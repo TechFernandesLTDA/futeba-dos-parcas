@@ -1,0 +1,259 @@
+# Gemini Ignore - Arquivos que o Gemini deve ignorar para economizar tokens
+
+# Este arquivo funciona de forma similar ao .gitignore
+# Cada linha representa um padrão de arquivo/diretório a ser ignorado
+
+# ============================================
+# BUILD OUTPUTS E BINÁRIOS
+# ============================================
+
+# Gradle
+build/
+**/build/
+.gradle/
+gradle-wrapper.jar
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+local.properties
+.DS_Store
+
+# Outputs Android
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# ============================================
+# DEPENDENCIES E NODE_MODULES
+# ============================================
+
+# Node
+node_modules/
+**/node_modules/
+backend/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+backend/package-lock.json
+yarn.lock
+
+# ============================================
+# ARQUIVOS GERADOS
+# ============================================
+
+# Android generated
+app/generated/
+**/generated/
+app/build/generated/
+R.java
+BuildConfig.java
+
+# Backend build
+backend/dist/
+backend/build/
+*.tsbuildinfo
+
+# ============================================
+# LOGS E TEMPORÁRIOS
+# ============================================
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+lerna-debug.log*
+
+# Temporários
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.cache/
+
+# ============================================
+# TESTES E COVERAGE
+# ============================================
+
+# Coverage
+coverage/
+backend/coverage/
+.nyc_output/
+*.lcov
+
+# Test results
+test-results/
+junit-reports/
+
+# ============================================
+# GIT E CONTROLE DE VERSÃO
+# ============================================
+
+.git/
+.gitignore
+.gitattributes
+.gitmodules
+
+# ============================================
+# SECRETS E CONFIGURAÇÕES SENSÍVEIS
+# ============================================
+
+# Android
+google-services.json
+serviceAccountKey.json
+*.keystore
+*.jks
+key.properties
+
+# Backend
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# Firebase
+**/serviceAccountKey.json
+firebase-adminsdk-*.json
+
+# ============================================
+# ASSETS PESADOS (REDUZIR TOKENS)
+# ============================================
+
+# Imagens (se precisar ler, pedir especificamente)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.ico
+*.svg
+!res/drawable/*.xml
+
+# Vídeos e áudios
+*.mp4
+*.avi
+*.mov
+*.mp3
+*.wav
+
+# Fonts
+*.ttf
+*.otf
+*.woff
+*.woff2
+
+# ============================================
+# DOCUMENTAÇÃO REDUNDANTE
+# ============================================
+
+# Backups de documentação
+*.md.backup
+*.md~
+*.bak
+
+# Screenshots e prints
+screenshots/
+prints/
+app/screenshots/
+
+# ============================================
+# MIGRATIONS JÁ APLICADAS
+# ============================================
+
+# Evitar leitura de migrações antigas (usar apenas quando necessário)
+backend/src/migrations/*.js
+backend/src/migrations/*.js.map
+
+# ============================================
+# OUTROS
+# ============================================
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# Firebase cache
+.firebase/
+firebase-debug.log
+
+# TypeScript
+*.tsbuildinfo
+
+# Proguard
+proguard/
+
+# Lint
+lint-results*.xml
+lint-results*.html
+
+# ============================================
+# ESPECÍFICOS DO PROJETO
+# ============================================
+
+# Mock data excessivo (se necessário, ler especificamente)
+**/mock-data/*.json
+
+# Arquivos muito grandes de seed
+scripts/large-seed-data.json
+
+# Relatórios de análise estática
+reports/
+
+# ============================================
+# EXCEÇÕES (NÃO IGNORAR)
+# ============================================
+
+# Garantir que arquivos de configuração importantes sejam lidos
+!gradle.properties
+!settings.gradle.kts
+!build.gradle.kts
+!app/build.gradle.kts
+!tsconfig.json
+!package.json
+!AndroidManifest.xml
+!firestore.rules
+!firestore.indexes.json
+!storage.rules
+
+# Arquivos de documentação do projeto (IMPORTANTE LER)
+!CLAUDE.md
+!GEMINI.md
+!README.md
+!IMPLEMENTACAO.md
+!.agentrules
+!.agent/*.md
+
+# ============================================
+# NOTAS
+# ============================================
+
+# Este arquivo ajuda o Gemini a:
+# 1. Economizar ~60-70% de tokens ignorando arquivos desnecessários
+# 2. Focar apenas em código fonte relevante
+# 3. Evitar leitura de binários, assets, e builds
+# 4. Melhorar tempo de resposta e eficiência
+
+# Se precisar ler algum arquivo ignorado, peça especificamente
+# Exemplo: "Leia o arquivo google-services.json" irá funcionar

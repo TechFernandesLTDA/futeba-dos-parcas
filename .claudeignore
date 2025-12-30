@@ -1,0 +1,87 @@
+# Claude Ignore - Arquivos e diretórios que Claude deve ignorar para economizar tokens
+
+# Build outputs
+build/
+**/build/
+.gradle/
+*.iml
+.idea/
+local.properties
+*.apk
+*.aab
+*.dex
+
+# Android generated
+app/generated/
+**/generated/
+*.class
+
+# Node modules e dependencies
+node_modules/
+**/node_modules/
+backend/node_modules/
+package-lock.json
+backend/package-lock.json
+
+# Logs e temporários
+*.log
+logs/
+*.tmp
+*.temp
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Binaries e compilados
+*.so
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Secrets (já devem estar em .gitignore mas reforçando)
+*.keystore
+*.jks
+google-services.json
+serviceAccountKey.json
+.env
+.env.*
+
+# Documentação gerada/redundante
+backend/dist/
+backend/coverage/
+*.md.backup
+*.md~
+
+# Cache
+.cache/
+*.cache
+
+# Migrations já aplicadas (evitar leitura desnecessária)
+backend/src/migrations/*.js
+
+# Screenshots e assets pesados (se necessário, pedir para ler especificamente)
+screenshots/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.webp
+*.ico
+
+# Fonts
+*.ttf
+*.otf
+*.woff
+*.woff2

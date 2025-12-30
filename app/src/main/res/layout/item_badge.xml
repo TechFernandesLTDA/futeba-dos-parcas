@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:strokeWidth="2dp"
+    app:strokeColor="@color/outline_variant">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:gravity="center">
+
+        <!-- Ícone da Badge com Background Colorido -->
+        <FrameLayout
+            android:layout_width="80dp"
+            android:layout_height="80dp">
+
+            <!-- Background Circular com Cor da Raridade -->
+            <View
+                android:id="@+id/vBadgeBackground"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_badge_circle"
+                android:backgroundTint="@color/primary" />
+
+            <!-- Emoji/Ícone da Badge -->
+            <TextView
+                android:id="@+id/tvBadgeIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="⚽"
+                android:textSize="40sp"
+                tools:ignore="HardcodedText" />
+
+        </FrameLayout>
+
+        <!-- Nome da Badge -->
+        <TextView
+            android:id="@+id/tvBadgeName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Hat-Trick"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface"
+            android:gravity="center"
+            android:layout_marginTop="8dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:ignore="HardcodedText" />
+
+        <!-- Descrição da Badge -->
+        <TextView
+            android:id="@+id/tvBadgeDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Marque 3+ gols em uma partida"
+            android:textSize="11sp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:gravity="center"
+            android:layout_marginTop="4dp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            tools:ignore="HardcodedText" />
+
+        <!-- Contador (quantas vezes conquistou) -->
+        <LinearLayout
+            android:id="@+id/llBadgeCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="×"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/tertiary"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:id="@+id/tvBadgeCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/tertiary"
+                android:layout_marginStart="2dp"
+                tools:ignore="HardcodedText" />
+
+        </LinearLayout>
+
+        <!-- Badge de Raridade -->
+        <TextView
+            android:id="@+id/tvRarity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🏆 ÉPICO"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:background="@drawable/badge_rarity"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:layout_marginTop="6dp"
+            tools:ignore="HardcodedText" />
+
+        <!-- Data de Desbloqueio -->
+        <TextView
+            android:id="@+id/tvUnlockedDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Desbloqueado em 15/12/2024"
+            android:textSize="9sp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"
+            tools:visibility="visible"
+            tools:ignore="HardcodedText" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

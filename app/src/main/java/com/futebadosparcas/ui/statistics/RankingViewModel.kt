@@ -1,0 +1,208 @@
+package com.futebadosparcas.ui.statistics
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.data.model.LevelTable
+import com.futebadosparcas.data.model.MilestoneType
+import com.futebadosparcas.data.repository.IStatisticsRepository
+import com.futebadosparcas.data.repository.RankingCategory
+import com.futebadosparcas.data.repository.RankingPeriod
+import com.futebadosparcas.data.repository.RankingRepository
+import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.ranking.LeagueService
+import com.futebadosparcas.domain.ranking.MilestoneChecker
+import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class RankingViewModel @Inject constructor(
+    private val rankingRepository: RankingRepository,
+    private val statisticsRepository: IStatisticsRepository,
+    private val userRepository: UserRepository,
+    private val leagueService: LeagueService,
+    private val auth: FirebaseAuth
+) : ViewModel() {
+
+    private val _rankingState = MutableStateFlow(RankingUiState())
+    val rankingState: StateFlow<RankingUiState> = _rankingState
+
+    private val _evolutionState = MutableStateFlow<EvolutionUiState>(EvolutionUiState.Loading)
+    val evolutionState: StateFlow<EvolutionUiState> = _evolutionState
+
+    private val currentUserId: String?
+        get() = auth.currentUser?.uid
+
+    init {
+        loadRanking()
+    }
+
+    /**
+     * Carrega ranking com filtros atuais.
+     */
+    fun loadRanking() {
+        viewModelScope.launch {
+            _rankingState.update { it.copy(isLoading = true, error = null) }
+
+            try {
+                val category = _rankingState.value.selectedCategory
+                val period = _rankingState.value.selectedPeriod
+
+                val rankingResult = if (period == RankingPeriod.ALL_TIME) {
+                    rankingRepository.getRanking(category)
+                } else {
+                    rankingRepository.getRankingByPeriod(category, period)
+                }
+
+                if (rankingResult.isFailure) {
+                    _rankingState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = rankingResult.exceptionOrNull()?.message
+                        )
+                    }
+                    return@launch
+                }
+
+                val rankings = rankingResult.getOrNull() ?: emptyList()
+                val items = rankings.map { entry ->
+                    PlayerRankingItem(
+                        rank = entry.rank,
+                        playerName = entry.userName,
+                        value = entry.value,
+                        photoUrl = entry.userPhoto,
+                        userId = entry.userId,
+                        gamesPlayed = entry.gamesPlayed,
+                        average = entry.average,
+                        nickname = entry.nickname
+                    )
+                }
+
+                // Buscar posicao do usuario atual
+                val myPosition = currentUserId?.let { uid ->
+                    items.indexOfFirst { it.userId == uid }.let { if (it >= 0) it + 1 else 0 }
+                } ?: 0
+
+                _rankingState.update {
+                    it.copy(
+                        isLoading = false,
+                        rankings = items,
+                        myPosition = myPosition
+                    )
+                }
+
+            } catch (e: Exception) {
+                _rankingState.update {
+                    it.copy(isLoading = false, error = e.message)
+                }
+            }
+        }
+    }
+
+    /**
+     * Altera a categoria do ranking.
+     */
+    fun selectCategory(category: RankingCategory) {
+        _rankingState.update { it.copy(selectedCategory = category) }
+        loadRanking()
+    }
+
+    /**
+     * Altera o periodo do ranking.
+     */
+    fun selectPeriod(period: RankingPeriod) {
+        _rankingState.update { it.copy(selectedPeriod = period) }
+        loadRanking()
+    }
+
+    /**
+     * Carrega dados de evolucao do jogador atual.
+     */
+    fun loadEvolution() {
+        viewModelScope.launch {
+            _evolutionState.value = EvolutionUiState.Loading
+
+            try {
+                val uid = currentUserId ?: run {
+                    _evolutionState.value = EvolutionUiState.Error("Usuario nao autenticado")
+                    return@launch
+                }
+
+                // Buscar dados do usuario
+                val userResult = userRepository.getCurrentUser()
+                if (userResult.isFailure) {
+                    _evolutionState.value = EvolutionUiState.Error("Erro ao carregar usuario")
+                    return@launch
+                }
+                val user = userResult.getOrNull()!!
+
+                // Buscar estatisticas
+                val statsResult = statisticsRepository.getMyStatistics()
+                val stats = statsResult.getOrNull()
+
+                // Buscar historico de XP
+                val historyResult = rankingRepository.getUserXpHistory(uid, 20)
+                val xpHistory = historyResult.getOrNull() ?: emptyList()
+
+                // Buscar evolucao de XP por mes
+                val evolutionResult = rankingRepository.getXpEvolution(uid, 6)
+                val xpEvolution = evolutionResult.getOrNull() ?: emptyMap()
+
+                // Calcular progresso de nivel
+                val currentXp = user.experiencePoints
+                val currentLevel = user.level
+                val (xpProgress, xpNeeded) = LevelTable.getXpProgress(currentXp)
+                val progressPercentage = if (xpNeeded > 0) xpProgress.toFloat() / xpNeeded else 1f
+
+                // Buscar milestones
+                val achievedMilestones = mutableListOf<MilestoneType>()
+                // Por enquanto, inferir dos badges ou de um campo no user
+                // TODO: Implementar busca de milestones do Firestore
+
+                // Calcular proximos milestones
+                val nextMilestones = if (stats != null) {
+                    MilestoneChecker.getNextMilestones(stats, achievedMilestones.map { it.name })
+                        .map { milestone ->
+                            val (current, target) = MilestoneChecker.getProgress(stats, milestone)
+                            MilestoneProgress(
+                                milestone = milestone,
+                                current = current,
+                                target = target,
+                                percentage = if (target > 0) current.toFloat() / target else 0f
+                            )
+                        }
+                        .take(5)
+                } else {
+                    emptyList()
+                }
+
+                // Buscar dados da liga (temporada ativa)
+                // TODO: Buscar season_id da temporada ativa
+                val leagueData: com.futebadosparcas.data.model.SeasonParticipationV2? = null
+
+                _evolutionState.value = EvolutionUiState.Success(
+                    PlayerEvolutionData(
+                        currentXp = currentXp,
+                        currentLevel = currentLevel,
+                        levelName = LevelTable.getLevelName(currentLevel),
+                        xpProgress = xpProgress,
+                        xpNeeded = xpNeeded,
+                        progressPercentage = progressPercentage,
+                        xpHistory = xpHistory,
+                        xpEvolution = xpEvolution,
+                        achievedMilestones = achievedMilestones,
+                        nextMilestones = nextMilestones,
+                        leagueData = leagueData
+                    )
+                )
+
+            } catch (e: Exception) {
+                _evolutionState.value = EvolutionUiState.Error(e.message ?: "Erro desconhecido")
+            }
+        }
+    }
+}

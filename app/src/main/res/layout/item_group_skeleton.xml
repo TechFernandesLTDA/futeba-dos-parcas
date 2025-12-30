@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/outline_variant"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp">
+
+        <!-- Photo Skeleton -->
+        <View
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/skeleton_circle" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:orientation="vertical">
+
+            <!-- Name Skeleton -->
+            <View
+                android:layout_width="160dp"
+                android:layout_height="18dp"
+                android:background="@drawable/skeleton_rounded" />
+
+            <!-- Description Skeleton -->
+            <View
+                android:layout_width="100dp"
+                android:layout_height="14dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/skeleton_rounded" />
+
+        </LinearLayout>
+
+        <!-- Chip Skeleton -->
+        <View
+            android:layout_width="60dp"
+            android:layout_height="28dp"
+            android:background="@drawable/skeleton_rounded" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

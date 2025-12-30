@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "490094091078",
+    "project_id": "futebadosparcas",
+    "storage_bucket": "futebadosparcas.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:490094091078:android:4acb28d78734931db5a347",
+        "android_client_info": {
+          "package_name": "com.futebadosparcas"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "490094091078-ue973k83nddm5pvg9eg902cgtshaa1on.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.futebadosparcas",
+            "certificate_hash": "5da1000ca36b7ba23f3525f2efccfd2d98281aac"
+          }
+        },
+        {
+          "client_id": "490094091078-9niv1mhthjb0blkluv114cvo6jgbf24p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMzIKlfST4gJm3RM3QQXY-N0doVE6vMQE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "490094091078-9niv1mhthjb0blkluv114cvo6jgbf24p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Futsal Icon - Quadra coberta -->
+    <path
+        android:fillColor="?attr/colorPrimary"
+        android:pathData="M3,5h18v14H3V5z M4,6v12h16V6H4z"/>
+    <path
+        android:fillColor="?attr/colorPrimary"
+        android:pathData="M12,7 L12,17 M7,12 L17,12 M7,7 L7,17 M17,7 L17,17"/>
+</vector>

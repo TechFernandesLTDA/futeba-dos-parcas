@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_invite"
+        android:title="Convidar jogadores"
+        android:icon="@drawable/ic_person_add"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_cashbox"
+        android:title="Caixinha"
+        android:icon="@drawable/ic_wallet"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_create_game"
+        android:title="Criar jogo"
+        android:icon="@drawable/ic_add"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_edit"
+        android:title="Editar grupo"
+        android:icon="@drawable/ic_edit"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_transfer_ownership"
+        android:title="Transferir propriedade"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_leave_group"
+        android:title="Sair do grupo"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_archive"
+        android:title="Arquivar grupo"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_delete"
+        android:title="Excluir grupo"
+        app:showAsAction="never" />
+
+</menu>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_role_admin"
+        android:title="Tornar Administrador" />
+    <item
+        android:id="@+id/menu_role_owner"
+        android:title="Tornar Dono de Quadra" />
+    <item
+        android:id="@+id/menu_role_player"
+        android:title="Tornar Jogador Comum" />
+</menu>

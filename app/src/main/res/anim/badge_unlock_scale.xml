@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:anim/bounce_interpolator">
+
+    <!-- Escala de 0 a 1.2 e volta para 1 -->
+    <scale
+        android:duration="600"
+        android:fromXScale="0.0"
+        android:fromYScale="0.0"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:toXScale="1.2"
+        android:toYScale="1.2" />
+
+    <scale
+        android:duration="200"
+        android:fromXScale="1.2"
+        android:fromYScale="1.2"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:startOffset="600"
+        android:toXScale="1.0"
+        android:toYScale="1.0" />
+
+    <!-- Rotação -->
+    <rotate
+        android:duration="800"
+        android:fromDegrees="-15"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:toDegrees="0" />
+
+    <!-- Fade in -->
+    <alpha
+        android:duration="400"
+        android:fromAlpha="0.0"
+        android:toAlpha="1.0" />
+
+</set>
