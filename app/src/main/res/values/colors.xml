@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base Colors -->
+    <color name="primary">#58CC02</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="primary_container">#D6F5C6</color>
+    <color name="on_primary_container">#113800</color>
+    <color name="primary_dark">#8CD85B</color>
+    <color name="on_primary_dark">#003910</color>
+    <color name="primary_container_dark">#00531A</color>
+    <color name="on_primary_container_dark">#9EF67B</color>
+
+    <color name="secondary">#FF9600</color>
+    <color name="secondary_dark">#FFB86C</color>
+    <color name="on_secondary_dark">#452B00</color>
+    <color name="secondary_container_dark">#633F00</color>
+    <color name="on_secondary_container_dark">#FFDDB3</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="secondary_container">#FFDDB3</color>
+    <color name="on_secondary_container">#2B1700</color>
+
+    <color name="tertiary">#4B9CE2</color>
+    <color name="on_tertiary">#FFFFFF</color>
+    <color name="tertiary_container">#CFE5FF</color>
+    <color name="on_tertiary_container">#001D36</color>
+    <color name="on_tertiary_dark">#003355</color>
+    <color name="tertiary_dark">#99CBFF</color>
+    <color name="tertiary_container_dark">#004A78</color>
+    <color name="on_tertiary_container_dark">#CFE5FF</color>
+
+    <color name="error_dark">#FFB4AB</color>
+    <color name="on_error_dark">#690005</color>
+    <color name="error_container_dark">#93000A</color>
+    <color name="on_error_container_dark">#FFDAD6</color>
+
+    <!-- Dark Neutral Colors -->
+    <color name="background_dark">#1D1B20</color>
+    <color name="on_background_dark">#E6E1E5</color>
+    <color name="surface_dark">#1D1B20</color>
+    <color name="on_surface_dark">#E6E1E5</color>
+    <color name="surface_variant_dark">#49454F</color>
+    <color name="on_surface_variant_dark">#CAC4D0</color>
+    <color name="outline_dark">#938F99</color>
+    <color name="outline_variant_dark">#49454F</color>
+    <color name="on_error">#FFFFFF</color>
+    <color name="error_container">#F9DEDC</color>
+    <color name="on_error_container">#410E0B</color>
+
+    <!-- Neutral Colors -->
+    <color name="background">#FFFFFF</color>
+    <color name="on_background">#1D1B20</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="on_surface">#1D1B20</color>
+    <color name="surface_variant">#F0F2F5</color>
+    <color name="on_surface_variant">#444746</color>
+    <color name="outline">#79747E</color>
+    <color name="outline_variant">#CAC4D0</color>
+    <color name="colorOnSurface">#1D1B20</color> <!-- Alias for compatibility -->
+
+    <!-- Semantics -->
+    <color name="success">#58CC02</color>
+    <color name="warning">#FFCA28</color>
+    <color name="error">#B3261E</color>
+
+    <!-- Group Role Chips -->
+    <color name="chip_owner">#FF9600</color>
+    <color name="chip_admin">#4B9CE2</color>
+    <color name="chip_member">#58CC02</color>
+    <color name="chip_text_light">#FFFFFF</color>
+
+    <!-- Notification Colors -->
+    <color name="notification_unread">#E3F2FD</color>
+    <color name="notification_read">#FFFFFF</color>
+    <color name="badge_background">#F44336</color>
+    <color name="badge_text">#FFFFFF</color>
+
+    <!-- Cashbox Colors -->
+    <color name="income">#4CAF50</color>
+    <color name="expense">#F44336</color>
+    <color name="balance_positive">#4CAF50</color>
+    <color name="balance_negative">#F44336</color>
+
+    <!-- Status Colors -->
+    <color name="status_pending">#FFC107</color>
+    <color name="status_accepted">#4CAF50</color>
+    <color name="status_declined">#F44336</color>
+    <color name="status_expired">#9E9E9E</color>
+
+    <!-- Legacy/Compatibility Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="accent">#FF9600</color>
+    <color name="info">#4B9CE2</color>
+    <color name="text_primary">#1D1B20</color>
+    <color name="text_secondary">#49454F</color>
+    <color name="divider">#E7E0EC</color>
+    <color name="gold">#FFD700</color>
+
+    <!-- Field Type Chips -->
+    <color name="chip_futsal">#FF5722</color>
+    <color name="chip_society">#4CAF50</color>
+    <color name="chip_campo">#2196F3</color>
+    <!-- Theme Presets -->
+    <color name="theme_blue_primary">#1CB0F6</color>
+    <color name="theme_blue_container">#83D3F9</color>
+    <color name="theme_blue_on_primary">#FFFFFF</color>
+
+    <color name="theme_orange_primary">#FF9600</color>
+    <color name="theme_orange_container">#FFD488</color>
+    <color name="theme_orange_on_primary">#FFFFFF</color>
+    
+    <color name="theme_purple_primary">#CE82FF</color>
+    <color name="theme_purple_container">#E8C4FF</color>
+    <color name="theme_purple_on_primary">#FFFFFF</color>
+
+    <color name="theme_red_primary">#FF4B4B</color>
+    <color name="theme_red_container">#FF9B9B</color>
+    <color name="theme_red_on_primary">#FFFFFF</color>
+    
+    <color name="theme_navy_primary">#2B70C9</color>
+    <color name="theme_navy_container">#82ABDE</color>
+    <color name="theme_navy_on_primary">#FFFFFF</color>
+
+    <color name="theme_yellow_primary">#FFC107</color>
+    <color name="theme_yellow_container">#FFECB3</color>
+    <color name="theme_yellow_on_primary">#FFFFFF</color>
+
+    <color name="outlineVariant">#CAC4D0</color>
+</resources>

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="recurrence_options">
+        <item>Semanal</item>
+        <item>Quinzenal</item>
+        <item>Mensal</item>
+        <item>Não se repete</item>
+    </string-array>
+
+    <string-array name="game_type_options">
+        <item>Society</item>
+        <item>Futsal</item>
+        <item>Campo</item>
+    </string-array>
+
+    <string-array name="theme_entries">
+        <item>Claro</item>
+        <item>Escuro</item>
+        <item>Padrão do Sistema</item>
+    </string-array>
+
+    <string-array name="theme_values">
+        <item>light</item>
+        <item>dark</item>
+        <item>system</item>
+    </string-array>
+    <string-array name="regions_array">
+        <item>Portão/Água Verde</item>
+        <item>CIC/Campo Comprido</item>
+        <item>Boa Vista/Santa Cândida</item>
+        <item>Capão/Uberaba</item>
+        <item>Xaxim/Boqueirão</item>
+        <item>Centro/Batel</item>
+        <item>Outros</item>
+    </string-array>
+
+    <string-array name="curitiba_neighborhoods">
+        <item>Abranches</item>
+        <item>Água Verde</item>
+        <item>Ahú</item>
+        <item>Alto Boqueirão</item>
+        <item>Alto da Glória</item>
+        <item>Alto da XV</item>
+        <item>Atuba</item>
+        <item>Augusta</item>
+        <item>Bacacheri</item>
+        <item>Bairro Alto</item>
+        <item>Barreirinha</item>
+        <item>Batel</item>
+        <item>Bigorrilho</item>
+        <item>Boa Vista</item>
+        <item>Bom Retiro</item>
+        <item>Boqueirão</item>
+        <item>Butiatuvinha</item>
+        <item>Cabral</item>
+        <item>Cachoeira</item>
+        <item>Cajuru</item>
+        <item>Campina do Siqueira</item>
+        <item>Campo Comprido</item>
+        <item>Campo de Santana</item>
+        <item>Capão da Imbuia</item>
+        <item>Capão Raso</item>
+        <item>Cascatinha</item>
+        <item>Caximba</item>
+        <item>Centro</item>
+        <item>Centro Cívico</item>
+        <item>Cidade Industrial (CIC)</item>
+        <item>Cristo Rei</item>
+        <item>Fanny</item>
+        <item>Fazendinha</item>
+        <item>Ganchinho</item>
+        <item>Guabirotuba</item>
+        <item>Guaíra</item>
+        <item>Hauer</item>
+        <item>Hugo Lange</item>
+        <item>Jardim Botânico</item>
+        <item>Jardim das Américas</item>
+        <item>Jardim Social</item>
+        <item>Juvevê</item>
+        <item>Lamenha Pequena</item>
+        <item>Lindóia</item>
+        <item>Mercês</item>
+        <item>Mossunguê (Ecoville)</item>
+        <item>Novo Mundo</item>
+        <item>Orleans</item>
+        <item>Parolin</item>
+        <item>Pilarzinho</item>
+        <item>Pinheirinho</item>
+        <item>Portão</item>
+        <item>Prado Velho</item>
+        <item>Rebouças</item>
+        <item>Riviera</item>
+        <item>Santa Cândida</item>
+        <item>Santa Felicidade</item>
+        <item>Santa Quitéria</item>
+        <item>Santo Inácio</item>
+        <item>São Braz</item>
+        <item>São Francisco</item>
+        <item>São João</item>
+        <item>São Lourenço</item>
+        <item>São Miguel</item>
+        <item>Seminário</item>
+        <item>Sítio Cercado</item>
+        <item>Taboão</item>
+        <item>Tarumã</item>
+        <item>Tatuquara</item>
+        <item>Tingui</item>
+        <item>Uberaba</item>
+        <item>Umbará</item>
+        <item>Vila Izabel</item>
+        <item>Vista Alegre</item>
+        <item>Vista Alegre</item>
+        <item>Xaxim</item>
+    </string-array>
+
+    <string-array name="field_type_options">
+        <item>SOCIETY</item>
+        <item>FUTSAL</item>
+        <item>CAMPO</item>
+        <item>AREIA</item>
+        <item>OUTROS</item>
+    </string-array>
+
+    <string-array name="surface_type_options">
+        <item>Grama Sintética</item>
+        <item>Grama Natural</item>
+        <item>Taco (Parquet)</item>
+        <item>Cimento/Epóxi</item>
+        <item>Areia</item>
+        <item>Outros</item>
+    </string-array>
+
+    <string-array name="duration_options">
+        <item>60</item>
+        <item>90</item>
+        <item>120</item>
+    </string-array>
+</resources>

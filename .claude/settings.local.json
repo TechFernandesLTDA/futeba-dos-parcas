@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(.gradlew.bat:*)",
+      "Bash(cmd /c:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(gradlew.bat assembleDebug:*)",
+      "Bash(gradlew.bat build:*)",
+      "Bash(./gradlew assembleDebug:*)",
+      "Bash(powershell:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(copy \"C:\\Projetos\\Futeba dos Parças\\futebadosparcas-firebase-adminsdk-fbsvc-b5fb25775d.json\" \"C:\\Projetos\\Futeba dos Parças\\scripts\\serviceAccountKey.json\")",
+      "Bash(npm install:*)",
+      "Bash(node reset_firestore.js:*)",
+      "Bash(echo:*)",
+      "Bash(where:*)",
+      "Bash(export JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\":*)",
+      "Bash(./gradlew clean:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(pip install:*)",
+      "Bash(python -m pip:*)",
+      "Bash(python:*)",
+      "Bash(del /Q build_*.txt ksp_error.txt nul firestore-debug.log)",
+      "Bash(./gradlew installDebug:*)",
+      "Bash(adb logcat:*)",
+      "Bash(del \"app\\src\\main\\res\\drawable\\app_logo_base.png\")",
+      "Bash(dir /s /b)",
+      "Bash(dir:*)",
+      "Bash(./gradlew compileDebugKotlin:*)",
+      "Bash(adb devices:*)"
+    ]
+  }
+}

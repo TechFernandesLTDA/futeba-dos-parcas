@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SwitchPreferenceCompat
+        app:key="profile_public_preference"
+        app:title="Perfil Visível"
+        app:summary="Permitir que outros usuários encontrem seu perfil"
+        app:defaultValue="true" />
+
+    <ListPreference
+        app:key="theme_preference"
+        app:title="Tema"
+        app:summary="%s"
+        app:entries="@array/theme_entries"
+        app:entryValues="@array/theme_values"
+        app:defaultValue="system" />
+
+    <Preference
+        app:key="dev_tools_preference"
+        app:title="Ferramentas de Desenvolvedor"
+        app:summary="Opções para desenvolvedores"
+        app:isPreferenceVisible="false" />
+
+</PreferenceScreen>

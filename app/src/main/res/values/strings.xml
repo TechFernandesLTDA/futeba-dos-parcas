@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Futeba dos Parças</string>
+
+    <!-- Firebase Google Sign-In (Web Client ID do Firebase Console) -->
+    <string name="default_web_client_id">490094091078-9niv1mhthjb0blkluv114cvo6jgbf24p.apps.googleusercontent.com</string>
+
+    <!-- Auth -->
+    <string name="login">Entrar</string>
+    <string name="login_with_google">Entrar com Google</string>
+    <string name="register">Cadastrar</string>
+    <string name="email">Email</string>
+    <string name="password">Senha</string>
+    <string name="confirm_password">Confirmar Senha</string>
+    <string name="name">Nome</string>
+    <string name="phone">Telefone</string>
+    <string name="forgot_password">Esqueceu a senha?</string>
+    <string name="no_account">Nao tem conta?</string>
+    <string name="already_have_account">Ja tem conta?</string>
+    <string name="logout">Sair</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_games">Jogos</string>
+    <string name="nav_players">Jogadores</string>
+    <string name="nav_schedules">Horarios</string>
+    <string name="nav_statistics">Estatisticas</string>
+    <string name="nav_profile">Perfil</string>
+
+    <!-- Games -->
+    <string name="upcoming_games">Proximos Jogos</string>
+    <string name="game_details">Detalhes do Jogo</string>
+    <string name="confirm_presence">Confirmar Presenca</string>
+    <string name="cancel_confirmation">Cancelar Confirmacao</string>
+    <string name="confirmed">Confirmado</string>
+    <string name="players">Jogadores</string>
+    <string name="date">Data</string>
+    <string name="time">Horario</string>
+    <string name="location">Local</string>
+    <string name="price">Valor</string>
+
+    <!-- Schedules -->
+    <string name="my_schedules">Meus Horarios</string>
+    <string name="public_schedules">Horarios Publicos</string>
+    <string name="create_schedule">Criar Horario</string>
+
+    <!-- Statistics -->
+    <string name="my_statistics">Minhas Estatisticas</string>
+    <string name="rankings">Rankings</string>
+    <string name="goals">Gols</string>
+    <string name="games">Jogos</string>
+    <string name="saves">Defesas</string>
+    <string name="presence_rate">Presenca</string>
+
+    <!-- Invites -->
+    <string name="invites">Convites</string>
+    <string name="send_invite">Enviar Convite</string>
+    <string name="accept">Aceitar</string>
+    <string name="decline">Recusar</string>
+
+    <!-- Profile -->
+    <string name="edit_profile">Editar Perfil</string>
+    <string name="notifications">Notificacoes</string>
+    <string name="preferences">Preferencias</string>
+    <string name="about">Sobre</string>
+
+    <!-- Preferences -->
+    <string name="theme">Tema</string>
+    <string name="select_theme">Selecione o tema do aplicativo</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Escuro</string>
+    <string name="theme_system">Sistema</string>
+    <string name="privacy">Privacidade</string>
+    <string name="profile_visibility">Perfil Visível</string>
+    <string name="profile_visibility_description">Permitir que outros usuários encontrem seu perfil na busca</string>
+
+    <!-- Google Maps API Key (configurar em local.properties ou como variável de ambiente) -->
+    <string name="google_maps_key" translatable="false">YOUR_GOOGLE_MAPS_API_KEY</string>
+
+    <!-- General -->
+    <string name="loading">Carregando...</string>
+    <string name="error">Erro</string>
+    <string name="success">Sucesso</string>
+    <string name="cancel">Cancelar</string>
+    <string name="save">Salvar</string>
+    <string name="delete">Excluir</string>
+    <string name="edit">Editar</string>
+    <string name="search">Buscar</string>
+    <string name="no_data">Sem dados</string>
+    <string name="retry">Tentar novamente</string>
+
+
+    <!-- Gamification -->
+    <string name="xp_incentive_max">VOCÊ É UMA LENDA IMORTAL!</string>
+    <string name="xp_incentive_next">Faltam %1$d XP para ser %2$s</string>
+    <string name="level_prefix">Nv. %1$d</string>
+
+</resources>

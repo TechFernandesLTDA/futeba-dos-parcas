@@ -1,0 +1,87 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Funcao auxiliar: usuario autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Funcao auxiliar: ID do usuario
+    function userId() {
+      return request.auth.uid;
+    }
+
+    // ============================================
+    // PASTA: profile_images/{userId} (and legacy profile_photos)
+    // ============================================
+    match /profile_images/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) &&
+                      request.resource.size <= 10 * 1024 * 1024 &&
+                      request.resource.contentType.matches('image/.*');
+    }
+
+    match /profile_photos/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) &&
+                      request.resource.size <= 10 * 1024 * 1024 &&
+                      request.resource.contentType.matches('image/.*');
+    }
+
+    function isOwner(uId) {
+      return isAuthenticated() && userId() == uId;
+    }
+
+    // ============================================
+    // PASTA: game_photos/{gameId}
+    // ============================================
+    match /game_photos/{gameId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       request.resource.size < 10 * 1024 * 1024 &&
+                       request.resource.contentType.matches('image/.*');
+      allow delete: if isAuthenticated();
+    }
+
+    // ============================================
+    // PASTA: fields_photos (Quadras)
+    // ============================================
+    match /fields_photos/{fileName} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       request.resource.size < 10 * 1024 * 1024 &&
+                       request.resource.contentType.matches('image/.*');
+      allow delete: if isAuthenticated(); // Idealmente apenas admin/dono
+    }
+
+    // ============================================
+    // PASTA: locations_photos (Locais - se houver)
+    // ============================================
+    match /locations_photos/{fileName} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       request.resource.size < 10 * 1024 * 1024 &&
+                       request.resource.contentType.matches('image/.*');
+      allow delete: if isAuthenticated();
+    }
+
+    // ============================================
+    // PASTA: groups_photos (Grupos)
+    // ============================================
+    match /groups_photos/{groupId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       request.resource.size < 10 * 1024 * 1024 &&
+                       request.resource.contentType.matches('image/.*');
+      allow delete: if isAuthenticated(); // Idealmente apenas admin/dono do grupo
+    }
+
+    // ============================================
+    // REGRA PADRAO: Negar tudo
+    // ============================================
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

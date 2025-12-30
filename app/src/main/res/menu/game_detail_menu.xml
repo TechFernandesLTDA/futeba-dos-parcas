@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_invite_whatsapp"
+        android:title="Convidar no WhatsApp"
+        android:icon="@drawable/ic_chat_bubble"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_share"
+        android:title="Compartilhar"
+        android:icon="@drawable/ic_share"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_vote_mvp"
+        android:title="Votar no MVP"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_share_card"
+        android:title="Compartilhar Card"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_tactical_board"
+        android:title="Prancheta Tática"
+        app:showAsAction="never" />
+</menu>

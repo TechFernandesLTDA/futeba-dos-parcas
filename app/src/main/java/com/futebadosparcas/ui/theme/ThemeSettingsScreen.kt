@@ -1,0 +1,119 @@
+package com.futebadosparcas.ui.theme
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.futebadosparcas.data.model.ThemeMode
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ThemeSettingsScreen(
+    viewModel: ThemeViewModel = hiltViewModel()
+) {
+    val config by viewModel.themeConfig.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Theme Mode
+        Card {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Modo", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ThemeMode.values().forEach { mode ->
+                        FilterChip(
+                            selected = config.mode == mode,
+                            onClick = { viewModel.setThemeMode(mode) },
+                            label = { Text(mode.name) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Primary Color
+        ColorPickerSection(
+            title = "Cor Principal",
+            selectedColor = config.seedColors.primary,
+            onColorSelected = { viewModel.setPrimaryColor(it) }
+        )
+
+        // Secondary Color
+        ColorPickerSection(
+            title = "Cor de Destaque",
+            selectedColor = config.seedColors.secondary,
+            onColorSelected = { viewModel.setSecondaryColor(it) }
+        )
+        
+        // Preview Box (Demonstrates dynamic theming immediately)
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ),
+            modifier = Modifier.fillMaxWidth().height(100.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                Text("Preview: Primary Container", color = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
+        }
+    }
+}
+
+@Composable
+fun ColorPickerSection(
+    title: String,
+    selectedColor: Int,
+    onColorSelected: (Int) -> Unit
+) {
+    val presets = listOf(
+        Color(0xFF58CC02), // Green (Default)
+        Color(0xFF1CB0F6), // Blue
+        Color(0xFFFF9600), // Orange
+        Color(0xFFCE82FF), // Purple
+        Color(0xFFFF4B4B), // Red
+        Color(0xFF2B70C9), // Navy
+    )
+
+    Card {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(16.dp))
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(presets) { color ->
+                    val isSelected = selectedColor == color.toArgb()
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(color)
+                            .border(
+                                width = if (isSelected) 3.dp else 0.dp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                shape = CircleShape
+                            )
+                            .clickable { onColorSelected(color.toArgb()) }
+                    )
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,42 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="300dp"
+    android:height="500dp"
+    android:viewportWidth="300"
+    android:viewportHeight="500">
+    
+    <!-- Grass -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M0,0h300v500h-300z"/>
+        
+    <!-- Outer Lines -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:fillColor="#00000000"
+        android:pathData="M16,16h268v468h-268z"/>
+        
+    <!-- Center Line -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M16,250h268"/>
+        
+    <!-- Center Circle -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M150,250m-40,0a40,40 0 1,1 80,0a40,40 0 1,1 -80,0"/>
+        
+    <!-- Top Area -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M100,16v60h100v-60"/>
+
+    <!-- Bottom Area -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M100,484v-60h100v60"/>
+</vector>

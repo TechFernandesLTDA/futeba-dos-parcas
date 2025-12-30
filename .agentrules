@@ -1,0 +1,640 @@
+# Agent Rules - Regras para AI Agents (Gemini, Claude, etc.)
+
+## 🎯 Propósito
+Este arquivo define regras universais para qualquer AI agent trabalhando neste projeto.
+
+## 🔥 ACESSO AO FIREBASE
+
+**CRÍTICO**: Todos os AI agents têm acesso COMPLETO ao Firebase via Service Account.
+
+### ✅ Capacidades Disponíveis
+
+```yaml
+firestore:
+  leitura: "✅ COMPLETO - Todas as collections"
+  escrita: "✅ COMPLETO - Criar/atualizar documentos"
+  deleção: "✅ COMPLETO - Deletar dados"
+  queries: "✅ COMPLETO - Queries complexas"
+
+firebase_auth:
+  listar: "✅ Todos os usuários"
+  criar: "✅ Novos usuários"
+  gerenciar: "✅ Contas e permissões"
+
+firebase_storage:
+  listar: "✅ Arquivos e pastas"
+  upload: "✅ Imagens e arquivos"
+  deletar: "✅ Remover arquivos"
+
+firebase_functions:
+  deploy: "✅ Novas functions"
+  executar: "✅ Chamar functions"
+  logs: "✅ Ver logs"
+
+credenciais:
+  arquivo: "futebadosparcas-firebase-adminsdk-fbsvc-b5fb25775d.json"
+  projeto: "futebadosparcas"
+  permissões: "FULL ADMIN ACCESS"
+```
+
+### ⚠️ Diretrizes de Uso
+
+```yaml
+use_firebase_direto:
+  - "Analisar estrutura de dados"
+  - "Verificar dados antes de implementar"
+  - "Debugar problemas de dados"
+  - "Validar queries complexas"
+  - "Criar dados de teste"
+
+SEMPRE_confirme_antes:
+  - "❌ DELETAR dados em produção"
+  - "❌ Modificar dados de usuários reais"
+  - "❌ Alterar estrutura de collections"
+  - "❌ Operações em massa"
+
+prefira_app_android:
+  - "Criar dados mock (Developer Menu)"
+  - "Resetar base (Developer Menu)"
+  - "Testar fluxos completos"
+```
+
+---
+
+## 🌐 Idioma Obrigatório
+
+```yaml
+comentários: português (PT-BR)
+strings_ui: português (PT-BR)
+código: english
+documentação: português (PT-BR)
+commits: português (PT-BR)
+```
+
+## 📏 Padrões de Código
+
+### Arquitetura Obrigatória
+
+```
+MVVM + Clean Architecture + Hilt DI
+
+UI Layer:
+  - Fragment/Activity (ViewBinding ou Compose)
+  - Observa StateFlow do ViewModel
+  - NUNCA lógica de negócio na UI
+
+ViewModel Layer:
+  - @HiltViewModel
+  - StateFlow<UiState> (sealed classes)
+  - viewModelScope para coroutines
+  - NUNCA referências a Context/Activity/Fragment
+
+Repository Layer:
+  - Interface + Implementação
+  - Result<T> para operações que podem falhar
+  - Flow<T> para dados em tempo real
+  - suspend fun para operações únicas
+
+Data Source:
+  - Firebase (Firestore, Auth, Storage, FCM)
+  - Room (cache local)
+```
+
+### Null Safety
+
+```kotlin
+# PERMITIDO
+?.let { }
+?.run { }
+?: defaultValue
+if (x != null) { }
+
+# PROIBIDO
+!! operator (exceto em casos 100% seguros como binding)
+```
+
+### Coroutines
+
+```kotlin
+# ViewModel
+viewModelScope.launch { }
+
+# Fragment
+viewLifecycleOwner.lifecycleScope.launch { }
+
+# Repository (já é suspend)
+suspend fun getData(): Result<Data>
+```
+
+### StateFlow Pattern
+
+```kotlin
+# SEMPRE use este padrão:
+
+sealed class MyUiState {
+    object Loading : MyUiState()
+    data class Success(val data: Data) : MyUiState()
+    data class Error(val message: String) : MyUiState()
+}
+
+private val _uiState = MutableStateFlow<MyUiState>(MyUiState.Loading)
+val uiState: StateFlow<MyUiState> = _uiState.asStateFlow()
+```
+
+## 🔧 Regras de Edição de Arquivos
+
+### CRÍTICO - Estratégia de Edição
+
+```yaml
+arquivos_xml:
+  estratégia: REWRITE COMPLETO
+  razão: "Indentação complexa causa falhas em patches"
+
+arquivos_kotlin_grandes:
+  estratégia: REWRITE COMPLETO
+  limite: "> 200 linhas"
+
+arquivos_kotlin_pequenos:
+  estratégia: "EDIT pontual OK"
+  limite: "< 200 linhas"
+
+regra_de_ouro: |
+  Se EDIT falhar 2 vezes, use WRITE para reescrever o arquivo completo
+```
+
+### Naming Conventions
+
+```yaml
+activities: "LoginActivity.kt"
+fragments: "GamesFragment.kt"
+viewmodels: "GamesViewModel.kt"
+repositories: "GameRepository.kt" (interface)
+              "GameRepositoryImpl.kt" (implementação)
+adapters: "GamesAdapter.kt"
+models: "Game.kt", "User.kt"
+enums: "GameStatus.kt", "UserRole.kt"
+
+layouts:
+  activities: "activity_login.xml"
+  fragments: "fragment_games.xml"
+  items: "item_game.xml"
+  dialogs: "dialog_select_position.xml"
+```
+
+## 🔥 Firebase Rules
+
+### Collections Schema
+
+```yaml
+users:
+  campos_obrigatórios: [id, name, email, role]
+  roles: [Player, FieldOwner, Admin]
+
+games:
+  campos_obrigatórios: [id, locationId, dateTime, status, maxPlayers]
+  status: [SCHEDULED, CONFIRMED, LIVE, FINISHED, CANCELLED]
+  subcollections: [confirmations]
+
+confirmations:
+  campos_obrigatórios: [userId, userName, position, confirmedAt]
+  position: [GOALKEEPER, LINE_PLAYER]
+
+locations:
+  campos_obrigatórios: [id, name, address, latitude, longitude]
+  subcollections: [fields]
+
+fields:
+  campos_obrigatórios: [id, name, type, locationId]
+  types: [SOCIETY, FUTSAL, FIELD, BEACH, SYNTHETIC_GRASS]
+
+statistics:
+  campos_obrigatórios: [userId, totalGames, wins, goals, assists]
+
+live_games:
+  campos_obrigatórios: [id, gameId, type, playerId, teamNumber, timestamp]
+  types: [GOAL, YELLOW_CARD, RED_CARD, SUBSTITUTION]
+```
+
+### Regras de Segurança
+
+```yaml
+autenticação: OBRIGATÓRIA (exceto para mocks com isMock: true)
+
+permissões:
+  leitura: "Autenticado"
+  escrita_user: "Próprio usuário ou Admin"
+  escrita_game: "Criador do jogo ou Admin"
+  escrita_admin: "Apenas Admin"
+
+validações:
+  roles: "Validar enums no Firestore rules"
+  status: "Validar transições de estado"
+  campos_obrigatórios: "Validar presença"
+```
+
+## 📦 Hilt Dependency Injection
+
+### Modules Existentes
+
+```yaml
+AppModule:
+  provides: [Repositories, UseCases]
+
+FirebaseModule:
+  provides: [FirebaseAuth, FirebaseFirestore, FirebaseStorage, FirebaseFunctions]
+
+DatabaseModule:
+  provides: [Room Database, DAOs]
+```
+
+### Anotações Obrigatórias
+
+```kotlin
+# ViewModel
+@HiltViewModel
+class MyViewModel @Inject constructor()
+
+# Fragment/Activity
+@AndroidEntryPoint
+class MyFragment : Fragment()
+
+# Repository no Module
+@Provides
+@Singleton
+fun provideRepository(): Repository = RepositoryImpl()
+```
+
+## 🎨 Design System
+
+```yaml
+cores_primárias:
+  primary: "#58CC02"  # Verde Duolingo
+  accent: "#FF9600"   # Laranja
+
+cores_estado:
+  success: "#58CC02"
+  error: "#D32F2F"
+  warning: "#FFA000"
+  info: "#1976D2"
+
+tipografia:
+  fonte_principal: "Roboto"
+  tamanhos: [12sp, 14sp, 16sp, 18sp, 24sp, 32sp]
+
+espaçamento:
+  unidade_base: 8dp
+  valores: [4dp, 8dp, 16dp, 24dp, 32dp]
+
+componentes:
+  estilo: "Material Design 3"
+  tema: "Gamificado (estilo Duolingo)"
+```
+
+## 🚫 Proibições Absolutas
+
+```yaml
+proibido:
+  - "findViewById() - Use ViewBinding"
+  - "LiveData - Use StateFlow"
+  - "!! operator (exceto binding)"
+  - "Injeção manual de dependências - Use Hilt"
+  - "Lógica de negócio na UI"
+  - "Hardcoded strings - Use strings.xml"
+  - "Magic numbers - Use constants"
+  - "God classes (> 500 linhas)"
+  - "Nested callbacks - Use coroutines"
+  - "Mutable collections expostas - Use toList()/toMap()"
+```
+
+## ✅ Obrigações
+
+```yaml
+obrigatório:
+  - "ViewBinding ou Compose para UI"
+  - "StateFlow para estado de UI"
+  - "Hilt para DI"
+  - "Coroutines para async"
+  - "Result<T> para operações que podem falhar"
+  - "Flow<T> para dados em tempo real"
+  - "Sealed classes para UI states"
+  - "Comentários em português"
+  - "Try-catch em operações de rede/disco"
+  - "Limpar binding em onDestroyView"
+```
+
+## 📊 Status do Projeto (Referência Rápida)
+
+```yaml
+features_completas:
+  autenticação: 100%
+  jogos: 95%
+  locais: 90%
+  estatísticas: 85%
+  jogo_ao_vivo: 80%
+
+features_parciais:
+  gamificação: 30%  # PRIORIDADE - Falta ViewModels
+  pagamentos: 10%
+  experiência_jogo: 15%
+
+features_não_iniciadas:
+  schedules_recorrentes: 0%
+  networking_convites: 0%
+  backend_nodejs: 5%
+```
+
+## 🎯 Prioridades de Desenvolvimento
+
+```yaml
+1_urgente:
+  - "Completar gamificação (LeagueViewModel, BadgesViewModel)"
+  - "Auto-award de badges após jogos"
+
+2_importante:
+  - "Edição e cancelamento de jogos"
+  - "Notificações FCM para confirmações"
+
+3_desejável:
+  - "Sistema de pagamentos PIX"
+  - "Votação MVP"
+  - "Cards instagramáveis"
+```
+
+## 📁 Estrutura de Arquivos
+
+```yaml
+models: "data/model/*.kt"
+repositories: "data/repository/*Repository*.kt"
+viewmodels: "ui/[feature]/*ViewModel.kt"
+fragments: "ui/[feature]/*Fragment.kt"
+activities: "ui/[feature]/*Activity.kt"
+adapters: "ui/[feature]/*Adapter.kt"
+layouts: "res/layout/*.xml"
+drawables: "res/drawable/*.xml"
+strings: "res/values/strings.xml"
+colors: "res/values/colors.xml"
+```
+
+## 🔍 Documentação de Referência
+
+```yaml
+contexto_geral: ".agent/QUICK_REFERENCE.md"
+estado_projeto: ".agent/PROJECT_STATE.md"
+padrões_firebase: ".agent/FIREBASE_MODERNIZATION.md"
+features_pendentes: "IMPLEMENTACAO.md"
+setup_projeto: "README.md"
+
+instruções_claude: "CLAUDE.md"
+instruções_gemini: "GEMINI.md"
+contexto_gemini: ".agent/GEMINI_CONTEXT.md"
+```
+
+## 🧪 Testing
+
+```yaml
+testes_unitários:
+  pasta: "test/"
+  framework: "JUnit 4"
+  mocking: "Mockito"
+
+testes_instrumentados:
+  pasta: "androidTest/"
+  framework: "Espresso"
+
+convenção:
+  nome: "[ClasseTestada]Test.kt"
+  exemplo: "GameRepositoryImplTest.kt"
+```
+
+## 🚀 Release Protocol (CRÍTICO)
+
+Sempre que o usuário mencionar "publicar", "release", "loja", "play store", "produção" ou "nova versão":
+
+1. **Verificar `app/build.gradle.kts`**:
+   - `versionCode`: Incrementar (+1) obrigatório
+   - `versionName`: Semantic Versioning (Major.Minor.Patch)
+
+2. **Ação Obrigatória**:
+   - Atualizar `versionCode` e `versionName` antes de qualquer build de release.
+   - Perguntar: "Confirmar versão X (build Y)?" se houver dúvida.
+
+3. **NUNCA gerar APK/AAB de release com versão repetida.**
+
+## 🚀 Build & Deploy
+
+```bash
+# Build debug
+./gradlew assembleDebug
+
+# Build release
+./gradlew assembleRelease
+
+# Instalar no device
+./gradlew installDebug
+
+# Testes
+./gradlew test
+
+# Clean
+./gradlew clean
+```
+
+## 📝 Commits
+
+```yaml
+formato: "tipo(escopo): mensagem em português"
+
+tipos:
+  - feat: "Nova feature"
+  - fix: "Correção de bug"
+  - refactor: "Refatoração"
+  - style: "Formatação, lint"
+  - docs: "Documentação"
+  - test: "Testes"
+  - chore: "Manutenção"
+
+exemplos:
+  - "feat(games): adicionar filtro de jogos abertos"
+  - "fix(auth): corrigir validação de email"
+  - "refactor(statistics): simplificar cálculo de média"
+```
+
+## 🔒 Segurança
+
+```yaml
+nunca_commitar:
+  - google-services.json (usar .gitignore)
+  - serviceAccountKey.json
+  - .env
+  - *.keystore
+  - *.jks
+  - Senhas ou tokens
+
+sempre_validar:
+  - Input do usuário
+  - Dados de APIs externas
+  - Permissões de roles
+  - Transições de estado
+```
+
+## 📈 Performance
+
+```yaml
+otimizações:
+  - "Usar LazyColumn/LazyRow no Compose"
+  - "Usar RecyclerView com DiffUtil"
+  - "Paginar listas grandes"
+  - "Cache com Room para offline"
+  - "Índices compostos no Firestore"
+  - "Limitar queries Firestore"
+
+evitar:
+  - "Operações pesadas na UI thread"
+  - "Queries N+1"
+  - "Carregar todas as imagens de uma vez"
+  - "Nested RecyclerViews"
+```
+
+## 🤖 Especificações dos Modelos AI
+
+Este projeto suporta múltiplos modelos AI. Escolha o modelo correto para cada tarefa.
+
+### Claude (Anthropic)
+
+```yaml
+opus-4.5:
+  arquivo: "OPUS.md"
+  contexto: "200K tokens"
+  velocidade: "Lenta"
+  custo: "Muito alto ($$$$$)"
+  uso: "Decisões arquiteturais críticas, security audits, design de sistemas"
+  quando_usar:
+    - "Decisão afeta arquitetura do app"
+    - "Trade-offs complexos (múltiplas soluções válidas)"
+    - "Security audit crítico"
+    - "Refatoração arquitetural (>500 linhas)"
+    - "ADRs (Architecture Decision Records)"
+  quando_NÃO_usar:
+    - "Implementação de código"
+    - "Correções triviais"
+    - "Tasks bem definidas"
+
+sonnet-4.5:
+  arquivo: "CLAUDE.md"
+  contexto: "200K tokens"
+  velocidade: "Rápida"
+  custo: "Médio ($$) - 20% do Opus"
+  uso: "Desenvolvimento diário, implementação de features, debugging"
+  quando_usar:
+    - "Implementar ViewModels, Repositories, Fragments"
+    - "Debugging de bugs conhecidos"
+    - "Code reviews (<500 linhas)"
+    - "Refatorações locais (<300 linhas)"
+    - "Testes unitários"
+  quando_NÃO_usar:
+    - "Decisões arquiteturais (use Opus)"
+    - "Tarefas triviais (use Gemini Flash)"
+    - "Análise visual (use Gemini Pro)"
+```
+
+### Gemini (Google)
+
+```yaml
+gemini-3-pro-high:
+  arquivo: "GEMINI.md"
+  contexto: "10M tokens"
+  velocidade: "Lenta"
+  custo: "Alto ($$$$)"
+  uso: "Análise profunda, multimodal, code execution"
+  quando_usar:
+    - "Refatoração arquitetural complexa"
+    - "Análise de segurança detalhada"
+    - "Design de features novas e complexas"
+    - "Code review profundo (>500 linhas)"
+    - "Deep research mode"
+  capacidades_únicas:
+    - "Multimodal (screenshots, diagramas)"
+    - "Code execution (Python)"
+    - "Contexto 10M tokens"
+
+gemini-3-pro:
+  arquivo: "GEMINI.md"
+  contexto: "2M tokens"
+  velocidade: "Média"
+  custo: "Médio ($$$)"
+  uso: "Desenvolvimento geral, análise visual"
+  quando_usar:
+    - "Implementação de features"
+    - "Debugging com screenshots"
+    - "Análise visual de UI"
+    - "Validação de diagramas"
+    - "Análise de dados via Python"
+  capacidades_únicas:
+    - "Multimodal (screenshots, diagramas)"
+    - "Code execution (Python)"
+
+gemini-3-flash:
+  arquivo: "GEMINI.md"
+  contexto: "1M tokens"
+  velocidade: "Muito rápida"
+  custo: "Baixo ($)"
+  uso: "Tarefas rápidas e simples"
+  quando_usar:
+    - "Correções simples (<10 linhas)"
+    - "Consultas rápidas de código"
+    - "Renomeação de variáveis"
+    - "Ajustes de UI (cores, padding)"
+  quando_NÃO_usar:
+    - "Decisões arquiteturais"
+    - "Código complexo"
+    - "Refatorações"
+```
+
+### Guia de Seleção Rápida
+
+```yaml
+decisão_arquitetural: "Opus 4.5"
+design_sistema_complexo: "Opus 4.5 ou Gemini 3 Pro High"
+security_audit: "Opus 4.5"
+implementar_feature: "Sonnet 4.5"
+debugging: "Sonnet 4.5"
+code_review_pequeno: "Sonnet 4.5"
+code_review_grande: "Opus 4.5"
+análise_visual: "Gemini 3 Pro"
+correção_simples: "Gemini 3 Flash"
+consulta_rápida: "Gemini 3 Flash"
+```
+
+### Workflow Recomendado
+
+```
+1. Decisão Arquitetural (Opus 4.5)
+   ↓
+2. Implementação (Sonnet 4.5)
+   ↓
+3. Validação Visual (Gemini 3 Pro)
+   ↓
+4. Correções (Gemini 3 Flash ou Sonnet)
+```
+
+**Ver detalhes**: `.agent/MODEL_SELECTION.md`
+
+---
+
+## 🎓 Boas Práticas Finais
+
+1. **Leia código existente antes de criar novo**
+2. **Siga os padrões do projeto religiosamente**
+3. **Use os arquivos de referência** (.agent/QUICK_REFERENCE.md)
+4. **Escolha o modelo correto** (.agent/MODEL_SELECTION.md)
+5. **Pergunte antes de fazer mudanças arquiteturais**
+6. **Teste localmente antes de commitar**
+7. **Documente decisões importantes**
+8. **Mantenha simplicidade** (KISS principle)
+9. **Não reinvente a roda** (use bibliotecas consolidadas)
+10. **Escale para Opus quando necessário** (decisões críticas)
+
+---
+
+**Última atualização**: 27/12/2024
+**Versão**: 2.0 (Multi-Model Support)
