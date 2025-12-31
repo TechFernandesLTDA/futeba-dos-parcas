@@ -4,6 +4,10 @@ import com.futebadosparcas.data.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -14,6 +18,20 @@ class AuthRepository @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
     private val usersCollection = firestore.collection("users")
+
+    val authStateFlow: Flow<FirebaseUser?> = callbackFlow {
+        val listener = FirebaseAuth.AuthStateListener { auth ->
+            val user = auth.currentUser
+            trySend(user)
+            if (user != null) {
+                FirebaseCrashlytics.getInstance().setUserId(user.uid)
+            } else {
+                FirebaseCrashlytics.getInstance().setUserId("")
+            }
+        }
+        auth.addAuthStateListener(listener)
+        awaitClose { auth.removeAuthStateListener(listener) }
+    }
 
     fun isLoggedIn(): Boolean = auth.currentUser != null
 
@@ -61,5 +79,6 @@ class AuthRepository @Inject constructor(
 
     fun logout() {
         auth.signOut()
+        FirebaseCrashlytics.getInstance().setUserId("")
     }
 }

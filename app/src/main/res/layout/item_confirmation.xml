@@ -57,9 +57,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="+10 XP"
-                android:textSize="12sp"
+                android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
                 android:textStyle="bold"
-                android:textColor="@color/theme_yellow_primary"
+                android:textColor="?attr/colorPrimary"
                 android:layout_marginEnd="8dp"/>
 
             <ImageView
@@ -136,7 +136,7 @@
             android:textSize="12sp"
             android:minWidth="0dp"
             android:paddingHorizontal="12dp"
-            app:cornerRadius="8dp" />
+            app:cornerRadius="24dp" />
     </LinearLayout>
         
     <ImageButton
@@ -150,6 +150,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:tint="@color/error" />
+        app:tint="?attr/colorError" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

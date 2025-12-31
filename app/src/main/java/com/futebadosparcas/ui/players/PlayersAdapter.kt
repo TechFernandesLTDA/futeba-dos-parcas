@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import com.futebadosparcas.util.loadProfileImage
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -12,7 +13,6 @@ import com.futebadosparcas.R
 import com.futebadosparcas.data.model.FieldType
 import com.futebadosparcas.data.model.User
 import com.google.android.material.button.MaterialButton
-import coil.load
 
 class PlayersAdapter(
     private val onInviteClick: (User) -> Unit,
@@ -119,15 +119,7 @@ class PlayersAdapter(
             }
 
             // Avatar
-            if (user.photoUrl != null) {
-                ivAvatar.load(user.photoUrl) {
-                    crossfade(true)
-                    placeholder(R.drawable.ic_person)
-                    error(R.drawable.ic_person)
-                }
-            } else {
-                ivAvatar.setImageResource(R.drawable.ic_person)
-            }
+            ivAvatar.loadProfileImage(user.photoUrl)
 
             btnInvite.setOnClickListener { onInviteClick(user) }
             btnInvite.isEnabled = !isSelectionMode // Disable actions during selection

@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.futebadosparcas.R
 import com.futebadosparcas.databinding.FragmentGameDetailBinding
+import com.futebadosparcas.util.HapticManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -25,6 +26,9 @@ class GameDetailFragment : Fragment() {
 
     private var _binding: FragmentGameDetailBinding? = null
     private val binding get() = _binding!!
+
+    @javax.inject.Inject
+    lateinit var hapticManager: HapticManager
 
     private val viewModel: GameDetailViewModel by viewModels()
     private val args: GameDetailFragmentArgs by navArgs()
@@ -237,9 +241,11 @@ class GameDetailFragment : Fragment() {
             if (uiState is GameDetailUiState.Success) {
                 when {
                     uiState.isUserConfirmed -> {
+                        hapticManager.tick()
                         viewModel.toggleConfirmation(args.gameId)
                     }
                     uiState.isUserPending || !uiState.isUserConfirmed -> {
+                        hapticManager.tick()
                         showPositionSelectionDialog(uiState)
                     }
                 }

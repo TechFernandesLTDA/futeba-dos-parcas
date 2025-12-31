@@ -19,7 +19,7 @@ import com.futebadosparcas.databinding.FragmentCreateGameBinding
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import org.threeten.bp.format.DateTimeFormatter
+import java.time.format.DateTimeFormatter
 import android.text.Editable
 import android.text.TextWatcher
 import java.util.Calendar
@@ -31,6 +31,9 @@ class CreateGameFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: CreateGameViewModel by viewModels()
+    
+    @javax.inject.Inject
+    lateinit var hapticManager: com.futebadosparcas.util.HapticManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -83,6 +86,7 @@ class CreateGameFragment : Fragment() {
 
     private fun setupClickListeners() {
         binding.btnCancel.setOnClickListener {
+            hapticManager.tick()
             findNavController().popBackStack()
         }
 
@@ -122,6 +126,7 @@ class CreateGameFragment : Fragment() {
                 "Não se repete" to "none"
             )
 
+            hapticManager.success()
             viewModel.saveGame(
                 gameId = args.gameId,
                 ownerName = binding.etOwnerName.text.toString(),

@@ -13,12 +13,12 @@ object FutebaColors {
     // ==========================================
     // PRIMARY - Duolingo Signature Green
     // ==========================================
-    val Primary = Color.parseColor("#58CC02")
+    val Primary = Color.parseColor("#58CC02") // Vibrante (Duolingo)
     val PrimaryDark = Color.parseColor("#43C000")
     val PrimaryLight = Color.parseColor("#89E219")
-    val PrimaryContainer = Color.parseColor("#89E219")
+    val PrimaryContainer = Color.parseColor("#D6F5C6") // Mais suave para M3
     val OnPrimary = Color.parseColor("#FFFFFF")
-    val OnPrimaryContainer = Color.parseColor("#1A4700")
+    val OnPrimaryContainer = Color.parseColor("#113800")
 
     // Primary for OLED Dark Theme (more vibrant)
     val PrimaryDarkTheme = Color.parseColor("#7CFC00")
@@ -29,7 +29,7 @@ object FutebaColors {
     // ==========================================
     // SECONDARY - Duolingo Blue
     // ==========================================
-    val Secondary = Color.parseColor("#1CB0F6")
+    val Secondary = Color.parseColor("#1CB0F6") // Azul Duolingo
     val SecondaryDark = Color.parseColor("#0996CC")
     val SecondaryLight = Color.parseColor("#D6F1FF")
     val SecondaryContainer = Color.parseColor("#D6F1FF")
@@ -107,7 +107,7 @@ object FutebaColors {
     val TextSecondaryDark = Color.parseColor("#CCCCCC")
 
     // ==========================================
-    // GAMIFICATION - Duolingo Style
+    // GAMIFICATION - Expressive Variants
     // ==========================================
     val Gold = Color.parseColor("#FFC800")
     val Silver = Color.parseColor("#C0C0C0")
@@ -116,6 +116,11 @@ object FutebaColors {
     // Purple for streaks/premium features
     val Purple = Color.parseColor("#A560E8")
     val PurpleLight = Color.parseColor("#CE93D8")
+    
+    // Expressive XP Gradient colors
+    val XpStart = Color.parseColor("#58CC02")
+    val XpEnd = Color.parseColor("#89E219")
+    val LevelUpGold = Color.parseColor("#FFD700")
 
     // ==========================================
     // LEGACY - Compatibility

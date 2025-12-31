@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.data.datasource.MatchManagementDataSource
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.data.model.Team
@@ -35,7 +36,9 @@ class GameRepositoryImpl @Inject constructor(
     private val badgeAwarder: com.futebadosparcas.domain.gamification.BadgeAwarder,
     private val liveGameRepository: com.futebadosparcas.data.repository.LiveGameRepository,
     private val matchFinalizationService: com.futebadosparcas.domain.ranking.MatchFinalizationService,
-    private val postGameEventEmitter: com.futebadosparcas.domain.ranking.PostGameEventEmitter
+    private val postGameEventEmitter: com.futebadosparcas.domain.ranking.PostGameEventEmitter,
+    private val matchManagementDataSource: MatchManagementDataSource,
+    private val teamBalancer: com.futebadosparcas.domain.ai.TeamBalancer
 ) : GameRepository {
     private val gamesCollection = firestore.collection("games")
     private val confirmationsCollection = firestore.collection("confirmations")
@@ -261,6 +264,9 @@ class GameRepositoryImpl @Inject constructor(
                 AppLogger.e(TAG, "Erro ao salvar cache local do jogo", e)
             }
 
+            // Crashlytics Context
+            com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().setCustomKey("active_game_id", gameId)
+
             Result.success(game)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar detalhes do jogo remoto, tentando local", e)
@@ -368,90 +374,15 @@ class GameRepositoryImpl @Inject constructor(
                 ?: return Result.failure(Exception("Usuario nao autenticado"))
             val user = auth.currentUser!!
 
-            val gameRef = gamesCollection.document(gameId)
-            // ID determinístico permite leitura direta na transação
-                // ID determinístico permite leitura direta na transação
-            val confirmationId = "${gameId}_${uid}"
-            val confirmationRef = confirmationsCollection.document(confirmationId)
-
-            val confirmation = firestore.runTransaction { transaction ->
-                val gameSnapshot = transaction.get(gameRef)
-                val existingConfirmationSnapshot = transaction.get(confirmationRef)
-
-                if (!gameSnapshot.exists()) {
-                    throw Exception("Jogo nao encontrado")
-                }
-
-                val currentGk = gameSnapshot.getLong("goalkeepers_count")?.toInt() ?: 0
-                val currentPlayers = gameSnapshot.getLong("players_count")?.toInt() ?: 0
-                val maxGk = gameSnapshot.getLong("max_goalkeepers")?.toInt() ?: 3
-                val maxPlayers = gameSnapshot.getLong("max_players")?.toInt() ?: 24
-
-                val isUpdate = existingConfirmationSnapshot.exists()
-                val previousPosition = existingConfirmationSnapshot.getString("position")
-                val previousStatus = existingConfirmationSnapshot.getString("status")
-
-                var finalStatus = "CONFIRMED"
-                var finalPosition = position
-
-                // Lógica de Vagas e Lista de Espera
-                if (!isUpdate || previousStatus != "CONFIRMED") {
-                    // Novo registro ou user voltando/saindo da waitlist
-                    if (currentPlayers >= maxPlayers) {
-                        finalStatus = "WAITLIST"
-                    } else if (position == "GOALKEEPER" && currentGk >= maxGk) {
-                        // Se goleiro cheio, mas tem vaga na linha -> pode virar linha ou waitlist?
-                        // Por enquanto: joga pra waitlist
-                        finalStatus = "WAITLIST"
-                    }
-                } else {
-                    // Já está confirmado, apenas atualizando dados
-                    if (position == "GOALKEEPER" && previousPosition != "GOALKEEPER" && currentGk >= maxGk) {
-                         throw Exception("Vagas de goleiro esgotadas.")
-                    }
-                }
-
-                // Calcular novos contadores (Apenas se CONFIRMED)
-                var newGkCount = currentGk
-                var newPlayerCount = currentPlayers
-
-                if (finalStatus == "CONFIRMED") {
-                    if (!isUpdate || previousStatus != "CONFIRMED") {
-                        // Entrou agora na lista principal
-                        newPlayerCount++
-                        if (finalPosition == "GOALKEEPER") newGkCount++
-                    } else {
-                        // Já estava confirmado, mudou posição?
-                        if (previousPosition == "GOALKEEPER" && finalPosition != "GOALKEEPER") newGkCount--
-                        else if (previousPosition != "GOALKEEPER" && finalPosition == "GOALKEEPER") newGkCount++
-                    }
-                }
-
-                // Atualizar jogo
-                if (newPlayerCount != currentPlayers || newGkCount != currentGk) {
-                    transaction.update(gameRef, mapOf(
-                        "players_count" to newPlayerCount,
-                        "goalkeepers_count" to newGkCount
-                    ))
-                }
-
-                // Criar/atualizar confirmação
-                val confirmationData = GameConfirmation(
-                    id = confirmationId,
-                    gameId = gameId,
-                    userId = uid,
-                    userName = user.displayName ?: "Jogador",
-                    userPhoto = user.photoUrl?.toString(),
-                    position = finalPosition,
-                    status = finalStatus,
-                    isCasualPlayer = isCasual
-                )
-                transaction.set(confirmationRef, confirmationData)
-                confirmationData
-            }.await()
-
+            val confirmation = matchManagementDataSource.confirmPlayer(
+                gameId = gameId,
+                userId = uid,
+                userName = user.displayName ?: "Jogador",
+                userPhoto = user.photoUrl?.toString(),
+                position = position,
+                isCasual = isCasual
+            )
             Result.success(confirmation)
-
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao confirmar presenca", e)
             Result.failure(e)
@@ -476,40 +407,11 @@ class GameRepositoryImpl @Inject constructor(
     override suspend fun cancelConfirmation(gameId: String): Result<Unit> {
         return try {
             val uid = auth.currentUser?.uid ?: return Result.failure(Exception("Not authenticated"))
-            val confirmationId = "${gameId}_${uid}"
-            val confirmationRef = confirmationsCollection.document(confirmationId)
-            val gameRef = gamesCollection.document(gameId)
-
-            val wasConfirmed = firestore.runTransaction { transaction ->
-                val confirmationSnapshot = transaction.get(confirmationRef)
-                
-                if (confirmationSnapshot.exists()) {
-                    val status = confirmationSnapshot.getString("status")
-                    val isConfirmed = status == "CONFIRMED"
-                    
-                    if (isConfirmed) {
-                         val gameSnapshot = transaction.get(gameRef)
-                         val position = confirmationSnapshot.getString("position")
-                         val currentGk = gameSnapshot.getLong("goalkeepers_count")?.toInt() ?: 0
-                         val currentPlayers = gameSnapshot.getLong("players_count")?.toInt() ?: 0
-                         
-                         val newGkCount = if (position == "GOALKEEPER") maxOf(0, currentGk - 1) else currentGk
-                         val newPlayerCount = maxOf(0, currentPlayers - 1)
-                         
-                         transaction.update(gameRef, mapOf(
-                            "players_count" to newPlayerCount,
-                            "goalkeepers_count" to newGkCount
-                         ))
-                    }
-                    transaction.delete(confirmationRef)
-                    isConfirmed
-                } else {
-                    false
-                }
-            }.await()
             
-            if (wasConfirmed) {
-                promoteWaitlistedPlayer(gameId)
+            val wasRemoved = matchManagementDataSource.removePlayer(gameId, uid)
+            
+            if (wasRemoved) {
+                matchManagementDataSource.promoteWaitlistedPlayer(gameId)
             }
 
             Result.success(Unit)
@@ -521,86 +423,16 @@ class GameRepositoryImpl @Inject constructor(
 
     override suspend fun removePlayerFromGame(gameId: String, userId: String): Result<Unit> {
         return try {
-            val gameRef = gamesCollection.document(gameId)
-            val confirmationId = "${gameId}_${userId}"
-            val confirmationRef = confirmationsCollection.document(confirmationId)
+            val wasRemoved = matchManagementDataSource.removePlayer(gameId, userId)
 
-            val wasConfirmed = firestore.runTransaction { transaction ->
-                val confirmationSnapshot = transaction.get(confirmationRef)
-
-                if (confirmationSnapshot.exists()) {
-                    val status = confirmationSnapshot.getString("status")
-                    val isConfirmed = status == "CONFIRMED"
-                    
-                    if (isConfirmed) {
-                         val gameSnapshot = transaction.get(gameRef)
-                         val position = confirmationSnapshot.getString("position")
-                         val currentGk = gameSnapshot.getLong("goalkeepers_count")?.toInt() ?: 0
-                         val currentPlayers = gameSnapshot.getLong("players_count")?.toInt() ?: 0
-                         
-                         val newGkCount = if (position == "GOALKEEPER") maxOf(0, currentGk - 1) else currentGk
-                         val newPlayerCount = maxOf(0, currentPlayers - 1)
-                         
-                         transaction.update(gameRef, mapOf(
-                            "players_count" to newPlayerCount,
-                            "goalkeepers_count" to newGkCount
-                         ))
-                    }
-                    transaction.delete(confirmationRef)
-                    isConfirmed
-                } else {
-                     false
-                }
-            }.await()
-
-            if (wasConfirmed) {
-                promoteWaitlistedPlayer(gameId)
+            if (wasRemoved) {
+                matchManagementDataSource.promoteWaitlistedPlayer(gameId)
             }
 
             Result.success(Unit)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao remover jogador", e)
             Result.failure(e)
-        }
-    }
-    
-    private suspend fun promoteWaitlistedPlayer(gameId: String) {
-        try {
-            val snapshot = confirmationsCollection
-                .whereEqualTo("game_id", gameId)
-                .whereEqualTo("status", "WAITLIST")
-                .orderBy("confirmed_at", com.google.firebase.firestore.Query.Direction.ASCENDING)
-                .limit(1)
-                .get()
-                .await()
-                
-            if (!snapshot.isEmpty) {
-                val candidateDoc = snapshot.documents.first()
-                val candidateRef = candidateDoc.reference
-                
-                firestore.runTransaction { transaction ->
-                    val gameRef = gamesCollection.document(gameId)
-                    val gameSnapshot = transaction.get(gameRef)
-                    val candidateSnapshot = transaction.get(candidateRef)
-                    
-                    if (candidateSnapshot.exists() && candidateSnapshot.getString("status") == "WAITLIST") {
-                         val currentPlayers = gameSnapshot.getLong("players_count")?.toInt() ?: 0
-                         val maxPlayers = gameSnapshot.getLong("max_players")?.toInt() ?: 24
-                         
-                         if (currentPlayers < maxPlayers) {
-                             transaction.update(candidateRef, "status", "CONFIRMED")
-                             transaction.update(gameRef, "players_count", currentPlayers + 1)
-                             
-                             if (candidateSnapshot.getString("position") == "GOALKEEPER") {
-                                 val currentGk = gameSnapshot.getLong("goalkeepers_count")?.toInt() ?: 0
-                                 transaction.update(gameRef, "goalkeepers_count", currentGk + 1)
-                             }
-                         }
-                    }
-                }.await()
-            }
-        } catch (e: Exception) {
-            AppLogger.e(TAG, "Erro ao promover jogador da waitlist", e)
         }
     }
 
@@ -654,6 +486,7 @@ class GameRepositoryImpl @Inject constructor(
                 }
 
                 // 2. DEPOIS processar XP, estatisticas, rankings (streak ja foi atualizado)
+                /* MIGRATED TO CLOUD FUNCTIONS
                 try {
                     val finalizationResult = matchFinalizationService.processGame(gameId)
                     if (finalizationResult.success) {
@@ -685,6 +518,8 @@ class GameRepositoryImpl @Inject constructor(
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Erro ao processar XP/estatisticas do jogo $gameId", e)
                 }
+                */
+                AppLogger.i(TAG, "Jogo finalizado. XP será processado via Cloud Functions.")
             }
 
             Result.success(Unit)
@@ -764,47 +599,33 @@ class GameRepositoryImpl @Inject constructor(
             }
 
             if (balanceTeams) {
-                // Fetch user data for ratings
-                val userIds = fieldPlayers.map { it.userId }
-                val usersMap = mutableMapOf<String, com.futebadosparcas.data.model.User>()
+                // Use AI/Smart Balancer
+                val balancedTeamsResult = teamBalancer.balanceTeams(gameId, allPlayers, numberOfTeams)
                 
-                // Firestore whereIn has limit of 10. Process in chunks.
-                if (userIds.isNotEmpty()) {
-                    userIds.chunked(10).forEach { chunk ->
-                        val snapshot = firestore.collection("users")
-                            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), chunk)
-                            .get()
-                            .await()
-                        snapshot.toObjects(com.futebadosparcas.data.model.User::class.java).forEach { user ->
-                            usersMap[user.id] = user
-                        }
+                if (balancedTeamsResult.isSuccess) {
+                   val balancedTeams = balancedTeamsResult.getOrNull()!!
+                   // Map playerIds from balancedTeams to teamPlayerLists for persistence
+                   // Or simply use the balanced Teams directly, but we need to respect the colors and naming logic below if not provided
+                   
+                   // Just override the lists if the balancer returns ordered teams
+                   balancedTeams.forEachIndexed { index, team ->
+                       if (index < numberOfTeams) {
+                           teamPlayerLists[index].clear()
+                           teamPlayerLists[index].addAll(team.playerIds)
+                       }
+                   }
+                } else {
+                   // Fallback if balancer fails
+                    AppLogger.w(TAG) { "Falha no balanceamento: ${balancedTeamsResult.exceptionOrNull()?.message}. Usando aleatório." }
+                    val fieldPlayers = allPlayers.filter { it.position == "FIELD" }.toMutableList()
+                    fieldPlayers.shuffle()
+                    fieldPlayers.forEachIndexed { index, player ->
+                        val teamIndex = index % numberOfTeams
+                        teamPlayerLists[teamIndex].add(player.userId)
                     }
                 }
-                
-                // Sort field players by rating (Overall or specific logic)
-                fieldPlayers.sortByDescending { confirmation ->
-                    val user = usersMap[confirmation.userId]
-                    // Simple average for now, or weighted
-                    user?.let { (it.strikerRating + it.midRating + it.defenderRating) / 3.0 } ?: 0.0
-                }
-                
-                // Distribute using Snake Draft or Greedy to lowest total
-                val teamRatings = MutableList(numberOfTeams) { 0.0 }
-                
-                fieldPlayers.forEach { player ->
-                    // Find team with lowest current rating sum
-                    val minRatingIndex = teamRatings.indices.minByOrNull { teamRatings[it] } ?: 0
-                    
-                    teamPlayerLists[minRatingIndex].add(player.userId)
-                    
-                    val user = usersMap[player.userId]
-                    val rating = user?.let { (it.strikerRating + it.midRating + it.defenderRating) / 3.0 } ?: 0.0
-                    teamRatings[minRatingIndex] += rating
-                }
-                
             } else {
                 fieldPlayers.shuffle()
-                val playersPerTeam = (fieldPlayers.size + numberOfTeams - 1) / numberOfTeams // Ceiling division equivalent-ish
                 
                 // Simple distribution
                 fieldPlayers.forEachIndexed { index, player ->

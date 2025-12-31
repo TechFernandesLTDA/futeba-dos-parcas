@@ -108,6 +108,8 @@ fun FutebaTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = FutebaTypography,
+        shapes = FutebaShapes,
         content = content
     )
 }

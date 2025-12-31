@@ -12,6 +12,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import com.futebadosparcas.R
 import com.futebadosparcas.databinding.FragmentHomeBinding
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import com.futebadosparcas.ui.home.components.ExpressiveHubHeader
+import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.util.setDebouncedRefreshListener
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -21,6 +25,9 @@ class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
+
+    @javax.inject.Inject
+    lateinit var hapticManager: HapticManager
 
     private val viewModel: HomeViewModel by viewModels()
     private lateinit var gamesAdapter: UpcomingGamesAdapter
@@ -108,32 +115,23 @@ class HomeFragment : Fragment() {
                         binding.layoutEmpty.root.visibility = if (state.games.isEmpty()) View.VISIBLE else View.GONE
                         binding.rvUpcomingGames.visibility = if (state.games.isEmpty()) View.GONE else View.VISIBLE
                         
-                        // Bind User Info
-                        binding.tvUserName.text = state.user.getDisplayName()
-                        if (state.user.photoUrl != null) {
-                            binding.ivUserPhoto.load(state.user.photoUrl) {
-                                crossfade(true)
-                                placeholder(R.drawable.ic_player_placeholder)
-                                error(R.drawable.ic_player_placeholder)
+                        // Bind Expressive Compose Header
+                        binding.composeHeader.apply {
+                            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+                            setContent {
+                                FutebaTheme {
+                                    ExpressiveHubHeader(
+                                        user = state.user,
+                                        summary = state.gamificationSummary,
+                                        hapticManager = hapticManager,
+                                        onProfileClick = {
+                                            val playerCard = com.futebadosparcas.ui.player.PlayerCardDialog.newInstance(state.user.id)
+                                            playerCard.show(childFragmentManager, "PlayerCard")
+                                        }
+                                    )
+                                }
                             }
                         }
-
-                        // Bind Gamification Info
-                        val summary = state.gamificationSummary
-                        binding.tvUserLevel.text = getString(R.string.level_prefix, summary.level)
-                        binding.tvLevelName.text = summary.levelName
-                        binding.tvXpPercent.text = "${summary.progressPercent}%"
-                        binding.xpProgressBar.progress = summary.progressPercent
-                        
-                        binding.tvXpIncentive.text = if (summary.isMaxLevel) {
-                            getString(R.string.xp_incentive_max)
-                        } else {
-                            getString(R.string.xp_incentive_next, summary.nextLevelXp, summary.nextLevelName)
-                        }
-                        
-                        // Bind League Info
-                        binding.tvLeagueDivision.text = summary.division.displayName
-                        binding.leagueBadge.setCardBackgroundColor(android.graphics.Color.parseColor(summary.division.colorHex))
 
                         gamesAdapter.submitList(state.games)
                     }

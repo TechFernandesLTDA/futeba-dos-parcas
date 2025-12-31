@@ -124,4 +124,12 @@ object AppModule {
     ): ScheduleRepository {
         return ScheduleRepositoryImpl(firestore)
     }
+
+    @Provides
+    @Singleton
+    fun provideTeamBalancer(
+        userRepository: UserRepository
+    ): com.futebadosparcas.domain.ai.TeamBalancer {
+        return com.futebadosparcas.data.ai.GeminiTeamBalancer(userRepository)
+    }
 }
