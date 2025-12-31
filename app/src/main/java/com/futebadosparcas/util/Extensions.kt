@@ -19,6 +19,15 @@ fun ImageView.loadUrl(url: String?, placeholder: Int? = null) {
     }
 }
 
+fun ImageView.loadProfileImage(url: String?) {
+    this.load(url) {
+        crossfade(true)
+        placeholder(com.futebadosparcas.R.drawable.ic_player_placeholder)
+        error(com.futebadosparcas.R.drawable.ic_player_placeholder)
+        transformations(coil.transform.CircleCropTransformation())
+    }
+}
+
 /**
  * Extensão para debounce de cliques em Views.
  * Previne cliques múltiplos acidentais.

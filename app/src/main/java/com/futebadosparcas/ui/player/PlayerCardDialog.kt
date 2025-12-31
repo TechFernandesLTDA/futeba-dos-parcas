@@ -48,8 +48,8 @@ class PlayerCardDialog : DialogFragment() {
         savedInstanceState: Bundle?
     ): View {
         dialog?.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            requestFeature(Window.FEATURE_NO_TITLE)
+            setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+            requestFeature(android.view.Window.FEATURE_NO_TITLE)
         }
         
         _binding = DialogPlayerCardBinding.inflate(inflater, container, false)
@@ -113,16 +113,7 @@ class PlayerCardDialog : DialogFragment() {
         val stats = state.statistics
 
         // Foto
-        if (!user.photoUrl.isNullOrEmpty()) {
-            binding.ivPlayerPhoto.load(user.photoUrl) {
-                crossfade(true)
-                placeholder(R.drawable.ic_player_placeholder)
-                error(R.drawable.ic_player_placeholder)
-                transformations(CircleCropTransformation())
-            }
-        } else {
-            binding.ivPlayerPhoto.setImageResource(R.drawable.ic_player_placeholder)
-        }
+        binding.ivPlayerPhoto.loadProfileImage(user.photoUrl)
 
         // Nome
         binding.tvPlayerName.text = user.getDisplayName()

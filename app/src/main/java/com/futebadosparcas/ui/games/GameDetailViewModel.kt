@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import org.threeten.bp.*
-import org.threeten.bp.temporal.ChronoUnit
-import org.threeten.bp.temporal.TemporalAdjusters
+import java.time.*
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalAdjusters
 import com.futebadosparcas.data.repository.ScheduleRepository
 import javax.inject.Inject
 
@@ -197,10 +197,10 @@ class GameDetailViewModel @Inject constructor(
             // 1. Validação de Horário (10 minutos antes)
             try {
                 if (game.date.isNotEmpty() && game.time.isNotEmpty()) {
-                    val date = org.threeten.bp.LocalDate.parse(game.date)
-                    val time = org.threeten.bp.LocalTime.parse(game.time)
-                    val gameDateTime = org.threeten.bp.LocalDateTime.of(date, time)
-                    val now = org.threeten.bp.LocalDateTime.now()
+                    val date = java.time.LocalDate.parse(game.date)
+                    val time = java.time.LocalTime.parse(game.time)
+                    val gameDateTime = java.time.LocalDateTime.of(date, time)
+                    val now = java.time.LocalDateTime.now()
 
                     if (now.isBefore(gameDateTime.minusMinutes(10))) {
                         _uiState.value = state.copy(userMessage = "O jogo só pode ser iniciado 10 minutos antes do horário marcado.")
@@ -322,8 +322,8 @@ class GameDetailViewModel @Inject constructor(
                             else -> RecurrenceType.weekly
                         },
                         dayOfWeek = try {
-                            val dateFormatter = org.threeten.bp.format.DateTimeFormatter.ISO_LOCAL_DATE
-                            val date = org.threeten.bp.LocalDate.parse(sourceGame.date, dateFormatter)
+                            val dateFormatter = java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
+                            val date = java.time.LocalDate.parse(sourceGame.date, dateFormatter)
                             val isoDay = date.dayOfWeek.value
                             if (isoDay == 7) 0 else isoDay
                         } catch (e: Exception) { 0 }
@@ -339,9 +339,9 @@ class GameDetailViewModel @Inject constructor(
                 }
 
                 // 1. Parse current date
-                val dateFormatter = org.threeten.bp.format.DateTimeFormatter.ISO_LOCAL_DATE
+                val dateFormatter = java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
                 val currentDate = try {
-                    org.threeten.bp.LocalDate.parse(sourceGame.date, dateFormatter)
+                    java.time.LocalDate.parse(sourceGame.date, dateFormatter)
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Data do jogo inválida: ${sourceGame.date}")
                     return@launch
@@ -376,11 +376,11 @@ class GameDetailViewModel @Inject constructor(
 
                 // 3. Calculate dateTime (java.util.Date) for proper Firestore sorting
                 val nextDateTime: java.util.Date? = try {
-                    val timeFormatter = org.threeten.bp.format.DateTimeFormatter.ofPattern("HH:mm")
-                    val localTime = org.threeten.bp.LocalTime.parse(sourceGame.time, timeFormatter)
+                    val timeFormatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+                    val localTime = java.time.LocalTime.parse(sourceGame.time, timeFormatter)
                     val localDateTime = nextDate.atTime(localTime)
-                    val instant = localDateTime.atZone(org.threeten.bp.ZoneId.systemDefault()).toInstant()
-                    org.threeten.bp.DateTimeUtils.toDate(instant)
+                    val instant = localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant()
+                    java.util.Date.from(instant)
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Falha ao calcular dateTime para o próximo jogo, usando fallback nulo", e)
                     null
@@ -411,7 +411,7 @@ class GameDetailViewModel @Inject constructor(
                     // endTime is not explicitly in Schedule, we could keep same duration
                     endTime = if (template != null && template.time != sourceGame.time) {
                         try {
-                           val t = org.threeten.bp.LocalTime.parse(template.time)
+                           val t = java.time.LocalTime.parse(template.time)
                            t.plusMinutes(template.duration.toLong()).toString()
                         } catch(e: Exception) { sourceGame.endTime }
                     } else sourceGame.endTime,

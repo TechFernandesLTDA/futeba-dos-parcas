@@ -13,9 +13,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import org.threeten.bp.LocalDate
-import org.threeten.bp.LocalTime
-import org.threeten.bp.format.DateTimeFormatter
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import com.futebadosparcas.data.repository.ScheduleRepository
 import com.futebadosparcas.data.model.Schedule
 import com.futebadosparcas.data.model.RecurrenceType
@@ -303,8 +303,8 @@ class CreateGameViewModel @Inject constructor(
         }
 
         // Validar que data/horário não sejam no passado
-        val selectedDateTime = org.threeten.bp.LocalDateTime.of(_selectedDate.value!!, _selectedTime.value!!)
-        val now = org.threeten.bp.LocalDateTime.now()
+        val selectedDateTime = java.time.LocalDateTime.of(_selectedDate.value!!, _selectedTime.value!!)
+        val now = java.time.LocalDateTime.now()
 
         if (selectedDateTime.isBefore(now)) {
             _uiState.value = CreateGameUiState.Error("A data e horário do início devem ser futuros")

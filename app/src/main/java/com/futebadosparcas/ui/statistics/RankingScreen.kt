@@ -1,8 +1,7 @@
 package com.futebadosparcas.ui.statistics
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -68,12 +68,20 @@ fun RankingScreen(
                     EmptyRankingMessage(modifier = Modifier.align(Alignment.Center))
                 }
                 else -> {
-                    RankingList(
-                        rankings = state.rankings,
-                        myPosition = state.myPosition,
-                        category = state.selectedCategory,
-                        onPlayerClick = onPlayerClick
-                    )
+                    AnimatedContent(
+                        targetState = state.rankings,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(300)) with fadeOut(animationSpec = tween(150))
+                        },
+                        label = "rankingContent"
+                    ) { currentRankings ->
+                        RankingList(
+                            rankings = currentRankings,
+                            myPosition = state.myPosition,
+                            category = state.selectedCategory,
+                            onPlayerClick = onPlayerClick
+                        )
+                    }
                 }
             }
         }
@@ -171,13 +179,30 @@ private fun RankingList(
 
         // Rest of the list
         itemsIndexed(rankings.drop(3)) { index, player ->
-            RankingItem(
-                rank = index + 4,
-                player = player,
-                category = category,
-                isCurrentUser = player.rank == myPosition,
-                onClick = { onPlayerClick(player.userId) }
+            val animatedProgress by animateFloatAsState(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = 400,
+                    delayMillis = index * 30, // Stagger
+                    easing = FastOutSlowInEasing
+                ),
+                label = "itemAnimation"
             )
+
+            Box(
+                modifier = Modifier.graphicsLayer(
+                    alpha = animatedProgress,
+                    translationY = (1f - animatedProgress) * 40f
+                )
+            ) {
+                RankingItem(
+                    rank = index + 4,
+                    player = player,
+                    category = category,
+                    isCurrentUser = player.rank == myPosition,
+                    onClick = { onPlayerClick(player.userId) }
+                )
+            }
         }
     }
 }

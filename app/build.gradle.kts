@@ -49,6 +49,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -65,6 +66,9 @@ android {
 }
 
 dependencies {
+    // Core Library Desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
     // Core Android
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
@@ -116,6 +120,7 @@ dependencies {
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-crashlytics")
     implementation("com.google.firebase:firebase-perf")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
 
     // Credentials para Google Sign-In
     implementation("androidx.credentials:credentials:1.3.0")
@@ -138,7 +143,7 @@ dependencies {
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
     // Date/Time
-    implementation("com.jakewharton.threetenabp:threetenabp:1.4.7")
+    // implementation("com.jakewharton.threetenabp:threetenabp:1.4.7") // Migrated to java.time
 
     // Security - Encrypted SharedPreferences
     implementation("androidx.security:security-crypto:1.1.0-alpha06")

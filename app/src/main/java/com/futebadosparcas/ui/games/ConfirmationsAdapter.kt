@@ -3,11 +3,10 @@ package com.futebadosparcas.ui.games
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.futebadosparcas.util.loadProfileImage
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
-import coil.transform.CircleCropTransformation
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.PaymentStatus
@@ -53,11 +52,7 @@ class ConfirmationsAdapter(
                 tvUserName.text = confirmation.getDisplayName().ifEmpty { "Desconhecido" }
                 tvUserType.text = if (confirmation.isCasualPlayer) "Avulso" else "Mensalista"
                 
-                ivUserPhoto.load(confirmation.userPhoto ?: R.drawable.ic_player_placeholder) {
-                    crossfade(true)
-                    transformations(CircleCropTransformation())
-                    error(R.drawable.ic_player_placeholder)
-                }
+                ivUserPhoto.loadProfileImage(confirmation.userPhoto)
 
                 val isMe = currentUserId != null && currentUserId == confirmation.userId
 
