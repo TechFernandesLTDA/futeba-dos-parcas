@@ -11,120 +11,129 @@ import android.graphics.Color
 object FutebaColors {
 
     // ==========================================
-    // PRIMARY - Duolingo Signature Green
+    // PRIMARY - Electric Pro Green
+    // Modern, energetic, yet professional.
     // ==========================================
-    val Primary = Color.parseColor("#58CC02") // Vibrante (Duolingo)
-    val PrimaryDark = Color.parseColor("#43C000")
-    val PrimaryLight = Color.parseColor("#89E219")
-    val PrimaryContainer = Color.parseColor("#D6F5C6") // Mais suave para M3
+    val Primary = Color.parseColor("#00C853") // Vibrant Green (Material A700 equivalent)
+    val PrimaryDark = Color.parseColor("#009624")
+    val PrimaryLight = Color.parseColor("#5EFC82") // Neon pop
+    val PrimaryContainer = Color.parseColor("#E0F2F1") // Very subtle mint tint
     val OnPrimary = Color.parseColor("#FFFFFF")
-    val OnPrimaryContainer = Color.parseColor("#113800")
+    val OnPrimaryContainer = Color.parseColor("#003300")
 
-    // Primary for OLED Dark Theme (more vibrant)
-    val PrimaryDarkTheme = Color.parseColor("#7CFC00")
-    val PrimaryContainerDark = Color.parseColor("#2D5A00")
-    val OnPrimaryDark = Color.parseColor("#003300")
-    val OnPrimaryContainerDark = Color.parseColor("#B8FF6E")
+    // PRIMARY OLED - High Contrast Neon
+    val PrimaryDarkTheme = Color.parseColor("#00E676") // Neon Green
+    val PrimaryContainerDark = Color.parseColor("#003300") // Deep Green
+    val OnPrimaryDark = Color.parseColor("#000000") // Black text on neon
+    val OnPrimaryContainerDark = Color.parseColor("#B9F6CA")
 
     // ==========================================
-    // SECONDARY - Duolingo Blue
+    // SECONDARY - Electric Blue / Accent
     // ==========================================
-    val Secondary = Color.parseColor("#1CB0F6") // Azul Duolingo
-    val SecondaryDark = Color.parseColor("#0996CC")
-    val SecondaryLight = Color.parseColor("#D6F1FF")
-    val SecondaryContainer = Color.parseColor("#D6F1FF")
+    val Secondary = Color.parseColor("#2979FF") // Electric Blue
+    val SecondaryDark = Color.parseColor("#004ECB")
+    val SecondaryLight = Color.parseColor("#75A7FF")
+    val SecondaryContainer = Color.parseColor("#E3F2FD")
     val OnSecondary = Color.parseColor("#FFFFFF")
-    val OnSecondaryContainer = Color.parseColor("#003D5C")
+    val OnSecondaryContainer = Color.parseColor("#0D47A1")
 
-    // Secondary for OLED Dark Theme (electric blue)
-    val SecondaryDarkTheme = Color.parseColor("#4DD0E1")
-    val SecondaryContainerDark = Color.parseColor("#004F58")
-    val OnSecondaryDark = Color.parseColor("#00363D")
-    val OnSecondaryContainerDark = Color.parseColor("#97F0FF")
+    // SECONDARY OLED - Cyan/Teal
+    val SecondaryDarkTheme = Color.parseColor("#40C4FF") // Sky Blue
+    val SecondaryContainerDark = Color.parseColor("#004B73")
+    val OnSecondaryDark = Color.parseColor("#000000")
+    val OnSecondaryContainerDark = Color.parseColor("#C3E7FF")
 
     // ==========================================
-    // TERTIARY/ACCENT - Duolingo Orange
+    // TERTIARY - Energetic Orange (Action)
     // ==========================================
-    val Tertiary = Color.parseColor("#FF9600")
-    val Accent = Color.parseColor("#FF9600")
-    val TertiaryContainer = Color.parseColor("#FFE0B3")
+    val Tertiary = Color.parseColor("#FF6D00") // Deep Orange
+    val Accent = Color.parseColor("#FF6D00")
+    val TertiaryContainer = Color.parseColor("#FFF3E0")
     val OnTertiary = Color.parseColor("#FFFFFF")
-    val OnTertiaryContainer = Color.parseColor("#4A2800")
+    val OnTertiaryContainer = Color.parseColor("#E65100")
 
-    // Tertiary for OLED Dark Theme (vibrant orange)
-    val TertiaryDarkTheme = Color.parseColor("#FFAB40")
-    val TertiaryContainerDark = Color.parseColor("#5E3A00")
-    val OnTertiaryDark = Color.parseColor("#442800")
-    val OnTertiaryContainerDark = Color.parseColor("#FFDDB3")
+    // TERTIARY OLED - Amber/Gold
+    val TertiaryDarkTheme = Color.parseColor("#FFAB00") // Amber A700
+    val TertiaryContainerDark = Color.parseColor("#5A3600")
+    val OnTertiaryDark = Color.parseColor("#000000")
+    val OnTertiaryContainerDark = Color.parseColor("#FFD180")
+
+    // ==========================================
+    // SEMANTIC COLORS - Field Types
+    // ==========================================
+    val FieldGrass = Color.parseColor("#388E3C")
+    val FieldSynthetic = Color.parseColor("#4CAF50")
+    val FieldFutsal = Color.parseColor("#1976D2")
+    val FieldSand = Color.parseColor("#FBC02D")
 
     // ==========================================
     // STATUS COLORS
     // ==========================================
-    val Success = Color.parseColor("#58CC02")
+    val Success = Color.parseColor("#00C853")
     val SuccessDark = Color.parseColor("#69F0AE")
 
-    val Warning = Color.parseColor("#FFC800")
-    val WarningDark = Color.parseColor("#FFD54F")
+    val Warning = Color.parseColor("#FFD600") // Vibrant Yellow
+    val WarningDark = Color.parseColor("#FFFF00")
 
-    val Error = Color.parseColor("#FF4B4B")
-    val ErrorDark = Color.parseColor("#FF6B6B")
+    val Error = Color.parseColor("#D32F2F")
+    val ErrorDark = Color.parseColor("#FF5252") // Red A200
 
-    val Info = Color.parseColor("#1CB0F6")
+    val Info = Color.parseColor("#0288D1")
     val InfoDark = Color.parseColor("#40C4FF")
 
     // ==========================================
     // LIGHT THEME - BACKGROUNDS & SURFACES
-    // Clean white like Duolingo
+    // Clean, airy, premium white/grey
     // ==========================================
-    val Background = Color.parseColor("#FFFFFF")
+    val Background = Color.parseColor("#F8F9FA") // Off-white, easier on eyes than #FFFFFF
     val Surface = Color.parseColor("#FFFFFF")
-    val SurfaceVariant = Color.parseColor("#F7F7F7")
-    val OnBackground = Color.parseColor("#3C3C3C")
-    val OnSurface = Color.parseColor("#3C3C3C")
-    val OnSurfaceVariant = Color.parseColor("#6F6F6F")
-    val Outline = Color.parseColor("#CFCFCF")
-    val OutlineVariant = Color.parseColor("#E5E5E5")
+    val SurfaceVariant = Color.parseColor("#F1F5F9") // Slate-tinted grey
+    val OnBackground = Color.parseColor("#1A1C1E")
+    val OnSurface = Color.parseColor("#1A1C1E")
+    val OnSurfaceVariant = Color.parseColor("#49454F")
+    val Outline = Color.parseColor("#79747E")
+    val OutlineVariant = Color.parseColor("#CAC4D0")
 
     // ==========================================
     // DARK THEME - OLED OPTIMIZED
-    // Pure black + vibrant colors
+    // True Black & Slate Greys
     // ==========================================
-    val BackgroundDark = Color.parseColor("#000000")
-    val SurfaceDark = Color.parseColor("#000000")
-    val SurfaceVariantDark = Color.parseColor("#1A1A1A")
-    val OnBackgroundDark = Color.parseColor("#E8E8E8")
-    val OnSurfaceDark = Color.parseColor("#F0F0F0")
-    val OnSurfaceVariantDark = Color.parseColor("#CCCCCC")
-    val OutlineDark = Color.parseColor("#444444")
-    val OutlineVariantDark = Color.parseColor("#2A2A2A")
+    val BackgroundDark = Color.parseColor("#000000") // True Black for OLED
+    val SurfaceDark = Color.parseColor("#121212") // Material Dark Surface
+    val SurfaceVariantDark = Color.parseColor("#1E1E1E") // Slightly Elevated
+    val OnBackgroundDark = Color.parseColor("#E1E1E1")
+    val OnSurfaceDark = Color.parseColor("#E1E1E1")
+    val OnSurfaceVariantDark = Color.parseColor("#C4C7C5")
+    val OutlineDark = Color.parseColor("#8E918F")
+    val OutlineVariantDark = Color.parseColor("#444746")
 
     // ==========================================
     // TEXT COLORS
     // ==========================================
-    val TextPrimary = Color.parseColor("#3C3C3C")
-    val TextSecondary = Color.parseColor("#6F6F6F")
-    val TextPrimaryDark = Color.parseColor("#F0F0F0")
-    val TextSecondaryDark = Color.parseColor("#CCCCCC")
+    val TextPrimary = Color.parseColor("#1A1C1E")
+    val TextSecondary = Color.parseColor("#49454F")
+    val TextPrimaryDark = Color.parseColor("#E1E1E1")
+    val TextSecondaryDark = Color.parseColor("#C4C7C5")
 
     // ==========================================
-    // GAMIFICATION - Expressive Variants
+    // GAMIFICATION - Premium Metals & Effects
     // ==========================================
-    val Gold = Color.parseColor("#FFC800")
-    val Silver = Color.parseColor("#C0C0C0")
+    val Gold = Color.parseColor("#FFD700")
+    val Silver = Color.parseColor("#E0E0E0")
     val Bronze = Color.parseColor("#CD7F32")
 
-    // Purple for streaks/premium features
-    val Purple = Color.parseColor("#A560E8")
-    val PurpleLight = Color.parseColor("#CE93D8")
+    // Royal Purple for Premium/MVP
+    val Purple = Color.parseColor("#6200EA") // Deep Purple A700
+    val PurpleLight = Color.parseColor("#B388FF")
     
-    // Expressive XP Gradient colors
-    val XpStart = Color.parseColor("#58CC02")
-    val XpEnd = Color.parseColor("#89E219")
-    val LevelUpGold = Color.parseColor("#FFD700")
+    // XP Gradients
+    val XpStart = Color.parseColor("#00C853")
+    val XpEnd = Color.parseColor("#64DD17")
+    val LevelUpGold = Color.parseColor("#FFAB00")
 
     // ==========================================
-    // LEGACY - Compatibility
+    // LEGACY
     // ==========================================
-    val Divider = Color.parseColor("#E5E5E5")
-    val DividerDark = Color.parseColor("#2A2A2A")
+    val Divider = Color.parseColor("#E0E0E0")
+    val DividerDark = Color.parseColor("#333333")
 }
