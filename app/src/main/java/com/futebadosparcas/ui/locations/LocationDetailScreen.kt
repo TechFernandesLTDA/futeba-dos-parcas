@@ -347,7 +347,6 @@ fun LocationDetailScreen(
                     if (fields.isEmpty()) {
                         Text("Nenhuma quadra cadastrada.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
                     } else {
-                    } else {
                         fields.forEach { field ->
                             FieldItem(field) {
                                 selectedField = field
@@ -378,13 +377,6 @@ fun LocationDetailScreen(
     }
 }
 
-@Composable
-fun FieldItem(field: Field, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        onClick = onClick
-    ) {
 @Composable
 fun FieldDialog(
     field: Field? = null,
