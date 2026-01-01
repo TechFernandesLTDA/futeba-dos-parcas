@@ -68,7 +68,6 @@ class LiveGameFragment : Fragment() {
         }
 
         binding.fabAddEvent.setOnClickListener {
-            // TODO: Mostrar dialog para adicionar evento
             showAddEventDialog()
         }
     }

@@ -54,7 +54,7 @@ class LeagueService @Inject constructor(
     suspend fun updateLeague(
         userId: String,
         seasonId: String,
-        xpEarned: Int,
+        xpEarned: Long,
         won: Boolean,
         drew: Boolean,
         goalDiff: Int,

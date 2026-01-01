@@ -10,55 +10,46 @@ object LevelHelper {
 
     /**
      * Calcula o XP necessário para alcançar um determinado nível
-     * Usa a tabela oficial de niveis (0-10)
      */
-    fun getXPForLevel(level: Int): Int {
+    fun getXPForLevel(level: Int): Long {
         return LevelTable.getXpForLevel(level)
     }
 
     /**
      * Calcula o XP necessário para subir do nível atual para o próximo
      */
-    fun getXPForNextLevel(currentLevel: Int): Int {
+    fun getXPForNextLevel(currentLevel: Int): Long {
         return LevelTable.getXpForNextLevel(currentLevel)
     }
 
     /**
      * Calcula o nível baseado no XP total acumulado
-     *
-     * @param totalXP XP total do jogador
-     * @return Nível calculado (0-10)
      */
-    fun getLevelFromXP(totalXP: Int): Int {
+    fun getLevelFromXP(totalXP: Long): Int {
         return LevelTable.getLevelForXp(totalXP)
     }
 
     /**
      * Calcula o progresso percentual para o próximo nível
-     *
-     * @param totalXP XP total do jogador
      * @return Par com (XP no nível atual, XP necessário para próximo nível)
      */
-    fun getProgressInCurrentLevel(totalXP: Int): Pair<Int, Int> {
+    fun getProgressInCurrentLevel(totalXP: Long): Pair<Long, Long> {
         return LevelTable.getXpProgress(totalXP)
     }
 
     /**
-     * Calcula a porcentagem de progresso no nível atual
-     *
-     * @param totalXP XP total do jogador
-     * @return Porcentagem de 0 a 100
+     * Calcula a porcentagem de progresso no nível atual (0 a 100)
      */
-    fun getProgressPercentage(totalXP: Int): Int {
+    fun getProgressPercentage(totalXP: Long): Int {
         val (currentXP, neededXP) = getProgressInCurrentLevel(totalXP)
-        if (neededXP == 0) return 100
+        if (neededXP == 0L) return 100
         return ((currentXP.toFloat() / neededXP) * 100).toInt().coerceIn(0, 100)
     }
 
     /**
      * Retorna uma mensagem motivacional baseada no progresso
      */
-    fun getMotivationalMessage(totalXP: Int): String {
+    fun getMotivationalMessage(totalXP: Long): String {
         val (currentXP, neededXP) = getProgressInCurrentLevel(totalXP)
         val remaining = neededXP - currentXP
         val percentage = getProgressPercentage(totalXP)
@@ -74,10 +65,6 @@ object LevelHelper {
         }
     }
 
-    /**
-     * Retorna o título baseado no nível
-     * Usa os nomes oficiais da LevelTable
-     */
     fun getLevelTitle(level: Int): String {
         return LevelTable.getLevelName(level)
     }

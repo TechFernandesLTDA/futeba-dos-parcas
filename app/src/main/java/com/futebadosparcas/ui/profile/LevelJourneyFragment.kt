@@ -66,7 +66,7 @@ class LevelJourneyFragment : Fragment() {
                     }
                     val currentXp = when (uiState) {
                         is ProfileUiState.Success -> (uiState as ProfileUiState.Success).user.experiencePoints
-                        else -> 0
+                        else -> 0L
                     }
 
                     LevelJourneyScreen(
@@ -84,7 +84,7 @@ class LevelJourneyFragment : Fragment() {
 @Composable
 fun LevelJourneyScreen(
     currentLevel: Int,
-    currentXp: Int,
+    currentXp: Long,
     onBackClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
@@ -178,10 +178,10 @@ fun LevelJourneyScreen(
 }
 
 @Composable
-fun CurrentProgressHeader(currentLevel: Int, currentXp: Int) {
+fun CurrentProgressHeader(currentLevel: Int, currentXp: Long) {
     val levelName = LevelTable.getLevelName(currentLevel)
     val (progressXp, neededXp) = LevelTable.getXpProgress(currentXp)
-    val percentage = if (neededXp > 0) (progressXp * 100 / neededXp) else 100
+    val percentage = if (neededXp > 0L) (progressXp * 100L / neededXp).toInt() else 100
 
     Card(
         modifier = Modifier
@@ -220,16 +220,6 @@ fun CurrentProgressHeader(currentLevel: Int, currentXp: Int) {
                         repeatMode = RepeatMode.Reverse
                     ),
                     label = "scale"
-                )
-
-                val rotation by infiniteTransition.animateFloat(
-                    initialValue = 0f,
-                    targetValue = 360f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(3000, easing = LinearEasing),
-                        repeatMode = RepeatMode.Restart
-                    ),
-                    label = "rotation"
                 )
 
                 Box(
@@ -327,7 +317,7 @@ fun CurrentProgressHeader(currentLevel: Int, currentXp: Int) {
 }
 
 @Composable
-fun LevelJourneyMap(currentLevel: Int, currentXp: Int) {
+fun LevelJourneyMap(currentLevel: Int, currentXp: Long) {
     val levels = LevelTable.levels.reversed() // Do maior para o menor
 
     Column(
@@ -364,11 +354,11 @@ fun LevelJourneyMap(currentLevel: Int, currentXp: Int) {
 fun LevelNode(
     level: Int,
     name: String,
-    xpRequired: Int,
+    xpRequired: Long,
     isUnlocked: Boolean,
     isCurrent: Boolean,
     isNext: Boolean,
-    currentXp: Int
+    currentXp: Long
 ) {
     val backgroundColor = when {
         isCurrent -> Color(FutebaColors.Primary)
@@ -386,13 +376,6 @@ fun LevelNode(
         isCurrent -> Color(FutebaColors.Primary)
         isNext -> Color(FutebaColors.Secondary)
         else -> Color.Transparent
-    }
-
-    val icon = when {
-        level >= 10 -> Icons.Filled.Star
-        level >= 7 -> Icons.Filled.Star
-        level >= 4 -> Icons.Filled.Star
-        else -> Icons.Filled.Star
     }
 
     Card(
@@ -431,7 +414,7 @@ fun LevelNode(
                 ) {
                     if (isUnlocked || isCurrent) {
                         Icon(
-                            imageVector = icon,
+                            imageVector = Icons.Filled.Star,
                             contentDescription = null,
                             tint = textColor,
                             modifier = Modifier.size(36.dp)
@@ -486,7 +469,7 @@ fun LevelNode(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = if (xpRequired == 0) "🎮 Início da jornada" else "⚡ $xpRequired XP necessários",
+                        text = if (xpRequired == 0L) "🎮 Início da jornada" else "⚡ $xpRequired XP necessários",
                         fontSize = 13.sp,
                         color = textColor.copy(alpha = 0.8f)
                     )
@@ -512,7 +495,7 @@ fun LevelNode(
             }
 
             // Mostrar progresso se for o próximo nível
-            if (isNext && xpRequired > 0) {
+            if (isNext && xpRequired > 0L) {
                 val progress = (currentXp.toFloat() / xpRequired).coerceIn(0f, 1f)
                 Spacer(modifier = Modifier.height(12.dp))
                 
@@ -532,8 +515,9 @@ fun LevelNode(
                         .padding(top = 6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    val remaining = xpRequired - currentXp
                     Text(
-                        text = "🎯 Faltam ${xpRequired - currentXp} XP",
+                        text = "🎯 Faltam $remaining XP",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(FutebaColors.Secondary)
@@ -550,7 +534,7 @@ fun LevelNode(
             // Informações extras para níveis desbloqueados
             if (isUnlocked || isCurrent) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Divider(
+                HorizontalDivider(
                     color = textColor.copy(alpha = 0.2f),
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
@@ -635,13 +619,13 @@ fun XpDocumentationCard() {
             XpSourceItem("🏆", "Vitória", "20 XP bonus por vitória")
             XpSourceItem("🤝", "Empate", "10 XP bonus por empate")
             XpSourceItem("⭐", "MVP", "30 XP bonus como melhor jogador")
-            XpSourceItem("🎮", "Participação", "15 XP só por jogar")
+            XpSourceItem("🎮", "Participação", "10 XP só por jogar")
             XpSourceItem("🎖️", "Milestones", "50-2500 XP por conquistas especiais")
             XpSourceItem("🔥", "Sequências", "Bonus por vitórias consecutivas")
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Divider(color = Color(FutebaColors.OnSurfaceVariant).copy(alpha = 0.2f))
+            HorizontalDivider(color = Color(FutebaColors.OnSurfaceVariant).copy(alpha = 0.2f))
 
             Spacer(modifier = Modifier.height(12.dp))
 

@@ -333,7 +333,7 @@ class ProfileFragment : Fragment() {
     /**
      * Atualiza o card de XP/Nível com base no nível e XP do usuário
      */
-    private fun updateLevelCard(level: Int, totalXP: Int) {
+    private fun updateLevelCard(level: Int, totalXP: Long) {
         // Atualizar nível
         binding.tvCurrentLevel.text = "Nível $level"
 

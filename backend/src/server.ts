@@ -1,11 +1,15 @@
 import app from './app';
 import { appConfig } from './config';
 import { initializeDatabase } from './config/database';
+import { initializeFirebase } from './config/firebase';
 import { logger } from './utils/logger';
 import { initializeCronJobs } from './cron';
 
 const startServer = async (): Promise<void> => {
   try {
+    // Initialize services
+    initializeFirebase();
+
     // Initialize database connection
     await initializeDatabase();
 

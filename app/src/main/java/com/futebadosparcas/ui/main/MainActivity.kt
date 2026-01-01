@@ -183,9 +183,20 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun updateNotificationBadge(count: Int) {
-        // TODO: Implementar badge visual no ícone de notificações
-        // Por enquanto, apenas log para debug
-        android.util.Log.d("MainActivity", "Notificações não lidas: $count")
+        try {
+            val badge = binding.bottomNavigation.getOrCreateBadge(R.id.profileFragment)
+            if (count > 0) {
+                badge.isVisible = true
+                badge.number = count
+                badge.backgroundColor = getColor(R.color.badge_background) // Ensure color exists or use generic
+                badge.badgeTextColor = getColor(R.color.badge_text)
+            } else {
+                badge.isVisible = false
+                badge.clearNumber()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Erro ao atualizar badge", e)
+        }
     }
 
     private fun showPostGameDialog(summary: com.futebadosparcas.ui.statistics.PostGameSummary) {

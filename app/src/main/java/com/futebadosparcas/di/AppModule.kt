@@ -52,12 +52,24 @@ object AppModule {
         badgeAwarder: com.futebadosparcas.domain.gamification.BadgeAwarder,
         liveGameRepository: com.futebadosparcas.data.repository.LiveGameRepository,
         matchFinalizationService: MatchFinalizationService,
-        postGameEventEmitter: PostGameEventEmitter
+        postGameEventEmitter: PostGameEventEmitter,
+        matchManagementDataSource: com.futebadosparcas.data.datasource.MatchManagementDataSource,
+        teamBalancer: com.futebadosparcas.domain.ai.TeamBalancer
     ): GameRepository {
         return if (preferencesManager.isMockModeEnabled()) {
             FakeGameRepository()
         } else {
-            GameRepositoryImpl(firestore, auth, gameDao, badgeAwarder, liveGameRepository, matchFinalizationService, postGameEventEmitter)
+            GameRepositoryImpl(
+                firestore, 
+                auth, 
+                gameDao, 
+                badgeAwarder, 
+                liveGameRepository, 
+                matchFinalizationService, 
+                postGameEventEmitter,
+                matchManagementDataSource,
+                teamBalancer
+            )
         }
     }
 
@@ -131,5 +143,11 @@ object AppModule {
         userRepository: UserRepository
     ): com.futebadosparcas.domain.ai.TeamBalancer {
         return com.futebadosparcas.data.ai.GeminiTeamBalancer(userRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideHapticManager(@ApplicationContext context: Context): com.futebadosparcas.util.HapticManager {
+        return com.futebadosparcas.util.HapticManager(context)
     }
 }

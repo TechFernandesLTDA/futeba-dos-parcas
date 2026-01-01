@@ -22,13 +22,13 @@ data class XpLog(
     var gameId: String = "",
     @get:PropertyName("xp_earned")
     @set:PropertyName("xp_earned")
-    var xpEarned: Int = 0,
+    var xpEarned: Long = 0L,
     @get:PropertyName("xp_before")
     @set:PropertyName("xp_before")
-    var xpBefore: Int = 0,
+    var xpBefore: Long = 0L,
     @get:PropertyName("xp_after")
     @set:PropertyName("xp_after")
-    var xpAfter: Int = 0,
+    var xpAfter: Long = 0L,
     @get:PropertyName("level_before")
     @set:PropertyName("level_before")
     var levelBefore: Int = 1,
@@ -109,52 +109,8 @@ data class XpLog(
 /**
  * Marcos historicos que concedem XP bonus (one-time).
  */
-enum class MilestoneType(
-    val displayName: String,
-    val description: String,
-    val xpReward: Int,
-    val threshold: Int,
-    val field: String // Campo em UserStatistics a verificar
-) {
-    // Jogos
-    GAMES_10("Iniciante", "Jogue 10 partidas", 50, 10, "totalGames"),
-    GAMES_25("Frequentador", "Jogue 25 partidas", 100, 25, "totalGames"),
-    GAMES_50("Habitue", "Jogue 50 partidas", 200, 50, "totalGames"),
-    GAMES_100("Veterano", "Jogue 100 partidas", 500, 100, "totalGames"),
-    GAMES_250("Lenda Viva", "Jogue 250 partidas", 1000, 250, "totalGames"),
-    GAMES_500("Imortal", "Jogue 500 partidas", 2500, 500, "totalGames"),
+// Milestones are now defined in Gamification.kt
 
-    // Gols
-    GOALS_10("Primeiro Artilheiro", "Marque 10 gols", 50, 10, "totalGoals"),
-    GOALS_25("Goleador", "Marque 25 gols", 100, 25, "totalGoals"),
-    GOALS_50("Matador", "Marque 50 gols", 200, 50, "totalGoals"),
-    GOALS_100("Centena de Gols", "Marque 100 gols", 500, 100, "totalGoals"),
-    GOALS_250("Artilheiro Historico", "Marque 250 gols", 1000, 250, "totalGoals"),
-
-    // Assistencias
-    ASSISTS_10("Garcom", "De 10 assistencias", 50, 10, "totalAssists"),
-    ASSISTS_25("Armador", "De 25 assistencias", 100, 25, "totalAssists"),
-    ASSISTS_50("Maestro", "De 50 assistencias", 200, 50, "totalAssists"),
-    ASSISTS_100("Cerebro", "De 100 assistencias", 500, 100, "totalAssists"),
-
-    // Defesas (goleiros)
-    SAVES_25("Luvas de Ouro", "Faca 25 defesas", 50, 25, "totalSaves"),
-    SAVES_50("Paredao Iniciante", "Faca 50 defesas", 100, 50, "totalSaves"),
-    SAVES_100("Goleiro de Elite", "Faca 100 defesas", 200, 100, "totalSaves"),
-    SAVES_250("Muralha", "Faca 250 defesas", 500, 250, "totalSaves"),
-
-    // MVPs
-    MVP_5("Destaque", "Seja MVP 5 vezes", 100, 5, "bestPlayerCount"),
-    MVP_10("Craque", "Seja MVP 10 vezes", 300, 10, "bestPlayerCount"),
-    MVP_25("Fenomeno", "Seja MVP 25 vezes", 750, 25, "bestPlayerCount"),
-    MVP_50("Lenda", "Seja MVP 50 vezes", 1500, 50, "bestPlayerCount"),
-
-    // Vitorias
-    WINS_10("Vencedor", "Venca 10 jogos", 75, 10, "gamesWon"),
-    WINS_25("Campeao", "Venca 25 jogos", 150, 25, "gamesWon"),
-    WINS_50("Dominador", "Venca 50 jogos", 300, 50, "gamesWon"),
-    WINS_100("Invicto", "Venca 100 jogos", 750, 100, "gamesWon")
-}
 
 // ========== RANKING ==========
 
@@ -231,7 +187,7 @@ data class RankingDelta(
     var savesAdded: Int = 0,
     @get:PropertyName("xp_added")
     @set:PropertyName("xp_added")
-    var xpAdded: Int = 0,
+    var xpAdded: Long = 0L,
     @get:PropertyName("games_added")
     @set:PropertyName("games_added")
     var gamesAdded: Int = 0,
@@ -249,58 +205,8 @@ data class RankingDelta(
     constructor() : this(id = "")
 }
 
-// ========== TABELA DE NIVEIS ==========
+// LevelTable is now defined in its own file
 
-/**
- * Definicao dos niveis e XP necessario.
- */
-object LevelTable {
-    val levels = listOf(
-        LevelDefinition(0, 0, "Novato"),
-        LevelDefinition(1, 100, "Iniciante"),
-        LevelDefinition(2, 350, "Amador"),
-        LevelDefinition(3, 850, "Regular"),
-        LevelDefinition(4, 1850, "Experiente"),
-        LevelDefinition(5, 3850, "Habilidoso"),
-        LevelDefinition(6, 7350, "Profissional"),
-        LevelDefinition(7, 12850, "Expert"),
-        LevelDefinition(8, 20850, "Mestre"),
-        LevelDefinition(9, 32850, "Lenda"),
-        LevelDefinition(10, 52850, "Imortal")
-    )
-
-    fun getLevelForXp(xp: Int): Int {
-        return levels.lastOrNull { xp >= it.xpRequired }?.level ?: 0
-    }
-
-    fun getXpForLevel(level: Int): Int {
-        return levels.getOrNull(level)?.xpRequired ?: 0
-    }
-
-    fun getXpForNextLevel(currentLevel: Int): Int {
-        val nextLevel = levels.getOrNull(currentLevel + 1)
-        return nextLevel?.xpRequired ?: levels.last().xpRequired
-    }
-
-    fun getXpProgress(xp: Int): Pair<Int, Int> {
-        val currentLevel = getLevelForXp(xp)
-        val currentLevelXp = levels.getOrNull(currentLevel)?.xpRequired ?: 0
-        val nextLevelXp = getXpForNextLevel(currentLevel)
-        val progressXp = xp - currentLevelXp
-        val neededXp = nextLevelXp - currentLevelXp
-        return Pair(progressXp, neededXp)
-    }
-
-    fun getLevelName(level: Int): String {
-        return levels.getOrNull(level)?.name ?: "Desconhecido"
-    }
-}
-
-data class LevelDefinition(
-    val level: Int,
-    val xpRequired: Int,
-    val name: String
-)
 
 // ========== SEASON PARTICIPATION EXTENDIDO ==========
 
@@ -313,7 +219,7 @@ data class RecentGameData(
     var gameId: String = "",
     @get:PropertyName("xp_earned")
     @set:PropertyName("xp_earned")
-    var xpEarned: Int = 0,
+    var xpEarned: Long = 0L,
     val won: Boolean = false,
     val drew: Boolean = false,
     @get:PropertyName("goal_diff")

@@ -30,9 +30,9 @@ import com.futebadosparcas.ui.theme.FutebaColors
 fun PlayerEvolutionCard(
     currentLevel: Int,
     levelName: String,
-    currentXp: Int,
-    xpProgress: Int,
-    xpNeeded: Int,
+    currentXp: Long,
+    xpProgress: Long,
+    xpNeeded: Long,
     progressPercentage: Float,
     modifier: Modifier = Modifier
 ) {
@@ -218,7 +218,7 @@ fun LeagueDivisionCard(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Liga ${division.name}",
+                        text = "Liga ${division.displayName}",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(FutebaColors.TextPrimary)
@@ -346,7 +346,7 @@ fun MilestoneProgressCard(
     description: String,
     current: Int,
     target: Int,
-    xpReward: Int,
+    xpReward: Long,
     modifier: Modifier = Modifier
 ) {
     val progress = if (target > 0) current.toFloat() / target else 0f

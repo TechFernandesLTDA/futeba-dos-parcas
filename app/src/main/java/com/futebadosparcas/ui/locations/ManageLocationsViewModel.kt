@@ -6,9 +6,12 @@ import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.data.repository.LocationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,8 +23,32 @@ class ManageLocationsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<ManageLocationsUiState>(ManageLocationsUiState.Loading)
     val uiState: StateFlow<ManageLocationsUiState> = _uiState.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    
+    private var allLocations: List<LocationWithFieldsData> = emptyList()
+
     init {
         loadAllLocations()
+    }
+
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
+        filterLocations()
+    }
+
+    private fun filterLocations() {
+        val query = _searchQuery.value
+        if (query.isBlank()) {
+            _uiState.value = ManageLocationsUiState.Success(allLocations)
+            return
+        }
+
+        val filtered = allLocations.filter { data ->
+            data.location.name.contains(query, ignoreCase = true) ||
+            data.location.address.contains(query, ignoreCase = true) ||
+            data.fields.any { it.name.contains(query, ignoreCase = true) }
+        }
+        _uiState.value = ManageLocationsUiState.Success(filtered)
     }
 
     fun loadAllLocations() {
@@ -33,16 +60,17 @@ class ManageLocationsViewModel @Inject constructor(
             
             locationsResult.fold(
                 onSuccess = { locations ->
-                    // Para cada local, buscar suas quadras
-                    val locationsWithFields = mutableListOf<LocationWithFieldsData>()
+                    // Paralelizar a busca de quadras para ganho de performance (resolve N+1)
+                    val locationsWithFields = locations.map { location ->
+                        async {
+                            val fieldsResult = locationRepository.getFieldsByLocation(location.id)
+                            val fields = fieldsResult.getOrNull() ?: emptyList()
+                            LocationWithFieldsData(location, fields)
+                        }
+                    }.awaitAll()
                     
-                    for (location in locations) {
-                        val fieldsResult = locationRepository.getFieldsByLocation(location.id)
-                        val fields = fieldsResult.getOrNull() ?: emptyList()
-                        locationsWithFields.add(LocationWithFieldsData(location, fields))
-                    }
-                    
-                    _uiState.value = ManageLocationsUiState.Success(locationsWithFields)
+                    allLocations = locationsWithFields
+                    filterLocations()
                 },
                 onFailure = { error ->
                     _uiState.value = ManageLocationsUiState.Error(

@@ -519,7 +519,7 @@ class GameRepositoryImpl @Inject constructor(
                     AppLogger.e(TAG, "Erro ao processar XP/estatisticas do jogo $gameId", e)
                 }
                 */
-                AppLogger.i(TAG, "Jogo finalizado. XP será processado via Cloud Functions.")
+                AppLogger.i(TAG) { "Jogo finalizado. XP será processado via Cloud Functions." }
             }
 
             Result.success(Unit)

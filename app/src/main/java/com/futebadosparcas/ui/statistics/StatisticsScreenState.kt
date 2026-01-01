@@ -19,7 +19,7 @@ data class CombinedStatistics(
 data class PlayerRankingItem(
     val rank: Int,
     val playerName: String,
-    val value: Int,
+    val value: Long,
     val photoUrl: String?,
     val userId: String = "",
     val gamesPlayed: Int = 0,
@@ -54,14 +54,14 @@ data class RankingUiState(
  * Dados de evolucao do jogador.
  */
 data class PlayerEvolutionData(
-    val currentXp: Int = 0,
+    val currentXp: Long = 0L,
     val currentLevel: Int = 1,
     val levelName: String = "Novato",
-    val xpProgress: Int = 0, // XP acumulado no nivel atual
-    val xpNeeded: Int = 100, // XP total para proximo nivel
+    val xpProgress: Long = 0L, // XP acumulado no nivel atual
+    val xpNeeded: Long = 100L, // XP total para proximo nivel
     val progressPercentage: Float = 0f,
     val xpHistory: List<XpLog> = emptyList(),
-    val xpEvolution: Map<String, Int> = emptyMap(), // Mes -> XP ganho
+    val xpEvolution: Map<String, Long> = emptyMap(), // Mes -> XP ganho
     val achievedMilestones: List<MilestoneType> = emptyList(),
     val nextMilestones: List<MilestoneProgress> = emptyList(),
     val leagueData: SeasonParticipationV2? = null
@@ -85,10 +85,10 @@ sealed class EvolutionUiState {
  */
 data class PostGameSummary(
     val gameId: String,
-    val xpEarned: Int,
-    val xpBreakdown: Map<String, Int>, // "Participacao" -> 25, "Gols" -> 30, etc
-    val previousXp: Int,
-    val newXp: Int,
+    val xpEarned: Long,
+    val xpBreakdown: Map<String, Long>, // "Participacao" -> 25, "Gols" -> 30, etc
+    val previousXp: Long,
+    val newXp: Long,
     val previousLevel: Int,
     val newLevel: Int,
     val leveledUp: Boolean,
@@ -102,6 +102,6 @@ data class PostGameSummary(
     val progressToNextLevel: Float
         get() {
             val (progress, needed) = LevelTable.getXpProgress(newXp)
-            return if (needed > 0) progress.toFloat() / needed else 1f
+            return if (needed > 0L) progress.toFloat() / needed else 1f
         }
 }

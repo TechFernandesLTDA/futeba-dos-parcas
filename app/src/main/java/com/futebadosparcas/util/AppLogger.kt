@@ -42,7 +42,15 @@ object AppLogger {
      */
     fun e(tag: String, message: String, throwable: Throwable? = null) {
         Log.e(tag, message, throwable)
-        // TODO: Adicionar Firebase Crashlytics.log() aqui se desejado
+        try {
+            val crashlytics = com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance()
+            crashlytics.log("$tag: $message")
+            if (throwable != null) {
+                crashlytics.recordException(throwable)
+            }
+        } catch (e: Exception) {
+            // Ignore if Crashlytics context issues
+        }
     }
 
     /**

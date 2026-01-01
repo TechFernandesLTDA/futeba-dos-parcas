@@ -9,26 +9,26 @@ import com.futebadosparcas.data.repository.GameResult
  * Resultado do calculo de XP para um jogador em uma partida.
  */
 data class XpCalculationResult(
-    val totalXp: Int,
+    val totalXp: Long,
     val breakdown: XpBreakdown,
     val gameResult: GameResult
 )
 
 data class XpBreakdown(
-    val participation: Int = 0,
-    val goals: Int = 0,
-    val assists: Int = 0,
-    val saves: Int = 0,
-    val result: Int = 0,
-    val mvp: Int = 0,
-    val milestones: Int = 0,
-    val streak: Int = 0
+    val participation: Long = 0,
+    val goals: Long = 0,
+    val assists: Long = 0,
+    val saves: Long = 0,
+    val result: Long = 0,
+    val mvp: Long = 0,
+    val milestones: Long = 0,
+    val streak: Long = 0
 ) {
-    val total: Int
+    val total: Long
         get() = participation + goals + assists + saves + result + mvp + milestones + streak
 
-    fun toDisplayMap(): Map<String, Int> {
-        val map = mutableMapOf<String, Int>()
+    fun toDisplayMap(): Map<String, Long> {
+        val map = mutableMapOf<String, Long>()
         if (participation > 0) map["Participação"] = participation
         if (goals > 0) map["Gols"] = goals
         if (assists > 0) map["Assistências"] = assists
@@ -152,13 +152,13 @@ object XPCalculator {
         }
 
         val breakdown = XpBreakdown(
-            participation = participationXp,
-            goals = goalsXp,
-            assists = assistsXp,
-            saves = savesXp,
-            result = resultXp,
-            mvp = mvpXp,
-            streak = streakXp
+            participation = participationXp.toLong(),
+            goals = goalsXp.toLong(),
+            assists = assistsXp.toLong(),
+            saves = savesXp.toLong(),
+            result = resultXp.toLong(),
+            mvp = mvpXp.toLong(),
+            streak = streakXp.toLong()
         )
 
         return XpCalculationResult(
@@ -208,7 +208,7 @@ object XPCalculator {
         userId: String,
         gameId: String,
         calculationResult: XpCalculationResult,
-        xpBefore: Int,
+        xpBefore: Long,
         levelBefore: Int,
         levelAfter: Int,
         milestonesUnlocked: List<String> = emptyList(),
@@ -225,14 +225,14 @@ object XPCalculator {
             xpAfter = xpBefore + calculationResult.totalXp,
             levelBefore = levelBefore,
             levelAfter = levelAfter,
-            xpParticipation = breakdown.participation,
-            xpGoals = breakdown.goals,
-            xpAssists = breakdown.assists,
-            xpSaves = breakdown.saves,
-            xpResult = breakdown.result,
-            xpMvp = breakdown.mvp,
-            xpMilestones = breakdown.milestones,
-            xpStreak = breakdown.streak,
+            xpParticipation = breakdown.participation.toInt(),
+            xpGoals = breakdown.goals.toInt(),
+            xpAssists = breakdown.assists.toInt(),
+            xpSaves = breakdown.saves.toInt(),
+            xpResult = breakdown.result.toInt(),
+            xpMvp = breakdown.mvp.toInt(),
+            xpMilestones = breakdown.milestones.toInt(),
+            xpStreak = breakdown.streak.toInt(),
             goals = goals,
             assists = assists,
             saves = saves,

@@ -5,7 +5,9 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
-import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.WeekFields
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -57,33 +59,62 @@ class RankingRepository @Inject constructor(
     suspend fun getRanking(
         category: RankingCategory,
         limit: Int = 50
-    ): Result<List<RankingEntryV2>> {
+    ): Result<List<com.futebadosparcas.ui.statistics.PlayerRankingItem>> {
         return try {
-            val snapshot = statisticsCollection
-                .orderBy(category.field, Query.Direction.DESCENDING)
-                .limit(limit.toLong())
-                .get()
-                .await()
+            val snapshot = if (category == RankingCategory.XP) {
+                usersCollection
+                    .orderBy(category.field, Query.Direction.DESCENDING)
+                    .limit(limit.toLong())
+                    .get()
+                    .await()
+            } else {
+                statisticsCollection
+                    .orderBy(category.field, Query.Direction.DESCENDING)
+                    .limit(limit.toLong())
+                    .get()
+                    .await()
+            }
 
-            val stats = snapshot.documents.mapNotNull { it.toObject(UserStatistics::class.java) }
+            // Se for XP, os resultados vem de User. Se for outros, vem de UserStatistics.
+            val entries = mutableListOf<com.futebadosparcas.ui.statistics.PlayerRankingItem>()
 
-            // Buscar dados dos usuarios
-            val userIds = stats.map { it.id }
-            val usersMap = fetchUserData(userIds)
+            if (category == RankingCategory.XP) {
+                val users = snapshot.documents.mapNotNull { it.toObject(User::class.java) }
+                users.forEachIndexed { index, user ->
+                    entries.add(
+                        com.futebadosparcas.ui.statistics.PlayerRankingItem(
+                            rank = index + 1,
+                            userId = user.id,
+                            playerName = user.name,
+                            nickname = user.nickname,
+                            photoUrl = user.photoUrl,
+                            value = user.experiencePoints,
+                            gamesPlayed = 0, // Precisariamos buscar stats se quisermos preencher aqui
+                            average = 0.0
+                        )
+                    )
+                }
+            } else {
+                val stats = snapshot.documents.mapNotNull { it.toObject(UserStatistics::class.java) }
+                val userIds = stats.map { it.id }
+                val usersMap = fetchUserData(userIds)
 
-            val entries = stats.mapIndexed { index, stat ->
-                val user = usersMap[stat.id]
-                RankingEntryV2(
-                    rank = index + 1,
-                    userId = stat.id,
-                    userName = user?.name ?: "Jogador",
-                    userPhoto = user?.photoUrl,
-                    value = getStatValue(stat, category),
-                    gamesPlayed = stat.totalGames,
-                    average = if (stat.totalGames > 0) {
-                        getStatValue(stat, category).toDouble() / stat.totalGames
-                    } else 0.0
-                )
+                stats.forEachIndexed { index, stat ->
+                    val user = usersMap[stat.id]
+                    val value = getStatValue(stat, category)
+                    entries.add(
+                        com.futebadosparcas.ui.statistics.PlayerRankingItem(
+                            rank = index + 1,
+                            userId = stat.id,
+                            playerName = user?.name ?: "Jogador",
+                            nickname = user?.nickname,
+                            photoUrl = user?.photoUrl,
+                            value = value.toLong(),
+                            gamesPlayed = stat.totalGames,
+                            average = if (stat.totalGames > 0) value.toDouble() / stat.totalGames else 0.0
+                        )
+                    )
+                }
             }
 
             Result.success(entries)
@@ -100,7 +131,7 @@ class RankingRepository @Inject constructor(
         category: RankingCategory,
         period: RankingPeriod,
         limit: Int = 50
-    ): Result<List<RankingEntryV2>> {
+    ): Result<List<com.futebadosparcas.ui.statistics.PlayerRankingItem>> {
         return try {
             val periodKey = when (period) {
                 RankingPeriod.WEEK -> getCurrentWeekKey()
@@ -136,7 +167,7 @@ class RankingRepository @Inject constructor(
 
             val deltas = snapshot.documents.mapNotNull { doc ->
                 val userId = doc.getString("user_id") ?: return@mapNotNull null
-                val value = doc.getLong(deltaField)?.toInt() ?: 0
+                val value = doc.getLong(deltaField) ?: 0L
                 val games = doc.getLong("games_added")?.toInt() ?: 0
                 Triple(userId, value, games)
             }
@@ -150,11 +181,12 @@ class RankingRepository @Inject constructor(
 
             val entries = filteredDeltas.mapIndexed { index, (userId, value, games) ->
                 val user = usersMap[userId]
-                RankingEntryV2(
+                com.futebadosparcas.ui.statistics.PlayerRankingItem(
                     rank = index + 1,
                     userId = userId,
-                    userName = user?.name ?: "Jogador",
-                    userPhoto = user?.photoUrl,
+                    playerName = user?.name ?: "Jogador",
+                    nickname = user?.nickname,
+                    photoUrl = user?.photoUrl,
                     value = value,
                     gamesPlayed = games,
                     average = if (games > 0) value.toDouble() / games else 0.0
@@ -223,15 +255,14 @@ class RankingRepository @Inject constructor(
     suspend fun getXpEvolution(
         userId: String,
         months: Int = 6
-    ): Result<Map<String, Int>> {
+    ): Result<Map<String, Long>> {
         return try {
-            val cal = Calendar.getInstance()
-            cal.add(Calendar.MONTH, -months)
-            val startDate = cal.time
+            val startDate = LocalDate.now().minusMonths(months.toLong())
+            val startTimestamp = java.util.Date.from(startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant())
 
             val snapshot = xpLogsCollection
                 .whereEqualTo("user_id", userId)
-                .whereGreaterThan("created_at", startDate)
+                .whereGreaterThan("created_at", startTimestamp)
                 .orderBy("created_at", Query.Direction.ASCENDING)
                 .get()
                 .await()
@@ -239,9 +270,11 @@ class RankingRepository @Inject constructor(
             val logs = snapshot.toObjects(XpLog::class.java)
 
             // Agrupar por mes
-            val sdf = SimpleDateFormat("MM/yyyy", Locale.getDefault())
+            val formatter = DateTimeFormatter.ofPattern("MM/yyyy")
             val grouped = logs.groupBy { log ->
-                log.createdAt?.let { sdf.format(it) } ?: "N/A"
+                log.createdAt?.let { 
+                    it.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate().format(formatter)
+                } ?: "N/A"
             }.mapValues { (_, logsInMonth) ->
                 logsInMonth.sumOf { it.xpEarned }
             }
@@ -294,18 +327,17 @@ class RankingRepository @Inject constructor(
     }
 
     private fun getCurrentWeekKey(): String {
-        val cal = Calendar.getInstance()
-        val year = cal.get(Calendar.YEAR)
-        val week = cal.get(Calendar.WEEK_OF_YEAR)
-        return "$year-W${week.toString().padStart(2, '0')}"
+        val now = LocalDate.now()
+        val weekFields = WeekFields.of(Locale.getDefault())
+        val weekNumber = now.get(weekFields.weekOfWeekBasedYear())
+        return "${now.year}-W${weekNumber.toString().padStart(2, '0')}"
     }
 
     private fun getCurrentMonthKey(): String {
-        val sdf = SimpleDateFormat("yyyy-MM", Locale.getDefault())
-        return sdf.format(Date())
+        return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"))
     }
 
     private fun getCurrentYearKey(): String {
-        return Calendar.getInstance().get(Calendar.YEAR).toString()
+        return LocalDate.now().year.toString()
     }
 }

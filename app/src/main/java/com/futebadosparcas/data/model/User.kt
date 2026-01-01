@@ -63,7 +63,7 @@ data class User(
 
     @get:PropertyName("experience_points")
     @set:PropertyName("experience_points")
-    var experiencePoints: Int = 0,
+    var experiencePoints: Long = 0L,
 
     // Milestones ja conquistados (para evitar duplicacao)
     @get:PropertyName("milestones_achieved")

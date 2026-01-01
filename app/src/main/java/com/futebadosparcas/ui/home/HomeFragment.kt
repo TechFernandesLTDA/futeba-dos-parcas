@@ -73,14 +73,9 @@ class HomeFragment : Fragment() {
             findNavController().navigate(R.id.action_global_notifications)
         }
         
-        // Clique no header para abrir Player Card
-        binding.headerUserInfo.setOnClickListener {
-            val currentUserId = viewModel.getCurrentUserId()
-            if (currentUserId != null) {
-                val playerCard = com.futebadosparcas.ui.player.PlayerCardDialog.newInstance(currentUserId)
-                playerCard.show(childFragmentManager, "PlayerCard")
-            }
-        }
+        // O clique no header é gerenciado pelo componente Compose ExpressiveHubHeader
+        // para maior precisão e haptic feedback.
+
     }
 
     private fun setupRecyclerView() {
@@ -125,8 +120,9 @@ class HomeFragment : Fragment() {
                                         summary = state.gamificationSummary,
                                         hapticManager = hapticManager,
                                         onProfileClick = {
+                                            if (!isAdded) return@ExpressiveHubHeader
                                             val playerCard = com.futebadosparcas.ui.player.PlayerCardDialog.newInstance(state.user.id)
-                                            playerCard.show(childFragmentManager, "PlayerCard")
+                                            playerCard.show(parentFragmentManager, "PlayerCard")
                                         }
                                     )
                                 }

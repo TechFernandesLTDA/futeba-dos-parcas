@@ -21,6 +21,7 @@ import com.futebadosparcas.databinding.DialogPlayerCardBinding
 import com.futebadosparcas.util.LevelHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import com.futebadosparcas.util.loadProfileImage
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat

@@ -30,11 +30,12 @@ fun PostGameDialog(
     summary: PostGameSummary,
     onDismiss: () -> Unit
 ) {
-    val animatedXp by animateIntAsState(
-        targetValue = summary.xpEarned,
+    val animatedXpFloat by animateFloatAsState(
+        targetValue = summary.xpEarned.toFloat(),
         animationSpec = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
         label = "xp"
     )
+    val animatedXp = animatedXpFloat.toLong()
 
     val animatedProgress by animateFloatAsState(
         targetValue = summary.progressToNextLevel,
@@ -183,7 +184,7 @@ private fun GameResultBadge(result: String) {
 }
 
 @Composable
-private fun XpBreakdownSection(breakdown: Map<String, Int>) {
+private fun XpBreakdownSection(breakdown: Map<String, Long>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
