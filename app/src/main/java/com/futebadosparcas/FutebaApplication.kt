@@ -3,12 +3,13 @@ package com.futebadosparcas
 import android.app.Application
 import com.futebadosparcas.util.PreferencesManager
 import com.futebadosparcas.util.ThemeHelper
-import com.jakewharton.threetenabp.AndroidThreeTen
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.futebadosparcas.BuildConfig
 
 @HiltAndroidApp
 class FutebaApplication : Application() {
@@ -25,9 +26,16 @@ class FutebaApplication : Application() {
         // Initialize Firebase App Check
         FirebaseApp.initializeApp(this)
         val firebaseAppCheck = FirebaseAppCheck.getInstance()
-        firebaseAppCheck.installAppCheckProviderFactory(
-            PlayIntegrityAppCheckProviderFactory.getInstance()
-        )
+        
+        if (BuildConfig.DEBUG) {
+            firebaseAppCheck.installAppCheckProviderFactory(
+                DebugAppCheckProviderFactory.getInstance()
+            )
+        } else {
+            firebaseAppCheck.installAppCheckProviderFactory(
+                PlayIntegrityAppCheckProviderFactory.getInstance()
+            )
+        }
 
         // Apply saved theme preference (default: system)
         val theme = preferencesManager.getThemePreference()

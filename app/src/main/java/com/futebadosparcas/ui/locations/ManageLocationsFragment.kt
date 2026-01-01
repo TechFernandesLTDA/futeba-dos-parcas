@@ -15,6 +15,7 @@ import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.databinding.FragmentManageLocationsBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.core.widget.doAfterTextChanged
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -41,6 +42,7 @@ class ManageLocationsFragment : Fragment() {
         setupToolbar()
         setupRecyclerView()
         setupListeners()
+        setupSearch()
         observeViewModel()
     }
 
@@ -84,6 +86,12 @@ class ManageLocationsFragment : Fragment() {
         binding.fabAddLocation.setOnClickListener {
             // Navegar para tela de criar novo local
             findNavController().navigate(com.futebadosparcas.R.id.locationDetailFragment)
+        }
+    }
+
+    private fun setupSearch() {
+        binding.etSearch.doAfterTextChanged { text ->
+            viewModel.onSearchQueryChanged(text?.toString() ?: "")
         }
     }
 

@@ -25,6 +25,7 @@ class RankingViewModel @Inject constructor(
     private val statisticsRepository: IStatisticsRepository,
     private val userRepository: UserRepository,
     private val leagueService: LeagueService,
+    private val gamificationRepository: com.futebadosparcas.data.repository.GamificationRepository,
     private val auth: FirebaseAuth
 ) : ViewModel() {
 
@@ -69,18 +70,8 @@ class RankingViewModel @Inject constructor(
                 }
 
                 val rankings = rankingResult.getOrNull() ?: emptyList()
-                val items = rankings.map { entry ->
-                    PlayerRankingItem(
-                        rank = entry.rank,
-                        playerName = entry.userName,
-                        value = entry.value,
-                        photoUrl = entry.userPhoto,
-                        userId = entry.userId,
-                        gamesPlayed = entry.gamesPlayed,
-                        average = entry.average,
-                        nickname = entry.nickname
-                    )
-                }
+                val items = rankings
+
 
                 // Buscar posicao do usuario atual
                 val myPosition = currentUserId?.let { uid ->
@@ -156,12 +147,18 @@ class RankingViewModel @Inject constructor(
                 val currentXp = user.experiencePoints
                 val currentLevel = user.level
                 val (xpProgress, xpNeeded) = LevelTable.getXpProgress(currentXp)
-                val progressPercentage = if (xpNeeded > 0) xpProgress.toFloat() / xpNeeded else 1f
+                val progressPercentage = if (xpNeeded > 0L) xpProgress.toFloat() / xpNeeded else 1f
 
                 // Buscar milestones
-                val achievedMilestones = mutableListOf<MilestoneType>()
-                // Por enquanto, inferir dos badges ou de um campo no user
-                // TODO: Implementar busca de milestones do Firestore
+                val achievedMilestones = user.milestonesAchieved
+                    .mapNotNull { name ->
+                        try {
+                            MilestoneType.valueOf(name)
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    .toMutableList()
 
                 // Calcular proximos milestones
                 val nextMilestones = if (stats != null) {
@@ -181,8 +178,14 @@ class RankingViewModel @Inject constructor(
                 }
 
                 // Buscar dados da liga (temporada ativa)
-                // TODO: Buscar season_id da temporada ativa
-                val leagueData: com.futebadosparcas.data.model.SeasonParticipationV2? = null
+                val activeSeasonResult = gamificationRepository.getActiveSeason()
+                val activeSeason = activeSeasonResult.getOrNull()
+                
+                val leagueData = if (activeSeason != null) {
+                    leagueService.getParticipation(uid, activeSeason.id).getOrNull()
+                } else {
+                    null
+                }
 
                 _evolutionState.value = EvolutionUiState.Success(
                     PlayerEvolutionData(

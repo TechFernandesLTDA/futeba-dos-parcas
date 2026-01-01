@@ -50,13 +50,13 @@ class StatisticsViewModel @Inject constructor(
                 val combined = CombinedStatistics(
                     myStats = myStats,
                     topScorers = topScorers.mapIndexed { index, stats ->
-                        PlayerRankingItem(index + 1, userMap[stats.id]?.name ?: "Jogador", stats.totalGoals, userMap[stats.id]?.photoUrl)
+                        PlayerRankingItem(index + 1, userMap[stats.id]?.name ?: "Jogador", stats.totalGoals.toLong(), userMap[stats.id]?.photoUrl)
                     },
                     topGoalkeepers = topGoalkeepers.mapIndexed { index, stats ->
-                        PlayerRankingItem(index + 1, userMap[stats.id]?.name ?: "Jogador", stats.totalSaves, userMap[stats.id]?.photoUrl)
+                        PlayerRankingItem(index + 1, userMap[stats.id]?.name ?: "Jogador", stats.totalSaves.toLong(), userMap[stats.id]?.photoUrl)
                     },
                     bestPlayers = bestPlayers.mapIndexed { index, stats ->
-                        PlayerRankingItem(index + 1, userMap[stats.id]?.name ?: "Jogador", stats.bestPlayerCount, userMap[stats.id]?.photoUrl)
+                        PlayerRankingItem(index + 1, userMap[stats.id]?.name ?: "Jogador", stats.bestPlayerCount.toLong(), userMap[stats.id]?.photoUrl)
                     },
                     goalEvolution = goalsHistory
                 )

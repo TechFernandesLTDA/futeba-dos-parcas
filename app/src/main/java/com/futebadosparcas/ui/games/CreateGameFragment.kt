@@ -126,7 +126,7 @@ class CreateGameFragment : Fragment() {
                 "Não se repete" to "none"
             )
 
-            hapticManager.success()
+            hapticManager.tick()
             viewModel.saveGame(
                 gameId = args.gameId,
                 ownerName = binding.etOwnerName.text.toString(),

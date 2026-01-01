@@ -33,7 +33,7 @@ class PostGameEventEmitter @Inject constructor() {
     fun createSummary(
         gameId: String,
         result: PlayerProcessingResult,
-        previousXp: Int,
+        previousXp: Long,
         previousLevel: Int
     ): PostGameSummary {
         return PostGameSummary(

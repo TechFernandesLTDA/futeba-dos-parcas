@@ -79,7 +79,7 @@ class HomeViewModel @Inject constructor(
                     val isMaxLevel = user.level >= 10
                     
                     val percent = if (isMaxLevel) 100 else {
-                        if (neededXp > 0) (progressXp * 100 / neededXp) else 100
+                        if (neededXp > 0L) (progressXp * 100L / neededXp).toInt() else 100
                     }
                     
                     val summary = GamificationSummary(
@@ -113,7 +113,7 @@ class HomeViewModel @Inject constructor(
 data class GamificationSummary(
     val level: Int,
     val levelName: String,
-    val nextLevelXp: Int,
+    val nextLevelXp: Long,
     val nextLevelName: String,
     val progressPercent: Int,
     val isMaxLevel: Boolean,

@@ -57,16 +57,12 @@ class BadgeUnlockedDialog : DialogFragment() {
     }
 
     private fun setupMockBadge() {
-        // TODO: Receber badge via Bundle arguments
-        badge = Badge(
-            id = "hat_trick",
-            type = BadgeType.HAT_TRICK,
-            name = "Hat-Trick",
-            description = "Marque 3+ gols em uma partida",
-            iconUrl = "",
-            xpReward = 100,
-            rarity = BadgeRarity.EPICO
-        )
+        badge = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            arguments?.getParcelable("badge", Badge::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            arguments?.getParcelable("badge")
+        }
     }
 
     private fun setupViews() {
@@ -161,8 +157,7 @@ class BadgeUnlockedDialog : DialogFragment() {
         fun newInstance(badge: Badge): BadgeUnlockedDialog {
             val dialog = BadgeUnlockedDialog()
             val args = Bundle().apply {
-                // TODO: Passar badge via Parcelable
-                // putParcelable("badge", badge)
+                putParcelable("badge", badge)
             }
             dialog.arguments = args
             return dialog

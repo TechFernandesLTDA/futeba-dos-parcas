@@ -84,21 +84,18 @@
                 android:layout_height="wrap_content">
 
                 <!-- User Summary Header -->
-                <com.google.android.material.card.MaterialCardView
+                <FrameLayout
                     android:id="@+id/headerUserInfo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:cardElevation="0dp"
-                    app:cardBackgroundColor="@android:color/transparent"
-                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.None">
+                    app:layout_constraintTop_toTopOf="parent">
                     
                     <androidx.compose.ui.platform.ComposeView
                         android:id="@+id/composeHeader"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
 
-                </com.google.android.material.card.MaterialCardView>
+                </FrameLayout>
 
                 <TextView
                     android:id="@+id/tvTitle"

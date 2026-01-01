@@ -23,7 +23,7 @@ import com.futebadosparcas.data.repository.RankingCategory
 import com.futebadosparcas.data.repository.RankingPeriod
 import com.futebadosparcas.ui.theme.FutebaColors
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun RankingScreen(
     viewModel: RankingViewModel,

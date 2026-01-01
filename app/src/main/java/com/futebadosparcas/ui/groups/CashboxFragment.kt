@@ -22,6 +22,7 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
+import java.util.Date
 import java.util.Locale
 
 /**
@@ -68,8 +69,7 @@ class CashboxFragment : Fragment() {
         binding.toolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.action_filter -> {
-                    // TODO: Mostrar opções de filtro
-                    Toast.makeText(requireContext(), "Filtros - Em breve", Toast.LENGTH_SHORT).show()
+                    showFilterOptions()
                     true
                 }
                 R.id.action_recalculate -> {
@@ -77,8 +77,7 @@ class CashboxFragment : Fragment() {
                     true
                 }
                 R.id.action_report -> {
-                    // TODO: Implementar relatório
-                    Toast.makeText(requireContext(), "Relatório - Em breve", Toast.LENGTH_SHORT).show()
+                    showReportOptions()
                     true
                 }
                 else -> false
@@ -197,10 +196,10 @@ class CashboxFragment : Fragment() {
                         viewModel.resetActionState()
                     }
                     is CashboxActionState.TotalsByCategory -> {
-                        // Pode mostrar dialog com totais por categoria
+                        showTotalsDialog("Totais por Categoria", state.totals.mapKeys { it.key.displayName })
                     }
                     is CashboxActionState.TotalsByPlayer -> {
-                        // Pode mostrar dialog com totais por jogador
+                        showTotalsDialog("Totais por Jogador", state.totals)
                     }
                     is CashboxActionState.Idle -> {}
                 }
@@ -282,6 +281,58 @@ class CashboxFragment : Fragment() {
                 viewModel.recalculateBalance()
             }
             .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun showFilterOptions() {
+        // Usa o Material Date Range Picker
+        val dateRangePicker = com.google.android.material.datepicker.MaterialDatePicker.Builder.dateRangePicker()
+            .setTitleText("Selecione o período")
+            .setSelection(androidx.core.util.Pair(
+                com.google.android.material.datepicker.MaterialDatePicker.thisMonthInUtcMilliseconds(),
+                com.google.android.material.datepicker.MaterialDatePicker.todayInUtcMilliseconds()
+            ))
+            .build()
+
+        dateRangePicker.addOnPositiveButtonClickListener { selection ->
+            val startDate = Date(selection.first)
+            val endDate = Date(selection.second)
+            viewModel.filterByDateRange(startDate, endDate)
+            
+            // Atualiza chip de filtro se necessário ou mostra Snackbar
+            showSnackbar("Filtro aplicado: ${java.text.SimpleDateFormat("dd/MM", Locale.getDefault()).format(startDate)} - ${java.text.SimpleDateFormat("dd/MM", Locale.getDefault()).format(endDate)}")
+        }
+
+        dateRangePicker.show(parentFragmentManager, "DateRangePicker")
+    }
+
+    private fun showReportOptions() {
+        val options = arrayOf("Totais por Categoria", "Totais por Jogador")
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Relatórios")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> viewModel.getTotalsByCategory()
+                    1 -> viewModel.getTotalsByPlayer()
+                }
+            }
+            .show()
+    }
+
+    private fun showTotalsDialog(title: String, totals: Map<String, Double>) {
+        val message = buildString {
+            totals.forEach { (name, amount) ->
+                append("$name: ${currencyFormat.format(amount)}\n")
+            }
+            if (totals.isEmpty()) {
+                append("Nenhum dado encontrado.")
+            }
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton("OK", null)
             .show()
     }
 

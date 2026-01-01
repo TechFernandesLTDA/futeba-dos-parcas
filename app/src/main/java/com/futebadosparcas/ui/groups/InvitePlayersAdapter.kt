@@ -6,8 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
-import coil.transform.CircleCropTransformation
+import com.futebadosparcas.util.loadProfileImage
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.User
 import com.futebadosparcas.databinding.ItemInvitePlayerBinding
@@ -57,12 +56,7 @@ class InvitePlayersAdapter(
 
         fun bind(user: User) {
             // Carrega foto do jogador
-            binding.ivPlayerAvatar.load(user.photoUrl) {
-                crossfade(true)
-                placeholder(R.drawable.ic_person)
-                error(R.drawable.ic_person)
-                transformations(CircleCropTransformation())
-            }
+            binding.ivPlayerAvatar.loadProfileImage(user.photoUrl)
             
             // Nome do jogador
             binding.tvPlayerName.text = user.name

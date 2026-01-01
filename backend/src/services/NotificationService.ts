@@ -3,6 +3,7 @@ import { Notification, NotificationType } from '../entities/Notification';
 import { User } from '../entities/User';
 import { Game } from '../entities/Game';
 import { logger } from '../utils/logger';
+import * as admin from 'firebase-admin';
 
 export class NotificationService {
   private notificationRepository = AppDataSource.getRepository(Notification);
@@ -27,7 +28,7 @@ export class NotificationService {
 
     await this.notificationRepository.save(notification);
 
-    // TODO: Integrar com Firebase Cloud Messaging para push notification
+
     await this.sendPushNotification(userId, title, message, data);
 
     logger.info(`Notification created for user ${userId}: ${type}`);
@@ -51,14 +52,15 @@ export class NotificationService {
         return;
       }
 
-      // TODO: Implementar envio via Firebase Admin SDK
-      // messaging.send({
-      //   token: user.fcm_token,
-      //   notification: { title, body },
-      //   data: { ...data },
-      // });
+      await admin.messaging().send({
+        token: user.fcm_token,
+        notification: { title, body },
+        data: data ? Object.fromEntries(
+          Object.entries(data).map(([key, value]) => [key, String(value)])
+        ) : undefined,
+      });
 
-      logger.debug(`Push notification would be sent to user ${userId}`);
+      logger.info(`Push notification sent to user ${userId}`);
     } catch (error) {
       logger.error('Error sending push notification:', error);
     }

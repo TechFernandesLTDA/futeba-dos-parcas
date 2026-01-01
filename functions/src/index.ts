@@ -1,7 +1,5 @@
 import * as admin from "firebase-admin";
-import * as functions from "firebase-functions";
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
-import { getWeek, getYear, format } from "date-fns";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -15,6 +13,7 @@ interface Game {
     xp_processed: boolean;
     status: string; // "FINISHED"
     mvp_id?: string;
+    owner_id: string;
 }
 
 interface GameConfirmation {
@@ -111,19 +110,19 @@ const DEFAULT_SETTINGS: GamificationSettings = {
     xp_streak_10: 100
 };
 
-// LevelTable Logic
+// LevelTable Logic (Synced with Kotlin LevelTable.kt)
 const LEVELS = [
-    { level: 0, xpRequired: 0 },
-    { level: 1, xpRequired: 100 },
-    { level: 2, xpRequired: 350 },
-    { level: 3, xpRequired: 850 },
-    { level: 4, xpRequired: 1850 },
-    { level: 5, xpRequired: 3850 },
-    { level: 6, xpRequired: 7350 },
-    { level: 7, xpRequired: 12850 },
-    { level: 8, xpRequired: 20850 },
-    { level: 9, xpRequired: 32850 },
-    { level: 10, xpRequired: 52850 }
+    { level: 0, name: "Novato", xpRequired: 0 },
+    { level: 1, name: "Iniciante", xpRequired: 100 },
+    { level: 2, name: "Amador", xpRequired: 350 },
+    { level: 3, name: "Regular", xpRequired: 850 },
+    { level: 4, name: "Experiente", xpRequired: 1850 },
+    { level: 5, name: "Habilidoso", xpRequired: 3850 },
+    { level: 6, name: "Profissional", xpRequired: 7350 },
+    { level: 7, name: "Expert", xpRequired: 12850 },
+    { level: 8, name: "Mestre", xpRequired: 20850 },
+    { level: 9, name: "Lenda", xpRequired: 32850 },
+    { level: 10, name: "Imortal", xpRequired: 52850 }
 ];
 
 function getLevelForXp(xp: number): number {
@@ -132,7 +131,7 @@ function getLevelForXp(xp: number): number {
     return found ? found.level : 0;
 }
 
-// Milestone Logic (Simplified for TS)
+// Milestone Logic (Synced with Kotlin Gamification.kt)
 type MilestoneDef = {
     name: string;
     xpReward: number;
@@ -141,27 +140,50 @@ type MilestoneDef = {
 };
 
 const MILESTONES: MilestoneDef[] = [
-    // Games
+    // Jogos
     { name: "GAMES_10", xpReward: 50, threshold: 10, field: "totalGames" },
     { name: "GAMES_25", xpReward: 100, threshold: 25, field: "totalGames" },
     { name: "GAMES_50", xpReward: 200, threshold: 50, field: "totalGames" },
-    // Goals
+    { name: "GAMES_100", xpReward: 500, threshold: 100, field: "totalGames" },
+    { name: "GAMES_250", xpReward: 1000, threshold: 250, field: "totalGames" },
+    { name: "GAMES_500", xpReward: 2500, threshold: 500, field: "totalGames" },
+
+    // Gols
     { name: "GOALS_10", xpReward: 50, threshold: 10, field: "totalGoals" },
     { name: "GOALS_25", xpReward: 100, threshold: 25, field: "totalGoals" },
     { name: "GOALS_50", xpReward: 200, threshold: 50, field: "totalGoals" },
-    // Assists
+    { name: "GOALS_100", xpReward: 500, threshold: 100, field: "totalGoals" },
+    { name: "GOALS_250", xpReward: 1000, threshold: 250, field: "totalGoals" },
+
+    // Assistencias
     { name: "ASSISTS_10", xpReward: 50, threshold: 10, field: "totalAssists" },
     { name: "ASSISTS_25", xpReward: 100, threshold: 25, field: "totalAssists" },
-    // Wins
+    { name: "ASSISTS_50", xpReward: 200, threshold: 50, field: "totalAssists" },
+    { name: "ASSISTS_100", xpReward: 500, threshold: 100, field: "totalAssists" },
+
+    // Defesas
+    { name: "SAVES_25", xpReward: 50, threshold: 25, field: "totalSaves" },
+    { name: "SAVES_50", xpReward: 100, threshold: 50, field: "totalSaves" },
+    { name: "SAVES_100", xpReward: 200, threshold: 100, field: "totalSaves" },
+    { name: "SAVES_250", xpReward: 500, threshold: 250, field: "totalSaves" },
+
+    // MVPs
+    { name: "MVP_5", xpReward: 100, threshold: 5, field: "bestPlayerCount" },
+    { name: "MVP_10", xpReward: 300, threshold: 10, field: "bestPlayerCount" },
+    { name: "MVP_25", xpReward: 750, threshold: 25, field: "bestPlayerCount" },
+    { name: "MVP_50", xpReward: 1500, threshold: 50, field: "bestPlayerCount" },
+
+    // Vitorias
     { name: "WINS_10", xpReward: 75, threshold: 10, field: "gamesWon" },
-    { name: "WINS_25", xpReward: 150, threshold: 25, field: "gamesWon" }
-    // ... add others as needed or full list
+    { name: "WINS_25", xpReward: 150, threshold: 25, field: "gamesWon" },
+    { name: "WINS_50", xpReward: 300, threshold: 50, field: "gamesWon" },
+    { name: "WINS_100", xpReward: 750, threshold: 100, field: "gamesWon" }
 ];
 
 function checkMilestones(stats: UserStatistics, achieved: string[]): { newMilestones: string[], xp: number } {
     const newM: string[] = [];
     let xp = 0;
-    
+
     for (const m of MILESTONES) {
         if (achieved.includes(m.name)) continue;
         if (stats[m.field] >= m.threshold) {
@@ -178,12 +200,12 @@ function checkMilestones(stats: UserStatistics, achieved: string[]): { newMilest
 
 export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (event) => {
     if (!event.data) return;
-    
+
     const before = event.data.before.data() as Game;
     const after = event.data.after.data() as Game;
     const gameId = event.params.gameId;
 
-    // Check Trigger Conditions
+    // Check Trigger Conditions: Status changed to FINISHED and xp not yet processed
     if (before.status !== "FINISHED" && after.status === "FINISHED") {
         if (after.xp_processed) {
             console.log(`Game ${gameId} already processed.`);
@@ -191,22 +213,24 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
         }
 
         console.log(`Processing Game ${gameId} for XP...`);
-        
+
         // 1. Fetch Dependencies
-        const [confirmationsSnap, teamsSnap, liveScoreDoc, settingsSnap] = await Promise.all([
+        const [confirmationsSnap, teamsSnap, liveScoreDoc, settingsSnap, seasonSnap] = await Promise.all([
             db.collection("confirmations")
                 .where("game_id", "==", gameId)
                 .where("status", "==", "CONFIRMED")
                 .get(),
             db.collection("teams").where("game_id", "==", gameId).get(),
             db.collection("live_scores").doc(gameId).get(),
-            db.collection("app_settings").doc("gamification").get()
+            db.collection("app_settings").doc("gamification").get(),
+            db.collection("seasons").where("is_active", "==", true).limit(1).get()
         ]);
 
         const confirmations = confirmationsSnap.docs.map(d => d.data() as GameConfirmation);
         const teams = teamsSnap.docs.map(d => d.data() as Team);
         const liveScore = liveScoreDoc.exists ? (liveScoreDoc.data() as LiveGameScore) : null;
-        
+        const activeSeason = !seasonSnap.empty ? seasonSnap.docs[0].id : null;
+
         let settings = DEFAULT_SETTINGS;
         if (settingsSnap.exists) {
             settings = { ...DEFAULT_SETTINGS, ...settingsSnap.data() } as GamificationSettings;
@@ -214,46 +238,51 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
 
         if (confirmations.length < 6) {
             console.log("Not enough players. Marking processed.");
-            await event.data.after.ref.update({ xp_processed: true });
+            await event.data.after.ref.update({ xp_processed: true, xp_processed_at: admin.firestore.FieldValue.serverTimestamp() });
             return;
         }
 
         // 2. Determine Results
         let teamResults: Record<string, "WIN" | "LOSS" | "DRAW"> = {};
         if (teams.length >= 2) {
-             const t1 = teams.find(t => t.id === (liveScore ? liveScore.team1Id : teams[0].id));
-             const t2 = teams.find(t => t.id === (liveScore ? liveScore.team2Id : teams[1].id));
+            const t1 = teams.find(t => t.id === (liveScore ? liveScore.team1Id : teams[0].id));
+            const t2 = teams.find(t => t.id === (liveScore ? liveScore.team2Id : teams[1].id));
 
-             let s1 = t1 ? t1.score : 0;
-             let s2 = t2 ? t2.score : 0;
-             if (liveScore) {
-                 s1 = liveScore.team1Score;
-                 s2 = liveScore.team2Score;
-             }
+            let s1 = t1 ? t1.score : 0;
+            let s2 = t2 ? t2.score : 0;
+            if (liveScore) {
+                s1 = liveScore.team1Score;
+                s2 = liveScore.team2Score;
+            }
 
-             if (t1 && t2) {
-                 if (s1 > s2) {
-                     teamResults[t1.id] = "WIN";
-                     teamResults[t2.id] = "LOSS";
-                 } else if (s2 > s1) {
-                     teamResults[t1.id] = "LOSS";
-                     teamResults[t2.id] = "WIN";
-                 } else {
-                     teamResults[t1.id] = "DRAW";
-                     teamResults[t2.id] = "DRAW";
-                 }
-             }
+            if (t1 && t2) {
+                if (s1 > s2) {
+                    teamResults[t1.id] = "WIN";
+                    teamResults[t2.id] = "LOSS";
+                } else if (s2 > s1) {
+                    teamResults[t1.id] = "LOSS";
+                    teamResults[t2.id] = "WIN";
+                } else {
+                    teamResults[t1.id] = "DRAW";
+                    teamResults[t2.id] = "DRAW";
+                }
+            }
         }
 
         // 3. Process Each Player
         const batch = db.batch();
         const now = admin.firestore.FieldValue.serverTimestamp();
 
+        // Date keys for Rankings
+        const d = new Date();
+        const monthKey = d.toISOString().substring(0, 7); // yyyy-MM
+        const weekKey = getWeekKey(d);
+
         for (const conf of confirmations) {
             const uid = conf.userId;
             const team = teams.find(t => t.playerIds.includes(uid));
             const result = team ? (teamResults[team.id] || "DRAW") : "DRAW";
-            
+
             // Fetch User Data & Stats (Parallel)
             const [userDoc, statsDoc, streakDoc] = await Promise.all([
                 db.collection("users").doc(uid).get(),
@@ -264,9 +293,10 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
             const userEntry = userDoc.data() || {};
             const currentXp = userEntry.experience_points || 0;
             const achievedMilestones = (userEntry.milestones_achieved || []) as string[];
-            
+
             const stats = (statsDoc.exists ? statsDoc.data() : {
                 totalGames: 0, totalGoals: 0, totalAssists: 0, totalSaves: 0,
+                totalYellowCards: 0, totalRedCards: 0,
                 gamesWon: 0, gamesLost: 0, gamesDraw: 0, bestPlayerCount: 0
             }) as UserStatistics;
 
@@ -278,7 +308,7 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
             xp += conf.goals * settings.xp_per_goal;
             xp += conf.assists * settings.xp_per_assist;
             xp += conf.saves * settings.xp_per_save;
-            
+
             // Result XP
             if (result === "WIN") xp += settings.xp_win;
             else if (result === "DRAW") xp += settings.xp_draw;
@@ -294,15 +324,19 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
             xp += streakXp;
 
             // Update Stats locally for Milestone Check
-            const newStats = { ...stats };
-            newStats.totalGames++;
-            newStats.totalGoals += conf.goals;
-            newStats.totalAssists += conf.assists;
-            newStats.totalSaves += conf.saves;
-            if (result === "WIN") newStats.gamesWon++;
-            else if (result === "LOSS") newStats.gamesLost++;
-            else newStats.gamesDraw++;
-            if (isMvp) newStats.bestPlayerCount++;
+            const newStats: UserStatistics = {
+                ...stats,
+                totalGames: (stats.totalGames || 0) + 1,
+                totalGoals: (stats.totalGoals || 0) + conf.goals,
+                totalAssists: (stats.totalAssists || 0) + conf.assists,
+                totalSaves: (stats.totalSaves || 0) + conf.saves,
+                totalYellowCards: (stats.totalYellowCards || 0) + conf.yellowCards,
+                totalRedCards: (stats.totalRedCards || 0) + conf.redCards,
+                gamesWon: (stats.gamesWon || 0) + (result === "WIN" ? 1 : 0),
+                gamesLost: (stats.gamesLost || 0) + (result === "LOSS" ? 1 : 0),
+                gamesDraw: (stats.gamesDraw || 0) + (result === "DRAW" ? 1 : 0),
+                bestPlayerCount: (stats.bestPlayerCount || 0) + (isMvp ? 1 : 0)
+            };
 
             // Milestones
             const { newMilestones, xp: milesXp } = checkMilestones(newStats, achievedMilestones);
@@ -318,8 +352,11 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
             const userUpdate: any = {
                 experience_points: finalXp,
                 level: newLevel,
-                milestones_achieved: admin.firestore.FieldValue.arrayUnion(...newMilestones)
+                updated_at: now
             };
+            if (newMilestones.length > 0) {
+                userUpdate.milestones_achieved = admin.firestore.FieldValue.arrayUnion(...newMilestones);
+            }
             batch.update(db.collection("users").doc(uid), userUpdate);
 
             // 2. Update Stats
@@ -355,6 +392,14 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 created_at: now
             };
             batch.set(logRef, log);
+
+            // 5. Update Ranking Deltas
+            updateRankingDeltas(batch, uid, conf, result, xp, isMvp, weekKey, monthKey);
+
+            // 6. Update Season (if active)
+            if (activeSeason) {
+                updateSeasonParticipation(batch, uid, activeSeason, result, conf, isMvp);
+            }
         }
 
         // Mark Game Processed
@@ -364,3 +409,75 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
         console.log(`Game ${gameId} processing complete.`);
     }
 });
+
+function getWeekKey(d: Date): string {
+    const year = d.getFullYear();
+    const firstDayOfYear = new Date(year, 0, 1);
+    const pastDaysOfYear = (d.getTime() - firstDayOfYear.getTime()) / 86400000;
+    const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+    return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
+}
+
+function updateRankingDeltas(
+    batch: admin.firestore.WriteBatch,
+    uid: string,
+    conf: GameConfirmation,
+    result: string,
+    xp: number,
+    isMvp: boolean,
+    weekKey: string,
+    monthKey: string
+) {
+    const fields = {
+        goals_added: admin.firestore.FieldValue.increment(conf.goals),
+        assists_added: admin.firestore.FieldValue.increment(conf.assists),
+        saves_added: admin.firestore.FieldValue.increment(conf.saves),
+        xp_added: admin.firestore.FieldValue.increment(xp),
+        games_added: admin.firestore.FieldValue.increment(1),
+        wins_added: admin.firestore.FieldValue.increment(result === "WIN" ? 1 : 0),
+        mvp_added: admin.firestore.FieldValue.increment(isMvp ? 1 : 0),
+        updated_at: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    const weekId = `week_${weekKey}_${uid}`;
+    batch.set(db.collection("ranking_deltas").doc(weekId), {
+        user_id: uid,
+        period: "week",
+        period_key: weekKey,
+        ...fields
+    }, { merge: true });
+
+    const monthId = `month_${monthKey}_${uid}`;
+    batch.set(db.collection("ranking_deltas").doc(monthId), {
+        user_id: uid,
+        period: "month",
+        period_key: monthKey,
+        ...fields
+    }, { merge: true });
+}
+
+function updateSeasonParticipation(
+    batch: admin.firestore.WriteBatch,
+    uid: string,
+    seasonId: string,
+    result: string,
+    conf: GameConfirmation,
+    isMvp: boolean
+) {
+    const partId = `${seasonId}_${uid}`;
+    const pointsToAdd = result === "WIN" ? 3 : (result === "DRAW" ? 1 : 0);
+
+    batch.set(db.collection("season_participation").doc(partId), {
+        user_id: uid,
+        season_id: seasonId,
+        points: admin.firestore.FieldValue.increment(pointsToAdd),
+        games_played: admin.firestore.FieldValue.increment(1),
+        wins: admin.firestore.FieldValue.increment(result === "WIN" ? 1 : 0),
+        draws: admin.firestore.FieldValue.increment(result === "DRAW" ? 1 : 0),
+        losses: admin.firestore.FieldValue.increment(result === "LOSS" ? 1 : 0),
+        goals_scored: admin.firestore.FieldValue.increment(conf.goals),
+        assists: admin.firestore.FieldValue.increment(conf.assists),
+        mvp_count: admin.firestore.FieldValue.increment(isMvp ? 1 : 0),
+        last_calculated_at: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+}

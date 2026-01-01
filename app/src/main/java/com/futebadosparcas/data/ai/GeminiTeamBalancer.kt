@@ -62,7 +62,7 @@ class GeminiTeamBalancer @Inject constructor(
                     compareBy<Int> { teamBuilders[it].size }
                         .thenBy { teamScores[it] }
                 )
-                teamBuilders[targetTeamIndex].add(player.first)
+                teamBuilders[targetTeamIndex].add(player)
                 teamScores[targetTeamIndex] += score
             }
 
@@ -76,7 +76,7 @@ class GeminiTeamBalancer @Inject constructor(
                     compareBy<Int> { teamBuilders[it].size }
                         .thenBy { teamScores[it] }
                 )
-                teamBuilders[targetTeamIndex].add(player.first)
+                teamBuilders[targetTeamIndex].add(player)
                 teamScores[targetTeamIndex] += score
             }
 

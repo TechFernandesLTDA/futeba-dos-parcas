@@ -7,7 +7,9 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
-import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.WeekFields
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,8 +19,8 @@ import javax.inject.Singleton
  */
 data class PlayerProcessingResult(
     val userId: String,
-    val xpEarned: Int,
-    val xpBreakdown: Map<String, Int>,
+    val xpEarned: Long,
+    val xpBreakdown: Map<String, Long>,
     val newLevel: Int,
     val leveledUp: Boolean,
     val milestonesUnlocked: List<MilestoneType>,
@@ -148,6 +150,9 @@ class MatchFinalizationService @Inject constructor(
             }
 
             // 10. Atualizar flags do jogo no Batch
+            // REMOVIDO: O servidor deve ser a única fonte de escrita para garantir consistência.
+            // O cliente apenas lê os dados ou envia comandos de ação (como finalizar jogo).
+            /*
             val gameRef = gamesCollection.document(gameId)
             batch.update(gameRef, mapOf(
                 "xp_processed" to true,
@@ -156,6 +161,8 @@ class MatchFinalizationService @Inject constructor(
 
             // 11. Commit Atomico
             batch.commit().await()
+            */
+
 
             AppLogger.d(TAG) { "Jogo $gameId processado com sucesso. ${results.size} jogadores." }
             GameProcessingResult(gameId, true, results)
@@ -283,7 +290,7 @@ class MatchFinalizationService @Inject constructor(
 
         // 6. Buscar dados atuais do usuario
         val userDoc = usersCollection.document(userId).get().await()
-        val currentXp = userDoc.getLong("experience_points")?.toInt() ?: 0
+        val currentXp = userDoc.getLong("experience_points") ?: 0L
         val currentLevel = userDoc.getLong("level")?.toInt() ?: 1
         val achievedMilestones = (userDoc.get("milestones_achieved") as? List<*>)
             ?.filterIsInstance<String>() ?: emptyList()
@@ -320,13 +327,13 @@ class MatchFinalizationService @Inject constructor(
         val newLevel = LevelTable.getLevelForXp(newXp)
         val leveledUp = newLevel > currentLevel
 
-        // 11. Criar XP Log
+        // 11. Criar XP Log (Apenas para retorno visual, não será salvo localmente)
         val xpLog = XPCalculator.createXpLog(
             userId = userId,
             gameId = gameId,
             calculationResult = xpResult.copy(
                 totalXp = totalXpEarned,
-                breakdown = xpResult.breakdown.copy(milestones = milestonesXp)
+                breakdown = xpResult.breakdown.copy(milestones = milestonesXp.toLong())
             ),
             xpBefore = currentXp,
             levelBefore = currentLevel,
@@ -337,24 +344,11 @@ class MatchFinalizationService @Inject constructor(
             saves = confirmation.saves
         )
 
-        // 12. Preparar Season Participation (Se houver temporada ativa)
-        if (activeSeason != null) {
-            prepareSeasonUpdate(
-                batch = batch,
-                userId = userId,
-                seasonId = activeSeason.id,
-                result = playerTeamResult,
-                goals = confirmation.goals,
-                assists = confirmation.assists,
-                conceded = goalsConceded,
-                isMvp = isMvp
-            )
-        }
-
-        // ------------------------------------------------------------
-        // Adicionar operações ao Batch
-        // ------------------------------------------------------------
-
+        // IMPORTANTE: Todas as gravações no Firestore foram removidas daqui.
+        // A lógica de persistência agora reside exclusivamente na Cloud Function 'onGameStatusUpdate'.
+        // Este serviço agora atua apenas como uma "Preview" para a UI do PostGameDialog.
+        
+        /* CÓDIGO DE GRAVAÇÃO REMOVIDO PARA SEGURANÇA E CENTRALIZAÇÃO NO SERVIDOR
         // Update Confirmation
         val confRef = confirmationsCollection.document("${gameId}_${userId}")
         batch.update(confRef, "xp_earned", totalXpEarned)
@@ -374,12 +368,13 @@ class MatchFinalizationService @Inject constructor(
 
         // Update Ranking Deltas (Week & Month)
         updateRankingDeltas(batch, userId, confirmation, playerTeamResult, totalXpEarned, isMvp)
+        */
 
         // Retornar resultado
         return PlayerProcessingResult(
             userId = userId,
             xpEarned = totalXpEarned,
-            xpBreakdown = xpResult.breakdown.copy(milestones = milestonesXp).toDisplayMap(),
+            xpBreakdown = xpResult.breakdown.copy(milestones = milestonesXp.toLong()).toDisplayMap(),
             newLevel = newLevel,
             leveledUp = leveledUp,
             milestonesUnlocked = milestoneResult.newMilestones,
@@ -400,10 +395,6 @@ class MatchFinalizationService @Inject constructor(
         conceded: Int,
         isMvp: Boolean
     ) {
-        // Tentar buscar documento existente (pode ser lento dentro do loop, mas é necessario)
-        // Otimização: Usar ID deterministico seasonId_userId se possivel
-        // Como o repositorio original usava ID aleatorio, precisamos buscar primeiro para nao duplicar
-        
         val snapshot = seasonParticipationCollection
             .whereEqualTo("season_id", seasonId)
             .whereEqualTo("user_id", userId)
@@ -417,7 +408,6 @@ class MatchFinalizationService @Inject constructor(
         }
 
         if (snapshot.isEmpty) {
-            // Criar novo com ID determinístico para facilitar futuro
             val docId = "${seasonId}_${userId}"
             val newParticipation = SeasonParticipationV2(
                 id = docId,
@@ -436,11 +426,9 @@ class MatchFinalizationService @Inject constructor(
             )
             batch.set(seasonParticipationCollection.document(docId), newParticipation)
         } else {
-            // Atualizar existente
             val doc = snapshot.documents.first()
             val ref = seasonParticipationCollection.document(doc.id)
             
-            // Usar FieldValue.increment para garantir atomicidade
             batch.update(ref, mapOf(
                 "games_played" to FieldValue.increment(1),
                 "wins" to FieldValue.increment(if (result == GameResult.WIN) 1L else 0L),
@@ -461,7 +449,7 @@ class MatchFinalizationService @Inject constructor(
         userId: String,
         confirmation: GameConfirmation,
         result: GameResult,
-        totalXp: Int,
+        totalXp: Long,
         isMvp: Boolean
     ) {
         val weekKey = getCurrentWeekKey()
@@ -469,8 +457,8 @@ class MatchFinalizationService @Inject constructor(
 
         val updates = mapOf(
             "user_id" to userId,
-            "period" to "week", // Overwritten below
-            "period_key" to weekKey, // Overwritten below
+            "period" to "week",
+            "period_key" to weekKey,
             "goals_added" to FieldValue.increment(confirmation.goals.toLong()),
             "assists_added" to FieldValue.increment(confirmation.assists.toLong()),
             "saves_added" to FieldValue.increment(confirmation.saves.toLong()),
@@ -499,14 +487,13 @@ class MatchFinalizationService @Inject constructor(
     }
 
     private fun getCurrentWeekKey(): String {
-        val cal = Calendar.getInstance()
-        val year = cal.get(Calendar.YEAR)
-        val week = cal.get(Calendar.WEEK_OF_YEAR)
-        return "$year-W${week.toString().padStart(2, '0')}"
+        val now = LocalDate.now()
+        val weekFields = WeekFields.of(Locale.getDefault())
+        val weekNumber = now.get(weekFields.weekOfWeekBasedYear())
+        return "${now.year}-W${weekNumber.toString().padStart(2, '0')}"
     }
 
     private fun getCurrentMonthKey(): String {
-        val sdf = SimpleDateFormat("yyyy-MM", Locale.getDefault())
-        return sdf.format(Date())
+        return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"))
     }
 }

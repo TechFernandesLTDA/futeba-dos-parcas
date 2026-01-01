@@ -8,7 +8,7 @@ import com.futebadosparcas.data.model.UserStatistics
  */
 data class MilestoneCheckResult(
     val newMilestones: List<MilestoneType>,
-    val totalXpFromMilestones: Int
+    val totalXpFromMilestones: Long
 )
 
 /**
@@ -42,7 +42,8 @@ object MilestoneChecker {
             }
         }
 
-        val totalXp = newMilestones.sumOf { it.xpReward }
+        // Resolvendo ambiguidade do sumOf especificando o seletor claramente
+        val totalXp = newMilestones.fold(0L) { acc, milestone -> acc + milestone.xpReward }
 
         return MilestoneCheckResult(
             newMilestones = newMilestones,

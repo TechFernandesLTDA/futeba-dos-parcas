@@ -22,14 +22,14 @@ class PostGameDialogFragment : DialogFragment() {
 
         arguments?.let { args ->
             @Suppress("UNCHECKED_CAST")
-            val breakdown = (args.getSerializable(ARG_XP_BREAKDOWN) as? HashMap<String, Int>) ?: HashMap()
+            val breakdown = (args.getSerializable(ARG_XP_BREAKDOWN) as? HashMap<String, Long>) ?: HashMap()
             
             summary = PostGameSummary(
                 gameId = args.getString(ARG_GAME_ID, ""),
-                xpEarned = args.getInt(ARG_XP_EARNED, 0),
+                xpEarned = args.getLong(ARG_XP_EARNED, 0L),
                 xpBreakdown = breakdown,
-                previousXp = args.getInt(ARG_PREVIOUS_XP, 0),
-                newXp = args.getInt(ARG_NEW_XP, 0),
+                previousXp = args.getLong(ARG_PREVIOUS_XP, 0L),
+                newXp = args.getLong(ARG_NEW_XP, 0L),
                 previousLevel = args.getInt(ARG_PREVIOUS_LEVEL, 1),
                 newLevel = args.getInt(ARG_NEW_LEVEL, 1),
                 leveledUp = args.getBoolean(ARG_LEVELED_UP, false),
@@ -76,10 +76,10 @@ class PostGameDialogFragment : DialogFragment() {
             return PostGameDialogFragment().apply {
                 arguments = Bundle().apply {
                     putString(ARG_GAME_ID, summary.gameId)
-                    putInt(ARG_XP_EARNED, summary.xpEarned)
+                    putLong(ARG_XP_EARNED, summary.xpEarned)
                     putSerializable(ARG_XP_BREAKDOWN, HashMap(summary.xpBreakdown))
-                    putInt(ARG_PREVIOUS_XP, summary.previousXp)
-                    putInt(ARG_NEW_XP, summary.newXp)
+                    putLong(ARG_PREVIOUS_XP, summary.previousXp)
+                    putLong(ARG_NEW_XP, summary.newXp)
                     putInt(ARG_PREVIOUS_LEVEL, summary.previousLevel)
                     putInt(ARG_NEW_LEVEL, summary.newLevel)
                     putBoolean(ARG_LEVELED_UP, summary.leveledUp)

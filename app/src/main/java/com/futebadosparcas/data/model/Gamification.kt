@@ -3,9 +3,58 @@ package com.futebadosparcas.data.model
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
+import kotlinx.parcelize.Parcelize
+import android.os.Parcelable
 import java.util.Date
 
 // ========== LIGAS E TEMPORADAS ==========
+
+enum class MilestoneType(
+    val displayName: String,
+    val description: String,
+    val xpReward: Long,
+    val threshold: Int,
+    val field: String // Campo em UserStatistics a verificar
+) {
+    // Jogos
+    GAMES_10("Iniciante", "Jogue 10 partidas", 50L, 10, "totalGames"),
+    GAMES_25("Frequentador", "Jogue 25 partidas", 100L, 25, "totalGames"),
+    GAMES_50("Habitur", "Jogue 50 partidas", 200L, 50, "totalGames"),
+    GAMES_100("Veterano", "Jogue 100 partidas", 500L, 100, "totalGames"),
+    GAMES_250("Lenda Viva", "Jogue 250 partidas", 1000L, 250, "totalGames"),
+    GAMES_500("Imortal", "Jogue 500 partidas", 2500L, 500, "totalGames"),
+
+    // Gols
+    GOALS_10("Primeiro Artilheiro", "Marque 10 gols", 50L, 10, "totalGoals"),
+    GOALS_25("Goleador", "Marque 25 gols", 100L, 25, "totalGoals"),
+    GOALS_50("Matador", "Marque 50 gols", 200L, 50, "totalGoals"),
+    GOALS_100("Centena de Gols", "Marque 100 gols", 500L, 100, "totalGoals"),
+    GOALS_250("Artilheiro Historico", "Marque 250 gols", 1000L, 250, "totalGoals"),
+
+    // Assistencias
+    ASSISTS_10("Garcom", "De 10 assistencias", 50L, 10, "totalAssists"),
+    ASSISTS_25("Armador", "De 25 assistencias", 100L, 25, "totalAssists"),
+    ASSISTS_50("Maestro", "De 50 assistencias", 200L, 50, "totalAssists"),
+    ASSISTS_100("Cerebro", "De 100 assistencias", 500L, 100, "totalAssists"),
+
+    // Defesas (goleiros)
+    SAVES_25("Luvas de Ouro", "Faca 25 defesas", 50L, 25, "totalSaves"),
+    SAVES_50("Paredao Iniciante", "Faca 50 defesas", 100L, 50, "totalSaves"),
+    SAVES_100("Goleiro de Elite", "Faca 100 defesas", 200L, 100, "totalSaves"),
+    SAVES_250("Muralha", "Faca 250 defesas", 500L, 250, "totalSaves"),
+
+    // MVPs
+    MVP_5("Destaque", "Seja MVP 5 vezes", 100L, 5, "bestPlayerCount"),
+    MVP_10("Craque", "Seja MVP 10 vezes", 300L, 10, "bestPlayerCount"),
+    MVP_25("Fenomeno", "Seja MVP 25 vezes", 750L, 25, "bestPlayerCount"),
+    MVP_50("Lenda", "Seja MVP 50 vezes", 1500L, 50, "bestPlayerCount"),
+
+    // Vitorias
+    WINS_10("Vencedor", "Venca 10 jogos", 75L, 10, "gamesWon"),
+    WINS_25("Campeao", "Venca 25 jogos", 150L, 25, "gamesWon"),
+    WINS_50("Dominador", "Venca 50 jogos", 300L, 50, "gamesWon"),
+    WINS_100("Invicto", "Venca 100 jogos", 750L, 100, "gamesWon")
+}
 
 enum class LeagueDivision(val displayName: String, val colorHex: String) {
     BRONZE("Bronze", "#5D4037"),
@@ -84,6 +133,7 @@ enum class BadgeRarity {
     COMUM, RARO, EPICO, LENDARIO
 }
 
+@Parcelize
 data class Badge(
     @DocumentId
     val id: String = "",
@@ -95,9 +145,9 @@ data class Badge(
     var iconUrl: String = "",
     @get:PropertyName("xp_reward")
     @set:PropertyName("xp_reward")
-    var xpReward: Int = 0,
+    var xpReward: Long = 0,
     val rarity: BadgeRarity = BadgeRarity.COMUM
-) {
+) : Parcelable {
     constructor() : this(id = "")
 }
 
@@ -166,7 +216,7 @@ data class WeeklyChallenge(
     var targetValue: Int = 0,
     @get:PropertyName("xp_reward")
     @set:PropertyName("xp_reward")
-    var xpReward: Int = 100,
+    var xpReward: Long = 100,
     @get:PropertyName("start_date")
     @set:PropertyName("start_date")
     var startDate: String = "",
