@@ -15,6 +15,31 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
+data class LocationMigrationData(
+    val nameKey: String,
+    val cep: String,
+    val street: String,
+    val number: String,
+    val complement: String = "",
+    val neighborhood: String,
+    val city: String,
+    val state: String,
+    val region: String = "",
+    val country: String = "Brasil",
+    
+    // Additional Info
+    val phone: String? = null,
+    val whatsapp: String? = null, // To prioritize
+    val instagram: String? = null,
+    val description: String? = null,
+    val amenities: List<String> = emptyList(),
+    val openingTime: String? = null, // "HH:mm"
+    val closingTime: String? = null, // "HH:mm"
+    val modalities: List<String> = emptyList(), // For default fields creation
+    val numFieldsEstimation: Int = 1
+)
+
+
 @Singleton
 class LocationRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
@@ -459,460 +484,179 @@ class LocationRepository @Inject constructor(
     /**
      * Seeds the database with 50 locations in Curitiba region
      */
+    /**
+     * Seeds the database with 50 locations in Curitiba region
+     * DEPRECATED: Use migrateLocations instead.
+     */
     suspend fun seedCuritibaLocations(currentUserId: String? = null): Result<Int> {
+        return Result.success(0)
+    }
+
+    /**
+     * Migration/Seeding Utility: Updates or Creates locations based on provided data.
+     * Matches by NAME (case insensitive).
+     */
+    suspend fun migrateLocations(migrationData: List<LocationMigrationData>): Result<Int> {
         return try {
-            val uid = currentUserId ?: auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
+            val validData = migrationData.filter { it.nameKey.isNotBlank() }
+            if (validData.isEmpty()) return Result.success(0)
 
-            val locationsToSeed = listOf(
-                // 1) Arena Amigos da Bola
-                Location(
-                    name = "Arena Amigos da Bola",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Boa Vista",
-                    region = "Norte",
-                    address = "Rua Estados Unidos, 2851",
-                    latitude = -25.392827,
-                    longitude = -49.2572238,
-                    phone = "(41) 3206-6241",
-                    instagram = "@arenaamigosdabola",
-                    amenities = listOf("sport bar", "churrasqueira", "vestiario", "wi-fi", "estacionamento"),
-                    ownerId = uid,
-                    isVerified = true,
-                    description = "2 quadras society (cobertas), piso sintético"
-                ),
-                // 2) Camisa 9 – Futebol e Diversão
-                Location(
-                    name = "Camisa 9 – Futebol e Diversão",
-                    city = "Pinhais",
-                    state = "PR",
-                    neighborhood = "Centro",
-                    region = "Grande Curitiba",
-                    address = "Avenida Ayrton Senna da Silva, 2700",
-                    latitude = -25.444941,
-                    longitude = -49.1931287,
-                    phone = "(41) 88288-499",
-                    amenities = listOf("estacionamento", "bar", "churrasqueira", "salao de festas", "vestiario"),
-                    ownerId = uid,
-                    isVerified = true,
-                    description = "3 quadras society (cobertas) + 1 campo (grama)"
-                ),
-                // 3) Cancha do Corinthians
-                Location(
-                    name = "Cancha do Corinthians",
-                    city = "Pinhais",
-                    state = "PR",
-                    neighborhood = "Vargem Grande",
-                    region = "Grande Curitiba",
-                    address = "R. Henrique Coelho Neto, 534",
-                    latitude = -25.448291,
-                    longitude = -49.1774825,
-                    phone = "(41) 99944-2404",
-                    ownerId = uid,
-                    isVerified = true,
-                    description = "Campo de Futebol Suíço e Society"
-                ),
-                // 4) ARP – Futebol Society e Academia
-                Location(
-                    name = "ARP – Futebol Society e Academia",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Rebouças",
-                    region = "Centro/Sul",
-                    address = "Rua 24 de Maio, 988",
-                    latitude = -25.443195,
-                    longitude = -49.266225,
-                    ownerId = uid,
-                    isVerified = true
-                ),
-                // 5) Futebol Society Barcelona
-                Location(
-                    name = "Futebol Society Barcelona",
-                    city = "Pinhais",
-                    state = "PR",
-                    neighborhood = "Emiliano Perneta",
-                    region = "Grande Curitiba",
-                    address = "R. Marialva, 506",
-                    latitude = -25.42397,
-                    longitude = -49.18378,
-                    ownerId = uid,
-                    isVerified = true
-                ),
-                // 6) JB Esportes & Eventos
-                Location(
-                    name = "JB Esportes & Eventos",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Portão",
-                    region = "Sul",
-                    address = "Rua João Bettega, 3173",
-                    latitude = -25.4881045,
-                    longitude = -49.3198734,
-                    ownerId = uid,
-                    isVerified = true,
-                    description = "Society e Futsal"
-                ),
-                // 7) Brasil Soccer (Portão)
-                Location(
-                    name = "Brasil Soccer",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Portão",
-                    region = "Sul",
-                    address = "Rua João Bettega, 1250",
-                    latitude = -25.47696,
-                    longitude = -49.30799,
-                    ownerId = uid,
-                    isVerified = true
-                ),
-                // 8) Top Sports Centro Esportivo
-                Location(
-                    name = "Top Sports Centro Esportivo",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Portão",
-                    region = "Sul",
-                    address = "Rua João Bettega, 2709",
-                    latitude = -25.503923,
-                    longitude = -49.330805,
-                    ownerId = uid,
-                    isVerified = true
-                ),
-                // 9) Eco Soccer (Pilarzinho)
-                Location(
-                    name = "Eco Soccer",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Pilarzinho",
-                    region = "Norte",
-                    address = "Rua Nilo Peçanha, 2575",
-                    latitude = -25.3898,
-                    longitude = -49.2721,
-                    ownerId = uid,
-                    isVerified = true
-                ),
-                // 10) Copacabana Sports
-                Location(
-                    name = "Copacabana Sports",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Capão da Imbuia",
-                    region = "Leste",
-                    address = "Rua Antônio Simm, 809",
-                    // Coords approx
-                    latitude = -25.4385,
-                    longitude = -49.2215,
-                    ownerId = uid,
-                    isVerified = true
-                ),
-                // 11) Duga Sports (Uberaba)
-                Location(
-                    name = "Duga Sports",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Uberaba",
-                    region = "Leste",
-                    address = "Rua Dr. Joaquim Ignácio Silveira da Motta, 1211",
-                    latitude = -25.474668,
-                    longitude = -49.231902,
-                    ownerId = uid,
-                    isVerified = true
-                ),
-                // 12) Goleadores Futebol Society (Uberaba)
-                Location(
-                    name = "Goleadores Futebol Society",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Uberaba",
-                    region = "Leste",
-                    address = "Av. Senador Salgado Filho, 1690",
-                    latitude = -25.4791162,
-                    longitude = -49.2254817,
-                    ownerId = uid,
-                    isVerified = true
-                ),
-                // 13) Meia Alta Society (CIC)
-                Location(
-                    name = "Meia Alta Society",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "CIC",
-                    region = "Oeste",
-                    address = "Rua Nossa Senhora da Cabeça, 1845",
-                    latitude = -25.4957427,
-                    longitude = -49.3155662,
-                    ownerId = uid,
-                    isVerified = true
-                ),
-                // 14) Premium Esportes e Eventos (Campo Comprido)
-                Location(
-                    name = "Premium Esportes e Eventos",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Campo Comprido",
-                    region = "Oeste",
-                    address = "Rua Renato Polatti, 2535",
-                    latitude = -25.4607422,
-                    longitude = -49.331917,
-                    ownerId = uid,
-                    isVerified = true
-                ),
-                // 15) BR Sports (Xaxim)
-                Location(
-                    name = "BR Sports",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Xaxim",
-                    region = "Sul",
-                    address = "BR-116, 15499",
-                    latitude = -25.49805,
-                    longitude = -49.2770138,
-                    ownerId = uid,
-                    isVerified = true
-                ),
-                // 16) Arena Boqueirão
-                Location(
-                    name = "Arena Boqueirão",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Boqueirão",
-                    region = "Sul",
-                    ownerId = uid,
-                    description = "Google Maps Query: Arena Boqueirão Curitiba PR"
-                ),
-                // 17) Arena Xaxim
-                Location(
-                    name = "Arena Xaxim",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Xaxim",
-                    region = "Sul",
-                    ownerId = uid,
-                    description = "Google Maps Query: Arena Xaxim Curitiba PR"
-                ),
-                // 18) Baldan Sports Futsal
-                Location(
-                    name = "Baldan Sports Futsal",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Sítio Cercado",
-                    region = "Sul",
-                    ownerId = uid,
-                    description = "Google Maps Query: Baldan Sports Futsal Sítio Cercado Curitiba PR"
-                ),
-                // 19) Arena Santa Cândida
-                Location(
-                    name = "Arena Santa Cândida",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Santa Cândida",
-                    region = "Norte",
-                    ownerId = uid,
-                    description = "Google Maps Query: Arena Santa Cândida Curitiba PR"
-                ),
-                // 20) Arena Tarumã
-                Location(
-                    name = "Arena Tarumã",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Tarumã",
-                    region = "Leste",
-                    ownerId = uid,
-                    description = "Google Maps Query: Arena Tarumã Curitiba PR"
-                ),
-                 // 21) Arena Alto da XV
-                Location(
-                    name = "Arena Alto da XV",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Alto da XV",
-                    region = "Central",
-                    ownerId = uid,
-                    description = "Google Maps Query: Arena Alto da XV Curitiba PR"
-                ),
-                // 22) Arena Santa Quitéria
-                Location(
-                    name = "Arena Santa Quitéria",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Santa Quitéria",
-                    region = "Sul/Oeste",
-                    ownerId = uid,
-                    description = "Google Maps Query: Arena Santa Quitéria Curitiba PR"
-                ),
-                // 23) Arena Orleans
-                Location(
-                    name = "Arena Orleans",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Orleans",
-                    region = "Oeste",
-                    ownerId = uid,
-                    description = "Google Maps Query: Arena Orleans Curitiba PR"
-                ),
-                // 24) Arena Bairro Alto
-                Location(
-                    name = "Arena Bairro Alto",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Bairro Alto",
-                    region = "Norte",
-                    ownerId = uid,
-                    description = "Google Maps Query: Arena Bairro Alto Curitiba PR"
-                ),
-                // 25) Arena Hauer (Fut & Chopp)
-                Location(
-                    name = "Arena Hauer (Fut & Chopp)",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Hauer",
-                    region = "Sul",
-                    ownerId = uid,
-                    description = "Google Maps Query: Fut & Chopp Arena Hauer Curitiba PR"
-                ),
-                // 26) Arena Tatuquara
-                Location(
-                    name = "Arena Tatuquara",
-                    city = "Curitiba",
-                    state = "PR",
-                    neighborhood = "Tatuquara",
-                    region = "Sul",
-                    ownerId = uid,
-                    description = "Google Maps Query: Arena Tatuquara Curitiba PR"
-                ),
-                // 27) DD Arena Sports (Pinhais)
-                Location(
-                    name = "DD Arena Sports",
-                    city = "Pinhais",
-                    state = "PR",
-                    region = "Grande Curitiba",
-                    ownerId = uid,
-                    description = "Google Maps Query: DD Arena Sports Pinhais PR"
-                ),
-                // 28) Arena Ceschin Fut7 (Pinhais)
-                Location(
-                    name = "Arena Ceschin Fut7",
-                    city = "Pinhais",
-                    state = "PR",
-                    region = "Grande Curitiba",
-                    ownerId = uid,
-                    description = "Google Maps Query: Arena Ceschin Fut7 Pinhais PR"
-                ),
-                // 29) Centro Esportivo Mendes (Pinhais)
-                Location(
-                    name = "Centro Esportivo Mendes",
-                    city = "Pinhais",
-                    state = "PR",
-                    region = "Grande Curitiba",
-                    ownerId = uid,
-                    description = "Google Maps Query: Centro Esportivo Mendes Pinhais PR"
-                ),
-                // 30) Centro da Juventude de Pinhais
-                Location(
-                    name = "Centro da Juventude de Pinhais",
-                    city = "Pinhais",
-                    state = "PR",
-                    region = "Grande Curitiba",
-                    ownerId = uid,
-                    description = "Google Maps Query: Centro da Juventude de Pinhais Pinhais PR"
-                ),
-                // 31) Ginásio Tancredo Neves – Poli (Pinhais)
-                Location(
-                    name = "Ginásio Tancredo Neves – Poli",
-                    city = "Pinhais",
-                    state = "PR",
-                    region = "Grande Curitiba",
-                    address = "Rua 11 de Junho, 637",
-                    latitude = -25.43806,
-                    longitude = -49.19269,
-                    phone = "(41) 99280-1073",
-                    ownerId = uid,
-                    isVerified = true
-                ),
-                
-                // --- Genéricos para cobertura geográfica ---
-                
-                // 32) Arena Society São José dos Pinhais
-                Location(name = "Arena Society São José dos Pinhais", city = "São José dos Pinhais", state = "PR", region = "Grande Curitiba", ownerId = uid),
-                // 33) Arena Society Colombo
-                Location(name = "Arena Society Colombo", city = "Colombo", state = "PR", region = "Grande Curitiba", ownerId = uid),
-                // 34) Arena Society Araucária
-                Location(name = "Arena Society Araucária", city = "Araucária", state = "PR", region = "Grande Curitiba", ownerId = uid),
-                // 35) Arena Society Campo Largo
-                Location(name = "Arena Society Campo Largo", city = "Campo Largo", state = "PR", region = "Grande Curitiba", ownerId = uid),
-                // 36) Arena Society Fazenda Rio Grande
-                Location(name = "Arena Society Fazenda Rio Grande", city = "Fazenda Rio Grande", state = "PR", region = "Grande Curitiba", ownerId = uid),
-                // 37) Arena Society Almirante Tamandaré
-                Location(name = "Arena Society Almirante Tamandaré", city = "Almirante Tamandaré", state = "PR", region = "Grande Curitiba", ownerId = uid),
-                // 38) Arena Society Piraquara
-                Location(name = "Arena Society Piraquara", city = "Piraquara", state = "PR", region = "Grande Curitiba", ownerId = uid),
-                // 39) Arena Society Quatro Barras
-                Location(name = "Arena Society Quatro Barras", city = "Quatro Barras", state = "PR", region = "Grande Curitiba", ownerId = uid),
-                // 40) Arena Society Rio Branco do Sul
-                Location(name = "Arena Society Rio Branco do Sul", city = "Rio Branco do Sul", state = "PR", region = "Grande Curitiba", ownerId = uid),
-                
-                // --- Genéricos Bairros Curitiba ---
-                
-                // 41) Quadra de Futsal Portão
-                Location(name = "Quadra de Futsal Portão", city = "Curitiba", state = "PR", neighborhood = "Portão", region = "Sul", ownerId = uid, description = "Futsal"),
-                // 42) Quadra de Futsal Água Verde
-                Location(name = "Quadra de Futsal Água Verde", city = "Curitiba", state = "PR", neighborhood = "Água Verde", region = "Sul", ownerId = uid, description = "Futsal"),
-                // 43) Quadra de Futsal Boqueirão
-                Location(name = "Quadra de Futsal Boqueirão", city = "Curitiba", state = "PR", neighborhood = "Boqueirão", region = "Sul", ownerId = uid, description = "Futsal"),
-                // 44) Quadra de Futsal Santa Felicidade
-                Location(name = "Quadra de Futsal Santa Felicidade", city = "Curitiba", state = "PR", neighborhood = "Santa Felicidade", region = "Oeste", ownerId = uid, description = "Futsal"),
-                // 45) Quadra Society Santa Cândida
-                Location(name = "Quadra Society Santa Cândida", city = "Curitiba", state = "PR", neighborhood = "Santa Cândida", region = "Norte", ownerId = uid, description = "Society"),
-                // 46) Quadra Society Pinheirinho
-                Location(name = "Quadra Society Pinheirinho", city = "Curitiba", state = "PR", neighborhood = "Pinheirinho", region = "Sul", ownerId = uid, description = "Society"),
-                // 47) Quadra Society Cajuru
-                Location(name = "Quadra Society Cajuru", city = "Curitiba", state = "PR", neighborhood = "Cajuru", region = "Leste", ownerId = uid, description = "Society"),
-                // 48) Quadra Society Barreirinha
-                Location(name = "Quadra Society Barreirinha", city = "Curitiba", state = "PR", neighborhood = "Barreirinha", region = "Norte", ownerId = uid, description = "Society"),
-                // 49) Quadra Society Sítio Cercado
-                Location(name = "Quadra Society Sítio Cercado", city = "Curitiba", state = "PR", neighborhood = "Sítio Cercado", region = "Sul", ownerId = uid, description = "Society"),
-                // 50) Quadra Society Uberaba
-                Location(name = "Quadra Society Uberaba", city = "Curitiba", state = "PR", neighborhood = "Uberaba", region = "Leste", ownerId = uid, description = "Society")
-            )
+            val uid = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado para migração"))
 
-            var addedCount = 0
-            for (loc in locationsToSeed) {
-                // Verificar existência pelo nome e cidade (simples desduplicação)
-                val existing = locationsCollection
-                    .whereEqualTo("name", loc.name)
-                    .whereEqualTo("city", loc.city)
-                    .limit(1)
-                    .get()
-                    .await()
+            // Efficient approach: Get all locations once instead of N queries
+            val allLocationsResult = getAllLocations()
+            if (allLocationsResult.isFailure) return Result.failure(allLocationsResult.exceptionOrNull()!!)
+            
+            val allLocations = allLocationsResult.getOrNull() ?: emptyList()
+            var processedCount = 0
 
-                if (existing.isEmpty) {
-                    val docRef = locationsCollection.document()
-                    val newLoc = loc.copy(id = docRef.id)
-                    docRef.set(newLoc).await()
-                    
-                    // Adicionar uma quadra padrão para cada local, para evitar locais vazios
-                    val fieldType = if (loc.name.contains("Futsal", ignoreCase = true) || loc.description.contains("Futsal", ignoreCase = true)) "FUTSAL" else "SOCIETY"
-                    
-                    val fieldRef = fieldsCollection.document()
-                    val defaultField = Field(
-                        id = fieldRef.id,
-                        locationId = newLoc.id,
-                        name = "Quadra Principal",
-                        type = fieldType,
-                        hourlyPrice = 100.0,
-                        isActive = true,
-                        isCovered = true
+            for (data in validData) {
+                // Find location by name (case insensitive)
+                val existingLoc = allLocations.find { it.name.trim().equals(data.nameKey.trim(), ignoreCase = true) }
+                
+                // Determine contact info precedence
+                val finalPhone = if (!data.whatsapp.isNullOrBlank()) data.whatsapp else data.phone
+                
+                // Parse Instagram (remove URL if present)
+                val finalInsta = data.instagram?.substringAfter(".com/")?.replace("/", "")?.replace("@", "")
+                
+                if (existingLoc != null) {
+                    // UPDATE
+                    val updated = existingLoc.copy(
+                        cep = data.cep,
+                        street = data.street,
+                        number = data.number,
+                        neighborhood = data.neighborhood,
+                        city = data.city,
+                        state = data.state,
+                        country = data.country,
+                        complement = data.complement,
+                        region = if (data.region.isNotBlank()) data.region else existingLoc.region,
+                        address = "${data.street}, ${data.number}${if (data.complement.isNotBlank()) " - " + data.complement else ""} - ${data.neighborhood}, ${data.city} - ${data.state}",
+                        
+                        // Update optional fields if provided in data
+                        phone = finalPhone ?: existingLoc.phone,
+                        instagram = finalInsta ?: existingLoc.instagram,
+                        amenities = if (data.amenities.isNotEmpty()) data.amenities else existingLoc.amenities,
+                        description = data.description ?: existingLoc.description,
+                        openingTime = data.openingTime ?: existingLoc.openingTime,
+                        closingTime = data.closingTime ?: existingLoc.closingTime
                     )
-                    fieldRef.set(defaultField).await()
+                    updateLocation(updated)
+                } else {
+                    // CREATE (Seed)
+                   val docRef = locationsCollection.document()
+                   val newLoc = Location(
+                       id = docRef.id,
+                       ownerId = uid,
+                       name = data.nameKey,
+                       cep = data.cep,
+                       street = data.street,
+                       number = data.number,
+                       neighborhood = data.neighborhood,
+                       city = data.city,
+                       state = data.state,
+                       country = data.country,
+                       complement = data.complement,
+                       region = data.region,
+                       address = "${data.street}, ${data.number}${if (data.complement.isNotBlank()) " - " + data.complement else ""} - ${data.neighborhood}, ${data.city} - ${data.state}",
+                       phone = finalPhone,
+                       instagram = finalInsta,
+                       amenities = data.amenities,
+                       description = data.description ?: "",
+                       openingTime = data.openingTime ?: "08:00",
+                       closingTime = data.closingTime ?: "23:00",
+                       minGameDurationMinutes = 60,
+                       isActive = true,
+                       isVerified = true
+                   )
+                   docRef.set(newLoc).await()
+                   
+                   // Create default fields based on modalities
+                   // Basic logic: 1 field per modality or just 1 default
+                   val mainType = if (data.modalities.any { it.contains("Futsal", true) }) "FUTSAL" else "SOCIETY"
+                   val count = if (data.numFieldsEstimation > 0) data.numFieldsEstimation else 1
+                   
+                   for (i in 1..count) {
+                       val fieldRef = fieldsCollection.document()
+                       val field = Field(
+                           id = fieldRef.id,
+                           locationId = newLoc.id,
+                           name = if (count > 1) "Quadra $i" else "Quadra Principal",
+                           type = mainType,
+                           hourlyPrice = 100.0,
+                           isActive = true,
+                           isCovered = true // Assumption
+                       )
+                       fieldRef.set(field).await()
+                   }
+                }
+                processedCount++
+            }
+            Result.success(processedCount)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro na migração/seeding de locais", e)
+            Result.failure(e)
+        }
+    }
+    /**
+     * Deduplicates locations based on normalized names.
+     * Keeps the record with the most complete structured address data.
+     */
+    suspend fun deduplicateLocations(): Result<Int> {
+        return try {
+            val allLocationsResult = getAllLocations()
+            if (allLocationsResult.isFailure) return Result.failure(allLocationsResult.exceptionOrNull()!!)
+            val allLocations = allLocationsResult.getOrNull() ?: emptyList()
+
+            // Helper to normalize strings (remove accents, lowercase, remove special chars)
+            fun String.normalize(): String {
+                return java.text.Normalizer.normalize(this, java.text.Normalizer.Form.NFD)
+                    .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+                    .lowercase()
+                    .replace(Regex("[^a-z0-9]"), "")
+            }
+
+            var deletedCount = 0
+            
+            // Group by normalized name
+            val grouped = allLocations.groupBy { it.name.normalize() }
+            
+            for ((_, duplicates) in grouped) {
+                if (duplicates.size > 1) {
+                    // Sort to find the "best" record to keep
+                    // Priority: Has CEP (migrated) > Has Phone > ID string comparison (arbitrary tiebreaker)
+                    val best = duplicates.sortedWith(compareByDescending<Location> { !it.cep.isNullOrBlank() }
+                        .thenByDescending { !it.phone.isNullOrBlank() }
+                        .thenByDescending { it.id } 
+                    ).first()
                     
-                    addedCount++
+                    val toDelete = duplicates.filter { it.id != best.id }
+                    
+                    for (loc in toDelete) {
+                        try {
+                            // 1. Delete the location document
+                            locationsCollection.document(loc.id).delete().await()
+                            
+                            // 2. Delete associated fields
+                            val fieldsSnapshot = fieldsCollection.whereEqualTo("locationId", loc.id).get().await()
+                            for (fieldDoc in fieldsSnapshot.documents) {
+                                fieldDoc.reference.delete().await()
+                            }
+                            
+                            deletedCount++
+                            AppLogger.d(TAG) { "Deleted duplicate location: ${loc.name} (${loc.id})" }
+                        } catch (e: Exception) {
+                            AppLogger.e(TAG, "Error deleting duplicate ${loc.name}", e)
+                        }
+                    }
                 }
             }
-            
-            Result.success(addedCount)
+            Result.success(deletedCount)
         } catch (e: Exception) {
-            AppLogger.e(TAG, "Erro ao popular locais de Curitiba", e)
+            AppLogger.e(TAG, "Error executing deduplication", e)
             Result.failure(e)
         }
     }
 }
+

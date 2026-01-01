@@ -19,11 +19,6 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    @Provides
-    @Singleton
-    fun providePreferencesManager(@ApplicationContext context: Context): PreferencesManager {
-        return PreferencesManager(context)
-    }
 
     @Provides
     @Singleton

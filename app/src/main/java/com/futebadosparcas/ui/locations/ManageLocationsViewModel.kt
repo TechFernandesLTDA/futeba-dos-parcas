@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import com.futebadosparcas.data.seeding.LocationsSeed
 import javax.inject.Inject
 
 @HiltViewModel
@@ -34,6 +35,38 @@ class ManageLocationsViewModel @Inject constructor(
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
         filterLocations()
+    }
+    
+    fun seedDatabase() {
+        viewModelScope.launch {
+            _uiState.value = ManageLocationsUiState.Loading
+            
+            val result = locationRepository.migrateLocations(LocationsSeed.data)
+            
+            if (result.isSuccess) {
+                // Reload to show new data
+                loadAllLocations()
+            } else {
+                 _uiState.value = ManageLocationsUiState.Error(
+                    result.exceptionOrNull()?.message ?: "Erro na migração"
+                )
+            }
+        }
+    }
+
+    fun removeDuplicates() {
+        viewModelScope.launch {
+            _uiState.value = ManageLocationsUiState.Loading
+            val result = locationRepository.deduplicateLocations()
+            if (result.isSuccess) {
+                // Could verify count here but for now just reload
+                loadAllLocations()
+            } else {
+                _uiState.value = ManageLocationsUiState.Error(
+                    result.exceptionOrNull()?.message ?: "Erro na deduplicação"
+                )
+            }
+        }
     }
 
     private fun filterLocations() {
