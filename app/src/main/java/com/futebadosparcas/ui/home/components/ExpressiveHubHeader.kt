@@ -29,6 +29,7 @@ import com.futebadosparcas.util.HapticManager
 fun ExpressiveHubHeader(
     user: com.futebadosparcas.data.model.User,
     summary: GamificationSummary,
+    statistics: com.futebadosparcas.data.model.UserStatistics? = null,
     onProfileClick: () -> Unit,
     hapticManager: HapticManager? = null,
     modifier: Modifier = Modifier
@@ -167,7 +168,40 @@ fun ExpressiveHubHeader(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
+
+                if (statistics != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        StatItem("Jogos", statistics.totalGames.toString())
+                        StatItem("Gols", statistics.totalGoals.toString())
+                        StatItem("Assist.", statistics.totalAssists.toString())
+                        StatItem("MVP", statistics.bestPlayerCount.toString())
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun StatItem(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

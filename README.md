@@ -44,6 +44,12 @@ For developers and contributors, please refer to our detailed documentation:
 3. Sync Gradle project.
 4. Run on Emulator or Physical Device.
 
+## 🔐 Environment & Access
+
+This repository is configured with the necessary environment variables and access keys for development in the current environment.
+- **Firebase Access**: Authenticated via Service Account (`futebadosparcas-firebase-adminsdk-fbsvc-afdd15710a.json` located in project root).
+- **Scripts**: Node.js scripts in `/scripts` are configured to use this service account for maintenance tasks.
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to submit Pull Requests.

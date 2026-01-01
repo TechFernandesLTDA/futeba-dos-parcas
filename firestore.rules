@@ -307,12 +307,14 @@ service cloud.firestore {
                        isAdmin() || 
                        ((resource.data.owner_id == userId() || resource.data.owner_id == 'mock_admin') &&
                        fieldUnchanged('owner_id') &&
-                       fieldUnchanged('created_at'))
+                       fieldUnchanged('created_at') &&
+                       fieldUnchanged('is_active') &&
+                       fieldUnchanged('is_verified'))
                     );
 
       // Apenas o dono ou admin pode deletar (ou mocks)
-      allow delete: if isAuthenticated() &&
-                       (isAdmin() || resource.data.owner_id == userId() || resource.data.owner_id == 'mock_admin');
+      // Apenas admin pode deletar (ou mocks se necessário, mas regra diz nunca apagar)
+      allow delete: if isAuthenticated() && (isAdmin());
     }
 
     // ============================================
@@ -328,11 +330,11 @@ service cloud.firestore {
 
       // Apenas dono do local ou admin pode atualizar quadras
       allow update: if isAuthenticated() &&
-                       (isAdmin() || (isLocationOwner(resource.data.location_id) && fieldUnchanged('location_id')));
+                       (isAdmin() || (isLocationOwner(resource.data.location_id) && fieldUnchanged('location_id') && fieldUnchanged('is_active')));
 
       // Apenas dono do local ou admin pode deletar quadras
-      allow delete: if isAuthenticated() &&
-                       (isAdmin() || isLocationOwner(resource.data.location_id));
+      // Apenas admin pode deletar quadras
+      allow delete: if isAuthenticated() && (isAdmin());
 
       function isLocationOwner(locationId) {
         let locDoc = get(/databases/$(database)/documents/locations/$(locationId));

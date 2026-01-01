@@ -343,7 +343,15 @@ class LocationDetailViewModel @Inject constructor(
                      _uiState.value = LocationDetailUiState.Error("Gerentes não podem alterar status Ativo/Inativo")
                      return@launch
                 }
-                // Determine other restricted fields if necessary
+            }
+            
+            // Requirements: "Owner can update info but NEVER activate/inactivate or delete"
+            // If Owner (but not Admin), prevent changing isActive
+            if (isOwner && !isAdmin) {
+                if (isActive != field.isActive) {
+                     _uiState.value = LocationDetailUiState.Error("Apenas Administradores podem alterar o status Ativo/Inativo")
+                     return@launch
+                }
             }
 
             var currentPhotos = field.photos
