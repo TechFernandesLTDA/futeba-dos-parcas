@@ -50,6 +50,35 @@ class ManageLocationsFragment : Fragment() {
         binding.toolbar.setNavigationOnClickListener {
             findNavController().popBackStack()
         }
+        
+        binding.toolbar.inflateMenu(com.futebadosparcas.R.menu.manage_locations_menu)
+        binding.toolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                com.futebadosparcas.R.id.action_seed_database -> {
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Popular Banco de Dados")
+                        .setMessage("Deseja importar/atualizar os 52 locais padrão? Isso pode levar alguns segundos.")
+                        .setPositiveButton("Sim") { _, _ ->
+                            viewModel.seedDatabase()
+                        }
+                        .setNegativeButton("Cancelar", null)
+                        .show()
+                    true
+                }
+                com.futebadosparcas.R.id.action_deduplicate -> {
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Remover Duplicatas")
+                        .setMessage("Deseja analisar e remover locais duplicados? Será mantido o registro com dados mais completos (CEP preenchido).")
+                        .setPositiveButton("Sim") { _, _ ->
+                            viewModel.removeDuplicates()
+                        }
+                        .setNegativeButton("Cancelar", null)
+                        .show()
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     private fun setupRecyclerView() {

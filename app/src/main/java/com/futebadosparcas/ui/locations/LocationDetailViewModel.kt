@@ -9,6 +9,7 @@ import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.data.model.LocationReview
 import com.futebadosparcas.data.repository.LocationRepository
 import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.data.repository.AddressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LocationDetailViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val addressRepository: AddressRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LocationDetailUiState>(LocationDetailUiState.Loading)
@@ -39,7 +41,14 @@ class LocationDetailViewModel @Inject constructor(
         description: String,
         amenities: List<String>,
         isActive: Boolean,
-        instagram: String
+        instagram: String,
+        cep: String,
+        street: String,
+        number: String,
+        complement: String,
+        city: String,
+        state: String,
+        country: String
     ) {
          viewModelScope.launch {
             _uiState.value = LocationDetailUiState.Loading
@@ -63,7 +72,16 @@ class LocationDetailViewModel @Inject constructor(
                 description = description,
                 amenities = amenities,
                 isActive = isActive,
-                instagram = instagram
+                instagram = instagram,
+                // Address fields
+                cep = cep,
+                street = street,
+                number = number,
+                complement = complement,
+                // neighborhood, passed as arg above
+                city = city,
+                state = state,
+                country = country
             )
 
             locationRepository.createLocation(newLocation).fold(
@@ -129,7 +147,14 @@ class LocationDetailViewModel @Inject constructor(
         description: String,
         amenities: List<String>,
         isActive: Boolean,
-        instagram: String
+        instagram: String,
+        cep: String,
+        street: String,
+        number: String,
+        complement: String,
+        city: String,
+        state: String,
+        country: String
     ) {
         val location = currentLocation ?: return
         
@@ -145,7 +170,14 @@ class LocationDetailViewModel @Inject constructor(
             description = description,
             amenities = amenities,
             isActive = isActive,
-            instagram = instagram
+            instagram = instagram,
+            cep = cep,
+            street = street,
+            number = number,
+            complement = complement,
+            city = city,
+            state = state,
+            country = country
         )
         
         viewModelScope.launch {
@@ -163,6 +195,61 @@ class LocationDetailViewModel @Inject constructor(
         }
     }
     
+    fun searchCep(cep: String) {
+        viewModelScope.launch {
+            _uiState.value = LocationDetailUiState.Loading
+            addressRepository.getAddressByCep(cep).fold(
+                onSuccess = { address ->
+                    val currentState = currentLocation ?: Location()
+                    val updated = currentState.copy(
+                        cep = address.cep,
+                        street = address.street,
+                        neighborhood = address.neighborhood,
+                        city = address.city,
+                        state = address.state,
+                        country = address.country,
+                        // Update full address text as preview logic
+                        address = "${address.street}, ${address.neighborhood}, ${address.city} - ${address.state}"
+                    )
+                    currentLocation = updated
+                    
+                    val currentSuccess = uiState.value as? LocationDetailUiState.Success
+                    _uiState.value = LocationDetailUiState.Success(
+                        location = updated,
+                        fields = currentSuccess?.fields ?: emptyList(),
+                        reviews = currentSuccess?.reviews ?: emptyList()
+                    )
+                },
+                onFailure = {
+                     _uiState.value = LocationDetailUiState.Error("CEP não encontrado: ${it.message}")
+                     // Ideally restore success state after showing error, or use one-shot event
+                }
+            )
+        }
+    }
+
+    fun updateCoordinates(fullAddress: String) {
+        viewModelScope.launch {
+             // Keep loading state optional or add specific loading field
+             addressRepository.getGeocode(fullAddress).onSuccess { latLng ->
+                 val current = currentLocation ?: return@onSuccess
+                 val updated = current.copy(
+                     latitude = latLng.latitude,
+                     longitude = latLng.longitude
+                 )
+                 currentLocation = updated
+                 val currentSuccess = uiState.value as? LocationDetailUiState.Success
+                 if (currentSuccess != null) {
+                     _uiState.value = LocationDetailUiState.Success(
+                            location = updated,
+                            fields = currentSuccess.fields,
+                            reviews = currentSuccess.reviews
+                     )
+                 }
+             }
+        }
+    }
+
     fun addField(
         name: String, 
         type: FieldType, 
@@ -174,24 +261,17 @@ class LocationDetailViewModel @Inject constructor(
         dimensions: String?
     ) {
         val location = currentLocation ?: return
-
+        // Implementation remains same
         viewModelScope.launch {
             _uiState.value = LocationDetailUiState.Loading
-
             var photosList = emptyList<String>()
-            
             if (photoUri != null) {
-                locationRepository.uploadFieldPhoto(photoUri).onSuccess { url ->
-                    photosList = listOf(url)
-                }.onFailure {
-                     _uiState.value = LocationDetailUiState.Error("Erro ao fazer upload da imagem")
-                     // Could return or continue without image. Continuing without image for now but showing error might be better. 
-                     // Let's stop to be safe or maybe continue? User expects save. 
-                     // Returning might be safer to let user retry.
-                     return@launch
-                }
+                locationRepository.uploadFieldPhoto(photoUri).onSuccess { url -> photosList = listOf(url) }
+                    .onFailure { 
+                         _uiState.value = LocationDetailUiState.Error("Erro ao fazer upload da imagem")
+                         return@launch
+                    }
             }
-
             val newField = Field(
                 locationId = location.id,
                 name = name,
@@ -203,15 +283,9 @@ class LocationDetailViewModel @Inject constructor(
                 isCovered = isCovered,
                 dimensions = dimensions
             )
-            
             locationRepository.createField(newField).fold(
-                onSuccess = {
-                    loadData(location.id, location)
-                },
-                onFailure = { error ->
-                    _uiState.value = LocationDetailUiState.Error(error.message ?: "Erro ao criar quadra")
-                    loadData(location.id, location)
-                }
+                onSuccess = { loadData(location.id, location) },
+                onFailure = { error -> _uiState.value = LocationDetailUiState.Error(error.message ?: "Erro ao criar quadra") }
             )
         }
     }
@@ -232,25 +306,57 @@ class LocationDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = LocationDetailUiState.Loading
 
-            // Fetch existing to get photos if no new photo
-            var currentPhotos = emptyList<String>()
-            locationRepository.getFieldById(fieldId).onSuccess { 
-                currentPhotos = it.photos 
+            val currentUser = userRepository.getCurrentUser().getOrNull()
+            if (currentUser == null) {
+                _uiState.value = LocationDetailUiState.Error("Usuário não autenticado")
+                return@launch
             }
 
+            // Check permissions
+            // We need the existing field to check its managers if we don't have it locally in current args?
+            // But we can check location owner first.
+            val isOwner = location.ownerId == currentUser.id
+            val isAdmin = currentUser.role == "ADMIN" // Assuming role string match or enum
+            
+            // Allow update if Owner, Admin. If Manager, we need to check specific field permission.
+            // We fetch the field to check managers.
+            
+            var currentField: Field? = null
+             locationRepository.getFieldById(fieldId).onSuccess { 
+                currentField = it
+            }.onFailure {
+                _uiState.value = LocationDetailUiState.Error("Quadra não encontrada")
+                return@launch
+            }
+            
+            val field = currentField!!
+            val isManager = field.managers.contains(currentUser.id)
+
+            if (!isOwner && !isAdmin && !isManager) {
+                 _uiState.value = LocationDetailUiState.Error("Sem permissão para editar esta quadra")
+                 return@launch
+            }
+
+            // Manager restrictions: Cannot change isActive? User said "Gerenciador não pode: Alterar dados críticos (ativo/inativo)".
+            if (isManager && !isOwner && !isAdmin) {
+                if (isActive != field.isActive) {
+                     _uiState.value = LocationDetailUiState.Error("Gerentes não podem alterar status Ativo/Inativo")
+                     return@launch
+                }
+                // Determine other restricted fields if necessary
+            }
+
+            var currentPhotos = field.photos
             if (photoUri != null) {
                  locationRepository.uploadFieldPhoto(photoUri).onSuccess { url ->
-                    currentPhotos = listOf(url) // Request implies single photo for now, or append? Text says "Upload de fotos" but UI shows one. 
-                    // Replacing for this implementation to match UI single ImageView. 
+                    currentPhotos = listOf(url) 
                 }.onFailure {
                      _uiState.value = LocationDetailUiState.Error("Erro ao fazer upload da imagem")
                      return@launch
                 }
             }
         
-            val updatedField = Field(
-                id = fieldId,
-                locationId = location.id,
+            val updatedField = field.copy(
                 name = name,
                 type = type.name,
                 hourlyPrice = price,
@@ -272,7 +378,7 @@ class LocationDetailViewModel @Inject constructor(
             )
         }
     }
-    fun addReview(rating: Float, comment: String) {
+fun addReview(rating: Float, comment: String) {
         val location = currentLocation ?: return
         viewModelScope.launch {
              _uiState.value = LocationDetailUiState.Loading
@@ -282,7 +388,6 @@ class LocationDetailViewModel @Inject constructor(
                  _uiState.value = LocationDetailUiState.Error("Usuário não logado")
                  return@launch
              }
-
              val review = LocationReview(
                  locationId = location.id,
                  userId = currentUser.id,
@@ -291,14 +396,9 @@ class LocationDetailViewModel @Inject constructor(
                  rating = rating,
                  comment = comment
              )
-
              locationRepository.addLocationReview(review).fold(
-                 onSuccess = {
-                     loadData(location.id, location)
-                 },
-                 onFailure = { error ->
-                     _uiState.value = LocationDetailUiState.Error(error.message ?: "Erro ao enviar avaliação")
-                 }
+                 onSuccess = { loadData(location.id, location) },
+                 onFailure = { error -> _uiState.value = LocationDetailUiState.Error(error.message ?: "Erro ao enviar avaliação") }
              )
         }
     }

@@ -14,9 +14,17 @@ data class Location(
     @DocumentId
     val id: String = "",
     val name: String = "",
-    val address: String = "",
+    val address: String = "", // Mantido como texto completo/legado ou calculado
+    
+    // Endereço Estruturado
+    val cep: String = "",
+    val street: String = "", // Logradouro
+    val number: String = "",
+    val complement: String = "",
+    val district: String = "", // Bairro (substitui ou complementa neighborhood?) -> User asked for 'bairro' and model has 'neighborhood'. I'll use neighborhood, but maybe rename or keep consistent.
     val city: String = "",
-    val state: String = "",
+    val state: String = "", // UF
+    val country: String = "Brasil",
     
     // Localização detalhada
     val neighborhood: String = "", // Bairro (ex: "Portão", "Boa Vista")
@@ -116,6 +124,11 @@ data class Field(
     @get:PropertyName("photos")
     @set:PropertyName("photos")
     var photos: List<String> = emptyList(),
+
+    // Permissões
+    @get:PropertyName("managers")
+    @set:PropertyName("managers")
+    var managers: List<String> = emptyList(), // Lista de IDs de usuários gerentes
     
     // Detalhes da quadra
     val surface: String? = null, // Grama Sintética, Natural, Taco...
