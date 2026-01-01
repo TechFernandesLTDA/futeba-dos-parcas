@@ -4,9 +4,17 @@ const path = require('path');
 
 // Initialize Firebase
 try {
-    // Try to find a local service account key if the user happens to have one
+    // Try the specific key found in root
+    const rootKeyPath = path.join(__dirname, '../futebadosparcas-firebase-adminsdk-fbsvc-afdd15710a.json');
     const serviceKeyPath = path.join(__dirname, '../serviceAccountKey.json');
-    if (fs.existsSync(serviceKeyPath)) {
+
+    if (fs.existsSync(rootKeyPath)) {
+        const serviceAccount = require(rootKeyPath);
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        });
+        console.log('Initialized with futebadosparcas-...json');
+    } else if (fs.existsSync(serviceKeyPath)) {
         const serviceAccount = require(serviceKeyPath);
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount)

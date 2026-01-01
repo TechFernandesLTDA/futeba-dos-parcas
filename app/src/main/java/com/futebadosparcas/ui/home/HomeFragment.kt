@@ -118,12 +118,13 @@ class HomeFragment : Fragment() {
                                     ExpressiveHubHeader(
                                         user = state.user,
                                         summary = state.gamificationSummary,
+                                        statistics = state.statistics,
                                         hapticManager = hapticManager,
-                                        onProfileClick = {
-                                            if (!isAdded) return@ExpressiveHubHeader
-                                            val playerCard = com.futebadosparcas.ui.player.PlayerCardDialog.newInstance(state.user.id)
-                                            playerCard.show(parentFragmentManager, "PlayerCard")
-                                        }
+                            onProfileClick = {
+                                if (!isAdded) return@ExpressiveHubHeader
+                                val playerCard = com.futebadosparcas.ui.player.PlayerCardDialog.newInstance(state.user.id)
+                                playerCard.show(childFragmentManager, "PlayerCard")
+                            }
                                     )
                                 }
                             }

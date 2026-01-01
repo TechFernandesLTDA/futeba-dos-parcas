@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -63,6 +64,10 @@ fun LocationDetailScreen(
     var country by remember { mutableStateOf("Brasil") }
     var latitude by remember { mutableStateOf(0.0) }
     var longitude by remember { mutableStateOf(0.0) }
+    
+    // Dialog States
+    var showFieldDialog by remember { mutableStateOf(false) }
+    var selectedField by remember { mutableStateOf<Field?>(null) }
 
     // Logic to sync state from backend
     LaunchedEffect(uiState) {
@@ -134,8 +139,8 @@ fun LocationDetailScreen(
         floatingActionButton = {
             if (uiState is LocationDetailUiState.Success) {
                  FloatingActionButton(onClick = { 
-                     // TODO: Open Dialog/Screen for Field
-                     // This would require a callback or another composable state for dialog
+                     selectedField = null
+                     showFieldDialog = true
                  }) {
                      Icon(Icons.Default.Add, contentDescription = "Adicionar Quadra")
                  }
@@ -342,8 +347,12 @@ fun LocationDetailScreen(
                     if (fields.isEmpty()) {
                         Text("Nenhuma quadra cadastrada.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
                     } else {
+                    } else {
                         fields.forEach { field ->
-                            FieldItem(field)
+                            FieldItem(field) {
+                                selectedField = field
+                                showFieldDialog = true
+                            }
                         }
                     }
                 }
@@ -351,14 +360,145 @@ fun LocationDetailScreen(
                 Spacer(Modifier.height(80.dp)) // Space for Fab
             }
         }
+        
+        if (showFieldDialog) {
+            FieldDialog(
+                field = selectedField,
+                onDismiss = { showFieldDialog = false },
+                onConfirm = { name, type, price, surface, covered, active ->
+                    if (selectedField == null) {
+                        viewModel.addField(name, type, price, active, null, surface, covered, null)
+                    } else {
+                        viewModel.updateField(selectedField!!.id, name, type, price, active, null, surface, covered, null)
+                    }
+                    showFieldDialog = false
+                }
+            )
+        }
     }
 }
 
 @Composable
-fun FieldItem(field: Field) {
+fun FieldItem(field: Field, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        onClick = onClick
+    ) {
+@Composable
+fun FieldDialog(
+    field: Field? = null,
+    onDismiss: () -> Unit,
+    onConfirm: (String, FieldType, Double, String, Boolean, Boolean) -> Unit
+) {
+    var name by remember { mutableStateOf(field?.name ?: "") }
+    var type by remember { mutableStateOf(field?.getTypeEnum() ?: FieldType.SOCIETY) }
+    var price by remember { mutableStateOf(field?.hourlyPrice?.toString() ?: "0.0") }
+    var surface by remember { mutableStateOf(field?.surface ?: "Grama Sintética") }
+    var isCovered by remember { mutableStateOf(field?.isCovered ?: true) }
+    var isActive by remember { mutableStateOf(field?.isActive ?: true) }
+    
+    // Dropdown state
+    var expanded by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (field == null) "Adicionar Quadra" else "Editar Quadra") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nome (ex: Quadra 1)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                // Tipo Dropdown
+                Box(Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = type.displayName,
+                        onValueChange = {},
+                        label = { Text("Tipo") },
+                        readOnly = true,
+                        trailingIcon = {
+                             IconButton(onClick = { expanded = true }) {
+                                 Icon(Icons.Default.ArrowBack /* Use ArrowDown in real code */, contentDescription = null, Modifier.rotate(270f))
+                             }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        FieldType.values().forEach { t ->
+                            DropdownMenuItem(
+                                text = { Text(t.displayName) },
+                                onClick = {
+                                    type = t
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = price,
+                    onValueChange = { price = it },
+                    label = { Text("Preço Hora (R$)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                
+                OutlinedTextField(
+                    value = surface,
+                    onValueChange = { surface = it },
+                    label = { Text("Superfície") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Coberta?")
+                    Spacer(Modifier.width(8.dp))
+                    Switch(checked = isCovered, onCheckedChange = { isCovered = it })
+                }
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Ativa?")
+                    Spacer(Modifier.width(8.dp))
+                    Switch(
+                        checked = isActive, 
+                        onCheckedChange = { isActive = it }
+                    )
+                }
+                if (field != null && isActive != field.isActive) {
+                     Text("Status só pode ser alterado por Admins", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                val p = price.toDoubleOrNull() ?: 0.0
+                onConfirm(name, type, p, surface, isCovered, isActive)
+            }) {
+                Text(if (field == null) "Adicionar" else "Salvar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+fun FieldItem(field: Field, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        onClick = onClick
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(field.name, style = MaterialTheme.typography.bodyLarge)

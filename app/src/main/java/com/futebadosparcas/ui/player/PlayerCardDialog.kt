@@ -48,11 +48,6 @@ class PlayerCardDialog : DialogFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        dialog?.window?.apply {
-            setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
-            requestFeature(android.view.Window.FEATURE_NO_TITLE)
-        }
-        
         _binding = DialogPlayerCardBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -97,11 +92,13 @@ class PlayerCardDialog : DialogFragment() {
                         bindPlayerData(state)
                     }
                     is PlayerCardUiState.Error -> {
-                        android.widget.Toast.makeText(
-                            requireContext(),
-                            state.message,
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
+                        context?.let { ctx ->
+                            android.widget.Toast.makeText(
+                                ctx,
+                                state.message,
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
                         dismiss()
                     }
                 }

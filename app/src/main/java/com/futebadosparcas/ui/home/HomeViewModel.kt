@@ -21,7 +21,8 @@ class HomeViewModel @Inject constructor(
     private val gameRepository: GameRepository,
     private val userRepository: UserRepository,
     private val notificationRepository: com.futebadosparcas.data.repository.NotificationRepository,
-    private val gamificationRepository: GamificationRepository
+    private val gamificationRepository: GamificationRepository,
+    private val statisticsRepository: com.futebadosparcas.data.repository.StatisticsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
@@ -54,11 +55,15 @@ class HomeViewModel @Inject constructor(
             val gamesDeferred = async { gameRepository.getConfirmedUpcomingGamesForUser() }
 
             val userResult = userDeferred.await()
+            val statsDeferred = async { statisticsRepository.getUserStatistics(userResult.getOrNull()?.id ?: "") }
+
             val gamesResult = gamesDeferred.await()
+            val statsResult = statsDeferred.await()
 
             userResult.fold(
                 onSuccess = { user ->
                     val games = gamesResult.getOrDefault(emptyList())
+                    val statistics = statsResult.getOrNull()
                     
                     // Fetch League info
                     var leagueDivision = LeagueDivision.BRONZE
@@ -92,7 +97,7 @@ class HomeViewModel @Inject constructor(
                         division = leagueDivision
                     )
 
-                    _uiState.value = HomeUiState.Success(user, games, summary)
+                    _uiState.value = HomeUiState.Success(user, games, summary, statistics)
                 },
                 onFailure = { error ->
                     _uiState.value = HomeUiState.Error(error.message ?: "Erro ao carregar perfil")
@@ -125,7 +130,8 @@ sealed class HomeUiState {
     data class Success(
         val user: com.futebadosparcas.data.model.User, 
         val games: List<Game>,
-        val gamificationSummary: GamificationSummary
+        val gamificationSummary: GamificationSummary,
+        val statistics: com.futebadosparcas.data.model.UserStatistics? = null
     ) : HomeUiState()
     data class Error(val message: String) : HomeUiState()
 }
