@@ -78,6 +78,17 @@ service firebase.storage {
     }
 
     // ============================================
+    // PASTA: groups/{groupId}/cashbox_receipts
+    // ============================================
+    match /groups/{groupId}/cashbox_receipts/{fileName} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+                       request.resource.size < 10 * 1024 * 1024 &&
+                       request.resource.contentType.matches('image/.*');
+      allow delete: if isAuthenticated();
+    }
+
+    // ============================================
     // REGRA PADRAO: Negar tudo
     // ============================================
     match /{allPaths=**} {

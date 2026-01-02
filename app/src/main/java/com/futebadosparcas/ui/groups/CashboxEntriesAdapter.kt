@@ -11,32 +11,70 @@ import com.futebadosparcas.R
 import com.futebadosparcas.data.model.CashboxEntry
 import com.futebadosparcas.data.model.CashboxEntryType
 import com.futebadosparcas.databinding.ItemCashboxEntryBinding
+import com.futebadosparcas.databinding.ItemCashboxHeaderBinding
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 /**
- * Adapter para lista de entradas do caixa (receitas e despesas)
+ * Representa os itens que podem aparecer na lista do caixa
+ */
+sealed class CashboxListItem {
+    data class Header(val title: String) : CashboxListItem()
+    data class Entry(val entry: CashboxEntry) : CashboxListItem()
+}
+
+/**
+ * Adapter para lista de entradas do caixa com suporte a cabeçalhos de mês
  */
 class CashboxEntriesAdapter(
     private val onEntryClick: (CashboxEntry) -> Unit,
     private val onEntryLongClick: (CashboxEntry) -> Unit
-) : ListAdapter<CashboxEntry, CashboxEntriesAdapter.EntryViewHolder>(EntryDiffCallback()) {
+) : ListAdapter<CashboxListItem, RecyclerView.ViewHolder>(EntryDiffCallback()) {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale("pt", "BR"))
     private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EntryViewHolder {
-        val binding = ItemCashboxEntryBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-        return EntryViewHolder(binding)
+    companion object {
+        private const val TYPE_HEADER = 0
+        private const val TYPE_ENTRY = 1
     }
 
-    override fun onBindViewHolder(holder: EntryViewHolder, position: Int) {
-        holder.bind(getItem(position))
+    override fun getItemViewType(position: Int): Int {
+        return when (getItem(position)) {
+            is CashboxListItem.Header -> TYPE_HEADER
+            is CashboxListItem.Entry -> TYPE_ENTRY
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return when (viewType) {
+            TYPE_HEADER -> {
+                val binding = ItemCashboxHeaderBinding.inflate(inflater, parent, false)
+                HeaderViewHolder(binding)
+            }
+            else -> {
+                val binding = ItemCashboxEntryBinding.inflate(inflater, parent, false)
+                EntryViewHolder(binding)
+            }
+        }
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        val item = getItem(position)
+        when (holder) {
+            is HeaderViewHolder -> holder.bind(item as CashboxListItem.Header)
+            is EntryViewHolder -> holder.bind((item as CashboxListItem.Entry).entry)
+        }
+    }
+
+    inner class HeaderViewHolder(
+        private val binding: ItemCashboxHeaderBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(header: CashboxListItem.Header) {
+            binding.tvHeaderTitle.text = header.title
+        }
     }
 
     inner class EntryViewHolder(
@@ -47,20 +85,33 @@ class CashboxEntriesAdapter(
             val context = binding.root.context
             val entryType = entry.getTypeEnum()
 
-            // Categoria - usa o displayName do enum
+            // Categoria
             binding.tvCategory.text = entry.getCategoryDisplayName()
 
-            // Descrição (pode incluir nome do jogador)
-            val descriptionText = if (!entry.playerName.isNullOrEmpty()) {
-                "${entry.description} (${entry.playerName})"
-            } else {
-                entry.description
-            }
-            binding.tvDescription.text = descriptionText
+            // Descrição (mais limpa)
+            binding.tvDescription.text = entry.description.ifEmpty { "Sem descrição" }
 
             // Data
             val dateToShow = entry.createdAt ?: entry.referenceDate
             binding.tvDate.text = dateFormat.format(dateToShow)
+
+            // Quem criou
+            binding.tvCreatedBy.text = entry.createdByName.ifEmpty { "Sistema" }
+
+            // Comprovante
+            val hasReceipt = !entry.receiptUrl.isNullOrEmpty()
+            binding.ivReceipt.visibility = if (hasReceipt) View.VISIBLE else View.GONE
+            if (hasReceipt) {
+                binding.ivReceipt.setOnClickListener {
+                    try {
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(entry.receiptUrl))
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        // Toast alert? context is accessible
+                        android.widget.Toast.makeText(context, "Não foi possível abrir o comprovante", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
 
             // Valor com cor dependendo do tipo
             val amountText = currencyFormat.format(entry.amount)
@@ -70,32 +121,15 @@ class CashboxEntriesAdapter(
                 "- $amountText"
             }
 
-            when (entryType) {
-                CashboxEntryType.INCOME -> {
-                    binding.tvAmount.setTextColor(
-                        ContextCompat.getColor(context, R.color.success)
-                    )
-                    // Ícone verde para entrada
-                    binding.ivIcon.setColorFilter(
-                        ContextCompat.getColor(context, R.color.success)
-                    )
-                }
-                CashboxEntryType.EXPENSE -> {
-                    binding.tvAmount.setTextColor(
-                        ContextCompat.getColor(context, R.color.error)
-                    )
-                    // Ícone vermelho para saída
-                    binding.ivIcon.setColorFilter(
-                        ContextCompat.getColor(context, R.color.error)
-                    )
-                }
-            }
+            // Estilos visuais baseados no tipo
+            val colorRes = if (entryType == CashboxEntryType.INCOME) R.color.success else R.color.error
+            val color = ContextCompat.getColor(context, colorRes)
+            
+            binding.tvAmount.setTextColor(color)
+            binding.ivIcon.setColorFilter(color)
 
             // Listeners
-            binding.root.setOnClickListener {
-                onEntryClick(entry)
-            }
-
+            binding.root.setOnClickListener { onEntryClick(entry) }
             binding.root.setOnLongClickListener {
                 onEntryLongClick(entry)
                 true
@@ -103,13 +137,18 @@ class CashboxEntriesAdapter(
         }
     }
 
-    class EntryDiffCallback : DiffUtil.ItemCallback<CashboxEntry>() {
-        override fun areItemsTheSame(oldItem: CashboxEntry, newItem: CashboxEntry): Boolean {
-            return oldItem.id == newItem.id
+    class EntryDiffCallback : DiffUtil.ItemCallback<CashboxListItem>() {
+        override fun areItemsTheSame(oldItem: CashboxListItem, newItem: CashboxListItem): Boolean {
+            return if (oldItem is CashboxListItem.Header && newItem is CashboxListItem.Header) {
+                oldItem.title == newItem.title
+            } else if (oldItem is CashboxListItem.Entry && newItem is CashboxListItem.Entry) {
+                oldItem.entry.id == newItem.entry.id
+            } else false
         }
 
-        override fun areContentsTheSame(oldItem: CashboxEntry, newItem: CashboxEntry): Boolean {
+        override fun areContentsTheSame(oldItem: CashboxListItem, newItem: CashboxListItem): Boolean {
             return oldItem == newItem
         }
     }
 }
+

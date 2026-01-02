@@ -1,6 +1,7 @@
 package com.futebadosparcas.ui.groups.dialogs
 
 import android.app.Dialog
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -8,13 +9,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.DialogFragment
 import com.futebadosparcas.data.model.CashboxCategory
 import com.futebadosparcas.data.model.CashboxEntryType
 import com.futebadosparcas.databinding.DialogAddCashboxEntryBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import androidx.fragment.app.DialogFragment
-import com.google.android.material.textfield.TextInputLayout
-import java.text.DecimalFormat
 
 class AddCashboxEntryDialogFragment : DialogFragment() {
 
@@ -22,7 +22,15 @@ class AddCashboxEntryDialogFragment : DialogFragment() {
     private val binding get() = _binding!!
 
     private var type: CashboxEntryType = CashboxEntryType.INCOME
-    private var onSaveListener: ((description: String, amount: Double, category: CashboxCategory) -> Unit)? = null
+    private var onSaveListener: ((description: String, amount: Double, category: CashboxCategory, receiptUri: Uri?) -> Unit)? = null
+    private var selectedReceiptUri: Uri? = null
+
+    private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            selectedReceiptUri = it
+            updateReceiptUi()
+        }
+    }
 
     companion object {
         private const val ARG_TYPE = "arg_type"
@@ -36,7 +44,7 @@ class AddCashboxEntryDialogFragment : DialogFragment() {
         }
     }
 
-    fun setOnSaveListener(listener: (description: String, amount: Double, category: CashboxCategory) -> Unit) {
+    fun setOnSaveListener(listener: (description: String, amount: Double, category: CashboxCategory, receiptUri: Uri?) -> Unit) {
         onSaveListener = listener
     }
 
@@ -48,11 +56,12 @@ class AddCashboxEntryDialogFragment : DialogFragment() {
 
         setupSpinner()
         setupValidation()
+        setupReceiptListeners()
 
         return MaterialAlertDialogBuilder(requireContext())
             .setTitle("Adicionar ${type.displayName}")
             .setView(binding.root)
-            .setPositiveButton("Salvar", null) // Set null here to override in onShow
+            .setPositiveButton("Salvar", null)
             .setNegativeButton("Cancelar", null)
             .create()
             .apply {
@@ -81,14 +90,6 @@ class AddCashboxEntryDialogFragment : DialogFragment() {
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spinnerCategory.adapter = adapter
-
-        // Listener to update validation when category changes
-        binding.spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                 // Trigger validation (optional, visual feedback)
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
     }
 
     private fun setupValidation() {
@@ -109,15 +110,37 @@ class AddCashboxEntryDialogFragment : DialogFragment() {
         })
     }
 
+    private fun setupReceiptListeners() {
+        binding.cardReceipt.setOnClickListener {
+            selectImageLauncher.launch("image/*")
+        }
+
+        binding.btnRemoveReceipt.setOnClickListener {
+            selectedReceiptUri = null
+            updateReceiptUi()
+        }
+    }
+
+    private fun updateReceiptUi() {
+        if (selectedReceiptUri != null) {
+            binding.layoutAddReceipt.visibility = View.GONE
+            binding.ivReceiptPreview.visibility = View.VISIBLE
+            binding.btnRemoveReceipt.visibility = View.VISIBLE
+            binding.ivReceiptPreview.setImageURI(selectedReceiptUri)
+        } else {
+            binding.layoutAddReceipt.visibility = View.VISIBLE
+            binding.ivReceiptPreview.visibility = View.GONE
+            binding.btnRemoveReceipt.visibility = View.GONE
+        }
+    }
+
     private fun validateAndSave(): Boolean {
         val description = binding.etDescription.text.toString().trim()
         val amountRaw = binding.etAmount.text.toString().trim()
         
-        // Limpar erros anteriores
         binding.tilDescription.error = null
         binding.tilAmount.error = null
         
-        // Fix for Brazilian locale (comma replaces dot)
         val amountStr = amountRaw.replace(",", ".")
         val amount = amountStr.toDoubleOrNull()
         
@@ -126,12 +149,10 @@ class AddCashboxEntryDialogFragment : DialogFragment() {
         } else {
             CashboxCategory.getExpenseCategories()
         }
-        val selectedCategoryIndex = binding.spinnerCategory.selectedItemPosition
-        val selectedCategory = categories.getOrNull(selectedCategoryIndex) ?: CashboxCategory.OTHER
+        val selectedCategory = categories.getOrNull(binding.spinnerCategory.selectedItemPosition) ?: CashboxCategory.OTHER
 
         var isValid = true
 
-        // Validate Amount
         if (amountRaw.isEmpty()) {
             binding.tilAmount.error = "Campo obrigatório"
             isValid = false
@@ -140,18 +161,13 @@ class AddCashboxEntryDialogFragment : DialogFragment() {
             isValid = false
         }
 
-        // Validate Description (Mandatory if OTHER, otherwise Optional but recommended)
-        // Rule: "Categorization Mandatory ... If 'OUTROS', description required"
         if (selectedCategory == CashboxCategory.OTHER && description.isEmpty()) {
             binding.tilDescription.error = "Descrição obrigatória para 'Outros'"
-            isValid = false
-        } else if (description.length > 100) {
-            binding.tilDescription.error = "Descrição muito longa (máx 100 carac.)"
             isValid = false
         }
 
         if (isValid && amount != null) {
-            onSaveListener?.invoke(description, amount, selectedCategory)
+            onSaveListener?.invoke(description, amount, selectedCategory, selectedReceiptUri)
             return true
         }
         return false

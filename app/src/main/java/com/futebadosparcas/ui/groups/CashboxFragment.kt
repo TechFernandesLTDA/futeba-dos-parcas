@@ -171,7 +171,7 @@ class CashboxFragment : Fragment() {
                     is CashboxHistoryState.Success -> {
                         binding.tvEmptyHistory.visibility = View.GONE
                         binding.rvHistory.visibility = View.VISIBLE
-                        adapter.submitList(state.entries)
+                        adapter.submitList(state.items)
                     }
                     is CashboxHistoryState.Error -> {
                         Snackbar.make(binding.root, state.message, Snackbar.LENGTH_LONG).show()
@@ -227,11 +227,21 @@ class CashboxFragment : Fragment() {
 
     private fun showAddEntryDialog(type: CashboxEntryType) {
         val dialog = com.futebadosparcas.ui.groups.dialogs.AddCashboxEntryDialogFragment.newInstance(type)
-        dialog.setOnSaveListener { description, amount, category ->
+        dialog.setOnSaveListener { description, amount, category, receiptUri ->
             if (type == CashboxEntryType.INCOME) {
-                viewModel.addIncome(category, amount, description)
+                viewModel.addIncome(
+                    category = category,
+                    amount = amount,
+                    description = description,
+                    receiptUri = receiptUri
+                )
             } else {
-                viewModel.addExpense(category, amount, description)
+                viewModel.addExpense(
+                    category = category,
+                    amount = amount,
+                    description = description,
+                    receiptUri = receiptUri
+                )
             }
         }
         dialog.show(childFragmentManager, "AddCashboxEntryDialog")
