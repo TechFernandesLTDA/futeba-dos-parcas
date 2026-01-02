@@ -29,7 +29,8 @@
       "Bash(dir /s /b)",
       "Bash(dir:*)",
       "Bash(./gradlew compileDebugKotlin:*)",
-      "Bash(adb devices:*)"
+      "Bash(adb devices:*)",
+      "Bash(git add:*)"
     ]
   }
 }
