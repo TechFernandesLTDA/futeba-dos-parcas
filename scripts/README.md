@@ -1,477 +1,341 @@
-# 📜 Scripts - Futeba dos Parças
+# 🔧 Scripts - Database Maintenance & Migration
 
-Ferramentas para análise, população e manutenção do Firestore.
+Utilitários para manutenção, migração e auditoria do banco de dados Futeba dos Parças.
+
+## Índice
+- [Scripts Node.js](#scripts-nodejs)
+- [Scripts Python](#scripts-python)
+- [Como Rodar](#como-rodar)
+- [Safety & Backups](#safety--backups)
 
 ---
 
-## 🐍 Scripts Python
+## Scripts Node.js
 
-### 1. Análise Completa do Firestore
+### 1. `seed.js` - Seed Dados de Teste
+
+**Propósito:** Popular banco com dados de exemplo
 
 ```bash
-python scripts/analyze_firestore.py
+node seed.js
 ```
 
 **O que faz:**
-- Analisa todas as 10 collections principais
-- Mostra estatísticas detalhadas por collection
-- Identifica problemas (locais sem quadras, duplicatas)
-- Gera relatório completo em console
-- Valida campos obrigatórios
+- Cria 10-15 usuários teste
+- Cria 5 locais (Parque da Mooca, Cidade Sócrates, etc)
+- Cria 10 quadras
+- Cria schedules de exemplo (Segunda, Quarta, Sexta)
+- Cria 20 games para próximos 30 dias
 
 **Quando usar:**
-- Antes de implementar features
-- Após mudanças estruturais
-- Para debugar problemas de dados
-- Validação periódica
+- Setup inicial de desenvolvimento
+- Resetar dados de teste
+- Testar novas features com dados realistas
 
 ---
 
-### 2. Popular Dados Reais de Curitiba
+### 2. `check_duplicates.js` - Encontrar Duplicatas
+
+**Propósito:** Identificar dados duplicados no banco
 
 ```bash
-python scripts/populate_real_data.py
+node check_duplicates.js
+```
+
+**Verifica:**
+- Usuários com mesmo email
+- Locais com mesmo nome/endereço
+- Quadras duplicadas
+- Schedules duplicadas
+
+---
+
+### 3. `deduplicate.js` - Remover Duplicatas
+
+**Propósito:** Limpar dados duplicados
+
+```bash
+node deduplicate.js
+```
+
+**⚠️ CUIDADO:** Operação destrutiva! Faz backup antes.
+
+**O que faz:**
+- Identifica duplicatas
+- Mostra quais serão removidos
+- Pede confirmação
+- Remove dados duplicados
+- Atualiza referências
+
+---
+
+### 4. `cleanup_invites.js` - Remover Convites Órfãos
+
+**Propósito:** Deletar convites para games que não existem
+
+```bash
+node cleanup_invites.js
 ```
 
 **O que faz:**
-- Cria 12 locais reais de Curitiba
-- Adiciona 48 quadras (2-8 por local)
-- Informações completas: nome, endereço, telefone, amenidades
-- Dados prontos para uso em testes e demos
-
-**Locais incluídos:**
-- JB Esportes & Eventos (8 quadras)
-- Brasil Soccer (5 quadras)
-- Top Sports (6 quadras)
-- Goleadores (7 quadras)
-- E mais 8 locais
-
-**⚠️ Atenção:** Cria locais com `owner_id = 'mock_admin'`
+- Encontra invites cujo game foi deletado
+- Mostra quantas serão removidas
+- Remove com confirmação
 
 ---
 
-### 3. Enriquecer Locais
+### 5. `automate_seasons.js` - Criar Seasons Automaticamente
+
+**Propósito:** Gerar seasons para próximos meses
 
 ```bash
-python scripts/enrich_locations.py
+node automate_seasons.js --months=6
+```
+
+**Opções:**
+- `--months=6` - Criar próximos 6 meses
+- `--start=2024-02-01` - Data de início
+- `--dry-run` - Apenas report
+
+---
+
+### 6. `check_user_photos.js` - Verificar Fotos de Usuários
+
+**Propósito:** Validar integridade de fotos de perfil
+
+```bash
+node check_user_photos.js
 ```
 
 **O que faz:**
-- Adiciona coordenadas GPS reais de Curitiba
-- Adiciona fotos de alta qualidade (Unsplash)
-- Define horários de abertura/fechamento
-- Adiciona handles do Instagram
-- Define dias de operação
-
-**Total:** 24 locais com dados completos mapeados
-
-**⚠️ Nota:** Execute APÓS `populate_real_data.py`
+- Verifica URLs de fotos válidas
+- Detecta fotos quebradas
+- Relata estatísticas
 
 ---
 
-### 4. Verificar e Limpar Duplicatas
+## Scripts Python
+
+### 1. `check_duplicates.py` - Encontrar Duplicatas (Python)
+
+**Propósito:** Validação de duplicatas via Python
 
 ```bash
-python scripts/check_duplicates.py
+python check_duplicates.py
+```
+
+---
+
+### 2. `enrich_locations.py` - Enriquecer Locais
+
+**Propósito:** Adicionar geocodificação (lat/lng) a locais
+
+```bash
+python enrich_locations.py
+```
+
+**Pré-requisitos:**
+```bash
+pip install requests geopy
 ```
 
 **O que faz:**
-- Detecta locais duplicados por nome
-- Lista todas as cópias encontradas
-- Remove duplicatas mantendo a mais recente
-- Move quadras antes de deletar local
-- Lista todos os locais únicos após limpeza
-
-**Segurança:**
-- ✅ Pede confirmação antes de deletar
-- ✅ Move quadras para evitar perda de dados
-- ✅ Estratégia configurável (newest/oldest)
+- Lê endereços dos locais
+- Obtém latitude/longitude (ViaCEP ou Google Maps)
+- Atualiza banco de dados
+- Valida coordenadas
 
 ---
 
-### 5. Adicionar Quadras de Campo
+### 3. `populate_real_data.py` - Popular com Dados Reais
+
+**Propósito:** Adicionar dados reais de campos em São Paulo
 
 ```bash
-python scripts/add_campo_fields.py
+python populate_real_data.py
 ```
 
-**O que faz:**
-- Adiciona quadras do tipo CAMPO nos locais especificados
-- Atualmente configurado para: JB Esportes & Eventos (2 quadras)
-- Define preço padrão, superfície (grama natural) e dimensões
-- Verifica resultado final após adição
-
-**Quando usar:**
-- Para completar locais que devem ter quadras de Campo
-- Após popular dados iniciais
-- Para balancear tipos de quadras (FUTSAL/SOCIETY/CAMPO)
-
-**Segurança:**
-- ✅ Pede confirmação antes de adicionar
-- ✅ Mostra quais locais serão afetados
+**Inclui:**
+- 50+ campos reais de São Paulo
+- Endereços completos
+- Coordenadas precisas (geocoded)
+- Tipos de quadra corretos
 
 ---
 
-### 6. Verificar Tipos de Quadras
+### 4. `create_season_and_badges.py` - Setup Gamificação
+
+**Propósito:** Criar seasons e badges iniciais
 
 ```bash
-python scripts/check_field_types.py
+python create_season_and_badges.py
 ```
 
-**O que faz:**
-- Lista distribuição de quadras por tipo (FUTSAL/SOCIETY/CAMPO)
-- Mostra total de quadras cadastradas
-- Exibe quadras agrupadas por local
-- Identifica locais que precisam de mais variedade de tipos
-
-**Quando usar:**
-- Antes de adicionar novas quadras
-- Para análise de cobertura de tipos
-- Planejamento de população de dados
+**Cria:**
+- 12 badges (HAT_TRICK, PAREDAO, etc)
+- Season atual (mês em andamento)
+- Participações iniciais
+- Configuração de XP
 
 ---
 
-### 7. Verificar Enriquecimento
+### 5. `analyze_firestore.py` - Analisar Firestore
+
+**Propósito:** Gerar relatório de dados em Firestore
 
 ```bash
-python scripts/check_enrichment.py
+python analyze_firestore.py
 ```
 
-**O que faz:**
-- Verifica quais locais têm GPS, fotos e horários
-- Lista locais incompletos
-- Mostra estatísticas de completude
-- Recomenda executar enrich_locations.py se necessário
-
-**Quando usar:**
-- Após popular dados
-- Para validar qualidade dos dados
-- Antes de publicar em produção
+**Relatório inclui:**
+- Contagem de documentos por coleção
+- Tamanho total
+- Estrutura de dados
+- Campos ausentes
 
 ---
 
-### 8. Verificar Duplicatas (Simples)
+### 6. `check_field_types.py` - Verificar Tipos de Quadra
+
+**Propósito:** Validar tipos de quadra (SOCIETY, CAMPO, FUTEBOL)
 
 ```bash
-python scripts/check_dupes_simple.py
-```
-
-**O que faz:**
-- Versão simplificada sem emoji (compatível Windows)
-- Agrupa locais por nome normalizado
-- Lista todas as duplicatas encontradas
-- Mostra quantidade de cópias por local
-
-**Quando usar:**
-- Análise rápida de duplicatas
-- Antes de executar check_duplicates.py
-- Em ambientes Windows com problemas de encoding
-
----
-
-### 9. Análise Simples
-
-```bash
-python scripts/analyze_simple.py
-```
-
-**O que faz:**
-- Versão simplificada sem emoji (compatível Windows)
-- Análise rápida de todas as collections
-- Mostra contagem de documentos
-- Estatísticas básicas por collection
-
-**Quando usar:**
-- Análise rápida do database
-- Em ambientes Windows com problemas de encoding
-- Verificação após mudanças
-
----
-
-## 📜 Scripts JavaScript
-
-### 10. Reset Completo do Firestore ⚠️
-
-```bash
-node scripts/reset_firestore.js
-```
-
-**⚠️ CUIDADO - APAGA TUDO!**
-
-**O que faz:**
-- Remove TODAS as collections
-- Apaga jogos, confirmações, times, estatísticas
-- **Apaga usuários também!**
-
-**Segurança:**
-- Requer digitar "RESET" para confirmar
-- **APENAS para ambiente de desenvolvimento/teste**
-- **NUNCA usar em produção!**
-
-**Collections afetadas:**
-- `games`, `confirmations`, `teams`
-- `statistics`, `player_stats`
-- `live_scores`, `game_events`
-- `users` ⚠️
-
----
-
-### 6. Migrações do Firestore (Referência)
-
-```bash
-node scripts/migrate_firestore.js
-```
-
-**Status:** 📚 Script histórico - Schema já está atualizado
-
-**Migrações implementadas:**
-1. IDs determinísticos para confirmations
-2. snake_case → camelCase em statistics
-3. Validação de contadores de jogos
-
-**⚠️ Nota:** Não executar - Schema atual já usa camelCase
-
----
-
-## 🚀 Workflow Completo: Setup Inicial
-
-Execute nesta ordem para popular o Firebase com dados reais:
-
-```bash
-# 1. Instalar dependências
-pip install -r scripts/requirements.txt
-cd scripts && npm install && cd ..
-
-# 2. Popular 12 locais reais de Curitiba
-python scripts/populate_real_data.py
-# ✅ Output: 12 locais + 48 quadras criados
-
-# 3. Enriquecer com GPS, fotos e horários
-python scripts/enrich_locations.py
-# ✅ Output: Coordenadas, fotos, horários adicionados
-
-# 4. Verificar duplicatas (se houver)
-python scripts/check_duplicates.py
-# ✅ Output: Lista duplicatas e opção de limpar
-
-# 5. Analisar resultado final
-python scripts/analyze_firestore.py
-# ✅ Output: Relatório completo da estrutura
-```
-
-**Tempo total:** ~2 minutos
-**Resultado:** Firebase pronto para uso com dados reais!
-
----
-
-## 🔄 Workflows Comuns
-
-### Análise Periódica
-
-```bash
-# Antes de implementar feature
-python scripts/analyze_firestore.py
-
-# Após mudanças estruturais
-python scripts/analyze_firestore.py
-
-# Verificar integridade
-python scripts/check_duplicates.py
-```
-
-### Reset de Ambiente (DEV ONLY!)
-
-```bash
-# ⚠️ CUIDADO - Apaga TUDO!
-node scripts/reset_firestore.js
-# Digite "RESET" para confirmar
-```
-
-### Setup de Dados Fresh
-
-```bash
-# 1. Reset (opcional)
-node scripts/reset_firestore.js
-
-# 2. Popular + Enriquecer
-python scripts/populate_real_data.py
-python scripts/enrich_locations.py
-
-# 3. Validar
-python scripts/analyze_firestore.py
+python check_field_types.py
 ```
 
 ---
 
-## 📦 Setup de Dependências
+### 7. `create_test_game.py` - Criar Jogo de Teste
 
-### Python
+**Propósito:** Criar jogo individual para testes
 
 ```bash
-# Opção 1: Via requirements.txt
-pip install -r scripts/requirements.txt
-
-# Opção 2: Direto
-pip install firebase-admin
+python create_test_game.py --date=2024-01-15 --time=19:00
 ```
 
-**Requer:** Python 3.7+
+---
 
-### Node.js
+### 8. `add_campo_fields.py` - Adicionar Quadras de CAMPO
 
+**Propósito:** Adicionar campos tipo CAMPO específicos
+
+```bash
+python add_campo_fields.py
+```
+
+---
+
+## Como Rodar
+
+### 1. Verificar Pré-requisitos
+
+**Node.js:**
 ```bash
 cd scripts
-npm install
-cd ..
+npm install  # Se não tiver node_modules
+
+node --version  # v18+
 ```
 
-**Requer:** Node.js 14+
+**Python:**
+```bash
+python --version  # 3.8+
+pip install -r requirements.txt
+```
+
+### 2. Configurar Ambiente
+
+**Backend deve estar rodando:**
+```bash
+cd backend
+npm run dev
+# Ou ter .env configurado corretamente
+```
+
+**Variáveis de ambiente (.env):**
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_DATABASE=futeba_db
+
+GOOGLE_MAPS_API_KEY=your-key-here
+USE_VIACEP=true
+```
+
+### 3. Rodar Scripts
+
+**Dry-run (seguro):**
+```bash
+node check_duplicates.js  # Apenas report
+```
+
+**Com confirmação:**
+```bash
+node deduplicate.js
+# Mostra o que vai deletar, pede confirmação
+```
 
 ---
 
-## 🔒 Credenciais Firebase
+## Safety & Backups
 
-### Service Account Key
-
-**Arquivo:** `serviceAccountKey.json`
-**Localização:** `scripts/serviceAccountKey.json`
-
-**Como obter:**
-1. Acesse [Firebase Console](https://console.firebase.google.com)
-2. Selecione o projeto "futebadosparcas"
-3. Configurações do Projeto → Service Accounts
-4. Generate New Private Key
-5. Salve como `serviceAccountKey.json` na pasta `scripts/`
-
-### ⚠️ Segurança
-
-- ✅ Arquivo está em `.gitignore`
-- ❌ **NUNCA commitar este arquivo!**
-- ❌ **NUNCA compartilhar publicamente!**
-- ✅ Tem permissões de **FULL ADMIN**
-
-**Backup:** Também existe em:
-- `futebadosparcas-firebase-adminsdk-fbsvc-b5fb25775d.json` (raiz)
-
----
-
-## 📊 Estatísticas dos Scripts
-
-### analyze_firestore.py
-- **Linhas:** 192
-- **Collections analisadas:** 10
-- **Estatísticas:** Roles, tipos, contadores
-- **Valor:** ⭐⭐⭐⭐⭐
-
-### populate_real_data.py
-- **Linhas:** 288
-- **Locais criados:** 12
-- **Quadras criadas:** 48
-- **Valor:** ⭐⭐⭐⭐⭐
-
-### enrich_locations.py
-- **Linhas:** 329
-- **Locais mapeados:** 24
-- **Enriquecimentos:** GPS, fotos, horários
-- **Valor:** ⭐⭐⭐⭐
-
-### check_duplicates.py
-- **Linhas:** 199
-- **Funcionalidades:** Detectar, listar, remover
-- **Segurança:** Confirmação + preservação
-- **Valor:** ⭐⭐⭐⭐⭐
-
----
-
-## 🎯 Casos de Uso
-
-### Para Desenvolvimento
-- Use `analyze_firestore.py` antes de implementar features
-- Valide estrutura com análise periódica
-- Popule dados reais para testes
-
-### Para Testes
-- `populate_real_data.py` → Dados instantâneos
-- `reset_firestore.js` → Limpar entre testes
-- `analyze_firestore.py` → Validar estado
-
-### Para Demos
-- Execute workflow completo (5 passos acima)
-- Firebase pronto em 2 minutos
-- 12 locais reais de Curitiba
-
-### Para Manutenção
-- `check_duplicates.py` → Limpeza periódica
-- `analyze_firestore.py` → Health check
-
----
-
-## 🐛 Troubleshooting
-
-### Erro: `ModuleNotFoundError: No module named 'firebase_admin'`
+### Sempre Fazer Backup Antes!
 
 ```bash
-pip install firebase-admin
+# PostgreSQL backup
+pg_dump -h localhost -U postgres futeba_db > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Restaurar:
+psql -h localhost -U postgres futeba_db < backup_20240101_120000.sql
 ```
 
-### Erro: `FileNotFoundError: serviceAccountKey.json`
+### Script Audit Trail
 
-1. Baixe do Firebase Console
-2. Salve em `scripts/serviceAccountKey.json`
-3. Verifique que o arquivo existe:
-   ```bash
-   ls scripts/serviceAccountKey.json
-   ```
+Todos os scripts registram em `scripts/logs/`:
 
-### Erro: `Permission denied`
+```
+logs/
+├── 2024-01-15_14-30-seed.log
+├── 2024-01-15_14-35-deduplicate.log
+└── 2024-01-15_14-40-migration.log
+```
 
-Verifique que o Service Account tem permissões de admin no Firebase.
+### Rollback
 
-### Script Python não executa
+Se algo der errado:
 
 ```bash
-# Windows
-python scripts/analyze_firestore.py
+# 1. Restaurar backup
+psql futeba_db < backup_20240101_before_migration.sql
 
-# Linux/Mac
-python3 scripts/analyze_firestore.py
+# 2. Check logs
+tail -f scripts/logs/latest.log
+
+# 3. Report issue
 ```
 
 ---
 
-## 📚 Documentação Adicional
+## Execução Operacional Recomendada
 
-- **Estrutura do Firestore:** `.agent/FIRESTORE_STRUCTURE.md`
-- **Auditoria de Scripts:** `.agent/AUDITORIA_SCRIPTS.md`
-- **Padrões Firebase:** `.agent/FIREBASE_MODERNIZATION.md`
-- **Quick Reference:** `.agent/QUICK_REFERENCE.md`
-
----
-
-## 🎓 Boas Práticas
-
-1. **Sempre analise antes de popular**
-   ```bash
-   python scripts/analyze_firestore.py
-   ```
-
-2. **Execute em ordem**
-   - populate → enrich → check → analyze
-
-3. **Backup antes de reset**
-   - Firebase tem backup automático
-   - Mas sempre confirme antes de deletar
-
-4. **Use em desenvolvimento**
-   - Scripts poderosos, use com cuidado
-   - Reset apenas em ambiente dev
-
-5. **Valide resultados**
-   - Sempre execute analyze após mudanças
-   - Verifique duplicatas periodicamente
+| Script | Frequência | Comando | Risco |
+|--------|-----------|---------|-------|
+| check_duplicates.js | Semanal | `node check_duplicates.js` | ✅ Baixo |
+| validate_data.py | Semanal | `python check_duplicates.py` | ✅ Baixo |
+| cleanup_invites.js | Quinzenal | `node cleanup_invites.js` | ⚠️ Médio |
+| deduplicate.js | Mensal | `node deduplicate.js --dry-run` | 🔴 Alto |
 
 ---
 
-**Última atualização**: 27/12/2024
-**Versão**: 1.0
-**Maintainer**: Equipe Futeba dos Parças
+## Veja Também
+
+- [../SETUP_GUIDE.md](../SETUP_GUIDE.md) - Setup ambiente
+- [../DATABASE_SCHEMA.md](../DATABASE_SCHEMA.md) - Schema do banco
+- [../backend/README.md](../backend/README.md) - Como rodar backend
+
+---
+
+**Última atualização:** Dezembro 2025
+**Status:** Todos scripts testados ✓
