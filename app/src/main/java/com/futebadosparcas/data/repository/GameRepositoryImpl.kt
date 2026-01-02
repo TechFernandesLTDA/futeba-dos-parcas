@@ -52,7 +52,7 @@ class GameRepositoryImpl @Inject constructor(
         return try {
             val snapshot = gamesCollection
                 .whereIn("status", listOf(GameStatus.SCHEDULED.name, GameStatus.CONFIRMED.name))
-                .orderBy("date", Query.Direction.ASCENDING)
+                .orderBy("dateTime", Query.Direction.ASCENDING)
                 .limit(20)
                 .get()
                 .await()
@@ -110,7 +110,7 @@ class GameRepositoryImpl @Inject constructor(
             val uid = auth.currentUser?.uid ?: ""
             
             val gamesSnapshot = gamesCollection
-                .orderBy("date", Query.Direction.DESCENDING)
+                .orderBy("dateTime", Query.Direction.DESCENDING)
                 .limit(50)
                 .get()
                 .await()
@@ -151,7 +151,7 @@ class GameRepositoryImpl @Inject constructor(
         
         val gamesFlow = callbackFlow {
              val subscription = gamesCollection
-                .orderBy("date", Query.Direction.DESCENDING)
+                .orderBy("dateTime", Query.Direction.DESCENDING)
                 .limit(50)
                 .addSnapshotListener { snapshot, e ->
                     if (e != null) { 
@@ -1098,5 +1098,140 @@ class GameRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             0
         }
+    }
+
+    // ========== FASE 1: Public Games Discovery ==========
+
+    override suspend fun getPublicGames(limit: Int): Result<List<Game>> {
+        return try {
+            val snapshot = gamesCollection
+                .whereIn("visibility", listOf(
+                    com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED.name,
+                    com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN.name
+                ))
+                .whereIn("status", listOf(
+                    GameStatus.SCHEDULED.name,
+                    GameStatus.CONFIRMED.name
+                ))
+                .orderBy("dateTime", Query.Direction.ASCENDING)
+                .limit(limit.toLong())
+                .get()
+                .await()
+
+            val games = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(Game::class.java)?.apply { id = doc.id }
+            }
+
+            AppLogger.d(TAG) { "Encontrados ${games.size} jogos públicos" }
+            Result.success(games)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar jogos públicos", e)
+            Result.failure(e)
+        }
+    }
+
+    override fun getPublicGamesFlow(limit: Int): kotlinx.coroutines.flow.Flow<List<Game>> = callbackFlow {
+        val listener = gamesCollection
+            .whereIn("visibility", listOf(
+                com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED.name,
+                com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN.name
+            ))
+            .whereIn("status", listOf(
+                GameStatus.SCHEDULED.name,
+                GameStatus.CONFIRMED.name
+            ))
+            .orderBy("dateTime", Query.Direction.ASCENDING)
+            .limit(limit.toLong())
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    AppLogger.e(TAG, "Erro no listener de jogos públicos", error)
+                    return@addSnapshotListener
+                }
+
+                val games = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(Game::class.java)?.apply { id = doc.id }
+                } ?: emptyList()
+
+                trySend(games)
+            }
+
+        awaitClose { listener.remove() }
+    }
+
+    override suspend fun getNearbyPublicGames(
+        userLat: Double,
+        userLng: Double,
+        radiusKm: Double,
+        limit: Int
+    ): Result<List<Game>> {
+        return try {
+            // Buscar todos os jogos públicos
+            val publicGamesResult = getPublicGames(100) // Buscar mais jogos para filtrar por distância
+            val allPublicGames = publicGamesResult.getOrElse { emptyList() }
+
+            // Filtrar por distância usando fórmula de Haversine
+            val nearbyGames = allPublicGames.filter { game ->
+                if (game.locationLat == null || game.locationLng == null) return@filter false
+
+                val distance = calculateDistance(
+                    userLat, userLng,
+                    game.locationLat!!, game.locationLng!!
+                )
+                distance <= radiusKm
+            }.sortedBy { game ->
+                // Ordenar por distância
+                calculateDistance(
+                    userLat, userLng,
+                    game.locationLat ?: 0.0,
+                    game.locationLng ?: 0.0
+                )
+            }.take(limit)
+
+            AppLogger.d(TAG) { "Encontrados ${nearbyGames.size} jogos próximos em ${radiusKm}km" }
+            Result.success(nearbyGames)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar jogos próximos", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getOpenPublicGames(limit: Int): Result<List<Game>> {
+        return try {
+            val snapshot = gamesCollection
+                .whereEqualTo("visibility", com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN.name)
+                .whereIn("status", listOf(
+                    GameStatus.SCHEDULED.name,
+                    GameStatus.CONFIRMED.name
+                ))
+                .orderBy("dateTime", Query.Direction.ASCENDING)
+                .limit(limit.toLong())
+                .get()
+                .await()
+
+            val games = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(Game::class.java)?.apply { id = doc.id }
+            }
+
+            AppLogger.d(TAG) { "Encontrados ${games.size} jogos abertos para solicitações" }
+            Result.success(games)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar jogos abertos", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Calcula distância entre duas coordenadas usando fórmula de Haversine
+     * @return Distância em quilômetros
+     */
+    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371.0 // Raio da Terra em km
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        return R * c
     }
 }

@@ -14,6 +14,14 @@ import com.futebadosparcas.R
 import com.futebadosparcas.databinding.FragmentHomeBinding
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import com.futebadosparcas.ui.home.components.ExpressiveHubHeader
+import com.futebadosparcas.ui.components.SyncStatusBanner
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.futebadosparcas.ui.home.components.ActivityFeedSection
+import com.futebadosparcas.ui.home.components.PublicGamesSuggestions
+import com.futebadosparcas.ui.home.components.StreakWidget
+import com.futebadosparcas.ui.home.components.ChallengesSection
+import com.futebadosparcas.ui.home.components.RecentBadgesCarousel
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.util.setDebouncedRefreshListener
@@ -45,6 +53,7 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
+        setupComposeViews()
         observeViewModel()
 
         binding.swipeRefresh.setDebouncedRefreshListener(
@@ -73,9 +82,12 @@ class HomeFragment : Fragment() {
             findNavController().navigate(R.id.action_global_notifications)
         }
         
+        binding.btnViewToggle?.setOnClickListener {
+            viewModel.toggleViewMode()
+        }
+        
         // O clique no header é gerenciado pelo componente Compose ExpressiveHubHeader
         // para maior precisão e haptic feedback.
-
     }
 
     private fun setupRecyclerView() {
@@ -89,6 +101,115 @@ class HomeFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             setHasFixedSize(true)
             isNestedScrollingEnabled = false
+        }
+    }
+
+    private fun setupComposeViews() {
+        binding.composeConnectionStatus.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val isOnline by viewModel.isOnline.collectAsState()
+                FutebaTheme {
+                    SyncStatusBanner(isConnected = isOnline)
+                }
+            }
+        }
+
+        binding.composeStreak.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val uiState by viewModel.uiState.collectAsState()
+                FutebaTheme {
+                    if (uiState is HomeUiState.Success) {
+                        val streak = (uiState as HomeUiState.Success).streak
+                        StreakWidget(streak = streak)
+                    }
+                }
+            }
+        }
+
+        binding.composeActivityFeed.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val uiState by viewModel.uiState.collectAsState()
+                FutebaTheme {
+                    if (uiState is HomeUiState.Success) {
+                        val activities = (uiState as HomeUiState.Success).activities
+                        ActivityFeedSection(activities = activities)
+                    }
+                }
+            }
+        }
+
+        binding.composePublicGames.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val uiState by viewModel.uiState.collectAsState()
+                FutebaTheme {
+                    if (uiState is HomeUiState.Success) {
+                        val publicGames = (uiState as HomeUiState.Success).publicGames
+                        PublicGamesSuggestions(
+                            games = publicGames,
+                            onGameClick = { game ->
+                                val action = HomeFragmentDirections.actionHomeToGameDetail(game.id)
+                                findNavController().navigate(action)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        binding.composeChallenges.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val uiState by viewModel.uiState.collectAsState()
+                FutebaTheme {
+                    if (uiState is HomeUiState.Success) {
+                        val challenges = (uiState as HomeUiState.Success).challenges
+                        ChallengesSection(challenges = challenges)
+                    }
+                }
+            }
+        }
+
+        binding.composeStats?.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                 val uiState by viewModel.uiState.collectAsState()
+                 FutebaTheme {
+                     if (uiState is HomeUiState.Success) {
+                         val stats = (uiState as HomeUiState.Success).statistics
+                         com.futebadosparcas.ui.home.components.ExpandableStatsSection(statistics = stats ?: com.futebadosparcas.data.model.UserStatistics())
+                     }
+                 }
+            }
+        }
+        
+        binding.composeHeatmap?.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                 val uiState by viewModel.uiState.collectAsState()
+                 FutebaTheme {
+                     if (uiState is HomeUiState.Success) {
+                         val activities = (uiState as HomeUiState.Success).activities
+                         com.futebadosparcas.ui.home.components.ActivityHeatmapSection(activities = activities)
+                     }
+                 }
+            }
+        }
+
+        binding.composeBadges.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val uiState by viewModel.uiState.collectAsState()
+                FutebaTheme {
+                    if (uiState is HomeUiState.Success) {
+                        val badges = (uiState as HomeUiState.Success).recentBadges
+                        RecentBadgesCarousel(badges = badges)
+                    }
+                }
+            }
         }
     }
 
@@ -110,6 +231,22 @@ class HomeFragment : Fragment() {
                         binding.layoutEmpty.root.visibility = if (state.games.isEmpty()) View.VISIBLE else View.GONE
                         binding.rvUpcomingGames.visibility = if (state.games.isEmpty()) View.GONE else View.VISIBLE
                         
+                        // Handle View Mode Toggle
+                        val layoutManager = if (state.isGridView) {
+                            androidx.recyclerview.widget.GridLayoutManager(requireContext(), 2)
+                        } else {
+                            LinearLayoutManager(requireContext())
+                        }
+                        
+                        // Only change if different to avoid reset scroll
+                        if (binding.rvUpcomingGames.layoutManager?.javaClass != layoutManager.javaClass) {
+                            binding.rvUpcomingGames.layoutManager = layoutManager
+                        }
+                        
+                        binding.btnViewToggle?.setIconResource(
+                            if (state.isGridView) R.drawable.ic_view_list else R.drawable.ic_grid_view
+                        )
+                        
                         // Bind Expressive Compose Header
                         binding.composeHeader.apply {
                             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
@@ -120,11 +257,11 @@ class HomeFragment : Fragment() {
                                         summary = state.gamificationSummary,
                                         statistics = state.statistics,
                                         hapticManager = hapticManager,
-                            onProfileClick = {
-                                if (!isAdded) return@ExpressiveHubHeader
-                                val playerCard = com.futebadosparcas.ui.player.PlayerCardDialog.newInstance(state.user.id)
-                                playerCard.show(childFragmentManager, "PlayerCard")
-                            }
+                                        onProfileClick = {
+                                            if (!isAdded) return@ExpressiveHubHeader
+                                            val playerCard = com.futebadosparcas.ui.player.PlayerCardDialog.newInstance(state.user.id)
+                                            playerCard.show(childFragmentManager, "PlayerCard")
+                                        }
                                     )
                                 }
                             }
@@ -147,6 +284,7 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.unreadCount.collect { count ->

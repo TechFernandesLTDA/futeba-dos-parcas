@@ -125,6 +125,9 @@ class LocationRepository @Inject constructor(
                 val fieldsDeferred = async {
                     fieldsCollection
                         .whereEqualTo("location_id", locationId)
+                        .whereEqualTo("is_active", true)
+                        .orderBy("type")
+                        .orderBy("name")
                         .get()
                         .await()
                 }
@@ -136,8 +139,6 @@ class LocationRepository @Inject constructor(
                     ?: return@coroutineScope Result.failure(Exception("Local nao encontrado"))
 
                 val fields = fieldsSnapshot.toObjects(Field::class.java)
-                    .filter { it.isActive }
-                    .sortedWith(compareBy({ it.type }, { it.name }))
 
                 Result.success(LocationWithFields(location, fields))
             }
@@ -181,7 +182,6 @@ class LocationRepository @Inject constructor(
 
     /**
      * Busca todas as quadras de um local
-     * Nota: Removido filtro is_active e ordenações complexas para evitar erro de índice
      */
     suspend fun getFieldsByLocation(locationId: String): Result<List<Field>> {
         return try {
@@ -191,12 +191,12 @@ class LocationRepository @Inject constructor(
             
             val snapshot = fieldsCollection
                 .whereEqualTo("location_id", locationId)
+                .orderBy("type")
+                .orderBy("name")
                 .get()
                 .await()
 
-            // Ordenar localmente para evitar necessidade de índice composto
             val fields = snapshot.toObjects(Field::class.java)
-                .sortedWith(compareBy({ it.type }, { it.name }))
             
             Result.success(fields)
         } catch (e: Exception) {
@@ -639,7 +639,7 @@ class LocationRepository @Inject constructor(
                             locationsCollection.document(loc.id).delete().await()
                             
                             // 2. Delete associated fields
-                            val fieldsSnapshot = fieldsCollection.whereEqualTo("locationId", loc.id).get().await()
+                            val fieldsSnapshot = fieldsCollection.whereEqualTo("location_id", loc.id).get().await()
                             for (fieldDoc in fieldsSnapshot.documents) {
                                 fieldDoc.reference.delete().await()
                             }

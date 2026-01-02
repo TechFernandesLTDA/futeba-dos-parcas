@@ -27,6 +27,8 @@ class GamificationRepository @Inject constructor(
         private const val COLLECTION_USER_BADGES = "user_badges"
         private const val COLLECTION_SEASONS = "seasons"
         private const val COLLECTION_SEASON_PARTICIPATION = "season_participation"
+        private const val COLLECTION_CHALLENGES = "challenges"
+        private const val COLLECTION_CHALLENGE_PROGRESS = "challenge_progress"
     }
 
     /**
@@ -197,6 +199,26 @@ class GamificationRepository @Inject constructor(
     }
 
     /**
+     * Busca os badges mais recentes do usuário
+     */
+    suspend fun getRecentBadges(userId: String, limit: Int = 5): Result<List<UserBadge>> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_USER_BADGES)
+                .whereEqualTo("user_id", userId)
+                .orderBy("unlockedAt", Query.Direction.DESCENDING)
+                .limit(limit.toLong())
+                .get()
+                .await()
+
+            val badges = snapshot.toObjects(UserBadge::class.java)
+            Result.success(badges)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar badges recentes", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Busca a temporada ativa
      */
 
@@ -361,6 +383,64 @@ class GamificationRepository @Inject constructor(
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao atualizar participação na temporada", e)
             Result.failure(e)
+        }
+    }
+
+
+    suspend fun getActiveChallenges(): Result<List<WeeklyChallenge>> {
+        return try {
+            val now = Date()
+            val snapshot = firestore.collection(COLLECTION_CHALLENGES)
+                .whereLessThanOrEqualTo("startDate", now)
+                .orderBy("startDate", Query.Direction.DESCENDING)
+                .limit(20)
+                .get()
+                .await()
+
+            val challenges = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(WeeklyChallenge::class.java)?.copy(id = doc.id)
+            }.filter { challenge ->
+                 // Simple string comparison for ISO dates or parse if needed.
+                 // Assuming YYYY-MM-DD format which is comparable as string.
+                 // Or better, logic: if endDate is empty/null, it's ongoing.
+                 // User 'now' is Date.
+                 // We need to parse challenge.endDate (String) to Date.
+                 try {
+                     if (challenge.endDate.isEmpty()) return@filter true
+                     val end = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).parse(challenge.endDate)
+                     end?.after(now) ?: true
+                 } catch (e: Exception) {
+                     true // If parse fails, assume active
+                 }
+            }
+            
+            Result.success(challenges)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar desafios ativos", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getChallengesProgress(userId: String, challengeIds: List<String>): Result<List<UserChallengeProgress>> {
+        if (challengeIds.isEmpty()) return Result.success(emptyList())
+        return try {
+             // Firestore limit for 'IN' query is 10
+             val chunks = challengeIds.chunked(10)
+             val allProgress = mutableListOf<UserChallengeProgress>()
+             
+             for (chunk in chunks) {
+                 val snapshot = firestore.collection(COLLECTION_CHALLENGE_PROGRESS)
+                     .whereEqualTo("userId", userId)
+                     .whereIn("challengeId", chunk)
+                     .get()
+                     .await()
+                 allProgress.addAll(snapshot.toObjects(UserChallengeProgress::class.java))
+             }
+             Result.success(allProgress)
+        } catch (e: Exception) {
+             AppLogger.e(TAG, "Erro ao buscar progresso dos desafios", e)
+             // Non-critical, return empty if fails? Or propagate error
+             Result.failure(e)
         }
     }
 }

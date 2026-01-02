@@ -145,4 +145,11 @@ object AppModule {
     fun provideHapticManager(@ApplicationContext context: Context): com.futebadosparcas.util.HapticManager {
         return com.futebadosparcas.util.HapticManager(context)
     }
+    @Provides
+    @Singleton
+    fun provideActivityRepository(
+        firestore: FirebaseFirestore
+    ): ActivityRepository {
+        return ActivityRepositoryImpl(firestore)
+    }
 }

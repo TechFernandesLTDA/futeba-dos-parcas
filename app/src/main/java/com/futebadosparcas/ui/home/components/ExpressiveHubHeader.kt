@@ -178,10 +178,10 @@ fun ExpressiveHubHeader(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
-                        StatItem("Jogos", statistics.totalGames.toString())
-                        StatItem("Gols", statistics.totalGoals.toString())
-                        StatItem("Assist.", statistics.totalAssists.toString())
-                        StatItem("MVP", statistics.bestPlayerCount.toString())
+                        HeaderStatItem("Jogos", statistics.totalGames.toString())
+                        HeaderStatItem("Gols", statistics.totalGoals.toString())
+                        HeaderStatItem("Assist.", statistics.totalAssists.toString())
+                        HeaderStatItem("MVP", statistics.bestPlayerCount.toString())
                     }
                 }
             }
@@ -190,7 +190,7 @@ fun ExpressiveHubHeader(
 }
 
 @Composable
-private fun StatItem(label: String, value: String) {
+private fun HeaderStatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,

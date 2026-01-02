@@ -125,8 +125,21 @@ service cloud.firestore {
     // COLECAO: games
     // ============================================
     match /games/{gameId} {
-      // Qualquer usuario autenticado pode ver jogos
-      allow read: if isAuthenticated();
+      // Regras de leitura baseadas em visibilidade (FASE 1):
+      // - PUBLIC_CLOSED ou PUBLIC_OPEN: qualquer autenticado pode ver
+      // - GROUP_ONLY: apenas membros do grupo podem ver
+      allow read: if isAuthenticated() && (
+        resource.data.visibility == 'PUBLIC_CLOSED' ||
+        resource.data.visibility == 'PUBLIC_OPEN' ||
+        isGroupMember(userId(), resource.data.group_id) ||
+        isAdmin()
+      );
+
+      // Helper function para verificar se usuário é membro do grupo
+      function isGroupMember(uid, groupId) {
+        return groupId != null &&
+          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(uid));
+      }
 
       // Qualquer usuario autenticado pode criar jogos
       // Permitir criar jogos como mock_admin
@@ -751,7 +764,37 @@ service cloud.firestore {
     match /user_badges/{badgeId} {
       allow read: if isAuthenticated();
       // Permitir create pelo BadgeAwarder
-      allow create: if isAuthenticated(); 
+      allow create: if isAuthenticated();
+    }
+
+    // ============================================
+    // COLECAO: game_requests (FASE 1 - Solicitações de Jogos Públicos)
+    // ============================================
+    match /game_requests/{requestId} {
+      // Qualquer usuário autenticado pode ler suas próprias solicitações
+      // Dono do jogo pode ler todas as solicitações do seu jogo
+      allow read: if isAuthenticated() &&
+        (resource.data.user_id == userId() || isGameOwner(resource.data.game_id));
+
+      // Usuário pode criar solicitação apenas para si mesmo
+      allow create: if isAuthenticated() &&
+        request.resource.data.user_id == userId() &&
+        request.resource.data.status == 'PENDING';
+
+      // Dono do jogo pode aprovar/rejeitar (update status)
+      // Usuário pode cancelar sua própria solicitação (delete)
+      allow update: if isAuthenticated() &&
+        (isGameOwner(resource.data.game_id) &&
+         onlyAllowedFields(['status', 'reviewed_at', 'reviewed_by', 'rejection_reason']));
+
+      // Usuário pode deletar sua própria solicitação
+      allow delete: if isAuthenticated() && resource.data.user_id == userId();
+    }
+
+    // Helper function para verificar se usuário é dono do jogo
+    function isGameOwner(gameId) {
+      return exists(/databases/$(database)/documents/games/$(gameId)) &&
+        get(/databases/$(database)/documents/games/$(gameId)).data.owner_id == userId();
     }
 
     // ============================================

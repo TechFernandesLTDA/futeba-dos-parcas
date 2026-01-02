@@ -44,6 +44,25 @@ class UpcomingGamesAdapter(
                     "Gratis"
                 }
 
+                // Countdown logic (Simplified for RecyclerView)
+                try {
+                    val format = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
+                    val gameDate = format.parse("${game.date} ${game.time}")
+                    if (gameDate != null) {
+                        val diff = gameDate.time - System.currentTimeMillis()
+                        if (diff > 0 && diff < 86400000) { // Less than 24h
+                            val hours = java.util.concurrent.TimeUnit.MILLISECONDS.toHours(diff)
+                            val minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(diff) % 60
+                            tvTime.text = "${game.time} (Faltam ${hours}h ${minutes}m)"
+                            tvTime.setTextColor(root.context.getColor(R.color.secondary))
+                        } else {
+                             tvTime.setTextColor(root.context.getColor(R.color.text_primary))
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Ignore parse errors
+                }
+
                 // Status de confirmacao - simplificado para Firebase
                 btnConfirm.text = "Acessar"
                 btnConfirm.setBackgroundColor(root.context.getColor(R.color.primary))

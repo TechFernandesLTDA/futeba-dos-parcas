@@ -99,6 +99,28 @@ class FakeGameRepository @Inject constructor() : GameRepository {
         if (game != null) emit(Result.success(game)) else emit(Result.failure(Exception("Game not found")))
     }
 
+    override suspend fun getPublicGames(limit: Int): Result<List<Game>> {
+        return Result.success(games.filter { it.visibility == "PUBLIC_OPEN" || it.visibility == "PUBLIC_CLOSED" }.take(limit))
+    }
+
+    override fun getPublicGamesFlow(limit: Int): kotlinx.coroutines.flow.Flow<List<Game>> = kotlinx.coroutines.flow.flow {
+        emit(games.filter { it.visibility == "PUBLIC_OPEN" || it.visibility == "PUBLIC_CLOSED" }.take(limit))
+    }
+
+    override suspend fun getNearbyPublicGames(
+        userLat: Double,
+        userLng: Double,
+        radiusKm: Double,
+        limit: Int
+    ): Result<List<Game>> {
+        // Mock implementation: return all public games
+        return getPublicGames(limit)
+    }
+
+    override suspend fun getOpenPublicGames(limit: Int): Result<List<Game>> {
+        return Result.success(games.filter { it.visibility == "PUBLIC_OPEN" }.take(limit))
+    }
+
     override suspend fun createGame(game: Game): Result<Game> {
         val newGame = game.copy(id = (games.size + 1).toString())
         games.add(newGame)

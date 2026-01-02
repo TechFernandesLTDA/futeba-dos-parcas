@@ -89,4 +89,41 @@ interface GameRepository {
     suspend fun summonPlayers(gameId: String, confirmations: List<GameConfirmation>): Result<Unit>
     suspend fun sendGameEvent(gameId: String, event: com.futebadosparcas.data.model.GameEvent): Result<Unit>
     suspend fun deleteGameEvent(gameId: String, eventId: String): Result<Unit>
+
+    // Public Games Discovery (FASE 1 - Sistema de Privacidade)
+    /**
+     * Buscar jogos públicos (visibilidade PUBLIC_CLOSED ou PUBLIC_OPEN)
+     * @param limit Número máximo de jogos a retornar
+     * @return Result com lista de jogos públicos ordenados por data
+     */
+    suspend fun getPublicGames(limit: Int = 20): Result<List<Game>>
+
+    /**
+     * Flow de jogos públicos em tempo real
+     * @param limit Número máximo de jogos a retornar
+     * @return Flow com lista de jogos públicos
+     */
+    fun getPublicGamesFlow(limit: Int = 20): kotlinx.coroutines.flow.Flow<List<Game>>
+
+    /**
+     * Buscar jogos públicos próximos à localização do usuário
+     * @param userLat Latitude do usuário
+     * @param userLng Longitude do usuário
+     * @param radiusKm Raio de busca em quilômetros
+     * @param limit Número máximo de jogos a retornar
+     * @return Result com lista de jogos públicos próximos
+     */
+    suspend fun getNearbyPublicGames(
+        userLat: Double,
+        userLng: Double,
+        radiusKm: Double = 10.0,
+        limit: Int = 20
+    ): Result<List<Game>>
+
+    /**
+     * Buscar jogos públicos que aceitam solicitações externas
+     * @param limit Número máximo de jogos a retornar
+     * @return Result com lista de jogos PUBLIC_OPEN
+     */
+    suspend fun getOpenPublicGames(limit: Int = 20): Result<List<Game>>
 }

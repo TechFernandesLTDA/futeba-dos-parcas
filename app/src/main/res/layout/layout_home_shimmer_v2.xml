@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Header Shimmer -->
+    <include layout="@layout/item_skeleton_game_card" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="16dp" />
+
+    <!-- Stats Shimmer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        
+        <View
+            android:layout_width="0dp"
+            android:layout_height="80dp"
+            android:layout_weight="1"
+            android:background="@drawable/skeleton_rounded_rect"
+            android:layout_marginEnd="8dp"/>
+            
+        <View
+            android:layout_width="0dp"
+            android:layout_height="80dp"
+            android:layout_weight="1"
+            android:background="@drawable/skeleton_rounded_rect"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="24dp" />
+
+    <!-- List Items Shimmer -->
+    <include layout="@layout/item_skeleton_game_card" />
+    <Space android:layout_width="match_parent" android:layout_height="8dp" />
+    <include layout="@layout/item_skeleton_game_card" />
+    <Space android:layout_width="match_parent" android:layout_height="8dp" />
+    <include layout="@layout/item_skeleton_game_card" />
+
+</LinearLayout>
