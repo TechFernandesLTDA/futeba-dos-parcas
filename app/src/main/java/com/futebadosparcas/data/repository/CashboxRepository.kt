@@ -23,97 +23,109 @@ import javax.inject.Singleton
 @Singleton
 class CashboxRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val storage: FirebaseStorage
 ) {
     private val groupsCollection = firestore.collection("groups")
     private val usersCollection = firestore.collection("users")
 
     /**
-     * Adiciona uma entrada no caixa do grupo
+     * Faz upload do comprovante de pagamento
      */
-    suspend fun addEntry(groupId: String, entry: CashboxEntry): Result<String> {
+    suspend fun uploadReceipt(groupId: String, imageUri: Uri): Result<String> {
+        return try {
+            val filename = "receipt_${System.currentTimeMillis()}.jpg"
+            val ref = storage.reference.child("groups/$groupId/cashbox_receipts/$filename")
+
+            ref.putFile(imageUri).await()
+            val downloadUrl = ref.downloadUrl.await()
+
+            Result.success(downloadUrl.toString())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Adiciona uma nova entrada no caixa
+     */
+    suspend fun addEntry(groupId: String, entry: CashboxEntry, photoUri: Uri? = null): Result<String> {
         return try {
             val userId = auth.currentUser?.uid
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            // Verificar se é admin do grupo
+            // Verificar permissão
             val memberDoc = groupsCollection.document(groupId)
-                .collection("members")
-                .document(userId)
-                .get()
-                .await()
+                .collection("members").document(userId).get().await()
 
-            if (!memberDoc.exists()) {
-                return Result.failure(Exception("Você não é membro deste grupo"))
+            val role = memberDoc.getString("role")
+            if (role != GroupMemberRole.ADMIN.name && role != GroupMemberRole.OWNER.name) {
+                return Result.failure(Exception("Apenas administradores podem lançar no caixa"))
             }
 
-            val member = memberDoc.toObject(GroupMember::class.java)
-            if (member?.isAdmin() != true) {
-                return Result.failure(Exception("Apenas administradores podem gerenciar o caixa"))
+            // Upload da foto se houver
+            val finalEntry = if (photoUri != null) {
+                val uploadResult = uploadReceipt(groupId, photoUri)
+                if (uploadResult.isSuccess) {
+                    entry.copy(receiptUrl = uploadResult.getOrNull())
+                } else {
+                    return Result.failure(uploadResult.exceptionOrNull()!!)
+                }
+            } else {
+                entry
             }
 
-            // Buscar dados do usuário
-            val userDoc = usersCollection.document(userId).get().await()
-            val userName = userDoc.getString("name") ?: ""
+            val userName = memberDoc.getString("user_name") ?: ""
 
-            // Criar entrada com dados do usuário
-            val entryWithUser = entry.copy(
-                createdById = userId,
-                createdByName = userName
-            )
+            val entryRef = groupsCollection.document(groupId).collection("cashbox").document()
+            val summaryRef = groupsCollection.document(groupId).collection("cashbox_summary").document("current")
 
-            // Validar dados da entrada
-            if (entry.amount <= 0) {
+            if (finalEntry.amount <= 0) {
                 return Result.failure(Exception("O valor deve ser maior que zero"))
             }
 
-            // Executar transação
-            val entryId = firestore.runTransaction { transaction ->
-                // 1. Buscar ou criar resumo
-                val summaryRef = groupsCollection.document(groupId)
-                    .collection("cashbox_summary")
-                    .document("current")
+            val entryWithData = finalEntry.copy(
+                id = entryRef.id,
+                createdById = userId,
+                createdByName = userName,
+                createdAt = Date(),
+                referenceDate = finalEntry.referenceDate ?: Date(),
+                status = CashboxAppStatus.ACTIVE.name
+            )
 
-                val summaryDoc = transaction.get(summaryRef)
-                val currentSummary = if (summaryDoc.exists()) {
-                    summaryDoc.toObject(CashboxSummary::class.java) ?: CashboxSummary()
-                } else {
-                    CashboxSummary()
-                }
+            firestore.runTransaction { transaction ->
+                // 1. Buscar sumário atual
+                val summary = transaction.get(summaryRef).toObject(CashboxSummary::class.java) 
+                    ?: CashboxSummary()
 
                 // 2. Calcular novos valores
-                val amountDelta = if (entry.isIncome()) entry.amount else -entry.amount
-                val newBalance = currentSummary.balance + amountDelta
-                val newTotalIncome = if (entry.isIncome()) {
-                    currentSummary.totalIncome + entry.amount
+                val amount = entryWithData.amount
+                val newSummary = if (entryWithData.isIncome()) {
+                    summary.copy(
+                        balance = summary.balance + amount,
+                        totalIncome = summary.totalIncome + amount,
+                        lastEntryAt = entryWithData.createdAt,
+                        entryCount = summary.entryCount + 1
+                    )
                 } else {
-                    currentSummary.totalIncome
-                }
-                val newTotalExpense = if (entry.isExpense()) {
-                    currentSummary.totalExpense + entry.amount
-                } else {
-                    currentSummary.totalExpense
+                    summary.copy(
+                        balance = summary.balance - amount,
+                        totalExpense = summary.totalExpense + amount,
+                        lastEntryAt = entryWithData.createdAt,
+                        entryCount = summary.entryCount + 1
+                    )
                 }
 
                 // 3. Atualizar resumo
-                transaction.set(summaryRef, mapOf(
-                    "balance" to newBalance,
-                    "total_income" to newTotalIncome,
-                    "total_expense" to newTotalExpense,
-                    "last_entry_at" to FieldValue.serverTimestamp(),
-                    "entry_count" to currentSummary.entryCount + 1
-                ))
+                transaction.set(summaryRef, newSummary)
 
                 // 4. Adicionar entrada
-                val entryRef = groupsCollection.document(groupId)
-                    .collection("cashbox")
-                    .document()
-                transaction.set(entryRef, entryWithUser.copy(id = entryRef.id))
+                transaction.set(entryRef, entryWithData)
 
                 entryRef.id
             }.await()
 
-            Result.success(entryId)
+            Result.success(entryRef.id)
         } catch (e: Exception) {
             Result.failure(e)
         }

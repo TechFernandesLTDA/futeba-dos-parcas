@@ -19,7 +19,9 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -72,13 +74,16 @@ class CashboxViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
+    private val monthFormat = SimpleDateFormat("MMMM yyyy", Locale("pt", "BR"))
+
     private fun observeHistory(groupId: String) {
         cashboxRepository.getHistoryFlow(groupId)
             .onEach { entries ->
                 _historyState.value = if (entries.isEmpty()) {
                     CashboxHistoryState.Empty
                 } else {
-                    CashboxHistoryState.Success(entries)
+                    val groupedItems = groupEntriesByMonth(entries)
+                    CashboxHistoryState.Success(groupedItems)
                 }
             }
             .catch { e ->
@@ -87,6 +92,35 @@ class CashboxViewModel @Inject constructor(
                 )
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun groupEntriesByMonth(entries: List<CashboxEntry>): List<CashboxListItem> {
+        val result = mutableListOf<CashboxListItem>()
+        val grouped = entries.groupBy { entry ->
+            val date = entry.createdAt ?: entry.referenceDate
+            val cal = java.util.Calendar.getInstance()
+            cal.time = date
+            cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+            cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            cal.set(java.util.Calendar.MINUTE, 0)
+            cal.set(java.util.Calendar.SECOND, 0)
+            cal.set(java.util.Calendar.MILLISECOND, 0)
+            cal.time
+        }
+
+        // Sort months descending
+        val sortedMonths = grouped.keys.sortedDescending()
+
+        for (month in sortedMonths) {
+            val monthTitle = monthFormat.format(month).replaceFirstChar { it.uppercase() }
+            result.add(CashboxListItem.Header(monthTitle))
+            
+            val monthEntries = grouped[month] ?: emptyList()
+            // Entries are already sorted descending by repository typically, but let's ensure
+            result.addAll(monthEntries.map { CashboxListItem.Entry(it) })
+        }
+
+        return result
     }
 
     fun addEntry(
@@ -98,7 +132,8 @@ class CashboxViewModel @Inject constructor(
         playerId: String? = null,
         playerName: String? = null,
         gameId: String? = null,
-        referenceDate: Date = Date()
+        referenceDate: Date = Date(),
+        receiptUri: Uri? = null
     ) {
         val groupId = currentGroupId ?: return
 
@@ -117,7 +152,7 @@ class CashboxViewModel @Inject constructor(
                 referenceDate = referenceDate
             )
 
-            val result = cashboxRepository.addEntry(groupId, entry)
+            val result = cashboxRepository.addEntry(groupId, entry, receiptUri)
 
             result.fold(
                 onSuccess = {
@@ -139,7 +174,8 @@ class CashboxViewModel @Inject constructor(
         amount: Double,
         description: String,
         playerId: String? = null,
-        playerName: String? = null
+        playerName: String? = null,
+        receiptUri: Uri? = null // Added receiptUri parameter
     ) {
         addEntry(
             type = CashboxEntryType.INCOME,
@@ -147,7 +183,8 @@ class CashboxViewModel @Inject constructor(
             amount = amount,
             description = description,
             playerId = playerId,
-            playerName = playerName
+            playerName = playerName,
+            receiptUri = receiptUri // Pass receiptUri
         )
     }
 
@@ -155,14 +192,16 @@ class CashboxViewModel @Inject constructor(
         category: CashboxCategory,
         amount: Double,
         description: String,
-        gameId: String? = null
+        gameId: String? = null,
+        receiptUri: Uri? = null // Added receiptUri parameter
     ) {
         addEntry(
             type = CashboxEntryType.EXPENSE,
             category = category,
             amount = amount,
             description = description,
-            gameId = gameId
+            gameId = gameId,
+            receiptUri = receiptUri // Pass receiptUri
         )
     }
 
@@ -201,7 +240,8 @@ class CashboxViewModel @Inject constructor(
                     _historyState.value = if (entries.isEmpty()) {
                         CashboxHistoryState.Empty
                     } else {
-                        CashboxHistoryState.Success(entries)
+                        val groupedItems = groupEntriesByMonth(entries)
+                        CashboxHistoryState.Success(groupedItems)
                     }
                 },
                 onFailure = { error ->
@@ -248,7 +288,8 @@ class CashboxViewModel @Inject constructor(
                     _historyState.value = if (entries.isEmpty()) {
                         CashboxHistoryState.Empty
                     } else {
-                        CashboxHistoryState.Success(entries)
+                        val groupedItems = groupEntriesByMonth(entries)
+                        CashboxHistoryState.Success(groupedItems)
                     }
                 },
                 onFailure = { error ->
@@ -335,7 +376,7 @@ sealed class CashboxSummaryState {
 sealed class CashboxHistoryState {
     object Loading : CashboxHistoryState()
     object Empty : CashboxHistoryState()
-    data class Success(val entries: List<CashboxEntry>) : CashboxHistoryState()
+    data class Success(val items: List<CashboxListItem>) : CashboxHistoryState()
     data class Error(val message: String) : CashboxHistoryState()
 }
 

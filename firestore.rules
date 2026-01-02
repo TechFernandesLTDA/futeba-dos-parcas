@@ -704,20 +704,19 @@ service cloud.firestore {
     // COLECAO: ranking_deltas (incrementos de ranking)
     // ============================================
     match /ranking_deltas/{deltaId} {
-      // Qualquer usuario autenticado pode ler
       allow read: if isAuthenticated();
-
-      // Permitir que o sistema (via admin/field owner/game owner) crie
-      // Como não há resource.data no create, a validação de diff falha.
-      // Assumimos que a creation é controlada por backend ou lógica de app confiável por enquanto, 
-      // ou validamos apenas integridade básica se possível.
-      allow create: if isAuthenticated(); 
       
-      // Permitir update com restrição de campos
+      // CRITICO: Apenas Admin ou Backend deve criar deltas diretamente para evitar fraude.
+      // Se o app cliente cria isso, ele deve ser Game Owner.
+      // Assumindo que o delta tem 'game_id', validamos o dono.
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        (request.resource.data.keys().hasAll(['game_id']) && isGameOwner(request.resource.data.game_id))
+      );
+      
       allow update: if isAuthenticated() && (
         isAdmin() ||
-        // Verifica se é um update de incremento vindo de um jogo válido
-        (request.resource.data.diff(resource.data).affectedKeys().hasAny(['goals_added', 'assists_added', 'xp_added', 'games_added', 'wins_added', 'updated_at']))
+        (resource.data.keys().hasAll(['game_id']) && isGameOwner(resource.data.game_id))
       );
     }
 
@@ -725,10 +724,7 @@ service cloud.firestore {
     // COLECAO: rankings (rankings consolidados)
     // ============================================
     match /rankings/{rankingId} {
-      // Qualquer usuario autenticado pode ler
       allow read: if isAuthenticated();
-
-      // Apenas admin pode criar/atualizar (via Cloud Functions ou admin)
       allow create, update, delete: if isAdmin();
     }
 
@@ -745,8 +741,7 @@ service cloud.firestore {
     // ============================================
     match /season_participation/{partId} {
       allow read: if isAuthenticated();
-      // Permitir update pelo MatchFinalizationService
-      allow create, update: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isAdmin(); // Client-side updates should be discouraged
     }
 
     // ============================================
@@ -754,8 +749,8 @@ service cloud.firestore {
     // ============================================
     match /user_streaks/{streakId} {
       allow read: if isAuthenticated();
-      // Permitir update pelo BadgeAwarder (Game Owner)
-      allow create, update: if isAuthenticated(); // Simplificado para permitir funcionamento inicial, ideal seria validar owner do jogo
+      // Apenas Admin (ou Cloud Functions) deve manipular streaks para evitar fraude.
+      allow create, update: if isAuthenticated() && isAdmin();
     }
 
     // ============================================
@@ -763,8 +758,8 @@ service cloud.firestore {
     // ============================================
     match /user_badges/{badgeId} {
       allow read: if isAuthenticated();
-      // Permitir create pelo BadgeAwarder
-      allow create: if isAuthenticated();
+      // Apenas Admin (ou Cloud Functions) deve conceder badges.
+      allow create: if isAuthenticated() && isAdmin();
     }
 
     // ============================================
