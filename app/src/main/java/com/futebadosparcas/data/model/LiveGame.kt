@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.model
 
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
@@ -76,6 +77,7 @@ data class GameEvent(
 ) {
     constructor() : this(id = "")
 
+    @Exclude
     fun getEventTypeEnum(): GameEventType = try {
         GameEventType.valueOf(eventType)
     } catch (e: Exception) {
@@ -127,6 +129,7 @@ data class LivePlayerStats(
 ) {
     constructor() : this(id = "")
 
+    @Exclude
     fun getPositionEnum(): PlayerPosition = try {
         PlayerPosition.valueOf(position)
     } catch (e: Exception) {

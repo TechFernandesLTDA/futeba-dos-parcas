@@ -90,6 +90,7 @@ data class Location(
     /**
      * Retorna endereco formatado completo
      */
+    @Exclude
     fun getFullAddress(): String {
         return if (city.isNotEmpty() && state.isNotEmpty()) {
             "$address - $city, $state"
@@ -139,17 +140,19 @@ data class Field(
 ) {
     constructor() : this(id = "")
 
+    @Exclude
     fun getTypeEnum(): FieldType = try {
         FieldType.valueOf(type) // Try exact match first
     } catch (e: Exception) {
         // Try simple name matching if uppercase fails
         try {
-             FieldType.values().firstOrNull { it.name.equals(type, ignoreCase = true) } ?: FieldType.SOCIETY
+             FieldType.entries.firstOrNull { it.name.equals(type, ignoreCase = true) } ?: FieldType.SOCIETY
         } catch (e2: Exception) {
              FieldType.SOCIETY
         }
     }
 
+    @Exclude
     fun getDisplayName(): String {
         return "$name (${getTypeEnum().displayName})"
     }
@@ -181,6 +184,7 @@ data class LocationWithFields(
     /**
      * Agrupa os campos por tipo
      */
+    @Exclude
     fun getFieldsByType(): Map<FieldType, List<Field>> {
         return fields.groupBy { it.getTypeEnum() }
     }
