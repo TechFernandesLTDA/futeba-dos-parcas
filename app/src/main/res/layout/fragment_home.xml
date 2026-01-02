@@ -89,29 +89,38 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <!-- User Summary Header -->
+                <!-- User Summary Header - DESTAQUE NO TOPO -->
                 <FrameLayout
                     android:id="@+id/headerUserInfo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:layout_constraintTop_toTopOf="parent">
-                    
+
                     <androidx.compose.ui.platform.ComposeView
                         android:id="@+id/composeHeader"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
 
                 </FrameLayout>
-                
+
+                <!-- Badges Recentes (Brasões) -->
                 <androidx.compose.ui.platform.ComposeView
-                    android:id="@+id/composeStreak"
+                    android:id="@+id/composeBadges"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
                     app:layout_constraintTop_toBottomOf="@id/headerUserInfo" />
 
+                <!-- Welcome/Empty State (Movido para o topo) -->
+                <androidx.compose.ui.platform.ComposeView
+                    android:id="@+id/composeEmptyState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toBottomOf="@id/composeBadges" />
+
+                <!-- Estatísticas da Temporada -->
                 <androidx.compose.ui.platform.ComposeView
                     android:id="@+id/composeStats"
                     android:layout_width="match_parent"
@@ -119,8 +128,9 @@
                     android:layout_marginTop="8dp"
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
-                    app:layout_constraintTop_toBottomOf="@id/composeStreak" />
-                
+                    app:layout_constraintTop_toBottomOf="@id/composeEmptyState" />
+
+                <!-- Frequência de Jogos (Heatmap) -->
                 <androidx.compose.ui.platform.ComposeView
                     android:id="@+id/composeHeatmap"
                     android:layout_width="match_parent"
@@ -130,6 +140,7 @@
                     android:layout_marginEnd="16dp"
                     app:layout_constraintTop_toBottomOf="@id/composeStats" />
 
+                <!-- Atividades Recentes -->
                 <androidx.compose.ui.platform.ComposeView
                     android:id="@+id/composeActivityFeed"
                     android:layout_width="match_parent"
@@ -137,27 +148,33 @@
                     android:layout_marginTop="8dp"
                     app:layout_constraintTop_toBottomOf="@id/composeHeatmap" />
 
+                <!-- Streak (Sequência de Jogos) -->
                 <androidx.compose.ui.platform.ComposeView
-                    android:id="@+id/composePublicGames"
+                    android:id="@+id/composeStreak"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
                     app:layout_constraintTop_toBottomOf="@id/composeActivityFeed" />
 
+                <!-- Desafios -->
                 <androidx.compose.ui.platform.ComposeView
                     android:id="@+id/composeChallenges"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    app:layout_constraintTop_toBottomOf="@id/composePublicGames" />
+                    app:layout_constraintTop_toBottomOf="@id/composeStreak" />
 
+                <!-- Jogos Públicos Sugeridos -->
                 <androidx.compose.ui.platform.ComposeView
-                    android:id="@+id/composeBadges"
+                    android:id="@+id/composePublicGames"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     app:layout_constraintTop_toBottomOf="@id/composeChallenges" />
 
+                <!-- Título: Meus Próximos Jogos -->
                 <TextView
                     android:id="@+id/tvTitle"
                     android:layout_width="0dp"
@@ -168,7 +185,7 @@
                     android:textColor="?attr/colorOnSurface"
                     android:layout_marginStart="16dp"
                     android:layout_marginTop="16dp"
-                    app:layout_constraintTop_toBottomOf="@id/composeBadges"
+                    app:layout_constraintTop_toBottomOf="@id/composePublicGames"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/btnViewToggle" />
 
@@ -193,16 +210,7 @@
                     android:paddingBottom="80dp"
                     app:layout_constraintTop_toBottomOf="@id/tvTitle" />
 
-                <include
-                    android:id="@+id/layoutEmpty"
-                    layout="@layout/layout_empty_state"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="32dp"
-                    android:visibility="gone"
-                    app:layout_constraintTop_toBottomOf="@id/tvTitle"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent" />
+
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.core.widget.NestedScrollView>
@@ -215,16 +223,5 @@
         android:visibility="gone">
         <include layout="@layout/layout_home_shimmer_v2" />
     </com.facebook.shimmer.ShimmerFrameLayout>
-
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabCreateGame"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_football"
-        android:contentDescription="Criar Jogo"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

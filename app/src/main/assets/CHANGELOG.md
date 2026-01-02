@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.5] - 2026-01-02
+
+### Changed
+
+- **Home Screen Redesign**:
+  - A seção de "Boas-vindas" e "Primeiros Passos" foi movida para o topo da tela para melhor orientar novos usuários.
+  - O gráfico de "Frequência de Jogos" (Heatmap) agora exibe um histórico de atividades mais completo (100 itens).
+  - Remoção do botão flutuante "Criar Jogo" (FAB) da tela Inicial, centralizando essa ação na aba de Jogos para simplificar a navegação.
+- **UI & UX**: Ajustes de layout para garantir fluidez entre os componentes nativos (XML) e Jetpack Compose na tela inicial.
+
 ## [1.1.4] - 2026-01-02
 
 ### Added
