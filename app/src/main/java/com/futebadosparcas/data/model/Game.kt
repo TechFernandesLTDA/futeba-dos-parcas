@@ -88,6 +88,12 @@ data class Game(
     @get:PropertyName("is_public")
     @set:PropertyName("is_public")
     var isPublic: Boolean = true,
+
+    // Novo sistema de visibilidade (substitui isPublic gradualmente)
+    @get:PropertyName("visibility")
+    @set:PropertyName("visibility")
+    var visibility: String = GameVisibility.GROUP_ONLY.name,
+
     @get:PropertyName("dateTime")
     @set:PropertyName("dateTime")
     var dateTime: Date? = null,
@@ -130,14 +136,55 @@ data class Game(
     constructor() : this(id = "")
 
     // Helper methods for enum conversion
+    @Exclude
     fun getStatusEnum(): GameStatus = try {
         GameStatus.valueOf(status)
     } catch (e: Exception) {
         GameStatus.SCHEDULED
     }
 
+    @Exclude
     fun setStatusEnum(gameStatus: GameStatus) {
         status = gameStatus.name
+    }
+
+    /**
+     * Retorna o enum de visibilidade do jogo.
+     * Compatibilidade: Se visibility não estiver definido, usa isPublic como fallback.
+     */
+    @Exclude
+    fun getVisibilityEnum(): GameVisibility = try {
+        GameVisibility.valueOf(visibility)
+    } catch (e: Exception) {
+        // Compatibilidade com jogos antigos que só têm isPublic
+        if (isPublic) GameVisibility.PUBLIC_CLOSED else GameVisibility.GROUP_ONLY
+    }
+
+    /**
+     * Define a visibilidade do jogo
+     */
+    @Exclude
+    fun setVisibility(gameVisibility: GameVisibility) {
+        visibility = gameVisibility.name
+        // Manter isPublic sincronizado para compatibilidade
+        isPublic = gameVisibility != GameVisibility.GROUP_ONLY
+    }
+
+    /**
+     * Verifica se o jogo aceita solicitações externas
+     */
+    @Exclude
+    fun acceptsExternalRequests(): Boolean {
+        return getVisibilityEnum() == GameVisibility.PUBLIC_OPEN
+    }
+
+    /**
+     * Verifica se o jogo é visível publicamente
+     */
+    @Exclude
+    fun isPubliclyVisible(): Boolean {
+        val vis = getVisibilityEnum()
+        return vis == GameVisibility.PUBLIC_CLOSED || vis == GameVisibility.PUBLIC_OPEN
     }
 }
 
@@ -217,22 +264,26 @@ data class GameConfirmation(
 ) {
     constructor() : this(id = "")
 
+    @Exclude
     fun getDisplayName(): String {
         return if (!nickname.isNullOrBlank()) nickname!! else userName
     }
 
+    @Exclude
     fun getStatusEnum(): ConfirmationStatus = try {
         ConfirmationStatus.valueOf(status)
     } catch (e: Exception) {
         ConfirmationStatus.CONFIRMED
     }
 
+    @Exclude
     fun getPaymentStatusEnum(): PaymentStatus = try {
         PaymentStatus.valueOf(paymentStatus)
     } catch (e: Exception) {
         PaymentStatus.PENDING
     }
 
+    @Exclude
     fun getPositionEnum(): PlayerPosition = try {
         PlayerPosition.valueOf(position)
     } catch (e: Exception) {

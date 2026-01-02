@@ -29,7 +29,10 @@
       "Bash(dir /s /b)",
       "Bash(dir:*)",
       "Bash(./gradlew compileDebugKotlin:*)",
-      "Bash(adb devices:*)"
+      "Bash(adb devices:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\ndocs: comprehensive project documentation for developers and LLMs\n\nCreate extensive documentation suite covering all aspects of the Futeba dos Parças project:\n\n**Root Level Documentation (9 files):**\n- README.md: Updated with improved Getting Started guide\n- SETUP_GUIDE.md: Complete step-by-step setup for Android, Backend, Firebase\n- ARCHITECTURE.md: High-level 3-tier architecture with diagrams and patterns\n- API_REFERENCE.md: Complete REST API documentation with examples\n- DATABASE_SCHEMA.md: PostgreSQL schema with ER diagram and relationships\n- DEVELOPMENT_GUIDE.md: Coding standards, Git workflow, testing, security\n\n**Backend Documentation (3 files):**\n- backend/README.md: Enhanced with quick start, structure, scripts\n- backend/ARCHITECTURE.md: Controller-Service-Repository layers explained\n- backend/SERVICES.md: GameGeneratorService, StatisticsService, NotificationService, TeamBalancerService\n\n**Optimizations for LLMs:**\n- Clear hierarchical structure with table of contents\n- ASCII diagrams for visual understanding\n- Practical code examples in Kotlin, TypeScript, SQL\n- Cross-references between documents\n- Business context alongside technical details\n- Common pitfalls and solutions\n\n**Scope:**\n- 100% API endpoint coverage\n- Complete database schema mapping\n- All major services documented\n- Setup reproducible from scratch\n- Ready for onboarding developers\n\n🤖 Generated with Claude Code\nEOF\n)\")",
+      "Bash(git commit:*)"
     ]
   }
 }
