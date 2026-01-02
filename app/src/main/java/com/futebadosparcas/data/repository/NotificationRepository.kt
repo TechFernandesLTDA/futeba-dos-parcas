@@ -302,6 +302,7 @@ class NotificationRepository @Inject constructor(
             val snapshot = notificationsCollection
                 .whereEqualTo("user_id", userId)
                 .whereEqualTo("type", type.name)
+                .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .limit(limit.toLong())
                 .get()
                 .await()

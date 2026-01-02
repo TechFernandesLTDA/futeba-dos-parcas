@@ -481,3 +481,5 @@ function updateSeasonParticipation(
         last_calculated_at: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
 }
+
+export * from "./activities";

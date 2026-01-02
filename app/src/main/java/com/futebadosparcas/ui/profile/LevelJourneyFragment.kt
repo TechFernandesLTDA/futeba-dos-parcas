@@ -183,133 +183,125 @@ fun CurrentProgressHeader(currentLevel: Int, currentXp: Long) {
     val (progressXp, neededXp) = LevelTable.getXpProgress(currentXp)
     val percentage = if (neededXp > 0L) (progressXp * 100L / neededXp).toInt() else 100
 
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color(FutebaColors.Primary),
-                            Color(FutebaColors.Secondary)
-                        )
+            .padding(16.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        Color(FutebaColors.Primary),
+                        Color(FutebaColors.Secondary)
                     )
                 )
+            )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
+            // Ícone animado com brilho
+            val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+            val scale by infiniteTransition.animateFloat(
+                initialValue = 1f,
+                targetValue = 1.15f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1000),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "scale"
+            )
+
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .size((100 * scale).dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
             ) {
-                // Ícone animado com brilho
-                val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-                val scale by infiniteTransition.animateFloat(
-                    initialValue = 1f,
-                    targetValue = 1.15f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(1000),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "scale"
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(60.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = "Nível $currentLevel",
+                fontSize = 36.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White
+            )
+
+            Text(
+                text = levelName,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White.copy(alpha = 0.95f)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Barra de progresso moderna
+            Column(modifier = Modifier.fillMaxWidth()) {
+                LinearProgressIndicator(
+                    progress = { percentage / 100f },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .shadow(4.dp, RoundedCornerShape(8.dp)),
+                    color = Color.White,
+                    trackColor = Color.White.copy(alpha = 0.25f)
                 )
 
-                Box(
-                    modifier = Modifier
-                        .size((100 * scale).dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(60.dp)
+                    Text(
+                        text = "$currentXp XP total",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White.copy(alpha = 0.95f)
+                    )
+                    Text(
+                        text = "$percentage%",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = "Nível $currentLevel",
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
-                )
-
-                Text(
-                    text = levelName,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White.copy(alpha = 0.95f)
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Barra de progresso moderna
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    LinearProgressIndicator(
-                        progress = { percentage / 100f },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(16.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .shadow(4.dp, RoundedCornerShape(8.dp)),
-                        color = Color.White,
-                        trackColor = Color.White.copy(alpha = 0.25f)
+                if (currentLevel < 10) {
+                    val nextLevelXp = LevelTable.getXpForNextLevel(currentLevel)
+                    val remaining = nextLevelXp - currentXp
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "🎯 Faltam $remaining XP para ${LevelTable.getLevelName(currentLevel + 1)}",
+                        fontSize = 13.sp,
+                        color = Color.White.copy(alpha = 0.9f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
                     )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "$currentXp XP total",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White.copy(alpha = 0.95f)
-                        )
-                        Text(
-                            text = "$percentage%",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-
-                    if (currentLevel < 10) {
-                        val nextLevelXp = LevelTable.getXpForNextLevel(currentLevel)
-                        val remaining = nextLevelXp - currentXp
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "🎯 Faltam $remaining XP para ${LevelTable.getLevelName(currentLevel + 1)}",
-                            fontSize = 13.sp,
-                            color = Color.White.copy(alpha = 0.9f),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "🏆 NÍVEL MÁXIMO ALCANÇADO!",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                } else {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "🏆 NÍVEL MÁXIMO ALCANÇADO!",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }

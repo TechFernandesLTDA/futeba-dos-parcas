@@ -2,12 +2,17 @@ package com.futebadosparcas.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.data.model.Activity
 import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.data.model.WeeklyChallenge
+import com.futebadosparcas.data.model.UserChallengeProgress
+import com.futebadosparcas.data.model.UserBadge
 import com.futebadosparcas.data.model.LeagueDivision
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.GamificationRepository
 import com.futebadosparcas.data.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.ConnectivityMonitor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -22,17 +27,34 @@ class HomeViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val notificationRepository: com.futebadosparcas.data.repository.NotificationRepository,
     private val gamificationRepository: GamificationRepository,
-    private val statisticsRepository: com.futebadosparcas.data.repository.StatisticsRepository
+    private val statisticsRepository: com.futebadosparcas.data.repository.StatisticsRepository,
+    private val activityRepository: com.futebadosparcas.data.repository.ActivityRepository,
+    private val connectivityMonitor: ConnectivityMonitor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState
+
+    private val _loadingState = MutableStateFlow<LoadingState>(LoadingState.Idle)
+    val loadingState: StateFlow<LoadingState> = _loadingState
+
+    private val _isOnline = MutableStateFlow(true)
+    val isOnline: StateFlow<Boolean> = _isOnline
 
     private val _unreadCount = MutableStateFlow(0)
     val unreadCount: StateFlow<Int> = _unreadCount
 
     init {
         observeUnreadCount()
+        observeConnectivity()
+    }
+
+    private fun observeConnectivity() {
+        viewModelScope.launch {
+            connectivityMonitor.isConnected.collect { 
+                _isOnline.value = it 
+            }
+        }
     }
 
     private fun observeUnreadCount() {
@@ -48,22 +70,54 @@ class HomeViewModel @Inject constructor(
     fun loadHomeData() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
+            _loadingState.value = LoadingState.Loading("Carregando dados...")
             _uiState.value = HomeUiState.Loading
 
-            // Parallelize data fetching
+            // Simulate progress (optional, or real progress if possible)
+            _loadingState.value = LoadingState.LoadingProgress(10, 100, "Iniciando...")
+
             val userDeferred = async { userRepository.getCurrentUser() }
             val gamesDeferred = async { gameRepository.getConfirmedUpcomingGamesForUser() }
 
             val userResult = userDeferred.await()
+            _loadingState.value = LoadingState.LoadingProgress(40, 100, "Perfil carregado")
+            
             val statsDeferred = async { statisticsRepository.getUserStatistics(userResult.getOrNull()?.id ?: "") }
+            val activitiesDeferred = async { activityRepository.getRecentActivities(20) }
+            val publicGamesDeferred = async { gameRepository.getPublicGames(10) }
+            val streakDeferred = async { gamificationRepository.getUserStreak(userResult.getOrNull()?.id ?: "") }
+            val challengesDeferred = async { gamificationRepository.getActiveChallenges() }
+            val badgesDeferred = async { gamificationRepository.getRecentBadges(userResult.getOrNull()?.id ?: "") }
 
             val gamesResult = gamesDeferred.await()
+            _loadingState.value = LoadingState.LoadingProgress(70, 100, "Jogos carregados")
+            
             val statsResult = statsDeferred.await()
+            val activitiesResult = activitiesDeferred.await()
+            val publicGamesResult = publicGamesDeferred.await()
+            val streakResult = streakDeferred.await()
+            val challengesResult = challengesDeferred.await()
+            val badgesResult = badgesDeferred.await()
+            _loadingState.value = LoadingState.LoadingProgress(90, 100, "Finalizando...")
 
             userResult.fold(
                 onSuccess = { user ->
                     val games = gamesResult.getOrDefault(emptyList())
                     val statistics = statsResult.getOrNull()
+                    val activities = activitiesResult.getOrDefault(emptyList())
+                    val publicGames = publicGamesResult.getOrDefault(emptyList())
+                    val streak = streakResult.getOrNull()
+                    val allChallenges = challengesResult.getOrDefault(emptyList())
+                    val userBadges = badgesResult.getOrDefault(emptyList())
+                    
+                    // Fetch progress for challenges
+                    val challengeIds = allChallenges.map { it.id }
+                    val progressResult = gamificationRepository.getChallengesProgress(user.id, challengeIds)
+                    val progressMap = progressResult.getOrDefault(emptyList()).associateBy { it.challengeId }
+                    
+                    val challengesWithProgress = allChallenges.map { 
+                        it to progressMap[it.id] 
+                    }
                     
                     // Fetch League info
                     var leagueDivision = LeagueDivision.BRONZE
@@ -96,13 +150,26 @@ class HomeViewModel @Inject constructor(
                         isMaxLevel = isMaxLevel,
                         division = leagueDivision
                     )
+                    
+                    // Add streak logic if needed or just pass it to UI State
 
-                    _uiState.value = HomeUiState.Success(user, games, summary, statistics)
+                    _loadingState.value = LoadingState.Success
+                    _uiState.value = HomeUiState.Success(
+                        user, games, summary, statistics, activities, publicGames, streak, challengesWithProgress, userBadges
+                    )
                 },
                 onFailure = { error ->
+                    _loadingState.value = LoadingState.Error(error.message ?: "Erro ao carregar perfil")
                     _uiState.value = HomeUiState.Error(error.message ?: "Erro ao carregar perfil")
                 }
             )
+        }
+    }
+
+    fun toggleViewMode() {
+        val currentState = _uiState.value
+        if (currentState is HomeUiState.Success) {
+            _uiState.value = currentState.copy(isGridView = !currentState.isGridView)
         }
     }
     
@@ -131,7 +198,21 @@ sealed class HomeUiState {
         val user: com.futebadosparcas.data.model.User, 
         val games: List<Game>,
         val gamificationSummary: GamificationSummary,
-        val statistics: com.futebadosparcas.data.model.UserStatistics? = null
+        val statistics: com.futebadosparcas.data.model.UserStatistics? = null,
+        val activities: List<Activity> = emptyList(),
+        val publicGames: List<Game> = emptyList(),
+        val streak: com.futebadosparcas.data.model.UserStreak? = null,
+        val challenges: List<Pair<WeeklyChallenge, UserChallengeProgress?>> = emptyList(),
+        val recentBadges: List<UserBadge> = emptyList(),
+        val isGridView: Boolean = false
     ) : HomeUiState()
     data class Error(val message: String) : HomeUiState()
+}
+
+sealed class LoadingState {
+    object Idle : LoadingState()
+    data class Loading(val message: String = "Carregando...") : LoadingState()
+    data class LoadingProgress(val current: Int, val total: Int, val message: String) : LoadingState()
+    object Success : LoadingState()
+    data class Error(val message: String, val retryable: Boolean = true) : LoadingState()
 }
