@@ -1,6 +1,8 @@
 package com.futebadosparcas.data.model
 
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
+import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
@@ -76,6 +78,7 @@ data class User(
     /**
      * Retorna o enum de Role do usuario
      */
+    @Exclude
     fun getRoleEnum(): UserRole = try {
         UserRole.valueOf(role.trim().uppercase())
     } catch (e: Exception) {
@@ -85,36 +88,39 @@ data class User(
     /**
      * Verifica se o usuario tem permissao de admin
      */
+    @Exclude
     fun isAdmin(): Boolean = getRoleEnum() == UserRole.ADMIN
 
     /**
      * Verifica se o usuario e dono de quadra/local
      */
+    @Exclude
     fun isFieldOwner(): Boolean = getRoleEnum() == UserRole.FIELD_OWNER || isAdmin()
 
     /**
      * Verifica se pode gerenciar locais e quadras
      */
+    @Exclude
     fun canManageLocations(): Boolean = isFieldOwner()
 
     /**
      * Verifica se pode aprovar reservas
      */
+    @Exclude
     fun canApproveBookings(): Boolean = isFieldOwner()
 
     /**
      * Verifica se pode ver estatisticas globais
      */
-    /**
-     * Verifica se pode ver estatisticas globais
-     */
+    @Exclude
     fun canViewGlobalStats(): Boolean = isAdmin()
 
     /**
      * Retorna o nome de exibição (Apelido se houver, senão o Nome)
      */
+    @Exclude
     fun getDisplayName(): String {
-        return if (!nickname.isNullOrBlank()) nickname else name
+        return if (!nickname.isNullOrBlank()) nickname!! else name
     }
 }
 

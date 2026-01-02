@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.model
 
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
@@ -66,28 +67,34 @@ data class AppNotification(
 ) {
     constructor() : this(id = "")
 
+    @Exclude
     fun getTypeEnum(): NotificationType = try {
         NotificationType.valueOf(type)
     } catch (e: Exception) {
         NotificationType.GENERAL
     }
 
+    @Exclude
     fun getActionTypeEnum(): NotificationAction = try {
         actionType?.let { NotificationAction.valueOf(it) } ?: NotificationAction.VIEW_DETAILS
     } catch (e: Exception) {
         NotificationAction.VIEW_DETAILS
     }
 
+    @Exclude
     fun checkIfRead(): Boolean = read
 
+    @Exclude
     fun hasAction(): Boolean = getActionTypeEnum() != NotificationAction.NONE
 
+    @Exclude
     fun requiresResponse(): Boolean = getActionTypeEnum() == NotificationAction.ACCEPT_DECLINE ||
             getActionTypeEnum() == NotificationAction.CONFIRM_POSITION
 
     /**
      * Retorna o ícone apropriado baseado no tipo de notificação
      */
+    @Exclude
     fun getIconResource(): Int {
         return when (getTypeEnum()) {
             NotificationType.GROUP_INVITE -> com.futebadosparcas.R.drawable.ic_group

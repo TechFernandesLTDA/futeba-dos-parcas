@@ -28,8 +28,8 @@ android {
         applicationId = "com.futebadosparcas"
         minSdk = 24
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.1.3"
+        versionCode = 9
+        versionName = "1.1.4"
 
         val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
@@ -143,6 +143,9 @@ dependencies {
 
     // Charts
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation("com.patrykandpatrick.vico:compose:1.14.0")
+    implementation("com.patrykandpatrick.vico:compose-m3:1.14.0")
+    implementation("com.patrykandpatrick.vico:core:1.14.0")
 
     // Date/Time
     // implementation("com.jakewharton.threetenabp:threetenabp:1.4.7") // Migrated to java.time

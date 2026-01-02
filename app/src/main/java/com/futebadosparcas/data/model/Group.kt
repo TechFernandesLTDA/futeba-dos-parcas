@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.model
 
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
@@ -48,14 +49,17 @@ data class Group(
 ) {
     constructor() : this(id = "")
 
+    @Exclude
     fun getStatusEnum(): GroupStatus = try {
         GroupStatus.valueOf(status)
     } catch (e: Exception) {
         GroupStatus.ACTIVE
     }
 
+    @Exclude
     fun isActive(): Boolean = getStatusEnum() == GroupStatus.ACTIVE
 
+    @Exclude
     fun isArchived(): Boolean = getStatusEnum() == GroupStatus.ARCHIVED
 }
 
@@ -108,34 +112,44 @@ data class GroupMember(
 ) {
     constructor() : this(id = "")
 
+    @Exclude
     fun getDisplayName(): String {
         return if (!nickname.isNullOrBlank()) nickname!! else userName
     }
 
+    @Exclude
     fun getRoleEnum(): GroupMemberRole = try {
         GroupMemberRole.valueOf(role)
     } catch (e: Exception) {
         GroupMemberRole.MEMBER
     }
 
+    @Exclude
     fun getStatusEnum(): GroupMemberStatus = try {
         GroupMemberStatus.valueOf(status)
     } catch (e: Exception) {
         GroupMemberStatus.ACTIVE
     }
 
+    @Exclude
     fun isOwner(): Boolean = getRoleEnum() == GroupMemberRole.OWNER
 
+    @Exclude
     fun isAdmin(): Boolean = getRoleEnum() == GroupMemberRole.ADMIN || isOwner()
 
+    @Exclude
     fun isActive(): Boolean = getStatusEnum() == GroupMemberStatus.ACTIVE
 
+    @Exclude
     fun canInvite(): Boolean = isAdmin() && isActive()
 
+    @Exclude
     fun canRemoveMembers(): Boolean = isAdmin() && isActive()
 
+    @Exclude
     fun canCreateGames(): Boolean = isAdmin() && isActive()
 
+    @Exclude
     fun canEditGroup(): Boolean = isAdmin() && isActive()
 }
 
@@ -206,18 +220,22 @@ data class UserGroup(
 ) {
     constructor() : this(id = "")
 
+    @Exclude
     fun getRoleEnum(): GroupMemberRole = try {
         GroupMemberRole.valueOf(role)
     } catch (e: Exception) {
         GroupMemberRole.MEMBER
     }
 
+    @Exclude
     fun isOwner(): Boolean = getRoleEnum() == GroupMemberRole.OWNER
 
+    @Exclude
     fun isAdmin(): Boolean = getRoleEnum() == GroupMemberRole.ADMIN || isOwner()
 
     /**
      * Verifica se o grupo é válido para criar jogos (>= 2 membros)
      */
+    @Exclude
     fun isValidForGame(): Boolean = memberCount >= 2
 }

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.4] - 2026-01-02
+
+### Added
+
+- **Firestore Resilience**: Adicionada a anotação `@Exclude` em todos os métodos auxiliares e de conversão nas classes de modelo (`Game`, `Group`, `LiveGame`, `AppNotification`, `Location`, `User`). Isso previne crashes críticos relacionados a "conflicting getters" durante a desserialização de dados do Firestore.
+
+### Fixed
+
+- **Games Section Crash**: Resolvido o erro `RuntimeException: Found conflicting getters for name getVisibility` que impedia a abertura da seção de Jogos.
+
 ## [1.1.3] - 2025-12-30
 
 ### Fixed
