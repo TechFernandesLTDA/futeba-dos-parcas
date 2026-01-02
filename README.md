@@ -26,23 +26,30 @@ For developers and contributors, please refer to our detailed documentation:
 
 ## 🛠 Getting Started
 
-### Prerequisites
+### Quick Start (5 minutes)
 
-- Android Studio Iguana or later.
-- JDK 17.
-- A valid `google-services.json` (Required for Firebase connection).
+**Requirements:** Android Studio, JDK 17, `google-services.json`
 
-### Installation
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/futeba-dos-parcas.git
+   cd futeba-dos-parcas
+   ```
 
-1. Clone the repository:
+2. **Configure Firebase:**
+   - Download `google-services.json` from [Firebase Console](https://console.firebase.google.com)
+   - Place it in: `app/google-services.json`
 
-    ```bash
-    git clone https://github.com/your-username/futeba-dos-parcas.git
-    ```
+3. **Run the app:**
+   ```bash
+   # Android Studio → Run → Run 'app' (Shift+F10)
+   # Or terminal:
+   ./gradlew installDebug
+   ```
 
-2. Open in Android Studio.
-3. Sync Gradle project.
-4. Run on Emulator or Physical Device.
+4. **For full setup with backend:**
+   - Follow [SETUP_GUIDE.md](./SETUP_GUIDE.md) for Android + Backend + Database setup
+   - Takes ~30 minutes for complete development environment
 
 ## 🔐 Environment & Access
 
