@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.fragment.app.DialogFragment
 import com.futebadosparcas.R
+import com.futebadosparcas.data.model.PlayerRatingRole
 import com.futebadosparcas.data.model.User
 import com.futebadosparcas.data.model.UserStatistics
 import com.futebadosparcas.databinding.DialogComparePlayersBinding
@@ -125,17 +126,17 @@ class ComparePlayersDialogFragment : BottomSheetDialogFragment() {
 
         // Order: ATA, MEI, DEF, GOL
         userA?.let {
-            entriesA.add(RadarEntry(it.strikerRating.toFloat()))
-            entriesA.add(RadarEntry(it.midRating.toFloat()))
-            entriesA.add(RadarEntry(it.defenderRating.toFloat()))
-            entriesA.add(RadarEntry(it.gkRating.toFloat()))
+            entriesA.add(RadarEntry(it.getEffectiveRating(PlayerRatingRole.STRIKER).toFloat()))
+            entriesA.add(RadarEntry(it.getEffectiveRating(PlayerRatingRole.MID).toFloat()))
+            entriesA.add(RadarEntry(it.getEffectiveRating(PlayerRatingRole.DEFENDER).toFloat()))
+            entriesA.add(RadarEntry(it.getEffectiveRating(PlayerRatingRole.GOALKEEPER).toFloat()))
         }
 
         userB?.let {
-            entriesB.add(RadarEntry(it.strikerRating.toFloat()))
-            entriesB.add(RadarEntry(it.midRating.toFloat()))
-            entriesB.add(RadarEntry(it.defenderRating.toFloat()))
-            entriesB.add(RadarEntry(it.gkRating.toFloat()))
+            entriesB.add(RadarEntry(it.getEffectiveRating(PlayerRatingRole.STRIKER).toFloat()))
+            entriesB.add(RadarEntry(it.getEffectiveRating(PlayerRatingRole.MID).toFloat()))
+            entriesB.add(RadarEntry(it.getEffectiveRating(PlayerRatingRole.DEFENDER).toFloat()))
+            entriesB.add(RadarEntry(it.getEffectiveRating(PlayerRatingRole.GOALKEEPER).toFloat()))
         }
 
         val primaryColor = requireContext().getColor(R.color.primary)

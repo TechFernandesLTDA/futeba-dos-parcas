@@ -49,7 +49,7 @@
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:src="@drawable/ic_person"
-                    android:tint="?attr/colorOnSurfaceVariant" />
+                    app:tint="?attr/colorOnSurfaceVariant" />
 
                 <TextView
                     android:id="@+id/tvMemberCount"
@@ -72,3 +72,4 @@
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

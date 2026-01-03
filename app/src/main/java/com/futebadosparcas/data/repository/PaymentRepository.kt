@@ -9,6 +9,7 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 import java.util.Date
+import java.util.Locale
 
 @Singleton
 class PaymentRepository @Inject constructor(
@@ -32,7 +33,7 @@ class PaymentRepository @Inject constructor(
     fun generatePixCode(payment: Payment): String {
         // Mock Pix generation
         val randomString = java.util.UUID.randomUUID().toString().replace("-", "").take(4).uppercase()
-        return "00020126360014BR.GOV.BCB.PIX0114+55419999999995204000053039865406${String.format("%.2f", payment.amount).replace(",", ".")}5802BR5913FutebaParcas6008CURITIBA62070503***6304$randomString"
+        return "00020126360014BR.GOV.BCB.PIX0114+55419999999995204000053039865406${String.format(Locale.getDefault(), "%.2f", payment.amount).replace(",", ".")}5802BR5913FutebaParcas6008CURITIBA62070503***6304$randomString"
     }
     
     suspend fun confirmPayment(paymentId: String): Result<Unit> {

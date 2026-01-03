@@ -78,44 +78,62 @@
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
 
-                        <!-- Avatar elevado -->
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/avatarCard"
+                        <!-- Avatar elevado com Brasão -->
+                        <FrameLayout
+                            android:id="@+id/avatarContainer"
                             android:layout_width="110dp"
                             android:layout_height="110dp"
-                            app:cardCornerRadius="55dp"
-                            app:cardElevation="8dp"
-                            app:strokeWidth="4dp"
-                            app:strokeColor="@android:color/white"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent">
 
-                            <FrameLayout
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/avatarCard"
                                 android:layout_width="match_parent"
-                                android:layout_height="match_parent">
+                                android:layout_height="match_parent"
+                                app:cardCornerRadius="55dp"
+                                app:cardElevation="8dp"
+                                app:strokeWidth="4dp"
+                                app:strokeColor="@android:color/white">
 
-                                <ImageView
-                                    android:id="@+id/ivProfileImage"
+                                <FrameLayout
                                     android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:scaleType="centerCrop"
-                                    android:visibility="gone"
-                                    tools:src="@drawable/ic_launcher_foreground" />
+                                    android:layout_height="match_parent">
 
-                                <TextView
-                                    android:id="@+id/tvUserInitials"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:background="@android:color/white"
-                                    android:gravity="center"
-                                    android:textColor="#58CC02"
-                                    android:textSize="44sp"
-                                    android:textStyle="bold"
-                                    tools:text="JP" />
-                            </FrameLayout>
-                        </com.google.android.material.card.MaterialCardView>
+                                    <ImageView
+                                        android:id="@+id/ivProfileImage"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:scaleType="centerCrop"
+                                        android:visibility="gone"
+                                        tools:src="@drawable/ic_launcher_foreground" />
+
+                                    <TextView
+                                        android:id="@+id/tvUserInitials"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:background="@android:color/white"
+                                        android:gravity="center"
+                                        android:textColor="#58CC02"
+                                        android:textSize="44sp"
+                                        android:textStyle="bold"
+                                        tools:text="JP" />
+                                </FrameLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Brasão de Nível -->
+                            <ImageView
+                                android:id="@+id/ivLevelBadgeProfile"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_gravity="bottom|end"
+                                android:layout_marginEnd="2dp"
+                                android:layout_marginBottom="2dp"
+                                android:contentDescription="@string/fragment_profile_contentdescription_1"
+                                android:src="@drawable/ic_level_badge_0" />
+
+                        </FrameLayout>
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -153,7 +171,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="ADMINISTRADOR"
+                    android:text="@string/fragment_profile_text_2"
                     android:textColor="?attr/colorOnPrimary"
                     android:visibility="gone"
                     app:chipBackgroundColor="?attr/colorPrimary"
@@ -182,19 +200,18 @@
 
                         <ImageView
                             android:id="@+id/ivLevelIcon"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:src="@drawable/ic_football"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:src="@drawable/ic_level_badge_0"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:tint="?attr/colorPrimary" />
+                            app:layout_constraintTop_toTopOf="parent" />
 
                         <TextView
                             android:id="@+id/tvCurrentLevel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="12dp"
-                            android:text="Nível 1"
+                            android:text="@string/fragment_profile_text_3"
                             android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                             android:textStyle="bold"
                             app:layout_constraintStart_toEndOf="@id/ivLevelIcon"
@@ -204,7 +221,7 @@
                             android:id="@+id/tvLevelTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Iniciante"
+                            android:text="@string/fragment_profile_text_4"
                             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                             android:textColor="?attr/colorOnSurfaceVariant"
                             app:layout_constraintStart_toStartOf="@id/tvCurrentLevel"
@@ -214,7 +231,7 @@
                             android:id="@+id/tvXpPercentage"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0%"
+                            android:text="@string/fragment_profile_text_5"
                             android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                             android:textStyle="bold"
                             app:layout_constraintBottom_toTopOf="@id/pbLevelXp"
@@ -239,7 +256,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="0 XP"
+                            android:text="@string/fragment_profile_text_6"
                             android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                             android:textStyle="bold"
                             app:layout_constraintStart_toStartOf="parent"
@@ -249,7 +266,7 @@
                             android:id="@+id/tvNextLevelXp"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Faltam 100 XP"
+                            android:text="@string/fragment_profile_text_7"
                             android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
                             android:textColor="?attr/colorOnSurfaceVariant"
                             app:layout_constraintBottom_toBottomOf="@id/tvCurrentXp"
@@ -261,7 +278,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
-                            android:text="Bora pro jogo ganhar mais XP!"
+                            android:text="@string/fragment_profile_text_8"
                             android:textAlignment="center"
                             android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                             android:textStyle="italic"
@@ -295,7 +312,7 @@
                             android:id="@+id/tvStatsTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Estatísticas da Carreira"
+                            android:text="@string/fragment_profile_text_9"
                             android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                             android:textStyle="bold"
                             app:layout_constraintStart_toStartOf="parent"
@@ -322,7 +339,7 @@
                                     android:id="@+id/tvStatsGames"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/fragment_profile_text_10"
                                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                                     android:textColor="?attr/colorPrimary"
                                     android:textStyle="bold" />
@@ -330,7 +347,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Jogos"
+                                    android:text="@string/fragment_profile_text_11"
                                     android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
                             </LinearLayout>
 
@@ -347,7 +364,7 @@
                                     android:id="@+id/tvStatsWins"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/fragment_profile_text_12"
                                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                                     android:textColor="@color/success"
                                     android:textStyle="bold" />
@@ -355,7 +372,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Vitórias"
+                                    android:text="@string/fragment_profile_text_13"
                                     android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
                             </LinearLayout>
 
@@ -372,7 +389,7 @@
                                     android:id="@+id/tvStatsDraws"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/fragment_profile_text_14"
                                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                                     android:textColor="@color/warning"
                                     android:textStyle="bold" />
@@ -380,7 +397,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Empates"
+                                    android:text="@string/fragment_profile_text_15"
                                     android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
                             </LinearLayout>
 
@@ -397,7 +414,7 @@
                                     android:id="@+id/tvStatsGoals"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/fragment_profile_text_16"
                                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                                     android:textColor="?attr/colorSecondary"
                                     android:textStyle="bold" />
@@ -405,7 +422,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Gols"
+                                    android:text="@string/fragment_profile_text_17"
                                     android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
                             </LinearLayout>
 
@@ -422,7 +439,7 @@
                                     android:id="@+id/tvStatsAssists"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/fragment_profile_text_18"
                                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                                     android:textColor="?attr/colorTertiary"
                                     android:textStyle="bold" />
@@ -430,7 +447,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Assists"
+                                    android:text="@string/fragment_profile_text_19"
                                     android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
                             </LinearLayout>
 
@@ -447,7 +464,7 @@
                                     android:id="@+id/tvStatsMvp"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/fragment_profile_text_20"
                                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                                     android:textColor="@color/gold"
                                     android:textStyle="bold" />
@@ -455,7 +472,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="O Brabo"
+                                    android:text="@string/fragment_profile_text_21"
                                     android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
                             </LinearLayout>
 
@@ -472,15 +489,15 @@
                                     android:id="@+id/tvStatsWorst"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/fragment_profile_text_22"
                                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-                                    android:textColor="@color/error"
+                                    android:textColor="?attr/colorError"
                                     android:textStyle="bold" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Pereba"
+                                    android:text="@string/fragment_profile_text_23"
                                     android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
                             </LinearLayout>
 
@@ -497,7 +514,7 @@
                                     android:id="@+id/tvStatsBestGoal"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/fragment_profile_text_24"
                                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                                     android:textColor="?attr/colorSecondary"
                                     android:textStyle="bold" />
@@ -505,7 +522,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Golaço"
+                                    android:text="@string/fragment_profile_text_25"
                                     android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
                             </LinearLayout>
 
@@ -522,7 +539,7 @@
                                     android:id="@+id/tvStatsAvgGoals"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0.0"
+                                    android:text="@string/fragment_profile_text_26"
                                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                                     android:textColor="?attr/colorPrimary"
                                     android:textStyle="bold" />
@@ -530,7 +547,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Gols/Jogo"
+                                    android:text="@string/fragment_profile_text_27"
                                     android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
                             </LinearLayout>
 
@@ -547,7 +564,7 @@
                                     android:id="@+id/tvStatsSaves"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/fragment_profile_text_28"
                                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                                     android:textColor="@color/info"
                                     android:textStyle="bold" />
@@ -555,7 +572,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Defesas"
+                                    android:text="@string/fragment_profile_text_29"
                                     android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
                             </LinearLayout>
 
@@ -572,15 +589,15 @@
                                     android:id="@+id/tvStatsCards"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="0"
+                                    android:text="@string/fragment_profile_text_30"
                                     android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-                                    android:textColor="@color/error"
+                                    android:textColor="?attr/colorError"
                                     android:textStyle="bold" />
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Cartões"
+                                    android:text="@string/fragment_profile_text_31"
                                     android:textAppearance="@style/TextAppearance.Material3.LabelSmall" />
                             </LinearLayout>
 
@@ -596,7 +613,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="24dp"
-                    android:text="CONQUISTAS"
+                    android:text="@string/fragment_profile_text_32"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurfaceVariant"
@@ -637,7 +654,7 @@
                             android:id="@+id/tvLevelSkills"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Habilidades"
+                            android:text="@string/fragment_profile_text_33"
                             android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                             android:textStyle="bold"
                             app:layout_constraintStart_toStartOf="parent"
@@ -649,7 +666,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
-                            android:text="ATA"
+                            android:text="@string/fragment_profile_text_34"
                             android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toBottomOf="@id/tvLevelSkills" />
@@ -673,7 +690,7 @@
                             android:id="@+id/tvRatingAtaValue"
                             android:layout_width="32dp"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/fragment_profile_text_35"
                             android:textAlignment="viewEnd"
                             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                             android:textStyle="bold"
@@ -687,7 +704,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
-                            android:text="MEI"
+                            android:text="@string/fragment_profile_text_36"
                             android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toBottomOf="@id/tvRatingAtaLabel" />
@@ -711,7 +728,7 @@
                             android:id="@+id/tvRatingMeiValue"
                             android:layout_width="32dp"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/fragment_profile_text_37"
                             android:textAlignment="viewEnd"
                             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                             android:textStyle="bold"
@@ -725,7 +742,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
-                            android:text="DEF"
+                            android:text="@string/fragment_profile_text_38"
                             android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toBottomOf="@id/tvRatingMeiLabel" />
@@ -749,7 +766,7 @@
                             android:id="@+id/tvRatingDefValue"
                             android:layout_width="32dp"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/fragment_profile_text_39"
                             android:textAlignment="viewEnd"
                             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                             android:textStyle="bold"
@@ -763,7 +780,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
-                            android:text="GOL"
+                            android:text="@string/fragment_profile_text_40"
                             android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toBottomOf="@id/tvRatingDefLabel" />
@@ -787,7 +804,7 @@
                             android:id="@+id/tvRatingGolValue"
                             android:layout_width="32dp"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/fragment_profile_text_41"
                             android:textAlignment="viewEnd"
                             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                             android:textStyle="bold"
@@ -844,7 +861,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="24dp"
-                    android:text="CONTA"
+                    android:text="@string/fragment_profile_text_42"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurfaceVariant"
@@ -883,7 +900,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
-                            android:text="Notificações"
+                            android:text="@string/fragment_profile_text_43"
                             android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toStartOf="@id/ivNotificationsArrow"
@@ -942,13 +959,13 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Minhas Recorrências"
+                                android:text="@string/fragment_profile_text_44"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Gerenciar jogos automáticos"
+                                android:text="@string/fragment_profile_text_45"
                                 android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
@@ -1005,13 +1022,13 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Preferências"
+                                android:text="@string/fragment_profile_text_46"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Tema, posições e configurações"
+                                android:text="@string/fragment_profile_text_47"
                                 android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
@@ -1035,7 +1052,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="24dp"
-                    android:text="ADMINISTRAÇÃO"
+                    android:text="@string/fragment_profile_text_48"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurfaceVariant"
@@ -1087,13 +1104,13 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Configurações da Liga"
+                                android:text="@string/fragment_profile_text_49"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Ajustar valores de XP e regras da liga"
+                                android:text="@string/fragment_profile_text_50"
                                 android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
@@ -1152,13 +1169,13 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Gerenciar Usuários"
+                                android:text="@string/fragment_profile_text_51"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Promover, editar e remover usuários"
+                                android:text="@string/fragment_profile_text_52"
                                 android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
@@ -1217,13 +1234,14 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Meus Locais"
+                                android:text="@string/fragment_profile_text_53"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
                             <TextView
+                                android:id="@+id/tvMyLocationsSubtitle"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Gerencie seus locais e quadras"
+                                android:text="@string/fragment_profile_text_54"
                                 android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
@@ -1282,13 +1300,13 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Gerenciar Locais e Quadras"
+                                android:text="@string/fragment_profile_text_55"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Administração global de todos os locais"
+                                android:text="@string/fragment_profile_text_56"
                                 android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
@@ -1312,7 +1330,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="24dp"
-                    android:text="GERAL"
+                    android:text="@string/fragment_profile_text_57"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurfaceVariant"
@@ -1360,14 +1378,14 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Sobre"
+                                android:text="@string/fragment_profile_text_58"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
                             <TextView
                                 android:id="@+id/tvAboutSubtitle"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Versão do app e informações"
+                                android:text="@string/fragment_profile_text_59"
                                 android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
@@ -1426,13 +1444,13 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="🔧 Developer Tools"
+                                android:text="@string/fragment_profile_text_60"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Ferramentas de desenvolvimento e debug"
+                                android:text="@string/fragment_profile_text_61"
                                 android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant" />
                         </LinearLayout>
@@ -1458,7 +1476,7 @@
                     android:layout_marginHorizontal="16dp"
                     android:layout_marginTop="32dp"
                     android:layout_marginBottom="40dp"
-                    android:text="Sair da Conta"
+                    android:text="@string/fragment_profile_text_62"
                     android:textColor="?attr/colorError"
                     android:textStyle="bold"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -1471,3 +1489,4 @@
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

@@ -22,21 +22,23 @@ data class XpBreakdown(
     val result: Long = 0,
     val mvp: Long = 0,
     val milestones: Long = 0,
-    val streak: Long = 0
+    val streak: Long = 0,
+    val penalty: Long = 0 // Penalidade por ser worst player
 ) {
     val total: Long
-        get() = participation + goals + assists + saves + result + mvp + milestones + streak
+        get() = participation + goals + assists + saves + result + mvp + milestones + streak + penalty
 
     fun toDisplayMap(): Map<String, Long> {
         val map = mutableMapOf<String, Long>()
-        if (participation > 0) map["Participação"] = participation
+        if (participation > 0) map["Participacao"] = participation
         if (goals > 0) map["Gols"] = goals
-        if (assists > 0) map["Assistências"] = assists
+        if (assists > 0) map["Assistencias"] = assists
         if (saves > 0) map["Defesas"] = saves
         if (result > 0) map["Resultado"] = result
         if (mvp > 0) map["MVP"] = mvp
         if (milestones > 0) map["Milestones"] = milestones
-        if (streak > 0) map["Sequência"] = streak
+        if (streak > 0) map["Sequencia"] = streak
+        if (penalty < 0) map["Bola Murcha"] = penalty
         return map
     }
 }
@@ -65,17 +67,17 @@ data class PlayerGameData(
  * Calculador de XP baseado em regras definidas.
  *
  * Regras:
- * - Participacao: 25 XP por jogo
- * - Gols: 15 XP cada (max 5 = 75 XP)
- * - Assistencias: 10 XP cada (max 5 = 50 XP)
- * - Defesas (goleiro): 8 XP cada (max 10 = 80 XP)
- * - Clean Sheet (goleiro): 30 XP
- * - Vitoria: 15 XP
- * - Empate: 5 XP
- * - MVP: 50 XP
- * - Melhor Gol: 20 XP
- * - Streak 7: 100 XP (uma vez por streak)
- * - Streak 30: 500 XP (uma vez por streak)
+ * - Participacao: 10 XP por jogo
+ * - Gols: 10 XP cada
+ * - Assistencias: 7 XP cada
+ * - Defesas (goleiro): 5 XP cada
+ * - Vitoria: 20 XP
+ * - Empate: 10 XP
+ * - MVP: 30 XP
+ * - Streak 3: 20 XP
+ * - Streak 7: 50 XP
+ * - Streak 10: 100 XP
+ * - Bola Murcha (worst player): -10 XP (penalidade)
  */
 object XPCalculator {
 
@@ -87,7 +89,8 @@ object XPCalculator {
     private const val XP_WIN = 20
     private const val XP_DRAW = 10
     private const val XP_MVP = 30
-    
+    private const val XP_WORST_PLAYER_PENALTY = -10
+
     // Bonus de Sequencia (Streak)
     private const val XP_STREAK_3 = 20
     private const val XP_STREAK_7 = 50
@@ -109,7 +112,7 @@ object XPCalculator {
         val xpWin = settings?.xpWin ?: XP_WIN
         val xpDraw = settings?.xpDraw ?: XP_DRAW
         val xpMvp = settings?.xpMvp ?: XP_MVP
-        
+
         val xpStreak3 = settings?.xpStreak3 ?: XP_STREAK_3
         val xpStreak7 = settings?.xpStreak7 ?: XP_STREAK_7
         val xpStreak10 = settings?.xpStreak10 ?: XP_STREAK_10
@@ -144,6 +147,9 @@ object XPCalculator {
             else -> 0
         }
 
+        // 8. Penalidade por ser Bola Murcha (worst player)
+        val penaltyXp = if (playerData.isWorstPlayer) XP_WORST_PLAYER_PENALTY else 0
+
         // Determinar resultado do jogo
         val gameResult = when {
             playerData.teamWon -> GameResult.WIN
@@ -158,11 +164,15 @@ object XPCalculator {
             saves = savesXp.toLong(),
             result = resultXp.toLong(),
             mvp = mvpXp.toLong(),
-            streak = streakXp.toLong()
+            streak = streakXp.toLong(),
+            penalty = penaltyXp.toLong()
         )
 
+        // Garantir que XP total nunca seja negativo
+        val totalXp = maxOf(0L, breakdown.total)
+
         return XpCalculationResult(
-            totalXp = breakdown.total,
+            totalXp = totalXp,
             breakdown = breakdown,
             gameResult = gameResult
         )
@@ -170,6 +180,7 @@ object XPCalculator {
 
     /**
      * Calcula XP a partir de GameConfirmation (dados do jogo finalizados).
+     * Agora inclui isWorstPlayer para aplicar penalidade corretamente.
      */
     fun calculateFromConfirmation(
         confirmation: GameConfirmation,
@@ -177,6 +188,7 @@ object XPCalculator {
         teamDrew: Boolean,
         opponentsGoals: Int,
         isMvp: Boolean,
+        isWorstPlayer: Boolean = false,
         hasBestGoal: Boolean,
         currentStreak: Int,
         settings: com.futebadosparcas.data.model.GamificationSettings? = null
@@ -190,7 +202,7 @@ object XPCalculator {
             yellowCards = confirmation.yellowCards,
             redCards = confirmation.redCards,
             isMvp = isMvp,
-            isWorstPlayer = false,
+            isWorstPlayer = isWorstPlayer,
             hasBestGoal = hasBestGoal,
             teamId = "",
             teamWon = teamWon,

@@ -86,7 +86,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Recusar" />
+                android:text="@string/item_notification_text_1" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAccept"
@@ -94,7 +94,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:text="Aceitar" />
+                android:text="@string/item_notification_text_2" />
 
         </LinearLayout>
 

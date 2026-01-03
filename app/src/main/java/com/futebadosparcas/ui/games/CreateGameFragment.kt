@@ -139,6 +139,18 @@ class CreateGameFragment : Fragment() {
                 }
             )
         }
+
+        binding.chipGroupVisibility.setOnCheckedStateChangeListener { _, checkedIds ->
+            val checkedId = checkedIds.firstOrNull() ?: View.NO_ID
+            val visibility = when (checkedId) {
+                R.id.chipGroupOnly -> com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY
+                R.id.chipPublicClosed -> com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED
+                R.id.chipPublicOpen -> com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN
+                else -> com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY
+            }
+            viewModel.setVisibility(visibility)
+            hapticManager.tick()
+        }
     }
 
     private fun showLocationDialog() {
@@ -323,6 +335,28 @@ class CreateGameFragment : Fragment() {
                             binding.actvGroup.setText(group.groupName, false)
                         } else {
                             binding.actvGroup.setText("", false)
+                        }
+                    }
+                }
+
+                // Observar visibilidade selecionada
+                launch {
+                    viewModel.selectedVisibility.collect { visibility ->
+                        val chipId = when (visibility) {
+                            com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY -> R.id.chipGroupOnly
+                            com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED -> R.id.chipPublicClosed
+                            com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN -> R.id.chipPublicOpen
+                        }
+                        
+                        if (binding.chipGroupVisibility.checkedChipId != chipId) {
+                            binding.chipGroupVisibility.check(chipId)
+                        }
+
+                        // Atualizar descrição
+                        binding.tvVisibilityDescription.text = when (visibility) {
+                            com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY -> "Visível apenas para membros do grupo"
+                            com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED -> "Visível para todos (App). Requer solicitação para entrar."
+                            com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN -> "Visível para todos (App). Entrada automática."
                         }
                     }
                 }

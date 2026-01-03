@@ -19,7 +19,7 @@
     <item
         android:id="@+id/leagueFragment"
         android:icon="@drawable/ic_bar_chart"
-        android:title="Liga" />
+        android:title="@string/bottom_nav_menu_title_1" />
 
     <item
         android:id="@+id/profileFragment"

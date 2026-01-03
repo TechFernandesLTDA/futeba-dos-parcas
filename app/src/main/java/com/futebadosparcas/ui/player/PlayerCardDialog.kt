@@ -17,8 +17,10 @@ import androidx.lifecycle.lifecycleScope
 import coil.load
 import coil.transform.CircleCropTransformation
 import com.futebadosparcas.R
+import com.futebadosparcas.data.model.PlayerRatingRole
 import com.futebadosparcas.databinding.DialogPlayerCardBinding
 import com.futebadosparcas.util.LevelHelper
+import com.futebadosparcas.util.LevelBadgeHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import com.futebadosparcas.util.loadProfileImage
@@ -113,6 +115,9 @@ class PlayerCardDialog : DialogFragment() {
         // Foto
         binding.ivPlayerPhoto.loadProfileImage(user.photoUrl)
 
+        // Brasão de Nível
+        binding.ivLevelBadge.setImageResource(LevelBadgeHelper.getBadgeForLevel(user.level))
+
         // Nome
         binding.tvPlayerName.text = user.getDisplayName()
 
@@ -135,17 +140,22 @@ class PlayerCardDialog : DialogFragment() {
         binding.tvSaves.text = stats?.totalSaves?.toString() ?: "0"
 
         // Habilidades (Ratings) - Circular Progress
-        binding.tvStrikerRating.text = String.format("%.1f", user.strikerRating)
-        binding.progressStriker.progress = ((user.strikerRating / 5.0) * 100).toInt()
+        val strikerRating = user.getEffectiveRating(PlayerRatingRole.STRIKER)
+        val midRating = user.getEffectiveRating(PlayerRatingRole.MID)
+        val defenderRating = user.getEffectiveRating(PlayerRatingRole.DEFENDER)
+        val gkRating = user.getEffectiveRating(PlayerRatingRole.GOALKEEPER)
 
-        binding.tvMidRating.text = String.format("%.1f", user.midRating)
-        binding.progressMid.progress = ((user.midRating / 5.0) * 100).toInt()
+        binding.tvStrikerRating.text = String.format(Locale.getDefault(), "%.1f", strikerRating)
+        binding.progressStriker.progress = ((strikerRating / 5.0) * 100).toInt()
 
-        binding.tvDefenderRating.text = String.format("%.1f", user.defenderRating)
-        binding.progressDefender.progress = ((user.defenderRating / 5.0) * 100).toInt()
+        binding.tvMidRating.text = String.format(Locale.getDefault(), "%.1f", midRating)
+        binding.progressMid.progress = ((midRating / 5.0) * 100).toInt()
 
-        binding.tvGkRating.text = String.format("%.1f", user.gkRating)
-        binding.progressGk.progress = ((user.gkRating / 5.0) * 100).toInt()
+        binding.tvDefenderRating.text = String.format(Locale.getDefault(), "%.1f", defenderRating)
+        binding.progressDefender.progress = ((defenderRating / 5.0) * 100).toInt()
+
+        binding.tvGkRating.text = String.format(Locale.getDefault(), "%.1f", gkRating)
+        binding.progressGk.progress = ((gkRating / 5.0) * 100).toInt()
 
         // Timestamp
         val dateFormat = SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale("pt", "BR"))

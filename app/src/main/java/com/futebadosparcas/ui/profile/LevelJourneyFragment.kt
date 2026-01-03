@@ -38,6 +38,8 @@ import androidx.navigation.fragment.findNavController
 import com.futebadosparcas.data.model.LevelTable
 import com.futebadosparcas.ui.theme.FutebaColors
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.util.LevelBadgeHelper
+import androidx.compose.ui.res.painterResource
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -215,18 +217,15 @@ fun CurrentProgressHeader(currentLevel: Int, currentXp: Long) {
                 label = "scale"
             )
 
+            // Brasão do Nível Atual Animado
             Box(
-                modifier = Modifier
-                    .size((100 * scale).dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.2f)),
+                modifier = Modifier.size((140 * scale).dp),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(60.dp)
+                androidx.compose.foundation.Image(
+                    painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(currentLevel)),
+                    contentDescription = LevelBadgeHelper.getBadgeDescription(currentLevel, levelName),
+                    modifier = Modifier.size(140.dp)
                 )
             }
 
@@ -393,30 +392,31 @@ fun LevelNode(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Badge do nível
+                // Brasão do nível
                 Box(
                     modifier = Modifier
                         .size(64.dp)
                         .clip(CircleShape)
                         .background(
-                            if (isUnlocked || isCurrent) Color.White.copy(alpha = 0.2f)
-                            else Color(FutebaColors.Surface)
+                            if (isUnlocked || isCurrent) Color.Transparent
+                            else Color(FutebaColors.Surface).copy(alpha = 0.5f)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     if (isUnlocked || isCurrent) {
-                        Icon(
-                            imageVector = Icons.Filled.Star,
-                            contentDescription = null,
-                            tint = textColor,
-                            modifier = Modifier.size(36.dp)
+                        // Mostrar brasão do nível
+                        androidx.compose.foundation.Image(
+                            painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
+                            contentDescription = LevelBadgeHelper.getBadgeDescription(level, name),
+                            modifier = Modifier.size(80.dp)
                         )
                     } else {
-                        Text(
-                            text = "$level",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(FutebaColors.OnSurfaceVariant)
+                        // Nível bloqueado - mostrar número
+                        Icon(
+                            imageVector = Icons.Filled.Lock,
+                            contentDescription = "Nível bloqueado",
+                            tint = Color(FutebaColors.OnSurfaceVariant),
+                            modifier = Modifier.size(40.dp)
                         )
                     }
                 }

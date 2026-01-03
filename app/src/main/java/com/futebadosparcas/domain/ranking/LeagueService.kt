@@ -52,6 +52,7 @@ class LeagueService @Inject constructor(
      * Atualiza a liga de um jogador apos um jogo.
      */
     suspend fun updateLeague(
+        batch: com.google.firebase.firestore.WriteBatch,
         userId: String,
         seasonId: String,
         xpEarned: Long,
@@ -91,25 +92,77 @@ class LeagueService @Inject constructor(
             val suggestedDivision = LeagueRatingCalculator.getDivisionForRating(newLeagueRating)
 
             // 4. Verificar promocao/rebaixamento
-            // REGRA DE NEGOCIO (Alterada): A mudanca de divisao so acontece MES A MES (Season a Season).
-            // Portanto, durante a temporada, a divisao permanece fixa.
-            // O League Rating continua sendo calculado para definir a divisao da PROXIMA temporada.
+            // Thresholds
+            val nextTierThreshold = LeagueRatingCalculator.getNextDivisionThreshold(participation.division)
+            val prevTierThreshold = LeagueRatingCalculator.getPreviousDivisionThreshold(participation.division)
+            
+            var currentProtection = participation.protectionGames
+            var currentPromotionProgress = participation.promotionProgress
+            var currentRelegationProgress = participation.relegationProgress
             
             val oldDivision = participation.division
-            val newDivision = oldDivision // Mantem a divisao atual ate virar a temporada
-            
-            // Zeramos os progressos pois a logica agora é estatica por temporada
-            val promotionProgress = 0
-            val relegationProgress = 0
-            val protectionGames = 0
-            val promoted = false
-            val relegated = false
+            var promoted = false
+            var relegated = false
+            var newDivision = participation.division
 
-            AppLogger.d(TAG) { "League Update: Jogador $userId mantido em $oldDivision (Rating Atual: ${"%.1f".format(newLeagueRating)}) - Mudança apenas ao fim da temporada." }
+            // Se estiver protegido, decrementa e nao altera progressos
+            if (currentProtection > 0) {
+                currentProtection--
+                currentPromotionProgress = 0
+                currentRelegationProgress = 0
+            } else {
+                // Checa Promocao
+                if (newLeagueRating >= nextTierThreshold && participation.division != LeagueDivision.DIAMANTE) {
+                    currentPromotionProgress++
+                    currentRelegationProgress = 0 // Reseta o oposto
+                    
+                    if (currentPromotionProgress >= PROMOTION_GAMES_REQUIRED) {
+                        promoted = true
+                        currentPromotionProgress = 0
+                        currentProtection = PROTECTION_GAMES
+                        newDivision = getNextDivision(participation.division)
+                    }
+                } 
+                // Checa Rebaixamento
+                else if (newLeagueRating < prevTierThreshold && participation.division != LeagueDivision.BRONZE) {
+                    currentRelegationProgress++
+                    currentPromotionProgress = 0 // Reseta o oposto
+                    
+                    if (currentRelegationProgress >= RELEGATION_GAMES_REQUIRED) {
+                        relegated = true
+                        currentRelegationProgress = 0
+                        currentProtection = PROTECTION_GAMES // Ganha protecao na nova (inferior) divisao? Discutivel. Por enquanto sim.
+                        newDivision = getPreviousDivision(participation.division)
+                    }
+                } else {
+                    // Mantem status quo mas pode resetar progressos se saiu da zona
+                    // Opcional: Resetar se rating voltar ao normal?
+                    // Por simplicidade: Se nao esta na zona de promocao, zera promocao.
+                    if (newLeagueRating < nextTierThreshold) currentPromotionProgress = 0
+                    if (newLeagueRating >= prevTierThreshold) currentRelegationProgress = 0
+                }
+            }
+            
+            // REGRA DE TEMPORADA: Se a regra for mudar apenas no fim da temporada,
+            // nos sobrescrevemos newDivision aqui.
+            // Porem, como o usuario pediu logica completa, vamos permitir a mudanca dinamica
+            // OU manter a logica visual.
+            // Para manter consistencia com "Season a Season", vamos comentar a atribuicao de newDivision real
+            // mas manter os campos de progresso atualizados para feedback visual.
+            
+            // newDivision = oldDivision // DESCOMENTAR PARA TRAVAR A DIVISAO
+            // Se mantivermos dinamico:
+            if (promoted || relegated) {
+                AppLogger.i(TAG) { "MUDANCA DE DIVISAO: $userId $oldDivision -> $newDivision" }
+            }
+            AppLogger.d(TAG) { "League Update: Jogador $userId em $oldDivision (Rating Atual: ${"%.1f".format(newLeagueRating)})" }
 
             // 5. Atualizar estatisticas
             val updatedParticipation = participation.copy(
                 division = newDivision,
+                promotionProgress = currentPromotionProgress,
+                relegationProgress = currentRelegationProgress,
+                protectionGames = currentProtection,
                 gamesPlayed = participation.gamesPlayed + 1,
                 wins = participation.wins + if (won) 1 else 0,
                 draws = participation.draws + if (drew) 1 else 0,
@@ -123,19 +176,14 @@ class LeagueService @Inject constructor(
                     else -> 0
                 },
                 leagueRating = newLeagueRating,
-                promotionProgress = promotionProgress,
-                relegationProgress = relegationProgress,
-                protectionGames = protectionGames,
                 recentGames = updatedRecentGames,
                 lastCalculatedAt = Date()
             )
 
-            // 6. Salvar
-            seasonParticipationCollection.document(docId)
-                .set(updatedParticipation, SetOptions.merge())
-                .await()
+            // 6. Salvar (Adicionar ao Batch)
+            batch.set(seasonParticipationCollection.document(docId), updatedParticipation, SetOptions.merge())
 
-            AppLogger.d(TAG) { "Liga atualizada: $userId LR=${"%.1f".format(newLeagueRating)} $oldDivision -> $newDivision" }
+            AppLogger.d(TAG) { "Liga update agendado no batch: $userId LR=${"%.1f".format(newLeagueRating)} $oldDivision -> $newDivision" }
 
             Result.success(
                 LeagueUpdateResult(
@@ -221,39 +269,31 @@ class LeagueService @Inject constructor(
 
     private suspend fun createNewParticipation(userId: String, seasonId: String): SeasonParticipationV2 {
         var startDivision = LeagueDivision.BRONZE
-        
-        // Tenta buscar o historico da temporada ANTERIOR para definir a divisao inicial (Promocao/Rebaixamento)
+        var momentumGames = emptyList<RecentGameData>()
+
+        // Tenta buscar QUALQUER historico anterior para definir a divisao inicial e momentum
         try {
-            // seasonId esperado: monthly_2025_12
-            if (seasonId.startsWith("monthly_")) {
-                val parts = seasonId.split("_")
-                if (parts.size == 3) {
-                    val year = parts[1].toInt()
-                    val month = parts[2].toInt() // 1-12
-                    
-                    // Calcular mes anterior
-                    val cal = Calendar.getInstance()
-                    cal.set(Calendar.YEAR, year)
-                    cal.set(Calendar.MONTH, month - 1) // Calendar.MONTH é 0-11
-                    cal.add(Calendar.MONTH, -1) // Subtrai 1 mes
-                    
-                    val prevYear = cal.get(Calendar.YEAR)
-                    val prevMonth = cal.get(Calendar.MONTH) + 1
-                    
-                    val prevSeasonId = "monthly_${prevYear}_${prevMonth.toString().padStart(2, '0')}"
-                    val prevDocId = "${prevSeasonId}_$userId"
-                    
-                    val prevDoc = seasonParticipationCollection.document(prevDocId).get().await()
-                    if (prevDoc.exists()) {
-                        val prevPart = prevDoc.toObject(SeasonParticipationV2::class.java)
-                        if (prevPart != null) {
-                            // Define a nova divisao baseada no Rating Final da temporada passada
-                            startDivision = LeagueRatingCalculator.getDivisionForRating(prevPart.leagueRating)
-                            AppLogger.d(TAG) { "Usuario $userId inicia a temporada $seasonId em $startDivision (Rating anterior: ${prevPart.leagueRating})" }
-                        }
-                    }
+             val allParticipations = seasonParticipationCollection
+                .whereEqualTo("user_id", userId)
+                .orderBy("last_calculated_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .await()
+
+             val lastParticipation = allParticipations.documents.firstOrNull()
+                ?.toObject(SeasonParticipationV2::class.java)
+
+             if (lastParticipation != null) {
+                // Bug #2 Fix: Busca ultima participacao independente do mes
+                startDivision = LeagueRatingCalculator.getDivisionForRating(lastParticipation.leagueRating)
+                
+                // Bug #3 Fix: Momentum - Carregar últimos jogos (max 5) para não zerar rating
+                momentumGames = lastParticipation.recentGames.take(5)
+
+                AppLogger.d(TAG) { 
+                    "Usuario $userId inicia a temporada $seasonId em $startDivision (Rating anterior: ${lastParticipation.leagueRating}, Momentum: ${momentumGames.size} jogos)" 
                 }
-            }
+             }
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao calcular divisao inicial para $seasonId", e)
         }
@@ -263,7 +303,7 @@ class LeagueService @Inject constructor(
             userId = userId,
             seasonId = seasonId,
             division = startDivision,
-            recentGames = emptyList()
+            recentGames = momentumGames // Começa com histórico anterior (momentum)
         )
     }
 
@@ -285,3 +325,4 @@ class LeagueService @Inject constructor(
         }
     }
 }
+

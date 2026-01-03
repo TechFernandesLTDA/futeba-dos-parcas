@@ -7,18 +7,15 @@
     android:background="?attr/colorSurface">
 
     <com.google.android.material.appbar.AppBarLayout
+        style="@style/FutebaAppBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorTertiary"
-        app:elevation="0dp">
+        android:layout_height="wrap_content">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:title="Conquistas"
-            app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge"
-            app:titleTextColor="@android:color/white" />
+            app:title="Conquistas" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -40,7 +37,7 @@
                 android:layout_marginBottom="20dp"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="@color/tertiary">
+                app:cardBackgroundColor="?attr/colorTertiaryContainer">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -51,10 +48,10 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Seu Progresso"
+                        android:text="@string/fragment_badges_text_1"
                         android:textSize="22sp"
                         android:textStyle="bold"
-                        android:textColor="@android:color/white" />
+                        android:textColor="?attr/colorOnTertiaryContainer" />
 
                     <!-- Barra de Progresso -->
                     <LinearLayout
@@ -72,17 +69,17 @@
                             android:layout_weight="1"
                             android:max="100"
                             android:progress="35"
-                            android:progressTint="@android:color/white"
-                            android:progressBackgroundTint="#80FFFFFF" />
+                            android:progressTint="?attr/colorOnTertiaryContainer"
+                            android:progressBackgroundTint="?attr/colorOutlineVariant" />
 
                         <TextView
                             android:id="@+id/tvBadgesPercentage"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="35%"
+                            android:text="@string/fragment_badges_text_2"
                             android:textSize="20sp"
                             android:textStyle="bold"
-                            android:textColor="@android:color/white"
+                            android:textColor="?attr/colorOnTertiaryContainer"
                             android:layout_marginStart="16dp" />
 
                     </LinearLayout>
@@ -99,19 +96,19 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Badges Desbloqueadas"
+                            android:text="@string/fragment_badges_text_3"
                             android:textSize="16sp"
-                            android:textColor="@android:color/white"
+                            android:textColor="?attr/colorOnTertiaryContainer"
                             android:alpha="0.9" />
 
                         <TextView
                             android:id="@+id/tvBadgesProgress"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="7/20"
+                            android:text="@string/fragment_badges_text_4"
                             android:textSize="24sp"
                             android:textStyle="bold"
-                            android:textColor="@android:color/white" />
+                            android:textColor="?attr/colorOnTertiaryContainer" />
 
                     </LinearLayout>
 
@@ -128,8 +125,8 @@
                 android:minHeight="56dp"
                 app:tabMode="scrollable"
                 app:tabTextColor="?attr/colorOnSurface"
-                app:tabSelectedTextColor="@color/primary"
-                app:tabIndicatorColor="@color/primary"
+                app:tabSelectedTextColor="?attr/colorPrimary"
+                app:tabIndicatorColor="?attr/colorPrimary"
                 app:tabIndicatorHeight="3dp"
                 app:tabTextAppearance="@style/TextAppearance.Material3.TitleMedium"
                 app:tabPaddingStart="16dp"
@@ -138,27 +135,27 @@
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Todas" />
+                    android:text="@string/fragment_badges_text_5" />
 
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⚽ Desempenho" />
+                    android:text="@string/fragment_badges_text_6" />
 
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="📅 Presença" />
+                    android:text="@string/fragment_badges_text_7" />
 
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="👥 Comunidade" />
+                    android:text="@string/fragment_badges_text_8" />
 
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🏆 Nível" />
+                    android:text="@string/fragment_badges_text_9" />
 
             </com.google.android.material.tabs.TabLayout>
 
@@ -188,13 +185,13 @@
                     android:src="@android:drawable/btn_star_big_on"
                     android:alpha="0.3"
                     app:tint="?attr/colorOnSurfaceVariant"
-                    android:contentDescription="Sem conquistas" />
+                    android:contentDescription="@string/fragment_badges_contentdescription_10" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
-                    android:text="Nenhuma conquista ainda"
+                    android:text="@string/fragment_badges_text_11"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -204,7 +201,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Jogue mais partidas para\ndesbloquear badges!"
+                    android:text="@string/fragment_badges_text_12"
                     android:textSize="16sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:gravity="center"
@@ -225,3 +222,4 @@
         android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

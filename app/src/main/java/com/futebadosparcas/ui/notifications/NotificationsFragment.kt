@@ -42,11 +42,6 @@ class NotificationsFragment : Fragment() {
         setupRecyclerView()
         setupListeners()
         observeViewModel()
-
-        observeViewModel()
-        
-        // Mark all as read when entering screen
-        viewModel.markAllAsRead()
     }
 
     private fun setupToolbar() {

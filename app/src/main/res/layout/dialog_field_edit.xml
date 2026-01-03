@@ -9,7 +9,7 @@
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Editar Quadra"
+        android:text="@string/dialog_field_edit_text_1"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
@@ -42,7 +42,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:hint="Nome (ex: Quadra 1)"
+        android:hint="@string/dialog_field_edit_hint_2"
         app:layout_constraintTop_toBottomOf="@id/ivFieldPhoto">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etName"
@@ -67,7 +67,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="4dp"
-            android:hint="Tipo">
+            android:hint="@string/dialog_field_edit_hint_3">
             <AutoCompleteTextView
                 android:id="@+id/actvType"
                 android:layout_width="match_parent"
@@ -83,7 +83,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="4dp"
-            android:hint="Piso">
+            android:hint="@string/dialog_field_edit_hint_4">
             <AutoCompleteTextView
                 android:id="@+id/actvSurface"
                 android:layout_width="match_parent"
@@ -108,7 +108,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="4dp"
-            android:hint="Preço/Hora (R$)">
+            android:hint="@string/dialog_field_edit_hint_5">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPrice"
                 android:layout_width="match_parent"
@@ -122,7 +122,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="4dp"
-            android:hint="Dimensões (m)">
+            android:hint="@string/dialog_field_edit_hint_6">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etDimensions"
                 android:layout_width="match_parent"
@@ -145,13 +145,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="24dp"
-            android:text="Coberta"/>
+            android:text="@string/dialog_field_edit_text_7"/>
             
         <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/switchActive"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ativa"
+            android:text="@string/dialog_field_edit_text_8"
             android:checked="true"/>
     </LinearLayout>
 
@@ -169,13 +169,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
-            android:text="Cancelar"/>
+            android:text="@string/dialog_field_edit_text_9"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSave"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Salvar"/>
+            android:text="@string/dialog_field_edit_text_10"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

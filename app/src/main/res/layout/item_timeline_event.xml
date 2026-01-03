@@ -57,6 +57,7 @@
         android:src="@drawable/ic_close"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:padding="8dp"
-        app:tint="@color/error"/>
+        app:tint="?attr/colorError"/>
 
 </LinearLayout>
+

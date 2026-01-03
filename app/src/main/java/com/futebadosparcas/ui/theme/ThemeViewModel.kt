@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.AppThemeConfig
 import com.futebadosparcas.data.model.ThemeMode
 import com.futebadosparcas.data.repository.ThemeRepository
+import com.futebadosparcas.util.PreferencesManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +15,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ThemeViewModel @Inject constructor(
-    private val themeRepository: ThemeRepository
+    private val themeRepository: ThemeRepository,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
     val themeConfig: StateFlow<AppThemeConfig> = themeRepository.themeConfig
@@ -46,6 +48,15 @@ class ThemeViewModel @Inject constructor(
                 ThemeMode.SYSTEM -> "system"
             }
             com.futebadosparcas.util.ThemeHelper.applyTheme(themeString)
+            preferencesManager.setThemePreference(themeString)
+        }
+    }
+
+    fun resetTheme() {
+        viewModelScope.launch {
+            themeRepository.resetThemeConfig()
+            com.futebadosparcas.util.ThemeHelper.applyTheme("light")
+            preferencesManager.setThemePreference("light")
         }
     }
 }

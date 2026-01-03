@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.groups
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.CashboxCategory

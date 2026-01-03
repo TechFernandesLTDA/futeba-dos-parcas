@@ -27,22 +27,37 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:gravity="center"
-                android:text="1"
+                android:text="@string/item_ranking_text_1"
                 android:textSize="24sp"
                 android:textStyle="bold"
-                android:textColor="@color/primary"
+                android:textColor="?attr/colorPrimary"
                 android:background="@drawable/bg_circle_primary_light"
                 tools:text="1" />
 
-            <!-- Avatar -->
-            <ImageView
-                android:id="@+id/ivAvatar"
+            <!-- Avatar com Brasão -->
+            <FrameLayout
                 android:layout_width="52dp"
                 android:layout_height="52dp"
-                android:layout_marginStart="12dp"
-                android:src="@drawable/ic_person"
-                android:scaleType="centerCrop"
-                android:contentDescription="Avatar" />
+                android:layout_marginStart="12dp">
+
+                <ImageView
+                    android:id="@+id/ivAvatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_person"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="@string/item_ranking_contentdescription_2" />
+
+                <!-- Brasão de Nível -->
+                <ImageView
+                    android:id="@+id/ivLevelBadgeRanking"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="bottom|end"
+                    android:contentDescription="@string/item_ranking_contentdescription_3"
+                    android:src="@drawable/ic_level_badge_0" />
+
+            </FrameLayout>
 
             <!-- Nome e Stats -->
             <LinearLayout
@@ -56,7 +71,7 @@
                     android:id="@+id/tvPlayerName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="João Silva"
+                    android:text="@string/item_ranking_text_4"
                     android:textSize="17sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -68,7 +83,7 @@
                     android:id="@+id/tvStats"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="15J • 10V • ⚽12"
+                    android:text="@string/item_ranking_text_5"
                     android:textSize="13sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:layout_marginTop="4dp"
@@ -87,16 +102,16 @@
                     android:id="@+id/tvPoints"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="45"
+                    android:text="@string/item_ranking_text_6"
                     android:textSize="26sp"
                     android:textStyle="bold"
-                    android:textColor="@color/primary"
+                    android:textColor="?attr/colorPrimary"
                     tools:text="45" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="pts"
+                    android:text="@string/item_ranking_text_7"
                     android:textSize="11sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:alpha="0.7" />
@@ -128,14 +143,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⚽"
+                    android:text="@string/item_ranking_text_8"
                     android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/tvGoals"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="12"
+                    android:text="@string/item_ranking_text_9"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -145,7 +160,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Gols"
+                    android:text="@string/item_ranking_text_10"
                     android:textSize="10sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:layout_marginTop="2dp" />
@@ -163,14 +178,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="📊"
+                    android:text="@string/item_ranking_text_11"
                     android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/tvGoalDiff"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="+5"
+                    android:text="@string/item_ranking_text_12"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -180,7 +195,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Saldo"
+                    android:text="@string/item_ranking_text_13"
                     android:textSize="10sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:layout_marginTop="2dp" />
@@ -198,14 +213,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⭐"
+                    android:text="@string/item_ranking_text_14"
                     android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/tvMvp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="3"
+                    android:text="@string/item_ranking_text_15"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -215,7 +230,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="MVP"
+                    android:text="@string/item_ranking_text_16"
                     android:textSize="10sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:layout_marginTop="2dp" />
@@ -233,14 +248,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="📈"
+                    android:text="@string/item_ranking_text_17"
                     android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/tvWinRate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="67%"
+                    android:text="@string/item_ranking_text_18"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -250,7 +265,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Vitórias"
+                    android:text="@string/item_ranking_text_19"
                     android:textSize="10sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:layout_marginTop="2dp" />
@@ -262,3 +277,4 @@
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

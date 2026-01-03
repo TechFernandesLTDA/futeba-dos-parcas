@@ -3,11 +3,15 @@ package com.futebadosparcas.ui.profile
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.data.model.AutoRatings
 import com.futebadosparcas.data.model.FieldType
+import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.data.model.PerformanceRatingCalculator
 import com.futebadosparcas.data.model.User
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.LiveGameRepository
+import com.futebadosparcas.data.repository.LocationRepository
 import com.futebadosparcas.data.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -17,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.math.abs
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
@@ -24,6 +29,7 @@ class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val gameRepository: GameRepository,
     private val liveGameRepository: LiveGameRepository,
+    private val locationRepository: LocationRepository,
     private val gamificationRepository: com.futebadosparcas.data.repository.GamificationRepository,
     private val statisticsRepository: com.futebadosparcas.data.repository.IStatisticsRepository,
     private val preferencesManager: com.futebadosparcas.util.PreferencesManager,
@@ -36,6 +42,9 @@ class ProfileViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
     val uiState: StateFlow<ProfileUiState> = _uiState
+
+    private val _myLocations = MutableStateFlow<List<Location>>(emptyList())
+    val myLocations: StateFlow<List<Location>> = _myLocations
 
     private var statisticsListener: com.google.firebase.firestore.ListenerRegistration? = null
 
@@ -61,12 +70,26 @@ class ProfileViewModel @Inject constructor(
 
                     // Iniciar listener de tempo real para estatísticas
                     setupStatisticsRealTimeListener(user.id)
+                    maybeUpdateAutoRatings(user, stats)
+
+                    // Carregar locais se o usuário for dono de quadra
+                    if (user.isFieldOwner()) {
+                        loadMyLocations(user.id)
+                    }
                 },
                 onFailure = { error ->
                     _uiState.value = ProfileUiState.Error(error.message ?: "Erro ao carregar perfil")
                     _uiEvents.send(ProfileUiEvent.LoadComplete)
                 }
             )
+        }
+    }
+
+    private fun loadMyLocations(userId: String) {
+        viewModelScope.launch {
+            locationRepository.getLocationsByOwner(userId).onSuccess { locations ->
+                _myLocations.value = locations
+            }
         }
     }
 
@@ -88,8 +111,8 @@ class ProfileViewModel @Inject constructor(
                         val currentState = _uiState.value
 
                         if (currentState is ProfileUiState.Success && updatedStats != null) {
-                            // Atualizar o estado com as novas estatísticas
                             _uiState.value = currentState.copy(statistics = updatedStats)
+                            maybeUpdateAutoRatings(currentState.user, updatedStats)
                         }
                     } catch (e: Exception) {
                         // Ignorar erros de parsing
@@ -106,7 +129,16 @@ class ProfileViewModel @Inject constructor(
         strikerRating: Double,
         midRating: Double,
         defenderRating: Double,
-        gkRating: Double
+        gkRating: Double,
+        birthDate: java.util.Date?,
+        gender: String?,
+        heightCm: Int?,
+        weightKg: Int?,
+        dominantFoot: String?,
+        primaryPosition: String?,
+        secondaryPosition: String?,
+        playStyle: String?,
+        experienceYears: Int?
     ) {
         viewModelScope.launch {
             _uiState.value = ProfileUiState.Loading
@@ -120,7 +152,16 @@ class ProfileViewModel @Inject constructor(
                 strikerRating,
                 midRating,
                 defenderRating,
-                gkRating
+                gkRating,
+                birthDate,
+                gender,
+                heightCm,
+                weightKg,
+                dominantFoot,
+                primaryPosition,
+                secondaryPosition,
+                playStyle,
+                experienceYears
             )
 
             profileResult.fold(
@@ -157,6 +198,54 @@ class ProfileViewModel @Inject constructor(
 
     fun isDevModeEnabled(): Boolean {
         return preferencesManager.isDevModeEnabled()
+    }
+
+    private fun maybeUpdateAutoRatings(user: User, stats: com.futebadosparcas.data.model.UserStatistics?) {
+        if (stats == null || stats.totalGames < 3) return
+
+        val autoRatings = PerformanceRatingCalculator.fromStats(stats)
+        if (!shouldUpdateAutoRatings(user, autoRatings)) return
+
+        viewModelScope.launch {
+            val result = userRepository.updateAutoRatings(
+                autoRatings.striker,
+                autoRatings.mid,
+                autoRatings.defender,
+                autoRatings.gk,
+                autoRatings.sampleSize
+            )
+
+            if (result.isSuccess) {
+                updateUserStateWithAutoRatings(autoRatings)
+            }
+        }
+    }
+
+    private fun shouldUpdateAutoRatings(user: User, auto: AutoRatings): Boolean {
+        if (auto.sampleSize <= 0) return false
+        if (auto.sampleSize >= user.autoRatingSamples + 3) return true
+
+        val delta = maxOf(
+            abs(user.autoStrikerRating - auto.striker),
+            abs(user.autoMidRating - auto.mid),
+            abs(user.autoDefenderRating - auto.defender),
+            abs(user.autoGkRating - auto.gk)
+        )
+        return delta >= 0.3
+    }
+
+    private fun updateUserStateWithAutoRatings(auto: AutoRatings) {
+        val currentState = _uiState.value
+        if (currentState is ProfileUiState.Success) {
+            val updatedUser = currentState.user.copy(
+                autoStrikerRating = auto.striker,
+                autoMidRating = auto.mid,
+                autoDefenderRating = auto.defender,
+                autoGkRating = auto.gk,
+                autoRatingSamples = auto.sampleSize
+            )
+            _uiState.value = currentState.copy(user = updatedUser)
+        }
     }
 
     override fun onCleared() {

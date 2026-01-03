@@ -3,10 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_seed_database"
-        android:title="Popular Banco de Dados"
+        android:title="@string/manage_locations_menu_title_1"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_deduplicate"
-        android:title="Remover Duplicatas"
+        android:title="@string/manage_locations_menu_title_2"
         app:showAsAction="never" />
 </menu>

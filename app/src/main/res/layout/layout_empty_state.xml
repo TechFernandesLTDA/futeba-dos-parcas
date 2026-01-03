@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Sem jogos por aqui"
+        android:text="@string/layout_empty_state_text_1"
         android:textColor="?attr/colorOnSurface"
         android:textSize="20sp"
         android:textStyle="bold" />
@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:text="Que tal marcar uma pelada com a galera agora mesmo?"
+        android:text="@string/layout_empty_state_text_2"
         android:textColor="?attr/colorOnSurfaceVariant"
         android:textSize="16sp" />
 

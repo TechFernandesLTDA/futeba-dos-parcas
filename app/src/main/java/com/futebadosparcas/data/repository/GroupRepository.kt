@@ -358,26 +358,35 @@ class GroupRepository @Inject constructor(
 
             // Atualizar referência em todos os membros (denormalização)
             // Buscar todos os membros ativos para atualizar o UserGroup deles
-            val members = groupsCollection.document(groupId)
+            // FIX: Usar paginação ou batches para evitar estouro de memória/limite
+            val membersSnapshot = groupsCollection.document(groupId)
                 .collection("members")
                 .get()
                 .await()
 
-            val batch = firestore.batch()
-            members.documents.forEach { memberDoc ->
-                val memberId = memberDoc.getString("user_id") ?: return@forEach
-                val userGroupRef = usersCollection.document(memberId)
-                    .collection("groups").document(groupId)
+            val totalMembers = membersSnapshot.size()
+            val batchSize = 400 // Margem de segurança (limite é 500)
+            
+            // Processar em lotes
+            for (i in 0 until totalMembers step batchSize) {
+                val batch = firestore.batch()
+                val chunk = membersSnapshot.documents.drop(i).take(batchSize)
                 
-                val groupUpdates = mutableMapOf<String, Any>(
-                    "group_name" to name
-                )
-                if (photoUrl != null) {
-                    groupUpdates["group_photo"] = photoUrl
+                chunk.forEach { memberDoc ->
+                    val memberId = memberDoc.getString("user_id") ?: return@forEach
+                    val userGroupRef = usersCollection.document(memberId)
+                        .collection("groups").document(groupId)
+                    
+                    val groupUpdates = mutableMapOf<String, Any>(
+                        "group_name" to name
+                    )
+                    if (photoUrl != null) {
+                        groupUpdates["group_photo"] = photoUrl
+                    }
+                    batch.update(userGroupRef, groupUpdates)
                 }
-                batch.update(userGroupRef, groupUpdates)
+                batch.commit().await()
             }
-            batch.commit().await()
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -495,6 +504,7 @@ class GroupRepository @Inject constructor(
             val newMemberCount = remainingMemberIds.size
 
             // Remover membro e atualizar contagem em todos os UserGroups
+            // FIX: Usar chunks para evitar falhar em grupos grandes
             firestore.runTransaction { transaction ->
                 val memberRef = groupsCollection.document(groupId)
                     .collection("members").document(memberId)
@@ -507,14 +517,22 @@ class GroupRepository @Inject constructor(
                 val userGroupRef = usersCollection.document(memberId)
                     .collection("groups").document(groupId)
                 transaction.delete(userGroupRef)
-
-                // Atualizar member_count em todos os membros restantes
-                remainingMemberIds.forEach { remainingMemberId ->
+            }.await()
+            
+            // Atualizar member_count nos membros restantes (fora da transação principal para evitar limite)
+            // Isso pode gerar inconsistência temporária, mas evita crash.
+            val batchSize = 400
+            for (i in 0 until remainingMemberIds.size step batchSize) {
+                val batch = firestore.batch()
+                val chunk = remainingMemberIds.drop(i).take(batchSize)
+                
+                chunk.forEach { remainingMemberId ->
                     val remainingUserGroupRef = usersCollection.document(remainingMemberId)
                         .collection("groups").document(groupId)
-                    transaction.update(remainingUserGroupRef, "member_count", newMemberCount)
+                    batch.update(remainingUserGroupRef, "member_count", newMemberCount)
                 }
-            }.await()
+                batch.commit().await()
+            }
 
             Result.success(Unit)
         } catch (e: Exception) {

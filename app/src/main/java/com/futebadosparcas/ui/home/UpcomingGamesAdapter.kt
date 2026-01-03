@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.databinding.ItemGameCardBinding
+import java.util.Locale
 
 class UpcomingGamesAdapter(
     private val onGameClick: (Game) -> Unit
@@ -39,7 +40,7 @@ class UpcomingGamesAdapter(
                 tvPlayersCount.text = "${game.players.size}/${game.maxPlayers}"
 
                 tvPrice.text = if (game.dailyPrice > 0) {
-                    "R$ ${String.format("%.2f", game.dailyPrice)}"
+                    "R$ ${String.format(Locale.getDefault(), "%.2f", game.dailyPrice)}"
                 } else {
                     "Gratis"
                 }

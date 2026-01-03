@@ -9,18 +9,18 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Escolha sua Posição"
+        android:text="@string/dialog_select_position_text_1"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="@color/text_primary"
+        android:textColor="?attr/colorOnSurface"
         android:layout_marginBottom="8dp" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Selecione em qual posição você vai jogar"
+        android:text="@string/dialog_select_position_text_2"
         android:textSize="14sp"
-        android:textColor="@color/text_secondary"
+        android:textColor="?attr/colorOnSurfaceVariant"
         android:layout_marginBottom="24dp" />
 
     <!-- Opcoes de posicao -->
@@ -46,7 +46,7 @@
             <TextView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="🧤"
+                android:text="@string/dialog_select_position_text_3"
                 android:textSize="32sp"
                 android:gravity="center" />
 
@@ -60,18 +60,18 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Goleiro"
+                    android:text="@string/dialog_select_position_text_4"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/tvGoalkeeperSlots"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="2 de 3 vagas disponíveis"
+                    android:text="@string/dialog_select_position_text_5"
                     android:textSize="12sp"
-                    android:textColor="@color/text_secondary" />
+                    android:textColor="?attr/colorOnSurfaceVariant" />
 
             </LinearLayout>
 
@@ -87,7 +87,7 @@
         app:cardCornerRadius="12dp"
         app:cardElevation="2dp"
         app:strokeWidth="2dp"
-        app:strokeColor="@color/primary"
+        app:strokeColor="?attr/colorPrimary"
         android:clickable="true"
         android:focusable="true">
 
@@ -101,7 +101,7 @@
             <TextView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="⚽"
+                android:text="@string/dialog_select_position_text_6"
                 android:textSize="32sp"
                 android:gravity="center" />
 
@@ -115,17 +115,17 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Linha"
+                    android:text="@string/dialog_select_position_text_7"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
+                    android:textColor="?attr/colorOnSurface" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Vagas ilimitadas"
+                    android:text="@string/dialog_select_position_text_8"
                     android:textSize="12sp"
-                    android:textColor="@color/text_secondary" />
+                    android:textColor="?attr/colorOnSurfaceVariant" />
 
             </LinearLayout>
 
@@ -144,7 +144,7 @@
             android:id="@+id/btnCancelPosition"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cancelar"
+            android:text="@string/dialog_select_position_text_9"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_marginEnd="8dp" />
 
@@ -152,9 +152,10 @@
             android:id="@+id/btnConfirmPosition"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Confirmar"
-            app:backgroundTint="@color/primary" />
+            android:text="@string/dialog_select_position_text_10"
+            app:backgroundTint="?attr/colorPrimary" />
 
     </LinearLayout>
 
 </LinearLayout>
+

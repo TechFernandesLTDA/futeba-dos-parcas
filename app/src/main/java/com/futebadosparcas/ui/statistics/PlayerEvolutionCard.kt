@@ -168,7 +168,7 @@ fun PlayerEvolutionCard(
  * Card de liga/divisao do jogador.
  */
 @Composable
-fun LeagueDivisionCard(
+fun PlayerLeagueCard(
     division: LeagueDivision,
     leagueRating: Double,
     promotionProgress: Int,
@@ -221,32 +221,47 @@ fun LeagueDivisionCard(
                         text = "Liga ${division.displayName}",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(FutebaColors.TextPrimary)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "Rating: ${"%.1f".format(leagueRating)}",
                         fontSize = 14.sp,
-                        color = Color(FutebaColors.TextSecondary)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                // Status indicator
-                if (protectionGames > 0) {
-                    StatusBadge(
-                        text = "Protegido",
-                        color = Color(FutebaColors.Success)
-                    )
-                } else if (promotionProgress > 0) {
-                    StatusBadge(
-                        text = "Subindo ($promotionProgress/3)",
-                        color = Color(FutebaColors.Primary)
-                    )
-                } else if (relegationProgress > 0) {
-                    StatusBadge(
-                        text = "Risco ($relegationProgress/3)",
-                        color = Color(FutebaColors.Warning)
-                    )
-                }
+            }
+            // Status indicator from fields
+            val hasExplicitStatus = protectionGames > 0 || promotionProgress > 0 || relegationProgress > 0
+            if (protectionGames > 0) {
+                StatusBadge(
+                    text = "Protegido",
+                    color = Color(FutebaColors.Success)
+                )
+            } else if (promotionProgress > 0) {
+                StatusBadge(
+                    text = "Subindo ($promotionProgress/3)",
+                    color = Color(FutebaColors.Primary)
+                )
+            } else if (relegationProgress > 0) {
+                StatusBadge(
+                    text = "Risco ($relegationProgress/3)",
+                    color = Color(FutebaColors.Warning)
+                )
+            }
+            // Computed Status Badge
+            val status = if (!hasExplicitStatus) {
+                getComputedStatus(
+                    division,
+                    leagueRating,
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else null
+            if (status != null) {
+                StatusBadge(
+                    text = status.first,
+                    color = status.second
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -305,13 +320,13 @@ private fun LeagueRatingBar(
                 Text(
                     text = "$threshold",
                     fontSize = 10.sp,
-                    color = Color(FutebaColors.TextSecondary)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Text(
                 text = "100",
                 fontSize = 10.sp,
-                color = Color(FutebaColors.TextSecondary)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -391,12 +406,12 @@ fun MilestoneProgressCard(
                     text = milestoneName,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(FutebaColors.TextPrimary)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "$current / $target - $description",
                     fontSize = 12.sp,
-                    color = Color(FutebaColors.TextSecondary)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -411,7 +426,7 @@ fun MilestoneProgressCard(
                 Text(
                     text = "XP",
                     fontSize = 10.sp,
-                    color = Color(FutebaColors.TextSecondary)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -420,9 +435,25 @@ fun MilestoneProgressCard(
 
 private fun getDivisionIcon(division: LeagueDivision): String {
     return when (division) {
-        LeagueDivision.BRONZE -> "🥉"
-        LeagueDivision.PRATA -> "🥈"
-        LeagueDivision.OURO -> "🥇"
-        LeagueDivision.DIAMANTE -> "💎"
+        LeagueDivision.BRONZE -> "B"
+        LeagueDivision.PRATA -> "P"
+        LeagueDivision.OURO -> "O"
+        LeagueDivision.DIAMANTE -> "D"
     }
 }
+
+private fun getComputedStatus(
+    division: LeagueDivision,
+    leagueRating: Double,
+    neutralColor: Color
+): Pair<String, Color>? {
+    if (leagueRating.isNaN()) return null
+    return when {
+        leagueRating >= 90.0 -> "Elite" to Color(FutebaColors.Success)
+        leagueRating >= 70.0 -> "Boa fase" to Color(FutebaColors.Primary)
+        leagueRating >= 50.0 -> "Estavel" to neutralColor
+        else -> "Em risco" to Color(FutebaColors.Warning)
+    }
+}
+
+

@@ -4,22 +4,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background">
+    android:background="?attr/colorSurface">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"
+        style="@style/FutebaAppBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/primary">
+        android:layout_height="wrap_content">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:title="Bola Rolando"
-            app:titleTextColor="@color/white"
-            app:navigationIcon="@drawable/ic_back"
-            app:navigationIconTint="@color/white" />
+            app:navigationIcon="@drawable/ic_back" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -53,10 +51,10 @@
                         android:id="@+id/tvLiveStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="⚽ BOLA ROLANDO"
+                        android:text="@string/fragment_live_game_text_1"
                         android:textSize="12sp"
                         android:textStyle="bold"
-                        android:textColor="@color/white"
+                        android:textColor="?attr/colorOnPrimary"
                         android:background="@drawable/badge_accent"
                         android:paddingHorizontal="12dp"
                         android:paddingVertical="6dp"
@@ -71,7 +69,7 @@
                         android:layout_gravity="center_horizontal"
                         android:textSize="32sp"
                         android:textStyle="bold"
-                        android:textColor="@color/text_primary"
+                        android:textColor="?attr/colorOnSurface"
                         android:layout_marginBottom="16dp" />
 
                     <!-- Placar -->
@@ -94,30 +92,30 @@
                                 android:id="@+id/tvTeam1Name"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Time 1"
+                                android:text="@string/fragment_live_game_text_2"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/text_primary"
+                                android:textColor="?attr/colorOnSurface"
                                 android:layout_marginBottom="8dp" />
 
                             <TextView
                                 android:id="@+id/tvTeam1Score"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="0"
+                                android:text="@string/fragment_live_game_text_3"
                                 android:textSize="48sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/primary" />
+                                android:textColor="?attr/colorPrimary" />
                         </LinearLayout>
 
                         <!-- VS -->
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="X"
+                            android:text="@string/fragment_live_game_text_4"
                             android:textSize="24sp"
                             android:textStyle="bold"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="?attr/colorOnSurfaceVariant"
                             android:layout_marginHorizontal="24dp" />
 
                         <!-- Time 2 -->
@@ -132,20 +130,20 @@
                                 android:id="@+id/tvTeam2Name"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Time 2"
+                                android:text="@string/fragment_live_game_text_5"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/text_primary"
+                                android:textColor="?attr/colorOnSurface"
                                 android:layout_marginBottom="8dp" />
 
                             <TextView
                                 android:id="@+id/tvTeam2Score"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="0"
+                                android:text="@string/fragment_live_game_text_6"
                                 android:textSize="48sp"
                                 android:textStyle="bold"
-                                android:textColor="@color/primary" />
+                                android:textColor="?attr/colorPrimary" />
                         </LinearLayout>
                     </LinearLayout>
 
@@ -161,9 +159,9 @@
                             android:id="@+id/tvGameInfo"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Arena Sports - Quadra 1"
+                            android:text="@string/fragment_live_game_text_7"
                             android:textSize="12sp"
-                            android:textColor="@color/text_secondary" />
+                            android:textColor="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
 
                     <!-- Botao Finalizar Jogo (apenas organizador) -->
@@ -171,9 +169,9 @@
                         android:id="@+id/btnFinishGame"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:text="Finalizar Jogo"
-                        android:textColor="@color/white"
-                        app:backgroundTint="@color/error"
+                        android:text="@string/fragment_live_game_text_8"
+                        android:textColor="?attr/colorOnError"
+                        app:backgroundTint="?attr/colorError"
                         app:cornerRadius="12dp"
                         android:layout_marginTop="16dp"
                         android:visibility="gone"
@@ -187,10 +185,10 @@
                 android:id="@+id/tabLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/surface"
-                app:tabIndicatorColor="@color/primary"
-                app:tabSelectedTextColor="@color/primary"
-                app:tabTextColor="@color/text_secondary"
+                android:background="?attr/colorSurface"
+                app:tabIndicatorColor="?attr/colorPrimary"
+                app:tabSelectedTextColor="?attr/colorPrimary"
+                app:tabTextColor="?attr/colorOnSurfaceVariant"
                 android:layout_marginBottom="16dp" />
 
             <!-- ViewPager2 para as tabs -->
@@ -213,7 +211,8 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:src="@android:drawable/ic_input_add"
-        app:tint="@color/white"
-        app:backgroundTint="@color/primary" />
+        app:tint="?attr/colorOnPrimary"
+        app:backgroundTint="?attr/colorPrimary" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

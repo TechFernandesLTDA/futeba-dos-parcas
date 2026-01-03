@@ -46,10 +46,6 @@ class ThemeSettingsFragment : Fragment() {
             }
         })
         
-        // Dynamic XML Toolbar Coloring
-        val toolbar = view.findViewById<com.google.android.material.appbar.MaterialToolbar>(com.futebadosparcas.R.id.toolbar)
-        val appBar = view.findViewById<com.google.android.material.appbar.AppBarLayout>(com.futebadosparcas.R.id.appBarLayout)
-        
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
                 viewModel.themeConfig.collect { config ->

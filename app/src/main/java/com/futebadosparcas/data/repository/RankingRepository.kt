@@ -4,6 +4,9 @@ import com.futebadosparcas.data.model.*
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -37,6 +40,7 @@ enum class RankingPeriod(val displayName: String, val minGames: Int) {
 
 /**
  * Repository para consultar rankings.
+ * Otimizado com requisicoes paralelas para melhor performance.
  */
 @Singleton
 class RankingRepository @Inject constructor(
@@ -44,6 +48,7 @@ class RankingRepository @Inject constructor(
 ) {
     companion object {
         private const val TAG = "RankingRepository"
+        private const val CHUNK_SIZE = 10 // Firestore whereIn limit
     }
 
     private val statisticsCollection = firestore.collection("statistics")
@@ -90,14 +95,15 @@ class RankingRepository @Inject constructor(
                             photoUrl = user.photoUrl,
                             value = user.experiencePoints,
                             gamesPlayed = 0, // Precisariamos buscar stats se quisermos preencher aqui
-                            average = 0.0
+                            average = 0.0,
+                            level = user.level
                         )
                     )
                 }
             } else {
                 val stats = snapshot.documents.mapNotNull { it.toObject(UserStatistics::class.java) }
                 val userIds = stats.map { it.id }
-                val usersMap = fetchUserData(userIds)
+                val usersMap = fetchUserDataParallel(userIds)
 
                 stats.forEachIndexed { index, stat ->
                     val user = usersMap[stat.id]
@@ -111,7 +117,8 @@ class RankingRepository @Inject constructor(
                             photoUrl = user?.photoUrl,
                             value = value.toLong(),
                             gamesPlayed = stat.totalGames,
-                            average = if (stat.totalGames > 0) value.toDouble() / stat.totalGames else 0.0
+                            average = if (stat.totalGames > 0) value.toDouble() / stat.totalGames else 0.0,
+                            level = user?.level ?: 0
                         )
                     )
                 }
@@ -175,9 +182,9 @@ class RankingRepository @Inject constructor(
             // Filtrar por minimo de jogos
             val filteredDeltas = deltas.filter { it.third >= period.minGames }
 
-            // Buscar dados dos usuarios
+            // Buscar dados dos usuarios em paralelo
             val userIds = filteredDeltas.map { it.first }
-            val usersMap = fetchUserData(userIds)
+            val usersMap = fetchUserDataParallel(userIds)
 
             val entries = filteredDeltas.mapIndexed { index, (userId, value, games) ->
                 val user = usersMap[userId]
@@ -189,7 +196,8 @@ class RankingRepository @Inject constructor(
                     photoUrl = user?.photoUrl,
                     value = value,
                     gamesPlayed = games,
-                    average = if (games > 0) value.toDouble() / games else 0.0
+                    average = if (games > 0) value.toDouble() / games else 0.0,
+                    level = user?.level ?: 0
                 )
             }
 
@@ -272,7 +280,7 @@ class RankingRepository @Inject constructor(
             // Agrupar por mes
             val formatter = DateTimeFormatter.ofPattern("MM/yyyy")
             val grouped = logs.groupBy { log ->
-                log.createdAt?.let { 
+                log.createdAt?.let {
                     it.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate().format(formatter)
                 } ?: "N/A"
             }.mapValues { (_, logsInMonth) ->
@@ -287,31 +295,56 @@ class RankingRepository @Inject constructor(
     }
 
     /**
-     * Busca dados complementares dos usuarios.
+     * Busca dados complementares dos usuarios em PARALELO.
+     * Otimizado para evitar requisicoes sequenciais que causam lentidao.
+     *
+     * Antes: 100 usuarios = 10 chunks * ~1s cada = 10s
+     * Agora: 100 usuarios = 10 chunks em paralelo = ~1s total
      */
-    private suspend fun fetchUserData(userIds: List<String>): Map<String, User> {
+    private suspend fun fetchUserDataParallel(userIds: List<String>): Map<String, User> {
         if (userIds.isEmpty()) return emptyMap()
 
-        val usersMap = mutableMapOf<String, User>()
-
-        try {
-            userIds.chunked(10).forEach { chunk ->
-                val snapshot = usersCollection
-                    .whereIn(com.google.firebase.firestore.FieldPath.documentId(), chunk)
-                    .get()
-                    .await()
-
-                snapshot.documents.forEach { doc ->
-                    doc.toObject(User::class.java)?.let { user ->
-                        usersMap[user.id] = user
+        return try {
+            coroutineScope {
+                // Criar requisicoes paralelas para cada chunk
+                val deferredResults = userIds.chunked(CHUNK_SIZE).map { chunk ->
+                    async {
+                        try {
+                            usersCollection
+                                .whereIn(com.google.firebase.firestore.FieldPath.documentId(), chunk)
+                                .get()
+                                .await()
+                                .documents
+                                .mapNotNull { doc ->
+                                    doc.toObject(User::class.java)?.let { user ->
+                                        user.id to user
+                                    }
+                                }
+                        } catch (e: Exception) {
+                            AppLogger.e(TAG, "Erro ao buscar chunk de usuarios", e)
+                            emptyList()
+                        }
                     }
                 }
+
+                // Aguardar todas as requisicoes e combinar resultados
+                deferredResults.awaitAll()
+                    .flatten()
+                    .toMap()
             }
         } catch (e: Exception) {
-            AppLogger.e(TAG, "Erro ao buscar dados de usuarios", e)
+            AppLogger.e(TAG, "Erro ao buscar dados de usuarios em paralelo", e)
+            emptyMap()
         }
+    }
 
-        return usersMap
+    /**
+     * Busca dados complementares dos usuarios (versao sequencial).
+     * @deprecated Use fetchUserDataParallel para melhor performance.
+     */
+    @Deprecated("Use fetchUserDataParallel instead", ReplaceWith("fetchUserDataParallel(userIds)"))
+    private suspend fun fetchUserData(userIds: List<String>): Map<String, User> {
+        return fetchUserDataParallel(userIds)
     }
 
     private fun getStatValue(stats: UserStatistics, category: RankingCategory): Int {

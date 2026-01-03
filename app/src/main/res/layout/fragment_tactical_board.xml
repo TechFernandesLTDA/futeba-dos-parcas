@@ -39,7 +39,7 @@
             android:src="@drawable/bg_notification_badge" 
             app:tint="#D32F2F"
             android:background="?actionBarItemBackground"
-            android:contentDescription="Vermelho"/>
+            android:contentDescription="@string/fragment_tactical_board_contentdescription_1"/>
             
         <ImageButton
             android:id="@+id/btnColorBlue"
@@ -48,7 +48,7 @@
             android:src="@drawable/bg_notification_badge"
             app:tint="#1976D2"
             android:background="?actionBarItemBackground"
-            android:contentDescription="Azul"/>
+            android:contentDescription="@string/fragment_tactical_board_contentdescription_2"/>
 
         <ImageButton
             android:id="@+id/btnColorBlack"
@@ -57,7 +57,7 @@
             android:src="@drawable/bg_notification_badge"
             app:tint="#000000"
             android:background="?actionBarItemBackground"
-            android:contentDescription="Preto"/>
+            android:contentDescription="@string/fragment_tactical_board_contentdescription_3"/>
 
         <View
             android:layout_width="0dp"
@@ -68,7 +68,7 @@
             android:id="@+id/btnClear"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Limpar"
+            android:text="@string/fragment_tactical_board_text_4"
             style="@style/Widget.Material3.Button.OutlinedButton.Icon"
             app:icon="@drawable/ic_close"/>
 
@@ -76,7 +76,7 @@
             android:id="@+id/btnShare"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Salvar"
+            android:text="@string/fragment_tactical_board_text_5"
             android:layout_marginStart="8dp"
             app:icon="@drawable/ic_share"/>
 

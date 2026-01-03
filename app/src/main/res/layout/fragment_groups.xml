@@ -2,9 +2,11 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
 
     <com.google.android.material.appbar.AppBarLayout
+        style="@style/FutebaAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -44,7 +46,7 @@
                 android:id="@+id/etSearch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Buscar grupos..."
+                android:hint="@string/fragment_groups_hint_1"
                 android:inputType="text"
                 android:imeOptions="actionSearch"
                 android:maxLines="1" />
@@ -94,13 +96,14 @@
                 android:layout_height="120dp"
                 android:src="@drawable/ic_groups"
                 android:alpha="0.5"
-                android:importantForAccessibility="no" />
+                android:importantForAccessibility="no"
+                app:tint="?attr/colorOnSurfaceVariant" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Nenhum grupo ainda"
+                android:text="@string/fragment_groups_text_2"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -108,7 +111,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Crie um grupo para organizar seus jogos com os amigos"
+                android:text="@string/fragment_groups_text_3"
                 android:textAlignment="center"
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -117,7 +120,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="Criar Grupo"
+                android:text="@string/fragment_groups_text_4"
                 app:icon="@drawable/ic_add" />
 
         </LinearLayout>
@@ -139,13 +142,14 @@
                 android:layout_height="80dp"
                 android:src="@drawable/ic_search"
                 android:alpha="0.5"
-                android:importantForAccessibility="no" />
+                android:importantForAccessibility="no"
+                app:tint="?attr/colorOnSurfaceVariant" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Nenhum grupo encontrado"
+                android:text="@string/fragment_groups_text_5"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -154,7 +158,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Tente buscar com outras palavras"
+                android:text="@string/fragment_groups_text_6"
                 android:textAlignment="center"
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -168,7 +172,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:contentDescription="Criar Grupo"
+        android:contentDescription="@string/fragment_groups_contentdescription_7"
         app:srcCompat="@drawable/ic_add" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

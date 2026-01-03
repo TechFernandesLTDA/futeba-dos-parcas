@@ -10,19 +10,19 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Adicionar Evento"
+        android:text="@string/dialog_add_event_text_1"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="@color/text_primary"
+        android:textColor="?attr/colorOnSurface"
         android:layout_marginBottom="16dp" />
 
     <!-- Tipo de Evento -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Tipo de Evento"
+        android:text="@string/dialog_add_event_text_2"
         android:textSize="14sp"
-        android:textColor="@color/text_secondary"
+        android:textColor="?attr/colorOnSurfaceVariant"
         android:layout_marginBottom="8dp" />
 
     <com.google.android.material.chip.ChipGroup
@@ -36,17 +36,17 @@
             android:id="@+id/chipGoal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Gol"
+            android:text="@string/dialog_add_event_text_3"
             android:checked="true"
             app:chipIcon="@drawable/ic_sports_soccer"
-            app:chipIconTint="@color/primary"
+            app:chipIconTint="?attr/colorPrimary"
             style="@style/Widget.Material3.Chip.Filter" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipSave"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Defesa"
+            android:text="@string/dialog_add_event_text_4"
             app:chipIcon="@drawable/ic_save_action"
             app:chipIconTint="@color/success"
             style="@style/Widget.Material3.Chip.Filter" />
@@ -55,7 +55,7 @@
             android:id="@+id/chipYellowCard"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Amarelo"
+            android:text="@string/dialog_add_event_text_5"
             app:chipIcon="@drawable/ic_card_filled"
             app:chipIconTint="@color/warning"
             style="@style/Widget.Material3.Chip.Filter" />
@@ -64,9 +64,9 @@
             android:id="@+id/chipRedCard"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Vermelho"
+            android:text="@string/dialog_add_event_text_6"
             app:chipIcon="@drawable/ic_card_filled"
-            app:chipIconTint="@color/error"
+            app:chipIconTint="?attr/colorError"
             style="@style/Widget.Material3.Chip.Filter" />
 
     </com.google.android.material.chip.ChipGroup>
@@ -75,9 +75,9 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Time"
+        android:text="@string/dialog_add_event_text_7"
         android:textSize="14sp"
-        android:textColor="@color/text_secondary"
+        android:textColor="?attr/colorOnSurfaceVariant"
         android:layout_marginBottom="8dp" />
 
     <com.google.android.material.chip.ChipGroup
@@ -91,7 +91,7 @@
             android:id="@+id/chipTeam1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Time 1"
+            android:text="@string/dialog_add_event_text_8"
             android:checked="true"
             style="@style/Widget.Material3.Chip.Filter" />
 
@@ -99,7 +99,7 @@
             android:id="@+id/chipTeam2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Time 2"
+            android:text="@string/dialog_add_event_text_9"
             style="@style/Widget.Material3.Chip.Filter" />
 
     </com.google.android.material.chip.ChipGroup>
@@ -109,7 +109,7 @@
         android:id="@+id/tilPlayer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Quem fez o Gol?"
+        android:hint="@string/dialog_add_event_hint_10"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_marginBottom="16dp">
 
@@ -126,7 +126,7 @@
         android:id="@+id/tilAssist"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Quem deu o Oé (Passe)? (Opcional)"
+        android:hint="@string/dialog_add_event_hint_11"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_marginBottom="16dp"
         android:visibility="visible">
@@ -143,7 +143,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Minuto"
+        android:hint="@string/dialog_add_event_hint_12"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_marginBottom="24dp">
 
@@ -152,7 +152,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="number"
-            android:text="0" />
+            android:text="@string/dialog_add_event_text_13" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -167,7 +167,7 @@
             android:id="@+id/btnCancel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cancelar"
+            android:text="@string/dialog_add_event_text_14"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_marginEnd="8dp" />
 
@@ -175,9 +175,10 @@
             android:id="@+id/btnAdd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Adicionar"
-            app:backgroundTint="@color/primary" />
+            android:text="@string/dialog_add_event_text_15"
+            app:backgroundTint="?attr/colorPrimary" />
 
     </LinearLayout>
 
 </LinearLayout>
+

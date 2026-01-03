@@ -28,9 +28,9 @@ class ThemeRepositoryImpl @Inject constructor(
     override val themeConfig: Flow<AppThemeConfig> = dataStore.data
         .map { preferences ->
             val mode = try {
-                ThemeMode.valueOf(preferences[Keys.THEME_MODE] ?: ThemeMode.SYSTEM.name)
+                ThemeMode.valueOf(preferences[Keys.THEME_MODE] ?: ThemeMode.LIGHT.name)
             } catch (e: IllegalArgumentException) {
-                ThemeMode.SYSTEM
+                ThemeMode.LIGHT
             }
             
             val contrast = try {
@@ -72,5 +72,15 @@ class ThemeRepositoryImpl @Inject constructor(
 
     override suspend fun setContrastLevel(level: ContrastLevel) {
         dataStore.edit { it[Keys.CONTRAST_LEVEL] = level.name }
+    }
+
+    override suspend fun resetThemeConfig() {
+        val defaults = AppThemeConfig()
+        dataStore.edit { preferences ->
+            preferences[Keys.THEME_MODE] = defaults.mode.name
+            preferences[Keys.PRIMARY_COLOR] = defaults.seedColors.primary
+            preferences[Keys.SECONDARY_COLOR] = defaults.seedColors.secondary
+            preferences[Keys.CONTRAST_LEVEL] = defaults.contrastLevel.name
+        }
     }
 }

@@ -116,7 +116,7 @@ class PreferencesManager @Inject constructor(
 
     companion object {
         private const val PREFS_NAME = "futeba_prefs"
-        private const val DEFAULT_THEME = "system"
+        private const val DEFAULT_THEME = "light"
 
         private const val KEY_FIRST_LAUNCH = "first_launch"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"

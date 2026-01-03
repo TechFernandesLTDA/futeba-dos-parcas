@@ -75,6 +75,17 @@ fun ThemeSettingsScreen(
                 Text("Preview: Primary Container", color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
         }
+
+        Button(
+            onClick = { viewModel.resetTheme() },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        ) {
+            Text("Redefinir padrao")
+        }
     }
 }
 

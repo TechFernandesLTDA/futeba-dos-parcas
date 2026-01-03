@@ -9,8 +9,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.data.model.FieldType
 import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.data.model.User
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -34,14 +35,19 @@ fun LocationDetailScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val fieldOwners by viewModel.fieldOwners.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    
+
     // Form States
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var instagram by remember { mutableStateOf("") }
     var isActive by remember { mutableStateOf(true) }
+
+    // Owner Selection
+    var selectedOwner by remember { mutableStateOf<User?>(null) }
+    var ownerDropdownExpanded by remember { mutableStateOf(false) }
     
     // Missing Fields Restored
     var openingTime by remember { mutableStateOf("08:00") }
@@ -69,33 +75,66 @@ fun LocationDetailScreen(
     var showFieldDialog by remember { mutableStateOf(false) }
     var selectedField by remember { mutableStateOf<Field?>(null) }
 
-    // Logic to sync state from backend
-    LaunchedEffect(uiState) {
+    // Flag para controlar inicialização (só atualiza campos no carregamento inicial)
+    var isInitialized by remember { mutableStateOf(false) }
+
+    // Logic to sync state from backend - APENAS no carregamento inicial
+    LaunchedEffect(uiState, fieldOwners) {
         if (uiState is LocationDetailUiState.Success) {
             val loc = (uiState as LocationDetailUiState.Success).location
-            name = loc.name
-            description = loc.description
-            phone = loc.phone ?: ""
-            instagram = loc.instagram ?: ""
-            isActive = loc.isActive
-            openingTime = loc.openingTime
-            closingTime = loc.closingTime
-            minDuration = loc.minGameDurationMinutes.toString()
-            region = loc.region
-            
-            selectedAmenities.clear()
-            selectedAmenities.addAll(loc.amenities)
 
-            cep = loc.cep
-            street = loc.street
-            number = loc.number
-            complement = loc.complement
-            neighborhood = loc.neighborhood
-            city = loc.city
-            state = loc.state
-            country = loc.country
-            latitude = loc.latitude ?: 0.0
-            longitude = loc.longitude ?: 0.0
+            // Se o location tem ID (está carregando um existente) e não foi inicializado ainda
+            // OU se está vazio e precisamos preencher campos padrão
+            if (!isInitialized) {
+                name = loc.name
+                description = loc.description
+                phone = loc.phone ?: ""
+                instagram = loc.instagram ?: ""
+                isActive = loc.isActive
+                openingTime = loc.openingTime
+                closingTime = loc.closingTime
+                minDuration = loc.minGameDurationMinutes.toString()
+                region = loc.region
+
+                selectedAmenities.clear()
+                selectedAmenities.addAll(loc.amenities)
+
+                cep = loc.cep
+                street = loc.street
+                number = loc.number
+                complement = loc.complement
+                neighborhood = loc.neighborhood
+                city = loc.city
+                state = loc.state
+                country = loc.country
+                latitude = loc.latitude ?: 0.0
+                longitude = loc.longitude ?: 0.0
+
+                // Seleciona o owner atual se existir
+                if (loc.ownerId.isNotEmpty() && fieldOwners.isNotEmpty()) {
+                    selectedOwner = fieldOwners.find { it.id == loc.ownerId }
+                }
+
+                isInitialized = true
+            } else {
+                // Atualiza APENAS campos que vêm de operações específicas (CEP, coordenadas)
+                // Preserva o resto do formulário
+                if (loc.cep.isNotEmpty() && loc.cep != cep) {
+                    // Atualização veio de busca de CEP
+                    cep = loc.cep
+                    street = loc.street
+                    neighborhood = loc.neighborhood
+                    city = loc.city
+                    state = loc.state
+                    country = loc.country
+                }
+
+                // Atualiza coordenadas se mudaram
+                if (loc.latitude != null && loc.latitude != latitude) {
+                    latitude = loc.latitude ?: 0.0
+                    longitude = loc.longitude ?: 0.0
+                }
+            }
         }
         if (uiState is LocationDetailUiState.Error) {
              Toast.makeText(context, (uiState as LocationDetailUiState.Error).message, Toast.LENGTH_LONG).show()
@@ -108,32 +147,40 @@ fun LocationDetailScreen(
                 title = { Text("Detalhes do Local") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 },
                 actions = {
                     IconButton(onClick = {
                         val currentLoc = (uiState as? LocationDetailUiState.Success)?.location
                         val minDurInt = minDuration.toIntOrNull() ?: 60
-                        
+
                         if (currentLoc != null && currentLoc.id.isNotEmpty()) {
                             viewModel.updateLocation(
-                                name, currentLoc.address, phone, 
-                                openingTime, closingTime, minDurInt, 
+                                name, currentLoc.address, phone,
+                                openingTime, closingTime, minDurInt,
                                 region, neighborhood, description, selectedAmenities.toList(), isActive, instagram,
-                                cep, street, number, complement, city, state, country
+                                cep, street, number, complement, city, state, country,
+                                selectedOwnerId = selectedOwner?.id
                             )
                         } else {
                             viewModel.createLocation(
                                 name, "${street}, ${number} - ${city}", phone,
                                 openingTime, closingTime, minDurInt, region, neighborhood, description, selectedAmenities.toList(), isActive, instagram,
-                                cep, street, number, complement, city, state, country
+                                cep, street, number, complement, city, state, country,
+                                selectedOwnerId = selectedOwner?.id
                             )
                         }
                     }) {
                         Icon(Icons.Default.Save, contentDescription = "Salvar")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.primary,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary
+                )
             )
         },
         floatingActionButton = {
@@ -163,13 +210,60 @@ fun LocationDetailScreen(
             ) {
                 // --- Basic Info ---
                 Text("Informações Básicas", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                
+
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Nome do Local *") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                // Owner Selection Dropdown
+                if (fieldOwners.isNotEmpty()) {
+                    Box(Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = selectedOwner?.getDisplayName() ?: "Nenhum dono selecionado",
+                            onValueChange = {},
+                            label = { Text("Dono da Quadra (Opcional)") },
+                            readOnly = true,
+                            trailingIcon = {
+                                IconButton(onClick = { ownerDropdownExpanded = true }) {
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, Modifier.rotate(270f))
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        DropdownMenu(
+                            expanded = ownerDropdownExpanded,
+                            onDismissRequest = { ownerDropdownExpanded = false }
+                        ) {
+                            // Opção para remover seleção
+                            DropdownMenuItem(
+                                text = { Text("Nenhum dono", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline) },
+                                onClick = {
+                                    selectedOwner = null
+                                    ownerDropdownExpanded = false
+                                }
+                            )
+                            HorizontalDivider()
+                            // Lista de donos de quadra
+                            fieldOwners.forEach { owner ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(owner.getDisplayName(), style = MaterialTheme.typography.bodyMedium)
+                                            Text(owner.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedOwner = owner
+                                        ownerDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
                 
                 OutlinedTextField(
                     value = description,
@@ -414,7 +508,7 @@ fun FieldDialog(
                         readOnly = true,
                         trailingIcon = {
                              IconButton(onClick = { expanded = true }) {
-                                 Icon(Icons.Default.ArrowBack /* Use ArrowDown in real code */, contentDescription = null, Modifier.rotate(270f))
+                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, Modifier.rotate(270f))
                              }
                         },
                         modifier = Modifier.fillMaxWidth()

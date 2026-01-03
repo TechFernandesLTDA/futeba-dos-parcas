@@ -30,10 +30,10 @@
             android:id="@+id/tvPlayerName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Jogador"
+            android:text="@string/item_live_player_stat_text_1"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="@color/text_primary"
+            android:textColor="?attr/colorOnSurface"
             android:layout_marginStart="12dp"
             app:layout_constraintTop_toTopOf="@id/ivPlayerPhoto"
             app:layout_constraintStart_toEndOf="@id/ivPlayerPhoto"
@@ -44,9 +44,9 @@
             android:id="@+id/tvPosition"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Linha"
+            android:text="@string/item_live_player_stat_text_2"
             android:textSize="11sp"
-            android:textColor="@color/text_secondary"
+            android:textColor="?attr/colorOnSurfaceVariant"
             android:layout_marginStart="12dp"
             app:layout_constraintTop_toBottomOf="@id/tvPlayerName"
             app:layout_constraintStart_toEndOf="@id/ivPlayerPhoto"
@@ -57,7 +57,7 @@
             android:id="@+id/tvTeamBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="T1"
+            android:text="@string/item_live_player_stat_text_3"
             android:textSize="10sp"
             android:textColor="@color/white"
             android:background="@drawable/badge_primary"
@@ -93,15 +93,15 @@
                     android:id="@+id/tvGoalsCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="2"
+                    android:text="@string/item_live_player_stat_text_4"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/primary" />
+                    android:textColor="?attr/colorPrimary" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⚽"
+                    android:text="@string/item_live_player_stat_text_5"
                     android:textSize="16sp" />
             </LinearLayout>
 
@@ -120,15 +120,15 @@
                     android:id="@+id/tvAssistsCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="1"
+                    android:text="@string/item_live_player_stat_text_6"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/accent" />
+                    android:textColor="?attr/colorTertiary" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="👟"
+                    android:text="@string/item_live_player_stat_text_7"
                     android:textSize="14sp" />
             </LinearLayout>
 
@@ -147,7 +147,7 @@
                     android:id="@+id/tvSavesCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="5"
+                    android:text="@string/item_live_player_stat_text_8"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="@color/success" />
@@ -155,7 +155,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🧤"
+                    android:text="@string/item_live_player_stat_text_9"
                     android:textSize="14sp" />
             </LinearLayout>
 
@@ -174,7 +174,7 @@
                     android:id="@+id/tvCardsCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="1"
+                    android:text="@string/item_live_player_stat_text_10"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="@color/warning" />
@@ -182,7 +182,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🟨"
+                    android:text="@string/item_live_player_stat_text_11"
                     android:textSize="14sp" />
             </LinearLayout>
 
@@ -191,3 +191,4 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

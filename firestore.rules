@@ -125,21 +125,13 @@ service cloud.firestore {
     // COLECAO: games
     // ============================================
     match /games/{gameId} {
-      // Regras de leitura baseadas em visibilidade (FASE 1):
-      // - PUBLIC_CLOSED ou PUBLIC_OPEN: qualquer autenticado pode ver
-      // - GROUP_ONLY: apenas membros do grupo podem ver
-      allow read: if isAuthenticated() && (
-        resource.data.visibility == 'PUBLIC_CLOSED' ||
-        resource.data.visibility == 'PUBLIC_OPEN' ||
-        isGroupMember(userId(), resource.data.group_id) ||
-        isAdmin()
-      );
 
-      // Helper function para verificar se usuário é membro do grupo
-      function isGroupMember(uid, groupId) {
-        return groupId != null &&
-          exists(/databases/$(database)/documents/groups/$(groupId)/members/$(uid));
-      }
+
+      // Regras de leitura:
+      // Qualquer usuario autenticado pode ler jogos.
+      // A filtragem de jogos GROUP_ONLY e feita no cliente quando necessario.
+      // Isso simplifica as queries e evita conflitos com multiplos whereIn.
+      allow read: if isAuthenticated();
 
       // Qualquer usuario autenticado pode criar jogos
       // Permitir criar jogos como mock_admin
@@ -360,7 +352,17 @@ service cloud.firestore {
     // ============================================
     match /groups/{groupId} {
       // Qualquer usuario autenticado pode ler grupos
-      allow read: if isAuthenticated();
+      // Leitura permitida se:
+      // 1. Grupo for publico (is_public == true)
+      // 2. Usuario for membro do grupo (verificado via subcolecao members - requer query especifica ou get)
+      // 3. Usuario for owner (campo owner_id)
+      // NOTA: Para listar grupos privados que o usuario participa, a query deve ser feita em users/{id}/groups
+      // Para ler UM grupo especifico, validamos abaixo:
+      allow read: if isAuthenticated() && (
+        resource.data.is_public == true || 
+        resource.data.owner_id == userId() ||
+        exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()))
+      );
 
       // Usuario autenticado pode criar grupos
       allow create: if isAuthenticated() && request.resource.data.owner_id == userId();

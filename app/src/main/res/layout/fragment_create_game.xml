@@ -17,7 +17,7 @@
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Agendar Jogo"
+            android:text="@string/fragment_create_game_text_1"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
@@ -55,7 +55,7 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:src="@drawable/ic_location"
-                    android:contentDescription="Icone local"
+                    android:contentDescription="@string/fragment_create_game_contentdescription_2"
                     app:tint="?attr/colorPrimary" />
 
                 <LinearLayout
@@ -69,7 +69,7 @@
                         android:id="@+id/tvLocationLabel"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Local do Jogo"
+                        android:text="@string/fragment_create_game_text_3"
                         android:textSize="12sp"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -77,7 +77,7 @@
                         android:id="@+id/tvSelectedLocation"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Toque para selecionar"
+                        android:text="@string/fragment_create_game_text_4"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorOnSurface" />
@@ -98,7 +98,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/ic_chevron_right"
-                    android:contentDescription="Selecionar"
+                    android:contentDescription="@string/fragment_create_game_contentdescription_5"
                     app:tint="?attr/colorOnSurfaceVariant" />
 
             </LinearLayout>
@@ -128,7 +128,7 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:src="@drawable/ic_explore"
-                    android:contentDescription="Icone quadra"
+                    android:contentDescription="@string/fragment_create_game_contentdescription_6"
                     app:tint="?attr/colorPrimary" />
 
                 <LinearLayout
@@ -142,7 +142,7 @@
                         android:id="@+id/tvFieldLabel"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Quadra/Campo"
+                        android:text="@string/fragment_create_game_text_7"
                         android:textSize="12sp"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -150,7 +150,7 @@
                         android:id="@+id/tvSelectedField"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Toque para selecionar"
+                        android:text="@string/fragment_create_game_text_8"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorOnSurface" />
@@ -177,7 +177,7 @@
             android:visibility="gone"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
-            app:cardBackgroundColor="@color/error_container"
+            app:cardBackgroundColor="?attr/colorErrorContainer"
             app:layout_constraintTop_toBottomOf="@id/cardSelectField">
 
             <LinearLayout
@@ -191,8 +191,8 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/ic_warning"
-                    android:contentDescription="Alerta"
-                    app:tint="@color/error" />
+                    android:contentDescription="@string/fragment_create_game_contentdescription_9"
+                    app:tint="?attr/colorError" />
 
                 <TextView
                     android:id="@+id/tvConflictMessage"
@@ -200,9 +200,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
-                    android:text="Conflito de horário detectado!"
+                    android:text="@string/fragment_create_game_text_10"
                     android:textSize="14sp"
-                    android:textColor="@color/on_error_container" />
+                    android:textColor="?attr/colorOnErrorContainer" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -214,7 +214,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="Dono do Horário (Responsável)"
+            android:hint="@string/fragment_create_game_hint_11"
             app:boxCornerRadiusTopStart="24dp"
             app:boxCornerRadiusTopEnd="24dp"
             app:boxCornerRadiusBottomStart="24dp"
@@ -234,7 +234,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="Convidar Grupo"
+            android:hint="@string/fragment_create_game_hint_12"
             android:visibility="gone"
             app:startIconDrawable="@drawable/ic_groups"
             app:boxCornerRadiusTopStart="12dp"
@@ -257,7 +257,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="Data do Jogo"
+            android:hint="@string/fragment_create_game_hint_13"
             app:startIconDrawable="@drawable/ic_calendar"
             app:boxCornerRadiusTopStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
@@ -288,7 +288,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:hint="Início"
+                android:hint="@string/fragment_create_game_hint_14"
                 app:startIconDrawable="@drawable/ic_history"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -309,7 +309,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:hint="Fim"
+                android:hint="@string/fragment_create_game_hint_15"
                 app:startIconDrawable="@drawable/ic_history"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -346,7 +346,7 @@
                     android:id="@+id/switchRecurrence"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Agendamento Automático"
+                    android:text="@string/fragment_create_game_text_16"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp"
                     android:textStyle="bold"
@@ -355,7 +355,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="O sistema agendará o próximo jogo automaticamente na Central de Recorrências."
+                    android:text="@string/fragment_create_game_text_17"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:layout_marginBottom="12dp" />
@@ -364,7 +364,7 @@
                     android:id="@+id/tilRecurrence"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Frequência"
+                    android:hint="@string/fragment_create_game_hint_18"
                     android:visibility="gone"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     app:boxCornerRadiusTopStart="12dp"
@@ -377,8 +377,94 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="none"
-                        android:text="Semanal" />
+                        android:text="@string/fragment_create_game_text_19" />
                 </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Visibilidade do Jogo -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardVisibility"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorOutline"
+            app:layout_constraintTop_toBottomOf="@id/cardRecurrence">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_visibility"
+                        android:contentDescription="@string/fragment_create_game_contentdescription_20"
+                        app:tint="?attr/colorPrimary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="@string/fragment_create_game_text_21"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvVisibilityDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/fragment_create_game_text_22"
+                    android:textSize="12sp"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupVisibility"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipGroupOnly"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_create_game_text_23"
+                        android:checked="true" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipPublicClosed"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_create_game_text_24" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipPublicOpen"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_create_game_text_25" />
+
+                </com.google.android.material.chip.ChipGroup>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -389,7 +475,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:orientation="horizontal"
-            app:layout_constraintTop_toBottomOf="@id/cardRecurrence">
+            app:layout_constraintTop_toBottomOf="@id/cardVisibility">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilPrice"
@@ -398,7 +484,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:hint="Preço Individual"
+                android:hint="@string/fragment_create_game_hint_26"
                 app:prefixText="R$"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -419,7 +505,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:hint="Max. Jogadores"
+                android:hint="@string/fragment_create_game_hint_27"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
@@ -447,7 +533,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:text="Cancelar"
+                android:text="@string/fragment_create_game_text_28"
                 app:cornerRadius="24dp"
                 style="@style/Widget.Material3.Button.OutlinedButton" />
 
@@ -457,7 +543,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:text="Agendar"
+                android:text="@string/fragment_create_game_text_29"
                 app:cornerRadius="24dp" />
 
         </LinearLayout>
@@ -474,3 +560,4 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
+

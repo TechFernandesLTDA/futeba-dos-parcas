@@ -43,12 +43,17 @@ data class GameProcessingResult(
  * - Atualizar estatisticas (Global e Season)
  * - Verificar milestones
  * - Atualizar rankings (Deltas)
+ * - Atualizar streaks
  * - Marcar jogo como processado
+ *
+ * IMPORTANTE: Usa transações atômicas para evitar race conditions e garantir
+ * consistência dos dados.
  */
 @Singleton
 class MatchFinalizationService @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val settingsRepository: com.futebadosparcas.data.repository.SettingsRepository
+    private val settingsRepository: com.futebadosparcas.data.repository.SettingsRepository,
+    private val leagueService: LeagueService
 ) {
     companion object {
         private const val TAG = "MatchFinalizationService"
@@ -68,25 +73,48 @@ class MatchFinalizationService @Inject constructor(
     private val seasonParticipationCollection = firestore.collection("season_participation")
 
     /**
-     * Processa um jogo finalizado.
+     * Processa um jogo finalizado usando transação atômica.
      * Deve ser chamado quando o status do jogo muda para FINISHED.
+     *
+     * IMPORTANTE: Usa transação Firestore para garantir atomicidade e evitar
+     * race conditions que poderiam causar XP duplicado.
      */
     suspend fun processGame(gameId: String): GameProcessingResult {
         AppLogger.d(TAG) { "Iniciando processamento do jogo $gameId" }
 
         return try {
-            // 1. Buscar dados do jogo
-            val gameDoc = gamesCollection.document(gameId).get().await()
-            val game = gameDoc.toObject(Game::class.java)
-                ?: return GameProcessingResult(gameId, false, emptyList(), "Jogo nao encontrado")
+            // Usar transação atômica para verificar e marcar como processado
+            val result = firestore.runTransaction { transaction ->
+                // 1. Buscar dados do jogo DENTRO da transação
+                val gameRef = gamesCollection.document(gameId)
+                val gameDoc = transaction.get(gameRef)
+                val game = gameDoc.toObject(Game::class.java)
+                    ?: throw Exception("Jogo nao encontrado")
 
-            // 2. Verificar se ja foi processado
-            if (game.xpProcessed) {
-                AppLogger.d(TAG) { "Jogo $gameId ja foi processado anteriormente" }
-                return GameProcessingResult(gameId, true, emptyList(), "Jogo ja processado")
+                // 2. Verificar se ja foi processado (check atômico)
+                if (game.xpProcessed) {
+                    AppLogger.d(TAG) { "Jogo $gameId ja foi processado anteriormente" }
+                    return@runTransaction GameProcessingResult(gameId, true, emptyList(), "Jogo ja processado")
+                }
+
+                // 3. Marcar como processado IMEDIATAMENTE para evitar race condition
+                transaction.update(gameRef, mapOf(
+                    "xp_processed" to true,
+                    "xp_processed_at" to FieldValue.serverTimestamp()
+                ))
+
+                // Retornar game para processamento fora da transação
+                game
+            }.await()
+
+            // Se já foi processado, retornar
+            if (result is GameProcessingResult) {
+                return result
             }
 
-            // 3. Buscar confirmacoes
+            val game = result as Game
+
+            // 4. Buscar confirmacoes (fora da transação principal)
             val confirmationsSnapshot = confirmationsCollection
                 .whereEqualTo("game_id", gameId)
                 .whereEqualTo("status", "CONFIRMED")
@@ -95,44 +123,40 @@ class MatchFinalizationService @Inject constructor(
 
             val confirmations = confirmationsSnapshot.toObjects(GameConfirmation::class.java)
 
-            // 4. Verificar minimo de jogadores
+            // 5. Verificar minimo de jogadores
             if (confirmations.size < MIN_PLAYERS) {
                 AppLogger.w(TAG) { "Jogo $gameId com menos de $MIN_PLAYERS jogadores. XP nao sera processado." }
-                // Marcar como processado para nao tentar novamente
-                gamesCollection.document(gameId).update(
-                    mapOf(
-                        "xp_processed" to true,
-                        "xp_processed_at" to FieldValue.serverTimestamp()
-                    )
-                ).await()
                 return GameProcessingResult(gameId, true, emptyList(), "Menos de $MIN_PLAYERS jogadores")
             }
 
-            // 5. Buscar times e placar
+            // 6. Buscar times e placar
             val teamsSnapshot = teamsCollection
                 .whereEqualTo("game_id", gameId)
                 .get()
                 .await()
             val teams = teamsSnapshot.toObjects(Team::class.java)
 
-            // 6. Buscar placar final
+            // 7. Buscar placar final
             val liveScoreDoc = liveScoresCollection.document(gameId).get().await()
             val liveScore = liveScoreDoc.toObject(LiveGameScore::class.java)
 
-            // 7. Determinar resultado de cada time
+            // 8. Determinar resultado de cada time
             val teamResults = determineTeamResults(teams, liveScore)
-            
-            // 8. Buscar Temporada Ativa e Configuracoes de XP
-            val activeSeason = getActiveSeason()
-            val gamificationSettings = settingsRepository.getGamificationSettings().getOrNull() ?: GamificationSettings()
 
-            // 9. Processar cada jogador
+            // 9. Buscar Temporada Ativa e Configuracoes de XP
+            val activeSeason = getActiveSeason()
+            val gamificationSettings = settingsRepository.getGamificationSettings().getOrNull()
+                ?: GamificationSettings().also {
+                    AppLogger.w(TAG) { "GamificationSettings não encontrado, usando valores padrão" }
+                }
+
+            // 10. Processar cada jogador e persistir dados
             val results = mutableListOf<PlayerProcessingResult>()
             val batch = firestore.batch()
 
             for (confirmation in confirmations) {
                 try {
-                    val result = processPlayer(
+                    val playerResult = processPlayer(
                         gameId = gameId,
                         game = game,
                         confirmation = confirmation,
@@ -143,26 +167,14 @@ class MatchFinalizationService @Inject constructor(
                         settings = gamificationSettings,
                         batch = batch
                     )
-                    results.add(result)
+                    results.add(playerResult)
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Erro ao processar jogador ${confirmation.userId}", e)
                 }
             }
 
-            // 10. Atualizar flags do jogo no Batch
-            // REMOVIDO: O servidor deve ser a única fonte de escrita para garantir consistência.
-            // O cliente apenas lê os dados ou envia comandos de ação (como finalizar jogo).
-            /*
-            val gameRef = gamesCollection.document(gameId)
-            batch.update(gameRef, mapOf(
-                "xp_processed" to true,
-                "xp_processed_at" to FieldValue.serverTimestamp()
-            ))
-
-            // 11. Commit Atomico
+            // 11. Commit do batch com todas as atualizações
             batch.commit().await()
-            */
-
 
             AppLogger.d(TAG) { "Jogo $gameId processado com sucesso. ${results.size} jogadores." }
             GameProcessingResult(gameId, true, results)
@@ -192,46 +204,82 @@ class MatchFinalizationService @Inject constructor(
 
     /**
      * Determina o resultado (vitoria/empate/derrota) de cada time.
+     * Corrigido para lidar com casos onde liveScore tem IDs diferentes dos teams.
      */
     private fun determineTeamResults(
         teams: List<Team>,
         liveScore: LiveGameScore?
     ): Map<String, GameResult> {
-        if (liveScore == null || teams.size < 2) {
-            // Fallback: tentar usar scores dos times se disponivel
-            if (teams.size >= 2) {
-                val team1 = teams[0]
-                val team2 = teams[1]
-                return when {
-                    team1.score > team2.score -> mapOf(team1.id to GameResult.WIN, team2.id to GameResult.LOSS)
-                    team2.score > team1.score -> mapOf(team1.id to GameResult.LOSS, team2.id to GameResult.WIN)
-                    else -> mapOf(team1.id to GameResult.DRAW, team2.id to GameResult.DRAW)
+        // Criar mapa de resultados incluindo todos os times
+        val results = mutableMapOf<String, GameResult>()
+
+        if (teams.size < 2) {
+            // Menos de 2 times, todos empate
+            teams.forEach { results[it.id] = GameResult.DRAW }
+            return results
+        }
+
+        // Tentar usar liveScore primeiro
+        if (liveScore != null) {
+            val team1Score = liveScore.team1Score
+            val team2Score = liveScore.team2Score
+
+            val team1Result = when {
+                team1Score > team2Score -> GameResult.WIN
+                team2Score > team1Score -> GameResult.LOSS
+                else -> GameResult.DRAW
+            }
+            val team2Result = when {
+                team2Score > team1Score -> GameResult.WIN
+                team1Score > team2Score -> GameResult.LOSS
+                else -> GameResult.DRAW
+            }
+
+            // Mapear pelos IDs do liveScore
+            results[liveScore.team1Id] = team1Result
+            results[liveScore.team2Id] = team2Result
+
+            // Também mapear pelos IDs dos teams (podem ser diferentes)
+            teams.forEachIndexed { index, team ->
+                if (!results.containsKey(team.id)) {
+                    // Tentar associar por posição se ID não bater
+                    results[team.id] = if (index == 0) team1Result else team2Result
                 }
             }
-            return teams.associate { it.id to GameResult.DRAW }
+        } else {
+            // Fallback: usar scores dos times se disponivel
+            val team1 = teams[0]
+            val team2 = teams[1]
+
+            when {
+                team1.score > team2.score -> {
+                    results[team1.id] = GameResult.WIN
+                    results[team2.id] = GameResult.LOSS
+                }
+                team2.score > team1.score -> {
+                    results[team1.id] = GameResult.LOSS
+                    results[team2.id] = GameResult.WIN
+                }
+                else -> {
+                    results[team1.id] = GameResult.DRAW
+                    results[team2.id] = GameResult.DRAW
+                }
+            }
         }
 
-        val team1Score = liveScore.team1Score
-        val team2Score = liveScore.team2Score
-
-        return when {
-            team1Score > team2Score -> mapOf(
-                liveScore.team1Id to GameResult.WIN,
-                liveScore.team2Id to GameResult.LOSS
-            )
-            team2Score > team1Score -> mapOf(
-                liveScore.team1Id to GameResult.LOSS,
-                liveScore.team2Id to GameResult.WIN
-            )
-            else -> mapOf(
-                liveScore.team1Id to GameResult.DRAW,
-                liveScore.team2Id to GameResult.DRAW
-            )
+        // Garantir que todos os times tenham um resultado
+        teams.forEach { team ->
+            if (!results.containsKey(team.id)) {
+                results[team.id] = GameResult.DRAW
+            }
         }
+
+        return results
     }
 
     /**
      * Processa um jogador individual e adiciona escritas ao Batch.
+     * Inclui persistência de XP, estatísticas, milestones, streaks e ranking deltas.
      */
     private suspend fun processPlayer(
         gameId: String,
@@ -257,17 +305,15 @@ class MatchFinalizationService @Inject constructor(
             0
         }
 
-        // 3. Buscar streak atual (leitura necessaria para calculo de XP)
-        val streakDoc = userStreaksCollection
-            .whereEqualTo("user_id", userId)
-            .get()
-            .await()
-        val currentStreak = streakDoc.documents.firstOrNull()
-            ?.toObject(UserStreak::class.java)?.currentStreak ?: 0
+        // 3. Buscar e atualizar streak
+        val streakResult = updateUserStreak(userId, game.date, batch)
+        val currentStreak = streakResult.first
+        val streakDocId = streakResult.second
 
-        // 4. Verificar MVP e Melhor Gol (leitura player_stats)
-        val isMvp = game.mvpId == userId
-        
+        // 4. Verificar MVP e worst player da confirmação
+        val isMvp = game.mvpId == userId || confirmation.isMvp
+        val isWorstPlayer = confirmation.isWorstPlayer
+
         val playerStatsSnapshot = firestore.collection("player_stats")
             .whereEqualTo("game_id", gameId)
             .whereEqualTo("user_id", userId)
@@ -276,13 +322,14 @@ class MatchFinalizationService @Inject constructor(
         val hasBestGoal = playerStatsSnapshot.documents.firstOrNull()
             ?.getBoolean("best_goal") ?: false
 
-        // 5. Calcular XP
+        // 5. Calcular XP (agora incluindo isWorstPlayer)
         val xpResult = XPCalculator.calculateFromConfirmation(
             confirmation = confirmation,
             teamWon = playerTeamResult == GameResult.WIN,
             teamDrew = playerTeamResult == GameResult.DRAW,
             opponentsGoals = goalsConceded,
             isMvp = isMvp,
+            isWorstPlayer = isWorstPlayer,
             hasBestGoal = hasBestGoal,
             currentStreak = currentStreak,
             settings = settings
@@ -291,7 +338,7 @@ class MatchFinalizationService @Inject constructor(
         // 6. Buscar dados atuais do usuario
         val userDoc = usersCollection.document(userId).get().await()
         val currentXp = userDoc.getLong("experience_points") ?: 0L
-        val currentLevel = userDoc.getLong("level")?.toInt() ?: 1
+        val currentLevel = userDoc.getLong("level")?.toInt() ?: 0
         val achievedMilestones = (userDoc.get("milestones_achieved") as? List<*>)
             ?.filterIsInstance<String>() ?: emptyList()
 
@@ -314,10 +361,11 @@ class MatchFinalizationService @Inject constructor(
             gamesWon = currentStats.gamesWon + if (playerTeamResult == GameResult.WIN) 1 else 0,
             gamesLost = currentStats.gamesLost + if (playerTeamResult == GameResult.LOSS) 1 else 0,
             gamesDraw = currentStats.gamesDraw + if (playerTeamResult == GameResult.DRAW) 1 else 0,
-            bestPlayerCount = if (isMvp) currentStats.bestPlayerCount + 1 else currentStats.bestPlayerCount
+            bestPlayerCount = if (isMvp) currentStats.bestPlayerCount + 1 else currentStats.bestPlayerCount,
+            worstPlayerCount = if (isWorstPlayer) currentStats.worstPlayerCount + 1 else currentStats.worstPlayerCount
         )
 
-        // 9. Verificar milestones
+        // 9. Verificar milestones (usando lista atualizada para evitar duplicatas)
         val milestoneResult = MilestoneChecker.check(newStats, achievedMilestones)
         val milestonesXp = milestoneResult.totalXpFromMilestones
 
@@ -327,7 +375,7 @@ class MatchFinalizationService @Inject constructor(
         val newLevel = LevelTable.getLevelForXp(newXp)
         val leveledUp = newLevel > currentLevel
 
-        // 11. Criar XP Log (Apenas para retorno visual, não será salvo localmente)
+        // 11. Criar XP Log
         val xpLog = XPCalculator.createXpLog(
             userId = userId,
             gameId = gameId,
@@ -344,31 +392,55 @@ class MatchFinalizationService @Inject constructor(
             saves = confirmation.saves
         )
 
-        // IMPORTANTE: Todas as gravações no Firestore foram removidas daqui.
-        // A lógica de persistência agora reside exclusivamente na Cloud Function 'onGameStatusUpdate'.
-        // Este serviço agora atua apenas como uma "Preview" para a UI do PostGameDialog.
-        
-        /* CÓDIGO DE GRAVAÇÃO REMOVIDO PARA SEGURANÇA E CENTRALIZAÇÃO NO SERVIDOR
-        // Update Confirmation
-        val confRef = confirmationsCollection.document("${gameId}_${userId}")
-        batch.update(confRef, "xp_earned", totalXpEarned)
+        // ========== PERSISTÊNCIA DOS DADOS ==========
 
-        // Update User
-        batch.update(usersCollection.document(userId), mapOf(
-            "experience_points" to newXp,
-            "level" to newLevel,
-            "milestones_achieved" to FieldValue.arrayUnion(*milestoneResult.newMilestones.map { it.name }.toTypedArray())
+        // 12. Update Confirmation com XP ganho
+        val confId = "${gameId}_${userId}"
+        val confRef = confirmationsCollection.document(confId)
+        batch.update(confRef, mapOf(
+            "xp_earned" to totalXpEarned.toInt(),
+            "is_mvp" to isMvp
         ))
 
-        // Update Global Statistics
+        // 13. Update User (XP, Level, Milestones)
+        val userUpdates = mutableMapOf<String, Any>(
+            "experience_points" to newXp,
+            "level" to newLevel
+        )
+        if (milestoneResult.newMilestones.isNotEmpty()) {
+            userUpdates["milestones_achieved"] = FieldValue.arrayUnion(
+                *milestoneResult.newMilestones.map { it.name }.toTypedArray()
+            )
+        }
+        batch.update(usersCollection.document(userId), userUpdates)
+
+        // 14. Update/Create Global Statistics
         batch.set(statisticsCollection.document(userId), newStats, SetOptions.merge())
 
-        // Create XP Log
+        // 15. Create XP Log
         batch.set(xpLogsCollection.document(), xpLog)
 
-        // Update Ranking Deltas (Week & Month)
+        // 16. Update Ranking Deltas (Week & Month)
         updateRankingDeltas(batch, userId, confirmation, playerTeamResult, totalXpEarned, isMvp)
-        */
+
+        // 17. Update Season Participation (se houver temporada ativa)
+        if (activeSeason != null) {
+            // Bug #1 e #4 Fix: Usar LeagueService para atualizar dados da liga com GoalDifference correto
+            val goalDiff = confirmation.goals - goalsConceded
+            
+            // Nota: updateLeague agora adiciona operacoes ao batch passado
+            leagueService.updateLeague(
+                batch = batch,
+                userId = userId,
+                seasonId = activeSeason.id,
+                xpEarned = totalXpEarned,
+                won = playerTeamResult == GameResult.WIN,
+                drew = playerTeamResult == GameResult.DRAW,
+                goalDiff = goalDiff,
+                wasMvp = isMvp,
+                gameId = gameId
+            )
+        }
 
         // Retornar resultado
         return PlayerProcessingResult(
@@ -383,66 +455,62 @@ class MatchFinalizationService @Inject constructor(
     }
 
     /**
-     * Prepara a atualização da SeasonParticipation no batch.
+     * Atualiza a streak do usuário.
+     * Retorna o streak atual (após atualização) e o ID do documento.
      */
-    private suspend fun prepareSeasonUpdate(
-        batch: com.google.firebase.firestore.WriteBatch,
+    private suspend fun updateUserStreak(
         userId: String,
-        seasonId: String,
-        result: GameResult,
-        goals: Int,
-        assists: Int,
-        conceded: Int,
-        isMvp: Boolean
-    ) {
-        val snapshot = seasonParticipationCollection
-            .whereEqualTo("season_id", seasonId)
+        gameDate: String,
+        batch: com.google.firebase.firestore.WriteBatch
+    ): Pair<Int, String> {
+        val streakQuery = userStreaksCollection
             .whereEqualTo("user_id", userId)
+            .limit(1)
             .get()
             .await()
 
-        val pointsToAdd = when (result) {
-            GameResult.WIN -> 3
-            GameResult.DRAW -> 1
-            GameResult.LOSS -> 0
+        val streakDocId = "${userId}_streak"
+        val streakRef = userStreaksCollection.document(streakDocId)
+
+        val existingStreak = streakQuery.documents.firstOrNull()
+            ?.toObject(UserStreak::class.java)
+
+        if (existingStreak == null) {
+            // Criar novo streak
+            val newStreak = UserStreak(
+                id = streakDocId,
+                userId = userId,
+                currentStreak = 1,
+                longestStreak = 1,
+                lastGameDate = gameDate,
+                streakStartedAt = gameDate
+            )
+            batch.set(streakRef, newStreak)
+            return Pair(1, streakDocId)
         }
 
-        if (snapshot.isEmpty) {
-            val docId = "${seasonId}_${userId}"
-            val newParticipation = SeasonParticipationV2(
-                id = docId,
-                userId = userId,
-                seasonId = seasonId,
-                gamesPlayed = 1,
-                wins = if (result == GameResult.WIN) 1 else 0,
-                draws = if (result == GameResult.DRAW) 1 else 0,
-                losses = if (result == GameResult.LOSS) 1 else 0,
-                points = pointsToAdd,
-                goalsScored = goals,
-                goalsConceded = conceded,
-                assists = assists,
-                mvpCount = if (isMvp) 1 else 0,
-                lastCalculatedAt = Date()
-            )
-            batch.set(seasonParticipationCollection.document(docId), newParticipation)
+        // Calcular se é jogo consecutivo (simplificado: verifica se é diferente do último)
+        val lastDate = existingStreak.lastGameDate
+        val isConsecutive = lastDate != gameDate // Se é um jogo diferente, conta
+
+        val newCurrentStreak = if (isConsecutive) {
+            existingStreak.currentStreak + 1
         } else {
-            val doc = snapshot.documents.first()
-            val ref = seasonParticipationCollection.document(doc.id)
-            
-            batch.update(ref, mapOf(
-                "games_played" to FieldValue.increment(1),
-                "wins" to FieldValue.increment(if (result == GameResult.WIN) 1L else 0L),
-                "draws" to FieldValue.increment(if (result == GameResult.DRAW) 1L else 0L),
-                "losses" to FieldValue.increment(if (result == GameResult.LOSS) 1L else 0L),
-                "points" to FieldValue.increment(pointsToAdd.toLong()),
-                "goals_scored" to FieldValue.increment(goals.toLong()),
-                "goals_conceded" to FieldValue.increment(conceded.toLong()),
-                "assists" to FieldValue.increment(assists.toLong()),
-                "mvp_count" to FieldValue.increment(if (isMvp) 1L else 0L),
-                "last_calculated_at" to FieldValue.serverTimestamp()
-            ))
+            existingStreak.currentStreak // Mesmo jogo, não incrementa
         }
+
+        val newLongestStreak = maxOf(existingStreak.longestStreak, newCurrentStreak)
+
+        batch.update(streakRef, mapOf(
+            "current_streak" to newCurrentStreak,
+            "longest_streak" to newLongestStreak,
+            "last_game_date" to gameDate
+        ))
+
+        return Pair(newCurrentStreak, streakDocId)
     }
+
+
 
     private fun updateRankingDeltas(
         batch: com.google.firebase.firestore.WriteBatch,
@@ -455,14 +523,12 @@ class MatchFinalizationService @Inject constructor(
         val weekKey = getCurrentWeekKey()
         val monthKey = getCurrentMonthKey()
 
-        val updates = mapOf(
+        val baseUpdates = mapOf(
             "user_id" to userId,
-            "period" to "week",
-            "period_key" to weekKey,
             "goals_added" to FieldValue.increment(confirmation.goals.toLong()),
             "assists_added" to FieldValue.increment(confirmation.assists.toLong()),
             "saves_added" to FieldValue.increment(confirmation.saves.toLong()),
-            "xp_added" to FieldValue.increment(totalXp.toLong()),
+            "xp_added" to FieldValue.increment(totalXp),
             "games_added" to FieldValue.increment(1),
             "wins_added" to FieldValue.increment(if (result == GameResult.WIN) 1L else 0L),
             "mvp_added" to FieldValue.increment(if (isMvp) 1L else 0L),
@@ -472,16 +538,16 @@ class MatchFinalizationService @Inject constructor(
         // Week Delta
         val weekId = "week_${weekKey}_$userId"
         batch.set(
-            rankingDeltasCollection.document(weekId), 
-            updates.plus(mapOf("period" to "week", "period_key" to weekKey)), 
+            rankingDeltasCollection.document(weekId),
+            baseUpdates.plus(mapOf("period" to "week", "period_key" to weekKey)),
             SetOptions.merge()
         )
 
         // Month Delta
         val monthId = "month_${monthKey}_$userId"
         batch.set(
-            rankingDeltasCollection.document(monthId), 
-            updates.plus(mapOf("period" to "month", "period_key" to monthKey)), 
+            rankingDeltasCollection.document(monthId),
+            baseUpdates.plus(mapOf("period" to "month", "period_key" to monthKey)),
             SetOptions.merge()
         )
     }

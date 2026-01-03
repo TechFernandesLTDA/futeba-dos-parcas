@@ -328,8 +328,9 @@ class NotificationRepository @Inject constructor(
                 .get()
                 .await()
 
+            val now = Date()
             val notifications = snapshot.toObjects(AppNotification::class.java)
-                .filter { it.requiresResponse() }
+                .filter { it.requiresResponse() && (it.expiresAt?.after(now) != false) }
 
             Result.success(notifications)
         } catch (e: Exception) {

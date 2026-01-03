@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.ai
 
 import com.futebadosparcas.data.model.GameConfirmation
+import com.futebadosparcas.data.model.PlayerRatingRole
 import com.futebadosparcas.data.model.Team
 import com.futebadosparcas.data.repository.UserRepository
 import com.futebadosparcas.domain.ai.TeamBalancer
@@ -34,8 +35,12 @@ class GeminiTeamBalancer @Inject constructor(
                 val user = usersMap[confirmation.userId]
                 val rating = if (user != null) {
                     when (confirmation.position) {
-                        "GOALKEEPER" -> user.gkRating
-                        else -> maxOf(user.strikerRating, user.midRating, user.defenderRating)
+                        "GOALKEEPER" -> user.getEffectiveRating(PlayerRatingRole.GOALKEEPER)
+                        else -> maxOf(
+                            user.getEffectiveRating(PlayerRatingRole.STRIKER),
+                            user.getEffectiveRating(PlayerRatingRole.MID),
+                            user.getEffectiveRating(PlayerRatingRole.DEFENDER)
+                        )
                     }
                 } else 0.0
                 

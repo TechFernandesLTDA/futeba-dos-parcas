@@ -26,7 +26,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Gerenciamento de Dados Mock"
+                android:text="@string/fragment_developer_text_1"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="16dp"
@@ -36,13 +36,13 @@
                 android:id="@+id/btnGenerateData"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Gerar Dados Históricos (Completo)"
+                android:text="@string/fragment_developer_text_2"
                 android:layout_marginBottom="8dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Gera usuários, locais, campos, jogos passados, confirmações e estatísticas."
+                android:text="@string/fragment_developer_text_3"
                 android:textSize="12sp"
                 android:layout_marginBottom="24dp"
                 android:textColor="?attr/colorOnSurfaceVariant" />
@@ -52,7 +52,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:text="Resetar Tudo (Limpar Banco)"
+                android:text="@string/fragment_developer_text_4"
                 android:textColor="?attr/colorOnError"
                 app:backgroundTint="?attr/colorError" />
 
@@ -60,14 +60,14 @@
                 android:id="@+id/btnPopulateFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="⚽ Popular Quadras nos Locais"
+                android:text="@string/fragment_developer_text_5"
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_marginBottom="8dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Adiciona quadras de exemplo para todos os locais que não possuem quadras."
+                android:text="@string/fragment_developer_text_6"
                 android:textSize="12sp"
                 android:layout_marginBottom="24dp"
                 android:textColor="?attr/colorOnSurfaceVariant" />
@@ -76,14 +76,14 @@
                 android:id="@+id/btnAnalyzeFirestore"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="🔍 Analisar Estrutura do Firestore"
+                android:text="@string/fragment_developer_text_7"
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_marginBottom="8dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Gera relatório completo de todas as collections e documentos do Firebase."
+                android:text="@string/fragment_developer_text_8"
                 android:textSize="12sp"
                 android:layout_marginBottom="24dp"
                 android:textColor="?attr/colorOnSurfaceVariant" />
@@ -92,7 +92,7 @@
                 android:id="@+id/btnCleanUp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="🧹 Limpar Pendências e Mocks"
+                android:text="@string/fragment_developer_text_9"
                 style="@style/Widget.Material3.Button.TonalButton"
                 app:strokeColor="?attr/colorError"
                 app:strokeWidth="1dp"
@@ -101,7 +101,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Remove todos os usuários, jogos e estatísticas criados como mock."
+                android:text="@string/fragment_developer_text_10"
                 android:textSize="12sp"
                 android:layout_marginBottom="24dp"
                 android:textColor="?attr/colorOnSurfaceVariant" />

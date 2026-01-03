@@ -24,7 +24,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:text="Modo de Dados"
+        android:text="@string/fragment_dev_tools_text_1"
         android:textStyle="bold"
         android:textSize="16sp" />
 
@@ -33,7 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:text="Usar dados mockados (requer reinicio)" />
+        android:text="@string/fragment_dev_tools_text_2" />
 
     <TextView
         android:id="@+id/tv_current_mode"
@@ -55,7 +55,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:text="Acoes"
+        android:text="@string/fragment_dev_tools_text_3"
         android:textStyle="bold"
         android:textSize="16sp" />
 
@@ -65,7 +65,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="8dp"
-        android:text="Popular 50 Locais (Curitiba/PR)"
+        android:text="@string/fragment_dev_tools_text_4"
         style="@style/Widget.Material3.Button.TonalButton" />
 
     <com.google.android.material.button.MaterialButton
@@ -74,7 +74,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="8dp"
-        android:text="Limpar Cache Local (Room)"
+        android:text="@string/fragment_dev_tools_text_5"
         style="@style/Widget.Material3.Button.OutlinedButton" />
 
     <com.google.android.material.button.MaterialButton
@@ -83,7 +83,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="8dp"
-        android:text="Resetar Preferencias"
+        android:text="@string/fragment_dev_tools_text_6"
         style="@style/Widget.Material3.Button.OutlinedButton" />
 
     <com.google.android.material.button.MaterialButton
@@ -92,6 +92,6 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="16dp"
-        android:text="Reiniciar App" />
+        android:text="@string/fragment_dev_tools_text_7" />
 
 </LinearLayout>

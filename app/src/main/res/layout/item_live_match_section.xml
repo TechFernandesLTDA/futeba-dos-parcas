@@ -10,7 +10,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Placar ao Vivo"
+        android:text="@string/item_live_match_section_text_1"
         android:textSize="20sp"
         android:textStyle="bold"
         android:layout_marginBottom="16dp"
@@ -29,7 +29,7 @@
         android:id="@+id/btnAddEvent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Adicionar Evento"
+        android:text="@string/item_live_match_section_text_2"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
         app:icon="@drawable/ic_add"
@@ -50,7 +50,7 @@
             android:src="@drawable/ic_sports_soccer"
             app:tint="@color/success"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Gol"
+            android:contentDescription="@string/item_live_match_section_contentdescription_3"
             android:layout_marginEnd="24dp"/>
 
         <ImageButton
@@ -60,7 +60,7 @@
             android:src="@drawable/ic_assist"
             app:tint="@color/theme_blue_primary"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Assistência"
+            android:contentDescription="@string/item_live_match_section_contentdescription_4"
             android:layout_marginEnd="24dp"/>
 
         <ImageButton
@@ -70,7 +70,7 @@
             android:src="@drawable/ic_save_action"
             app:tint="@color/theme_orange_primary"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Defesa"
+            android:contentDescription="@string/item_live_match_section_contentdescription_5"
             android:layout_marginEnd="24dp"/>
 
         <ImageButton
@@ -80,7 +80,7 @@
             android:src="@drawable/ic_card_filled"
             app:tint="#FFD600"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Cartão Amarelo"
+            android:contentDescription="@string/item_live_match_section_contentdescription_6"
             android:layout_marginEnd="24dp"/>
 
         <ImageButton
@@ -90,13 +90,13 @@
             android:src="@drawable/ic_card_filled"
             app:tint="@color/theme_red_primary"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Cartão Vermelho"/>
+            android:contentDescription="@string/item_live_match_section_contentdescription_7"/>
     </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Linha do Tempo"
+        android:text="@string/item_live_match_section_text_8"
         android:textSize="16sp"
         android:textStyle="bold"
         android:layout_marginTop="24dp"

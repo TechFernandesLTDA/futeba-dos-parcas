@@ -40,7 +40,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
-                    android:text="Rankings"
+                    android:text="@string/fragment_statistics_text_1"
                     style="@style/Widget.Material3.Button.OutlinedButton"
                     app:icon="@android:drawable/ic_menu_sort_by_size"
                     app:iconGravity="textStart" />
@@ -51,7 +51,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
-                    android:text="Evolucao"
+                    android:text="@string/fragment_statistics_text_2"
                     style="@style/Widget.Material3.Button.OutlinedButton"
                     app:icon="@android:drawable/ic_menu_compass"
                     app:iconGravity="textStart" />
@@ -92,7 +92,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Suas Estatisticas"
+                            android:text="@string/fragment_statistics_text_3"
                             android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorOnSurface" />
@@ -208,7 +208,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Melhor"
+                                    android:text="@string/fragment_statistics_text_4"
                                     android:textSize="12sp"
                                     android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -275,7 +275,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Evolução de Gols"
+                            android:text="@string/fragment_statistics_text_5"
                             android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorOnSurface" />
@@ -292,7 +292,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Rankings Gerais"
+                    android:text="@string/fragment_statistics_text_6"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -301,7 +301,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Artilheiros"
+                    android:text="@string/fragment_statistics_text_7"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -318,7 +318,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Melhores Goleiros"
+                    android:text="@string/fragment_statistics_text_8"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -335,7 +335,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Melhores Jogadores"
+                    android:text="@string/fragment_statistics_text_9"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"

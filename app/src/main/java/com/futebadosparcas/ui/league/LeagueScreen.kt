@@ -7,8 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -16,11 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+
+
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,7 +30,8 @@ import com.futebadosparcas.R
 import com.futebadosparcas.data.model.LeagueDivision
 import com.futebadosparcas.data.model.Season
 import com.futebadosparcas.data.model.SeasonParticipationV2
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.data.model.LeagueRatingCalculator
+import com.futebadosparcas.ui.components.FutebaTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,86 +57,13 @@ fun LeagueScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 0.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp) // Reduz para altura padrão de Toolbar (56dp) para alinhar visualmente
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Futeba dos Parças",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    // Notifications
-                    Box {
-                        IconButton(
-                            onClick = onNavigateNotifications,
-                            modifier = Modifier.size(48.dp) // Revert to standard size
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_notifications),
-                                contentDescription = "Notificações",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        if (unreadCount > 0) {
-                            Surface(
-                                color = Color(0xFFF44336),
-                                shape = CircleShape,
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .align(Alignment.TopEnd)
-                                    .offset(x = (-2).dp, y = 2.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = if (unreadCount > 9) "9+" else unreadCount.toString(),
-                                        color = Color.White,
-                                        fontSize = 10.sp, // Aumentado para 10sp como no XML
-                                        fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Groups
-                    IconButton(
-                        onClick = onNavigateGroups,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_group),
-                            contentDescription = "Grupos",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    // Map
-                    IconButton(
-                        onClick = onNavigateMap,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_location),
-                            contentDescription = "Mapa",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
+            FutebaTopBar(
+                unreadCount = unreadCount,
+                onNavigateNotifications = onNavigateNotifications,
+                onNavigateGroups = onNavigateGroups,
+                onNavigateMap = onNavigateMap
+            )
         }
     ) { padding ->
         PullToRefreshBox(
@@ -277,21 +203,17 @@ fun LeagueHeader(
             .fillMaxWidth()
             .padding(16.dp),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Box(
             modifier = Modifier
-                .background(
-                    Brush.verticalGradient(
-                        listOf(divisionColor, divisionColor.copy(alpha = 0.7f))
-                    )
-                )
                 .padding(24.dp)
         ) {
             Column {
                 Text(
                     text = season.name,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
@@ -306,21 +228,23 @@ fun LeagueHeader(
                     Column {
                         Text(
                             text = "Minha Posição",
-                            color = Color.White.copy(alpha = 0.8f),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 14.sp
                         )
                         Text(
                             text = if (myPosition != null) "#$myPosition" else "—",
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 42.sp,
                             fontWeight = FontWeight.Black
                         )
                     }
                     
                     Surface(
-                        color = Color.White.copy(alpha = 0.2f),
+                        color = divisionColor.copy(alpha = 0.18f),
+                        contentColor = divisionColor,
                         shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.padding(8.dp)
+                        modifier = Modifier.padding(8.dp),
+                        border = BorderStroke(1.dp, divisionColor.copy(alpha = 0.5f))
                     ) {
                         Column(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -332,11 +256,54 @@ fun LeagueHeader(
                             )
                             Text(
                                 text = (myParticipation?.division ?: LeagueDivision.BRONZE).name,
-                                color = Color.White,
+                                color = divisionColor,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
                             )
                         }
+                    }
+                }
+
+                // Barra de Progresso da Divisão (Rating)
+                if (myParticipation != null) {
+                    val currentRating = myParticipation.leagueRating
+                    val division = myParticipation.division
+                    val nextThreshold = LeagueRatingCalculator.getNextDivisionThreshold(division)
+                    val prevThreshold = LeagueRatingCalculator.getPreviousDivisionThreshold(division)
+                    
+                    // Normalizar progresso (0 a 1 dentro da faixa da divisão)
+                    val range = nextThreshold - prevThreshold
+                    val progress = ((currentRating - prevThreshold) / range).coerceIn(0.0, 1.0).toFloat()
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Rating: ${"%.1f".format(currentRating)}",
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Prox: ${nextThreshold.toInt()}",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 12.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp)),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.outlineVariant,
+                        )
                     }
                 }
                 
@@ -371,8 +338,8 @@ fun LeagueHeader(
 @Composable
 fun MiniStatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = label, color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-        Text(text = value, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text(text = label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+        Text(text = value, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, fontSize = 18.sp)
     }
 }
 
@@ -510,6 +477,12 @@ fun RankingListItem(
                     fontSize = 16.sp
                 )
                 Text(
+                    text = "Rating: ${"%.1f".format(item.participation.leagueRating)}",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
                     text = "${item.participation.wins}V • ${item.participation.goalsScored}G",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -591,3 +564,4 @@ fun getRankColor(position: Int): Color {
 }
 
 fun String.capitalize() = replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+

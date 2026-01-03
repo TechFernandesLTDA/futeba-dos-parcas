@@ -8,7 +8,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Sua Avaliação"
+        android:text="@string/dialog_add_review_text_1"
         android:textSize="16sp"
         android:textStyle="bold"
         android:layout_marginBottom="16dp" />
@@ -25,7 +25,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:hint="Comentário">
+        android:hint="@string/dialog_add_review_hint_2">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etComment"

@@ -22,7 +22,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:src="@android:drawable/ic_menu_myplaces"
-            android:contentDescription="Icone do local"
+            android:contentDescription="@string/item_location_contentdescription_1"
             app:tint="?attr/colorPrimary" />
 
         <LinearLayout
@@ -58,10 +58,11 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@android:drawable/btn_star_big_on"
-            android:contentDescription="Local verificado"
+            android:contentDescription="@string/item_location_contentdescription_2"
             android:visibility="gone"
-            app:tint="@color/primary" />
+            app:tint="?attr/colorPrimary" />
 
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

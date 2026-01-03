@@ -18,6 +18,6 @@ data class SeedColors(
 
 data class AppThemeConfig(
     val seedColors: SeedColors = SeedColors(),
-    val mode: ThemeMode = ThemeMode.SYSTEM,
+    val mode: ThemeMode = ThemeMode.LIGHT,
     val contrastLevel: ContrastLevel = ContrastLevel.NORMAL
 )

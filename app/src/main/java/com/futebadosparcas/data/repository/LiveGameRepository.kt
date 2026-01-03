@@ -279,10 +279,13 @@ class LiveGameRepository @Inject constructor(
                  val currentRed = confSnapshot.getLong("red_cards") ?: 0
                  val currentAssists = confSnapshot.getLong("assists") ?: 0 // New field
 
+                 val currentSaves = confSnapshot.getLong("saves") ?: 0
+
                  when (eventType) {
                     GameEventType.GOAL -> transaction.update(confDoc, "goals", currentGoals + 1)
                     GameEventType.YELLOW_CARD -> transaction.update(confDoc, "yellow_cards", currentYellow + 1)
                     GameEventType.RED_CARD -> transaction.update(confDoc, "red_cards", currentRed + 1)
+                    GameEventType.SAVE -> transaction.update(confDoc, "saves", currentSaves + 1)
                     else -> {}
                 }
             }
@@ -513,6 +516,10 @@ class LiveGameRepository @Inject constructor(
                             GameEventType.RED_CARD -> {
                                 val currentRed = confSnapshot.getLong("red_cards") ?: 0
                                 transaction.update(confDoc, "red_cards", maxOf(0, currentRed - 1))
+                            }
+                            GameEventType.SAVE -> {
+                                val currentSaves = confSnapshot.getLong("saves") ?: 0
+                                transaction.update(confDoc, "saves", maxOf(0, currentSaves - 1))
                             }
                             else -> {}
                         }

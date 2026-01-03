@@ -13,8 +13,9 @@
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
+            style="@style/FutebaToolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="?attr/actionBarSize"
             app:layout_constraintTop_toTopOf="parent"
             app:navigationIcon="@drawable/ic_arrow_back"
             app:title="Detalhes do Local" />
@@ -23,7 +24,7 @@
             android:id="@+id/switchIsActive"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ativo"
+            android:text="@string/fragment_location_detail_text_1"
             android:checked="true"
             app:layout_constraintTop_toTopOf="@id/toolbar"
             app:layout_constraintBottom_toBottomOf="@id/toolbar"
@@ -35,7 +36,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="Nome do Local"
+            android:hint="@string/fragment_location_detail_hint_2"
             app:layout_constraintTop_toBottomOf="@id/toolbar">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etName"
@@ -60,7 +61,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:hint="Região">
+                android:hint="@string/fragment_location_detail_hint_3">
                 <AutoCompleteTextView
                     android:id="@+id/actvRegion"
                     android:layout_width="match_parent"
@@ -76,7 +77,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:hint="Bairro">
+                android:hint="@string/fragment_location_detail_hint_4">
                 <AutoCompleteTextView
                     android:id="@+id/actvNeighborhood"
                     android:layout_width="match_parent"
@@ -91,7 +92,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:hint="Endereço Completo"
+            android:hint="@string/fragment_location_detail_hint_5"
             app:layout_constraintTop_toBottomOf="@id/layoutLocation">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etAddress"
@@ -106,7 +107,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:hint="Descrição (Opcional)"
+            android:hint="@string/fragment_location_detail_hint_6"
             app:layout_constraintTop_toBottomOf="@id/tilAddress">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etDescription"
@@ -131,7 +132,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:hint="Telefone/Zap">
+                android:hint="@string/fragment_location_detail_hint_7">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPhone"
                     android:layout_width="match_parent"
@@ -145,7 +146,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:hint="Instagram (sem @)">
+                android:hint="@string/fragment_location_detail_hint_8">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etInstagram"
                     android:layout_width="match_parent"
@@ -169,7 +170,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
-                android:hint="Abre">
+                android:hint="@string/fragment_location_detail_hint_9">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etOpenTime"
                     android:layout_width="match_parent"
@@ -184,7 +185,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:hint="Fecha">
+                android:hint="@string/fragment_location_detail_hint_10">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etCloseTime"
                     android:layout_width="match_parent"
@@ -200,14 +201,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:hint="Duração Mínima (minutos)"
+            android:hint="@string/fragment_location_detail_hint_11"
             app:layout_constraintTop_toBottomOf="@id/layoutHours">
             <AutoCompleteTextView
                 android:id="@+id/actvMinDuration"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="none"
-                android:text="60"
+                android:text="@string/fragment_location_detail_text_12"
                 app:simpleItems="@array/duration_options"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -217,7 +218,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Comodidades"
+            android:text="@string/fragment_location_detail_text_13"
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -235,37 +236,37 @@
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Vestiário" />
+                android:text="@string/fragment_location_detail_text_14" />
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipBar"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Bar" />
+                android:text="@string/fragment_location_detail_text_15" />
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipBBQ"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Churrasqueira" />
+                android:text="@string/fragment_location_detail_text_16" />
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipParking"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Estacionamento" />
+                android:text="@string/fragment_location_detail_text_17" />
              <com.google.android.material.chip.Chip
                 android:id="@+id/chipWifi"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Wi-Fi" />
+                android:text="@string/fragment_location_detail_text_18" />
              <com.google.android.material.chip.Chip
                 android:id="@+id/chipGrandstand"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Arquibancada" />
+                android:text="@string/fragment_location_detail_text_19" />
         </com.google.android.material.chip.ChipGroup>
 
         <!-- Quadras -->
@@ -274,7 +275,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Quadras/Campos"
+            android:text="@string/fragment_location_detail_text_20"
             android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -285,7 +286,7 @@
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Adicionar Quadra"
+            android:text="@string/fragment_location_detail_text_21"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBaseline_toBaselineOf="@id/tvFieldsHeader"/>
 
@@ -304,7 +305,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
-            android:text="Salvar Local"
+            android:text="@string/fragment_location_detail_text_22"
             android:layout_marginBottom="32dp"
             app:layout_constraintTop_toBottomOf="@id/rvFields"
             app:layout_constraintStart_toStartOf="parent"

@@ -59,7 +59,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Gerado em 28/12/2024 às 23:05"
+                        android:text="@string/dialog_player_card_text_1"
                         android:textSize="9sp"
                         android:textColor="@android:color/white"
                         android:alpha="0.7"
@@ -85,7 +85,7 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@drawable/ic_whatsapp"
                         app:tint="@android:color/white"
-                        android:contentDescription="Compartilhar" />
+                        android:contentDescription="@string/dialog_player_card_contentdescription_2" />
 
                     <ImageButton
                         android:id="@+id/btnClose"
@@ -94,30 +94,47 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@drawable/ic_close"
                         app:tint="@android:color/white"
-                        android:contentDescription="Fechar" />
+                        android:contentDescription="@string/dialog_player_card_contentdescription_3" />
                 </LinearLayout>
             </RelativeLayout>
 
-            <!-- Player Photo -->
-            <com.google.android.material.card.MaterialCardView
+            <!-- Player Photo with Badge -->
+            <FrameLayout
                 android:layout_width="110dp"
                 android:layout_height="110dp"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="8dp"
-                app:cardCornerRadius="55dp"
-                app:cardElevation="6dp"
-                app:strokeWidth="3dp"
-                app:strokeColor="@android:color/white">
+                android:layout_marginTop="8dp">
 
-                <ImageView
-                    android:id="@+id/ivPlayerPhoto"
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_player_placeholder"
-                    android:contentDescription="Foto do jogador" />
+                    app:cardCornerRadius="55dp"
+                    app:cardElevation="6dp"
+                    app:strokeWidth="3dp"
+                    app:strokeColor="@android:color/white">
 
-            </com.google.android.material.card.MaterialCardView>
+                    <ImageView
+                        android:id="@+id/ivPlayerPhoto"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_player_placeholder"
+                        android:contentDescription="@string/dialog_player_card_contentdescription_4" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Level Badge Overlay -->
+                <ImageView
+                    android:id="@+id/ivLevelBadge"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginEnd="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:contentDescription="@string/dialog_player_card_contentdescription_5"
+                    android:src="@drawable/ic_level_badge_0" />
+
+            </FrameLayout>
 
             <!-- Player Name -->
             <TextView
@@ -126,7 +143,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="12dp"
-                android:text="Jogador"
+                android:text="@string/dialog_player_card_text_6"
                 android:textSize="24sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white"
@@ -152,25 +169,25 @@
                     android:id="@+id/tvLevel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="5"
+                    android:text="@string/dialog_player_card_text_7"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="@color/primary"
+                    android:textColor="?attr/colorPrimary"
                     tools:text="5" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=" • "
-                    android:textColor="@color/primary" />
+                    android:text="@string/dialog_player_card_text_8"
+                    android:textColor="?attr/colorPrimary" />
 
                 <TextView
                     android:id="@+id/tvLevelName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Habilidoso"
+                    android:text="@string/dialog_player_card_text_9"
                     android:textSize="14sp"
-                    android:textColor="@color/primary"
+                    android:textColor="?attr/colorPrimary"
                     tools:text="Habilidoso" />
 
             </LinearLayout>
@@ -193,7 +210,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="XP"
+                        android:text="@string/dialog_player_card_text_10"
                         android:textSize="11sp"
                         android:textColor="@android:color/white"
                         android:shadowColor="#80000000"
@@ -207,7 +224,7 @@
                         android:id="@+id/tvXpProgress"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="2500 / 3850"
+                        android:text="@string/dialog_player_card_text_11"
                         android:textSize="11sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -225,7 +242,7 @@
                     android:layout_height="8dp"
                     android:layout_marginTop="6dp"
                     app:trackCornerRadius="4dp"
-                    app:indicatorColor="@color/accent"
+                    app:indicatorColor="?attr/colorTertiary"
                     app:trackColor="#4DFFFFFF"
                     tools:progress="65" />
 
@@ -267,7 +284,7 @@
                             android:id="@+id/tvTotalGames"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/dialog_player_card_text_12"
                             android:textSize="22sp"
                             android:textStyle="bold"
                             android:textColor="@android:color/white"
@@ -280,7 +297,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Jogos"
+                            android:text="@string/dialog_player_card_text_13"
                             android:textSize="11sp"
                             android:textAllCaps="true"
                             android:textColor="@android:color/white"
@@ -303,7 +320,7 @@
                             android:id="@+id/tvTotalGoals"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/dialog_player_card_text_14"
                             android:textSize="22sp"
                             android:textStyle="bold"
                             android:textColor="@android:color/white"
@@ -316,7 +333,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Gols"
+                            android:text="@string/dialog_player_card_text_15"
                             android:textSize="11sp"
                             android:textAllCaps="true"
                             android:textColor="@android:color/white"
@@ -339,7 +356,7 @@
                             android:id="@+id/tvTotalAssists"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/dialog_player_card_text_16"
                             android:textSize="22sp"
                             android:textStyle="bold"
                             android:textColor="@android:color/white"
@@ -352,7 +369,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Assist."
+                            android:text="@string/dialog_player_card_text_17"
                             android:textSize="11sp"
                             android:textAllCaps="true"
                             android:textColor="@android:color/white"
@@ -386,7 +403,7 @@
                             android:id="@+id/tvWins"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/dialog_player_card_text_18"
                             android:textSize="22sp"
                             android:textStyle="bold"
                             android:textColor="@android:color/white"
@@ -399,7 +416,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Vitórias"
+                            android:text="@string/dialog_player_card_text_19"
                             android:textSize="11sp"
                             android:textAllCaps="true"
                             android:textColor="@android:color/white"
@@ -422,7 +439,7 @@
                             android:id="@+id/tvMvp"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/dialog_player_card_text_20"
                             android:textSize="22sp"
                             android:textStyle="bold"
                             android:textColor="@android:color/white"
@@ -435,7 +452,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="MVP"
+                            android:text="@string/dialog_player_card_text_21"
                             android:textSize="11sp"
                             android:textAllCaps="true"
                             android:textColor="@android:color/white"
@@ -458,7 +475,7 @@
                             android:id="@+id/tvSaves"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="@string/dialog_player_card_text_22"
                             android:textSize="22sp"
                             android:textStyle="bold"
                             android:textColor="@android:color/white"
@@ -471,7 +488,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Defesas"
+                            android:text="@string/dialog_player_card_text_23"
                             android:textSize="11sp"
                             android:textAllCaps="true"
                             android:textColor="@android:color/white"
@@ -492,7 +509,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp"
-                android:text="PERFIL TÁTICO"
+                android:text="@string/dialog_player_card_text_24"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white"
@@ -530,7 +547,7 @@
                             android:layout_centerInParent="true"
                             app:indicatorSize="52dp"
                             app:trackThickness="4dp"
-                            app:indicatorColor="@color/accent"
+                            app:indicatorColor="?attr/colorTertiary"
                             app:trackColor="#4DFFFFFF"
                             tools:progress="75" />
 
@@ -539,7 +556,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
-                            android:text="3.8"
+                            android:text="@string/dialog_player_card_text_25"
                             android:textSize="16sp"
                             android:textStyle="bold"
                             android:textColor="@android:color/white"
@@ -554,7 +571,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="ATK"
+                        android:text="@string/dialog_player_card_text_26"
                         android:textSize="11sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -584,7 +601,7 @@
                             android:layout_centerInParent="true"
                             app:indicatorSize="52dp"
                             app:trackThickness="4dp"
-                            app:indicatorColor="@color/accent"
+                            app:indicatorColor="?attr/colorTertiary"
                             app:trackColor="#4DFFFFFF"
                             tools:progress="80" />
 
@@ -593,7 +610,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
-                            android:text="4.0"
+                            android:text="@string/dialog_player_card_text_27"
                             android:textSize="16sp"
                             android:textStyle="bold"
                             android:textColor="@android:color/white"
@@ -608,7 +625,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="MID"
+                        android:text="@string/dialog_player_card_text_28"
                         android:textSize="11sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -638,7 +655,7 @@
                             android:layout_centerInParent="true"
                             app:indicatorSize="52dp"
                             app:trackThickness="4dp"
-                            app:indicatorColor="@color/accent"
+                            app:indicatorColor="?attr/colorTertiary"
                             app:trackColor="#4DFFFFFF"
                             tools:progress="70" />
 
@@ -647,7 +664,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
-                            android:text="3.5"
+                            android:text="@string/dialog_player_card_text_29"
                             android:textSize="16sp"
                             android:textStyle="bold"
                             android:textColor="@android:color/white"
@@ -662,7 +679,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="DEF"
+                        android:text="@string/dialog_player_card_text_30"
                         android:textSize="11sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -692,7 +709,7 @@
                             android:layout_centerInParent="true"
                             app:indicatorSize="52dp"
                             app:trackThickness="4dp"
-                            app:indicatorColor="@color/accent"
+                            app:indicatorColor="?attr/colorTertiary"
                             app:trackColor="#4DFFFFFF"
                             tools:progress="60" />
 
@@ -701,7 +718,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
-                            android:text="3.0"
+                            android:text="@string/dialog_player_card_text_31"
                             android:textSize="16sp"
                             android:textStyle="bold"
                             android:textColor="@android:color/white"
@@ -716,7 +733,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="GK"
+                        android:text="@string/dialog_player_card_text_32"
                         android:textSize="11sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -737,3 +754,4 @@
     </com.google.android.material.card.MaterialCardView>
 
 </FrameLayout>
+

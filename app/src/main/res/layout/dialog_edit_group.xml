@@ -17,7 +17,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Editar Grupo"
+            android:text="@string/dialog_edit_group_text_1"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -26,7 +26,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Fechar"
+            android:contentDescription="@string/dialog_edit_group_contentdescription_2"
             android:src="@drawable/ic_close" />
 
     </LinearLayout>
@@ -59,7 +59,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Alterar foto"
+            android:text="@string/dialog_edit_group_text_3"
             app:icon="@drawable/ic_add" />
 
     </LinearLayout>
@@ -69,7 +69,7 @@
         android:id="@+id/tilGroupName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nome do Grupo"
+        android:hint="@string/dialog_edit_group_hint_4"
         app:counterEnabled="true"
         app:counterMaxLength="50"
         app:errorEnabled="true">
@@ -89,7 +89,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:hint="Descricao (opcional)"
+        android:hint="@string/dialog_edit_group_hint_5"
         app:counterEnabled="true"
         app:counterMaxLength="200">
 
@@ -110,6 +110,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:enabled="false"
-        android:text="Salvar Alteracoes" />
+        android:text="@string/dialog_edit_group_text_6" />
 
 </LinearLayout>

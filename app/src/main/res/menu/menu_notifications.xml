@@ -4,12 +4,12 @@
 
     <item
         android:id="@+id/action_mark_all_read"
-        android:title="Marcar todas como lidas"
+        android:title="@string/menu_notifications_title_1"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_delete_old"
-        android:title="Limpar antigas"
+        android:title="@string/menu_notifications_title_2"
         app:showAsAction="never" />
 
 </menu>

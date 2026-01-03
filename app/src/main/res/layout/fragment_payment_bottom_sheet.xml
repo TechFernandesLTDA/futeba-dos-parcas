@@ -19,7 +19,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Pagamento via Pix"
+        android:text="@string/fragment_payment_bottom_sheet_text_1"
         android:textSize="20sp"
         android:textStyle="bold"
         android:layout_marginBottom="8dp"
@@ -48,7 +48,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Código Pix Copia e Cola"
+        android:text="@string/fragment_payment_bottom_sheet_text_2"
         android:textColor="?attr/colorOnSurfaceVariant"
         android:textSize="12sp"
         android:layout_marginBottom="4dp"/>
@@ -82,7 +82,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:icon="@android:drawable/ic_menu_save"
-            android:text="Copiar"/>
+            android:text="@string/fragment_payment_bottom_sheet_text_3"/>
     </LinearLayout>
 
     <Button
@@ -90,7 +90,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="Já Realizei o Pagamento"
+        android:text="@string/fragment_payment_bottom_sheet_text_4"
         android:enabled="false"/>
 
     <ProgressBar

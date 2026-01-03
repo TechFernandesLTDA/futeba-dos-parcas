@@ -54,12 +54,16 @@ class LeagueViewModel @Inject constructor(
     /**
      * Carrega dados da liga
      */
+    private val _userCache = mutableMapOf<String, User>()
+
+    /**
+     * Carrega dados da liga em tempo real
+     */
     fun loadLeagueData() {
         viewModelScope.launch {
             _uiState.value = LeagueUiState.Loading
 
             try {
-                // Buscar temporada ativa
                 val seasonResult = gamificationRepository.getActiveSeason()
                 val season = seasonResult.getOrNull()
 
@@ -68,35 +72,43 @@ class LeagueViewModel @Inject constructor(
                     return@launch
                 }
 
-                // Buscar ranking completo
-                val rankingResult = gamificationRepository.getSeasonRanking(season.id, limit = 100)
-                val allParticipations = rankingResult.getOrThrow()
+                // Iniciar observação do ranking
+                gamificationRepository.observeSeasonRanking(season.id, limit = 100).collect { participations ->
+                    // 1. Identificar usuários faltantes no cache
+                    val missingUserIds = participations.map { it.userId }
+                        .filter { !_userCache.containsKey(it) }
+                        .distinct()
 
-                // Buscar dados dos usuários
-                val rankingWithUsers = loadUserDataForRanking(allParticipations)
+                    // 2. Buscar dados dos faltantes
+                    if (missingUserIds.isNotEmpty()) {
+                        fetchMissingUsers(missingUserIds)
+                    }
 
-                // Buscar minha participação
-                val currentUserId = authRepository.getCurrentUserId()
-                val myParticipation = if (currentUserId != null) {
-                    allParticipations.find { it.userId == currentUserId }
-                } else {
-                    null
+                    // 3. Montar RankingItems
+                    val rankingItems = participations.mapNotNull { part ->
+                         _userCache[part.userId]?.let { user ->
+                             RankingItem(participation = part, user = user)
+                         }
+                    }
+
+                    // 4. Identificar usuário atual
+                    val currentUserId = authRepository.getCurrentUserId()
+                    val myParticipation = participations.find { it.userId == currentUserId }
+                    val myPosition = if (myParticipation != null) {
+                        participations.indexOf(myParticipation) + 1
+                    } else null
+
+                    // 5. Atualizar Estado
+                    _uiState.value = LeagueUiState.Success(
+                        season = season,
+                        allRankings = rankingItems,
+                        myParticipation = myParticipation,
+                        myPosition = myPosition,
+                        selectedDivision = ( _uiState.value as? LeagueUiState.Success)?.selectedDivision 
+                            ?: myParticipation?.division 
+                            ?: LeagueDivision.BRONZE
+                    )
                 }
-
-                // Calcular minha posição
-                val myPosition = if (myParticipation != null) {
-                    allParticipations.indexOf(myParticipation) + 1
-                } else {
-                    null
-                }
-
-                _uiState.value = LeagueUiState.Success(
-                    season = season,
-                    allRankings = rankingWithUsers,
-                    myParticipation = myParticipation,
-                    myPosition = myPosition,
-                    selectedDivision = myParticipation?.division ?: LeagueDivision.BRONZE
-                )
 
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao carregar dados da liga", e)
@@ -105,30 +117,27 @@ class LeagueViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Carrega dados dos usuários para o ranking
-     */
-    private suspend fun loadUserDataForRanking(participations: List<SeasonParticipationV2>): List<RankingItem> {
-        return participations.mapNotNull { participation ->
-            try {
-                val userDoc = firestore.collection("users")
-                    .document(participation.userId)
+    private suspend fun fetchMissingUsers(userIds: List<String>) {
+        // Firestore "in" query supporta max 10, então fazemos em chunks ou individualmente
+        // Como o ranking é limitado a 100, ok fazer loop ou chunks
+        val chunks = userIds.chunked(10)
+        
+        chunks.forEach { chunk ->
+             try {
+                val snapshot = firestore.collection("users")
+                    .whereIn("id", chunk)
                     .get()
                     .await()
-
-                val user = userDoc.toObject(User::class.java)
-                if (user != null) {
-                    RankingItem(
-                        participation = participation,
-                        user = user
-                    )
-                } else {
-                    null
+                
+                snapshot.documents.forEach { doc ->
+                    val user = doc.toObject(User::class.java)
+                    if (user != null) {
+                        _userCache[user.id] = user
+                    }
                 }
-            } catch (e: Exception) {
-                AppLogger.e(TAG, "Erro ao buscar usuário ${participation.userId}", e)
-                null
-            }
+             } catch (e: Exception) {
+                 AppLogger.e(TAG, "Erro ao buscar users batch", e)
+             }
         }
     }
 

@@ -24,6 +24,62 @@
         <item>dark</item>
         <item>system</item>
     </string-array>
+
+    <string-array name="gender_entries">
+        <item>Masculino</item>
+        <item>Feminino</item>
+        <item>Outro</item>
+        <item>Prefiro não informar</item>
+    </string-array>
+    <string-array name="gender_values">
+        <item>MALE</item>
+        <item>FEMALE</item>
+        <item>OTHER</item>
+        <item>NOT_INFORMED</item>
+    </string-array>
+
+    <string-array name="dominant_foot_entries">
+        <item>Destro</item>
+        <item>Canhoto</item>
+        <item>Ambidestro</item>
+    </string-array>
+    <string-array name="dominant_foot_values">
+        <item>RIGHT</item>
+        <item>LEFT</item>
+        <item>BOTH</item>
+    </string-array>
+
+    <string-array name="position_entries">
+        <item>Atacante</item>
+        <item>Meio-campo</item>
+        <item>Defensor</item>
+        <item>Goleiro</item>
+        <item>Versátil</item>
+    </string-array>
+    <string-array name="position_values">
+        <item>STRIKER</item>
+        <item>MIDFIELDER</item>
+        <item>DEFENDER</item>
+        <item>GOALKEEPER</item>
+        <item>VERSATILE</item>
+    </string-array>
+
+    <string-array name="play_style_entries">
+        <item>Finalizador</item>
+        <item>Construtor</item>
+        <item>Marcador</item>
+        <item>Velocidade</item>
+        <item>Técnico</item>
+        <item>Versátil</item>
+    </string-array>
+    <string-array name="play_style_values">
+        <item>FINISHER</item>
+        <item>PLAYMAKER</item>
+        <item>MARKER</item>
+        <item>SPEED</item>
+        <item>TECHNICAL</item>
+        <item>VERSATILE</item>
+    </string-array>
     <string-array name="regions_array">
         <item>Portão/Água Verde</item>
         <item>CIC/Campo Comprido</item>

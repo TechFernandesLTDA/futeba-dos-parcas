@@ -10,7 +10,7 @@
         android:id="@+id/tvDialogTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Selecionar Local"
+        android:text="@string/dialog_select_location_text_1"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="?attr/colorOnSurface"
@@ -22,7 +22,7 @@
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Buscar local..."
+        android:hint="@string/dialog_select_location_hint_2"
         app:startIconDrawable="@android:drawable/ic_menu_search"
         app:boxCornerRadiusTopStart="12dp"
         app:boxCornerRadiusTopEnd="12dp"
@@ -49,7 +49,7 @@
         android:id="@+id/tvRecentLocations"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Locais salvos"
+        android:text="@string/dialog_select_location_text_3"
         android:textSize="14sp"
         android:textColor="?attr/colorOnSurfaceVariant"
         android:layout_marginTop="16dp"
@@ -67,7 +67,7 @@
         android:id="@+id/tvEmptyState"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Nenhum local encontrado.\nDigite para buscar no Google Maps."
+        android:text="@string/dialog_select_location_text_4"
         android:textSize="14sp"
         android:textColor="?attr/colorOnSurfaceVariant"
         android:gravity="center"
@@ -87,7 +87,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="8dp"
-            android:text="Cancelar"
+            android:text="@string/dialog_select_location_text_5"
             app:cornerRadius="12dp" />
 
         <com.google.android.material.button.MaterialButton
@@ -96,7 +96,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="8dp"
-            android:text="Confirmar"
+            android:text="@string/dialog_select_location_text_6"
             android:enabled="false"
             app:cornerRadius="12dp" />
 

@@ -1,10 +1,12 @@
 package com.futebadosparcas.ui.profile
 
+import android.app.DatePickerDialog
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -14,10 +16,16 @@ import androidx.navigation.fragment.findNavController
 import coil.load
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.FieldType
+import com.futebadosparcas.data.model.PerformanceRatingCalculator
 import com.futebadosparcas.databinding.FragmentEditProfileBinding
 import com.futebadosparcas.util.PreferencesManager
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -29,6 +37,17 @@ class EditProfileFragment : Fragment() {
     private val viewModel: ProfileViewModel by viewModels()
 
     private var selectedImageUri: Uri? = null
+    private var selectedBirthDate: Date? = null
+    private val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+
+    private lateinit var genderEntries: Array<String>
+    private lateinit var genderValues: Array<String>
+    private lateinit var footEntries: Array<String>
+    private lateinit var footValues: Array<String>
+    private lateinit var positionEntries: Array<String>
+    private lateinit var positionValues: Array<String>
+    private lateinit var playStyleEntries: Array<String>
+    private lateinit var playStyleValues: Array<String>
 
     @Inject
     lateinit var preferencesManager: PreferencesManager
@@ -71,6 +90,8 @@ class EditProfileFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupClickListeners()
+        setupDropdowns()
+        setupBirthDatePicker()
         observeViewModel()
         viewModel.loadProfile()
     }
@@ -116,6 +137,97 @@ class EditProfileFragment : Fragment() {
         }
     }
 
+    private fun setupDropdowns() {
+        genderEntries = resources.getStringArray(R.array.gender_entries)
+        genderValues = resources.getStringArray(R.array.gender_values)
+        footEntries = resources.getStringArray(R.array.dominant_foot_entries)
+        footValues = resources.getStringArray(R.array.dominant_foot_values)
+        positionEntries = resources.getStringArray(R.array.position_entries)
+        positionValues = resources.getStringArray(R.array.position_values)
+        playStyleEntries = resources.getStringArray(R.array.play_style_entries)
+        playStyleValues = resources.getStringArray(R.array.play_style_values)
+
+        binding.etGender.setAdapter(
+            ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, genderEntries)
+        )
+        binding.etDominantFoot.setAdapter(
+            ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, footEntries)
+        )
+        binding.etPrimaryPosition.setAdapter(
+            ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, positionEntries)
+        )
+        binding.etSecondaryPosition.setAdapter(
+            ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, positionEntries)
+        )
+        binding.etPlayStyle.setAdapter(
+            ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, playStyleEntries)
+        )
+    }
+
+    private fun setupBirthDatePicker() {
+        binding.tilBirthDate.setEndIconOnClickListener {
+            openBirthDatePicker()
+        }
+        binding.etBirthDate.setOnClickListener {
+            openBirthDatePicker()
+        }
+    }
+
+    private fun openBirthDatePicker() {
+        val calendar = Calendar.getInstance()
+        selectedBirthDate?.let { calendar.time = it } ?: calendar.add(Calendar.YEAR, -18)
+
+        DatePickerDialog(
+            requireContext(),
+            { _, year, month, dayOfMonth ->
+                val selected = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, year)
+                    set(Calendar.MONTH, month)
+                    set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                selectedBirthDate = selected.time
+                binding.etBirthDate.setText(dateFormatter.format(selected.time))
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).show()
+    }
+
+    private fun mapEntryToValue(
+        selected: String,
+        entries: Array<String>,
+        values: Array<String>
+    ): String? {
+        if (selected.isBlank()) return null
+        val index = entries.indexOf(selected)
+        return if (index >= 0 && index < values.size) values[index] else selected
+    }
+
+    private fun setDropdownValue(
+        value: String?,
+        entries: Array<String>,
+        values: Array<String>,
+        field: MaterialAutoCompleteTextView
+    ) {
+        if (value.isNullOrBlank()) {
+            field.setText("", false)
+            return
+        }
+        val index = values.indexOf(value)
+        val displayValue = if (index >= 0 && index < entries.size) entries[index] else value
+        field.setText(displayValue, false)
+    }
+
+    private fun formatRating(value: Double): String {
+        if (value <= 0.0) return "-"
+        return String.format(Locale.getDefault(), "%.1f", value)
+    }
+
     private fun isImageSizeValid(uri: Uri): Boolean {
         return try {
             val cursor = requireContext().contentResolver.query(uri, null, null, null, null)
@@ -149,7 +261,34 @@ class EditProfileFragment : Fragment() {
             val def = binding.sliderDefender.value.toDouble()
             val gk = binding.sliderGk.value.toDouble()
 
-            viewModel.updateProfile(name, nickname, preferredFieldTypes, selectedImageUri, striker, mid, def, gk)
+            val gender = mapEntryToValue(binding.etGender.text.toString(), genderEntries, genderValues)
+            val dominantFoot = mapEntryToValue(binding.etDominantFoot.text.toString(), footEntries, footValues)
+            val primaryPosition = mapEntryToValue(binding.etPrimaryPosition.text.toString(), positionEntries, positionValues)
+            val secondaryPosition = mapEntryToValue(binding.etSecondaryPosition.text.toString(), positionEntries, positionValues)
+            val playStyle = mapEntryToValue(binding.etPlayStyle.text.toString(), playStyleEntries, playStyleValues)
+            val experienceYears = binding.etExperienceYears.text?.toString()?.toIntOrNull()
+            val heightCm = binding.etHeight.text?.toString()?.toIntOrNull()
+            val weightKg = binding.etWeight.text?.toString()?.toIntOrNull()
+
+            viewModel.updateProfile(
+                name,
+                nickname,
+                preferredFieldTypes,
+                selectedImageUri,
+                striker,
+                mid,
+                def,
+                gk,
+                selectedBirthDate,
+                gender,
+                heightCm,
+                weightKg,
+                dominantFoot,
+                primaryPosition,
+                secondaryPosition,
+                playStyle,
+                experienceYears
+            )
         } else {
             Toast.makeText(requireContext(), "Preencha o nome e selecione ao menos um tipo de campo", Toast.LENGTH_SHORT).show()
         }
@@ -174,6 +313,20 @@ class EditProfileFragment : Fragment() {
                         binding.uploadProgress.visibility = View.GONE
                         binding.etName.setText(state.user.name)
                         binding.etNickname.setText(state.user.nickname)
+                        selectedBirthDate = state.user.birthDate
+                        binding.etBirthDate.setText(
+                            state.user.birthDate?.let { dateFormatter.format(it) } ?: ""
+                        )
+
+                        setDropdownValue(state.user.gender, genderEntries, genderValues, binding.etGender)
+                        setDropdownValue(state.user.dominantFoot, footEntries, footValues, binding.etDominantFoot)
+                        setDropdownValue(state.user.primaryPosition, positionEntries, positionValues, binding.etPrimaryPosition)
+                        setDropdownValue(state.user.secondaryPosition, positionEntries, positionValues, binding.etSecondaryPosition)
+                        setDropdownValue(state.user.playStyle, playStyleEntries, playStyleValues, binding.etPlayStyle)
+
+                        binding.etHeight.setText(state.user.heightCm?.toString() ?: "")
+                        binding.etWeight.setText(state.user.weightKg?.toString() ?: "")
+                        binding.etExperienceYears.setText(state.user.experienceYears?.toString() ?: "")
                         state.user.photoUrl?.let {
                             binding.ivProfile.load(it) {
                                 crossfade(true)
@@ -198,6 +351,17 @@ class EditProfileFragment : Fragment() {
                                 else -> {}
                             }
                         }
+
+                        val autoRatings = state.statistics?.let { PerformanceRatingCalculator.fromStats(it) }
+                        val sampleSize = autoRatings?.sampleSize ?: 0
+                        binding.tvAutoRatingSubtitle.text = getString(
+                            R.string.fragment_edit_profile_text_22,
+                            sampleSize
+                        )
+                        binding.tvAutoStrikerValue.text = formatRating(autoRatings?.striker ?: 0.0)
+                        binding.tvAutoMidValue.text = formatRating(autoRatings?.mid ?: 0.0)
+                        binding.tvAutoDefValue.text = formatRating(autoRatings?.defender ?: 0.0)
+                        binding.tvAutoGkValue.text = formatRating(autoRatings?.gk ?: 0.0)
                     }
                     is ProfileUiState.ProfileUpdateSuccess -> {
                         binding.progressBar.visibility = View.GONE

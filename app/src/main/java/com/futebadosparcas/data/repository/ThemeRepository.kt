@@ -12,4 +12,5 @@ interface ThemeRepository {
     suspend fun setSecondaryColor(color: Int)
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun setContrastLevel(level: ContrastLevel)
+    suspend fun resetThemeConfig()
 }

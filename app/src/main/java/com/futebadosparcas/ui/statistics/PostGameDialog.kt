@@ -79,7 +79,7 @@ fun PostGameDialog(
                         Icon(
                             imageVector = Icons.Filled.Close,
                             contentDescription = "Fechar",
-                            tint = Color(FutebaColors.TextSecondary)
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -199,7 +199,7 @@ private fun XpBreakdownSection(breakdown: Map<String, Long>) {
                 text = "SUA JORNADA NA PARTIDA",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(FutebaColors.TextSecondary),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp),
                 letterSpacing = 0.5.sp
             )
@@ -215,7 +215,7 @@ private fun XpBreakdownSection(breakdown: Map<String, Long>) {
                         Text(
                             text = label,
                             fontSize = 14.sp,
-                            color = Color(FutebaColors.TextPrimary)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "+$xp XP",
@@ -265,12 +265,12 @@ private fun LevelProgressSection(
                 Text(
                     text = "Nivel $previousLevel",
                     fontSize = 14.sp,
-                    color = Color(FutebaColors.TextSecondary)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = " → ",
                     fontSize = 14.sp,
-                    color = Color(FutebaColors.TextSecondary)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "Nivel $newLevel - $newLevelName",
@@ -284,7 +284,7 @@ private fun LevelProgressSection(
                 text = "Nivel $newLevel",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(FutebaColors.TextPrimary)
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -304,7 +304,7 @@ private fun LevelProgressSection(
         Text(
             text = "${(progress * 100).toInt()}% para o proximo nivel",
             fontSize = 12.sp,
-            color = Color(FutebaColors.TextSecondary),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp)
         )
     }
@@ -362,7 +362,7 @@ private fun MilestonesUnlockedSection(
                     Text(
                         text = milestone.displayName,
                         fontSize = 14.sp,
-                        color = Color(FutebaColors.TextPrimary)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
