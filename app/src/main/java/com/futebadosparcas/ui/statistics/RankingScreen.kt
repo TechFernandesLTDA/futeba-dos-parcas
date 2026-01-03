@@ -71,7 +71,7 @@ fun RankingScreen(
                     AnimatedContent(
                         targetState = state.rankings,
                         transitionSpec = {
-                            fadeIn(animationSpec = tween(300)) with fadeOut(animationSpec = tween(150))
+                            fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(150))
                         },
                         label = "rankingContent"
                     ) { currentRankings ->
@@ -288,7 +288,7 @@ private fun PodiumPlayer(
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
-            color = Color(FutebaColors.TextPrimary)
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Text(
@@ -349,7 +349,7 @@ private fun RankingItem(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                color = Color(FutebaColors.TextSecondary)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -378,12 +378,12 @@ private fun RankingItem(
                     text = player.getDisplayName(),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(FutebaColors.TextPrimary)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "${player.gamesPlayed} jogos",
                     fontSize = 12.sp,
-                    color = Color(FutebaColors.TextSecondary)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -398,7 +398,7 @@ private fun RankingItem(
                 Text(
                     text = getCategoryUnit(category),
                     fontSize = 10.sp,
-                    color = Color(FutebaColors.TextSecondary)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -422,7 +422,7 @@ private fun MyPositionCard(position: Int, category: RankingCategory) {
             Text(
                 text = "Sua posicao:",
                 fontSize = 14.sp,
-                color = Color(FutebaColors.TextSecondary)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -444,14 +444,14 @@ private fun EmptyRankingMessage(modifier: Modifier = Modifier) {
         Text(
             text = "Nenhum dado disponivel",
             fontSize = 16.sp,
-            color = Color(FutebaColors.TextSecondary),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "Jogue mais partidas para aparecer no ranking!",
             fontSize = 14.sp,
-            color = Color(FutebaColors.TextSecondary),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
     }

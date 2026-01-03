@@ -2,6 +2,7 @@ package com.futebadosparcas.di
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.MemoryCacheSettings
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
@@ -39,7 +40,7 @@ object FirebaseModule {
             try {
                 firestore.useEmulator("10.0.2.2", 8085)
                 val settings = com.google.firebase.firestore.FirebaseFirestoreSettings.Builder()
-                    .setPersistenceEnabled(false)
+                    .setLocalCacheSettings(MemoryCacheSettings.newBuilder().build())
                     .build()
                 firestore.firestoreSettings = settings
             } catch (e: Exception) {

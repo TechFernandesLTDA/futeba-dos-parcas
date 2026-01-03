@@ -4,11 +4,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.futebadosparcas.databinding.FragmentPlayersBinding
+import com.futebadosparcas.ui.components.FutebaTopBar
+import com.futebadosparcas.ui.theme.FutebaTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -36,23 +41,32 @@ class PlayersFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         
         setupRecyclerView()
+        setupTopBar()
         setupHeader()
         setupListeners()
         observeViewModel()
     }
 
+    private fun setupTopBar() {
+        binding.composeTopBar.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val unreadCount by viewModel.unreadCount.collectAsState()
+                FutebaTheme {
+                    FutebaTopBar(
+                        unreadCount = unreadCount,
+                        onNavigateNotifications = { findNavController().navigate(com.futebadosparcas.R.id.action_global_notifications) },
+                        onNavigateGroups = { findNavController().navigate(com.futebadosparcas.R.id.action_global_groups) },
+                        onNavigateMap = { findNavController().navigate(com.futebadosparcas.R.id.action_global_map) }
+                    )
+                }
+            }
+        }
+    }
+
     private fun setupHeader() {
         binding.btnCompare.setOnClickListener {
             toggleComparisonMode()
-        }
-        binding.btnNotifications.setOnClickListener {
-            findNavController().navigate(com.futebadosparcas.R.id.action_global_notifications)
-        }
-        binding.btnGroups.setOnClickListener {
-            findNavController().navigate(com.futebadosparcas.R.id.action_global_groups)
-        }
-        binding.btnMap.setOnClickListener {
-            findNavController().navigate(com.futebadosparcas.R.id.action_global_map)
         }
     }
 
@@ -120,7 +134,8 @@ class PlayersFragment : Fragment() {
         })
 
         // Filtro por tipo de campo
-        binding.chipGroupFieldType.setOnCheckedChangeListener { _, checkedId ->
+        binding.chipGroupFieldType.setOnCheckedStateChangeListener { _, checkedIds ->
+            val checkedId = checkedIds.firstOrNull() ?: View.NO_ID
             val fieldType = when (checkedId) {
                 com.futebadosparcas.R.id.chipSociety -> com.futebadosparcas.data.model.FieldType.SOCIETY
                 com.futebadosparcas.R.id.chipFutsal -> com.futebadosparcas.data.model.FieldType.FUTSAL
@@ -131,7 +146,8 @@ class PlayersFragment : Fragment() {
         }
 
         // Ordenação
-        binding.chipGroupSort.setOnCheckedChangeListener { _, checkedId ->
+        binding.chipGroupSort.setOnCheckedStateChangeListener { _, checkedIds ->
+            val checkedId = checkedIds.firstOrNull() ?: View.NO_ID
             val sortOption = when (checkedId) {
                 com.futebadosparcas.R.id.chipSortStriker -> PlayersViewModel.SortOption.BEST_STRIKER
                 com.futebadosparcas.R.id.chipSortGK -> PlayersViewModel.SortOption.BEST_GK
@@ -167,16 +183,6 @@ class PlayersFragment : Fragment() {
                         binding.swipeRefresh.isRefreshing = false
                         android.widget.Toast.makeText(requireContext(), state.message, android.widget.Toast.LENGTH_LONG).show()
                     }
-                }
-            }
-        }
-
-        // Unread Count Observer
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.unreadCount.collect { count ->
-                binding.tvNotificationBadge.apply {
-                    text = count.toString()
-                    visibility = if (count > 0) View.VISIBLE else View.GONE
                 }
             }
         }

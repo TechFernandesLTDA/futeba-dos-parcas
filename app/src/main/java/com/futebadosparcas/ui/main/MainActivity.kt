@@ -1,6 +1,8 @@
 package com.futebadosparcas.ui.main
 
 import android.os.Bundle
+import android.os.Build
+import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -13,6 +15,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.futebadosparcas.R
 import com.futebadosparcas.databinding.ActivityMainBinding
+import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -51,12 +54,15 @@ class MainActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         // Adiciona padding para evitar sobreposição com as barras do sistema
+        val bottomNavBasePadding = binding.bottomNavigation.paddingBottom
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             view.updatePadding(top = systemBars.top)
+            binding.bottomNavigation.updatePadding(bottom = bottomNavBasePadding + systemBars.bottom)
             insets
         }
 
+        applySystemBars()
         setupNavigation()
         observeGamificationEvents()
         observePostGameEvents()
@@ -158,12 +164,12 @@ class MainActivity : AppCompatActivity() {
                  // We need to skip the initial value because it was already applied in onCreate
                  // However, stateFlow replays latest.
                  // Simple diff: Current theme vs New theme
-                 var currentPrimary = 0
+                 var currentConfig: com.futebadosparcas.data.model.AppThemeConfig? = null
                  themeRepository.themeConfig.collect { themeConfig ->
-                     if (currentPrimary != 0 && currentPrimary != themeConfig.seedColors.primary) {
+                     if (currentConfig != null && currentConfig != themeConfig) {
                          recreate()
                      }
-                     currentPrimary = themeConfig.seedColors.primary
+                     currentConfig = themeConfig
                  }
             }
         }
@@ -209,5 +215,25 @@ class MainActivity : AppCompatActivity() {
                 .newInstance(summary)
                 .show(fm, "PostGameDialog")
         }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun applySystemBars() {
+        val surface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, 0)
+        val surfaceVariant = MaterialColors.getColor(
+            this,
+            com.google.android.material.R.attr.colorSurfaceVariant,
+            surface
+        )
+        window.statusBarColor = surface
+        window.navigationBarColor = surfaceVariant
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
+        val insetsController = WindowCompat.getInsetsController(window, binding.root)
+        val isDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+        insetsController.isAppearanceLightStatusBars = !isDark
+        insetsController.isAppearanceLightNavigationBars = !isDark
     }
 }

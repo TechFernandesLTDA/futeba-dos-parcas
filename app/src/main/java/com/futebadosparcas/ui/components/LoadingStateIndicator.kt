@@ -34,7 +34,13 @@ fun LoadingStateIndicator(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     // Using value directly for compatibility
                     LinearProgressIndicator(
-                        progress = if (loadingState.total > 0) loadingState.current.toFloat() / loadingState.total.toFloat() else 0f,
+                        progress = {
+                            if (loadingState.total > 0) {
+                                loadingState.current.toFloat() / loadingState.total.toFloat()
+                            } else {
+                                0f
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth().height(8.dp),
                     )
                     Spacer(modifier = Modifier.height(8.dp))

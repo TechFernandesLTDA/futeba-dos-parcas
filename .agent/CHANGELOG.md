@@ -1,29 +1,43 @@
 # Changelog de Implementações
 
-**Última atualização**: 27/12/2024
+**Última atualização**: 06/01/2026
 
 Este arquivo consolida o histórico de todas as implementações significativas do projeto.
 
 ---
 
-## 📌 Status Atual
+## 🔄 Correções Recentes
 
-✅ **Build**: SUCCESS  
-📊 **Progresso**: ~89% completo  
-🔧 **Próxima Prioridade**: Testes manuais do fluxo de jogo completo
+### 06/01/2026
+
+- **Perfil do jogador**: novos campos (nascimento, gênero, medidas, pé dominante, posições, estilo e experiência) com validação e avatar.
+- **Autoavaliação inteligente**: notas calculadas a partir do desempenho real e combinadas com ratings manuais.
+- **Notas consistentes**: cartões, listas, comparador e balanceamento agora usam a nota efetiva.
+- **Tema e splash**: app inicia no modo claro e mostra a versão atual na splash/Sobre.
+- **Build & warnings**: ajustes de dependências, R8/proguard e supressão de avisos irrelevantes.
 
 ---
 
 ## 🔄 Correções Recentes
 
-### 27/12/2024
+## ð Status Atual
 
-- ✅ **FakeStatisticsRepository**: Adicionado método `getGoalsHistory()` que faltava
-- ✅ **Documentação**: Consolidação e sincronização de status entre arquivos
+â **Build**: SUCCESS  
+ð **Progresso**: ~89% completo  
+ð§ **PrÃ³xima Prioridade**: Testes manuais do fluxo de jogo completo
 
 ---
 
-## ✅ Implementações Concluídas (Por Data)
+## ð CorreÃ§Ãµes Recentes
+
+### 27/12/2024
+
+- â **FakeStatisticsRepository**: Adicionado mÃ©todo `getGoalsHistory()` que faltava
+- â **DocumentaÃ§Ã£o**: ConsolidaÃ§Ã£o e sincronizaÃ§Ã£o de status entre arquivos
+
+---
+
+## â ImplementaÃ§Ãµes ConcluÃ­das (Por Data)
 
 ### Rodada 4: Sistema Completo de Jogo ao Vivo
 
@@ -34,22 +48,22 @@ Este arquivo consolida o histórico de todas as implementações significativas 
 - `LiveStatsViewModel.kt` - Stats em tempo real
 - `LiveEventsViewModel.kt` - Timeline de eventos
 - `LiveGameFragment.kt` - Fragment com tabs
-- `LiveStatsFragment.kt` - Tab de estatísticas
+- `LiveStatsFragment.kt` - Tab de estatÃ­sticas
 - `LiveEventsFragment.kt` - Tab de eventos
 - `LiveStatsAdapter.kt` + `LiveEventsAdapter.kt`
 - `SelectPositionDialog.kt` - Dialog goleiro/linha
-- `AddEventDialog.kt` - Adicionar gols/cartões
+- `AddEventDialog.kt` - Adicionar gols/cartÃµes
 - `dialog_select_position.xml` + `dialog_add_event.xml`
 
 **Funcionalidades:**
 
-- ✅ Jogo ao vivo com tabs (Estatísticas/Eventos)
-- ✅ Placar atualizado em tempo real via Flow
-- ✅ Sistema de eventos (gols, defesas, cartões)
-- ✅ Timeline de eventos cronológica
-- ✅ Dialog de seleção de posição (Goleiro/Linha)
-- ✅ Validação de limite de goleiros
-- ✅ Botão finalizar jogo (apenas organizador)
+- â Jogo ao vivo com tabs (EstatÃ­sticas/Eventos)
+- â Placar atualizado em tempo real via Flow
+- â Sistema de eventos (gols, defesas, cartÃµes)
+- â Timeline de eventos cronolÃ³gica
+- â Dialog de seleÃ§Ã£o de posiÃ§Ã£o (Goleiro/Linha)
+- â ValidaÃ§Ã£o de limite de goleiros
+- â BotÃ£o finalizar jogo (apenas organizador)
 
 ---
 
@@ -63,14 +77,14 @@ Este arquivo consolida o histórico de todas as implementações significativas 
 
 **Funcionalidades:**
 
-- ✅ Geração de PIX simulado
-- ✅ QR Code + Copia e Cola
-- ✅ Integração com detalhes do jogo
-- ✅ Atualização de status (Pendente → Pago)
+- â GeraÃ§Ã£o de PIX simulado
+- â QR Code + Copia e Cola
+- â IntegraÃ§Ã£o com detalhes do jogo
+- â AtualizaÃ§Ã£o de status (Pendente â Pago)
 
 ---
 
-### Rodada 2: Gamificação (Liga/Badges)
+### Rodada 2: GamificaÃ§Ã£o (Liga/Badges)
 
 **Arquivos Criados:**
 
@@ -80,11 +94,11 @@ Este arquivo consolida o histórico de todas as implementações significativas 
 
 **Funcionalidades:**
 
-- ✅ Sistema de streaks (sequências)
-- ✅ Badges por conquistas
-- ✅ Seasons/Temporadas
-- ✅ Rankings por temporada
-- ✅ Tipos de badges: HAT_TRICK, PAREDAO, ARTILHEIRO_MES, etc.
+- â Sistema de streaks (sequÃªncias)
+- â Badges por conquistas
+- â Seasons/Temporadas
+- â Rankings por temporada
+- â Tipos de badges: HAT_TRICK, PAREDAO, ARTILHEIRO_MES, etc.
 
 ---
 
@@ -98,43 +112,43 @@ Este arquivo consolida o histórico de todas as implementações significativas 
 
 **Funcionalidades:**
 
-- ✅ Contador de confirmações corrigido
-- ✅ Status `LIVE` (Bola Rolando)
-- ✅ Sistema de posições (Goleiro/Linha)
-- ✅ Sorteio de times melhorado
-- ✅ Ferramentas de desenvolvedor com mock data
+- â Contador de confirmaÃ§Ãµes corrigido
+- â Status `LIVE` (Bola Rolando)
+- â Sistema de posiÃ§Ãµes (Goleiro/Linha)
+- â Sorteio de times melhorado
+- â Ferramentas de desenvolvedor com mock data
 
 ---
 
-## 🐛 Correções de Erros
+## ð CorreÃ§Ãµes de Erros
 
-| Erro | Solução | Data |
+| Erro | SoluÃ§Ã£o | Data |
 |------|---------|------|
-| `FakeStatisticsRepository` sem `getGoalsHistory()` | Implementado método | 27/12/2024 |
-| Redeclaração `PaymentStatus` | Movido para `Enums.kt` | Anterior |
-| Redeclaração `PlayerPosition` | Movido para `Enums.kt` | Anterior |
+| `FakeStatisticsRepository` sem `getGoalsHistory()` | Implementado mÃ©todo | 27/12/2024 |
+| RedeclaraÃ§Ã£o `PaymentStatus` | Movido para `Enums.kt` | Anterior |
+| RedeclaraÃ§Ã£o `PlayerPosition` | Movido para `Enums.kt` | Anterior |
 | Type Mismatch em `GamesFragment` | Alterado adapter | Anterior |
-| ViewPager2 não encontrado | Adicionado dependência | Anterior |
+| ViewPager2 nÃ£o encontrado | Adicionado dependÃªncia | Anterior |
 
 ---
 
-## 📊 Estatísticas Totais
+## ð EstatÃ­sticas Totais
 
-| Métrica | Valor |
+| MÃ©trica | Valor |
 |---------|-------|
 | Arquivos Criados | ~35 |
 | Arquivos Modificados | ~15 |
-| Linhas de Código | ~6.000+ |
+| Linhas de CÃ³digo | ~6.000+ |
 | Features Implementadas | 11 |
 
 ---
 
-## 📚 Documentação Relacionada
+## ð DocumentaÃ§Ã£o Relacionada
 
 - **PROJECT_STATE.md** - Estado atual de cada feature
-- **QUICK_REFERENCE.md** - Índice de navegação rápida
-- **GEMINI.md** - Instruções para o agente
+- **QUICK_REFERENCE.md** - Ãndice de navegaÃ§Ã£o rÃ¡pida
+- **GEMINI.md** - InstruÃ§Ãµes para o agente
 
 ---
 
-**Nota**: Os arquivos `FINAL_IMPLEMENTATION.md`, `IMPLEMENTATION_SUMMARY.md` e `IMPROVEMENTS_SUMMARY.md` contêm detalhes históricos e podem ser consultados para contexto adicional.
+**Nota**: Os arquivos `FINAL_IMPLEMENTATION.md`, `IMPLEMENTATION_SUMMARY.md` e `IMPROVEMENTS_SUMMARY.md` contÃªm detalhes histÃ³ricos e podem ser consultados para contexto adicional.

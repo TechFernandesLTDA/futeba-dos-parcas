@@ -1,4 +1,4 @@
-package com.futebadosparcas.ui.home.components
+﻿package com.futebadosparcas.ui.home.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.futebadosparcas.data.model.Activity
 import com.futebadosparcas.data.model.ActivityType
+import com.futebadosparcas.util.LevelBadgeHelper
+import androidx.compose.ui.res.painterResource
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -51,6 +53,7 @@ fun ActivityFeedSection(
             text = "Atividades Recentes",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
@@ -84,20 +87,33 @@ fun ActivityCard(activity: Activity) {
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon based on type
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(getActivityColor(activity.type).copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = getActivityIcon(activity.type),
-                    contentDescription = null,
-                    tint = getActivityColor(activity.type),
-                    modifier = Modifier.size(24.dp)
+            // Icon based on type - Show level badge for LEVEL_UP activities
+            val isLevelUp = ActivityType.values().find { it.name == activity.type } == ActivityType.LEVEL_UP
+            val level = (activity.metadata["level"] as? Number)?.toInt()
+
+            if (isLevelUp && level != null) {
+                // Show level badge
+                androidx.compose.foundation.Image(
+                    painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
+                    contentDescription = "Brasao de nivel $level",
+                    modifier = Modifier.size(40.dp)
                 )
+            } else {
+                // Show default icon
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(getActivityColor(activity.type).copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = getActivityIcon(activity.type),
+                        contentDescription = null,
+                        tint = getActivityColor(activity.type),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -111,13 +127,14 @@ fun ActivityCard(activity: Activity) {
                         text = activity.userName,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "• ${getRelativeTime(activity.createdAt)}",
+                        text = "- ${getRelativeTime(activity.createdAt)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -127,6 +144,7 @@ fun ActivityCard(activity: Activity) {
                     text = activity.title,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -166,7 +184,7 @@ fun getActivityIcon(type: String): ImageVector {
     return when (ActivityType.values().find { it.name == type }) {
         ActivityType.GAME_FINISHED -> Icons.Default.SportsSoccer
         ActivityType.BADGE_EARNED -> Icons.Default.EmojiEvents
-        ActivityType.LEVEL_UP -> Icons.Default.TrendingUp
+        ActivityType.LEVEL_UP -> Icons.AutoMirrored.Filled.TrendingUp
         ActivityType.MVP_EARNED -> Icons.Default.Star
         else -> Icons.Default.SportsSoccer
     }
@@ -200,3 +218,6 @@ fun getRelativeTime(date: java.util.Date?): String {
         else -> SimpleDateFormat("dd/MM", Locale.getDefault()).format(date)
     }
 }
+
+
+

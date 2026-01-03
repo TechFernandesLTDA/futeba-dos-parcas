@@ -5,6 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.google.android.material.snackbar.Snackbar
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -12,6 +15,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.futebadosparcas.R
 import com.futebadosparcas.databinding.FragmentGamesBinding
+import com.futebadosparcas.ui.components.FutebaTopBar
+import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.setDebouncedRefreshListener
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,7 +44,7 @@ class GamesFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
-        setupHeader()
+        setupTopBar()
         setupClickListeners()
         observeViewModel()
 
@@ -48,15 +53,20 @@ class GamesFragment : Fragment() {
 
     }
 
-    private fun setupHeader() {
-        binding.btnNotifications.setOnClickListener {
-            findNavController().navigate(R.id.action_global_notifications)
-        }
-        binding.btnGroups.setOnClickListener {
-            findNavController().navigate(R.id.action_global_groups)
-        }
-        binding.btnMap.setOnClickListener {
-            findNavController().navigate(R.id.action_global_map)
+    private fun setupTopBar() {
+        binding.composeTopBar.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val unreadCount by viewModel.unreadCount.collectAsState()
+                FutebaTheme {
+                    FutebaTopBar(
+                        unreadCount = unreadCount,
+                        onNavigateNotifications = { findNavController().navigate(R.id.action_global_notifications) },
+                        onNavigateGroups = { findNavController().navigate(R.id.action_global_groups) },
+                        onNavigateMap = { findNavController().navigate(R.id.action_global_map) }
+                    )
+                }
+            }
         }
     }
 
@@ -93,7 +103,8 @@ class GamesFragment : Fragment() {
             viewModel.loadGames(filterType)
         }
 
-        binding.chipGroupFilters.setOnCheckedChangeListener { _, checkedId ->
+        binding.chipGroupFilters.setOnCheckedStateChangeListener { _, checkedIds ->
+            val checkedId = checkedIds.firstOrNull() ?: View.NO_ID
             currentFilterId = checkedId
             val filterType = when (checkedId) {
                 R.id.chipOpen -> com.futebadosparcas.data.repository.GameFilterType.OPEN
@@ -175,14 +186,6 @@ class GamesFragment : Fragment() {
             }
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.unreadCount.collect { count ->
-                binding.tvNotificationBadge.apply {
-                    text = count.toString()
-                    visibility = if (count > 0) View.VISIBLE else View.GONE
-                }
-            }
-        }
     }
 
     private fun showLoading() {

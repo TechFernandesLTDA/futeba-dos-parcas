@@ -85,7 +85,7 @@ fun ChallengeCard(challenge: WeeklyChallenge, progress: UserChallengeProgress?) 
             Spacer(modifier = Modifier.height(12.dp))
             
             LinearProgressIndicator(
-                progress = percent,
+                progress = { percent },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)

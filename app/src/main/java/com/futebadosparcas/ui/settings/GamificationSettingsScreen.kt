@@ -145,7 +145,7 @@ fun SectionCard(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF333333))
             }
-            Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFEEEEEE))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFEEEEEE))
             content()
         }
     }

@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.3.0] - 2026-01-06
+
+### Added
+
+- **Perfil do Jogador**: novos campos de perfil (data de nascimento, genero, altura/peso, pe dominante, posicoes, estilo de jogo e experiencia).
+- **Autoavaliacao Inteligente**: notas automaticas calculadas com base no desempenho e exibicao dedicada no perfil.
+
+### Changed
+
+- **Consistencia de Ratings**: notas efetivas aplicadas em cards, comparador, lista de jogadores e balanceamento de times.
+- **Tema Padrao**: o app agora inicia no tema claro.
+
+### Fixed
+
+- **Tela Inicial**: ajuste no carregamento de "Meus Proximos Jogos" para evitar cards cortados.
+
 ## [1.1.5] - 2026-01-02
 
 ### Changed
