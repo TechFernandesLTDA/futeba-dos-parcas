@@ -15,9 +15,7 @@ import com.futebadosparcas.data.repository.LocationRepository
 import com.futebadosparcas.databinding.DialogSelectLocationBinding
 import com.futebadosparcas.util.AppLogger
 import com.google.android.libraries.places.api.Places
-import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.Place
-import com.google.android.libraries.places.api.model.TypeFilter
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.PlacesClient
@@ -263,9 +261,9 @@ class SelectLocationDialog : DialogFragment() {
 
         val placeFields = listOf(
             Place.Field.ID,
-            Place.Field.NAME,
-            Place.Field.ADDRESS,
-            Place.Field.LAT_LNG,
+            Place.Field.DISPLAY_NAME,
+            Place.Field.FORMATTED_ADDRESS,
+            Place.Field.LOCATION,
             Place.Field.ADDRESS_COMPONENTS
         )
 
@@ -288,12 +286,12 @@ class SelectLocationDialog : DialogFragment() {
                 lifecycleScope.launch {
                     val result = locationRepository.getOrCreateLocationFromPlace(
                         placeId = placeId,
-                        name = place.name ?: "",
-                        address = place.address ?: "",
+                        name = place.displayName ?: "",
+                        address = place.formattedAddress ?: "",
                         city = city,
                         state = state,
-                        latitude = place.latLng?.latitude,
-                        longitude = place.latLng?.longitude
+                        latitude = place.location?.latitude,
+                        longitude = place.location?.longitude
                     )
 
                     result.fold(

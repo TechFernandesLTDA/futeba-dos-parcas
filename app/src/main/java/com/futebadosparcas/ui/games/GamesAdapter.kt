@@ -53,7 +53,7 @@ class GamesAdapter(
 
             binding.btnQuickConfirm.setOnClickListener {
                 it.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
-                val position = adapterPosition
+                val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onQuickConfirm(getItem(position).game)
                 }
@@ -61,7 +61,7 @@ class GamesAdapter(
 
             binding.btnMap.setOnClickListener {
                 it.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
-                val position = adapterPosition
+                val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onMapClick(getItem(position).game)
                 }

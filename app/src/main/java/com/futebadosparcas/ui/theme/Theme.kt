@@ -1,12 +1,14 @@
 package com.futebadosparcas.ui.theme
 
 import android.app.Activity
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.futebadosparcas.data.model.AppThemeConfig
@@ -69,6 +71,7 @@ private val DarkColorScheme = darkColorScheme(
 
 // Mantendo compatibilidade com previews existentes
 @Composable
+@Suppress("DEPRECATION")
 fun FutebaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     themeConfig: AppThemeConfig? = null, // Config manual opcional
@@ -93,6 +96,7 @@ fun FutebaTheme(
         ThemeMode.SYSTEM -> darkTheme
     }
 
+    val context = LocalContext.current
     val colorScheme = DynamicThemeEngine.generateColorScheme(finalConfig, isDark)
 
     val view = LocalView.current
@@ -100,8 +104,14 @@ fun FutebaTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window
             window?.let {
-                it.statusBarColor = colorScheme.primary.toArgb()
-                WindowCompat.getInsetsController(it, view).isAppearanceLightStatusBars = !isDark
+                it.statusBarColor = colorScheme.surface.toArgb()
+                it.navigationBarColor = colorScheme.surfaceVariant.toArgb()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    it.isNavigationBarContrastEnforced = false
+                }
+                val insetsController = WindowCompat.getInsetsController(it, view)
+                insetsController.isAppearanceLightStatusBars = !isDark
+                insetsController.isAppearanceLightNavigationBars = !isDark
             }
         }
     }

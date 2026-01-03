@@ -1,6 +1,7 @@
 package com.futebadosparcas.ui.statistics
 
 import android.os.Bundle
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,8 +22,14 @@ class PostGameDialogFragment : DialogFragment() {
         setStyle(STYLE_NO_FRAME, android.R.style.Theme_Material_Light_Dialog_NoActionBar)
 
         arguments?.let { args ->
-            @Suppress("UNCHECKED_CAST")
-            val breakdown = (args.getSerializable(ARG_XP_BREAKDOWN) as? HashMap<String, Long>) ?: HashMap()
+            val rawBreakdown: HashMap<*, *>? =
+                getSerializableCompat(args, ARG_XP_BREAKDOWN, HashMap::class.java)
+            val breakdown = HashMap<String, Long>()
+            rawBreakdown?.forEach { (key, value) ->
+                if (key is String && value is Long) {
+                    breakdown[key] = value
+                }
+            }
             
             summary = PostGameSummary(
                 gameId = args.getString(ARG_GAME_ID, ""),
@@ -57,6 +64,19 @@ class PostGameDialogFragment : DialogFragment() {
                     }
                 }
             }
+        }
+    }
+
+    private fun <T : java.io.Serializable> getSerializableCompat(
+        bundle: Bundle,
+        key: String,
+        clazz: Class<T>
+    ): T? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            bundle.getSerializable(key, clazz)
+        } else {
+            @Suppress("DEPRECATION")
+            bundle.getSerializable(key)?.let { value -> clazz.cast(value) }
         }
     }
 

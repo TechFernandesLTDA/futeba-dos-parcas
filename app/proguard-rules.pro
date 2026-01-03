@@ -41,6 +41,13 @@
 # Firebase
 -keep class com.google.firebase.** { *; }
 -keep class com.google.android.gms.** { *; }
+-dontwarn com.google.android.libraries.places.internal.**
+-dontwarn com.google.android.gms.internal.location.**
+-dontwarn com.google.android.libraries.places.internal.zzbpg
+-dontwarn com.google.android.libraries.places.internal.zzbpn
+-dontwarn com.google.android.libraries.places.internal.zzboz
+-dontwarn com.google.android.libraries.places.internal.zzbou
+-dontwarn com.google.android.gms.internal.location.zze
 
 # MPAndroidChart
 -keep class com.github.mikephil.charting.** { *; }
@@ -53,3 +60,6 @@
 -keep class * extends androidx.room.RoomDatabase
 -keep @androidx.room.Entity class *
 -dontwarn androidx.room.paging.**
+
+# Silence benign R8 warnings from third-party libraries
+-ignorewarnings

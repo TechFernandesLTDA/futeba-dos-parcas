@@ -1,6 +1,7 @@
 package com.futebadosparcas.ui.livegame
 
 import android.os.Bundle
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -41,8 +42,8 @@ class AddEventDialog : DialogFragment() {
         super.onCreate(savedInstanceState)
         arguments?.let {
             gameId = it.getString(ARG_GAME_ID) ?: ""
-            team1 = it.getSerializable(ARG_TEAM1) as? Team ?: Team()
-            team2 = it.getSerializable(ARG_TEAM2) as? Team ?: Team()
+            team1 = getSerializableCompat(it, ARG_TEAM1, Team::class.java) ?: Team()
+            team2 = getSerializableCompat(it, ARG_TEAM2, Team::class.java) ?: Team()
         }
     }
 
@@ -65,7 +66,8 @@ class AddEventDialog : DialogFragment() {
     }
 
     private fun setupEventTypeChips() {
-        binding.chipGroupEventType.setOnCheckedChangeListener { _, checkedId ->
+        binding.chipGroupEventType.setOnCheckedStateChangeListener { _, checkedIds ->
+            val checkedId = checkedIds.firstOrNull() ?: View.NO_ID
             selectedEventType = when (checkedId) {
                 R.id.chipGoal -> GameEventType.GOAL
                 R.id.chipSave -> GameEventType.SAVE
@@ -105,7 +107,8 @@ class AddEventDialog : DialogFragment() {
         binding.chipTeam1.text = team1.name.ifEmpty { "Time 1" }
         binding.chipTeam2.text = team2.name.ifEmpty { "Time 2" }
 
-        binding.chipGroupTeam.setOnCheckedChangeListener { _, checkedId ->
+        binding.chipGroupTeam.setOnCheckedStateChangeListener { _, checkedIds ->
+            val checkedId = checkedIds.firstOrNull() ?: View.NO_ID
             selectedTeam = when (checkedId) {
                 R.id.chipTeam1 -> team1
                 R.id.chipTeam2 -> team2
@@ -204,6 +207,19 @@ class AddEventDialog : DialogFragment() {
         }
 
         dismiss()
+    }
+
+    private fun <T : java.io.Serializable> getSerializableCompat(
+        bundle: Bundle,
+        key: String,
+        clazz: Class<T>
+    ): T? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            bundle.getSerializable(key, clazz)
+        } else {
+            @Suppress("DEPRECATION")
+            bundle.getSerializable(key)?.let { value -> clazz.cast(value) }
+        }
     }
 
     override fun onDestroyView() {

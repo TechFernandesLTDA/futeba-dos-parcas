@@ -28,8 +28,8 @@ android {
         applicationId = "com.futebadosparcas"
         minSdk = 24
         targetSdk = 35
-        versionCode = 10
-        versionName = "1.1.5"
+        versionCode = 12
+        versionName = "1.3.0"
 
         val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
@@ -76,12 +76,18 @@ android {
         compose = true
     }
 
+    packaging {
+        jniLibs {
+            keepDebugSymbols += setOf("**/libandroidx.graphics.path.so")
+        }
+    }
+
 
 }
 
 dependencies {
     // Core Library Desugaring
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
 
     // Core Android
     implementation("androidx.core:core-ktx:1.15.0")
