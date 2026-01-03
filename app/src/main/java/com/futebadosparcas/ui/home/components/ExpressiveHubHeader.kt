@@ -24,6 +24,8 @@ import coil.compose.AsyncImage
 import com.futebadosparcas.ui.home.GamificationSummary
 import com.futebadosparcas.ui.theme.FutebaColors
 import com.futebadosparcas.util.HapticManager
+import com.futebadosparcas.util.LevelBadgeHelper
+import androidx.compose.ui.res.painterResource
 
 @Composable
 fun ExpressiveHubHeader(
@@ -59,20 +61,33 @@ fun ExpressiveHubHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Foto do Usuário
-                AsyncImage(
-                    model = user.photoUrl ?: com.futebadosparcas.R.drawable.ic_player_placeholder,
-                    contentDescription = "Foto do usuário",
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surface)
-                        .clickable { 
-                            hapticManager?.tick()
-                            onProfileClick() 
-                        },
-                    contentScale = ContentScale.Crop
-                )
+                // Foto do Usuário com Brasão
+                Box(
+                    modifier = Modifier.clickable {
+                        hapticManager?.tick()
+                        onProfileClick()
+                    }
+                ) {
+                    AsyncImage(
+                        model = user.photoUrl ?: com.futebadosparcas.R.drawable.ic_player_placeholder,
+                        contentDescription = "Foto do usuário",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surface),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    // Brasão de Nível
+                    androidx.compose.foundation.Image(
+                        painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(summary.level)),
+                        contentDescription = LevelBadgeHelper.getBadgeDescription(summary.level, summary.levelName),
+                        modifier = Modifier
+                            .size(28.dp)
+                            .align(Alignment.BottomEnd)
+                            .offset(x = 4.dp, y = 4.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.width(16.dp))
 

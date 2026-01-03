@@ -21,7 +21,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Futeba dos Parças"
+            android:text="@string/fragment_league_text_1"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="?attr/colorPrimary" />
@@ -46,7 +46,7 @@
                 android:padding="2dp"
                 android:minWidth="16dp"
                 android:gravity="center"
-                android:text="0"
+                android:text="@string/fragment_league_text_2"
                 android:visibility="gone"
                 android:layout_gravity="top|end"
                 android:layout_marginTop="4dp"
@@ -87,7 +87,7 @@
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="8dp"
-                app:cardBackgroundColor="@color/primary">
+                app:cardBackgroundColor="?attr/colorPrimary">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -99,7 +99,7 @@
                         android:id="@+id/tvSeasonName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Temporada 2024/2025"
+                        android:text="@string/fragment_league_text_3"
                         android:textSize="26sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -109,7 +109,7 @@
                         android:id="@+id/tvSeasonDates"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Janeiro - Dezembro 2025"
+                        android:text="@string/fragment_league_text_4"
                         android:textSize="15sp"
                         android:textColor="@android:color/white"
                         android:alpha="0.9"
@@ -132,7 +132,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Minha Posição"
+                                android:text="@string/fragment_league_text_5"
                                 android:textSize="15sp"
                                 android:textColor="@android:color/white"
                                 android:alpha="0.85" />
@@ -142,7 +142,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="#15"
+                                android:text="@string/fragment_league_text_6"
                                 android:textSize="52sp"
                                 android:textStyle="bold"
                                 android:textColor="@android:color/white" />
@@ -160,7 +160,7 @@
                                 android:id="@+id/tvMyDivision"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="🥈 Prata"
+                                android:text="@string/fragment_league_text_7"
                                 android:textSize="22sp"
                                 android:textStyle="bold"
                                 android:textColor="@android:color/white"
@@ -191,7 +191,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Pontos"
+                                android:text="@string/fragment_league_text_8"
                                 android:textSize="13sp"
                                 android:textColor="@android:color/white"
                                 android:alpha="0.8" />
@@ -200,7 +200,7 @@
                                 android:id="@+id/tvMyPoints"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="45"
+                                android:text="@string/fragment_league_text_9"
                                 android:textSize="24sp"
                                 android:textStyle="bold"
                                 android:textColor="@android:color/white"
@@ -219,7 +219,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Jogos"
+                                android:text="@string/fragment_league_text_10"
                                 android:textSize="13sp"
                                 android:textColor="@android:color/white"
                                 android:alpha="0.8" />
@@ -228,7 +228,7 @@
                                 android:id="@+id/tvMyGames"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="15"
+                                android:text="@string/fragment_league_text_11"
                                 android:textSize="24sp"
                                 android:textStyle="bold"
                                 android:textColor="@android:color/white"
@@ -247,7 +247,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Vitórias"
+                                android:text="@string/fragment_league_text_12"
                                 android:textSize="13sp"
                                 android:textColor="@android:color/white"
                                 android:alpha="0.8" />
@@ -256,7 +256,7 @@
                                 android:id="@+id/tvMyWins"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="10"
+                                android:text="@string/fragment_league_text_13"
                                 android:textSize="24sp"
                                 android:textStyle="bold"
                                 android:textColor="@android:color/white"
@@ -285,7 +285,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="⚽ Gols"
+                                android:text="@string/fragment_league_text_14"
                                 android:textSize="13sp"
                                 android:textColor="@android:color/white"
                                 android:alpha="0.8" />
@@ -294,7 +294,7 @@
                                 android:id="@+id/tvMyGoals"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="12"
+                                android:text="@string/fragment_league_text_15"
                                 android:textSize="20sp"
                                 android:textStyle="bold"
                                 android:textColor="@android:color/white"
@@ -313,7 +313,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Saldo"
+                                android:text="@string/fragment_league_text_16"
                                 android:textSize="13sp"
                                 android:textColor="@android:color/white"
                                 android:alpha="0.8" />
@@ -322,7 +322,7 @@
                                 android:id="@+id/tvMyGoalDiff"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="+5"
+                                android:text="@string/fragment_league_text_17"
                                 android:textSize="20sp"
                                 android:textStyle="bold"
                                 android:textColor="@android:color/white"
@@ -341,7 +341,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="⭐ MVP"
+                                android:text="@string/fragment_league_text_18"
                                 android:textSize="13sp"
                                 android:textColor="@android:color/white"
                                 android:alpha="0.8" />
@@ -350,7 +350,7 @@
                                 android:id="@+id/tvMyMvp"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="3"
+                                android:text="@string/fragment_league_text_19"
                                 android:textSize="20sp"
                                 android:textStyle="bold"
                                 android:textColor="@android:color/white"
@@ -373,8 +373,8 @@
                 android:minHeight="56dp"
                 app:tabMode="scrollable"
                 app:tabTextColor="?attr/colorOnSurface"
-                app:tabSelectedTextColor="@color/primary"
-                app:tabIndicatorColor="@color/primary"
+                app:tabSelectedTextColor="?attr/colorPrimary"
+                app:tabIndicatorColor="?attr/colorPrimary"
                 app:tabIndicatorHeight="4dp"
                 app:tabTextAppearance="@style/TextAppearance.Material3.TitleMedium"
                 app:tabPaddingStart="20dp"
@@ -383,22 +383,22 @@
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🥇 Ouro" />
+                    android:text="@string/fragment_league_text_20" />
 
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🥈 Prata" />
+                    android:text="@string/fragment_league_text_21" />
 
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🥉 Bronze" />
+                    android:text="@string/fragment_league_text_22" />
 
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="💎 Diamante" />
+                    android:text="@string/fragment_league_text_23" />
 
             </com.google.android.material.tabs.TabLayout>
 
@@ -406,7 +406,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ranking"
+                android:text="@string/fragment_league_text_24"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="?attr/colorOnSurface"
@@ -435,7 +435,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🏆"
+                    android:text="@string/fragment_league_text_25"
                     android:textSize="64sp"
                     android:alpha="0.3" />
 
@@ -443,7 +443,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="Nenhum jogador nesta divisão"
+                    android:text="@string/fragment_league_text_26"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -453,7 +453,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Jogue mais partidas para\nsubir no ranking!"
+                    android:text="@string/fragment_league_text_27"
                     android:textSize="16sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:gravity="center"
@@ -474,3 +474,4 @@
         android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

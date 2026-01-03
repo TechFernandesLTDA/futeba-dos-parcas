@@ -46,12 +46,16 @@
         <!-- Preferences Theme -->
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
 
+        <!-- AppBar/Toolbar defaults -->
+        <item name="appBarLayoutStyle">@style/FutebaAppBar</item>
+        <item name="toolbarStyle">@style/FutebaToolbar</item>
+
         <!-- Status Bar: White with dark icons (Duolingo style) -->
         <item name="android:statusBarColor">@color/background</item>
         <item name="android:windowLightStatusBar">true</item>
 
         <!-- Navigation Bar: White with dark icons -->
-        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/surface_variant</item>
 
         <!-- Material You dynamic colors disabled for consistency -->
         <item name="android:windowBackground">@color/background</item>
@@ -174,6 +178,26 @@
     <style name="FutebaChip.Selected" parent="FutebaChip">
         <item name="chipBackgroundColor">@color/primary</item>
         <item name="android:textColor">@color/on_primary</item>
+    </style>
+
+    <!-- ============================================== -->
+    <!-- APP BAR / TOOLBAR STYLES                      -->
+    <!-- ============================================== -->
+    <style name="FutebaAppBar" parent="Widget.Material3.AppBarLayout">
+        <item name="android:background">?attr/colorSurface</item>
+        <item name="android:elevation">0dp</item>
+    </style>
+
+    <style name="FutebaToolbar" parent="Widget.Material3.Toolbar">
+        <item name="android:background">?attr/colorSurface</item>
+        <item name="titleTextColor">?attr/colorPrimary</item>
+        <item name="subtitleTextColor">?attr/colorOnSurfaceVariant</item>
+        <item name="navigationIconTint">?attr/colorPrimary</item>
+        <item name="titleTextAppearance">@style/FutebaToolbarTitle</item>
+    </style>
+
+    <style name="FutebaToolbarTitle" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textStyle">bold</item>
     </style>
 
     <!-- ============================================== -->

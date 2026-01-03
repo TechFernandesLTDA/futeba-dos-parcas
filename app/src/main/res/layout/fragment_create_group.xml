@@ -2,9 +2,11 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
 
     <com.google.android.material.appbar.AppBarLayout
+        style="@style/FutebaAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -50,7 +52,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Adicionar foto"
+                    android:text="@string/fragment_create_group_text_1"
                     app:icon="@drawable/ic_add" />
 
             </LinearLayout>
@@ -60,7 +62,7 @@
                 android:id="@+id/tilGroupName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Nome do Grupo"
+                android:hint="@string/fragment_create_group_hint_2"
                 app:counterEnabled="true"
                 app:counterMaxLength="50"
                 app:errorEnabled="true">
@@ -80,7 +82,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="Descricao (opcional)"
+                android:hint="@string/fragment_create_group_hint_3"
                 app:counterEnabled="true"
                 app:counterMaxLength="200">
 
@@ -98,7 +100,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="Apos criar o grupo, voce podera convidar jogadores."
+                android:text="@string/fragment_create_group_text_4"
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
             <com.google.android.material.button.MaterialButton
@@ -107,7 +109,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
                 android:enabled="false"
-                android:text="Criar Grupo" />
+                android:text="@string/fragment_create_group_text_5" />
 
             <ProgressBar
                 android:id="@+id/progressBar"

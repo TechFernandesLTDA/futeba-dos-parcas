@@ -83,7 +83,7 @@ class HomeViewModel @Inject constructor(
             _loadingState.value = LoadingState.LoadingProgress(40, 100, "Perfil carregado")
             
             val statsDeferred = async { statisticsRepository.getUserStatistics(userResult.getOrNull()?.id ?: "") }
-            val activitiesDeferred = async { activityRepository.getRecentActivities(20) }
+            val activitiesDeferred = async { activityRepository.getRecentActivities(100) }
             val publicGamesDeferred = async { gameRepository.getPublicGames(10) }
             val streakDeferred = async { gamificationRepository.getUserStreak(userResult.getOrNull()?.id ?: "") }
             val challengesDeferred = async { gamificationRepository.getActiveChallenges() }

@@ -24,9 +24,10 @@ object AppModule {
     @Singleton
     fun provideMatchFinalizationService(
         firestore: FirebaseFirestore,
-        settingsRepository: SettingsRepository
+        settingsRepository: SettingsRepository,
+        leagueService: LeagueService
     ): MatchFinalizationService {
-        return MatchFinalizationService(firestore, settingsRepository)
+        return MatchFinalizationService(firestore, settingsRepository, leagueService)
     }
 
     @Provides
@@ -49,7 +50,8 @@ object AppModule {
         matchFinalizationService: MatchFinalizationService,
         postGameEventEmitter: PostGameEventEmitter,
         matchManagementDataSource: com.futebadosparcas.data.datasource.MatchManagementDataSource,
-        teamBalancer: com.futebadosparcas.domain.ai.TeamBalancer
+        teamBalancer: com.futebadosparcas.domain.ai.TeamBalancer,
+        groupRepository: com.futebadosparcas.data.repository.GroupRepository
     ): GameRepository {
         return if (preferencesManager.isMockModeEnabled()) {
             FakeGameRepository()
@@ -63,7 +65,8 @@ object AppModule {
                 matchFinalizationService, 
                 postGameEventEmitter,
                 matchManagementDataSource,
-                teamBalancer
+                teamBalancer,
+                groupRepository
             )
         }
     }

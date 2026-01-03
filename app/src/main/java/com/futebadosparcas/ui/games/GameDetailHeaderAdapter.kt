@@ -9,6 +9,7 @@ import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.databinding.ItemGameDetailHeaderBinding
 import coil.load
 import coil.transform.CircleCropTransformation
+import java.util.Locale
 
 class GameDetailHeaderAdapter(
     private val onEditClick: () -> Unit,
@@ -102,7 +103,7 @@ class GameDetailHeaderAdapter(
                 tvPlayersCount.text = "$count/${game.maxPlayers}"
 
                 tvPrice.text = if (game.dailyPrice > 0) {
-                    "R$ ${String.format("%.2f", game.dailyPrice)}"
+                    "R$ ${String.format(Locale.getDefault(), "%.2f", game.dailyPrice)}"
                 } else {
                     "Grátis"
                 }

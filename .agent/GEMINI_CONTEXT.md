@@ -6,7 +6,7 @@ Este arquivo fornece contexto otimizado especificamente para o Gemini trabalhar 
 
 ```yaml
 projeto: "Futeba dos Parças - App Android de peladas"
-progresso: "75-80% completo"
+progresso: "~91% completo"
 linguagem: "Kotlin 2.0.21"
 arquitetura: "MVVM + Clean + Hilt"
 backend: "Firebase (Firestore/Auth/FCM)"
@@ -14,8 +14,8 @@ min_sdk: 24
 target_sdk: 35
 build_status: "✅ SUCCESS"
 
-prioridade_atual: "Completar gamificação (30% → 100%)"
-próxima_tarefa: "Criar LeagueViewModel.kt"
+prioridade_atual: "Refinar UX de badges e fluxo de jogo completo"
+próxima_tarefa: "Testar fluxo completo em produção"
 ```
 
 ## 🎯 Capacidades Específicas do Gemini
@@ -23,12 +23,14 @@ próxima_tarefa: "Criar LeagueViewModel.kt"
 ### Multimodal (Vantagem do Gemini)
 
 O Gemini pode processar:
+
 - ✅ **Screenshots de UI** - Mostrar prints para análise
 - ✅ **Diagramas de arquitetura** - Imagens de fluxo
 - ✅ **Wireframes** - Desenhos de UI
 - ✅ **Logos e assets** - Análise de design
 
 **Como usar:**
+
 ```
 "Veja este screenshot da tela de jogos e sugira melhorias"
 "Analise este diagrama de arquitetura e valide"
@@ -38,12 +40,14 @@ O Gemini pode processar:
 ### Code Execution (Vantagem do Gemini)
 
 O Gemini pode executar código Python para:
+
 - ✅ **Análise de dados** - Estatísticas de código
 - ✅ **Validação de padrões** - Verificar consistência
 - ✅ **Geração de relatórios** - Métricas do projeto
 - ✅ **Processamento de JSONs** - Análise de estruturas
 
 **Como usar:**
+
 ```python
 # Exemplo: Contar arquivos por feature
 import os
@@ -491,21 +495,21 @@ Use modo "Deep Think" para revisão profunda:
 
 ## 🎯 Modo de Uso Recomendado
 
-### Para tarefas de desenvolvimento:
+### Para tarefas de desenvolvimento
 
 1. **Leia**: `GEMINI.md` (instruções gerais)
 2. **Localize**: `.agent/QUICK_REFERENCE.md` (onde está o código)
 3. **Contextualize**: Este arquivo (detalhes específicos)
 4. **Execute**: Siga `.agentrules` (regras obrigatórias)
 
-### Para debugging:
+### Para debugging
 
 1. Use capacidades multimodal (screenshots de erros)
 2. Execute código Python para análise
 3. Consulte Firebase schema neste arquivo
 4. Verifique padrões em `.agentrules`
 
-### Para planejamento:
+### Para planejamento
 
 1. Leia `.agent/PROJECT_STATE.md` (status atual)
 2. Consulte roadmap e prioridades
@@ -527,6 +531,7 @@ Para maximizar eficiência do Gemini:
 ### 1. Firebase como Backend Único
 
 ⚠️ **IMPORTANTE**: Existe um backend Node.js no projeto, mas **NÃO está em uso**.
+
 - Apenas Firebase é usado atualmente
 - Backend Node.js está 5% implementado
 - Focar apenas em Firebase para desenvolvimento
@@ -553,6 +558,6 @@ Para maximizar eficiência do Gemini:
 
 ---
 
-**Última atualização**: 27/12/2024
+**Última atualização**: 06/01/2026
 **Gemini Version**: 2.0 Pro (Antigravity)
 **Context Window**: 2M tokens

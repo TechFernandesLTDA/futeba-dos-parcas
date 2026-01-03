@@ -2,11 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/menu_role_admin"
-        android:title="Tornar Administrador" />
+        android:title="@string/menu_user_roles_title_1" />
     <item
         android:id="@+id/menu_role_owner"
-        android:title="Tornar Dono de Quadra" />
+        android:title="@string/menu_user_roles_title_2" />
     <item
         android:id="@+id/menu_role_player"
-        android:title="Tornar Jogador Comum" />
+        android:title="@string/menu_user_roles_title_3" />
 </menu>

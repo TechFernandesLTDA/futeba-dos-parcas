@@ -17,11 +17,13 @@ import com.futebadosparcas.ui.home.components.ExpressiveHubHeader
 import com.futebadosparcas.ui.components.SyncStatusBanner
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.futebadosparcas.ui.components.FutebaTopBar
 import com.futebadosparcas.ui.home.components.ActivityFeedSection
 import com.futebadosparcas.ui.home.components.PublicGamesSuggestions
 import com.futebadosparcas.ui.home.components.StreakWidget
 import com.futebadosparcas.ui.home.components.ChallengesSection
 import com.futebadosparcas.ui.home.components.RecentBadgesCarousel
+import com.futebadosparcas.ui.home.components.WelcomeEmptyState
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.util.setDebouncedRefreshListener
@@ -53,6 +55,7 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
+        setupTopBar()
         setupComposeViews()
         observeViewModel()
 
@@ -65,23 +68,8 @@ class HomeFragment : Fragment() {
 
         viewModel.loadHomeData()
 
-        binding.fabCreateGame.setOnClickListener {
-            val action = HomeFragmentDirections.actionHomeToCreateGame(gameId = null)
-            findNavController().navigate(action)
-        }
 
-        binding.btnMap?.setOnClickListener {
-            findNavController().navigate(R.id.action_global_map)
-        }
 
-        binding.btnGroups?.setOnClickListener {
-            findNavController().navigate(R.id.action_global_groups)
-        }
-
-        binding.btnNotifications?.setOnClickListener {
-            findNavController().navigate(R.id.action_global_notifications)
-        }
-        
         binding.btnViewToggle?.setOnClickListener {
             viewModel.toggleViewMode()
         }
@@ -99,9 +87,23 @@ class HomeFragment : Fragment() {
         binding.rvUpcomingGames.apply {
             adapter = gamesAdapter
             layoutManager = LinearLayoutManager(requireContext())
-            setHasFixedSize(true)
+            setHasFixedSize(false)
             isNestedScrollingEnabled = false
         }
+
+        gamesAdapter.registerAdapterDataObserver(object : androidx.recyclerview.widget.RecyclerView.AdapterDataObserver() {
+            override fun onChanged() {
+                _binding?.rvUpcomingGames?.post { _binding?.rvUpcomingGames?.requestLayout() }
+            }
+
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                _binding?.rvUpcomingGames?.post { _binding?.rvUpcomingGames?.requestLayout() }
+            }
+
+            override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) {
+                _binding?.rvUpcomingGames?.post { _binding?.rvUpcomingGames?.requestLayout() }
+            }
+        })
     }
 
     private fun setupComposeViews() {
@@ -213,6 +215,23 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun setupTopBar() {
+        binding.composeTopBar.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val unreadCount by viewModel.unreadCount.collectAsState()
+                FutebaTheme {
+                    FutebaTopBar(
+                        unreadCount = unreadCount,
+                        onNavigateNotifications = { findNavController().navigate(R.id.action_global_notifications) },
+                        onNavigateGroups = { findNavController().navigate(R.id.action_global_groups) },
+                        onNavigateMap = { findNavController().navigate(R.id.action_global_map) }
+                    )
+                }
+            }
+        }
+    }
+
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.uiState.collect { state ->
@@ -222,14 +241,29 @@ class HomeFragment : Fragment() {
                             binding.shimmerViewContainer.visibility = View.VISIBLE
                             binding.shimmerViewContainer.startShimmer()
                         }
-                        binding.layoutEmpty.root.visibility = View.GONE
+                        binding.composeEmptyState.visibility = View.GONE
                     }
                     is HomeUiState.Success -> {
                         binding.shimmerViewContainer.stopShimmer()
                         binding.shimmerViewContainer.visibility = View.GONE
                         binding.swipeRefresh.isRefreshing = false
-                        binding.layoutEmpty.root.visibility = if (state.games.isEmpty()) View.VISIBLE else View.GONE
+                        binding.composeEmptyState.visibility = if (state.games.isEmpty()) View.VISIBLE else View.GONE
                         binding.rvUpcomingGames.visibility = if (state.games.isEmpty()) View.GONE else View.VISIBLE
+
+                        // Configurar estado vazio com dados do usuário
+                        if (state.games.isEmpty()) {
+                            binding.composeEmptyState.apply {
+                                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+                                setContent {
+                                    FutebaTheme {
+                                        WelcomeEmptyState(
+                                            userName = state.user.getDisplayName(),
+                                            userLevel = state.user.level
+                                        )
+                                    }
+                                }
+                            }
+                        }
                         
                         // Handle View Mode Toggle
                         val layoutManager = if (state.isGridView) {
@@ -241,6 +275,7 @@ class HomeFragment : Fragment() {
                         // Only change if different to avoid reset scroll
                         if (binding.rvUpcomingGames.layoutManager?.javaClass != layoutManager.javaClass) {
                             binding.rvUpcomingGames.layoutManager = layoutManager
+                            binding.rvUpcomingGames.post { binding.rvUpcomingGames.requestLayout() }
                         }
                         
                         binding.btnViewToggle?.setIconResource(
@@ -281,19 +316,6 @@ class HomeFragment : Fragment() {
                             viewModel.loadHomeData()
                         }.show()
                     }
-                }
-            }
-        }
-
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.unreadCount.collect { count ->
-                val badge = binding.tvNotificationBadge
-                if (count > 0) {
-                    badge.text = if (count > 99) "99+" else count.toString()
-                    badge.visibility = View.VISIBLE
-                } else {
-                    badge.visibility = View.GONE
                 }
             }
         }

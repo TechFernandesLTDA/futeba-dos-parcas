@@ -56,7 +56,7 @@
                 android:id="@+id/tvXp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="+10 XP"
+                android:text="@string/item_confirmation_text_1"
                 android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
                 android:textStyle="bold"
                 android:textColor="?attr/colorPrimary"
@@ -121,8 +121,8 @@
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Recusar"
-            android:textColor="@color/error"
+            android:text="@string/item_confirmation_text_2"
+            android:textColor="?attr/colorError"
             android:textSize="12sp"
             android:minWidth="0dp"
             android:paddingHorizontal="8dp" />
@@ -132,7 +132,7 @@
             style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Aceitar"
+            android:text="@string/item_confirmation_text_3"
             android:textSize="12sp"
             android:minWidth="0dp"
             android:paddingHorizontal="12dp"
@@ -153,3 +153,4 @@
         app:tint="?attr/colorError" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+

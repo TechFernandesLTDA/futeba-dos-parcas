@@ -4,12 +4,48 @@
     android:layout_height="match_parent"
     android:background="?attr/colorSurface">
 
-    <ImageView
-        android:layout_width="120dp"
-        android:layout_height="120dp"
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:src="@drawable/ic_launcher_foreground"
-        android:contentDescription="@string/app_name" />
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp">
+
+        <!-- Brasão do Jogador - Inicialmente invisível -->
+        <ImageView
+            android:id="@+id/ivLevelBadgeSplash"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:alpha="0"
+            android:scaleX="0.8"
+            android:scaleY="0.8"
+            android:contentDescription="@string/activity_splash_contentdescription_1" />
+
+        <!-- Logo do App -->
+        <ImageView
+            android:id="@+id/ivAppLogo"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="24dp"
+            android:src="@drawable/ic_launcher_foreground"
+            android:contentDescription="@string/app_name" />
+
+        <!-- Frase de Efeito -->
+        <TextView
+            android:id="@+id/tvSplashQuote"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/activity_splash_text_2"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+            android:textColor="?attr/colorPrimary"
+            android:textStyle="bold|italic"
+            android:textAlignment="center"
+            android:alpha="0.7"
+            android:paddingHorizontal="32dp" />
+
+    </LinearLayout>
 
     <include layout="@layout/layout_splash_branding" />
 

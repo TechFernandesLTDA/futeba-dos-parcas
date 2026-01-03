@@ -37,7 +37,7 @@ class FutebaApplication : Application() {
             )
         }
 
-        // Apply saved theme preference (default: system)
+        // Apply saved theme preference (default: light)
         val theme = preferencesManager.getThemePreference()
         ThemeHelper.applyTheme(theme)
     }

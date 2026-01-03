@@ -91,7 +91,7 @@
                     style="@style/Widget.Material3.Chip.Assist"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0 quadras"
+                    android:text="@string/item_manage_location_text_1"
                     app:chipIcon="@android:drawable/ic_dialog_map"
                     tools:text="8 quadras" />
 
@@ -135,7 +135,7 @@
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ver quadras"
+            android:text="@string/item_manage_location_text_2"
             app:icon="@drawable/ic_expand_more"
             app:iconGravity="end" />
 

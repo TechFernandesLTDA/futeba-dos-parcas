@@ -17,9 +17,11 @@ import com.futebadosparcas.R
 import com.futebadosparcas.databinding.FragmentProfileBinding
 import com.futebadosparcas.ui.auth.LoginActivity
 import com.futebadosparcas.util.LevelHelper
+import com.futebadosparcas.util.LevelBadgeHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @AndroidEntryPoint
 class ProfileFragment : Fragment() {
@@ -159,6 +161,13 @@ class ProfileFragment : Fragment() {
             }
         }
 
+        // Observar locais do dono
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.myLocations.collect { locations ->
+                updateMyLocationsCard(locations.size)
+            }
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.uiState.collect { state ->
                 when (state) {
@@ -255,10 +264,16 @@ class ProfileFragment : Fragment() {
                             if (state.isDevMode) View.VISIBLE else View.GONE
 
                         // Ratings com animação
-                        animateRating(binding.tvRatingAtaValue, binding.pbRatingAta, 0.0, state.user.strikerRating)
-                        animateRating(binding.tvRatingMeiValue, binding.pbRatingMei, 0.0, state.user.midRating)
-                        animateRating(binding.tvRatingDefValue, binding.pbRatingDef, 0.0, state.user.defenderRating)
-                        animateRating(binding.tvRatingGolValue, binding.pbRatingGol, 0.0, state.user.gkRating)
+                        animateRating(binding.tvRatingAtaValue, binding.pbRatingAta, 0.0, state.user.getEffectiveRating(com.futebadosparcas.data.model.PlayerRatingRole.STRIKER))
+                        animateRating(binding.tvRatingMeiValue, binding.pbRatingMei, 0.0, state.user.getEffectiveRating(com.futebadosparcas.data.model.PlayerRatingRole.MID))
+                        animateRating(binding.tvRatingDefValue, binding.pbRatingDef, 0.0, state.user.getEffectiveRating(com.futebadosparcas.data.model.PlayerRatingRole.DEFENDER))
+                        animateRating(binding.tvRatingGolValue, binding.pbRatingGol, 0.0, state.user.getEffectiveRating(com.futebadosparcas.data.model.PlayerRatingRole.GOALKEEPER))
+
+                        // Brasão de Nível
+                        binding.ivLevelBadgeProfile.setImageResource(LevelBadgeHelper.getBadgeForLevel(state.user.level))
+
+                        // Brasão no card de nível
+                        binding.ivLevelIcon.setImageResource(LevelBadgeHelper.getBadgeForLevel(state.user.level))
 
                         // XP e Nível com animação
                         updateLevelCard(state.user.level, state.user.experiencePoints)
@@ -277,7 +292,7 @@ class ProfileFragment : Fragment() {
                         binding.tvStatsCards.text = stats?.totalCards?.toString() ?: "0"
 
                         // Média de gols
-                        val avgGoals = stats?.avgGoalsPerGame?.let { String.format("%.1f", it) } ?: "0.0"
+                        val avgGoals = stats?.avgGoalsPerGame?.let { String.format(Locale.getDefault(), "%.1f", it) } ?: "0.0"
                         binding.tvStatsAvgGoals.text = avgGoals
                         
                         // Badges
@@ -321,7 +336,7 @@ class ProfileFragment : Fragment() {
                     return@addUpdateListener
                 }
                 val value = anim.animatedValue as Float
-                textView.text = String.format("%.1f", value)
+                textView.text = String.format(Locale.getDefault(), "%.1f", value)
                 val progress = ((value / 5.0) * 100).toInt()
                 progressIndicator.setProgressCompat(progress, true)
             }
@@ -382,6 +397,14 @@ class ProfileFragment : Fragment() {
 
     private fun updatePreferenceIcon(view: android.widget.ImageView, isEnabled: Boolean) {
         view.alpha = if (isEnabled) 1.0f else 0.2f
+    }
+
+    private fun updateMyLocationsCard(count: Int) {
+        binding.tvMyLocationsSubtitle.text = when (count) {
+            0 -> "Nenhum local cadastrado"
+            1 -> "1 local cadastrado"
+            else -> "$count locais cadastrados"
+        }
     }
 
     private fun navigateToLogin() {

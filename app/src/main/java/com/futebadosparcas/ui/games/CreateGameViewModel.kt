@@ -23,6 +23,7 @@ import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GameConfirmation
+import com.futebadosparcas.data.model.GameVisibility
 import javax.inject.Inject
 
 @HiltViewModel
@@ -76,6 +77,10 @@ class CreateGameViewModel @Inject constructor(
     private val _selectedGroup = MutableStateFlow<UserGroup?>(null)
     val selectedGroup: StateFlow<UserGroup?> = _selectedGroup
 
+    // Estado para visibilidade do jogo
+    private val _selectedVisibility = MutableStateFlow(GameVisibility.GROUP_ONLY)
+    val selectedVisibility: StateFlow<GameVisibility> = _selectedVisibility
+
     init {
         loadOwnerName()
         loadGroups()
@@ -92,6 +97,10 @@ class CreateGameViewModel @Inject constructor(
 
     fun selectGroup(group: UserGroup?) {
         _selectedGroup.value = group
+    }
+
+    fun setVisibility(visibility: GameVisibility) {
+        _selectedVisibility.value = visibility
     }
 
     private fun loadOwnerName() {
@@ -220,6 +229,9 @@ class CreateGameViewModel @Inject constructor(
                            groupName = game.groupName ?: ""
                        )
                    }
+
+                   // Carregar visibilidade
+                   _selectedVisibility.value = game.getVisibilityEnum()
 
                 } catch (e: Exception) {
                     // Continuar com valores vazios se parse falhar
@@ -363,6 +375,7 @@ class CreateGameViewModel @Inject constructor(
                 }
             }
 
+            val visibility = _selectedVisibility.value
             val game = Game(
                 id = gameId ?: _currentGameId ?: "",
                 scheduleId = scheduleId,
@@ -384,13 +397,16 @@ class CreateGameViewModel @Inject constructor(
                 recurrence = recurrence,
                 status = "SCHEDULED",
                 groupId = group?.id,
-                groupName = group?.groupName
+                groupName = group?.groupName,
+                visibility = visibility.name,
+                isPublic = visibility != GameVisibility.GROUP_ONLY,
+                dateTime = java.util.Date.from(selectedDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant())
             )
 
             if (game.id.isNotEmpty() && (gameId != null || _currentGameId != null)) {
                 gameRepository.updateGame(game).fold(
                     onSuccess = {
-                        if (group != null) summonGroupMembers(game)
+                        summonGroupMembers(game)
                         _uiState.value = CreateGameUiState.Success(game)
                     },
                     onFailure = { error ->
@@ -400,7 +416,7 @@ class CreateGameViewModel @Inject constructor(
             } else {
                 gameRepository.createGame(game).fold(
                     onSuccess = { savedGame ->
-                        if (group != null) summonGroupMembers(savedGame)
+                        summonGroupMembers(savedGame)
                         _uiState.value = CreateGameUiState.Success(savedGame)
                     },
                     onFailure = { error ->

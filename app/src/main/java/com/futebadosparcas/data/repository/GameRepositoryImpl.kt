@@ -38,7 +38,8 @@ class GameRepositoryImpl @Inject constructor(
     private val matchFinalizationService: com.futebadosparcas.domain.ranking.MatchFinalizationService,
     private val postGameEventEmitter: com.futebadosparcas.domain.ranking.PostGameEventEmitter,
     private val matchManagementDataSource: MatchManagementDataSource,
-    private val teamBalancer: com.futebadosparcas.domain.ai.TeamBalancer
+    private val teamBalancer: com.futebadosparcas.domain.ai.TeamBalancer,
+    private val groupRepository: com.futebadosparcas.data.repository.GroupRepository
 ) : GameRepository {
     private val gamesCollection = firestore.collection("games")
     private val confirmationsCollection = firestore.collection("confirmations")
@@ -50,16 +51,71 @@ class GameRepositoryImpl @Inject constructor(
 
     override suspend fun getUpcomingGames(): Result<List<Game>> {
         return try {
-            val snapshot = gamesCollection
-                .whereIn("status", listOf(GameStatus.SCHEDULED.name, GameStatus.CONFIRMED.name))
+            val uid = auth.currentUser?.uid
+            val userGroupIds = if (uid != null) {
+                groupRepository.getMyGroups()
+                    .getOrElse { emptyList() }
+                    .map { it.id.ifEmpty { it.groupId } }
+                    .filter { it.isNotEmpty() }
+                    .take(10)
+            } else {
+                emptyList()
+            }
+
+            // Public Queries
+            val scheduledTask = gamesCollection
+                .whereEqualTo("status", GameStatus.SCHEDULED.name)
+                .whereIn("visibility", listOf("PUBLIC_OPEN", "PUBLIC_CLOSED"))
                 .orderBy("dateTime", Query.Direction.ASCENDING)
                 .limit(20)
                 .get()
-                .await()
 
-            val games = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(Game::class.java)?.apply { id = doc.id }
+            val confirmedTask = gamesCollection
+                .whereEqualTo("status", GameStatus.CONFIRMED.name)
+                .whereIn("visibility", listOf("PUBLIC_OPEN", "PUBLIC_CLOSED"))
+                .orderBy("dateTime", Query.Direction.ASCENDING)
+                .limit(20)
+                .get()
+
+            // Private Queries
+            val privateScheduledTask = if (userGroupIds.isNotEmpty()) {
+                gamesCollection
+                    .whereEqualTo("status", GameStatus.SCHEDULED.name)
+                    .whereEqualTo("visibility", com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY.name)
+                    .whereIn("group_id", userGroupIds)
+                    .orderBy("dateTime", Query.Direction.ASCENDING)
+                    .limit(20)
+                    .get()
+            } else null
+
+            val privateConfirmedTask = if (userGroupIds.isNotEmpty()) {
+                gamesCollection
+                    .whereEqualTo("status", GameStatus.CONFIRMED.name)
+                    .whereEqualTo("visibility", com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY.name)
+                    .whereIn("group_id", userGroupIds)
+                    .orderBy("dateTime", Query.Direction.ASCENDING)
+                    .limit(20)
+                    .get()
+            } else null
+
+            // Executar queries em paralelo
+            val allSnapshots = coroutineScope {
+                val tasks = listOfNotNull(
+                    async { scheduledTask.await() },
+                    async { confirmedTask.await() },
+                    if (privateScheduledTask != null) async { privateScheduledTask.await() } else null,
+                    if (privateConfirmedTask != null) async { privateConfirmedTask.await() } else null
+                )
+                tasks.awaitAll()
             }
+
+            val allGames = allSnapshots.flatMap { it.documents }
+                .mapNotNull { doc -> doc.toObject(Game::class.java)?.apply { id = doc.id } }
+                .sortedBy { it.dateTime }
+                .distinctBy { it.id }
+                .take(20)
+                
+            val games = allGames
             // Sync to local
             val entities = games.map { it.toEntity() }
             gameDao.insertGames(entities)
@@ -75,7 +131,7 @@ class GameRepositoryImpl @Inject constructor(
     override suspend fun getAllGames(): Result<List<Game>> {
         return try {
             val snapshot = gamesCollection
-                .whereEqualTo("is_public", true)
+                .whereIn("visibility", listOf("PUBLIC_OPEN", "PUBLIC_CLOSED"))
                 .orderBy("dateTime", Query.Direction.ASCENDING)
                 .limit(50)
                 .get()
@@ -110,6 +166,7 @@ class GameRepositoryImpl @Inject constructor(
             val uid = auth.currentUser?.uid ?: ""
             
             val gamesSnapshot = gamesCollection
+                .whereIn("visibility", listOf("PUBLIC_OPEN", "PUBLIC_CLOSED"))
                 .orderBy("dateTime", Query.Direction.DESCENDING)
                 .limit(50)
                 .get()
@@ -151,6 +208,7 @@ class GameRepositoryImpl @Inject constructor(
         
         val gamesFlow = callbackFlow {
              val subscription = gamesCollection
+                .whereIn("visibility", listOf("PUBLIC_OPEN", "PUBLIC_CLOSED"))
                 .orderBy("dateTime", Query.Direction.DESCENDING)
                 .limit(50)
                 .addSnapshotListener { snapshot, e ->
@@ -310,10 +368,22 @@ class GameRepositoryImpl @Inject constructor(
                 ?: return Result.failure(Exception("Usuario nao autenticado"))
 
             val docRef = gamesCollection.document()
-            val gameWithId = game.copy(id = docRef.id, ownerId = uid)
+        
+        // Safety check: ensure dateTime is set
+        var finalGame = game.copy(id = docRef.id, ownerId = uid)
+        if (finalGame.dateTime == null && finalGame.date.isNotEmpty() && finalGame.time.isNotEmpty()) {
+            try {
+                // Combine date and time (assuming format yyyy-MM-dd and HH:mm)
+                val dateTimeStr = "${finalGame.date} ${finalGame.time}"
+                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                finalGame = finalGame.copy(dateTime = sdf.parse(dateTimeStr))
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "createGame: Error parsing dateTime from date/time strings", e)
+            }
+        }
 
-            docRef.set(gameWithId).await()
-            Result.success(gameWithId)
+        docRef.set(finalGame).await()
+        Result.success(finalGame)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -938,43 +1008,96 @@ class GameRepositoryImpl @Inject constructor(
     override fun getLiveAndUpcomingGamesFlow(): kotlinx.coroutines.flow.Flow<Result<List<GameWithConfirmations>>> {
         val uid = auth.currentUser?.uid ?: ""
 
-        val gamesFlow = callbackFlow {
-            val statsFilter = listOf(GameStatus.SCHEDULED.name, GameStatus.CONFIRMED.name, GameStatus.LIVE.name)
+        // Flow principal combinando Publicos + Privados
+        return kotlinx.coroutines.flow.channelFlow {
+            // 1. Obter grupos do usuário (para filtro de GROUP_ONLY)
+            // Monitora mudanças nos grupos para atualizar a lista de jogos se entrar/sair de grupos
+            val userGroupsFlow = if (uid.isNotEmpty()) groupRepository.getMyGroupsFlow() else kotlinx.coroutines.flow.flowOf(emptyList())
+            
+            userGroupsFlow.collect { userGroups ->
+                val userGroupIds = userGroups.map { it.id.ifEmpty { it.groupId } }
+                    .filter { it.isNotEmpty() }
+                    .take(10) 
+                
+                // 2. Definir Queries
+                val now = java.util.Calendar.getInstance().apply {
+                    add(java.util.Calendar.HOUR_OF_DAY, -4) // Include recent live games
+                }.time
 
-            val subscription = gamesCollection
-                .whereIn("status", statsFilter)
-                .orderBy("dateTime", Query.Direction.ASCENDING)
-                .limit(20)
-                .addSnapshotListener { snapshot, e ->
-                    if (e != null) {
-                        trySend(Result.failure<List<Game>>(e))
-                        return@addSnapshotListener
-                    }
-                    if (snapshot != null) {
-                        val games = snapshot.documents.mapNotNull { doc ->
-                            doc.toObject(Game::class.java)?.apply { id = doc.id }
+                // Query A: Jogos Públicos
+                val publicQuery = gamesCollection
+                    .whereIn("visibility", listOf(
+                        com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN.name,
+                        com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED.name
+                    ))
+                    .whereGreaterThan("dateTime", now)
+                    .orderBy("dateTime", Query.Direction.ASCENDING)
+                    .limit(30)
+
+                // Query B: Jogos do Grupo (se houver grupos)
+                val groupQuery = if (userGroupIds.isNotEmpty()) {
+                    gamesCollection
+                        .whereEqualTo("visibility", com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY.name)
+                        .whereIn("group_id", userGroupIds)
+                        .whereGreaterThan("dateTime", now)
+                        .orderBy("dateTime", Query.Direction.ASCENDING)
+                        .limit(30)
+                } else null
+
+                // 3. Listeners
+                val publicFlow = callbackFlow {
+                    val sub = publicQuery.addSnapshotListener { snap, e ->
+                        if (e != null) {
+                            AppLogger.e(TAG, "getLiveAndUpcomingGamesFlow: Erro na Query Publica", e)
+                            trySend(emptyList())
+                            return@addSnapshotListener
                         }
-                        trySend(Result.success(games))
+
+                        val games = snap?.toObjects(Game::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                        trySend(games)
                     }
+                    awaitClose { sub.remove() }
                 }
-            awaitClose { subscription.remove() }
-        }
 
-        val userConfFlow = getUserConfirmationsFlow(uid)
-
-        return kotlinx.coroutines.flow.combine(gamesFlow, userConfFlow) { gamesResult, userConfs ->
-            if (gamesResult.isSuccess) {
-                val games = gamesResult.getOrNull() ?: emptyList()
-                val result = games.map { game ->
-                    GameWithConfirmations(
-                        game = game,
-                        confirmedCount = game.playersCount,
-                        isUserConfirmed = game.id in userConfs
-                    )
+                val groupGamesFlow = if (groupQuery != null) {
+                    callbackFlow {
+                        val sub = groupQuery.addSnapshotListener { snap, e ->
+                            if (e != null) { 
+                                AppLogger.e(TAG, "getLiveAndUpcomingGamesFlow: Erro na Query de Grupo", e)
+                                trySend(emptyList())
+                                return@addSnapshotListener 
+                            }
+                            val games = snap?.toObjects(Game::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                            trySend(games)
+                        }
+                        awaitClose { sub.remove() }
+                    }
+                } else {
+                    kotlinx.coroutines.flow.flowOf(emptyList())
                 }
-                Result.success(result)
-            } else {
-                Result.failure(gamesResult.exceptionOrNull() ?: Exception("Unknown error"))
+
+                // 4. User Confirmations (para UI state)
+                val userConfFlow = getUserConfirmationsFlow(uid)
+
+                // 5. Combine everything
+                kotlinx.coroutines.flow.combine(publicFlow, groupGamesFlow, userConfFlow) { publicGames, groupGames, userConfs ->
+                    val allGames = (publicGames + groupGames)
+                        .filter { it.status == GameStatus.SCHEDULED.name || it.status == GameStatus.CONFIRMED.name || it.status == GameStatus.LIVE.name }
+                        .distinctBy { it.id }
+                        .sortedBy { it.dateTime }
+                        .take(20)
+
+                    val result = allGames.map { game ->
+                        GameWithConfirmations(
+                            game = game,
+                            confirmedCount = game.playersCount,
+                            isUserConfirmed = game.id in userConfs
+                        )
+                    }
+                    Result.success(result)
+                }.collect {
+                    send(it)
+                }
             }
         }
     }
@@ -982,43 +1105,77 @@ class GameRepositoryImpl @Inject constructor(
     override fun getHistoryGamesFlow(limit: Int): kotlinx.coroutines.flow.Flow<Result<List<GameWithConfirmations>>> {
         val uid = auth.currentUser?.uid ?: ""
 
-        val gamesFlow = callbackFlow {
-            val statsFilter = listOf(GameStatus.FINISHED.name, GameStatus.CANCELLED.name)
+        return kotlinx.coroutines.flow.channelFlow {
+            // 1. Obter grupos do usuário
+            val userGroupsFlow = if (uid.isNotEmpty()) groupRepository.getMyGroupsFlow() else kotlinx.coroutines.flow.flowOf(emptyList())
+            
+            userGroupsFlow.collect { userGroups ->
+                val userGroupIds = userGroups.map { it.id.ifEmpty { it.groupId } }
+                    .filter { it.isNotEmpty() }
+                    .take(10)
+                
+                // Query A: Public History
+                val publicQuery = gamesCollection
+                    .whereIn("visibility", listOf(
+                        com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN.name,
+                        com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED.name
+                    ))
+                    //.whereLessThanWithType("dateTime", java.util.Date()) // Opcional, mas sort DESC já cuida
+                    .orderBy("dateTime", Query.Direction.DESCENDING)
+                    .limit(limit.toLong())
 
-            val subscription = gamesCollection
-                .whereIn("status", statsFilter)
-                .orderBy("dateTime", Query.Direction.DESCENDING)
-                .limit(limit.toLong())
-                .addSnapshotListener { snapshot, e ->
-                    if (e != null) {
-                        trySend(Result.failure<List<Game>>(e))
-                        return@addSnapshotListener
+                // Query B: Group History
+                val groupQuery = if (userGroupIds.isNotEmpty()) {
+                    gamesCollection
+                        .whereEqualTo("visibility", com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY.name)
+                        .whereIn("group_id", userGroupIds)
+                        .orderBy("dateTime", Query.Direction.DESCENDING)
+                        .limit(limit.toLong())
+                } else null
+
+                // Listeners
+                val publicFlow = callbackFlow {
+                    val sub = publicQuery.addSnapshotListener { snap, e ->
+                        if (e != null) { trySend(emptyList()); return@addSnapshotListener }
+                        val games = snap?.toObjects(Game::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                        trySend(games)
                     }
-                    if (snapshot != null) {
-                        val games = snapshot.documents.mapNotNull { doc ->
-                            doc.toObject(Game::class.java)?.apply { id = doc.id }
+                    awaitClose { sub.remove() }
+                }
+
+                val groupGamesFlow = if (groupQuery != null) {
+                    callbackFlow {
+                        val sub = groupQuery.addSnapshotListener { snap, e ->
+                            if (e != null) { trySend(emptyList()); return@addSnapshotListener }
+                            val games = snap?.toObjects(Game::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                            trySend(games)
                         }
-                        trySend(Result.success(games))
+                        awaitClose { sub.remove() }
                     }
+                } else {
+                    kotlinx.coroutines.flow.flowOf(emptyList())
                 }
-            awaitClose { subscription.remove() }
-        }
 
-        val userConfFlow = getUserConfirmationsFlow(uid)
+                val userConfFlow = getUserConfirmationsFlow(uid)
 
-        return kotlinx.coroutines.flow.combine(gamesFlow, userConfFlow) { gamesResult, userConfs ->
-            if (gamesResult.isSuccess) {
-                val games = gamesResult.getOrNull() ?: emptyList()
-                val result = games.map { game ->
-                    GameWithConfirmations(
-                        game = game,
-                        confirmedCount = game.playersCount,
-                        isUserConfirmed = game.id in userConfs
-                    )
+                kotlinx.coroutines.flow.combine(publicFlow, groupGamesFlow, userConfFlow) { publicGames, groupGames, userConfs ->
+                    val allGames = (publicGames + groupGames)
+                        .filter { it.status == GameStatus.FINISHED.name || it.status == GameStatus.CANCELLED.name }
+                        .distinctBy { it.id }
+                        .sortedByDescending { it.dateTime }
+                        .take(limit)
+
+                    val result = allGames.map { game ->
+                        GameWithConfirmations(
+                            game = game,
+                            confirmedCount = game.playersCount,
+                            isUserConfirmed = game.id in userConfs
+                        )
+                    }
+                    Result.success(result)
+                }.collect {
+                    send(it)
                 }
-                Result.success(result)
-            } else {
-                Result.failure(gamesResult.exceptionOrNull() ?: Exception("Unknown error"))
             }
         }
     }
@@ -1081,7 +1238,12 @@ class GameRepositoryImpl @Inject constructor(
             val subscription = confirmationsCollection
                 .whereEqualTo("user_id", uid)
                 .whereEqualTo("status", "CONFIRMED")
-                .addSnapshotListener { snapshot, _ ->
+                .addSnapshotListener { snapshot, e ->
+                    if (e != null) {
+                        AppLogger.e(TAG, "getUserConfirmationsFlow: Erro ao buscar confirmacoes", e)
+                        trySend(emptySet())
+                        return@addSnapshotListener
+                    }
                     val ids = snapshot?.documents?.mapNotNull { it.getString("game_id") }?.toSet() ?: emptySet()
                     trySend(ids)
                 }

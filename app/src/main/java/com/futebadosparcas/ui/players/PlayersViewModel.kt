@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.players
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.FieldType
+import com.futebadosparcas.data.model.PlayerRatingRole
 import com.futebadosparcas.data.model.User
 import com.futebadosparcas.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -185,8 +186,8 @@ class PlayersViewModel @Inject constructor(
         // Aplicar ordenação
         filteredPlayers = when (currentSortOption) {
             SortOption.NAME -> filteredPlayers.sortedBy { it.name }
-            SortOption.BEST_STRIKER -> filteredPlayers.sortedByDescending { it.strikerRating }
-            SortOption.BEST_GK -> filteredPlayers.sortedByDescending { it.gkRating }
+            SortOption.BEST_STRIKER -> filteredPlayers.sortedByDescending { it.getEffectiveRating(PlayerRatingRole.STRIKER) }
+            SortOption.BEST_GK -> filteredPlayers.sortedByDescending { it.getEffectiveRating(PlayerRatingRole.GOALKEEPER) }
         }
 
         _uiState.value = PlayersUiState.Success(filteredPlayers)

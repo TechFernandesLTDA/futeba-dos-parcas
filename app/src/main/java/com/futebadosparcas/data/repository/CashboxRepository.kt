@@ -8,10 +8,12 @@ import com.futebadosparcas.data.model.CashboxFilter
 import com.futebadosparcas.data.model.CashboxSummary
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
+import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -254,8 +256,15 @@ class CashboxRepository @Inject constructor(
                 query = query.whereLessThanOrEqualTo("reference_date", it)
             }
 
+            // Determinar campo de ordenação
+            val orderByField = if (filter.startDate != null || filter.endDate != null) {
+                "reference_date"
+            } else {
+                "created_at"
+            }
+
             val snapshot = query
-                .orderBy("created_at", Query.Direction.DESCENDING)
+                .orderBy(orderByField, Query.Direction.DESCENDING)
                 .limit(limit.toLong())
                 .get()
                 .await()
@@ -514,21 +523,36 @@ class CashboxRepository @Inject constructor(
             }
 
             // Buscar todas as entradas
-            val entries = getHistory(groupId, 10000).getOrDefault(emptyList())
+            // WARN: Esta operacao e custosa. Use com cuidado.
+            // Idealmente deveria usar Aggregation queries (count, sum) do Firestore quando disponivel
+            val entriesSnapshot = groupsCollection.document(groupId)
+                .collection("cashbox")
+                .whereEqualTo("status", CashboxAppStatus.ACTIVE.name)
+                .get()
+                .await()
 
             var totalIncome = 0.0
             var totalExpense = 0.0
+            var lastEntryDate: Date? = null
 
-            entries.forEach { entry ->
-                // Skip voided entries if query didn't filter them (though getHistory should have)
-                if (entry.status == CashboxAppStatus.VOIDED.name) return@forEach
+            // Calcular totais em memoria (melhor que ler 10k docs individualmente, snapshot le em batch)
+            val entries = entriesSnapshot.toObjects(CashboxEntry::class.java)
+            
+            // Ordenar para pegar a data mais recente corretamente
+            val sortedEntries = entries.sortedByDescending { it.createdAt }
 
-                if (entry.isIncome()) {
-                    totalIncome += entry.amount
-                } else {
-                    totalExpense += entry.amount
+            sortedEntries.forEach { entry ->
+                // Status ja filtrado na query, mas verificamos por segurança se mudou algo
+                if (entry.status == CashboxAppStatus.ACTIVE.name) {
+                    if (entry.isIncome()) {
+                        totalIncome += entry.amount
+                    } else {
+                        totalExpense += entry.amount
+                    }
                 }
             }
+            
+            lastEntryDate = sortedEntries.firstOrNull()?.createdAt
 
             val balance = totalIncome - totalExpense
 
@@ -537,7 +561,7 @@ class CashboxRepository @Inject constructor(
                 balance = balance,
                 totalIncome = totalIncome,
                 totalExpense = totalExpense,
-                lastEntryAt = entries.firstOrNull()?.createdAt,
+                lastEntryAt = lastEntryDate,
                 entryCount = entries.size
             )
 

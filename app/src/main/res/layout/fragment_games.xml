@@ -6,67 +6,11 @@
     android:layout_height="match_parent"
     android:background="?attr/colorSurface">
 
-    <LinearLayout
-        android:id="@+id/layoutFixedHeader"
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/composeTopBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp"
-        android:background="?attr/colorSurface"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Futeba dos Parças"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="?attr/colorPrimary" />
-
-        <FrameLayout
-            android:id="@+id/layoutNotifications"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnNotifications"
-                style="@style/Widget.Material3.Button.IconButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:icon="@drawable/ic_notifications" />
-            <TextView
-                android:id="@+id/tvNotificationBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_badge"
-                android:textColor="@android:color/white"
-                android:textSize="10sp"
-                android:padding="2dp"
-                android:minWidth="16dp"
-                android:gravity="center"
-                android:text="0"
-                android:visibility="gone"
-                android:layout_gravity="top|end"
-                android:layout_marginTop="4dp"
-                android:layout_marginEnd="4dp" />
-        </FrameLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnGroups"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:icon="@drawable/ic_group" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnMap"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:icon="@drawable/ic_location" />
-    </LinearLayout>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <HorizontalScrollView
         android:id="@+id/hsvFilters"
@@ -76,7 +20,7 @@
         android:clipToPadding="false"
         android:paddingHorizontal="16dp"
         android:scrollbars="none"
-        app:layout_constraintTop_toBottomOf="@id/layoutFixedHeader"
+        app:layout_constraintTop_toBottomOf="@id/composeTopBar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -95,7 +39,7 @@
                 android:minHeight="48dp"
                 android:paddingVertical="12dp"
                 android:paddingHorizontal="20dp"
-                android:text="Todos"
+                android:text="@string/fragment_games_text_3"
                 android:textSize="15sp"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:checked="true"/>
@@ -107,7 +51,7 @@
                 android:minHeight="48dp"
                 android:paddingVertical="12dp"
                 android:paddingHorizontal="20dp"
-                android:text="Abertos"
+                android:text="@string/fragment_games_text_4"
                 android:textSize="15sp"
                 style="@style/Widget.Material3.Chip.Filter"/>
 
@@ -118,7 +62,7 @@
                 android:minHeight="48dp"
                 android:paddingVertical="12dp"
                 android:paddingHorizontal="20dp"
-                android:text="Meus Jogos"
+                android:text="@string/fragment_games_text_5"
                 android:textSize="15sp"
                 style="@style/Widget.Material3.Chip.Filter"/>
 
@@ -203,13 +147,13 @@
             android:src="@drawable/ic_search"
             android:alpha="0.3"
             app:tint="?attr/colorOnSurfaceVariant"
-            android:contentDescription="Sem jogos" />
+            android:contentDescription="@string/fragment_games_contentdescription_6" />
 
         <TextView
             android:id="@+id/tvEmptyTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nenhum jogo encontrado"
+            android:text="@string/fragment_games_text_7"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
@@ -219,7 +163,7 @@
             android:id="@+id/tvEmptyMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Que tal criar o primeiro jogo?"
+            android:text="@string/fragment_games_text_8"
             android:textSize="16sp"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:layout_marginTop="8dp"
@@ -233,7 +177,7 @@
             android:minHeight="56dp"
             android:layout_marginTop="24dp"
             android:paddingHorizontal="32dp"
-            android:text="Criar Jogo"
+            android:text="@string/fragment_games_text_9"
             android:textSize="16sp"
             android:textStyle="bold"
             app:cornerRadius="16dp"
@@ -260,13 +204,13 @@
             android:layout_height="100dp"
             android:src="@drawable/ic_warning"
             android:alpha="0.3"
-            android:contentDescription="Erro" />
+            android:contentDescription="@string/fragment_games_contentdescription_10" />
 
         <TextView
             android:id="@+id/tvErrorMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Erro ao carregar jogos"
+            android:text="@string/fragment_games_text_11"
             android:textSize="16sp"
             android:textColor="?attr/colorOnSurface"
             android:layout_marginTop="16dp"
@@ -276,7 +220,7 @@
             android:id="@+id/btnRetry"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tentar novamente"
+            android:text="@string/fragment_games_text_12"
             android:layout_marginTop="16dp" />
     </LinearLayout>
 
@@ -288,6 +232,6 @@
         android:src="@drawable/ic_add"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:contentDescription="Criar novo jogo" />
+        android:contentDescription="@string/fragment_games_contentdescription_13" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

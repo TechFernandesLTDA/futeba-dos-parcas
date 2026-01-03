@@ -9,10 +9,12 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.CircleCropTransformation
-import com.futebadosparcas.R
 import com.futebadosparcas.data.model.AppNotification
 import com.futebadosparcas.data.model.NotificationAction
+import com.futebadosparcas.data.model.NotificationType
 import com.futebadosparcas.databinding.ItemNotificationBinding
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class NotificationsAdapter(
     private val onItemClick: (AppNotification) -> Unit,
@@ -64,31 +66,26 @@ class NotificationsAdapter(
             binding.tvTitle.text = notification.title
             binding.tvMessage.text = notification.message
 
-            // Format time - Show exact date/time
-            // Format time - Show exact date/time
             val createdDate = notification.createdAt
             if (createdDate != null) {
-                val dateFormat = java.text.SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", java.util.Locale("pt", "BR"))
+                val dateFormat = SimpleDateFormat("dd/MM/yyyy 'as' HH:mm", Locale("pt", "BR"))
                 val exactTime = dateFormat.format(createdDate)
-                
+
                 val relativeTime = DateUtils.getRelativeTimeSpanString(
                     createdDate.time,
                     System.currentTimeMillis(),
                     DateUtils.MINUTE_IN_MILLIS
                 )
-                
-                // Show exact time for better clarity
-                binding.tvTime.text = "$relativeTime • $exactTime"
+
+                binding.tvTime.text = "$relativeTime - $exactTime"
                 binding.tvTime.visibility = View.VISIBLE
             } else {
                 binding.tvTime.text = "Data desconhecida"
                 binding.tvTime.visibility = View.VISIBLE
             }
 
-            // Unread indicator
             binding.unreadIndicator.visibility = if (!notification.read) View.VISIBLE else View.GONE
 
-            // Sender photo
             val iconRes = notification.getIconResource()
             if (!notification.senderPhoto.isNullOrEmpty()) {
                 binding.ivSenderPhoto.load(notification.senderPhoto) {
@@ -101,14 +98,12 @@ class NotificationsAdapter(
                 binding.ivSenderPhoto.setImageResource(iconRes)
             }
 
-            // Action buttons
             val actionType = notification.getActionTypeEnum()
             val showActions = actionType == NotificationAction.ACCEPT_DECLINE ||
-                    actionType == NotificationAction.CONFIRM_POSITION
+                actionType == NotificationAction.CONFIRM_POSITION
 
             binding.layoutActions.visibility = if (showActions) View.VISIBLE else View.GONE
 
-            // Customize button text based on action type
             if (actionType == NotificationAction.CONFIRM_POSITION) {
                 binding.btnAccept.text = "Confirmar"
                 binding.btnDecline.text = "Recusar"
@@ -117,17 +112,15 @@ class NotificationsAdapter(
                 binding.btnDecline.text = "Recusar"
             }
 
-            // Card styling for unread
             binding.root.alpha = if (notification.read) 0.6f else 1.0f
-            
-            // Special styling for types
+
             when (notification.getTypeEnum()) {
-                com.futebadosparcas.data.model.NotificationType.ACHIEVEMENT -> {
-                    binding.root.strokeColor = android.graphics.Color.parseColor("#FFD700") // Gold
+                NotificationType.ACHIEVEMENT -> {
+                    binding.root.strokeColor = android.graphics.Color.parseColor("#FFD700")
                     binding.root.strokeWidth = 4
                 }
-                com.futebadosparcas.data.model.NotificationType.ADMIN_MESSAGE -> {
-                    binding.root.strokeColor = android.graphics.Color.parseColor("#58CC02") // Primary
+                NotificationType.ADMIN_MESSAGE -> {
+                    binding.root.strokeColor = android.graphics.Color.parseColor("#58CC02")
                     binding.root.strokeWidth = 4
                 }
                 else -> {

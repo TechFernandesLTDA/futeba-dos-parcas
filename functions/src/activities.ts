@@ -49,7 +49,9 @@ export const generateActivityOnGameFinish = onDocumentUpdated("games/{gameId}", 
             // PUBLIC_OPEN / PUBLIC_CLOSED -> PUBLIC
             // PRIVATE -> FRIENDS_ONLY (or just PRIVATE/FRIENDS)
             let visibility = "PUBLIC";
-            if (after.visibility === "PRIVATE") {
+            if (after.visibility === "GROUP_ONLY" || after.visibility === "PRIVATE") {
+                visibility = "FRIENDS";
+            } else if (after.is_public === false) {
                 visibility = "FRIENDS";
             }
 

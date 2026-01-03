@@ -50,13 +50,43 @@ class StatisticsViewModel @Inject constructor(
                 val combined = CombinedStatistics(
                     myStats = myStats,
                     topScorers = topScorers.mapIndexed { index, stats ->
-                        PlayerRankingItem(index + 1, userMap[stats.id]?.name ?: "Jogador", stats.totalGoals.toLong(), userMap[stats.id]?.photoUrl)
+                        PlayerRankingItem(
+                            rank = index + 1,
+                            playerName = userMap[stats.id]?.name ?: "Jogador",
+                            value = stats.totalGoals.toLong(),
+                            photoUrl = userMap[stats.id]?.photoUrl,
+                            userId = stats.id,
+                            gamesPlayed = stats.totalGames,
+                            average = if (stats.totalGames > 0) stats.totalGoals.toDouble() / stats.totalGames else 0.0,
+                            nickname = userMap[stats.id]?.nickname,
+                            level = userMap[stats.id]?.level ?: 0
+                        )
                     },
                     topGoalkeepers = topGoalkeepers.mapIndexed { index, stats ->
-                        PlayerRankingItem(index + 1, userMap[stats.id]?.name ?: "Jogador", stats.totalSaves.toLong(), userMap[stats.id]?.photoUrl)
+                        PlayerRankingItem(
+                            rank = index + 1,
+                            playerName = userMap[stats.id]?.name ?: "Jogador",
+                            value = stats.totalSaves.toLong(),
+                            photoUrl = userMap[stats.id]?.photoUrl,
+                            userId = stats.id,
+                            gamesPlayed = stats.totalGames,
+                            average = if (stats.totalGames > 0) stats.totalSaves.toDouble() / stats.totalGames else 0.0,
+                            nickname = userMap[stats.id]?.nickname,
+                            level = userMap[stats.id]?.level ?: 0
+                        )
                     },
                     bestPlayers = bestPlayers.mapIndexed { index, stats ->
-                        PlayerRankingItem(index + 1, userMap[stats.id]?.name ?: "Jogador", stats.bestPlayerCount.toLong(), userMap[stats.id]?.photoUrl)
+                        PlayerRankingItem(
+                            rank = index + 1,
+                            playerName = userMap[stats.id]?.name ?: "Jogador",
+                            value = stats.bestPlayerCount.toLong(),
+                            photoUrl = userMap[stats.id]?.photoUrl,
+                            userId = stats.id,
+                            gamesPlayed = stats.totalGames,
+                            average = if (stats.totalGames > 0) stats.bestPlayerCount.toDouble() / stats.totalGames else 0.0,
+                            nickname = userMap[stats.id]?.nickname,
+                            level = userMap[stats.id]?.level ?: 0
+                        )
                     },
                     goalEvolution = goalsHistory
                 )

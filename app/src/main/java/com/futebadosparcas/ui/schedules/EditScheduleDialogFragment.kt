@@ -11,6 +11,7 @@ import com.futebadosparcas.databinding.DialogEditScheduleBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
+import java.util.Locale
 
 class EditScheduleDialogFragment : BottomSheetDialogFragment() {
 
@@ -81,7 +82,7 @@ class EditScheduleDialogFragment : BottomSheetDialogFragment() {
                 .build()
 
             picker.addOnPositiveButtonClickListener {
-                val formattedTime = String.format("%02d:%02d", picker.hour, picker.minute)
+                val formattedTime = String.format(Locale.getDefault(), "%02d:%02d", picker.hour, picker.minute)
                 binding.etTime.setText(formattedTime)
             }
             picker.show(parentFragmentManager, "TIME_PICKER")

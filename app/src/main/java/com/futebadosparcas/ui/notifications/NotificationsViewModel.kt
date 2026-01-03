@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.AppNotification
 import com.futebadosparcas.data.model.NotificationType
+import com.futebadosparcas.data.repository.GameSummonRepository
 import com.futebadosparcas.data.repository.InviteRepository
 import com.futebadosparcas.data.repository.NotificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class NotificationsViewModel @Inject constructor(
     private val notificationRepository: NotificationRepository,
-    private val inviteRepository: InviteRepository
+    private val inviteRepository: InviteRepository,
+    private val gameSummonRepository: GameSummonRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<NotificationsUiState>(NotificationsUiState.Loading)
@@ -38,15 +40,16 @@ class NotificationsViewModel @Inject constructor(
     private fun observeNotifications() {
         notificationRepository.getMyNotificationsFlow()
             .onEach { notifications ->
-                _uiState.value = if (notifications.isEmpty()) {
+                val sortedNotifications = sortNotifications(notifications)
+                _uiState.value = if (sortedNotifications.isEmpty()) {
                     NotificationsUiState.Empty
                 } else {
-                    NotificationsUiState.Success(notifications)
+                    NotificationsUiState.Success(sortedNotifications)
                 }
             }
             .catch { e ->
                 _uiState.value = NotificationsUiState.Error(
-                    e.message ?: "Erro ao carregar notificações"
+                    e.message ?: "Erro ao carregar notificacoes"
                 )
             }
             .launchIn(viewModelScope)
@@ -69,15 +72,16 @@ class NotificationsViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = { notifications ->
-                    _uiState.value = if (notifications.isEmpty()) {
+                    val sortedNotifications = sortNotifications(notifications)
+                    _uiState.value = if (sortedNotifications.isEmpty()) {
                         NotificationsUiState.Empty
                     } else {
-                        NotificationsUiState.Success(notifications)
+                        NotificationsUiState.Success(sortedNotifications)
                     }
                 },
                 onFailure = { error ->
                     _uiState.value = NotificationsUiState.Error(
-                        error.message ?: "Erro ao carregar notificações"
+                        error.message ?: "Erro ao carregar notificacoes"
                     )
                 }
             )
@@ -97,12 +101,12 @@ class NotificationsViewModel @Inject constructor(
             result.fold(
                 onSuccess = {
                     _actionState.value = NotificationActionState.Success(
-                        "Todas as notificações foram marcadas como lidas"
+                        "Todas as notificacoes foram marcadas como lidas"
                     )
                 },
                 onFailure = { error ->
                     _actionState.value = NotificationActionState.Error(
-                        error.message ?: "Erro ao marcar notificações"
+                        error.message ?: "Erro ao marcar notificacoes"
                     )
                 }
             )
@@ -115,11 +119,11 @@ class NotificationsViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = {
-                    _actionState.value = NotificationActionState.Success("Notificação removida")
+                    _actionState.value = NotificationActionState.Success("Notificacao removida")
                 },
                 onFailure = { error ->
                     _actionState.value = NotificationActionState.Error(
-                        error.message ?: "Erro ao remover notificação"
+                        error.message ?: "Erro ao remover notificacao"
                     )
                 }
             )
@@ -134,7 +138,7 @@ class NotificationsViewModel @Inject constructor(
                 onSuccess = { count ->
                     if (count > 0) {
                         _actionState.value = NotificationActionState.Success(
-                            "$count notificações antigas removidas"
+                            "$count notificacoes antigas removidas"
                         )
                     }
                 },
@@ -149,13 +153,15 @@ class NotificationsViewModel @Inject constructor(
                 handleGroupInvite(notification, accept)
             }
             NotificationType.GAME_SUMMON -> {
-                // Handled by GameSummonViewModel
-                _actionState.value = NotificationActionState.NavigateToGame(
-                    notification.referenceId ?: ""
-                )
+                if (accept) {
+                    _actionState.value = NotificationActionState.NavigateToGame(
+                        notification.referenceId ?: ""
+                    )
+                } else {
+                    handleGameSummonDecline(notification)
+                }
             }
             else -> {
-                // Just mark as read for other types
                 markAsRead(notification.id)
             }
         }
@@ -177,7 +183,7 @@ class NotificationsViewModel @Inject constructor(
                 onSuccess = {
                     markAsRead(notification.id)
                     _actionState.value = if (accept) {
-                        NotificationActionState.InviteAccepted("Você entrou no grupo!")
+                        NotificationActionState.InviteAccepted("Voce entrou no grupo!")
                     } else {
                         NotificationActionState.InviteDeclined("Convite recusado")
                     }
@@ -185,6 +191,31 @@ class NotificationsViewModel @Inject constructor(
                 onFailure = { error ->
                     _actionState.value = NotificationActionState.Error(
                         error.message ?: "Erro ao processar convite"
+                    )
+                }
+            )
+        }
+    }
+
+    private fun handleGameSummonDecline(notification: AppNotification) {
+        val gameId = notification.referenceId
+        if (gameId.isNullOrBlank()) {
+            _actionState.value = NotificationActionState.Error("Jogo invalido na notificacao")
+            return
+        }
+
+        viewModelScope.launch {
+            _actionState.value = NotificationActionState.Loading
+            val result = gameSummonRepository.declineSummon(gameId)
+
+            result.fold(
+                onSuccess = {
+                    markAsRead(notification.id)
+                    _actionState.value = NotificationActionState.Success("Convocacao recusada")
+                },
+                onFailure = { error ->
+                    _actionState.value = NotificationActionState.Error(
+                        error.message ?: "Erro ao recusar convocacao"
                     )
                 }
             )
@@ -199,15 +230,16 @@ class NotificationsViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = { notifications ->
-                    _uiState.value = if (notifications.isEmpty()) {
+                    val sortedNotifications = sortNotifications(notifications)
+                    _uiState.value = if (sortedNotifications.isEmpty()) {
                         NotificationsUiState.Empty
                     } else {
-                        NotificationsUiState.Success(notifications)
+                        NotificationsUiState.Success(sortedNotifications)
                     }
                 },
                 onFailure = { error ->
                     _uiState.value = NotificationsUiState.Error(
-                        error.message ?: "Erro ao filtrar notificações"
+                        error.message ?: "Erro ao filtrar notificacoes"
                     )
                 }
             )
@@ -216,6 +248,13 @@ class NotificationsViewModel @Inject constructor(
 
     fun resetActionState() {
         _actionState.value = NotificationActionState.Idle
+    }
+
+    private fun sortNotifications(notifications: List<AppNotification>): List<AppNotification> {
+        return notifications.sortedWith(
+            compareByDescending<AppNotification> { it.createdAt?.time ?: 0L }
+                .thenByDescending { it.id }
+        )
     }
 }
 

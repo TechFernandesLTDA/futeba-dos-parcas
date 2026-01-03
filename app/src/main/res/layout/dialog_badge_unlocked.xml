@@ -11,7 +11,7 @@
         android:id="@+id/tvUnlockedTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="🎉 Conquista Desbloqueada!"
+        android:text="@string/dialog_badge_unlocked_text_1"
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="@android:color/white"
@@ -41,7 +41,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="🏆"
+            android:text="@string/dialog_badge_unlocked_text_2"
             android:textSize="64sp" />
 
     </FrameLayout>
@@ -52,7 +52,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Hat-Trick"
+        android:text="@string/dialog_badge_unlocked_text_3"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@android:color/white"
@@ -65,7 +65,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Marque 3+ gols em uma partida"
+        android:text="@string/dialog_badge_unlocked_text_4"
         android:textSize="14sp"
         android:textColor="@android:color/white"
         android:alpha="0.9"
@@ -78,7 +78,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="+100 XP"
+        android:text="@string/dialog_badge_unlocked_text_5"
         android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="#FFD700"
@@ -95,10 +95,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="Continuar"
-        android:textColor="@color/primary"
+        android:text="@string/dialog_badge_unlocked_text_6"
+        android:textColor="?attr/colorPrimary"
         style="@style/Widget.Material3.Button"
         app:backgroundTint="@android:color/white"
         app:layout_constraintTop_toBottomOf="@id/tvXpReward" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+

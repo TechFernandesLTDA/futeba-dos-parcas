@@ -16,7 +16,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class SeasonGuardian @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val seasonClosureService: com.futebadosparcas.domain.ranking.SeasonClosureService
 ) {
     companion object {
         private const val TAG = "SeasonGuardian"
@@ -55,6 +56,9 @@ class SeasonGuardian @Inject constructor(
                 endDate = "$currentYear-12-31",
                 type = "ANNUAL"
             )
+
+            // 3. Encerrar temporadas passadas que ainda constam como ativas
+            closePastSeasons(now)
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -101,5 +105,27 @@ class SeasonGuardian @Inject constructor(
         val temp = cal.clone() as Calendar
         temp.set(Calendar.DAY_OF_MONTH, temp.getActualMaximum(Calendar.DAY_OF_MONTH))
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(temp.time)
+    }
+
+
+    private suspend fun closePastSeasons(currentDate: Calendar) {
+        try {
+            val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(currentDate.time)
+            
+            val snapshot = firestore.collection(COLLECTION_SEASONS)
+                .whereEqualTo("is_active", true)
+                .whereLessThan("end_date", todayStr)
+                .get()
+                .await()
+
+            if (!snapshot.isEmpty) {
+                AppLogger.i(TAG) { "Encontradas ${snapshot.size()} temporadas expiradas para encerrar." }
+                for (doc in snapshot.documents) {
+                    seasonClosureService.closeSeason(doc.id)
+                }
+            }
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao tentar fechar temporadas passadas", e)
+        }
     }
 }

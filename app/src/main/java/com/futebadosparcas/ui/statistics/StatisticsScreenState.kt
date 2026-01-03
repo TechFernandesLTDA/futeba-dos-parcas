@@ -24,7 +24,8 @@ data class PlayerRankingItem(
     val userId: String = "",
     val gamesPlayed: Int = 0,
     val average: Double = 0.0,
-    val nickname: String? = null
+    val nickname: String? = null,
+    val level: Int = 0
 ) {
     fun getDisplayName(): String {
         return if (!nickname.isNullOrBlank()) nickname else playerName

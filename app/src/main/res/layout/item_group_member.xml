@@ -43,6 +43,6 @@
         android:layout_height="40dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_more_vert"
-        android:contentDescription="Opcoes" />
+        android:contentDescription="@string/item_group_member_contentdescription_1" />
 
 </LinearLayout>

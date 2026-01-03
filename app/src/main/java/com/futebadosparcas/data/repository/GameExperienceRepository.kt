@@ -105,9 +105,10 @@ class GameExperienceRepository @Inject constructor(
             val bestGkCounts = votes.filter { it.category == VoteCategory.BEST_GOALKEEPER }.groupingBy { it.votedPlayerId }.eachCount()
             val worstCounts = votes.filter { it.category == VoteCategory.WORST }.groupingBy { it.votedPlayerId }.eachCount()
 
-            val mvpId = mvpCounts.maxByOrNull { it.value }?.key
-            val bestGkId = bestGkCounts.maxByOrNull { it.value }?.key
-            val worstId = worstCounts.maxByOrNull { it.value }?.key
+            // Obter vencedores apenas se houver votos (evitar null quando nao ha votos)
+            val mvpId = if (mvpCounts.isNotEmpty()) mvpCounts.maxByOrNull { it.value }?.key else null
+            val bestGkId = if (bestGkCounts.isNotEmpty()) bestGkCounts.maxByOrNull { it.value }?.key else null
+            val worstId = if (worstCounts.isNotEmpty()) worstCounts.maxByOrNull { it.value }?.key else null
 
             AppLogger.d(TAG) { "Resultados da votação - MVP: $mvpId, BestGK: $bestGkId, Worst: $worstId" }
 
@@ -115,11 +116,12 @@ class GameExperienceRepository @Inject constructor(
             val batch = db.batch()
 
             confirmations.forEach { conf ->
-                val isMvp = conf.userId == mvpId
-                val isBestGk = conf.userId == bestGkId
-                val isWorst = conf.userId == worstId
+                // Verificar se o jogador foi eleito (null-safe)
+                val isMvp = mvpId != null && conf.userId == mvpId
+                val isBestGk = bestGkId != null && conf.userId == bestGkId
+                val isWorst = worstId != null && conf.userId == worstId
 
-                // Usar ID determinístico
+                // Usar ID determinístico padronizado: {gameId}_{userId}
                 val confId = "${gameId}_${conf.userId}"
                 val confRef = db.collection("confirmations").document(confId)
 
@@ -130,10 +132,21 @@ class GameExperienceRepository @Inject constructor(
                 ))
             }
 
-            // 4. Update Game with MVP ID
-            batch.update(gameRef, mapOf(
-                "mvp_id" to mvpId
-            ))
+            // 4. Update Game with MVP ID (apenas se houver MVP eleito)
+            val gameUpdates = mutableMapOf<String, Any?>()
+            if (mvpId != null) {
+                gameUpdates["mvp_id"] = mvpId
+            }
+            if (bestGkId != null) {
+                gameUpdates["best_gk_id"] = bestGkId
+            }
+            if (worstId != null) {
+                gameUpdates["worst_player_id"] = worstId
+            }
+
+            if (gameUpdates.isNotEmpty()) {
+                batch.update(gameRef, gameUpdates)
+            }
 
             batch.commit().await()
             AppLogger.d(TAG) { "Votação concluída para o jogo $gameId" }

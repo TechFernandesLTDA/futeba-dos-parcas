@@ -1,6 +1,6 @@
 # Project State - Estado Atual do Projeto
 
-**Última atualização**: 27/12/2024 12:55
+**Última atualização**: 06/01/2026
 
 Este arquivo é a **fonte única de verdade** sobre o estado de implementação de cada feature.
 
@@ -10,7 +10,7 @@ Este arquivo é a **fonte única de verdade** sobre o estado de implementação 
 
 | Métrica | Valor |
 |---------|-------|
-| **Progresso Total** | ~85% completo |
+| **Progresso Total** | ~91% completo |
 | **Build Status** | ✅ SUCCESS |
 | **Backend em Uso** | Firebase (Firestore, Auth, Storage, FCM) |
 | **Kotlin** | 2.0.21 |
@@ -124,11 +124,11 @@ Este arquivo é a **fonte única de verdade** sobre o estado de implementação 
 #### 6. Perfil
 
 - ✅ Visualização de perfil
-- ✅ Edição de perfil
+- ✅ Edição de perfil (novo layout expandido)
 - ✅ Upload de foto
 - ✅ Preferências de posição
-- ⏳ **Pendente**: Histórico de jogos no perfil
-- ⏳ **Pendente**: Badges no perfil (UI refinada)
+- ✅ Novos campos: nascimento, gênero, medidas, pé dominante, estilo e experiência
+- ⏳ **Pendente**: Histórico de jogos no perfil (integrado)
 
 **Arquivos principais:**
 
@@ -144,8 +144,8 @@ Este arquivo é a **fonte única de verdade** sobre o estado de implementação 
 - ✅ Dashboard de estatísticas (Compose)
 - ✅ Top scorers, Top goleiros
 - ✅ Gráficos de evolução
-- ✅ Rankings
-- ⏳ **Pendente**: Detalhamento por temporada
+- ✅ Rankings e Autoavaliação Inteligente (Ratings reais)
+- ✅ Notas dinâmicas baseadas em performance real
 
 **Arquivos principais:**
 
@@ -231,13 +231,13 @@ Este arquivo é a **fonte única de verdade** sobre o estado de implementação 
 | Jogos | 🔶 | 95% |
 | Locais/Quadras | 🔶 | 95% |
 | Pagamentos | 🔷 | 90% |
-| Perfil | 🔷 | 90% |
-| Estatísticas | 🟡 | 85% |
+| Perfil | 🔶 | 95% |
+| Estatísticas | 🔷 | 90% |
 | Admin | 🟡 | 85% |
 | Jogo ao Vivo | 🟠 | 80% |
-| Gamificação | 🟠 | 80% |
+| Gamificação | 🟡 | 85% |
 | Exp. de Jogo | 🟠 | 80% |
-| **MÉDIA** | | **~89%** |
+| **MÉDIA** | | **~91%** |
 
 ---
 

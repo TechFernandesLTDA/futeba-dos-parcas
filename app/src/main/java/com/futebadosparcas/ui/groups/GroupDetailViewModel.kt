@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.futebadosparcas.util.AppLogger
 
 /**
  * ViewModel para detalhes do grupo
@@ -32,14 +33,28 @@ import javax.inject.Inject
 @HiltViewModel
 class GroupDetailViewModel @Inject constructor(
     private val groupRepository: GroupRepository,
+    private val userRepository: com.futebadosparcas.data.repository.UserRepository, // Injected
     private val auth: FirebaseAuth,
     private val updateGroupUseCase: UpdateGroupUseCase,
     private val archiveGroupUseCase: ArchiveGroupUseCase,
     private val deleteGroupUseCase: DeleteGroupUseCase,
     private val leaveGroupUseCase: LeaveGroupUseCase,
     private val manageMembersUseCase: ManageMembersUseCase,
-    private val transferOwnershipUseCase: TransferOwnershipUseCase
+    private val transferOwnershipUseCase: TransferOwnershipUseCase,
+    private val cashboxSeeder: com.futebadosparcas.util.CashboxSeeder
 ) : ViewModel() {
+
+    // ... (existing code)
+
+    fun seedTestHistory(groupId: String) {
+        viewModelScope.launch {
+            val user = auth.currentUser
+            if (user != null) {
+                cashboxSeeder.seedHistory(groupId, user.uid, user.displayName ?: "User")
+                _actionState.value = GroupActionState.Success("Histórico de teste inserido!")
+            }
+        }
+    }
 
     private val _uiState = MutableStateFlow<GroupDetailUiState>(GroupDetailUiState.Loading)
     val uiState: StateFlow<GroupDetailUiState> = _uiState.asStateFlow()
@@ -52,24 +67,49 @@ class GroupDetailViewModel @Inject constructor(
     /**
      * Carrega os dados do grupo e seus membros em tempo real
      * Membros são ordenados por role (Owner > Admin > Member) e depois por nome
+     * Enriquecido com dados atualizados do usuário (foto/nome)
      */
     fun loadGroup(groupId: String) {
         currentGroupId = groupId
         _uiState.value = GroupDetailUiState.Loading
 
-        // Combina o flow do grupo com o flow de membros ordenados
+        // Combina o flow do grupo com o flow de membros
         combine(
             groupRepository.getGroupFlow(groupId).map { result ->
                 result.getOrNull()
             },
-            groupRepository.getOrderedGroupMembersFlow(groupId)
+            groupRepository.getOrderedGroupMembersFlow(groupId).map { members ->
+                // "Smarter" loading: Buscar dados atualizados dos usuários (fotos/nomes)
+                val userIds = members.map { it.userId }
+                if (userIds.isNotEmpty()) {
+                    val freshUsersResult = userRepository.getUsersByIds(userIds)
+                    val freshUsers = freshUsersResult.getOrNull() ?: emptyList()
+                    
+                    AppLogger.d("GroupDetailVM") { "Enriching members. Found ${freshUsers.size} users. User IDs: $userIds" }
+
+                    members.map { member ->
+                        val user = freshUsers.find { it.id == member.userId }
+                        if (user != null) {
+                            AppLogger.d("GroupDetailVM") { "Enriched member ${member.userId}: photo=${user.photoUrl}" }
+                            member.copy(
+                                userName = user.name, // Garante nome atualizado
+                                userPhoto = user.photoUrl // Garante foto atualizada
+                            )
+                        } else {
+                            member
+                        }
+                    }
+                } else {
+                    members
+                }
+            }
         ) { group: Group?, members: List<GroupMember> ->
             if (group != null) {
                 val currentUserId = auth.currentUser?.uid
                 val currentUserMember = members.find { it.userId == currentUserId }
                 GroupDetailUiState.Success(
                     group = group,
-                    members = members,
+                    members = members, // Agora com fotos atualizadas
                     myRole = currentUserMember?.getRoleEnum()
                 )
             } else {

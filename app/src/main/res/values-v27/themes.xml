@@ -42,12 +42,16 @@
         <!-- Preferences Theme -->
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
 
+        <!-- AppBar/Toolbar defaults -->
+        <item name="appBarLayoutStyle">@style/FutebaAppBar</item>
+        <item name="toolbarStyle">@style/FutebaToolbar</item>
+
         <!-- Status Bar: White with dark icons (Duolingo style) -->
         <item name="android:statusBarColor">@color/background</item>
         <item name="android:windowLightStatusBar">true</item>
 
         <!-- Navigation Bar: White with dark icons (API 27+) -->
-        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/surface_variant</item>
         <item name="android:windowLightNavigationBar">true</item>
 
         <!-- Material You dynamic colors disabled for consistency -->

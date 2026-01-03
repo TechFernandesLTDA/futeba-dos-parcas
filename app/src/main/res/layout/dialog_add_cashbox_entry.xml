@@ -9,7 +9,7 @@
         android:id="@+id/tilDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Descrição">
+        android:hint="@string/dialog_add_cashbox_entry_hint_1">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etDescription"
@@ -25,7 +25,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:hint="Valor (R$)">
+        android:hint="@string/dialog_add_cashbox_entry_hint_2">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etAmount"
@@ -40,7 +40,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Categoria"
+        android:text="@string/dialog_add_cashbox_entry_text_3"
         android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
     <Spinner
@@ -59,7 +59,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Comprovante (Opcional)"
+        android:text="@string/dialog_add_cashbox_entry_text_4"
         android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
         android:textColor="?attr/colorPrimary" />
 
@@ -92,7 +92,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Anexar foto"
+                android:text="@string/dialog_add_cashbox_entry_text_5"
                 android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -107,7 +107,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnRemoveReceipt"
-            style="@style/Widget.Material3.Button.IconButton.Tonal"
+            style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|end"

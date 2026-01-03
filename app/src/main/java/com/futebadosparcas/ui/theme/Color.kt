@@ -22,10 +22,10 @@ object FutebaColors {
     val OnPrimaryContainer = Color.parseColor("#003300")
 
     // PRIMARY OLED - High Contrast Neon
-    val PrimaryDarkTheme = Color.parseColor("#00E676") // Neon Green
-    val PrimaryContainerDark = Color.parseColor("#003300") // Deep Green
-    val OnPrimaryDark = Color.parseColor("#000000") // Black text on neon
-    val OnPrimaryContainerDark = Color.parseColor("#B9F6CA")
+    val PrimaryDarkTheme = Color.parseColor("#4ADE80") // Balanced vivid green
+    val PrimaryContainerDark = Color.parseColor("#0F3B24")
+    val OnPrimaryDark = Color.parseColor("#0B0F0D")
+    val OnPrimaryContainerDark = Color.parseColor("#B7F7D2")
 
     // ==========================================
     // SECONDARY - Electric Blue / Accent
@@ -38,10 +38,10 @@ object FutebaColors {
     val OnSecondaryContainer = Color.parseColor("#0D47A1")
 
     // SECONDARY OLED - Cyan/Teal
-    val SecondaryDarkTheme = Color.parseColor("#40C4FF") // Sky Blue
-    val SecondaryContainerDark = Color.parseColor("#004B73")
-    val OnSecondaryDark = Color.parseColor("#000000")
-    val OnSecondaryContainerDark = Color.parseColor("#C3E7FF")
+    val SecondaryDarkTheme = Color.parseColor("#5CC8FF")
+    val SecondaryContainerDark = Color.parseColor("#103447")
+    val OnSecondaryDark = Color.parseColor("#0B1114")
+    val OnSecondaryContainerDark = Color.parseColor("#BFE9FF")
 
     // ==========================================
     // TERTIARY - Energetic Orange (Action)
@@ -53,10 +53,10 @@ object FutebaColors {
     val OnTertiaryContainer = Color.parseColor("#E65100")
 
     // TERTIARY OLED - Amber/Gold
-    val TertiaryDarkTheme = Color.parseColor("#FFAB00") // Amber A700
-    val TertiaryContainerDark = Color.parseColor("#5A3600")
-    val OnTertiaryDark = Color.parseColor("#000000")
-    val OnTertiaryContainerDark = Color.parseColor("#FFD180")
+    val TertiaryDarkTheme = Color.parseColor("#FFB74D")
+    val TertiaryContainerDark = Color.parseColor("#4A2A00")
+    val OnTertiaryDark = Color.parseColor("#2A1700")
+    val OnTertiaryContainerDark = Color.parseColor("#FFD9A0")
 
     // ==========================================
     // SEMANTIC COLORS - Field Types
@@ -73,7 +73,7 @@ object FutebaColors {
     val SuccessDark = Color.parseColor("#69F0AE")
 
     val Warning = Color.parseColor("#FFD600") // Vibrant Yellow
-    val WarningDark = Color.parseColor("#FFFF00")
+    val WarningDark = Color.parseColor("#F7D87A")
 
     val Error = Color.parseColor("#D32F2F")
     val ErrorDark = Color.parseColor("#FF5252") // Red A200
@@ -98,22 +98,22 @@ object FutebaColors {
     // DARK THEME - OLED OPTIMIZED
     // True Black & Slate Greys
     // ==========================================
-    val BackgroundDark = Color.parseColor("#000000") // True Black for OLED
-    val SurfaceDark = Color.parseColor("#121212") // Material Dark Surface
-    val SurfaceVariantDark = Color.parseColor("#1E1E1E") // Slightly Elevated
-    val OnBackgroundDark = Color.parseColor("#E1E1E1")
-    val OnSurfaceDark = Color.parseColor("#E1E1E1")
-    val OnSurfaceVariantDark = Color.parseColor("#C4C7C5")
-    val OutlineDark = Color.parseColor("#8E918F")
-    val OutlineVariantDark = Color.parseColor("#444746")
+    val BackgroundDark = Color.parseColor("#0F1114")
+    val SurfaceDark = Color.parseColor("#15191C")
+    val SurfaceVariantDark = Color.parseColor("#20252A")
+    val OnBackgroundDark = Color.parseColor("#E8ECEF")
+    val OnSurfaceDark = Color.parseColor("#E8ECEF")
+    val OnSurfaceVariantDark = Color.parseColor("#C7CDD1")
+    val OutlineDark = Color.parseColor("#445058")
+    val OutlineVariantDark = Color.parseColor("#30373C")
 
     // ==========================================
     // TEXT COLORS
     // ==========================================
     val TextPrimary = Color.parseColor("#1A1C1E")
     val TextSecondary = Color.parseColor("#49454F")
-    val TextPrimaryDark = Color.parseColor("#E1E1E1")
-    val TextSecondaryDark = Color.parseColor("#C4C7C5")
+    val TextPrimaryDark = Color.parseColor("#E8ECEF")
+    val TextSecondaryDark = Color.parseColor("#C7CDD1")
 
     // ==========================================
     // GAMIFICATION - Premium Metals & Effects
@@ -135,5 +135,5 @@ object FutebaColors {
     // LEGACY
     // ==========================================
     val Divider = Color.parseColor("#E0E0E0")
-    val DividerDark = Color.parseColor("#333333")
+    val DividerDark = Color.parseColor("#30373C")
 }

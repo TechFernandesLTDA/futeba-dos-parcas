@@ -5,6 +5,7 @@ import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
+import java.util.Locale
 
 /**
  * Representa uma entrada no caixa do grupo
@@ -105,7 +106,7 @@ data class CashboxEntry(
      */
     fun getFormattedAmount(): String {
         val sign = if (isIncome()) "+" else "-"
-        return "$sign R$ ${String.format("%.2f", amount)}"
+        return "$sign R$ ${String.format(Locale.getDefault(), "%.2f", amount)}"
     }
 
     /**
@@ -207,21 +208,21 @@ data class CashboxSummary(
      */
     fun getFormattedBalance(): String {
         val sign = if (balance >= 0) "" else "-"
-        return "$sign R$ ${String.format("%.2f", kotlin.math.abs(balance))}"
+        return "$sign R$ ${String.format(Locale.getDefault(), "%.2f", kotlin.math.abs(balance))}"
     }
 
     /**
      * Formata as entradas para exibição
      */
     fun getFormattedIncome(): String {
-        return "+ R$ ${String.format("%.2f", totalIncome)}"
+        return "+ R$ ${String.format(Locale.getDefault(), "%.2f", totalIncome)}"
     }
 
     /**
      * Formata as saídas para exibição
      */
     fun getFormattedExpense(): String {
-        return "- R$ ${String.format("%.2f", totalExpense)}"
+        return "- R$ ${String.format(Locale.getDefault(), "%.2f", totalExpense)}"
     }
 
     /**

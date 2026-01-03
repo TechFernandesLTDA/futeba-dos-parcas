@@ -8,8 +8,8 @@ import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
 /**
- * Representa uma notificação in-app para o usuário
- * Coleção: notifications
+ * Representa uma notificacao in-app para o usuario.
+ * Colecao: notifications
  */
 @IgnoreExtraProperties
 data class AppNotification(
@@ -89,10 +89,10 @@ data class AppNotification(
 
     @Exclude
     fun requiresResponse(): Boolean = getActionTypeEnum() == NotificationAction.ACCEPT_DECLINE ||
-            getActionTypeEnum() == NotificationAction.CONFIRM_POSITION
+        getActionTypeEnum() == NotificationAction.CONFIRM_POSITION
 
     /**
-     * Retorna o ícone apropriado baseado no tipo de notificação
+     * Retorna o icone apropriado baseado no tipo de notificacao.
      */
     @Exclude
     fun getIconResource(): Int {
@@ -110,13 +110,14 @@ data class AppNotification(
             NotificationType.CASHBOX_EXIT -> com.futebadosparcas.R.drawable.ic_notifications
             NotificationType.ACHIEVEMENT -> com.futebadosparcas.R.drawable.ic_star
             NotificationType.ADMIN_MESSAGE -> com.futebadosparcas.R.drawable.ic_notifications
+            NotificationType.SYSTEM -> com.futebadosparcas.R.drawable.ic_notifications
             NotificationType.GENERAL -> com.futebadosparcas.R.drawable.ic_notifications
         }
     }
 
     companion object {
         /**
-         * Cria notificação de convite de grupo
+         * Cria notificacao de convite de grupo.
          */
         fun createGroupInviteNotification(
             userId: String,
@@ -129,7 +130,7 @@ data class AppNotification(
                 userId = userId,
                 type = NotificationType.GROUP_INVITE.name,
                 title = "Convite para grupo",
-                message = "$invitedByName convidou você para o grupo $groupName",
+                message = "$invitedByName convidou voce para o grupo $groupName",
                 senderId = invitedById,
                 senderName = invitedByName,
                 referenceId = inviteId,
@@ -140,7 +141,7 @@ data class AppNotification(
         }
 
         /**
-         * Cria notificação de convocação de jogo
+         * Cria notificacao de convocacao de jogo.
          */
         fun createGameSummonNotification(
             userId: String,
@@ -154,8 +155,8 @@ data class AppNotification(
             return AppNotification(
                 userId = userId,
                 type = NotificationType.GAME_SUMMON.name,
-                title = "Convocação para jogo",
-                message = "Você foi convocado para $gameName ($gameDate) - Grupo $groupName",
+                title = "Convocacao para jogo",
+                message = "Voce foi convocado para $gameName ($gameDate) - Grupo $groupName",
                 senderId = summonedById,
                 senderName = summonedByName,
                 referenceId = gameId,
@@ -165,7 +166,7 @@ data class AppNotification(
         }
 
         /**
-         * Cria notificação de lembrete de jogo
+         * Cria notificacao de lembrete de jogo.
          */
         fun createGameReminderNotification(
             userId: String,
@@ -179,7 +180,7 @@ data class AppNotification(
                 userId = userId,
                 type = NotificationType.GAME_REMINDER.name,
                 title = "Lembrete de jogo",
-                message = "$gameName começa em $timeText ($gameDate)",
+                message = "$gameName comeca em $timeText ($gameDate)",
                 referenceId = gameId,
                 referenceType = "game",
                 actionType = NotificationAction.VIEW_DETAILS.name
@@ -187,7 +188,7 @@ data class AppNotification(
         }
 
         /**
-         * Cria notificação de novo membro no grupo
+         * Cria notificacao de novo membro no grupo.
          */
         fun createMemberJoinedNotification(
             userId: String,
@@ -212,22 +213,23 @@ data class AppNotification(
 }
 
 /**
- * Tipos de notificação
+ * Tipos de notificacao.
  */
 enum class NotificationType(val displayName: String) {
     GROUP_INVITE("Convite de grupo"),
     GROUP_INVITE_ACCEPTED("Convite aceito"),
     GROUP_INVITE_DECLINED("Convite recusado"),
-    GAME_SUMMON("Convocação de jogo"),
+    GAME_SUMMON("Convocacao de jogo"),
     GAME_REMINDER("Lembrete de jogo"),
     GAME_CANCELLED("Jogo cancelado"),
     GAME_CONFIRMED("Jogo confirmado"),
     MEMBER_JOINED("Novo membro"),
     MEMBER_LEFT("Membro saiu"),
     CASHBOX_ENTRY("Entrada no caixa"),
-    CASHBOX_EXIT("Saída do caixa"),
+    CASHBOX_EXIT("Saida do caixa"),
     ACHIEVEMENT("Conquista"),
     ADMIN_MESSAGE("Mensagem do Admin"),
+    SYSTEM("Sistema"),
     GENERAL("Geral");
 
     companion object {
@@ -238,13 +240,13 @@ enum class NotificationType(val displayName: String) {
 }
 
 /**
- * Ações disponíveis na notificação
+ * Acoes disponiveis na notificacao.
  */
 enum class NotificationAction(val displayName: String) {
-    ACCEPT_DECLINE("Aceitar/Recusar"),      // Botões Aceitar/Recusar
-    CONFIRM_POSITION("Confirmar Posição"),  // Botões Linha/Goleiro
-    VIEW_DETAILS("Ver Detalhes"),           // Apenas visualizar
-    NONE("Sem ação");                       // Sem ação
+    ACCEPT_DECLINE("Aceitar/Recusar"),
+    CONFIRM_POSITION("Confirmar Posicao"),
+    VIEW_DETAILS("Ver Detalhes"),
+    NONE("Sem acao");
 
     companion object {
         fun fromString(value: String?): NotificationAction {

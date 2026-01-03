@@ -52,13 +52,16 @@
         <!-- Preferences Theme -->
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
 
+        <!-- AppBar/Toolbar defaults -->
+        <item name="appBarLayoutStyle">@style/FutebaAppBar</item>
+        <item name="toolbarStyle">@style/FutebaToolbar</item>
+
         <!-- Status Bar: Pure black, blends with content -->
         <item name="android:statusBarColor">@color/background_dark</item>
         <item name="android:windowLightStatusBar">false</item>
 
-        <!-- Navigation Bar: Pure black -->
-        <item name="android:navigationBarColor">@color/background_dark</item>
-        <item name="android:windowLightNavigationBar">false</item>
+        <!-- Navigation Bar: Matches app surface variant -->
+        <item name="android:navigationBarColor">@color/surface_variant_dark</item>
 
         <!-- Window background -->
         <item name="android:windowBackground">@color/background_dark</item>

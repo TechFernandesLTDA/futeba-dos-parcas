@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_compare"
-        android:title="Comparar Jogadores"
+        android:title="@string/menu_players_title_1"
         android:icon="@drawable/ic_compare"
         app:showAsAction="ifRoom" />
 </menu>

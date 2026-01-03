@@ -9,6 +9,35 @@ import java.util.Date
 
 // ========== LIGAS E TEMPORADAS ==========
 
+// Milestones are now defined in Gamification.kt
+
+// ========== RESULTADOS FINAIS DE TEMPORADA ==========
+
+/**
+ * Registro congelado do desempenho do jogador ao fim da temporada.
+ */
+data class SeasonFinalStanding(
+    @DocumentId
+    val id: String = "",
+    @get:PropertyName("season_id")
+    @set:PropertyName("season_id")
+    var seasonId: String = "",
+    @get:PropertyName("user_id")
+    @set:PropertyName("user_id")
+    var userId: String = "",
+    val finalDivision: LeagueDivision = LeagueDivision.BRONZE,
+    val finalRating: Double = 0.0,
+    val points: Int = 0,
+    val wins: Int = 0,
+    val draws: Int = 0,
+    val losses: Int = 0,
+    @get:PropertyName("frozen_at")
+    @set:PropertyName("frozen_at")
+    var frozenAt: Date? = null
+) {
+    constructor() : this(id = "")
+}
+
 enum class MilestoneType(
     val displayName: String,
     val description: String,
@@ -82,7 +111,10 @@ data class Season(
     @ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
-    var createdAt: Date? = null
+    var createdAt: Date? = null,
+    @get:PropertyName("closed_at")
+    @set:PropertyName("closed_at")
+    var closedAt: Date? = null
 ) {
     constructor() : this(id = "")
 }

@@ -5,7 +5,7 @@
     android:id="@+id/shareCardRoot"
     android:layout_width="360dp"
     android:layout_height="360dp"
-    android:background="@color/primary">
+    android:background="?attr/colorPrimary">
 
     <ImageView
         android:layout_width="0dp"
@@ -23,7 +23,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="FUTEBA DOS PARÇAS"
+        android:text="@string/layout_share_card_text_1"
         android:textColor="@android:color/white"
         android:textSize="18sp"
         android:textStyle="bold"
@@ -76,7 +76,7 @@
         android:id="@+id/tvVs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="X"
+        android:text="@string/layout_share_card_text_2"
         android:textColor="#80FFFFFF"
         android:textSize="32sp"
         android:textStyle="bold"
@@ -118,7 +118,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
-        android:text="Baixe o App e jogue com a gente!"
+        android:text="@string/layout_share_card_text_3"
         android:textColor="#CCFFFFFF"
         android:textSize="10sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -126,3 +126,4 @@
         app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+

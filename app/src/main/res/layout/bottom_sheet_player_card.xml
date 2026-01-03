@@ -46,24 +46,41 @@
                     android:paddingVertical="16dp"
                     android:background="@drawable/bg_player_card_header">
 
-                    <!-- Foto do Jogador -->
-                    <com.google.android.material.card.MaterialCardView
+                    <!-- Foto do Jogador com Brasão -->
+                    <FrameLayout
                         android:layout_width="120dp"
-                        android:layout_height="120dp"
-                        app:cardCornerRadius="60dp"
-                        app:cardElevation="8dp"
-                        app:strokeWidth="4dp"
-                        app:strokeColor="@color/primary">
+                        android:layout_height="120dp">
 
-                        <ImageView
-                            android:id="@+id/ivPlayerPhoto"
+                        <com.google.android.material.card.MaterialCardView
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_player_placeholder"
-                            android:contentDescription="Foto do jogador" />
+                            app:cardCornerRadius="60dp"
+                            app:cardElevation="8dp"
+                            app:strokeWidth="4dp"
+                            app:strokeColor="?attr/colorPrimary">
 
-                    </com.google.android.material.card.MaterialCardView>
+                            <ImageView
+                                android:id="@+id/ivPlayerPhoto"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_player_placeholder"
+                                android:contentDescription="@string/bottom_sheet_player_card_contentdescription_1" />
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- Brasão de Nível -->
+                        <ImageView
+                            android:id="@+id/ivLevelBadgeBottomSheet"
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:layout_gravity="bottom|end"
+                            android:layout_marginEnd="2dp"
+                            android:layout_marginBottom="2dp"
+                            android:contentDescription="@string/bottom_sheet_player_card_contentdescription_2"
+                            android:src="@drawable/ic_level_badge_0" />
+
+                    </FrameLayout>
 
                     <!-- Nome -->
                     <TextView
@@ -71,7 +88,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:text="Jogador"
+                        android:text="@string/bottom_sheet_player_card_text_3"
                         android:textSize="28sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorOnSurface"
@@ -83,7 +100,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Membro desde Jan 2024"
+                        android:text="@string/bottom_sheet_player_card_text_4"
                         android:textSize="14sp"
                         android:textColor="?attr/colorOnSurfaceVariant"
                         tools:text="Membro desde Jan 2024" />
@@ -97,7 +114,7 @@
                     android:layout_marginTop="16dp"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="4dp"
-                    app:cardBackgroundColor="@color/primary">
+                    app:cardBackgroundColor="?attr/colorPrimary">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -120,7 +137,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Nível"
+                                    android:text="@string/bottom_sheet_player_card_text_5"
                                     android:textSize="14sp"
                                     android:textColor="@android:color/white"
                                     android:alpha="0.9" />
@@ -129,7 +146,7 @@
                                     android:id="@+id/tvLevel"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="5"
+                                    android:text="@string/bottom_sheet_player_card_text_6"
                                     android:textSize="48sp"
                                     android:textStyle="bold"
                                     android:textColor="@android:color/white"
@@ -139,7 +156,7 @@
                                     android:id="@+id/tvLevelName"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Habilidoso"
+                                    android:text="@string/bottom_sheet_player_card_text_7"
                                     android:textSize="16sp"
                                     android:textColor="@android:color/white"
                                     android:alpha="0.95"
@@ -150,7 +167,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="⭐"
+                                android:text="@string/bottom_sheet_player_card_text_8"
                                 android:textSize="64sp" />
 
                         </LinearLayout>
@@ -172,7 +189,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:text="Experiência"
+                                    android:text="@string/bottom_sheet_player_card_text_9"
                                     android:textSize="13sp"
                                     android:textColor="@android:color/white"
                                     android:alpha="0.9" />
@@ -181,7 +198,7 @@
                                     android:id="@+id/tvXpProgress"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="2500 / 3850 XP"
+                                    android:text="@string/bottom_sheet_player_card_text_10"
                                     android:textSize="13sp"
                                     android:textStyle="bold"
                                     android:textColor="@android:color/white"
@@ -211,7 +228,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
                     android:layout_marginBottom="12dp"
-                    android:text="📊 Estatísticas"
+                    android:text="@string/bottom_sheet_player_card_text_11"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface" />
@@ -235,7 +252,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🎮"
+                            android:text="@string/bottom_sheet_player_card_text_12"
                             android:textSize="32sp" />
 
                         <TextView
@@ -243,7 +260,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="0"
+                            android:text="@string/bottom_sheet_player_card_text_13"
                             android:textSize="28sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorPrimary"
@@ -253,7 +270,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Jogos"
+                            android:text="@string/bottom_sheet_player_card_text_14"
                             android:textSize="12sp"
                             android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -273,7 +290,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="⚽"
+                            android:text="@string/bottom_sheet_player_card_text_15"
                             android:textSize="32sp" />
 
                         <TextView
@@ -281,7 +298,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="0"
+                            android:text="@string/bottom_sheet_player_card_text_16"
                             android:textSize="28sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorPrimary"
@@ -291,7 +308,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Gols"
+                            android:text="@string/bottom_sheet_player_card_text_17"
                             android:textSize="12sp"
                             android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -311,7 +328,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🎯"
+                            android:text="@string/bottom_sheet_player_card_text_18"
                             android:textSize="32sp" />
 
                         <TextView
@@ -319,7 +336,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="0"
+                            android:text="@string/bottom_sheet_player_card_text_19"
                             android:textSize="28sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorPrimary"
@@ -329,7 +346,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Assistências"
+                            android:text="@string/bottom_sheet_player_card_text_20"
                             android:textSize="12sp"
                             android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -358,7 +375,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🏆"
+                            android:text="@string/bottom_sheet_player_card_text_21"
                             android:textSize="32sp" />
 
                         <TextView
@@ -366,7 +383,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="0"
+                            android:text="@string/bottom_sheet_player_card_text_22"
                             android:textSize="28sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorPrimary"
@@ -376,7 +393,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Vitórias"
+                            android:text="@string/bottom_sheet_player_card_text_23"
                             android:textSize="12sp"
                             android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -396,7 +413,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="⭐"
+                            android:text="@string/bottom_sheet_player_card_text_24"
                             android:textSize="32sp" />
 
                         <TextView
@@ -404,7 +421,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="0"
+                            android:text="@string/bottom_sheet_player_card_text_25"
                             android:textSize="28sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorPrimary"
@@ -414,7 +431,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="MVP"
+                            android:text="@string/bottom_sheet_player_card_text_26"
                             android:textSize="12sp"
                             android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -434,7 +451,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🧤"
+                            android:text="@string/bottom_sheet_player_card_text_27"
                             android:textSize="32sp" />
 
                         <TextView
@@ -442,7 +459,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="0"
+                            android:text="@string/bottom_sheet_player_card_text_28"
                             android:textSize="28sp"
                             android:textStyle="bold"
                             android:textColor="?attr/colorPrimary"
@@ -452,7 +469,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Defesas"
+                            android:text="@string/bottom_sheet_player_card_text_29"
                             android:textSize="12sp"
                             android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -466,7 +483,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
                     android:layout_marginBottom="12dp"
-                    android:text="⚡ Habilidades"
+                    android:text="@string/bottom_sheet_player_card_text_30"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface" />
@@ -482,7 +499,7 @@
                     <TextView
                         android:layout_width="100dp"
                         android:layout_height="wrap_content"
-                        android:text="Ataque"
+                        android:text="@string/bottom_sheet_player_card_text_31"
                         android:textSize="14sp"
                         android:textColor="?attr/colorOnSurface" />
 
@@ -493,7 +510,7 @@
                         android:layout_weight="1"
                         android:layout_marginEnd="12dp"
                         app:trackCornerRadius="4dp"
-                        app:indicatorColor="@color/primary"
+                        app:indicatorColor="?attr/colorPrimary"
                         app:trackColor="?attr/colorSurfaceVariant"
                         tools:progress="75" />
 
@@ -501,7 +518,7 @@
                         android:id="@+id/tvStrikerRating"
                         android:layout_width="40dp"
                         android:layout_height="wrap_content"
-                        android:text="3.8"
+                        android:text="@string/bottom_sheet_player_card_text_32"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorPrimary"
@@ -521,7 +538,7 @@
                     <TextView
                         android:layout_width="100dp"
                         android:layout_height="wrap_content"
-                        android:text="Meio-Campo"
+                        android:text="@string/bottom_sheet_player_card_text_33"
                         android:textSize="14sp"
                         android:textColor="?attr/colorOnSurface" />
 
@@ -532,7 +549,7 @@
                         android:layout_weight="1"
                         android:layout_marginEnd="12dp"
                         app:trackCornerRadius="4dp"
-                        app:indicatorColor="@color/primary"
+                        app:indicatorColor="?attr/colorPrimary"
                         app:trackColor="?attr/colorSurfaceVariant"
                         tools:progress="80" />
 
@@ -540,7 +557,7 @@
                         android:id="@+id/tvMidRating"
                         android:layout_width="40dp"
                         android:layout_height="wrap_content"
-                        android:text="4.0"
+                        android:text="@string/bottom_sheet_player_card_text_34"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorPrimary"
@@ -560,7 +577,7 @@
                     <TextView
                         android:layout_width="100dp"
                         android:layout_height="wrap_content"
-                        android:text="Defesa"
+                        android:text="@string/bottom_sheet_player_card_text_35"
                         android:textSize="14sp"
                         android:textColor="?attr/colorOnSurface" />
 
@@ -571,7 +588,7 @@
                         android:layout_weight="1"
                         android:layout_marginEnd="12dp"
                         app:trackCornerRadius="4dp"
-                        app:indicatorColor="@color/primary"
+                        app:indicatorColor="?attr/colorPrimary"
                         app:trackColor="?attr/colorSurfaceVariant"
                         tools:progress="70" />
 
@@ -579,7 +596,7 @@
                         android:id="@+id/tvDefenderRating"
                         android:layout_width="40dp"
                         android:layout_height="wrap_content"
-                        android:text="3.5"
+                        android:text="@string/bottom_sheet_player_card_text_36"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorPrimary"
@@ -599,7 +616,7 @@
                     <TextView
                         android:layout_width="100dp"
                         android:layout_height="wrap_content"
-                        android:text="Goleiro"
+                        android:text="@string/bottom_sheet_player_card_text_37"
                         android:textSize="14sp"
                         android:textColor="?attr/colorOnSurface" />
 
@@ -610,7 +627,7 @@
                         android:layout_weight="1"
                         android:layout_marginEnd="12dp"
                         app:trackCornerRadius="4dp"
-                        app:indicatorColor="@color/primary"
+                        app:indicatorColor="?attr/colorPrimary"
                         app:trackColor="?attr/colorSurfaceVariant"
                         tools:progress="60" />
 
@@ -618,7 +635,7 @@
                         android:id="@+id/tvGkRating"
                         android:layout_width="40dp"
                         android:layout_height="wrap_content"
-                        android:text="3.0"
+                        android:text="@string/bottom_sheet_player_card_text_38"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorPrimary"
@@ -633,13 +650,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
                     android:layout_marginTop="24dp"
-                    android:text="Compartilhar no WhatsApp"
+                    android:text="@string/bottom_sheet_player_card_text_39"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     app:icon="@drawable/ic_share"
                     app:iconGravity="textStart"
                     app:cornerRadius="12dp"
-                    app:backgroundTint="@color/primary" />
+                    app:backgroundTint="?attr/colorPrimary" />
 
             </LinearLayout>
 
@@ -648,3 +665,4 @@
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

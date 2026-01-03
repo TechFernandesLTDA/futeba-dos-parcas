@@ -7,11 +7,13 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.futebadosparcas.R
 import com.futebadosparcas.databinding.FragmentPreferencesBinding
+import com.futebadosparcas.data.model.ThemeMode
 import com.futebadosparcas.util.PreferencesManager
-import com.futebadosparcas.util.ThemeHelper
+import com.futebadosparcas.ui.theme.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -23,6 +25,7 @@ class PreferencesFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: PreferencesViewModel by viewModels()
+    private val themeViewModel: ThemeViewModel by viewModels()
 
     @Inject
     lateinit var preferencesManager: PreferencesManager
@@ -44,6 +47,7 @@ class PreferencesFragment : Fragment() {
         setupProfileVisibilitySwitch()
         setupDeveloperButton()
         observeViewModel()
+        observeThemeConfig()
     }
 
     private fun setupToolbar() {
@@ -53,19 +57,16 @@ class PreferencesFragment : Fragment() {
     }
 
     private fun setupThemeSelector() {
-        val currentTheme = preferencesManager.getThemePreference()
-        updateThemeButtonSelection(currentTheme)
-
         binding.btnThemeLight.setOnClickListener {
-            selectTheme("light")
+            selectTheme(ThemeMode.LIGHT)
         }
 
         binding.btnThemeDark.setOnClickListener {
-            selectTheme("dark")
+            selectTheme(ThemeMode.DARK)
         }
 
         binding.btnThemeSystem.setOnClickListener {
-            selectTheme("system")
+            selectTheme(ThemeMode.SYSTEM)
         }
         
         binding.btnCustomizeColors.setOnClickListener {
@@ -73,17 +74,22 @@ class PreferencesFragment : Fragment() {
         }
     }
 
-    private fun selectTheme(theme: String) {
-        preferencesManager.setThemePreference(theme)
-        updateThemeButtonSelection(theme)
-        ThemeHelper.applyTheme(theme)
+    private fun selectTheme(mode: ThemeMode) {
+        val themeString = when (mode) {
+            ThemeMode.LIGHT -> "light"
+            ThemeMode.DARK -> "dark"
+            ThemeMode.SYSTEM -> "system"
+        }
+        preferencesManager.setThemePreference(themeString)
+        themeViewModel.setThemeMode(mode)
+        updateThemeButtonSelection(mode)
     }
 
-    private fun updateThemeButtonSelection(theme: String) {
-        val checkedId = when (theme) {
-            "light" -> R.id.btnThemeLight
-            "dark" -> R.id.btnThemeDark
-            else -> R.id.btnThemeSystem
+    private fun updateThemeButtonSelection(mode: ThemeMode) {
+        val checkedId = when (mode) {
+            ThemeMode.LIGHT -> R.id.btnThemeLight
+            ThemeMode.DARK -> R.id.btnThemeDark
+            ThemeMode.SYSTEM -> R.id.btnThemeSystem
         }
         binding.toggleGroupTheme.check(checkedId)
     }
@@ -113,6 +119,16 @@ class PreferencesFragment : Fragment() {
                 binding.switchProfileVisibility.setOnCheckedChangeListener(null)
                 binding.switchProfileVisibility.isChecked = isChecked
                 setupProfileVisibilitySwitch()
+            }
+        }
+    }
+
+    private fun observeThemeConfig() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+                themeViewModel.themeConfig.collect { config ->
+                    updateThemeButtonSelection(config.mode)
+                }
             }
         }
     }

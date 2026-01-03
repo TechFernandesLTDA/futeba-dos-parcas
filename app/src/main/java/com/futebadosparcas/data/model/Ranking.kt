@@ -271,18 +271,18 @@ data class SeasonParticipationV2(
     @get:PropertyName("league_rating")
     @set:PropertyName("league_rating")
     var leagueRating: Double = 0.0,
-    @get:PropertyName("promotion_progress")
-    @set:PropertyName("promotion_progress")
-    var promotionProgress: Int = 0, // 0-3
-    @get:PropertyName("relegation_progress")
-    @set:PropertyName("relegation_progress")
-    var relegationProgress: Int = 0, // 0-3
-    @get:PropertyName("protection_games")
-    @set:PropertyName("protection_games")
-    var protectionGames: Int = 0, // 0-5 (imunidade apos promocao)
     @get:PropertyName("recent_games")
     @set:PropertyName("recent_games")
     var recentGames: List<RecentGameData> = emptyList(), // Ultimos 10 jogos
+    @get:PropertyName("promotion_progress")
+    @set:PropertyName("promotion_progress")
+    var promotionProgress: Int = 0,
+    @get:PropertyName("relegation_progress")
+    @set:PropertyName("relegation_progress")
+    var relegationProgress: Int = 0,
+    @get:PropertyName("protection_games")
+    @set:PropertyName("protection_games")
+    var protectionGames: Int = 0,
     @ServerTimestamp
     @get:PropertyName("last_calculated_at")
     @set:PropertyName("last_calculated_at")

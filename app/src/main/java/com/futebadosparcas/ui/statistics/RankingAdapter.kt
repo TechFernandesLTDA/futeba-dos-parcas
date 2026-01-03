@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.futebadosparcas.R
 import com.futebadosparcas.databinding.ItemRankingBinding
+import com.futebadosparcas.util.LevelBadgeHelper
 
 class RankingAdapter(private val rankingItems: List<PlayerRankingItem>) : RecyclerView.Adapter<RankingAdapter.ViewHolder>() {
 
@@ -31,6 +32,9 @@ class RankingAdapter(private val rankingItems: List<PlayerRankingItem>) : Recycl
                 placeholder(R.drawable.ic_launcher_foreground)
                 error(R.drawable.ic_launcher_foreground)
             }
+
+            // Brasão de Nível
+            binding.ivLevelBadgeRanking.setImageResource(LevelBadgeHelper.getBadgeForLevel(item.level))
         }
     }
 }

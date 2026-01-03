@@ -96,7 +96,7 @@ private fun EvolutionContent(data: PlayerEvolutionData) {
             text = "Minha Evolucao",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(FutebaColors.TextPrimary),
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
@@ -114,7 +114,7 @@ private fun EvolutionContent(data: PlayerEvolutionData) {
 
         // Card de Liga (se houver dados)
         data.leagueData?.let { league ->
-            LeagueDivisionCard(
+            PlayerLeagueCard(
                 division = league.division,
                 leagueRating = league.leagueRating,
                 promotionProgress = league.promotionProgress,
@@ -130,7 +130,7 @@ private fun EvolutionContent(data: PlayerEvolutionData) {
                 text = "Proximos Objetivos",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(FutebaColors.TextPrimary),
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(vertical = 12.dp)
             )
 
@@ -152,7 +152,7 @@ private fun EvolutionContent(data: PlayerEvolutionData) {
                 text = "Historico Recente",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(FutebaColors.TextPrimary),
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(vertical = 12.dp)
             )
 
@@ -173,7 +173,7 @@ private fun EvolutionContent(data: PlayerEvolutionData) {
                             Text(
                                 text = log.source,
                                 fontSize = 14.sp,
-                                color = Color(FutebaColors.TextPrimary)
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = "+${log.xpEarned} XP",

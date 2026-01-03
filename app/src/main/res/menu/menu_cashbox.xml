@@ -4,18 +4,18 @@
 
     <item
         android:id="@+id/action_filter"
-        android:title="Filtrar"
+        android:title="@string/menu_cashbox_title_1"
         android:icon="@drawable/ic_filter"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_report"
-        android:title="Relatorio"
+        android:title="@string/menu_cashbox_title_2"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_recalculate"
-        android:title="Recalcular saldo"
+        android:title="@string/menu_cashbox_title_3"
         app:showAsAction="never" />
 
 </menu>

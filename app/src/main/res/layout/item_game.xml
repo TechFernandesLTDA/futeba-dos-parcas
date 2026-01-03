@@ -23,7 +23,7 @@
             android:id="@+id/tvDate"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="26/12/2025"
+            android:text="@string/item_game_text_1"
             android:textSize="22sp"
             android:textStyle="bold"
             android:textColor="?attr/colorPrimary"
@@ -38,7 +38,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="18:00"
+            android:text="@string/item_game_text_2"
             android:textSize="16sp"
             android:textColor="?attr/colorOnSurfaceVariant"
             app:layout_constraintStart_toStartOf="parent"
@@ -65,7 +65,7 @@
                 android:gravity="center"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="8dp"
-                android:text="AGENDADO"
+                android:text="@string/item_game_text_3"
                 android:textSize="13sp"
                 android:textStyle="bold"
                 android:textColor="?attr/colorOnSurface"
@@ -90,10 +90,10 @@
                 android:id="@+id/tvScoreboardScore"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0  -  0"
+                android:text="@string/item_game_text_4"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="@color/error"
+                android:textColor="?attr/colorError"
                 android:gravity="center"
                 tools:text="2  -  1" />
 
@@ -101,7 +101,7 @@
                 android:id="@+id/tvScoreboardTeams"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Time 1 vs Time 2"
+                android:text="@string/item_game_text_5"
                 android:textSize="10sp"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:gravity="center"
@@ -127,7 +127,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:text="Centro Esportivo"
+            android:text="@string/item_game_text_6"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
@@ -147,7 +147,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:layout_marginStart="32dp"
-            android:text="Quadra 1 - Society"
+            android:text="@string/item_game_text_7"
             android:textSize="14sp"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:lineSpacingMultiplier="1.3"
@@ -196,7 +196,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="0/14"
+                    android:text="@string/item_game_text_8"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -206,7 +206,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="confirmados"
+                    android:text="@string/item_game_text_9"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -224,14 +224,14 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:src="@drawable/ic_money"
-                    app:tint="@color/primary" />
+                    app:tint="?attr/colorPrimary" />
 
                 <TextView
                     android:id="@+id/tvPrice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="R$ 0,00"
+                    android:text="@string/item_game_text_10"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorPrimary"
@@ -241,7 +241,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="por pessoa"
+                    android:text="@string/item_game_text_11"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -267,7 +267,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Organizador"
+                    android:text="@string/item_game_text_12"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="?attr/colorOnSurface"
@@ -280,7 +280,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Grupo"
+                    android:text="@string/item_game_text_13"
                     android:textSize="12sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:maxLines="1"
@@ -319,7 +319,7 @@
                 android:layout_height="48dp"
                 android:minHeight="48dp"
                 android:paddingHorizontal="16dp"
-                android:text="Mapa"
+                android:text="@string/item_game_text_14"
                 android:textSize="14sp"
                 app:icon="@drawable/ic_location"
                 android:textColor="?attr/colorOnSurfaceVariant"
@@ -333,7 +333,7 @@
                 android:layout_height="48dp"
                 android:minHeight="48dp"
                 android:paddingHorizontal="20dp"
-                android:text="Confirmar"
+                android:text="@string/item_game_text_15"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 app:icon="@drawable/ic_check"
@@ -347,3 +347,4 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

@@ -20,7 +20,7 @@
             android:id="@+id/tvMinute"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:text="45'"
+            android:text="@string/item_game_event_text_1"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/white"
@@ -48,18 +48,18 @@
                 android:id="@+id/tvEventDescription"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Gol de João Silva"
+                android:text="@string/item_game_event_text_2"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_primary" />
+                android:textColor="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/tvEventSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Assistência: Pedro Santos"
+                android:text="@string/item_game_event_text_3"
                 android:textSize="12sp"
-                android:textColor="@color/text_secondary"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:visibility="gone" />
         </LinearLayout>
 
@@ -68,7 +68,7 @@
             android:id="@+id/tvEventTeam"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="T1"
+            android:text="@string/item_game_event_text_4"
             android:textSize="12sp"
             android:textColor="@color/white"
             android:background="@drawable/badge_primary"

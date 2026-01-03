@@ -4,6 +4,7 @@ import android.net.Uri
 import com.futebadosparcas.data.model.FieldType
 import com.futebadosparcas.data.model.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
@@ -67,7 +68,16 @@ class UserRepository @Inject constructor(
         strikerRating: Double = 0.0,
         midRating: Double = 0.0,
         defenderRating: Double = 0.0,
-        gkRating: Double = 0.0
+        gkRating: Double = 0.0,
+        birthDate: java.util.Date?,
+        gender: String?,
+        heightCm: Int?,
+        weightKg: Int?,
+        dominantFoot: String?,
+        primaryPosition: String?,
+        secondaryPosition: String?,
+        playStyle: String?,
+        experienceYears: Int?
     ): Result<User> {
         return try {
             val uid = auth.currentUser?.uid
@@ -90,6 +100,16 @@ class UserRepository @Inject constructor(
                 "gk_rating" to gkRating
             )
 
+            updates["birth_date"] = birthDate ?: FieldValue.delete()
+            updates["gender"] = gender ?: FieldValue.delete()
+            updates["height_cm"] = heightCm ?: FieldValue.delete()
+            updates["weight_kg"] = weightKg ?: FieldValue.delete()
+            updates["dominant_foot"] = dominantFoot ?: FieldValue.delete()
+            updates["primary_position"] = primaryPosition ?: FieldValue.delete()
+            updates["secondary_position"] = secondaryPosition ?: FieldValue.delete()
+            updates["play_style"] = playStyle ?: FieldValue.delete()
+            updates["experience_years"] = experienceYears ?: FieldValue.delete()
+
             photoUrl?.let {
                 updates["photo_url"] = it
             }
@@ -98,6 +118,33 @@ class UserRepository @Inject constructor(
 
             // Retornar usuario atualizado
             getCurrentUser()
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateAutoRatings(
+        autoStrikerRating: Double,
+        autoMidRating: Double,
+        autoDefenderRating: Double,
+        autoGkRating: Double,
+        autoRatingSamples: Int
+    ): Result<Unit> {
+        return try {
+            val uid = auth.currentUser?.uid
+                ?: return Result.failure(Exception("Usuario nao autenticado"))
+
+            val updates = mapOf(
+                "auto_striker_rating" to autoStrikerRating,
+                "auto_mid_rating" to autoMidRating,
+                "auto_defender_rating" to autoDefenderRating,
+                "auto_gk_rating" to autoGkRating,
+                "auto_rating_samples" to autoRatingSamples,
+                "auto_rating_updated_at" to FieldValue.serverTimestamp()
+            )
+
+            usersCollection.document(uid).update(updates).await()
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -174,9 +221,17 @@ class UserRepository @Inject constructor(
                 return Result.success(emptyList())
             }
 
-            val snapshot = usersCollection.whereIn(com.google.firebase.firestore.FieldPath.documentId(), userIds).get().await()
-            val users = snapshot.toObjects(User::class.java)
-            Result.success(users)
+            // Firestore 'in' query supports max 10 values
+            val chunks = userIds.chunked(10)
+            val allUsers = mutableListOf<User>()
+
+            // Process chunks in parallel or sequence? Sequence is safer for now.
+            for (chunk in chunks) {
+                val snapshot = usersCollection.whereIn(com.google.firebase.firestore.FieldPath.documentId(), chunk).get().await()
+                allUsers.addAll(snapshot.toObjects(User::class.java))
+            }
+            
+            Result.success(allUsers)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -217,6 +272,24 @@ class UserRepository @Inject constructor(
             )
             usersCollection.document(userId).update(updates).await()
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Busca todos os usuários que são donos de quadra (FIELD_OWNER)
+     * Usado para selecionar o dono ao criar/editar um local
+     */
+    suspend fun getFieldOwners(): Result<List<User>> {
+        return try {
+            val snapshot = usersCollection
+                .whereEqualTo("role", "FIELD_OWNER")
+                .orderBy("name")
+                .get()
+                .await()
+            val fieldOwners = snapshot.toObjects(User::class.java)
+            Result.success(fieldOwners)
         } catch (e: Exception) {
             Result.failure(e)
         }

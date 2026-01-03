@@ -7,6 +7,7 @@ import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.data.model.FieldType
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.data.model.LocationReview
+import com.futebadosparcas.data.model.User
 import com.futebadosparcas.data.repository.LocationRepository
 import com.futebadosparcas.data.repository.UserRepository
 import com.futebadosparcas.data.repository.AddressRepository
@@ -24,14 +25,29 @@ class LocationDetailViewModel @Inject constructor(
     private val addressRepository: AddressRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<LocationDetailUiState>(LocationDetailUiState.Loading)
+    private val _uiState = MutableStateFlow<LocationDetailUiState>(LocationDetailUiState.Success(Location(), emptyList()))
     val uiState: StateFlow<LocationDetailUiState> = _uiState
+
+    private val _fieldOwners = MutableStateFlow<List<User>>(emptyList())
+    val fieldOwners: StateFlow<List<User>> = _fieldOwners
 
     private var currentLocation: Location? = null
 
+    init {
+        loadFieldOwners()
+    }
+
+    private fun loadFieldOwners() {
+        viewModelScope.launch {
+            userRepository.getFieldOwners().onSuccess { owners ->
+                _fieldOwners.value = owners
+            }
+        }
+    }
+
     fun createLocation(
-        name: String, 
-        address: String, 
+        name: String,
+        address: String,
         phone: String?,
         openingTime: String,
         closingTime: String,
@@ -48,19 +64,23 @@ class LocationDetailViewModel @Inject constructor(
         complement: String,
         city: String,
         state: String,
-        country: String
+        country: String,
+        selectedOwnerId: String? = null // ID do dono selecionado (opcional)
     ) {
          viewModelScope.launch {
             _uiState.value = LocationDetailUiState.Loading
-            
-            val userId = userRepository.getCurrentUserId()
-            if (userId == null) {
+
+            val currentUserId = userRepository.getCurrentUserId()
+            if (currentUserId == null) {
                 _uiState.value = LocationDetailUiState.Error("Usuário não autenticado")
                 return@launch
             }
 
+            // Se foi selecionado um dono, usa ele; senão usa o usuário atual
+            val finalOwnerId = selectedOwnerId ?: currentUserId
+
             val newLocation = Location(
-                ownerId = userId,
+                ownerId = finalOwnerId,
                 name = name,
                 address = address,
                 phone = phone,
@@ -136,8 +156,8 @@ class LocationDetailViewModel @Inject constructor(
     }
 
     fun updateLocation(
-        name: String, 
-        address: String, 
+        name: String,
+        address: String,
         phone: String?,
         openingTime: String,
         closingTime: String,
@@ -154,13 +174,21 @@ class LocationDetailViewModel @Inject constructor(
         complement: String,
         city: String,
         state: String,
-        country: String
+        country: String,
+        selectedOwnerId: String? = null // ID do dono selecionado (opcional)
     ) {
         val location = currentLocation ?: return
-        
+
+        // Monta o endereço completo atualizado com os dados atuais do formulário
+        val fullAddress = "${street}, ${number} - ${city}"
+
+        // Se foi selecionado um dono, atualiza; senão mantém o dono atual
+        val finalOwnerId = selectedOwnerId ?: location.ownerId
+
         val updatedLocation = location.copy(
+            ownerId = finalOwnerId,
             name = name,
-            address = address,
+            address = fullAddress, // Usa o endereço recém-montado ao invés do parâmetro desatualizado
             phone = phone,
             openingTime = openingTime,
             closingTime = closingTime,
@@ -179,7 +207,7 @@ class LocationDetailViewModel @Inject constructor(
             state = state,
             country = country
         )
-        
+
         viewModelScope.launch {
             _uiState.value = LocationDetailUiState.Loading
             locationRepository.updateLocation(updatedLocation).fold(
@@ -197,7 +225,9 @@ class LocationDetailViewModel @Inject constructor(
     
     fun searchCep(cep: String) {
         viewModelScope.launch {
-            _uiState.value = LocationDetailUiState.Loading
+            // NÃO muda para Loading - preserva o formulário visível
+            val currentSuccess = uiState.value as? LocationDetailUiState.Success
+
             addressRepository.getAddressByCep(cep).fold(
                 onSuccess = { address ->
                     val currentState = currentLocation ?: Location()
@@ -212,8 +242,7 @@ class LocationDetailViewModel @Inject constructor(
                         address = "${address.street}, ${address.neighborhood}, ${address.city} - ${address.state}"
                     )
                     currentLocation = updated
-                    
-                    val currentSuccess = uiState.value as? LocationDetailUiState.Success
+
                     _uiState.value = LocationDetailUiState.Success(
                         location = updated,
                         fields = currentSuccess?.fields ?: emptyList(),
@@ -221,8 +250,14 @@ class LocationDetailViewModel @Inject constructor(
                     )
                 },
                 onFailure = {
-                     _uiState.value = LocationDetailUiState.Error("CEP não encontrado: ${it.message}")
-                     // Ideally restore success state after showing error, or use one-shot event
+                    // Mostra erro mas mantém o estado Success anterior (não perde dados)
+                    _uiState.value = LocationDetailUiState.Error("CEP não encontrado: ${it.message}")
+
+                    // Restaura o estado Success após 100ms para manter formulário visível
+                    kotlinx.coroutines.delay(100)
+                    if (currentSuccess != null) {
+                        _uiState.value = currentSuccess
+                    }
                 }
             )
         }

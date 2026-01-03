@@ -7,10 +7,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
 import com.futebadosparcas.R
 import com.futebadosparcas.data.repository.UserRepository
 import com.futebadosparcas.ui.main.MainActivity
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.LevelBadgeHelper
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
@@ -32,8 +35,8 @@ class FcmService : FirebaseMessagingService() {
     companion object {
         private const val TAG = "FcmService"
         private const val CHANNEL_ID = "futeba_notifications"
-        private const val CHANNEL_NAME = "Futeba dos Parças"
-        private const val CHANNEL_DESCRIPTION = "Notificações de jogos e confirmações"
+        private const val CHANNEL_NAME = "Futeba dos Parcas"
+        private const val CHANNEL_DESCRIPTION = "Notificacoes de jogos e confirmacoes"
     }
 
     override fun onNewToken(token: String) {
@@ -51,13 +54,11 @@ class FcmService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        // Create notification channel for Android O+
         createNotificationChannel()
 
-        // Get notification data
         val title = remoteMessage.notification?.title
             ?: remoteMessage.data["title"]
-            ?: "Futeba dos Parças"
+            ?: "Futeba dos Parcas"
 
         val body = remoteMessage.notification?.body
             ?: remoteMessage.data["body"]
@@ -65,8 +66,9 @@ class FcmService : FirebaseMessagingService() {
 
         val type = remoteMessage.data["type"] ?: "general"
         val gameId = remoteMessage.data["gameId"]
+        val level = remoteMessage.data["level"]?.toIntOrNull()
 
-        showNotification(title, body, type, gameId)
+        showNotification(title, body, type, gameId, level)
     }
 
     private fun createNotificationChannel() {
@@ -86,7 +88,7 @@ class FcmService : FirebaseMessagingService() {
         }
     }
 
-    private fun showNotification(title: String, body: String, type: String, gameId: String?) {
+    private fun showNotification(title: String, body: String, type: String, gameId: String?, level: Int? = null) {
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         gameId?.let { intent.putExtra("gameId", it) }
@@ -108,13 +110,24 @@ class FcmService : FirebaseMessagingService() {
             .setContentIntent(pendingIntent)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
 
+        if (type == "level_up" && level != null) {
+            try {
+                val badgeDrawable = ContextCompat.getDrawable(this, LevelBadgeHelper.getBadgeForLevel(level))
+                val largeBitmap = badgeDrawable?.toBitmap()
+                largeBitmap?.let {
+                    notificationBuilder.setLargeIcon(it)
+                }
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Erro ao adicionar brasao na notificacao", e)
+            }
+        }
+
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Cancela todas as coroutines pendentes para evitar leaks
         serviceScope.cancel()
     }
 }

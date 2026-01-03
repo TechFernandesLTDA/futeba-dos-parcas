@@ -10,7 +10,7 @@
         android:id="@+id/tvDialogTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Selecionar Quadra"
+        android:text="@string/dialog_select_field_text_1"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="?attr/colorOnSurface"
@@ -20,7 +20,7 @@
         android:id="@+id/tvLocationName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Nome do Local"
+        android:text="@string/dialog_select_field_text_2"
         android:textSize="14sp"
         android:textColor="?attr/colorOnSurfaceVariant"
         android:layout_marginBottom="16dp" />
@@ -46,7 +46,7 @@
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Todos"
+            android:text="@string/dialog_select_field_text_3"
             android:checked="true" />
 
         <com.google.android.material.chip.Chip
@@ -54,21 +54,21 @@
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Society" />
+            android:text="@string/dialog_select_field_text_4" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipFutsal"
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Futsal" />
+            android:text="@string/dialog_select_field_text_5" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipCampo"
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Campo" />
+            android:text="@string/dialog_select_field_text_6" />
 
     </com.google.android.material.chip.ChipGroup>
 
@@ -84,7 +84,7 @@
         android:id="@+id/tvEmptyState"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Nenhuma quadra cadastrada neste local."
+        android:text="@string/dialog_select_field_text_7"
         android:textSize="14sp"
         android:textColor="?attr/colorOnSurfaceVariant"
         android:gravity="center"
@@ -110,7 +110,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="8dp"
-            android:text="Cancelar"
+            android:text="@string/dialog_select_field_text_8"
             app:cornerRadius="12dp" />
 
         <com.google.android.material.button.MaterialButton
@@ -119,7 +119,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="8dp"
-            android:text="Confirmar"
+            android:text="@string/dialog_select_field_text_9"
             android:enabled="false"
             app:cornerRadius="12dp" />
 

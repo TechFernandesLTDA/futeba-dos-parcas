@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.FieldType
+import com.futebadosparcas.data.model.PlayerRatingRole
 import com.futebadosparcas.data.model.User
 import com.google.android.material.button.MaterialButton
 
@@ -96,10 +97,15 @@ class PlayersAdapter(
             }
 
             // Ratings
-            tvStrikerRating.text = if (user.strikerRating > 0) user.strikerRating.toInt().toString() else "-"
-            tvMidRating.text = if (user.midRating > 0) user.midRating.toInt().toString() else "-"
-            tvDefRating.text = if (user.defenderRating > 0) user.defenderRating.toInt().toString() else "-"
-            tvGkRating.text = if (user.gkRating > 0) user.gkRating.toInt().toString() else "-"
+            val strikerRating = user.getEffectiveRating(PlayerRatingRole.STRIKER)
+            val midRating = user.getEffectiveRating(PlayerRatingRole.MID)
+            val defenderRating = user.getEffectiveRating(PlayerRatingRole.DEFENDER)
+            val gkRating = user.getEffectiveRating(PlayerRatingRole.GOALKEEPER)
+
+            tvStrikerRating.text = if (strikerRating > 0) strikerRating.toInt().toString() else "-"
+            tvMidRating.text = if (midRating > 0) midRating.toInt().toString() else "-"
+            tvDefRating.text = if (defenderRating > 0) defenderRating.toInt().toString() else "-"
+            tvGkRating.text = if (gkRating > 0) gkRating.toInt().toString() else "-"
 
             // Logic for Level Badge
             val level = user.level

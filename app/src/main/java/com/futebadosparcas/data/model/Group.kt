@@ -45,7 +45,11 @@ data class Group(
 
     @get:PropertyName("updated_at")
     @set:PropertyName("updated_at")
-    var updatedAt: Date? = null
+    var updatedAt: Date? = null,
+
+    @get:PropertyName("is_public")
+    @set:PropertyName("is_public")
+    var isPublic: Boolean = false
 ) {
     constructor() : this(id = "")
 

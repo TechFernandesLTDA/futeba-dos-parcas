@@ -2,9 +2,11 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
 
     <com.google.android.material.appbar.AppBarLayout
+        style="@style/FutebaAppBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -118,7 +120,7 @@
                         style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Convidar Jogadores"
+                        android:text="@string/fragment_group_detail_text_1"
                         app:icon="@drawable/ic_person_add"
                         android:gravity="start|center_vertical" />
 
@@ -127,7 +129,7 @@
                         style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Criar Jogo"
+                        android:text="@string/fragment_group_detail_text_2"
                         app:icon="@drawable/ic_add"
                         android:gravity="start|center_vertical" />
 
@@ -136,7 +138,7 @@
                         style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Caixa do Grupo"
+                        android:text="@string/fragment_group_detail_text_3"
                         app:icon="@drawable/ic_money"
                         android:gravity="start|center_vertical" />
 
@@ -149,7 +151,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="Membros"
+                android:text="@string/fragment_group_detail_text_4"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 

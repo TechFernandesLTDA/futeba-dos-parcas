@@ -16,7 +16,7 @@
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Comparador"
+            android:text="@string/dialog_compare_players_text_1"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
@@ -55,7 +55,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
-            android:text="Jogador A"
+            android:text="@string/dialog_compare_players_text_2"
             android:textStyle="bold"
             android:maxLines="2"
             android:ellipsize="end"
@@ -69,7 +69,7 @@
             android:id="@+id/tvVS"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="VS"
+            android:text="@string/dialog_compare_players_text_3"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="?attr/colorOutline"
@@ -99,7 +99,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
-            android:text="Jogador B"
+            android:text="@string/dialog_compare_players_text_4"
             android:textStyle="bold"
             android:maxLines="2"
             android:ellipsize="end"
@@ -131,33 +131,33 @@
 
             <!-- Gols -->
             <TableRow android:paddingVertical="8dp">
-                <TextView android:id="@+id/tvGoalsA" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="0"/>
-                <TextView android:gravity="center" android:text="Gols" android:textColor="?attr/colorOnSurfaceVariant"/>
-                <TextView android:id="@+id/tvGoalsB" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="0"/>
+                <TextView android:id="@+id/tvGoalsA" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="@string/dialog_compare_players_text_5"/>
+                <TextView android:gravity="center" android:text="@string/dialog_compare_players_text_6" android:textColor="?attr/colorOnSurfaceVariant"/>
+                <TextView android:id="@+id/tvGoalsB" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="@string/dialog_compare_players_text_7"/>
             </TableRow>
             <View android:background="?attr/colorOutlineVariant" android:layout_height="1dp" android:alpha="0.2"/>
 
             <!-- Assistências -->
             <TableRow android:paddingVertical="8dp">
-                <TextView android:id="@+id/tvAssistsA" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="0"/>
-                <TextView android:gravity="center" android:text="Assistências" android:textColor="?attr/colorOnSurfaceVariant"/>
-                <TextView android:id="@+id/tvAssistsB" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="0"/>
+                <TextView android:id="@+id/tvAssistsA" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="@string/dialog_compare_players_text_8"/>
+                <TextView android:gravity="center" android:text="@string/dialog_compare_players_text_9" android:textColor="?attr/colorOnSurfaceVariant"/>
+                <TextView android:id="@+id/tvAssistsB" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="@string/dialog_compare_players_text_10"/>
             </TableRow>
             <View android:background="?attr/colorOutlineVariant" android:layout_height="1dp" android:alpha="0.2"/>
 
             <!-- Jogos -->
             <TableRow android:paddingVertical="8dp">
-                <TextView android:id="@+id/tvGamesA" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="0"/>
-                <TextView android:gravity="center" android:text="Jogos" android:textColor="?attr/colorOnSurfaceVariant"/>
-                <TextView android:id="@+id/tvGamesB" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="0"/>
+                <TextView android:id="@+id/tvGamesA" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="@string/dialog_compare_players_text_11"/>
+                <TextView android:gravity="center" android:text="@string/dialog_compare_players_text_12" android:textColor="?attr/colorOnSurfaceVariant"/>
+                <TextView android:id="@+id/tvGamesB" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="@string/dialog_compare_players_text_13"/>
             </TableRow>
              <View android:background="?attr/colorOutlineVariant" android:layout_height="1dp" android:alpha="0.2"/>
 
             <!-- MVP -->
             <TableRow android:paddingVertical="8dp">
-                <TextView android:id="@+id/tvMvpA" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="0x"/>
-                <TextView android:gravity="center" android:text="MVP" android:textColor="?attr/colorOnSurfaceVariant"/>
-                <TextView android:id="@+id/tvMvpB" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="0x"/>
+                <TextView android:id="@+id/tvMvpA" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="@string/dialog_compare_players_text_14"/>
+                <TextView android:gravity="center" android:text="@string/dialog_compare_players_text_15" android:textColor="?attr/colorOnSurfaceVariant"/>
+                <TextView android:id="@+id/tvMvpB" android:gravity="center" android:textStyle="bold" android:textSize="18sp" android:text="@string/dialog_compare_players_text_16"/>
             </TableRow>
 
         </TableLayout>

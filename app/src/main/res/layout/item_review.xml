@@ -26,7 +26,7 @@
                 android:layout_height="40dp"
                 android:src="@drawable/ic_launcher_foreground"
                 app:civ_border_width="1dp"
-                app:civ_border_color="@color/outline_variant" />
+                app:civ_border_color="?attr/colorOutlineVariant" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -69,3 +69,4 @@
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

@@ -5,6 +5,7 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.channels.awaitClose
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -294,6 +295,28 @@ class GamificationRepository @Inject constructor(
             AppLogger.e(TAG, "Erro ao buscar ranking", e)
             Result.failure(e)
         }
+    }
+
+    /**
+     * Observa o ranking da temporada em tempo real via Flow.
+     */
+    fun observeSeasonRanking(seasonId: String, limit: Int = 50): kotlinx.coroutines.flow.Flow<List<SeasonParticipationV2>> = kotlinx.coroutines.flow.callbackFlow {
+        val listener = firestore.collection(COLLECTION_SEASON_PARTICIPATION)
+            .whereEqualTo("season_id", seasonId)
+            .orderBy("points", Query.Direction.DESCENDING)
+            .limit(limit.toLong())
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    AppLogger.e(TAG, "Erro ao observar ranking", error)
+                    close(error)
+                    return@addSnapshotListener
+                }
+                
+                val ranking = snapshot?.toObjects(SeasonParticipationV2::class.java) ?: emptyList()
+                trySend(ranking)
+            }
+            
+        awaitClose { listener.remove() }
     }
 
     suspend fun getUserParticipation(userId: String, seasonId: String): Result<SeasonParticipationV2?> {

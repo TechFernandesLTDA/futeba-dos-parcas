@@ -18,7 +18,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Transferir Propriedade"
+            android:text="@string/dialog_transfer_ownership_text_1"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -27,7 +27,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Fechar"
+            android:contentDescription="@string/dialog_transfer_ownership_contentdescription_2"
             android:src="@drawable/ic_close" />
 
     </LinearLayout>
@@ -36,7 +36,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Selecione o novo dono do grupo"
+        android:text="@string/dialog_transfer_ownership_text_3"
         android:textColor="?attr/colorOnSurfaceVariant" />
 
     <com.google.android.material.divider.MaterialDivider
@@ -53,7 +53,7 @@
         android:layout_marginTop="24dp"
         android:layout_marginBottom="24dp"
         android:gravity="center"
-        android:text="Nenhum membro disponivel para transferencia"
+        android:text="@string/dialog_transfer_ownership_text_4"
         android:textColor="?attr/colorOnSurfaceVariant"
         android:visibility="gone"
         tools:visibility="visible" />

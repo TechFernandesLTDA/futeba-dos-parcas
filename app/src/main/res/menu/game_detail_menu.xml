@@ -3,24 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_invite_whatsapp"
-        android:title="Convidar no WhatsApp"
+        android:title="@string/game_detail_menu_title_1"
         android:icon="@drawable/ic_chat_bubble"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_share"
-        android:title="Compartilhar"
+        android:title="@string/game_detail_menu_title_2"
         android:icon="@drawable/ic_share"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_vote_mvp"
-        android:title="Votar no MVP"
+        android:title="@string/game_detail_menu_title_3"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_share_card"
-        android:title="Compartilhar Card"
+        android:title="@string/game_detail_menu_title_4"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_tactical_board"
-        android:title="Prancheta Tática"
+        android:title="@string/game_detail_menu_title_5"
         app:showAsAction="never" />
 </menu>

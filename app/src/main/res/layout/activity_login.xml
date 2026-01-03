@@ -11,7 +11,7 @@
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:src="@mipmap/ic_launcher"
-        android:contentDescription="Logo do Futeba dos Parças"
+        android:contentDescription="@string/activity_login_contentdescription_1"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -22,7 +22,7 @@
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Futeba dos Parças"
+        android:text="@string/activity_login_text_2"
         android:textSize="32sp"
         android:textStyle="bold"
         android:textColor="?attr/colorPrimary"
@@ -38,7 +38,7 @@
         android:id="@+id/tvSlogan"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Organize suas peladas com estilo"
+        android:text="@string/activity_login_text_3"
         android:textSize="15sp"
         android:textColor="?attr/colorOnSurfaceVariant"
         android:fontFamily="sans-serif"
@@ -52,7 +52,7 @@
         android:id="@+id/tvSubtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Entre na sua conta"
+        android:text="@string/activity_login_text_4"
         android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="?attr/colorOnSurface"
@@ -148,7 +148,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="  ou  "
+            android:text="@string/activity_login_text_5"
             android:textColor="?attr/colorOnSurfaceVariant" />
 
         <View
@@ -212,7 +212,7 @@
             android:id="@+id/tvRegister"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=" Cadastre-se"
+            android:text="@string/activity_login_text_6"
             android:textColor="?attr/colorPrimary"
             android:textStyle="bold" />
 
@@ -233,7 +233,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Desenvolvido por"
+            android:text="@string/activity_login_text_7"
             android:textSize="12sp"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:alpha="0.7" />
@@ -241,7 +241,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Renan Locatiz Fernandes"
+            android:text="@string/activity_login_text_8"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="?attr/colorPrimary"
@@ -251,7 +251,7 @@
             android:id="@+id/tvVersion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="v1.0.0"
+            android:text="@string/activity_login_text_9"
             android:textSize="11sp"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:alpha="0.6"
