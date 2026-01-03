@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme overlay for API 27+ to add windowLightNavigationBar -->
+    <style name="Theme.FutebaDosParcas" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- AppBar/Toolbar defaults -->
+        <item name="appBarLayoutStyle">@style/FutebaAppBar</item>
+        <item name="toolbarStyle">@style/FutebaToolbar</item>
+
+        <!-- Navigation Bar: Pure black with light icons for API 27+ -->
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

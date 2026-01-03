@@ -1,0 +1,75 @@
+package com.futebadosparcas.util
+
+import com.futebadosparcas.data.model.CashboxCategory
+import com.futebadosparcas.data.model.CashboxEntry
+import com.futebadosparcas.data.model.CashboxEntryType
+import com.futebadosparcas.data.repository.CashboxRepository
+import java.util.Calendar
+import java.util.Date
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.random.Random
+
+@Singleton
+class CashboxSeeder @Inject constructor(
+    private val cashboxRepository: CashboxRepository
+) {
+
+    suspend fun seedHistory(groupId: String, memberId: String, memberName: String) {
+        val calendar = Calendar.getInstance()
+        
+        // Generate entries for the last 3 months
+        for (i in 90 downTo 0 step 2) {
+            calendar.time = Date()
+            calendar.add(Calendar.DAY_OF_YEAR, -i)
+            val date = calendar.time
+
+            val isIncome = Random.nextBoolean()
+            val entryType = if (isIncome) CashboxEntryType.INCOME else CashboxEntryType.EXPENSE
+            
+            val category = if (isIncome) {
+                if (Random.nextBoolean()) CashboxCategory.MONTHLY_FEE else CashboxCategory.DONATION
+            } else {
+                if (Random.nextBoolean()) CashboxCategory.FIELD_RENTAL else CashboxCategory.EQUIPMENT
+            }
+
+            val amount = if (isIncome) {
+                Random.nextDouble(20.0, 50.0)
+            } else {
+                Random.nextDouble(100.0, 300.0)
+            }
+
+            val description = when (category) {
+                CashboxCategory.MONTHLY_FEE -> "Mensalidade Ref. ${i} dias atrás"
+                CashboxCategory.DONATION -> "Vaquinha para churrasco"
+                CashboxCategory.FIELD_RENTAL -> "Pagamento Quadra"
+                CashboxCategory.EQUIPMENT -> "Compra de Bola/Coletes"
+                else -> "Movimentação Geral"
+            }
+
+            val entry = CashboxEntry(
+                type = entryType.name,
+                category = category.name,
+                amount = amount,
+                description = description,
+                playerId = if (isIncome) memberId else null,
+                playerName = if (isIncome) memberName else null,
+                referenceDate = date,
+                // Status will be set by repository or default
+            )
+
+            // Calculate 'created_at' to match reference date for history sort simulation?
+            // Repository usually uses serverTimestamp for created_at, but we can't easily spoof that back in time 
+            // easily without Admin SDK custom claims or import tools.
+            // But 'reference_date' is what we filter by often. 
+            // The history view orders by 'created_at', so newer entries (inserted now) will appear at top.
+            // This is a limitation of client-side seeding: all entries will have "now" as created_at.
+            // Users will see them in history as "created just now" but with old reference dates.
+            // To fix visuals, the app should probably sort by referenceDate for display?
+            // The current app sorts by 'created_at'.
+            // For testing volume it's fine.
+            
+            cashboxRepository.addEntry(groupId, entry)
+        }
+    }
+}
