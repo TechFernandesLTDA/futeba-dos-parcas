@@ -12,6 +12,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -40,7 +41,18 @@ enum class RankingPeriod(val displayName: String, val minGames: Int) {
 
 /**
  * Repository para consultar rankings.
- * Otimizado com requisicoes paralelas para melhor performance.
+ *
+ * OTIMIZACAO N+1: Este repositorio utiliza um cache em memoria (LRU) para armazenar
+ * dados de usuarios (nome, foto, nivel). Isso evita multiplas queries ao Firestore
+ * quando os mesmos usuarios aparecem em diferentes rankings ou em atualizacoes consecutivas.
+ *
+ * Alternativa futura: Desnormalizar nome/foto diretamente no documento de statistics
+ * para eliminar completamente a necessidade de joins. Isso requereria Cloud Functions
+ * para manter os dados sincronizados quando o usuario atualiza seu perfil.
+ *
+ * Performance:
+ * - Antes: N queries por ranking (1 por usuario)
+ * - Agora: Cache hit = 0 queries, Cache miss = requisicoes em batch paralelo
  */
 @Singleton
 class RankingRepository @Inject constructor(
@@ -49,6 +61,8 @@ class RankingRepository @Inject constructor(
     companion object {
         private const val TAG = "RankingRepository"
         private const val CHUNK_SIZE = 10 // Firestore whereIn limit
+        private const val USER_CACHE_MAX_SIZE = 200 // Maximo de usuarios em cache
+        private const val USER_CACHE_TTL_MS = 5 * 60 * 1000L // 5 minutos de TTL
     }
 
     private val statisticsCollection = firestore.collection("statistics")
@@ -56,6 +70,23 @@ class RankingRepository @Inject constructor(
     private val rankingsCollection = firestore.collection("rankings")
     private val rankingDeltasCollection = firestore.collection("ranking_deltas")
     private val xpLogsCollection = firestore.collection("xp_logs")
+
+    /**
+     * Cache LRU de usuarios com TTL para evitar queries N+1.
+     * Armazena dados basicos (nome, foto, nivel) que sao frequentemente acessados.
+     */
+    private data class CachedUser(
+        val user: User,
+        val cachedAt: Long = System.currentTimeMillis()
+    ) {
+        fun isExpired(): Boolean = System.currentTimeMillis() - cachedAt > USER_CACHE_TTL_MS
+    }
+
+    private val userCache = object : LinkedHashMap<String, CachedUser>(USER_CACHE_MAX_SIZE, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, CachedUser>?): Boolean {
+            return size > USER_CACHE_MAX_SIZE
+        }
+    }
 
     /**
      * Busca ranking de uma categoria (all-time).
@@ -295,19 +326,52 @@ class RankingRepository @Inject constructor(
     }
 
     /**
-     * Busca dados complementares dos usuarios em PARALELO.
-     * Otimizado para evitar requisicoes sequenciais que causam lentidao.
+     * Busca dados complementares dos usuarios em PARALELO com CACHE.
      *
-     * Antes: 100 usuarios = 10 chunks * ~1s cada = 10s
-     * Agora: 100 usuarios = 10 chunks em paralelo = ~1s total
+     * OTIMIZACAO N+1: Utiliza cache LRU em memoria para evitar queries repetidas.
+     * Apenas usuarios nao encontrados no cache (ou com cache expirado) sao buscados.
+     *
+     * Performance:
+     * - Cache hit total: 0 queries ao Firestore
+     * - Cache miss parcial: apenas usuarios faltantes sao buscados em batch paralelo
+     * - Antes: 100 usuarios = 10 chunks * ~1s cada = 10s
+     * - Agora com cache: 100 usuarios (todos em cache) = 0s
+     * - Agora sem cache: 100 usuarios = 10 chunks em paralelo = ~1s total
      */
     private suspend fun fetchUserDataParallel(userIds: List<String>): Map<String, User> {
         if (userIds.isEmpty()) return emptyMap()
 
+        val result = mutableMapOf<String, User>()
+        val idsToFetch = mutableListOf<String>()
+
+        // 1. Verificar cache primeiro (cache hit)
+        synchronized(userCache) {
+            for (userId in userIds) {
+                val cached = userCache[userId]
+                if (cached != null && !cached.isExpired()) {
+                    result[userId] = cached.user
+                } else {
+                    // Remover do cache se expirado
+                    if (cached?.isExpired() == true) {
+                        userCache.remove(userId)
+                    }
+                    idsToFetch.add(userId)
+                }
+            }
+        }
+
+        AppLogger.d(TAG) { "fetchUserDataParallel: ${result.size} cache hits, ${idsToFetch.size} cache misses" }
+
+        // 2. Se todos estavam no cache, retornar direto
+        if (idsToFetch.isEmpty()) {
+            return result
+        }
+
+        // 3. Buscar usuarios faltantes em paralelo
         return try {
             coroutineScope {
                 // Criar requisicoes paralelas para cada chunk
-                val deferredResults = userIds.chunked(CHUNK_SIZE).map { chunk ->
+                val deferredResults = idsToFetch.chunked(CHUNK_SIZE).map { chunk ->
                     async {
                         try {
                             usersCollection
@@ -328,13 +392,43 @@ class RankingRepository @Inject constructor(
                 }
 
                 // Aguardar todas as requisicoes e combinar resultados
-                deferredResults.awaitAll()
-                    .flatten()
-                    .toMap()
+                val fetchedUsers = deferredResults.awaitAll().flatten().toMap()
+
+                // 4. Atualizar cache com usuarios buscados
+                synchronized(userCache) {
+                    fetchedUsers.forEach { (userId, user) ->
+                        userCache[userId] = CachedUser(user)
+                    }
+                }
+
+                // 5. Combinar cache hits com usuarios buscados
+                result.putAll(fetchedUsers)
+                result
             }
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar dados de usuarios em paralelo", e)
-            emptyMap()
+            result // Retorna pelo menos os que estavam no cache
+        }
+    }
+
+    /**
+     * Limpa o cache de usuarios.
+     * Util para forcar atualizacao apos mudancas de perfil.
+     */
+    fun clearUserCache() {
+        synchronized(userCache) {
+            userCache.clear()
+        }
+        AppLogger.d(TAG) { "Cache de usuarios limpo" }
+    }
+
+    /**
+     * Remove um usuario especifico do cache.
+     * Util quando sabemos que um usuario foi atualizado.
+     */
+    fun invalidateUserCache(userId: String) {
+        synchronized(userCache) {
+            userCache.remove(userId)
         }
     }
 

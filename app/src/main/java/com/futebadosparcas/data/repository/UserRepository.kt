@@ -12,6 +12,18 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Resultado paginado de usuarios.
+ * @param users Lista de usuarios da pagina atual
+ * @param nextCursor Cursor para buscar proxima pagina (null se nao houver mais)
+ * @param hasNextPage Indica se existe proxima pagina
+ */
+data class PaginatedUsers(
+    val users: List<User>,
+    val nextCursor: String?,
+    val hasNextPage: Boolean
+)
+
 @Singleton
 class UserRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
@@ -191,7 +203,6 @@ class UserRepository @Inject constructor(
             }
 
             val users = snapshot.documents.mapNotNull { it.toObject(User::class.java) }
-                .filter { it.id != auth.currentUser?.uid }
 
             Result.success(users)
         } catch (e: Exception) {
@@ -237,7 +248,54 @@ class UserRepository @Inject constructor(
         }
     }
 
-    suspend fun getAllUsers(): Result<List<User>> {
+    /**
+     * Busca todos os usuarios com paginacao.
+     *
+     * OTIMIZACAO: Implementa paginacao com cursor para evitar carregar todos os usuarios
+     * de uma vez, o que pode ser lento e consumir muita memoria em bases grandes.
+     *
+     * @param limit Numero maximo de usuarios por pagina (padrao: 50)
+     * @param lastUserName Nome do ultimo usuario da pagina anterior (cursor para proxima pagina)
+     * @return Result contendo PaginatedUsers com lista de usuarios e cursor para proxima pagina
+     */
+    suspend fun getAllUsers(
+        limit: Int = 50,
+        lastUserName: String? = null
+    ): Result<PaginatedUsers> {
+        return try {
+            var query = usersCollection
+                .orderBy("name")
+                .limit(limit.toLong() + 1) // Busca 1 a mais para saber se tem proxima pagina
+
+            // Se temos um cursor, comecar a partir dele
+            if (lastUserName != null) {
+                query = query.startAfter(lastUserName)
+            }
+
+            val snapshot = query.get().await()
+            val allUsers = snapshot.toObjects(User::class.java)
+
+            // Verificar se tem proxima pagina
+            val hasNextPage = allUsers.size > limit
+            val users = if (hasNextPage) allUsers.dropLast(1) else allUsers
+            val nextCursor = if (hasNextPage && users.isNotEmpty()) users.last().name else null
+
+            Result.success(PaginatedUsers(
+                users = users,
+                nextCursor = nextCursor,
+                hasNextPage = hasNextPage
+            ))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Busca todos os usuarios sem paginacao (uso interno/legado).
+     * @deprecated Preferir getAllUsers(limit, cursor) para melhor performance.
+     */
+    @Deprecated("Use getAllUsers(limit, cursor) para paginacao", ReplaceWith("getAllUsers(limit = 50)"))
+    suspend fun getAllUsersUnpaginated(): Result<List<User>> {
         return try {
             val snapshot = usersCollection.orderBy("name").get().await()
             val users = snapshot.toObjects(User::class.java)

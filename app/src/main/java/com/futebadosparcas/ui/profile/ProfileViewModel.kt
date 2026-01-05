@@ -49,6 +49,10 @@ class ProfileViewModel @Inject constructor(
     private var statisticsListener: com.google.firebase.firestore.ListenerRegistration? = null
 
     fun loadProfile() {
+        // Remover listener anterior para evitar race condition ao recarregar
+        statisticsListener?.remove()
+        statisticsListener = null
+
         viewModelScope.launch {
             if (_uiState.value !is ProfileUiState.Success) {
                 _uiState.value = ProfileUiState.Loading
@@ -252,6 +256,8 @@ class ProfileViewModel @Inject constructor(
         super.onCleared()
         // Remover listener de tempo real ao destruir o ViewModel
         statisticsListener?.remove()
+        // Fechar Channel para evitar memory leak
+        _uiEvents.close()
     }
 }
 

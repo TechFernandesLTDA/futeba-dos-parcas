@@ -18,6 +18,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -51,17 +52,29 @@ class HomeViewModel @Inject constructor(
 
     private fun observeConnectivity() {
         viewModelScope.launch {
-            connectivityMonitor.isConnected.collect { 
-                _isOnline.value = it 
-            }
+            connectivityMonitor.isConnected
+                .catch { e ->
+                    // Tratamento de erro: assumir online em caso de falha
+                    AppLogger.e(TAG, "Erro ao observar conectividade", e)
+                    _isOnline.value = true
+                }
+                .collect {
+                    _isOnline.value = it
+                }
         }
     }
 
     private fun observeUnreadCount() {
         viewModelScope.launch {
-            notificationRepository.getUnreadCountFlow().collect { count ->
-                _unreadCount.value = count
-            }
+            notificationRepository.getUnreadCountFlow()
+                .catch { e ->
+                    // Tratamento de erro: zerar contador em caso de falha
+                    AppLogger.e(TAG, "Erro ao observar notificacoes", e)
+                    _unreadCount.value = 0
+                }
+                .collect { count ->
+                    _unreadCount.value = count
+                }
         }
     }
 

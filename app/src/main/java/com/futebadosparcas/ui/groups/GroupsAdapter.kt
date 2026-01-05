@@ -44,12 +44,11 @@ class GroupsAdapter(
 
         fun bind(group: UserGroup) {
             binding.tvGroupName.text = group.groupName
-            binding.tvMemberCount.text = when (group.memberCount) {
-                1 -> "1 membro"
-                else -> "${group.memberCount} membros"
-            }
+            
+            val memberText = if (group.memberCount == 1) "1 membro" else "${group.memberCount} membros"
+            binding.tvMemberCount.text = memberText
 
-            // Load group photo
+            // Load group photo with border effect
             if (!group.groupPhoto.isNullOrEmpty()) {
                 binding.ivGroupPhoto.load(group.groupPhoto) {
                     crossfade(true)
@@ -61,16 +60,60 @@ class GroupsAdapter(
                 binding.ivGroupPhoto.setImageResource(R.drawable.ic_groups)
             }
 
-            // Role chip
+            // Role Badge Logic
             val role = group.getRoleEnum()
             binding.chipRole.text = role.displayName
+            
+            // Apply colors based on Role for Premium feel
+            val (bgColor, textColor) = when (role) {
+                GroupMemberRole.OWNER -> Pair(R.color.chip_owner, R.color.white) // Assume white text for owners
+                GroupMemberRole.ADMIN -> Pair(R.color.chip_admin, R.color.white)
+                GroupMemberRole.MEMBER -> Pair(R.color.chip_member, R.color.black)
+            }
+            
+            // Note: Colors might need check if they exist, falling back to resource handling if complex
+            // For now reverting to resource ID usage as per original but ensuring logic holds
             binding.chipRole.setChipBackgroundColorResource(
                 when (role) {
-                    GroupMemberRole.OWNER -> R.color.chip_owner
-                    GroupMemberRole.ADMIN -> R.color.chip_admin
-                    GroupMemberRole.MEMBER -> R.color.chip_member
+                    GroupMemberRole.OWNER -> R.color.chip_owner // Gold/Orange usually
+                    GroupMemberRole.ADMIN -> R.color.chip_admin // Blue/Green
+                    GroupMemberRole.MEMBER -> R.color.chip_member // Grey
                 }
             )
+
+            // Gamification Logic (Simulated Level based on member count)
+            val level = calculateLevel(group.memberCount)
+            val progress = calculateProgress(group.memberCount, level)
+            
+            binding.tvLevelInfo.text = "Lvl $level"
+            binding.pbGroupLevel.progress = progress
+        }
+
+        private fun calculateLevel(count: Int): Int {
+            return when {
+                count < 5 -> 1
+                count < 15 -> 2
+                count < 30 -> 3
+                count < 50 -> 4
+                else -> 5
+            }
+        }
+
+        private fun calculateProgress(count: Int, level: Int): Int {
+            // Calculate progress to next level
+            val (min, max) = when (level) {
+                1 -> Pair(0, 5)
+                2 -> Pair(5, 15)
+                3 -> Pair(15, 30)
+                4 -> Pair(30, 50)
+                else -> Pair(50, 100)
+            }
+            
+            if (max == min) return 100 // Max level
+            
+            val totalNeeded = max - min
+            val currentInLevel = count - min
+            return ((currentInLevel.toFloat() / totalNeeded) * 100).toInt().coerceIn(0, 100)
         }
     }
 

@@ -45,7 +45,7 @@ object AppModule {
         firestore: FirebaseFirestore,
         auth: FirebaseAuth,
         gameDao: com.futebadosparcas.data.local.dao.GameDao,
-        badgeAwarder: com.futebadosparcas.domain.gamification.BadgeAwarder,
+        // badgeAwarder: com.futebadosparcas.domain.gamification.BadgeAwarder,
         liveGameRepository: com.futebadosparcas.data.repository.LiveGameRepository,
         matchFinalizationService: MatchFinalizationService,
         postGameEventEmitter: PostGameEventEmitter,
@@ -60,7 +60,7 @@ object AppModule {
                 firestore, 
                 auth, 
                 gameDao, 
-                badgeAwarder, 
+                // badgeAwarder, // MIGRATED TO CLOUD
                 liveGameRepository, 
                 matchFinalizationService, 
                 postGameEventEmitter,
@@ -154,5 +154,16 @@ object AppModule {
         firestore: FirebaseFirestore
     ): ActivityRepository {
         return ActivityRepositoryImpl(firestore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRemoteConfig(): com.google.firebase.remoteconfig.FirebaseRemoteConfig {
+        val remoteConfig = com.google.firebase.remoteconfig.FirebaseRemoteConfig.getInstance()
+        val configSettings = com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings.Builder()
+            .setMinimumFetchIntervalInSeconds(3600)
+            .build()
+        remoteConfig.setConfigSettingsAsync(configSettings)
+        return remoteConfig
     }
 }

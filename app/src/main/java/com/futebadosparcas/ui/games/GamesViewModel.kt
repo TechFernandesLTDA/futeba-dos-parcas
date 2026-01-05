@@ -9,6 +9,7 @@ import com.futebadosparcas.util.AppLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -40,9 +41,15 @@ class GamesViewModel @Inject constructor(
 
     private fun observeUnreadCount() {
         viewModelScope.launch {
-            notificationRepository.getUnreadCountFlow().collect { count ->
-                _unreadCount.value = count
-            }
+            notificationRepository.getUnreadCountFlow()
+                .catch { e ->
+                    // Tratamento de erro: zerar contador em caso de falha
+                    AppLogger.e(TAG, "Erro ao observar notificacoes", e)
+                    _unreadCount.value = 0
+                }
+                .collect { count ->
+                    _unreadCount.value = count
+                }
         }
     }
 
@@ -67,6 +74,11 @@ class GamesViewModel @Inject constructor(
                 else -> { // ALL (Live + Upcoming) ou OPEN (filtro em memória depois)
                     // Flow Realtime para jogos principais
                     gameRepository.getLiveAndUpcomingGamesFlow()
+                        .catch { e ->
+                            // Tratamento de erro de fluxo
+                            AppLogger.e(TAG, "Erro no fluxo de jogos", e)
+                            _uiState.value = GamesUiState.Error(e.message ?: "Erro ao carregar jogos")
+                        }
                         .collect { result ->
                             result.fold(
                                 onSuccess = { games ->
@@ -75,7 +87,7 @@ class GamesViewModel @Inject constructor(
                                     } else {
                                         games
                                     }
-                                    
+
                                     _uiState.value = if (filtered.isEmpty()) {
                                         // Se vazio, tenta carregar histórico recente? Por enquanto mostra vazio.
                                         GamesUiState.Empty

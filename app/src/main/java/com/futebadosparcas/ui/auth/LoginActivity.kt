@@ -71,9 +71,9 @@ class LoginActivity : AppCompatActivity() {
             
             biometricHelper.showBiometricPrompt(
                 activity = this,
-                title = "Bem-vindo de volta!",
-                subtitle = "Use sua digital para entrar",
-                negativeButtonText = "Usar Google",
+                title = getString(R.string.toast_welcome_user, ""),
+                subtitle = getString(R.string.biometric_subtitle),
+                negativeButtonText = getString(R.string.biometric_negative_button),
                 onSuccess = {
                     // Autenticação biométrica bem-sucedida
                     preferencesManager.setLastLoginTime()
@@ -139,7 +139,7 @@ class LoginActivity : AppCompatActivity() {
                 AppLogger.e(TAG, "Google Sign-In failed: ${e.message}", e)
                 binding.progressBar.visibility = View.GONE
                 binding.btnGoogleSignIn.isEnabled = true
-                Toast.makeText(this@LoginActivity, "Erro ao fazer login com Google", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@LoginActivity, R.string.error_google_login, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -184,7 +184,7 @@ class LoginActivity : AppCompatActivity() {
                     viewModel.onGoogleSignInSuccess()
                 } else {
                     AppLogger.e(TAG, "signInWithCredential:failure", task.exception)
-                    viewModel.onGoogleSignInError("Erro na autenticacao")
+                    viewModel.onGoogleSignInError(getString(R.string.error_authentication))
                 }
             }
     }
