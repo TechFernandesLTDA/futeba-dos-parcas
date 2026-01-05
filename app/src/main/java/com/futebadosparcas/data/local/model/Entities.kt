@@ -42,7 +42,8 @@ data class GameEntity(
     val fieldName: String,
     val gameType: String,
     val recurrence: String,
-    val createdAt: Long?
+    val createdAt: Long?,
+    val dateTime: Long? = null
 )
 
 // Extensions to map between Domain/Network and Local
@@ -90,7 +91,8 @@ fun GameEntity.toDomain() = Game(
     fieldName = fieldName,
     gameType = gameType,
     recurrence = recurrence,
-    createdAt = createdAt?.let { Date(it) }
+    createdAt = createdAt?.let { Date(it) },
+    dateTimeRaw = dateTime?.let { Date(it) }
 )
 
 fun Game.toEntity() = GameEntity(
@@ -117,5 +119,6 @@ fun Game.toEntity() = GameEntity(
     fieldName = fieldName,
     gameType = gameType,
     recurrence = recurrence,
-    createdAt = createdAt?.time
+    createdAt = createdAt?.time,
+    dateTime = dateTime?.time
 )

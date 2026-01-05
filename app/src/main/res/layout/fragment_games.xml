@@ -114,7 +114,8 @@
         app:layout_constraintTop_toBottomOf="@id/hsvFilters"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_max="@dimen/content_max_width">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvGames"

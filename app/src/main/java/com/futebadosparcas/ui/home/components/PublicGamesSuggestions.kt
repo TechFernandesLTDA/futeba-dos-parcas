@@ -34,6 +34,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
+import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
+import com.futebadosparcas.ui.adaptive.adaptiveValue
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -45,9 +51,15 @@ fun PublicGamesSuggestions(
 ) {
     if (games.isEmpty()) return
 
+    val windowSizeClass = rememberWindowSizeClass()
+    val spacing = rememberAdaptiveSpacing()
+
+    // Em telas grandes, mostrar grid ao invés de carrossel
+    val useGrid = windowSizeClass.isMedium || windowSizeClass.isExpanded
+
     Column(modifier = modifier) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.contentPaddingHorizontal, vertical = spacing.sm),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -56,7 +68,7 @@ fun PublicGamesSuggestions(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Text(
                 text = "Ver todos",
                 style = MaterialTheme.typography.labelMedium,
@@ -65,23 +77,51 @@ fun PublicGamesSuggestions(
             )
         }
 
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(games) { game ->
-                PublicGameCard(game = game, onClick = { onGameClick(game) })
+        if (useGrid) {
+            // Grid para tablets e landscape
+            val columns = adaptiveValue(
+                compact = 2,
+                medium = 2,
+                expanded = 3
+            )
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(columns),
+                contentPadding = PaddingValues(horizontal = spacing.contentPaddingHorizontal),
+                horizontalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing),
+                verticalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing),
+                modifier = Modifier.padding(bottom = spacing.sm)
+            ) {
+                items(games.take(columns * 2)) { game ->
+                    PublicGameCard(game = game, onClick = { onGameClick(game) }, fillWidth = true)
+                }
+            }
+        } else {
+            // Carrossel horizontal para telefones portrait
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = spacing.contentPaddingHorizontal),
+                horizontalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing)
+            ) {
+                items(games) { game ->
+                    PublicGameCard(game = game, onClick = { onGameClick(game) }, fillWidth = false)
+                }
             }
         }
     }
 }
 
 @Composable
-fun PublicGameCard(game: Game, onClick: () -> Unit) {
+fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) {
     Card(
-        modifier = Modifier
-            .width(220.dp)
-            .clickable(onClick = onClick),
+        modifier = if (fillWidth) {
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+        } else {
+            Modifier
+                .width(220.dp)
+                .clickable(onClick = onClick)
+        },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),

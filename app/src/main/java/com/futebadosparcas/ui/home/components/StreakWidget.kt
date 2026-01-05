@@ -25,6 +25,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.data.model.UserStreak
+import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
+import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
+import com.futebadosparcas.ui.adaptive.adaptiveValue
 
 @Composable
 fun StreakWidget(
@@ -33,9 +36,25 @@ fun StreakWidget(
 ) {
     if (streak == null || streak.currentStreak <= 0) return
 
+    val windowSizeClass = rememberWindowSizeClass()
+    val spacing = rememberAdaptiveSpacing()
+
     val fireColors = listOf(
         Color(0xFFFF9800), // Orange
         Color(0xFFF44336)  // Red
+    )
+
+    // Tamanhos adaptativos
+    val iconBoxSize = adaptiveValue(
+        compact = 48.dp,
+        medium = 56.dp,
+        expanded = 64.dp
+    )
+
+    val iconSize = adaptiveValue(
+        compact = 28.dp,
+        medium = 32.dp,
+        expanded = 36.dp
     )
 
     Card(
@@ -45,12 +64,12 @@ fun StreakWidget(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(iconBoxSize)
                     .background(
                         brush = Brush.verticalGradient(fireColors),
                         shape = RoundedCornerShape(12.dp)
@@ -61,21 +80,27 @@ fun StreakWidget(
                     imageVector = Icons.Default.LocalFireDepartment,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(iconSize)
                 )
             }
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column {
+
+            Spacer(modifier = Modifier.width(spacing.md))
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "${streak.currentStreak} dias de sequência!",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = if (windowSizeClass.isCompact)
+                        MaterialTheme.typography.titleMedium
+                    else
+                        MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "Recorde: ${streak.longestStreak} dias",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = if (windowSizeClass.isCompact)
+                        MaterialTheme.typography.bodySmall
+                    else
+                        MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

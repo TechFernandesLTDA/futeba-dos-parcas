@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.players
 
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
 import com.futebadosparcas.R
 import com.futebadosparcas.databinding.FragmentPlayersBinding
 import com.futebadosparcas.ui.components.FutebaTopBar
@@ -43,13 +45,19 @@ class PlayersFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
         setupRecyclerView()
         setupTopBar()
         setupHeader()
         setupListeners()
         observeViewModel()
 
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Reconfigura o grid quando a orientação muda
+        setupAdaptiveGrid()
     }
 
     private fun setupTopBar() {
@@ -114,7 +122,7 @@ class PlayersFragment : Fragment() {
             onInviteClick = { user ->
                 viewModel.invitePlayer(user)
             },
-            onItemClick = { user -> 
+            onItemClick = { user ->
                 if (isComparisonMode) {
                     adapter.toggleSelection(user.id)
                     checkComparisonSelection()
@@ -125,9 +133,20 @@ class PlayersFragment : Fragment() {
             }
         )
         binding.rvPlayers.apply {
-            layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
             adapter = this@PlayersFragment.adapter
         }
+
+        // Configura o grid adaptativo inicial
+        setupAdaptiveGrid()
+    }
+
+    /**
+     * Configura o GridLayoutManager com número de colunas adaptativo baseado no tamanho da tela.
+     * Utiliza recursos definidos em values/dimens.xml, values-sw600dp/dimens.xml e values-sw720dp/dimens.xml
+     */
+    private fun setupAdaptiveGrid() {
+        val columns = resources.getInteger(R.integer.grid_columns)
+        binding.rvPlayers.layoutManager = GridLayoutManager(requireContext(), columns)
     }
 
     private fun setupListeners() {

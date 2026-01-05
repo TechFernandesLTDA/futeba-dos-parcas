@@ -126,4 +126,13 @@
     <color name="theme_yellow_on_primary">#FFFFFF</color>
 
     <color name="outlineVariant">#CAC4D0</color>
+
+    <!-- XP Badge -->
+    <color name="xp_badge_background">#1A58CC02</color>
+
+    <!-- Badge Rarity Colors -->
+    <color name="rarity_comum">#9E9E9E</color>
+    <color name="rarity_raro">#2196F3</color>
+    <color name="rarity_epico">#9C27B0</color>
+    <color name="rarity_lendario">#FFD700</color>
 </resources>

@@ -1,5 +1,6 @@
 package com.futebadosparcas.data.model
 
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
@@ -94,9 +95,10 @@ data class Game(
     @set:PropertyName("visibility")
     var visibility: String = GameVisibility.GROUP_ONLY.name,
 
+    // Campo raw para aceitar Timestamp ou Date do Firestore
     @get:PropertyName("dateTime")
     @set:PropertyName("dateTime")
-    var dateTime: Date? = null,
+    var dateTimeRaw: Any? = null,
     @ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
@@ -134,6 +136,19 @@ data class Game(
     var groupName: String? = null
 ) {
     constructor() : this(id = "")
+
+    /**
+     * Propriedade computada para converter dateTimeRaw (Timestamp/Date/Long) para Date.
+     * Resolve problema de deserializacao do Firestore que retorna Timestamp.
+     */
+    val dateTime: Date?
+        @Exclude
+        get() = when (val raw = dateTimeRaw) {
+            is Date -> raw
+            is Timestamp -> raw.toDate()
+            is Long -> Date(raw)
+            else -> null
+        }
 
     // Helper methods for enum conversion
     @Exclude

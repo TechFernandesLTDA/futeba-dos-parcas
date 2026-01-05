@@ -430,7 +430,7 @@ class GameDetailViewModel @Inject constructor(
                     team1Score = 0,
                     team2Score = 0,
                     mvpId = null,
-                    dateTime = nextDateTime,
+                    dateTimeRaw = nextDateTime,
                     createdAt = null,
                     xpProcessed = false,
                     xpProcessedAt = null,

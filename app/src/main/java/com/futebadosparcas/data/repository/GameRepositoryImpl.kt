@@ -284,7 +284,7 @@ class GameRepositoryImpl @Inject constructor(
                                     .whereIn(com.google.firebase.firestore.FieldPath.documentId(), chunk)
                                     .get()
                                     .await()
-                                
+
                                 snapshot.documents.mapNotNull { doc ->
                                     doc.toObject(Game::class.java)?.apply { id = doc.id }
                                 }
@@ -376,7 +376,7 @@ class GameRepositoryImpl @Inject constructor(
                 // Combine date and time (assuming format yyyy-MM-dd and HH:mm)
                 val dateTimeStr = "${finalGame.date} ${finalGame.time}"
                 val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
-                finalGame = finalGame.copy(dateTime = sdf.parse(dateTimeStr))
+                finalGame = finalGame.copy(dateTimeRaw = sdf.parse(dateTimeStr))
             } catch (e: Exception) {
                 AppLogger.e(TAG, "createGame: Error parsing dateTime from date/time strings", e)
             }

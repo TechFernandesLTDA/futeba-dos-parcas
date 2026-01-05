@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ============================================== -->
+    <!-- ADAPTIVE LAYOUT DIMENSIONS - LANDSCAPE        -->
+    <!-- Telefones em landscape                        -->
+    <!-- ============================================== -->
+
+    <!-- Grid Columns - More columns in landscape -->
+    <integer name="grid_columns">2</integer>
+    <integer name="grid_columns_landscape">2</integer>
+
+    <!-- Header/Hero - Shorter in landscape -->
+    <dimen name="header_height">160dp</dimen>
+    <dimen name="header_height_compact">120dp</dimen>
+    <dimen name="hero_image_height">160dp</dimen>
+
+    <!-- Profile Header - Compact in landscape -->
+    <dimen name="profile_header_height">160dp</dimen>
+    <dimen name="profile_avatar_size">90dp</dimen>
+    <dimen name="profile_badge_size">36dp</dimen>
+
+    <!-- Map Dimensions - Wider, shorter -->
+    <dimen name="map_height">250dp</dimen>
+
+    <!-- Statistics Grid - More columns -->
+    <integer name="stats_grid_columns">4</integer>
+
+    <!-- Dialog - Side margins for landscape -->
+    <dimen name="dialog_max_width">480dp</dimen>
+
+    <!-- Bottom Sheet - Lower in landscape -->
+    <dimen name="bottom_sheet_peek_height">300dp</dimen>
+</resources>

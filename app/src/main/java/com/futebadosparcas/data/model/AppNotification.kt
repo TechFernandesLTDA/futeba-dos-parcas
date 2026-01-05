@@ -1,5 +1,6 @@
 package com.futebadosparcas.data.model
 
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
@@ -56,16 +57,41 @@ data class AppNotification(
     @set:PropertyName("read_at")
     var readAt: Date? = null,
 
+    // Campo interno que recebe Timestamp ou Date do Firestore
     @ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
-    var createdAt: Date? = null,
+    var createdAtRaw: Any? = null,
 
     @get:PropertyName("expires_at")
     @set:PropertyName("expires_at")
-    var expiresAt: Date? = null
+    var expiresAtRaw: Any? = null
 ) {
     constructor() : this(id = "")
+
+    /**
+     * Converte o campo raw para Date, tratando Timestamp e Date
+     */
+    val createdAt: Date?
+        @Exclude
+        get() = when (val raw = createdAtRaw) {
+            is Date -> raw
+            is Timestamp -> raw.toDate()
+            is Long -> Date(raw)
+            else -> null
+        }
+
+    /**
+     * Converte o campo raw para Date, tratando Timestamp e Date
+     */
+    val expiresAt: Date?
+        @Exclude
+        get() = when (val raw = expiresAtRaw) {
+            is Date -> raw
+            is Timestamp -> raw.toDate()
+            is Long -> Date(raw)
+            else -> null
+        }
 
     @Exclude
     fun getTypeEnum(): NotificationType = try {
@@ -136,7 +162,8 @@ data class AppNotification(
                 referenceId = inviteId,
                 referenceType = "invite",
                 actionType = NotificationAction.ACCEPT_DECLINE.name,
-                expiresAt = Date(System.currentTimeMillis() + GroupInvite.EXPIRATION_TIME_MS)
+                createdAtRaw = Date(),
+                expiresAtRaw = Date(System.currentTimeMillis() + GroupInvite.EXPIRATION_TIME_MS)
             )
         }
 
@@ -161,7 +188,8 @@ data class AppNotification(
                 senderName = summonedByName,
                 referenceId = gameId,
                 referenceType = "game",
-                actionType = NotificationAction.CONFIRM_POSITION.name
+                actionType = NotificationAction.CONFIRM_POSITION.name,
+                createdAtRaw = Date()
             )
         }
 
@@ -183,7 +211,8 @@ data class AppNotification(
                 message = "$gameName comeca em $timeText ($gameDate)",
                 referenceId = gameId,
                 referenceType = "game",
-                actionType = NotificationAction.VIEW_DETAILS.name
+                actionType = NotificationAction.VIEW_DETAILS.name,
+                createdAtRaw = Date()
             )
         }
 
@@ -206,7 +235,8 @@ data class AppNotification(
                 senderName = memberName,
                 referenceId = groupId,
                 referenceType = "group",
-                actionType = NotificationAction.VIEW_DETAILS.name
+                actionType = NotificationAction.VIEW_DETAILS.name,
+                createdAtRaw = Date()
             )
         }
     }

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout para tablets (sw600dp+) - Dialog de edição centralizado -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:maxWidth="500dp"
+        android:orientation="vertical"
+        android:padding="28dp"
+        android:background="?attr/colorSurface">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dialog_edit_group_text_1"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnClose"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/dialog_edit_group_contentdescription_2"
+                android:src="@drawable/ic_close" />
+
+        </LinearLayout>
+
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Foto do Grupo - maior em tablets -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="28dp">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/ivGroupPhoto"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/ic_groups"
+                android:padding="6dp"
+                android:background="@drawable/skeleton_circle" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddPhoto"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/dialog_edit_group_text_3"
+                app:icon="@drawable/ic_add" />
+
+        </LinearLayout>
+
+        <!-- Nome do Grupo -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilGroupName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/dialog_edit_group_hint_4"
+            app:counterEnabled="true"
+            app:counterMaxLength="50"
+            app:errorEnabled="true"
+            app:boxCornerRadiusTopStart="@dimen/card_corner_radius"
+            app:boxCornerRadiusTopEnd="@dimen/card_corner_radius"
+            app:boxCornerRadiusBottomStart="@dimen/card_corner_radius"
+            app:boxCornerRadiusBottomEnd="@dimen/card_corner_radius">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etGroupName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapWords"
+                android:maxLength="50" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Descrição -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilGroupDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="@string/dialog_edit_group_hint_5"
+            app:counterEnabled="true"
+            app:counterMaxLength="200"
+            app:boxCornerRadiusTopStart="@dimen/card_corner_radius"
+            app:boxCornerRadiusTopEnd="@dimen/card_corner_radius"
+            app:boxCornerRadiusBottomStart="@dimen/card_corner_radius"
+            app:boxCornerRadiusBottomEnd="@dimen/card_corner_radius">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etGroupDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:maxLength="200"
+                android:minLines="3" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Botão Salvar -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSave"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="32dp"
+            android:enabled="false"
+            android:text="@string/dialog_edit_group_text_6"
+            app:cornerRadius="@dimen/card_corner_radius" />
+
+    </LinearLayout>
+
+</FrameLayout>

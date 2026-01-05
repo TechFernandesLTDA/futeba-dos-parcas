@@ -18,6 +18,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.data.model.Activity
+import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
+import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
+import com.futebadosparcas.ui.adaptive.adaptiveValue
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -27,34 +30,43 @@ fun ActivityHeatmapSection(
     activities: List<Activity>,
     modifier: Modifier = Modifier
 ) {
+    val windowSizeClass = rememberWindowSizeClass()
+    val spacing = rememberAdaptiveSpacing()
+
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(spacing.md)) {
             Text(
                 text = "Frequência de Jogos",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier.padding(bottom = spacing.gridItemSpacing)
             )
 
-            // Mock implementation for visual structure
-            // In a real scenario, we map activities to dates.
-            // For now, drawing a static grid representing the last 12 weeks.
-            HeatmapGrid(activities)
+            // Mais semanas em telas grandes
+            val weeksToShow = adaptiveValue(
+                compact = 12,
+                medium = 16,
+                expanded = 20
+            )
+
+            HeatmapGrid(activities = activities, weeksToShow = weeksToShow, spacing = spacing)
         }
     }
 }
 
 @Composable
-fun HeatmapGrid(activities: List<Activity>) {
+fun HeatmapGrid(
+    activities: List<Activity>,
+    weeksToShow: Int = 12,
+    spacing: com.futebadosparcas.ui.adaptive.AdaptiveSpacing
+) {
     val today = java.time.LocalDate.now()
-    // Show last 12 weeks
-    val weeksToShow = 12
     val daysToShow = weeksToShow * 7
-    
+
     // Prepare data
     val activityCounts = remember(activities) {
         val counts = mutableMapOf<java.time.LocalDate, Int>()
@@ -73,29 +85,29 @@ fun HeatmapGrid(activities: List<Activity>) {
         counts
     }
 
+    // Tamanho adaptativo das células
+    val cellSize = when {
+        weeksToShow <= 12 -> 12.dp
+        weeksToShow <= 16 -> 10.dp
+        else -> 8.dp
+    }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         // Iterate weeks (columns)
         for (week in 0 until weeksToShow) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
                 // Iterate days (rows)
                 for (day in 0 until 7) {
                     // Calculate date for this cell
-                    // Start from: (Today - (12 weeks * 7 days)) + (week * 7) + day
-                    // This is naive. Better to align columns by week start?
-                    // GitHub style: Columns are weeks. Rows are Mon, Tue, Wed...
-                    // Let's simplified: Column 0 is Oldest week. 
-                    // To do it right, we need `startDate`.
-                    
-                    // Simple approach:
-                    // Determine start date of the grid (Sunday of 12 weeks ago)
+                    // Determine start date of the grid (Sunday of weeksToShow weeks ago)
                     val startDate = today.minusWeeks(weeksToShow.toLong()).with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.SUNDAY))
                     val cellDate = startDate.plusWeeks(week.toLong()).plusDays(day.toLong())
-                    
+
                     val count = activityCounts[cellDate] ?: 0
-                    HeatmapCell(count)
+                    HeatmapCell(count = count, size = cellSize)
                 }
             }
         }
@@ -103,7 +115,7 @@ fun HeatmapGrid(activities: List<Activity>) {
 }
 
 @Composable
-fun HeatmapCell(count: Int) {
+fun HeatmapCell(count: Int, size: androidx.compose.ui.unit.Dp = 12.dp) {
     val color = when {
         count == 0 -> MaterialTheme.colorScheme.surfaceVariant
         count < 2 -> MaterialTheme.colorScheme.primaryContainer
@@ -112,7 +124,7 @@ fun HeatmapCell(count: Int) {
 
     Box(
         modifier = Modifier
-            .size(12.dp)
+            .size(size)
             .clip(RoundedCornerShape(2.dp))
             .background(color)
     )

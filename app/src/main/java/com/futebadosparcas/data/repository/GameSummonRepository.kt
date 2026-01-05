@@ -101,7 +101,8 @@ class GameSummonRepository @Inject constructor(
                     senderName = currentUserName,
                     referenceId = gameId,
                     referenceType = "game",
-                    actionType = NotificationAction.CONFIRM_POSITION.name
+                    actionType = NotificationAction.CONFIRM_POSITION.name,
+                    createdAtRaw = Date()
                 )
                 batch.set(notificationRef, notification)
 

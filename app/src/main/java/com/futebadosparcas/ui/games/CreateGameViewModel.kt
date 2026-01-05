@@ -400,7 +400,7 @@ class CreateGameViewModel @Inject constructor(
                 groupName = group?.groupName,
                 visibility = visibility.name,
                 isPublic = visibility != GameVisibility.GROUP_ONLY,
-                dateTime = java.util.Date.from(selectedDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant())
+                dateTimeRaw = java.util.Date.from(selectedDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant())
             )
 
             if (game.id.isNotEmpty() && (gameId != null || _currentGameId != null)) {

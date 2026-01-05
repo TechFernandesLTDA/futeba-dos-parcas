@@ -16,6 +16,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
+import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
+import com.futebadosparcas.ui.adaptive.adaptiveValue
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
@@ -29,7 +32,11 @@ fun ExpandableStatsSection(
     statistics: UserStatistics,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    val windowSizeClass = rememberWindowSizeClass()
+    val spacing = rememberAdaptiveSpacing()
+
+    // Em telas grandes, sempre expandir por padrão
+    var expanded by remember { mutableStateOf(windowSizeClass.isMedium || windowSizeClass.isExpanded) }
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -41,7 +48,7 @@ fun ExpandableStatsSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { expanded = !expanded }
-                    .padding(16.dp),
+                    .padding(spacing.md),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -58,25 +65,50 @@ fun ExpandableStatsSection(
             }
 
             AnimatedVisibility(visible = expanded) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    
+                Column(modifier = Modifier.padding(horizontal = spacing.md, vertical = spacing.sm)) {
+
                     Text(
                         text = "Resumo Geral",
                         style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = spacing.sm)
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround
-                    ) {
-                        StatItem("Jogos", statistics.totalGames.toString())
-                        StatItem("Gols", statistics.totalGoals.toString())
-                        StatItem("Assistências", statistics.totalAssists.toString())
-                        StatItem("MVPs", statistics.bestPlayerCount.toString())
+                    // Layout adaptativo para estatísticas
+                    if (windowSizeClass.isCompact) {
+                        // Layout compacto: uma linha
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceAround
+                        ) {
+                            StatItem("Jogos", statistics.totalGames.toString())
+                            StatItem("Gols", statistics.totalGoals.toString())
+                            StatItem("Assistências", statistics.totalAssists.toString())
+                            StatItem("MVPs", statistics.bestPlayerCount.toString())
+                        }
+                    } else {
+                        // Layout expandido: duas linhas ou grid
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(spacing.md)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceAround
+                            ) {
+                                StatItemLarge("Jogos", statistics.totalGames.toString())
+                                StatItemLarge("Gols", statistics.totalGoals.toString())
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceAround
+                            ) {
+                                StatItemLarge("Assistências", statistics.totalAssists.toString())
+                                StatItemLarge("MVPs", statistics.bestPlayerCount.toString())
+                            }
+                        }
                     }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Spacer(modifier = Modifier.height(spacing.md))
 
                     // Vico Chart - Performance Stats
                     val chartEntryModel = entryModelOf(
@@ -94,10 +126,16 @@ fun ExpandableStatsSection(
                         }
                     }
 
+                    val chartHeight = adaptiveValue(
+                        compact = 200.dp,
+                        medium = 250.dp,
+                        expanded = 300.dp
+                    )
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
+                            .height(chartHeight)
                             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
                     ) {
                         Chart(
@@ -110,11 +148,31 @@ fun ExpandableStatsSection(
                             modifier = Modifier.fillMaxSize()
                         )
                     }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Spacer(modifier = Modifier.height(spacing.md))
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun StatItemLarge(label: String, value: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(16.dp)
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

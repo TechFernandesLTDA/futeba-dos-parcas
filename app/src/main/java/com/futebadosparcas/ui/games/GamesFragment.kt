@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.games
 
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,7 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import com.futebadosparcas.R
 import com.futebadosparcas.databinding.FragmentGamesBinding
 import com.futebadosparcas.ui.components.FutebaTopBar
@@ -51,6 +52,12 @@ class GamesFragment : Fragment() {
         // Initial load is handled by init block in VM or we can call here explicitly
         // viewModel.loadGames() // Already called in init with ALL
 
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Reconfigura o grid quando a orientação muda
+        setupAdaptiveGrid()
     }
 
     private fun setupTopBar() {
@@ -165,9 +172,20 @@ class GamesFragment : Fragment() {
 
         binding.rvGames.apply {
             adapter = gamesAdapter
-            layoutManager = LinearLayoutManager(requireContext())
             setHasFixedSize(true)
         }
+
+        // Configura o grid adaptativo inicial
+        setupAdaptiveGrid()
+    }
+
+    /**
+     * Configura o GridLayoutManager com número de colunas adaptativo baseado no tamanho da tela.
+     * Utiliza recursos definidos em values/dimens.xml, values-sw600dp/dimens.xml e values-sw720dp/dimens.xml
+     */
+    private fun setupAdaptiveGrid() {
+        val columns = resources.getInteger(R.integer.grid_columns)
+        binding.rvGames.layoutManager = GridLayoutManager(requireContext(), columns)
     }
 
     private fun observeViewModel() {
