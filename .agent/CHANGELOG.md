@@ -16,6 +16,15 @@ Este arquivo consolida o histórico de todas as implementações significativas 
 - **Tema e splash**: app inicia no modo claro e mostra a versão atual na splash/Sobre.
 - **Build & warnings**: ajustes de dependências, R8/proguard e supressão de avisos irrelevantes.
 
+
+### 07/01/2026 (v1.3.1)
+
+- **Players atualizado**: o card “Você” agora aparece na aba jogadores com o melhor rating calculado e redireciona rapidamente para o perfil ativo.
+- **Tema inteligente**: barras do sistema seguem o esquema gerado por `DynamicThemeEngine`, mantendo a navbar e o status bar alinhados com o modo escuro e as cores escolhidas no personalizador.
+- **Personalização enriquecida**: a tela de aparência ganhou texto explicativo, botão “Redefinir para o padrão” e reforço de que as escolhas afetam todo o aplicativo.
+- **Operação documentada**: este changelog traz o histórico das ações de manutenção e visualização para facilitar auditorias futuras.
+
+
 ---
 
 ## � Status Atual

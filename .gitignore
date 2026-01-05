@@ -76,3 +76,15 @@ ehthumbs.db
 *.tmp
 *.swp
 *~
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Temporary build logs
+build_*.txt
+compile_*.txt
+*_log.txt
+temp_*.txt
+
+# Windows null device artifacts
+nul
