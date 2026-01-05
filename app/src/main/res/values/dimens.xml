@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ============================================== -->
+    <!-- ADAPTIVE LAYOUT DIMENSIONS - BASE (COMPACT)   -->
+    <!-- Telefones em portrait (< 600dp)               -->
+    <!-- ============================================== -->
+
+    <!-- Spacing Base -->
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_md">16dp</dimen>
+    <dimen name="spacing_lg">24dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+    <dimen name="spacing_xxl">48dp</dimen>
+
+    <!-- Content Padding -->
+    <dimen name="content_padding_horizontal">16dp</dimen>
+    <dimen name="content_padding_vertical">16dp</dimen>
+    <dimen name="screen_padding">16dp</dimen>
+
+    <!-- Card Dimensions -->
+    <dimen name="card_corner_radius">16dp</dimen>
+    <dimen name="card_corner_radius_large">28dp</dimen>
+    <dimen name="card_elevation">2dp</dimen>
+    <dimen name="card_spacing">12dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+
+    <!-- List/Grid Dimensions -->
+    <dimen name="list_item_spacing">8dp</dimen>
+    <dimen name="list_item_min_height">56dp</dimen>
+    <dimen name="grid_item_spacing">8dp</dimen>
+    <integer name="grid_columns">1</integer>
+    <integer name="grid_columns_landscape">2</integer>
+
+    <!-- Navigation -->
+    <dimen name="bottom_nav_height">80dp</dimen>
+    <dimen name="navigation_rail_width">0dp</dimen>
+    <dimen name="navigation_drawer_width">0dp</dimen>
+
+    <!-- Content Max Width (unlimited for compact) -->
+    <dimen name="content_max_width">10000dp</dimen>
+    <dimen name="form_max_width">600dp</dimen>
+    <dimen name="dialog_max_width">560dp</dimen>
+
+    <!-- Avatar/Icon Sizes -->
+    <dimen name="avatar_size_small">40dp</dimen>
+    <dimen name="avatar_size_medium">56dp</dimen>
+    <dimen name="avatar_size_large">80dp</dimen>
+    <dimen name="avatar_size_xlarge">110dp</dimen>
+    <dimen name="icon_size_small">20dp</dimen>
+    <dimen name="icon_size_medium">24dp</dimen>
+    <dimen name="icon_size_large">32dp</dimen>
+    <dimen name="icon_size_xlarge">48dp</dimen>
+
+    <!-- Touch Targets -->
+    <dimen name="touch_target_min">48dp</dimen>
+    <dimen name="button_height">56dp</dimen>
+    <dimen name="button_height_small">40dp</dimen>
+    <dimen name="fab_size">56dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+
+    <!-- Typography Scaling -->
+    <dimen name="text_size_display">32sp</dimen>
+    <dimen name="text_size_headline">24sp</dimen>
+    <dimen name="text_size_title">20sp</dimen>
+    <dimen name="text_size_body">16sp</dimen>
+    <dimen name="text_size_label">14sp</dimen>
+    <dimen name="text_size_caption">12sp</dimen>
+
+    <!-- Header/Hero Sections -->
+    <dimen name="header_height">200dp</dimen>
+    <dimen name="header_height_compact">160dp</dimen>
+    <dimen name="hero_image_height">200dp</dimen>
+
+    <!-- Form Fields -->
+    <dimen name="text_field_height">56dp</dimen>
+    <dimen name="text_field_corner_radius">16dp</dimen>
+    <dimen name="form_field_spacing">16dp</dimen>
+
+    <!-- Chip Dimensions -->
+    <dimen name="chip_height">48dp</dimen>
+    <dimen name="chip_corner_radius">20dp</dimen>
+    <dimen name="chip_spacing">12dp</dimen>
+
+    <!-- Progress Indicators -->
+    <dimen name="progress_track_thickness">8dp</dimen>
+    <dimen name="progress_track_thickness_large">12dp</dimen>
+
+    <!-- Dividers -->
+    <dimen name="divider_height">1dp</dimen>
+    <dimen name="divider_inset">16dp</dimen>
+
+    <!-- Sheets/Dialogs -->
+    <dimen name="bottom_sheet_corner_radius">28dp</dimen>
+    <dimen name="bottom_sheet_peek_height">400dp</dimen>
+    <dimen name="dialog_corner_radius">28dp</dimen>
+    <dimen name="dialog_padding">24dp</dimen>
+
+    <!-- Empty State -->
+    <dimen name="empty_state_icon_size">120dp</dimen>
+    <dimen name="empty_state_margin_horizontal">32dp</dimen>
+
+    <!-- Profile Header -->
+    <dimen name="profile_header_height">200dp</dimen>
+    <dimen name="profile_avatar_size">110dp</dimen>
+    <dimen name="profile_badge_size">40dp</dimen>
+
+    <!-- Game Card -->
+    <dimen name="game_card_height">180dp</dimen>
+    <dimen name="game_card_image_height">80dp</dimen>
+
+    <!-- Statistics Grid -->
+    <integer name="stats_grid_columns">3</integer>
+    <dimen name="stats_item_padding">8dp</dimen>
+
+    <!-- Map Dimensions -->
+    <dimen name="map_height">300dp</dimen>
+    <dimen name="map_controls_margin">16dp</dimen>
+
+    <!-- Shimmer/Skeleton -->
+    <dimen name="shimmer_corner_radius">8dp</dimen>
+</resources>

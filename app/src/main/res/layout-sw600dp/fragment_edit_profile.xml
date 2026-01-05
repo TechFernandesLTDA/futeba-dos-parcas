@@ -1,0 +1,766 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout para tablets (sw600dp+) - Formulário de perfil em 2 colunas -->
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
+    tools:context=".ui.profile.EditProfileFragment">
+
+    <!-- AppBar com Voltar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        style="@style/FutebaAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:title="Editar Perfil" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- ScrollView com conteúdo centralizado -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbarThumbVertical="@drawable/scrollbar_thumb"
+        android:scrollbars="vertical"
+        android:scrollbarStyle="outsideOverlay"
+        android:fadeScrollbars="false"
+        android:scrollbarSize="6dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:padding="@dimen/content_padding_horizontal">
+
+            <!-- Container principal com max-width -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintWidth_max="@dimen/content_max_width">
+
+                <!-- Layout em 2 colunas para tablets -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <!-- Coluna esquerda: Foto e dados básicos -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.4"
+                        android:orientation="vertical"
+                        android:layout_marginEnd="@dimen/spacing_md">
+
+                        <!-- Container para Foto -->
+                        <FrameLayout
+                            android:id="@+id/photoHeaderContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="@dimen/spacing_md"
+                            android:layout_marginTop="@dimen/spacing_md">
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/cardPhotoContainer"
+                                android:layout_width="@dimen/profile_avatar_size"
+                                android:layout_height="@dimen/profile_avatar_size"
+                                app:cardCornerRadius="@dimen/card_corner_radius_large"
+                                app:cardElevation="4dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?attr/selectableItemBackground"
+                                android:layout_gravity="center_horizontal">
+
+                                <FrameLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:clickable="false"
+                                    android:focusable="false">
+
+                                    <ImageView
+                                        android:id="@+id/ivProfile"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_launcher_foreground"
+                                        android:clickable="false"
+                                        android:focusable="false" />
+
+                                    <View
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:background="@color/black"
+                                        android:alpha="0.2"
+                                        android:id="@+id/photoOverlay"
+                                        android:clickable="false"
+                                        android:focusable="false" />
+
+                                    <ImageView
+                                        android:layout_width="56dp"
+                                        android:layout_height="56dp"
+                                        android:layout_gravity="center"
+                                        android:src="@drawable/ic_camera"
+                                        app:tint="@color/white"
+                                        android:contentDescription="@string/fragment_edit_profile_contentdescription_1"
+                                        android:clickable="false"
+                                        android:focusable="false"
+                                        android:id="@+id/ivCameraIcon" />
+
+                                    <com.google.android.material.progressindicator.CircularProgressIndicator
+                                        android:id="@+id/uploadProgress"
+                                        android:layout_width="64dp"
+                                        android:layout_height="64dp"
+                                        android:layout_gravity="center"
+                                        android:visibility="gone"
+                                        android:indeterminate="true" />
+
+                                </FrameLayout>
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                        </FrameLayout>
+
+                        <TextView
+                            android:id="@+id/tvPhotoHint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/fragment_edit_profile_text_2"
+                            android:textSize="@dimen/text_size_caption"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="@dimen/spacing_sm" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnChooseImage"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="0dp"
+                            android:text=""
+                            android:visibility="gone"
+                            android:layout_gravity="center_horizontal" />
+
+                        <!-- Nome e Apelido na coluna esquerda -->
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilName"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="@string/fragment_edit_profile_hint_3"
+                            app:boxCornerRadiusTopStart="@dimen/card_corner_radius"
+                            app:boxCornerRadiusTopEnd="@dimen/card_corner_radius"
+                            app:boxCornerRadiusBottomStart="@dimen/card_corner_radius"
+                            app:boxCornerRadiusBottomEnd="@dimen/card_corner_radius"
+                            android:layout_marginTop="@dimen/spacing_lg">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etName"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilNickname"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="@string/fragment_edit_profile_hint_4"
+                            app:boxCornerRadiusTopStart="@dimen/card_corner_radius"
+                            app:boxCornerRadiusTopEnd="@dimen/card_corner_radius"
+                            app:boxCornerRadiusBottomStart="@dimen/card_corner_radius"
+                            app:boxCornerRadiusBottomEnd="@dimen/card_corner_radius"
+                            android:layout_marginTop="@dimen/form_field_spacing">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etNickname"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Tipo de Campo Preferido -->
+                        <TextView
+                            android:id="@+id/tvPreferredFieldType"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/form_field_spacing"
+                            android:text="@string/fragment_edit_profile_text_5"
+                            android:textColor="?attr/colorOnSurface" />
+
+                        <LinearLayout
+                            android:id="@+id/llFieldTypes"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <com.google.android.material.checkbox.MaterialCheckBox
+                                android:id="@+id/cbSociety"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/fragment_edit_profile_text_6"
+                                android:textColor="?attr/colorOnSurface" />
+
+                            <com.google.android.material.checkbox.MaterialCheckBox
+                                android:id="@+id/cbFutsal"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/fragment_edit_profile_text_7"
+                                android:textColor="?attr/colorOnSurface" />
+
+                            <com.google.android.material.checkbox.MaterialCheckBox
+                                android:id="@+id/cbField"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/fragment_edit_profile_text_8"
+                                android:textColor="?attr/colorOnSurface" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Coluna direita: Campos de perfil detalhados -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.6"
+                        android:orientation="vertical"
+                        android:layout_marginStart="@dimen/spacing_md">
+
+                        <!-- Ficha do Jogador -->
+                        <TextView
+                            android:id="@+id/tvPersonalInfoTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_md"
+                            android:text="@string/fragment_edit_profile_text_15"
+                            android:textSize="@dimen/text_size_title"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface" />
+
+                        <!-- Data nascimento e Sexo em linha -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="@dimen/form_field_spacing">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilBirthDate"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginEnd="@dimen/spacing_sm"
+                                android:hint="@string/fragment_edit_profile_hint_5"
+                                app:endIconMode="custom"
+                                app:endIconDrawable="@drawable/ic_calendar"
+                                app:boxCornerRadiusTopStart="12dp"
+                                app:boxCornerRadiusTopEnd="12dp"
+                                app:boxCornerRadiusBottomStart="12dp"
+                                app:boxCornerRadiusBottomEnd="12dp">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etBirthDate"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="none"
+                                    android:focusable="false" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilGender"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="@dimen/spacing_sm"
+                                android:hint="@string/fragment_edit_profile_hint_6"
+                                app:endIconMode="dropdown_menu"
+                                app:boxCornerRadiusTopStart="12dp"
+                                app:boxCornerRadiusTopEnd="12dp"
+                                app:boxCornerRadiusBottomStart="12dp"
+                                app:boxCornerRadiusBottomEnd="12dp">
+
+                                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                                    android:id="@+id/etGender"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="none" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                        </LinearLayout>
+
+                        <!-- Altura e Peso -->
+                        <LinearLayout
+                            android:id="@+id/llBodyMeasures"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/form_field_spacing"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilHeight"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:hint="@string/fragment_edit_profile_hint_7"
+                                app:suffixText="@string/fragment_edit_profile_text_16"
+                                app:boxCornerRadiusTopStart="12dp"
+                                app:boxCornerRadiusTopEnd="12dp"
+                                app:boxCornerRadiusBottomStart="12dp"
+                                app:boxCornerRadiusBottomEnd="12dp">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etHeight"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="number" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilWeight"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="@dimen/spacing_md"
+                                android:hint="@string/fragment_edit_profile_hint_8"
+                                app:suffixText="@string/fragment_edit_profile_text_17"
+                                app:boxCornerRadiusTopStart="12dp"
+                                app:boxCornerRadiusTopEnd="12dp"
+                                app:boxCornerRadiusBottomStart="12dp"
+                                app:boxCornerRadiusBottomEnd="12dp">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etWeight"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="number" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                        </LinearLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilDominantFoot"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="@string/fragment_edit_profile_hint_9"
+                            app:endIconMode="dropdown_menu"
+                            app:boxCornerRadiusTopStart="12dp"
+                            app:boxCornerRadiusTopEnd="12dp"
+                            app:boxCornerRadiusBottomStart="12dp"
+                            app:boxCornerRadiusBottomEnd="12dp"
+                            android:layout_marginTop="@dimen/form_field_spacing">
+
+                            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                                android:id="@+id/etDominantFoot"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="none" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <!-- Perfil de Jogo -->
+                        <TextView
+                            android:id="@+id/tvGameProfileTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/spacing_lg"
+                            android:text="@string/fragment_edit_profile_text_18"
+                            android:textSize="@dimen/text_size_title"
+                            android:textStyle="bold"
+                            android:textColor="?attr/colorOnSurface" />
+
+                        <!-- Posições em linha -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="@dimen/form_field_spacing">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilPrimaryPosition"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginEnd="@dimen/spacing_sm"
+                                android:hint="@string/fragment_edit_profile_hint_10"
+                                app:endIconMode="dropdown_menu"
+                                app:boxCornerRadiusTopStart="12dp"
+                                app:boxCornerRadiusTopEnd="12dp"
+                                app:boxCornerRadiusBottomStart="12dp"
+                                app:boxCornerRadiusBottomEnd="12dp">
+
+                                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                                    android:id="@+id/etPrimaryPosition"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="none" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilSecondaryPosition"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="@dimen/spacing_sm"
+                                android:hint="@string/fragment_edit_profile_hint_11"
+                                app:endIconMode="dropdown_menu"
+                                app:boxCornerRadiusTopStart="12dp"
+                                app:boxCornerRadiusTopEnd="12dp"
+                                app:boxCornerRadiusBottomStart="12dp"
+                                app:boxCornerRadiusBottomEnd="12dp">
+
+                                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                                    android:id="@+id/etSecondaryPosition"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="none" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                        </LinearLayout>
+
+                        <!-- Estilo e Experiência em linha -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="@dimen/form_field_spacing">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilPlayStyle"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginEnd="@dimen/spacing_sm"
+                                android:hint="@string/fragment_edit_profile_hint_12"
+                                app:endIconMode="dropdown_menu"
+                                app:boxCornerRadiusTopStart="12dp"
+                                app:boxCornerRadiusTopEnd="12dp"
+                                app:boxCornerRadiusBottomStart="12dp"
+                                app:boxCornerRadiusBottomEnd="12dp">
+
+                                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                                    android:id="@+id/etPlayStyle"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="none" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:id="@+id/tilExperienceYears"
+                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="@dimen/spacing_sm"
+                                android:hint="@string/fragment_edit_profile_hint_13"
+                                app:suffixText="@string/fragment_edit_profile_text_19"
+                                app:boxCornerRadiusTopStart="12dp"
+                                app:boxCornerRadiusTopEnd="12dp"
+                                app:boxCornerRadiusBottomStart="12dp"
+                                app:boxCornerRadiusBottomEnd="12dp">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etExperienceYears"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="number" />
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Seção de Ratings (fullwidth abaixo das 2 colunas) -->
+                <TextView
+                    android:id="@+id/tvRatingTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_xl"
+                    android:text="@string/fragment_edit_profile_text_9"
+                    android:textSize="@dimen/text_size_title"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvRatingTitle" />
+
+                <!-- O restante dos campos precisa ter IDs compatíveis com o binding -->
+                <!-- Vou incluir uma versão simplificada para manter compatibilidade -->
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Card de auto-avaliação -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardAutoRatings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                style="@style/FutebaCard"
+                app:layout_constraintWidth_max="@dimen/content_max_width">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/card_padding">
+
+                    <TextView
+                        android:id="@+id/tvAutoRatingTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_edit_profile_text_21"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvAutoRatingSubtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/fragment_edit_profile_text_22"
+                        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <!-- Stats em grid 2x2 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="@dimen/spacing_md">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@string/fragment_edit_profile_text_10"
+                                    android:textColor="?attr/colorOnSurfaceVariant" />
+                                <TextView
+                                    android:id="@+id/tvAutoStrikerValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/fragment_edit_profile_text_23"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="@dimen/spacing_sm">
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@string/fragment_edit_profile_text_12"
+                                    android:textColor="?attr/colorOnSurfaceVariant" />
+                                <TextView
+                                    android:id="@+id/tvAutoDefValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/fragment_edit_profile_text_23"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="@dimen/spacing_lg"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@string/fragment_edit_profile_text_11"
+                                    android:textColor="?attr/colorOnSurfaceVariant" />
+                                <TextView
+                                    android:id="@+id/tvAutoMidValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/fragment_edit_profile_text_23"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="@dimen/spacing_sm">
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@string/fragment_edit_profile_text_13"
+                                    android:textColor="?attr/colorOnSurfaceVariant" />
+                                <TextView
+                                    android:id="@+id/tvAutoGkValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/fragment_edit_profile_text_23"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Sliders de habilidade em grid 2x2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="@dimen/spacing_md"
+                app:layout_constraintWidth_max="@dimen/content_max_width">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="@dimen/spacing_md"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvStrikerLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_edit_profile_text_10" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/sliderStriker"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:valueFrom="0.0"
+                        android:valueTo="5.0"
+                        android:stepSize="1.0" />
+
+                    <TextView
+                        android:id="@+id/tvDefenderLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:text="@string/fragment_edit_profile_text_12" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/sliderDefender"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:valueFrom="0.0"
+                        android:valueTo="5.0"
+                        android:stepSize="1.0" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="@dimen/spacing_md"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvMidLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/fragment_edit_profile_text_11" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/sliderMid"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:valueFrom="0.0"
+                        android:valueTo="5.0"
+                        android:stepSize="1.0" />
+
+                    <TextView
+                        android:id="@+id/tvGkLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_sm"
+                        android:text="@string/fragment_edit_profile_text_13" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/sliderGk"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:valueFrom="0.0"
+                        android:valueTo="5.0"
+                        android:stepSize="1.0" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Botão Salvar -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConfirm"
+                android:layout_width="280dp"
+                android:layout_height="@dimen/button_height"
+                android:layout_marginTop="@dimen/spacing_xl"
+                android:layout_marginBottom="@dimen/spacing_xl"
+                android:text="@string/fragment_edit_profile_text_14"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="@dimen/card_corner_radius" />
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_md"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -260,7 +260,7 @@ class NotificationRepository @Inject constructor(
     }
 
     /**
-     * Deleta notificações antigas (mais de 30 dias)
+     * Deleta notificações antigas (mais de 30 dias) ou com data nula/ausente
      */
     suspend fun deleteOldNotifications(): Result<Int> {
         return try {
@@ -269,23 +269,47 @@ class NotificationRepository @Inject constructor(
 
             val thirtyDaysAgo = Date(System.currentTimeMillis() - 30 * 24 * 60 * 60 * 1000L)
 
-            val snapshot = notificationsCollection
+            // Buscar notificações antigas por data
+            val oldSnapshot = notificationsCollection
                 .whereEqualTo("user_id", userId)
                 .whereLessThan("created_at", thirtyDaysAgo)
                 .get()
                 .await()
 
-            if (snapshot.isEmpty) {
+            // Buscar TODAS as notificações do usuário para verificar as com data nula
+            val allSnapshot = notificationsCollection
+                .whereEqualTo("user_id", userId)
+                .get()
+                .await()
+
+            val docsToDelete = mutableListOf<com.google.firebase.firestore.DocumentSnapshot>()
+
+            // Adicionar notificações antigas
+            docsToDelete.addAll(oldSnapshot.documents)
+
+            // Adicionar notificações com created_at nulo ou ausente
+            allSnapshot.documents.forEach { doc ->
+                val createdAt = doc.get("created_at")
+                if (createdAt == null && !docsToDelete.any { it.id == doc.id }) {
+                    docsToDelete.add(doc)
+                }
+            }
+
+            if (docsToDelete.isEmpty()) {
                 return Result.success(0)
             }
 
-            val batch = firestore.batch()
-            snapshot.documents.forEach { doc ->
-                batch.delete(doc.reference)
+            // Dividir em batches de 400 (limite do Firestore é 500)
+            val batches = docsToDelete.chunked(400)
+            batches.forEach { chunk ->
+                val batch = firestore.batch()
+                chunk.forEach { doc ->
+                    batch.delete(doc.reference)
+                }
+                batch.commit().await()
             }
-            batch.commit().await()
 
-            Result.success(snapshot.size())
+            Result.success(docsToDelete.size)
         } catch (e: Exception) {
             Result.failure(e)
         }

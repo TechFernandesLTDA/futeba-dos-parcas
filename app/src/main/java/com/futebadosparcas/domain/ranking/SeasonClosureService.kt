@@ -88,7 +88,7 @@ class SeasonClosureService @Inject constructor(
                         message = "A temporada ${season?.name ?: ""} chegou ao fim. Confira sua classificação final!",
                         type = NotificationType.SYSTEM.name, // Usando name/string pois NotificationType pode não estar atualizado
                         read = false,
-                        createdAt = Date()
+                        createdAtRaw = Date()
                     )
                 )
 

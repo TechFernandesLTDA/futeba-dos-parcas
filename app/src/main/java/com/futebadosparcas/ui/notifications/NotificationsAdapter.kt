@@ -68,7 +68,7 @@ class NotificationsAdapter(
 
             val createdDate = notification.createdAt
             if (createdDate != null) {
-                val dateFormat = SimpleDateFormat("dd/MM/yyyy 'as' HH:mm", Locale("pt", "BR"))
+                val dateFormat = SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale("pt", "BR"))
                 val exactTime = dateFormat.format(createdDate)
 
                 val relativeTime = DateUtils.getRelativeTimeSpanString(
@@ -77,11 +77,11 @@ class NotificationsAdapter(
                     DateUtils.MINUTE_IN_MILLIS
                 )
 
-                binding.tvTime.text = "$relativeTime - $exactTime"
+                binding.tvTime.text = "$relativeTime • $exactTime"
                 binding.tvTime.visibility = View.VISIBLE
             } else {
-                binding.tvTime.text = "Data desconhecida"
-                binding.tvTime.visibility = View.VISIBLE
+                // Notificações sem data (criadas antes da correção) - ocultar timestamp
+                binding.tvTime.visibility = View.GONE
             }
 
             binding.unreadIndicator.visibility = if (!notification.read) View.VISIBLE else View.GONE

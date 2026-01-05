@@ -85,6 +85,8 @@
     <string name="error">Erro</string>
     <string name="success">Sucesso</string>
     <string name="cancel">Cancelar</string>
+    <string name="close">Fechar</string>
+    <string name="badge_icon">Ícone da conquista</string>
     <string name="save">Salvar</string>
     <string name="delete">Excluir</string>
     <string name="edit">Editar</string>
@@ -183,6 +185,9 @@
     <string name="dialog_badge_unlocked_text_4">Marque 3+ gols em uma partida</string>
     <string name="dialog_badge_unlocked_text_5">+100 XP</string>
     <string name="dialog_badge_unlocked_text_6">Continuar</string>
+    <string name="share">Compartilhar</string>
+    <string name="share_badge_title">Desbloqueei uma conquista!</string>
+    <string name="share_badge_text">Ganhei a conquista "%1$s" no Futeba dos Parças! 🏆⚽</string>
     <string name="dialog_compare_players_text_1">Comparador</string>
     <string name="dialog_compare_players_text_2">Jogador A</string>
     <string name="dialog_compare_players_text_3">VS</string>
@@ -835,4 +840,12 @@ subir no ranking!</string>
     <string name="cashbox_entry_value">Valor: %1$s</string>
     <string name="cashbox_entry_player">Jogador: %1$s</string>
     <string name="cashbox_entry_voided">[ESTORNADO]</string>
+
+    <!-- Adaptive Layout -->
+    <string name="select_item_to_view_details">Selecione um item para ver os detalhes</string>
+    <string name="adaptive_nav_home">Inicio</string>
+    <string name="adaptive_nav_games">Jogos</string>
+    <string name="adaptive_nav_players">Jogadores</string>
+    <string name="adaptive_nav_league">Liga</string>
+    <string name="adaptive_nav_profile">Perfil</string>
 </resources>

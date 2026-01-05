@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.main
 import android.os.Bundle
 import android.os.Build
 import android.content.res.Configuration
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.ViewCompat
@@ -12,11 +13,13 @@ import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.ThemeMode
 import com.futebadosparcas.databinding.ActivityMainBinding
+import com.futebadosparcas.ui.adaptive.WindowSizeClass
 import com.futebadosparcas.ui.theme.DynamicThemeEngine
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
@@ -37,9 +40,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
+    /** Indica se está usando NavigationRail (tablets) ou BottomNav (phones) */
+    private val isUsingNavigationRail: Boolean
+        get() = !WindowSizeClass.fromActivity(this).isCompact
+
     @javax.inject.Inject
     lateinit var themeRepository: com.futebadosparcas.data.repository.ThemeRepository
-    
+
     @javax.inject.Inject
     lateinit var notificationRepository: com.futebadosparcas.data.repository.NotificationRepository
 
@@ -57,13 +64,7 @@ class MainActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         // Adiciona padding para evitar sobreposição com as barras do sistema
-        val bottomNavBasePadding = binding.bottomNavigation.paddingBottom
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.updatePadding(top = systemBars.top)
-            binding.bottomNavigation.updatePadding(bottom = bottomNavBasePadding + systemBars.bottom)
-            insets
-        }
+        setupWindowInsets()
 
         applySystemBars()
         setupNavigation()
@@ -73,59 +74,127 @@ class MainActivity : AppCompatActivity() {
         observeNotifications()
     }
 
+    private fun setupWindowInsets() {
+        if (isUsingNavigationRail) {
+            // Tablets: NavigationRail - padding apenas no topo
+            ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                view.updatePadding(top = systemBars.top)
+                // NavigationRail lida com seu próprio padding
+                binding.navigationRail?.updatePadding(
+                    top = systemBars.top,
+                    bottom = systemBars.bottom
+                )
+                insets
+            }
+        } else {
+            // Phones: BottomNav - padding no topo e bottom nav
+            val bottomNavBasePadding = binding.bottomNavigation.paddingBottom
+            ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                view.updatePadding(top = systemBars.top)
+                binding.bottomNavigation.updatePadding(bottom = bottomNavBasePadding + systemBars.bottom)
+                insets
+            }
+        }
+    }
+
     private fun setupNavigation() {
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
 
-        // Configurar bottom navigation
-        binding.bottomNavigation.setupWithNavController(navController)
-        
-        // Corrigir bug: sempre navegar para o destino raiz ao clicar no bottom nav
-        binding.bottomNavigation.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.homeFragment -> {
-                    navController.popBackStack(R.id.homeFragment, false)
-                    navController.navigate(R.id.homeFragment)
-                    true
-                }
-                R.id.gamesFragment -> {
-                    navController.popBackStack(R.id.gamesFragment, false)
-                    navController.navigate(R.id.gamesFragment)
-                    true
-                }
-                R.id.playersFragment -> {
-                    navController.popBackStack(R.id.playersFragment, false)
-                    navController.navigate(R.id.playersFragment)
-                    true
-                }
-                R.id.leagueFragment -> {
-                    navController.popBackStack(R.id.leagueFragment, false)
-                    navController.navigate(R.id.leagueFragment)
-                    true
-                }
-                R.id.statisticsFragment -> {
-                    navController.popBackStack(R.id.statisticsFragment, false)
-                    navController.navigate(R.id.statisticsFragment)
-                    true
-                }
-                R.id.profileFragment -> {
-                    navController.popBackStack(R.id.profileFragment, false)
-                    navController.navigate(R.id.profileFragment)
-                    true
-                }
-                else -> false
+        if (isUsingNavigationRail) {
+            // Configurar NavigationRail para tablets
+            setupNavigationRail(navController)
+        } else {
+            // Configurar BottomNavigation para phones
+            setupBottomNavigation(navController)
+        }
+    }
+
+    private fun setupNavigationRail(navController: NavController) {
+        binding.navigationRail?.let { rail ->
+            rail.setupWithNavController(navController)
+
+            // Corrigir navegação: sempre navegar para o destino raiz
+            rail.setOnItemSelectedListener { item ->
+                navigateToDestination(navController, item.itemId)
             }
         }
     }
+
+    private fun setupBottomNavigation(navController: NavController) {
+        binding.bottomNavigation.setupWithNavController(navController)
+
+        // Corrigir bug: sempre navegar para o destino raiz ao clicar no bottom nav
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            navigateToDestination(navController, item.itemId)
+        }
+    }
+
+    private fun navigateToDestination(navController: NavController, itemId: Int): Boolean {
+        return when (itemId) {
+            R.id.homeFragment -> {
+                navController.popBackStack(R.id.homeFragment, false)
+                navController.navigate(R.id.homeFragment)
+                true
+            }
+            R.id.gamesFragment -> {
+                navController.popBackStack(R.id.gamesFragment, false)
+                navController.navigate(R.id.gamesFragment)
+                true
+            }
+            R.id.playersFragment -> {
+                navController.popBackStack(R.id.playersFragment, false)
+                navController.navigate(R.id.playersFragment)
+                true
+            }
+            R.id.leagueFragment -> {
+                navController.popBackStack(R.id.leagueFragment, false)
+                navController.navigate(R.id.leagueFragment)
+                true
+            }
+            R.id.statisticsFragment -> {
+                navController.popBackStack(R.id.statisticsFragment, false)
+                navController.navigate(R.id.statisticsFragment)
+                true
+            }
+            R.id.profileFragment -> {
+                navController.popBackStack(R.id.profileFragment, false)
+                navController.navigate(R.id.profileFragment)
+                true
+            }
+            else -> false
+        }
+    }
+
+    // Conjunto de badges já exibidas nesta sessão para evitar duplicatas
+    private val shownBadgeIds = mutableSetOf<String>()
 
     private fun observeGamificationEvents() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 badgeAwarder.newBadges.collect { userBadge ->
-                    com.futebadosparcas.ui.badges.dialog.BadgeUnlockDialog
-                        .newInstance(userBadge.badgeId, firestore)
-                        .show(supportFragmentManager, com.futebadosparcas.ui.badges.dialog.BadgeUnlockDialog.TAG)
+                    // Verificar se já existe um dialog aberto ou se esta badge já foi exibida
+                    val existingDialog = supportFragmentManager.findFragmentByTag(
+                        com.futebadosparcas.ui.badges.dialog.BadgeUnlockDialog.TAG
+                    )
+
+                    // Verificar tambem se ja foi vista anteriormente (persistido)
+                    val alreadySeen = com.futebadosparcas.util.SeenBadgesManager.hasBeenSeen(
+                        this@MainActivity,
+                        userBadge.badgeId
+                    )
+
+                    if (existingDialog == null &&
+                        !shownBadgeIds.contains(userBadge.badgeId) &&
+                        !alreadySeen) {
+                        shownBadgeIds.add(userBadge.badgeId)
+                        com.futebadosparcas.ui.badges.dialog.BadgeUnlockDialog
+                            .newInstance(userBadge.badgeId, firestore)
+                            .show(supportFragmentManager, com.futebadosparcas.ui.badges.dialog.BadgeUnlockDialog.TAG)
+                    }
                 }
             }
         }
@@ -193,15 +262,32 @@ class MainActivity : AppCompatActivity() {
     
     private fun updateNotificationBadge(count: Int) {
         try {
-            val badge = binding.bottomNavigation.getOrCreateBadge(R.id.profileFragment)
-            if (count > 0) {
-                badge.isVisible = true
-                badge.number = count
-                badge.backgroundColor = getColor(R.color.badge_background) // Ensure color exists or use generic
-                badge.badgeTextColor = getColor(R.color.badge_text)
+            if (isUsingNavigationRail) {
+                // Atualiza badge no NavigationRail
+                binding.navigationRail?.let { rail ->
+                    val badge = rail.getOrCreateBadge(R.id.profileFragment)
+                    if (count > 0) {
+                        badge.isVisible = true
+                        badge.number = count
+                        badge.backgroundColor = getColor(R.color.badge_background)
+                        badge.badgeTextColor = getColor(R.color.badge_text)
+                    } else {
+                        badge.isVisible = false
+                        badge.clearNumber()
+                    }
+                }
             } else {
-                badge.isVisible = false
-                badge.clearNumber()
+                // Atualiza badge no BottomNavigation
+                val badge = binding.bottomNavigation.getOrCreateBadge(R.id.profileFragment)
+                if (count > 0) {
+                    badge.isVisible = true
+                    badge.number = count
+                    badge.backgroundColor = getColor(R.color.badge_background)
+                    badge.badgeTextColor = getColor(R.color.badge_text)
+                } else {
+                    badge.isVisible = false
+                    badge.clearNumber()
+                }
             }
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "Erro ao atualizar badge", e)

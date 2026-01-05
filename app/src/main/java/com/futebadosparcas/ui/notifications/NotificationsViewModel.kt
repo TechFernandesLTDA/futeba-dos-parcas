@@ -251,8 +251,11 @@ class NotificationsViewModel @Inject constructor(
     }
 
     private fun sortNotifications(notifications: List<AppNotification>): List<AppNotification> {
+        // Notificações com data vêm primeiro (ordenadas por data desc)
+        // Notificações sem data vão para o final (ordenadas por ID desc)
         return notifications.sortedWith(
-            compareByDescending<AppNotification> { it.createdAt?.time ?: 0L }
+            compareByDescending<AppNotification> { it.createdAt != null }
+                .thenByDescending { it.createdAt?.time ?: 0L }
                 .thenByDescending { it.id }
         )
     }

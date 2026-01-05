@@ -129,7 +129,8 @@ class InviteRepositoryImpl @Inject constructor(
                 referenceId = inviteRef.id,
                 referenceType = "invite",
                 actionType = NotificationAction.ACCEPT_DECLINE.name,
-                expiresAt = invite.expiresAt
+                createdAtRaw = Date(),
+                expiresAtRaw = invite.expiresAt
             )
 
             // Salvar convite e notificação em transação
@@ -299,7 +300,8 @@ class InviteRepositoryImpl @Inject constructor(
                     senderName = userNameDisplay,
                     referenceId = invite.groupId,
                     referenceType = "group",
-                    actionType = NotificationAction.VIEW_DETAILS.name
+                    actionType = NotificationAction.VIEW_DETAILS.name,
+                    createdAtRaw = Date()
                 )
                 transaction.set(notificationRef, notification)
             }.await()
@@ -357,7 +359,8 @@ class InviteRepositoryImpl @Inject constructor(
                     senderName = userNameDisplay,
                     referenceId = invite.groupId,
                     referenceType = "group",
-                    actionType = NotificationAction.NONE.name
+                    actionType = NotificationAction.NONE.name,
+                    createdAtRaw = Date()
                 )
                 transaction.set(notificationRef, notification)
             }.await()
