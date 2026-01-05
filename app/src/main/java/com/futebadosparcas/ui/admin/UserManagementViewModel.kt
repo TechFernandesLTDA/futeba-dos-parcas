@@ -28,7 +28,9 @@ class UserManagementViewModel @Inject constructor(
     fun loadUsers() {
         viewModelScope.launch {
             _uiState.value = UserManagementUiState.Loading
-            userRepository.getAllUsers().fold(
+            // Admin carrega todos os usuários usando a versão sem paginação
+            @Suppress("DEPRECATION")
+            userRepository.getAllUsersUnpaginated().fold(
                 onSuccess = { users ->
                     allUsers = users
                     _uiState.value = UserManagementUiState.Success(users)

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.os.Build
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -14,11 +15,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.futebadosparcas.R
+import com.futebadosparcas.data.model.ThemeMode
 import com.futebadosparcas.databinding.ActivityMainBinding
-import com.google.android.material.color.MaterialColors
+import com.futebadosparcas.ui.theme.DynamicThemeEngine
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -219,21 +222,29 @@ class MainActivity : AppCompatActivity() {
 
     @Suppress("DEPRECATION")
     private fun applySystemBars() {
-        val surface = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, 0)
-        val surfaceVariant = MaterialColors.getColor(
-            this,
-            com.google.android.material.R.attr.colorSurfaceVariant,
-            surface
-        )
-        window.statusBarColor = surface
-        window.navigationBarColor = surfaceVariant
+        val themeConfig = runBlocking {
+            themeRepository.themeConfig.first()
+        }
+        val isDark = when (themeConfig.mode) {
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+            ThemeMode.SYSTEM -> isSystemInDarkMode()
+        }
+        val colorScheme = DynamicThemeEngine.generateColorScheme(themeConfig, isDark)
+
+        window.statusBarColor = colorScheme.surface.toArgb()
+        window.navigationBarColor = colorScheme.surfaceVariant.toArgb()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isNavigationBarContrastEnforced = false
         }
+
         val insetsController = WindowCompat.getInsetsController(window, binding.root)
-        val isDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-            Configuration.UI_MODE_NIGHT_YES
         insetsController.isAppearanceLightStatusBars = !isDark
         insetsController.isAppearanceLightNavigationBars = !isDark
+    }
+
+    private fun isSystemInDarkMode(): Boolean {
+        val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        return currentNightMode == Configuration.UI_MODE_NIGHT_YES
     }
 }

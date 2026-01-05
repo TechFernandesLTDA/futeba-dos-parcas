@@ -7,6 +7,7 @@ import com.futebadosparcas.data.repository.LiveGameRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,9 +21,14 @@ class LiveEventsViewModel @Inject constructor(
 
     fun observeEvents(gameId: String) {
         viewModelScope.launch {
-            liveGameRepository.observeGameEvents(gameId).collect { eventsList ->
-                _events.value = eventsList
-            }
+            liveGameRepository.observeGameEvents(gameId)
+                .catch { e ->
+                    // Tratamento de erro: em caso de falha, manter lista vazia
+                    _events.value = emptyList()
+                }
+                .collect { eventsList ->
+                    _events.value = eventsList
+                }
         }
     }
 }

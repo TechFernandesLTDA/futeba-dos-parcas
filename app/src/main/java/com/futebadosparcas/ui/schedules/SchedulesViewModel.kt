@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,16 +29,21 @@ class SchedulesViewModel @Inject constructor(
     private fun loadSchedules() {
         val userId = authRepository.getCurrentUserId() ?: return
         viewModelScope.launch {
-            scheduleRepository.getSchedules(userId).collect { result ->
-                result.fold(
-                    onSuccess = { schedules ->
-                        _uiState.value = SchedulesUiState.Success(schedules)
-                    },
-                    onFailure = { error ->
-                        _uiState.value = SchedulesUiState.Error(error.message ?: "Erro ao carregar recorrências")
-                    }
-                )
-            }
+            scheduleRepository.getSchedules(userId)
+                .catch { e ->
+                    // Tratamento de erro de fluxo: converter para estado de erro
+                    _uiState.value = SchedulesUiState.Error(e.message ?: "Erro ao carregar recorrencias")
+                }
+                .collect { result ->
+                    result.fold(
+                        onSuccess = { schedules ->
+                            _uiState.value = SchedulesUiState.Success(schedules)
+                        },
+                        onFailure = { error ->
+                            _uiState.value = SchedulesUiState.Error(error.message ?: "Erro ao carregar recorrências")
+                        }
+                    )
+                }
         }
     }
 

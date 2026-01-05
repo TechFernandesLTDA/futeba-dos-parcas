@@ -32,14 +32,19 @@ class LeagueFragment : Fragment() {
             setContent {
                 val uiState by viewModel.uiState.collectAsState()
                 val unreadCount by viewModel.unreadCount.collectAsState()
-                
+                val availableSeasons by viewModel.availableSeasons.collectAsState()
+                val selectedSeason by viewModel.selectedSeason.collectAsState()
+
                 FutebaTheme {
                     LeagueScreen(
                         uiState = uiState,
                         unreadCount = unreadCount,
+                        availableSeasons = availableSeasons,
+                        selectedSeason = selectedSeason,
                         onBack = { findNavController().popBackStack() },
                         onDivisionSelected = { viewModel.filterByDivision(it) },
-                        onRefresh = { viewModel.loadLeagueData() },
+                        onSeasonSelected = { viewModel.selectSeason(it) },
+                        onRefresh = { /* Refresh não é mais necessário, carrega automaticamente */ },
                         onNavigateNotifications = { findNavController().navigate(com.futebadosparcas.R.id.action_global_notifications) },
                         onNavigateGroups = { findNavController().navigate(com.futebadosparcas.R.id.action_global_groups) },
                         onNavigateMap = { findNavController().navigate(com.futebadosparcas.R.id.action_global_map) }

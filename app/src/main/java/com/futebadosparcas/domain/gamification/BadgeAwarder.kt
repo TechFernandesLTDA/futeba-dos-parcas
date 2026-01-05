@@ -1,81 +1,65 @@
 package com.futebadosparcas.domain.gamification
 
-import com.futebadosparcas.data.model.BadgeType
-import com.futebadosparcas.data.model.Game
-import com.futebadosparcas.data.model.LivePlayerStats
-import com.futebadosparcas.data.model.PlayerPosition
-import com.futebadosparcas.data.repository.GamificationRepository
-import com.futebadosparcas.util.AppLogger
-import kotlinx.coroutines.flow.asSharedFlow
+import com.futebadosparcas.data.model.UserBadge
+import com.futebadosparcas.data.repository.AuthRepository
+import com.google.firebase.firestore.DocumentChange
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.flowOf
+import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * UseCase responsável por verificar e premiar badges automaticamente após um jogo.
+ * Service that listens for new badges awarded to the current user (via Cloud Functions)
+ * and emits them for UI display.
  */
 @Singleton
 class BadgeAwarder @Inject constructor(
-    private val gamificationRepository: GamificationRepository
+    private val authRepository: AuthRepository,
+    private val firestore: FirebaseFirestore
 ) {
 
-    companion object {
-        private const val TAG = "BadgeAwarder"
-    }
+    private val sessionStartTime = Date()
 
-    private val _newBadges = kotlinx.coroutines.flow.MutableSharedFlow<com.futebadosparcas.data.model.UserBadge>()
-    val newBadges = _newBadges.asSharedFlow()
-
-    /**
-     * Verifica e premia badges para todos os jogadores de um jogo finalizado baseando-se nas estatísticas.
-     */
-    suspend fun checkAndAwardBadges(game: Game, stats: List<LivePlayerStats>) {
-        AppLogger.d(TAG) { "Iniciando verificação de badges para o jogo ${game.id}" }
-        
-        stats.forEach { playerStats ->
-            checkIndividualBadges(playerStats, stats, game)
+    val newBadges: Flow<UserBadge> = authRepository.authStateFlow
+        .flatMapLatest { user ->
+            if (user == null) {
+                flowOf()
+            } else {
+                observeBadges(user.uid)
+            }
         }
-    }
 
-    private suspend fun checkIndividualBadges(playerStats: LivePlayerStats, allStats: List<LivePlayerStats>, game: Game) {
-        val userId = playerStats.playerId
-        
-        // 1. Verificar STREAKS
-        game.date?.let { gameDate ->
-            gamificationRepository.updateStreak(userId, gameDate)
-                .onSuccess { streak ->
-                    if (streak.currentStreak >= 30) {
-                        award(userId, BadgeType.STREAK_30)
-                    } else if (streak.currentStreak >= 7) {
-                        award(userId, BadgeType.STREAK_7)
+    private fun observeBadges(userId: String): Flow<UserBadge> = callbackFlow {
+        // Listen to all badges for this user
+        // We filter by client-side timestamp to avoid spamming existing badges on startup
+        val observer = firestore.collection("user_badges")
+            .whereEqualTo("user_id", userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    // Fail silently or log? Closing the flow effectively stops retry unless handled upstream
+                    return@addSnapshotListener
+                }
+
+                snapshot?.documentChanges?.forEach { change ->
+                    val badge = change.document.toObject(UserBadge::class.java)
+                    val earnedAt = badge.lastEarnedAt ?: badge.unlockedAt
+
+                    // Only emit if it was earned/updated AFTER this session started
+                    // AND it's a relevant change (Allocated or Updated count)
+                    if (earnedAt != null && earnedAt.after(sessionStartTime)) {
+                        if (change.type == DocumentChange.Type.ADDED || 
+                            change.type == DocumentChange.Type.MODIFIED) {
+                            trySend(badge)
+                        }
                     }
                 }
-        }
-
-        // 2. HAT_TRICK: 3 gols no mesmo jogo
-        if (playerStats.goals >= 3) {
-            award(userId, BadgeType.HAT_TRICK)
-        }
-
-        // 3. PAREDAO: Goleiro sem levar gols
-        if (playerStats.getPositionEnum() == PlayerPosition.GOALKEEPER) {
-            val opponentGoals = allStats
-                .filter { it.teamId != playerStats.teamId }
-                .sumOf { it.goals }
-            
-            if (opponentGoals == 0) {
-                award(userId, BadgeType.PAREDAO)
             }
-        }
-    }
 
-    private suspend fun award(userId: String, badgeType: BadgeType) {
-        gamificationRepository.awardBadge(userId, badgeType.name)
-            .onSuccess { userBadge ->
-                AppLogger.d(TAG) { "Badge ${badgeType.name} concedido para $userId" }
-                _newBadges.emit(userBadge)
-            }
-            .onFailure { e ->
-                AppLogger.e(TAG, "Erro ao conceder badge ${badgeType.name} para $userId", e)
-            }
+        awaitClose { observer.remove() }
     }
 }

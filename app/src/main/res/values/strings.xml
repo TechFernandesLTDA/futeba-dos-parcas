@@ -535,6 +535,7 @@ subir no ranking!</string>
     <string name="fragment_players_text_9">A-Z</string>
     <string name="fragment_players_text_10">Melhor ATA</string>
     <string name="fragment_players_text_11">Melhor GOL</string>
+    <string name="fragment_players_button_view_profile">Ver perfil</string>
     <string name="fragment_preferences_text_1">🎨 Personalizar Cores</string>
     <string name="fragment_preferences_text_2">Desenvolvedor</string>
     <string name="fragment_preferences_text_3">🛠️</string>
@@ -753,7 +754,7 @@ subir no ranking!</string>
     <string name="layout_share_card_text_2">X</string>
     <string name="layout_share_card_text_3">Baixe o App e jogue com a gente!</string>
     <string name="layout_splash_branding_text_1">Futeba dos Parças</string>
-    <string name="layout_splash_branding_text_3">v1.3.0</string>
+    <string name="layout_splash_branding_text_3">v1.4.0</string>
     <string name="layout_splash_branding_text_2">Desenvolvido por Renan Locatiz Fernandes</string>
     <string name="bottom_nav_menu_title_1">Liga</string>
     <string name="game_detail_menu_title_1">Convidar no WhatsApp</string>
@@ -780,4 +781,58 @@ subir no ranking!</string>
     <string name="menu_user_roles_title_1">Tornar Administrador</string>
     <string name="menu_user_roles_title_2">Tornar Dono de Quadra</string>
     <string name="menu_user_roles_title_3">Tornar Jogador Comum</string>
+    <string name="theme_settings_preview_note">As cores escolhidas atualizam toda a experiência do app, incluindo barras, cartões e botões.</string>
+    <string name="theme_settings_action_reset">Redefinir para o padrão</string>
+
+    <!-- Dialogs Strings -->
+    <string name="dialog_change_permission_title">Alterar Permissão</string>
+    <string name="dialog_confirm">Confirmar</string>
+    <string name="dialog_entry_details_title">Detalhes da Entrada</string>
+    <string name="dialog_void_entry_title">Estornar Entrada</string>
+    <string name="dialog_void_entry_message">Deseja realmente estornar esta entrada?</string>
+    <string name="dialog_void_entry_button">Estornar</string>
+    <string name="dialog_recalculate_balance_title">Recalcular Saldo</string>
+    <string name="dialog_recalculate_balance_message">O saldo sera recalculado baseado em todas as entradas ativas.</string>
+    <string name="dialog_recalculate_button">Recalcular</string>
+    <string name="dialog_select_period">Selecione o período</string>
+    <string name="dialog_totals_by_category">Totais por Categoria</string>
+    <string name="dialog_totals_by_player">Totais por Jogador</string>
+
+    <!-- Error Messages -->
+    <string name="error_google_login">Erro ao fazer login com Google</string>
+    <string name="error_authentication">Erro na autenticacao</string>
+    <string name="error_game_not_found">Erro: Jogo não identificado</string>
+    <string name="error_update_permission">Erro ao atualizar permissão</string>
+    <string name="error_only_owner_can_void">Apenas o dono do grupo pode estornar entradas</string>
+
+    <!-- Toast Messages -->
+    <string name="toast_select_two_players">Selecione 2 jogadores para comparar</string>
+    <string name="toast_welcome_user">Bem-vindo, %1$s!</string>
+
+    <!-- MVP Voting -->
+    <string name="mvp_category_description">O melhor jogador da partida</string>
+
+    <!-- Biometric Auth -->
+    <string name="biometric_subtitle">Use sua digital para entrar</string>
+    <string name="biometric_negative_button">Usar Google</string>
+
+    <!-- Register -->
+    <string name="register_use_google_button">Use o botao \'Entrar com Google\' para criar sua conta</string>
+
+    <!-- DevTools -->
+    <string name="dev_tools_title">Ferramentas de Desenvolvedor</string>
+    <string name="dev_tools_mode_firebase">Modo atual: Firebase Real</string>
+
+    <!-- Chart Labels -->
+    <string name="chart_label_attack">ATA</string>
+    <string name="chart_label_midfield">MEI</string>
+    <string name="chart_label_defense">DEF</string>
+    <string name="chart_label_goalkeeper">GOL</string>
+
+    <!-- Cashbox Details -->
+    <string name="cashbox_entry_description">Descrição: %1$s</string>
+    <string name="cashbox_entry_category">Categoria: %1$s</string>
+    <string name="cashbox_entry_value">Valor: %1$s</string>
+    <string name="cashbox_entry_player">Jogador: %1$s</string>
+    <string name="cashbox_entry_voided">[ESTORNADO]</string>
 </resources>

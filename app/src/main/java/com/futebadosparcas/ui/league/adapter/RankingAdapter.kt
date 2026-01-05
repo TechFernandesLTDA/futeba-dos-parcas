@@ -40,6 +40,30 @@ class RankingAdapter : ListAdapter<RankingItem, RankingAdapter.RankingViewHolder
             // Posição
             binding.tvPosition.text = position.toString()
 
+            // Status da Liga (Promoção/Rebaixamento)
+            binding.ivLeagueStatus.apply {
+                when {
+                    participation.promotionProgress >= 100 -> {
+                        visibility = android.view.View.VISIBLE
+                        setImageResource(R.drawable.ic_expand_less)
+                        setColorFilter(androidx.core.content.ContextCompat.getColor(context, R.color.success))
+                    }
+                    participation.relegationProgress >= 100 -> {
+                        visibility = android.view.View.VISIBLE
+                        setImageResource(R.drawable.ic_expand_more)
+                        setColorFilter(androidx.core.content.ContextCompat.getColor(context, R.color.error))
+                    }
+                    participation.protectionGames > 0 -> {
+                        visibility = android.view.View.VISIBLE
+                        setImageResource(R.drawable.ic_security)
+                        setColorFilter(androidx.core.content.ContextCompat.getColor(context, R.color.outline)) // Grey
+                    }
+                    else -> {
+                        visibility = android.view.View.GONE
+                    }
+                }
+            }
+
             // Avatar
             if (!user.photoUrl.isNullOrEmpty()) {
                 binding.ivAvatar.load(user.photoUrl) {

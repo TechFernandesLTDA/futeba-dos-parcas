@@ -34,6 +34,18 @@
                 android:background="@drawable/bg_circle_primary_light"
                 tools:text="1" />
 
+            <!-- Indicador de Liga (Promoção/Rebaixamento) -->
+            <ImageView
+                android:id="@+id/ivLeagueStatus"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="4dp"
+                android:src="@drawable/ic_expand_less"
+                android:visibility="gone"
+                app:tint="@color/success"
+                tools:visibility="visible"
+                android:contentDescription="Status da Liga" />
+
             <!-- Avatar com Brasão -->
             <FrameLayout
                 android:layout_width="52dp"
