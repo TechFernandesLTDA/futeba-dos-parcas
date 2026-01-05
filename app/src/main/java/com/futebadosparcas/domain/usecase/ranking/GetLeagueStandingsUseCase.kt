@@ -1,0 +1,289 @@
+package com.futebadosparcas.domain.usecase.ranking
+
+import com.futebadosparcas.data.model.LeagueDivision
+import com.futebadosparcas.data.model.Season
+import com.futebadosparcas.data.model.SeasonParticipation
+import com.futebadosparcas.data.model.User
+import com.futebadosparcas.data.repository.GamificationRepository
+import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.util.AppLogger
+import com.google.firebase.auth.FirebaseAuth
+import java.text.SimpleDateFormat
+import java.util.Locale
+import javax.inject.Inject
+
+/**
+ * Use Case para buscar classificação da liga.
+ *
+ * Responsabilidades:
+ * - Buscar classificação por divisão
+ * - Calcular posição do jogador
+ * - Verificar critérios de promoção/rebaixamento
+ * - Fornecer estatísticas da temporada
+ */
+class GetLeagueStandingsUseCase @Inject constructor(
+    private val gamificationRepository: GamificationRepository,
+    private val userRepository: UserRepository,
+    private val auth: FirebaseAuth
+) {
+    companion object {
+        private const val TAG = "GetLeagueStandingsUseCase"
+    }
+
+    /**
+     * Participante com dados completos.
+     */
+    data class RankedPlayer(
+        val position: Int,
+        val user: User,
+        val participation: SeasonParticipation,
+        val division: LeagueDivision,
+        val isCurrentUser: Boolean,
+        val positionChange: Int,
+        val isPromotionZone: Boolean,
+        val isRelegationZone: Boolean
+    )
+
+    /**
+     * Classificação completa de uma divisão.
+     */
+    data class DivisionStandings(
+        val division: LeagueDivision,
+        val season: Season,
+        val players: List<RankedPlayer>,
+        val promotionCutoff: Int,
+        val relegationCutoff: Int,
+        val currentUserPosition: Int?
+    )
+
+    /**
+     * Visão geral da liga.
+     */
+    data class LeagueOverview(
+        val season: Season,
+        val divisions: List<DivisionStandings>,
+        val currentUserDivision: LeagueDivision?,
+        val currentUserPosition: Int?,
+        val daysRemaining: Int
+    )
+
+    /**
+     * Busca classificação de uma divisão específica.
+     *
+     * @param division Divisão da liga
+     * @param limit Número máximo de jogadores
+     * @return Result com classificação da divisão
+     */
+    suspend fun getDivisionStandings(
+        division: LeagueDivision,
+        limit: Int = 50
+    ): Result<DivisionStandings> {
+        AppLogger.d(TAG) { "Buscando classificação: division=$division" }
+
+        return try {
+            val currentUserId = auth.currentUser?.uid
+
+            // 1. Buscar temporada ativa
+            val seasonResult = gamificationRepository.getActiveSeason()
+            if (seasonResult.isFailure) {
+                return Result.failure(seasonResult.exceptionOrNull()!!)
+            }
+            val season = seasonResult.getOrNull()!!
+
+            // 2. Buscar classificação da divisão
+            val rankingResult = gamificationRepository.getLeagueRanking(division, limit)
+            if (rankingResult.isFailure) {
+                return Result.failure(rankingResult.exceptionOrNull()!!)
+            }
+            val participations = rankingResult.getOrNull()!!
+
+            // 3. Buscar dados dos usuários
+            val userIds = participations.map { it.userId }
+            val usersResult = userRepository.getUsersByIds(userIds)
+            val usersMap = usersResult.getOrNull()?.associateBy { it.id } ?: emptyMap()
+
+            // 4. Montar lista de jogadores rankeados
+            val totalPlayers = participations.size
+            val rankedPlayers = participations.mapIndexed { index, participation ->
+                val userId = participation.userId
+                val user = usersMap[userId] ?: createUnknownUser(userId)
+                val position = index + 1
+
+                RankedPlayer(
+                    position = position,
+                    user = user,
+                    participation = participation,
+                    division = division,
+                    isCurrentUser = userId == currentUserId,
+                    positionChange = 0,
+                    isPromotionZone = position <= getPromotionCutoff(division),
+                    isRelegationZone = position > totalPlayers - getRelegationCutoff(division)
+                )
+            }
+
+            // 5. Encontrar posição do usuário atual
+            val currentUserPosition = rankedPlayers.firstOrNull { it.isCurrentUser }?.position
+
+            val standings = DivisionStandings(
+                division = division,
+                season = season,
+                players = rankedPlayers,
+                promotionCutoff = getPromotionCutoff(division),
+                relegationCutoff = getRelegationCutoff(division),
+                currentUserPosition = currentUserPosition
+            )
+
+            AppLogger.d(TAG) { "Classificação carregada: ${rankedPlayers.size} jogadores" }
+
+            Result.success(standings)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar classificação", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Busca visão geral da liga completa.
+     *
+     * @return Result com visão geral
+     */
+    suspend fun getLeagueOverview(): Result<LeagueOverview> {
+        AppLogger.d(TAG) { "Buscando visão geral da liga" }
+
+        return try {
+            // 1. Buscar temporada ativa
+            val seasonResult = gamificationRepository.getActiveSeason()
+            if (seasonResult.isFailure) {
+                return Result.failure(seasonResult.exceptionOrNull()!!)
+            }
+            val season = seasonResult.getOrNull()!!
+
+            // 2. Buscar classificação de cada divisão
+            val divisions = mutableListOf<DivisionStandings>()
+            var currentUserDivision: LeagueDivision? = null
+            var currentUserPosition: Int? = null
+
+            for (division in LeagueDivision.values()) {
+                val standingsResult = getDivisionStandings(division, 20)
+                if (standingsResult.isSuccess) {
+                    val standings = standingsResult.getOrNull()!!
+                    divisions.add(standings)
+
+                    // Verificar se usuário está nesta divisão
+                    standings.currentUserPosition?.let { pos ->
+                        currentUserDivision = division
+                        currentUserPosition = pos
+                    }
+                }
+            }
+
+            // 3. Calcular dias restantes
+            val daysRemaining = calculateDaysRemaining(season)
+
+            val overview = LeagueOverview(
+                season = season,
+                divisions = divisions.sortedByDescending { it.division.ordinal },
+                currentUserDivision = currentUserDivision,
+                currentUserPosition = currentUserPosition,
+                daysRemaining = daysRemaining
+            )
+
+            Result.success(overview)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar visão geral", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Busca participação do usuário atual.
+     *
+     * @return Result com dados de participação
+     */
+    suspend fun getCurrentUserParticipation(): Result<RankedPlayer?> {
+        val currentUserId = auth.currentUser?.uid
+            ?: return Result.failure(IllegalStateException("Usuário não autenticado"))
+
+        AppLogger.d(TAG) { "Buscando participação do usuário: $currentUserId" }
+
+        return try {
+            // 1. Buscar temporada ativa
+            val seasonResult = gamificationRepository.getActiveSeason()
+            if (seasonResult.isFailure) {
+                return Result.failure(seasonResult.exceptionOrNull()!!)
+            }
+            val season = seasonResult.getOrNull()!!
+
+            // 2. Buscar participação
+            val participationResult = gamificationRepository.getUserParticipation(currentUserId, season.id)
+            if (participationResult.isFailure) {
+                return Result.success(null) // Usuário não está participando
+            }
+            val participation = participationResult.getOrNull()!!
+
+            // 3. Buscar dados do usuário
+            val userResult = userRepository.getCurrentUser()
+            val user = userResult.getOrNull() ?: createUnknownUser(currentUserId)
+
+            // 4. Buscar posição na divisão
+            val division = participation.division
+            val standingsResult = getDivisionStandings(division, 100)
+            val position = standingsResult.getOrNull()?.currentUserPosition ?: 0
+
+            val rankedPlayer = RankedPlayer(
+                position = position,
+                user = user,
+                participation = participation,
+                division = division,
+                isCurrentUser = true,
+                positionChange = 0,
+                isPromotionZone = position <= getPromotionCutoff(division),
+                isRelegationZone = false
+            )
+
+            Result.success(rankedPlayer)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar participação", e)
+            Result.failure(e)
+        }
+    }
+
+    private fun getPromotionCutoff(division: LeagueDivision): Int {
+        return when (division) {
+            LeagueDivision.BRONZE -> 3
+            LeagueDivision.PRATA -> 3
+            LeagueDivision.OURO -> 3
+            LeagueDivision.DIAMANTE -> 0
+        }
+    }
+
+    private fun getRelegationCutoff(division: LeagueDivision): Int {
+        return when (division) {
+            LeagueDivision.BRONZE -> 0
+            LeagueDivision.PRATA -> 3
+            LeagueDivision.OURO -> 3
+            LeagueDivision.DIAMANTE -> 3
+        }
+    }
+
+    private fun calculateDaysRemaining(season: Season): Int {
+        return try {
+            val endDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                .parse(season.endDate)
+            if (endDate != null) {
+                val diff = endDate.time - System.currentTimeMillis()
+                (diff / (1000 * 60 * 60 * 24)).toInt().coerceAtLeast(0)
+            } else {
+                0
+            }
+        } catch (e: Exception) {
+            0
+        }
+    }
+
+    private fun createUnknownUser(userId: String) = User(
+        id = userId,
+        name = "Jogador",
+        email = ""
+    )
+}

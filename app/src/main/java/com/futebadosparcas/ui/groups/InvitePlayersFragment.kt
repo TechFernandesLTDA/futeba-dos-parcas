@@ -75,6 +75,7 @@ class InvitePlayersFragment : Fragment() {
         binding.rvUsers.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = this@InvitePlayersFragment.adapter
+            setHasFixedSize(true)
         }
     }
 

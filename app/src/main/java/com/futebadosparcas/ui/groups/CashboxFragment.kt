@@ -98,6 +98,7 @@ class CashboxFragment : Fragment() {
         binding.rvHistory.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = this@CashboxFragment.adapter
+            setHasFixedSize(true)
         }
     }
 

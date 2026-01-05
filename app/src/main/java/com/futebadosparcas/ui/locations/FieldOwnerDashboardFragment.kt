@@ -49,6 +49,7 @@ class FieldOwnerDashboardFragment : Fragment() {
         binding.rvLocations.apply {
             layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
             adapter = this@FieldOwnerDashboardFragment.adapter
+            setHasFixedSize(true)
         }
     }
 

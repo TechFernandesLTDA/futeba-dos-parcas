@@ -104,6 +104,7 @@ class ManageLocationsFragment : Fragment() {
         binding.rvLocations.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@ManageLocationsFragment.adapter
+            setHasFixedSize(true)
         }
     }
 

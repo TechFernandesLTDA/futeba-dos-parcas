@@ -46,7 +46,10 @@ class LiveStatsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        binding.rvLiveStats.adapter = adapter
+        binding.rvLiveStats.apply {
+            adapter = this@LiveStatsFragment.adapter
+            setHasFixedSize(true)
+        }
     }
 
     private fun observeViewModel() {

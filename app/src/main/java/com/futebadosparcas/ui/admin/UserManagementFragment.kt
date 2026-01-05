@@ -47,6 +47,7 @@ class UserManagementFragment : Fragment() {
         binding.rvUsers.apply {
             layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
             adapter = this@UserManagementFragment.adapter
+            setHasFixedSize(true)
         }
     }
 

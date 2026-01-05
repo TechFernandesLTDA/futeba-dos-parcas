@@ -51,22 +51,25 @@ class MainActivity : AppCompatActivity() {
     lateinit var notificationRepository: com.futebadosparcas.data.repository.NotificationRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // IMPORTANTE: Habilita edge-to-edge ANTES de super.onCreate()
+        // para garantir que o tema seja aplicado corretamente
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         super.onCreate(savedInstanceState)
-        
+
         // Hilt Dependency Injection happens in super.onCreate()
         // So we must access repository AFTER it, but BEFORE setContentView to apply theme
         applyDynamicTheme()
-        
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Habilita o modo edge-to-edge
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Configura system bars (status e navigation)
+        applySystemBars()
 
         // Adiciona padding para evitar sobreposição com as barras do sistema
         setupWindowInsets()
 
-        applySystemBars()
         setupNavigation()
         observeGamificationEvents()
         observePostGameEvents()
@@ -318,12 +321,27 @@ class MainActivity : AppCompatActivity() {
         }
         val colorScheme = DynamicThemeEngine.generateColorScheme(themeConfig, isDark)
 
-        window.statusBarColor = colorScheme.surface.toArgb()
-        window.navigationBarColor = colorScheme.surfaceVariant.toArgb()
+        // Edge-to-Edge: Barras transparentes para permitir conteúdo embaixo
+        // Usamos cor de fundo com transparência para efeito premium
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isNavigationBarContrastEnforced = false
+            window.isStatusBarContrastEnforced = false
         }
 
+        // Status bar transparente para edge-to-edge completo
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+
+        // Navigation bar com leve transparência para efeito moderno
+        val navBarColor = if (isDark) {
+            // Dark: Semi-transparente sobre preto
+            android.graphics.Color.argb(230, 15, 17, 20)
+        } else {
+            // Light: Semi-transparente sobre branco
+            android.graphics.Color.argb(245, 255, 255, 255)
+        }
+        window.navigationBarColor = navBarColor
+
+        // Configura ícones das barras do sistema
         val insetsController = WindowCompat.getInsetsController(window, binding.root)
         insetsController.isAppearanceLightStatusBars = !isDark
         insetsController.isAppearanceLightNavigationBars = !isDark
