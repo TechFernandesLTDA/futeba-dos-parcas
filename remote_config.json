@@ -1,0 +1,10 @@
+{
+    "parameters": {
+        "level_table": {
+            "defaultValue": {
+                "value": "[{\"level\":0,\"xpRequired\":0,\"name\":\"Novato\"},{\"level\":1,\"xpRequired\":100,\"name\":\"Iniciante\"},{\"level\":2,\"xpRequired\":350,\"name\":\"Amador\"},{\"level\":3,\"xpRequired\":850,\"name\":\"Regular\"},{\"level\":4,\"xpRequired\":1850,\"name\":\"Experiente\"},{\"level\":5,\"xpRequired\":3850,\"name\":\"Habilidoso\"},{\"level\":6,\"xpRequired\":7350,\"name\":\"Profissional\"},{\"level\":7,\"xpRequired\":12850,\"name\":\"Expert\"},{\"level\":8,\"xpRequired\":20850,\"name\":\"Mestre\"},{\"level\":9,\"xpRequired\":32850,\"name\":\"Lenda\"},{\"level\":10,\"xpRequired\":52850,\"name\":\"Imortal\"}]"
+            },
+            "valueType": "STRING"
+        }
+    }
+}

@@ -1,6 +1,7 @@
 # Agent Rules - Regras para AI Agents (Gemini, Claude, etc.)
 
 ## 🎯 Propósito
+
 Este arquivo define regras universais para qualquer AI agent trabalhando neste projeto.
 
 ## 🔥 ACESSO AO FIREBASE
@@ -495,115 +496,78 @@ evitar:
   - "Nested RecyclerViews"
 ```
 
-## 🤖 Especificações dos Modelos AI
+## 🧠 Orquestração de Super-Modelos (Antigravity Hub - "The A-Team")
 
-Este projeto suporta múltiplos modelos AI. Escolha o modelo correto para cada tarefa.
+O agente principal (Gemini 3/Antigravity) atua como **LÍDER E ORQUESTRADOR**.
+Você deve delegar tarefas especializadas para os workers corretos usando `run_command`:
 
-### Claude (Anthropic)
+### 1. 🎨 Especialista em UI/UX & Refino Visual
 
-```yaml
-opus-4.5:
-  arquivo: "OPUS.md"
-  contexto: "200K tokens"
-  velocidade: "Lenta"
-  custo: "Muito alto ($$$$$)"
-  uso: "Decisões arquiteturais críticas, security audits, design de sistemas"
-  quando_usar:
-    - "Decisão afeta arquitetura do app"
-    - "Trade-offs complexos (múltiplas soluções válidas)"
-    - "Security audit crítico"
-    - "Refatoração arquitetural (>500 linhas)"
-    - "ADRs (Architecture Decision Records)"
-  quando_NÃO_usar:
-    - "Implementação de código"
-    - "Correções triviais"
-    - "Tasks bem definidas"
+- **Modelos**: Claude Code (Sonnet 4.5 / Opus)
+- **Comando**: `claude -p "instrução"` (Modo Direto)
+- **Quando usar**:
+  - Criação e correção de Layouts XML (XML Perfect)
+  - Sugestões de Design System e Cores
+  - Micro-interações e Animações
+  - Bugs específicos de Android View system
 
-sonnet-4.5:
-  arquivo: "CLAUDE.md"
-  contexto: "200K tokens"
-  velocidade: "Rápida"
-  custo: "Médio ($$) - 20% do Opus"
-  uso: "Desenvolvimento diário, implementação de features, debugging"
-  quando_usar:
-    - "Implementar ViewModels, Repositories, Fragments"
-    - "Debugging de bugs conhecidos"
-    - "Code reviews (<500 linhas)"
-    - "Refatorações locais (<300 linhas)"
-    - "Testes unitários"
-  quando_NÃO_usar:
-    - "Decisões arquiteturais (use Opus)"
-    - "Tarefas triviais (use Gemini Flash)"
-    - "Análise visual (use Gemini Pro)"
-```
+### 2. 🏗️ Heavy Lifter (Codificação Pesada)
 
-### Gemini (Google)
+- **Modelo**: **Qwen3-Coder (480b Cloud)**
+- **Comando**: `ollama run qwen3-coder:480b-cloud "instrução"`
+- **Quando usar**:
+  - Refatoração massiva de código
+  - Criação de módulos inteiros (Controller + Service + Repo)
+  - Escrita de testes unitários extensivos
 
-```yaml
-gemini-3-pro-high:
-  arquivo: "GEMINI.md"
-  contexto: "10M tokens"
-  velocidade: "Lenta"
-  custo: "Alto ($$$$)"
-  uso: "Análise profunda, multimodal, code execution"
-  quando_usar:
-    - "Refatoração arquitetural complexa"
-    - "Análise de segurança detalhada"
-    - "Design de features novas e complexas"
-    - "Code review profundo (>500 linhas)"
-    - "Deep research mode"
-  capacidades_únicas:
-    - "Multimodal (screenshots, diagramas)"
-    - "Code execution (Python)"
-    - "Contexto 10M tokens"
+### 3. 🧠 Estratégia & Raciocínio Profundo
 
-gemini-3-pro:
-  arquivo: "GEMINI.md"
-  contexto: "2M tokens"
-  velocidade: "Média"
-  custo: "Médio ($$$)"
-  uso: "Desenvolvimento geral, análise visual"
-  quando_usar:
-    - "Implementação de features"
-    - "Debugging com screenshots"
-    - "Análise visual de UI"
-    - "Validação de diagramas"
-    - "Análise de dados via Python"
-  capacidades_únicas:
-    - "Multimodal (screenshots, diagramas)"
-    - "Code execution (Python)"
+- **Modelo**: **DeepSeek V3.1 (671b Cloud)**
+- **Comando**: `ollama run deepseek-v3.1:671b-cloud "instrução"`
+- **Quando usar**:
+  - Definição de Arquitetura e Design Patterns
+  - Lógica de algoritmos complexos (ex: Team Balancing)
+  - Debugging de Race Conditions ou vazamento de memória
 
-gemini-3-flash:
-  arquivo: "GEMINI.md"
-  contexto: "1M tokens"
-  velocidade: "Muito rápida"
-  custo: "Baixo ($)"
-  uso: "Tarefas rápidas e simples"
-  quando_usar:
-    - "Correções simples (<10 linhas)"
-    - "Consultas rápidas de código"
-    - "Renomeação de variáveis"
-    - "Ajustes de UI (cores, padding)"
-  quando_NÃO_usar:
-    - "Decisões arquiteturais"
-    - "Código complexo"
-    - "Refatorações"
-```
+### 4. 📚 Contexto Infinito & Análise
 
-### Guia de Seleção Rápida
+- **Modelo**: **GLM-4.7 (198K Context)**
+- **Comando**: `ollama run glm-4.7:cloud "instrução"`
+- **Quando usar**:
+  - Leitura de múltiplos arquivos gigantes
+  - Entender todo o histórico do projeto
+  - Gerar documentação abrangente baseada em todo o codebase
 
-```yaml
-decisão_arquitetural: "Opus 4.5"
-design_sistema_complexo: "Opus 4.5 ou Gemini 3 Pro High"
-security_audit: "Opus 4.5"
-implementar_feature: "Sonnet 4.5"
-debugging: "Sonnet 4.5"
-code_review_pequeno: "Sonnet 4.5"
-code_review_grande: "Opus 4.5"
-análise_visual: "Gemini 3 Pro"
-correção_simples: "Gemini 3 Flash"
-consulta_rápida: "Gemini 3 Flash"
-```
+### 5. 🔥 Backend Ops & Data God
+
+- **Ferramentas**: Firebase CLI & Admin SDK (Integrado no Agente)
+- **Quando usar**:
+  - Manipulação direta de Firestore (criação de seeds, resets)
+  - Deploy de Cloud Functions, Rules e Indexes
+  - Gestão de Auth e Usuários
+
+---
+
+### Guia de Decisão Rápida
+
+| Tarefa | Delegar Para |
+| :--- | :--- |
+| "Melhorar a tela X" | **Claude** |
+| "Refatorar RepositoryImpl" | **Qwen3-Coder** |
+| "Planejar Feature de Torneio" | **DeepSeek V3.1** |
+| "Resumir o projeto todo" | **GLM-4.7** |
+| "Criar usuário Admin" | **Firebase Admin** |
+
+### 🖥️ Integração com Claude CLI (Modo Direto)
+
+**Instrução Especial:** Para tarefas de **UI/UX, Design de Interface e Layouts XML**, priorize o uso da ferramenta `claude` no terminal (Modo Direto).
+
+1. **Comando**: Utilize `run_command` com `claude -p "Sua instrução detalhada aqui"`
+2. **Por que?**: O Claude possui calibração superior para design visual e geração de layouts XML sem erros.
+3. **Fluxo**:
+   - Analise o pedido do usuário.
+   - Se for UI/Design -> Execute `claude -p "..."`.
+   - Leia a resposta e aplique ao projeto (ou apresente ao usuário).
 
 ### Workflow Recomendado
 
