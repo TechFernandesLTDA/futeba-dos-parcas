@@ -4,21 +4,22 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
-import com.futebadosparcas.databinding.FragmentLiveStatsBinding
+import com.futebadosparcas.ui.theme.FutebaTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 
+/**
+ * LiveStatsFragment - Exibe estatísticas ao vivo dos jogadores
+ *
+ * Migrado para Jetpack Compose com LiveStatsScreen.kt
+ */
 @AndroidEntryPoint
 class LiveStatsFragment : Fragment() {
 
-    private var _binding: FragmentLiveStatsBinding? = null
-    private val binding get() = _binding!!
     private val viewModel: LiveStatsViewModel by viewModels()
-    private val adapter = LiveStatsAdapter()
-
     private var gameId: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,38 +32,21 @@ class LiveStatsFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentLiveStatsBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+        return ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupRecyclerView()
-        observeViewModel()
-
-        if (gameId.isNotEmpty()) {
-            viewModel.observeStats(gameId)
-        }
-    }
-
-    private fun setupRecyclerView() {
-        binding.rvLiveStats.apply {
-            adapter = this@LiveStatsFragment.adapter
-            setHasFixedSize(true)
-        }
-    }
-
-    private fun observeViewModel() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.stats.collect { stats ->
-                adapter.submitList(stats)
+            setContent {
+                FutebaTheme {
+                    LiveStatsScreen(
+                        viewModel = viewModel,
+                        gameId = gameId,
+                        onPlayerClick = { playerId ->
+                            // Handle player click if needed
+                        }
+                    )
+                }
             }
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 
     companion object {
