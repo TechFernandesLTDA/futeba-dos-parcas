@@ -20,7 +20,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Location
-import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.ui.components.dialogs.ConfirmationDialog
+import com.futebadosparcas.ui.components.dialogs.ConfirmationDialogType
+import com.futebadosparcas.ui.components.dialogs.DeleteConfirmationDialog
+import com.futebadosparcas.ui.components.states.ErrorState
+import com.futebadosparcas.ui.components.states.LoadingState
+import com.futebadosparcas.ui.components.states.LoadingItemType
 
 /**
  * ManageLocationsScreen - Gerencia locais (campos de futebol)
@@ -148,7 +153,10 @@ fun ManageLocationsScreen(
                 // Conteúdo
                 when (uiState) {
                     is ManageLocationsUiState.Loading -> {
-                        ManageLocationsLoadingState()
+                        LoadingState(
+                            shimmerCount = 6,
+                            itemType = LoadingItemType.LIST_ITEM
+                        )
                     }
                     is ManageLocationsUiState.Success -> {
                         val state = uiState as ManageLocationsUiState.Success
@@ -179,7 +187,7 @@ fun ManageLocationsScreen(
                     }
                     is ManageLocationsUiState.Error -> {
                         val state = uiState as ManageLocationsUiState.Error
-                        ManageLocationsErrorState(
+                        ErrorState(
                             message = state.message,
                             onRetry = { viewModel.loadAllLocations() }
                         )
@@ -460,28 +468,6 @@ private fun FieldRow(
 }
 
 /**
- * Estado de loading
- */
-@Composable
-private fun ManageLocationsLoadingState() {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(5) {
-            ShimmerBox(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp)
-            )
-        }
-    }
-}
-
-/**
  * Estado vazio
  */
 @Composable
@@ -529,80 +515,24 @@ private fun ManageLocationsEmptyState(
     }
 }
 
-/**
- * Estado de erro
- */
-@Composable
-private fun ManageLocationsErrorState(
-    message: String,
-    onRetry: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = Icons.Default.ErrorOutline,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = stringResource(R.string.error),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.error
-        )
-
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(vertical = 16.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
-
-        Button(onClick = onRetry) {
-            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.retry))
-        }
-    }
-}
-
 // Diálogos de Confirmação
 
+// Dialogs using shared components
 @Composable
 private fun DeleteLocationDialog(
     locationName: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Deletar Local") },
-        text = { Text("Tem certeza que deseja deletar \"$locationName\" e todos seus campos?") },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text("Deletar")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
-            }
-        }
+    ConfirmationDialog(
+        visible = true,
+        title = "Deletar Local",
+        message = "Tem certeza que deseja deletar \"$locationName\" e todos seus campos?",
+        confirmText = "Deletar",
+        type = ConfirmationDialogType.DESTRUCTIVE,
+        icon = Icons.Default.Delete,
+        onConfirm = onConfirm,
+        onDismiss = onDismiss
     )
 }
 
@@ -612,25 +542,15 @@ private fun DeleteFieldDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Deletar Campo") },
-        text = { Text("Tem certeza que deseja deletar \"$fieldName\"?") },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text("Deletar")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
-            }
-        }
+    ConfirmationDialog(
+        visible = true,
+        title = "Deletar Campo",
+        message = "Tem certeza que deseja deletar \"$fieldName\"?",
+        confirmText = "Deletar",
+        type = ConfirmationDialogType.DESTRUCTIVE,
+        icon = Icons.Default.Delete,
+        onConfirm = onConfirm,
+        onDismiss = onDismiss
     )
 }
 
@@ -639,20 +559,15 @@ private fun SeedDatabaseDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Popular Banco de Dados") },
-        text = { Text("Deseja importar/atualizar os 52 locais padrão? Isso pode levar alguns segundos.") },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text("Sim")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
-            }
-        }
+    ConfirmationDialog(
+        visible = true,
+        title = "Popular Banco de Dados",
+        message = "Deseja importar/atualizar os 52 locais padrão? Isso pode levar alguns segundos.",
+        confirmText = "Sim",
+        type = ConfirmationDialogType.NORMAL,
+        icon = Icons.Default.CloudDownload,
+        onConfirm = onConfirm,
+        onDismiss = onDismiss
     )
 }
 
@@ -661,20 +576,15 @@ private fun DeduplicateDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Remover Duplicatas") },
-        text = { Text("Deseja analisar e remover locais duplicados? Será mantido o registro com dados mais completos.") },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text("Sim")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
-            }
-        }
+    ConfirmationDialog(
+        visible = true,
+        title = "Remover Duplicatas",
+        message = "Deseja analisar e remover locais duplicados? Será mantido o registro com dados mais completos.",
+        confirmText = "Sim",
+        type = ConfirmationDialogType.WARNING,
+        icon = Icons.Default.CleaningServices,
+        onConfirm = onConfirm,
+        onDismiss = onDismiss
     )
 }
 

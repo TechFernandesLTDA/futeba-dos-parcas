@@ -1,7 +1,6 @@
 package com.futebadosparcas.ui.groups
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -26,7 +24,12 @@ import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
-import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.ui.components.cards.GroupMemberCard
+import com.futebadosparcas.ui.components.cards.UserCardMenuItem
+import com.futebadosparcas.ui.components.dialogs.*
+import com.futebadosparcas.ui.components.states.ErrorState
+import com.futebadosparcas.ui.components.states.LoadingState
+import com.futebadosparcas.ui.components.states.LoadingItemType
 
 /**
  * GroupDetailScreen - Exibe detalhes de um grupo
@@ -87,80 +90,38 @@ fun GroupDetailScreen(
         }
     }
 
-    // Confirmation Dialogs
+    // Confirmation Dialogs using shared components
     val group = (uiState as? GroupDetailUiState.Success)?.group
 
-    if (showLeaveDialog && group != null) {
-        AlertDialog(
-            onDismissRequest = { showLeaveDialog = false },
-            title = { Text("Sair do Grupo") },
-            text = { Text("Tem certeza que deseja sair do grupo \"${group.name}\"?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showLeaveDialog = false
-                        viewModel.leaveGroup()
-                    }
-                ) {
-                    Text("Sair")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLeaveDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
+    LeaveGroupDialog(
+        visible = showLeaveDialog && group != null,
+        groupName = group?.name ?: "",
+        onConfirm = {
+            showLeaveDialog = false
+            viewModel.leaveGroup()
+        },
+        onDismiss = { showLeaveDialog = false }
+    )
 
-    if (showArchiveDialog && group != null) {
-        AlertDialog(
-            onDismissRequest = { showArchiveDialog = false },
-            title = { Text("Arquivar Grupo") },
-            text = { Text("Tem certeza que deseja arquivar o grupo \"${group.name}\"?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showArchiveDialog = false
-                        viewModel.archiveGroup()
-                    }
-                ) {
-                    Text("Arquivar")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showArchiveDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
+    ArchiveGroupDialog(
+        visible = showArchiveDialog && group != null,
+        groupName = group?.name ?: "",
+        onConfirm = {
+            showArchiveDialog = false
+            viewModel.archiveGroup()
+        },
+        onDismiss = { showArchiveDialog = false }
+    )
 
-    if (showDeleteDialog && group != null) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Excluir Grupo") },
-            text = { Text("Tem certeza que deseja excluir permanentemente o grupo \"${group.name}\"? Esta ação não pode ser desfeita.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        viewModel.deleteGroup()
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("Excluir")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
+    DeleteGroupDialog(
+        visible = showDeleteDialog && group != null,
+        groupName = group?.name ?: "",
+        onConfirm = {
+            showDeleteDialog = false
+            viewModel.deleteGroup()
+        },
+        onDismiss = { showDeleteDialog = false }
+    )
 
     Scaffold(
         topBar = {
@@ -196,7 +157,10 @@ fun GroupDetailScreen(
                 .background(MaterialTheme.colorScheme.background)
         ) {
             when (val state = uiState) {
-                is GroupDetailUiState.Loading -> GroupDetailLoadingState()
+                is GroupDetailUiState.Loading -> LoadingState(
+                    shimmerCount = 6,
+                    itemType = LoadingItemType.LIST_ITEM
+                )
                 is GroupDetailUiState.Success -> GroupDetailContent(
                     group = state.group,
                     members = state.members,
@@ -210,7 +174,7 @@ fun GroupDetailScreen(
                     onDemoteMember = { viewModel.demoteMember(it) },
                     onRemoveMember = { viewModel.removeMember(it) }
                 )
-                is GroupDetailUiState.Error -> GroupDetailErrorState(
+                is GroupDetailUiState.Error -> ErrorState(
                     message = state.message,
                     onRetry = { viewModel.loadGroup(groupId) }
                 )
@@ -646,7 +610,7 @@ private fun GroupActionButtons(
 }
 
 /**
- * Card de membro do grupo
+ * Card de membro do grupo usando componente compartilhado
  */
 @Composable
 private fun GroupMemberCard(
@@ -657,295 +621,78 @@ private fun GroupMemberCard(
     onDemoteClick: () -> Unit,
     onRemoveClick: () -> Unit
 ) {
-    var showMemberMenu by remember { mutableStateOf(false) }
     var showPromoteDialog by remember { mutableStateOf(false) }
     var showDemoteDialog by remember { mutableStateOf(false) }
     var showRemoveDialog by remember { mutableStateOf(false) }
 
     val memberRole = member.getRoleEnum()
-
-    // Determina se o usuário atual pode gerenciar este membro
     val canManage = when (myRole) {
         GroupMemberRole.OWNER -> memberRole != GroupMemberRole.OWNER
         GroupMemberRole.ADMIN -> memberRole == GroupMemberRole.MEMBER
         else -> false
     }
 
-    // Confirmation dialogs for member actions
-    if (showPromoteDialog) {
-        AlertDialog(
-            onDismissRequest = { showPromoteDialog = false },
-            title = { Text("Promover Membro") },
-            text = { Text("Tem certeza que deseja promover ${member.getDisplayName()} a administrador?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showPromoteDialog = false
-                        onPromoteClick()
-                    }
-                ) {
-                    Text("Promover")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showPromoteDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
+    // Confirmation dialogs
+    PromoteMemberDialog(
+        visible = showPromoteDialog,
+        memberName = member.getDisplayName(),
+        onConfirm = {
+            showPromoteDialog = false
+            onPromoteClick()
+        },
+        onDismiss = { showPromoteDialog = false }
+    )
 
-    if (showDemoteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDemoteDialog = false },
-            title = { Text("Rebaixar Membro") },
-            text = { Text("Tem certeza que deseja rebaixar ${member.getDisplayName()} para membro comum?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDemoteDialog = false
-                        onDemoteClick()
-                    }
-                ) {
-                    Text("Rebaixar")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDemoteDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
+    DemoteMemberDialog(
+        visible = showDemoteDialog,
+        memberName = member.getDisplayName(),
+        onConfirm = {
+            showDemoteDialog = false
+            onDemoteClick()
+        },
+        onDismiss = { showDemoteDialog = false }
+    )
 
-    if (showRemoveDialog) {
-        AlertDialog(
-            onDismissRequest = { showRemoveDialog = false },
-            title = { Text("Remover Membro") },
-            text = { Text("Tem certeza que deseja remover ${member.getDisplayName()} do grupo?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showRemoveDialog = false
-                        onRemoveClick()
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("Remover")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showRemoveDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
-        )
-    }
+    RemoveMemberDialog(
+        visible = showRemoveDialog,
+        memberName = member.getDisplayName(),
+        onConfirm = {
+            showRemoveDialog = false
+            onRemoveClick()
+        },
+        onDismiss = { showRemoveDialog = false }
+    )
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onMemberClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Foto do membro
-            AsyncImage(
-                model = member.userPhoto?.ifEmpty { null } ?: R.drawable.ic_person,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                contentScale = ContentScale.Crop
-            )
-
-            // Nome e role
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = member.getDisplayName(),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Text(
-                    text = when (memberRole) {
-                        GroupMemberRole.OWNER -> "Dono"
-                        GroupMemberRole.ADMIN -> "Admin"
-                        GroupMemberRole.MEMBER -> "Membro"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            // Botão de mais opções (se pode gerenciar)
-            if (canManage) {
-                Box {
-                    IconButton(onClick = { showMemberMenu = true }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = stringResource(R.string.more_options)
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded = showMemberMenu,
-                        onDismissRequest = { showMemberMenu = false }
-                    ) {
-                        // Owner pode promover/rebaixar e remover
-                        if (myRole == GroupMemberRole.OWNER) {
-                            when (memberRole) {
-                                GroupMemberRole.ADMIN -> {
-                                    DropdownMenuItem(
-                                        text = { Text("Rebaixar para Membro") },
-                                        onClick = {
-                                            showMemberMenu = false
-                                            showDemoteDialog = true
-                                        }
-                                    )
-                                }
-                                GroupMemberRole.MEMBER -> {
-                                    DropdownMenuItem(
-                                        text = { Text("Promover a Admin") },
-                                        onClick = {
-                                            showMemberMenu = false
-                                            showPromoteDialog = true
-                                        }
-                                    )
-                                }
-                                else -> {}
-                            }
-                            DropdownMenuItem(
-                                text = { Text("Remover do Grupo") },
-                                onClick = {
-                                    showMemberMenu = false
-                                    showRemoveDialog = true
-                                },
-                                colors = MenuDefaults.itemColors(
-                                    textColor = MaterialTheme.colorScheme.error
-                                )
-                            )
-                        }
-
-                        // Admin só pode remover membros
-                        if (myRole == GroupMemberRole.ADMIN && memberRole == GroupMemberRole.MEMBER) {
-                            DropdownMenuItem(
-                                text = { Text("Remover do Grupo") },
-                                onClick = {
-                                    showMemberMenu = false
-                                    showRemoveDialog = true
-                                },
-                                colors = MenuDefaults.itemColors(
-                                    textColor = MaterialTheme.colorScheme.error
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
+    // Using shared GroupMemberCard component
+    GroupMemberCard(
+        photoUrl = member.userPhoto,
+        name = member.getDisplayName(),
+        role = when (memberRole) {
+            GroupMemberRole.OWNER -> "Dono"
+            GroupMemberRole.ADMIN -> "Admin"
+            GroupMemberRole.MEMBER -> "Membro"
+        },
+        roleIcon = when (memberRole) {
+            GroupMemberRole.OWNER -> Icons.Default.Star
+            GroupMemberRole.ADMIN -> Icons.Default.Shield
+            GroupMemberRole.MEMBER -> Icons.Default.Person
+        },
+        roleColor = when (memberRole) {
+            GroupMemberRole.OWNER -> MaterialTheme.colorScheme.tertiary
+            GroupMemberRole.ADMIN -> MaterialTheme.colorScheme.primary
+            GroupMemberRole.MEMBER -> MaterialTheme.colorScheme.secondary
+        },
+        onClick = onMemberClick,
+        canManage = canManage,
+        onPromote = if (myRole == GroupMemberRole.OWNER && memberRole == GroupMemberRole.MEMBER) {
+            { showPromoteDialog = true }
+        } else null,
+        onDemote = if (myRole == GroupMemberRole.OWNER && memberRole == GroupMemberRole.ADMIN) {
+            { showDemoteDialog = true }
+        } else null,
+        onRemove = if (canManage) {
+            { showRemoveDialog = true }
+        } else null
+    )
 }
 
-/**
- * Estado de loading com shimmer
- */
-@Composable
-private fun GroupDetailLoadingState() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Header shimmer
-        ShimmerBox(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-        )
-
-        // Action buttons shimmer
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            repeat(3) {
-                ShimmerBox(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(40.dp)
-                )
-            }
-        }
-
-        // Members list shimmer
-        repeat(5) {
-            ShimmerBox(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(72.dp)
-            )
-        }
-    }
-}
-
-/**
- * Estado de erro
- */
-@Composable
-private fun GroupDetailErrorState(
-    message: String,
-    onRetry: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = Icons.Default.Error,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = stringResource(R.string.error),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(onClick = onRetry) {
-            Text(stringResource(R.string.retry))
-        }
-    }
-}
