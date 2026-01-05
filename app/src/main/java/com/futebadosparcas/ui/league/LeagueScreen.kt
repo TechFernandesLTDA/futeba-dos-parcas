@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.league
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -38,8 +39,11 @@ import com.futebadosparcas.ui.components.FutebaTopBar
 fun LeagueScreen(
     uiState: LeagueUiState,
     unreadCount: Int,
+    availableSeasons: List<Season>,
+    selectedSeason: Season?,
     onBack: () -> Unit,
     onDivisionSelected: (LeagueDivision) -> Unit,
+    onSeasonSelected: (Season) -> Unit,
     onRefresh: () -> Unit,
     onNavigateNotifications: () -> Unit,
     onNavigateGroups: () -> Unit,
@@ -92,7 +96,10 @@ fun LeagueScreen(
                     is LeagueUiState.Success -> {
                         LeagueContent(
                             state = uiState,
-                            onDivisionSelected = onDivisionSelected
+                            availableSeasons = availableSeasons,
+                            selectedSeason = selectedSeason,
+                            onDivisionSelected = onDivisionSelected,
+                            onSeasonSelected = onSeasonSelected
                         )
                     }
                 }
@@ -105,7 +112,10 @@ fun LeagueScreen(
 @Composable
 fun LeagueContent(
     state: LeagueUiState.Success,
-    onDivisionSelected: (LeagueDivision) -> Unit
+    availableSeasons: List<Season>,
+    selectedSeason: Season?,
+    onDivisionSelected: (LeagueDivision) -> Unit,
+    onSeasonSelected: (Season) -> Unit
 ) {
     val filteredRanking = remember(state.allRankings, state.selectedDivision) {
         state.allRankings.filter { it.participation.division == state.selectedDivision }
@@ -118,8 +128,11 @@ fun LeagueContent(
         item {
             LeagueHeader(
                 season = state.season,
+                availableSeasons = availableSeasons,
+                selectedSeason = selectedSeason,
                 myParticipation = state.myParticipation,
-                myPosition = state.myPosition
+                myPosition = state.myPosition,
+                onSeasonSelected = onSeasonSelected
             )
         }
 
@@ -190,14 +203,19 @@ fun LeagueContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeagueHeader(
     season: Season,
+    availableSeasons: List<Season>,
+    selectedSeason: Season?,
     myParticipation: SeasonParticipationV2?,
-    myPosition: Int?
+    myPosition: Int?,
+    onSeasonSelected: (Season) -> Unit
 ) {
+    var expanded by remember { mutableStateOf(false) }
     val divisionColor = getDivisionColor(myParticipation?.division ?: LeagueDivision.BRONZE)
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -211,12 +229,59 @@ fun LeagueHeader(
                 .padding(24.dp)
         ) {
             Column {
-                Text(
-                    text = season.name,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
+                // Seletor de Season
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = season.name,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Período") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth(),
+                        textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        availableSeasons.forEach { s ->
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(
+                                            text = s.name,
+                                            fontWeight = if (s.id == selectedSeason?.id) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                        if (s.isActive) {
+                                            Text(
+                                                text = "Ativa",
+                                                fontSize = 11.sp,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    onSeasonSelected(s)
+                                    expanded = false
+                                },
+                                leadingIcon = if (s.id == selectedSeason?.id) {
+                                    { Text("✓", color = MaterialTheme.colorScheme.primary) }
+                                } else null
+                            )
+                        }
+                    }
+                }
                 
                 Spacer(modifier = Modifier.height(20.dp))
                 
@@ -348,38 +413,171 @@ fun DivisionSelector(
     selectedDivision: LeagueDivision,
     onDivisionSelected: (LeagueDivision) -> Unit
 ) {
+    var showInfo by remember { mutableStateOf(false) }
+
     val divisions = listOf(
         LeagueDivision.BRONZE,
         LeagueDivision.PRATA,
         LeagueDivision.OURO,
         LeagueDivision.DIAMANTE
     )
-    
-    ScrollableTabRow(
-        selectedTabIndex = divisions.indexOf(selectedDivision),
-        containerColor = Color.Transparent,
-        contentColor = MaterialTheme.colorScheme.primary,
-        edgePadding = 16.dp,
-        divider = {},
-        indicator = { tabPositions ->
-            TabRowDefaults.SecondaryIndicator(
-                Modifier.tabIndicatorOffset(tabPositions[divisions.indexOf(selectedDivision)]),
-                color = MaterialTheme.colorScheme.primary
+
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Divisões",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            TextButton(onClick = { showInfo = !showInfo }) {
+                Text(
+                    if (showInfo) "Ocultar regras" else "Como funciona?",
+                    fontSize = 12.sp
+                )
+            }
         }
-    ) {
-        divisions.forEach { division ->
-            Tab(
-                selected = selectedDivision == division,
-                onClick = { onDivisionSelected(division) },
-                text = {
+
+        AnimatedVisibility(visible = showInfo) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "${getDivisionEmoji(division)} ${division.name.lowercase().capitalize()}",
-                        fontWeight = if (selectedDivision == division) FontWeight.Bold else FontWeight.Normal
+                        "Sistema de Ligas",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    DivisionInfoItem(
+                        emoji = "💎",
+                        name = "DIAMANTE",
+                        rating = "70-100",
+                        color = Color(0xFF1CB0F6),
+                        description = "Elite do fut"
+                    )
+                    DivisionInfoItem(
+                        emoji = "🥇",
+                        name = "OURO",
+                        rating = "50-69",
+                        color = Color(0xFFFFC800),
+                        description = "Jogadores experientes"
+                    )
+                    DivisionInfoItem(
+                        emoji = "🥈",
+                        name = "PRATA",
+                        rating = "30-49",
+                        color = Color(0xFFC0C0C0),
+                        description = "Em evolução"
+                    )
+                    DivisionInfoItem(
+                        emoji = "🥉",
+                        name = "BRONZE",
+                        rating = "0-29",
+                        color = Color(0xFFCD7F32),
+                        description = "Iniciantes"
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        "Rating calculado baseado em:",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "• XP/jogo (40%)\n• Taxa de vitória (30%)\n• Saldo de gols (20%)\n• MVPs (10%)",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 16.sp
                     )
                 }
+            }
+        }
+
+        ScrollableTabRow(
+            selectedTabIndex = divisions.indexOf(selectedDivision),
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.primary,
+            edgePadding = 16.dp,
+            divider = {},
+            indicator = { tabPositions ->
+                TabRowDefaults.SecondaryIndicator(
+                    Modifier.tabIndicatorOffset(tabPositions[divisions.indexOf(selectedDivision)]),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        ) {
+            divisions.forEach { division ->
+                Tab(
+                    selected = selectedDivision == division,
+                    onClick = { onDivisionSelected(division) },
+                    text = {
+                        Text(
+                            text = "${getDivisionEmoji(division)} ${division.name.lowercase().capitalize()}",
+                            fontWeight = if (selectedDivision == division) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DivisionInfoItem(
+    emoji: String,
+    name: String,
+    rating: String,
+    color: Color,
+    description: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = emoji,
+            fontSize = 16.sp,
+            modifier = Modifier.width(32.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = name,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                color = color
+            )
+            Text(
+                text = description,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+        Text(
+            text = rating,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

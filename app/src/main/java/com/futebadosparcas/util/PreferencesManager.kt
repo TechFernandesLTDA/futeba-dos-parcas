@@ -2,15 +2,46 @@ package com.futebadosparcas.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Gerenciador de preferências do app com suporte a encriptação.
+ * Dados sensíveis são armazenados em EncryptedSharedPreferences.
+ * Dados não-sensíveis usam SharedPreferences padrão para performance.
+ */
 @Singleton
 class PreferencesManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    // Lazy initialization - SharedPreferences só é criado quando acessado pela primeira vez
+    // Master key para encriptação AES256
+    private val masterKey: MasterKey by lazy {
+        MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+    }
+
+    // SharedPreferences encriptado para dados sensíveis
+    private val encryptedPreferences: SharedPreferences by lazy {
+        try {
+            EncryptedSharedPreferences.create(
+                context,
+                ENCRYPTED_PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            // Fallback para prefs normais se encriptação falhar (dispositivos antigos)
+            AppLogger.e("PreferencesManager", "Fallback para SharedPreferences não-encriptado", e)
+            context.getSharedPreferences(ENCRYPTED_PREFS_NAME, Context.MODE_PRIVATE)
+        }
+    }
+
+    // SharedPreferences padrão para dados não-sensíveis (performance)
     private val sharedPreferences: SharedPreferences by lazy {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
@@ -93,37 +124,65 @@ class PreferencesManager @Inject constructor(
     }
     
     /**
-     * Salva o timestamp do último login bem-sucedido
+     * Salva o timestamp do último login bem-sucedido (encriptado)
      */
     fun setLastLoginTime(timestamp: Long = System.currentTimeMillis()) {
-        sharedPreferences.edit()
+        encryptedPreferences.edit()
             .putLong(KEY_LAST_LOGIN_TIME, timestamp)
             .apply()
     }
-    
+
     /**
      * Retorna o timestamp do último login
      * @return timestamp em milissegundos, ou 0 se nunca fez login
      */
     fun getLastLoginTime(): Long {
-        return sharedPreferences.getLong(KEY_LAST_LOGIN_TIME, 0L)
+        return encryptedPreferences.getLong(KEY_LAST_LOGIN_TIME, 0L)
+    }
+
+    /**
+     * Salva token FCM de forma segura (encriptado)
+     */
+    fun setFcmToken(token: String?) {
+        if (token != null) {
+            encryptedPreferences.edit()
+                .putString(KEY_FCM_TOKEN, token)
+                .apply()
+        } else {
+            encryptedPreferences.edit()
+                .remove(KEY_FCM_TOKEN)
+                .apply()
+        }
+    }
+
+    /**
+     * Retorna o token FCM salvo
+     */
+    fun getFcmToken(): String? {
+        return encryptedPreferences.getString(KEY_FCM_TOKEN, null)
     }
 
     fun clearAll() {
         cachedTheme = null
         sharedPreferences.edit().clear().apply()
+        encryptedPreferences.edit().clear().apply()
     }
 
     companion object {
         private const val PREFS_NAME = "futeba_prefs"
+        private const val ENCRYPTED_PREFS_NAME = "futeba_secure_prefs"
         private const val DEFAULT_THEME = "light"
 
+        // Chaves para SharedPreferences padrão (dados não-sensíveis)
         private const val KEY_FIRST_LAUNCH = "first_launch"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
         private const val KEY_PREFERRED_FIELD_TYPE = "preferred_field_type"
         private const val KEY_THEME_PREFERENCE = "theme_preference"
         private const val KEY_MOCK_MODE_ENABLED = "mock_mode_enabled"
         private const val KEY_DEV_MODE_ENABLED = "dev_mode_enabled"
+
+        // Chaves para EncryptedSharedPreferences (dados sensíveis)
         private const val KEY_LAST_LOGIN_TIME = "last_login_time"
+        private const val KEY_FCM_TOKEN = "fcm_token"
     }
 }

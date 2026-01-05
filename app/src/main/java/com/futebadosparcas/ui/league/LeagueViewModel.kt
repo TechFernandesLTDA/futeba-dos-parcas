@@ -11,8 +11,10 @@ import com.futebadosparcas.data.repository.GamificationRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -28,52 +30,112 @@ class LeagueViewModel @Inject constructor(
     private val notificationRepository: com.futebadosparcas.data.repository.NotificationRepository
 ) : ViewModel() {
 
-    companion object {
-        private const val TAG = "LeagueViewModel"
-    }
-
     private val _uiState = MutableStateFlow<LeagueUiState>(LeagueUiState.Loading)
     val uiState: StateFlow<LeagueUiState> = _uiState
 
     private val _unreadCount = MutableStateFlow(0)
     val unreadCount: StateFlow<Int> = _unreadCount
 
+    private val _availableSeasons = MutableStateFlow<List<Season>>(emptyList())
+    val availableSeasons: StateFlow<List<Season>> = _availableSeasons
+
+    private val _selectedSeason = MutableStateFlow<Season?>(null)
+    val selectedSeason: StateFlow<Season?> = _selectedSeason
+
     init {
-        loadLeagueData()
+        loadAvailableSeasons()
         observeUnreadCount()
     }
 
     private fun observeUnreadCount() {
         viewModelScope.launch {
-            notificationRepository.getUnreadCountFlow().collect { count ->
-                _unreadCount.value = count
+            notificationRepository.getUnreadCountFlow()
+                .catch { e ->
+                    // Tratamento de erro: zerar contador em caso de falha
+                    AppLogger.e(TAG, "Erro ao observar notificacoes", e)
+                    _unreadCount.value = 0
+                }
+                .collect { count ->
+                    _unreadCount.value = count
+                }
+        }
+    }
+
+    /**
+     * Carrega todas as seasons disponíveis
+     */
+    private fun loadAvailableSeasons() {
+        viewModelScope.launch {
+            try {
+                val seasonsResult = gamificationRepository.getAllSeasons()
+                val seasons = seasonsResult.getOrNull() ?: emptyList()
+
+                _availableSeasons.value = seasons
+
+                // Se há seasons, selecionar a primeira (mais recente) ou a ativa
+                if (seasons.isNotEmpty()) {
+                    // Preferir season ativa
+                    val activeSeason = seasons.find { it.isActive }
+                    _selectedSeason.value = activeSeason ?: seasons.first()
+                    loadLeagueData()
+                } else {
+                    _uiState.value = LeagueUiState.NoActiveSeason
+                }
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Erro ao carregar seasons", e)
+                _uiState.value = LeagueUiState.Error("Erro ao carregar temporadas: ${e.message}")
             }
         }
     }
 
     /**
+     * Seleciona uma season diferente e recarrega os dados
+     */
+    fun selectSeason(season: Season) {
+        _selectedSeason.value = season
+        loadLeagueData()
+    }
+
+    /**
      * Carrega dados da liga
      */
-    private val _userCache = mutableMapOf<String, User>()
+    private val _userCache = object : LinkedHashMap<String, User>(MAX_CACHE_SIZE, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, User>?): Boolean {
+            return size > MAX_CACHE_SIZE
+        }
+    }
+
+    private var leagueDataJob: Job? = null
+
+    companion object {
+        private const val TAG = "LeagueViewModel"
+        private const val MAX_CACHE_SIZE = 200
+    }
 
     /**
      * Carrega dados da liga em tempo real
      */
-    fun loadLeagueData() {
-        viewModelScope.launch {
+    private fun loadLeagueData() {
+        // Cancelar job anterior para evitar race condition
+        leagueDataJob?.cancel()
+
+        leagueDataJob = viewModelScope.launch {
             _uiState.value = LeagueUiState.Loading
 
-            try {
-                val seasonResult = gamificationRepository.getActiveSeason()
-                val season = seasonResult.getOrNull()
+            val season = _selectedSeason.value
 
-                if (season == null) {
-                    _uiState.value = LeagueUiState.NoActiveSeason
-                    return@launch
+            if (season == null) {
+                _uiState.value = LeagueUiState.NoActiveSeason
+                return@launch
+            }
+
+            // Iniciar observação do ranking com tratamento de erros via catch
+            gamificationRepository.observeSeasonRanking(season.id, limit = 100)
+                .catch { e ->
+                    AppLogger.e(TAG, "Erro no Flow de ranking", e)
+                    _uiState.value = LeagueUiState.Error("Erro ao carregar ranking: ${e.message}")
                 }
-
-                // Iniciar observação do ranking
-                gamificationRepository.observeSeasonRanking(season.id, limit = 100).collect { participations ->
+                .collect { participations ->
                     // 1. Identificar usuários faltantes no cache
                     val missingUserIds = participations.map { it.userId }
                         .filter { !_userCache.containsKey(it) }
@@ -104,41 +166,67 @@ class LeagueViewModel @Inject constructor(
                         allRankings = rankingItems,
                         myParticipation = myParticipation,
                         myPosition = myPosition,
-                        selectedDivision = ( _uiState.value as? LeagueUiState.Success)?.selectedDivision 
-                            ?: myParticipation?.division 
+                        selectedDivision = ( _uiState.value as? LeagueUiState.Success)?.selectedDivision
+                            ?: myParticipation?.division
                             ?: LeagueDivision.BRONZE
                     )
                 }
-
-            } catch (e: Exception) {
-                AppLogger.e(TAG, "Erro ao carregar dados da liga", e)
-                _uiState.value = LeagueUiState.Error("Erro ao carregar ranking: ${e.message}")
-            }
         }
     }
 
     private suspend fun fetchMissingUsers(userIds: List<String>) {
-        // Firestore "in" query supporta max 10, então fazemos em chunks ou individualmente
-        // Como o ranking é limitado a 100, ok fazer loop ou chunks
+        if (userIds.isEmpty()) {
+            AppLogger.d(TAG) { "fetchMissingUsers: lista vazia" }
+            return
+        }
+
+        AppLogger.d(TAG) { "fetchMissingUsers: buscando ${userIds.size} usuários" }
+
+        // Firestore "in" query supporta max 10, então fazemos em chunks
         val chunks = userIds.chunked(10)
-        
+
         chunks.forEach { chunk ->
              try {
+                AppLogger.d(TAG) { "Buscando chunk de ${chunk.size} usuários" }
+
                 val snapshot = firestore.collection("users")
-                    .whereIn("id", chunk)
+                    .whereIn(com.google.firebase.firestore.FieldPath.documentId(), chunk)
                     .get()
                     .await()
-                
+
+                AppLogger.d(TAG) { "Recebido ${snapshot.documents.size} documentos" }
+
                 snapshot.documents.forEach { doc ->
                     val user = doc.toObject(User::class.java)
                     if (user != null) {
-                        _userCache[user.id] = user
+                        _userCache[doc.id] = user
+                        AppLogger.d(TAG) { "User adicionado ao cache: ${doc.id}" }
+                    } else {
+                        AppLogger.w(TAG) { "Falha ao desserializar user: ${doc.id}" }
                     }
                 }
              } catch (e: Exception) {
                  AppLogger.e(TAG, "Erro ao buscar users batch", e)
+
+                 // Fallback: tentar buscar individualmente
+                 chunk.forEach { userId ->
+                     try {
+                         val doc = firestore.collection("users").document(userId).get().await()
+                         if (doc.exists()) {
+                             val user = doc.toObject(User::class.java)
+                             if (user != null) {
+                                 _userCache[userId] = user
+                                 AppLogger.d(TAG) { "User buscado individualmente: $userId" }
+                             }
+                         }
+                     } catch (e2: Exception) {
+                         AppLogger.e(TAG, "Erro ao buscar user $userId", e2)
+                     }
+                 }
              }
         }
+
+        AppLogger.d(TAG) { "fetchMissingUsers concluído. Cache tem ${_userCache.size} usuários" }
     }
 
     /**

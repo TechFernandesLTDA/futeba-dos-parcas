@@ -6,6 +6,9 @@
   "storage": {
     "rules": "storage.rules"
   },
+  "remoteconfig": {
+    "template": "remote_config.json"
+  },
   "hosting": {
     "public": "public",
     "ignore": [

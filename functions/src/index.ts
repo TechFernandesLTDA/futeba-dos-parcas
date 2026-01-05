@@ -262,7 +262,7 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 settings = { ...DEFAULT_SETTINGS, ...settingsSnap.data() } as GamificationSettings;
             }
 
-            if (confirmations.length < 6) {
+            if (confirmations.length < 4) {
                 console.log("Not enough players. Marking processed.");
                 await event.data.after.ref.update({
                     xp_processed: true,
@@ -427,8 +427,52 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 updateRankingDeltas(batch, uid, conf, result, xp, isMvp, weekKey, monthKey);
 
                 // 6. Update Season (if active)
+                // 6. Update Season (if active)
                 if (activeSeason) {
                     updateSeasonParticipation(batch, uid, activeSeason, result, conf, isMvp);
+                }
+
+                // 7. Award Badges (Cloud Integrity)
+                // Award Badges
+
+                const awardFullBadge = (badgeId: string) => {
+                    const docId = `${uid}_${badgeId}`;
+                    const badgeRef = db.collection("user_badges").doc(docId);
+
+                    batch.set(badgeRef, {
+                        user_id: uid,
+                        badge_id: badgeId,
+                        unlocked_at: admin.firestore.FieldValue.serverTimestamp(),
+                        last_earned_at: admin.firestore.FieldValue.serverTimestamp(),
+                        count: admin.firestore.FieldValue.increment(1)
+                    }, { merge: true });
+                };
+
+                // STREAK BADGES
+                if (streak >= 30) awardFullBadge("STREAK_30");
+                else if (streak >= 7) awardFullBadge("STREAK_7");
+
+                // HAT_TRICK
+                if (conf.goals >= 3) awardFullBadge("HAT_TRICK");
+
+                // PAREDAO (Clean Sheet for Goalkeeper)
+                if (conf.position === "GOALKEEPER") {
+                    let opponentScore = -1;
+                    if (liveScore) {
+                        if (team && team.id === liveScore.team1Id) opponentScore = liveScore.team2Score;
+                        else if (team && team.id === liveScore.team2Id) opponentScore = liveScore.team1Score;
+                    } else {
+                        // Fallback to team scores if live score missing (legacy)
+                        // Find opponent team
+                        if (teams.length >= 2 && team) {
+                            const opponent = teams.find(t => t.id !== team.id);
+                            if (opponent) opponentScore = opponent.score;
+                        }
+                    }
+
+                    if (opponentScore === 0) {
+                        awardFullBadge("PAREDAO");
+                    }
                 }
             }
 
@@ -568,4 +612,105 @@ function updateSeasonParticipation(
     }, { merge: true });
 }
 
+// ==========================================
+// RECALCULAR LEAGUE RATING E DIVISÃO
+// ==========================================
+
+export const recalculateLeagueRating = onDocumentUpdated(
+    "season_participation/{partId}",
+    async (event) => {
+        if (!event.data) return;
+
+        const partId = event.params.partId;
+        const before = event.data.before.data();
+        const after = event.data.after.data();
+        const userId = after.user_id;
+
+        // CRITICAL: Evitar loop infinito - só recalcular se games_played mudou
+        // Se league_rating/division/recent_games mudaram, significa que NÓS atualizamos
+        const gamesPlayedBefore = before?.games_played || 0;
+        const gamesPlayedAfter = after?.games_played || 0;
+
+        if (gamesPlayedBefore === gamesPlayedAfter) {
+            // Nenhum novo jogo foi adicionado, provavelmente foi nossa própria atualização
+            console.log(`Skipping recalculation for ${partId} - no new games (${gamesPlayedAfter} games)`);
+            return;
+        }
+
+        console.log(`Recalculating rating for ${partId}: ${gamesPlayedBefore} -> ${gamesPlayedAfter} games`);
+
+        try {
+            // Buscar últimos 10 xp_logs deste usuário
+            const xpLogsSnap = await db.collection("xp_logs")
+                .where("user_id", "==", userId)
+                .orderBy("created_at", "desc")
+                .limit(10)
+                .get();
+
+            const recentGames = xpLogsSnap.docs.map(doc => {
+                const log = doc.data();
+                const won = log.game_result === "WIN";
+                const drew = log.game_result === "DRAW";
+
+                return {
+                    game_id: log.game_id,
+                    xp_earned: log.xp_earned || 0,
+                    won: won,
+                    drew: drew,
+                    goal_diff: log.goals - (won ? 0 : drew ? 0 : 1), // Heurística simples
+                    was_mvp: log.was_mvp || false,
+                    played_at: log.created_at
+                };
+            });
+
+            // Calcular League Rating
+            const leagueRating = calculateLeagueRating(recentGames);
+            const division = getDivisionForRating(leagueRating);
+
+            // Atualizar documento (não triggera loop pois games_played não muda)
+            await db.collection("season_participation").doc(partId).update({
+                league_rating: leagueRating,
+                division: division,
+                recent_games: recentGames
+            });
+
+            console.log(`League Rating recalculado para ${userId}: ${leagueRating} (${division})`);
+        } catch (e) {
+            console.error(`Erro ao recalcular rating para ${partId}:`, e);
+        }
+    }
+);
+
+function calculateLeagueRating(recentGames: any[]): number {
+    if (!recentGames || recentGames.length === 0) return 0;
+
+    const gamesCount = recentGames.length;
+
+    // PPJ - Pontos (XP) por Jogo (max 200 = 100 pontos)
+    const avgXp = recentGames.reduce((sum, g) => sum + (g.xp_earned || 0), 0) / gamesCount;
+    const ppjScore = Math.min(avgXp / 200.0, 1.0) * 100;
+
+    // WR - Win Rate (100% = 100 pontos)
+    const winRate = (recentGames.filter(g => g.won).length / gamesCount) * 100;
+
+    // GD - Goal Difference médio (+3 = 100, -3 = 0)
+    const avgGD = recentGames.reduce((sum, g) => sum + (g.goal_diff || 0), 0) / gamesCount;
+    const gdScore = Math.max(0, Math.min(1, (avgGD + 3) / 6.0)) * 100;
+
+    // MVP Rate (50% = 100 pontos, cap)
+    const mvpRate = recentGames.filter(g => g.was_mvp).length / gamesCount;
+    const mvpScore = Math.min(mvpRate / 0.5, 1.0) * 100;
+
+    return (ppjScore * 0.4) + (winRate * 0.3) + (gdScore * 0.2) + (mvpScore * 0.1);
+}
+
+function getDivisionForRating(rating: number): string {
+    if (rating >= 70) return "DIAMANTE";
+    if (rating >= 50) return "OURO";
+    if (rating >= 30) return "PRATA";
+    return "BRONZE";
+}
+
 export * from "./activities";
+export * from "./season";
+export * from "./seeding";

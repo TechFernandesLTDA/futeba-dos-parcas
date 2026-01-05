@@ -7,6 +7,7 @@ import com.futebadosparcas.data.repository.LiveGameRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,10 +21,16 @@ class LiveStatsViewModel @Inject constructor(
 
     fun observeStats(gameId: String) {
         viewModelScope.launch {
-            liveGameRepository.observeLivePlayerStats(gameId).collect { statsList ->
-                // Ordenar por gols (maior primeiro)
-                _stats.value = statsList.sortedByDescending { it.goals }
-            }
+            liveGameRepository.observeLivePlayerStats(gameId)
+                .catch { e ->
+                    // Tratamento de erro: em caso de falha, manter lista vazia
+                    // Log pode ser adicionado aqui se necessario
+                    _stats.value = emptyList()
+                }
+                .collect { statsList ->
+                    // Ordenar por gols (maior primeiro)
+                    _stats.value = statsList.sortedByDescending { it.goals }
+                }
         }
     }
 }

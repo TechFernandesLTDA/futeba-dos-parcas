@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,6 +29,8 @@ class PlayersViewModel @Inject constructor(
     private val _unreadCount = MutableStateFlow(0)
     val unreadCount: StateFlow<Int> = _unreadCount
 
+
+
     private var allPlayers: List<User> = emptyList()
     private var currentQuery: String = ""
     private var currentFieldType: FieldType? = null
@@ -42,13 +45,19 @@ class PlayersViewModel @Inject constructor(
     init {
         loadPlayers()
         observeUnreadCount()
+
     }
 
     private fun observeUnreadCount() {
         viewModelScope.launch {
-            notificationRepository.getUnreadCountFlow().collect { count ->
-                _unreadCount.value = count
-            }
+            notificationRepository.getUnreadCountFlow()
+                .catch { e ->
+                    // Tratamento de erro: zerar contador em caso de falha
+                    _unreadCount.value = 0
+                }
+                .collect { count ->
+                    _unreadCount.value = count
+                }
         }
     }
 
@@ -70,6 +79,8 @@ class PlayersViewModel @Inject constructor(
             )
         }
     }
+
+
 
     fun searchPlayers(query: String) {
         searchJob?.cancel()
