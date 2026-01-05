@@ -17,7 +17,7 @@ class LiveGameViewModel @Inject constructor(
     private val liveGameRepository: LiveGameRepository,
     private val gameRepository: GameRepository,
     private val authRepository: AuthRepository,
-    private val badgeAwarder: com.futebadosparcas.domain.gamification.BadgeAwarder
+    // private val badgeAwarder: com.futebadosparcas.domain.gamification.BadgeAwarder
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LiveGameUiState>(LiveGameUiState.Loading)
@@ -75,13 +75,28 @@ class LiveGameViewModel @Inject constructor(
 
                 // Buscar times
                 val teamsResult = gameRepository.getGameTeams(gameId)
-                val teams = teamsResult.getOrNull()?.sortedBy { it.name } ?: emptyList()
+                val teams = teamsResult.getOrNull() ?: emptyList()
 
                 if (teams.size < 2) {
                     _uiState.value = LiveGameUiState.Error("Times não definidos.")
                 } else {
-                    val team1 = teams[0]
-                    val team2 = teams[1]
+                    val sortedTeams = teams.sortedBy { it.name }
+                    var team1 = sortedTeams[0]
+                    var team2 = sortedTeams[1]
+
+                    // Se já existe placar, respeitar os IDs salvos
+                    if (score != null) {
+                        val savedTeam1 = teams.find { it.id == score.team1Id }
+                        val savedTeam2 = teams.find { it.id == score.team2Id }
+                        
+                        if (savedTeam1 != null && savedTeam2 != null) {
+                            team1 = savedTeam1
+                            team2 = savedTeam2
+                        } else {
+                            // Fallback logging se times mudaram/foram deletados
+                            com.futebadosparcas.util.AppLogger.w("LiveGameViewModel") { "Times do placar salvo não encontrados. Usando padrão." }
+                        }
+                    }
 
                     // Handler para iniciar jogo se necessário
                     // Qualquer usuário confirmado pode iniciar se score não existir
@@ -118,14 +133,8 @@ class LiveGameViewModel @Inject constructor(
                 gameRepository.updateGameStatus(currentGameId, "FINISHED")
                 _userMessage.emit("Jogo finalizado com sucesso!")
 
-                // Gamification: Award Badges
-                currentGame?.let { game ->
-                    val statsResult = liveGameRepository.getFinalStats(currentGameId)
-                    val stats = statsResult.getOrNull() ?: emptyList()
-                    if (stats.isNotEmpty()) {
-                        badgeAwarder.checkAndAwardBadges(game, stats)
-                    }
-                }
+                // Gamification: Awarding logic moved to Cloud Function
+                // badgeAwarder.checkAndAwardBadges removed to prevent duplication
             } else {
                 _userMessage.emit("Erro ao finalizar jogo: ${result.exceptionOrNull()?.message}")
             }

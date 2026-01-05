@@ -33,7 +33,7 @@ class GameRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
     private val gameDao: GameDao,
-    private val badgeAwarder: com.futebadosparcas.domain.gamification.BadgeAwarder,
+    // private val badgeAwarder: com.futebadosparcas.domain.gamification.BadgeAwarder, // MIGRATED TO CLOUD
     private val liveGameRepository: com.futebadosparcas.data.repository.LiveGameRepository,
     private val matchFinalizationService: com.futebadosparcas.domain.ranking.MatchFinalizationService,
     private val postGameEventEmitter: com.futebadosparcas.domain.ranking.PostGameEventEmitter,
@@ -542,54 +542,8 @@ class GameRepositoryImpl @Inject constructor(
             }
 
             if (status == GameStatus.FINISHED.name) {
-                // 1. PRIMEIRO processar badges/streaks (para XP de streak funcionar)
-                try {
-                    val gameResult = getGameDetails(gameId)
-                    val statsResult = liveGameRepository.getFinalStats(gameId)
-
-                    if (gameResult.isSuccess && statsResult.isSuccess) {
-                        badgeAwarder.checkAndAwardBadges(gameResult.getOrNull()!!, statsResult.getOrNull()!!)
-                        AppLogger.d(TAG) { "Badges e streaks processados para jogo $gameId" }
-                    }
-                } catch (e: Exception) {
-                    AppLogger.e(TAG, "Erro ao processar badges na finalizacao do jogo", e)
-                }
-
-                // 2. DEPOIS processar XP, estatisticas, rankings (streak ja foi atualizado)
-                /* MIGRATED TO CLOUD FUNCTIONS
-                try {
-                    val finalizationResult = matchFinalizationService.processGame(gameId)
-                    if (finalizationResult.success) {
-                        AppLogger.d(TAG) { "Jogo $gameId finalizado: ${finalizationResult.playersProcessed.size} jogadores processados" }
-
-                        // Log level ups e emitir evento para usuario atual
-                        val currentUserId = auth.currentUser?.uid
-                        finalizationResult.playersProcessed.forEach { player ->
-                            if (player.leveledUp) {
-                                AppLogger.d(TAG) { "Jogador ${player.userId} subiu para nivel ${player.newLevel}!" }
-                            }
-                            // Emitir evento pos-jogo para o usuario atual
-                            if (player.userId == currentUserId) {
-                                val summary = postGameEventEmitter.createSummary(
-                                    gameId = gameId,
-                                    result = player,
-                                    previousXp = 0, // Simplificado
-                                    previousLevel = if (player.leveledUp) player.newLevel - 1 else player.newLevel
-                                )
-                                // Emitir de forma assincrona
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    postGameEventEmitter.emit(summary)
-                                }
-                            }
-                        }
-                    } else {
-                        AppLogger.w(TAG) { "Processamento do jogo $gameId: ${finalizationResult.error}" }
-                    }
-                } catch (e: Exception) {
-                    AppLogger.e(TAG, "Erro ao processar XP/estatisticas do jogo $gameId", e)
-                }
-                */
-                AppLogger.i(TAG) { "Jogo finalizado. XP será processado via Cloud Functions." }
+                // Logic migrated to Cloud Functions (Badges, XP, etc)
+                AppLogger.i(TAG) { "Jogo finalizado. Badges e XP serão processados via Cloud Functions." }
             }
 
             Result.success(Unit)

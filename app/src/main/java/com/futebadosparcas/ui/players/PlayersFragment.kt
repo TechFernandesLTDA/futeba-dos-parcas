@@ -11,11 +11,15 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.futebadosparcas.R
 import com.futebadosparcas.databinding.FragmentPlayersBinding
 import com.futebadosparcas.ui.components.FutebaTopBar
+import com.futebadosparcas.data.model.PlayerRatingRole
+import com.futebadosparcas.data.model.User
 import com.futebadosparcas.ui.theme.FutebaTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @AndroidEntryPoint
 class PlayersFragment : Fragment() {
@@ -45,6 +49,7 @@ class PlayersFragment : Fragment() {
         setupHeader()
         setupListeners()
         observeViewModel()
+
     }
 
     private fun setupTopBar() {
@@ -68,6 +73,7 @@ class PlayersFragment : Fragment() {
         binding.btnCompare.setOnClickListener {
             toggleComparisonMode()
         }
+
     }
 
     private fun toggleComparisonMode() {
@@ -161,6 +167,8 @@ class PlayersFragment : Fragment() {
         }
     }
 
+
+
     private fun observeViewModel() {
         // UI State Observer
         viewLifecycleOwner.lifecycleScope.launch {
@@ -243,6 +251,8 @@ class PlayersFragment : Fragment() {
             .setNegativeButton("Cancelar", null)
             .show()
     }
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()

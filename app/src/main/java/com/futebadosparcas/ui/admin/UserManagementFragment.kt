@@ -58,10 +58,10 @@ class UserManagementFragment : Fragment() {
 
     private fun showRoleChangeConfirmation(user: com.futebadosparcas.data.model.User, newRole: UserRole) {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Alterar Permissão")
+            .setTitle(com.futebadosparcas.R.string.dialog_change_permission_title)
             .setMessage("Tem certeza que deseja alterar o nível de acesso de ${user.name} para ${newRole.displayName}?")
-            .setNegativeButton("Cancelar", null)
-            .setPositiveButton("Confirmar") { _, _ ->
+            .setNegativeButton(com.futebadosparcas.R.string.cancel, null)
+            .setPositiveButton(com.futebadosparcas.R.string.dialog_confirm) { _, _ ->
                 viewModel.updateUserRole(user, newRole)
             }
             .show()

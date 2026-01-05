@@ -18,7 +18,8 @@ import javax.inject.Singleton
 class GamificationRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val authRepository: AuthRepository,
-    private val seasonGuardian: com.futebadosparcas.domain.gamification.SeasonGuardian
+    private val seasonGuardian: com.futebadosparcas.domain.gamification.SeasonGuardian,
+    private val remoteConfig: com.google.firebase.remoteconfig.FirebaseRemoteConfig
 ) {
 
     companion object {
@@ -30,6 +31,34 @@ class GamificationRepository @Inject constructor(
         private const val COLLECTION_SEASON_PARTICIPATION = "season_participation"
         private const val COLLECTION_CHALLENGES = "challenges"
         private const val COLLECTION_CHALLENGE_PROGRESS = "challenge_progress"
+    }
+
+    init {
+        fetchRemoteConfig()
+    }
+
+    private fun fetchRemoteConfig() {
+        remoteConfig.fetchAndActivate()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val levelsJson = remoteConfig.getString("level_table")
+                    if (levelsJson.isNotEmpty()) {
+                        try {
+                            val type = object : com.google.gson.reflect.TypeToken<List<com.futebadosparcas.data.model.LevelDefinition>>() {}.type
+                            val levels: List<com.futebadosparcas.data.model.LevelDefinition> = com.google.gson.Gson().fromJson(levelsJson, type)
+                            
+                            if (levels.isNotEmpty()) {
+                                com.futebadosparcas.data.model.LevelTable.configure(levels)
+                                AppLogger.i(TAG) { "LevelTable configured from Remote Config" }
+                            }
+                        } catch (e: Exception) {
+                            AppLogger.e(TAG, "Failed to parse level_table from Remote Config", e)
+                        }
+                    }
+                } else {
+                    AppLogger.w(TAG) { "RemoteConfig fetch failed" }
+                }
+            }
     }
 
     /**
@@ -273,6 +302,40 @@ class GamificationRepository @Inject constructor(
             Result.success(selectedSeason)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar temporada ativa", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Busca todas as seasons (ativas e inativas) ordenadas por data de fim
+     */
+    suspend fun getAllSeasons(): Result<List<Season>> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_SEASONS)
+                .get()
+                .await()
+
+            val seasons = snapshot.documents.mapNotNull { doc ->
+                try {
+                    doc.toObject(Season::class.java)
+                } catch (e: Exception) {
+                    AppLogger.e(TAG, "Erro ao converter season ${doc.id}", e)
+                    null
+                }
+            }
+
+            // Ordenar por data de fim decrescente (mais recente primeiro)
+            val sortedSeasons = seasons.sortedWith(
+                compareByDescending<Season> { it.endDate }
+                    .thenByDescending { it.startDate }
+                    .thenByDescending { it.id }
+            )
+
+            AppLogger.d(TAG) { "Total de temporadas encontradas: ${sortedSeasons.size}" }
+
+            Result.success(sortedSeasons)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar todas as seasons", e)
             Result.failure(e)
         }
     }
