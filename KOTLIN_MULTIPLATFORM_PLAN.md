@@ -398,13 +398,64 @@ koin = "3.5.0"
 
 ---
 
+## Status Atual (Janeiro 2026)
+
+### ✅ CONCLUIDO (Android 100% Compativel)
+
+1. **Modulo `shared/` configurado e funcional**
+   - 20 arquivos de dominio compartilhavel implementados
+   - Build do Android verificado e funcionando
+   - Estrutura KMP pronta para iOS
+
+2. **Domain Layer completo em `commonMain/`**
+   - Models: User, Game, Group, Season, Statistics, Badge, etc.
+   - Ranking: XPCalculator, LevelCalculator, LeagueRatingCalculator
+   - Gamification: BadgeDefinitions, MilestoneChecker
+   - AI: TeamBalancer
+   - Repository Interfaces: todas as 5 principais
+
+3. **Documentacao e organizacao**
+   - KOTLIN_MULTIPLATFORM_PLAN.md atualizado
+   - Analises tecnicas em docs/
+   - Projeto limpo e organizado
+
+### ⏳ PENDENTE (Requer Mac/Xcode)
+
+Para continuar o desenvolvimento iOS, e necessario:
+
+1. **Ambiente de Desenvolvimento**
+   - Mac com macOS 12+ (Monterey ou superior)
+   - Xcode 14+ instalado
+   - CocoaPods configurado (`sudo gem install cocoapods`)
+
+2. **Proximos passos iOS**
+   - Criar pasta `iosApp/` com projeto SwiftUI
+   - Configurar CocoaPods no modulo `shared/`
+   - Implementar `shared/src/iosMain/` com Firebase iOS SDK
+   - Criar primeiras telas (Login, Home)
+
+3. **Tarefas de integracao**
+   - Configurar Firebase para iOS (GoogleService-Info.plist)
+   - Implementar repositorios iOS (Firestore iOS SDK)
+   - Testar comunicacao Kotlin <-> Swift
+
+---
+
 ## Proximos Passos
 
-1. **Revisar este documento** com a equipe
-2. **Priorizar features** que mais se beneficiam de compartilhamento
-3. **Criar branch** `feature/kmp-migration`
-4. **Iniciar Fase 0** (preparacao e auditoria)
-5. **POC inicial** com `XPCalculator` (logica pura, facil de testar)
+### Imediato (sem Mac)
+- ✅ ~~Expandir modulo `shared/` com mais logica~~ FEITO
+- ✅ ~~Criar models compartilhaveis~~ FEITO
+- ✅ ~~Preparar interfaces de repository~~ FEITO
+- ✅ ~~Documentacao e planejamento~~ FEITO
+
+### Requer Mac/Xcode
+1. **Configurar ambiente iOS**
+2. **Criar projeto SwiftUI basico** (`iosApp/`)
+3. **Integrar modulo `shared/` via CocoaPods**
+4. **Implementar autenticacao Firebase iOS**
+5. **Implementar repositorios iOS** (`iosMain/`)
+6. **Criar telas principais** (Login, Home, Games)
 
 ---
 
