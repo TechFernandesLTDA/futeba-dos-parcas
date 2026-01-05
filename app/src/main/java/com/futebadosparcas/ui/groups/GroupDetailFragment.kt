@@ -141,6 +141,7 @@ class GroupDetailFragment : Fragment() {
         binding.rvMembers.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = membersAdapter
+            setHasFixedSize(true)
         }
     }
 

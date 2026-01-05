@@ -4,94 +4,87 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.futebadosparcas.R
 import com.futebadosparcas.data.model.AppNotification
 import com.futebadosparcas.data.model.NotificationAction
-import com.futebadosparcas.databinding.FragmentNotificationsBinding
+import com.futebadosparcas.ui.theme.FutebaTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+/**
+ * Fragment de notificações com Jetpack Compose
+ *
+ * Migrado de XML para Compose seguindo as melhores práticas:
+ * - ComposeView para integração com Navigation Component
+ * - ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed para evitar memory leaks
+ * - Navegação via NavController do Fragment
+ */
 @AndroidEntryPoint
 class NotificationsFragment : Fragment() {
 
-    private var _binding: FragmentNotificationsBinding? = null
-    private val binding get() = _binding!!
-
     private val viewModel: NotificationsViewModel by viewModels()
-    private lateinit var adapter: NotificationsAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentNotificationsBinding.inflate(inflater, container, false)
-        return binding.root
+        return ComposeView(requireContext()).apply {
+            // Define estratégia de lifecycle para evitar memory leaks
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+
+            setContent {
+                FutebaTheme {
+                    NotificationsScreen(
+                        viewModel = viewModel,
+                        onNotificationClick = { notification ->
+                            handleNotificationClick(notification)
+                        },
+                        onBackClick = {
+                            findNavController().popBackStack()
+                        }
+                    )
+                }
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        setupToolbar()
-        setupRecyclerView()
-        setupListeners()
-        observeViewModel()
+        observeNavigationActions()
     }
 
-    private fun setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener {
-            findNavController().popBackStack()
-        }
-
-        binding.toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_mark_all_read -> {
-                    viewModel.markAllAsRead()
-                    true
+    /**
+     * Observa ações de navegação do ViewModel
+     * (necessário porque navegação via NavController precisa estar no Fragment)
+     */
+    private fun observeNavigationActions() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.actionState.collect { state ->
+                when (state) {
+                    is NotificationActionState.NavigateToGame -> {
+                        val action = NotificationsFragmentDirections
+                            .actionNotificationsFragmentToGameDetailFragment(state.gameId)
+                        findNavController().navigate(action)
+                        viewModel.resetActionState()
+                    }
+                    else -> {
+                        // Outros estados são tratados no Composable
+                    }
                 }
-                R.id.action_delete_old -> {
-                    viewModel.deleteOldNotifications()
-                    true
-                }
-                else -> false
             }
         }
     }
 
-    private fun setupRecyclerView() {
-        adapter = NotificationsAdapter(
-            onItemClick = { notification ->
-                handleNotificationClick(notification)
-            },
-            onAcceptClick = { notification ->
-                viewModel.handleNotificationAction(notification, accept = true)
-            },
-            onDeclineClick = { notification ->
-                viewModel.handleNotificationAction(notification, accept = false)
-            }
-        )
-
-        binding.rvNotifications.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = this@NotificationsFragment.adapter
-        }
-    }
-
-    private fun setupListeners() {
-        binding.swipeRefresh.setOnRefreshListener {
-            viewModel.loadNotifications()
-        }
-    }
-
+    /**
+     * Trata clique em notificação e navega para a tela apropriada
+     */
     private fun handleNotificationClick(notification: AppNotification) {
-        viewModel.markAsRead(notification.id)
-
         when (notification.referenceType) {
             "group" -> {
                 notification.referenceId?.let { groupId ->
@@ -108,82 +101,11 @@ class NotificationsFragment : Fragment() {
                 }
             }
             "invite" -> {
-                // Show accept/decline options if not already handled
+                // Action buttons são exibidos no card se for ACCEPT_DECLINE
                 if (notification.getActionTypeEnum() == NotificationAction.ACCEPT_DECLINE) {
-                    // Action buttons should be visible in the item
+                    // Botões de aceitar/recusar já estão visíveis no card
                 }
             }
         }
-    }
-
-    private fun observeViewModel() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
-                binding.swipeRefresh.isRefreshing = false
-
-                when (state) {
-                    is NotificationsUiState.Loading -> {
-                        binding.progressBar.visibility = View.VISIBLE
-                        binding.rvNotifications.visibility = View.GONE
-                        binding.emptyView.visibility = View.GONE
-                    }
-                    is NotificationsUiState.Empty -> {
-                        binding.progressBar.visibility = View.GONE
-                        binding.rvNotifications.visibility = View.GONE
-                        binding.emptyView.visibility = View.VISIBLE
-                    }
-                    is NotificationsUiState.Success -> {
-                        binding.progressBar.visibility = View.GONE
-                        binding.rvNotifications.visibility = View.VISIBLE
-                        binding.emptyView.visibility = View.GONE
-                        adapter.submitList(state.notifications)
-                    }
-                    is NotificationsUiState.Error -> {
-                        binding.progressBar.visibility = View.GONE
-                        Toast.makeText(requireContext(), state.message, Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.actionState.collect { state ->
-                when (state) {
-                    is NotificationActionState.Loading -> {
-                        // Show loading indicator if needed
-                    }
-                    is NotificationActionState.Success -> {
-                        Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
-                        viewModel.resetActionState()
-                    }
-                    is NotificationActionState.InviteAccepted -> {
-                        Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
-                        viewModel.resetActionState()
-                    }
-                    is NotificationActionState.InviteDeclined -> {
-                        Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
-                        viewModel.resetActionState()
-                    }
-                    is NotificationActionState.NavigateToGame -> {
-                        val action = NotificationsFragmentDirections
-                            .actionNotificationsFragmentToGameDetailFragment(state.gameId)
-                        findNavController().navigate(action)
-                        viewModel.resetActionState()
-                    }
-                    is NotificationActionState.Error -> {
-                        Toast.makeText(requireContext(), state.message, Toast.LENGTH_LONG).show()
-                        viewModel.resetActionState()
-                    }
-                    is NotificationActionState.Idle -> {
-                        // Do nothing
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }

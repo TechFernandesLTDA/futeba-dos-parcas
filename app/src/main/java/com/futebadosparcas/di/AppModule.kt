@@ -40,33 +40,69 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideGameQueryRepository(
+        firestore: FirebaseFirestore,
+        auth: FirebaseAuth,
+        gameDao: com.futebadosparcas.data.local.dao.GameDao,
+        groupRepository: GroupRepository,
+        confirmationRepository: GameConfirmationRepository
+    ): GameQueryRepository {
+        return GameQueryRepositoryImpl(firestore, auth, gameDao, groupRepository, confirmationRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGameConfirmationRepository(
+        firestore: FirebaseFirestore,
+        auth: FirebaseAuth,
+        matchManagementDataSource: com.futebadosparcas.data.datasource.MatchManagementDataSource
+    ): GameConfirmationRepository {
+        return GameConfirmationRepositoryImpl(firestore, auth, matchManagementDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGameEventsRepository(
+        liveGameRepository: LiveGameRepository
+    ): GameEventsRepository {
+        return GameEventsRepositoryImpl(liveGameRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGameTeamRepository(
+        firestore: FirebaseFirestore,
+        teamBalancer: com.futebadosparcas.domain.ai.TeamBalancer,
+        confirmationRepository: GameConfirmationRepository
+    ): GameTeamRepository {
+        return GameTeamRepositoryImpl(firestore, teamBalancer, confirmationRepository)
+    }
+
+    @Provides
+    @Singleton
     fun provideGameRepository(
         preferencesManager: PreferencesManager,
         firestore: FirebaseFirestore,
         auth: FirebaseAuth,
         gameDao: com.futebadosparcas.data.local.dao.GameDao,
-        // badgeAwarder: com.futebadosparcas.domain.gamification.BadgeAwarder,
-        liveGameRepository: com.futebadosparcas.data.repository.LiveGameRepository,
-        matchFinalizationService: MatchFinalizationService,
-        postGameEventEmitter: PostGameEventEmitter,
-        matchManagementDataSource: com.futebadosparcas.data.datasource.MatchManagementDataSource,
-        teamBalancer: com.futebadosparcas.domain.ai.TeamBalancer,
-        groupRepository: com.futebadosparcas.data.repository.GroupRepository
+        queryRepository: GameQueryRepository,
+        confirmationRepository: GameConfirmationRepository,
+        eventsRepository: GameEventsRepository,
+        teamRepository: GameTeamRepository,
+        liveGameRepository: LiveGameRepository
     ): GameRepository {
         return if (preferencesManager.isMockModeEnabled()) {
             FakeGameRepository()
         } else {
             GameRepositoryImpl(
-                firestore, 
-                auth, 
-                gameDao, 
-                // badgeAwarder, // MIGRATED TO CLOUD
-                liveGameRepository, 
-                matchFinalizationService, 
-                postGameEventEmitter,
-                matchManagementDataSource,
-                teamBalancer,
-                groupRepository
+                firestore,
+                auth,
+                gameDao,
+                queryRepository,
+                confirmationRepository,
+                eventsRepository,
+                teamRepository,
+                liveGameRepository
             )
         }
     }

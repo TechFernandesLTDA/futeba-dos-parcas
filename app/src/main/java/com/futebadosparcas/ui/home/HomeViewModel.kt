@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.home
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Activity
@@ -16,11 +17,15 @@ import com.futebadosparcas.util.ConnectivityMonitor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
+import kotlin.math.pow
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -30,7 +35,8 @@ class HomeViewModel @Inject constructor(
     private val gamificationRepository: GamificationRepository,
     private val statisticsRepository: com.futebadosparcas.data.repository.StatisticsRepository,
     private val activityRepository: com.futebadosparcas.data.repository.ActivityRepository,
-    private val connectivityMonitor: ConnectivityMonitor
+    private val connectivityMonitor: ConnectivityMonitor,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
@@ -44,6 +50,11 @@ class HomeViewModel @Inject constructor(
 
     private val _unreadCount = MutableStateFlow(0)
     val unreadCount: StateFlow<Int> = _unreadCount
+
+    // SavedState para persistir estado de navegação
+    var isGridView: Boolean
+        get() = savedStateHandle.get<Boolean>(KEY_IS_GRID_VIEW) ?: false
+        set(value) = savedStateHandle.set(KEY_IS_GRID_VIEW, value)
 
     init {
         observeUnreadCount()
@@ -79,65 +90,137 @@ class HomeViewModel @Inject constructor(
     }
 
     private var loadJob: Job? = null
+    private var retryCount = 0
 
-    fun loadHomeData() {
+    /**
+     * Carrega dados da home com timeout, supervisorScope e retry automático
+     * - withTimeout(10_000): timeout de 10 segundos nas requisições paralelas
+     * - supervisorScope: falha graciosamente se uma requisição falhar
+     * - retry automático com exponential backoff (máx 3 tentativas)
+     */
+    fun loadHomeData(forceRetry: Boolean = false) {
+        if (forceRetry) retryCount = 0
+
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             _loadingState.value = LoadingState.Loading("Carregando dados...")
             _uiState.value = HomeUiState.Loading
 
-            // Simulate progress (optional, or real progress if possible)
-            _loadingState.value = LoadingState.LoadingProgress(10, 100, "Iniciando...")
+            try {
+                _loadingState.value = LoadingState.LoadingProgress(10, 100, "Iniciando...")
 
-            val userDeferred = async { userRepository.getCurrentUser() }
-            val gamesDeferred = async { gameRepository.getConfirmedUpcomingGamesForUser() }
-
-            val userResult = userDeferred.await()
-            _loadingState.value = LoadingState.LoadingProgress(40, 100, "Perfil carregado")
-            
-            val statsDeferred = async { statisticsRepository.getUserStatistics(userResult.getOrNull()?.id ?: "") }
-            val activitiesDeferred = async { activityRepository.getRecentActivities(100) }
-            val publicGamesDeferred = async { gameRepository.getPublicGames(10) }
-            val streakDeferred = async { gamificationRepository.getUserStreak(userResult.getOrNull()?.id ?: "") }
-            val challengesDeferred = async { gamificationRepository.getActiveChallenges() }
-            val badgesDeferred = async { gamificationRepository.getRecentBadges(userResult.getOrNull()?.id ?: "") }
-
-            val gamesResult = gamesDeferred.await()
-            _loadingState.value = LoadingState.LoadingProgress(70, 100, "Jogos carregados")
-            
-            val statsResult = statsDeferred.await()
-            val activitiesResult = activitiesDeferred.await()
-            val publicGamesResult = publicGamesDeferred.await()
-            val streakResult = streakDeferred.await()
-            val challengesResult = challengesDeferred.await()
-            val badgesResult = badgesDeferred.await()
-            _loadingState.value = LoadingState.LoadingProgress(90, 100, "Finalizando...")
-
-            userResult.fold(
-                onSuccess = { user ->
-                    val games = gamesResult.getOrDefault(emptyList())
-                    val statistics = statsResult.getOrNull()
-                    val activities = activitiesResult.getOrDefault(emptyList())
-                    val publicGames = publicGamesResult.getOrDefault(emptyList())
-                    val streak = streakResult.getOrNull()
-                    val allChallenges = challengesResult.getOrDefault(emptyList())
-                    val userBadges = badgesResult.getOrDefault(emptyList())
-                    
-                    // Fetch progress for challenges
-                    val challengeIds = allChallenges.map { it.id }
-                    val progressResult = gamificationRepository.getChallengesProgress(user.id, challengeIds)
-                    val progressMap = progressResult.getOrDefault(emptyList()).associateBy { it.challengeId }
-                    
-                    val challengesWithProgress = allChallenges.map { 
-                        it to progressMap[it.id] 
+                // SupervisorScope para falhar graciosamente
+                supervisorScope {
+                    // Requisição crítica com timeout
+                    val userResult = withTimeout(TIMEOUT_MILLIS) {
+                        userRepository.getCurrentUser()
                     }
-                    
-                    // Fetch League info
+
+                    if (userResult.isFailure) {
+                        throw userResult.exceptionOrNull() ?: Exception("Erro ao carregar usuário")
+                    }
+
+                    val user = userResult.getOrThrow()
+                    _loadingState.value = LoadingState.LoadingProgress(30, 100, "Perfil carregado")
+
+                    // Requisições paralelas com timeout e supervisorScope
+                    val gamesDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                gameRepository.getConfirmedUpcomingGamesForUser()
+                            }
+                        }
+                    }
+                    val statsDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                statisticsRepository.getUserStatistics(user.id)
+                            }
+                        }
+                    }
+                    val activitiesDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                activityRepository.getRecentActivities(100)
+                            }
+                        }
+                    }
+                    val publicGamesDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                gameRepository.getPublicGames(10)
+                            }
+                        }
+                    }
+                    val streakDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                gamificationRepository.getUserStreak(user.id)
+                            }
+                        }
+                    }
+                    val challengesDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                gamificationRepository.getActiveChallenges()
+                            }
+                        }
+                    }
+                    val badgesDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                gamificationRepository.getRecentBadges(user.id)
+                            }
+                        }
+                    }
+
+                    _loadingState.value = LoadingState.LoadingProgress(50, 100, "Carregando dados...")
+
+                    // Await all com tratamento de erro gracioso
+                    val gamesResult = gamesDeferred.await()
+                    val statsResult = statsDeferred.await()
+                    val activitiesResult = activitiesDeferred.await()
+                    val publicGamesResult = publicGamesDeferred.await()
+                    val streakResult = streakDeferred.await()
+                    val challengesResult = challengesDeferred.await()
+                    val badgesResult = badgesDeferred.await()
+
+                    _loadingState.value = LoadingState.LoadingProgress(70, 100, "Processando...")
+
+                    // Extrair dados com fallback para valores vazios
+                    val games = gamesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
+                    val statistics = statsResult.getOrNull()?.getOrNull()
+                    val activities = activitiesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
+                    val publicGames = publicGamesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
+                    val streak = streakResult.getOrNull()?.getOrNull()
+                    val allChallenges = challengesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
+                    val userBadges = badgesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
+
+                    // Fetch progress for challenges com timeout
+                    val challengeIds = allChallenges.map { it.id }
+                    val progressResult = runCatching {
+                        withTimeout(TIMEOUT_MILLIS) {
+                            gamificationRepository.getChallengesProgress(user.id, challengeIds)
+                        }
+                    }
+                    val progressMap = progressResult.getOrNull()?.getOrDefault(emptyList())?.associateBy { it.challengeId } ?: emptyMap()
+
+                    val challengesWithProgress = allChallenges.map {
+                        it to progressMap[it.id]
+                    }
+
+                    _loadingState.value = LoadingState.LoadingProgress(85, 100, "Carregando liga...")
+
+                    // Fetch League info com timeout e tratamento de erro
                     var leagueDivision = LeagueDivision.BRONZE
                     try {
-                        val seasonResult = gamificationRepository.getActiveSeason()
+                        val seasonResult = withTimeout(TIMEOUT_MILLIS) {
+                            gamificationRepository.getActiveSeason()
+                        }
                         seasonResult.getOrNull()?.let { season ->
-                            val participationResult = gamificationRepository.getUserParticipation(user.id, season.id)
+                            val participationResult = withTimeout(TIMEOUT_MILLIS) {
+                                gamificationRepository.getUserParticipation(user.id, season.id)
+                            }
                             participationResult.getOrNull()?.let { participation ->
                                 leagueDivision = participation.division
                             }
@@ -145,15 +228,17 @@ class HomeViewModel @Inject constructor(
                     } catch (e: Exception) {
                         AppLogger.e(TAG, "Erro ao carregar dados da liga", e)
                     }
-                    
+
+                    _loadingState.value = LoadingState.LoadingProgress(95, 100, "Finalizando...")
+
                     // Calculate Gamification Summary
                     val (progressXp, neededXp) = com.futebadosparcas.data.model.LevelTable.getXpProgress(user.experiencePoints)
                     val isMaxLevel = user.level >= 10
-                    
+
                     val percent = if (isMaxLevel) 100 else {
                         if (neededXp > 0L) (progressXp * 100L / neededXp).toInt() else 100
                     }
-                    
+
                     val summary = GamificationSummary(
                         level = user.level,
                         levelName = com.futebadosparcas.data.model.LevelTable.getLevelName(user.level),
@@ -163,27 +248,60 @@ class HomeViewModel @Inject constructor(
                         isMaxLevel = isMaxLevel,
                         division = leagueDivision
                     )
-                    
-                    // Add streak logic if needed or just pass it to UI State
 
                     _loadingState.value = LoadingState.Success
                     _uiState.value = HomeUiState.Success(
-                        user, games, summary, statistics, activities, publicGames, streak, challengesWithProgress, userBadges
+                        user, games, summary, statistics, activities, publicGames, streak, challengesWithProgress, userBadges, isGridView
                     )
-                },
-                onFailure = { error ->
-                    _loadingState.value = LoadingState.Error(error.message ?: "Erro ao carregar perfil")
-                    _uiState.value = HomeUiState.Error(error.message ?: "Erro ao carregar perfil")
+
+                    // Reset retry count on success
+                    retryCount = 0
                 }
-            )
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Erro ao carregar dados da home", e)
+
+                // Retry automático com exponential backoff
+                if (retryCount < MAX_RETRY_COUNT) {
+                    retryCount++
+                    val delayMs = calculateBackoffDelay(retryCount)
+
+                    _loadingState.value = LoadingState.Loading("Tentando novamente... (${retryCount}/${MAX_RETRY_COUNT})")
+                    AppLogger.d(TAG) { "Retry $retryCount após ${delayMs}ms" }
+
+                    delay(delayMs)
+                    loadHomeData()
+                } else {
+                    val errorMessage = when (e) {
+                        is kotlinx.coroutines.TimeoutCancellationException -> "Tempo limite excedido. Verifique sua conexão."
+                        else -> e.message ?: "Erro ao carregar dados"
+                    }
+
+                    _loadingState.value = LoadingState.Error(errorMessage, retryable = true)
+                    _uiState.value = HomeUiState.Error(errorMessage)
+                    retryCount = 0
+                }
+            }
         }
     }
 
+    /**
+     * Calcula delay com exponential backoff
+     * Tentativa 1: 1s, Tentativa 2: 2s, Tentativa 3: 4s
+     */
+    private fun calculateBackoffDelay(attempt: Int): Long {
+        return (BASE_DELAY_MS * 2.0.pow(attempt - 1)).toLong().coerceAtMost(MAX_DELAY_MS)
+    }
+
     fun toggleViewMode() {
+        isGridView = !isGridView
         val currentState = _uiState.value
         if (currentState is HomeUiState.Success) {
-            _uiState.value = currentState.copy(isGridView = !currentState.isGridView)
+            _uiState.value = currentState.copy(isGridView = isGridView)
         }
+    }
+
+    fun retryLoad() {
+        loadHomeData(forceRetry = true)
     }
     
     fun getCurrentUserId(): String? {
@@ -192,6 +310,11 @@ class HomeViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "HomeViewModel"
+        private const val TIMEOUT_MILLIS = 8_000L // 8 segundos
+        private const val MAX_RETRY_COUNT = 3
+        private const val BASE_DELAY_MS = 1000L // 1 segundo
+        private const val MAX_DELAY_MS = 4000L // 4 segundos
+        private const val KEY_IS_GRID_VIEW = "is_grid_view"
     }
 }
 

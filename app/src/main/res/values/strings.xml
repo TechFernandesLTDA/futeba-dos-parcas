@@ -848,4 +848,24 @@ subir no ranking!</string>
     <string name="adaptive_nav_players">Jogadores</string>
     <string name="adaptive_nav_league">Liga</string>
     <string name="adaptive_nav_profile">Perfil</string>
+
+    <!-- Empty States -->
+    <string name="empty_state_no_connection_title">Sem conexao</string>
+    <string name="empty_state_no_connection_desc">Verifique sua conexao com a internet e tente novamente</string>
+    <string name="empty_state_no_results_title">Nenhum resultado encontrado</string>
+    <string name="empty_state_no_results_desc">Tente buscar com outras palavras</string>
+    <string name="empty_state_no_games_title">Nenhum jogo agendado</string>
+    <string name="empty_state_no_games_desc">Que tal criar o primeiro jogo e reunir a galera?</string>
+    <string name="empty_state_no_players_title">Nenhum jogador</string>
+    <string name="empty_state_no_players_desc">Convide seus amigos para comecar a jogar!</string>
+    <string name="empty_state_create_game">Criar Jogo</string>
+    <string name="empty_state_invite_players">Convidar Jogadores</string>
+    <string name="empty_state_clear_search">Limpar Busca</string>
+
+    <!-- Undo Snackbar -->
+    <string name="undo">Desfazer</string>
+    <string name="undo_action">Desfazer acao</string>
+    <string name="item_deleted">Item excluido</string>
+    <string name="item_removed">Item removido</string>
+    <string name="action_undone">Acao desfeita</string>
 </resources>

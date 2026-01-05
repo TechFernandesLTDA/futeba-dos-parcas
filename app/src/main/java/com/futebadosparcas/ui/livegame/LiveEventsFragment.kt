@@ -46,7 +46,10 @@ class LiveEventsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        binding.rvLiveEvents.adapter = adapter
+        binding.rvLiveEvents.apply {
+            adapter = this@LiveEventsFragment.adapter
+            setHasFixedSize(true)
+        }
     }
 
     private fun observeViewModel() {

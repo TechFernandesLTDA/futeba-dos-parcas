@@ -19,53 +19,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.futebadosparcas.ui.theme.ThemeViewModel
 import androidx.compose.ui.platform.LocalInspectionMode
 
-private val LightColorScheme = lightColorScheme(
-    primary = Color(FutebaColors.Primary),
-    onPrimary = Color(FutebaColors.OnPrimary),
-    primaryContainer = Color(FutebaColors.PrimaryContainer),
-    onPrimaryContainer = Color(FutebaColors.OnPrimaryContainer),
-    secondary = Color(FutebaColors.Secondary),
-    onSecondary = Color(FutebaColors.OnSecondary),
-    secondaryContainer = Color(FutebaColors.SecondaryContainer),
-    onSecondaryContainer = Color(FutebaColors.OnSecondaryContainer),
-    tertiary = Color(FutebaColors.Tertiary),
-    onTertiary = Color(FutebaColors.OnTertiary),
-    tertiaryContainer = Color(FutebaColors.TertiaryContainer),
-    onTertiaryContainer = Color(FutebaColors.OnTertiaryContainer),
-    error = Color(FutebaColors.Error),
-    background = Color(FutebaColors.Background),
-    onBackground = Color(FutebaColors.OnBackground),
-    surface = Color(FutebaColors.Surface),
-    onSurface = Color(FutebaColors.OnSurface),
-    surfaceVariant = Color(FutebaColors.SurfaceVariant),
-    onSurfaceVariant = Color(FutebaColors.OnSurfaceVariant),
-    outline = Color(FutebaColors.Outline),
-    outlineVariant = Color(FutebaColors.OutlineVariant)
-)
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Color(FutebaColors.PrimaryDarkTheme),
-    onPrimary = Color(FutebaColors.OnPrimaryDark),
-    primaryContainer = Color(FutebaColors.PrimaryContainerDark),
-    onPrimaryContainer = Color(FutebaColors.OnPrimaryContainerDark),
-    secondary = Color(FutebaColors.SecondaryDarkTheme),
-    onSecondary = Color(FutebaColors.OnSecondaryDark),
-    secondaryContainer = Color(FutebaColors.SecondaryContainerDark),
-    onSecondaryContainer = Color(FutebaColors.OnSecondaryContainerDark),
-    tertiary = Color(FutebaColors.TertiaryDarkTheme),
-    onTertiary = Color(FutebaColors.OnTertiaryDark),
-    tertiaryContainer = Color(FutebaColors.TertiaryContainerDark),
-    onTertiaryContainer = Color(FutebaColors.OnTertiaryContainerDark),
-    error = Color(FutebaColors.ErrorDark),
-    background = Color(FutebaColors.BackgroundDark),
-    onBackground = Color(FutebaColors.OnBackgroundDark),
-    surface = Color(FutebaColors.SurfaceDark),
-    onSurface = Color(FutebaColors.OnSurfaceDark),
-    surfaceVariant = Color(FutebaColors.SurfaceVariantDark),
-    onSurfaceVariant = Color(FutebaColors.OnSurfaceVariantDark),
-    outline = Color(FutebaColors.OutlineDark),
-    outlineVariant = Color(FutebaColors.OutlineVariantDark)
-)
+// DEPRECATED: Usar FutebaLightColorScheme e FutebaDarkColorScheme de Color.kt
+// Mantido temporariamente para compatibilidade
+private val LightColorScheme = FutebaLightColorScheme
+private val DarkColorScheme = FutebaDarkColorScheme
 
 
 
