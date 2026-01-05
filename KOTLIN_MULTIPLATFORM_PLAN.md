@@ -30,6 +30,45 @@ Este documento descreve o plano de migracao do projeto **Futeba dos Parcas** par
 - **Local DB**: Room
 - **UI**: ViewBinding (XML) + Compose (parcial)
 
+### Progresso da Implementacao KMP (Janeiro 2026)
+
+#### Modulo `shared/` - IMPLEMENTADO ✅
+
+```
+shared/src/commonMain/kotlin/com/futebadosparcas/
+├── domain/
+│   ├── ai/
+│   │   └── TeamBalancer.kt          ✅ Balanceamento de times
+│   ├── gamification/
+│   │   ├── BadgeDefinitions.kt      ✅ Definicoes de badges
+│   │   └── MilestoneChecker.kt      ✅ Verificador de milestones
+│   ├── model/
+│   │   ├── Badge.kt                 ✅ Sistema de badges
+│   │   ├── Game.kt                  ✅ Jogo e confirmacoes
+│   │   ├── GameResult.kt            ✅ Resultado de jogos
+│   │   ├── GamificationSettings.kt  ✅ Configuracoes de XP
+│   │   ├── Group.kt                 ✅ Grupos e membros
+│   │   ├── LeagueDivision.kt        ✅ Divisoes da liga
+│   │   ├── PlayerPosition.kt        ✅ Posicoes
+│   │   ├── Season.kt                ✅ Temporadas e participacao
+│   │   ├── Statistics.kt            ✅ Estatisticas e XP logs
+│   │   └── User.kt                  ✅ Usuario completo
+│   ├── ranking/
+│   │   ├── LeagueRatingCalculator.kt ✅ Sistema Elo modificado
+│   │   ├── LevelCalculator.kt       ✅ Sistema de niveis
+│   │   └── XPCalculator.kt          ✅ Calculo de XP
+│   ├── repository/
+│   │   ├── GameRepository.kt        ✅ Interface de jogos
+│   │   ├── GroupRepository.kt       ✅ Interface de grupos
+│   │   ├── SeasonRepository.kt      ✅ Interface de temporadas
+│   │   ├── StatisticsRepository.kt  ✅ Interface de estatisticas
+│   │   └── UserRepository.kt        ✅ Interface de usuarios
+│   └── util/
+│       └── DateTimeUtils.kt         ✅ Utilitarios de data/hora
+```
+
+**Total: 20 arquivos compartilhaveis implementados**
+
 ---
 
 ## Arquitetura Proposta
