@@ -66,16 +66,19 @@ class GetUserBadgesUseCase @Inject constructor(
 
             // 3. Filtrar badges não conquistadas
             val earnedIds = earnedBadges.map { it.badgeId }.toSet()
-            val availableBadges = allBadges.filter { it.id !in earnedIds }
+            val availableBadges = allBadges.filter { badge -> badge.id !in earnedIds }
 
             // 4. Badges recentes (últimas 5)
             val recentBadges = earnedBadges
-                .sortedByDescending { it.earnedAt }
+                .sortedByDescending { it.unlockedAt }
                 .take(5)
 
             // 5. Calcular distribuição por raridade
+            // Para UserBadge, precisamos buscar a Badge correspondente para obter a raridade
+            val badgeMap = allBadges.associateBy { it.id }
             val rarityDistribution = earnedBadges
-                .groupBy { it.rarity ?: "COMMON" }
+                .mapNotNull { userBadge -> badgeMap[userBadge.badgeId]?.rarity?.name }
+                .groupBy { it }
                 .mapValues { it.value.size }
 
             // 6. Calcular porcentagem de conclusão
@@ -86,7 +89,7 @@ class GetUserBadgesUseCase @Inject constructor(
             }
 
             val summary = BadgesSummary(
-                earnedBadges = earnedBadges.sortedByDescending { it.earnedAt },
+                earnedBadges = earnedBadges.sortedByDescending { it.unlockedAt },
                 availableBadges = availableBadges,
                 recentBadges = recentBadges,
                 totalEarned = earnedBadges.size,
@@ -168,8 +171,17 @@ class GetUserBadgesUseCase @Inject constructor(
             return Result.failure(earnedResult.exceptionOrNull()!!)
         }
 
+        // Buscar todas as badges disponíveis para filtrar por categoria
+        val allBadgesResult = gamificationRepository.getAvailableBadges()
+        if (allBadgesResult.isFailure) {
+            return Result.failure(allBadgesResult.exceptionOrNull()!!)
+        }
+
+        val allBadges = allBadgesResult.getOrNull()!!
+        val badgesInCategory = allBadges.filter { it.type.name == category }.map { it.id }.toSet()
+
         val filteredBadges = earnedResult.getOrNull()!!.filter {
-            it.category == category
+            it.badgeId in badgesInCategory
         }
 
         return Result.success(filteredBadges)

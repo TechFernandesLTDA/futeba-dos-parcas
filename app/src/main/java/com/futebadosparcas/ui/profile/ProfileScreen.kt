@@ -25,6 +25,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -562,6 +563,8 @@ private fun FieldTypeIcon(
                 FieldType.SOCIETY -> Icons.Default.Sports
                 FieldType.FUTSAL -> Icons.Default.SportsSoccer
                 FieldType.CAMPO -> Icons.Default.Grass
+                FieldType.AREIA -> Icons.Default.BeachAccess
+                FieldType.OUTROS -> Icons.Default.SportsSoccer
             },
             contentDescription = label,
             modifier = Modifier.size(40.dp),

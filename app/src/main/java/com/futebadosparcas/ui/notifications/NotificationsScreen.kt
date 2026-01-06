@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,22 +61,12 @@ fun NotificationsScreen(
     val unreadCount by viewModel.unreadCount.collectAsStateWithLifecycle()
 
     // Pull-to-refresh state
-    val pullToRefreshState = rememberPullToRefreshState()
     var isRefreshing by remember { mutableStateOf(false) }
-
-    // Efeito para pull-to-refresh
-    LaunchedEffect(pullToRefreshState.isRefreshing) {
-        if (pullToRefreshState.isRefreshing) {
-            isRefreshing = true
-            viewModel.loadNotifications()
-        }
-    }
 
     // Reseta o estado de refresh quando terminar
     LaunchedEffect(uiState) {
         if (uiState !is NotificationsUiState.Loading) {
             isRefreshing = false
-            pullToRefreshState.endRefresh()
         }
     }
 
@@ -104,6 +95,10 @@ fun NotificationsScreen(
         }
     }
 
+    // String resources (must be read at composable level)
+    val emptyTitle = stringResource(R.string.fragment_notifications_text_1)
+    val emptyDescription = stringResource(R.string.fragment_notifications_text_2)
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -126,8 +121,10 @@ fun NotificationsScreen(
         ) {
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
-                onRefresh = { viewModel.loadNotifications() },
-                state = pullToRefreshState,
+                onRefresh = {
+                    isRefreshing = true
+                    viewModel.loadNotifications()
+                },
                 modifier = Modifier.fillMaxSize()
             ) {
                 when (val state = uiState) {
@@ -138,8 +135,8 @@ fun NotificationsScreen(
                     is NotificationsUiState.Empty -> {
                         EmptyState(
                             type = EmptyStateType.NoData(
-                                title = stringResource(R.string.fragment_notifications_text_1),
-                                description = stringResource(R.string.fragment_notifications_text_2),
+                                title = emptyTitle,
+                                description = emptyDescription,
                                 icon = Icons.Default.Notifications
                             )
                         )
@@ -601,7 +598,7 @@ private fun NotificationShimmerCard(brush: androidx.compose.ui.graphics.Brush) {
 /**
  * Agrupa notificações por data (Hoje, Ontem, Esta Semana, Antigas)
  */
-private fun groupNotificationsByDate(notifications: List<AppNotification>): LinkedHashMap<String, List<AppNotification>> {
+private fun groupNotificationsByDate(notifications: List<AppNotification>): Map<String, List<AppNotification>> {
     val grouped = LinkedHashMap<String, MutableList<AppNotification>>()
     val now = Calendar.getInstance()
     val today = Calendar.getInstance().apply {

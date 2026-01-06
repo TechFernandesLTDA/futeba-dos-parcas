@@ -244,9 +244,7 @@ private fun PlayerStatsCard(
                                         fontWeight = FontWeight.Bold,
                                         color = androidx.compose.ui.graphics.Color.Black,
                                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                                        fontSize = MaterialTheme.typography.labelSmall.fontSize.copy(
-                                            value = MaterialTheme.typography.labelSmall.fontSize.value * 0.8f
-                                        )
+                                        fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.8f
                                     )
                                 }
                             }
@@ -262,9 +260,7 @@ private fun PlayerStatsCard(
                                         fontWeight = FontWeight.Bold,
                                         color = androidx.compose.ui.graphics.Color.White,
                                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                                        fontSize = MaterialTheme.typography.labelSmall.fontSize.copy(
-                                            value = MaterialTheme.typography.labelSmall.fontSize.value * 0.8f
-                                        )
+                                        fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.8f
                                     )
                                 }
                             }
@@ -302,9 +298,7 @@ private fun StatBadge(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                fontSize = MaterialTheme.typography.labelSmall.fontSize.copy(
-                    value = MaterialTheme.typography.labelSmall.fontSize.value * 1.2f
-                )
+                fontSize = MaterialTheme.typography.labelSmall.fontSize * 1.2f
             )
 
             Text(

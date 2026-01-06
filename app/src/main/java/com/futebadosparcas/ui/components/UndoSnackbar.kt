@@ -63,10 +63,9 @@ fun UndoSnackbar(
         modifier = modifier.padding(12.dp),
         containerColor = containerColor,
         contentColor = contentColor,
-        actionColor = actionColor,
         shape = MaterialTheme.shapes.medium,
-        action = {
-            snackbarData.visuals.actionLabel?.let { actionLabel ->
+        action = snackbarData.visuals.actionLabel?.let { actionLabel ->
+            {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)

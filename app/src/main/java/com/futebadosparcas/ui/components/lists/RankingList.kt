@@ -51,6 +51,7 @@ import com.futebadosparcas.ui.theme.FutebaColors
  * @param contentPadding Padding do conteúdo
  * @param showDivisions Se deve mostrar headers de divisão
  */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun RankingList(
     entries: Map<LeagueDivision, List<RankingEntryV2>>,

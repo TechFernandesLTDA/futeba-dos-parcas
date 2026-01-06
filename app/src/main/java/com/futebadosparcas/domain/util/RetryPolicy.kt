@@ -104,9 +104,7 @@ suspend fun <T> suspendWithRetry(
 
             // Se não for retryable ou se for a última tentativa, lançar exceção
             if (!policy.isRetryable(e) || attempt == policy.maxAttempts - 1) {
-                AppLogger.e("RetryPolicy") {
-                    "Operação falhou após ${attempt + 1} tentativas: ${e.message}"
-                }
+                AppLogger.e("RetryPolicy", "Operação falhou após ${attempt + 1} tentativas: ${e.message}", e)
                 throw e
             }
 

@@ -5,20 +5,25 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,22 +55,17 @@ fun GamesScreen(
     onGroupsClick: () -> Unit = {},
     onMapClick: () -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycleContext()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unreadCount by viewModel.unreadCount.collectAsStateWithLifecycle()
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             FutebaTopBar(
                 unreadCount = unreadCount,
                 onNavigateNotifications = onNotificationsClick,
                 onNavigateGroups = onGroupsClick,
-                onNavigateMap = onMapClick,
-                scrollBehavior = scrollBehavior
+                onNavigateMap = onMapClick
             )
         },
         floatingActionButton = {
@@ -150,10 +150,10 @@ private fun GamesSuccessContent(
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(games, key = { it.id }) { game ->
+            items(games, key = { it.game.id }) { game ->
                 GameCard(
                     game = game,
-                    onClick = { onGameClick(game.id) },
+                    onClick = { onGameClick(game.game.id) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -236,16 +236,16 @@ private fun GameCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = game.locationName,
+                        text = game.game.locationName,
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    if (game.locationAddress.isNotEmpty()) {
+                    if (game.game.locationAddress.isNotEmpty()) {
                         Text(
-                            text = game.locationAddress,
+                            text = game.game.locationAddress,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                             maxLines = 1,
@@ -257,11 +257,11 @@ private fun GameCard(
                 // Badge de tipo de campo
                 Surface(
                     shape = RoundedCornerShape(6.dp),
-                    color = getFieldTypeColor(game.fieldType),
+                    color = getFieldTypeColor(game.game.gameType),
                     modifier = Modifier.padding(start = 8.dp)
                 ) {
                     Text(
-                        text = game.fieldType,
+                        text = game.game.gameType,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -282,7 +282,7 @@ private fun GameCard(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = formatGameDateTime(game.scheduledTime),
+                    text = "${game.game.date} ${game.game.time}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -301,7 +301,7 @@ private fun GameCard(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "${game.confirmations?.size ?: 0} confirmados",
+                    text = "${game.game.playersCount} confirmados",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -309,14 +309,14 @@ private fun GameCard(
                 Spacer(modifier = Modifier.weight(1f))
 
                 // Status badge
-                if (game.status?.isNotEmpty() == true) {
+                if (game.game.status.isNotEmpty()) {
                     Surface(
                         shape = RoundedCornerShape(4.dp),
-                        color = getStatusColor(game.status),
+                        color = getStatusColor(game.game.status),
                         modifier = Modifier.padding(end = 4.dp)
                     ) {
                         Text(
-                            text = game.status,
+                            text = game.game.status,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -427,7 +427,7 @@ private fun GamesErrorState(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(vertical = 16.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = TextAlign.Center
         )
 
         Button(onClick = onRetry) {
@@ -467,16 +467,3 @@ private fun formatGameDateTime(timestamp: Long): String {
     val sdf = java.text.SimpleDateFormat("dd/MM HH:mm", java.util.Locale.getDefault())
     return sdf.format(java.util.Date(timestamp))
 }
-
-/**
- * Extension para coletar estado com lifecycle
- */
-@Composable
-private fun <T> androidx.lifecycle.viewmodel.compose.ViewModel.collectAsStateWithLifecycleContext(): State<T> {
-    return androidx.compose.runtime.remember { androidx.lifecycle.compose.collectAsStateWithLifecycle() }
-}
-
-// Import para Color local
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll

@@ -2,6 +2,7 @@ package com.futebadosparcas.ui.groups
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -196,6 +197,7 @@ private fun CreateGroupFab(
 /**
  * Conteúdo de sucesso com lista de grupos
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun GroupsSuccessContent(
     groups: List<UserGroup>,
@@ -273,8 +275,9 @@ private fun SearchBar(
             }
         },
         shape = RoundedCornerShape(28.dp),
-        colors = TextFieldDefaults.textFieldColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent

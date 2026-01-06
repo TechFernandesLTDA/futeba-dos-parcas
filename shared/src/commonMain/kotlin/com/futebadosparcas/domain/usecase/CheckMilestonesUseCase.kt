@@ -9,8 +9,6 @@ import com.futebadosparcas.domain.model.Statistics
  */
 class CheckMilestonesUseCase {
 
-    private val milestoneChecker = MilestoneChecker()
-
     /**
      * Verifica quais milestones foram conquistados pelo jogador.
      *
@@ -21,8 +19,10 @@ class CheckMilestonesUseCase {
     operator fun invoke(
         statistics: Statistics,
         previouslyUnlocked: List<String>
-    ): List<String> {
-        return milestoneChecker.checkMilestones(statistics, previouslyUnlocked)
+    ): List<com.futebadosparcas.domain.gamification.MilestoneDefinition> {
+        return MilestoneChecker.checkAll(statistics, previouslyUnlocked)
+            .filter { it.isNewUnlock }
+            .map { it.milestone }
     }
 
     /**
@@ -37,16 +37,16 @@ class CheckMilestonesUseCase {
         statistics: Statistics
     ): Boolean {
         val unlocked = invoke(statistics, emptyList())
-        return unlocked.contains(milestoneId)
+        return unlocked.any { it.id == milestoneId }
     }
 
     /**
      * Retorna todos os milestones disponiveis no sistema.
      *
-     * @return Lista de IDs de milestones
+     * @return Lista de definicoes de milestones
      */
-    fun getAllMilestones(): List<String> {
-        return milestoneChecker.getAllMilestoneIds()
+    fun getAllMilestones(): List<com.futebadosparcas.domain.gamification.MilestoneDefinition> {
+        return MilestoneChecker.allMilestones
     }
 
     /**

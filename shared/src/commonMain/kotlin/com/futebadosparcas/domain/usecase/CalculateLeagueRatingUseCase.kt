@@ -1,5 +1,6 @@
 package com.futebadosparcas.domain.usecase
 
+import com.futebadosparcas.domain.model.GameResult
 import com.futebadosparcas.domain.ranking.LeagueRatingCalculator
 
 /**
@@ -8,136 +9,58 @@ import com.futebadosparcas.domain.ranking.LeagueRatingCalculator
  */
 class CalculateLeagueRatingUseCase {
 
-    private val calculator = LeagueRatingCalculator()
-
     /**
-     * Calcula a variacao de rating para dois jogadores apos uma partida.
-     *
-     * @param winnerRating Rating atual do vencedor
-     * @param loserRating Rating atual do perdedor
-     * @return Variacao de rating (pontos ganhos/perdidos)
+     * Calcula novo rating completo com todas as estatisticas.
      */
-    fun calculateRatingChange(
-        winnerRating: Double,
-        loserRating: Double
-    ): Double {
-        return calculator.calculateRatingChange(winnerRating, loserRating)
-    }
-
-    /**
-     * Calcula novo rating apos uma vitoria.
-     *
-     * @param currentRating Rating atual do jogador
-     * @param opponentRating Rating do adversario
-     * @return Novo rating do jogador
-     */
-    fun calculateNewRatingAfterWin(
-        currentRating: Double,
-        opponentRating: Double
-    ): Double {
-        val change = calculateRatingChange(currentRating, opponentRating)
-        return currentRating + change
-    }
-
-    /**
-     * Calcula novo rating apos uma derrota.
-     *
-     * @param currentRating Rating atual do jogador
-     * @param opponentRating Rating do vencedor
-     * @return Novo rating do jogador
-     */
-    fun calculateNewRatingAfterLoss(
-        currentRating: Double,
-        opponentRating: Double
-    ): Double {
-        val change = calculateRatingChange(opponentRating, currentRating)
-        return currentRating - change
-    }
-
-    /**
-     * Calcula novo rating apos um empate (nenhuma mudanca significativa).
-     *
-     * @param currentRating Rating atual do jogador
-     * @return Novo rating do jogador (inalterado ou pequena mudanca)
-     */
-    fun calculateNewRatingAfterDraw(currentRating: Double): Double {
-        // Em empates, o rating permanece o mesmo ou sofre ajuste minimo
-        return currentRating
-    }
-
-    /**
-     * Calcula a probabilidade de vitoria baseada nos ratings.
-     *
-     * @param playerRating Rating do jogador
-     * @param opponentRating Rating do adversario
-     * @return Probabilidade de vitoria (0.0 - 1.0)
-     */
-    fun calculateWinProbability(
-        playerRating: Double,
-        opponentRating: Double
-    ): Double {
-        return calculator.calculateExpectedScore(playerRating, opponentRating)
-    }
-
-    /**
-     * Retorna informacoes detalhadas sobre uma partida de rating.
-     *
-     * @param playerRating Rating do jogador
-     * @param opponentRating Rating do adversario
-     * @return Informacoes da partida
-     */
-    fun getMatchInfo(
-        playerRating: Double,
-        opponentRating: Double
-    ): MatchRatingInfo {
-        val winProbability = calculateWinProbability(playerRating, opponentRating)
-        val ratingChange = calculateRatingChange(playerRating, opponentRating)
-        val newRatingIfWin = calculateNewRatingAfterWin(playerRating, opponentRating)
-        val newRatingIfLose = calculateNewRatingAfterLoss(playerRating, opponentRating)
-
-        return MatchRatingInfo(
-            currentRating = playerRating,
-            opponentRating = opponentRating,
-            winProbability = winProbability,
-            lossProbability = 1.0 - winProbability,
-            potentialGain = ratingChange,
-            potentialLoss = ratingChange,
-            newRatingIfWin = newRatingIfWin,
-            newRatingIfLose = newRatingIfLose
+    fun calculateNewRating(
+        currentRating: Int,
+        opponentAverageRating: Int,
+        gameResult: GameResult,
+        gamesPlayed: Int = 0,
+        wasMvp: Boolean = false,
+        goals: Int = 0,
+        assists: Int = 0
+    ): LeagueRatingCalculator.RatingCalculationResult {
+        return LeagueRatingCalculator.calculateNewRating(
+            currentRating = currentRating,
+            opponentAverageRating = opponentAverageRating,
+            gameResult = gameResult,
+            gamesPlayed = gamesPlayed,
+            wasMvp = wasMvp,
+            goals = goals,
+            assists = assists
         )
     }
-}
-
-/**
- * Informacoes detalhadas sobre uma partida de rating.
- */
-data class MatchRatingInfo(
-    val currentRating: Double,
-    val opponentRating: Double,
-    val winProbability: Double,
-    val lossProbability: Double,
-    val potentialGain: Double,
-    val potentialLoss: Double,
-    val newRatingIfWin: Double,
-    val newRatingIfLose: Double
-) {
-    /**
-     * Retorna a probabilidade de vitoria como percentual (0-100).
-     */
-    fun getWinProbabilityPercent(): Int = (winProbability * 100).toInt()
 
     /**
-     * Retorna a probabilidade de derrota como percentual (0-100).
+     * Estima a mudança de rating de forma simples.
      */
-    fun getLossProbabilityPercent(): Int = (lossProbability * 100).toInt()
+    fun estimateRatingChange(
+        currentRating: Int,
+        opponentRating: Int,
+        gameResult: GameResult
+    ): Int {
+        return LeagueRatingCalculator.estimateRatingChange(currentRating, opponentRating, gameResult)
+    }
 
     /**
-     * Verifica se o jogador e favorito (probabilidade > 50%).
+     * Calcula rating médio de um grupo de jogadores.
      */
-    fun isFavorite(): Boolean = winProbability > 0.5
+    fun calculateAverageRating(ratings: List<Int>): Int {
+        return LeagueRatingCalculator.calculateAverageRating(ratings)
+    }
 
     /**
-     * Retorna a diferenca de rating.
+     * Retorna o rating inicial para novos jogadores.
      */
-    fun getRatingDifference(): Double = currentRating - opponentRating
+    fun getInitialRating(): Int {
+        return LeagueRatingCalculator.getInitialRating()
+    }
+
+    /**
+     * Calcula pontos da temporada baseado em vitorias/empates/derrotas.
+     */
+    fun calculateSeasonPoints(wins: Int, draws: Int, losses: Int): Int {
+        return LeagueRatingCalculator.calculateSeasonPoints(wins, draws, losses)
+    }
 }

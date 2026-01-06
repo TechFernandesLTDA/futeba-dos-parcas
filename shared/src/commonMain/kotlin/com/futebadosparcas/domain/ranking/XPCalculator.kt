@@ -231,7 +231,7 @@ object XPCalculator {
     ): XpCalculationResult {
         val playerData = PlayerGameData(
             playerId = confirmation.userId,
-            position = confirmation.position,
+            position = confirmation.getPositionEnum(),
             goals = confirmation.goals,
             assists = confirmation.assists,
             saves = confirmation.saves,

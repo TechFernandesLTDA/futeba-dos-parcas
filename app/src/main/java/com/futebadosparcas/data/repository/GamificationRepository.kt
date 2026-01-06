@@ -229,6 +229,24 @@ class GamificationRepository @Inject constructor(
     }
 
     /**
+     * Busca todos os badges disponíveis no sistema
+     */
+    suspend fun getAvailableBadges(): Result<List<Badge>> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_BADGES)
+                .get()
+                .await()
+
+            val badges = snapshot.toObjects(Badge::class.java)
+            AppLogger.d(TAG) { "Badges disponíveis: ${badges.size}" }
+            Result.success(badges)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar badges disponíveis", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Busca os badges mais recentes do usuário
      */
     suspend fun getRecentBadges(userId: String, limit: Int = 5): Result<List<UserBadge>> {
