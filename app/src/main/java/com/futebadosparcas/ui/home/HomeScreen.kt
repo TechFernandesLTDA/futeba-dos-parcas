@@ -1,6 +1,7 @@
 package com.futebadosparcas.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -8,6 +9,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -210,7 +212,7 @@ private fun HomeSuccessContent(
             item {
                 PublicGamesSuggestions(
                     games = state.publicGames,
-                    onGameClick = onGameClick,
+                    onGameClick = { game -> onGameClick(game.id) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
@@ -290,7 +292,7 @@ private fun UpcomingGameCard(
             )
 
             Text(
-                text = formatGameDateTime(game.scheduledTime),
+                text = "${game.date} às ${game.time}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
@@ -298,7 +300,7 @@ private fun UpcomingGameCard(
             // Confirmações (Placeholder)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Confirmados: ${game.confirmations?.size ?: 0}",
+                text = "Confirmados: ${game.playersCount}/${game.maxPlayers}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary
             )

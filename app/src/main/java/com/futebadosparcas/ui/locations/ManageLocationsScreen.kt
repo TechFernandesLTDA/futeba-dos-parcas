@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -114,7 +115,7 @@ fun ManageLocationsScreen(
                                     showDeduplicateDialog = true
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.DeleteDuplicates, contentDescription = null)
+                                    Icon(Icons.Default.DeleteSweep, contentDescription = null)
                                 }
                             )
                         }
@@ -587,6 +588,3 @@ private fun DeduplicateDialog(
         onDismiss = onDismiss
     )
 }
-
-private fun androidx.compose.foundation.Modifier.clickable(onClick: () -> Unit) =
-    androidx.compose.foundation.clickable { onClick() }

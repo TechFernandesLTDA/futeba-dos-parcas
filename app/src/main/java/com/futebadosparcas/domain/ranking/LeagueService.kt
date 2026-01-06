@@ -88,13 +88,13 @@ class LeagueService @Inject constructor(
                 .take(MAX_RECENT_GAMES)
 
             // 3. Calcular novo League Rating
-            val newLeagueRating = LeagueRatingCalculator.calculate(updatedRecentGames)
-            val suggestedDivision = LeagueRatingCalculator.getDivisionForRating(newLeagueRating)
+            val newLeagueRating = com.futebadosparcas.data.model.LeagueRatingCalculator.calculate(updatedRecentGames)
+            val suggestedDivision = com.futebadosparcas.data.model.LeagueRatingCalculator.getDivisionForRating(newLeagueRating)
 
             // 4. Verificar promocao/rebaixamento
             // Thresholds
-            val nextTierThreshold = LeagueRatingCalculator.getNextDivisionThreshold(participation.division)
-            val prevTierThreshold = LeagueRatingCalculator.getPreviousDivisionThreshold(participation.division)
+            val nextTierThreshold = com.futebadosparcas.data.model.LeagueRatingCalculator.getNextDivisionThreshold(participation.division)
+            val prevTierThreshold = com.futebadosparcas.data.model.LeagueRatingCalculator.getPreviousDivisionThreshold(participation.division)
             
             var currentProtection = participation.protectionGames
             var currentPromotionProgress = participation.promotionProgress
@@ -285,7 +285,7 @@ class LeagueService @Inject constructor(
 
              if (lastParticipation != null) {
                 // Bug #2 Fix: Busca ultima participacao independente do mes
-                startDivision = LeagueRatingCalculator.getDivisionForRating(lastParticipation.leagueRating)
+                startDivision = com.futebadosparcas.data.model.LeagueRatingCalculator.getDivisionForRating(lastParticipation.leagueRating)
                 
                 // Bug #3 Fix: Momentum - Carregar últimos jogos (max 5) para não zerar rating
                 momentumGames = lastParticipation.recentGames.take(5)

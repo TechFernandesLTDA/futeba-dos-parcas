@@ -12,10 +12,10 @@ class CalculateLevelUseCase {
      * Calcula o nivel atual do jogador baseado no XP.
      *
      * @param currentXp XP atual do jogador
-     * @return Nivel calculado (1-100)
+     * @return Nivel calculado (1-10)
      */
     fun calculateLevel(currentXp: Long): Int {
-        return LevelCalculator.calculateLevel(currentXp)
+        return LevelCalculator.getLevelFromXp(currentXp)
     }
 
     /**
@@ -25,7 +25,7 @@ class CalculateLevelUseCase {
      * @return XP necessario para atingir o nivel
      */
     fun getXpForLevel(targetLevel: Int): Long {
-        return LevelCalculator.getXpForLevel(targetLevel)
+        return LevelCalculator.getLevelInfo(targetLevel).xpRequired
     }
 
     /**
@@ -45,7 +45,7 @@ class CalculateLevelUseCase {
      * @return Percentual de progresso (0.0 - 1.0)
      */
     fun calculateLevelProgress(currentXp: Long): Double {
-        return LevelCalculator.calculateLevelProgress(currentXp)
+        return LevelCalculator.getProgressToNextLevel(currentXp).toDouble()
     }
 
     /**
@@ -56,20 +56,21 @@ class CalculateLevelUseCase {
      */
     fun getLevelInfo(currentXp: Long): LevelInfo {
         val currentLevel = calculateLevel(currentXp)
-        val xpForCurrentLevel = getXpForLevel(currentLevel)
-        val xpForNextLevel = getXpForNextLevel(currentXp)
+        val levelInfo = LevelCalculator.getLevelInfo(currentLevel)
+        val xpForCurrentLevel = levelInfo.xpRequired
+        val xpNeededForNextLevel = getXpForNextLevel(currentXp)
         val xpInCurrentLevel = currentXp - xpForCurrentLevel
-        val xpNeededForNextLevel = xpForNextLevel - currentXp
         val progress = calculateLevelProgress(currentXp)
 
         return LevelInfo(
             currentLevel = currentLevel,
             currentXp = currentXp,
             xpForCurrentLevel = xpForCurrentLevel,
-            xpForNextLevel = xpForNextLevel,
+            xpForNextLevel = xpForCurrentLevel + levelInfo.xpForNextLevel,
             xpInCurrentLevel = xpInCurrentLevel,
             xpNeededForNextLevel = xpNeededForNextLevel,
-            progressPercentage = progress
+            progressPercentage = progress,
+            levelTitle = levelInfo.title
         )
     }
 
@@ -81,9 +82,7 @@ class CalculateLevelUseCase {
      * @return True se o jogador subiu de nivel
      */
     fun didLevelUp(oldXp: Long, newXp: Long): Boolean {
-        val oldLevel = calculateLevel(oldXp)
-        val newLevel = calculateLevel(newXp)
-        return newLevel > oldLevel
+        return LevelCalculator.didLevelUp(oldXp, newXp)
     }
 
     /**
@@ -98,6 +97,20 @@ class CalculateLevelUseCase {
         val newLevel = calculateLevel(newXp)
         return maxOf(0, newLevel - oldLevel)
     }
+
+    /**
+     * Retorna o titulo do nivel.
+     */
+    fun getLevelTitle(level: Int): String {
+        return LevelCalculator.getLevelTitle(level)
+    }
+
+    /**
+     * Retorna todos os niveis disponiveis.
+     */
+    fun getAllLevels(): List<LevelCalculator.LevelInfo> {
+        return LevelCalculator.getAllLevels()
+    }
 }
 
 /**
@@ -110,7 +123,8 @@ data class LevelInfo(
     val xpForNextLevel: Long,
     val xpInCurrentLevel: Long,
     val xpNeededForNextLevel: Long,
-    val progressPercentage: Double
+    val progressPercentage: Double,
+    val levelTitle: String
 ) {
     /**
      * Progresso como inteiro (0-100).
@@ -120,5 +134,5 @@ data class LevelInfo(
     /**
      * Verifica se esta no nivel maximo.
      */
-    fun isMaxLevel(): Boolean = currentLevel >= 100
+    fun isMaxLevel(): Boolean = currentLevel >= 10
 }

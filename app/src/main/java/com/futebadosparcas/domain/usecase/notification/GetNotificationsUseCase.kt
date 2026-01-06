@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.usecase.notification
 
-import com.futebadosparcas.data.model.Notification
+import com.futebadosparcas.data.model.AppNotification
 import com.futebadosparcas.data.repository.NotificationRepository
 import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.flow.Flow
@@ -28,10 +28,10 @@ class GetNotificationsUseCase @Inject constructor(
      * Notificações agrupadas por período.
      */
     data class GroupedNotifications(
-        val today: List<Notification>,
-        val yesterday: List<Notification>,
-        val thisWeek: List<Notification>,
-        val older: List<Notification>,
+        val today: List<AppNotification>,
+        val yesterday: List<AppNotification>,
+        val thisWeek: List<AppNotification>,
+        val older: List<AppNotification>,
         val unreadCount: Int
     )
 
@@ -44,18 +44,18 @@ class GetNotificationsUseCase @Inject constructor(
     suspend fun getGroupedNotifications(limit: Int = 50): Result<GroupedNotifications> {
         AppLogger.d(TAG) { "Buscando notificações agrupadas (limit=$limit)" }
 
-        return notificationRepository.getNotifications(limit).map { notifications ->
+        return notificationRepository.getMyNotifications(limit).map { notifications ->
             val now = System.currentTimeMillis()
             val oneDayMs = 24 * 60 * 60 * 1000L
             val oneWeekMs = 7 * oneDayMs
 
-            val today = mutableListOf<Notification>()
-            val yesterday = mutableListOf<Notification>()
-            val thisWeek = mutableListOf<Notification>()
-            val older = mutableListOf<Notification>()
+            val today = mutableListOf<AppNotification>()
+            val yesterday = mutableListOf<AppNotification>()
+            val thisWeek = mutableListOf<AppNotification>()
+            val older = mutableListOf<AppNotification>()
 
             notifications.forEach { notification ->
-                val createdAt = notification.createdAt ?: 0L
+                val createdAt = notification.createdAt?.time ?: 0L
                 val age = now - createdAt
 
                 when {
@@ -67,11 +67,11 @@ class GetNotificationsUseCase @Inject constructor(
             }
 
             GroupedNotifications(
-                today = today.sortedByDescending { it.createdAt },
-                yesterday = yesterday.sortedByDescending { it.createdAt },
-                thisWeek = thisWeek.sortedByDescending { it.createdAt },
-                older = older.sortedByDescending { it.createdAt },
-                unreadCount = notifications.count { !it.isRead }
+                today = today.sortedByDescending { it.createdAt?.time ?: 0L },
+                yesterday = yesterday.sortedByDescending { it.createdAt?.time ?: 0L },
+                thisWeek = thisWeek.sortedByDescending { it.createdAt?.time ?: 0L },
+                older = older.sortedByDescending { it.createdAt?.time ?: 0L },
+                unreadCount = notifications.count { !it.read }
             )
         }
     }
@@ -81,8 +81,8 @@ class GetNotificationsUseCase @Inject constructor(
      *
      * @return Flow com lista de notificações
      */
-    fun getNotificationsFlow(): Flow<List<Notification>> {
-        return notificationRepository.getNotificationsFlow()
+    fun getNotificationsFlow(): Flow<List<AppNotification>> {
+        return notificationRepository.getMyNotificationsFlow()
             .catch { e ->
                 AppLogger.e(TAG, "Erro no flow de notificações", e)
                 emit(emptyList())

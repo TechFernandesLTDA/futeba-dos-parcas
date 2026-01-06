@@ -221,26 +221,7 @@ private fun LocationDashboardCard(
                     )
                 }
 
-                // Número de quadras (se disponível)
-                if (location.fields?.isNotEmpty() == true) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Grass,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "${location.fields.size} ${if (location.fields.size == 1) "quadra" else "quadras"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                // TODO: Número de quadras (requer LocationWithFields ou campo separado)
             }
 
             // Seta para detalhes
@@ -258,10 +239,12 @@ private fun EmptyLocationsState(
     onAddLocation: () -> Unit
 ) {
     EmptyState(
-        icon = Icons.Default.Stadium,
-        title = "Nenhum local cadastrado",
-        message = "Adicione seu primeiro local para começar a gerenciar suas quadras e reservas",
-        actionButtonText = "Adicionar Local",
-        onActionClick = onAddLocation
+        type = com.futebadosparcas.ui.components.EmptyStateType.NoData(
+            title = "Nenhum local cadastrado",
+            description = "Adicione seu primeiro local para começar a gerenciar suas quadras e reservas",
+            icon = Icons.Default.Stadium,
+            actionLabel = "Adicionar Local",
+            onAction = onAddLocation
+        )
     )
 }

@@ -2,10 +2,11 @@ package com.futebadosparcas.domain.usecase.ranking
 
 import com.futebadosparcas.data.model.LeagueDivision
 import com.futebadosparcas.data.model.Season
-import com.futebadosparcas.data.model.SeasonParticipation
+import com.futebadosparcas.data.model.SeasonParticipationV2
 import com.futebadosparcas.data.model.User
 import com.futebadosparcas.data.repository.GamificationRepository
 import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.ranking.LeagueService
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
@@ -23,6 +24,7 @@ import javax.inject.Inject
  */
 class GetLeagueStandingsUseCase @Inject constructor(
     private val gamificationRepository: GamificationRepository,
+    private val leagueService: LeagueService,
     private val userRepository: UserRepository,
     private val auth: FirebaseAuth
 ) {
@@ -36,7 +38,7 @@ class GetLeagueStandingsUseCase @Inject constructor(
     data class RankedPlayer(
         val position: Int,
         val user: User,
-        val participation: SeasonParticipation,
+        val participation: SeasonParticipationV2,
         val division: LeagueDivision,
         val isCurrentUser: Boolean,
         val positionChange: Int,
@@ -91,7 +93,7 @@ class GetLeagueStandingsUseCase @Inject constructor(
             val season = seasonResult.getOrNull()!!
 
             // 2. Buscar classificação da divisão
-            val rankingResult = gamificationRepository.getLeagueRanking(division, limit)
+            val rankingResult = leagueService.getPlayersByDivision(season.id, division, limit)
             if (rankingResult.isFailure) {
                 return Result.failure(rankingResult.exceptionOrNull()!!)
             }

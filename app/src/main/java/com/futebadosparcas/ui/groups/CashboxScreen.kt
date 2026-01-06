@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.data.model.*
 import com.futebadosparcas.ui.components.EmptyState
+import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.dialogs.ConfirmationDialog
 import com.futebadosparcas.ui.components.dialogs.ConfirmationDialogType
 import com.futebadosparcas.ui.components.states.ErrorState
@@ -216,13 +217,15 @@ fun CashboxScreen(
                 }
                 is CashboxHistoryState.Empty -> {
                     EmptyState(
-                        icon = Icons.Default.Receipt,
-                        title = "Nenhuma movimentação",
-                        message = if (canManage) {
-                            "Adicione sua primeira entrada ou saída para começar"
-                        } else {
-                            "Não há movimentações registradas no caixa"
-                        }
+                        type = EmptyStateType.NoData(
+                            title = "Nenhuma movimentação",
+                            description = if (canManage) {
+                                "Adicione sua primeira entrada ou saída para começar"
+                            } else {
+                                "Não há movimentações registradas no caixa"
+                            },
+                            icon = Icons.Default.Receipt
+                        )
                     )
                 }
                 is CashboxHistoryState.Success -> {
@@ -675,8 +678,9 @@ private fun EntryDetailsDialog(
                 DetailRow("Descrição", entry.description)
                 DetailRow("Categoria", entry.getCategoryEnum().displayName)
                 DetailRow("Valor", currencyFormat.format(entry.amount))
-                if (!entry.playerName.isNullOrEmpty()) {
-                    DetailRow("Jogador", entry.playerName)
+                val playerName = entry.playerName
+                if (!playerName.isNullOrEmpty()) {
+                    DetailRow("Jogador", playerName)
                 }
                 if (entry.status == "VOIDED") {
                     DetailRow("Status", "ESTORNADO/CANCELADO")
@@ -755,8 +759,4 @@ private fun TotalsDialog(
     )
 }
 
-// Sealed class para items da lista (Header e Entry)
-sealed class CashboxListItem {
-    data class Header(val title: String) : CashboxListItem()
-    data class Entry(val entry: CashboxEntry) : CashboxListItem()
-}
+// NOTA: CashboxListItem está definido em CashboxEntriesAdapter.kt

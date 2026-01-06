@@ -254,6 +254,7 @@ fun ExampleUndoableAction() {
  * EXEMPLO COMPLETO - Tela de Jogos com todos os componentes
  * =========================================================
  */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun ExampleGamesScreenComplete() {
     // Estados

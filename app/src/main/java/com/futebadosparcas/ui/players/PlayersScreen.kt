@@ -15,13 +15,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -69,7 +65,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  * - Modo comparação de jogadores
  * - Material Design 3
  */
-@OptIn(ExperimentalMaterialApi::class, FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalFoundationApi::class)
 @Composable
 fun PlayersScreen(
     viewModel: PlayersViewModel,
@@ -81,28 +77,11 @@ fun PlayersScreen(
     val unreadCount by viewModel.unreadCount.collectAsStateWithLifecycle()
 
     // Estados locais
-    var isRefreshing by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf(viewModel.currentQuery) }
     var selectedFieldType by remember { mutableStateOf(viewModel.currentFieldType) }
     var selectedSortOption by remember { mutableStateOf(viewModel.currentSortOption) }
     var isComparisonMode by remember { mutableStateOf(false) }
     var selectedPlayers by remember { mutableStateOf(setOf<String>()) }
-
-    // Pull-to-refresh state
-    val pullRefreshState = rememberPullRefreshState(
-        refreshing = isRefreshing,
-        onRefresh = {
-            isRefreshing = true
-            viewModel.loadPlayers(searchQuery)
-        }
-    )
-
-    // Efeito para desativar refreshing quando loading terminar
-    LaunchedEffect(uiState) {
-        if (uiState !is PlayersUiState.Loading) {
-            isRefreshing = false
-        }
-    }
 
     // Debounce manual da busca (300ms)
     LaunchedEffect(searchQuery) {
@@ -111,9 +90,7 @@ fun PlayersScreen(
     }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .pullRefresh(pullRefreshState)
+        modifier = modifier.fillMaxSize()
     ) {
         Column(
             modifier = Modifier
@@ -214,15 +191,6 @@ fun PlayersScreen(
                 }
             }
         }
-
-        // Pull refresh indicator
-        PullRefreshIndicator(
-            refreshing = isRefreshing,
-            state = pullRefreshState,
-            modifier = Modifier.align(Alignment.TopCenter),
-            backgroundColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.primary
-        )
     }
 }
 
@@ -417,6 +385,7 @@ private fun PlayersLoadingContent(
 /**
  * Lista de jogadores
  */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun PlayersListContent(
     players: List<User>,
@@ -483,14 +452,20 @@ private fun PlayerCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar
-            AsyncImage(
-                model = player.photoUrl,
-                contentDescription = player.getDisplayName(),
+            Box(
                 modifier = Modifier
                     .size(64.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop,
-                error = {
+                    .clip(CircleShape)
+            ) {
+                AsyncImage(
+                    model = player.photoUrl?.ifEmpty { null },
+                    contentDescription = player.getDisplayName(),
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+
+                // Fallback se não houver foto
+                if (player.photoUrl.isNullOrEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -508,7 +483,7 @@ private fun PlayerCard(
                         )
                     }
                 }
-            )
+            }
 
             Spacer(modifier = Modifier.width(12.dp))
 
