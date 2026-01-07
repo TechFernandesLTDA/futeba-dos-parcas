@@ -159,6 +159,20 @@ class LiveGameViewModel @Inject constructor(
                 return@launch
             }
 
+            // BUG #7 FIX: Validar que jogador pertence ao time
+            val state = _uiState.value as? LiveGameUiState.Success
+            if (state != null) {
+                val team = when (teamId) {
+                    state.team1.id -> state.team1
+                    state.team2.id -> state.team2
+                    else -> null
+                }
+                if (team == null || !team.playerIds.contains(playerId)) {
+                    _userMessage.emit("Erro: Jogador não pertence ao time selecionado")
+                    return@launch
+                }
+            }
+
             val result = liveGameRepository.addGameEvent(
                 gameId = currentGameId,
                 eventType = GameEventType.GOAL,
