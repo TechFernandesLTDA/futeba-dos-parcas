@@ -67,70 +67,67 @@ class GameDetailViewModel @Inject constructor(
                     val teamsResult = data.teamsResult
                     val liveScore = data.liveScore
 
-                    if (gameResult.isSuccess) {
-                        val game = gameResult.getOrNull()!!
-                        
-                        // Atualizar placar do jogo com o liveScore se disponível
-                        liveScore?.let {
-                            game.team1Score = it.team1Score
-                            game.team2Score = it.team2Score
-                        }
-
-                        val confirmations = confirmationsResult.getOrNull() ?: emptyList()
-                        val events = eventsResult.getOrNull() ?: emptyList()
-                        val teams = teamsResult.getOrNull()?.sortedBy { it.name } ?: emptyList() // Sorted by name
-
-                        val currentUserResult = authRepository.getCurrentUser()
-                        val currentUserObj = currentUserResult.getOrNull()
-                        val currentUserId = currentUserObj?.id ?: authRepository.getCurrentUserId()
-                        val isAdmin = currentUserObj?.isAdmin() == true
-                        
-                        val isConfirmed = confirmations.find { it.userId == currentUserId }
-                        val isUserConfirmed = isConfirmed?.status == "CONFIRMED"
-                        val isUserPending = isConfirmed?.status == "PENDING"
-                        val isOwner = game.ownerId == currentUserId
-                        val canManageGame = isOwner || isAdmin
-                        val canLogEvents = canManageGame || isUserConfirmed // Any confirmed player can log
-
-                        val currentMessage = (_uiState.value as? GameDetailUiState.Success)?.userMessage
-
-                        val confirmedWithStats = confirmations.map { conf ->
-                            val playerEvents = events.filter { it.playerId == conf.userId }
-                            conf.apply {
-                                goals = playerEvents.count { it.eventType == GameEventType.GOAL.name }
-                                yellowCards = playerEvents.count { it.eventType == GameEventType.YELLOW_CARD.name }
-                                redCards = playerEvents.count { it.eventType == GameEventType.RED_CARD.name }
-                                assists = events.count { it.assistedById == conf.userId }
-                            }
-                        }
-                        
-                        // Check vote status if game is finished
-                        var hasVoted: Boolean? = (_uiState.value as? GameDetailUiState.Success)?.hasVoted
-                        if (game.status == GameStatus.FINISHED.name && currentUserId != null) {
-                             val voteResult = gameExperienceRepository.hasUserVoted(game.id, currentUserId)
-                             hasVoted = voteResult.getOrNull() ?: false
-                        }
-
-                        _uiState.value = GameDetailUiState.Success(
-                            game = game,
-                            confirmations = confirmedWithStats,
-                            teams = teams,
-                            events = events,
-                            isUserConfirmed = isUserConfirmed,
-                            isUserPending = isUserPending,
-                            isOwner = isOwner,
-                            isAdmin = isAdmin,
-                            canManageGame = canManageGame,
-                            canLogEvents = canLogEvents,
-                            userMessage = currentMessage,
-                            currentUserId = currentUserId,
-                            hasVoted = hasVoted
-                        )
-                    } else {
-                        _uiState.value = GameDetailUiState.Error(
-                            gameResult.exceptionOrNull()?.message ?: "Erro ao carregar jogo"
-                        )
+                    val game = gameResult.getOrElse {
+                        _uiState.value = GameDetailUiState.Error(it.message ?: "Erro ao carregar jogo")
+                        return@collect
                     }
+
+                    // Atualizar placar do jogo com o liveScore se disponível
+                    liveScore?.let {
+                        game.team1Score = it.team1Score
+                        game.team2Score = it.team2Score
+                    }
+
+                    val confirmations = confirmationsResult.getOrNull() ?: emptyList()
+                    val events = eventsResult.getOrNull() ?: emptyList()
+                    val teams = teamsResult.getOrNull()?.sortedBy { it.name } ?: emptyList()
+
+                    val currentUserResult = authRepository.getCurrentUser()
+                    val currentUserObj = currentUserResult.getOrNull()
+                    val currentUserId = currentUserObj?.id ?: authRepository.getCurrentUserId()
+                    val isAdmin = currentUserObj?.isAdmin() == true
+
+                    val isConfirmed = confirmations.find { it.userId == currentUserId }
+                    val isUserConfirmed = isConfirmed?.status == "CONFIRMED"
+                    val isUserPending = isConfirmed?.status == "PENDING"
+                    val isOwner = game.ownerId == currentUserId
+                    val canManageGame = isOwner || isAdmin
+                    val canLogEvents = canManageGame || isUserConfirmed
+
+                    val currentMessage = (_uiState.value as? GameDetailUiState.Success)?.userMessage
+
+                    val confirmedWithStats = confirmations.map { conf ->
+                        val playerEvents = events.filter { it.playerId == conf.userId }
+                        conf.apply {
+                            goals = playerEvents.count { it.eventType == GameEventType.GOAL.name }
+                            yellowCards = playerEvents.count { it.eventType == GameEventType.YELLOW_CARD.name }
+                            redCards = playerEvents.count { it.eventType == GameEventType.RED_CARD.name }
+                            assists = events.count { it.assistedById == conf.userId }
+                        }
+                    }
+
+                    // Check vote status if game is finished
+                    var hasVoted: Boolean? = (_uiState.value as? GameDetailUiState.Success)?.hasVoted
+                    if (game.status == GameStatus.FINISHED.name && currentUserId != null) {
+                        val voteResult = gameExperienceRepository.hasUserVoted(game.id, currentUserId)
+                        hasVoted = voteResult.getOrNull() ?: false
+                    }
+
+                    _uiState.value = GameDetailUiState.Success(
+                        game = game,
+                        confirmations = confirmedWithStats,
+                        teams = teams,
+                        events = events,
+                        isUserConfirmed = isUserConfirmed,
+                        isUserPending = isUserPending,
+                        isOwner = isOwner,
+                        isAdmin = isAdmin,
+                        canManageGame = canManageGame,
+                        canLogEvents = canLogEvents,
+                        userMessage = currentMessage,
+                        currentUserId = currentUserId,
+                        hasVoted = hasVoted
+                    )
                 }
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao observar detalhes do jogo", e)
