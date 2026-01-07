@@ -1,5 +1,11 @@
 import * as admin from "firebase-admin";
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
+import {
+    calculateLeaguePromotion,
+    calculateLeagueRating as leagueRatingCalc,
+    PROMOTION_GAMES_REQUIRED,
+    RELEGATION_GAMES_REQUIRED
+} from "./league";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -705,53 +711,45 @@ export const recalculateLeagueRating = onDocumentUpdated(
                 };
             });
 
-            // Calcular League Rating
-            const leagueRating = calculateLeagueRating(recentGames);
-            const division = getDivisionForRating(leagueRating);
+            // Calcular League Rating usando a nova função importada
+            const leagueRating = leagueRatingCalc(recentGames);
+
+            // Buscar estado atual de promoção/rebaixamento
+            const currentDivision = after.division || "BRONZE";
+            const currentPromotionProgress = after.promotion_progress || 0;
+            const currentRelegationProgress = after.relegation_progress || 0;
+            const currentProtectionGames = after.protection_games || 0;
+
+            // Calcular novo estado com lógica de promoção/rebaixamento
+            const newLeagueState = calculateLeaguePromotion(
+                {
+                    division: currentDivision,
+                    promotionProgress: currentPromotionProgress,
+                    relegationProgress: currentRelegationProgress,
+                    protectionGames: currentProtectionGames
+                },
+                leagueRating
+            );
 
             // Atualizar documento (não triggera loop pois games_played não muda)
             await db.collection("season_participation").doc(partId).update({
                 league_rating: leagueRating,
-                division: division,
+                division: newLeagueState.division,
+                promotion_progress: newLeagueState.promotionProgress,
+                relegation_progress: newLeagueState.relegationProgress,
+                protection_games: newLeagueState.protectionGames,
                 recent_games: recentGames
             });
 
-            console.log(`League Rating recalculado para ${userId}: ${leagueRating} (${division})`);
+            console.log(`[LEAGUE] Rating: ${leagueRating.toFixed(1)} | Div: ${newLeagueState.division} | Promo: ${newLeagueState.promotionProgress}/${PROMOTION_GAMES_REQUIRED} | Releg: ${newLeagueState.relegationProgress}/${RELEGATION_GAMES_REQUIRED} | Protect: ${newLeagueState.protectionGames}`);
         } catch (e) {
             console.error(`Erro ao recalcular rating para ${partId}:`, e);
         }
     }
 );
 
-function calculateLeagueRating(recentGames: any[]): number {
-    if (!recentGames || recentGames.length === 0) return 0;
-
-    const gamesCount = recentGames.length;
-
-    // PPJ - Pontos (XP) por Jogo (max 200 = 100 pontos)
-    const avgXp = recentGames.reduce((sum, g) => sum + (g.xp_earned || 0), 0) / gamesCount;
-    const ppjScore = Math.min(avgXp / 200.0, 1.0) * 100;
-
-    // WR - Win Rate (100% = 100 pontos)
-    const winRate = (recentGames.filter(g => g.won).length / gamesCount) * 100;
-
-    // GD - Goal Difference médio (+3 = 100, -3 = 0)
-    const avgGD = recentGames.reduce((sum, g) => sum + (g.goal_diff || 0), 0) / gamesCount;
-    const gdScore = Math.max(0, Math.min(1, (avgGD + 3) / 6.0)) * 100;
-
-    // MVP Rate (50% = 100 pontos, cap)
-    const mvpRate = recentGames.filter(g => g.was_mvp).length / gamesCount;
-    const mvpScore = Math.min(mvpRate / 0.5, 1.0) * 100;
-
-    return (ppjScore * 0.4) + (winRate * 0.3) + (gdScore * 0.2) + (mvpScore * 0.1);
-}
-
-function getDivisionForRating(rating: number): string {
-    if (rating >= 70) return "DIAMANTE";
-    if (rating >= 50) return "OURO";
-    if (rating >= 30) return "PRATA";
-    return "BRONZE";
-}
+// Funções calculateLeagueRating e getDivisionForRating movidas para league.ts
+// Ver também: calculateLeaguePromotion para lógica de promoção/rebaixamento
 
 export * from "./activities";
 export * from "./season";
