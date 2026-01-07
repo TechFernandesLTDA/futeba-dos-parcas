@@ -1,0 +1,1295 @@
+package com.futebadosparcas.ui.profile
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import com.futebadosparcas.BuildConfig
+import com.futebadosparcas.R
+import com.futebadosparcas.data.model.*
+import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.util.LevelBadgeHelper
+import com.futebadosparcas.util.LevelHelper
+import java.util.Locale
+
+/**
+ * Tela principal do Perfil do usuário em Jetpack Compose
+ *
+ * Features:
+ * - Header com avatar, nome, nível e XP
+ * - Estatísticas resumidas
+ * - Badges recentes
+ * - Ratings por posição
+ * - Preferências de campo
+ * - Seção administrativa (Admin/Field Owner)
+ * - Estados: Loading (Shimmer), Success, Error
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileScreen(
+    viewModel: ProfileViewModel,
+    onEditProfileClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onNotificationsClick: () -> Unit,
+    onAboutClick: () -> Unit,
+    onSchedulesClick: () -> Unit,
+    onLevelJourneyClick: () -> Unit,
+    onUserManagementClick: () -> Unit,
+    onMyLocationsClick: () -> Unit,
+    onManageLocationsClick: () -> Unit,
+    onGamificationSettingsClick: () -> Unit,
+    onDeveloperMenuClick: () -> Unit,
+    onLogoutClick: () -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val myLocations by viewModel.myLocations.collectAsStateWithLifecycle()
+
+    // Estado para controle de cliques secretos no avatar
+    var avatarClickCount by remember { mutableStateOf(0) }
+    var lastAvatarClickTime by remember { mutableStateOf(0L) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Perfil") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            when (val state = uiState) {
+                is ProfileUiState.Loading -> {
+                    ProfileLoadingShimmer()
+                }
+                is ProfileUiState.Success -> {
+                    ProfileContent(
+                        user = state.user,
+                        badges = state.badges,
+                        statistics = state.statistics,
+                        isDevMode = state.isDevMode,
+                        myLocationsCount = myLocations.size,
+                        onEditProfileClick = onEditProfileClick,
+                        onSettingsClick = onSettingsClick,
+                        onNotificationsClick = onNotificationsClick,
+                        onAboutClick = onAboutClick,
+                        onSchedulesClick = onSchedulesClick,
+                        onLevelJourneyClick = onLevelJourneyClick,
+                        onUserManagementClick = onUserManagementClick,
+                        onMyLocationsClick = onMyLocationsClick,
+                        onManageLocationsClick = onManageLocationsClick,
+                        onGamificationSettingsClick = onGamificationSettingsClick,
+                        onDeveloperMenuClick = onDeveloperMenuClick,
+                        onLogoutClick = onLogoutClick,
+                        onAvatarClick = {
+                            val currentTime = System.currentTimeMillis()
+                            if (currentTime - lastAvatarClickTime > 1000) {
+                                avatarClickCount = 0
+                            }
+                            lastAvatarClickTime = currentTime
+                            avatarClickCount++
+
+                            if (avatarClickCount == 7) {
+                                viewModel.enableDevMode()
+                                avatarClickCount = 0
+                            }
+                        }
+                    )
+                }
+                is ProfileUiState.Error -> {
+                    ErrorState(
+                        message = state.message,
+                        onRetry = { viewModel.loadProfile() }
+                    )
+                }
+                else -> {
+                    // LoggedOut ou outros estados são tratados pelo Fragment
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Conteúdo principal do perfil
+ */
+@Composable
+private fun ProfileContent(
+    user: User,
+    badges: List<UserBadge>,
+    statistics: UserStatistics?,
+    isDevMode: Boolean,
+    myLocationsCount: Int,
+    onEditProfileClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onNotificationsClick: () -> Unit,
+    onAboutClick: () -> Unit,
+    onSchedulesClick: () -> Unit,
+    onLevelJourneyClick: () -> Unit,
+    onUserManagementClick: () -> Unit,
+    onMyLocationsClick: () -> Unit,
+    onManageLocationsClick: () -> Unit,
+    onGamificationSettingsClick: () -> Unit,
+    onDeveloperMenuClick: () -> Unit,
+    onLogoutClick: () -> Unit,
+    onAvatarClick: () -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Header: Avatar, Nome, Role
+        item {
+            ProfileHeader(
+                user = user,
+                onAvatarClick = onAvatarClick
+            )
+        }
+
+        // Card de Nível e XP
+        item {
+            LevelCard(
+                level = user.level,
+                totalXP = user.experiencePoints,
+                onClick = onLevelJourneyClick
+            )
+        }
+
+        // Preferências de Campo
+        item {
+            FieldPreferencesCard(preferredTypes = user.preferredFieldTypes)
+        }
+
+        // Ratings por Posição
+        item {
+            RatingsCard(user = user)
+        }
+
+        // Estatísticas Resumidas
+        item {
+            StatisticsCard(statistics = statistics)
+        }
+
+        // Badges Recentes
+        if (badges.isNotEmpty()) {
+            item {
+                BadgesSection(badges = badges)
+            }
+        }
+
+        // Botões de Ação
+        item {
+            ActionButtonsSection(
+                onEditProfileClick = onEditProfileClick,
+                onLogoutClick = onLogoutClick
+            )
+        }
+
+        // Seção de Configurações
+        item {
+            SettingsSection(
+                onNotificationsClick = onNotificationsClick,
+                onSettingsClick = onSettingsClick,
+                onSchedulesClick = onSchedulesClick,
+                onAboutClick = onAboutClick
+            )
+        }
+
+        // Seção Administrativa
+        val isAdmin = user.isAdmin()
+        val isFieldOwner = user.isFieldOwner()
+
+        if (isAdmin || isFieldOwner) {
+            item {
+                AdminSection(
+                    isAdmin = isAdmin,
+                    isFieldOwner = isFieldOwner,
+                    myLocationsCount = myLocationsCount,
+                    onUserManagementClick = onUserManagementClick,
+                    onMyLocationsClick = onMyLocationsClick,
+                    onManageLocationsClick = onManageLocationsClick,
+                    onGamificationSettingsClick = onGamificationSettingsClick
+                )
+            }
+        }
+
+        // Developer Menu (se ativado)
+        if (isDevMode) {
+            item {
+                DeveloperMenuCard(onClick = onDeveloperMenuClick)
+            }
+        }
+
+        // Versão do App
+        item {
+            Text(
+                text = "Versão ${BuildConfig.VERSION_NAME}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+/**
+ * Header do perfil com avatar, nome e role badge
+ */
+@Composable
+private fun ProfileHeader(
+    user: User,
+    onAvatarClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Avatar com badge de nível
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .clickable(onClick = onAvatarClick),
+                contentAlignment = Alignment.Center
+            ) {
+                // Avatar circular
+                if (user.photoUrl != null) {
+                    AsyncImage(
+                        model = "${user.photoUrl}?ts=${System.currentTimeMillis()}",
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    // Iniciais
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = getInitials(user.name),
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                // Badge de nível sobreposto
+                Image(
+                    painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(user.level)),
+                    contentDescription = "Badge de nível",
+                    modifier = Modifier
+                        .size(40.dp)
+                        .align(Alignment.BottomEnd)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Nome
+            Text(
+                text = user.name,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Email
+            Text(
+                text = user.email,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            // Role Badge
+            if (user.isAdmin() || user.isFieldOwner()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                AssistChip(
+                    onClick = { },
+                    label = {
+                        Text(
+                            text = when {
+                                user.isAdmin() -> "ADMINISTRADOR"
+                                user.isFieldOwner() -> "ORGANIZADOR"
+                                else -> ""
+                            }
+                        )
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = if (user.isAdmin()) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.secondary
+                        }
+                    )
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Card de Nível e XP com barra de progresso
+ */
+@Composable
+private fun LevelCard(
+    level: Int,
+    totalXP: Long,
+    onClick: () -> Unit
+) {
+    val (currentXP, neededXP) = LevelHelper.getProgressInCurrentLevel(totalXP)
+    val percentage = LevelHelper.getProgressPercentage(totalXP)
+    val levelTitle = LevelHelper.getLevelTitle(level)
+    val motivationalMessage = LevelHelper.getMotivationalMessage(totalXP)
+
+    // Animação da barra de progresso
+    val animatedProgress by animateFloatAsState(
+        targetValue = percentage / 100f,
+        animationSpec = tween(durationMillis = 1200),
+        label = "xp_progress"
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Nível $level",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        text = levelTitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
+                }
+
+                Image(
+                    painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
+                    contentDescription = "Badge de nível",
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Barra de progresso
+            Column {
+                LinearProgressIndicator(
+                    progress = { animatedProgress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp)),
+                    color = GamificationColors.XpGreen,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "$currentXP XP",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        text = "$percentage%",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Mensagem motivacional
+            Text(
+                text = motivationalMessage,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+            )
+        }
+    }
+}
+
+/**
+ * Card de preferências de campo
+ */
+@Composable
+private fun FieldPreferencesCard(preferredTypes: List<FieldType>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Preferências de Campo",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                FieldTypeIcon(
+                    type = FieldType.SOCIETY,
+                    isEnabled = preferredTypes.contains(FieldType.SOCIETY),
+                    label = "Society"
+                )
+                FieldTypeIcon(
+                    type = FieldType.FUTSAL,
+                    isEnabled = preferredTypes.contains(FieldType.FUTSAL),
+                    label = "Futsal"
+                )
+                FieldTypeIcon(
+                    type = FieldType.CAMPO,
+                    isEnabled = preferredTypes.contains(FieldType.CAMPO),
+                    label = "Campo"
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Ícone de tipo de campo
+ */
+@Composable
+private fun FieldTypeIcon(
+    type: FieldType,
+    isEnabled: Boolean,
+    label: String
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.alpha(if (isEnabled) 1f else 0.3f)
+    ) {
+        Icon(
+            imageVector = when (type) {
+                FieldType.SOCIETY -> Icons.Default.Sports
+                FieldType.FUTSAL -> Icons.Default.SportsSoccer
+                FieldType.CAMPO -> Icons.Default.Grass
+                FieldType.AREIA -> Icons.Default.BeachAccess
+                FieldType.OUTROS -> Icons.Default.SportsSoccer
+            },
+            contentDescription = label,
+            modifier = Modifier.size(40.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+/**
+ * Card de ratings por posição
+ */
+@Composable
+private fun RatingsCard(user: User) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Avaliações por Posição",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            RatingItem(
+                label = "Atacante",
+                rating = user.getEffectiveRating(PlayerRatingRole.STRIKER),
+                icon = Icons.Default.SportsSoccer
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RatingItem(
+                label = "Meio-Campo",
+                rating = user.getEffectiveRating(PlayerRatingRole.MID),
+                icon = Icons.AutoMirrored.Filled.DirectionsRun
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RatingItem(
+                label = "Defensor",
+                rating = user.getEffectiveRating(PlayerRatingRole.DEFENDER),
+                icon = Icons.Default.Shield
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RatingItem(
+                label = "Goleiro",
+                rating = user.getEffectiveRating(PlayerRatingRole.GOALKEEPER),
+                icon = Icons.Default.SportsKabaddi
+            )
+        }
+    }
+}
+
+/**
+ * Item de rating individual com animação
+ */
+@Composable
+private fun RatingItem(
+    label: String,
+    rating: Double,
+    icon: ImageVector
+) {
+    val animatedRating by animateFloatAsState(
+        targetValue = rating.toFloat(),
+        animationSpec = tween(durationMillis = 1000),
+        label = "rating_$label"
+    )
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Text(
+                text = String.format(Locale.getDefault(), "%.1f", animatedRating),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        LinearProgressIndicator(
+            progress = { (animatedRating / 5f).coerceIn(0f, 1f) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp)),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+        )
+    }
+}
+
+/**
+ * Card de estatísticas
+ */
+@Composable
+private fun StatisticsCard(statistics: UserStatistics?) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Estatísticas",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (statistics != null) {
+                // Grid de estatísticas 3x3
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatItem(label = "Jogos", value = statistics.totalGames.toString())
+                        StatItem(label = "Gols", value = statistics.totalGoals.toString())
+                        StatItem(label = "Vitórias", value = statistics.gamesWon.toString())
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatItem(label = "Assistências", value = statistics.totalAssists.toString())
+                        StatItem(label = "Empates", value = statistics.gamesDraw.toString())
+                        StatItem(label = "MVPs", value = statistics.bestPlayerCount.toString())
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatItem(label = "Defesas", value = statistics.totalSaves.toString())
+                        StatItem(label = "Cartões", value = statistics.totalCards.toString())
+                        StatItem(
+                            label = "Média Gols",
+                            value = String.format(Locale.getDefault(), "%.1f", statistics.avgGoalsPerGame ?: 0.0)
+                        )
+                    }
+                }
+            } else {
+                Text(
+                    text = "Nenhuma estatística disponível",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Item individual de estatística
+ */
+@Composable
+private fun RowScope.StatItem(label: String, value: String) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.weight(1f)
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+/**
+ * Seção de badges recentes
+ */
+@Composable
+private fun BadgesSection(badges: List<UserBadge>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Conquistas Recentes",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(badges.take(5)) { badge ->
+                    BadgeItem(badge = badge)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Item de badge individual
+ */
+@Composable
+private fun BadgeItem(badge: UserBadge) {
+    val badgeType = try {
+        BadgeType.valueOf(badge.badgeId)
+    } catch (e: Exception) {
+        null
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(80.dp)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(60.dp)
+                .clip(CircleShape)
+                .background(
+                    when (badgeType) {
+                        BadgeType.HAT_TRICK, BadgeType.PAREDAO -> GamificationColors.Gold
+                        BadgeType.ARTILHEIRO_MES, BadgeType.MITO -> MaterialTheme.colorScheme.primary
+                        BadgeType.STREAK_7, BadgeType.STREAK_30 -> MaterialTheme.colorScheme.secondary
+                        else -> MaterialTheme.colorScheme.surfaceVariant
+                    }.copy(alpha = 0.2f)
+                )
+        ) {
+            Icon(
+                imageVector = Icons.Default.EmojiEvents,
+                contentDescription = badge.badgeId,
+                modifier = Modifier.size(32.dp),
+                tint = when (badgeType) {
+                    BadgeType.HAT_TRICK, BadgeType.PAREDAO -> GamificationColors.Gold
+                    BadgeType.ARTILHEIRO_MES, BadgeType.MITO -> MaterialTheme.colorScheme.primary
+                    BadgeType.STREAK_7, BadgeType.STREAK_30 -> MaterialTheme.colorScheme.secondary
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            )
+
+            if (badge.count > 1) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.error),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = badge.count.toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onError,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = badgeType?.name ?: badge.badgeId,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+/**
+ * Seção de botões de ação
+ */
+@Composable
+private fun ActionButtonsSection(
+    onEditProfileClick: () -> Unit,
+    onLogoutClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Button(
+            onClick = onEditProfileClick,
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Editar Perfil")
+        }
+
+        OutlinedButton(
+            onClick = onLogoutClick,
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Logout,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Sair")
+        }
+    }
+}
+
+/**
+ * Seção de configurações
+ */
+@Composable
+private fun SettingsSection(
+    onNotificationsClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onSchedulesClick: () -> Unit,
+    onAboutClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            SettingsMenuItem(
+                icon = Icons.Default.Notifications,
+                title = "Notificações",
+                onClick = onNotificationsClick
+            )
+            HorizontalDivider()
+            SettingsMenuItem(
+                icon = Icons.Default.Settings,
+                title = "Preferências",
+                onClick = onSettingsClick
+            )
+            HorizontalDivider()
+            SettingsMenuItem(
+                icon = Icons.Default.Schedule,
+                title = "Horários",
+                onClick = onSchedulesClick
+            )
+            HorizontalDivider()
+            SettingsMenuItem(
+                icon = Icons.Default.Info,
+                title = "Sobre",
+                onClick = onAboutClick
+            )
+        }
+    }
+}
+
+/**
+ * Seção administrativa
+ */
+@Composable
+private fun AdminSection(
+    isAdmin: Boolean,
+    isFieldOwner: Boolean,
+    myLocationsCount: Int,
+    onUserManagementClick: () -> Unit,
+    onMyLocationsClick: () -> Unit,
+    onManageLocationsClick: () -> Unit,
+    onGamificationSettingsClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Administração",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            if (isAdmin) {
+                AdminMenuItem(
+                    icon = Icons.Default.People,
+                    title = "Gerenciar Usuários",
+                    onClick = onUserManagementClick
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
+            }
+
+            if (isFieldOwner) {
+                AdminMenuItem(
+                    icon = Icons.Default.Place,
+                    title = "Meus Locais",
+                    subtitle = when (myLocationsCount) {
+                        0 -> "Nenhum local cadastrado"
+                        1 -> "1 local cadastrado"
+                        else -> "$myLocationsCount locais cadastrados"
+                    },
+                    onClick = onMyLocationsClick
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
+            }
+
+            if (isAdmin) {
+                AdminMenuItem(
+                    icon = Icons.Default.AdminPanelSettings,
+                    title = "Configurações da Liga",
+                    onClick = onGamificationSettingsClick
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
+
+                AdminMenuItem(
+                    icon = Icons.Default.LocationOn,
+                    title = "Gerenciar Locais",
+                    onClick = onManageLocationsClick
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Item de menu de configurações
+ */
+@Composable
+private fun SettingsMenuItem(
+    icon: ImageVector,
+    title: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = title,
+            modifier = Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Item de menu administrativo
+ */
+@Composable
+private fun AdminMenuItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = title,
+            modifier = Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.onErrorContainer
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f)
+                )
+            }
+        }
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onErrorContainer
+        )
+    }
+}
+
+/**
+ * Card do Developer Menu
+ */
+@Composable
+private fun DeveloperMenuCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Code,
+                contentDescription = "Developer Menu",
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = "Developer Menu",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+        }
+    }
+}
+
+/**
+ * Estado de erro
+ */
+@Composable
+private fun ErrorState(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Error,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.error
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(onClick = onRetry) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Tentar Novamente")
+        }
+    }
+}
+
+/**
+ * Shimmer de loading
+ */
+@Composable
+private fun ProfileLoadingShimmer() {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Header shimmer
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ShimmerBox(
+                        modifier = Modifier.size(120.dp),
+                        cornerRadius = 60.dp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ShimmerBox(
+                        modifier = Modifier
+                            .width(200.dp)
+                            .height(24.dp),
+                        cornerRadius = 4.dp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ShimmerBox(
+                        modifier = Modifier
+                            .width(150.dp)
+                            .height(16.dp),
+                        cornerRadius = 4.dp
+                    )
+                }
+            }
+        }
+
+        // Card shimmers
+        items(4) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ShimmerBox(
+                        modifier = Modifier
+                            .width(150.dp)
+                            .height(20.dp),
+                        cornerRadius = 4.dp
+                    )
+                    ShimmerBox(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp),
+                        cornerRadius = 8.dp
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Função auxiliar para obter iniciais do nome
+ */
+private fun getInitials(name: String): String {
+    val parts = name.trim().split(" ")
+    return when {
+        parts.size >= 2 -> "${parts.first().first()}${parts.last().first()}".uppercase()
+        parts.isNotEmpty() -> parts.first().take(2).uppercase()
+        else -> "??"
+    }
+}

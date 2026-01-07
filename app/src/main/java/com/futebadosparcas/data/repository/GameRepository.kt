@@ -31,6 +31,12 @@ interface GameRepository {
     fun getLiveAndUpcomingGamesFlow(): kotlinx.coroutines.flow.Flow<Result<List<GameWithConfirmations>>>
     fun getHistoryGamesFlow(limit: Int = 20): kotlinx.coroutines.flow.Flow<Result<List<GameWithConfirmations>>>
     suspend fun getGamesByFilter(filterType: GameFilterType): Result<List<GameWithConfirmations>>
+
+    // Paginacao cursor-based para historico
+    suspend fun getHistoryGamesPaginated(
+        pageSize: Int = 20,
+        lastGameId: String? = null
+    ): Result<PaginatedGames>
     suspend fun getGameDetails(gameId: String): Result<Game>
     fun getGameDetailsFlow(gameId: String): kotlinx.coroutines.flow.Flow<Result<Game>>
     suspend fun createGame(game: Game): Result<Game>

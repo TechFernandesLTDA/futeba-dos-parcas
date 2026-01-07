@@ -78,15 +78,19 @@ service cloud.firestore {
       allow create: if (isOwner(userId) && request.resource.data.role == 'PLAYER') ||
                        (isAuthenticated() && isMock(userId));
 
-      // Usuario pode atualizar seu perfil
-      // Admin/FieldOwner pode atualizar campos de gamificação de outros usuários (XP/Level)
-      allow update: if 
-          isAdmin() || 
-          (isOwner(userId) && fieldUnchanged('id') && fieldUnchanged('created_at') && fieldUnchanged('role')) || 
-          (isAuthenticated() && isMock(userId)) ||
-          // Permissão para Gamificação Client-Side:
-          (isAuthenticated() && (getUserRole() == 'FIELD_OWNER' || getUserRole() == 'ADMIN') && 
-           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['experience_points', 'level', 'milestones_achieved', 'updated_at']));
+      // Usuario pode atualizar seu perfil (campos basicos apenas)
+      // XP/Level/Milestones SAO atualizados via Cloud Functions (Admin SDK) - NAO client-side
+      // SEGURANCA: Removida permissao de FIELD_OWNER editar XP (vulnerabilidade P0-1)
+      allow update: if
+          isAdmin() ||
+          (isOwner(userId) &&
+           fieldUnchanged('id') &&
+           fieldUnchanged('created_at') &&
+           fieldUnchanged('role') &&
+           fieldUnchanged('experience_points') &&
+           fieldUnchanged('level') &&
+           fieldUnchanged('milestones_achieved')) ||
+          (isAuthenticated() && isMock(userId));
 
       allow delete: if (isAuthenticated() && isMock(userId)) || false;
     }
@@ -100,16 +104,14 @@ service cloud.firestore {
     // ============================================
     // COLECAO: statistics
     // ============================================
+    // SEGURANCA: Estatisticas sao atualizadas via Cloud Functions (Admin SDK)
+    // Usuarios nao podem manipular suas proprias estatisticas
     match /statistics/{statId} {
       allow read: if isAuthenticated();
-      
-      // Permitir atualização por donos de quadra/admins para processar jogos de terceiros
-      allow create, update: if isAuthenticated() && (
-          statId == userId() || 
-          isMock(statId) || 
-          getUserRole() == 'FIELD_OWNER' || 
-          getUserRole() == 'ADMIN'
-      );
+
+      // SOMENTE Admin via Admin SDK pode criar/atualizar
+      // Mock users permitidos para testes
+      allow create, update: if isAdmin() || (isAuthenticated() && isMock(statId));
 
       allow delete: if isAuthenticated() && isMock(statId);
     }
@@ -691,12 +693,13 @@ service cloud.firestore {
     // ============================================
     // COLECAO: xp_logs (historico de XP)
     // ============================================
+    // SEGURANCA: XP logs sao criados APENAS por Cloud Functions (Admin SDK)
     match /xp_logs/{logId} {
       // Usuario pode ler seu proprio historico
       allow read: if isAuthenticated() && resource.data.user_id == userId();
 
-      // Sistema cria logs (via transacao no app ou Cloud Functions)
-      allow create: if isAuthenticated() && request.resource.data.user_id == userId();
+      // SOMENTE Admin (Cloud Functions) pode criar logs
+      allow create: if isAdmin();
 
       // Nao pode editar ou deletar logs
       allow update, delete: if false;

@@ -1,0 +1,34 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(C:\\Projetos\\Futeba dos Par\u00e7as/**)",
+      "Write(C:\\Projetos\\Futeba dos Par\u00e7as/**)",
+      "Edit(C:\\Projetos\\Futeba dos Par\u00e7as/**)",
+      "Glob(C:\\Projetos\\Futeba dos Par\u00e7as/**)",
+      "Grep(C:\\Projetos\\Futeba dos Par\u00e7as/**)",
+      "Read(C:\\Projetos\\Futeba dos Par\u00e7as\\.auto-claude\\specs\\003-identifique-tudo-que-precisar-migrar-para-material/**)",
+      "Write(C:\\Projetos\\Futeba dos Par\u00e7as\\.auto-claude\\specs\\003-identifique-tudo-que-precisar-migrar-para-material/**)",
+      "Edit(C:\\Projetos\\Futeba dos Par\u00e7as\\.auto-claude\\specs\\003-identifique-tudo-que-precisar-migrar-para-material/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__get-library-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}

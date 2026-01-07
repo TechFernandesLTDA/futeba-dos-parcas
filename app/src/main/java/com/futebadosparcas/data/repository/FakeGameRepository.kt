@@ -329,6 +329,31 @@ class FakeGameRepository @Inject constructor() : GameRepository {
         return Result.success(result)
     }
 
+    override suspend fun getHistoryGamesPaginated(pageSize: Int, lastGameId: String?): Result<PaginatedGames> {
+        val historyGames = games.filter {
+            it.status == GameStatus.FINISHED.name || it.status == GameStatus.CANCELLED.name
+        }.sortedByDescending { it.dateTime }
+
+        val startIndex = if (lastGameId != null) {
+            historyGames.indexOfFirst { it.id == lastGameId } + 1
+        } else {
+            0
+        }
+
+        val page = historyGames.drop(startIndex).take(pageSize)
+        val hasMore = startIndex + pageSize < historyGames.size
+
+        val result = page.map { game ->
+            GameWithConfirmations(game, 0)
+        }
+
+        return Result.success(PaginatedGames(
+            games = result,
+            lastGameId = page.lastOrNull()?.id,
+            hasMore = hasMore
+        ))
+    }
+
     private fun timeToMinutes(time: String): Int {
         return try {
             val parts = time.split(":")

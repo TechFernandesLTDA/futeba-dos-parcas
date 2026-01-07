@@ -213,4 +213,39 @@ object XPCalculator {
 
         return calculate(playerData, settings = settings)
     }
+
+    /**
+     * Calcula XP a partir de GameConfirmation (dados do jogo finalizados).
+     * Agora inclui isWorstPlayer para aplicar penalidade corretamente.
+     */
+    fun calculateFromConfirmation(
+        confirmation: com.futebadosparcas.domain.model.GameConfirmation,
+        teamWon: Boolean,
+        teamDrew: Boolean,
+        opponentsGoals: Int,
+        isMvp: Boolean,
+        isWorstPlayer: Boolean = false,
+        hasBestGoal: Boolean,
+        currentStreak: Int,
+        settings: GamificationSettings? = null
+    ): XpCalculationResult {
+        val playerData = PlayerGameData(
+            playerId = confirmation.userId,
+            position = confirmation.getPositionEnum(),
+            goals = confirmation.goals,
+            assists = confirmation.assists,
+            saves = confirmation.saves,
+            yellowCards = confirmation.yellowCards,
+            redCards = confirmation.redCards,
+            isMvp = isMvp,
+            isWorstPlayer = isWorstPlayer,
+            hasBestGoal = hasBestGoal,
+            teamId = confirmation.teamId ?: "",
+            teamWon = teamWon,
+            teamDrew = teamDrew,
+            currentStreak = currentStreak
+        )
+
+        return calculate(playerData, opponentsGoals, settings)
+    }
 }

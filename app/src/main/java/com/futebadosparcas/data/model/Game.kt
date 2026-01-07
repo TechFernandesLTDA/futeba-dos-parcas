@@ -1,5 +1,6 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.util.Identifiable
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
@@ -11,7 +12,7 @@ import java.util.Date
 @IgnoreExtraProperties
 data class Game(
     @DocumentId
-    var id: String = "",
+    override var id: String = "",
     @get:PropertyName("schedule_id")
     @set:PropertyName("schedule_id")
     var scheduleId: String = "",
@@ -134,7 +135,7 @@ data class Game(
     @get:PropertyName("group_name")
     @set:PropertyName("group_name")
     var groupName: String? = null
-) {
+) : Identifiable {
     constructor() : this(id = "")
 
     /**

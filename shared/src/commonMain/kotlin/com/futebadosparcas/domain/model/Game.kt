@@ -154,6 +154,7 @@ data class GameConfirmation(
     @SerialName("user_name") val userName: String = "",
     @SerialName("user_photo") val userPhoto: String? = null,
     val position: String = "FIELD",
+    @SerialName("team_id") val teamId: String? = null,
     val status: String = ConfirmationStatus.CONFIRMED.name,
     @SerialName("payment_status") val paymentStatus: String = PaymentStatus.PENDING.name,
     @SerialName("is_casual_player") val isCasualPlayer: Boolean = false,
