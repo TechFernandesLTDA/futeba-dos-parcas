@@ -208,6 +208,28 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
     const after = event.data.after.data() as Game;
     const gameId = event.params.gameId;
 
+    // ==========================================
+    // SECURITY VALIDATION
+    // ==========================================
+
+    // 1. Validate owner_id exists
+    if (!after.owner_id) {
+        console.error(`[SECURITY] Game ${gameId}: Missing owner_id. Blocking processing.`);
+        return;
+    }
+
+    // 2. Validate owner exists in users collection
+    const ownerDoc = await db.collection("users").doc(after.owner_id).get();
+    if (!ownerDoc.exists) {
+        console.error(`[SECURITY] Game ${gameId}: owner_id ${after.owner_id} not found in users. Blocking processing.`);
+        return;
+    }
+
+    // 3. Log status change for audit trail
+    if (before.status !== after.status) {
+        console.log(`[AUDIT] Game ${gameId}: Status changed ${before.status} -> ${after.status} by owner ${after.owner_id}`);
+    }
+
     // Check Trigger Conditions: Status changed to FINISHED and xp not yet processed
     if (before.status !== "FINISHED" && after.status === "FINISHED") {
         const gameRef = event.data.after.ref;
@@ -625,6 +647,26 @@ export const recalculateLeagueRating = onDocumentUpdated(
         const before = event.data.before.data();
         const after = event.data.after.data();
         const userId = after.user_id;
+
+        // ==========================================
+        // SECURITY VALIDATION
+        // ==========================================
+
+        // 1. Validate user_id exists
+        if (!userId) {
+            console.error(`[SECURITY] Participation ${partId}: Missing user_id. Blocking processing.`);
+            return;
+        }
+
+        // 2. Validate user exists in users collection
+        const userDoc = await db.collection("users").doc(userId).get();
+        if (!userDoc.exists) {
+            console.error(`[SECURITY] Participation ${partId}: user_id ${userId} not found. Blocking processing.`);
+            return;
+        }
+
+        // 3. Log for audit trail
+        console.log(`[AUDIT] Participation ${partId}: Processing for user ${userId}`);
 
         // CRITICAL: Evitar loop infinito - só recalcular se games_played mudou
         // Se league_rating/division/recent_games mudaram, significa que NÓS atualizamos

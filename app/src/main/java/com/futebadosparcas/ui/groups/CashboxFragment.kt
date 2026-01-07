@@ -44,37 +44,10 @@ class CashboxFragment : Fragment() {
                             if (isAdded) {
                                 findNavController().popBackStack()
                             }
-                        },
-                        onOpenAddEntryDialog = { type ->
-                            if (isAdded) {
-                                showAddEntryDialog(type)
-                            }
                         }
                     )
                 }
             }
         }
-    }
-
-    private fun showAddEntryDialog(type: CashboxEntryType) {
-        val dialog = com.futebadosparcas.ui.groups.dialogs.AddCashboxEntryDialogFragment.newInstance(type)
-        dialog.setOnSaveListener { description, amount, category, receiptUri ->
-            if (type == CashboxEntryType.INCOME) {
-                viewModel.addIncome(
-                    category = category,
-                    amount = amount,
-                    description = description,
-                    receiptUri = receiptUri
-                )
-            } else {
-                viewModel.addExpense(
-                    category = category,
-                    amount = amount,
-                    description = description,
-                    receiptUri = receiptUri
-                )
-            }
-        }
-        dialog.show(childFragmentManager, "AddCashboxEntryDialog")
     }
 }

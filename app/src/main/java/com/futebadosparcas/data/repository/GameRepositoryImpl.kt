@@ -65,6 +65,9 @@ class GameRepositoryImpl @Inject constructor(
     override suspend fun getGamesByFilter(filterType: GameFilterType): Result<List<GameWithConfirmations>> =
         queryRepository.getGamesByFilter(filterType)
 
+    override suspend fun getHistoryGamesPaginated(pageSize: Int, lastGameId: String?): Result<PaginatedGames> =
+        queryRepository.getHistoryGamesPaginated(pageSize, lastGameId)
+
     override suspend fun getGameDetails(gameId: String): Result<Game> =
         queryRepository.getGameDetails(gameId)
 

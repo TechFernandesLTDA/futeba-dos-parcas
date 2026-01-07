@@ -5,6 +5,15 @@ import com.futebadosparcas.ui.games.GameWithConfirmations
 import kotlinx.coroutines.flow.Flow
 
 /**
+ * Resultado de uma query paginada
+ */
+data class PaginatedGames(
+    val games: List<GameWithConfirmations>,
+    val lastGameId: String?, // Cursor para proxima pagina
+    val hasMore: Boolean
+)
+
+/**
  * Repositório responsável por queries e busca de jogos
  */
 interface GameQueryRepository {
@@ -20,6 +29,12 @@ interface GameQueryRepository {
     suspend fun getGamesByFilter(filterType: GameFilterType): Result<List<GameWithConfirmations>>
     suspend fun getGameDetails(gameId: String): Result<Game>
     fun getGameDetailsFlow(gameId: String): Flow<Result<Game>>
+
+    // Paginacao cursor-based para historico de jogos
+    suspend fun getHistoryGamesPaginated(
+        pageSize: Int = 20,
+        lastGameId: String? = null
+    ): Result<PaginatedGames>
 
     // Public Games Discovery (FASE 1 - Sistema de Privacidade)
     suspend fun getPublicGames(limit: Int = 20): Result<List<Game>>

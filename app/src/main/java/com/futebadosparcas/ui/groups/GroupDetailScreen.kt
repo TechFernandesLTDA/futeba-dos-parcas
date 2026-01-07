@@ -25,11 +25,12 @@ import com.futebadosparcas.data.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.ui.components.cards.GroupMemberCard
-import com.futebadosparcas.ui.components.cards.UserCardMenuItem
 import com.futebadosparcas.ui.components.dialogs.*
 import com.futebadosparcas.ui.components.states.ErrorState
-import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.components.states.LoadingItemType
+import com.futebadosparcas.ui.components.states.LoadingState
+import com.futebadosparcas.ui.groups.dialogs.EditGroupDialog
+import com.futebadosparcas.ui.groups.dialogs.TransferOwnershipDialog
 
 /**
  * GroupDetailScreen - Exibe detalhes de um grupo
@@ -62,9 +63,7 @@ fun GroupDetailScreen(
     onNavigateToInvite: () -> Unit = {},
     onNavigateToCashbox: () -> Unit = {},
     onNavigateToCreateGame: () -> Unit = {},
-    onMemberClick: (userId: String) -> Unit = {},
-    onShowEditDialog: (group: Group) -> Unit = {},
-    onShowTransferOwnershipDialog: (members: List<GroupMember>) -> Unit = {}
+    onMemberClick: (userId: String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val actionState by viewModel.actionState.collectAsStateWithLifecycle()
@@ -73,6 +72,8 @@ fun GroupDetailScreen(
     var showLeaveDialog by remember { mutableStateOf(false) }
     var showArchiveDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showTransferOwnershipDialog by remember { mutableStateOf(false) }
 
     // Carrega os dados do grupo na primeira composição
     LaunchedEffect(groupId) {
@@ -92,6 +93,29 @@ fun GroupDetailScreen(
 
     // Confirmation Dialogs using shared components
     val group = (uiState as? GroupDetailUiState.Success)?.group
+    val members = (uiState as? GroupDetailUiState.Success)?.members ?: emptyList()
+
+    if (showEditDialog && group != null) {
+        EditGroupDialog(
+            group = group,
+            onDismiss = { showEditDialog = false },
+            onSave = { name, description, photoUri ->
+                viewModel.updateGroup(name, description, photoUri)
+                showEditDialog = false
+            }
+        )
+    }
+
+    if (showTransferOwnershipDialog && members.isNotEmpty()) {
+        TransferOwnershipDialog(
+            members = members,
+            onDismiss = { showTransferOwnershipDialog = false },
+            onMemberSelected = { member ->
+                viewModel.transferOwnership(member)
+                showTransferOwnershipDialog = false
+            }
+        )
+    }
 
     LeaveGroupDialog(
         visible = showLeaveDialog && group != null,
@@ -132,17 +156,11 @@ fun GroupDetailScreen(
                 onInviteClick = onNavigateToInvite,
                 onCashboxClick = onNavigateToCashbox,
                 onCreateGameClick = onNavigateToCreateGame,
-                onEditClick = {
-                    (uiState as? GroupDetailUiState.Success)?.group?.let { group ->
-                        onShowEditDialog(group)
-                    }
-                },
+                onEditClick = { showEditDialog = true },
                 onTransferOwnershipClick = {
-                    (uiState as? GroupDetailUiState.Success)?.let { state ->
-                        if (state.members.size >= 2) {
-                            onShowTransferOwnershipDialog(state.members)
-                        }
-                    }
+                     if (members.size >= 2) {
+                         showTransferOwnershipDialog = true
+                     }
                 },
                 onLeaveGroupClick = { showLeaveDialog = true },
                 onArchiveGroupClick = { showArchiveDialog = true },
@@ -695,4 +713,3 @@ private fun GroupMemberCard(
         } else null
     )
 }
-

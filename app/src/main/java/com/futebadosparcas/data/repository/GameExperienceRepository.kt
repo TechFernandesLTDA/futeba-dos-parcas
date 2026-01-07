@@ -19,29 +19,80 @@ class GameExperienceRepository @Inject constructor(
 
     companion object {
         private const val TAG = "GameExperienceRepository"
+        private const val VOTE_WINDOW_HOURS = 24L // Janela de tempo para votacao em horas
     }
 
     /**
-     * Submete um voto, verificando se o usuário já votou nesta categoria para este jogo.
+     * Submete um voto, verificando:
+     * 1. Se o jogo foi finalizado dentro da janela de 24 horas
+     * 2. Se o usuário já votou nesta categoria para este jogo
      * Usa ID determinístico: {gameId}_{voterId}_{category} para evitar duplicatas.
      */
     suspend fun submitVote(vote: MVPVote): Result<Unit> {
         return try {
-            // ID determinístico para evitar votos duplicados na mesma categoria
+            // 1. Verificar janela de tempo de votacao (24h)
+            val gameRef = firestore.collection("games").document(vote.gameId)
+            val gameSnapshot = gameRef.get().await()
+            val game = gameSnapshot.toObject(com.futebadosparcas.data.model.Game::class.java)
+                ?: return Result.failure(Exception("Jogo nao encontrado"))
+
+            // Verificar se o jogo foi finalizado
+            if (game.status != com.futebadosparcas.data.model.GameStatus.FINISHED.name) {
+                return Result.failure(Exception("Votacao disponivel apenas para jogos finalizados"))
+            }
+
+            // Verificar se esta dentro da janela de 24h
+            val gameDateTime = game.dateTime
+            if (gameDateTime != null) {
+                val now = java.util.Date()
+                val voteDeadline = java.util.Date(gameDateTime.time + (VOTE_WINDOW_HOURS * 60 * 60 * 1000))
+
+                if (now.after(voteDeadline)) {
+                    AppLogger.w(TAG) { "Votacao expirada para o jogo ${vote.gameId}. Deadline: $voteDeadline" }
+                    return Result.failure(Exception("Prazo de votacao expirado (24h apos o jogo)"))
+                }
+            }
+
+            // 2. ID determinístico para evitar votos duplicados na mesma categoria
             val voteId = "${vote.gameId}_${vote.voterId}_${vote.category.name}"
             val voteRef = votesCollection.document(voteId)
 
-            // Verificar se já votou nesta categoria
+            // 3. Verificar se já votou nesta categoria
             val existingVote = voteRef.get().await()
             if (existingVote.exists()) {
-                AppLogger.w(TAG) { "Usuário ${vote.voterId} já votou na categoria ${vote.category} para o jogo ${vote.gameId}" }
-                return Result.failure(Exception("Você já votou nesta categoria"))
+                AppLogger.w(TAG) { "Usuario ${vote.voterId} ja votou na categoria ${vote.category} para o jogo ${vote.gameId}" }
+                return Result.failure(Exception("Voce ja votou nesta categoria"))
             }
 
             voteRef.set(vote.copy(id = voteId)).await()
             Result.success(Unit)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao enviar voto", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Verifica se a votacao ainda esta aberta para um jogo (dentro de 24h)
+     */
+    suspend fun isVotingOpen(gameId: String): Result<Boolean> {
+        return try {
+            val gameRef = firestore.collection("games").document(gameId)
+            val gameSnapshot = gameRef.get().await()
+            val game = gameSnapshot.toObject(com.futebadosparcas.data.model.Game::class.java)
+                ?: return Result.success(false)
+
+            if (game.status != com.futebadosparcas.data.model.GameStatus.FINISHED.name) {
+                return Result.success(false)
+            }
+
+            val gameDateTime = game.dateTime ?: return Result.success(false)
+            val now = java.util.Date()
+            val voteDeadline = java.util.Date(gameDateTime.time + (VOTE_WINDOW_HOURS * 60 * 60 * 1000))
+
+            Result.success(now.before(voteDeadline))
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao verificar se votacao esta aberta", e)
             Result.failure(e)
         }
     }

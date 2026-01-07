@@ -42,8 +42,7 @@ import java.util.*
 fun CashboxScreen(
     viewModel: CashboxViewModel,
     groupId: String,
-    onNavigateBack: () -> Unit = {},
-    onOpenAddEntryDialog: (CashboxEntryType) -> Unit = {}
+    onNavigateBack: () -> Unit = {}
 ) {
     val summaryState by viewModel.summaryState.collectAsStateWithLifecycle()
     val historyState by viewModel.historyState.collectAsStateWithLifecycle()
@@ -61,6 +60,7 @@ fun CashboxScreen(
     var showTotalsDialog by remember { mutableStateOf(false) }
     var totalsDialogTitle by remember { mutableStateOf("") }
     var totalsDialogData by remember { mutableStateOf<Map<String, Double>>(emptyMap()) }
+    var showAddEntryDialog by remember { mutableStateOf<CashboxEntryType?>(null) }
 
     val canManage = userRole == GroupMemberRole.ADMIN || userRole == GroupMemberRole.OWNER
     val canDelete = userRole == GroupMemberRole.OWNER
@@ -94,6 +94,22 @@ fun CashboxScreen(
             }
             else -> {}
         }
+    }
+
+    // Dialog de Adicionar Entrada
+    showAddEntryDialog?.let { type ->
+        com.futebadosparcas.ui.groups.dialogs.AddCashboxEntryDialog(
+            type = type,
+            onDismiss = { showAddEntryDialog = null },
+            onSave = { description, amount, category, receiptUri ->
+                if (type == CashboxEntryType.INCOME) {
+                    viewModel.addIncome(category, amount, description, receiptUri = receiptUri)
+                } else {
+                    viewModel.addExpense(category, amount, description, receiptUri = receiptUri)
+                }
+                showAddEntryDialog = null
+            }
+        )
     }
 
     // Dialog de confirmação de recálculo
@@ -167,8 +183,8 @@ fun CashboxScreen(
         floatingActionButton = {
             if (canManage) {
                 CashboxFABs(
-                    onAddIncome = { onOpenAddEntryDialog(CashboxEntryType.INCOME) },
-                    onAddExpense = { onOpenAddEntryDialog(CashboxEntryType.EXPENSE) }
+                    onAddIncome = { showAddEntryDialog = CashboxEntryType.INCOME },
+                    onAddExpense = { showAddEntryDialog = CashboxEntryType.EXPENSE }
                 )
             }
         },
@@ -308,6 +324,17 @@ fun CashboxScreen(
         }
     }
 }
+
+// ... existing helper composables ...
+
+/**
+ * Representa os itens que podem aparecer na lista do caixa
+ */
+sealed class CashboxListItem {
+    data class Header(val title: String) : CashboxListItem()
+    data class Entry(val entry: CashboxEntry) : CashboxListItem()
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,95 +1,95 @@
 rules_version = '2';
+
+// ============================================
+// FIREBASE STORAGE SECURITY RULES
+// Futeba dos Parças - v1.4.2
+// ============================================
+
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Funcao auxiliar: usuario autenticado
+    // ============================================
+    // FUNCOES AUXILIARES
+    // ============================================
+
+    // Verifica se o usuário está autenticado
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Funcao auxiliar: ID do usuario
-    function userId() {
-      return request.auth.uid;
+    // Verifica se o usuário é o dono do recurso
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Verifica se o usuário é membro do grupo
+    function isGroupMember(groupId) {
+      return firestore.exists(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid));
+    }
+
+    // Verifica se o usuário é admin do grupo
+    function isGroupAdmin(groupId) {
+      let member = firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)).data;
+      return member != null && (member.role == 'OWNER' || member.role == 'ADMIN');
+    }
+
+    // Verifica se o arquivo é uma imagem
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    // Verifica tamanho máximo do arquivo
+    function isUnderSize(maxSizeMB) {
+      return request.resource.size < maxSizeMB * 1024 * 1024;
     }
 
     // ============================================
-    // PASTA: profile_images/{userId} (and legacy profile_photos)
-    // ============================================
-    match /profile_images/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isOwner(userId) &&
-                      request.resource.size <= 10 * 1024 * 1024 &&
-                      request.resource.contentType.matches('image/.*');
-    }
-
-    match /profile_photos/{userId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isOwner(userId) &&
-                      request.resource.size <= 10 * 1024 * 1024 &&
-                      request.resource.contentType.matches('image/.*');
-    }
-
-    function isOwner(uId) {
-      return isAuthenticated() && userId() == uId;
-    }
-
-    // ============================================
-    // PASTA: game_photos/{gameId}
-    // ============================================
-    match /game_photos/{gameId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
-                       request.resource.size < 10 * 1024 * 1024 &&
-                       request.resource.contentType.matches('image/.*');
-      allow delete: if isAuthenticated();
-    }
-
-    // ============================================
-    // PASTA: fields_photos (Quadras)
-    // ============================================
-    match /fields_photos/{fileName} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
-                       request.resource.size < 10 * 1024 * 1024 &&
-                       request.resource.contentType.matches('image/.*');
-      allow delete: if isAuthenticated(); // Idealmente apenas admin/dono
-    }
-
-    // ============================================
-    // PASTA: locations_photos (Locais - se houver)
-    // ============================================
-    match /locations_photos/{fileName} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
-                       request.resource.size < 10 * 1024 * 1024 &&
-                       request.resource.contentType.matches('image/.*');
-      allow delete: if isAuthenticated();
-    }
-
-    // ============================================
-    // PASTA: groups_photos (Grupos)
-    // ============================================
-    match /groups_photos/{groupId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
-                       request.resource.size < 10 * 1024 * 1024 &&
-                       request.resource.contentType.matches('image/.*');
-      allow delete: if isAuthenticated(); // Idealmente apenas admin/dono do grupo
-    }
-
-    // ============================================
-    // PASTA: groups/{groupId}/cashbox_receipts
+    // COMPROVANTES DO CAIXINHA
     // ============================================
     match /groups/{groupId}/cashbox_receipts/{fileName} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
-                       request.resource.size < 10 * 1024 * 1024 &&
-                       request.resource.contentType.matches('image/.*');
-      allow delete: if isAuthenticated();
+      allow read: if isAuthenticated() && isGroupMember(groupId);
+      allow write: if isAuthenticated() && isGroupAdmin(groupId) && isImage() && isUnderSize(5);
+      allow delete: if isAuthenticated() && isGroupAdmin(groupId);
     }
 
     // ============================================
-    // REGRA PADRAO: Negar tudo
+    // FOTOS DE PERFIL DE USUÁRIOS
+    // ============================================
+    match /users/{userId}/photos/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) && isImage() && isUnderSize(2);
+      allow delete: if isOwner(userId);
+    }
+
+    // ============================================
+    // IMAGENS DE GAME EXPERIENCE
+    // ============================================
+    match /games/{gameId}/images/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && firestore.exists(/databases/(default)/documents/confirmations/$(gameId + "_" + request.auth.uid)) && isImage() && isUnderSize(10);
+      allow delete: if isAuthenticated() && firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid;
+    }
+
+    // ============================================
+    // LOGOS DE GRUPOS
+    // ============================================
+    match /groups/{groupId}/logo/{fileName} {
+      allow read: if isAuthenticated() && isGroupMember(groupId);
+      allow write: if isAuthenticated() && isGroupAdmin(groupId) && isImage() && isUnderSize(1);
+      allow delete: if isAuthenticated() && isGroupAdmin(groupId);
+    }
+
+    // ============================================
+    // FOTOS DE LOCAIS
+    // ============================================
+    match /locations/{locationId}/photos/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid && isImage() && isUnderSize(5);
+      allow delete: if isAuthenticated() && firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid;
+    }
+
+    // ============================================
+    // REGRA PADRÃO: NEGAR TUDO
     // ============================================
     match /{allPaths=**} {
       allow read, write: if false;

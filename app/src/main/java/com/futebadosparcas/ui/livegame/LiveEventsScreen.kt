@@ -159,7 +159,7 @@ private fun GameEventCard(
                 // Assistência (se houver)
                 if (!event.assistedById.isNullOrEmpty()) {
                     Text(
-                        text = "Assistência: ${event.assistedById}",
+                        text = "Assistência: ${event.assistedByName ?: event.assistedById}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary
                     )

@@ -10,13 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import com.futebadosparcas.data.model.Group
-import com.futebadosparcas.data.model.GroupMember
-import com.futebadosparcas.ui.groups.dialogs.ConfirmationDialogs
-import com.futebadosparcas.ui.groups.dialogs.EditGroupDialog
-import com.futebadosparcas.ui.groups.dialogs.TransferOwnershipDialog
 import com.futebadosparcas.ui.theme.FutebaTheme
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -79,49 +73,10 @@ class GroupDetailFragment : Fragment() {
                                 val playerCard = com.futebadosparcas.ui.player.PlayerCardDialog.newInstance(userId)
                                 playerCard.show(childFragmentManager, "PlayerCardDialog")
                             }
-                        },
-                        onShowEditDialog = { group ->
-                            if (isAdded) {
-                                showEditGroupDialog(group)
-                            }
-                        },
-                        onShowTransferOwnershipDialog = { members ->
-                            if (isAdded) {
-                                showTransferOwnershipDialog(members)
-                            }
                         }
                     )
                 }
             }
         }
-    }
-
-    private fun showEditGroupDialog(group: Group) {
-        val dialog = EditGroupDialog.newInstance(group)
-        dialog.setOnSaveListener { name, description, photoUri ->
-            viewModel.updateGroup(name, description, photoUri)
-        }
-        dialog.show(childFragmentManager, "EditGroupDialog")
-    }
-
-    private fun showTransferOwnershipDialog(members: List<GroupMember>) {
-        if (members.size < 2) {
-            // Mostrar mensagem de erro via Snackbar
-            view?.let { v ->
-                Snackbar.make(
-                    v,
-                    "O grupo precisa ter pelo menos mais um membro para transferir a propriedade",
-                    Snackbar.LENGTH_LONG
-                ).show()
-            }
-            return
-        }
-
-        val dialog = TransferOwnershipDialog.newInstance()
-        dialog.setMembers(members)
-        dialog.setOnMemberSelectedListener { member ->
-            viewModel.transferOwnership(member)
-        }
-        dialog.show(childFragmentManager, "TransferOwnershipDialog")
     }
 }
