@@ -57,12 +57,10 @@ class LiveGameViewModel @Inject constructor(
             combine(gameFlow, scoreFlow) { gameResult, score ->
                 Pair(gameResult, score)
             }.collect { (gameResult, score) ->
-                if (gameResult.isFailure) {
-                    _uiState.value = LiveGameUiState.Error(gameResult.exceptionOrNull()?.message ?: "Erro ao carregar jogo")
+                val game = gameResult.getOrElse {
+                    _uiState.value = LiveGameUiState.Error(it.message ?: "Erro ao carregar jogo")
                     return@collect
                 }
-
-                val game = gameResult.getOrNull()!!
                 currentGame = game
 
                 val isOwner = authRepository.getCurrentUserId() == game.ownerId
