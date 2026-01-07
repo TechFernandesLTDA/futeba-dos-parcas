@@ -141,7 +141,7 @@ class HomeViewModel @Inject constructor(
                     val activitiesDeferred = async {
                         runCatching {
                             withTimeout(TIMEOUT_MILLIS) {
-                                activityRepository.getRecentActivities(100)
+                                activityRepository.getRecentActivities(50) // Reduzido de 100 para melhor performance
                             }
                         }
                     }
