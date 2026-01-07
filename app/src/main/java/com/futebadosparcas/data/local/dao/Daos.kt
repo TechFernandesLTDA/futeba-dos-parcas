@@ -18,7 +18,7 @@ interface GameDao {
 
     @Query("SELECT * FROM games WHERE status IN ('SCHEDULED', 'CONFIRMED') ORDER BY date ASC")
     fun getUpcomingGames(): Flow<List<GameEntity>>
-    
+
     @Query("SELECT * FROM games WHERE status IN ('SCHEDULED', 'CONFIRMED') ORDER BY date ASC")
     suspend fun getUpcomingGamesSnapshot(): List<GameEntity>
 
@@ -33,9 +33,17 @@ interface GameDao {
 
     @Query("DELETE FROM games WHERE id = :gameId")
     suspend fun deleteGame(gameId: String)
-    
+
     @Query("DELETE FROM games")
     suspend fun clearAll()
+
+    // TTL: Remove jogos cacheados ha mais de X ms (padrao: 7 dias)
+    @Query("DELETE FROM games WHERE cachedAt < :expirationTime")
+    suspend fun deleteExpiredGames(expirationTime: Long)
+
+    // TTL: Remove jogos finalizados ha mais de X dias
+    @Query("DELETE FROM games WHERE status = 'FINISHED' AND cachedAt < :expirationTime")
+    suspend fun deleteOldFinishedGames(expirationTime: Long)
 }
 
 @Dao
@@ -45,4 +53,14 @@ interface UserDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUsers(users: List<UserEntity>)
+
+    // TTL: Remove usuarios cacheados ha mais de X ms (padrao: 24 horas)
+    @Query("DELETE FROM users WHERE cachedAt < :expirationTime")
+    suspend fun deleteExpiredUsers(expirationTime: Long)
+
+    @Query("DELETE FROM users")
+    suspend fun clearAll()
 }

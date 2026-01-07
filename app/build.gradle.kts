@@ -237,6 +237,11 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     ksp("androidx.room:room-compiler:$roomVersion")
 
+    // WorkManager (for background cache cleanup)
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
+
     // Gson for Object Conversion
     implementation("com.google.code.gson:gson:2.10.1")
 
