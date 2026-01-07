@@ -65,6 +65,14 @@ class HomeFragment : Fragment() {
                                 findNavController().navigate(R.id.action_global_notifications)
                             }
                         },
+                        onGroupsClick = {
+                            if (isAdded) {
+                                findNavController().navigate(R.id.action_global_groups)
+                            }
+                        },
+                        onMapClick = {
+                            // TODO: Navigate to map screen when available
+                        },
                         hapticManager = hapticManager
                     )
                 }
