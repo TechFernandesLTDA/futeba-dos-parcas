@@ -2,6 +2,7 @@ package com.futebadosparcas.ui.components.dialogs
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -224,7 +225,7 @@ fun LeaveGroupDialog(
         message = "Tem certeza que deseja sair do grupo \"$groupName\"?",
         confirmText = "Sair",
         type = ConfirmationDialogType.WARNING,
-        icon = Icons.Default.ExitToApp,
+        icon = Icons.AutoMirrored.Filled.ExitToApp,
         onConfirm = onConfirm,
         onDismiss = onDismiss
     )

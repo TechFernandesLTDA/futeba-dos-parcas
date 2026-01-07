@@ -10,6 +10,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -289,7 +291,7 @@ fun CashboxScreen(
                     viewModel.filterByType(CashboxEntryType.INCOME)
                     showFilterMenu = false
                 },
-                leadingIcon = { Icon(Icons.Default.TrendingUp, null) }
+                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, null) }
             )
             DropdownMenuItem(
                 text = { Text("Despesas") },
@@ -297,7 +299,7 @@ fun CashboxScreen(
                     viewModel.filterByType(CashboxEntryType.EXPENSE)
                     showFilterMenu = false
                 },
-                leadingIcon = { Icon(Icons.Default.TrendingDown, null) }
+                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingDown, null) }
             )
         }
 
@@ -418,7 +420,7 @@ private fun SummaryCard(summary: CashboxSummary) {
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.TrendingUp,
+                            imageVector = Icons.AutoMirrored.Filled.TrendingUp,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = Color(0xFF4CAF50)
@@ -444,7 +446,7 @@ private fun SummaryCard(summary: CashboxSummary) {
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.TrendingDown,
+                            imageVector = Icons.AutoMirrored.Filled.TrendingDown,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = Color(0xFFF44336)
