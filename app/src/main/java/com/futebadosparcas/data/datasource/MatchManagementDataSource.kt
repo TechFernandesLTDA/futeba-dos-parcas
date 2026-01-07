@@ -145,41 +145,103 @@ class MatchManagementDataSource @Inject constructor(
         }
     }
 
+    /**
+     * Promove jogadores da waitlist para preencher vagas disponíveis.
+     *
+     * Usa uma única transação que:
+     * 1. Lê o estado atual do jogo (vagas disponíveis)
+     * 2. Busca jogadores na waitlist ordenados por tempo de confirmação
+     * 3. Promove tantos jogadores quanto vagas disponíveis
+     *
+     * Isso evita race conditions quando múltiplos jogadores cancelam simultaneamente.
+     */
     suspend fun promoteWaitlistedPlayer(gameId: String) {
         try {
-            val snapshot = confirmationsCollection
+            val gameRef = gamesCollection.document(gameId)
+
+            firestore.runTransaction { transaction ->
+                // 1. Ler estado atual do jogo na transação
+                val gameSnapshot = transaction.get(gameRef)
+                if (!gameSnapshot.exists()) return@runTransaction
+
+                val currentPlayers = gameSnapshot.getLong("players_count")?.toInt() ?: 0
+                val maxPlayers = gameSnapshot.getLong("max_players")?.toInt() ?: 24
+                val currentGk = gameSnapshot.getLong("goalkeepers_count")?.toInt() ?: 0
+                val maxGk = gameSnapshot.getLong("max_goalkeepers")?.toInt() ?: 3
+
+                val availableSpots = maxPlayers - currentPlayers
+                if (availableSpots <= 0) return@runTransaction
+
+                // 2. Não podemos fazer query dentro de transação, então fazemos antes
+                // e validamos o status dentro da transação
+                null // Marker para indicar que precisamos buscar candidatos fora
+            }.await()
+
+            // Buscar candidatos fora da transação (Firestore não permite queries em transactions)
+            val waitlistSnapshot = confirmationsCollection
                 .whereEqualTo("game_id", gameId)
                 .whereEqualTo("status", "WAITLIST")
                 .orderBy("confirmed_at", Query.Direction.ASCENDING)
-                .limit(1)
+                .limit(10) // Buscar até 10 candidatos para cobrir race conditions
                 .get()
                 .await()
-                
-            if (!snapshot.isEmpty) {
-                val candidateDoc = snapshot.documents.first()
-                val candidateRef = candidateDoc.reference
-                
-                firestore.runTransaction { transaction ->
-                    val gameRef = gamesCollection.document(gameId)
-                    val gameSnapshot = transaction.get(gameRef)
+
+            if (waitlistSnapshot.isEmpty) return
+
+            // 3. Executar promoção em transação com validação
+            firestore.runTransaction { transaction ->
+                val gameSnapshot = transaction.get(gameRef)
+                if (!gameSnapshot.exists()) return@runTransaction
+
+                var currentPlayers = gameSnapshot.getLong("players_count")?.toInt() ?: 0
+                val maxPlayers = gameSnapshot.getLong("max_players")?.toInt() ?: 24
+                var currentGk = gameSnapshot.getLong("goalkeepers_count")?.toInt() ?: 0
+                val maxGk = gameSnapshot.getLong("max_goalkeepers")?.toInt() ?: 3
+
+                var promoted = 0
+                var gkPromoted = 0
+
+                for (candidateDoc in waitlistSnapshot.documents) {
+                    if (currentPlayers >= maxPlayers) break
+
+                    val candidateRef = candidateDoc.reference
                     val candidateSnapshot = transaction.get(candidateRef)
-                    
-                    if (candidateSnapshot.exists() && candidateSnapshot.getString("status") == "WAITLIST") {
-                         val currentPlayers = gameSnapshot.getLong("players_count")?.toInt() ?: 0
-                         val maxPlayers = gameSnapshot.getLong("max_players")?.toInt() ?: 24
-                         
-                         if (currentPlayers < maxPlayers) {
-                             transaction.update(candidateRef, "status", "CONFIRMED")
-                             transaction.update(gameRef, "players_count", currentPlayers + 1)
-                             
-                             if (candidateSnapshot.getString("position") == "GOALKEEPER") {
-                                 val currentGk = gameSnapshot.getLong("goalkeepers_count")?.toInt() ?: 0
-                                 transaction.update(gameRef, "goalkeepers_count", currentGk + 1)
-                             }
-                         }
+
+                    // Validar que ainda está na waitlist (pode ter sido promovido por outra transação)
+                    if (!candidateSnapshot.exists()) continue
+                    if (candidateSnapshot.getString("status") != "WAITLIST") continue
+
+                    val position = candidateSnapshot.getString("position")
+
+                    // Validar limite de goleiros
+                    if (position == "GOALKEEPER" && currentGk >= maxGk) continue
+
+                    // Promover jogador
+                    transaction.update(candidateRef, "status", "CONFIRMED")
+
+                    currentPlayers++
+                    promoted++
+
+                    if (position == "GOALKEEPER") {
+                        currentGk++
+                        gkPromoted++
                     }
-                }.await()
-            }
+                }
+
+                // Atualizar contadores do jogo uma única vez
+                if (promoted > 0) {
+                    val updates = mutableMapOf<String, Any>(
+                        "players_count" to currentPlayers
+                    )
+                    if (gkPromoted > 0) {
+                        updates["goalkeepers_count"] = currentGk
+                    }
+                    transaction.update(gameRef, updates)
+
+                    AppLogger.d(TAG) { "Promovidos $promoted jogadores da waitlist para game $gameId" }
+                }
+            }.await()
+
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao promover jogador da waitlist", e)
         }

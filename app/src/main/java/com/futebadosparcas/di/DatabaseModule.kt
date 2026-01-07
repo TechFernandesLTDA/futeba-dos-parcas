@@ -23,7 +23,10 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "futeba_db"
-        ).fallbackToDestructiveMigration().build()
+        )
+            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .fallbackToDestructiveMigration() // Fallback para versoes muito antigas
+            .build()
     }
 
     @Provides
