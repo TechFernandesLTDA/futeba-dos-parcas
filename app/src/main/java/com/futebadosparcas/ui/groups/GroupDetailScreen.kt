@@ -312,7 +312,7 @@ private fun GroupDetailTopBar(
                     )
                 }
 
-                Divider()
+                HorizontalDivider()
 
                 // Edit (admin+)
                 if (isOwnerOrAdmin) {

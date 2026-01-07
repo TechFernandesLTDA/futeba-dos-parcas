@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,8 +36,6 @@ import com.futebadosparcas.R
 import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 /**
  * Tela principal de listagem de grupos em Jetpack Compose
@@ -113,8 +112,8 @@ fun GroupsScreen(
                 }
 
                 is GroupsUiState.Success -> {
-                    SwipeRefresh(
-                        state = rememberSwipeRefreshState(isRefreshing),
+                    PullToRefreshBox(
+                        isRefreshing = isRefreshing,
                         onRefresh = { viewModel.refreshGroups() }
                     ) {
                         GroupsSuccessContent(

@@ -230,7 +230,7 @@ fun TransferOwnershipDialog(
                                     .clip(RoundedCornerShape(12.dp))
                                     .clickable { onMemberSelected(member) }
                             )
-                            Divider(color = MaterialTheme.colorScheme.surfaceVariant, thickness = 0.5.dp)
+                            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant, thickness = 0.5.dp)
                         }
                     }
                 }

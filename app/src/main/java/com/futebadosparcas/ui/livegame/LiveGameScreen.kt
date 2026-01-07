@@ -602,7 +602,7 @@ private fun AddEventBottomSheet(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Divider()
+            HorizontalDivider()
 
             // Tipo de Evento
             Text(
@@ -651,7 +651,7 @@ private fun AddEventBottomSheet(
                 )
             }
 
-            Divider()
+            HorizontalDivider()
 
             // Seleção de Time
             Text(
@@ -678,7 +678,7 @@ private fun AddEventBottomSheet(
                 )
             }
 
-            Divider()
+            HorizontalDivider()
 
             // Minuto
             OutlinedTextField(

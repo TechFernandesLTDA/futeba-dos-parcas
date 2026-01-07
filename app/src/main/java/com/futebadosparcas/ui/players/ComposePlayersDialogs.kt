@@ -85,7 +85,7 @@ fun ComparePlayersUiDialog(
                     PlayerHeader(user = user2, color = MaterialTheme.colorScheme.secondary)
                 }
                 
-                Divider()
+                HorizontalDivider()
                 
                 // Gráfico Radar Customizado
                 Box(
@@ -102,7 +102,7 @@ fun ComparePlayersUiDialog(
                     )
                 }
                 
-                Divider()
+                HorizontalDivider()
                 
                 // Tabela de Estatísticas
                 StatsComparisonTable(
@@ -430,7 +430,7 @@ fun PlayerCardContent(
                 )
             }
             
-            Divider(modifier = Modifier.padding(vertical = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
             
             // Stats Grid
             Row(
@@ -453,7 +453,7 @@ fun PlayerCardContent(
                 StatItem(label = "Defesas", value = stats?.totalSaves?.toString() ?: "0")
             }
             
-            Divider(modifier = Modifier.padding(vertical = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
             
             // Skills (Ratings)
             Column(

@@ -948,19 +948,19 @@ private fun SettingsSection(
                 title = "Notificações",
                 onClick = onNotificationsClick
             )
-            Divider()
+            HorizontalDivider()
             SettingsMenuItem(
                 icon = Icons.Default.Settings,
                 title = "Preferências",
                 onClick = onSettingsClick
             )
-            Divider()
+            HorizontalDivider()
             SettingsMenuItem(
                 icon = Icons.Default.Schedule,
                 title = "Horários",
                 onClick = onSchedulesClick
             )
-            Divider()
+            HorizontalDivider()
             SettingsMenuItem(
                 icon = Icons.Default.Info,
                 title = "Sobre",
@@ -1006,7 +1006,7 @@ private fun AdminSection(
                     title = "Gerenciar Usuários",
                     onClick = onUserManagementClick
                 )
-                Divider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
             }
 
             if (isFieldOwner) {
@@ -1020,7 +1020,7 @@ private fun AdminSection(
                     },
                     onClick = onMyLocationsClick
                 )
-                Divider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
             }
 
             if (isAdmin) {
@@ -1029,7 +1029,7 @@ private fun AdminSection(
                     title = "Configurações da Liga",
                     onClick = onGamificationSettingsClick
                 )
-                Divider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
 
                 AdminMenuItem(
                     icon = Icons.Default.LocationOn,
