@@ -566,7 +566,7 @@ fun TeamCard(
                 Text(team.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text("Gols: ${team.score}", style = MaterialTheme.typography.titleMedium)
             }
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             players.forEach { player ->
                 Row(
                     modifier = Modifier
@@ -842,7 +842,7 @@ fun LiveMatchSection(
                              }
                         }
                     }
-                    Divider(color = MaterialTheme.colorScheme.surfaceVariant, thickness = 0.5.dp)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant, thickness = 0.5.dp)
                 }
             }
             

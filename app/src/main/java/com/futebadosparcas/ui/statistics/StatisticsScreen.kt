@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,8 +41,6 @@ import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 /**
  * Tela principal de Estatísticas com Jetpack Compose
@@ -73,6 +72,7 @@ fun StatisticsScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StatisticsContent(
     uiState: StatisticsUiState,
@@ -83,10 +83,9 @@ private fun StatisticsContent(
     modifier: Modifier = Modifier
 ) {
     val isRefreshing = uiState is StatisticsUiState.Loading
-    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing)
 
-    SwipeRefresh(
-        state = swipeRefreshState,
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
         onRefresh = onRefresh,
         modifier = modifier.fillMaxSize()
     ) {
