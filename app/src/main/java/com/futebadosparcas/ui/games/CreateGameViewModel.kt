@@ -184,6 +184,25 @@ class CreateGameViewModel @Inject constructor(
             val result = gameRepository.getGameDetails(gameId)
             if (result.isSuccess) {
                 val game = result.getOrNull()!!
+
+                // ISSUE #2 FIX: Validar permissão de edição (owner ou admin do grupo)
+                val currentUserId = authRepository.getCurrentFirebaseUser()?.uid
+                val canEdit = when {
+                    currentUserId == null -> false
+                    game.ownerId == currentUserId -> true
+                    game.groupId != null -> {
+                        val roleResult = groupRepository.getMyRoleInGroup(game.groupId!!)
+                        val role = roleResult.getOrNull()
+                        role?.name in listOf("OWNER", "ADMIN")
+                    }
+                    else -> false
+                }
+
+                if (!canEdit) {
+                    _uiState.value = CreateGameUiState.Error("Você não tem permissão para editar este jogo")
+                    return@launch
+                }
+
                 _currentGameId = game.id
                 _isEditing.value = true
 
@@ -325,6 +344,19 @@ class CreateGameViewModel @Inject constructor(
 
         if (_selectedEndTime.value!!.isBefore(_selectedTime.value!!)) {
             _uiState.value = CreateGameUiState.Error("O horário de término deve ser após o início")
+            return
+        }
+
+        // BUG #4 FIX: Validar duração mínima de 30 minutos
+        val startMinutes = _selectedTime.value!!.hour * 60 + _selectedTime.value!!.minute
+        var endMinutes = _selectedEndTime.value!!.hour * 60 + _selectedEndTime.value!!.minute
+        // Tratar virada de meia-noite
+        if (endMinutes <= startMinutes) {
+            endMinutes += 24 * 60
+        }
+        val durationMinutes = endMinutes - startMinutes
+        if (durationMinutes < 30) {
+            _uiState.value = CreateGameUiState.Error("A duração mínima do jogo é de 30 minutos")
             return
         }
 

@@ -78,7 +78,7 @@ fun EditGroupDialog(
                         modifier = Modifier.clickable {
                             try {
                                 val file = File.createTempFile("group_edit_", ".jpg", context.cacheDir)
-                                val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+                                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
                                 tempCameraUri.value = uri
                                 takePictureLauncher.launch(uri)
                             } catch (e: Exception) {
@@ -293,7 +293,7 @@ fun AddCashboxEntryDialog(
                         modifier = Modifier.clickable {
                             try {
                                 val file = File.createTempFile("receipt_", ".jpg", context.cacheDir)
-                                val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+                                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
                                 tempCameraUri.value = uri
                                 takePictureLauncher.launch(uri)
                             } catch (e: Exception) {
