@@ -346,6 +346,11 @@ class GroupsViewModel @Inject constructor(
     fun resetActionState() {
         _actionState.value = GroupActionState.Idle
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        groupsFlowJob?.cancel()
+    }
 }
 
 sealed class GroupsUiState {

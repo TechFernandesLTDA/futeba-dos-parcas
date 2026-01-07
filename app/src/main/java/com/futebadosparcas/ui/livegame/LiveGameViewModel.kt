@@ -106,6 +106,13 @@ class LiveGameViewModel @Inject constructor(
                         liveGameRepository.startLiveGame(gameId, team1.id, team2.id)
                     }
 
+                    // Buscar confirmações para mapear nomes dos jogadores
+                    val confirmationsResult = gameRepository.getGameConfirmations(gameId)
+                    val confirmations = confirmationsResult.getOrNull() ?: emptyList()
+
+                    val team1Players = confirmations.filter { team1.playerIds.contains(it.userId) }
+                    val team2Players = confirmations.filter { team2.playerIds.contains(it.userId) }
+
                     _uiState.value = LiveGameUiState.Success(
                         game = game,
                         score = score ?: LiveGameScore(
@@ -118,6 +125,8 @@ class LiveGameViewModel @Inject constructor(
                         ),
                         team1 = team1,
                         team2 = team2,
+                        team1Players = team1Players,
+                        team2Players = team2Players,
                         isOwner = isOwner
                     )
                 }
@@ -240,6 +249,8 @@ sealed class LiveGameUiState {
         val score: LiveGameScore,
         val team1: Team,
         val team2: Team,
+        val team1Players: List<GameConfirmation>,
+        val team2Players: List<GameConfirmation>,
         val isOwner: Boolean
     ) : LiveGameUiState()
     data class Error(val message: String) : LiveGameUiState()

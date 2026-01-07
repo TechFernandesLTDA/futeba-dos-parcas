@@ -371,6 +371,20 @@ desbloquear badges!</string>
     <string name="fragment_create_group_hint_3">Descricao (opcional)</string>
     <string name="fragment_create_group_text_4">Apos criar o grupo, voce podera convidar jogadores.</string>
     <string name="fragment_create_group_text_5">Criar Grupo</string>
+    <string name="create_group_title">Criar Grupo</string>
+    <string name="create_group_photo_dialog_title">Foto do grupo</string>
+    <string name="create_group_photo_dialog_camera">Tirar foto</string>
+    <string name="create_group_photo_dialog_gallery">Escolher da galeria</string>
+    <string name="create_group_photo_change">Alterar foto</string>
+    <string name="create_group_error_camera">Erro ao abrir camera</string>
+    <string name="create_group_error_name_required">Nome e obrigatorio</string>
+    <string name="create_group_error_name_min">Nome deve ter pelo menos 3 caracteres</string>
+    <string name="create_group_error_name_max">Nome deve ter no maximo 50 caracteres</string>
+    <string name="create_group_error_name_invalid">Nome contem caracteres invalidos</string>
+    <string name="create_group_success">Grupo criado com sucesso!</string>
+    <string name="create_group_uploading">Fazendo upload da foto...</string>
+    <string name="create_group_cd_photo">Foto do grupo</string>
+    <string name="create_group_cd_close">Fechar</string>
     <string name="fragment_developer_text_1">Gerenciamento de Dados Mock</string>
     <string name="fragment_developer_text_2">Gerar Dados Históricos (Completo)</string>
     <string name="fragment_developer_text_3">Gera usuários, locais, campos, jogos passados, confirmações e estatísticas.</string>
@@ -848,4 +862,84 @@ subir no ranking!</string>
     <string name="adaptive_nav_players">Jogadores</string>
     <string name="adaptive_nav_league">Liga</string>
     <string name="adaptive_nav_profile">Perfil</string>
+
+    <!-- Empty States -->
+    <string name="empty_state_no_connection_title">Sem conexao</string>
+    <string name="empty_state_no_connection_desc">Verifique sua conexao com a internet e tente novamente</string>
+    <string name="empty_state_no_results_title">Nenhum resultado encontrado</string>
+    <string name="empty_state_no_results_desc">Tente buscar com outras palavras</string>
+    <string name="empty_state_no_games_title">Nenhum jogo agendado</string>
+    <string name="empty_state_no_games_desc">Que tal criar o primeiro jogo e reunir a galera?</string>
+    <string name="empty_state_no_players_title">Nenhum jogador</string>
+    <string name="empty_state_no_players_desc">Convide seus amigos para comecar a jogar!</string>
+    <string name="empty_state_create_game">Criar Jogo</string>
+    <string name="empty_state_invite_players">Convidar Jogadores</string>
+    <string name="empty_state_clear_search">Limpar Busca</string>
+
+    <!-- Undo Snackbar -->
+    <string name="undo">Desfazer</string>
+    <string name="undo_action">Desfazer acao</string>
+    <string name="item_deleted">Item excluido</string>
+    <string name="item_removed">Item removido</string>
+    <string name="action_undone">Acao desfeita</string>
+
+    <!-- Games Screen -->
+    <string name="create_game">Criar Jogo</string>
+    <string name="all_games">Todos</string>
+    <string name="open_games">Abertos</string>
+    <string name="my_games">Meus Jogos</string>
+    <string name="no_games">Nenhum jogo encontrado</string>
+    <string name="no_games_description">Que tal criar o primeiro jogo?</string>
+
+    <!-- Group Detail Screen -->
+    <string name="group_detail">Detalhes do Grupo</string>
+    <string name="back">Voltar</string>
+    <string name="more_options">Mais opcoes</string>
+    <string name="invite_players">Convidar Jogadores</string>
+    <string name="cashbox">Caixinha</string>
+    <string name="edit_group">Editar Grupo</string>
+    <string name="transfer_ownership">Transferir Propriedade</string>
+    <string name="leave_group">Sair do Grupo</string>
+    <string name="archive_group">Arquivar Grupo</string>
+    <string name="delete_group">Excluir Grupo</string>
+    <string name="members">Membros</string>
+    <string name="no_description">Sem descricao</string>
+    <string name="invite">Convidar</string>
+
+    <!-- Locations Screen -->
+    <string name="manage_locations">Gerenciar Locais</string>
+    <string name="add">Adicionar</string>
+    <string name="search_locations">Buscar locais</string>
+    <string name="no_locations">Nenhum local cadastrado</string>
+    <string name="no_locations_description">Adicione um novo local usando o botao +</string>
+    <string name="add_location">Adicionar Local</string>
+
+    <!-- Live Events Screen -->
+    <string name="no_events">Nenhum evento</string>
+    <string name="no_events_description">Os eventos da partida aparecerão aqui</string>
+
+    <!-- Live Stats Screen -->
+    <string name="no_stats">Sem estatisticas</string>
+    <string name="no_stats_description">As estatisticas aparecerão quando o jogo iniciar</string>
+
+    <!-- Field Owner Dashboard -->
+    <string name="fields">Quadras</string>
+
+    <!-- Notifications -->
+    <string name="DeleteDuplicates">Remover Duplicatas</string>
+
+    <!-- Home Screen -->
+    <string name="upcoming_games_home">Proximos Jogos</string>
+
+    <!-- Create Game Screen (Compose) -->
+    <string name="create_game_edit_title">Editar Jogo</string>
+    <string name="create_game_section_location">Local e Quadra</string>
+    <string name="create_game_section_basic_info">Informacoes Basicas</string>
+    <string name="create_game_section_datetime">Data e Horario</string>
+    <string name="create_game_section_pricing">Preco e Jogadores</string>
+    <string name="create_game_error_owner_name">Nome do responsavel deve ter pelo menos 3 caracteres</string>
+    <string name="create_game_error_price">Preco invalido</string>
+    <string name="create_game_error_max_players">Numero de jogadores deve estar entre 4 e 100</string>
+    <string name="create_game_no_groups_warning">Voce precisa ser Dono ou Administrador de um grupo para criar jogos</string>
+    <string name="create_game_search_results">Resultados da Busca</string>
 </resources>

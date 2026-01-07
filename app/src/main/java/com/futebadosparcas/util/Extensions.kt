@@ -51,12 +51,14 @@ fun View.setDebouncedClickListener(
  * Previne refresh excessivos que consomem bateria e dados.
  *
  * @param scope CoroutineScope para gerenciar o debounce
- * @param debounceTimeMs Tempo mínimo entre refreshes (padrão: 2 segundos)
+ * @param debounceTimeMs Tempo mínimo entre refreshes (padrão: 500ms)
+ * @param hapticManager Opcional: adiciona feedback háptico ao pull-to-refresh
  * @param onRefresh Callback executado quando o refresh é permitido
  */
 fun SwipeRefreshLayout.setDebouncedRefreshListener(
     scope: CoroutineScope,
-    debounceTimeMs: Long = 2000L,
+    debounceTimeMs: Long = 500L,
+    hapticManager: HapticManager? = null,
     onRefresh: () -> Unit
 ) {
     var lastRefreshTime = 0L
@@ -69,6 +71,7 @@ fun SwipeRefreshLayout.setDebouncedRefreshListener(
         if (timeSinceLastRefresh >= debounceTimeMs) {
             // Tempo suficiente passou, executar refresh imediatamente
             lastRefreshTime = currentTime
+            hapticManager?.tick() // Feedback háptico suave
             onRefresh()
         } else {
             // Muito cedo para outro refresh
@@ -77,6 +80,7 @@ fun SwipeRefreshLayout.setDebouncedRefreshListener(
                 // Aguardar o tempo restante
                 delay(debounceTimeMs - timeSinceLastRefresh)
                 lastRefreshTime = System.currentTimeMillis()
+                hapticManager?.tick() // Feedback háptico suave
                 onRefresh()
             }
         }
@@ -96,5 +100,62 @@ class Throttler(private val intervalMs: Long = 1000L) {
             lastExecutionTime = currentTime
             action()
         }
+    }
+}
+
+/**
+ * Interface para objetos que possuem um ID unico.
+ * Usado pela extensao deduplicateById para remover duplicatas de forma eficiente.
+ */
+interface Identifiable {
+    val id: String
+}
+
+/**
+ * Extension function para deduplicar listas por ID.
+ *
+ * Remove duplicatas de uma lista baseando-se no ID do objeto, mantendo apenas
+ * a primeira ocorrencia de cada ID. Mais eficiente que distinctBy { it.id }
+ * para listas grandes, pois usa HashSet internamente.
+ *
+ * Exemplo de uso:
+ * ```kotlin
+ * val games = listOf(game1, game2, game1) // game1 duplicado
+ * val uniqueGames = games.deduplicateById() // [game1, game2]
+ * ```
+ *
+ * @return Lista sem duplicatas, preservando a ordem original
+ */
+fun <T : Identifiable> List<T>.deduplicateById(): List<T> {
+    val seen = HashSet<String>(this.size)
+    return filter { item ->
+        if (item.id.isEmpty()) {
+            // Se ID vazio, sempre incluir (pode ser objeto temporario)
+            true
+        } else {
+            // Adiciona ao set e retorna true se nao existia (primeira ocorrencia)
+            seen.add(item.id)
+        }
+    }
+}
+
+/**
+ * Extension function genérica para deduplicar listas por qualquer propriedade.
+ *
+ * Mais eficiente que distinctBy para listas grandes (>100 elementos).
+ *
+ * Exemplo de uso:
+ * ```kotlin
+ * val users = listOf(user1, user2, user1)
+ * val uniqueUsers = users.deduplicateBy { it.email }
+ * ```
+ *
+ * @param selector Funcao que extrai a propriedade unica
+ * @return Lista sem duplicatas, preservando a ordem original
+ */
+inline fun <T, K> List<T>.deduplicateBy(crossinline selector: (T) -> K): List<T> {
+    val seen = HashSet<K>(this.size)
+    return filter { item ->
+        seen.add(selector(item))
     }
 }
