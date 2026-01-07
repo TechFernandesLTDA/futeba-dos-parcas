@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import { onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { onDocumentUpdated, onDocumentDeleted } from "firebase-functions/v2/firestore";
 import {
     calculateLeaguePromotion,
     calculateLeagueRating as leagueRatingCalc,
@@ -119,25 +119,25 @@ const DEFAULT_SETTINGS: GamificationSettings = {
     xp_streak_10: 100
 };
 
-// LevelTable Logic (Synced with Kotlin LevelTable.kt)
+// LevelTable Logic (Synced with Kotlin LevelCalculator.kt)
+// Formato: level, name, xpRequired (acumulado)
 const LEVELS = [
-    { level: 0, name: "Novato", xpRequired: 0 },
-    { level: 1, name: "Iniciante", xpRequired: 100 },
-    { level: 2, name: "Amador", xpRequired: 350 },
-    { level: 3, name: "Regular", xpRequired: 850 },
-    { level: 4, name: "Experiente", xpRequired: 1850 },
-    { level: 5, name: "Habilidoso", xpRequired: 3850 },
-    { level: 6, name: "Profissional", xpRequired: 7350 },
-    { level: 7, name: "Expert", xpRequired: 12850 },
-    { level: 8, name: "Mestre", xpRequired: 20850 },
-    { level: 9, name: "Lenda", xpRequired: 32850 },
-    { level: 10, name: "Imortal", xpRequired: 52850 }
+    { level: 1, name: "Iniciante", xpRequired: 0 },
+    { level: 2, name: "Amador", xpRequired: 100 },
+    { level: 3, name: "Promissor", xpRequired: 350 },
+    { level: 4, name: "Habilidoso", xpRequired: 750 },
+    { level: 5, name: "Experiente", xpRequired: 1350 },
+    { level: 6, name: "Veterano", xpRequired: 2200 },
+    { level: 7, name: "Elite", xpRequired: 3300 },
+    { level: 8, name: "Craque", xpRequired: 4700 },
+    { level: 9, name: "Lenda", xpRequired: 6500 },
+    { level: 10, name: "Imortal", xpRequired: 8800 }
 ];
 
 function getLevelForXp(xp: number): number {
     const sorted = [...LEVELS].reverse();
     const found = sorted.find(l => xp >= l.xpRequired);
-    return found ? found.level : 0;
+    return found ? found.level : 1; // Nível mínimo é 1 (Iniciante)
 }
 
 // Milestone Logic (Synced with Kotlin Gamification.kt)
@@ -290,8 +290,10 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 settings = { ...DEFAULT_SETTINGS, ...settingsSnap.data() } as GamificationSettings;
             }
 
-            if (confirmations.length < 4) {
-                console.log("Not enough players. Marking processed.");
+            // Mínimo de 6 jogadores (3v3) para processar XP - sincronizado com Android
+            const MIN_PLAYERS = 6;
+            if (confirmations.length < MIN_PLAYERS) {
+                console.log(`Not enough players (${confirmations.length}/${MIN_PLAYERS}). Marking processed.`);
                 await event.data.after.ref.update({
                     xp_processed: true,
                     xp_processing: false,
@@ -750,6 +752,90 @@ export const recalculateLeagueRating = onDocumentUpdated(
 
 // Funções calculateLeagueRating e getDivisionForRating movidas para league.ts
 // Ver também: calculateLeaguePromotion para lógica de promoção/rebaixamento
+
+// ==========================================
+// DELEÇÃO EM CASCATA DE JOGOS
+// ==========================================
+
+export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) => {
+    const gameId = event.params.gameId;
+    console.log(`[CASCADE DELETE] Starting cascade deletion for game ${gameId}`);
+
+    try {
+        const batch = db.batch();
+        let totalDeleted = 0;
+
+        // 1. Delete confirmations
+        const confirmationsSnap = await db.collection("confirmations")
+            .where("game_id", "==", gameId)
+            .get();
+        confirmationsSnap.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            totalDeleted++;
+        });
+        console.log(`[CASCADE DELETE] Found ${confirmationsSnap.size} confirmations to delete`);
+
+        // 2. Delete teams
+        const teamsSnap = await db.collection("teams")
+            .where("game_id", "==", gameId)
+            .get();
+        teamsSnap.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            totalDeleted++;
+        });
+        console.log(`[CASCADE DELETE] Found ${teamsSnap.size} teams to delete`);
+
+        // 3. Delete game_events (live match events)
+        const eventsSnap = await db.collection("game_events")
+            .where("game_id", "==", gameId)
+            .get();
+        eventsSnap.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            totalDeleted++;
+        });
+        console.log(`[CASCADE DELETE] Found ${eventsSnap.size} game_events to delete`);
+
+        // 4. Delete mvp_votes
+        const votesSnap = await db.collection("mvp_votes")
+            .where("game_id", "==", gameId)
+            .get();
+        votesSnap.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            totalDeleted++;
+        });
+        console.log(`[CASCADE DELETE] Found ${votesSnap.size} mvp_votes to delete`);
+
+        // 5. Delete live_scores (document with gameId as ID)
+        const liveScoreRef = db.collection("live_scores").doc(gameId);
+        const liveScoreDoc = await liveScoreRef.get();
+        if (liveScoreDoc.exists) {
+            batch.delete(liveScoreRef);
+            totalDeleted++;
+            console.log(`[CASCADE DELETE] Found live_score to delete`);
+        }
+
+        // 6. Delete xp_logs related to this game
+        const xpLogsSnap = await db.collection("xp_logs")
+            .where("game_id", "==", gameId)
+            .get();
+        xpLogsSnap.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            totalDeleted++;
+        });
+        console.log(`[CASCADE DELETE] Found ${xpLogsSnap.size} xp_logs to delete`);
+
+        // Commit all deletions
+        if (totalDeleted > 0) {
+            await batch.commit();
+            console.log(`[CASCADE DELETE] Successfully deleted ${totalDeleted} related documents for game ${gameId}`);
+        } else {
+            console.log(`[CASCADE DELETE] No related documents found for game ${gameId}`);
+        }
+    } catch (error) {
+        console.error(`[CASCADE DELETE] Error during cascade deletion for game ${gameId}:`, error);
+        throw error; // Re-throw to trigger retry
+    }
+});
 
 export * from "./activities";
 export * from "./season";
