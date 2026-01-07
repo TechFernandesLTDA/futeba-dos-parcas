@@ -14,7 +14,8 @@ data class UserEntity(
     val photoUrl: String?,
     val fcmToken: String?,
     val createdAt: Long?,
-    val updatedAt: Long?
+    val updatedAt: Long?,
+    val cachedAt: Long = System.currentTimeMillis() // TTL tracking
 )
 
 @Entity(tableName = "games")
@@ -43,7 +44,8 @@ data class GameEntity(
     val gameType: String,
     val recurrence: String,
     val createdAt: Long?,
-    val dateTime: Long? = null
+    val dateTime: Long? = null,
+    val cachedAt: Long = System.currentTimeMillis() // TTL tracking
 )
 
 // Extensions to map between Domain/Network and Local
