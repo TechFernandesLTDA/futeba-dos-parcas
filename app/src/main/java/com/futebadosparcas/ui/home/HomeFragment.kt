@@ -71,7 +71,9 @@ class HomeFragment : Fragment() {
                             }
                         },
                         onMapClick = {
-                            // TODO: Navigate to map screen when available
+                            if (isAdded) {
+                                findNavController().navigate(R.id.action_global_map)
+                            }
                         },
                         hapticManager = hapticManager
                     )
