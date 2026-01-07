@@ -314,7 +314,7 @@ fun CreateGroupScreen(
                     )
                     val uri = FileProvider.getUriForFile(
                         context,
-                        "${context.packageName}.provider",
+                        "${context.packageName}.fileprovider",
                         photoFile
                     )
                     tempCameraUri.value = uri

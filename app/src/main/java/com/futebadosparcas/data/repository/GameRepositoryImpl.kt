@@ -257,11 +257,76 @@ class GameRepositoryImpl @Inject constructor(
 
     override suspend fun deleteGame(gameId: String): Result<Unit> {
         return try {
-            gamesCollection.document(gameId).delete().await()
+            // BUG #5 FIX: Deleção em cascata de todos os dados relacionados
+            val confirmationsCollection = firestore.collection("confirmations")
+            val teamsCollection = firestore.collection("teams")
+            val mvpVotesCollection = firestore.collection("mvp_votes")
+            val liveScoresCollection = firestore.collection("live_scores")
+
+            // 1. Buscar todos os documentos relacionados
+            val confirmations = confirmationsCollection
+                .whereEqualTo("game_id", gameId)
+                .get().await()
+
+            val teams = teamsCollection
+                .whereEqualTo("game_id", gameId)
+                .get().await()
+
+            val mvpVotes = mvpVotesCollection
+                .whereEqualTo("game_id", gameId)
+                .get().await()
+
+            val gameEvents = gamesCollection.document(gameId)
+                .collection("game_events")
+                .get().await()
+
+            // 2. Deletar em batch (limite de 500 operações por batch)
+            val batch = firestore.batch()
+            var operationCount = 0
+            val maxBatchSize = 450 // Margem de segurança
+
+            // Deletar confirmações
+            confirmations.documents.forEach { doc ->
+                batch.delete(doc.reference)
+                operationCount++
+            }
+
+            // Deletar times
+            teams.documents.forEach { doc ->
+                batch.delete(doc.reference)
+                operationCount++
+            }
+
+            // Deletar votos MVP
+            mvpVotes.documents.forEach { doc ->
+                batch.delete(doc.reference)
+                operationCount++
+            }
+
+            // Deletar eventos do jogo (subcollection)
+            gameEvents.documents.forEach { doc ->
+                batch.delete(doc.reference)
+                operationCount++
+            }
+
+            // Deletar live_score se existir
+            val liveScoreDoc = liveScoresCollection.document(gameId)
+            batch.delete(liveScoreDoc)
+            operationCount++
+
+            // Deletar o jogo principal
+            batch.delete(gamesCollection.document(gameId))
+
+            // Commit do batch
+            batch.commit().await()
+
             // Sync with local DB
             gameDao.deleteGame(gameId)
+
+            AppLogger.i(TAG) { "Jogo $gameId deletado com sucesso. Removidos: $operationCount documentos relacionados." }
             Result.success(Unit)
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao deletar jogo $gameId em cascata", e)
             Result.failure(e)
         }
     }

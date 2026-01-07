@@ -36,9 +36,20 @@ class MatchManagementDataSource @Inject constructor(
              firestore.runTransaction { transaction ->
                 val gameSnapshot = transaction.get(gameRef)
                 val existingConfirmationSnapshot = transaction.get(confirmationRef)
-                
+
                 if (!gameSnapshot.exists()) {
                     throw Exception("Jogo nao encontrado")
+                }
+
+                // ISSUE #4 FIX: Bloquear confirmações quando lista está fechada
+                val gameStatus = gameSnapshot.getString("status") ?: "SCHEDULED"
+                if (gameStatus !in listOf("SCHEDULED", "CONFIRMED")) {
+                    throw Exception("Lista de confirmação está fechada")
+                }
+
+                // Se status for CONFIRMED (lista fechada), bloquear novas confirmações
+                if (gameStatus == "CONFIRMED" && !existingConfirmationSnapshot.exists()) {
+                    throw Exception("Lista de confirmação está fechada. Não é possível confirmar presença.")
                 }
 
                 val currentGk = gameSnapshot.getLong("goalkeepers_count")?.toInt() ?: 0

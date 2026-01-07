@@ -156,10 +156,41 @@ class GameExperienceRepository @Inject constructor(
             val bestGkCounts = votes.filter { it.category == VoteCategory.BEST_GOALKEEPER }.groupingBy { it.votedPlayerId }.eachCount()
             val worstCounts = votes.filter { it.category == VoteCategory.WORST }.groupingBy { it.votedPlayerId }.eachCount()
 
-            // Obter vencedores apenas se houver votos (evitar null quando nao ha votos)
-            val mvpId = if (mvpCounts.isNotEmpty()) mvpCounts.maxByOrNull { it.value }?.key else null
-            val bestGkId = if (bestGkCounts.isNotEmpty()) bestGkCounts.maxByOrNull { it.value }?.key else null
-            val worstId = if (worstCounts.isNotEmpty()) worstCounts.maxByOrNull { it.value }?.key else null
+            // BUG #9 FIX: Buscar estatísticas de gols para desempate
+            val gameEventsSnapshot = db.collection("games").document(gameId)
+                .collection("game_events")
+                .whereEqualTo("event_type", "GOAL")
+                .get().await()
+            val goalsPerPlayer = gameEventsSnapshot.documents
+                .mapNotNull { it.getString("player_id") }
+                .groupingBy { it }
+                .eachCount()
+
+            // BUG #9 FIX: Função helper para resolver empates
+            // Critério: 1) Mais votos, 2) Mais gols na partida, 3) Ordem alfabética
+            fun resolveWinner(voteCounts: Map<String, Int>): String? {
+                if (voteCounts.isEmpty()) return null
+                val maxVotes = voteCounts.values.maxOrNull() ?: return null
+                val candidates = voteCounts.filter { it.value == maxVotes }.keys.toList()
+
+                if (candidates.size == 1) return candidates.first()
+
+                // Desempate por gols na partida
+                val sortedByGoals = candidates.sortedByDescending { goalsPerPlayer[it] ?: 0 }
+                val maxGoals = goalsPerPlayer[sortedByGoals.first()] ?: 0
+                val tiedByGoals = sortedByGoals.filter { (goalsPerPlayer[it] ?: 0) == maxGoals }
+
+                if (tiedByGoals.size == 1) return tiedByGoals.first()
+
+                // Desempate final: ordem alfabética pelo nome do jogador
+                val playerNames = confirmations.associate { it.userId to it.userName }
+                return tiedByGoals.sortedBy { playerNames[it]?.lowercase() ?: "" }.first()
+            }
+
+            // Obter vencedores com tratamento de empate
+            val mvpId = resolveWinner(mvpCounts)
+            val bestGkId = resolveWinner(bestGkCounts)
+            val worstId = resolveWinner(worstCounts)
 
             AppLogger.d(TAG) { "Resultados da votação - MVP: $mvpId, BestGK: $bestGkId, Worst: $worstId" }
 

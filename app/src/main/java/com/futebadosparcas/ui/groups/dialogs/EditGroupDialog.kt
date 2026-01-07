@@ -185,7 +185,7 @@ class EditGroupDialog : BottomSheetDialogFragment() {
             )
             tempCameraUri = FileProvider.getUriForFile(
                 requireContext(),
-                "${requireContext().packageName}.provider",
+                "${requireContext().packageName}.fileprovider",
                 photoFile
             )
             takePictureLauncher.launch(tempCameraUri)
