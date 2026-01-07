@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -196,7 +197,7 @@ private fun LiveEventsEmptyState() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            imageVector = Icons.Default.EventNote,
+            imageVector = Icons.AutoMirrored.Filled.EventNote,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
@@ -242,7 +243,7 @@ private fun getEventIcon(eventType: String) = when (eventType.lowercase()) {
     "yellowcard" -> Icons.Default.Warning
     "redcard" -> Icons.Default.Close
     "foul" -> Icons.Default.Gavel
-    else -> Icons.Default.EventNote
+    else -> Icons.AutoMirrored.Filled.EventNote
 }
 
 /**

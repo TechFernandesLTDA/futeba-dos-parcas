@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -611,7 +613,7 @@ private fun RatingsCard(user: User) {
             RatingItem(
                 label = "Meio-Campo",
                 rating = user.getEffectiveRating(PlayerRatingRole.MID),
-                icon = Icons.Default.DirectionsRun
+                icon = Icons.AutoMirrored.Filled.DirectionsRun
             )
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -918,7 +920,7 @@ private fun ActionButtonsSection(
             shape = RoundedCornerShape(12.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Logout,
+                imageVector = Icons.AutoMirrored.Filled.Logout,
                 contentDescription = null,
                 modifier = Modifier.size(18.dp)
             )

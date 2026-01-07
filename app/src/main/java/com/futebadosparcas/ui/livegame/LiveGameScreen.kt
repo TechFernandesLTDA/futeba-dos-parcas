@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -431,7 +432,7 @@ private fun LiveGameTabs(
     onTabSelected: (Int) -> Unit
 ) {
     val tabTitles = listOf("Estatísticas", "Eventos")
-    val tabIcons = listOf(Icons.Default.BarChart, Icons.Default.EventNote)
+    val tabIcons = listOf(Icons.Default.BarChart, Icons.AutoMirrored.Filled.EventNote)
 
     Column(modifier = Modifier.fillMaxSize()) {
         // TabRow
