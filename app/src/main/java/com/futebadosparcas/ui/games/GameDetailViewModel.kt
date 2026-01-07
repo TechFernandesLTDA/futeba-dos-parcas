@@ -7,6 +7,7 @@ import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.util.AppLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -35,16 +36,19 @@ class GameDetailViewModel @Inject constructor(
     }
 
     private var gameId: String? = null
+    private var gameDetailsJob: Job? = null
 
     fun loadGameDetails(id: String) {
         if (id.isEmpty()) {
             _uiState.value = GameDetailUiState.Error("ID do jogo inválido")
             return
         }
-        if (gameId == id) return
+        if (gameId == id && gameDetailsJob?.isActive == true) return
         gameId = id
-        
-        viewModelScope.launch {
+
+        // Cancelar job anterior para evitar coleções concorrentes
+        gameDetailsJob?.cancel()
+        gameDetailsJob = viewModelScope.launch {
             _uiState.value = GameDetailUiState.Loading
 
             try {
@@ -633,6 +637,11 @@ class GameDetailViewModel @Inject constructor(
     fun clearUserMessage() {
         val currentState = _uiState.value as? GameDetailUiState.Success ?: return
         _uiState.value = currentState.copy(userMessage = null)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        gameDetailsJob?.cancel()
     }
 }
 
