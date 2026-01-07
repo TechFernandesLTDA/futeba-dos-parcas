@@ -1,6 +1,7 @@
 package com.futebadosparcas.ui.groups.dialogs
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -35,7 +36,10 @@ import com.futebadosparcas.data.model.CashboxEntryType
 import com.futebadosparcas.data.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
+import com.futebadosparcas.util.AppLogger
 import java.io.File
+
+private const val TAG = "ComposeGroupDialogs"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +81,10 @@ fun EditGroupDialog(
                                 val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
                                 tempCameraUri.value = uri
                                 takePictureLauncher.launch(uri)
-                            } catch (e: Exception) { /* Handle error */ }
+                            } catch (e: Exception) {
+                                AppLogger.e(TAG, "Erro ao abrir câmera para foto do grupo", e)
+                                Toast.makeText(context, "Erro ao abrir câmera", Toast.LENGTH_SHORT).show()
+                            }
                             showPhotoOptions = false
                         }
                     )
@@ -289,7 +296,10 @@ fun AddCashboxEntryDialog(
                                 val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
                                 tempCameraUri.value = uri
                                 takePictureLauncher.launch(uri)
-                            } catch (e: Exception) { }
+                            } catch (e: Exception) {
+                                AppLogger.e(TAG, "Erro ao abrir câmera para comprovante", e)
+                                Toast.makeText(context, "Erro ao abrir câmera", Toast.LENGTH_SHORT).show()
+                            }
                             showPhotoOptions = false
                         }
                     )
