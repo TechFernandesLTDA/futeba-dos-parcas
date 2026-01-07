@@ -55,6 +55,8 @@ fun HomeScreen(
     onProfileClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
+    onGroupsClick: () -> Unit = {},
+    onMapClick: () -> Unit = {},
     hapticManager: HapticManager? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -82,7 +84,9 @@ fun HomeScreen(
                     onGameClick = onGameClick,
                     onProfileClick = onProfileClick,
                     onSettingsClick = onSettingsClick,
-                    onNotificationsClick = onNotificationsClick
+                    onNotificationsClick = onNotificationsClick,
+                    onGroupsClick = onGroupsClick,
+                    onMapClick = onMapClick
                 )
             }
             is HomeUiState.Error -> {
@@ -109,7 +113,9 @@ private fun HomeSuccessContent(
     onGameClick: (gameId: String) -> Unit,
     onProfileClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    onNotificationsClick: () -> Unit
+    onNotificationsClick: () -> Unit,
+    onGroupsClick: () -> Unit,
+    onMapClick: () -> Unit
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
 
@@ -125,8 +131,8 @@ private fun HomeSuccessContent(
             FutebaTopBar(
                 unreadCount = unreadCount,
                 onNavigateNotifications = onNotificationsClick,
-                onNavigateGroups = {},
-                onNavigateMap = {}
+                onNavigateGroups = onGroupsClick,
+                onNavigateMap = onMapClick
             )
         }
 
