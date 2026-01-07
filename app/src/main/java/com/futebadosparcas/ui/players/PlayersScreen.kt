@@ -191,6 +191,23 @@ fun PlayersScreen(
                 }
             }
         }
+
+        // Dialog de Comparação
+        val comparisonState by viewModel.comparisonState.collectAsStateWithLifecycle()
+        if (comparisonState is ComparisonUiState.Ready) {
+            val readyState = comparisonState as ComparisonUiState.Ready
+            ComparePlayersUiDialog(
+                user1 = readyState.user1,
+                stats1 = readyState.stats1,
+                user2 = readyState.user2,
+                stats2 = readyState.stats2,
+                onDismiss = {
+                    viewModel.resetComparison()
+                    selectedPlayers = emptySet()
+                    isComparisonMode = false
+                }
+            )
+        }
     }
 }
 

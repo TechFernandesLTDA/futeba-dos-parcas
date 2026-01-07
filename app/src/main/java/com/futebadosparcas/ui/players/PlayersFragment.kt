@@ -57,51 +57,10 @@ class PlayersFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Observa eventos de comparação
-        observeComparisonState()
-
         // Observa eventos de convite
         observeInviteEvents()
     }
 
-    /**
-     * Observa estado de comparação de jogadores
-     * Exibe dialog quando comparação estiver pronta
-     */
-    private fun observeComparisonState() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.comparisonState.collect { state ->
-                    when (state) {
-                        is ComparisonUiState.Ready -> {
-                            // Verifica se já não existe um dialog aberto
-                            if (childFragmentManager.findFragmentByTag(ComparePlayersDialogFragment.TAG) == null) {
-                                val dialog = ComparePlayersDialogFragment()
-                                dialog.setPlayers(state.user1, state.stats1, state.user2, state.stats2)
-                                dialog.show(childFragmentManager, ComparePlayersDialogFragment.TAG)
-
-                                // Reset state após exibir
-                                viewModel.resetComparison()
-                            }
-                        }
-
-                        is ComparisonUiState.Error -> {
-                            Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
-                            viewModel.resetComparison()
-                        }
-
-                        is ComparisonUiState.Loading -> {
-                            // Loading é tratado no Compose
-                        }
-
-                        ComparisonUiState.Idle -> {
-                            // Estado inicial
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     /**
      * Observa eventos de convite para grupos

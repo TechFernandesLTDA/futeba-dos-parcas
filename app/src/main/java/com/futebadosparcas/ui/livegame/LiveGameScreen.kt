@@ -172,6 +172,8 @@ fun LiveGameScreen(
                             sheetState = sheetState,
                             team1 = state.team1,
                             team2 = state.team2,
+                            team1Players = state.team1Players,
+                            team2Players = state.team2Players,
                             gameId = gameId,
                             onDismiss = { showAddEventSheet = false },
                             onEventAdded = { eventType, playerId, playerName, teamId, assistId, assistName, minute ->
@@ -559,6 +561,8 @@ private fun AddEventBottomSheet(
     sheetState: SheetState,
     team1: Team,
     team2: Team,
+    team1Players: List<GameConfirmation>,
+    team2Players: List<GameConfirmation>,
     gameId: String,
     onDismiss: () -> Unit,
     onEventAdded: (
@@ -684,13 +688,102 @@ private fun AddEventBottomSheet(
                 singleLine = true
             )
 
-            // Nota: Seleção de jogador seria implementada com um Dropdown ou Dialog
-            // Por simplicidade, deixo como placeholder
-            Text(
-                text = "Seleção de jogador seria implementada aqui",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            // Lista de jogadores atuais baseada no time selecionado
+            val currentPlayers = remember(selectedTeam) {
+                if (selectedTeam.id == team1.id) team1Players else team2Players
+            }
+
+            // Seleção de Jogador (Dropdown)
+            var playerExpanded by remember { mutableStateOf(false) }
+            val playerLabel = when (selectedEventType) {
+                GameEventType.GOAL -> "Quem fez o Gol?"
+                GameEventType.SAVE -> "Quem fez a Defesa?"
+                GameEventType.YELLOW_CARD -> "Quem tomou cartão Amarelo?"
+                GameEventType.RED_CARD -> "Quem tomou cartão Vermelho?"
+                else -> "Jogador"
+            }
+
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = selectedPlayer?.userName ?: "",
+                    onValueChange = {},
+                    label = { Text(playerLabel) },
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = { playerExpanded = true }) {
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = "Expandir")
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                DropdownMenu(
+                    expanded = playerExpanded,
+                    onDismissRequest = { playerExpanded = false },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    currentPlayers.forEach { player ->
+                        DropdownMenuItem(
+                            text = { Text(player.userName) },
+                            onClick = {
+                                selectedPlayer = player
+                                playerExpanded = false
+                            }
+                        )
+                    }
+                    if (currentPlayers.isEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("Nenhum jogador encontrado") },
+                            onClick = { playerExpanded = false },
+                            enabled = false
+                        )
+                    }
+                }
+            }
+
+            // Assistência (Apenas para Gols)
+            if (selectedEventType == GameEventType.GOAL) {
+                var assistExpanded by remember { mutableStateOf(false) }
+                
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = selectedAssist?.userName ?: "",
+                        onValueChange = {},
+                        label = { Text("Assistência (Opcional)") },
+                        readOnly = true,
+                        trailingIcon = {
+                            IconButton(onClick = { assistExpanded = true }) {
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = "Expandir")
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    DropdownMenu(
+                        expanded = assistExpanded,
+                        onDismissRequest = { assistExpanded = false },
+                         modifier = Modifier.fillMaxWidth()
+                    ) {
+                         DropdownMenuItem(
+                            text = { Text("Sem assistência") },
+                            onClick = {
+                                selectedAssist = null
+                                assistExpanded = false
+                            }
+                        )
+                        currentPlayers.forEach { player ->
+                            // Não permitir auto-assistência (opcional, mas comum)
+                            if (player.userId != selectedPlayer?.userId) {
+                                DropdownMenuItem(
+                                    text = { Text(player.userName) },
+                                    onClick = {
+                                        selectedAssist = player
+                                        assistExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 
             // Botões
             Row(

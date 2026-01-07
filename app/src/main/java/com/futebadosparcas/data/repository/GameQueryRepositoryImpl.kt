@@ -12,6 +12,7 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -494,6 +495,122 @@ class GameQueryRepositoryImpl @Inject constructor(
                     send(it)
                 }
             }
+        }
+    }
+
+    // Cache para cursor de paginacao
+    private var lastDocumentSnapshot: DocumentSnapshot? = null
+
+    override suspend fun getHistoryGamesPaginated(
+        pageSize: Int,
+        lastGameId: String?
+    ): Result<PaginatedGames> {
+        return try {
+            val uid = auth.currentUser?.uid ?: ""
+
+            // Buscar grupos do usuario
+            val userGroupIds = if (uid.isNotEmpty()) {
+                groupRepository.getMyGroups()
+                    .getOrElse { emptyList() }
+                    .map { it.id.ifEmpty { it.groupId } }
+                    .filter { it.isNotEmpty() }
+                    .take(10)
+            } else {
+                emptyList()
+            }
+
+            // Se temos um cursor, buscar o documento de referencia
+            val startAfterDoc: DocumentSnapshot? = if (lastGameId != null && lastDocumentSnapshot?.id == lastGameId) {
+                lastDocumentSnapshot
+            } else if (lastGameId != null) {
+                // Buscar o documento pelo ID
+                gamesCollection.document(lastGameId).get().await()
+            } else {
+                null
+            }
+
+            // Construir query base com ordenacao
+            var publicQuery = gamesCollection
+                .whereIn("visibility", listOf(
+                    com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN.name,
+                    com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED.name
+                ))
+                .whereIn("status", listOf(GameStatus.FINISHED.name, GameStatus.CANCELLED.name))
+                .orderBy("dateTime", Query.Direction.DESCENDING)
+
+            // Aplicar cursor se existir
+            if (startAfterDoc != null && startAfterDoc.exists()) {
+                publicQuery = publicQuery.startAfter(startAfterDoc)
+            }
+
+            // Buscar uma pagina + 1 para saber se ha mais
+            val publicSnapshot = publicQuery.limit((pageSize + 1).toLong()).get().await()
+
+            // Query para jogos de grupo (se houver)
+            val groupGames = if (userGroupIds.isNotEmpty()) {
+                var groupQuery = gamesCollection
+                    .whereEqualTo("visibility", com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY.name)
+                    .whereIn("group_id", userGroupIds)
+                    .whereIn("status", listOf(GameStatus.FINISHED.name, GameStatus.CANCELLED.name))
+                    .orderBy("dateTime", Query.Direction.DESCENDING)
+
+                if (startAfterDoc != null && startAfterDoc.exists()) {
+                    groupQuery = groupQuery.startAfter(startAfterDoc)
+                }
+
+                groupQuery.limit((pageSize + 1).toLong()).get().await()
+                    .documents.mapNotNull { doc ->
+                        doc.toObject(Game::class.java)?.apply { id = doc.id }
+                    }
+            } else {
+                emptyList()
+            }
+
+            val publicGames = publicSnapshot.documents.mapNotNull { doc ->
+                doc.toObject(Game::class.java)?.apply { id = doc.id }
+            }
+
+            // Combinar e deduplicar
+            val allGames = (publicGames + groupGames)
+                .distinctBy { it.id }
+                .sortedByDescending { it.dateTime }
+
+            // Verificar se ha mais paginas
+            val hasMore = allGames.size > pageSize
+            val gamesPage = allGames.take(pageSize)
+
+            // Atualizar cursor para proxima pagina
+            val newLastGameId = if (gamesPage.isNotEmpty()) {
+                val lastGame = gamesPage.last()
+                // Guardar snapshot para reutilizar
+                lastDocumentSnapshot = publicSnapshot.documents.find { it.id == lastGame.id }
+                lastGame.id
+            } else {
+                null
+            }
+
+            // Buscar confirmacoes do usuario
+            val userConfirmations = confirmationRepository.getUserConfirmationIds(uid)
+
+            // Mapear para GameWithConfirmations
+            val result = gamesPage.map { game ->
+                GameWithConfirmations(
+                    game = game,
+                    confirmedCount = game.playersCount,
+                    isUserConfirmed = game.id in userConfirmations
+                )
+            }
+
+            AppLogger.d(TAG) { "getHistoryGamesPaginated: ${result.size} jogos, hasMore=$hasMore" }
+
+            Result.success(PaginatedGames(
+                games = result,
+                lastGameId = newLastGameId,
+                hasMore = hasMore
+            ))
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar historico paginado", e)
+            Result.failure(e)
         }
     }
 

@@ -88,3 +88,6 @@ temp_*.txt
 
 # Windows null device artifacts
 nul
+
+# Auto Claude data directory
+.auto-claude/

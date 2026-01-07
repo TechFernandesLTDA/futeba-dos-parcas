@@ -245,6 +245,11 @@ class LeagueViewModel @Inject constructor(
     fun getFilteredRanking(state: LeagueUiState.Success): List<RankingItem> {
         return state.allRankings.filter { it.participation.division == state.selectedDivision }
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        leagueDataJob?.cancel()
+    }
 }
 
 /**

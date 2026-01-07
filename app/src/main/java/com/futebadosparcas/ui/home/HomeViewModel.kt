@@ -308,6 +308,11 @@ class HomeViewModel @Inject constructor(
         return userRepository.getCurrentUserId()
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        loadJob?.cancel()
+    }
+
     companion object {
         private const val TAG = "HomeViewModel"
         private const val TIMEOUT_MILLIS = 8_000L // 8 segundos
