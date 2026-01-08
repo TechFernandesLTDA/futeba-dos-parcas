@@ -26,7 +26,15 @@ class PreferencesManager @Inject constructor(
 
     // SharedPreferences encriptado para dados sensíveis
     private val encryptedPreferences: SharedPreferences by lazy {
-        try {
+        createEncryptedPreferences()
+    }
+
+    /**
+     * Cria EncryptedSharedPreferences com recuperação automática de erros.
+     * Se a chave estiver corrompida, tenta limpar e recriar.
+     */
+    private fun createEncryptedPreferences(): SharedPreferences {
+        return try {
             EncryptedSharedPreferences.create(
                 context,
                 ENCRYPTED_PREFS_NAME,
@@ -35,9 +43,45 @@ class PreferencesManager @Inject constructor(
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
         } catch (e: Exception) {
-            // Fallback para prefs normais se encriptação falhar (dispositivos antigos)
-            AppLogger.e("PreferencesManager", "Fallback para SharedPreferences não-encriptado", e)
-            context.getSharedPreferences(ENCRYPTED_PREFS_NAME, Context.MODE_PRIVATE)
+            AppLogger.e("PreferencesManager", "Erro ao criar EncryptedSharedPreferences", e)
+            
+            // Tenta recuperar limpando as preferências corrompidas
+            when {
+                e is javax.crypto.AEADBadTagException || 
+                e.cause is javax.crypto.AEADBadTagException -> {
+                    AppLogger.w("PreferencesManager") { "Chave de criptografia corrompida, tentando recuperar..." }
+                    recoverFromCorruptedEncryption()
+                }
+                else -> {
+                    AppLogger.w("PreferencesManager") { "Fallback para SharedPreferences não-encriptado" }
+                    context.getSharedPreferences(ENCRYPTED_PREFS_NAME, Context.MODE_PRIVATE)
+                }
+            }
+        }
+    }
+
+    /**
+     * Recupera de erro de criptografia limpando dados corrompidos e recriando.
+     */
+    private fun recoverFromCorruptedEncryption(): SharedPreferences {
+        try {
+            // 1. Limpa o arquivo de preferências corrompido
+            val prefsFile = context.getSharedPreferences(ENCRYPTED_PREFS_NAME, Context.MODE_PRIVATE)
+            prefsFile.edit().clear().commit()
+            
+            // 2. Tenta recriar com nova chave
+            return EncryptedSharedPreferences.create(
+                context,
+                ENCRYPTED_PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            ).also {
+                AppLogger.i("PreferencesManager") { "EncryptedSharedPreferences recuperado com sucesso" }
+            }
+        } catch (e: Exception) {
+            AppLogger.e("PreferencesManager", "Falha na recuperação, usando SharedPreferences padrão", e)
+            return context.getSharedPreferences(ENCRYPTED_PREFS_NAME, Context.MODE_PRIVATE)
         }
     }
 

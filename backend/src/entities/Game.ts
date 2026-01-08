@@ -58,6 +58,24 @@ export class Game {
   @Column({ nullable: true })
   number_of_teams: number;
 
+  @Column({ default: 0 })
+  team1_score: number;
+
+  @Column({ default: 0 })
+  team2_score: number;
+
+  @Column({ default: 'Time 1' })
+  team1_name: string;
+
+  @Column({ default: 'Time 2' })
+  team2_name: string;
+
+  @Column({ default: false })
+  xp_processed: boolean;
+
+  @Column({ nullable: true })
+  mvp_id: string;
+
   @CreateDateColumn()
   created_at: Date;
 

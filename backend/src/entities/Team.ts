@@ -29,6 +29,9 @@ export class Team {
   @Column({ nullable: true })
   color: string;
 
+  @Column({ default: 0 })
+  score: number;
+
   @CreateDateColumn()
   created_at: Date;
 

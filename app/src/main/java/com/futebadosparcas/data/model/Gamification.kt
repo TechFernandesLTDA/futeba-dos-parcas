@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.model
 
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
 import kotlinx.parcelize.Parcelize
@@ -92,6 +93,7 @@ enum class LeagueDivision(val displayName: String, val colorHex: String) {
     DIAMANTE("Diamante", "#00BCD4")
 }
 
+@IgnoreExtraProperties
 data class Season(
     @DocumentId
     val id: String = "",

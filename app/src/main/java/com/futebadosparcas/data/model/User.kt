@@ -8,6 +8,7 @@ import com.google.firebase.firestore.ServerTimestamp
 import java.util.Calendar
 import java.util.Date
 
+@IgnoreExtraProperties
 data class User(
     @DocumentId
     val id: String = "",
