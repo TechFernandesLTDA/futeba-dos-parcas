@@ -1,0 +1,160 @@
+name: Issue Automation
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+    name: Auto-label Issues
+    steps:
+      - name: Auto-label Bug Reports
+        if: contains(github.event.issue.title, '[BUG]')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = ['bug', 'needs-triage'];
+
+            // Detectar severidade do body
+            const body = context.payload.issue.body || '';
+            if (body.includes('🔴 Crítico')) {
+              labels.push('priority: critical');
+            } else if (body.includes('🟠 Alto')) {
+              labels.push('priority: high');
+            } else if (body.includes('🟡 Médio')) {
+              labels.push('priority: medium');
+            } else if (body.includes('🟢 Baixo')) {
+              labels.push('priority: low');
+            }
+
+            // Detectar módulo
+            if (body.includes('🔐 Autenticação')) labels.push('module: auth');
+            else if (body.includes('🏠 Home')) labels.push('module: home');
+            else if (body.includes('⚽ Jogos')) labels.push('module: games');
+            else if (body.includes('👥 Grupos')) labels.push('module: groups');
+            else if (body.includes('📊 Estatísticas')) labels.push('module: stats');
+            else if (body.includes('🎮 Live Game')) labels.push('module: live-game');
+            else if (body.includes('👤 Perfil')) labels.push('module: profile');
+            else if (body.includes('💰 Caixa')) labels.push('module: cashbox');
+            else if (body.includes('🎯 Gamificação')) labels.push('module: gamification');
+            else if (body.includes('🔔 Notificações')) labels.push('module: notifications');
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labels
+            });
+
+      - name: Auto-label Feature Requests
+        if: contains(github.event.issue.title, '[FEATURE]')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = ['enhancement', 'needs-discussion'];
+
+            const body = context.payload.issue.body || '';
+
+            // Detectar prioridade
+            if (body.includes('🔴 Alta')) {
+              labels.push('priority: high');
+            } else if (body.includes('🟡 Média')) {
+              labels.push('priority: medium');
+            } else if (body.includes('🟢 Baixa')) {
+              labels.push('priority: low');
+            }
+
+            // Detectar categoria
+            if (body.includes('⚽ Jogos')) labels.push('module: games');
+            else if (body.includes('👥 Grupos')) labels.push('module: groups');
+            else if (body.includes('📊 Estatísticas')) labels.push('module: stats');
+            else if (body.includes('🎮 Live Game')) labels.push('module: live-game');
+            else if (body.includes('👤 Perfil')) labels.push('module: profile');
+            else if (body.includes('💰 Financeiro')) labels.push('module: cashbox');
+            else if (body.includes('🎯 Gamificação')) labels.push('module: gamification');
+            else if (body.includes('🔔 Notificações')) labels.push('module: notifications');
+            else if (body.includes('🎨 UI/UX')) labels.push('ui/ux');
+
+            // Detectar plataforma
+            if (body.includes('📱 Android')) labels.push('platform: android');
+            if (body.includes('🍎 iOS')) labels.push('platform: ios');
+            if (body.includes('🌐 Web')) labels.push('platform: web');
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labels
+            });
+
+      - name: Auto-label Improvements
+        if: contains(github.event.issue.title, '[IMPROVEMENT]')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['improvement', 'technical']
+            });
+
+      - name: Auto-label Documentation
+        if: contains(github.event.issue.title, '[DOCS]')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['documentation']
+            });
+
+  auto-comment:
+    runs-on: ubuntu-latest
+    name: Auto-comment on Critical Bugs
+    steps:
+      - name: Comment on Critical Bugs
+        if: contains(github.event.issue.title, '[BUG]') && contains(github.event.issue.body, '🔴 Crítico')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `⚠️ **Bug Crítico Detectado!**
+
+              Este bug foi marcado como **crítico** e será priorizado para resolução.
+
+              📌 **Próximos passos:**
+              - [ ] Triage e validação do bug
+              - [ ] Reprodução em ambiente de desenvolvimento
+              - [ ] Análise de impacto e urgência
+              - [ ] Atribuição para desenvolvedor
+
+              Obrigado pelo relato detalhado! 🙏`
+            });
+
+  auto-project:
+    runs-on: ubuntu-latest
+    name: Add to Project Board
+    steps:
+      - name: Add Bug to Backlog
+        if: contains(github.event.issue.title, '[BUG]')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Adiciona comentário informando que foi adicionado ao backlog
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '✅ Issue adicionada ao backlog para triage.'
+            });
