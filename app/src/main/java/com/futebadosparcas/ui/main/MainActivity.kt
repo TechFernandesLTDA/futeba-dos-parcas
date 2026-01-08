@@ -57,15 +57,14 @@ class MainActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // Hilt Dependency Injection happens in super.onCreate()
-        // So we must access repository AFTER it, but BEFORE setContentView to apply theme
-        applyDynamicTheme()
+        // Apply default theme immediately (no blocking)
+        setTheme(R.style.Theme_FutebaDosParcas)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Configura system bars (status e navigation)
-        applySystemBars()
+        // Configura system bars com tema padrão (será atualizado após carregar preferências)
+        applySystemBarsDefault()
 
         // Adiciona padding para evitar sobreposição com as barras do sistema
         setupWindowInsets()
@@ -75,6 +74,9 @@ class MainActivity : AppCompatActivity() {
         observePostGameEvents()
         observeThemeChanges()
         observeNotifications()
+
+        // Carrega tema assincronamente e aplica se necessário
+        loadAndApplyThemeAsync()
     }
 
     private fun setupWindowInsets() {
@@ -217,22 +219,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun applyDynamicTheme() {
-        // Use runBlocking to synchronously get preference before UI rendering
-        val config: com.futebadosparcas.data.model.AppThemeConfig = kotlinx.coroutines.runBlocking {
-            themeRepository.themeConfig.first()
-        }
-        
-        config.let { themeConfig ->
-            val themeId = when(themeConfig.seedColors.primary) {
-                0xFF1CB0F6.toInt() -> R.style.Theme_FutebaDosParcas_Blue
-                0xFFFF9600.toInt() -> R.style.Theme_FutebaDosParcas_Orange
-                0xFFCE82FF.toInt() -> R.style.Theme_FutebaDosParcas_Purple
-                0xFFFF4B4B.toInt() -> R.style.Theme_FutebaDosParcas_Red
-                0xFF2B70C9.toInt() -> R.style.Theme_FutebaDosParcas_Navy
-                else -> R.style.Theme_FutebaDosParcas // Green/Default
+    private fun loadAndApplyThemeAsync() {
+        lifecycleScope.launch {
+            try {
+                val config = themeRepository.themeConfig.first()
+
+                val themeId = when(config.seedColors.primary) {
+                    0xFF1CB0F6.toInt() -> R.style.Theme_FutebaDosParcas_Blue
+                    0xFFFF9600.toInt() -> R.style.Theme_FutebaDosParcas_Orange
+                    0xFFCE82FF.toInt() -> R.style.Theme_FutebaDosParcas_Purple
+                    0xFFFF4B4B.toInt() -> R.style.Theme_FutebaDosParcas_Red
+                    0xFF2B70C9.toInt() -> R.style.Theme_FutebaDosParcas_Navy
+                    else -> R.style.Theme_FutebaDosParcas // Green/Default
+                }
+
+                // Se tema é diferente do padrão, recreate para aplicar
+                if (themeId != R.style.Theme_FutebaDosParcas) {
+                    setTheme(themeId)
+                    applySystemBars(config)
+                } else {
+                    // Mesmo tema padrão, mas aplica system bars com config correta
+                    applySystemBars(config)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Erro ao carregar tema", e)
             }
-            setTheme(themeId)
         }
     }
     
@@ -314,38 +325,51 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Suppress("DEPRECATION")
-    private fun applySystemBars() {
-        val themeConfig = runBlocking {
-            themeRepository.themeConfig.first()
-        }
-        val isDark = when (themeConfig.mode) {
-            ThemeMode.LIGHT -> false
-            ThemeMode.DARK -> true
-            ThemeMode.SYSTEM -> isSystemInDarkMode()
-        }
-        val colorScheme = DynamicThemeEngine.generateColorScheme(themeConfig, isDark)
+    private fun applySystemBarsDefault() {
+        // Apply default system bars configuration with system theme
+        val isDark = isSystemInDarkMode()
 
-        // Edge-to-Edge: Barras transparentes para permitir conteúdo embaixo
-        // Usamos cor de fundo com transparência para efeito premium
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isNavigationBarContrastEnforced = false
             window.isStatusBarContrastEnforced = false
         }
 
-        // Status bar transparente para edge-to-edge completo
         window.statusBarColor = android.graphics.Color.TRANSPARENT
 
-        // Navigation bar com leve transparência para efeito moderno
         val navBarColor = if (isDark) {
-            // Dark: Semi-transparente sobre preto
             android.graphics.Color.argb(230, 15, 17, 20)
         } else {
-            // Light: Semi-transparente sobre branco
             android.graphics.Color.argb(245, 255, 255, 255)
         }
         window.navigationBarColor = navBarColor
 
-        // Configura ícones das barras do sistema
+        val insetsController = WindowCompat.getInsetsController(window, binding.root)
+        insetsController.isAppearanceLightStatusBars = !isDark
+        insetsController.isAppearanceLightNavigationBars = !isDark
+    }
+
+    @Suppress("DEPRECATION")
+    private fun applySystemBars(themeConfig: com.futebadosparcas.data.model.AppThemeConfig) {
+        val isDark = when (themeConfig.mode) {
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+            ThemeMode.SYSTEM -> isSystemInDarkMode()
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+            window.isStatusBarContrastEnforced = false
+        }
+
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+
+        val navBarColor = if (isDark) {
+            android.graphics.Color.argb(230, 15, 17, 20)
+        } else {
+            android.graphics.Color.argb(245, 255, 255, 255)
+        }
+        window.navigationBarColor = navBarColor
+
         val insetsController = WindowCompat.getInsetsController(window, binding.root)
         insetsController.isAppearanceLightStatusBars = !isDark
         insetsController.isAppearanceLightNavigationBars = !isDark
