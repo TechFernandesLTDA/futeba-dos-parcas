@@ -140,6 +140,10 @@ actual class FirebaseDataSource(
         TODO("Implementar com FIRAuth.auth().currentUser")
     }
 
+    actual fun getCurrentUserId(): String? {
+        TODO("Implementar com FIRAuth.auth().currentUser?.uid")
+    }
+
     actual suspend fun updateUser(userId: String, updates: Map<String, Any>): Result<Unit> {
         TODO("Implementar com Firebase iOS SDK - updateData()")
     }

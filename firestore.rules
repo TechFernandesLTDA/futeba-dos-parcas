@@ -798,6 +798,46 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLECAO: activities (feed de atividades)
+    // ============================================
+    match /activities/{activityId} {
+      // Qualquer usuario autenticado pode ler atividades publicas
+      allow read: if isAuthenticated() && resource.data.visibility == 'PUBLIC';
+
+      // Usuario pode criar suas proprias atividades
+      allow create: if isAuthenticated() && request.resource.data.user_id == userId();
+
+      // Usuario pode atualizar/deletar suas proprias atividades
+      allow update, delete: if isAuthenticated() && resource.data.user_id == userId();
+    }
+
+    // ============================================
+    // COLECAO: challenges (desafios semanais)
+    // ============================================
+    match /challenges/{challengeId} {
+      // Qualquer usuario autenticado pode ler desafios
+      allow read: if isAuthenticated();
+
+      // Apenas Admin pode criar/atualizar/deletar desafios
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: challenge_progress (progresso dos desafios)
+    // ============================================
+    match /challenge_progress/{progressId} {
+      // Usuario pode ler seu proprio progresso
+      allow read: if isAuthenticated() && resource.data.userId == userId();
+
+      // Usuario pode criar/atualizar seu proprio progresso
+      // (via app ao completar objetivos)
+      allow create, update: if isAuthenticated() && request.resource.data.userId == userId();
+
+      // Admin pode gerenciar qualquer progresso
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
     // REGRA PADRAO: Negar tudo que nao foi explicitamente permitido
     // ============================================
     match /{document=**} {
