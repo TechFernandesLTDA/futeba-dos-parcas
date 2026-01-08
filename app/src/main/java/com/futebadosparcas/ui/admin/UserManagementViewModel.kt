@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.User
 import com.futebadosparcas.data.model.UserRole
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.data.repository.UserRepositoryLegacy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UserManagementViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepositoryLegacy
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UserManagementUiState>(UserManagementUiState.Loading)

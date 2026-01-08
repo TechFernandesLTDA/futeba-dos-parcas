@@ -41,8 +41,20 @@ class AuthRepository @Inject constructor(
 
     suspend fun getCurrentUser(): Result<User> {
         return try {
-            val uid = auth.currentUser?.uid
-                ?: return Result.failure(Exception("Usuario nao autenticado"))
+            // Retry logic to handle race condition where auth.currentUser might not be immediately available
+            var uid: String? = null
+            var retries = 0
+            while (uid == null && retries < 5) {
+                uid = auth.currentUser?.uid
+                if (uid == null) {
+                    kotlinx.coroutines.delay(200) // Wait 200ms before retry
+                    retries++
+                }
+            }
+
+            if (uid == null) {
+                return Result.failure(Exception("Usuario nao autenticado"))
+            }
 
             val doc = usersCollection.document(uid).get().await()
 

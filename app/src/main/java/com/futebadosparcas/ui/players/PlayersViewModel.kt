@@ -3,9 +3,9 @@ package com.futebadosparcas.ui.players
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.FieldType
-import com.futebadosparcas.data.model.PlayerRatingRole
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.domain.model.PlayerRatingRole
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
 import dagger.hilt.android.lifecycle.HiltViewModel

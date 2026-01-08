@@ -942,4 +942,370 @@ subir no ranking!</string>
     <string name="create_game_error_max_players">Numero de jogadores deve estar entre 4 e 100</string>
     <string name="create_game_no_groups_warning">Voce precisa ser Dono ou Administrador de um grupo para criar jogos</string>
     <string name="create_game_search_results">Resultados da Busca</string>
+
+    <!-- Hardcoded Strings Centralization (Games Module) -->
+    <!-- Game Status Labels -->
+    <string name="game_status_scheduled">SCHEDULED</string>
+    <string name="game_status_confirmed">CONFIRMED</string>
+    <string name="game_status_live">LIVE</string>
+    <string name="game_status_finished">FINISHED</string>
+    <string name="game_status_open">OPEN</string>
+    <string name="game_status_pending">PENDING</string>
+    <string name="game_status_paid">PAID</string>
+    <string name="game_status_cancelled">CANCELLED</string>
+
+    <!-- Game Actions -->
+    <string name="game_action_start">Iniciar Jogo</string>
+    <string name="game_action_finish">Finalizar Jogo</string>
+    <string name="game_action_balance_teams">Equilibrar por habilidade?</string>
+    <string name="game_action_balance_teams_short">Gerar Times</string>
+    <string name="game_action_clear_teams">Limpar Times</string>
+    <string name="game_action_move_player">Mover para:</string>
+    <string name="game_action_generate_card">Gerar Card do Jogo</string>
+    <string name="game_action_choose_mvp">Escolher MVP</string>
+    <string name="game_action_open_list">Lista Aberta</string>
+    <string name="game_action_closed_list">Lista Fechada</string>
+    <string name="game_action_attendance_list">Lista de Presença</string>
+
+    <!-- Game Event Types -->
+    <string name="game_event_goal">Gol</string>
+    <string name="game_event_goal_type">GOAL</string>
+    <string name="game_event_save">Defesa</string>
+    <string name="game_event_yellow_card">Amarelo</string>
+    <string name="game_event_yellow_card_type">YELLOW_CARD</string>
+    <string name="game_event_red_card">Vermelho</string>
+    <string name="game_event_red_card_type">RED_CARD</string>
+    <string name="game_event_assist">Assistência</string>
+
+    <!-- Game Team References -->
+    <string name="team_label_a">Time A</string>
+    <string name="team_label_b">Time B</string>
+    <string name="team_label_one">Time 1</string>
+    <string name="team_label_two">Time 2</string>
+    <string name="team_vs">vs</string>
+    <string name="team_score_display">Gols: ${team.score}</string>
+
+    <!-- Game Confirmation Messages -->
+    <string name="game_confirm_presence">Confirmar Presença</string>
+    <string name="game_cancel_presence">Cancelar Presença</string>
+    <string name="game_cancel_confirmation">Cancelar Confirmação</string>
+    <string name="game_accept_invite">Aceitar Convite</string>
+    <string name="game_decline_invite">Recusar</string>
+    <string name="game_accept">Aceitar</string>
+
+    <!-- Game Position Selection -->
+    <string name="position_select_title">Escolha sua posição</string>
+    <string name="position_goalkeeper">Goleiro</string>
+    <string name="position_line">Linha</string>
+    <string name="position_defend_goal">Defender o gol da equipe</string>
+    <string name="position_play_line">Jogar na linha (ataque/defesa)</string>
+    <string name="position_goalkeepers_count">Goleiros: 0/2</string>
+    <string name="position_line_count">Linha: 0/12</string>
+
+    <!-- Game Detail Strings -->
+    <string name="game_detail_header">Detalhes do Jogo</string>
+    <string name="game_detail_mvp">MVP da Partida</string>
+    <string name="game_detail_performance">SEU DESEMPENHO</string>
+    <string name="game_detail_management">Administração</string>
+    <string name="game_detail_event_timeline">Linha do Tempo</string>
+    <string name="game_location_format">Jogo em ${state.game.locationName}</string>
+    <string name="game_field_format">Quadra: ${game.fieldName}</string>
+
+    <!-- Game Scheduling/Creation -->
+    <string name="game_schedule_frequency_weekly">Semanal</string>
+    <string name="game_schedule_frequency_biweekly">Quinzenal</string>
+    <string name="game_schedule_frequency_monthly">Mensal</string>
+    <string name="game_schedule_auto">Agendamento Automático</string>
+    <string name="game_schedule_template_description">O sistema agendará o próximo jogo automaticamente na Central de Recorrências.</string>
+    <string name="game_field_type_society">Society</string>
+    <string name="game_field_type_futsal">Futsal</string>
+    <string name="game_field_type_field">Campo</string>
+
+    <!-- Game Scheduling Events -->
+    <string name="game_schedule_next_planned">Proximo jogo agendado: ${event.nextDate}</string>
+    <string name="game_schedule_conflict">Conflito! Nao foi possivel agendar em ${event.date}.</string>
+    <string name="game_schedule_error">Erro no agendamento: ${event.message}</string>
+    <string name="game_cancelled_success">Jogo cancelado com sucesso</string>
+
+    <!-- Cashbox/Payment -->
+    <string name="cashbox_title">Caixa do Grupo</string>
+    <string name="cashbox_add_income">Adicionar Receita</string>
+    <string name="cashbox_add_expense">Adicionar Despesa</string>
+    <string name="cashbox_current_balance">Saldo Atual</string>
+    <string name="cashbox_income_header">Receitas</string>
+    <string name="cashbox_expense_header">Despesas</string>
+    <string name="cashbox_filter">Filtrar</string>
+    <string name="cashbox_all">Todos</string>
+    <string name="cashbox_report">Relatórios</string>
+    <string name="cashbox_no_entries">Não há movimentações registradas no caixa</string>
+    <string name="cashbox_entry_details">Detalhes da Entrada</string>
+    <string name="cashbox_void_entry">Estornar Entrada</string>
+    <string name="cashbox_void_confirm">Deseja realmente estornar esta entrada? Esta ação não pode ser desfeita.</string>
+    <string name="cashbox_void_button">Estornar</string>
+    <string name="cashbox_status_voided">ESTORNADO</string>
+    <string name="cashbox_status_voided_cancelled">ESTORNADO/CANCELADO</string>
+    <string name="cashbox_recalculate">Recalcular Saldo</string>
+    <string name="cashbox_recalculate_confirm">Isso irá recalcular o saldo com base em todas as entradas e saídas. Continuar?</string>
+    <string name="cashbox_first_entry_hint">Adicione sua primeira entrada ou saída para começar</string>
+    <string name="cashbox_category">Categoria</string>
+    <string name="cashbox_player">Jogador</string>
+    <string name="cashbox_value">Valor</string>
+    <string name="cashbox_description">Descrição</string>
+    <string name="cashbox_status">Status</string>
+    <string name="cashbox_totals_by_category">Totais por Categoria</string>
+    <string name="cashbox_totals_by_player">Totais por Jogador</string>
+    <string name="cashbox_no_data">Nenhum dado encontrado.</string>
+
+    <!-- Group Dialogs -->
+    <string name="dialog_edit_group">Editar Grupo</string>
+    <string name="dialog_change_photo">Alterar Foto</string>
+    <string name="dialog_transfer_ownership">Transferir Propriedade</string>
+    <string name="dialog_transfer_message">Selecione o novo dono do grupo</string>
+    <string name="dialog_transfer_no_members">Nenhum membro disponivel para transferencia</string>
+    <string name="dialog_confirm_yes">Sim</string>
+    <string name="dialog_confirm_no">Não</string>
+    <string name="dialog_confirm_ok">OK</string>
+
+    <!-- League/Ranking Strings -->
+    <string name="league_title">Sistema de Ligas</string>
+    <string name="league_my_position">Minha Posição</string>
+    <string name="league_divisions">Divisões</string>
+    <string name="league_classification">Classificação</string>
+    <string name="league_active">Ativa</string>
+    <string name="league_no_season">Nenhuma temporada ativa no momento.</string>
+    <string name="league_season_message">Aguarde o início da próxima temporada para subir no ranking!</string>
+    <string name="league_no_players">Nenhum jogador nesta divisão</string>
+    <string name="league_period">Período</string>
+    <string name="league_points">Pontos</string>
+    <string name="league_games_played">Jogos</string>
+    <string name="league_victories">Vitórias</string>
+    <string name="league_mvp_count">MVPs</string>
+    <string name="league_goals">Gols</string>
+    <string name="league_assists">Assists</string>
+    <string name="league_division_gold">OURO</string>
+    <string name="league_division_silver">PRATA</string>
+    <string name="league_division_bronze">BRONZE</string>
+    <string name="league_division_diamond">DIAMANTE</string>
+    <string name="league_rating_format">Rating: ${"</string>
+    <string name="league_rating_description">Rating calculado baseado em:</string>
+    <string name="league_rules_show">Como funciona?</string>
+    <string name="league_rules_hide">Ocultar regras</string>
+    <string name="league_ranking_title">Ranking</string>
+    <string name="league_next_threshold">Prox: ${nextThreshold.toInt()}</string>
+    <string name="league_elite">Elite do fut</string>
+    <string name="league_experienced">Jogadores experientes</string>
+    <string name="league_evolving">Em evolução</string>
+    <string name="league_beginners">Iniciantes</string>
+
+    <!-- Location Management -->
+    <string name="location_add_title">Adicionar Quadra</string>
+    <string name="location_edit_title">Editar Quadra</string>
+    <string name="location_basic_info">Informações Básicas</string>
+    <string name="location_active">Ativo?</string>
+    <string name="location_country">Brasil</string>
+    <string name="location_state">Estado</string>
+    <string name="location_city">Cidade</string>
+    <string name="location_zipcode">CEP</string>
+    <string name="location_address">Endereço</string>
+    <string name="location_complement">Complemento</string>
+    <string name="location_neighborhood">Bairro</string>
+    <string name="location_description">Descrição</string>
+    <string name="location_opening_time">Abre</string>
+    <string name="location_closing_time">Fecha</string>
+    <string name="location_hours_header">Funcionamento</string>
+    <string name="location_geo_label">Geolocalização</string>
+    <string name="location_geo_update">Atualizar Coordenadas</string>
+    <string name="location_geo_search">Buscar</string>
+    <string name="location_geo_format">Lat: $latitude / Lng: $longitude</string>
+    <string name="location_amenities">Comodidades</string>
+    <string name="location_amenity_locker">Vestiário</string>
+    <string name="location_amenity_bar">Bar</string>
+    <string name="location_amenity_bbq">Churrasqueira</string>
+    <string name="location_amenity_parking">Estacionamento</string>
+    <string name="location_amenity_wifi">Wi-Fi</string>
+    <string name="location_amenity_stands">Arquibancada</string>
+    <string name="location_fields_title">Quadras/Campos</string>
+    <string name="location_details">Detalhes do Local</string>
+    <string name="location_no_registered">Nenhum local cadastrado</string>
+    <string name="location_field_name">Nome (ex: Quadra 1)</string>
+    <string name="location_field_type">Tipo</string>
+    <string name="location_field_surface">Piso</string>
+    <string name="location_field_price">Preço/Hora (R$)</string>
+    <string name="location_field_dimensions">Dimensões (m)</string>
+    <string name="location_field_covered">Coberta?</string>
+    <string name="location_field_grass_type">Grama Sintética</string>
+    <string name="location_field_owner">Dono da Quadra (Opcional)</string>
+    <string name="location_field_no_fields">Nenhuma quadra cadastrada neste local.</string>
+    <string name="location_instagram_handle">Instagram</string>
+
+    <!-- Profile Management -->
+    <string name="profile_level_format">Nível $level</string>
+    <string name="profile_title">Perfil</string>
+    <string name="profile_edit">Editar Perfil</string>
+    <string name="profile_statistics">Estatísticas</string>
+    <string name="profile_achievements">Conquistas Recentes</string>
+    <string name="profile_user_badge">Badge de nível</string>
+    <string name="profile_photo">Foto de perfil</string>
+    <string name="profile_role_admin">ADMINISTRADOR</string>
+    <string name="profile_role_organizer">ORGANIZADOR</string>
+    <string name="profile_role_owner">Dono</string>
+    <string name="profile_role_member">Membro</string>
+    <string name="profile_field_preference_title">Preferências de Campo</string>
+    <string name="profile_field_type_society">Society</string>
+    <string name="profile_field_type_futsal">Futsal</string>
+    <string name="profile_field_type_field">Campo</string>
+    <string name="profile_position_preference">Auto-Avaliação</string>
+    <string name="profile_position_attacker">Atacante</string>
+    <string name="profile_position_midfielder">Meio-Campo</string>
+    <string name="profile_position_defender">Defensor</string>
+    <string name="profile_position_goalkeeper">Goleiro</string>
+    <string name="profile_stats_games">Jogos</string>
+    <string name="profile_stats_victories">Vitórias</string>
+    <string name="profile_stats_draws">Empates</string>
+    <string name="profile_stats_goals">Gols</string>
+    <string name="profile_stats_assists">Assistências</string>
+    <string name="profile_stats_mvp">MVPs</string>
+    <string name="profile_stats_saves">Defesas</string>
+    <string name="profile_stats_cards">Cartões</string>
+    <string name="profile_stats_avg_goals">Média Gols</string>
+    <string name="profile_skill_attack">Ataque</string>
+    <string name="profile_skill_midfield">Meio-Campo</string>
+    <string name="profile_skill_defense">Defesa</string>
+    <string name="profile_skill_goalkeeper">Goleiro</string>
+    <string name="profile_menu_notifications">Notificações</string>
+    <string name="profile_menu_schedules">Horários</string>
+    <string name="profile_menu_preferences">Preferências</string>
+    <string name="profile_menu_settings">Configurações da Liga</string>
+    <string name="profile_menu_manage_users">Gerenciar Usuários</string>
+    <string name="profile_menu_manage_locations">Gerenciar Locais</string>
+    <string name="profile_menu_my_locations">Meus Locais</string>
+    <string name="profile_menu_about">Sobre</string>
+    <string name="profile_menu_dev">Developer Menu</string>
+    <string name="profile_version_format">Versão ${BuildConfig.VERSION_NAME}</string>
+
+    <!-- Common UI Actions -->
+    <string name="action_save">Salvar</string>
+    <string name="action_delete">Deletar</string>
+    <string name="action_remove">Remover</string>
+    <string name="action_edit">Editar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_close">Fechar</string>
+    <string name="action_back">Voltar</string>
+    <string name="action_confirm">Confirmar</string>
+    <string name="action_invite">Convidar</string>
+    <string name="action_promote">Promover</string>
+    <string name="action_promote_admin">Promover a Admin</string>
+    <string name="action_demote">Rebaixar</string>
+    <string name="action_demote_member">Rebaixar para Membro</string>
+    <string name="action_remove_from_group">Remover do Grupo</string>
+    <string name="action_undo">Desfazer</string>
+    <string name="action_clear">Limpar</string>
+    <string name="action_clear_search">Limpar Busca</string>
+    <string name="action_expand">Expandir</string>
+    <string name="action_logout">Sair</string>
+    <string name="action_try_again">Tentar Novamente</string>
+    <string name="action_share">Compartilhar</string>
+    <string name="action_open_maps">Abrir no Mapa</string>
+    <string name="action_call">Ligar</string>
+    <string name="action_whatsapp">WhatsApp</string>
+    <string name="action_take_photo">Tirar Foto</string>
+    <string name="action_choose_gallery">Escolher da Galeria</string>
+    <string name="action_vote_mvp">Votar MVP</string>
+    <string name="action_tactical_board">Prancheta Tática</string>
+
+    <!-- Error Messages -->
+    <string name="error_generic">Erro inesperado</string>
+    <string name="error_unknown">Erro desconhecido</string>
+    <string name="error_loading_games">Erro ao carregar jogos</string>
+    <string name="error_loading_game">Erro ao carregar jogo</string>
+    <string name="error_loading_locations">Erro ao carregar locais</string>
+    <string name="error_loading_players">Erro ao carregar jogadores</string>
+    <string name="error_loading_data">Erro ao carregar dados</string>
+    <string name="error_send_invite">Erro ao enviar convite</string>
+    <string name="error_save_game">Erro ao salvar jogo</string>
+    <string name="error_transfer_ownership">Erro ao transferir propriedade</string>
+    <string name="error_promote_member">Erro ao promover membro</string>
+    <string name="error_demote_member">Erro ao rebaixar membro</string>
+    <string name="error_remove_member">Erro ao remover membro</string>
+    <string name="error_leave_group">Erro ao sair do grupo</string>
+    <string name="error_network">Verifique sua conexão com a internet e tente novamente</string>
+    <string name="error_user_not_auth">Usuário não autenticado</string>
+    <string name="error_user_not_found">Usuário não encontrado</string>
+    <string name="error_notifications">Erro ao observar notificacoes</string>
+    <string name="error_message_format">Erro: ${e.message}</string>
+
+    <!-- Success Messages -->
+    <string name="success_group_updated">Grupo atualizado com sucesso</string>
+    <string name="success_group_archived">Grupo arquivado com sucesso</string>
+    <string name="success_ownership_transferred">Propriedade transferida para ${newOwner.getDisplayName()}</string>
+    <string name="success_loading">Carregando...</string>
+
+    <!-- Confirmation Dialogs -->
+    <string name="confirm_cancel_game">Tem certeza que deseja cancelar este jogo? Todas as confirmações serão perdidas.</string>
+    <string name="confirm_delete_group">Tem certeza que deseja deletar \</string>
+    <string name="confirm_archive_group">Tem certeza que deseja arquivar o grupo \</string>
+    <string name="confirm_leave_group">Tem certeza que deseja sair do grupo \</string>
+
+    <!-- Game Event Prompts -->
+    <string name="event_who_scored">Quem fez o Gol?</string>
+    <string name="event_who_assisted">Quem fez a Defesa?</string>
+    <string name="event_yellow_card_who">Quem tomou cartão Amarelo?</string>
+    <string name="event_red_card_who">Quem tomou cartão Vermelho?</string>
+
+    <!-- Misc Strings -->
+    <string name="time_format_hhmm">HH:mm</string>
+    <string name="currency_br">BR</string>
+    <string name="currency_brl">BRL</string>
+    <string name="timezone_utc">UTC</string>
+    <string name="search_no_results">Nenhum resultado para \</string>
+    <string name="first_game_hint">Que tal criar o primeiro jogo e reunir a galera?</string>
+    <string name="no_data_available">Nenhum dado de ranking disponível</string>
+    <string name="data_load_error">Não foi possível carregar os dados. Tente novamente.</string>
+    <string name="is_member">Já é membro</string>
+    <string name="individual_payment">Individual</string>
+    <string name="user_photo">Foto do usuário</string>
+    <string name="real_time_label">Tempo Real</string>
+    <string name="live_game_label">Jogo ao Vivo</string>
+    <string name="end_game_label">Fim de Jogo</string>
+    <string name="pending_label">Pendente</string>
+    <string name="populate_database">Popular Banco de Dados</string>
+    <string name="remove_duplicates">Remover Duplicatas</string>
+    <string name="firebase_mode">Modo atual: Firebase Real</string>
+    <string name="mock_mode">Modo atual: Dados Mockados (FakeRepository)</string>
+
+    <!-- ViewModel Tags (for logging - considered technical strings) -->
+    <string name="tag_create_game_vm">CreateGameVM</string>
+    <string name="tag_game_detail_vm">GroupDetailVM</string>
+    <string name="tag_field_selection_vm">FieldSelectionVM</string>
+    <string name="tag_location_selection_vm">LocationSelectionVM</string>
+    <string name="tag_live_game_vm">LiveGameViewModel</string>
+    <string name="tag_player_card">PlayerCard</string>
+    <string name="tag_compose_group_dialogs">ComposeGroupDialogs</string>
+
+    <!-- Badge Rarity Levels -->
+    <string name="badge_rarity_comum">COMUM</string>
+    <string name="badge_rarity_raro">RARO</string>
+    <string name="badge_rarity_lendario">LENDÁRIO</string>
+
+    <!-- Day of Week -->
+    <string name="day_sunday">Domingo</string>
+    <string name="day_monday">Segunda-feira</string>
+    <string name="day_tuesday">Terça-feira</string>
+    <string name="day_wednesday">Quarta-feira</string>
+    <string name="day_thursday">Quinta-feira</string>
+    <string name="day_friday">Sexta-feira</string>
+    <string name="day_saturday">Sábado</string>
+
+    <!-- Statistics Terms -->
+    <string name="stat_xp">XP</string>
+    <string name="stat_admin">Admin</string>
+    <string name="stat_mvp">MVP</string>
+    <string name="stat_goals">Gols</string>
+    <string name="stat_assists">Assistências</string>
+    <string name="stat_saves">Defesas</string>
+    <string name="stat_victories">Vitórias</string>
+    <string name="stat_defeats">Derrotas</string>
+    <string name="stat_presence">Presença</string>
+    <string name="stat_all">Todos</string>
+
 </resources>

@@ -56,6 +56,10 @@ class HomeViewModel @Inject constructor(
         get() = savedStateHandle.get<Boolean>(KEY_IS_GRID_VIEW) ?: false
         set(value) = savedStateHandle.set(KEY_IS_GRID_VIEW, value)
 
+    // Cache para reduzir requisições repetidas
+    private var lastLoadTime: Long = 0
+    private var cachedSuccessState: HomeUiState.Success? = null
+
     init {
         observeUnreadCount()
         observeConnectivity()
@@ -97,9 +101,22 @@ class HomeViewModel @Inject constructor(
      * - withTimeout(10_000): timeout de 10 segundos nas requisições paralelas
      * - supervisorScope: falha graciosamente se uma requisição falhar
      * - retry automático com exponential backoff (máx 3 tentativas)
+     * - Cache de 30 segundos para evitar requisições repetidas
      */
     fun loadHomeData(forceRetry: Boolean = false) {
-        if (forceRetry) retryCount = 0
+        if (forceRetry) {
+            retryCount = 0
+            lastLoadTime = 0
+            cachedSuccessState = null
+        }
+
+        // Usar cache se disponível e recente (< 30s)
+        val currentTime = System.currentTimeMillis()
+        if (!forceRetry && cachedSuccessState != null && (currentTime - lastLoadTime) < CACHE_DURATION_MS) {
+            _uiState.value = cachedSuccessState!!
+            _loadingState.value = LoadingState.Success
+            return
+        }
 
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
@@ -141,7 +158,7 @@ class HomeViewModel @Inject constructor(
                     val activitiesDeferred = async {
                         runCatching {
                             withTimeout(TIMEOUT_MILLIS) {
-                                activityRepository.getRecentActivities(50) // Reduzido de 100 para melhor performance
+                                activityRepository.getRecentActivities(20) // Reduzido para 20 para melhor performance
                             }
                         }
                     }
@@ -169,12 +186,12 @@ class HomeViewModel @Inject constructor(
                     val badgesDeferred = async {
                         runCatching {
                             withTimeout(TIMEOUT_MILLIS) {
-                                gamificationRepository.getRecentBadges(user.id)
+                                gamificationRepository.getRecentBadges(user.id, limit = 5) // Reduzido para 5 badges
                             }
                         }
                     }
 
-                    _loadingState.value = LoadingState.LoadingProgress(50, 100, "Carregando dados...")
+                    _loadingState.value = LoadingState.LoadingProgress(60, 100, "Carregando dados...")
 
                     // Await all com tratamento de erro gracioso
                     val gamesResult = gamesDeferred.await()
@@ -250,9 +267,14 @@ class HomeViewModel @Inject constructor(
                     )
 
                     _loadingState.value = LoadingState.Success
-                    _uiState.value = HomeUiState.Success(
+                    val successState = HomeUiState.Success(
                         user, games, summary, statistics, activities, publicGames, streak, challengesWithProgress, userBadges, isGridView
                     )
+                    _uiState.value = successState
+
+                    // Cache do estado de sucesso
+                    cachedSuccessState = successState
+                    lastLoadTime = System.currentTimeMillis()
 
                     // Reset retry count on success
                     retryCount = 0
@@ -319,6 +341,7 @@ class HomeViewModel @Inject constructor(
         private const val MAX_RETRY_COUNT = 3
         private const val BASE_DELAY_MS = 1000L // 1 segundo
         private const val MAX_DELAY_MS = 4000L // 4 segundos
+        private const val CACHE_DURATION_MS = 30_000L // 30 segundos
         private const val KEY_IS_GRID_VIEW = "is_grid_view"
     }
 }
@@ -336,7 +359,7 @@ data class GamificationSummary(
 sealed class HomeUiState {
     object Loading : HomeUiState()
     data class Success(
-        val user: com.futebadosparcas.data.model.User, 
+        val user: com.futebadosparcas.domain.model.User, 
         val games: List<Game>,
         val gamificationSummary: GamificationSummary,
         val statistics: com.futebadosparcas.data.model.UserStatistics? = null,

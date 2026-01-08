@@ -14,7 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import coil.load
 import coil.transform.CircleCropTransformation
 import com.futebadosparcas.R
-import com.futebadosparcas.data.model.PlayerRatingRole
+import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.databinding.BottomSheetPlayerCardBinding
 import com.futebadosparcas.util.LevelHelper
 import com.futebadosparcas.util.LevelBadgeHelper

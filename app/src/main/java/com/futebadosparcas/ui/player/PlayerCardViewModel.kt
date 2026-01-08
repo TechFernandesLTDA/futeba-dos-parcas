@@ -2,7 +2,7 @@ package com.futebadosparcas.ui.player
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.model.UserStatistics
 import com.futebadosparcas.data.repository.StatisticsRepository
 import com.futebadosparcas.data.repository.UserRepository

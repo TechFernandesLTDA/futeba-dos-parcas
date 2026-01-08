@@ -225,11 +225,11 @@ private fun LiveEventsEmptyState() {
  */
 private fun getEventColor(eventType: String): androidx.compose.ui.graphics.Color {
     return when (eventType.lowercase()) {
-        "goal" -> androidx.compose.ui.graphics.Color(0xFFE8F5E9) // Verde claro
-        "substitution" -> androidx.compose.ui.graphics.Color(0xFFFFF3E0) // Laranja claro
-        "yellowcard" -> androidx.compose.ui.graphics.Color(0xFFFFFDE7) // Amarelo claro
-        "redcard" -> androidx.compose.ui.graphics.Color(0xFFFFEBEE) // Vermelho claro
-        "foul" -> androidx.compose.ui.graphics.Color(0xFFF3E5F5) // Roxo claro
+        "goal" -> com.futebadosparcas.ui.theme.MatchEventColors.GoalBackground
+        "substitution" -> com.futebadosparcas.ui.theme.MatchEventColors.SubstitutionBackground
+        "yellowcard" -> com.futebadosparcas.ui.theme.MatchEventColors.YellowCardBackground
+        "redcard" -> com.futebadosparcas.ui.theme.MatchEventColors.RedCardBackground
+        "foul" -> com.futebadosparcas.ui.theme.MatchEventColors.FoulBackground
         else -> androidx.compose.ui.graphics.Color(0xFFFAFAFA) // Cinza claro
     }
 }

@@ -180,27 +180,39 @@ private fun GamesFilters(
             selected = selectedFilter == GameFilterType.ALL,
             onClick = { onFilterChange(GameFilterType.ALL) },
             label = { Text(stringResource(R.string.all_games)) },
-            leadingIcon = if (selectedFilter == GameFilterType.ALL) {
-                { Icon(Icons.Default.Check, null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
-            } else null
+            leadingIcon = {
+                Icon(
+                    imageVector = if (selectedFilter == GameFilterType.ALL) Icons.Default.Check else Icons.Default.CalendarMonth,
+                    contentDescription = null,
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
+            }
         )
 
         FilterChip(
             selected = selectedFilter == GameFilterType.OPEN,
             onClick = { onFilterChange(GameFilterType.OPEN) },
             label = { Text(stringResource(R.string.open_games)) },
-            leadingIcon = if (selectedFilter == GameFilterType.OPEN) {
-                { Icon(Icons.Default.Check, null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
-            } else null
+            leadingIcon = {
+                Icon(
+                    imageVector = if (selectedFilter == GameFilterType.OPEN) Icons.Default.Check else Icons.Default.LockOpen,
+                    contentDescription = null,
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
+            }
         )
 
         FilterChip(
             selected = selectedFilter == GameFilterType.MY_GAMES,
             onClick = { onFilterChange(GameFilterType.MY_GAMES) },
             label = { Text(stringResource(R.string.my_games)) },
-            leadingIcon = if (selectedFilter == GameFilterType.MY_GAMES) {
-                { Icon(Icons.Default.Check, null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
-            } else null
+            leadingIcon = {
+                Icon(
+                    imageVector = if (selectedFilter == GameFilterType.MY_GAMES) Icons.Default.Check else Icons.Default.Person,
+                    contentDescription = null,
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
+            }
         )
     }
 }
@@ -443,22 +455,23 @@ private fun GamesErrorState(
  * Obtém cor baseada no tipo de campo
  */
 private fun getFieldTypeColor(fieldType: String) = when (fieldType.lowercase()) {
-    "society" -> Color(0xFF2E7D32)
-    "futsal" -> Color(0xFF1565C0)
-    "grama" -> Color(0xFF558B2F)
-    "campo" -> Color(0xFF7B1FA2)
-    else -> Color(0xFF616161)
+    "society" -> com.futebadosparcas.ui.theme.FieldTypeColors.Society
+    "futsal" -> com.futebadosparcas.ui.theme.FieldTypeColors.Futsal
+    "grama", "campo" -> com.futebadosparcas.ui.theme.FieldTypeColors.Campo
+    "areia" -> com.futebadosparcas.ui.theme.FieldTypeColors.Areia
+    else -> com.futebadosparcas.ui.theme.FieldTypeColors.Outros
 }
 
 /**
  * Obtém cor baseada no status do jogo
  */
 private fun getStatusColor(status: String) = when (status.lowercase()) {
-    "aberto" -> Color(0xFF388E3C)
-    "confirmado" -> Color(0xFF1976D2)
-    "em andamento" -> Color(0xFFFFA000)
-    "finalizado" -> Color(0xFF616161)
-    else -> Color(0xFF616161)
+    "aberto" -> com.futebadosparcas.ui.theme.GameStatusColors.Scheduled
+    "confirmado" -> com.futebadosparcas.ui.theme.GameStatusColors.InProgress
+    "em andamento" -> com.futebadosparcas.ui.theme.GameStatusColors.Full
+    "finalizado" -> com.futebadosparcas.ui.theme.GameStatusColors.Finished
+    "cancelado" -> com.futebadosparcas.ui.theme.GameStatusColors.Cancelled
+    else -> com.futebadosparcas.ui.theme.GameStatusColors.Finished
 }
 
 /**
