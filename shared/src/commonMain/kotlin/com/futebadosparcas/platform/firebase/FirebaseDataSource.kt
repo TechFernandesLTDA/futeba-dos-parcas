@@ -69,6 +69,7 @@ expect class FirebaseDataSource {
     suspend fun getUserById(userId: String): Result<User>
     suspend fun getUsersByIds(userIds: List<String>): Result<List<User>>
     suspend fun getCurrentUser(): Result<User>
+    fun getCurrentUserId(): String?
     suspend fun updateUser(userId: String, updates: Map<String, Any>): Result<Unit>
     suspend fun searchUsers(query: String, limit: Int): Result<List<User>>
 

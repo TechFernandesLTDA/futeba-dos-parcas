@@ -155,7 +155,7 @@ class UserRepositoryImpl(
     }
 
     override fun getCurrentUserId(): String? {
-        return preferencesService.getString("current_user_id", null)
+        return firebaseDataSource.getCurrentUserId()
     }
 
     // ========== HELPERS ==========
