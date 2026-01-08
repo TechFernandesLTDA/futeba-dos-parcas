@@ -24,8 +24,12 @@ data class PaginatedUsers(
     val hasNextPage: Boolean
 )
 
+/**
+ * LEGACY: Esta classe está sendo gradualmente substituída por UserRepositoryImpl (KMP).
+ * Manter temporariamente para métodos específicos do Android (como upload de foto).
+ */
 @Singleton
-class UserRepository @Inject constructor(
+class UserRepositoryLegacy @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
     private val storage: FirebaseStorage

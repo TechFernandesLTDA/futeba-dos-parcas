@@ -35,9 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.futebadosparcas.R
-import com.futebadosparcas.data.model.FieldType
-import com.futebadosparcas.data.model.PlayerRatingRole
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.domain.model.PlayerRatingRole
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.ui.components.EmptyPlayersState
 import com.futebadosparcas.ui.components.EmptySearchState
 import com.futebadosparcas.ui.components.EmptyState

@@ -3,8 +3,7 @@ package com.futebadosparcas.data.repository
 import android.content.Context
 import android.location.Geocoder
 import android.os.Build
-import com.futebadosparcas.data.remote.ViaCepService
-import com.futebadosparcas.data.remote.model.ViaCepResponse
+import com.futebadosparcas.data.network.ViaCepClient
 import com.futebadosparcas.util.AppLogger
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -30,42 +29,32 @@ data class LatLngResult(
 
 @Singleton
 class AddressRepository @Inject constructor(
-    private val viaCepService: ViaCepService,
     @ApplicationContext private val context: Context
 ) {
     companion object {
         private const val TAG = "AddressRepository"
     }
 
+    // Cliente Ktor compartilhado (KMP)
+    private val viaCepClient = ViaCepClient()
+
     suspend fun getAddressByCep(cep: String): Result<AddressLookupResult> {
         return withContext(Dispatchers.IO) {
             try {
-                // Remove formatacao
-                val cleanCep = cep.replace(Regex("[^0-9]"), "")
-                
-                if (cleanCep.length != 8) {
-                    return@withContext Result.failure(Exception("CEP inválido"))
-                }
-
-                val response = viaCepService.getAddress(cleanCep)
-                if (response.isSuccessful) {
-                    val body = response.body()
-                    if (body != null && body.erro != true) {
-                        Result.success(
-                            AddressLookupResult(
-                                cep = body.cep ?: cep,
-                                street = body.logradouro ?: "",
-                                neighborhood = body.bairro ?: "",
-                                city = body.localidade ?: "",
-                                state = body.uf ?: ""
-                            )
+                // Usa o novo ViaCepClient (Ktor KMP)
+                viaCepClient.getAddress(cep)
+                    .map { viaCepAddress ->
+                        AddressLookupResult(
+                            cep = viaCepAddress.cep,
+                            street = viaCepAddress.logradouro,
+                            neighborhood = viaCepAddress.bairro,
+                            city = viaCepAddress.localidade,
+                            state = viaCepAddress.uf
                         )
-                    } else {
-                        Result.failure(Exception("CEP não encontrado"))
                     }
-                } else {
-                    Result.failure(Exception("Erro na busca do CEP: ${response.code()}"))
-                }
+                    .onFailure { e ->
+                        AppLogger.e(TAG, "Erro ao buscar CEP", e)
+                    }
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao buscar CEP", e)
                 Result.failure(e)

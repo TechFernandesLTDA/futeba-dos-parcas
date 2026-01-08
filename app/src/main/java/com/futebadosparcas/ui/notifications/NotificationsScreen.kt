@@ -511,7 +511,7 @@ private fun NotificationIcon(
         NotificationType.MEMBER_LEFT -> Icons.Default.PersonRemove to MaterialTheme.colorScheme.onSurfaceVariant
         NotificationType.CASHBOX_ENTRY -> Icons.Default.AttachMoney to MaterialTheme.colorScheme.primary
         NotificationType.CASHBOX_EXIT -> Icons.Default.MoneyOff to MaterialTheme.colorScheme.error
-        NotificationType.ACHIEVEMENT -> Icons.Default.Star to Color(0xFFFFD700) // Gold
+        NotificationType.ACHIEVEMENT -> Icons.Default.Star to com.futebadosparcas.ui.theme.GamificationColors.Gold
         NotificationType.ADMIN_MESSAGE -> Icons.Default.AdminPanelSettings to MaterialTheme.colorScheme.tertiary
         NotificationType.SYSTEM -> Icons.Default.Info to MaterialTheme.colorScheme.secondary
         NotificationType.GENERAL -> Icons.Default.Notifications to MaterialTheme.colorScheme.onSurfaceVariant

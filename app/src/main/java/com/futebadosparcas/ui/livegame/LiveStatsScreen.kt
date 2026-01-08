@@ -236,7 +236,7 @@ private fun PlayerStatsCard(
                             if (stats.yellowCards > 0) {
                                 Surface(
                                     shape = RoundedCornerShape(2.dp),
-                                    color = androidx.compose.ui.graphics.Color(0xFFFDD835)
+                                    color = com.futebadosparcas.ui.theme.MatchEventColors.YellowCard
                                 ) {
                                     Text(
                                         text = "×${stats.yellowCards}",
@@ -252,7 +252,7 @@ private fun PlayerStatsCard(
                             if (stats.redCards > 0) {
                                 Surface(
                                     shape = RoundedCornerShape(2.dp),
-                                    color = androidx.compose.ui.graphics.Color(0xFFE53935)
+                                    color = com.futebadosparcas.ui.theme.MatchEventColors.RedCard
                                 ) {
                                     Text(
                                         text = "×${stats.redCards}",

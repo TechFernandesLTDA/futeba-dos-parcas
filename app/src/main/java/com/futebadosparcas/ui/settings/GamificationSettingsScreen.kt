@@ -40,9 +40,9 @@ fun GamificationSettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF58CC02),
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -51,11 +51,14 @@ fun GamificationSettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFF5F5F5))
+                .background(MaterialTheme.colorScheme.background)
         ) {
             when (val state = uiState) {
                 is SettingsUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF58CC02))
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
                 is SettingsUiState.Success -> {
                     SettingsForm(state.settings) { updated ->
@@ -66,7 +69,7 @@ fun GamificationSettingsScreen(
                     ErrorMessage(state.message) { viewModel.loadSettings() }
                 }
                 is SettingsUiState.Saved -> {
-                    SuccessMessage { 
+                    SuccessMessage {
                         viewModel.resetState()
                         onBack()
                     }
@@ -117,7 +120,6 @@ fun SettingsForm(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF58CC02)),
             shape = RoundedCornerShape(12.dp)
         ) {
             Text("SALVAR ALTERAÇÕES", fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -135,17 +137,30 @@ fun SectionCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(icon, contentDescription = null, tint = Color(0xFF58CC02), modifier = Modifier.size(24.dp))
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF333333))
+                Text(
+                    title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFEEEEEE))
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 12.dp),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
             content()
         }
     }
@@ -168,14 +183,23 @@ fun SettingsInput(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-            Icon(icon, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
             Spacer(modifier = Modifier.width(12.dp))
-            Text(label, fontSize = 14.sp, color = Color(0xFF666666))
+            Text(
+                label,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
 
         OutlinedTextField(
             value = textValue,
-            onValueChange = { 
+            onValueChange = {
                 if (it.isEmpty() || it.all { char -> char.isDigit() }) {
                     textValue = it
                     it.toIntOrNull()?.let { num -> onValueChange(num) }
@@ -199,10 +223,16 @@ fun ErrorMessage(message: String, onRetry: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Filled.Warning, contentDescription = null, tint = Color.Red, modifier = Modifier.size(48.dp))
+        Icon(
+            Icons.Filled.Warning,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error,
+            modifier = Modifier.size(48.dp)
+        )
         Spacer(modifier = Modifier.height(16.dp))
-        Text(message, color = Color.Gray)
-        Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF58CC02))) {
+        Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onRetry) {
             Text("Tentar Novamente")
         }
     }

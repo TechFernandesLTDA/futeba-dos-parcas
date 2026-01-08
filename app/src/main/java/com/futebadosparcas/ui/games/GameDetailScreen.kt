@@ -198,7 +198,7 @@ fun GameDetailTopBar(
         },
         actions = {
             IconButton(onClick = onInviteWhatsApp) {
-                Icon(painterResource(R.drawable.ic_whatsapp), contentDescription = "WhatsApp", tint = Color(0xFF25D366))
+                Icon(painterResource(R.drawable.ic_whatsapp), contentDescription = "WhatsApp", tint = com.futebadosparcas.ui.theme.BrandColors.WhatsApp)
             }
             IconButton(onClick = { showMenu = true }) {
                 Icon(Icons.Default.MoreVert, contentDescription = "Mais opções")
@@ -538,7 +538,7 @@ fun ConfirmationCard(
                 IconButton(onClick = onDeclineClick) { Icon(Icons.Default.Close, "Recusar", tint = MaterialTheme.colorScheme.error) }
             } else {
                  if (isOwner || currentUserId == confirmation.userId) {
-                    val payColor = if (confirmation.paymentStatus == "PAID") Color(0xFF25D366) else Color.Gray
+                    val payColor = if (confirmation.paymentStatus == "PAID") com.futebadosparcas.ui.theme.BrandColors.WhatsApp else Color.Gray
                     IconButton(onClick = onPaymentClick) {
                         Icon(painterResource(R.drawable.ic_money), "Pagamento", tint = payColor)
                     }

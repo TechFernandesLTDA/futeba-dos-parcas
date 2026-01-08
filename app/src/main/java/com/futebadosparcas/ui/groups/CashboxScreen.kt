@@ -423,7 +423,7 @@ private fun SummaryCard(summary: CashboxSummary) {
                             imageVector = Icons.AutoMirrored.Filled.TrendingUp,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = Color(0xFF4CAF50)
+                            tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
                             text = "Receitas",
@@ -435,7 +435,7 @@ private fun SummaryCard(summary: CashboxSummary) {
                         text = "+ ${NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(summary.totalIncome)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF4CAF50)
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
@@ -449,7 +449,7 @@ private fun SummaryCard(summary: CashboxSummary) {
                             imageVector = Icons.AutoMirrored.Filled.TrendingDown,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = Color(0xFFF44336)
+                            tint = MaterialTheme.colorScheme.error
                         )
                         Text(
                             text = "Despesas",
@@ -461,7 +461,7 @@ private fun SummaryCard(summary: CashboxSummary) {
                         text = "- ${NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(summary.totalExpense)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFFF44336)
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
             }
@@ -593,15 +593,15 @@ private fun EntryCard(
                     .size(40.dp)
                     .clip(CircleShape)
                     .background(
-                        if (isIncome) Color(0xFF4CAF50).copy(alpha = 0.15f)
-                        else Color(0xFFF44336).copy(alpha = 0.15f)
+                        if (isIncome) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.errorContainer
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = if (isIncome) Icons.Default.Add else Icons.Default.Remove,
                     contentDescription = null,
-                    tint = if (isIncome) Color(0xFF4CAF50) else Color(0xFFF44336),
+                    tint = if (isIncome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -655,7 +655,7 @@ private fun EntryCard(
                 text = "${if (isIncome) "+" else "-"} ${currencyFormat.format(entry.amount)}",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (isIncome) Color(0xFF4CAF50) else Color(0xFFF44336)
+                color = if (isIncome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
             )
         }
     }
@@ -673,17 +673,15 @@ private fun CashboxFABs(
         // FAB Adicionar Despesa
         SmallFloatingActionButton(
             onClick = onAddExpense,
-            containerColor = Color(0xFFF44336),
-            contentColor = Color.White
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer
         ) {
             Icon(Icons.Default.Remove, contentDescription = "Adicionar Despesa")
         }
 
         // FAB Adicionar Receita
         FloatingActionButton(
-            onClick = onAddIncome,
-            containerColor = Color(0xFF4CAF50),
-            contentColor = Color.White
+            onClick = onAddIncome
         ) {
             Icon(Icons.Default.Add, contentDescription = "Adicionar Receita")
         }

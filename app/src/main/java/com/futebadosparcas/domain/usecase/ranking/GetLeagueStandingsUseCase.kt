@@ -3,7 +3,7 @@ package com.futebadosparcas.domain.usecase.ranking
 import com.futebadosparcas.data.model.LeagueDivision
 import com.futebadosparcas.data.model.Season
 import com.futebadosparcas.data.model.SeasonParticipationV2
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.repository.GamificationRepository
 import com.futebadosparcas.data.repository.UserRepository
 import com.futebadosparcas.domain.ranking.LeagueService

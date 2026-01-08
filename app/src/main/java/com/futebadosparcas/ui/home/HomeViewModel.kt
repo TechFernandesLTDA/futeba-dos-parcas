@@ -336,7 +336,7 @@ data class GamificationSummary(
 sealed class HomeUiState {
     object Loading : HomeUiState()
     data class Success(
-        val user: com.futebadosparcas.data.model.User, 
+        val user: com.futebadosparcas.domain.model.User, 
         val games: List<Game>,
         val gamificationSummary: GamificationSummary,
         val statistics: com.futebadosparcas.data.model.UserStatistics? = null,

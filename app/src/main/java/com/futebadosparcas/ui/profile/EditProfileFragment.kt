@@ -15,7 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import coil.load
 import com.futebadosparcas.R
-import com.futebadosparcas.data.model.FieldType
+import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.data.model.PerformanceRatingCalculator
 import com.futebadosparcas.databinding.FragmentEditProfileBinding
 import com.futebadosparcas.util.PreferencesManager
@@ -270,10 +270,15 @@ class EditProfileFragment : Fragment() {
             val heightCm = binding.etHeight.text?.toString()?.toIntOrNull()
             val weightKg = binding.etWeight.text?.toString()?.toIntOrNull()
 
+            // Converter FieldType de domain para data.model temporariamente
+            val legacyFieldTypes = preferredFieldTypes.map {
+                com.futebadosparcas.data.model.FieldType.valueOf(it.name)
+            }
+
             viewModel.updateProfile(
                 name,
                 nickname,
-                preferredFieldTypes,
+                legacyFieldTypes,
                 selectedImageUri,
                 striker,
                 mid,
@@ -313,9 +318,9 @@ class EditProfileFragment : Fragment() {
                         binding.uploadProgress.visibility = View.GONE
                         binding.etName.setText(state.user.name)
                         binding.etNickname.setText(state.user.nickname)
-                        selectedBirthDate = state.user.birthDate
+                        selectedBirthDate = state.user.birthDate?.let { java.util.Date(it) }
                         binding.etBirthDate.setText(
-                            state.user.birthDate?.let { dateFormatter.format(it) } ?: ""
+                            selectedBirthDate?.let { dateFormatter.format(it) } ?: ""
                         )
 
                         setDropdownValue(state.user.gender, genderEntries, genderValues, binding.etGender)

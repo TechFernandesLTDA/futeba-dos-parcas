@@ -443,22 +443,23 @@ private fun GamesErrorState(
  * Obtém cor baseada no tipo de campo
  */
 private fun getFieldTypeColor(fieldType: String) = when (fieldType.lowercase()) {
-    "society" -> Color(0xFF2E7D32)
-    "futsal" -> Color(0xFF1565C0)
-    "grama" -> Color(0xFF558B2F)
-    "campo" -> Color(0xFF7B1FA2)
-    else -> Color(0xFF616161)
+    "society" -> com.futebadosparcas.ui.theme.FieldTypeColors.Society
+    "futsal" -> com.futebadosparcas.ui.theme.FieldTypeColors.Futsal
+    "grama", "campo" -> com.futebadosparcas.ui.theme.FieldTypeColors.Campo
+    "areia" -> com.futebadosparcas.ui.theme.FieldTypeColors.Areia
+    else -> com.futebadosparcas.ui.theme.FieldTypeColors.Outros
 }
 
 /**
  * Obtém cor baseada no status do jogo
  */
 private fun getStatusColor(status: String) = when (status.lowercase()) {
-    "aberto" -> Color(0xFF388E3C)
-    "confirmado" -> Color(0xFF1976D2)
-    "em andamento" -> Color(0xFFFFA000)
-    "finalizado" -> Color(0xFF616161)
-    else -> Color(0xFF616161)
+    "aberto" -> com.futebadosparcas.ui.theme.GameStatusColors.Scheduled
+    "confirmado" -> com.futebadosparcas.ui.theme.GameStatusColors.InProgress
+    "em andamento" -> com.futebadosparcas.ui.theme.GameStatusColors.Full
+    "finalizado" -> com.futebadosparcas.ui.theme.GameStatusColors.Finished
+    "cancelado" -> com.futebadosparcas.ui.theme.GameStatusColors.Cancelled
+    else -> com.futebadosparcas.ui.theme.GameStatusColors.Finished
 }
 
 /**

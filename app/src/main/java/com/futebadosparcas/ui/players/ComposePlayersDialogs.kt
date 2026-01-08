@@ -25,8 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.futebadosparcas.data.model.LevelTable
-import com.futebadosparcas.data.model.PlayerRatingRole
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.PlayerRatingRole
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.model.UserStatistics
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
