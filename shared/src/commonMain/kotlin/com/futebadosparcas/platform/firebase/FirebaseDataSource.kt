@@ -83,6 +83,32 @@ expect class FirebaseDataSource {
 
     suspend fun getUserXpLogs(userId: String, limit: Int): Result<List<XpLog>>
 
+    // ========== XP/GAMIFICATION ==========
+
+    suspend fun createXpLog(xpLog: XpLog): Result<XpLog>
+    suspend fun updateUserLevel(userId: String, level: Int, xp: Long): Result<Unit>
+    suspend fun awardBadge(userId: String, badgeId: String): Result<Unit>
+    suspend fun updateStreak(userId: String, streak: Int, lastGameDate: Long): Result<Unit>
+    suspend fun unlockMilestone(userId: String, milestoneId: String): Result<Unit>
+
+    // ========== LIVE GAME ==========
+
+    suspend fun createLiveGame(gameId: String): Result<Unit>
+    suspend fun updateLiveScore(gameId: String, team1Score: Int, team2Score: Int): Result<Unit>
+    suspend fun addGameEvent(gameId: String, event: GameEvent): Result<GameEvent>
+    suspend fun getGameEvents(gameId: String): Result<List<GameEvent>>
+    fun getGameEventsFlow(gameId: String): Flow<Result<List<GameEvent>>>
+    fun getLiveScoreFlow(gameId: String): Flow<Result<LiveScore>>
+
+    // ========== GROUPS MANAGEMENT ==========
+
+    suspend fun createGroup(group: Group): Result<Group>
+    suspend fun updateGroup(groupId: String, updates: Map<String, Any>): Result<Unit>
+    suspend fun getGroupMembers(groupId: String): Result<List<GroupMember>>
+    suspend fun addGroupMember(groupId: String, userId: String, role: String): Result<Unit>
+    suspend fun removeGroupMember(groupId: String, userId: String): Result<Unit>
+    suspend fun getGroupDetails(groupId: String): Result<Group>
+
     // ========== BATCH OPERATIONS ==========
 
     suspend fun executeBatch(operations: List<BatchOperation>): Result<Unit>

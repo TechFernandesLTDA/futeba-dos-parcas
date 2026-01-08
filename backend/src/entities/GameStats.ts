@@ -40,6 +40,9 @@ export class GameStats {
   goals: number;
 
   @Column({ default: 0 })
+  assists: number;
+
+  @Column({ default: 0 })
   saves: number;
 
   @Column({ default: false })
