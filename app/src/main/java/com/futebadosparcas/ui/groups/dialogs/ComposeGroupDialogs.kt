@@ -175,12 +175,18 @@ fun EditGroupDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    TextButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Cancelar")
+                    }
                     Spacer(Modifier.width(8.dp))
                     Button(
                         onClick = { onSave(name, description, selectedPhotoUri) },
                         enabled = name.isNotBlank() && name.length >= 3
                     ) {
+                        Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
                         Text("Salvar")
                     }
                 }
@@ -213,11 +219,15 @@ fun TransferOwnershipDialog(
                     selectedMember?.let { onMemberSelected(it) }
                     showConfirmation = false
                 }) {
+                    Icon(Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
                     Text("Transferir")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirmation = false }) {
+                    Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
                     Text("Cancelar")
                 }
             }
@@ -272,7 +282,11 @@ fun TransferOwnershipDialog(
                 }
 
                 Row(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    TextButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Cancelar")
+                    }
                 }
             }
         }
@@ -462,11 +476,17 @@ fun AddCashboxEntryDialog(
                 enabled = amount.isNotBlank() && selectedCategory != null &&
                     amount.replace(",", ".").toDoubleOrNull()?.let { it > 0 } ?: false
             ) {
+                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
                 Text("Salvar")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
+            TextButton(onClick = onDismiss) {
+                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Cancelar")
+            }
         }
     )
 }

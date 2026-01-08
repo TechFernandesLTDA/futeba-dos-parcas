@@ -180,27 +180,39 @@ private fun GamesFilters(
             selected = selectedFilter == GameFilterType.ALL,
             onClick = { onFilterChange(GameFilterType.ALL) },
             label = { Text(stringResource(R.string.all_games)) },
-            leadingIcon = if (selectedFilter == GameFilterType.ALL) {
-                { Icon(Icons.Default.Check, null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
-            } else null
+            leadingIcon = {
+                Icon(
+                    imageVector = if (selectedFilter == GameFilterType.ALL) Icons.Default.Check else Icons.Default.CalendarMonth,
+                    contentDescription = null,
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
+            }
         )
 
         FilterChip(
             selected = selectedFilter == GameFilterType.OPEN,
             onClick = { onFilterChange(GameFilterType.OPEN) },
             label = { Text(stringResource(R.string.open_games)) },
-            leadingIcon = if (selectedFilter == GameFilterType.OPEN) {
-                { Icon(Icons.Default.Check, null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
-            } else null
+            leadingIcon = {
+                Icon(
+                    imageVector = if (selectedFilter == GameFilterType.OPEN) Icons.Default.Check else Icons.Default.LockOpen,
+                    contentDescription = null,
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
+            }
         )
 
         FilterChip(
             selected = selectedFilter == GameFilterType.MY_GAMES,
             onClick = { onFilterChange(GameFilterType.MY_GAMES) },
             label = { Text(stringResource(R.string.my_games)) },
-            leadingIcon = if (selectedFilter == GameFilterType.MY_GAMES) {
-                { Icon(Icons.Default.Check, null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
-            } else null
+            leadingIcon = {
+                Icon(
+                    imageVector = if (selectedFilter == GameFilterType.MY_GAMES) Icons.Default.Check else Icons.Default.Person,
+                    contentDescription = null,
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
+            }
         )
     }
 }
