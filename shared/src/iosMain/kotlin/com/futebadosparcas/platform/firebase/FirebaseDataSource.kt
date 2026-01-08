@@ -172,6 +172,80 @@ actual class FirebaseDataSource(
         TODO("Implementar com Firebase iOS SDK")
     }
 
+    // ========== XP/GAMIFICATION ==========
+
+    actual suspend fun createXpLog(xpLog: XpLog): Result<XpLog> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun updateUserLevel(userId: String, level: Int, xp: Long): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun awardBadge(userId: String, badgeId: String): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun updateStreak(userId: String, streak: Int, lastGameDate: Long): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun unlockMilestone(userId: String, milestoneId: String): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    // ========== LIVE GAME ==========
+
+    actual suspend fun createLiveGame(gameId: String): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun updateLiveScore(gameId: String, team1Score: Int, team2Score: Int): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun addGameEvent(gameId: String, event: GameEvent): Result<GameEvent> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun getGameEvents(gameId: String): Result<List<GameEvent>> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual fun getGameEventsFlow(gameId: String): Flow<Result<List<GameEvent>>> {
+        TODO("Implementar com Firebase iOS SDK listeners")
+    }
+
+    actual fun getLiveScoreFlow(gameId: String): Flow<Result<LiveScore>> {
+        TODO("Implementar com Firebase iOS SDK listeners")
+    }
+
+    // ========== GROUPS MANAGEMENT ==========
+
+    actual suspend fun createGroup(group: Group): Result<Group> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun updateGroup(groupId: String, updates: Map<String, Any>): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun getGroupMembers(groupId: String): Result<List<GroupMember>> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun addGroupMember(groupId: String, userId: String, role: String): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun removeGroupMember(groupId: String, userId: String): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun getGroupDetails(groupId: String): Result<Group> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
     // ========== BATCH OPERATIONS ==========
 
     actual suspend fun executeBatch(operations: List<BatchOperation>): Result<Unit> {

@@ -11,6 +11,7 @@ import java.util.Date
 
 @IgnoreExtraProperties
 data class Game(
+    @get:Exclude @set:Exclude
     override var id: String = "",
     @get:PropertyName("schedule_id")
     @set:PropertyName("schedule_id")
@@ -213,6 +214,7 @@ enum class GameStatus {
 
 @IgnoreExtraProperties
 data class GameConfirmation(
+    @get:Exclude @set:Exclude
     var id: String = "",
     @get:PropertyName("game_id")
     @set:PropertyName("game_id")
@@ -311,6 +313,7 @@ enum class ConfirmationStatus {
 
 @IgnoreExtraProperties
 data class Team(
+    @get:Exclude @set:Exclude
     var id: String = "",
     @get:PropertyName("game_id")
     @set:PropertyName("game_id")
@@ -327,6 +330,7 @@ data class Team(
 
 @IgnoreExtraProperties
 data class PlayerStats(
+    @get:Exclude @set:Exclude
     var id: String = "",
     @get:PropertyName("game_id")
     @set:PropertyName("game_id")

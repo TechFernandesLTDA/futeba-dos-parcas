@@ -38,7 +38,22 @@ export class UserStatistics {
   total_goals: number;
 
   @Column({ default: 0 })
+  total_assists: number;
+
+  @Column({ default: 0 })
   total_saves: number;
+
+  @Column({ default: 0 })
+  wins: number;
+
+  @Column({ default: 0 })
+  draws: number;
+
+  @Column({ default: 0 })
+  losses: number;
+
+  @Column({ default: 0 })
+  points: number;
 
   @Column({ default: 0 })
   best_player_count: number;
