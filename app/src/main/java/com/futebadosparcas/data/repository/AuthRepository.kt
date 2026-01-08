@@ -41,13 +41,19 @@ class AuthRepository @Inject constructor(
 
     suspend fun getCurrentUser(): Result<User> {
         return try {
-            // Retry logic to handle race condition where auth.currentUser might not be immediately available
+            // Enhanced retry logic for Google Sign-In reliability
+            // Firebase Auth may take time to sync after credential validation
             var uid: String? = null
             var retries = 0
-            while (uid == null && retries < 5) {
+            val maxRetries = 10 // Increased from 5
+            val baseDelay = 300L // Increased from 200ms
+
+            while (uid == null && retries < maxRetries) {
                 uid = auth.currentUser?.uid
                 if (uid == null) {
-                    kotlinx.coroutines.delay(200) // Wait 200ms before retry
+                    // Exponential backoff: 300ms, 600ms, 900ms, 1200ms, etc.
+                    val delay = baseDelay * (retries + 1)
+                    kotlinx.coroutines.delay(delay)
                     retries++
                 }
             }
@@ -55,6 +61,9 @@ class AuthRepository @Inject constructor(
             if (uid == null) {
                 return Result.failure(Exception("Usuario nao autenticado"))
             }
+
+            // Wait a bit more to ensure Firestore is ready
+            kotlinx.coroutines.delay(100)
 
             val doc = usersCollection.document(uid).get().await()
 
