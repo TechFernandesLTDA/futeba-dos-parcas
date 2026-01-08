@@ -36,14 +36,18 @@ class LoginViewModel @Inject constructor(
 
     fun onGoogleSignInSuccess() {
         viewModelScope.launch {
+            android.util.Log.d("LoginViewModel", "=== onGoogleSignInSuccess called ===")
             _loginState.value = LoginState.Loading
 
+            android.util.Log.d("LoginViewModel", "Calling authRepository.getCurrentUser()")
             val result = authRepository.getCurrentUser()
             result.fold(
                 onSuccess = { user ->
+                    android.util.Log.d("LoginViewModel", "getCurrentUser SUCCESS - User: ${user.name} (${user.email})")
                     _loginState.value = LoginState.Success(user)
                 },
                 onFailure = { error ->
+                    android.util.Log.e("LoginViewModel", "getCurrentUser FAILURE: ${error.message}", error)
                     _loginState.value = LoginState.Error(error.message ?: "Erro ao fazer login")
                 }
             )

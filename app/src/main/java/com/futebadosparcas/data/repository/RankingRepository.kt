@@ -432,15 +432,6 @@ class RankingRepository @Inject constructor(
         }
     }
 
-    /**
-     * Busca dados complementares dos usuarios (versao sequencial).
-     * @deprecated Use fetchUserDataParallel para melhor performance.
-     */
-    @Deprecated("Use fetchUserDataParallel instead", ReplaceWith("fetchUserDataParallel(userIds)"))
-    private suspend fun fetchUserData(userIds: List<String>): Map<String, User> {
-        return fetchUserDataParallel(userIds)
-    }
-
     private fun getStatValue(stats: UserStatistics, category: RankingCategory): Int {
         return when (category) {
             RankingCategory.GOALS -> stats.totalGoals
