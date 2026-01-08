@@ -591,7 +591,12 @@ private fun GroupActionButtons(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.invite))
+                Text(
+                    text = stringResource(R.string.invite),
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
 
@@ -606,7 +611,12 @@ private fun GroupActionButtons(
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(4.dp))
-            Text(stringResource(R.string.cashbox))
+            Text(
+                text = stringResource(R.string.cashbox),
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.labelLarge
+            )
         }
 
         // Create Game (admin+)
@@ -621,7 +631,12 @@ private fun GroupActionButtons(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.create_game))
+                Text(
+                    text = stringResource(R.string.create_game),
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
     }
