@@ -116,6 +116,9 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun signInWithGoogle() {
+        AppLogger.d(TAG) { "=== GOOGLE SIGN-IN STARTED ===" }
+        AppLogger.d(TAG) { "Web Client ID: ${getString(R.string.default_web_client_id)}" }
+
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(false)
             .setServerClientId(getString(R.string.default_web_client_id))
@@ -127,64 +130,102 @@ class LoginActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
+                AppLogger.d(TAG) { "Showing progress bar" }
                 binding.progressBar.visibility = View.VISIBLE
                 binding.btnGoogleSignIn.isEnabled = false
 
+                AppLogger.d(TAG) { "Requesting credentials from CredentialManager" }
                 val result = credentialManager.getCredential(
                     request = request,
                     context = this@LoginActivity
                 )
+                AppLogger.d(TAG) { "Credentials received: ${result.credential.type}" }
                 handleSignInResult(result)
             } catch (e: GetCredentialException) {
-                AppLogger.e(TAG, "Google Sign-In failed: ${e.message}", e)
+                AppLogger.e(TAG, "Google Sign-In failed: ${e.javaClass.simpleName} - ${e.message}", e)
                 binding.progressBar.visibility = View.GONE
                 binding.btnGoogleSignIn.isEnabled = true
-                Toast.makeText(this@LoginActivity, R.string.error_google_login, Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@LoginActivity,
+                    "Erro no login: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Unexpected error during sign-in: ${e.message}", e)
+                binding.progressBar.visibility = View.GONE
+                binding.btnGoogleSignIn.isEnabled = true
+                Toast.makeText(
+                    this@LoginActivity,
+                    "Erro inesperado: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
 
     private fun handleSignInResult(result: GetCredentialResponse) {
+        AppLogger.d(TAG) { "=== HANDLING SIGN-IN RESULT ===" }
         val credential = result.credential
+        AppLogger.d(TAG) { "Credential type: ${credential.javaClass.simpleName}" }
 
         when (credential) {
             is CustomCredential -> {
+                AppLogger.d(TAG) { "CustomCredential type: ${credential.type}" }
                 if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                     try {
+                        AppLogger.d(TAG) { "Parsing Google ID token" }
                         val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                        AppLogger.d(TAG) { "Google ID: ${googleIdTokenCredential.id}" }
+                        AppLogger.d(TAG) { "Display Name: ${googleIdTokenCredential.displayName}" }
+                        AppLogger.d(TAG) { "Email: ${googleIdTokenCredential.id}" }
                         firebaseAuthWithGoogle(googleIdTokenCredential.idToken)
                     } catch (e: GoogleIdTokenParsingException) {
                         AppLogger.e(TAG, "Invalid Google ID token", e)
                         binding.progressBar.visibility = View.GONE
                         binding.btnGoogleSignIn.isEnabled = true
+                        Toast.makeText(this, "Erro ao processar token do Google", Toast.LENGTH_LONG).show()
                     }
                 } else {
-                    AppLogger.e(TAG, "Unexpected credential type")
+                    AppLogger.e(TAG, "Unexpected credential type: ${credential.type}")
                     binding.progressBar.visibility = View.GONE
                     binding.btnGoogleSignIn.isEnabled = true
+                    Toast.makeText(this, "Tipo de credencial não suportado", Toast.LENGTH_LONG).show()
                 }
             }
             else -> {
-                AppLogger.e(TAG, "Unexpected credential type")
+                AppLogger.e(TAG, "Not a CustomCredential: ${credential.javaClass.name}")
                 binding.progressBar.visibility = View.GONE
                 binding.btnGoogleSignIn.isEnabled = true
+                Toast.makeText(this, "Credencial inválida", Toast.LENGTH_LONG).show()
             }
         }
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
+        AppLogger.d(TAG) { "=== FIREBASE AUTH WITH GOOGLE ===" }
+        AppLogger.d(TAG) { "Creating Firebase credential with Google ID token" }
+
         val credential = GoogleAuthProvider.getCredential(idToken, null)
+
+        AppLogger.d(TAG) { "Signing in with Firebase credential" }
         auth.signInWithCredential(credential)
             .addOnCompleteListener(this) { task ->
+                AppLogger.d(TAG) { "Firebase signInWithCredential completed" }
                 binding.progressBar.visibility = View.GONE
                 binding.btnGoogleSignIn.isEnabled = true
 
                 if (task.isSuccessful) {
-                    AppLogger.d(TAG) { "signInWithCredential:success" }
+                    val user = auth.currentUser
+                    AppLogger.d(TAG) { "signInWithCredential:success - UID: ${user?.uid}" }
+                    AppLogger.d(TAG) { "User email: ${user?.email}" }
+                    AppLogger.d(TAG) { "User display name: ${user?.displayName}" }
+                    AppLogger.d(TAG) { "Calling viewModel.onGoogleSignInSuccess()" }
                     viewModel.onGoogleSignInSuccess()
                 } else {
-                    AppLogger.e(TAG, "signInWithCredential:failure", task.exception)
-                    viewModel.onGoogleSignInError(getString(R.string.error_authentication))
+                    AppLogger.e(TAG, "signInWithCredential:failure - ${task.exception?.message}", task.exception)
+                    val errorMsg = task.exception?.message ?: getString(R.string.error_authentication)
+                    Toast.makeText(this, "Erro Firebase: $errorMsg", Toast.LENGTH_LONG).show()
+                    viewModel.onGoogleSignInError(errorMsg)
                 }
             }
     }
