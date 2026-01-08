@@ -179,6 +179,9 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 badgeAwarder.newBadges.collect { userBadge ->
+                    // TODO: Migrate BadgeUnlockDialog to Compose
+                    // Badge notifications temporarily disabled
+                    /*
                     // Verificar se já existe um dialog aberto ou se esta badge já foi exibida
                     val existingDialog = supportFragmentManager.findFragmentByTag(
                         com.futebadosparcas.ui.badges.dialog.BadgeUnlockDialog.TAG
@@ -198,6 +201,7 @@ class MainActivity : AppCompatActivity() {
                             .newInstance(userBadge.badgeId, firestore)
                             .show(supportFragmentManager, com.futebadosparcas.ui.badges.dialog.BadgeUnlockDialog.TAG)
                     }
+                    */
                 }
             }
         }

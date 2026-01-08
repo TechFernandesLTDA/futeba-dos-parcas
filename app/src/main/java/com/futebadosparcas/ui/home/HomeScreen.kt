@@ -124,6 +124,13 @@ private fun HomeSuccessContent(
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
 
+    // Usar remember para evitar recomposições desnecessárias
+    val games = remember(state.games) { state.games }
+    val activities = remember(state.activities) { state.activities }
+    val publicGames = remember(state.publicGames) { state.publicGames }
+    val challenges = remember(state.challenges) { state.challenges }
+    val recentBadges = remember(state.recentBadges) { state.recentBadges }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -165,8 +172,8 @@ private fun HomeSuccessContent(
         }
 
         // Jogos Próximos
-        if (state.games.isNotEmpty()) {
-            item {
+        if (games.isNotEmpty()) {
+            item(key = "games_header") {
                 Text(
                     text = stringResource(R.string.upcoming_games),
                     style = MaterialTheme.typography.titleLarge,
@@ -177,7 +184,7 @@ private fun HomeSuccessContent(
 
             if (state.isGridView) {
                 // Grid view - usando FlowRow para evitar LazyVerticalGrid aninhado
-                item {
+                item(key = "games_grid") {
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -185,7 +192,7 @@ private fun HomeSuccessContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        state.games.forEach { game ->
+                        games.take(6).forEach { game -> // Limitar a 6 jogos no grid
                             UpcomingGameCard(
                                 game = game,
                                 onClick = { onGameClick(game.id) },
@@ -196,7 +203,7 @@ private fun HomeSuccessContent(
                 }
             } else {
                 // List view
-                items(state.games, key = { it.id }) { game ->
+                items(games, key = { it.id }) { game ->
                     UpcomingGameCard(
                         game = game,
                         onClick = { onGameClick(game.id) },
@@ -209,20 +216,20 @@ private fun HomeSuccessContent(
         }
 
         // Activity Feed
-        if (state.activities.isNotEmpty()) {
-            item {
+        if (activities.isNotEmpty()) {
+            item(key = "activity_feed") {
                 ActivityFeedSection(
-                    activities = state.activities,
+                    activities = activities,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
         }
 
         // Public Games Suggestions
-        if (state.publicGames.isNotEmpty()) {
-            item {
+        if (publicGames.isNotEmpty()) {
+            item(key = "public_games") {
                 PublicGamesSuggestions(
-                    games = state.publicGames,
+                    games = publicGames,
                     onGameClick = { game -> onGameClick(game.id) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
@@ -230,10 +237,10 @@ private fun HomeSuccessContent(
         }
 
         // Challenges
-        if (state.challenges.isNotEmpty()) {
-            item {
+        if (challenges.isNotEmpty()) {
+            item(key = "challenges") {
                 ChallengesSection(
-                    challenges = state.challenges,
+                    challenges = challenges,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
@@ -241,7 +248,7 @@ private fun HomeSuccessContent(
 
         // Statistics
         if (state.statistics != null) {
-            item {
+            item(key = "statistics") {
                 ExpandableStatsSection(
                     statistics = state.statistics,
                     modifier = Modifier.padding(top = 16.dp)
@@ -249,21 +256,21 @@ private fun HomeSuccessContent(
             }
         }
 
-        // Activity Heatmap
-        if (state.activities.isNotEmpty()) {
-            item {
-                ActivityHeatmapSection(
-                    activities = state.activities,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-            }
-        }
+        // Activity Heatmap - Remover para reduzir peso da tela
+        // if (activities.isNotEmpty()) {
+        //     item(key = "heatmap") {
+        //         ActivityHeatmapSection(
+        //             activities = activities,
+        //             modifier = Modifier.padding(top = 16.dp)
+        //         )
+        //     }
+        // }
 
         // Recent Badges
-        if (state.recentBadges.isNotEmpty()) {
-            item {
+        if (recentBadges.isNotEmpty()) {
+            item(key = "badges") {
                 RecentBadgesCarousel(
-                    badges = state.recentBadges,
+                    badges = recentBadges,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
