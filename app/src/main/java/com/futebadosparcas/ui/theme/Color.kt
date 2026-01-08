@@ -340,8 +340,59 @@ object GamificationColors {
  * Cores para tipos de campo
  */
 object FieldTypeColors {
+    val Society = Color(0xFF2E7D32) // Verde escuro
+    val Futsal = Color(0xFF1565C0) // Azul profundo
+    val Campo = Color(0xFF558B2F) // Verde campo
+    val Areia = Color(0xFFF9A825) // Amarelo areia
+    val Outros = Color(0xFF757575) // Cinza neutro
+
+    // Legacy aliases
     val Grass = Color(0xFF388E3C)
     val Synthetic = Color(0xFF4CAF50)
-    val Futsal = Color(0xFF1976D2)
     val Sand = Color(0xFFFBC02D)
+}
+
+/**
+ * Cores para status de jogos
+ */
+object GameStatusColors {
+    val Scheduled = Color(0xFF388E3C) // Verde
+    val InProgress = Color(0xFF1976D2) // Azul
+    val Finished = Color(0xFF616161) // Cinza
+    val Cancelled = Color(0xFFD32F2F) // Vermelho
+    val Full = Color(0xFFFF6F00) // Laranja
+}
+
+/**
+ * Cores para eventos de partida ao vivo
+ */
+object MatchEventColors {
+    // Backgrounds claros para eventos
+    val GoalBackground = Color(0xFFE8F5E9) // Verde claro
+    val SubstitutionBackground = Color(0xFFFFF3E0) // Laranja claro
+    val YellowCardBackground = Color(0xFFFFFDE7) // Amarelo claro
+    val RedCardBackground = Color(0xFFFFEBEE) // Vermelho claro
+    val FoulBackground = Color(0xFFF3E5F5) // Roxo claro
+
+    // Cores de ícones/badges
+    val YellowCard = Color(0xFFFDD835) // Cartão amarelo
+    val RedCard = Color(0xFFE53935) // Cartão vermelho
+}
+
+/**
+ * Cores de marcas/brands
+ */
+object BrandColors {
+    val WhatsApp = Color(0xFF25D366) // Verde oficial WhatsApp
+    val Pix = Color(0xFF00C9A7) // Verde-água Pix
+}
+
+/**
+ * Cores para raridades de badges
+ */
+object BadgeRarityColors {
+    val Common = Color(0xFF8E8E8E) // Cinza
+    val Rare = Color(0xFF2196F3) // Azul
+    val Epic = Color(0xFF9C27B0) // Roxo
+    val Legendary = Color(0xFFFF9800) // Laranja/Dourado
 }

@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,9 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.futebadosparcas.R
-import com.futebadosparcas.data.model.FieldType
-import com.futebadosparcas.data.model.PlayerRatingRole
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.domain.model.PlayerRatingRole
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.ui.components.EmptyPlayersState
 import com.futebadosparcas.ui.components.EmptySearchState
 import com.futebadosparcas.ui.components.EmptyState
@@ -320,27 +321,39 @@ private fun PlayersSearchAndFilters(
                 selected = selectedFieldType == FieldType.SOCIETY,
                 onClick = { onFieldTypeChange(FieldType.SOCIETY) },
                 label = { Text("Society") },
-                leadingIcon = if (selectedFieldType == FieldType.SOCIETY) {
-                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                } else null
+                leadingIcon = {
+                    Icon(
+                        imageVector = if (selectedFieldType == FieldType.SOCIETY) Icons.Default.Check else Icons.Default.Sports,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             )
 
             FilterChip(
                 selected = selectedFieldType == FieldType.FUTSAL,
                 onClick = { onFieldTypeChange(FieldType.FUTSAL) },
                 label = { Text("Futsal") },
-                leadingIcon = if (selectedFieldType == FieldType.FUTSAL) {
-                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                } else null
+                leadingIcon = {
+                    Icon(
+                        imageVector = if (selectedFieldType == FieldType.FUTSAL) Icons.Default.Check else Icons.Default.SportsSoccer,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             )
 
             FilterChip(
                 selected = selectedFieldType == FieldType.CAMPO,
                 onClick = { onFieldTypeChange(FieldType.CAMPO) },
                 label = { Text("Campo") },
-                leadingIcon = if (selectedFieldType == FieldType.CAMPO) {
-                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                } else null
+                leadingIcon = {
+                    Icon(
+                        imageVector = if (selectedFieldType == FieldType.CAMPO) Icons.Default.Check else Icons.Default.Grass,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             )
         }
 
@@ -353,27 +366,39 @@ private fun PlayersSearchAndFilters(
                 selected = selectedSortOption == PlayersViewModel.SortOption.NAME,
                 onClick = { onSortOptionChange(PlayersViewModel.SortOption.NAME) },
                 label = { Text("Nome") },
-                leadingIcon = if (selectedSortOption == PlayersViewModel.SortOption.NAME) {
-                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                } else null
+                leadingIcon = {
+                    Icon(
+                        imageVector = if (selectedSortOption == PlayersViewModel.SortOption.NAME) Icons.Default.Check else Icons.Default.SortByAlpha,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             )
 
             FilterChip(
                 selected = selectedSortOption == PlayersViewModel.SortOption.BEST_STRIKER,
                 onClick = { onSortOptionChange(PlayersViewModel.SortOption.BEST_STRIKER) },
                 label = { Text("Melhor Atacante") },
-                leadingIcon = if (selectedSortOption == PlayersViewModel.SortOption.BEST_STRIKER) {
-                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                } else null
+                leadingIcon = {
+                    Icon(
+                        imageVector = if (selectedSortOption == PlayersViewModel.SortOption.BEST_STRIKER) Icons.Default.Check else Icons.AutoMirrored.Filled.TrendingUp,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             )
 
             FilterChip(
                 selected = selectedSortOption == PlayersViewModel.SortOption.BEST_GK,
                 onClick = { onSortOptionChange(PlayersViewModel.SortOption.BEST_GK) },
                 label = { Text("Melhor Goleiro") },
-                leadingIcon = if (selectedSortOption == PlayersViewModel.SortOption.BEST_GK) {
-                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                } else null
+                leadingIcon = {
+                    Icon(
+                        imageVector = if (selectedSortOption == PlayersViewModel.SortOption.BEST_GK) Icons.Default.Check else Icons.Default.Shield,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             )
         }
     }

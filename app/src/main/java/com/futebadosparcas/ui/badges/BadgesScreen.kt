@@ -838,10 +838,10 @@ private fun getCategoryEmoji(category: BadgeCategory): String {
 @Composable
 private fun getRarityColor(rarity: BadgeRarity): Color {
     return when (rarity) {
-        BadgeRarity.COMUM -> Color(0xFF8E8E8E)
-        BadgeRarity.RARO -> GamificationColors.Silver
-        BadgeRarity.EPICO -> GamificationColors.Purple
-        BadgeRarity.LENDARIO -> GamificationColors.Gold
+        BadgeRarity.COMUM -> com.futebadosparcas.ui.theme.BadgeRarityColors.Common
+        BadgeRarity.RARO -> com.futebadosparcas.ui.theme.BadgeRarityColors.Rare
+        BadgeRarity.EPICO -> com.futebadosparcas.ui.theme.BadgeRarityColors.Epic
+        BadgeRarity.LENDARIO -> com.futebadosparcas.ui.theme.BadgeRarityColors.Legendary
     }
 }
 

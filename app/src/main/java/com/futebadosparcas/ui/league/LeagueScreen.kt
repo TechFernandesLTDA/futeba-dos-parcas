@@ -33,6 +33,7 @@ import com.futebadosparcas.data.model.Season
 import com.futebadosparcas.data.model.SeasonParticipationV2
 import com.futebadosparcas.data.model.LeagueRatingCalculator
 import com.futebadosparcas.ui.components.FutebaTopBar
+import com.futebadosparcas.ui.theme.GamificationColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -466,28 +467,28 @@ fun DivisionSelector(
                         emoji = "💎",
                         name = "DIAMANTE",
                         rating = "70-100",
-                        color = Color(0xFF1CB0F6),
+                        color = GamificationColors.Diamond,
                         description = "Elite do fut"
                     )
                     DivisionInfoItem(
                         emoji = "🥇",
                         name = "OURO",
                         rating = "50-69",
-                        color = Color(0xFFFFC800),
+                        color = GamificationColors.Gold,
                         description = "Jogadores experientes"
                     )
                     DivisionInfoItem(
                         emoji = "🥈",
                         name = "PRATA",
                         rating = "30-49",
-                        color = Color(0xFFC0C0C0),
+                        color = GamificationColors.Silver,
                         description = "Em evolução"
                     )
                     DivisionInfoItem(
                         emoji = "🥉",
                         name = "BRONZE",
                         rating = "0-29",
-                        color = Color(0xFFCD7F32),
+                        color = GamificationColors.Bronze,
                         description = "Iniciantes"
                     )
 
@@ -736,10 +737,10 @@ fun EmptySeasonMessage() {
 // Helpers
 fun getDivisionColor(division: LeagueDivision): Color {
     return when (division) {
-        LeagueDivision.BRONZE -> Color(0xFFCD7F32)
-        LeagueDivision.PRATA -> Color(0xFFC0C0C0)
-        LeagueDivision.OURO -> Color(0xFFFFC800)
-        LeagueDivision.DIAMANTE -> Color(0xFF1CB0F6)
+        LeagueDivision.BRONZE -> GamificationColors.Bronze
+        LeagueDivision.PRATA -> GamificationColors.Silver
+        LeagueDivision.OURO -> GamificationColors.Gold
+        LeagueDivision.DIAMANTE -> GamificationColors.Diamond
     }
 }
 
@@ -754,9 +755,9 @@ fun getDivisionEmoji(division: LeagueDivision): String {
 
 fun getRankColor(position: Int): Color {
     return when (position) {
-        1 -> Color(0xFFFFC800) // Gold
-        2 -> Color(0xFFC0C0C0) // Silver
-        3 -> Color(0xFFCD7F32) // Bronze
+        1 -> GamificationColors.Gold
+        2 -> GamificationColors.Silver
+        3 -> GamificationColors.Bronze
         else -> Color.Gray
     }
 }

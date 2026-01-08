@@ -175,12 +175,18 @@ fun EditGroupDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    TextButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Cancelar")
+                    }
                     Spacer(Modifier.width(8.dp))
                     Button(
                         onClick = { onSave(name, description, selectedPhotoUri) },
                         enabled = name.isNotBlank() && name.length >= 3
                     ) {
+                        Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
                         Text("Salvar")
                     }
                 }
@@ -197,6 +203,36 @@ fun TransferOwnershipDialog(
 ) {
     // Filter out owners, just in case
     val candidates = remember(members) { members.filter { it.getRoleEnum() != GroupMemberRole.OWNER } }
+
+    var showConfirmation by remember { mutableStateOf(false) }
+    var selectedMember by remember { mutableStateOf<GroupMember?>(null) }
+
+    if (showConfirmation && selectedMember != null) {
+        AlertDialog(
+            onDismissRequest = { showConfirmation = false },
+            title = { Text("Transferir Propriedade") },
+            text = {
+                Text("Tem certeza que deseja transferir a propriedade do grupo para \"${selectedMember?.getDisplayName()}\"?\n\nVocê se tornará administrador e não poderá reverter esta ação.")
+            },
+            confirmButton = {
+                Button(onClick = {
+                    selectedMember?.let { onMemberSelected(it) }
+                    showConfirmation = false
+                }) {
+                    Icon(Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Transferir")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmation = false }) {
+                    Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -235,15 +271,22 @@ fun TransferOwnershipDialog(
                                 },
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
-                                    .clickable { onMemberSelected(member) }
+                                    .clickable {
+                                        selectedMember = member
+                                        showConfirmation = true
+                                    }
                             )
                             HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant, thickness = 0.5.dp)
                         }
                     }
                 }
-                
+
                 Row(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    TextButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Cancelar")
+                    }
                 }
             }
         }
@@ -417,21 +460,33 @@ fun AddCashboxEntryDialog(
                 onClick = {
                     val amountVal = amount.replace(",", ".").toDoubleOrNull()
                     val category = selectedCategory
+
+                    // Validação: categoria e valor são obrigatórios
                     if (amountVal != null && amountVal > 0 && category != null) {
-                         if (category == CashboxCategory.OTHER && description.isBlank()) {
-                              // error
-                         } else {
-                             onSave(description, amountVal, category, selectedReceiptUri)
-                         }
+                        // Validação: se categoria é "OTHER", descrição é obrigatória
+                        if (category == CashboxCategory.OTHER && description.isBlank()) {
+                            // Usuário será notificado visualmente no campo de descrição
+                            // Por enquanto, não salvamos
+                        } else {
+                            onSave(description, amountVal, category, selectedReceiptUri)
+                            onDismiss()
+                        }
                     }
                 },
-                enabled = amount.isNotBlank() && selectedCategory != null
+                enabled = amount.isNotBlank() && selectedCategory != null &&
+                    amount.replace(",", ".").toDoubleOrNull()?.let { it > 0 } ?: false
             ) {
+                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
                 Text("Salvar")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
+            TextButton(onClick = onDismiss) {
+                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Cancelar")
+            }
         }
     )
 }

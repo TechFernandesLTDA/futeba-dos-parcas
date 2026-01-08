@@ -53,6 +53,7 @@ data class User(
     val phone: String? = null,
     val nickname: String? = null,
     @SerialName("photo_url") val photoUrl: String? = null,
+    @SerialName("fcm_token") val fcmToken: String? = null,
     @SerialName("is_searchable") val isSearchable: Boolean = true,
     @SerialName("is_profile_public") val isProfilePublic: Boolean = true,
     val role: String = UserRole.PLAYER.name,
@@ -67,6 +68,7 @@ data class User(
 
     // Posicao preferida
     @SerialName("preferred_position") val preferredPosition: String? = null,
+    @SerialName("preferred_field_types") val preferredFieldTypes: List<FieldType> = emptyList(),
 
     // Informacoes pessoais
     @SerialName("birth_date") val birthDate: Long? = null,

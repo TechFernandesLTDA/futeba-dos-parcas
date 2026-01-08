@@ -25,7 +25,8 @@ import com.futebadosparcas.data.model.ThemeMode
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemeSettingsScreen(
-    viewModel: ThemeViewModel = hiltViewModel()
+    viewModel: ThemeViewModel = hiltViewModel(),
+    onBackClick: () -> Unit = {}
 ) {
     val config by viewModel.themeConfig.collectAsState()
 

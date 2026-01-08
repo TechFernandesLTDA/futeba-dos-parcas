@@ -193,9 +193,9 @@ fun getActivityIcon(type: String): ImageVector {
 @Composable
 fun getActivityColor(type: String): androidx.compose.ui.graphics.Color {
     return when (ActivityType.values().find { it.name == type }) {
-        ActivityType.BADGE_EARNED, ActivityType.MVP_EARNED -> androidx.compose.ui.graphics.Color(0xFFFFD700) // Gold
-        ActivityType.LEVEL_UP -> androidx.compose.ui.graphics.Color(0xFF4CAF50) // Green
-        ActivityType.GAME_FINISHED -> androidx.compose.ui.graphics.Color(0xFF2196F3) // Blue
+        ActivityType.BADGE_EARNED, ActivityType.MVP_EARNED -> com.futebadosparcas.ui.theme.GamificationColors.Gold
+        ActivityType.LEVEL_UP -> com.futebadosparcas.ui.theme.GamificationColors.XpGreen
+        ActivityType.GAME_FINISHED -> MaterialTheme.colorScheme.secondary
         else -> MaterialTheme.colorScheme.primary
     }
 }

@@ -2,7 +2,7 @@ package com.futebadosparcas.ui.preferences
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.data.repository.UserRepositoryLegacy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +12,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PreferencesViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepositoryLegacy
 ) : ViewModel() {
 
     private val _isSearchable = MutableStateFlow(true)

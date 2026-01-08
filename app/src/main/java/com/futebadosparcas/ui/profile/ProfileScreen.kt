@@ -45,6 +45,9 @@ import coil.compose.AsyncImage
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.domain.model.PlayerRatingRole
+import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper

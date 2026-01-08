@@ -1,0 +1,72 @@
+-- Games table
+CREATE TABLE games (
+    id TEXT NOT NULL PRIMARY KEY,
+    scheduleId TEXT,
+    date TEXT NOT NULL,
+    time TEXT NOT NULL,
+    status TEXT NOT NULL,
+    ownerId TEXT NOT NULL,
+    locationId TEXT,
+    fieldId TEXT,
+    locationName TEXT,
+    locationAddress TEXT,
+    maxPlayers INTEGER NOT NULL,
+    dailyPrice REAL,
+    cachedAt INTEGER NOT NULL
+);
+
+-- Users table
+CREATE TABLE users (
+    id TEXT NOT NULL PRIMARY KEY,
+    email TEXT NOT NULL,
+    name TEXT NOT NULL,
+    photoUrl TEXT,
+    fcmToken TEXT,
+    cachedAt INTEGER NOT NULL
+);
+
+-- ========== GAME QUERIES ==========
+
+selectAllGames:
+SELECT * FROM games;
+
+selectGameById:
+SELECT * FROM games WHERE id = ?;
+
+selectGamesByStatus:
+SELECT * FROM games WHERE status = ? ORDER BY date ASC, time ASC;
+
+insertGame:
+INSERT OR REPLACE INTO games VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteGameById:
+DELETE FROM games WHERE id = ?;
+
+deleteOldGames:
+DELETE FROM games WHERE cachedAt < ?;
+
+countGames:
+SELECT COUNT(*) FROM games;
+
+-- ========== USER QUERIES ==========
+
+selectAllUsers:
+SELECT * FROM users;
+
+selectUserById:
+SELECT * FROM users WHERE id = ?;
+
+selectUsersByIds:
+SELECT * FROM users WHERE id IN ?;
+
+insertUser:
+INSERT OR REPLACE INTO users VALUES (?, ?, ?, ?, ?, ?);
+
+deleteUserById:
+DELETE FROM users WHERE id = ?;
+
+deleteOldUsers:
+DELETE FROM users WHERE cachedAt < ?;
+
+countUsers:
+SELECT COUNT(*) FROM users;

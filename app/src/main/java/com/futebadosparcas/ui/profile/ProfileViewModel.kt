@@ -7,12 +7,13 @@ import com.futebadosparcas.data.model.AutoRatings
 import com.futebadosparcas.data.model.FieldType
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.data.model.PerformanceRatingCalculator
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.LiveGameRepository
 import com.futebadosparcas.data.repository.LocationRepository
 import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.data.repository.UserRepositoryLegacy
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,6 +27,7 @@ import kotlin.math.abs
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
+    private val userRepositoryLegacy: UserRepositoryLegacy,
     private val authRepository: AuthRepository,
     private val gameRepository: GameRepository,
     private val liveGameRepository: LiveGameRepository,
@@ -148,7 +150,7 @@ class ProfileViewModel @Inject constructor(
             _uiState.value = ProfileUiState.Loading
 
             // Atualizar perfil com tudo de uma vez (foto, dados e ratings)
-            val profileResult = userRepository.updateProfile(
+            val profileResult = userRepositoryLegacy.updateProfile(
                 name,
                 nickname,
                 preferredFieldTypes,
@@ -169,8 +171,48 @@ class ProfileViewModel @Inject constructor(
             )
 
             profileResult.fold(
-                onSuccess = { user ->
-                    _uiState.value = ProfileUiState.ProfileUpdateSuccess(user)
+                onSuccess = { legacyUser ->
+                    // Converter de data.model.User para domain.model.User
+                    val domainUser = com.futebadosparcas.domain.model.User(
+                        id = legacyUser.id,
+                        email = legacyUser.email,
+                        name = legacyUser.name,
+                        phone = legacyUser.phone,
+                        nickname = legacyUser.nickname,
+                        photoUrl = legacyUser.photoUrl,
+                        fcmToken = legacyUser.fcmToken,
+                        isSearchable = legacyUser.isSearchable,
+                        isProfilePublic = legacyUser.isProfilePublic,
+                        role = legacyUser.role,
+                        createdAt = legacyUser.createdAt?.time,
+                        updatedAt = legacyUser.updatedAt?.time,
+                        strikerRating = legacyUser.strikerRating,
+                        midRating = legacyUser.midRating,
+                        defenderRating = legacyUser.defenderRating,
+                        gkRating = legacyUser.gkRating,
+                        preferredPosition = legacyUser.preferredPosition,
+                        preferredFieldTypes = legacyUser.preferredFieldTypes.map {
+                            com.futebadosparcas.domain.model.FieldType.valueOf(it.name)
+                        },
+                        birthDate = legacyUser.birthDate?.time,
+                        gender = legacyUser.gender,
+                        heightCm = legacyUser.heightCm,
+                        weightKg = legacyUser.weightKg,
+                        dominantFoot = legacyUser.dominantFoot,
+                        primaryPosition = legacyUser.primaryPosition,
+                        secondaryPosition = legacyUser.secondaryPosition,
+                        playStyle = legacyUser.playStyle,
+                        experienceYears = legacyUser.experienceYears,
+                        level = legacyUser.level,
+                        experiencePoints = legacyUser.experiencePoints,
+                        milestonesAchieved = legacyUser.milestonesAchieved,
+                        autoStrikerRating = legacyUser.autoStrikerRating,
+                        autoMidRating = legacyUser.autoMidRating,
+                        autoDefenderRating = legacyUser.autoDefenderRating,
+                        autoGkRating = legacyUser.autoGkRating,
+                        autoRatingSamples = legacyUser.autoRatingSamples
+                    )
+                    _uiState.value = ProfileUiState.ProfileUpdateSuccess(domainUser)
                 },
                 onFailure = { error ->
                     _uiState.value = ProfileUiState.Error(error.message ?: "Erro ao atualizar perfil")
@@ -211,7 +253,7 @@ class ProfileViewModel @Inject constructor(
         if (!shouldUpdateAutoRatings(user, autoRatings)) return
 
         viewModelScope.launch {
-            val result = userRepository.updateAutoRatings(
+            val result = userRepositoryLegacy.updateAutoRatings(
                 autoRatings.striker,
                 autoRatings.mid,
                 autoRatings.defender,

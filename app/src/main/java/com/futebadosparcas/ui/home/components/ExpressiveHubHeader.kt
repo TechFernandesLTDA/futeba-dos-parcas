@@ -33,7 +33,7 @@ import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 
 @Composable
 fun ExpressiveHubHeader(
-    user: com.futebadosparcas.data.model.User,
+    user: com.futebadosparcas.domain.model.User,
     summary: GamificationSummary,
     statistics: com.futebadosparcas.data.model.UserStatistics? = null,
     onProfileClick: () -> Unit,
@@ -102,7 +102,7 @@ fun ExpressiveHubHeader(
 
 @Composable
 private fun CompactHeaderLayout(
-    user: com.futebadosparcas.data.model.User,
+    user: com.futebadosparcas.domain.model.User,
     summary: GamificationSummary,
     statistics: com.futebadosparcas.data.model.UserStatistics?,
     animatedProgress: Float,
@@ -203,7 +203,7 @@ private fun CompactHeaderLayout(
 
 @Composable
 private fun ExpandedHeaderLayout(
-    user: com.futebadosparcas.data.model.User,
+    user: com.futebadosparcas.domain.model.User,
     summary: GamificationSummary,
     statistics: com.futebadosparcas.data.model.UserStatistics?,
     animatedProgress: Float,

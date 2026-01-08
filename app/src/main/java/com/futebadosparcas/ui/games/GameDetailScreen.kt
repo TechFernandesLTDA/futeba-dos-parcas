@@ -198,7 +198,7 @@ fun GameDetailTopBar(
         },
         actions = {
             IconButton(onClick = onInviteWhatsApp) {
-                Icon(painterResource(R.drawable.ic_whatsapp), contentDescription = "WhatsApp", tint = Color(0xFF25D366))
+                Icon(painterResource(R.drawable.ic_whatsapp), contentDescription = "WhatsApp", tint = com.futebadosparcas.ui.theme.BrandColors.WhatsApp)
             }
             IconButton(onClick = { showMenu = true }) {
                 Icon(Icons.Default.MoreVert, contentDescription = "Mais opções")
@@ -481,22 +481,38 @@ fun GameHeaderSection(
             
             if (canManage) {
                 Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-                    FilledTonalButton(onClick = onEdit) { Icon(Icons.Outlined.Edit, "Editar"); Spacer(Modifier.width(4.dp)); Text("Editar") }
+                    FilledTonalButton(onClick = onEdit) {
+                        Icon(Icons.Outlined.Edit, "Editar");
+                        Spacer(Modifier.width(4.dp));
+                        Text("Editar", maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    }
                     if (game.status == "OPEN" || game.status == "SCHEDULED") {
-                         FilledTonalButton(onClick = onStart, colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) { Text("Iniciar Jogo") }
+                         FilledTonalButton(onClick = onStart, colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                             Text("Iniciar Jogo", maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                         }
                     }
                     if (game.status == "LIVE") {
-                         Button(onClick = onFinish, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Finalizar") }
+                         Button(onClick = onFinish, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
+                             Text("Finalizar", maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                         }
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Switch(checked = game.status == "CONFIRMED", onCheckedChange = onToggleStatus)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (game.status == "CONFIRMED") "Lista Fechada" else "Lista Aberta")
+                    Text(
+                        text = if (game.status == "CONFIRMED") "Lista Fechada" else "Lista Aberta",
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
                 }
-                TextButton(onClick = onGenerateTeams) { Text("Gerar Times") }
-                TextButton(onClick = onCancel, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) { Text("Cancelar Jogo") }
+                TextButton(onClick = onGenerateTeams) {
+                    Text("Gerar Times", maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                }
+                TextButton(onClick = onCancel, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+                    Text("Cancelar Jogo", maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                }
             }
         }
     }
@@ -538,7 +554,7 @@ fun ConfirmationCard(
                 IconButton(onClick = onDeclineClick) { Icon(Icons.Default.Close, "Recusar", tint = MaterialTheme.colorScheme.error) }
             } else {
                  if (isOwner || currentUserId == confirmation.userId) {
-                    val payColor = if (confirmation.paymentStatus == "PAID") Color(0xFF25D366) else Color.Gray
+                    val payColor = if (confirmation.paymentStatus == "PAID") com.futebadosparcas.ui.theme.BrandColors.WhatsApp else Color.Gray
                     IconButton(onClick = onPaymentClick) {
                         Icon(painterResource(R.drawable.ic_money), "Pagamento", tint = payColor)
                     }

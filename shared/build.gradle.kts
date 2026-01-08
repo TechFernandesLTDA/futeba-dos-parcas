@@ -2,6 +2,7 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     kotlin("plugin.serialization")
+    id("app.cash.sqldelight") version "2.0.1"
 }
 
 kotlin {
@@ -29,6 +30,16 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                // Ktor Client
+                implementation("io.ktor:ktor-client-core:2.3.8")
+                implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
+                implementation("io.ktor:ktor-client-logging:2.3.8")
+
+                // SQLDelight
+                implementation("app.cash.sqldelight:runtime:2.0.1")
+                implementation("app.cash.sqldelight:coroutines-extensions:2.0.1")
+
                 // Coroutines
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
@@ -48,7 +59,16 @@ kotlin {
 
         val androidMain by getting {
             dependencies {
-                // Android-specific dependencies if needed
+                // Ktor Android engine
+                implementation("io.ktor:ktor-client-okhttp:2.3.8")
+
+                // SQLDelight Android driver
+                implementation("app.cash.sqldelight:android-driver:2.0.1")
+
+                // Firebase Android SDK (para androidMain only)
+                implementation("com.google.firebase:firebase-firestore-ktx:24.10.0")
+                implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
             }
         }
 
@@ -61,6 +81,14 @@ kotlin {
             iosX64Main.dependsOn(this)
             iosArm64Main.dependsOn(this)
             iosSimulatorArm64Main.dependsOn(this)
+
+            dependencies {
+                // Ktor iOS engine
+                implementation("io.ktor:ktor-client-darwin:2.3.8")
+
+                // SQLDelight native driver
+                implementation("app.cash.sqldelight:native-driver:2.0.1")
+            }
         }
     }
 }
@@ -76,5 +104,13 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+sqldelight {
+    databases {
+        create("FutebaDatabase") {
+            packageName.set("com.futebadosparcas.db")
+        }
     }
 }

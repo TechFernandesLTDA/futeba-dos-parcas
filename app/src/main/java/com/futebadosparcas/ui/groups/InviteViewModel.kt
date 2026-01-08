@@ -3,7 +3,7 @@ package com.futebadosparcas.ui.groups
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.GroupInvite
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.data.repository.InviteRepository
 import com.futebadosparcas.data.repository.UserRepository

@@ -9,7 +9,7 @@ import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.data.model.LocationReview
 import com.futebadosparcas.data.model.User
 import com.futebadosparcas.data.repository.LocationRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.data.repository.UserRepositoryLegacy
 import com.futebadosparcas.data.repository.AddressRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LocationDetailViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
-    private val userRepository: UserRepository,
+    private val userRepository: UserRepositoryLegacy,
     private val addressRepository: AddressRepository
 ) : ViewModel() {
 
