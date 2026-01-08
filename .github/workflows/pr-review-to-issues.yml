@@ -1,0 +1,190 @@
+name: Create Issues from PR Review
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  issues: write
+  pull-requests: read
+  contents: read
+
+jobs:
+  create-issue-from-review:
+    name: Parse Review and Create Issues
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check if comment is from Claude Code Review
+        id: check-claude
+        run: |
+          if [[ "${{ github.event.comment.user.login }}" == "github-actions[bot]" ]] || \
+             [[ "${{ github.event.review.user.login }}" == "github-actions[bot]" ]] || \
+             [[ "${{ github.event.comment.body }}" == *"Claude Code Report"* ]] || \
+             [[ "${{ github.event.review.body }}" == *"Claude Code Report"* ]]; then
+            echo "is_claude=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_claude=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Parse Review Comments and Create Issues
+        if: steps.check-claude.outputs.is_claude == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            
+            // Get comment body
+            let commentBody = '';
+            let prNumber = 0;
+            
+            if (context.payload.comment) {
+              commentBody = context.payload.comment.body;
+              prNumber = context.payload.issue.number;
+            } else if (context.payload.review) {
+              commentBody = context.payload.review.body;
+              prNumber = context.payload.pull_request.number;
+            }
+            
+            console.log('Processing review comment from PR #' + prNumber);
+            console.log('Comment length:', commentBody.length);
+            
+            // Patterns to identify critical issues
+            const criticalPatterns = [
+              { regex: /🚨\s*\*\*Critical\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'critical', label: 'priority: critical' },
+              { regex: /⚠️\s*\*\*Warning\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'high', label: 'priority: high' },
+              { regex: /🔴\s*\*\*Error\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'critical', label: 'priority: critical' },
+              { regex: /🟡\s*\*\*Issue\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'medium', label: 'priority: medium' },
+              { regex: /\*\*Security Issue\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'critical', label: 'security' },
+              { regex: /\*\*Bug\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'high', label: 'bug' },
+              { regex: /\*\*Performance\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'medium', label: 'performance' },
+              { regex: /\*\*Memory Leak\*\*[:\s]*(.*?)(?=\n\n|\n-|\n\*|$)/gis, severity: 'critical', label: 'bug' },
+            ];
+            
+            let issuesCreated = 0;
+            const issueLinks = [];
+            
+            for (const pattern of criticalPatterns) {
+              let match;
+              while ((match = pattern.regex.exec(commentBody)) !== null) {
+                const issueDescription = match[1].trim();
+                
+                // Skip if description is too short or empty
+                if (!issueDescription || issueDescription.length < 10) {
+                  continue;
+                }
+                
+                // Extract title (first line or first 80 chars)
+                const titleMatch = issueDescription.match(/^([^\n]{1,80})/);
+                const issueTitle = titleMatch ? titleMatch[1].trim() : issueDescription.substring(0, 80);
+                
+                // Create issue body
+                const issueBody = `## 🤖 Auto-created from PR Review
+            
+            **Source PR:** #${prNumber}
+            **Detected:** ${pattern.severity.toUpperCase()} severity issue
+            **Review Type:** Claude Code Review
+            
+            ---
+            
+            ### Issue Description
+            
+            ${issueDescription}
+            
+            ---
+            
+            ### Context
+            
+            This issue was automatically created by analyzing the code review comments on PR #${prNumber}.
+            
+            **Review timestamp:** ${new Date().toISOString()}
+            **Detected by:** Claude Code Review Bot
+            
+            ### Recommended Actions
+            
+            - [ ] Review the issue description
+            - [ ] Assign to appropriate team member
+            - [ ] Link to related PRs if needed
+            - [ ] Update priority/labels if needed
+            - [ ] Create sub-tasks if complex
+            `;
+                
+                try {
+                  // Determine labels based on severity and type
+                  const labels = ['automated', 'needs-triage', pattern.label];
+                  
+                  // Add type label if identifiable
+                  if (issueDescription.toLowerCase().includes('security')) labels.push('security');
+                  if (issueDescription.toLowerCase().includes('performance')) labels.push('performance');
+                  if (issueDescription.toLowerCase().includes('bug')) labels.push('bug');
+                  if (issueDescription.toLowerCase().includes('memory')) labels.push('memory-leak');
+                  
+                  // Try to detect module from description
+                  const modules = ['games', 'players', 'groups', 'statistics', 'notifications', 'profile', 'badges'];
+                  for (const module of modules) {
+                    if (issueDescription.toLowerCase().includes(module)) {
+                      labels.push(`module: ${module}`);
+                      break;
+                    }
+                  }
+                  
+                  // Create the issue
+                  const issue = await github.rest.issues.create({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    title: `[Code Review] ${issueTitle}`,
+                    body: issueBody,
+                    labels: labels.filter((v, i, a) => a.indexOf(v) === i) // Remove duplicates
+                  });
+                  
+                  issuesCreated++;
+                  issueLinks.push(`#${issue.data.number}`);
+                  
+                  console.log(`✅ Created issue #${issue.data.number}: ${issueTitle}`);
+                  
+                  // Add comment to PR about the created issue
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: prNumber,
+                    body: `🤖 **Auto-created Issue #${issue.data.number}**\n\n` +
+                          `A ${pattern.severity} severity issue was detected and tracked: ${issue.data.html_url}\n\n` +
+                          `Issue: "${issueTitle}"`
+                  });
+                  
+                } catch (error) {
+                  console.error('Failed to create issue:', error);
+                }
+              }
+            }
+            
+            // Summary comment
+            if (issuesCreated > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `## 📋 Code Review Issues Summary\n\n` +
+                      `**${issuesCreated} issue(s)** were automatically created from this code review:\n\n` +
+                      issueLinks.map(link => `- ${link}`).join('\n') + '\n\n' +
+                      `These issues are tagged with \`automated\` and \`needs-triage\` labels for tracking.`
+              });
+              
+              console.log(`✅ Total issues created: ${issuesCreated}`);
+            } else {
+              console.log('ℹ️ No critical issues found in this review');
+            }
+
+      - name: Summary
+        if: steps.check-claude.outputs.is_claude == 'true'
+        run: |
+          echo "✅ PR Review to Issues workflow completed"
+          echo "Review comments were analyzed for critical issues"
