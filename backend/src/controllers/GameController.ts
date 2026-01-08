@@ -12,6 +12,9 @@ import { AuthRequest } from '../middlewares/auth.middleware';
 import { ApiResponse } from '../utils/api-response';
 import { logger } from '../utils/logger';
 import { StatisticsService } from '../services/StatisticsService';
+import { GamificationService } from '../services/GamificationService';
+import { LeagueService } from '../services/LeagueService';
+import { UserStreak } from '../entities/UserStreak';
 
 export class GameController {
   private gameRepository = AppDataSource.getRepository(Game);
@@ -20,13 +23,16 @@ export class GameController {
   private teamPlayerRepository = AppDataSource.getRepository(TeamPlayer);
   private gameStatsRepository = AppDataSource.getRepository(GameStats);
   private membershipRepository = AppDataSource.getRepository(PlayerScheduleMembership);
+  private streakRepository = AppDataSource.getRepository(UserStreak);
+  private gamificationService = new GamificationService();
+  private statisticsService = new StatisticsService();
+  private leagueService = new LeagueService();
 
   getUpcoming = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const userId = req.user!.userId;
       const today = moment().startOf('day').toDate();
 
-      // Buscar horários do usuário (dono ou membro)
       const memberships = await this.membershipRepository.find({
         where: { user_id: userId, status: MembershipStatus.ACTIVE },
         relations: ['schedule'],
@@ -34,7 +40,6 @@ export class GameController {
 
       const scheduleIds = memberships.map((m) => m.schedule_id);
 
-      // Buscar horários que é dono
       const ownedSchedules = await AppDataSource.getRepository('Schedule').find({
         where: { owner_id: userId },
       });
@@ -65,7 +70,6 @@ export class GameController {
         take: 20,
       });
 
-      // Adicionar informação de confirmação do usuário
       const gamesWithUserConfirmation = games.map((game) => {
         const userConfirmation = game.confirmations.find(
           (c) => c.user_id === userId && c.status === ConfirmationStatus.CONFIRMED
@@ -136,13 +140,11 @@ export class GameController {
         return;
       }
 
-      // Verifica se confirmações estão abertas
       if (game.confirmation_closes_at && new Date() > game.confirmation_closes_at) {
         ApiResponse.error(res, 'Confirmações encerradas para este jogo');
         return;
       }
 
-      // Verifica limite de jogadores
       const confirmedCount = game.confirmations.filter(
         (c) => c.status === ConfirmationStatus.CONFIRMED
       ).length;
@@ -152,7 +154,6 @@ export class GameController {
         return;
       }
 
-      // Verifica se já confirmou
       let confirmation = await this.confirmationRepository.findOne({
         where: { game_id: id, user_id: userId },
       });
@@ -177,9 +178,6 @@ export class GameController {
       }
 
       await this.confirmationRepository.save(confirmation);
-
-      logger.info(`User ${userId} confirmed presence for game ${id}`);
-
       ApiResponse.success(res, confirmation);
     } catch (error) {
       logger.error('Error in confirmPresence:', error);
@@ -192,23 +190,18 @@ export class GameController {
       const { id } = req.params;
       const userId = req.user!.userId;
 
-      const game = await this.gameRepository.findOne({
-        where: { id },
-      });
-
+      const game = await this.gameRepository.findOne({ where: { id } });
       if (!game) {
         ApiResponse.notFound(res, 'Jogo não encontrado');
         return;
       }
 
-      // Verifica se pode cancelar (2 horas antes)
       const gameDateTime = moment(game.date).set({
         hour: parseInt(game.time.split(':')[0]),
         minute: parseInt(game.time.split(':')[1]),
       });
 
-      const hoursUntilGame = gameDateTime.diff(moment(), 'hours');
-      if (hoursUntilGame < 2) {
+      if (gameDateTime.diff(moment(), 'hours') < 2) {
         ApiResponse.error(res, 'Não é possível cancelar com menos de 2 horas de antecedência');
         return;
       }
@@ -224,8 +217,6 @@ export class GameController {
 
       confirmation.status = ConfirmationStatus.CANCELLED;
       await this.confirmationRepository.save(confirmation);
-
-      logger.info(`User ${userId} cancelled confirmation for game ${id}`);
 
       ApiResponse.success(res, { message: 'Confirmação cancelada com sucesso' });
     } catch (error) {
@@ -244,22 +235,14 @@ export class GameController {
         relations: ['schedule'],
       });
 
-      if (!game) {
-        ApiResponse.notFound(res, 'Jogo não encontrado');
-        return;
-      }
-
-      if (game.schedule.owner_id !== userId) {
-        ApiResponse.forbidden(res, 'Apenas o dono pode fechar a lista');
+      if (!game || game.schedule.owner_id !== userId) {
+        ApiResponse.forbidden(res, 'Ação não permitida');
         return;
       }
 
       game.status = GameStatus.CONFIRMED;
       game.confirmation_closes_at = new Date();
-
       await this.gameRepository.save(game);
-
-      logger.info(`Confirmations closed for game ${id} by user ${userId}`);
 
       ApiResponse.success(res, game);
     } catch (error) {
@@ -276,40 +259,25 @@ export class GameController {
 
       const game = await this.gameRepository.findOne({
         where: { id },
-        relations: ['schedule', 'confirmations'],
+        relations: ['schedule'],
       });
 
-      if (!game) {
-        ApiResponse.notFound(res, 'Jogo não encontrado');
+      if (!game || game.schedule.owner_id !== userId) {
+        ApiResponse.forbidden(res, 'Ação não permitida');
         return;
       }
 
-      if (game.schedule.owner_id !== userId) {
-        ApiResponse.forbidden(res, 'Apenas o dono pode definir times');
-        return;
-      }
-
-      if (game.status !== GameStatus.CONFIRMED) {
-        ApiResponse.error(res, 'A lista precisa estar fechada para definir times');
-        return;
-      }
-
-      // Remove times existentes
       await this.teamPlayerRepository.delete({ team: { game_id: id } });
       await this.teamRepository.delete({ game_id: id });
 
-      // Cria novos times
-      const createdTeams = [];
       for (const teamData of teams) {
         const team = this.teamRepository.create({
           game_id: id,
           name: teamData.name,
           color: teamData.color,
         });
-
         await this.teamRepository.save(team);
 
-        // Adiciona jogadores ao time
         for (const playerId of teamData.player_ids) {
           const teamPlayer = this.teamPlayerRepository.create({
             team_id: team.id,
@@ -317,16 +285,11 @@ export class GameController {
           });
           await this.teamPlayerRepository.save(teamPlayer);
         }
-
-        createdTeams.push(team);
       }
 
       game.number_of_teams = number_of_teams;
       await this.gameRepository.save(game);
 
-      logger.info(`Teams created for game ${id}`);
-
-      // Retorna game com times
       const updatedGame = await this.gameRepository.findOne({
         where: { id },
         relations: ['teams', 'teams.players', 'teams.players.user'],
@@ -347,51 +310,75 @@ export class GameController {
 
       const game = await this.gameRepository.findOne({
         where: { id },
-        relations: ['schedule'],
+        relations: ['schedule', 'teams'],
       });
 
-      if (!game) {
-        ApiResponse.notFound(res, 'Jogo não encontrado');
+      if (!game || game.schedule.owner_id !== userId) {
+        ApiResponse.forbidden(res, 'Ação não permitida');
         return;
       }
 
-      if (game.schedule.owner_id !== userId) {
-        ApiResponse.forbidden(res, 'Apenas o dono pode lançar estatísticas');
-        return;
+      const teamIdToScore = new Map<string, number>();
+      for (const stat of player_stats) {
+        if (stat.team_id) {
+          const current = teamIdToScore.get(stat.team_id) || 0;
+          teamIdToScore.set(stat.team_id, current + (stat.goals || 0));
+        }
       }
 
-      // Remove stats existentes
+      const teams = game.teams;
+      if (teams.length >= 2) {
+        game.team1_score = teamIdToScore.get(teams[0].id) || 0;
+        game.team2_score = teamIdToScore.get(teams[1].id) || 0;
+        game.team1_name = teams[0].name;
+        game.team2_name = teams[1].name;
+
+        // Atualizar scores nos times
+        teams[0].score = game.team1_score;
+        teams[1].score = game.team2_score;
+        await this.teamRepository.save(teams[0]);
+        await this.teamRepository.save(teams[1]);
+      }
+
+      game.mvp_id = best_player_id;
       await this.gameStatsRepository.delete({ game_id: id });
 
-      // Cria novas stats
       for (const stat of player_stats) {
         const gameStat = this.gameStatsRepository.create({
           game_id: id,
           user_id: stat.user_id,
           team_id: stat.team_id,
           goals: stat.goals || 0,
+          assists: stat.assists || 0,
           saves: stat.saves || 0,
           is_best_player: stat.user_id === best_player_id,
           is_worst_player: stat.user_id === worst_player_id,
           best_goal: stat.user_id === best_goal_player_id,
         });
-
         await this.gameStatsRepository.save(gameStat);
+
+        const teamScore = teamIdToScore.get(stat.team_id || '') || 0;
+        let otherTeamScore = 0;
+        teamIdToScore.forEach((score, tId) => { if (tId !== stat.team_id) otherTeamScore = score; });
+
+        await this.gamificationService.processGameParticipation(stat.user_id, game.schedule_id, stat, {
+          won: teamScore > otherTeamScore,
+          drew: teamScore === otherTeamScore && teamIdToScore.size > 1,
+          isMvp: stat.user_id === best_player_id,
+          isWorstPlayer: stat.user_id === worst_player_id
+        });
       }
 
-      // Atualiza status do jogo
       game.status = GameStatus.FINISHED;
+      game.xp_processed = true;
       await this.gameRepository.save(game);
 
-      // Recalcula estatísticas dos usuários
-      const statisticsService = new StatisticsService();
       for (const stat of player_stats) {
-        await statisticsService.recalculateUserStats(stat.user_id, game.schedule_id);
+        await this.statisticsService.recalculateUserStats(stat.user_id, game.schedule_id);
+        await this.leagueService.updatePlayerLeague(stat.user_id);
       }
 
-      logger.info(`Stats submitted for game ${id}`);
-
-      ApiResponse.success(res, { message: 'Estatísticas lançadas com sucesso' });
+      ApiResponse.success(res, { message: 'Estatísticas e XP lançados com sucesso' });
     } catch (error) {
       logger.error('Error in submitStats:', error);
       ApiResponse.internalError(res);

@@ -31,29 +31,40 @@ export class StatisticsController {
       ApiResponse.success(res, {
         overall: overall
           ? {
-              total_games: overall.total_games,
-              total_goals: overall.total_goals,
-              total_saves: overall.total_saves,
-              best_player_count: overall.best_player_count,
-              worst_player_count: overall.worst_player_count,
-              best_goal_count: overall.best_goal_count,
-              presence_rate: overall.presence_rate,
-              avg_goals_per_game:
-                overall.total_games > 0
-                  ? overall.total_goals / overall.total_games
-                  : 0,
-            }
+            total_games: overall.total_games,
+            total_goals: overall.total_goals,
+            total_assists: overall.total_assists,
+            total_saves: overall.total_saves,
+            wins: overall.wins,
+            draws: overall.draws,
+            losses: overall.losses,
+            points: overall.points,
+            best_player_count: overall.best_player_count,
+            worst_player_count: overall.worst_player_count,
+            best_goal_count: overall.best_goal_count,
+            presence_rate: overall.presence_rate,
+            win_rate: overall.total_games > 0 ? (overall.wins / overall.total_games) * 100 : 0,
+            avg_goals_per_game:
+              overall.total_games > 0
+                ? overall.total_goals / overall.total_games
+                : 0,
+          }
           : null,
         by_schedule: byScheduleFiltered.map((s) => ({
           schedule: s.schedule
             ? {
-                id: s.schedule.id,
-                name: s.schedule.name,
-              }
+              id: s.schedule.id,
+              name: s.schedule.name,
+            }
             : null,
           total_games: s.total_games,
           total_goals: s.total_goals,
+          total_assists: s.total_assists,
           total_saves: s.total_saves,
+          wins: s.wins,
+          draws: s.draws,
+          losses: s.losses,
+          points: s.points,
           presence_rate: s.presence_rate,
           avg_goals_per_game:
             s.total_games > 0 ? s.total_goals / s.total_games : 0,
@@ -85,15 +96,20 @@ export class StatisticsController {
       ApiResponse.success(res, {
         user: overall.user
           ? {
-              id: overall.user.id,
-              name: overall.user.name,
-              photo_url: overall.user.photo_url,
-            }
+            id: overall.user.id,
+            name: overall.user.name,
+            photo_url: overall.user.photo_url,
+          }
           : null,
         stats: {
           total_games: overall.total_games,
           total_goals: overall.total_goals,
+          total_assists: overall.total_assists,
           total_saves: overall.total_saves,
+          wins: overall.wins,
+          draws: overall.draws,
+          losses: overall.losses,
+          points: overall.points,
           best_player_count: overall.best_player_count,
           worst_player_count: overall.worst_player_count,
           best_goal_count: overall.best_goal_count,
@@ -134,14 +150,19 @@ export class StatisticsController {
         players: stats.map((s) => ({
           user: s.user
             ? {
-                id: s.user.id,
-                name: s.user.name,
-                photo_url: s.user.photo_url,
-              }
+              id: s.user.id,
+              name: s.user.name,
+              photo_url: s.user.photo_url,
+            }
             : null,
           total_games: s.total_games,
           total_goals: s.total_goals,
+          total_assists: s.total_assists,
           total_saves: s.total_saves,
+          wins: s.wins,
+          draws: s.draws,
+          losses: s.losses,
+          points: s.points,
           best_player_count: s.best_player_count,
           presence_rate: s.presence_rate,
         })),

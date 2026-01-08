@@ -442,6 +442,9 @@ class MatchFinalizationService @Inject constructor(
             )
         }
 
+        // 18. Auto-award Badges (HAT_TRICK, PAREDAO)
+        awardBadgesAutomatically(batch, userId, confirmation, goalsConceded)
+
         // Retornar resultado
         return PlayerProcessingResult(
             userId = userId,
@@ -561,5 +564,57 @@ class MatchFinalizationService @Inject constructor(
 
     private fun getCurrentMonthKey(): String {
         return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"))
+    }
+
+    /**
+     * Concede badges automaticamente baseado no desempenho no jogo.
+     *
+     * Badges automaticos:
+     * - HAT_TRICK: Jogador fez 3+ gols no jogo
+     * - PAREDAO: Goleiro nao sofreu gols (clean sheet)
+     */
+    private fun awardBadgesAutomatically(
+        batch: com.google.firebase.firestore.WriteBatch,
+        userId: String,
+        confirmation: GameConfirmation,
+        goalsConceded: Int
+    ) {
+        val userBadgesCollection = firestore.collection("user_badges")
+
+        // HAT_TRICK: 3+ gols em um jogo
+        if (confirmation.goals >= 3) {
+            val badgeId = "HAT_TRICK"
+            val docId = "${userId}_${badgeId}_${System.currentTimeMillis()}"
+            val badgeData = mapOf(
+                "user_id" to userId,
+                "badge_id" to badgeId,
+                "game_id" to confirmation.gameId,
+                "unlocked_at" to FieldValue.serverTimestamp(),
+                "goals_scored" to confirmation.goals
+            )
+            batch.set(userBadgesCollection.document(docId), badgeData)
+            AppLogger.d(TAG) { "Badge HAT_TRICK concedido para $userId (${confirmation.goals} gols)" }
+        }
+
+        // PAREDAO: Goleiro com clean sheet (nao sofreu gols)
+        val isGoalkeeper = confirmation.position == "GOALKEEPER" ||
+                           confirmation.position == "GK" ||
+                           confirmation.position.uppercase().contains("GOLEIRO")
+        if (isGoalkeeper && goalsConceded == 0 && confirmation.saves > 0) {
+            val badgeId = "PAREDAO"
+            val docId = "${userId}_${badgeId}_${System.currentTimeMillis()}"
+            val badgeData = mapOf(
+                "user_id" to userId,
+                "badge_id" to badgeId,
+                "game_id" to confirmation.gameId,
+                "unlocked_at" to FieldValue.serverTimestamp(),
+                "saves_made" to confirmation.saves
+            )
+            batch.set(userBadgesCollection.document(docId), badgeData)
+            AppLogger.d(TAG) { "Badge PAREDAO concedido para $userId (${confirmation.saves} defesas, 0 gols sofridos)" }
+        }
+
+        // ARTILHEIRO_JOGO: Maior artilheiro do jogo (opcional - verificar em outro lugar)
+        // FOMINHA: Jogou X jogos em uma semana (verificar streak semanal)
     }
 }

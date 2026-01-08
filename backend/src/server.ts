@@ -13,6 +13,10 @@ const startServer = async (): Promise<void> => {
     // Initialize database connection
     await initializeDatabase();
 
+    // Seed initial data
+    const { seedBadges } = await import('./utils/seed-badges');
+    await seedBadges();
+
     // Initialize cron jobs
     initializeCronJobs();
 

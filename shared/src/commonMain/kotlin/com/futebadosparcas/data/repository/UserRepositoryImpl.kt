@@ -44,10 +44,11 @@ class UserRepositoryImpl(
                     .executeAsOneOrNull()
 
                 // 2. Verificar se cache ainda é válido
-                if (cachedUser != null && !isCacheExpired(cachedUser.cachedAt)) {
-                    PlatformLogger.d(TAG, "Retornando usuário do cache")
-                    return@withContext Result.success(cachedUser.toUser())
-                }
+                // TODO: Reabilitar cache quando o schema do banco suportar campos de gamificação (level, xp, etc)
+                // if (cachedUser != null && !isCacheExpired(cachedUser.cachedAt)) {
+                //    PlatformLogger.d(TAG, "Retornando usuário do cache")
+                //    return@withContext Result.success(cachedUser.toUser())
+                // }
 
                 // 3. Buscar do Firebase
                 PlatformLogger.d(TAG, "Cache expirado, buscando do Firebase")
@@ -81,9 +82,9 @@ class UserRepositoryImpl(
                     .selectUserById(userId)
                     .executeAsOneOrNull()
 
-                if (cachedUser != null && !isCacheExpired(cachedUser.cachedAt)) {
-                    return@withContext Result.success(cachedUser.toUser())
-                }
+                // if (cachedUser != null && !isCacheExpired(cachedUser.cachedAt)) {
+                //    return@withContext Result.success(cachedUser.toUser())
+                // }
 
                 // 2. Buscar do Firebase
                 firebaseDataSource.getUserById(userId).also { result ->
