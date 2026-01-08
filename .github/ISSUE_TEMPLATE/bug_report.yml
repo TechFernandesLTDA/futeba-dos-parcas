@@ -1,0 +1,147 @@
+name: 🐛 Bug Report
+description: Relatar um bug ou problema no aplicativo
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por relatar um bug! Preencha os campos abaixo para nos ajudar a resolver o problema.
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidade
+      description: Qual o impacto do bug?
+      options:
+        - 🔴 Crítico - App crashando ou funcionalidade principal quebrada
+        - 🟠 Alto - Funcionalidade importante não funciona
+        - 🟡 Médio - Problema que afeta experiência do usuário
+        - 🟢 Baixo - Problema estético ou edge case
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Módulo Afetado
+      description: Onde o bug ocorre?
+      options:
+        - 🔐 Autenticação (Login/Registro)
+        - 🏠 Home
+        - ⚽ Jogos
+        - 👥 Grupos
+        - 📊 Estatísticas/Rankings
+        - 🎮 Live Game
+        - 👤 Perfil
+        - 💰 Caixa
+        - 🎯 Gamificação (Badges/XP)
+        - 🔔 Notificações
+        - 🗺️ Localização/Mapas
+        - 🔧 Outro
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrição do Bug
+      description: Descreva o que está acontecendo
+      placeholder: Ex: Ao tentar confirmar presença no jogo, o app trava e fecha.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos para Reproduzir
+      description: Como podemos reproduzir o bug?
+      placeholder: |
+        1. Abrir app
+        2. Ir para tela de Jogos
+        3. Clicar em um jogo
+        4. Clicar em "Confirmar Presença"
+        5. App trava
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento Esperado
+      description: O que deveria acontecer?
+      placeholder: Deveria confirmar a presença e mostrar mensagem de sucesso.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamento Atual
+      description: O que está acontecendo na realidade?
+      placeholder: App trava e fecha, voltando para a tela inicial do Android.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Versão do App
+      description: Qual versão do app você está usando?
+      placeholder: Ex: 1.4.0
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Dispositivo
+      description: Modelo do celular
+      placeholder: Ex: Xiaomi Redmi Note 13, Samsung Galaxy S23
+    validations:
+      required: true
+
+  - type: input
+    id: android_version
+    attributes:
+      label: Versão do Android
+      description: Qual versão do Android está rodando?
+      placeholder: Ex: Android 13, Android 14
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (Opcional)
+      description: Se você tem acesso a logs do Logcat, cole aqui
+      placeholder: |
+        Copie e cole logs relevantes aqui.
+        Use ``` para formatar como código.
+      render: shell
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots/Vídeos (Opcional)
+      description: Adicione capturas de tela ou links para vídeos do problema
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Informações Adicionais
+      description: Qualquer outra informação relevante
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: Verifiquei que não existe issue duplicada
+          required: true
+        - label: Testei na versão mais recente do app
+          required: true
+        - label: Li a documentação antes de reportar
+          required: false

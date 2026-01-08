@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussões Gerais
+    url: https://github.com/renantoniolo/futebadosparcas/discussions
+    about: Para dúvidas gerais, ideias e feedback sobre o projeto
+  - name: 📖 Documentação
+    url: https://github.com/renantoniolo/futebadosparcas/wiki
+    about: Consulte a documentação do projeto antes de abrir uma issue
