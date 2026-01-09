@@ -18,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -673,13 +675,18 @@ private fun CashboxFABs(
     onAddIncome: () -> Unit,
     onAddExpense: () -> Unit
 ) {
+    val haptics = LocalHapticFeedback.current
+
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.End
     ) {
         // FAB Adicionar Despesa
         SmallFloatingActionButton(
-            onClick = onAddExpense,
+            onClick = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onAddExpense()
+            },
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer
         ) {
@@ -688,7 +695,10 @@ private fun CashboxFABs(
 
         // FAB Adicionar Receita
         FloatingActionButton(
-            onClick = onAddIncome
+            onClick = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onAddIncome()
+            }
         ) {
             Icon(Icons.Default.Add, contentDescription = "Adicionar Receita")
         }
