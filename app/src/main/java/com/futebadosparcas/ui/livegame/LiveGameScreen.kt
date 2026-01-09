@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -536,9 +538,13 @@ private fun LiveGameFAB(
     val expanded by remember {
         derivedStateOf { pagerState.currentPage == 1 } // Expandido na tab de eventos
     }
+    val haptics = LocalHapticFeedback.current
 
     ExtendedFloatingActionButton(
-        onClick = onClick,
+        onClick = {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            onClick()
+        },
         expanded = expanded,
         icon = {
             Icon(
