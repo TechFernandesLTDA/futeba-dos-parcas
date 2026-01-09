@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.futebadosparcas.data.model.LeagueDivision
-import com.futebadosparcas.ui.theme.FutebaColors
 import com.futebadosparcas.ui.theme.FutebaTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -63,7 +62,7 @@ fun EvolutionScreen(viewModel: RankingViewModel) {
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = Color(FutebaColors.Primary))
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
         is EvolutionUiState.Error -> {
@@ -73,7 +72,7 @@ fun EvolutionScreen(viewModel: RankingViewModel) {
             ) {
                 Text(
                     text = currentState.message,
-                    color = Color(FutebaColors.Error)
+                    color = MaterialTheme.colorScheme.error
                 )
             }
         }
@@ -159,7 +158,7 @@ private fun EvolutionContent(data: PlayerEvolutionData) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(FutebaColors.Surface)
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -179,7 +178,7 @@ private fun EvolutionContent(data: PlayerEvolutionData) {
                                 text = "+${log.xpEarned} XP",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = Color(FutebaColors.Tertiary)
+                                color = MaterialTheme.colorScheme.tertiary
                             )
                         }
                     }

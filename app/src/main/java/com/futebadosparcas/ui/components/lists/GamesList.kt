@@ -1,6 +1,5 @@
 package com.futebadosparcas.ui.components.lists
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
@@ -13,15 +12,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.model.GameStatus
-import com.futebadosparcas.ui.theme.FutebaColors
-import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -221,9 +217,9 @@ fun GameCard(
                     Spacer(modifier = Modifier.width(4.dp))
 
                     val vacancyColor = when {
-                        game.playersCount >= game.maxPlayers -> Color(FutebaColors.Error)
-                        game.playersCount >= game.maxPlayers * 0.8 -> Color(FutebaColors.Warning)
-                        else -> Color(FutebaColors.Success)
+                        game.playersCount >= game.maxPlayers -> MaterialTheme.colorScheme.error
+                        game.playersCount >= game.maxPlayers * 0.8 -> com.futebadosparcas.ui.theme.GameStatusColors.Warning
+                        else -> MaterialTheme.colorScheme.primary
                     }
 
                     Text(
@@ -286,24 +282,24 @@ private fun GameStatusBadge(
     val (backgroundColor, textColor, icon, text) = when (status) {
         GameStatus.SCHEDULED -> {
             Quadruple(
-                Color(FutebaColors.Info),
-                Color.White,
+                MaterialTheme.colorScheme.secondary,
+                MaterialTheme.colorScheme.onSecondary,
                 Icons.Default.Schedule,
                 "Agendado"
             )
         }
         GameStatus.CONFIRMED -> {
             Quadruple(
-                Color(FutebaColors.Success),
-                Color.White,
+                MaterialTheme.colorScheme.primary,
+                MaterialTheme.colorScheme.onPrimary,
                 Icons.Default.CheckCircle,
                 "Confirmado"
             )
         }
         GameStatus.LIVE -> {
             Quadruple(
-                Color(FutebaColors.Error),
-                Color.White,
+                MaterialTheme.colorScheme.error,
+                MaterialTheme.colorScheme.onError,
                 Icons.Default.SportsScore,
                 "Ao Vivo"
             )

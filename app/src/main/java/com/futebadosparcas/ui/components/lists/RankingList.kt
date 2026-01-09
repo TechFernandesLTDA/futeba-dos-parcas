@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.futebadosparcas.data.model.LeagueDivision
 import com.futebadosparcas.data.model.RankingEntryV2
-import com.futebadosparcas.ui.theme.FutebaColors
+import com.futebadosparcas.ui.theme.GamificationColors
 
 /**
  * Lista moderna de ranking com sticky headers por divisão e animações.
@@ -143,10 +143,10 @@ fun DivisionHeader(
     modifier: Modifier = Modifier
 ) {
     val (backgroundColor, icon) = when (division) {
-        LeagueDivision.DIAMANTE -> Color(FutebaColors.BackgroundDark).copy(alpha = 0.1f) to "💎"
-        LeagueDivision.OURO -> Color(FutebaColors.Gold).copy(alpha = 0.1f) to "🥇"
-        LeagueDivision.PRATA -> Color(FutebaColors.Silver).copy(alpha = 0.1f) to "🥈"
-        LeagueDivision.BRONZE -> Color(FutebaColors.Bronze).copy(alpha = 0.1f) to "🥉"
+        LeagueDivision.DIAMANTE -> GamificationColors.Diamond.copy(alpha = 0.1f) to "💎"
+        LeagueDivision.OURO -> GamificationColors.Gold.copy(alpha = 0.1f) to "🥇"
+        LeagueDivision.PRATA -> GamificationColors.Silver.copy(alpha = 0.1f) to "🥈"
+        LeagueDivision.BRONZE -> GamificationColors.Bronze.copy(alpha = 0.1f) to "🥉"
     }
 
     val divisionColor = getDivisionColor(division)
@@ -356,13 +356,13 @@ private fun RankBadge(
         // Badge com gradiente para top 3
         val gradient = when (rank) {
             1 -> Brush.linearGradient(
-                colors = listOf(Color(FutebaColors.Gold), Color(0xFFFFE082))
+                colors = listOf(GamificationColors.Gold, GamificationColors.GoldLight)
             )
             2 -> Brush.linearGradient(
-                colors = listOf(Color(FutebaColors.Silver), Color.White)
+                colors = listOf(GamificationColors.Silver, Color.White)
             )
             3 -> Brush.linearGradient(
-                colors = listOf(Color(FutebaColors.Bronze), Color(0xFFE6A370))
+                colors = listOf(GamificationColors.Bronze, GamificationColors.BronzeLight)
             )
             else -> Brush.linearGradient(
                 colors = listOf(
@@ -411,10 +411,10 @@ private fun RankBadge(
 @Composable
 private fun getDivisionColor(division: LeagueDivision): Color {
     return when (division) {
-        LeagueDivision.DIAMANTE -> Color(0xFF00BCD4) // Cyan
-        LeagueDivision.OURO -> Color(FutebaColors.Gold)
-        LeagueDivision.PRATA -> Color(0xFF9E9E9E) // Grey
-        LeagueDivision.BRONZE -> Color(FutebaColors.Bronze)
+        LeagueDivision.DIAMANTE -> GamificationColors.DiamondDark
+        LeagueDivision.OURO -> GamificationColors.Gold
+        LeagueDivision.PRATA -> GamificationColors.SilverDark
+        LeagueDivision.BRONZE -> GamificationColors.Bronze
     }
 }
 

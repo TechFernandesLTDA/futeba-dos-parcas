@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.futebadosparcas.ui.theme.FutebaColors
+import com.futebadosparcas.ui.theme.GamificationColors
 
 /**
  * Dialog exibido apos finalizacao de um jogo mostrando XP ganho.
@@ -53,7 +53,7 @@ fun PostGameDialog(
                 .wrapContentHeight(),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(FutebaColors.Surface)
+                containerColor = MaterialTheme.colorScheme.surface
             )
         ) {
             Column(
@@ -72,7 +72,7 @@ fun PostGameDialog(
                         text = "VOCÊ EVOLUIU!",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(FutebaColors.Primary),
+                        color = MaterialTheme.colorScheme.primary,
                         letterSpacing = 1.sp
                     )
                     IconButton(onClick = onDismiss) {
@@ -96,7 +96,7 @@ fun PostGameDialog(
                     modifier = Modifier
                         .size(120.dp)
                         .clip(CircleShape)
-                        .background(Color(FutebaColors.Primary)),
+                        .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -104,12 +104,12 @@ fun PostGameDialog(
                             text = "+$animatedXp",
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                         Text(
                             text = "XP",
                             fontSize = 14.sp,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
                     }
                 }
@@ -143,7 +143,7 @@ fun PostGameDialog(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(FutebaColors.Primary)
+                        containerColor = MaterialTheme.colorScheme.primary
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -163,9 +163,9 @@ fun PostGameDialog(
 @Composable
 private fun GameResultBadge(result: String) {
     val (backgroundColor, text) = when (result.uppercase()) {
-        "WIN" -> Color(FutebaColors.Success) to "VITÓRIA ÉPICA!"
-        "LOSS" -> Color(FutebaColors.Error) to "NÃO DESISTA!"
-        else -> Color(FutebaColors.Warning) to "MÁXIMO ESFORÇO!"
+        "WIN" -> MaterialTheme.colorScheme.primary to "VITÓRIA ÉPICA!"
+        "LOSS" -> MaterialTheme.colorScheme.error to "NÃO DESISTA!"
+        else -> GamificationColors.LevelUpGold to "MÁXIMO ESFORÇO!"
     }
 
     Box(
@@ -178,7 +178,7 @@ private fun GameResultBadge(result: String) {
             text = text,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = if (backgroundColor == GamificationColors.LevelUpGold) Color.Black else Color.White
         )
     }
 }
@@ -188,7 +188,7 @@ private fun XpBreakdownSection(breakdown: Map<String, Long>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(FutebaColors.SurfaceVariant)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -221,7 +221,7 @@ private fun XpBreakdownSection(breakdown: Map<String, Long>) {
                             text = "+$xp XP",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(FutebaColors.Tertiary)
+                            color = MaterialTheme.colorScheme.tertiary
                         )
                     }
                 }
@@ -252,7 +252,7 @@ private fun LevelProgressSection(
                     text = "SUBIU DE NIVEL!",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(FutebaColors.Tertiary)
+                    color = MaterialTheme.colorScheme.tertiary
                 )
             }
 
@@ -276,7 +276,7 @@ private fun LevelProgressSection(
                     text = "Nivel $newLevel - $newLevelName",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(FutebaColors.Primary)
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         } else {
@@ -297,8 +297,8 @@ private fun LevelProgressSection(
                 .fillMaxWidth()
                 .height(8.dp)
                 .clip(RoundedCornerShape(4.dp)),
-            color = Color(FutebaColors.Primary),
-            trackColor = Color(FutebaColors.SurfaceVariant)
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
         )
 
         Text(
@@ -317,7 +317,7 @@ private fun MilestonesUnlockedSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(FutebaColors.Tertiary).copy(alpha = 0.1f)
+            containerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -331,7 +331,7 @@ private fun MilestonesUnlockedSection(
                 Icon(
                     imageVector = Icons.Default.Star,
                     contentDescription = null,
-                    tint = Color(FutebaColors.Tertiary),
+                    tint = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -339,7 +339,7 @@ private fun MilestonesUnlockedSection(
                     text = "Conquistas Desbloqueadas!",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(FutebaColors.Tertiary)
+                    color = MaterialTheme.colorScheme.tertiary
                 )
             }
 
@@ -355,7 +355,7 @@ private fun MilestonesUnlockedSection(
                     Icon(
                         imageVector = Icons.Filled.Star,
                         contentDescription = null,
-                        tint = Color(FutebaColors.Gold),
+                        tint = GamificationColors.Gold,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -369,7 +369,7 @@ private fun MilestonesUnlockedSection(
                         text = "+${milestone.xpReward} XP",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(FutebaColors.Tertiary)
+                        color = MaterialTheme.colorScheme.tertiary
                     )
                 }
             }

@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.futebadosparcas.ui.home.GamificationSummary
-import com.futebadosparcas.ui.theme.FutebaColors
+import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.util.LevelBadgeHelper
 import androidx.compose.ui.res.painterResource
@@ -349,8 +349,8 @@ private fun XpProgressSection(
                     .background(
                         Brush.horizontalGradient(
                             colors = listOf(
-                                Color(FutebaColors.XpStart),
-                                Color(FutebaColors.XpEnd)
+                                GamificationColors.XpGreen,
+                                GamificationColors.XpLightGreen
                             )
                         )
                     )

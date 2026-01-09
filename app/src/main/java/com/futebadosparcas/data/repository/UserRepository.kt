@@ -130,6 +130,7 @@ class UserRepositoryLegacy @Inject constructor(
                 updates["photo_url"] = it
             }
 
+            android.util.Log.d("UserRepositoryLegacy", "Updating Firestore user $uid with data: $updates")
             usersCollection.document(uid).update(updates).await()
 
             // Retornar usuario atualizado

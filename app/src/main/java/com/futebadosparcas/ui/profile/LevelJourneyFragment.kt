@@ -36,7 +36,6 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.findNavController
 import com.futebadosparcas.data.model.LevelTable
-import com.futebadosparcas.ui.theme.FutebaColors
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.util.LevelBadgeHelper
 import androidx.compose.ui.res.painterResource
@@ -109,9 +108,9 @@ fun LevelJourneyScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(FutebaColors.Primary),
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -124,8 +123,8 @@ fun LevelJourneyScreen(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(FutebaColors.Surface),
-                            Color(FutebaColors.SurfaceVariant).copy(alpha = 0.3f)
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                         )
                     )
                 )
@@ -145,7 +144,7 @@ fun LevelJourneyScreen(
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = null,
-                    tint = Color(FutebaColors.Primary),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -153,14 +152,14 @@ fun LevelJourneyScreen(
                     text = "Trilha do Sucesso",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(FutebaColors.OnSurface)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
             Text(
                 text = "Cada nível representa sua evolução como jogador",
                 fontSize = 14.sp,
-                color = Color(FutebaColors.OnSurfaceVariant),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
@@ -193,8 +192,8 @@ fun CurrentProgressHeader(currentLevel: Int, currentXp: Long) {
             .background(
                 Brush.linearGradient(
                     colors = listOf(
-                        Color(FutebaColors.Primary),
-                        Color(FutebaColors.Secondary)
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.colorScheme.secondary
                     )
                 )
             )
@@ -352,20 +351,20 @@ fun LevelNode(
     currentXp: Long
 ) {
     val backgroundColor = when {
-        isCurrent -> Color(FutebaColors.Primary)
-        isUnlocked -> Color(FutebaColors.Success)
-        isNext -> Color(FutebaColors.Secondary).copy(alpha = 0.3f)
-        else -> Color(FutebaColors.SurfaceVariant)
+        isCurrent -> MaterialTheme.colorScheme.primary
+        isUnlocked -> MaterialTheme.colorScheme.primary
+        isNext -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+        else -> MaterialTheme.colorScheme.surfaceVariant
     }
 
     val textColor = when {
         isCurrent || isUnlocked -> Color.White
-        else -> Color(FutebaColors.OnSurfaceVariant)
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     val borderColor = when {
-        isCurrent -> Color(FutebaColors.Primary)
-        isNext -> Color(FutebaColors.Secondary)
+        isCurrent -> MaterialTheme.colorScheme.primary
+        isNext -> MaterialTheme.colorScheme.secondary
         else -> Color.Transparent
     }
 
@@ -399,7 +398,7 @@ fun LevelNode(
                         .clip(CircleShape)
                         .background(
                             if (isUnlocked || isCurrent) Color.Transparent
-                            else Color(FutebaColors.Surface).copy(alpha = 0.5f)
+                            else MaterialTheme.colorScheme.background.copy(alpha = 0.5f)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -415,7 +414,7 @@ fun LevelNode(
                         Icon(
                             imageVector = Icons.Filled.Lock,
                             contentDescription = "Nível bloqueado",
-                            tint = Color(FutebaColors.OnSurfaceVariant),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(40.dp)
                         )
                     }
@@ -497,8 +496,8 @@ fun LevelNode(
                         .fillMaxWidth()
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp)),
-                    color = Color(FutebaColors.Secondary),
-                    trackColor = Color(FutebaColors.SurfaceVariant)
+                    color = MaterialTheme.colorScheme.secondary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
                 
                 Row(
@@ -512,13 +511,13 @@ fun LevelNode(
                         text = "🎯 Faltam $remaining XP",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(FutebaColors.Secondary)
+                        color = MaterialTheme.colorScheme.secondary
                     )
                     Text(
                         text = "${(progress * 100).toInt()}%",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(FutebaColors.Secondary)
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 }
             }
@@ -543,6 +542,9 @@ fun LevelNode(
 
 @Composable
 fun ConnectorLine(isUnlocked: Boolean) {
+    val activeColor = MaterialTheme.colorScheme.primary
+    val inactiveColor = MaterialTheme.colorScheme.surfaceVariant
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -559,7 +561,7 @@ fun ConnectorLine(isUnlocked: Boolean) {
             } else null
 
             drawLine(
-                color = if (isUnlocked) Color(FutebaColors.Success) else Color(FutebaColors.SurfaceVariant),
+                color = if (isUnlocked) activeColor else inactiveColor,
                 start = Offset(size.width / 2, 0f),
                 end = Offset(size.width / 2, size.height),
                 strokeWidth = 6f,
@@ -577,7 +579,7 @@ fun XpDocumentationCard() {
             .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(FutebaColors.SurfaceVariant)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column(
@@ -591,7 +593,7 @@ fun XpDocumentationCard() {
                 Icon(
                     imageVector = Icons.Filled.Info,
                     contentDescription = null,
-                    tint = Color(FutebaColors.Primary),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
@@ -599,7 +601,7 @@ fun XpDocumentationCard() {
                     text = "Como Ganhar XP",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(FutebaColors.OnSurface)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -617,14 +619,14 @@ fun XpDocumentationCard() {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            HorizontalDivider(color = Color(FutebaColors.OnSurfaceVariant).copy(alpha = 0.2f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = "💡 Dica: Jogue regularmente e ajude seu time para subir de nível mais rápido!",
                 fontSize = 13.sp,
-                color = Color(FutebaColors.OnSurfaceVariant),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium,
                 lineHeight = 18.sp
             )
@@ -651,12 +653,12 @@ fun XpSourceItem(emoji: String, title: String, description: String) {
                 text = title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(FutebaColors.OnSurface)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = description,
                 fontSize = 13.sp,
-                color = Color(FutebaColors.OnSurfaceVariant)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

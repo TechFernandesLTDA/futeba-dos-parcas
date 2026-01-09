@@ -12,7 +12,8 @@ import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.LiveGameRepository
 import com.futebadosparcas.data.repository.LocationRepository
-import com.futebadosparcas.data.repository.UserRepository
+
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.data.repository.UserRepositoryLegacy
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -60,10 +61,8 @@ class ProfileViewModel @Inject constructor(
                 _uiState.value = ProfileUiState.Loading
             }
 
-            val result = userRepository.getCurrentUser()
-
-            result.fold(
-                onSuccess = { user ->
+            userRepository.observeCurrentUser().collect { user ->
+                if (user != null) {
                     val badgesResult = gamificationRepository.getUserBadges(user.id)
                     val badges = badgesResult.getOrNull() ?: emptyList()
 
@@ -72,9 +71,16 @@ class ProfileViewModel @Inject constructor(
                     val stats = statsResult.getOrNull()
 
                     _uiState.value = ProfileUiState.Success(user, badges, stats, isDevModeEnabled())
-                    _uiEvents.send(ProfileUiEvent.LoadComplete)
 
-                    // Iniciar listener de tempo real para estatísticas
+                    // Se esta é a primeira carga ou atualização, envie o evento
+                    // Note: Em um fluxo contínuo, talvez não queiramos enviar LoadComplete a cada pequena mudança,
+                    // mas para garantir que a UI pare de carregar na primeira vez, é útil.
+                    if (_uiEvents.trySend(ProfileUiEvent.LoadComplete).isSuccess) {
+                         // Event sent
+                    }
+
+                    // Iniciar listener de tempo real para estatísticas (se ainda não estiver ativo ou se o user mudar)
+                    // Nota: O setupStatisticsRealTimeListener cuida de remover o anterior.
                     setupStatisticsRealTimeListener(user.id)
                     maybeUpdateAutoRatings(user, stats)
 
@@ -82,13 +88,59 @@ class ProfileViewModel @Inject constructor(
                     if (user.isFieldOwner()) {
                         loadMyLocations(user.id)
                     }
-                },
-                onFailure = { error ->
-                    _uiState.value = ProfileUiState.Error(error.message ?: "Erro ao carregar perfil")
-                    _uiEvents.send(ProfileUiEvent.LoadComplete)
+                } else {
+                    // Se user for null (não logado ou erro), tratar conforme necessário.
+                    // Se o estado anterior era Success/Loading, podemos cair aqui num logout.
+                    // Por enquanto, não vamos forçar erro se apenas estiver recarregando, mas se for nulo persistentemente, é um problema.
                 }
-            )
+            }
         }
+    }
+
+    private fun mapDataUserToDomainUser(legacyUser: com.futebadosparcas.data.model.User): com.futebadosparcas.domain.model.User {
+        return com.futebadosparcas.domain.model.User(
+            id = legacyUser.id,
+            email = legacyUser.email,
+            name = legacyUser.name,
+            phone = legacyUser.phone,
+            nickname = legacyUser.nickname,
+            photoUrl = legacyUser.photoUrl,
+            fcmToken = legacyUser.fcmToken,
+            isSearchable = legacyUser.isSearchable,
+            isProfilePublic = legacyUser.isProfilePublic,
+            role = legacyUser.role,
+            createdAt = legacyUser.createdAt?.time,
+            updatedAt = legacyUser.updatedAt?.time,
+            strikerRating = legacyUser.strikerRating,
+            midRating = legacyUser.midRating,
+            defenderRating = legacyUser.defenderRating,
+            gkRating = legacyUser.gkRating,
+            preferredPosition = legacyUser.preferredPosition,
+            preferredFieldTypes = legacyUser.preferredFieldTypes.map {
+                try {
+                     com.futebadosparcas.domain.model.FieldType.valueOf(it.name)
+                } catch (e: Exception) {
+                     com.futebadosparcas.domain.model.FieldType.SOCIETY
+                }
+            },
+            birthDate = legacyUser.birthDate?.time,
+            gender = legacyUser.gender,
+            heightCm = legacyUser.heightCm,
+            weightKg = legacyUser.weightKg,
+            dominantFoot = legacyUser.dominantFoot,
+            primaryPosition = legacyUser.primaryPosition,
+            secondaryPosition = legacyUser.secondaryPosition,
+            playStyle = legacyUser.playStyle,
+            experienceYears = legacyUser.experienceYears,
+            level = legacyUser.level,
+            experiencePoints = legacyUser.experiencePoints,
+            milestonesAchieved = legacyUser.milestonesAchieved,
+            autoStrikerRating = legacyUser.autoStrikerRating,
+            autoMidRating = legacyUser.autoMidRating,
+            autoDefenderRating = legacyUser.autoDefenderRating,
+            autoGkRating = legacyUser.autoGkRating,
+            autoRatingSamples = legacyUser.autoRatingSamples
+        )
     }
 
     private fun loadMyLocations(userId: String) {
@@ -146,6 +198,7 @@ class ProfileViewModel @Inject constructor(
         playStyle: String?,
         experienceYears: Int?
     ) {
+        android.util.Log.d("ProfileViewModel", "updateProfile called.")
         viewModelScope.launch {
             _uiState.value = ProfileUiState.Loading
 
@@ -172,46 +225,8 @@ class ProfileViewModel @Inject constructor(
 
             profileResult.fold(
                 onSuccess = { legacyUser ->
-                    // Converter de data.model.User para domain.model.User
-                    val domainUser = com.futebadosparcas.domain.model.User(
-                        id = legacyUser.id,
-                        email = legacyUser.email,
-                        name = legacyUser.name,
-                        phone = legacyUser.phone,
-                        nickname = legacyUser.nickname,
-                        photoUrl = legacyUser.photoUrl,
-                        fcmToken = legacyUser.fcmToken,
-                        isSearchable = legacyUser.isSearchable,
-                        isProfilePublic = legacyUser.isProfilePublic,
-                        role = legacyUser.role,
-                        createdAt = legacyUser.createdAt?.time,
-                        updatedAt = legacyUser.updatedAt?.time,
-                        strikerRating = legacyUser.strikerRating,
-                        midRating = legacyUser.midRating,
-                        defenderRating = legacyUser.defenderRating,
-                        gkRating = legacyUser.gkRating,
-                        preferredPosition = legacyUser.preferredPosition,
-                        preferredFieldTypes = legacyUser.preferredFieldTypes.map {
-                            com.futebadosparcas.domain.model.FieldType.valueOf(it.name)
-                        },
-                        birthDate = legacyUser.birthDate?.time,
-                        gender = legacyUser.gender,
-                        heightCm = legacyUser.heightCm,
-                        weightKg = legacyUser.weightKg,
-                        dominantFoot = legacyUser.dominantFoot,
-                        primaryPosition = legacyUser.primaryPosition,
-                        secondaryPosition = legacyUser.secondaryPosition,
-                        playStyle = legacyUser.playStyle,
-                        experienceYears = legacyUser.experienceYears,
-                        level = legacyUser.level,
-                        experiencePoints = legacyUser.experiencePoints,
-                        milestonesAchieved = legacyUser.milestonesAchieved,
-                        autoStrikerRating = legacyUser.autoStrikerRating,
-                        autoMidRating = legacyUser.autoMidRating,
-                        autoDefenderRating = legacyUser.autoDefenderRating,
-                        autoGkRating = legacyUser.autoGkRating,
-                        autoRatingSamples = legacyUser.autoRatingSamples
-                    )
+                    // Converter de data.model.User para domain.model.User usando helper
+                    val domainUser = mapDataUserToDomainUser(legacyUser)
                     _uiState.value = ProfileUiState.ProfileUpdateSuccess(domainUser)
                 },
                 onFailure = { error ->

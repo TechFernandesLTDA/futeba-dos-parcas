@@ -40,8 +40,8 @@ fun StreakWidget(
     val spacing = rememberAdaptiveSpacing()
 
     val fireColors = listOf(
-        Color(0xFFFF9800), // Orange
-        Color(0xFFF44336)  // Red
+        com.futebadosparcas.ui.theme.GamificationColors.FireStart,
+        com.futebadosparcas.ui.theme.GamificationColors.FireEnd
     )
 
     // Tamanhos adaptativos

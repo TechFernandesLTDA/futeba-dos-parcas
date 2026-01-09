@@ -13,14 +13,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.futebadosparcas.ui.theme.FutebaColors
+import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 
 /**
@@ -144,8 +142,8 @@ fun WelcomeEmptyState(
                 .background(
                     Brush.horizontalGradient(
                         colors = listOf(
-                            Color(FutebaColors.XpStart).copy(alpha = 0.1f),
-                            Color(FutebaColors.XpEnd).copy(alpha = 0.1f)
+                            GamificationColors.XpGreen.copy(alpha = 0.1f),
+                            GamificationColors.XpLightGreen.copy(alpha = 0.1f)
                         )
                     ),
                     shape = RoundedCornerShape(12.dp)
@@ -156,7 +154,7 @@ fun WelcomeEmptyState(
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = null,
-                tint = Color(FutebaColors.Primary),
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
 
@@ -184,7 +182,7 @@ private fun TipItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color(FutebaColors.Primary),
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(20.dp)
         )
 

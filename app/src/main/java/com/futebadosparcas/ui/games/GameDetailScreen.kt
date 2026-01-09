@@ -207,30 +207,32 @@ fun GameDetailTopBar(
                 DropdownMenuItem(
                     text = { Text("Compartilhar Link") },
                     onClick = { onShare(); showMenu = false },
-                    leadingIcon = { Icon(Icons.Outlined.Share, null) }
+                    leadingIcon = { Icon(Icons.Outlined.Share, contentDescription = "Compartilhar") }
                 )
                 if (game.status == "FINISHED") {
                     DropdownMenuItem(
                         text = { Text("Votar MVP") },
                         onClick = { onVoteMvp(); showMenu = false },
-                        leadingIcon = { Icon(Icons.Default.Star, null) }
+                        leadingIcon = { Icon(Icons.Default.Star, contentDescription = "Votar MVP") }
                     )
                     if (hasTeams) {
                         DropdownMenuItem(
                             text = { Text("Gerar Card do Jogo") },
                             onClick = { onShareCard(); showMenu = false },
-                             leadingIcon = { Icon(Icons.Default.Share, null) }
+                             leadingIcon = { Icon(Icons.Default.Share, contentDescription = "Gerar Card") }
                         )
                     }
                 }
-                // Tactical board option if relevant
                  DropdownMenuItem(
                     text = { Text("Prancheta Tática") },
                     onClick = { onTacticalBoard(); showMenu = false },
-                    leadingIcon = { Icon(Icons.Default.Create, null) } // Using Create as generic edit icon
+                    leadingIcon = { Icon(Icons.Default.Create, contentDescription = "Prancheta Tática") }
                  )
             }
-        }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     )
 }
 

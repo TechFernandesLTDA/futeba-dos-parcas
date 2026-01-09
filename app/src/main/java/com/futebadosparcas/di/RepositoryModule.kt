@@ -51,7 +51,7 @@ object RepositoryModule {
         firebaseDataSource: FirebaseDataSource,
         database: FutebaDatabase,
         preferencesService: PreferencesService
-    ): com.futebadosparcas.data.repository.UserRepository {
+    ): com.futebadosparcas.domain.repository.UserRepository {
         return UserRepositoryImpl(firebaseDataSource, database, preferencesService)
     }
 }

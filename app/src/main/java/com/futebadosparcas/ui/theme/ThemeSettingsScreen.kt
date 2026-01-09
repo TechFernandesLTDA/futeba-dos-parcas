@@ -105,14 +105,7 @@ fun ColorPickerSection(
     selectedColor: Int,
     onColorSelected: (Int) -> Unit
 ) {
-    val presets = listOf(
-        Color(0xFF58CC02), // Green (Default)
-        Color(0xFF1CB0F6), // Blue
-        Color(0xFFFF9600), // Orange
-        Color(0xFFCE82FF), // Purple
-        Color(0xFFFF4B4B), // Red
-        Color(0xFF2B70C9), // Navy
-    )
+    val presets = com.futebadosparcas.ui.theme.ThemePresets.All
 
     Card {
         Column(modifier = Modifier.padding(16.dp)) {

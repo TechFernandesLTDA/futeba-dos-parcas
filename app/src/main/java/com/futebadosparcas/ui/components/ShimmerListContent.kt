@@ -71,12 +71,6 @@ fun LazyListScope.shimmerItems(
     count: Int,
     shimmerContent: @Composable (Brush) -> Unit
 ) {
-    val shimmerColors = listOf(
-        androidx.compose.ui.graphics.Color(0xFFE0E0E0),
-        androidx.compose.ui.graphics.Color(0xFFF5F5F5),
-        androidx.compose.ui.graphics.Color(0xFFE0E0E0)
-    )
-
     items(count) {
         // Nota: Brush deve ser criado dentro do composable com animação
         ShimmerBox {

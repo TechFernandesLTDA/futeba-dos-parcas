@@ -8,7 +8,7 @@ import com.futebadosparcas.data.repository.IStatisticsRepository
 import com.futebadosparcas.data.repository.RankingCategory
 import com.futebadosparcas.data.repository.RankingPeriod
 import com.futebadosparcas.data.repository.RankingRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.LeagueService
 import com.futebadosparcas.domain.ranking.MilestoneChecker
 import com.google.firebase.auth.FirebaseAuth
