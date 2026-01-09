@@ -8,23 +8,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.maps.android.compose.*
 
 /**
  * LocationsMapScreen - Mapa com locais de pelada
  *
  * Features:
- * - Google Maps com marcadores de locais
+ * - Google Maps nativo em Compose com marcadores de locais
  * - Estados de loading, success, empty, error
  * - Centralização automática em Curitiba
+ *
+ * MIGRADO para Google Maps Compose SDK - Sem AndroidView wrapper
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,17 +31,6 @@ fun LocationsMapScreen(
     onBackClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var googleMap by remember { mutableStateOf<GoogleMap?>(null) }
-
-    // Update markers when locations change
-    LaunchedEffect(uiState) {
-        if (uiState is LocationsMapUiState.Success) {
-            val locations = (uiState as LocationsMapUiState.Success).locations
-            googleMap?.let { map ->
-                updateMarkers(map, locations)
-            }
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -76,13 +63,8 @@ fun LocationsMapScreen(
                     LoadingState()
                 }
                 is LocationsMapUiState.Success -> {
-                    MapContent(
-                        onMapReady = { map ->
-                            googleMap = map
-                            val locations = (uiState as LocationsMapUiState.Success).locations
-                            updateMarkers(map, locations)
-                        }
-                    )
+                    val locations = (uiState as LocationsMapUiState.Success).locations
+                    MapContent(locations = locations)
                 }
                 is LocationsMapUiState.Empty -> {
                     EmptyState()
@@ -100,40 +82,46 @@ fun LocationsMapScreen(
 
 @Composable
 private fun MapContent(
-    onMapReady: (GoogleMap) -> Unit
+    locations: List<com.futebadosparcas.data.model.Location>
 ) {
-    val context = LocalContext.current
-    val mapView = remember { MapView(context) }
+    // Default location: Curitiba, Brazil
+    val curitiba = LatLng(-25.4284, -49.2733)
 
-    AndroidView(
-        factory = {
-            mapView.apply {
-                onCreate(null)
-                onResume()
-                getMapAsync { googleMap ->
-                    // Default location: Curitiba, Brazil
-                    val curitiba = LatLng(-25.4284, -49.2733)
-                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curitiba, 12f))
+    // Find first valid location for camera position, or use Curitiba as default
+    val initialPosition = locations
+        .firstOrNull { it.latitude != null && it.longitude != null }
+        ?.let { LatLng(it.latitude!!, it.longitude!!) }
+        ?: curitiba
 
-                    // Enable UI controls
-                    googleMap.uiSettings.apply {
-                        isZoomControlsEnabled = true
-                        isCompassEnabled = true
-                        isMyLocationButtonEnabled = false
-                        isMapToolbarEnabled = true
-                    }
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(initialPosition, 12f)
+    }
 
-                    onMapReady(googleMap)
-                }
+    val uiSettings by remember {
+        mutableStateOf(
+            MapUiSettings(
+                zoomControlsEnabled = true,
+                compassEnabled = true,
+                myLocationButtonEnabled = false,
+                mapToolbarEnabled = true
+            )
+        )
+    }
+
+    GoogleMap(
+        modifier = Modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState,
+        uiSettings = uiSettings
+    ) {
+        // Add markers for all valid locations
+        locations.forEach { location ->
+            if (location.latitude != null && location.longitude != null) {
+                Marker(
+                    state = MarkerState(position = LatLng(location.latitude!!, location.longitude!!)),
+                    title = location.name,
+                    snippet = location.address
+                )
             }
-        },
-        modifier = Modifier.fillMaxSize()
-    )
-
-    DisposableEffect(mapView) {
-        onDispose {
-            mapView.onPause()
-            mapView.onDestroy()
         }
     }
 }
@@ -202,36 +190,6 @@ private fun ErrorState(
             Button(onClick = onRetry) {
                 Text("Tentar Novamente")
             }
-        }
-    }
-}
-
-private fun updateMarkers(
-    map: GoogleMap,
-    locations: List<com.futebadosparcas.data.model.Location>
-) {
-    map.clear()
-
-    var hasValidLocations = false
-
-    for (location in locations) {
-        if (location.latitude != null && location.longitude != null) {
-            val position = LatLng(location.latitude!!, location.longitude!!)
-            map.addMarker(
-                MarkerOptions()
-                    .position(position)
-                    .title(location.name)
-                    .snippet(location.address)
-            )
-            hasValidLocations = true
-        }
-    }
-
-    // If we have valid locations, adjust camera to show them
-    if (hasValidLocations && locations.isNotEmpty()) {
-        locations.firstOrNull { it.latitude != null && it.longitude != null }?.let { first ->
-            val firstPosition = LatLng(first.latitude!!, first.longitude!!)
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(firstPosition, 12f))
         }
     }
 }
