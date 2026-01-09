@@ -902,7 +902,7 @@ private fun ActionButtonsSection(
         ) {
             Icon(
                 imageVector = Icons.Default.Edit,
-                contentDescription = null,
+                contentDescription = "Editar Perfil",
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -916,7 +916,7 @@ private fun ActionButtonsSection(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Logout,
-                contentDescription = null,
+                contentDescription = "Sair",
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -1069,7 +1069,7 @@ private fun SettingsMenuItem(
         )
         Icon(
             imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
+            contentDescription = "Acessar $title",
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -1115,7 +1115,7 @@ private fun AdminMenuItem(
         }
         Icon(
             imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
+            contentDescription = "Acessar $title",
             tint = MaterialTheme.colorScheme.onErrorContainer
         )
     }
@@ -1155,7 +1155,7 @@ private fun DeveloperMenuCard(onClick: () -> Unit) {
             )
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
+                contentDescription = "Acessar Developer Menu",
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
@@ -1179,7 +1179,7 @@ private fun ErrorState(
     ) {
         Icon(
             imageVector = Icons.Default.Error,
-            contentDescription = null,
+            contentDescription = "Erro ao carregar perfil",
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.error
         )
@@ -1194,7 +1194,7 @@ private fun ErrorState(
         Button(onClick = onRetry) {
             Icon(
                 imageVector = Icons.Default.Refresh,
-                contentDescription = null,
+                contentDescription = "Tentar novamente",
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
