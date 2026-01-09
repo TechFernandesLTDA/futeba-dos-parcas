@@ -26,6 +26,9 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.FieldType
@@ -573,19 +576,27 @@ private fun PhysicalInfoSection(
         ) {
             OutlinedTextField(
                 value = heightCm,
-                onValueChange = onHeightChange,
+                onValueChange = { if (it.all { char -> char.isDigit() }) onHeightChange(it) },
                 label = { Text("Altura (cm)") },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
                 shape = RoundedCornerShape(12.dp)
             )
 
             OutlinedTextField(
                 value = weightKg,
-                onValueChange = onWeightChange,
+                onValueChange = { if (it.all { char -> char.isDigit() }) onWeightChange(it) },
                 label = { Text("Peso (kg)") },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
                 shape = RoundedCornerShape(12.dp)
             )
         }
@@ -641,34 +652,43 @@ private fun FieldPreferencesSection(
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onSocietyChange(!societyChecked) }
+                .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
                 checked = societyChecked,
-                onCheckedChange = onSocietyChange
+                onCheckedChange = null // Handled by Row click
             )
             Text("Society")
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onFutsalChange(!futsalChecked) }
+                .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
                 checked = futsalChecked,
-                onCheckedChange = onFutsalChange
+                onCheckedChange = null // Handled by Row click
             )
             Text("Futsal")
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onFieldChange(!fieldChecked) }
+                .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
                 checked = fieldChecked,
-                onCheckedChange = onFieldChange
+                onCheckedChange = null // Handled by Row click
             )
             Text("Campo/Grama")
         }
@@ -801,10 +821,14 @@ private fun PositionSection(
 
         OutlinedTextField(
             value = experienceYears,
-            onValueChange = onExperienceYearsChange,
+            onValueChange = { if (it.all { char -> char.isDigit() }) onExperienceYearsChange(it) },
             label = { Text("Anos de Experiência") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
+            ),
             shape = RoundedCornerShape(12.dp)
         )
     }
