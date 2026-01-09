@@ -284,7 +284,7 @@ fun CashboxScreen(
                     viewModel.clearFilter()
                     showFilterMenu = false
                 },
-                leadingIcon = { Icon(Icons.Default.FilterList, null) }
+                leadingIcon = { Icon(Icons.Default.FilterList, contentDescription = "Mostrar todos") }
             )
             DropdownMenuItem(
                 text = { Text("Receitas") },
@@ -292,7 +292,7 @@ fun CashboxScreen(
                     viewModel.filterByType(CashboxEntryType.INCOME)
                     showFilterMenu = false
                 },
-                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, null) }
+                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = "Receitas") }
             )
             DropdownMenuItem(
                 text = { Text("Despesas") },
@@ -300,7 +300,7 @@ fun CashboxScreen(
                     viewModel.filterByType(CashboxEntryType.EXPENSE)
                     showFilterMenu = false
                 },
-                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingDown, null) }
+                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingDown, contentDescription = "Despesas") }
             )
         }
 
@@ -315,7 +315,7 @@ fun CashboxScreen(
                     viewModel.getTotalsByCategory()
                     showReportMenu = false
                 },
-                leadingIcon = { Icon(Icons.Default.Category, null) }
+                leadingIcon = { Icon(Icons.Default.Category, contentDescription = "Categoria") }
             )
             DropdownMenuItem(
                 text = { Text("Totais por Jogador") },
@@ -323,7 +323,7 @@ fun CashboxScreen(
                     viewModel.getTotalsByPlayer()
                     showReportMenu = false
                 },
-                leadingIcon = { Icon(Icons.Default.Person, null) }
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = "Jogador") }
             )
         }
     }

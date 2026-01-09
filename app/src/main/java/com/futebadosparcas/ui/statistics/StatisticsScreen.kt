@@ -340,7 +340,7 @@ private fun NavigationButtons(
         ) {
             Icon(
                 imageVector = Icons.Default.Leaderboard,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.fragment_statistics_text_1),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -353,7 +353,7 @@ private fun NavigationButtons(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.TrendingUp,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.fragment_statistics_text_2),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -451,7 +451,7 @@ private fun StatItem(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = label,
             tint = iconTint,
             modifier = Modifier.size(32.dp)
         )
@@ -666,7 +666,7 @@ private fun RankingSection(
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = null,
+                contentDescription = title,
                 tint = iconTint,
                 modifier = Modifier.size(24.dp)
             )

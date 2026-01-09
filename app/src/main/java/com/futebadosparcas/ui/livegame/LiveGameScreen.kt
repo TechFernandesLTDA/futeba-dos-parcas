@@ -362,7 +362,7 @@ private fun LiveGameHeader(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.dialog_finish_game_text_1),
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -458,7 +458,7 @@ private fun LiveGameTabs(
                         ) {
                             Icon(
                                 imageVector = tabIcons[index],
-                                contentDescription = null,
+                                contentDescription = title,
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
@@ -902,7 +902,7 @@ private fun ErrorContent(
         ) {
             Icon(
                 imageVector = Icons.Default.ErrorOutline,
-                contentDescription = null,
+                contentDescription = "Erro ao carregar jogo",
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.error
             )
@@ -921,7 +921,7 @@ private fun ErrorContent(
             Button(onClick = onRetry) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
-                    contentDescription = null,
+                    contentDescription = "Tentar Novamente",
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
