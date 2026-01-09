@@ -319,6 +319,17 @@ object FutebaColors {
 // Para uso em Compose com cores especiais
 // ==========================================
 
+object ThemePresets {
+    val Green = Color(0xFF58CC02)
+    val Blue = Color(0xFF1CB0F6)
+    val Orange = Color(0xFFFF9600)
+    val Purple = Color(0xFFCE82FF)
+    val Red = Color(0xFFFF4B4B)
+    val Navy = Color(0xFF2B70C9)
+
+    val All = listOf(Green, Blue, Orange, Purple, Red, Navy)
+}
+
 /**
  * Cores especiais para gamificação
  */
@@ -334,6 +345,17 @@ object GamificationColors {
     val XpGreen = Color(0xFF00C853)
     val XpLightGreen = Color(0xFF64DD17)
     val LevelUpGold = Color(0xFFFFAB00)
+    
+    // Contraste para texto/ícones
+    val DiamondDark = Color(0xFF008394) // Cyan 700
+    val SilverDark = Color(0xFF616161) // Grey 700
+
+    val FireStart = Color(0xFFFF9800) // Orange
+    val FireEnd = Color(0xFFF44336) // Red
+
+    // Gradient Variants
+    val GoldLight = Color(0xFFFFE082)
+    val BronzeLight = Color(0xFFE6A370)
 }
 
 /**
@@ -361,6 +383,7 @@ object GameStatusColors {
     val Finished = Color(0xFF616161) // Cinza
     val Cancelled = Color(0xFFD32F2F) // Vermelho
     val Full = Color(0xFFFF6F00) // Laranja
+    val Warning = Color(0xFFE6A300) // Amarelo/Laranja aviso
 }
 
 /**

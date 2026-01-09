@@ -238,8 +238,8 @@ fun SuccessUndoSnackbar(
     UndoSnackbar(
         snackbarData = snackbarData,
         modifier = modifier,
-        containerColor = Color(0xFF00C853).copy(alpha = 0.9f),
-        contentColor = Color.White,
-        actionColor = Color.White
+        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        actionColor = MaterialTheme.colorScheme.onPrimary
     )
 }

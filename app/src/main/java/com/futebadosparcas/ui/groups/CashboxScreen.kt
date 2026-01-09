@@ -251,6 +251,7 @@ fun CashboxScreen(
                     HistoryList(
                         items = history.items,
                         canDelete = canDelete,
+                        contentPadding = PaddingValues(bottom = if (canManage) 88.dp else 16.dp),
                         onEntryClick = { entry ->
                             selectedEntry = entry
                             showEntryDetails = true
@@ -515,12 +516,13 @@ private fun FilterChips(
 private fun HistoryList(
     items: List<CashboxListItem>,
     canDelete: Boolean,
+    contentPadding: PaddingValues,
     onEntryClick: (CashboxEntry) -> Unit,
     onEntryLongClick: (CashboxEntry) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 88.dp) // Space for FAB
+        contentPadding = contentPadding
     ) {
         items(items, key = { item ->
             when (item) {
@@ -711,12 +713,33 @@ private fun EntryDetailsDialog(
                 DetailRow("Descrição", entry.description)
                 DetailRow("Categoria", entry.getCategoryEnum().displayName)
                 DetailRow("Valor", currencyFormat.format(entry.amount))
+                
                 val playerName = entry.playerName
                 if (!playerName.isNullOrEmpty()) {
                     DetailRow("Jogador", playerName)
                 }
+                
                 if (entry.status == "VOIDED") {
                     DetailRow("Status", "ESTORNADO/CANCELADO")
+                }
+
+                if (!entry.receiptUrl.isNullOrEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Comprovante:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    coil.compose.AsyncImage(
+                        model = entry.receiptUrl,
+                        contentDescription = "Comprovante",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
                 }
             }
         },

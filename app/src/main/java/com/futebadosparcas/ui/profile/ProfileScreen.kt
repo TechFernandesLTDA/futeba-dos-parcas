@@ -91,15 +91,7 @@ fun ProfileScreen(
     var lastAvatarClickTime by remember { mutableStateOf(0L) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Perfil") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        }
+        // topBar removido conforme solicitação (design limpo)
     ) { paddingValues ->
         Box(
             modifier = Modifier

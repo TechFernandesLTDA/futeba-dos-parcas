@@ -338,26 +338,27 @@ private fun EditProfileContent(
                     return@Button
                 }
 
-                onSaveClick(
-                    ProfileFormData(
-                        name = name,
-                        nickname = nickname.takeIf { it.isNotBlank() },
-                        preferredFieldTypes = preferredFieldTypes,
-                        strikerRating = strikerRating.toDouble(),
-                        midRating = midRating.toDouble(),
-                        defenderRating = defRating.toDouble(),
-                        gkRating = gkRating.toDouble(),
-                        birthDate = birthDate,
-                        gender = gender.takeIf { it.isNotBlank() },
-                        heightCm = heightCm.toIntOrNull(),
-                        weightKg = weightKg.toIntOrNull(),
-                        dominantFoot = dominantFoot.takeIf { it.isNotBlank() },
-                        primaryPosition = primaryPosition.takeIf { it.isNotBlank() },
-                        secondaryPosition = secondaryPosition.takeIf { it.isNotBlank() },
-                        playStyle = playStyle.takeIf { it.isNotBlank() },
-                        experienceYears = experienceYears.toIntOrNull()
-                    )
+                val formData = ProfileFormData(
+                    name = name,
+                    nickname = nickname.takeIf { it.isNotBlank() },
+                    preferredFieldTypes = preferredFieldTypes,
+                    strikerRating = strikerRating.toDouble(),
+                    midRating = midRating.toDouble(),
+                    defenderRating = defRating.toDouble(),
+                    gkRating = gkRating.toDouble(),
+                    birthDate = birthDate,
+                    gender = gender.takeIf { it.isNotBlank() },
+                    heightCm = heightCm.toIntOrNull(),
+                    weightKg = weightKg.toIntOrNull(),
+                    dominantFoot = dominantFoot.takeIf { it.isNotBlank() },
+                    primaryPosition = primaryPosition.takeIf { it.isNotBlank() },
+                    secondaryPosition = secondaryPosition.takeIf { it.isNotBlank() },
+                    playStyle = playStyle.takeIf { it.isNotBlank() },
+                    experienceYears = experienceYears.toIntOrNull()
                 )
+
+                android.util.Log.d("EditProfileScreen", "Saving profile data: $formData")
+                onSaveClick(formData)
             },
             modifier = Modifier
                 .fillMaxWidth()

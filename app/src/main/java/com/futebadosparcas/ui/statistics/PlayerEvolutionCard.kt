@@ -21,7 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.futebadosparcas.data.model.LeagueDivision
-import com.futebadosparcas.ui.theme.FutebaColors
+import com.futebadosparcas.ui.theme.GamificationColors
 
 /**
  * Card de evolucao do jogador mostrando nivel e XP.
@@ -45,7 +45,7 @@ fun PlayerEvolutionCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(FutebaColors.Primary)
+            containerColor = MaterialTheme.colorScheme.primary
         ),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -177,16 +177,16 @@ fun PlayerLeagueCard(
     modifier: Modifier = Modifier
 ) {
     val divisionColor = when (division) {
-        LeagueDivision.BRONZE -> Color(FutebaColors.Bronze)
-        LeagueDivision.PRATA -> Color(FutebaColors.Silver)
-        LeagueDivision.OURO -> Color(FutebaColors.Gold)
-        LeagueDivision.DIAMANTE -> Color(FutebaColors.Secondary)
+        LeagueDivision.BRONZE -> GamificationColors.Bronze
+        LeagueDivision.PRATA -> GamificationColors.SilverDark
+        LeagueDivision.OURO -> GamificationColors.Gold
+        LeagueDivision.DIAMANTE -> GamificationColors.DiamondDark
     }
 
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(FutebaColors.Surface)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -210,7 +210,8 @@ fun PlayerLeagueCard(
                 ) {
                     Text(
                         text = getDivisionIcon(division),
-                        fontSize = 24.sp
+                        fontSize = 24.sp,
+                        color = if (division == LeagueDivision.OURO || division == LeagueDivision.PRATA || division == LeagueDivision.BRONZE) Color.White else Color.White
                     )
                 }
 
@@ -236,17 +237,17 @@ fun PlayerLeagueCard(
             if (protectionGames > 0) {
                 StatusBadge(
                     text = "Protegido",
-                    color = Color(FutebaColors.Success)
+                    color = MaterialTheme.colorScheme.primary
                 )
             } else if (promotionProgress > 0) {
                 StatusBadge(
                     text = "Subindo ($promotionProgress/3)",
-                    color = Color(FutebaColors.Primary)
+                    color = MaterialTheme.colorScheme.primary
                 )
             } else if (relegationProgress > 0) {
                 StatusBadge(
                     text = "Risco ($relegationProgress/3)",
-                    color = Color(FutebaColors.Warning)
+                    color = MaterialTheme.colorScheme.error
                 )
             }
             // Computed Status Badge
@@ -254,7 +255,9 @@ fun PlayerLeagueCard(
                 getComputedStatus(
                     division,
                     leagueRating,
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.colorScheme.error
                 )
             } else null
             if (status != null) {
@@ -282,10 +285,10 @@ private fun LeagueRatingBar(
 ) {
     val thresholds = listOf(0, 30, 50, 70, 100)
     val colors = listOf(
-        Color(FutebaColors.Bronze),
-        Color(FutebaColors.Silver),
-        Color(FutebaColors.Gold),
-        Color(FutebaColors.Secondary)
+        GamificationColors.Bronze,
+        GamificationColors.Silver,
+        GamificationColors.Gold,
+        GamificationColors.DiamondDark
     )
 
     Column {
@@ -369,7 +372,7 @@ fun MilestoneProgressCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(FutebaColors.Surface)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -387,15 +390,15 @@ fun MilestoneProgressCard(
                 CircularProgressIndicator(
                     progress = { progress },
                     modifier = Modifier.fillMaxSize(),
-                    color = Color(FutebaColors.Primary),
-                    trackColor = Color(FutebaColors.SurfaceVariant),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
                     strokeWidth = 4.dp
                 )
                 Text(
                     text = "${(progress * 100).toInt()}%",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(FutebaColors.Primary)
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -421,7 +424,7 @@ fun MilestoneProgressCard(
                     text = "+$xpReward",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(FutebaColors.Tertiary)
+                    color = MaterialTheme.colorScheme.tertiary
                 )
                 Text(
                     text = "XP",
@@ -442,18 +445,19 @@ private fun getDivisionIcon(division: LeagueDivision): String {
     }
 }
 
+@Composable
 private fun getComputedStatus(
     division: LeagueDivision,
     leagueRating: Double,
-    neutralColor: Color
+    neutralColor: Color,
+    successColor: Color,
+    errorColor: Color
 ): Pair<String, Color>? {
     if (leagueRating.isNaN()) return null
     return when {
-        leagueRating >= 90.0 -> "Elite" to Color(FutebaColors.Success)
-        leagueRating >= 70.0 -> "Boa fase" to Color(FutebaColors.Primary)
+        leagueRating >= 90.0 -> "Elite" to successColor
+        leagueRating >= 70.0 -> "Boa fase" to successColor
         leagueRating >= 50.0 -> "Estavel" to neutralColor
-        else -> "Em risco" to Color(FutebaColors.Warning)
+        else -> "Em risco" to errorColor
     }
 }
-
-
