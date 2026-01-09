@@ -71,6 +71,29 @@ class LocationRepository @Inject constructor(
         }
     }
 
+    /**
+     * Busca locais com paginação (PERF FIX: Previne loading 1000+ items)
+     * @param limit Número máximo de locais por página (padrão 50)
+     * @param lastLocationName Nome do último local da página anterior para cursor-based pagination
+     */
+    suspend fun getLocationsWithPagination(limit: Int = 50, lastLocationName: String? = null): Result<List<Location>> {
+        return try {
+            var query = locationsCollection.orderBy("name").limit(limit.toLong())
+
+            // Cursor-based pagination: começar após o último item da página anterior
+            if (lastLocationName != null) {
+                query = query.startAfter(lastLocationName)
+            }
+
+            val snapshot = query.get().await()
+            val locations = snapshot.toObjects(Location::class.java)
+            Result.success(locations)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar locais com paginação", e)
+            Result.failure(e)
+        }
+    }
+
     suspend fun deleteLocation(locationId: String): Result<Unit> {
         return try {
             locationsCollection.document(locationId).delete().await()

@@ -116,6 +116,8 @@ class FcmService : FirebaseMessagingService() {
                 val largeBitmap = badgeDrawable?.toBitmap()
                 largeBitmap?.let {
                     notificationBuilder.setLargeIcon(it)
+                    // FIX: Recycle bitmap after adding to notification to prevent background memory leak
+                    it.recycle()
                 }
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao adicionar brasao na notificacao", e)
