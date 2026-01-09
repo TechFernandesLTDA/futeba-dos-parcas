@@ -485,10 +485,6 @@ actual class FirebaseDataSource(
         return auth.currentUser?.uid
     }
 
-    actual fun getCurrentUserId(): String? {
-        return auth.currentUser?.uid
-    }
-
     actual suspend fun updateUser(userId: String, updates: Map<String, Any>): Result<Unit> {
         return try {
             firestore.collection(COLLECTION_USERS)
