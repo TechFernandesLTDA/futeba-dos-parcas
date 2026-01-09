@@ -27,7 +27,8 @@ class UserRepositoryImpl(
 
     companion object {
         private const val TAG = "UserRepository"
-        private const val CACHE_TTL_MS = 5 * 60 * 1000L // 5 minutos
+        private const val CURRENT_USER_CACHE_TTL_MS = 15 * 60 * 1000L // 15 minutos para usuário atual
+        private const val OTHER_USER_CACHE_TTL_MS = 30 * 60 * 1000L // 30 minutos para outros usuários
     }
 
     override suspend fun getCurrentUser(): Result<User> {
@@ -44,17 +45,16 @@ class UserRepositoryImpl(
                     .executeAsOneOrNull()
 
                 // 2. Verificar se cache ainda é válido
-                // TODO: Reabilitar cache quando o schema do banco suportar campos de gamificação (level, xp, etc)
-                // if (cachedUser != null && !isCacheExpired(cachedUser.cachedAt)) {
-                //    PlatformLogger.d(TAG, "Retornando usuário do cache")
-                //    return@withContext Result.success(cachedUser.toUser())
-                // }
+                if (cachedUser != null && !isCacheExpired(cachedUser.cachedAt, CURRENT_USER_CACHE_TTL_MS)) {
+                    PlatformLogger.d(TAG, "Retornando usuário do cache")
+                    return@withContext Result.success(cachedUser.toUser())
+                }
 
                 // 3. Buscar do Firebase
                 PlatformLogger.d(TAG, "Cache expirado, buscando do Firebase")
                 firebaseDataSource.getCurrentUser().also { result ->
                     result.getOrNull()?.let { user ->
-                        // Atualizar cache
+                        // Atualizar cache com todos os campos (incluindo XP/level)
                         val now = currentTimeMillis()
                         database.futebaDatabaseQueries.insertUser(
                             id = user.id,
@@ -62,9 +62,12 @@ class UserRepositoryImpl(
                             name = user.name,
                             photoUrl = user.photoUrl,
                             fcmToken = user.fcmToken,
+                            experiencePoints = user.experiencePoints,
+                            level = user.level.toLong(),
+                            milestonesAchieved = user.milestonesAchieved.joinToString(","),
                             cachedAt = now
                         )
-                        PlatformLogger.d(TAG, "Cache atualizado para usuário ${user.id}")
+                        PlatformLogger.d(TAG, "Cache atualizado para usuário ${user.id} com XP ${user.experiencePoints}")
                     }
                 }
             } catch (e: Exception) {
@@ -82,22 +85,28 @@ class UserRepositoryImpl(
                     .selectUserById(userId)
                     .executeAsOneOrNull()
 
-                // if (cachedUser != null && !isCacheExpired(cachedUser.cachedAt)) {
-                //    return@withContext Result.success(cachedUser.toUser())
-                // }
+                if (cachedUser != null && !isCacheExpired(cachedUser.cachedAt, OTHER_USER_CACHE_TTL_MS)) {
+                    PlatformLogger.d(TAG, "Retornando usuário $userId do cache")
+                    return@withContext Result.success(cachedUser.toUser())
+                }
 
                 // 2. Buscar do Firebase
+                PlatformLogger.d(TAG, "Cache expirado para usuário $userId, buscando do Firebase")
                 firebaseDataSource.getUserById(userId).also { result ->
                     result.getOrNull()?.let { user ->
-                        // Atualizar cache
+                        // Atualizar cache com todos os campos (incluindo XP/level)
                         database.futebaDatabaseQueries.insertUser(
                             id = user.id,
                             email = user.email,
                             name = user.name,
                             photoUrl = user.photoUrl,
                             fcmToken = user.fcmToken,
+                            experiencePoints = user.experiencePoints,
+                            level = user.level.toLong(),
+                            milestonesAchieved = user.milestonesAchieved.joinToString(","),
                             cachedAt = currentTimeMillis()
                         )
+                        PlatformLogger.d(TAG, "Cache atualizado para usuário $userId com XP ${user.experiencePoints}")
                     }
                 }
             } catch (e: Exception) {
@@ -161,9 +170,9 @@ class UserRepositoryImpl(
 
     // ========== HELPERS ==========
 
-    private fun isCacheExpired(cachedAt: Long): Boolean {
+    private fun isCacheExpired(cachedAt: Long, ttl: Long): Boolean {
         val now = currentTimeMillis()
-        return (now - cachedAt) > CACHE_TTL_MS
+        return (now - cachedAt) > ttl
     }
 
     private fun currentTimeMillis(): Long {
@@ -172,14 +181,23 @@ class UserRepositoryImpl(
 }
 
 /**
- * Extensão para converter row do SQLDelight em User.
+ * Extensão para converter row do SQLDelight em User (com campos de gamificação).
  */
 private fun com.futebadosparcas.db.Users.toUser(): User {
+    val milestones: List<String> = if (this.milestonesAchieved.isNotEmpty()) {
+        this.milestonesAchieved.split(",")
+    } else {
+        emptyList()
+    }
+
     return User(
         id = this.id,
         email = this.email,
         name = this.name,
         photoUrl = this.photoUrl,
-        fcmToken = this.fcmToken
+        fcmToken = this.fcmToken,
+        experiencePoints = this.experiencePoints,
+        level = this.level.toInt(),
+        milestonesAchieved = milestones
     )
 }

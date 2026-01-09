@@ -9,6 +9,7 @@ import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -71,7 +72,13 @@ class PlayersViewModel @Inject constructor(
     private var unreadCountJob: Job? = null
 
     init {
-        loadPlayers(currentQuery)
+        // Lazy loading: não buscar jogadores no init
+        // Apenas se já havia uma query salva, recarregar
+        if (currentQuery.isNotEmpty()) {
+            loadPlayers(currentQuery)
+        } else {
+            _uiState.value = PlayersUiState.Empty
+        }
         observeUnreadCount()
         observeSearchQuery()
     }
@@ -130,10 +137,11 @@ class PlayersViewModel @Inject constructor(
     /**
      * Implementação interna de carregamento de jogadores
      * Chamada pelo Flow com debounce
+     * Usa Dispatchers.IO para não bloquear Main Thread
      */
     private fun loadPlayersInternal(query: String) {
         searchJob?.cancel()
-        searchJob = viewModelScope.launch {
+        searchJob = viewModelScope.launch(Dispatchers.IO) {
             try {
                 _uiState.value = PlayersUiState.Loading
 

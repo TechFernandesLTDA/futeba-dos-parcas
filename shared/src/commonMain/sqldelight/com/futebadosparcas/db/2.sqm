@@ -1,0 +1,5 @@
+-- Migration to Version 2 (Add XP fields)
+
+ALTER TABLE users ADD COLUMN experiencePoints INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN level INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE users ADD COLUMN milestonesAchieved TEXT NOT NULL DEFAULT '';

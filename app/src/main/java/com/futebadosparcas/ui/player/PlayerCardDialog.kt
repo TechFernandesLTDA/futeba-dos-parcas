@@ -93,10 +93,10 @@ class PlayerCardDialog : DialogFragment() {
                 putExtra(Intent.EXTRA_STREAM, contentUri)
                 putExtra(Intent.EXTRA_TEXT, "Confira meu cartão de jogador no Futeba dos Parças! ⚽")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                // setPackage("com.whatsapp")
+                setPackage("com.whatsapp")
             }
-            
-            startActivity(Intent.createChooser(shareIntent, "Compartilhar via"))
+
+            startActivity(Intent.createChooser(shareIntent, "Compartilhar via WhatsApp"))
             
         } catch (e: Exception) {
             android.widget.Toast.makeText(requireContext(), "Erro ao compartilhar", android.widget.Toast.LENGTH_SHORT).show()
