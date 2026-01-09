@@ -11,12 +11,14 @@ import com.futebadosparcas.data.repository.GamificationRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -174,16 +176,25 @@ class LeagueViewModel @Inject constructor(
         }
     }
 
-    private suspend fun fetchMissingUsers(userIds: List<String>) {
+    private suspend fun fetchMissingUsers(userIds: List<String>) = withContext(Dispatchers.IO) {
         if (userIds.isEmpty()) {
             AppLogger.d(TAG) { "fetchMissingUsers: lista vazia" }
-            return
+            return@withContext
         }
 
         AppLogger.d(TAG) { "fetchMissingUsers: buscando ${userIds.size} usuários" }
 
+        // Verificar cache primeiro
+        val missing = userIds.filter { !_userCache.containsKey(it) }
+        if (missing.isEmpty()) {
+            AppLogger.d(TAG) { "Todos os usuários já estão no cache" }
+            return@withContext
+        }
+
+        AppLogger.d(TAG) { "Faltando ${missing.size} usuários no cache" }
+
         // Firestore "in" query supporta max 10, então fazemos em chunks
-        val chunks = userIds.chunked(10)
+        val chunks = missing.chunked(10)
 
         chunks.forEach { chunk ->
              try {

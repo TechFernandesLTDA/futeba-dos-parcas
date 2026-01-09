@@ -8,7 +8,10 @@ import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.util.AppLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -22,6 +25,7 @@ data class GameWithConfirmations(
     val isUserConfirmed: Boolean = false
 )
 
+@OptIn(kotlinx.coroutines.FlowPreview::class)
 @HiltViewModel
 class GamesViewModel @Inject constructor(
     private val gameRepository: GameRepository,
@@ -44,6 +48,10 @@ class GamesViewModel @Inject constructor(
 
     // Cache de resultados por filtro (evita recarregar ao trocar filtros)
     private val filterCache = mutableMapOf<GameFilterType, CachedGamesResult>()
+
+    // SupervisorJob para operações persistentes que não devem ser canceladas na navegação
+    private val persistentJob = SupervisorJob()
+    private val persistentScope = CoroutineScope(Dispatchers.IO + persistentJob)
 
     // Mantem referencia do job de coleta atual para cancelar ao trocar filtro
     private var currentJob: Job? = null
@@ -85,6 +93,7 @@ class GamesViewModel @Inject constructor(
         super.onCleared()
         currentJob?.cancel()
         unreadCountJob?.cancel()
+        persistentJob.cancel() // Cancela operações persistentes apenas ao limpar o ViewModel
     }
 
     /**
@@ -210,9 +219,10 @@ class GamesViewModel @Inject constructor(
     /**
      * Confirma presença rapidamente na lista de jogos.
      * Usa posição FIELD como padrão.
+     * Usa persistentScope para garantir conclusão mesmo com navegação.
      */
     fun quickConfirmPresence(gameId: String) {
-        viewModelScope.launch {
+        persistentScope.launch {
             try {
                 val result = gameRepository.confirmPresence(gameId, "FIELD", false)
                 result.fold(

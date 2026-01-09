@@ -12,6 +12,10 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import coil.ImageLoader
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
+import coil.Coil
 
 @HiltAndroidApp
 class FutebaApplication : Application(), Configuration.Provider {
@@ -43,6 +47,25 @@ class FutebaApplication : Application(), Configuration.Provider {
                 PlayIntegrityAppCheckProviderFactory.getInstance()
             )
         }
+
+        // Configure Coil for optimal image loading performance
+        val imageLoader = ImageLoader.Builder(this)
+            .memoryCache {
+                MemoryCache.Builder(this)
+                    .maxSizePercent(0.25) // 25% da memória disponível
+                    .build()
+            }
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(cacheDir.resolve("image_cache"))
+                    .maxSizeBytes(50 * 1024 * 1024) // 50MB
+                    .build()
+            }
+            .crossfade(true) // Transições suaves
+            .respectCacheHeaders(false) // Não respeitar headers de cache do servidor
+            .build()
+
+        Coil.setImageLoader(imageLoader)
 
         // Apply saved theme preference (default: light)
         val theme = preferencesManager.getThemePreference()
