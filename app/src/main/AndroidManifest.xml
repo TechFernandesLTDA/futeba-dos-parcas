@@ -27,6 +27,7 @@
         android:theme="@style/Theme.FutebaDosParcas"
         android:enableOnBackInvokedCallback="true"
         android:usesCleartextTraffic="false"
+        android:appCategory="social"
         tools:targetApi="31">
 
         <activity
