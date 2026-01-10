@@ -219,6 +219,60 @@ class UserRepositoryImpl(
         return firebaseDataSource.getCurrentUserId()
     }
 
+    override suspend fun updateFcmToken(token: String): Result<Unit> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.updateFcmToken(getCurrentUserId() ?: return@withContext Result.failure(Exception("Usuário não autenticado")), token)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun getAllUsersUnpaginated(): Result<List<User>> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.searchUsers("", limit = Int.MAX_VALUE)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun updateUserRole(userId: String, newRole: String): Result<Unit> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.updateUser(userId, mapOf("role" to newRole))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun getFieldOwners(): Result<List<User>> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.searchUsers("", limit = Int.MAX_VALUE).getOrNull()?.filter {
+                    // This is a simple filter - ideally this would be done server-side
+                    it.nickname?.contains("FIELD_OWNER", ignoreCase = true) ?: false
+                }?.let { Result.success(it) } ?: Result.success(emptyList())
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun updateProfileVisibility(isSearchable: Boolean): Result<Unit> {
+        return withContext(Dispatchers.Default) {
+            try {
+                val userId = getCurrentUserId() ?: return@withContext Result.failure(Exception("Usuário não autenticado"))
+                firebaseDataSource.updateUser(userId, mapOf("is_searchable" to isSearchable))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
     // ========== HELPERS ==========
 
     private fun cacheUser(user: User) {

@@ -3,7 +3,7 @@ package com.futebadosparcas.data.ai
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.data.model.Team
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ai.TeamBalancer
 import javax.inject.Inject
 import javax.inject.Singleton

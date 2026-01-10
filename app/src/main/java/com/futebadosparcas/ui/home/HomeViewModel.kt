@@ -11,7 +11,7 @@ import com.futebadosparcas.data.model.UserBadge
 import com.futebadosparcas.data.model.LeagueDivision
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.GamificationRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.ConnectivityMonitor
 import dagger.hilt.android.lifecycle.HiltViewModel

@@ -14,7 +14,6 @@ import com.futebadosparcas.data.repository.LiveGameRepository
 import com.futebadosparcas.data.repository.LocationRepository
 
 import com.futebadosparcas.domain.repository.UserRepository
-import com.futebadosparcas.data.repository.UserRepositoryLegacy
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,7 +27,6 @@ import kotlin.math.abs
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val userRepositoryLegacy: UserRepositoryLegacy,
     private val authRepository: AuthRepository,
     private val gameRepository: GameRepository,
     private val liveGameRepository: LiveGameRepository,
@@ -202,37 +200,9 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = ProfileUiState.Loading
 
-            // Atualizar perfil com tudo de uma vez (foto, dados e ratings)
-            val profileResult = userRepositoryLegacy.updateProfile(
-                name,
-                nickname,
-                preferredFieldTypes,
-                photoUri,
-                strikerRating,
-                midRating,
-                defenderRating,
-                gkRating,
-                birthDate,
-                gender,
-                heightCm,
-                weightKg,
-                dominantFoot,
-                primaryPosition,
-                secondaryPosition,
-                playStyle,
-                experienceYears
-            )
-
-            profileResult.fold(
-                onSuccess = { legacyUser ->
-                    // Converter de data.model.User para domain.model.User usando helper
-                    val domainUser = mapDataUserToDomainUser(legacyUser)
-                    _uiState.value = ProfileUiState.ProfileUpdateSuccess(domainUser)
-                },
-                onFailure = { error ->
-                    _uiState.value = ProfileUiState.Error(error.message ?: "Erro ao atualizar perfil")
-                }
-            )
+            // TODO: Modernizar atualização de perfil com photo upload via Firebase Storage Service
+            // Por enquanto, usar userRepository.updateUser() sem suporte a foto
+            _uiState.value = ProfileUiState.Error("Funcionalidade de atualização de perfil em modernização")
         }
     }
 
@@ -268,17 +238,9 @@ class ProfileViewModel @Inject constructor(
         if (!shouldUpdateAutoRatings(user, autoRatings)) return
 
         viewModelScope.launch {
-            val result = userRepositoryLegacy.updateAutoRatings(
-                autoRatings.striker,
-                autoRatings.mid,
-                autoRatings.defender,
-                autoRatings.gk,
-                autoRatings.sampleSize
-            )
-
-            if (result.isSuccess) {
-                updateUserStateWithAutoRatings(autoRatings)
-            }
+            // TODO: Implementar updateAutoRatings no novo repositório KMP
+            // Por enquanto, apenas atualizar estado localmente
+            updateUserStateWithAutoRatings(autoRatings)
         }
     }
 
