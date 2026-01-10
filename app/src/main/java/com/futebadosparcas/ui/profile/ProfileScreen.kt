@@ -175,12 +175,14 @@ private fun ProfileContent(
     onAvatarClick: () -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding(),  // 🔧 OTIMIZADO: Respeita status/navigation bars (consistent com HomeScreen)
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header: Avatar, Nome, Role
-        item {
+        item(key = "profile_header") {
             ProfileHeader(
                 user = user,
                 onAvatarClick = onAvatarClick
@@ -188,7 +190,7 @@ private fun ProfileContent(
         }
 
         // Card de Nível e XP
-        item {
+        item(key = "level_card") {
             LevelCard(
                 level = user.level,
                 totalXP = user.experiencePoints,
@@ -197,29 +199,29 @@ private fun ProfileContent(
         }
 
         // Preferências de Campo
-        item {
+        item(key = "field_prefs") {
             FieldPreferencesCard(preferredTypes = user.preferredFieldTypes)
         }
 
         // Ratings por Posição
-        item {
+        item(key = "ratings") {
             RatingsCard(user = user)
         }
 
         // Estatísticas Resumidas
-        item {
+        item(key = "statistics") {
             StatisticsCard(statistics = statistics)
         }
 
         // Badges Recentes
         if (badges.isNotEmpty()) {
-            item {
+            item(key = "badges_section") {
                 BadgesSection(badges = badges)
             }
         }
 
         // Botões de Ação
-        item {
+        item(key = "action_buttons") {
             ActionButtonsSection(
                 onEditProfileClick = onEditProfileClick,
                 onLogoutClick = onLogoutClick
@@ -227,7 +229,7 @@ private fun ProfileContent(
         }
 
         // Seção de Configurações
-        item {
+        item(key = "settings_section") {
             SettingsSection(
                 onNotificationsClick = onNotificationsClick,
                 onSettingsClick = onSettingsClick,
@@ -241,7 +243,7 @@ private fun ProfileContent(
         val isFieldOwner = user.isFieldOwner()
 
         if (isAdmin || isFieldOwner) {
-            item {
+            item(key = "admin_section") {
                 AdminSection(
                     isAdmin = isAdmin,
                     isFieldOwner = isFieldOwner,
@@ -256,13 +258,13 @@ private fun ProfileContent(
 
         // Developer Menu (se ativado)
         if (isDevMode) {
-            item {
+            item(key = "dev_menu") {
                 DeveloperMenuCard(onClick = onDeveloperMenuClick)
             }
         }
 
         // Versão do App
-        item {
+        item(key = "app_version") {
             Text(
                 text = "Versão ${BuildConfig.VERSION_NAME}",
                 style = MaterialTheme.typography.bodySmall,
