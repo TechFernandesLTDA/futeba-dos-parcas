@@ -109,7 +109,16 @@ class LeagueViewModel @Inject constructor(
         }
     }
 
+    /**
+     * ✅ OTIMIZAÇÃO #5: Cancelamento de Queries Stale
+     *
+     * Rastreia e cancela queries que ficaram obsoletas:
+     * - Quando usuário muda de temporada, cancela query anterior
+     * - Quando ViewModel é destruído, cancela todas as queries pendentes
+     * - Previne memory leaks e leituras desnecessárias do Firestore
+     */
     private var leagueDataJob: Job? = null
+    private var userFetchJob: Job? = null
 
     companion object {
         private const val TAG = "LeagueViewModel"
@@ -120,8 +129,12 @@ class LeagueViewModel @Inject constructor(
      * Carrega dados da liga em tempo real
      */
     private fun loadLeagueData() {
-        // Cancelar job anterior para evitar race condition
+        // ✅ OTIMIZAÇÃO #5: Cancelar queries anteriores antes de iniciar nova
+        // Previne race conditions, memory leaks e leituras desnecessárias do Firestore
         leagueDataJob?.cancel()
+        userFetchJob?.cancel()
+
+        AppLogger.d(TAG) { "🔄 Carregando league data para nova temporada (queries stale canceladas)" }
 
         leagueDataJob = viewModelScope.launch {
             _uiState.value = LeagueUiState.Loading
@@ -145,9 +158,17 @@ class LeagueViewModel @Inject constructor(
                         .filter { !_userCache.containsKey(it) }
                         .distinct()
 
-                    // 2. Buscar dados dos faltantes
+                    // 2. Buscar dados dos faltantes (em job separado para cancelamento independente)
                     if (missingUserIds.isNotEmpty()) {
-                        fetchMissingUsers(missingUserIds)
+                        // ✅ OTIMIZAÇÃO #5: Rastrear job de fetch para cancelamento
+                        userFetchJob?.cancel()
+                        userFetchJob = viewModelScope.launch {
+                            try {
+                                fetchMissingUsers(missingUserIds)
+                            } catch (e: Exception) {
+                                AppLogger.d(TAG) { "🔄 User fetch job cancelado ou falhou: ${e.message}" }
+                            }
+                        }
                     }
 
                     // 3. Montar RankingItems
@@ -267,7 +288,11 @@ class LeagueViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        // ✅ OTIMIZAÇÃO #5: Cancelar todas as queries pendentes ao destruir ViewModel
+        // Previne memory leaks, conexões abertas e leituras desnecessárias do Firestore
         leagueDataJob?.cancel()
+        userFetchJob?.cancel()
+        AppLogger.d(TAG) { "✅ LeagueViewModel destruído - todas as queries canceladas" }
     }
 }
 
