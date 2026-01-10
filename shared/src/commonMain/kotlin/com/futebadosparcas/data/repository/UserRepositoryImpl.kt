@@ -90,8 +90,43 @@ class UserRepositoryImpl(
          return withContext(Dispatchers.Default) {
             try {
                 if (userIds.isEmpty()) return@withContext Result.success(emptyList())
-                firebaseDataSource.getUsersByIds(userIds)
+
+                // ✅ OTIMIZAÇÃO: Tentar cache local primeiro
+                val cachedUsers = database.futebaDatabaseQueries
+                    .selectAllUsers()
+                    .executeAsList()
+                    .map { it.toUser() }
+                    .filter { it.id in userIds }
+                    .filterNot { isCacheExpired(it.experiencePoints, OTHER_USER_CACHE_TTL_MS) }
+
+                // Se temos todos no cache, retornar
+                if (cachedUsers.size == userIds.size) {
+                    PlatformLogger.d(TAG, "getUsersByIds: Cache hit! ${userIds.size} users from local cache")
+                    return@withContext Result.success(cachedUsers)
+                }
+
+                // Identificar usuários faltantes
+                val cachedIds = cachedUsers.map { it.id }.toSet()
+                val missingIds = userIds.filter { it !in cachedIds }
+
+                PlatformLogger.d(TAG, "getUsersByIds: ${cachedUsers.size}/${userIds.size} cached, fetching ${missingIds.size} from Firebase")
+
+                // Buscar apenas os faltantes do Firebase
+                firebaseDataSource.getUsersByIds(missingIds).onSuccess { newUsers ->
+                    // ✅ Cache os novos usuários
+                    newUsers.forEach { user ->
+                        cacheUser(user)
+                        PlatformLogger.d(TAG, "Cached user: ${user.id}")
+                    }
+                }.getOrNull()?.let { newUsers ->
+                    // Retornar cache + novos
+                    Result.success(cachedUsers + newUsers)
+                } ?: run {
+                    // Se Firebase falhar, retornar o que temos no cache
+                    Result.success(cachedUsers)
+                }
             } catch (e: Exception) {
+                PlatformLogger.e(TAG, "Erro ao buscar users por IDs", e)
                 Result.failure(e)
             }
         }
