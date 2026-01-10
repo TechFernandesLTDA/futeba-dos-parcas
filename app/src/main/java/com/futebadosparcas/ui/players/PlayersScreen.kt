@@ -48,7 +48,6 @@ import com.futebadosparcas.ui.components.ShimmerPlayerCard
 import com.futebadosparcas.ui.theme.bottomBarPadding
 import com.futebadosparcas.ui.theme.GamificationColors
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -88,12 +87,6 @@ fun PlayersScreen(
     var isComparisonMode by remember { mutableStateOf(false) }
     var selectedPlayers by remember { mutableStateOf(setOf<String>()) }
 
-    // Debounce manual da busca (300ms)
-    LaunchedEffect(searchQuery) {
-        delay(300)
-        viewModel.searchPlayers(searchQuery)
-    }
-
     Scaffold(
         topBar = {
             com.futebadosparcas.ui.components.FutebaTopBar(
@@ -118,7 +111,10 @@ fun PlayersScreen(
                 // SearchBar e Filtros
                 PlayersSearchAndFilters(
                     searchQuery = searchQuery,
-                    onSearchQueryChange = { searchQuery = it },
+                    onSearchQueryChange = {
+                        searchQuery = it
+                        viewModel.searchPlayers(it) // ViewModel has debounce (300ms)
+                    },
                     selectedFieldType = selectedFieldType,
                     onFieldTypeChange = {
                         selectedFieldType = it
