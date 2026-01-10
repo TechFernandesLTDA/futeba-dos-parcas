@@ -87,12 +87,7 @@ fun PlayersScreen(
     var isComparisonMode by remember { mutableStateOf(false) }
     var selectedPlayers by remember { mutableStateOf(setOf<String>()) }
 
-    // Debounce manual da busca (300ms)
-    LaunchedEffect(searchQuery) {
-        delay(300)
-        viewModel.searchPlayers(searchQuery)
-    }
-
+  
     Scaffold(
         topBar = {
             com.futebadosparcas.ui.components.FutebaTopBar(
@@ -117,7 +112,10 @@ fun PlayersScreen(
                 // SearchBar e Filtros
                 PlayersSearchAndFilters(
                     searchQuery = searchQuery,
-                    onSearchQueryChange = { searchQuery = it },
+                    onSearchQueryChange = {
+                        searchQuery = it
+                        viewModel.searchPlayers(it)
+                    },
                     selectedFieldType = selectedFieldType,
                     onFieldTypeChange = {
                         selectedFieldType = it

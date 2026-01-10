@@ -66,21 +66,29 @@ class CacheCleanupWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         return try {
+            val startTime = System.currentTimeMillis()
             val now = System.currentTimeMillis()
+            var totalDeleted = 0
 
-            // Limpar usuarios expirados (> 24h)
+            AppLogger.d(TAG) { "Starting cache cleanup..." }
+
+            // Stage 1: Limpar usuarios expirados (> 24h)
             val userExpiration = now - USER_TTL_MS
             userDao.deleteExpiredUsers(userExpiration)
+            AppLogger.d(TAG) { "Cleaned expired users" }
 
-            // Limpar jogos finalizados antigos (> 3 dias)
+            // Stage 2: Limpar jogos finalizados antigos (> 3 dias)
             val finishedGameExpiration = now - FINISHED_GAME_TTL_MS
             gameDao.deleteOldFinishedGames(finishedGameExpiration)
+            AppLogger.d(TAG) { "Cleaned old finished games" }
 
-            // Limpar jogos gerais muito antigos (> 7 dias)
+            // Stage 3: Limpar jogos gerais muito antigos (> 7 dias)
             val gameExpiration = now - GAME_TTL_MS
             gameDao.deleteExpiredGames(gameExpiration)
+            AppLogger.d(TAG) { "Cleaned expired games" }
 
-            AppLogger.d(TAG) { "Cache cleanup completed successfully" }
+            val duration = System.currentTimeMillis() - startTime
+            AppLogger.d(TAG) { "Cache cleanup completed in ${duration}ms, deleted $totalDeleted entries" }
             Result.success()
         } catch (e: Exception) {
             AppLogger.e(TAG, "Cache cleanup failed", e)
