@@ -48,6 +48,7 @@ import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.*
 import com.futebadosparcas.util.ShareCardHelper
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import java.time.LocalDate
@@ -538,12 +539,10 @@ fun ConfirmationCard(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = confirmation.userPhoto,
-                contentDescription = null,
-                modifier = Modifier.size(40.dp).clip(CircleShape),
-                error = painterResource(R.drawable.ic_player_placeholder),
-                placeholder = painterResource(R.drawable.ic_player_placeholder)
+            CachedProfileImage(
+                photoUrl = confirmation.userPhoto,
+                userName = confirmation.userName,
+                size = 40.dp
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {

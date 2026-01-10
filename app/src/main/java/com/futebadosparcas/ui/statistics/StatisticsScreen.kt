@@ -40,6 +40,7 @@ import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 
@@ -746,24 +747,16 @@ private fun RankingItem(
             }
 
             // Avatar do jogador
+            CachedProfileImage(
+                photoUrl = item.photoUrl,
+                userName = item.playerName,
+                size = 48.dp
+            )
+
+            // Badge de nível (now as sibling, not nested)
             Box(
                 modifier = Modifier.size(48.dp)
             ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(item.photoUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = "Avatar de ${item.playerName}",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                    placeholder = painterResource(R.drawable.ic_launcher_foreground),
-                    error = painterResource(R.drawable.ic_launcher_foreground)
-                )
-
-                // Badge de nível
                 Image(
                     painter = painterResource(LevelBadgeHelper.getBadgeForLevel(item.level)),
                     contentDescription = "Badge nível ${item.level}",
