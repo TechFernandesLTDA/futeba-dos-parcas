@@ -428,7 +428,7 @@ fun AddCashboxEntryDialog(
                     Box(Modifier.fillMaxWidth().height(150.dp)) {
                         AsyncImage(
                             model = selectedReceiptUri,
-                            contentDescription = "Receipt",
+                            contentDescription = "Comprovante",
                             modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop
                         )
