@@ -196,13 +196,57 @@ class ProfileViewModel @Inject constructor(
         playStyle: String?,
         experienceYears: Int?
     ) {
-        android.util.Log.d("ProfileViewModel", "updateProfile called.")
         viewModelScope.launch {
+            val currentState = _uiState.value
+            if (currentState !is ProfileUiState.Success) return@launch
+
             _uiState.value = ProfileUiState.Loading
 
-            // TODO: Modernizar atualização de perfil com photo upload via Firebase Storage Service
-            // Por enquanto, usar userRepository.updateUser() sem suporte a foto
-            _uiState.value = ProfileUiState.Error("Funcionalidade de atualização de perfil em modernização")
+            try {
+                // Se houver foto nova, fazer upload primeiro
+                if (photoUri != null) {
+                    try {
+                        // TODO: Implementar upload de foto em FirebaseStorageService
+                        android.util.Log.d("ProfileViewModel", "Photo upload not yet implemented: $photoUri")
+                    } catch (e: Exception) {
+                        android.util.Log.e("ProfileViewModel", "Photo upload failed", e)
+                    }
+                }
+
+                // Criar User atualizado com novos dados
+                val updatedUser = currentState.user.copy(
+                    name = name,
+                    nickname = nickname ?: "",
+                    strikerRating = strikerRating,
+                    midRating = midRating,
+                    defenderRating = defenderRating,
+                    gkRating = gkRating,
+                    preferredFieldTypes = preferredFieldTypes.map {
+                        com.futebadosparcas.domain.model.FieldType.valueOf(it.name)
+                    },
+                    birthDate = birthDate?.time,
+                    gender = gender,
+                    heightCm = heightCm,
+                    weightKg = weightKg,
+                    dominantFoot = dominantFoot,
+                    primaryPosition = primaryPosition,
+                    secondaryPosition = secondaryPosition,
+                    playStyle = playStyle,
+                    experienceYears = experienceYears
+                )
+
+                // Atualizar perfil via UserRepository
+                userRepository.updateUser(updatedUser).onSuccess {
+                    _uiEvents.trySend(ProfileUiEvent.ProfileUpdated)
+                    // Reload será feito automaticamente via observeCurrentUser Flow
+                }.onFailure { error ->
+                    _uiState.value = ProfileUiState.Error("Erro ao atualizar perfil: ${error.message}")
+                    android.util.Log.e("ProfileViewModel", "Failed to update profile", error)
+                }
+            } catch (e: Exception) {
+                _uiState.value = ProfileUiState.Error("Erro ao atualizar perfil: ${e.message}")
+                android.util.Log.e("ProfileViewModel", "Exception during profile update", e)
+            }
         }
     }
 
@@ -296,4 +340,5 @@ sealed class ProfileUiState {
 
 sealed class ProfileUiEvent {
     object LoadComplete : ProfileUiEvent()
+    object ProfileUpdated : ProfileUiEvent()
 }
