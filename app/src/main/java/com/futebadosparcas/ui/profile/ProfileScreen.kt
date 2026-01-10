@@ -48,6 +48,7 @@ import com.futebadosparcas.data.model.*
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
@@ -308,13 +309,10 @@ private fun ProfileHeader(
             ) {
                 // Avatar circular
                 if (user.photoUrl != null) {
-                    AsyncImage(
-                        model = "${user.photoUrl}?ts=${System.currentTimeMillis()}",
-                        contentDescription = "Foto de perfil",
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
+                    CachedProfileImage(
+                        photoUrl = user.photoUrl,
+                        userName = user.name,
+                        size = 120.dp
                     )
                 } else {
                     // Iniciais

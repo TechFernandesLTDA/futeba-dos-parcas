@@ -38,6 +38,7 @@ import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.PlayerRatingRole
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.ui.components.EmptyPlayersState
 import com.futebadosparcas.ui.components.EmptySearchState
@@ -511,38 +512,11 @@ private fun PlayerCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-            ) {
-                AsyncImage(
-                    model = player.photoUrl?.ifEmpty { null },
-                    contentDescription = player.getDisplayName(),
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-                // Fallback se não houver foto
-                if (player.photoUrl.isNullOrEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = player.getDisplayName().take(1).uppercase(),
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
+            CachedProfileImage(
+                photoUrl = player.photoUrl,
+                userName = player.getDisplayName(),
+                size = 64.dp
+            )
 
             Spacer(modifier = Modifier.width(12.dp))
 
