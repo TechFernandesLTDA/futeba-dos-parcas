@@ -3,6 +3,7 @@ package com.futebadosparcas.data.repository
 import com.futebadosparcas.data.datasource.MatchManagementDataSource
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.QueryPerformanceMonitor
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
@@ -53,14 +54,16 @@ class GameConfirmationRepositoryImpl @Inject constructor(
                 return Result.success(cached.confirmations)
             }
 
-            // Buscar do Firestore se cache expirou ou não existe
-            val snapshot = confirmationsCollection
-                .whereEqualTo("game_id", gameId)
-                .whereEqualTo("status", "CONFIRMED")
-                .get()
-                .await()
+            // ✅ OTIMIZAÇÃO #6: Monitorar performance da query
+            val confirmations = QueryPerformanceMonitor.measureQuerySuspend("getGameConfirmations") {
+                val snapshot = confirmationsCollection
+                    .whereEqualTo("game_id", gameId)
+                    .whereEqualTo("status", "CONFIRMED")
+                    .get()
+                    .await()
 
-            val confirmations = snapshot.toObjects(GameConfirmation::class.java)
+                snapshot.toObjects(GameConfirmation::class.java)
+            }
 
             // ✅ Armazenar no cache local
             if (confirmationCache.size >= CACHE_LIMIT) {
