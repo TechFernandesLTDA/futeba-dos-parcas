@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.data.repository.RankingCategory
 import com.futebadosparcas.data.repository.RankingPeriod
 import com.futebadosparcas.ui.theme.GamificationColors
@@ -29,7 +30,8 @@ fun RankingScreen(
     viewModel: RankingViewModel,
     onPlayerClick: (String) -> Unit = {}
 ) {
-    val state by viewModel.rankingState.collectAsState()
+    // 🔧 OTIMIZADO: Use collectAsStateWithLifecycle to respect lifecycle and prevent memory leaks
+    val state by viewModel.rankingState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.loadRanking()

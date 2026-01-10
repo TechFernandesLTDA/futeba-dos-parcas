@@ -585,17 +585,23 @@ fun TeamCard(
                 Text("Gols: ${team.score}", style = MaterialTheme.typography.titleMedium)
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            players.forEach { player ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = canManage) { onPlayerClick(player.userId) }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(player.userName, modifier = Modifier.weight(1f))
-                    if (player.goals > 0) {
-                        Text("⚽ ${player.goals} ", fontSize = 12.sp)
+            // 🔧 OTIMIZADO: Use LazyColumn instead of forEach for proper Compose list rendering
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                items(
+                    items = players,
+                    key = { it.userId }  // ✅ Each player has unique key for efficient recomposition
+                ) { player ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = canManage) { onPlayerClick(player.userId) }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(player.userName, modifier = Modifier.weight(1f))
+                        if (player.goals > 0) {
+                            Text("⚽ ${player.goals} ", fontSize = 12.sp)
+                        }
                     }
                 }
             }
