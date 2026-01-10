@@ -10,7 +10,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.futebadosparcas.R
 import com.futebadosparcas.data.repository.AuthRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.ui.auth.LoginActivity
 import com.futebadosparcas.ui.main.MainActivity
 import com.futebadosparcas.util.LevelBadgeHelper

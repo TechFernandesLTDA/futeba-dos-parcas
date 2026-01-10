@@ -1,0 +1,26 @@
+-- Initial Schema (Version 1)
+
+CREATE TABLE IF NOT EXISTS games (
+    id TEXT NOT NULL PRIMARY KEY,
+    scheduleId TEXT,
+    date TEXT NOT NULL,
+    time TEXT NOT NULL,
+    status TEXT NOT NULL,
+    ownerId TEXT NOT NULL,
+    locationId TEXT,
+    fieldId TEXT,
+    locationName TEXT,
+    locationAddress TEXT,
+    maxPlayers INTEGER NOT NULL,
+    dailyPrice REAL,
+    cachedAt INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT NOT NULL PRIMARY KEY,
+    email TEXT NOT NULL,
+    name TEXT NOT NULL,
+    photoUrl TEXT,
+    fcmToken TEXT,
+    cachedAt INTEGER NOT NULL
+);

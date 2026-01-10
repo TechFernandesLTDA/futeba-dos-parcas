@@ -40,6 +40,7 @@ import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 
@@ -340,7 +341,7 @@ private fun NavigationButtons(
         ) {
             Icon(
                 imageVector = Icons.Default.Leaderboard,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.fragment_statistics_text_1),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -353,7 +354,7 @@ private fun NavigationButtons(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.TrendingUp,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.fragment_statistics_text_2),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -451,7 +452,7 @@ private fun StatItem(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = label,
             tint = iconTint,
             modifier = Modifier.size(32.dp)
         )
@@ -666,7 +667,7 @@ private fun RankingSection(
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = null,
+                contentDescription = title,
                 tint = iconTint,
                 modifier = Modifier.size(24.dp)
             )
@@ -746,24 +747,16 @@ private fun RankingItem(
             }
 
             // Avatar do jogador
+            CachedProfileImage(
+                photoUrl = item.photoUrl,
+                userName = item.playerName,
+                size = 48.dp
+            )
+
+            // Badge de nível (now as sibling, not nested)
             Box(
                 modifier = Modifier.size(48.dp)
             ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(item.photoUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = "Avatar de ${item.playerName}",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                    placeholder = painterResource(R.drawable.ic_launcher_foreground),
-                    error = painterResource(R.drawable.ic_launcher_foreground)
-                )
-
-                // Badge de nível
                 Image(
                     painter = painterResource(LevelBadgeHelper.getBadgeForLevel(item.level)),
                     contentDescription = "Badge nível ${item.level}",

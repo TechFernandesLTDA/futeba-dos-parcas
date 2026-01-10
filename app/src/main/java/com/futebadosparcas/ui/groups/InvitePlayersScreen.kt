@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.ui.theme.systemBarsPadding
@@ -236,13 +237,10 @@ private fun InvitePlayerCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar
-            AsyncImage(
-                model = user.photoUrl?.ifEmpty { null } ?: R.drawable.ic_person,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+            CachedProfileImage(
+                photoUrl = user.photoUrl,
+                userName = user.getDisplayName(),
+                size = 48.dp
             )
 
             // Nome e info secundária

@@ -18,11 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.data.model.*
+import com.futebadosparcas.ui.components.CachedAsyncImage
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.dialogs.ConfirmationDialog
@@ -251,6 +254,7 @@ fun CashboxScreen(
                     HistoryList(
                         items = history.items,
                         canDelete = canDelete,
+                        contentPadding = PaddingValues(bottom = if (canManage) 88.dp else 16.dp),
                         onEntryClick = { entry ->
                             selectedEntry = entry
                             showEntryDetails = true
@@ -283,7 +287,7 @@ fun CashboxScreen(
                     viewModel.clearFilter()
                     showFilterMenu = false
                 },
-                leadingIcon = { Icon(Icons.Default.FilterList, null) }
+                leadingIcon = { Icon(Icons.Default.FilterList, contentDescription = "Mostrar todos") }
             )
             DropdownMenuItem(
                 text = { Text("Receitas") },
@@ -291,7 +295,7 @@ fun CashboxScreen(
                     viewModel.filterByType(CashboxEntryType.INCOME)
                     showFilterMenu = false
                 },
-                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, null) }
+                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = "Receitas") }
             )
             DropdownMenuItem(
                 text = { Text("Despesas") },
@@ -299,7 +303,7 @@ fun CashboxScreen(
                     viewModel.filterByType(CashboxEntryType.EXPENSE)
                     showFilterMenu = false
                 },
-                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingDown, null) }
+                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingDown, contentDescription = "Despesas") }
             )
         }
 
@@ -314,7 +318,7 @@ fun CashboxScreen(
                     viewModel.getTotalsByCategory()
                     showReportMenu = false
                 },
-                leadingIcon = { Icon(Icons.Default.Category, null) }
+                leadingIcon = { Icon(Icons.Default.Category, contentDescription = "Categoria") }
             )
             DropdownMenuItem(
                 text = { Text("Totais por Jogador") },
@@ -322,7 +326,7 @@ fun CashboxScreen(
                     viewModel.getTotalsByPlayer()
                     showReportMenu = false
                 },
-                leadingIcon = { Icon(Icons.Default.Person, null) }
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = "Jogador") }
             )
         }
     }
@@ -515,12 +519,13 @@ private fun FilterChips(
 private fun HistoryList(
     items: List<CashboxListItem>,
     canDelete: Boolean,
+    contentPadding: PaddingValues,
     onEntryClick: (CashboxEntry) -> Unit,
     onEntryLongClick: (CashboxEntry) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 88.dp) // Space for FAB
+        contentPadding = contentPadding
     ) {
         items(items, key = { item ->
             when (item) {
@@ -671,13 +676,18 @@ private fun CashboxFABs(
     onAddIncome: () -> Unit,
     onAddExpense: () -> Unit
 ) {
+    val haptics = LocalHapticFeedback.current
+
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.End
     ) {
         // FAB Adicionar Despesa
         SmallFloatingActionButton(
-            onClick = onAddExpense,
+            onClick = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onAddExpense()
+            },
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer
         ) {
@@ -686,7 +696,10 @@ private fun CashboxFABs(
 
         // FAB Adicionar Receita
         FloatingActionButton(
-            onClick = onAddIncome
+            onClick = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onAddIncome()
+            }
         ) {
             Icon(Icons.Default.Add, contentDescription = "Adicionar Receita")
         }
@@ -711,12 +724,33 @@ private fun EntryDetailsDialog(
                 DetailRow("Descrição", entry.description)
                 DetailRow("Categoria", entry.getCategoryEnum().displayName)
                 DetailRow("Valor", currencyFormat.format(entry.amount))
+                
                 val playerName = entry.playerName
                 if (!playerName.isNullOrEmpty()) {
                     DetailRow("Jogador", playerName)
                 }
+                
                 if (entry.status == "VOIDED") {
                     DetailRow("Status", "ESTORNADO/CANCELADO")
+                }
+
+                if (!entry.receiptUrl.isNullOrEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Comprovante:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    coil.compose.AsyncImage(
+                        model = entry.receiptUrl,
+                        contentDescription = "Comprovante",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
                 }
             }
         },

@@ -6,7 +6,7 @@ import com.futebadosparcas.data.model.GroupInvite
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.data.repository.InviteRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

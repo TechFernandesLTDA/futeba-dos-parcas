@@ -26,9 +26,13 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.util.PreferencesManager
 import java.text.SimpleDateFormat
 import java.util.*
@@ -79,9 +83,9 @@ fun EditProfileScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -335,26 +339,27 @@ private fun EditProfileContent(
                     return@Button
                 }
 
-                onSaveClick(
-                    ProfileFormData(
-                        name = name,
-                        nickname = nickname.takeIf { it.isNotBlank() },
-                        preferredFieldTypes = preferredFieldTypes,
-                        strikerRating = strikerRating.toDouble(),
-                        midRating = midRating.toDouble(),
-                        defenderRating = defRating.toDouble(),
-                        gkRating = gkRating.toDouble(),
-                        birthDate = birthDate,
-                        gender = gender.takeIf { it.isNotBlank() },
-                        heightCm = heightCm.toIntOrNull(),
-                        weightKg = weightKg.toIntOrNull(),
-                        dominantFoot = dominantFoot.takeIf { it.isNotBlank() },
-                        primaryPosition = primaryPosition.takeIf { it.isNotBlank() },
-                        secondaryPosition = secondaryPosition.takeIf { it.isNotBlank() },
-                        playStyle = playStyle.takeIf { it.isNotBlank() },
-                        experienceYears = experienceYears.toIntOrNull()
-                    )
+                val formData = ProfileFormData(
+                    name = name,
+                    nickname = nickname.takeIf { it.isNotBlank() },
+                    preferredFieldTypes = preferredFieldTypes,
+                    strikerRating = strikerRating.toDouble(),
+                    midRating = midRating.toDouble(),
+                    defenderRating = defRating.toDouble(),
+                    gkRating = gkRating.toDouble(),
+                    birthDate = birthDate,
+                    gender = gender.takeIf { it.isNotBlank() },
+                    heightCm = heightCm.toIntOrNull(),
+                    weightKg = weightKg.toIntOrNull(),
+                    dominantFoot = dominantFoot.takeIf { it.isNotBlank() },
+                    primaryPosition = primaryPosition.takeIf { it.isNotBlank() },
+                    secondaryPosition = secondaryPosition.takeIf { it.isNotBlank() },
+                    playStyle = playStyle.takeIf { it.isNotBlank() },
+                    experienceYears = experienceYears.toIntOrNull()
                 )
+
+                android.util.Log.d("EditProfileScreen", "Saving profile data: $formData")
+                onSaveClick(formData)
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -390,13 +395,10 @@ private fun PhotoSection(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                AsyncImage(
-                    model = selectedImageUri ?: photoUrl,
-                    contentDescription = "Foto de perfil",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
+                CachedProfileImage(
+                    photoUrl = (selectedImageUri ?: photoUrl)?.toString(),
+                    userName = "Perfil",
+                    size = 120.dp
                 )
             }
         }
@@ -573,19 +575,27 @@ private fun PhysicalInfoSection(
         ) {
             OutlinedTextField(
                 value = heightCm,
-                onValueChange = onHeightChange,
+                onValueChange = { if (it.all { char -> char.isDigit() }) onHeightChange(it) },
                 label = { Text("Altura (cm)") },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
                 shape = RoundedCornerShape(12.dp)
             )
 
             OutlinedTextField(
                 value = weightKg,
-                onValueChange = onWeightChange,
+                onValueChange = { if (it.all { char -> char.isDigit() }) onWeightChange(it) },
                 label = { Text("Peso (kg)") },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
                 shape = RoundedCornerShape(12.dp)
             )
         }
@@ -641,34 +651,43 @@ private fun FieldPreferencesSection(
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onSocietyChange(!societyChecked) }
+                .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
                 checked = societyChecked,
-                onCheckedChange = onSocietyChange
+                onCheckedChange = null // Handled by Row click
             )
             Text("Society")
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onFutsalChange(!futsalChecked) }
+                .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
                 checked = futsalChecked,
-                onCheckedChange = onFutsalChange
+                onCheckedChange = null // Handled by Row click
             )
             Text("Futsal")
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onFieldChange(!fieldChecked) }
+                .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
                 checked = fieldChecked,
-                onCheckedChange = onFieldChange
+                onCheckedChange = null // Handled by Row click
             )
             Text("Campo/Grama")
         }
@@ -801,10 +820,14 @@ private fun PositionSection(
 
         OutlinedTextField(
             value = experienceYears,
-            onValueChange = onExperienceYearsChange,
+            onValueChange = { if (it.all { char -> char.isDigit() }) onExperienceYearsChange(it) },
             label = { Text("Anos de Experiência") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
+            ),
             shape = RoundedCornerShape(12.dp)
         )
     }

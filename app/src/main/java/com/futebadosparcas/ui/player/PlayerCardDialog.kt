@@ -73,31 +73,36 @@ class PlayerCardDialog : DialogFragment() {
     private fun sharePlayerCard(view: View) {
         try {
             val bitmap = captureView(view)
-            
-            val cachePath = File(requireContext().cacheDir, "images")
-            cachePath.mkdirs()
-            val file = File(cachePath, "player_card_${System.currentTimeMillis()}.png")
-            
-            FileOutputStream(file).use { out ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+
+            try {
+                val cachePath = File(requireContext().cacheDir, "images")
+                cachePath.mkdirs()
+                val file = File(cachePath, "player_card_${System.currentTimeMillis()}.png")
+
+                FileOutputStream(file).use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                }
+
+                val contentUri = FileProvider.getUriForFile(
+                    requireContext(),
+                    "${requireContext().packageName}.fileprovider",
+                    file
+                )
+
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "image/png"
+                    putExtra(Intent.EXTRA_STREAM, contentUri)
+                    putExtra(Intent.EXTRA_TEXT, "Confira meu cartão de jogador no Futeba dos Parças! ⚽")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    setPackage("com.whatsapp")
+                }
+
+                startActivity(Intent.createChooser(shareIntent, "Compartilhar via WhatsApp"))
+            } finally {
+                // FIX: Recycle bitmap to prevent 50-200MB memory leak
+                bitmap.recycle()
             }
-            
-            val contentUri = FileProvider.getUriForFile(
-                requireContext(),
-                "${requireContext().packageName}.fileprovider",
-                file
-            )
-            
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/png"
-                putExtra(Intent.EXTRA_STREAM, contentUri)
-                putExtra(Intent.EXTRA_TEXT, "Confira meu cartão de jogador no Futeba dos Parças! ⚽")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                // setPackage("com.whatsapp")
-            }
-            
-            startActivity(Intent.createChooser(shareIntent, "Compartilhar via"))
-            
+
         } catch (e: Exception) {
             android.widget.Toast.makeText(requireContext(), "Erro ao compartilhar", android.widget.Toast.LENGTH_SHORT).show()
         }

@@ -6,6 +6,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -270,8 +274,8 @@ class GamificationRepository @Inject constructor(
      * Busca a temporada ativa
      */
 
-    suspend fun getActiveSeason(): Result<Season?> {
-        return try {
+    suspend fun getActiveSeason(): Result<Season?> = withContext(Dispatchers.IO) {
+        try {
             // Gatilho de Automação: Se o usuário logado for Admin ou Dono, garante temporadas vivas
             authRepository.getCurrentUser().getOrNull()?.let { user ->
                 if (user.isAdmin() || user.isFieldOwner()) {
@@ -291,9 +295,9 @@ class GamificationRepository @Inject constructor(
                 try {
                     val season = doc.toObject(Season::class.java)
                     val active = doc.getBoolean("is_active") ?: doc.getBoolean("isActive") ?: false
-                    
+
                     AppLogger.d(TAG) { "Temporada ${doc.id}: Active=$active, Nome=${season?.name}" }
-                    
+
                     if (season != null && active) season else null
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Erro ao converter temporada ${doc.id}", e)
@@ -301,7 +305,7 @@ class GamificationRepository @Inject constructor(
                 }
             }
 
-            
+
             AppLogger.d(TAG) { "Temporadas ativas após filtro: ${seasons.size}" }
 
             // Lógica de Prioridade:
@@ -314,7 +318,7 @@ class GamificationRepository @Inject constructor(
                     .thenByDescending { it.id.startsWith("monthly") } // True (monthly) vem antes
                     .thenByDescending { it.id }
             ).firstOrNull()
-            
+
             AppLogger.d(TAG) { "Temporada selecionada: ${selectedSeason?.id} - ${selectedSeason?.name}" }
 
             Result.success(selectedSeason)
@@ -327,8 +331,8 @@ class GamificationRepository @Inject constructor(
     /**
      * Busca todas as seasons (ativas e inativas) ordenadas por data de fim
      */
-    suspend fun getAllSeasons(): Result<List<Season>> {
-        return try {
+    suspend fun getAllSeasons(): Result<List<Season>> = withContext(Dispatchers.IO) {
+        try {
             val snapshot = firestore.collection(COLLECTION_SEASONS)
                 .get()
                 .await()
@@ -361,8 +365,8 @@ class GamificationRepository @Inject constructor(
     /**
      * Busca ranking da temporada
      */
-    suspend fun getSeasonRanking(seasonId: String, limit: Int = 50): Result<List<SeasonParticipationV2>> {
-        return try {
+    suspend fun getSeasonRanking(seasonId: String, limit: Int = 50): Result<List<SeasonParticipationV2>> = withContext(Dispatchers.IO) {
+        try {
             val snapshot = firestore.collection(COLLECTION_SEASON_PARTICIPATION)
                 .whereEqualTo("season_id", seasonId)
                 .orderBy("points", Query.Direction.DESCENDING)
@@ -525,21 +529,26 @@ class GamificationRepository @Inject constructor(
         }
     }
 
-    suspend fun getChallengesProgress(userId: String, challengeIds: List<String>): Result<List<UserChallengeProgress>> {
-        if (challengeIds.isEmpty()) return Result.success(emptyList())
-        return try {
+    suspend fun getChallengesProgress(userId: String, challengeIds: List<String>): Result<List<UserChallengeProgress>> = withContext(Dispatchers.IO) {
+        if (challengeIds.isEmpty()) return@withContext Result.success(emptyList())
+        try {
              // Firestore limit for 'IN' query is 10
              val chunks = challengeIds.chunked(10)
-             val allProgress = mutableListOf<UserChallengeProgress>()
-             
-             for (chunk in chunks) {
-                 val snapshot = firestore.collection(COLLECTION_CHALLENGE_PROGRESS)
-                     .whereEqualTo("userId", userId)
-                     .whereIn("challengeId", chunk)
-                     .get()
-                     .await()
-                 allProgress.addAll(snapshot.toObjects(UserChallengeProgress::class.java))
+
+             // Execute queries in parallel
+             val allProgress = coroutineScope {
+                 chunks.map { chunk ->
+                     async {
+                         firestore.collection(COLLECTION_CHALLENGE_PROGRESS)
+                             .whereEqualTo("userId", userId)
+                             .whereIn("challengeId", chunk)
+                             .get()
+                             .await()
+                             .toObjects(UserChallengeProgress::class.java)
+                     }
+                 }.flatMap { it.await() }
              }
+
              Result.success(allProgress)
         } catch (e: Exception) {
              AppLogger.e(TAG, "Erro ao buscar progresso dos desafios", e)

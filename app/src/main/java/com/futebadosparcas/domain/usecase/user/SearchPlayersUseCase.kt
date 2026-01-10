@@ -3,7 +3,7 @@ package com.futebadosparcas.domain.usecase.user
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.User
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
 import javax.inject.Inject
 

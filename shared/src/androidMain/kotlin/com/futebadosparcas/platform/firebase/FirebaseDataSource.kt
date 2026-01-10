@@ -539,6 +539,18 @@ actual class FirebaseDataSource(
         }
     }
 
+    actual suspend fun updateFcmToken(userId: String, token: String): Result<Unit> {
+        return try {
+            firestore.collection(COLLECTION_USERS)
+                .document(userId)
+                .update("fcm_token", token)
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // ========== GROUPS ==========
 
     actual suspend fun getUserGroups(userId: String): Result<List<UserGroup>> {

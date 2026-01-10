@@ -111,6 +111,10 @@ sqldelight {
     databases {
         create("FutebaDatabase") {
             packageName.set("com.futebadosparcas.db")
+            // Migração automática: SQLDelight 2.x lê arquivos .sqm
+            schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
+            verifyMigrations.set(true)
+            deriveSchemaFromMigrations.set(true)
         }
     }
 }

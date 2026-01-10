@@ -12,6 +12,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -47,7 +48,10 @@ class PlayersFragment : Fragment() {
                         onPlayerClick = { user ->
                             // Abre dialog de detalhes do jogador
                             showPlayerCard(user)
-                        }
+                        },
+                        onNavigateNotifications = { findNavController().navigate(com.futebadosparcas.R.id.action_global_notifications) },
+                        onNavigateGroups = { findNavController().navigate(com.futebadosparcas.R.id.action_global_groups) },
+                        onNavigateMap = { findNavController().navigate(com.futebadosparcas.R.id.action_global_map) }
                     )
                 }
             }

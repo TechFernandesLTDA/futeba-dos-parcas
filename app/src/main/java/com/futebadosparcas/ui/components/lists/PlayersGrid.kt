@@ -24,7 +24,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.futebadosparcas.data.model.User
-import com.futebadosparcas.ui.theme.FutebaColors
+import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.components.CachedProfileImage
 
 /**
  * Grid moderna de jogadores com LazyVerticalGrid adaptativo.
@@ -165,17 +166,14 @@ fun PlayerCard(
                 )
 
                 // Avatar
-                if (!player.photoUrl.isNullOrEmpty()) {
-                    AsyncImage(
-                        model = player.photoUrl,
-                        contentDescription = "Foto de ${player.getDisplayName()}",
-                        modifier = Modifier
-                            .size(68.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
+                CachedProfileImage(
+                    photoUrl = player.photoUrl,
+                    userName = player.getDisplayName(),
+                    size = 68.dp
+                )
+
+                // Fallback rendering removed - handled by CachedProfileImage
+                if (false) {
                     Box(
                         modifier = Modifier
                             .size(68.dp)
@@ -236,7 +234,7 @@ fun PlayerCard(
                     imageVector = Icons.Default.Star,
                     contentDescription = null,
                     modifier = Modifier.size(12.dp),
-                    tint = Color(FutebaColors.Gold)
+                    tint = GamificationColors.Gold
                 )
                 Spacer(modifier = Modifier.width(2.dp))
                 Text(
@@ -257,21 +255,21 @@ fun PlayerCard(
                 StatChip(
                     label = "ATK",
                     value = player.strikerRating,
-                    color = Color(FutebaColors.Error)
+                    color = MaterialTheme.colorScheme.error
                 )
 
                 // Meio
                 StatChip(
                     label = "MID",
                     value = player.midRating,
-                    color = Color(FutebaColors.Info)
+                    color = MaterialTheme.colorScheme.secondary
                 )
 
                 // Defesa
                 StatChip(
                     label = "DEF",
                     value = player.defenderRating,
-                    color = Color(FutebaColors.Success)
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -315,20 +313,20 @@ private fun getLevelGradient(level: Int): Brush {
     return when {
         level >= 50 -> Brush.linearGradient(
             colors = listOf(
-                Color(FutebaColors.Gold),
-                Color(FutebaColors.LevelUpGold)
+                GamificationColors.Gold,
+                GamificationColors.LevelUpGold
             )
         )
         level >= 30 -> Brush.linearGradient(
             colors = listOf(
-                Color(FutebaColors.Silver),
+                GamificationColors.Silver,
                 Color.White
             )
         )
         level >= 15 -> Brush.linearGradient(
             colors = listOf(
-                Color(FutebaColors.Bronze),
-                Color(0xFFE6A370)
+                GamificationColors.Bronze,
+                GamificationColors.BronzeLight
             )
         )
         else -> Brush.linearGradient(

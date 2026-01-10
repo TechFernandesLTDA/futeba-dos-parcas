@@ -48,6 +48,7 @@ import com.futebadosparcas.data.model.*
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
@@ -91,15 +92,7 @@ fun ProfileScreen(
     var lastAvatarClickTime by remember { mutableStateOf(0L) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Perfil") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        }
+        // topBar removido conforme solicitação (design limpo)
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -183,12 +176,14 @@ private fun ProfileContent(
     onAvatarClick: () -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding(),  // 🔧 OTIMIZADO: Respeita status/navigation bars (consistent com HomeScreen)
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header: Avatar, Nome, Role
-        item {
+        item(key = "profile_header") {
             ProfileHeader(
                 user = user,
                 onAvatarClick = onAvatarClick
@@ -196,7 +191,7 @@ private fun ProfileContent(
         }
 
         // Card de Nível e XP
-        item {
+        item(key = "level_card") {
             LevelCard(
                 level = user.level,
                 totalXP = user.experiencePoints,
@@ -205,29 +200,29 @@ private fun ProfileContent(
         }
 
         // Preferências de Campo
-        item {
+        item(key = "field_prefs") {
             FieldPreferencesCard(preferredTypes = user.preferredFieldTypes)
         }
 
         // Ratings por Posição
-        item {
+        item(key = "ratings") {
             RatingsCard(user = user)
         }
 
         // Estatísticas Resumidas
-        item {
+        item(key = "statistics") {
             StatisticsCard(statistics = statistics)
         }
 
         // Badges Recentes
         if (badges.isNotEmpty()) {
-            item {
+            item(key = "badges_section") {
                 BadgesSection(badges = badges)
             }
         }
 
         // Botões de Ação
-        item {
+        item(key = "action_buttons") {
             ActionButtonsSection(
                 onEditProfileClick = onEditProfileClick,
                 onLogoutClick = onLogoutClick
@@ -235,7 +230,7 @@ private fun ProfileContent(
         }
 
         // Seção de Configurações
-        item {
+        item(key = "settings_section") {
             SettingsSection(
                 onNotificationsClick = onNotificationsClick,
                 onSettingsClick = onSettingsClick,
@@ -249,7 +244,7 @@ private fun ProfileContent(
         val isFieldOwner = user.isFieldOwner()
 
         if (isAdmin || isFieldOwner) {
-            item {
+            item(key = "admin_section") {
                 AdminSection(
                     isAdmin = isAdmin,
                     isFieldOwner = isFieldOwner,
@@ -264,13 +259,13 @@ private fun ProfileContent(
 
         // Developer Menu (se ativado)
         if (isDevMode) {
-            item {
+            item(key = "dev_menu") {
                 DeveloperMenuCard(onClick = onDeveloperMenuClick)
             }
         }
 
         // Versão do App
-        item {
+        item(key = "app_version") {
             Text(
                 text = "Versão ${BuildConfig.VERSION_NAME}",
                 style = MaterialTheme.typography.bodySmall,
@@ -314,13 +309,10 @@ private fun ProfileHeader(
             ) {
                 // Avatar circular
                 if (user.photoUrl != null) {
-                    AsyncImage(
-                        model = "${user.photoUrl}?ts=${System.currentTimeMillis()}",
-                        contentDescription = "Foto de perfil",
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
+                    CachedProfileImage(
+                        photoUrl = user.photoUrl,
+                        userName = user.name,
+                        size = 120.dp
                     )
                 } else {
                     // Iniciais
@@ -823,10 +815,13 @@ private fun BadgesSection(badges: List<UserBadge>) {
  */
 @Composable
 private fun BadgeItem(badge: UserBadge) {
-    val badgeType = try {
-        BadgeType.valueOf(badge.badgeId)
-    } catch (e: Exception) {
-        null
+    // 🔧 OTIMIZADO: Memoizar parsing de BadgeType para evitar recomposição desnecessária
+    val badgeType = remember(badge.badgeId) {
+        try {
+            BadgeType.valueOf(badge.badgeId)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     Column(
@@ -910,7 +905,7 @@ private fun ActionButtonsSection(
         ) {
             Icon(
                 imageVector = Icons.Default.Edit,
-                contentDescription = null,
+                contentDescription = "Editar Perfil",
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -924,7 +919,7 @@ private fun ActionButtonsSection(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Logout,
-                contentDescription = null,
+                contentDescription = "Sair",
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -1077,7 +1072,7 @@ private fun SettingsMenuItem(
         )
         Icon(
             imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
+            contentDescription = "Acessar $title",
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -1123,7 +1118,7 @@ private fun AdminMenuItem(
         }
         Icon(
             imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
+            contentDescription = "Acessar $title",
             tint = MaterialTheme.colorScheme.onErrorContainer
         )
     }
@@ -1163,7 +1158,7 @@ private fun DeveloperMenuCard(onClick: () -> Unit) {
             )
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
+                contentDescription = "Acessar Developer Menu",
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
@@ -1187,7 +1182,7 @@ private fun ErrorState(
     ) {
         Icon(
             imageVector = Icons.Default.Error,
-            contentDescription = null,
+            contentDescription = "Erro ao carregar perfil",
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.error
         )
@@ -1202,7 +1197,7 @@ private fun ErrorState(
         Button(onClick = onRetry) {
             Icon(
                 imageVector = Icons.Default.Refresh,
-                contentDescription = null,
+                contentDescription = "Tentar novamente",
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))

@@ -72,6 +72,7 @@ expect class FirebaseDataSource {
     fun getCurrentUserId(): String?
     suspend fun updateUser(userId: String, updates: Map<String, Any>): Result<Unit>
     suspend fun searchUsers(query: String, limit: Int): Result<List<User>>
+    suspend fun updateFcmToken(userId: String, token: String): Result<Unit>
 
     // ========== GROUPS ==========
 

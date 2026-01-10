@@ -36,6 +36,7 @@ import com.futebadosparcas.R
 import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.components.CachedProfileImage
 
 /**
  * Tela principal de listagem de grupos em Jetpack Compose
@@ -259,7 +260,7 @@ private fun SearchBar(
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.search),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
@@ -348,7 +349,7 @@ private fun GroupCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.People,
-                            contentDescription = null,
+                            contentDescription = "${group.memberCount} ${if (group.memberCount == 1) "membro" else "membros"}",
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -368,7 +369,7 @@ private fun GroupCard(
             // Ícone de navegação
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
+                contentDescription = "Acessar grupo",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -397,25 +398,11 @@ private fun GroupPhoto(
             ),
         contentAlignment = Alignment.Center
     ) {
-        if (!photoUrl.isNullOrBlank()) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(photoUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            // Fallback com inicial do nome
-            Text(
-                text = groupName.firstOrNull()?.uppercase() ?: "G",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
-        }
+        CachedProfileImage(
+            photoUrl = photoUrl,
+            userName = groupName,
+            size = 56.dp
+        )
     }
 }
 
@@ -448,7 +435,7 @@ private fun RoleBadge(
                         com.futebadosparcas.data.model.GroupMemberRole.ADMIN -> Icons.Default.Shield
                         else -> Icons.Default.Person
                     },
-                    contentDescription = null,
+                    contentDescription = role.displayName,
                     modifier = Modifier.size(12.dp),
                     tint = when (role) {
                         com.futebadosparcas.data.model.GroupMemberRole.OWNER ->

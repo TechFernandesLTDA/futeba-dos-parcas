@@ -361,7 +361,17 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 }) as UserStatistics;
 
                 const streak = !streakDoc.empty ? (streakDoc.docs[0].data().currentStreak || 0) : 0;
-                const isMvp = after.mvp_id === uid;
+
+                // SECURITY FIX (CVE-2): Validate MVP was actually confirmed by checking confirmations list
+                const isMvpAndConfirmed = after.mvp_id === uid &&
+                    confirmations.some(c => c.userId === uid && c.status === 'CONFIRMED');
+
+                // Log fraud attempts (MVP claimed without confirmation)
+                if (after.mvp_id === uid && !isMvpAndConfirmed) {
+                    console.error(`[FRAUD] User ${uid} set as MVP without confirmation in game ${gameId}`);
+                }
+
+                const isMvp = isMvpAndConfirmed;
 
                 // Calc XP
                 let xp = settings.xp_presence;
@@ -373,7 +383,7 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 if (result === "WIN") xp += settings.xp_win;
                 else if (result === "DRAW") xp += settings.xp_draw;
 
-                // MVP XP
+                // MVP XP (now validated)
                 if (isMvp) xp += settings.xp_mvp;
 
                 // Streak XP

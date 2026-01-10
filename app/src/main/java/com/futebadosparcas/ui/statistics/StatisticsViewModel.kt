@@ -3,7 +3,7 @@ package com.futebadosparcas.ui.statistics
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.repository.IStatisticsRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow

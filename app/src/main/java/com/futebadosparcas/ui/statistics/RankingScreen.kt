@@ -19,9 +19,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.data.repository.RankingCategory
 import com.futebadosparcas.data.repository.RankingPeriod
-import com.futebadosparcas.ui.theme.FutebaColors
+import com.futebadosparcas.ui.theme.GamificationColors
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -29,7 +30,8 @@ fun RankingScreen(
     viewModel: RankingViewModel,
     onPlayerClick: (String) -> Unit = {}
 ) {
-    val state by viewModel.rankingState.collectAsState()
+    // 🔧 OTIMIZADO: Use collectAsStateWithLifecycle to respect lifecycle and prevent memory leaks
+    val state by viewModel.rankingState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.loadRanking()
@@ -38,7 +40,7 @@ fun RankingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(FutebaColors.Background))
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Header
         RankingHeader(
@@ -54,14 +56,14 @@ fun RankingScreen(
                 state.isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
-                        color = Color(FutebaColors.Primary)
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
                 state.error != null -> {
                     Text(
                         text = state.error ?: "Erro ao carregar",
                         modifier = Modifier.align(Alignment.Center),
-                        color = Color(FutebaColors.Error)
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
                 state.rankings.isEmpty() -> {
@@ -98,14 +100,14 @@ private fun RankingHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(FutebaColors.Primary))
+            .background(MaterialTheme.colorScheme.primary)
             .padding(16.dp)
     ) {
         Text(
             text = "Ranking",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = MaterialTheme.colorScheme.onPrimary
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -121,10 +123,10 @@ private fun RankingHeader(
                     onClick = { onCategorySelected(category) },
                     label = { Text(getCategoryLabel(category), fontSize = 12.sp) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color.White,
-                        selectedLabelColor = Color(FutebaColors.Primary),
-                        containerColor = Color.White.copy(alpha = 0.2f),
-                        labelColor = Color.White
+                        selectedContainerColor = MaterialTheme.colorScheme.onPrimary,
+                        selectedLabelColor = MaterialTheme.colorScheme.primary,
+                        containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f),
+                        labelColor = MaterialTheme.colorScheme.onPrimary
                     )
                 )
             }
@@ -143,10 +145,10 @@ private fun RankingHeader(
                     onClick = { onPeriodSelected(period) },
                     label = { Text(getPeriodLabel(period), fontSize = 12.sp) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(FutebaColors.Tertiary),
-                        selectedLabelColor = Color.White,
-                        containerColor = Color.White.copy(alpha = 0.2f),
-                        labelColor = Color.White
+                        selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f),
+                        labelColor = MaterialTheme.colorScheme.onPrimary
                     )
                 )
             }
@@ -224,7 +226,7 @@ private fun PodiumSection(topPlayers: List<PlayerRankingItem>, category: Ranking
                 player = topPlayers[1],
                 rank = 2,
                 height = 80.dp,
-                color = Color(FutebaColors.Silver),
+                color = GamificationColors.Silver,
                 category = category
             )
         }
@@ -235,7 +237,7 @@ private fun PodiumSection(topPlayers: List<PlayerRankingItem>, category: Ranking
                 player = topPlayers[0],
                 rank = 1,
                 height = 100.dp,
-                color = Color(FutebaColors.Gold),
+                color = GamificationColors.Gold,
                 category = category
             )
         }
@@ -246,7 +248,7 @@ private fun PodiumSection(topPlayers: List<PlayerRankingItem>, category: Ranking
                 player = topPlayers[2],
                 rank = 3,
                 height = 60.dp,
-                color = Color(FutebaColors.Bronze),
+                color = GamificationColors.Bronze,
                 category = category
             )
         }
@@ -270,14 +272,14 @@ private fun PodiumPlayer(
             modifier = Modifier
                 .size(60.dp)
                 .clip(CircleShape)
-                .background(Color(FutebaColors.SurfaceVariant)),
+                .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = player.getDisplayName().take(1).uppercase(),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(FutebaColors.Primary)
+                color = MaterialTheme.colorScheme.primary
             )
         }
 
@@ -330,9 +332,9 @@ private fun RankingItem(
         onClick = onClick,
         colors = CardDefaults.cardColors(
             containerColor = if (isCurrentUser)
-                Color(FutebaColors.PrimaryLight).copy(alpha = 0.2f)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
             else
-                Color(FutebaColors.Surface)
+                MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isCurrentUser) 4.dp else 1.dp)
     ) {
@@ -359,14 +361,14 @@ private fun RankingItem(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color(FutebaColors.SurfaceVariant)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = player.getDisplayName().take(1).uppercase(),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(FutebaColors.Primary)
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -393,7 +395,7 @@ private fun RankingItem(
                     text = "${player.value}",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(FutebaColors.Primary)
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Text(
                     text = getCategoryUnit(category),
@@ -410,7 +412,7 @@ private fun MyPositionCard(position: Int, category: RankingCategory) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(FutebaColors.Secondary).copy(alpha = 0.1f)
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
         )
     ) {
         Row(
@@ -429,7 +431,7 @@ private fun MyPositionCard(position: Int, category: RankingCategory) {
                 text = "#$position",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(FutebaColors.Secondary)
+                color = MaterialTheme.colorScheme.secondary
             )
         }
     }
