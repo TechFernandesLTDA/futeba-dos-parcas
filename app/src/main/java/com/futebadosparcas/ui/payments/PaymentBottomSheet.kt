@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.futebadosparcas.ui.components.CachedAsyncImage
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -197,12 +198,11 @@ private fun PixGeneratedContent(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                AsyncImage(
-                    model = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=$pixCode",
+                CachedAsyncImage(
+                    imageUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=$pixCode",
                     contentDescription = "QR Code Pix",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp)
+                    size = 250.dp,
+                    shape = RoundedCornerShape(0.dp)
                 )
             }
         }
