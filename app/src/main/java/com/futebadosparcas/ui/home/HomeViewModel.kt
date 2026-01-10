@@ -161,14 +161,10 @@ class HomeViewModel @Inject constructor(
                     _loadingState.value = LoadingState.LoadingProgress(20, 100, "Carregando próximos jogos...")
 
                     // Carregar apenas 3 upcoming games (reduzido de 5) - mais rápido
-                    val games: List<Game> = try {
-                        withTimeout(TIMEOUT_MILLIS) {
-                            gameRepository.getConfirmedUpcomingGamesForUser()
-                                .getOrDefault(emptyList())
-                                .take(3) // Limitar a 3 para fase 1
-                        }
-                    } catch (e: Exception) {
-                        emptyList<Game>()
+                    val games: List<Game> = withTimeout(TIMEOUT_MILLIS) {
+                        gameRepository.getConfirmedUpcomingGamesForUser()
+                            .getOrDefault(emptyList())
+                            .take(3) // Limitar a 3 para fase 1
                     }
 
                     // Cache games no SharedCache
@@ -225,21 +221,13 @@ class HomeViewModel @Inject constructor(
 
                     _loadingState.value = LoadingState.LoadingProgress(50, 100, "Carregando atividades...")
 
-                    val activities: List<Activity> = try {
-                        withTimeout(TIMEOUT_MILLIS) {
-                            activityRepository.getRecentActivities(10) // Reduzido de 20 → 10
-                        }
-                    } catch (e: Exception) {
-                        emptyList<Activity>()
-                    }
+                    val activities: List<Activity> = withTimeout(TIMEOUT_MILLIS) {
+                        activityRepository.getRecentActivities(10) // Reduzido de 20 → 10
+                    }.getOrDefault(emptyList())
 
-                    val statistics: com.futebadosparcas.data.model.UserStatistics? = try {
-                        withTimeout(TIMEOUT_MILLIS) {
-                            statisticsRepository.getUserStatistics(user.id)
-                        }
-                    } catch (e: Exception) {
-                        null
-                    }
+                    val statistics: com.futebadosparcas.data.model.UserStatistics? = withTimeout(TIMEOUT_MILLIS) {
+                        statisticsRepository.getUserStatistics(user.id)
+                    }.getOrNull()
 
                     _loadingState.value = LoadingState.LoadingProgress(60, 100, "Atualizando tela...")
 
@@ -258,49 +246,29 @@ class HomeViewModel @Inject constructor(
 
                     _loadingState.value = LoadingState.LoadingProgress(70, 100, "Carregando mais...")
 
-                    val publicGames: List<Game> = try {
-                        withTimeout(TIMEOUT_MILLIS) {
-                            gameRepository.getPublicGames(5) // Reduzido de 10 → 5
-                        }
-                    } catch (e: Exception) {
-                        emptyList<Game>()
-                    }
+                    val publicGames: List<Game> = withTimeout(TIMEOUT_MILLIS) {
+                        gameRepository.getPublicGames(5) // Reduzido de 10 → 5
+                    }.getOrDefault(emptyList())
 
-                    val streak: com.futebadosparcas.data.model.UserStreak? = try {
-                        withTimeout(TIMEOUT_MILLIS) {
-                            gamificationRepository.getUserStreak(user.id)
-                        }
-                    } catch (e: Exception) {
-                        null
-                    }
+                    val streak: com.futebadosparcas.data.model.UserStreak? = withTimeout(TIMEOUT_MILLIS) {
+                        gamificationRepository.getUserStreak(user.id)
+                    }.getOrNull()
 
-                    val allChallenges: List<WeeklyChallenge> = try {
-                        withTimeout(TIMEOUT_MILLIS) {
-                            gamificationRepository.getActiveChallenges()
-                        }
-                    } catch (e: Exception) {
-                        emptyList<WeeklyChallenge>()
-                    }
+                    val allChallenges: List<WeeklyChallenge> = withTimeout(TIMEOUT_MILLIS) {
+                        gamificationRepository.getActiveChallenges()
+                    }.getOrDefault(emptyList())
 
-                    val userBadges: List<UserBadge> = try {
-                        withTimeout(TIMEOUT_MILLIS) {
-                            gamificationRepository.getRecentBadges(user.id, limit = 5)
-                        }
-                    } catch (e: Exception) {
-                        emptyList<UserBadge>()
-                    }
+                    val userBadges: List<UserBadge> = withTimeout(TIMEOUT_MILLIS) {
+                        gamificationRepository.getRecentBadges(user.id, limit = 5)
+                    }.getOrDefault(emptyList())
 
                     // Fetch challenge progress
-                    val challengeIds = allChallenges.map { challenge: WeeklyChallenge -> challenge.id }
-                    val progressList: List<UserChallengeProgress> = try {
-                        withTimeout(TIMEOUT_MILLIS) {
-                            gamificationRepository.getChallengesProgress(user.id, challengeIds)
-                        }
-                    } catch (e: Exception) {
-                        emptyList<UserChallengeProgress>()
-                    }
-                    val progressMap = progressList.associateBy { progress: UserChallengeProgress -> progress.challengeId }
-                    val challengesWithProgress = allChallenges.map { challenge: WeeklyChallenge -> challenge to progressMap[challenge.id] }
+                    val challengeIds = allChallenges.map { it.id }
+                    val progressList: List<UserChallengeProgress> = withTimeout(TIMEOUT_MILLIS) {
+                        gamificationRepository.getChallengesProgress(user.id, challengeIds)
+                    }.getOrDefault(emptyList())
+                    val progressMap = progressList.associateBy { it.challengeId }
+                    val challengesWithProgress = allChallenges.map { it to progressMap[it.id] }
 
                     // Fetch league division
                     var leagueDivision = LeagueDivision.BRONZE
