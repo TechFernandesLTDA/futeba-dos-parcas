@@ -124,12 +124,8 @@ private fun HomeSuccessContent(
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
 
-    // Usar remember para evitar recomposições desnecessárias
-    val games = remember(state.games) { state.games }
-    val activities = remember(state.activities) { state.activities }
-    val publicGames = remember(state.publicGames) { state.publicGames }
-    val challenges = remember(state.challenges) { state.challenges }
-    val recentBadges = remember(state.recentBadges) { state.recentBadges }
+    // 🔧 OTIMIZADO: Removed unnecessary remember() - StateFlow already handles memoization
+    // Using state.games directly is efficient since state is from collectAsStateWithLifecycle
 
     LazyColumn(
         modifier = Modifier
@@ -172,7 +168,7 @@ private fun HomeSuccessContent(
         }
 
         // Jogos Próximos
-        if (games.isNotEmpty()) {
+        if (state.games.isNotEmpty()) {
             item(key = "games_header") {
                 Text(
                     text = stringResource(R.string.upcoming_games),
@@ -192,7 +188,7 @@ private fun HomeSuccessContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        games.take(6).forEach { game -> // Limitar a 6 jogos no grid
+                        state.games.take(6).forEach { game -> // Limitar a 6 jogos no grid
                             UpcomingGameCard(
                                 game = game,
                                 onClick = { onGameClick(game.id) },
@@ -203,7 +199,7 @@ private fun HomeSuccessContent(
                 }
             } else {
                 // List view
-                items(games, key = { it.id }) { game ->
+                items(state.games, key = { it.id }) { game ->
                     UpcomingGameCard(
                         game = game,
                         onClick = { onGameClick(game.id) },
@@ -216,20 +212,20 @@ private fun HomeSuccessContent(
         }
 
         // Activity Feed
-        if (activities.isNotEmpty()) {
+        if (state.activities.isNotEmpty()) {
             item(key = "activity_feed") {
                 ActivityFeedSection(
-                    activities = activities,
+                    activities = state.activities,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
         }
 
         // Public Games Suggestions
-        if (publicGames.isNotEmpty()) {
+        if (state.publicGames.isNotEmpty()) {
             item(key = "public_games") {
                 PublicGamesSuggestions(
-                    games = publicGames,
+                    games = state.publicGames,
                     onGameClick = { game -> onGameClick(game.id) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
@@ -237,10 +233,10 @@ private fun HomeSuccessContent(
         }
 
         // Challenges
-        if (challenges.isNotEmpty()) {
+        if (state.challenges.isNotEmpty()) {
             item(key = "challenges") {
                 ChallengesSection(
-                    challenges = challenges,
+                    challenges = state.challenges,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
@@ -267,10 +263,10 @@ private fun HomeSuccessContent(
         // }
 
         // Recent Badges
-        if (recentBadges.isNotEmpty()) {
+        if (state.recentBadges.isNotEmpty()) {
             item(key = "badges") {
                 RecentBadgesCarousel(
-                    badges = recentBadges,
+                    badges = state.recentBadges,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
