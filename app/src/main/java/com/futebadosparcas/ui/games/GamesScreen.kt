@@ -183,7 +183,7 @@ private fun GamesFilters(
             leadingIcon = {
                 Icon(
                     imageVector = if (selectedFilter == GameFilterType.ALL) Icons.Default.Check else Icons.Default.CalendarMonth,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.all_games),
                     modifier = Modifier.size(FilterChipDefaults.IconSize)
                 )
             }
@@ -196,7 +196,7 @@ private fun GamesFilters(
             leadingIcon = {
                 Icon(
                     imageVector = if (selectedFilter == GameFilterType.OPEN) Icons.Default.Check else Icons.Default.LockOpen,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.open_games),
                     modifier = Modifier.size(FilterChipDefaults.IconSize)
                 )
             }
@@ -209,7 +209,7 @@ private fun GamesFilters(
             leadingIcon = {
                 Icon(
                     imageVector = if (selectedFilter == GameFilterType.MY_GAMES) Icons.Default.Check else Icons.Default.Person,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.my_games),
                     modifier = Modifier.size(FilterChipDefaults.IconSize)
                 )
             }
@@ -397,7 +397,7 @@ private fun GamesEmptyState(
         )
 
         Button(onClick = onCreateGameClick) {
-            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_game), modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.create_game))
         }
@@ -444,7 +444,7 @@ private fun GamesErrorState(
         )
 
         Button(onClick = onRetry) {
-            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry), modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.retry))
         }

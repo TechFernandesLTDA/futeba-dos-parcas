@@ -1,29 +1,5 @@
--- Games table
-CREATE TABLE games (
-    id TEXT NOT NULL PRIMARY KEY,
-    scheduleId TEXT,
-    date TEXT NOT NULL,
-    time TEXT NOT NULL,
-    status TEXT NOT NULL,
-    ownerId TEXT NOT NULL,
-    locationId TEXT,
-    fieldId TEXT,
-    locationName TEXT,
-    locationAddress TEXT,
-    maxPlayers INTEGER NOT NULL,
-    dailyPrice REAL,
-    cachedAt INTEGER NOT NULL
-);
-
--- Users table
-CREATE TABLE users (
-    id TEXT NOT NULL PRIMARY KEY,
-    email TEXT NOT NULL,
-    name TEXT NOT NULL,
-    photoUrl TEXT,
-    fcmToken TEXT,
-    cachedAt INTEGER NOT NULL
-);
+-- Schema is now defined in migrations (1.sqm, 2.sqm)
+-- This file contains only queries
 
 -- ========== GAME QUERIES ==========
 
@@ -60,7 +36,7 @@ selectUsersByIds:
 SELECT * FROM users WHERE id IN ?;
 
 insertUser:
-INSERT OR REPLACE INTO users VALUES (?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 deleteUserById:
 DELETE FROM users WHERE id = ?;

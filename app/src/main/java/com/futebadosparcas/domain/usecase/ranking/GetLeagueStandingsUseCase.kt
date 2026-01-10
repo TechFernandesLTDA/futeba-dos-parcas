@@ -5,7 +5,7 @@ import com.futebadosparcas.data.model.Season
 import com.futebadosparcas.data.model.SeasonParticipationV2
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.repository.GamificationRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.LeagueService
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth

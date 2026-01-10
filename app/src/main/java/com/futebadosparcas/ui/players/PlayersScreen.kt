@@ -38,6 +38,7 @@ import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.PlayerRatingRole
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.ui.components.EmptyPlayersState
 import com.futebadosparcas.ui.components.EmptySearchState
@@ -47,7 +48,6 @@ import com.futebadosparcas.ui.components.ShimmerPlayerCard
 import com.futebadosparcas.ui.theme.bottomBarPadding
 import com.futebadosparcas.ui.theme.GamificationColors
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -71,6 +71,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 fun PlayersScreen(
     viewModel: PlayersViewModel,
     onPlayerClick: (User) -> Unit,
+    onNavigateNotifications: () -> Unit,
+    onNavigateGroups: () -> Unit,
+    onNavigateMap: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Estados do ViewModel
@@ -84,130 +87,141 @@ fun PlayersScreen(
     var isComparisonMode by remember { mutableStateOf(false) }
     var selectedPlayers by remember { mutableStateOf(setOf<String>()) }
 
-    // Debounce manual da busca (300ms)
-    LaunchedEffect(searchQuery) {
-        delay(300)
-        viewModel.searchPlayers(searchQuery)
-    }
-
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
-        Column(
+    Scaffold(
+        topBar = {
+            com.futebadosparcas.ui.components.FutebaTopBar(
+                unreadCount = unreadCount,
+                onNavigateNotifications = onNavigateNotifications,
+                onNavigateGroups = onNavigateGroups,
+                onNavigateMap = onNavigateMap
+            )
+        },
+        modifier = modifier
+    ) { paddingValues ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .padding(paddingValues)
         ) {
-            // SearchBar e Filtros
-            PlayersSearchAndFilters(
-                searchQuery = searchQuery,
-                onSearchQueryChange = { searchQuery = it },
-                selectedFieldType = selectedFieldType,
-                onFieldTypeChange = {
-                    selectedFieldType = it
-                    viewModel.setFieldTypeFilter(it)
-                },
-                selectedSortOption = selectedSortOption,
-                onSortOptionChange = {
-                    selectedSortOption = it
-                    viewModel.setSortOption(it)
-                },
-                isComparisonMode = isComparisonMode,
-                onToggleComparisonMode = {
-                    isComparisonMode = !isComparisonMode
-                    if (!isComparisonMode) {
-                        selectedPlayers = emptySet()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                // SearchBar e Filtros
+                PlayersSearchAndFilters(
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = {
+                        searchQuery = it
+                        viewModel.searchPlayers(it) // ViewModel has debounce (300ms)
+                    },
+                    selectedFieldType = selectedFieldType,
+                    onFieldTypeChange = {
+                        selectedFieldType = it
+                        viewModel.setFieldTypeFilter(it)
+                    },
+                    selectedSortOption = selectedSortOption,
+                    onSortOptionChange = {
+                        selectedSortOption = it
+                        viewModel.setSortOption(it)
+                    },
+                    isComparisonMode = isComparisonMode,
+                    onToggleComparisonMode = {
+                        isComparisonMode = !isComparisonMode
+                        if (!isComparisonMode) {
+                            selectedPlayers = emptySet()
+                        }
                     }
-                }
-            )
+                )
 
-            // Conteúdo baseado no estado
-            when (val state = uiState) {
-                is PlayersUiState.Loading -> {
-                    // Shimmer loading
-                    PlayersLoadingContent()
-                }
+                // Conteúdo baseado no estado
+                when (val state = uiState) {
+                    is PlayersUiState.Loading -> {
+                        // Shimmer loading
+                        PlayersLoadingContent()
+                    }
 
-                is PlayersUiState.Empty -> {
-                    // Empty state
-                    if (searchQuery.isNotBlank()) {
-                        EmptySearchState(
-                            query = searchQuery,
-                            onClearSearch = {
-                                searchQuery = ""
+                    is PlayersUiState.Empty -> {
+                        // Empty state
+                        if (searchQuery.isNotBlank()) {
+                            EmptySearchState(
+                                query = searchQuery,
+                                onClearSearch = {
+                                    searchQuery = ""
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            EmptyPlayersState(
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+
+                    is PlayersUiState.Success -> {
+                        // Lista de jogadores
+                        PlayersListContent(
+                            players = state.players,
+                            isComparisonMode = isComparisonMode,
+                            selectedPlayers = selectedPlayers,
+                            onPlayerClick = { user ->
+                                if (isComparisonMode) {
+                                    selectedPlayers = if (selectedPlayers.contains(user.id)) {
+                                        selectedPlayers - user.id
+                                    } else if (selectedPlayers.size < 2) {
+                                        selectedPlayers + user.id
+                                    } else {
+                                        selectedPlayers
+                                    }
+
+                                    // Se selecionou 2, carrega comparação
+                                    if (selectedPlayers.size == 2) {
+                                        val users = state.players.filter { it.id in selectedPlayers }
+                                        if (users.size == 2) {
+                                            viewModel.loadComparisonData(users[0], users[1])
+                                        }
+                                    }
+                                } else {
+                                    onPlayerClick(user)
+                                }
+                            },
+                            onInviteClick = { user ->
+                                viewModel.invitePlayer(user)
                             },
                             modifier = Modifier.fillMaxSize()
                         )
-                    } else {
-                        EmptyPlayersState(
+                    }
+
+                    is PlayersUiState.Error -> {
+                        // Error state
+                        EmptyState(
+                            type = EmptyStateType.Error(
+                                title = "Erro ao carregar jogadores",
+                                description = state.message,
+                                onRetry = { viewModel.loadPlayers(searchQuery) }
+                            ),
                             modifier = Modifier.fillMaxSize()
                         )
                     }
                 }
-
-                is PlayersUiState.Success -> {
-                    // Lista de jogadores
-                    PlayersListContent(
-                        players = state.players,
-                        isComparisonMode = isComparisonMode,
-                        selectedPlayers = selectedPlayers,
-                        onPlayerClick = { user ->
-                            if (isComparisonMode) {
-                                selectedPlayers = if (selectedPlayers.contains(user.id)) {
-                                    selectedPlayers - user.id
-                                } else if (selectedPlayers.size < 2) {
-                                    selectedPlayers + user.id
-                                } else {
-                                    selectedPlayers
-                                }
-
-                                // Se selecionou 2, carrega comparação
-                                if (selectedPlayers.size == 2) {
-                                    val users = state.players.filter { it.id in selectedPlayers }
-                                    if (users.size == 2) {
-                                        viewModel.loadComparisonData(users[0], users[1])
-                                    }
-                                }
-                            } else {
-                                onPlayerClick(user)
-                            }
-                        },
-                        onInviteClick = { user ->
-                            viewModel.invitePlayer(user)
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-
-                is PlayersUiState.Error -> {
-                    // Error state
-                    EmptyState(
-                        type = EmptyStateType.Error(
-                            title = "Erro ao carregar jogadores",
-                            description = state.message,
-                            onRetry = { viewModel.loadPlayers(searchQuery) }
-                        ),
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
             }
-        }
 
-        // Dialog de Comparação
-        val comparisonState by viewModel.comparisonState.collectAsStateWithLifecycle()
-        if (comparisonState is ComparisonUiState.Ready) {
-            val readyState = comparisonState as ComparisonUiState.Ready
-            ComparePlayersUiDialog(
-                user1 = readyState.user1,
-                stats1 = readyState.stats1,
-                user2 = readyState.user2,
-                stats2 = readyState.stats2,
-                onDismiss = {
-                    viewModel.resetComparison()
-                    selectedPlayers = emptySet()
-                    isComparisonMode = false
-                }
-            )
+            // Dialog de Comparação
+            val comparisonState by viewModel.comparisonState.collectAsStateWithLifecycle()
+            if (comparisonState is ComparisonUiState.Ready) {
+                val readyState = comparisonState as ComparisonUiState.Ready
+                ComparePlayersUiDialog(
+                    user1 = readyState.user1,
+                    stats1 = readyState.stats1,
+                    user2 = readyState.user2,
+                    stats2 = readyState.stats2,
+                    onDismiss = {
+                        viewModel.resetComparison()
+                        selectedPlayers = emptySet()
+                        isComparisonMode = false
+                    }
+                )
+            }
         }
     }
 }
@@ -494,38 +508,11 @@ private fun PlayerCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-            ) {
-                AsyncImage(
-                    model = player.photoUrl?.ifEmpty { null },
-                    contentDescription = player.getDisplayName(),
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-                // Fallback se não houver foto
-                if (player.photoUrl.isNullOrEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = player.getDisplayName().take(1).uppercase(),
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
+            CachedProfileImage(
+                photoUrl = player.photoUrl,
+                userName = player.getDisplayName(),
+                size = 64.dp
+            )
 
             Spacer(modifier = Modifier.width(12.dp))
 

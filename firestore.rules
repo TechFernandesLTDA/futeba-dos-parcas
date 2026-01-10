@@ -57,10 +57,9 @@ service cloud.firestore {
     //   return isAuthenticated();
     // }
 
-    // Verifica se e um usuario mock (ficticio)
-    function isMock(id) {
-      return id.matches('mock_user_.*');
-    }
+    // REMOVED: Mock user pattern bypass (CVE-1: Security vulnerability)
+    // Mock users must be created via Firebase Auth with real credentials
+    // This prevents unauthorized XP/badge manipulation
 
     // Verifica se o usuario e um jogador confirmado no jogo
     function isConfirmedPlayer(gameId) {
@@ -75,8 +74,7 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // Usuario so pode criar seu proprio perfil (com role padrao PLAYER)
-      allow create: if (isOwner(userId) && request.resource.data.role == 'PLAYER') ||
-                       (isAuthenticated() && isMock(userId));
+      allow create: if isOwner(userId) && request.resource.data.role == 'PLAYER';
 
       // Usuario pode atualizar seu perfil (campos basicos apenas)
       // XP/Level/Milestones SAO atualizados via Cloud Functions (Admin SDK) - NAO client-side
@@ -89,10 +87,9 @@ service cloud.firestore {
            fieldUnchanged('role') &&
            fieldUnchanged('experience_points') &&
            fieldUnchanged('level') &&
-           fieldUnchanged('milestones_achieved')) ||
-          (isAuthenticated() && isMock(userId));
+           fieldUnchanged('milestones_achieved'));
 
-      allow delete: if (isAuthenticated() && isMock(userId)) || false;
+      allow delete: if false;
     }
 
     // ... (games, confirmations, teams rules remain unchanged) ...
@@ -110,10 +107,10 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // SOMENTE Admin via Admin SDK pode criar/atualizar
-      // Mock users permitidos para testes
-      allow create, update: if isAdmin() || (isAuthenticated() && isMock(statId));
+      // (Cloud Functions have elevated privileges via Admin SDK)
+      allow create, update: if isAdmin();
 
-      allow delete: if isAuthenticated() && isMock(statId);
+      allow delete: if false;
     }
     
     // ... (player_stats rules remain unchanged) ...
@@ -136,29 +133,25 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // Qualquer usuario autenticado pode criar jogos
-      // Permitir criar jogos como mock_admin
       allow create: if isAuthenticated() &&
-                       (isAdmin() || request.resource.data.owner_id == userId() || request.resource.data.owner_id == 'mock_admin');
+                       (isAdmin() || request.resource.data.owner_id == userId());
 
       // Apenas o dono pode atualizar o jogo
       // Excecao: contadores (players_count, goalkeepers_count) podem ser
       // atualizados por qualquer autenticado (via transacao de confirmacao)
-      // Mocks podem ser atualizados por qualquer um
-      // Apenas o dono pode atualizar o jogo
       // Admins têm acesso total
       allow update: if isAuthenticated() && (
         isAdmin() ||
         // Dono pode fazer qualquer atualizacao
         resource.data.owner_id == userId() ||
-        resource.data.owner_id == 'mock_admin' ||
         // Outros usuarios so podem atualizar contadores via transacao
         onlyAllowedFields(['players_count', 'goalkeepers_count']) ||
         // Permitir que jogadores confirmados atualizem o MVP no final da votacao
         (isConfirmedPlayer(gameId) && onlyAllowedFields(['mvp_id']))
       );
 
-      // Apenas o dono ou admin pode deletar (ou mocks)
-      allow delete: if isAdmin() || isOwner(resource.data.owner_id) || resource.data.owner_id == 'mock_admin';
+      // Apenas o dono ou admin pode deletar
+      allow delete: if isAdmin() || isOwner(resource.data.owner_id);
     }
 
     // ============================================
@@ -191,22 +184,19 @@ service cloud.firestore {
 
       // Usuario pode criar sua propria confirmacao
       // ID deve seguir padrao: {gameId}_{userId}
-      // OU criar confirmacao para mock users
       // OU o dono do jogo pode criar convites (summon) para outros
       allow create: if isAuthenticated() &&
-                       (request.resource.data.user_id == userId() || 
-                        isMock(request.resource.data.user_id) ||
+                       (request.resource.data.user_id == userId() ||
                         isGameOwner(request.resource.data.game_id));
 
       // Usuario pode atualizar sua propria confirmacao
-      // OU se for mock
       allow update: if isAuthenticated() && (
         // O dono da confirmação pode atualizar (sem restrição de campos por enquanto, ou restringir se necessário)
         (resource.data.user_id == userId()) ||
         // O dono do JOGO pode atualizar qualquer confirmação (necessário para setar MVP/Stats no final)
         isGameOwner(resource.data.game_id) ||
         // Jogadores confirmados podem atualizar flags de MVP (para votação)
-        (isConfirmedPlayer(resource.data.game_id) && 
+        (isConfirmedPlayer(resource.data.game_id) &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_mvp', 'is_best_gk', 'is_worst_player']))
       );
 
@@ -215,14 +205,13 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && (
         isAdmin() ||
         resource.data.user_id == userId() ||
-        isMock(resource.data.user_id) ||
         isGameOwner(resource.data.game_id)
       );
 
       // Funcao auxiliar para verificar dono do jogo
       function isGameOwner(gameId) {
         let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId() || owner == 'mock_admin'; 
+        return owner == userId();
       }
     }
 
@@ -239,7 +228,7 @@ service cloud.firestore {
 
       function isGameOwnerForTeam(gameId) {
         let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId() || owner == 'mock_admin';
+        return owner == userId();
       }
     }
 
@@ -264,7 +253,7 @@ service cloud.firestore {
 
       function isGameOwnerForStats(gameId) {
         let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId() || owner == 'mock_admin';
+        return owner == userId();
       }
     }
 
@@ -280,7 +269,7 @@ service cloud.firestore {
 
       function isGameOwnerForLive(gameId) {
         let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId() || owner == 'mock_admin';
+        return owner == userId();
       }
 
       // Sub-colecao: eventos do jogo
@@ -292,7 +281,7 @@ service cloud.firestore {
 
         function isGameOwnerForLiveEvent(gId) {
           let owner = get(/databases/$(database)/documents/games/$(gId)).data.owner_id;
-          return owner == userId() || owner == 'mock_admin';
+          return owner == userId();
         }
       }
     }
@@ -305,14 +294,13 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // Qualquer usuario autenticado pode criar locais
-      // Permitir criar locations como mock_admin
       allow create: if isAuthenticated() &&
-                       (request.resource.data.owner_id == userId() || request.resource.data.owner_id == 'mock_admin');
+                       request.resource.data.owner_id == userId();
 
-      // Apenas o dono ou admin pode atualizar o local (ou mocks)
+      // Apenas o dono ou admin pode atualizar o local
       allow update: if isAuthenticated() && (
-                       isAdmin() || 
-                       ((resource.data.owner_id == userId() || resource.data.owner_id == 'mock_admin') &&
+                       isAdmin() ||
+                       (resource.data.owner_id == userId() &&
                        fieldUnchanged('owner_id') &&
                        fieldUnchanged('created_at') &&
                        fieldUnchanged('is_active') &&
@@ -345,7 +333,7 @@ service cloud.firestore {
 
       function isLocationOwner(locationId) {
         let locDoc = get(/databases/$(database)/documents/locations/$(locationId));
-        return locDoc != null && (locDoc.data.owner_id == userId() || locDoc.data.owner_id == 'mock_admin');
+        return locDoc != null && locDoc.data.owner_id == userId();
       }
     }
 
@@ -583,7 +571,7 @@ service cloud.firestore {
 
       function isGameOwner(gId) {
         let owner = get(/databases/$(database)/documents/games/$(gId)).data.owner_id;
-        return owner == request.auth.uid || owner == 'mock_admin';
+        return owner == request.auth.uid;
       }
     }
 
@@ -618,7 +606,7 @@ service cloud.firestore {
 
       function isGameOwnerForEvent(gameId) {
         let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId() || owner == 'mock_admin';
+        return owner == userId();
       }
     }
 
@@ -644,7 +632,7 @@ service cloud.firestore {
 
       function isGameOwnerForScore(gameId) {
         let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId() || owner == 'mock_admin';
+        return owner == userId();
       }
     }
 
@@ -669,7 +657,7 @@ service cloud.firestore {
 
       function isGameOwnerForLiveStats(gameId) {
         let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId() || owner == 'mock_admin';
+        return owner == userId();
       }
     }
 

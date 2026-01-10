@@ -4,7 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.User
 import com.futebadosparcas.data.model.UserRole
-import com.futebadosparcas.data.repository.UserRepositoryLegacy
+import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.util.toDataModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UserManagementViewModel @Inject constructor(
-    private val userRepository: UserRepositoryLegacy
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UserManagementUiState>(UserManagementUiState.Loading)
@@ -31,9 +32,9 @@ class UserManagementViewModel @Inject constructor(
             // Admin carrega todos os usuários usando a versão sem paginação
             @Suppress("DEPRECATION")
             userRepository.getAllUsersUnpaginated().fold(
-                onSuccess = { users ->
-                    allUsers = users
-                    _uiState.value = UserManagementUiState.Success(users)
+                onSuccess = { domainUsers ->
+                    allUsers = domainUsers.map { it.toDataModel() }
+                    _uiState.value = UserManagementUiState.Success(allUsers)
                 },
                 onFailure = { error ->
                     _uiState.value = UserManagementUiState.Error(error.message ?: "Erro ao carregar usuários")

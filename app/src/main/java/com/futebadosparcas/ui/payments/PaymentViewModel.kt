@@ -7,7 +7,7 @@ import com.futebadosparcas.data.model.PaymentMethod
 import com.futebadosparcas.data.model.PaymentStatus
 import com.futebadosparcas.data.model.PaymentType
 import com.futebadosparcas.data.repository.PaymentRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

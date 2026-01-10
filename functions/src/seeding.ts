@@ -39,8 +39,17 @@ function getGameDates(start: Date, end: Date): Date[] {
 }
 
 export const seedDatabase = onRequest(async (request, response) => {
-    // Basic protection (optional)
+    // SECURITY FIX (CVE-4): Disable seeding in production to prevent DoS attacks
+    const environment = process.env.ENVIRONMENT || "production";
+    if (environment !== "development") {
+        console.error(`[SECURITY] Seeding blocked: Not in development environment (${environment})`);
+        response.status(403).send("Seeding is disabled in this environment");
+        return;
+    }
+
+    // Development-only: Basic secret protection
     if (request.query.secret !== "antigravity_seed") {
+        console.warn("[SECURITY] Seeding blocked: Invalid secret");
         response.status(403).send("Unauthorized");
         return;
     }

@@ -48,6 +48,7 @@ import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.*
 import com.futebadosparcas.util.ShareCardHelper
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import java.time.LocalDate
@@ -207,30 +208,32 @@ fun GameDetailTopBar(
                 DropdownMenuItem(
                     text = { Text("Compartilhar Link") },
                     onClick = { onShare(); showMenu = false },
-                    leadingIcon = { Icon(Icons.Outlined.Share, null) }
+                    leadingIcon = { Icon(Icons.Outlined.Share, contentDescription = "Compartilhar") }
                 )
                 if (game.status == "FINISHED") {
                     DropdownMenuItem(
                         text = { Text("Votar MVP") },
                         onClick = { onVoteMvp(); showMenu = false },
-                        leadingIcon = { Icon(Icons.Default.Star, null) }
+                        leadingIcon = { Icon(Icons.Default.Star, contentDescription = "Votar MVP") }
                     )
                     if (hasTeams) {
                         DropdownMenuItem(
                             text = { Text("Gerar Card do Jogo") },
                             onClick = { onShareCard(); showMenu = false },
-                             leadingIcon = { Icon(Icons.Default.Share, null) }
+                             leadingIcon = { Icon(Icons.Default.Share, contentDescription = "Gerar Card") }
                         )
                     }
                 }
-                // Tactical board option if relevant
                  DropdownMenuItem(
                     text = { Text("Prancheta Tática") },
                     onClick = { onTacticalBoard(); showMenu = false },
-                    leadingIcon = { Icon(Icons.Default.Create, null) } // Using Create as generic edit icon
+                    leadingIcon = { Icon(Icons.Default.Create, contentDescription = "Prancheta Tática") }
                  )
             }
-        }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     )
 }
 
@@ -536,12 +539,10 @@ fun ConfirmationCard(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = confirmation.userPhoto,
-                contentDescription = null,
-                modifier = Modifier.size(40.dp).clip(CircleShape),
-                error = painterResource(R.drawable.ic_player_placeholder),
-                placeholder = painterResource(R.drawable.ic_player_placeholder)
+            CachedProfileImage(
+                photoUrl = confirmation.userPhoto,
+                userName = confirmation.userName,
+                size = 40.dp
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -583,17 +584,23 @@ fun TeamCard(
                 Text("Gols: ${team.score}", style = MaterialTheme.typography.titleMedium)
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            players.forEach { player ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = canManage) { onPlayerClick(player.userId) }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(player.userName, modifier = Modifier.weight(1f))
-                    if (player.goals > 0) {
-                        Text("⚽ ${player.goals} ", fontSize = 12.sp)
+            // 🔧 OTIMIZADO: Use LazyColumn instead of forEach for proper Compose list rendering
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                items(
+                    items = players,
+                    key = { it.userId }  // ✅ Each player has unique key for efficient recomposition
+                ) { player ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = canManage) { onPlayerClick(player.userId) }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(player.userName, modifier = Modifier.weight(1f))
+                        if (player.goals > 0) {
+                            Text("⚽ ${player.goals} ", fontSize = 12.sp)
+                        }
                     }
                 }
             }

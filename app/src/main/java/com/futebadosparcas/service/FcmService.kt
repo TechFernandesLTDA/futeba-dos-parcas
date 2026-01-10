@@ -10,7 +10,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.futebadosparcas.R
-import com.futebadosparcas.data.repository.UserRepositoryLegacy
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.ui.main.MainActivity
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.LevelBadgeHelper
@@ -28,7 +28,7 @@ import javax.inject.Inject
 class FcmService : FirebaseMessagingService() {
 
     @Inject
-    lateinit var userRepository: UserRepositoryLegacy
+    lateinit var userRepository: UserRepository
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -116,6 +116,8 @@ class FcmService : FirebaseMessagingService() {
                 val largeBitmap = badgeDrawable?.toBitmap()
                 largeBitmap?.let {
                     notificationBuilder.setLargeIcon(it)
+                    // FIX: Recycle bitmap after adding to notification to prevent background memory leak
+                    it.recycle()
                 }
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao adicionar brasao na notificacao", e)

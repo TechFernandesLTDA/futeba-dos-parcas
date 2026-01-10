@@ -7,7 +7,7 @@ import com.futebadosparcas.data.model.MVPVote
 import com.futebadosparcas.data.model.VoteCategory
 import com.futebadosparcas.data.repository.GameExperienceRepository
 import com.futebadosparcas.data.repository.GameRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.MatchFinalizationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

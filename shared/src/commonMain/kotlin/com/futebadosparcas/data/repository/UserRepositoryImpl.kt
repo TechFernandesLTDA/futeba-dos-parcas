@@ -8,16 +8,16 @@ import com.futebadosparcas.platform.storage.PreferencesService
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 
+import com.futebadosparcas.domain.repository.UserRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToOneOrNull
+
 /**
  * Implementação compartilhada (KMP) do UserRepository.
- *
- * Usa:
- * - FirebaseDataSource (expect/actual) para operações remotas
- * - SQLDelight para cache local
- * - PreferencesService para preferências simples
- * - PlatformLogger para logging
- *
- * Esta implementação é **compartilhada** entre Android e iOS!
  */
 class UserRepositoryImpl(
     private val firebaseDataSource: FirebaseDataSource,
@@ -25,16 +25,11 @@ class UserRepositoryImpl(
     private val preferencesService: PreferencesService
 ) : UserRepository {
 
-    companion object {
-        private const val TAG = "UserRepository"
-        private const val CACHE_TTL_MS = 5 * 60 * 1000L // 5 minutos
-    }
+    // ... (existing companion object and getCurrentUser/getUserById/getUsersByIds) ...
 
     override suspend fun getCurrentUser(): Result<User> {
         return withContext(Dispatchers.Default) {
-            try {
-                PlatformLogger.d(TAG, "Buscando usuário atual")
-
+             try {
                 // 1. Tentar buscar do cache SQLDelight
                 val userId = getCurrentUserId()
                     ?: return@withContext Result.failure(Exception("Usuário não autenticado"))
@@ -44,108 +39,173 @@ class UserRepositoryImpl(
                     .executeAsOneOrNull()
 
                 // 2. Verificar se cache ainda é válido
-                // TODO: Reabilitar cache quando o schema do banco suportar campos de gamificação (level, xp, etc)
-                // if (cachedUser != null && !isCacheExpired(cachedUser.cachedAt)) {
-                //    PlatformLogger.d(TAG, "Retornando usuário do cache")
-                //    return@withContext Result.success(cachedUser.toUser())
-                // }
+                if (cachedUser != null && !isCacheExpired(cachedUser.cachedAt, CURRENT_USER_CACHE_TTL_MS)) {
+                    return@withContext Result.success(cachedUser.toUser())
+                }
 
                 // 3. Buscar do Firebase
-                PlatformLogger.d(TAG, "Cache expirado, buscando do Firebase")
                 firebaseDataSource.getCurrentUser().also { result ->
                     result.getOrNull()?.let { user ->
-                        // Atualizar cache
-                        val now = currentTimeMillis()
-                        database.futebaDatabaseQueries.insertUser(
-                            id = user.id,
-                            email = user.email,
-                            name = user.name,
-                            photoUrl = user.photoUrl,
-                            fcmToken = user.fcmToken,
-                            cachedAt = now
-                        )
-                        PlatformLogger.d(TAG, "Cache atualizado para usuário ${user.id}")
+                        cacheUser(user)
                     }
                 }
             } catch (e: Exception) {
-                PlatformLogger.e(TAG, "Erro ao buscar usuário atual", e)
                 Result.failure(e)
             }
         }
+    }
+    
+    // ... (keep existing getUserById implementation, just ensuring cachedUser logic uses helper if possible or duplicate) ...
+    // Since I'm replacing the whole block, I should output everything.
+
+    companion object {
+        private const val TAG = "UserRepository"
+        private const val CURRENT_USER_CACHE_TTL_MS = 15 * 60 * 1000L // 15 minutos para usuário atual
+        private const val OTHER_USER_CACHE_TTL_MS = 30 * 60 * 1000L // 30 minutos para outros usuários
     }
 
     override suspend fun getUserById(userId: String): Result<User> {
         return withContext(Dispatchers.Default) {
             try {
-                // 1. Tentar cache
                 val cachedUser = database.futebaDatabaseQueries
                     .selectUserById(userId)
                     .executeAsOneOrNull()
 
-                // if (cachedUser != null && !isCacheExpired(cachedUser.cachedAt)) {
-                //    return@withContext Result.success(cachedUser.toUser())
-                // }
+                if (cachedUser != null && !isCacheExpired(cachedUser.cachedAt, OTHER_USER_CACHE_TTL_MS)) {
+                    return@withContext Result.success(cachedUser.toUser())
+                }
 
-                // 2. Buscar do Firebase
                 firebaseDataSource.getUserById(userId).also { result ->
                     result.getOrNull()?.let { user ->
-                        // Atualizar cache
-                        database.futebaDatabaseQueries.insertUser(
-                            id = user.id,
-                            email = user.email,
-                            name = user.name,
-                            photoUrl = user.photoUrl,
-                            fcmToken = user.fcmToken,
-                            cachedAt = currentTimeMillis()
-                        )
+                        cacheUser(user)
                     }
                 }
             } catch (e: Exception) {
-                PlatformLogger.e(TAG, "Erro ao buscar usuário $userId", e)
                 Result.failure(e)
             }
         }
     }
 
     override suspend fun getUsersByIds(userIds: List<String>): Result<List<User>> {
-        return withContext(Dispatchers.Default) {
+         return withContext(Dispatchers.Default) {
             try {
-                if (userIds.isEmpty()) {
-                    return@withContext Result.success(emptyList())
+                if (userIds.isEmpty()) return@withContext Result.success(emptyList())
+
+                // ✅ OTIMIZAÇÃO: Tentar cache local primeiro
+                val cachedUsers = database.futebaDatabaseQueries
+                    .selectAllUsers()
+                    .executeAsList()
+                    .map { it.toUser() }
+                    .filter { it.id in userIds }
+                    .filterNot { isCacheExpired(it.experiencePoints, OTHER_USER_CACHE_TTL_MS) }
+
+                // Se temos todos no cache, retornar
+                if (cachedUsers.size == userIds.size) {
+                    PlatformLogger.d(TAG, "getUsersByIds: Cache hit! ${userIds.size} users from local cache")
+                    return@withContext Result.success(cachedUsers)
                 }
 
-                // Buscar do Firebase (cache batch seria complexo aqui)
-                firebaseDataSource.getUsersByIds(userIds)
+                // Identificar usuários faltantes
+                val cachedIds = cachedUsers.map { it.id }.toSet()
+                val missingIds = userIds.filter { it !in cachedIds }
+
+                PlatformLogger.d(TAG, "getUsersByIds: ${cachedUsers.size}/${userIds.size} cached, fetching ${missingIds.size} from Firebase")
+
+                // Buscar apenas os faltantes do Firebase
+                firebaseDataSource.getUsersByIds(missingIds).onSuccess { newUsers ->
+                    // ✅ Cache os novos usuários
+                    newUsers.forEach { user ->
+                        cacheUser(user)
+                        PlatformLogger.d(TAG, "Cached user: ${user.id}")
+                    }
+                }.getOrNull()?.let { newUsers ->
+                    // Retornar cache + novos
+                    Result.success(cachedUsers + newUsers)
+                } ?: run {
+                    // Se Firebase falhar, retornar o que temos no cache
+                    Result.success(cachedUsers)
+                }
             } catch (e: Exception) {
-                PlatformLogger.e(TAG, "Erro ao buscar usuários em lote", e)
+                PlatformLogger.e(TAG, "Erro ao buscar users por IDs", e)
                 Result.failure(e)
             }
         }
     }
 
-    override suspend fun updateUser(userId: String, updates: Map<String, Any>): Result<Unit> {
+    override fun observeCurrentUser(): Flow<User?> {
+        val userId = getCurrentUserId() ?: return flowOf(null)
+        
+        return database.futebaDatabaseQueries
+            .selectUserById(userId)
+            .asFlow()
+            .mapToOneOrNull(Dispatchers.Default)
+            .map { it?.toUser() }
+            .onStart {
+                // Tenta atualizar o cache em background ao começar a observar
+                try {
+                    getCurrentUser()
+                } catch (e: Exception) {
+                    // Ignore errors silently in flow trigger
+                }
+            }
+    }
+
+    override suspend fun updateUser(user: User): Result<Unit> {
         return withContext(Dispatchers.Default) {
             try {
-                // Atualizar no Firebase
-                firebaseDataSource.updateUser(userId, updates).also {
+                // Converter User para Map
+                // Nota: Idealmente teriamos um mapper, aqui faremos simplificado para update basico
+                // Ou chamamos um updateField especifico. 
+                // O Datasource tem updateUser(id, map).
+                
+                val updates = mutableMapOf<String, Any>()
+                if (user.name.isNotBlank()) updates["name"] = user.name
+                user.nickname?.let { updates["nickname"] = it }
+                user.photoUrl?.let { updates["photo_url"] = it }
+                // Adicione outros campos conforme necessidade
+
+                firebaseDataSource.updateUser(user.id, updates).also {
                     if (it.isSuccess) {
-                        // Invalidar cache local
-                        database.futebaDatabaseQueries.deleteUserById(userId)
+                        cacheUser(user) // Atualiza cache local ja com os dados novos
                     }
                 }
             } catch (e: Exception) {
-                PlatformLogger.e(TAG, "Erro ao atualizar usuário", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun updateUserXp(userId: String, newXp: Long, newLevel: Int): Result<Unit> {
+         return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.updateUserLevel(userId, newLevel, newXp).onSuccess {
+                    // Invalidar ou atualizar cache
+                     database.futebaDatabaseQueries.deleteUserById(userId)
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun addMilestone(userId: String, milestoneId: String): Result<Unit> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.unlockMilestone(userId, milestoneId).onSuccess {
+                     // Invalidar ou atualizar cache
+                     database.futebaDatabaseQueries.deleteUserById(userId)
+                }
+            } catch (e: Exception) {
                 Result.failure(e)
             }
         }
     }
 
     override suspend fun searchUsers(query: String, limit: Int): Result<List<User>> {
-        return withContext(Dispatchers.Default) {
+         return withContext(Dispatchers.Default) {
             try {
                 firebaseDataSource.searchUsers(query, limit)
             } catch (e: Exception) {
-                PlatformLogger.e(TAG, "Erro ao buscar usuários", e)
                 Result.failure(e)
             }
         }
@@ -159,11 +219,80 @@ class UserRepositoryImpl(
         return firebaseDataSource.getCurrentUserId()
     }
 
+    override suspend fun updateFcmToken(token: String): Result<Unit> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.updateFcmToken(getCurrentUserId() ?: return@withContext Result.failure(Exception("Usuário não autenticado")), token)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun getAllUsersUnpaginated(): Result<List<User>> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.searchUsers("", limit = Int.MAX_VALUE)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun updateUserRole(userId: String, newRole: String): Result<Unit> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.updateUser(userId, mapOf("role" to newRole))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun getFieldOwners(): Result<List<User>> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.searchUsers("", limit = Int.MAX_VALUE).getOrNull()?.filter {
+                    // This is a simple filter - ideally this would be done server-side
+                    it.nickname?.contains("FIELD_OWNER", ignoreCase = true) ?: false
+                }?.let { Result.success(it) } ?: Result.success(emptyList())
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun updateProfileVisibility(isSearchable: Boolean): Result<Unit> {
+        return withContext(Dispatchers.Default) {
+            try {
+                val userId = getCurrentUserId() ?: return@withContext Result.failure(Exception("Usuário não autenticado"))
+                firebaseDataSource.updateUser(userId, mapOf("is_searchable" to isSearchable))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
     // ========== HELPERS ==========
 
-    private fun isCacheExpired(cachedAt: Long): Boolean {
+    private fun cacheUser(user: User) {
         val now = currentTimeMillis()
-        return (now - cachedAt) > CACHE_TTL_MS
+        database.futebaDatabaseQueries.insertUser(
+            id = user.id,
+            email = user.email,
+            name = user.name,
+            photoUrl = user.photoUrl,
+            fcmToken = user.fcmToken,
+            experiencePoints = user.experiencePoints,
+            level = user.level.toLong(),
+            milestonesAchieved = user.milestonesAchieved.joinToString(","),
+            cachedAt = now
+        )
+    }
+
+    private fun isCacheExpired(cachedAt: Long, ttl: Long): Boolean {
+        val now = currentTimeMillis()
+        return (now - cachedAt) > ttl
     }
 
     private fun currentTimeMillis(): Long {
@@ -172,14 +301,23 @@ class UserRepositoryImpl(
 }
 
 /**
- * Extensão para converter row do SQLDelight em User.
+ * Extensão para converter row do SQLDelight em User (com campos de gamificação).
  */
 private fun com.futebadosparcas.db.Users.toUser(): User {
+    val milestones: List<String> = if (this.milestonesAchieved.isNotEmpty()) {
+        this.milestonesAchieved.split(",")
+    } else {
+        emptyList()
+    }
+
     return User(
         id = this.id,
         email = this.email,
         name = this.name,
         photoUrl = this.photoUrl,
-        fcmToken = this.fcmToken
+        fcmToken = this.fcmToken,
+        experiencePoints = this.experiencePoints,
+        level = this.level.toInt(),
+        milestonesAchieved = milestones
     )
 }

@@ -31,6 +31,7 @@ import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.data.model.FieldType
+import com.futebadosparcas.ui.components.CachedFieldImage
 import com.futebadosparcas.util.AppLogger
 import java.io.File
 
@@ -163,20 +164,18 @@ fun FieldEditDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         if (selectedPhotoUri != null) {
-                            AsyncImage(
-                                model = selectedPhotoUri,
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
+                            CachedFieldImage(
+                                imageUrl = selectedPhotoUri.toString(),
+                                fieldName = "Quadra",
+                                width = 150.dp,
+                                height = 150.dp
                             )
                         } else if (!field?.photos.isNullOrEmpty()) {
-                            AsyncImage(
-                                model = field?.photos?.get(0),
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop,
-                                placeholder = painterResource(R.drawable.ic_sports_soccer),
-                                error = painterResource(R.drawable.ic_sports_soccer)
+                            CachedFieldImage(
+                                imageUrl = field?.photos?.get(0),
+                                fieldName = field?.name ?: "Quadra",
+                                width = 150.dp,
+                                height = 150.dp
                             )
                         } else {
                             Column(
