@@ -26,6 +26,7 @@ import com.futebadosparcas.R
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.PlayerPosition
 import com.futebadosparcas.data.model.VoteCategory
+import com.futebadosparcas.ui.components.CachedProfileImage
 
 /**
  * MVPVoteScreen - Tela de Votação MVP/Melhor Goleiro/Bola Murcha
@@ -251,18 +252,10 @@ private fun CandidateCard(
             verticalArrangement = Arrangement.Center
         ) {
             // Avatar
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(candidate.userPhoto)
-                    .crossfade(true)
-                    .placeholder(R.drawable.ic_person)
-                    .error(R.drawable.ic_person)
-                    .build(),
-                contentDescription = "Foto de ${candidate.getDisplayName()}",
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+            CachedProfileImage(
+                photoUrl = candidate.userPhoto,
+                userName = candidate.getDisplayName(),
+                size = 80.dp
             )
 
             Spacer(modifier = Modifier.height(12.dp))
