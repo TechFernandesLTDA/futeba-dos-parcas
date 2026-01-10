@@ -2,6 +2,7 @@ package com.futebadosparcas.di
 
 import android.content.Context
 import com.futebadosparcas.data.repository.*
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.LeagueService
 import com.futebadosparcas.domain.ranking.MatchFinalizationService
 import com.futebadosparcas.domain.ranking.PostGameEventEmitter

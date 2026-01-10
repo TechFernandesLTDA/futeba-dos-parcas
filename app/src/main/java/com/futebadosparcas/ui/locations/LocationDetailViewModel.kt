@@ -9,8 +9,9 @@ import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.data.model.LocationReview
 import com.futebadosparcas.data.model.User
 import com.futebadosparcas.data.repository.LocationRepository
-import com.futebadosparcas.data.repository.UserRepositoryLegacy
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.data.repository.AddressRepository
+import com.futebadosparcas.util.toDataModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LocationDetailViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
-    private val userRepository: UserRepositoryLegacy,
+    private val userRepository: UserRepository,
     private val addressRepository: AddressRepository
 ) : ViewModel() {
 
@@ -39,8 +40,8 @@ class LocationDetailViewModel @Inject constructor(
 
     private fun loadFieldOwners() {
         viewModelScope.launch {
-            userRepository.getFieldOwners().onSuccess { owners ->
-                _fieldOwners.value = owners
+            userRepository.getFieldOwners().onSuccess { domainOwners ->
+                _fieldOwners.value = domainOwners.map { it.toDataModel() }
             }
         }
     }

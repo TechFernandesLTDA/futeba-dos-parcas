@@ -3,8 +3,8 @@ package com.futebadosparcas.di
 import android.content.Context
 import com.futebadosparcas.data.database.DatabaseDriverFactory
 import com.futebadosparcas.data.database.DatabaseFactory
-import com.futebadosparcas.data.repository.UserRepositoryImpl
 import com.futebadosparcas.db.FutebaDatabase
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.storage.PreferencesService
 import com.google.firebase.auth.FirebaseAuth
@@ -18,6 +18,9 @@ import javax.inject.Singleton
 
 /**
  * Módulo Hilt para repositórios compartilhados (KMP).
+ *
+ * Configuração moderna com Kotlin Multiplatform, Jetpack Compose,
+ * e injeção de dependência centralizada.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -51,7 +54,12 @@ object RepositoryModule {
         firebaseDataSource: FirebaseDataSource,
         database: FutebaDatabase,
         preferencesService: PreferencesService
-    ): com.futebadosparcas.domain.repository.UserRepository {
-        return UserRepositoryImpl(firebaseDataSource, database, preferencesService)
+    ): UserRepository {
+        // Instancia o UserRepositoryImpl compartilhado (KMP) do módulo shared
+        return com.futebadosparcas.data.repository.UserRepositoryImpl(
+            firebaseDataSource,
+            database,
+            preferencesService
+        )
     }
 }

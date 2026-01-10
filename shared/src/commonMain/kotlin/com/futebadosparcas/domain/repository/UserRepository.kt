@@ -62,4 +62,31 @@ interface UserRepository {
      * Verifica se o usuario esta logado.
      */
     fun isLoggedIn(): Boolean
+
+    /**
+     * Atualiza o token FCM do usuario para push notifications.
+     */
+    suspend fun updateFcmToken(token: String): Result<Unit>
+
+    /**
+     * Busca todos os usuarios sem paginacao (uso interno).
+     * @deprecated Preferir searchUsers() para melhor performance.
+     */
+    @Deprecated("Use searchUsers() for better performance")
+    suspend fun getAllUsersUnpaginated(): Result<List<User>>
+
+    /**
+     * Atualiza o role (permissão) do usuario.
+     */
+    suspend fun updateUserRole(userId: String, newRole: String): Result<Unit>
+
+    /**
+     * Busca todos os usuarios que são donos de quadra.
+     */
+    suspend fun getFieldOwners(): Result<List<User>>
+
+    /**
+     * Atualiza a visibilidade do perfil do usuario para busca.
+     */
+    suspend fun updateProfileVisibility(isSearchable: Boolean): Result<Unit>
 }
