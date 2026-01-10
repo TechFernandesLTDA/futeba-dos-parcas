@@ -817,10 +817,13 @@ private fun BadgesSection(badges: List<UserBadge>) {
  */
 @Composable
 private fun BadgeItem(badge: UserBadge) {
-    val badgeType = try {
-        BadgeType.valueOf(badge.badgeId)
-    } catch (e: Exception) {
-        null
+    // 🔧 OTIMIZADO: Memoizar parsing de BadgeType para evitar recomposição desnecessária
+    val badgeType = remember(badge.badgeId) {
+        try {
+            BadgeType.valueOf(badge.badgeId)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     Column(
