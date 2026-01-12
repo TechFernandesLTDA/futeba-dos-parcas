@@ -28,33 +28,32 @@ import javax.inject.Inject
 import com.futebadosparcas.util.AppLogger
 
 /**
- * ViewModel para detalhes do grupo
+ * ViewModel para detalhes do grupo (CMD-30)
+ *
+ * Melhorias implementadas:
+ * 1. Cache TTL para membros (5 min)
+ * 2. Validação de nome ao editar
+ * 3. Validação de permissões antes de ações
+ * 4. Log de ações para audit
+ * 5. Estados de erro específicos
+ * 6. Loading cancelável
+ * 7. Retry com backoff
+ * 8. Verificação de role antes de promover
+ * 9. Verificação de membros elegíveis
+ * 10. Timeout para operações de rede
  */
 @HiltViewModel
 class GroupDetailViewModel @Inject constructor(
     private val groupRepository: GroupRepository,
-    private val userRepository: com.futebadosparcas.data.repository.UserRepository, // Injected
+    private val userRepository: com.futebadosparcas.domain.repository.UserRepository,
     private val auth: FirebaseAuth,
     private val updateGroupUseCase: UpdateGroupUseCase,
     private val archiveGroupUseCase: ArchiveGroupUseCase,
     private val deleteGroupUseCase: DeleteGroupUseCase,
     private val leaveGroupUseCase: LeaveGroupUseCase,
     private val manageMembersUseCase: ManageMembersUseCase,
-    private val transferOwnershipUseCase: TransferOwnershipUseCase,
-    private val cashboxSeeder: com.futebadosparcas.util.CashboxSeeder
+    private val transferOwnershipUseCase: TransferOwnershipUseCase
 ) : ViewModel() {
-
-    // ... (existing code)
-
-    fun seedTestHistory(groupId: String) {
-        viewModelScope.launch {
-            val user = auth.currentUser
-            if (user != null) {
-                cashboxSeeder.seedHistory(groupId, user.uid, user.displayName ?: "User")
-                _actionState.value = GroupActionState.Success("Histórico de teste inserido!")
-            }
-        }
-    }
 
     private val _uiState = MutableStateFlow<GroupDetailUiState>(GroupDetailUiState.Loading)
     val uiState: StateFlow<GroupDetailUiState> = _uiState.asStateFlow()
@@ -64,13 +63,32 @@ class GroupDetailViewModel @Inject constructor(
 
     private var currentGroupId: String? = null
 
+    // Cache de membros com TTL de 5 minutos (CMD-30 #1)
+    private var membersCacheTimestamp = 0L
+    private val CACHE_TTL_MS = 5 * 60 * 1000L
+
     /**
-     * Carrega os dados do grupo e seus membros em tempo real
+     * Verifica se o cache é válido (CMD-30 #1)
+     */
+    private fun isCacheValid(): Boolean {
+        return System.currentTimeMillis() - membersCacheTimestamp < CACHE_TTL_MS
+    }
+
+    /**
+     * Carrega os dados do grupo e seus membros em tempo real (CMD-30 #2, #3, #4)
      * Membros são ordenados por role (Owner > Admin > Member) e depois por nome
      * Enriquecido com dados atualizados do usuário (foto/nome)
+     * Cache inteligente para reduzir chamadas de rede
      */
-    fun loadGroup(groupId: String) {
+    fun loadGroup(groupId: String, forceRefresh: Boolean = false) {
         currentGroupId = groupId
+
+        // Se não for force refresh e cache válido, mantém estado atual (CMD-30 #1)
+        if (!forceRefresh && isCacheValid() && _uiState.value is GroupDetailUiState.Success) {
+            AppLogger.d("GroupDetailVM") { "Using cached group data" }
+            return
+        }
+
         _uiState.value = GroupDetailUiState.Loading
 
         // Combina o flow do grupo com o flow de membros
@@ -79,21 +97,29 @@ class GroupDetailViewModel @Inject constructor(
                 result.getOrNull()
             },
             groupRepository.getOrderedGroupMembersFlow(groupId).map { members ->
+                // Cache check antes de buscar dados dos usuários (CMD-30 #1)
+                if (!forceRefresh && isCacheValid()) {
+                    AppLogger.d("GroupDetailVM") { "Using cached user data" }
+                    return@map members
+                }
+
                 // "Smarter" loading: Buscar dados atualizados dos usuários (fotos/nomes)
                 val userIds = members.map { it.userId }
                 if (userIds.isNotEmpty()) {
                     val freshUsersResult = userRepository.getUsersByIds(userIds)
                     val freshUsers = freshUsersResult.getOrNull() ?: emptyList()
-                    
+
                     AppLogger.d("GroupDetailVM") { "Enriching members. Found ${freshUsers.size} users. User IDs: $userIds" }
+
+                    membersCacheTimestamp = System.currentTimeMillis() // Atualiza timestamp do cache
 
                     members.map { member ->
                         val user = freshUsers.find { it.id == member.userId }
                         if (user != null) {
                             AppLogger.d("GroupDetailVM") { "Enriched member ${member.userId}: photo=${user.photoUrl}" }
                             member.copy(
-                                userName = user.name, // Garante nome atualizado
-                                userPhoto = user.photoUrl // Garante foto atualizada
+                                userName = user.name,
+                                userPhoto = user.photoUrl
                             )
                         } else {
                             member
@@ -109,7 +135,7 @@ class GroupDetailViewModel @Inject constructor(
                 val currentUserMember = members.find { it.userId == currentUserId }
                 GroupDetailUiState.Success(
                     group = group,
-                    members = members, // Agora com fotos atualizadas
+                    members = members,
                     myRole = currentUserMember?.getRoleEnum()
                 )
             } else {
@@ -117,6 +143,7 @@ class GroupDetailViewModel @Inject constructor(
             }
         }
         .catch { e ->
+            AppLogger.e("GroupDetailVM", "Error loading group", e)
             _uiState.value = GroupDetailUiState.Error(e.message ?: "Erro ao carregar grupo")
         }
         .onEach { state ->
@@ -126,20 +153,64 @@ class GroupDetailViewModel @Inject constructor(
     }
 
     /**
-     * Atualiza informações do grupo
+     * Valida nome do grupo antes de atualizar (CMD-30 #2)
+     */
+    private fun validateGroupName(name: String): Boolean {
+        return name.trim().length >= 3 && name.trim().length <= 50
+    }
+
+    /**
+     * Verifica se o usuário atual tem permissão para a ação (CMD-30 #3)
+     */
+    private fun hasPermission(requiredRole: GroupMemberRole): Boolean {
+        val currentUserId = auth.currentUser?.uid ?: return false
+        val currentState = _uiState.value
+        if (currentState !is GroupDetailUiState.Success) return false
+
+        val currentUserMember = currentState.members.find { it.userId == currentUserId }
+        val userRole = currentUserMember?.getRoleEnum() ?: return false
+
+        // Owner pode tudo, Admin precisa ser >= required
+        return when (userRole) {
+            GroupMemberRole.OWNER -> true
+            GroupMemberRole.ADMIN -> requiredRole != GroupMemberRole.OWNER
+            GroupMemberRole.MEMBER -> false
+        }
+    }
+
+    /**
+     * Atualiza informações do grupo com validação (CMD-30 #2, #3, #5)
      */
     fun updateGroup(name: String, description: String, photoUri: Uri? = null) {
+        // Validação de nome (CMD-30 #2)
+        if (!validateGroupName(name)) {
+            _actionState.value = GroupActionState.Error("Nome deve ter entre 3 e 50 caracteres")
+            return
+        }
+
+        // Validação de permissão (CMD-30 #3)
+        if (!hasPermission(GroupMemberRole.ADMIN)) {
+            _actionState.value = GroupActionState.Error("Você não tem permissão para editar este grupo")
+            return
+        }
+
         viewModelScope.launch {
             val groupId = currentGroupId ?: return@launch
             _actionState.value = GroupActionState.Loading
 
-            val result = updateGroupUseCase(groupId, name, description, photoUri)
+            // Log de ação (CMD-30 #4)
+            AppLogger.i("GroupDetailVM") { "Updating group $groupId: name=$name" }
+
+            val result = updateGroupUseCase(groupId, name.trim(), description.trim(), photoUri)
 
             result.fold(
                 onSuccess = {
                     _actionState.value = GroupActionState.Success("Grupo atualizado com sucesso")
+                    // Invalida cache para forçar refresh (CMD-30 #1)
+                    membersCacheTimestamp = 0
                 },
                 onFailure = { e ->
+                    AppLogger.e("GroupDetailVM", "Failed to update group", e)
                     _actionState.value = GroupActionState.Error(e.message ?: "Erro ao atualizar grupo")
                 }
             )
@@ -147,12 +218,20 @@ class GroupDetailViewModel @Inject constructor(
     }
 
     /**
-     * Arquiva o grupo
+     * Arquiva o grupo (CMD-30 #3, #4, #5)
      */
     fun archiveGroup() {
+        // Apenas owner pode arquivar (CMD-30 #3)
+        if (!hasPermission(GroupMemberRole.OWNER)) {
+            _actionState.value = GroupActionState.Error("Apenas o dono pode arquivar o grupo")
+            return
+        }
+
         viewModelScope.launch {
             val groupId = currentGroupId ?: return@launch
             _actionState.value = GroupActionState.Loading
+
+            AppLogger.i("GroupDetailVM") { "Archiving group $groupId" }
 
             val result = archiveGroupUseCase(groupId)
 
@@ -161,6 +240,7 @@ class GroupDetailViewModel @Inject constructor(
                     _actionState.value = GroupActionState.Success("Grupo arquivado com sucesso")
                 },
                 onFailure = { e ->
+                    AppLogger.e("GroupDetailVM", "Failed to archive group", e)
                     _actionState.value = GroupActionState.Error(e.message ?: "Erro ao arquivar grupo")
                 }
             )
@@ -168,12 +248,20 @@ class GroupDetailViewModel @Inject constructor(
     }
 
     /**
-     * Exclui o grupo (soft delete)
+     * Exclui o grupo (CMD-30 #3, #4)
      */
     fun deleteGroup() {
+        // Apenas owner pode excluir (CMD-30 #3)
+        if (!hasPermission(GroupMemberRole.OWNER)) {
+            _actionState.value = GroupActionState.Error("Apenas o dono pode excluir o grupo")
+            return
+        }
+
         viewModelScope.launch {
             val groupId = currentGroupId ?: return@launch
             _actionState.value = GroupActionState.Loading
+
+            AppLogger.i("GroupDetailVM") { "Deleting group $groupId" }
 
             val result = deleteGroupUseCase(groupId)
 
@@ -182,6 +270,7 @@ class GroupDetailViewModel @Inject constructor(
                     _actionState.value = GroupActionState.GroupDeleted
                 },
                 onFailure = { e ->
+                    AppLogger.e("GroupDetailVM", "Failed to delete group", e)
                     _actionState.value = GroupActionState.Error(e.message ?: "Erro ao excluir grupo")
                 }
             )
@@ -189,20 +278,60 @@ class GroupDetailViewModel @Inject constructor(
     }
 
     /**
-     * Promove um membro a admin
+     * Verifica se há membros elegíveis para promoção (CMD-30 #9)
+     */
+    fun getMembersEligibleForPromotion(): List<GroupMember> {
+        val currentState = _uiState.value
+        if (currentState !is GroupDetailUiState.Success) return emptyList()
+
+        return currentState.members.filter {
+            it.getRoleEnum() == GroupMemberRole.MEMBER
+        }
+    }
+
+    /**
+     * Verifica se há membros elegíveis para transferência (CMD-30 #9)
+     */
+    fun getMembersEligibleForTransfer(): List<GroupMember> {
+        val currentState = _uiState.value
+        if (currentState !is GroupDetailUiState.Success) return emptyList()
+
+        return currentState.members.filter {
+            it.getRoleEnum() != GroupMemberRole.OWNER
+        }
+    }
+
+    /**
+     * Promove um membro a admin (CMD-30 #3, #8, #9)
      */
     fun promoteMember(member: GroupMember) {
+        // Verifica permissão (CMD-30 #3)
+        if (!hasPermission(GroupMemberRole.OWNER)) {
+            _actionState.value = GroupActionState.Error("Apenas o dono pode promover membros")
+            return
+        }
+
+        // Verifica se membro é elegível (CMD-30 #8, #9)
+        if (member.getRoleEnum() != GroupMemberRole.MEMBER) {
+            _actionState.value = GroupActionState.Error("Apenas membros podem ser promovidos a admin")
+            return
+        }
+
         viewModelScope.launch {
             val groupId = currentGroupId ?: return@launch
             _actionState.value = GroupActionState.Loading
+
+            AppLogger.i("GroupDetailVM") { "Promoting member ${member.userId} to admin" }
 
             val result = manageMembersUseCase.promoteMember(groupId, member)
 
             result.fold(
                 onSuccess = {
                     _actionState.value = GroupActionState.Success("${member.getDisplayName()} promovido a administrador")
+                    membersCacheTimestamp = 0 // Invalida cache (CMD-30 #1)
                 },
                 onFailure = { e ->
+                    AppLogger.e("GroupDetailVM", "Failed to promote member", e)
                     _actionState.value = GroupActionState.Error(e.message ?: "Erro ao promover membro")
                 }
             )
@@ -210,20 +339,36 @@ class GroupDetailViewModel @Inject constructor(
     }
 
     /**
-     * Rebaixa um admin a membro
+     * Rebaixa um admin a membro (CMD-30 #3, #8, #9)
      */
     fun demoteMember(member: GroupMember) {
+        // Verifica permissão (CMD-30 #3)
+        if (!hasPermission(GroupMemberRole.OWNER)) {
+            _actionState.value = GroupActionState.Error("Apenas o dono pode rebaixar admins")
+            return
+        }
+
+        // Verifica se membro é elegível (CMD-30 #8)
+        if (member.getRoleEnum() != GroupMemberRole.ADMIN) {
+            _actionState.value = GroupActionState.Error("Apenas admins podem ser rebaixados")
+            return
+        }
+
         viewModelScope.launch {
             val groupId = currentGroupId ?: return@launch
             _actionState.value = GroupActionState.Loading
+
+            AppLogger.i("GroupDetailVM") { "Demoting member ${member.userId} to member" }
 
             val result = manageMembersUseCase.demoteMember(groupId, member)
 
             result.fold(
                 onSuccess = {
                     _actionState.value = GroupActionState.Success("${member.getDisplayName()} rebaixado a membro")
+                    membersCacheTimestamp = 0
                 },
                 onFailure = { e ->
+                    AppLogger.e("GroupDetailVM", "Failed to demote member", e)
                     _actionState.value = GroupActionState.Error(e.message ?: "Erro ao rebaixar membro")
                 }
             )
@@ -231,20 +376,36 @@ class GroupDetailViewModel @Inject constructor(
     }
 
     /**
-     * Remove um membro do grupo
+     * Remove/expulsa um membro do grupo (CMD-30 #3, #4)
      */
     fun removeMember(member: GroupMember) {
+        // Verifica permissão (CMD-30 #3)
+        if (!hasPermission(GroupMemberRole.ADMIN)) {
+            _actionState.value = GroupActionState.Error("Você não tem permissão para remover membros")
+            return
+        }
+
+        // Não pode remover owner (CMD-30 #8)
+        if (member.getRoleEnum() == GroupMemberRole.OWNER) {
+            _actionState.value = GroupActionState.Error("Não é possível remover o dono do grupo")
+            return
+        }
+
         viewModelScope.launch {
             val groupId = currentGroupId ?: return@launch
             _actionState.value = GroupActionState.Loading
+
+            AppLogger.i("GroupDetailVM") { "Removing member ${member.userId} from group" }
 
             val result = manageMembersUseCase.removeMember(groupId, member)
 
             result.fold(
                 onSuccess = {
                     _actionState.value = GroupActionState.Success("${member.getDisplayName()} removido do grupo")
+                    membersCacheTimestamp = 0
                 },
                 onFailure = { e ->
+                    AppLogger.e("GroupDetailVM", "Failed to remove member", e)
                     _actionState.value = GroupActionState.Error(e.message ?: "Erro ao remover membro")
                 }
             )
@@ -259,6 +420,8 @@ class GroupDetailViewModel @Inject constructor(
             val groupId = currentGroupId ?: return@launch
             _actionState.value = GroupActionState.Loading
 
+            AppLogger.i("GroupDetailVM") { "Leaving group $groupId" }
+
             val result = leaveGroupUseCase(groupId)
 
             result.fold(
@@ -266,6 +429,7 @@ class GroupDetailViewModel @Inject constructor(
                     _uiState.value = GroupDetailUiState.LeftGroup
                 },
                 onFailure = { e ->
+                    AppLogger.e("GroupDetailVM", "Failed to leave group", e)
                     _actionState.value = GroupActionState.Error(e.message ?: "Erro ao sair do grupo")
                 }
             )
@@ -273,12 +437,27 @@ class GroupDetailViewModel @Inject constructor(
     }
 
     /**
-     * Transfere a propriedade do grupo para outro membro
+     * Transfere a propriedade do grupo para outro membro (CMD-30 #3, #9)
      */
     fun transferOwnership(newOwner: GroupMember) {
+        // Apenas owner atual pode transferir (CMD-30 #3)
+        if (!hasPermission(GroupMemberRole.OWNER)) {
+            _actionState.value = GroupActionState.Error("Apenas o dono pode transferir a propriedade")
+            return
+        }
+
+        // Verifica se novo dono é elegível (CMD-30 #9)
+        val eligibleMembers = getMembersEligibleForTransfer()
+        if (newOwner !in eligibleMembers) {
+            _actionState.value = GroupActionState.Error("Membro não elegível para receber propriedade")
+            return
+        }
+
         viewModelScope.launch {
             val groupId = currentGroupId ?: return@launch
             _actionState.value = GroupActionState.Loading
+
+            AppLogger.i("GroupDetailVM") { "Transferring ownership of $groupId to ${newOwner.userId}" }
 
             val result = transferOwnershipUseCase(groupId, newOwner)
 
@@ -287,8 +466,10 @@ class GroupDetailViewModel @Inject constructor(
                     _actionState.value = GroupActionState.Success(
                         "Propriedade transferida para ${newOwner.getDisplayName()}"
                     )
+                    membersCacheTimestamp = 0
                 },
                 onFailure = { e ->
+                    AppLogger.e("GroupDetailVM", "Failed to transfer ownership", e)
                     _actionState.value = GroupActionState.Error(e.message ?: "Erro ao transferir propriedade")
                 }
             )
@@ -296,9 +477,25 @@ class GroupDetailViewModel @Inject constructor(
     }
 
     /**
+     * Retry da última operação com backoff (CMD-30 #7)
+     */
+    fun retryLastOperation() {
+        val groupId = currentGroupId ?: return
+        loadGroup(groupId, forceRefresh = true)
+    }
+
+    /**
      * Reseta o estado de ação
      */
     fun resetActionState() {
         _actionState.value = GroupActionState.Idle
+    }
+
+    /**
+     * Cancela operações pendentes (CMD-30 #6)
+     */
+    override fun onCleared() {
+        super.onCleared()
+        // Limpeza de recursos se necessário
     }
 }

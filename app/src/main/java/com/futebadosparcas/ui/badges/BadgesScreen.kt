@@ -24,6 +24,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Badge
 import com.futebadosparcas.data.model.BadgeRarity
 import com.futebadosparcas.data.model.BadgeType
@@ -105,7 +107,7 @@ private fun BadgesTopBar(
     TopAppBar(
         title = {
             Text(
-                text = "Conquistas",
+                text = stringResource(R.string.badges_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -115,7 +117,7 @@ private fun BadgesTopBar(
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Voltar"
+                        contentDescription = stringResource(R.string.back)
                     )
                 }
             }
@@ -159,11 +161,11 @@ private fun BadgesSuccessContent(
             // Empty state
             EmptyState(
                 type = EmptyStateType.NoData(
-                    title = "Nenhuma conquista",
+                    title = stringResource(R.string.badges_no_badges),
                     description = if (state.selectedCategory != null) {
-                        "Nenhuma conquista nesta categoria ainda.\nJogue mais partidas para desbloquear!"
+                        stringResource(R.string.badges_no_badges_category)
                     } else {
-                        "Jogue mais partidas para desbloquear badges!"
+                        stringResource(R.string.badges_no_badges_general)
                     },
                     icon = Icons.Default.EmojiEvents
                 ),
@@ -224,7 +226,7 @@ private fun BadgeProgressHeader(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Seu Progresso",
+                text = stringResource(R.string.badges_progress),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 fontWeight = FontWeight.Bold
@@ -264,7 +266,7 @@ private fun BadgeProgressHeader(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Badges Desbloqueadas",
+                text = stringResource(R.string.badges_unlocked),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
@@ -297,7 +299,7 @@ private fun BadgeCategoryTabs(
         Tab(
             selected = selectedCategory == null,
             onClick = { onCategorySelected(null) },
-            text = { Text("Todas") }
+            text = { Text(stringResource(R.string.badges_all)) }
         )
         BadgeCategory.entries.forEach { category ->
             Tab(
@@ -446,10 +448,10 @@ private fun BadgeCard(
 @Composable
 private fun BadgeRarityLabel(rarity: BadgeRarity) {
     val rarityText = when (rarity) {
-        BadgeRarity.COMUM -> "COMUM"
-        BadgeRarity.RARO -> "RARO"
-        BadgeRarity.EPICO -> "ÉPICO"
-        BadgeRarity.LENDARIO -> "LENDÁRIO"
+        BadgeRarity.COMUM -> stringResource(R.string.badges_rarity_comum)
+        BadgeRarity.RARO -> stringResource(R.string.badges_rarity_raro)
+        BadgeRarity.EPICO -> stringResource(R.string.badges_rarity_epico)
+        BadgeRarity.LENDARIO -> stringResource(R.string.badges_rarity_lendario)
     }
 
     val rarityColor = getRarityColor(rarity)
@@ -548,7 +550,7 @@ private fun BadgeDetailDialog(
             ) {
                 // Header
                 Text(
-                    text = "🎉 Conquista Desbloqueada!",
+                    text = stringResource(R.string.badges_unlocked_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -658,7 +660,7 @@ private fun BadgeDetailDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Continuar")
+                    Text(stringResource(R.string.badges_continue))
                 }
             }
         }
@@ -791,7 +793,7 @@ private fun BadgesErrorState(
 ) {
     EmptyState(
         type = EmptyStateType.Error(
-            title = "Erro ao carregar conquistas",
+            title = stringResource(R.string.badges_error_title),
             description = message,
             onRetry = onRetry
         ),

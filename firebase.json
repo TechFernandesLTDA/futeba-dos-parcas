@@ -56,7 +56,11 @@
       ],
       "predeploy": [
         "npm --prefix \"$RESOURCE_DIR\" run build"
-      ]
+      ],
+      "runtimeOptions": {
+        "timeout": 120,
+        "memory": 512
+      }
     }
   ]
 }

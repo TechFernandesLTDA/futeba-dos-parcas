@@ -1,4 +1,4 @@
-import * as admin from "firebase-admin";
+﻿import * as admin from "firebase-admin";
 import { onDocumentUpdated, onDocumentDeleted } from "firebase-functions/v2/firestore";
 import {
     calculateLeaguePromotion,
@@ -35,6 +35,7 @@ interface GameConfirmation {
     yellowCards: number;
     redCards: number;
     game_id: string;
+    is_worst_player?: boolean; // "Bola Murcha" - penalidade de -10 XP
 }
 
 interface Team {
@@ -62,6 +63,7 @@ interface UserStatistics {
     gamesLost: number;
     gamesDraw: number;
     bestPlayerCount: number;
+    worstPlayerCount: number;
 }
 
 interface XpLog {
@@ -80,10 +82,12 @@ interface XpLog {
     xp_mvp: number;
     xp_milestones: number;
     xp_streak: number;
+    xp_penalty: number; // Penalidade "Bola Murcha"
     goals: number;
     assists: number;
     saves: number;
     was_mvp: boolean;
+    was_worst_player: boolean; // Flag "Bola Murcha"
     game_result: string;
     milestones_unlocked: string[];
     created_at: admin.firestore.FieldValue;
@@ -119,25 +123,36 @@ const DEFAULT_SETTINGS: GamificationSettings = {
     xp_streak_10: 100
 };
 
-// LevelTable Logic (Synced with Kotlin LevelCalculator.kt)
+// Limites Anti-Cheat (Tetos de XP por jogo)
+const MAX_GOALS_PER_GAME = 15;
+const MAX_ASSISTS_PER_GAME = 10;
+const MAX_SAVES_PER_GAME = 30;
+const MAX_XP_PER_GAME = 500;
+
+// Penalidade "Bola Murcha" (sincronizado com XPCalculator.kt)
+const XP_WORST_PLAYER_PENALTY = -10;
+
+// LevelTable Logic (Synced with Kotlin LevelTable.kt)
 // Formato: level, name, xpRequired (acumulado)
+// Fonte de verdade: app/src/main/java/com/futebadosparcas/data/model/LevelTable.kt
 const LEVELS = [
-    { level: 1, name: "Iniciante", xpRequired: 0 },
-    { level: 2, name: "Amador", xpRequired: 100 },
-    { level: 3, name: "Promissor", xpRequired: 350 },
-    { level: 4, name: "Habilidoso", xpRequired: 750 },
-    { level: 5, name: "Experiente", xpRequired: 1350 },
-    { level: 6, name: "Veterano", xpRequired: 2200 },
-    { level: 7, name: "Elite", xpRequired: 3300 },
-    { level: 8, name: "Craque", xpRequired: 4700 },
-    { level: 9, name: "Lenda", xpRequired: 6500 },
-    { level: 10, name: "Imortal", xpRequired: 8800 }
+    { level: 0, name: "Novato", xpRequired: 0 },
+    { level: 1, name: "Iniciante", xpRequired: 100 },
+    { level: 2, name: "Amador", xpRequired: 350 },
+    { level: 3, name: "Regular", xpRequired: 850 },
+    { level: 4, name: "Experiente", xpRequired: 1850 },
+    { level: 5, name: "Habilidoso", xpRequired: 3850 },
+    { level: 6, name: "Profissional", xpRequired: 7350 },
+    { level: 7, name: "Expert", xpRequired: 12850 },
+    { level: 8, name: "Mestre", xpRequired: 20850 },
+    { level: 9, name: "Lenda", xpRequired: 32850 },
+    { level: 10, name: "Imortal", xpRequired: 52850 }
 ];
 
 function getLevelForXp(xp: number): number {
     const sorted = [...LEVELS].reverse();
     const found = sorted.find(l => xp >= l.xpRequired);
-    return found ? found.level : 1; // Nível mínimo é 1 (Iniciante)
+    return found ? found.level : 0; // NÃ­vel mÃ­nimo Ã© 0 (Novato)
 }
 
 // Milestone Logic (Synced with Kotlin Gamification.kt)
@@ -224,14 +239,20 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
         return;
     }
 
-    // 2. Validate owner exists in users collection
+    // 2. Validate owner_id was NOT changed (prevent unauthorized ownership transfer)
+    if (before.owner_id && before.owner_id !== after.owner_id) {
+        console.warn(`[SECURITY] Game ${gameId}: owner changed from ${before.owner_id} to ${after.owner_id} - aborting XP processing to prevent fraud`);
+        return;
+    }
+
+    // 3. Validate owner exists in users collection
     const ownerDoc = await db.collection("users").doc(after.owner_id).get();
     if (!ownerDoc.exists) {
         console.error(`[SECURITY] Game ${gameId}: owner_id ${after.owner_id} not found in users. Blocking processing.`);
         return;
     }
 
-    // 3. Log status change for audit trail
+    // 4. Log status change for audit trail
     if (before.status !== after.status) {
         console.log(`[AUDIT] Game ${gameId}: Status changed ${before.status} -> ${after.status} by owner ${after.owner_id}`);
     }
@@ -280,6 +301,21 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
             ]);
 
             const confirmations = confirmationsSnap.docs.map(d => toGameConfirmation(d.data()));
+
+            // VALIDAÃ‡Ã•ES ANTI-CHEAT (SERVER-SIDE)
+            for (const conf of confirmations) {
+                if (conf.goals < 0 || conf.goals > MAX_GOALS_PER_GAME) {
+                    throw new Error(`[ANTI-CHEAT] Invalid goals count for user ${conf.userId}: ${conf.goals} (max: ${MAX_GOALS_PER_GAME})`);
+                }
+                if (conf.assists < 0 || conf.assists > MAX_ASSISTS_PER_GAME) {
+                    throw new Error(`[ANTI-CHEAT] Invalid assists count for user ${conf.userId}: ${conf.assists} (max: ${MAX_ASSISTS_PER_GAME})`);
+                }
+                if (conf.saves < 0 || conf.saves > MAX_SAVES_PER_GAME) {
+                    throw new Error(`[ANTI-CHEAT] Invalid saves count for user ${conf.userId}: ${conf.saves} (max: ${MAX_SAVES_PER_GAME})`);
+                }
+                console.log(`[ANTI-CHEAT] User ${conf.userId}: ${conf.goals} goals, ${conf.assists} assists, ${conf.saves} saves - VALID`);
+            }
+
             const teams = teamsSnap.docs.map(d => toTeam(d.id, d.data()));
             const liveScore = liveScoreDoc.exists ? toLiveScore(liveScoreDoc.data()) : null;
             const activeSeason = !seasonSnap.empty ? seasonSnap.docs[0].id : null;
@@ -290,7 +326,7 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 settings = { ...DEFAULT_SETTINGS, ...settingsSnap.data() } as GamificationSettings;
             }
 
-            // Mínimo de 6 jogadores (3v3) para processar XP - sincronizado com Android
+            // MÃ­nimo de 6 jogadores (3v3) para processar XP - sincronizado com Android
             const MIN_PLAYERS = 6;
             if (confirmations.length < MIN_PLAYERS) {
                 console.log(`Not enough players (${confirmations.length}/${MIN_PLAYERS}). Marking processed.`);
@@ -329,7 +365,107 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 }
             }
 
-            // 3. Process Each Player
+            // 3. Pre-fetch ALL player data in parallel (PERF: reduces 60+ sequential ops to ~3)
+            const userIds = confirmations.map(c => c.userId);
+
+            // Helper: batch fetch users with whereIn (limit 10)
+            const fetchAllUsers = async (ids: string[]): Promise<Map<string, admin.firestore.DocumentData>> => {
+                const result = new Map<string, admin.firestore.DocumentData>();
+                const chunks: string[][] = [];
+                for (let i = 0; i < ids.length; i += 10) {
+                    chunks.push(ids.slice(i, i + 10));
+                }
+                const snaps = await Promise.all(
+                    chunks.map(chunk =>
+                        db.collection("users")
+                            .where(admin.firestore.FieldPath.documentId(), "in", chunk)
+                            .get()
+                    )
+                );
+                for (const snap of snaps) {
+                    for (const doc of snap.docs) {
+                        result.set(doc.id, doc.data() || {});
+                    }
+                }
+                return result;
+            };
+
+            // Helper: batch fetch statistics with whereIn (limit 10)
+            const fetchAllStats = async (ids: string[]): Promise<Map<string, UserStatistics>> => {
+                const result = new Map<string, UserStatistics>();
+                const chunks: string[][] = [];
+                for (let i = 0; i < ids.length; i += 10) {
+                    chunks.push(ids.slice(i, i + 10));
+                }
+                const snaps = await Promise.all(
+                    chunks.map(chunk =>
+                        db.collection("statistics")
+                            .where(admin.firestore.FieldPath.documentId(), "in", chunk)
+                            .get()
+                    )
+                );
+                for (const snap of snaps) {
+                    for (const doc of snap.docs) {
+                        result.set(doc.id, (doc.data() || {
+                            totalGames: 0, totalGoals: 0, totalAssists: 0, totalSaves: 0,
+                            totalYellowCards: 0, totalRedCards: 0,
+                            gamesWon: 0, gamesLost: 0, gamesDraw: 0, bestPlayerCount: 0, worstPlayerCount: 0
+                        }) as UserStatistics);
+                    }
+                }
+                // Fill in missing stats with defaults
+                for (const id of ids) {
+                    if (!result.has(id)) {
+                        result.set(id, {
+                            totalGames: 0, totalGoals: 0, totalAssists: 0, totalSaves: 0,
+                            totalYellowCards: 0, totalRedCards: 0,
+                            gamesWon: 0, gamesLost: 0, gamesDraw: 0, bestPlayerCount: 0, worstPlayerCount: 0
+                        });
+                    }
+                }
+                return result;
+            };
+
+            // Helper: batch fetch streaks with whereIn (limit 10)
+            const fetchAllStreaks = async (ids: string[]): Promise<Map<string, number>> => {
+                const result = new Map<string, number>();
+                const chunks: string[][] = [];
+                for (let i = 0; i < ids.length; i += 10) {
+                    chunks.push(ids.slice(i, i + 10));
+                }
+                const snaps = await Promise.all(
+                    chunks.map(chunk =>
+                        db.collection("user_streaks")
+                            .where("user_id", "in", chunk)
+                            .get()
+                    )
+                );
+                for (const snap of snaps) {
+                    for (const doc of snap.docs) {
+                        const data = doc.data();
+                        const userId = data.user_id;
+                        if (userId) {
+                            result.set(userId, data.currentStreak || 0);
+                        }
+                    }
+                }
+                // Fill in missing streaks with 0
+                for (const id of ids) {
+                    if (!result.has(id)) {
+                        result.set(id, 0);
+                    }
+                }
+                return result;
+            };
+
+            // Fetch all data in PARALLEL - key optimization!
+            const [usersMap, statsMap, streaksMap] = await Promise.all([
+                fetchAllUsers(userIds),
+                fetchAllStats(userIds),
+                fetchAllStreaks(userIds)
+            ]);
+
+            // 4. Process Each Player (NO Firestore calls in loop - data already loaded)
             const batch = db.batch();
             const now = admin.firestore.FieldValue.serverTimestamp();
 
@@ -343,24 +479,18 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 const team = teams.find(t => t.playerIds.includes(uid));
                 const result = team ? (teamResults[team.id] || "DRAW") : "DRAW";
 
-                // Fetch User Data & Stats (Parallel)
-                const [userDoc, statsDoc, streakDoc] = await Promise.all([
-                    db.collection("users").doc(uid).get(),
-                    db.collection("statistics").doc(uid).get(),
-                    db.collection("user_streaks").where("user_id", "==", uid).limit(1).get()
-                ]);
-
-                const userEntry = userDoc.data() || {};
+                // Get pre-fetched data (NO Firestore calls - synchronous lookup)
+                const userEntry = usersMap.get(uid) || {};
                 const currentXp = userEntry.experience_points || 0;
                 const achievedMilestones = (userEntry.milestones_achieved || []) as string[];
 
-                const stats = (statsDoc.exists ? statsDoc.data() : {
+                const stats = statsMap.get(uid) || {
                     totalGames: 0, totalGoals: 0, totalAssists: 0, totalSaves: 0,
                     totalYellowCards: 0, totalRedCards: 0,
                     gamesWon: 0, gamesLost: 0, gamesDraw: 0, bestPlayerCount: 0
-                }) as UserStatistics;
+                } as UserStatistics;
 
-                const streak = !streakDoc.empty ? (streakDoc.docs[0].data().currentStreak || 0) : 0;
+                const streak = streaksMap.get(uid) || 0;
 
                 // SECURITY FIX (CVE-2): Validate MVP was actually confirmed by checking confirmations list
                 const isMvpAndConfirmed = after.mvp_id === uid &&
@@ -373,11 +503,14 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
 
                 const isMvp = isMvpAndConfirmed;
 
-                // Calc XP
+                // Check if player was voted as "Bola Murcha" (worst player)
+                const isWorstPlayer = conf.is_worst_player === true;
+
+                // Calc XP (COM TETOS ANTI-CHEAT)
                 let xp = settings.xp_presence;
-                xp += conf.goals * settings.xp_per_goal;
-                xp += conf.assists * settings.xp_per_assist;
-                xp += conf.saves * settings.xp_per_save;
+                xp += Math.min(conf.goals, MAX_GOALS_PER_GAME) * settings.xp_per_goal;
+                xp += Math.min(conf.assists, MAX_ASSISTS_PER_GAME) * settings.xp_per_assist;
+                xp += Math.min(conf.saves, MAX_SAVES_PER_GAME) * settings.xp_per_save;
 
                 // Result XP
                 if (result === "WIN") xp += settings.xp_win;
@@ -393,6 +526,14 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 else if (streak >= 3) streakXp = settings.xp_streak_3;
                 xp += streakXp;
 
+                // "Bola Murcha" Penalty (worst player) - synced with XPCalculator.kt
+                let penaltyXp = 0;
+                if (isWorstPlayer) {
+                    penaltyXp = XP_WORST_PLAYER_PENALTY;
+                    console.log(`[PENALTY] User ${uid} is "Bola Murcha" in game ${gameId}. Applying ${penaltyXp} XP penalty.`);
+                }
+                xp += penaltyXp;
+
                 // Update Stats locally for Milestone Check
                 const newStats: UserStatistics = {
                     ...stats,
@@ -405,12 +546,16 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                     gamesWon: (stats.gamesWon || 0) + (result === "WIN" ? 1 : 0),
                     gamesLost: (stats.gamesLost || 0) + (result === "LOSS" ? 1 : 0),
                     gamesDraw: (stats.gamesDraw || 0) + (result === "DRAW" ? 1 : 0),
-                    bestPlayerCount: (stats.bestPlayerCount || 0) + (isMvp ? 1 : 0)
+                    bestPlayerCount: (stats.bestPlayerCount || 0) + (isMvp ? 1 : 0),
+                    worstPlayerCount: (stats.worstPlayerCount || 0) + (isWorstPlayer ? 1 : 0)
                 };
 
                 // Milestones
                 const { newMilestones, xp: milesXp } = checkMilestones(newStats, achievedMilestones);
                 xp += milesXp;
+
+                // Aplicar teto mÃ¡ximo de XP por jogo (anti-cheat)
+                xp = Math.max(0, Math.min(xp, MAX_XP_PER_GAME));
 
                 // Final XP & Level
                 const finalXp = currentXp + xp;
@@ -453,10 +598,12 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                     xp_mvp: isMvp ? settings.xp_mvp : 0,
                     xp_milestones: milesXp,
                     xp_streak: streakXp,
+                    xp_penalty: penaltyXp,
                     goals: conf.goals,
                     assists: conf.assists,
                     saves: conf.saves,
                     was_mvp: isMvp,
+                    was_worst_player: isWorstPlayer,
                     game_result: result,
                     milestones_unlocked: newMilestones,
                     created_at: now
@@ -553,7 +700,8 @@ function toGameConfirmation(raw: admin.firestore.DocumentData): GameConfirmation
         saves: Number(raw.saves ?? 0),
         yellowCards: Number(raw.yellow_cards ?? raw.yellowCards ?? 0),
         redCards: Number(raw.red_cards ?? raw.redCards ?? 0),
-        game_id: raw.game_id ?? raw.gameId ?? ""
+        game_id: raw.game_id ?? raw.gameId ?? "",
+        is_worst_player: raw.is_worst_player ?? raw.isWorstPlayer ?? false
     };
 }
 
@@ -653,7 +801,7 @@ function updateSeasonParticipation(
 }
 
 // ==========================================
-// RECALCULAR LEAGUE RATING E DIVISÃO
+// RECALCULAR LEAGUE RATING E DIVISÃƒO
 // ==========================================
 
 export const recalculateLeagueRating = onDocumentUpdated(
@@ -686,13 +834,13 @@ export const recalculateLeagueRating = onDocumentUpdated(
         // 3. Log for audit trail
         console.log(`[AUDIT] Participation ${partId}: Processing for user ${userId}`);
 
-        // CRITICAL: Evitar loop infinito - só recalcular se games_played mudou
-        // Se league_rating/division/recent_games mudaram, significa que NÓS atualizamos
+        // CRITICAL: Evitar loop infinito - sÃ³ recalcular se games_played mudou
+        // Se league_rating/division/recent_games mudaram, significa que NÃ“S atualizamos
         const gamesPlayedBefore = before?.games_played || 0;
         const gamesPlayedAfter = after?.games_played || 0;
 
         if (gamesPlayedBefore === gamesPlayedAfter) {
-            // Nenhum novo jogo foi adicionado, provavelmente foi nossa própria atualização
+            // Nenhum novo jogo foi adicionado, provavelmente foi nossa prÃ³pria atualizaÃ§Ã£o
             console.log(`Skipping recalculation for ${partId} - no new games (${gamesPlayedAfter} games)`);
             return;
         }
@@ -700,7 +848,7 @@ export const recalculateLeagueRating = onDocumentUpdated(
         console.log(`Recalculating rating for ${partId}: ${gamesPlayedBefore} -> ${gamesPlayedAfter} games`);
 
         try {
-            // Buscar últimos 10 xp_logs deste usuário
+            // Buscar Ãºltimos 10 xp_logs deste usuÃ¡rio
             const xpLogsSnap = await db.collection("xp_logs")
                 .where("user_id", "==", userId)
                 .orderBy("created_at", "desc")
@@ -717,22 +865,22 @@ export const recalculateLeagueRating = onDocumentUpdated(
                     xp_earned: log.xp_earned || 0,
                     won: won,
                     drew: drew,
-                    goal_diff: log.goals - (won ? 0 : drew ? 0 : 1), // Heurística simples
+                    goal_diff: log.goals - (won ? 0 : drew ? 0 : 1), // HeurÃ­stica simples
                     was_mvp: log.was_mvp || false,
                     played_at: log.created_at
                 };
             });
 
-            // Calcular League Rating usando a nova função importada
+            // Calcular League Rating usando a nova funÃ§Ã£o importada
             const leagueRating = leagueRatingCalc(recentGames);
 
-            // Buscar estado atual de promoção/rebaixamento
+            // Buscar estado atual de promoÃ§Ã£o/rebaixamento
             const currentDivision = after.division || "BRONZE";
             const currentPromotionProgress = after.promotion_progress || 0;
             const currentRelegationProgress = after.relegation_progress || 0;
             const currentProtectionGames = after.protection_games || 0;
 
-            // Calcular novo estado com lógica de promoção/rebaixamento
+            // Calcular novo estado com lÃ³gica de promoÃ§Ã£o/rebaixamento
             const newLeagueState = calculateLeaguePromotion(
                 {
                     division: currentDivision,
@@ -743,7 +891,7 @@ export const recalculateLeagueRating = onDocumentUpdated(
                 leagueRating
             );
 
-            // Atualizar documento (não triggera loop pois games_played não muda)
+            // Atualizar documento (nÃ£o triggera loop pois games_played nÃ£o muda)
             await db.collection("season_participation").doc(partId).update({
                 league_rating: leagueRating,
                 division: newLeagueState.division,
@@ -760,11 +908,11 @@ export const recalculateLeagueRating = onDocumentUpdated(
     }
 );
 
-// Funções calculateLeagueRating e getDivisionForRating movidas para league.ts
-// Ver também: calculateLeaguePromotion para lógica de promoção/rebaixamento
+// FunÃ§Ãµes calculateLeagueRating e getDivisionForRating movidas para league.ts
+// Ver tambÃ©m: calculateLeaguePromotion para lÃ³gica de promoÃ§Ã£o/rebaixamento
 
 // ==========================================
-// DELEÇÃO EM CASCATA DE JOGOS
+// DELEÃ‡ÃƒO EM CASCATA DE JOGOS
 // ==========================================
 
 export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) => {

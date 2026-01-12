@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -54,31 +55,69 @@ fun EditGroupDialog(
     var showPhotoOptions by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-    
+
     // Photo Logic
     val tempCameraUri = remember { mutableStateOf<Uri?>(null) }
-    
+
     val pickImageLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> selectedPhotoUri = uri }
+    ) { uri: Uri? ->
+        uri?.let {
+            selectedPhotoUri = it
+        }
+    }
 
     val takePictureLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
-    ) { success -> if (success) selectedPhotoUri = tempCameraUri.value }
+    ) { success ->
+        if (success) {
+            selectedPhotoUri = tempCameraUri.value
+        }
+    }
+
+    // Validação de nome
+    val nameValidationError = remember(name) {
+        when {
+            name.trim().isEmpty() -> "Nome é obrigatório"
+            name.trim().length < 3 -> "Nome deve ter pelo menos 3 caracteres"
+            name.trim().length > 50 -> "Nome deve ter no máximo 50 caracteres"
+            !name.trim().matches(Regex("^[\\p{L}\\p{N}\\s\\-_']+$")) -> "Nome contém caracteres inválidos"
+            else -> null
+        }
+    }
+
+    // Validação de descrição
+    val descriptionValidationError = remember(description) {
+        when {
+            description.trim().length > 200 -> "Descrição deve ter no máximo 200 caracteres"
+            else -> null
+        }
+    }
+
+    // Habilitar botão apenas se houve mudança e os dados são válidos
+    val hasChanges = name.trim() != group.name ||
+        description.trim() != group.description ||
+        selectedPhotoUri != null
+    val isValid = nameValidationError == null && descriptionValidationError == null
+    val canSave = hasChanges && isValid
 
     if (showPhotoOptions) {
         AlertDialog(
             onDismissRequest = { showPhotoOptions = false },
-            title = { Text("Foto do Grupo") },
+            title = { Text("Foto do grupo") },
             text = {
                 Column {
                     ListItem(
-                        headlineContent = { Text("Tirar Foto") },
+                        headlineContent = { Text("Tirar foto") },
                         leadingContent = { Icon(Icons.Default.CameraAlt, null) },
                         modifier = Modifier.clickable {
                             try {
-                                val file = File.createTempFile("group_edit_", ".jpg", context.cacheDir)
-                                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                                val file = File.createTempFile("group_photo_edit_", ".jpg", context.cacheDir)
+                                val uri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.fileprovider",
+                                    file
+                                )
                                 tempCameraUri.value = uri
                                 takePictureLauncher.launch(uri)
                             } catch (e: Exception) {
@@ -89,7 +128,7 @@ fun EditGroupDialog(
                         }
                     )
                     ListItem(
-                        headlineContent = { Text("Escolher da Galeria") },
+                        headlineContent = { Text("Escolher da galeria") },
                         leadingContent = { Icon(Icons.Default.PhotoLibrary, null) },
                         modifier = Modifier.clickable {
                             pickImageLauncher.launch("image/*")
@@ -99,7 +138,11 @@ fun EditGroupDialog(
                 }
             },
             confirmButton = {},
-            dismissButton = { TextButton(onClick = { showPhotoOptions = false }) { Text("Cancelar") } }
+            dismissButton = {
+                TextButton(onClick = { showPhotoOptions = false }) {
+                    Text("Cancelar")
+                }
+            }
         )
     }
 
@@ -143,9 +186,13 @@ fun EditGroupDialog(
                     )
                 }
                 TextButton(onClick = { showPhotoOptions = true }) {
-                    Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
+                    Icon(
+                        if (selectedPhotoUri != null) Icons.Default.Edit else Icons.Default.Add,
+                        null,
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(Modifier.width(4.dp))
-                    Text("Alterar Foto")
+                    Text(if (selectedPhotoUri != null) "Alterar foto" else "Adicionar foto")
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -155,6 +202,15 @@ fun EditGroupDialog(
                     onValueChange = { if (it.length <= 50) name = it },
                     label = { Text("Nome do Grupo") },
                     singleLine = true,
+                    isError = nameValidationError != null,
+                    supportingText = {
+                        nameValidationError?.let { error ->
+                            Text(
+                                text = error,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -166,6 +222,25 @@ fun EditGroupDialog(
                     label = { Text("Descrição") },
                     minLines = 3,
                     maxLines = 5,
+                    isError = descriptionValidationError != null,
+                    supportingText = {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            descriptionValidationError?.let { error ->
+                                Text(
+                                    text = error,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                            Text(
+                                text = "${description.length}/200",
+                                color = if (description.length > 200) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            )
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -176,16 +251,26 @@ fun EditGroupDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Cancelar",
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(Modifier.width(4.dp))
                         Text("Cancelar")
                     }
                     Spacer(Modifier.width(8.dp))
                     Button(
-                        onClick = { onSave(name, description, selectedPhotoUri) },
-                        enabled = name.isNotBlank() && name.length >= 3
+                        onClick = {
+                            onSave(name.trim(), description.trim(), selectedPhotoUri)
+                        },
+                        enabled = canSave
                     ) {
-                        Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Default.Save,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(Modifier.width(4.dp))
                         Text("Salvar")
                     }

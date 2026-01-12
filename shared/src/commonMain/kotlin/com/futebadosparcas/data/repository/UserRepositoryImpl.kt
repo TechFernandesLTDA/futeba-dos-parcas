@@ -153,24 +153,65 @@ class UserRepositoryImpl(
     override suspend fun updateUser(user: User): Result<Unit> {
         return withContext(Dispatchers.Default) {
             try {
-                // Converter User para Map
-                // Nota: Idealmente teriamos um mapper, aqui faremos simplificado para update basico
-                // Ou chamamos um updateField especifico. 
-                // O Datasource tem updateUser(id, map).
-                
+                PlatformLogger.d(TAG, "updateUser: Starting update for user ${user.id}")
+
+                // Converter User para Map com todos os campos do perfil
+                // Incluindo campos pessoais, ratings e preferencias
                 val updates = mutableMapOf<String, Any>()
+
+                // Campos basicos
                 if (user.name.isNotBlank()) updates["name"] = user.name
                 user.nickname?.let { updates["nickname"] = it }
                 user.photoUrl?.let { updates["photo_url"] = it }
-                // Adicione outros campos conforme necessidade
 
-                firebaseDataSource.updateUser(user.id, updates).also {
-                    if (it.isSuccess) {
-                        cacheUser(user) // Atualiza cache local ja com os dados novos
+                // Preferencias de campo (tipo Society, Futsal, Campo)
+                updates["preferred_field_types"] = user.preferredFieldTypes.map { it.name }
+
+                // Ratings manuais (0.0 - 5.0)
+                updates["striker_rating"] = user.strikerRating
+                updates["mid_rating"] = user.midRating
+                updates["defender_rating"] = user.defenderRating
+                updates["gk_rating"] = user.gkRating
+
+                // Informacoes pessoais
+                user.birthDate?.let { updates["birth_date"] = it }
+                user.gender?.let { updates["gender"] = it }
+                user.heightCm?.let { updates["height_cm"] = it }
+                user.weightKg?.let { updates["weight_kg"] = it }
+                user.dominantFoot?.let { updates["dominant_foot"] = it }
+                user.primaryPosition?.let { updates["primary_position"] = it }
+                user.secondaryPosition?.let { updates["secondary_position"] = it }
+                user.playStyle?.let { updates["play_style"] = it }
+                user.experienceYears?.let { updates["experience_years"] = it }
+
+                PlatformLogger.d(TAG, "updateUser: Sending updates to Firebase: ${updates.keys}")
+
+                firebaseDataSource.updateUser(user.id, updates).also { result ->
+                    if (result.isSuccess) {
+                        // Invalidar cache para forcar recarga do Firebase com dados atualizados
+                        database.futebaDatabaseQueries.deleteUserById(user.id)
+                        PlatformLogger.d(TAG, "User ${user.id} updated successfully, cache invalidated")
+                    } else {
+                        val error = result.exceptionOrNull()
+                        PlatformLogger.e(TAG, "Failed to update user ${user.id}: ${error?.message}", error)
                     }
                 }
             } catch (e: Exception) {
+                PlatformLogger.e(TAG, "Exception in updateUser", e)
                 Result.failure(e)
+            }
+        }
+    }
+
+    /**
+     * Busca o usuário atual SEM usar cache, garantindo dados frescos do Firebase.
+     * Use este método após atualizações para garantir que os dados mais recentes sejam retornados.
+     */
+    suspend fun getCurrentUserFresh(): Result<User> {
+        return firebaseDataSource.getCurrentUser().also { result ->
+            result.getOrNull()?.let { user ->
+                // Atualizar cache com dados frescos
+                cacheUser(user)
             }
         }
     }
@@ -211,12 +252,108 @@ class UserRepositoryImpl(
         }
     }
 
+    override suspend fun getAllUsers(): Result<List<User>> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.getAllUsers()
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun updateUserRole(userId: String, newRole: String): Result<Unit> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.updateUserRole(userId, newRole).also {
+                    if (it.isSuccess) {
+                        // Invalidar cache
+                        database.futebaDatabaseQueries.deleteUserById(userId)
+                    }
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun updateAutoRatings(
+        userId: String,
+        autoStrikerRating: Double,
+        autoMidRating: Double,
+        autoDefenderRating: Double,
+        autoGkRating: Double,
+        autoRatingSamples: Int
+    ): Result<Unit> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.updateAutoRatings(
+                    userId,
+                    autoStrikerRating,
+                    autoMidRating,
+                    autoDefenderRating,
+                    autoGkRating,
+                    autoRatingSamples
+                ).also {
+                    if (it.isSuccess) {
+                        // Invalidar cache
+                        database.futebaDatabaseQueries.deleteUserById(userId)
+                    }
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
     override fun isLoggedIn(): Boolean {
         return getCurrentUserId() != null
     }
 
     override fun getCurrentUserId(): String? {
         return firebaseDataSource.getCurrentUserId()
+    }
+
+    override suspend fun updateProfileVisibility(userId: String, isSearchable: Boolean): Result<Unit> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.updateProfileVisibility(userId, isSearchable).also {
+                    if (it.isSuccess) {
+                        // Invalidar cache
+                        database.futebaDatabaseQueries.deleteUserById(userId)
+                    }
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun getFieldOwners(): Result<List<User>> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.getFieldOwners()
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun updateFcmToken(token: String): Result<Unit> {
+        return withContext(Dispatchers.Default) {
+            try {
+                firebaseDataSource.updateFcmToken(token).also {
+                    if (it.isSuccess) {
+                        // Invalidar cache do usuário atual
+                        getCurrentUserId()?.let { userId ->
+                            database.futebaDatabaseQueries.deleteUserById(userId)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
     }
 
     // ========== HELPERS ==========

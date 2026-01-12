@@ -11,9 +11,14 @@ import kotlinx.coroutines.flow.Flow
 interface StatisticsRepository {
 
     /**
+     * Busca estatisticas do usuario atual.
+     */
+    suspend fun getMyStatistics(): Result<Statistics>
+
+    /**
      * Busca estatisticas de um usuario.
      */
-    suspend fun getStatistics(userId: String): Result<Statistics>
+    suspend fun getUserStatistics(userId: String): Result<Statistics>
 
     /**
      * Observa estatisticas em tempo real.
@@ -23,17 +28,38 @@ interface StatisticsRepository {
     /**
      * Atualiza estatisticas apos um jogo.
      */
-    suspend fun updateStatisticsAfterGame(
+    suspend fun updateStatistics(
         userId: String,
-        goals: Int,
-        assists: Int,
-        saves: Int,
-        won: Boolean,
-        drew: Boolean,
-        wasMvp: Boolean,
-        wasBestGk: Boolean,
-        wasWorstPlayer: Boolean
-    ): Result<Unit>
+        goals: Int = 0,
+        assists: Int = 0,
+        saves: Int = 0,
+        yellowCards: Int = 0,
+        redCards: Int = 0,
+        isBestPlayer: Boolean = false,
+        isWorstPlayer: Boolean = false,
+        hasBestGoal: Boolean = false,
+        gameResult: GameResult = GameResult.DRAW
+    ): Result<Statistics>
+
+    /**
+     * Busca artilheiros (ranking de gols).
+     */
+    suspend fun getTopScorers(limit: Int = 10): Result<List<Statistics>>
+
+    /**
+     * Busca melhores goleiros (ranking de defesas).
+     */
+    suspend fun getTopGoalkeepers(limit: Int = 10): Result<List<Statistics>>
+
+    /**
+     * Busca melhores jogadores (ranking de MVP).
+     */
+    suspend fun getBestPlayers(limit: Int = 10): Result<List<Statistics>>
+
+    /**
+     * Busca historico de gols por mes (ultimos 6 meses).
+     */
+    suspend fun getGoalsHistory(userId: String): Result<Map<String, Int>>
 
     /**
      * Busca historico de XP.
@@ -52,6 +78,15 @@ interface StatisticsRepository {
         orderBy: RankingOrderBy = RankingOrderBy.GOALS,
         limit: Int = 50
     ): Result<List<Statistics>>
+}
+
+/**
+ * Resultado de um jogo para atualizacao de estatisticas.
+ */
+enum class GameResult {
+    WIN,
+    LOSS,
+    DRAW
 }
 
 /**

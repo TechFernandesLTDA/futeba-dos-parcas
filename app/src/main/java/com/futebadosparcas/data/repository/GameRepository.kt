@@ -20,6 +20,15 @@ enum class GameFilterType {
     LIVE
 }
 
+/**
+ * Resultado de uma query paginada
+ */
+data class PaginatedGames(
+    val games: List<GameWithConfirmations>,
+    val lastGameId: String?, // Cursor para proxima pagina
+    val hasMore: Boolean
+)
+
 interface GameRepository {
     suspend fun getUpcomingGames(): Result<List<Game>>
     suspend fun getAllGames(): Result<List<Game>>

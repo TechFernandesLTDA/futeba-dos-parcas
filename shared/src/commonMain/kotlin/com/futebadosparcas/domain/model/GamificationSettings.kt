@@ -19,5 +19,7 @@ data class GamificationSettings(
     @SerialName("xp_streak_3") val xpStreak3: Int = 20,
     @SerialName("xp_streak_7") val xpStreak7: Int = 50,
     @SerialName("xp_streak_10") val xpStreak10: Int = 100,
-    @SerialName("xp_worst_player_penalty") val xpWorstPlayerPenalty: Int = -10
+    @SerialName("xp_worst_player_penalty") val xpWorstPlayerPenalty: Int = -10,
+    @SerialName("updated_at") val updatedAt: Long = 0L,
+    @SerialName("updated_by") val updatedBy: String = ""
 )

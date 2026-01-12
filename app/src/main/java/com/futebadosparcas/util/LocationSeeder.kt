@@ -1,8 +1,8 @@
 package com.futebadosparcas.util
 
-import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.data.model.FieldType
-import com.futebadosparcas.data.repository.LocationRepository
+import com.futebadosparcas.domain.model.Field
+import com.futebadosparcas.domain.repository.LocationRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject

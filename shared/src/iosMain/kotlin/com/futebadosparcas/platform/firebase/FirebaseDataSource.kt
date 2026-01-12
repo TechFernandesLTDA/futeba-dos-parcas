@@ -90,6 +90,17 @@ actual class FirebaseDataSource(
         TODO("Implementar com Firebase iOS SDK")
     }
 
+    actual suspend fun removePlayerFromGame(gameId: String, userId: String): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun summonPlayers(
+        gameId: String,
+        confirmations: List<GameConfirmation>
+    ): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
     actual suspend fun updatePaymentStatus(gameId: String, userId: String, isPaid: Boolean): Result<Unit> {
         TODO("Implementar com Firebase iOS SDK")
     }
@@ -250,5 +261,101 @@ actual class FirebaseDataSource(
 
     actual suspend fun executeBatch(operations: List<BatchOperation>): Result<Unit> {
         TODO("Implementar com Firebase iOS SDK - FIRWriteBatch")
+    }
+
+    // ========== LOCATIONS ==========
+
+    actual suspend fun getAllLocations(): Result<List<Location>> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun getLocationsWithPagination(limit: Int, lastLocationName: String?): Result<List<Location>> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun deleteLocation(locationId: String): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun getLocationsByOwner(ownerId: String): Result<List<Location>> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun getLocationById(locationId: String): Result<Location> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun getLocationWithFields(locationId: String): Result<LocationWithFields> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun createLocation(location: Location): Result<Location> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun updateLocation(location: Location): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun searchLocations(query: String): Result<List<Location>> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun getOrCreateLocationFromPlace(
+        placeId: String,
+        name: String,
+        address: String,
+        city: String,
+        state: String,
+        latitude: Double?,
+        longitude: Double?
+    ): Result<Location> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun addLocationReview(review: LocationReview): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun getLocationReviews(locationId: String): Result<List<LocationReview>> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun seedGinasioApollo(): Result<Location> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun migrateLocations(migrationData: List<LocationMigrationData>): Result<Int> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun deduplicateLocations(): Result<Int> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    // ========== FIELDS ==========
+
+    actual suspend fun getFieldsByLocation(locationId: String): Result<List<Field>> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun getFieldById(fieldId: String): Result<Field> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun createField(field: Field): Result<Field> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun updateField(field: Field): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun deleteField(fieldId: String): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK")
+    }
+
+    actual suspend fun uploadFieldPhoto(filePath: String): Result<String> {
+        TODO("Implementar com Firebase iOS SDK - FIRStorage")
     }
 }

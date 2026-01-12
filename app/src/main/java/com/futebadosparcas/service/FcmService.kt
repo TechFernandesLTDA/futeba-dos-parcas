@@ -10,8 +10,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.futebadosparcas.R
-import com.futebadosparcas.data.repository.UserRepositoryLegacy
-import com.futebadosparcas.ui.main.MainActivity
+import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.ui.main.MainActivityCompose
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.LevelBadgeHelper
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -28,7 +28,7 @@ import javax.inject.Inject
 class FcmService : FirebaseMessagingService() {
 
     @Inject
-    lateinit var userRepository: UserRepositoryLegacy
+    lateinit var userRepository: UserRepository
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -89,7 +89,7 @@ class FcmService : FirebaseMessagingService() {
     }
 
     private fun showNotification(title: String, body: String, type: String, gameId: String?, level: Int? = null) {
-        val intent = Intent(this, MainActivity::class.java)
+        val intent = Intent(this, MainActivityCompose::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         gameId?.let { intent.putExtra("gameId", it) }
         intent.putExtra("notificationType", type)
@@ -116,8 +116,9 @@ class FcmService : FirebaseMessagingService() {
                 val largeBitmap = badgeDrawable?.toBitmap()
                 largeBitmap?.let {
                     notificationBuilder.setLargeIcon(it)
-                    // FIX: Recycle bitmap after adding to notification to prevent background memory leak
-                    it.recycle()
+                    // NOTA: NAO reciclar bitmap quando usado em NotificationCompat
+                    // O NotificationManager gerencia o lifecycle do bitmap
+                    // Reciclar pode causar crash: "Canvas: trying to use a recycled bitmap"
                 }
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao adicionar brasao na notificacao", e)

@@ -117,7 +117,7 @@ fun FutebaTopBar(
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_location),
+                    painter = painterResource(id = R.drawable.ic_map),
                     contentDescription = stringResource(R.string.cd_map),
                     tint = MaterialTheme.colorScheme.primary
                 )

@@ -26,7 +26,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.data.model.Activity
+import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.ui.games.GameWithConfirmations
+import com.futebadosparcas.domain.model.UserStreak
+import com.futebadosparcas.domain.model.WeeklyChallenge
+import com.futebadosparcas.domain.model.UserChallengeProgress
+import com.futebadosparcas.domain.model.UserBadge
 import com.futebadosparcas.ui.components.*
 import com.futebadosparcas.ui.home.components.*
 import com.futebadosparcas.util.HapticManager
@@ -56,6 +63,7 @@ import com.futebadosparcas.util.HapticManager
 fun HomeScreen(
     viewModel: HomeViewModel,
     onGameClick: (gameId: String) -> Unit = {},
+    onConfirmGame: (gameId: String) -> Unit = {},
     onProfileClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
@@ -86,6 +94,7 @@ fun HomeScreen(
                     viewModel = viewModel,
                     hapticManager = hapticManager,
                     onGameClick = onGameClick,
+                    onConfirmGame = onConfirmGame,
                     onProfileClick = onProfileClick,
                     onSettingsClick = onSettingsClick,
                     onNotificationsClick = onNotificationsClick,
@@ -116,6 +125,7 @@ private fun HomeSuccessContent(
     viewModel: HomeViewModel,
     hapticManager: HapticManager?,
     onGameClick: (gameId: String) -> Unit,
+    onConfirmGame: (gameId: String) -> Unit,
     onProfileClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onNotificationsClick: () -> Unit,
@@ -133,10 +143,9 @@ private fun HomeSuccessContent(
 
     LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding(),
+            .fillMaxSize(),
         verticalArrangement = Arrangement.Top,
-        contentPadding = PaddingValues(bottom = 16.dp)
+        contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp) // Bottom padding para nav bar
     ) {
         // Top Bar com notificações
         item {
@@ -171,47 +180,14 @@ private fun HomeSuccessContent(
             }
         }
 
-        // Jogos Próximos
+        // Jogos Próximos - Nova seção com status de confirmação
         if (games.isNotEmpty()) {
-            item(key = "games_header") {
-                Text(
-                    text = stringResource(R.string.upcoming_games),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+            item(key = "upcoming_games") {
+                UpcomingGamesSection(
+                    games = games,
+                    onGameClick = onGameClick,
+                    onConfirmClick = onConfirmGame
                 )
-            }
-
-            if (state.isGridView) {
-                // Grid view - usando FlowRow para evitar LazyVerticalGrid aninhado
-                item(key = "games_grid") {
-                    FlowRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        games.take(6).forEach { game -> // Limitar a 6 jogos no grid
-                            UpcomingGameCard(
-                                game = game,
-                                onClick = { onGameClick(game.id) },
-                                modifier = Modifier.fillMaxWidth(0.48f)
-                            )
-                        }
-                    }
-                }
-            } else {
-                // List view
-                items(games, key = { it.id }) { game ->
-                    UpcomingGameCard(
-                        game = game,
-                        onClick = { onGameClick(game.id) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
             }
         }
 
@@ -274,59 +250,6 @@ private fun HomeSuccessContent(
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
-        }
-    }
-}
-
-/**
- * Card de jogo próximo - exibível em grid ou lista
- */
-@Composable
-private fun UpcomingGameCard(
-    game: Game,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .fillMaxWidth()
-            .heightIn(min = 100.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            // Local e Data
-            Text(
-                text = game.locationName,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-            )
-
-            Text(
-                text = "${game.date} às ${game.time}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-            )
-
-            // Confirmações (Placeholder)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Confirmados: ${game.playersCount}/${game.maxPlayers}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1
-            )
         }
     }
 }
@@ -398,12 +321,4 @@ private fun HomeErrorState(
             Text(stringResource(R.string.retry))
         }
     }
-}
-
-/**
- * Formata data/hora do jogo
- */
-private fun formatGameDateTime(timestamp: Long): String {
-    val sdf = java.text.SimpleDateFormat("dd/MM HH:mm", java.util.Locale.getDefault())
-    return sdf.format(java.util.Date(timestamp))
 }

@@ -7,37 +7,43 @@ import com.futebadosparcas.data.model.AutoRatings
 import com.futebadosparcas.data.model.FieldType
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.data.model.PerformanceRatingCalculator
-import com.futebadosparcas.domain.model.User
-import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.LiveGameRepository
-import com.futebadosparcas.data.repository.LocationRepository
-
+import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.data.repository.AuthRepository
+import com.futebadosparcas.domain.repository.GamificationRepository
+import com.futebadosparcas.domain.repository.LocationRepository
+import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.UserRepository
-import com.futebadosparcas.data.repository.UserRepositoryLegacy
+import com.futebadosparcas.util.toDataBadges
+import com.futebadosparcas.util.toDataLocations
+import com.futebadosparcas.util.toDataModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.util.Date
 import javax.inject.Inject
 import kotlin.math.abs
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val userRepositoryLegacy: UserRepositoryLegacy,
     private val authRepository: AuthRepository,
     private val gameRepository: GameRepository,
     private val liveGameRepository: LiveGameRepository,
+    private val gamificationRepository: GamificationRepository,
+    private val statisticsRepository: StatisticsRepository,
     private val locationRepository: LocationRepository,
-    private val gamificationRepository: com.futebadosparcas.data.repository.GamificationRepository,
-    private val statisticsRepository: com.futebadosparcas.data.repository.IStatisticsRepository,
     private val preferencesManager: com.futebadosparcas.util.PreferencesManager,
     private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val storage: FirebaseStorage
 ) : ViewModel() {
 
     private val _uiEvents = kotlinx.coroutines.channels.Channel<ProfileUiEvent>()
@@ -63,12 +69,13 @@ class ProfileViewModel @Inject constructor(
 
             userRepository.observeCurrentUser().collect { user ->
                 if (user != null) {
+                    // Buscar badges do repositório de domínio e converter para modelo de dados
                     val badgesResult = gamificationRepository.getUserBadges(user.id)
-                    val badges = badgesResult.getOrNull() ?: emptyList()
+                    val badges = badgesResult.getOrNull()?.toDataBadges() ?: emptyList()
 
-                    // Carregar estatísticas
+                    // Carregar estatísticas do repositório de domínio e converter para modelo de dados
                     val statsResult = statisticsRepository.getUserStatistics(user.id)
-                    val stats = statsResult.getOrNull()
+                    val stats = statsResult.getOrNull()?.toDataModel(user.id)
 
                     _uiState.value = ProfileUiState.Success(user, badges, stats, isDevModeEnabled())
 
@@ -97,56 +104,10 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    private fun mapDataUserToDomainUser(legacyUser: com.futebadosparcas.data.model.User): com.futebadosparcas.domain.model.User {
-        return com.futebadosparcas.domain.model.User(
-            id = legacyUser.id,
-            email = legacyUser.email,
-            name = legacyUser.name,
-            phone = legacyUser.phone,
-            nickname = legacyUser.nickname,
-            photoUrl = legacyUser.photoUrl,
-            fcmToken = legacyUser.fcmToken,
-            isSearchable = legacyUser.isSearchable,
-            isProfilePublic = legacyUser.isProfilePublic,
-            role = legacyUser.role,
-            createdAt = legacyUser.createdAt?.time,
-            updatedAt = legacyUser.updatedAt?.time,
-            strikerRating = legacyUser.strikerRating,
-            midRating = legacyUser.midRating,
-            defenderRating = legacyUser.defenderRating,
-            gkRating = legacyUser.gkRating,
-            preferredPosition = legacyUser.preferredPosition,
-            preferredFieldTypes = legacyUser.preferredFieldTypes.map {
-                try {
-                     com.futebadosparcas.domain.model.FieldType.valueOf(it.name)
-                } catch (e: Exception) {
-                     com.futebadosparcas.domain.model.FieldType.SOCIETY
-                }
-            },
-            birthDate = legacyUser.birthDate?.time,
-            gender = legacyUser.gender,
-            heightCm = legacyUser.heightCm,
-            weightKg = legacyUser.weightKg,
-            dominantFoot = legacyUser.dominantFoot,
-            primaryPosition = legacyUser.primaryPosition,
-            secondaryPosition = legacyUser.secondaryPosition,
-            playStyle = legacyUser.playStyle,
-            experienceYears = legacyUser.experienceYears,
-            level = legacyUser.level,
-            experiencePoints = legacyUser.experiencePoints,
-            milestonesAchieved = legacyUser.milestonesAchieved,
-            autoStrikerRating = legacyUser.autoStrikerRating,
-            autoMidRating = legacyUser.autoMidRating,
-            autoDefenderRating = legacyUser.autoDefenderRating,
-            autoGkRating = legacyUser.autoGkRating,
-            autoRatingSamples = legacyUser.autoRatingSamples
-        )
-    }
-
     private fun loadMyLocations(userId: String) {
         viewModelScope.launch {
             locationRepository.getLocationsByOwner(userId).onSuccess { locations ->
-                _myLocations.value = locations
+                _myLocations.value = locations.toDataLocations()
             }
         }
     }
@@ -202,37 +163,73 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = ProfileUiState.Loading
 
-            // Atualizar perfil com tudo de uma vez (foto, dados e ratings)
-            val profileResult = userRepositoryLegacy.updateProfile(
-                name,
-                nickname,
-                preferredFieldTypes,
-                photoUri,
-                strikerRating,
-                midRating,
-                defenderRating,
-                gkRating,
-                birthDate,
-                gender,
-                heightCm,
-                weightKg,
-                dominantFoot,
-                primaryPosition,
-                secondaryPosition,
-                playStyle,
-                experienceYears
-            )
+            try {
+                // Obter usuário atual
+                val currentUserResult = userRepository.getCurrentUser()
+                val currentUser = currentUserResult.getOrNull()
 
-            profileResult.fold(
-                onSuccess = { legacyUser ->
-                    // Converter de data.model.User para domain.model.User usando helper
-                    val domainUser = mapDataUserToDomainUser(legacyUser)
-                    _uiState.value = ProfileUiState.ProfileUpdateSuccess(domainUser)
-                },
-                onFailure = { error ->
-                    _uiState.value = ProfileUiState.Error(error.message ?: "Erro ao atualizar perfil")
+                if (currentUser == null) {
+                    _uiState.value = ProfileUiState.Error("Usuário não encontrado")
+                    return@launch
                 }
-            )
+
+                // Upload de foto se fornecida
+                var photoUrl: String? = currentUser.photoUrl
+                if (photoUri != null) {
+                    try {
+                        val userId = currentUser.id
+                        val photoRef = storage.reference.child("profile_photos/$userId.jpg")
+                        photoRef.putFile(photoUri).await()
+                        val urlResult = photoRef.downloadUrl.await()
+                        photoUrl = urlResult.toString()
+                    } catch (e: Exception) {
+                        android.util.Log.e("ProfileViewModel", "Erro ao fazer upload de foto", e)
+                        // Continuar sem foto se o upload falhar
+                    }
+                }
+
+                // Criar usuário atualizado
+                val updatedUser = currentUser.copy(
+                    name = name,
+                    nickname = nickname,
+                    photoUrl = photoUrl,
+                    strikerRating = strikerRating,
+                    midRating = midRating,
+                    defenderRating = defenderRating,
+                    gkRating = gkRating,
+                    preferredPosition = primaryPosition,
+                    primaryPosition = primaryPosition,
+                    secondaryPosition = secondaryPosition,
+                    playStyle = playStyle,
+                    experienceYears = experienceYears,
+                    birthDate = birthDate?.time,
+                    gender = gender,
+                    heightCm = heightCm,
+                    weightKg = weightKg,
+                    dominantFoot = dominantFoot,
+                    preferredFieldTypes = preferredFieldTypes.map {
+                        try {
+                            com.futebadosparcas.domain.model.FieldType.valueOf(it.name)
+                        } catch (e: Exception) {
+                            com.futebadosparcas.domain.model.FieldType.SOCIETY
+                        }
+                    }
+                )
+
+                // Atualizar no repositório
+                val updateResult = userRepository.updateUser(updatedUser)
+
+                updateResult.fold(
+                    onSuccess = {
+                        _uiState.value = ProfileUiState.ProfileUpdateSuccess(updatedUser)
+                    },
+                    onFailure = { error ->
+                        _uiState.value = ProfileUiState.Error(error.message ?: "Erro ao atualizar perfil")
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.value = ProfileUiState.Error(e.message ?: "Erro ao atualizar perfil")
+            }
         }
     }
 
@@ -268,12 +265,13 @@ class ProfileViewModel @Inject constructor(
         if (!shouldUpdateAutoRatings(user, autoRatings)) return
 
         viewModelScope.launch {
-            val result = userRepositoryLegacy.updateAutoRatings(
-                autoRatings.striker,
-                autoRatings.mid,
-                autoRatings.defender,
-                autoRatings.gk,
-                autoRatings.sampleSize
+            val result = userRepository.updateAutoRatings(
+                userId = user.id,
+                autoStrikerRating = autoRatings.striker,
+                autoMidRating = autoRatings.mid,
+                autoDefenderRating = autoRatings.defender,
+                autoGkRating = autoRatings.gk,
+                autoRatingSamples = autoRatings.sampleSize
             )
 
             if (result.isSuccess) {

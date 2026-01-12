@@ -178,7 +178,7 @@ private fun TacticalBoardControls(
                 )
             }
 
-            Divider()
+            HorizontalDivider()
 
             // Actions
             Row(

@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.data.model.ThemeMode
+import com.futebadosparcas.domain.model.ThemeMode
 import com.futebadosparcas.ui.theme.ThemeViewModel
 import com.futebadosparcas.util.PreferencesManager
 

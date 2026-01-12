@@ -15,8 +15,11 @@ import kotlinx.coroutines.launch
 import java.time.*
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
-import com.futebadosparcas.data.repository.ScheduleRepository
+import com.futebadosparcas.domain.repository.ScheduleRepository
+import com.futebadosparcas.util.toAndroidSchedule
+import com.futebadosparcas.util.toKmpSchedule
 import javax.inject.Inject
+import com.futebadosparcas.util.toKmpAppNotifications
 
 @HiltViewModel
 class GameDetailViewModel @Inject constructor(
@@ -25,7 +28,7 @@ class GameDetailViewModel @Inject constructor(
     private val gameExperienceRepository: com.futebadosparcas.data.repository.GameExperienceRepository,
     private val scheduleRepository: ScheduleRepository,
     private val groupRepository: com.futebadosparcas.data.repository.GroupRepository,
-    private val notificationRepository: com.futebadosparcas.data.repository.NotificationRepository
+    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GameDetailUiState>(GameDetailUiState.Loading)
@@ -296,10 +299,10 @@ class GameDetailViewModel @Inject constructor(
                 if (currentScheduleId.isNotEmpty()) {
                     val existingScheduleResult = scheduleRepository.getScheduleById(currentScheduleId)
                     if (existingScheduleResult.isFailure) {
-                        AppLogger.i(TAG) { "Agendamento automático cancelado: O template de recorrência foi excluído pelo usuário." }
+                        AppLogger.i(TAG) { "Agendamento automatico cancelado: O template de recorrencia foi excluido pelo usuario." }
                         return@launch
                     }
-                    scheduleTemplate = existingScheduleResult.getOrNull()
+                    scheduleTemplate = existingScheduleResult.getOrNull()?.toAndroidSchedule()
                 } else {
                     // Create a template if it doesn't exist but game is recurring
                     val newSchedule = Schedule(
@@ -329,8 +332,9 @@ class GameDetailViewModel @Inject constructor(
                             if (isoDay == 7) 0 else isoDay
                         } catch (e: Exception) { 0 }
                     )
-                    
-                    val result = scheduleRepository.createSchedule(newSchedule)
+
+                    val kmpSchedule = newSchedule.toKmpSchedule()
+                    val result = scheduleRepository.createSchedule(kmpSchedule)
                     result.onSuccess { id ->
                         currentScheduleId = id
                         scheduleTemplate = newSchedule.copy(id = id)
@@ -500,7 +504,7 @@ class GameDetailViewModel @Inject constructor(
                     )
                 }
                 if (notifications.isNotEmpty()) {
-                    notificationRepository.batchCreateNotifications(notifications)
+                    notificationRepository.batchCreateNotifications(notifications.toKmpAppNotifications())
                 }
             }
         }

@@ -27,7 +27,7 @@
     <string name="nav_games">Jogos</string>
     <string name="nav_players">Jogadores</string>
     <string name="nav_schedules">Horarios</string>
-    <string name="nav_statistics">Estatisticas</string>
+    <string name="nav_statistics">Stats</string>
     <string name="nav_profile">Perfil</string>
 
     <!-- Games -->
@@ -54,6 +54,38 @@
     <string name="games">Jogos</string>
     <string name="saves">Defesas</string>
     <string name="presence_rate">Presenca</string>
+    <string name="assists">Assistencias</string>
+    <string name="wins">Vitorias</string>
+    <string name="week">Semana</string>
+    <string name="month">Mes</string>
+    <string name="year">Ano</string>
+    <string name="all_time">Geral</string>
+    <string name="your_position">Sua posicao:</string>
+    <string name="no_ranking_data">Sem dados de ranking</string>
+    <string name="no_ranking_description">Jogue mais partidas para aparecer no ranking!</string>
+    <string name="stat_general">Geral</string>
+    <string name="stat_offensive">Ofensivo</string>
+    <string name="stat_defensive">Defensivo</string>
+    <string name="stat_league">Liga</string>
+    <string name="stat_subtitle">Seu desempenho em numeros</string>
+    <string name="stat_league_overview">Liga da Temporada</string>
+    <string name="stat_season_performance">Desempenho na Temporada</string>
+    <string name="stat_recent_performance">Desempenho Recente</string>
+    <string name="win_rate">Taxa de Vitoria</string>
+    <string name="see_more">Ver mais</string>
+
+    <!-- Evolution Screen -->
+    <string name="achieved_milestones">Conquistas</string>
+    <string name="next_milestones">Proximas Conquistas</string>
+    <string name="progress_to_next_level">Progresso para o proximo nivel</string>
+    <string name="current_season">Temporada Atual</string>
+    <string name="position">Posicao</string>
+    <string name="xp_evolution">Evolucao de XP</string>
+    <string name="recent_xp_gains">Ganhos Recentes de XP</string>
+    <string name="milestone_first_goal">Primeiro Gol</string>
+    <string name="milestone_first_assist">Primeira Assistencia</string>
+    <string name="milestone_first_mvp">Primeiro MVP</string>
+    <string name="milestone_first_win">Primeira Vitoria</string>
 
     <!-- Invites -->
     <string name="invites">Convites</string>
@@ -1078,6 +1110,8 @@ subir no ranking!</string>
     <string name="league_period">Período</string>
     <string name="league_points">Pontos</string>
     <string name="league_games_played">Jogos</string>
+    <string name="league_games_played_lower">%d jogos</string>
+    <string name="player_avatar_cd">Foto de perfil de %s</string>
     <string name="league_victories">Vitórias</string>
     <string name="league_mvp_count">MVPs</string>
     <string name="league_goals">Gols</string>
@@ -1090,6 +1124,7 @@ subir no ranking!</string>
     <string name="league_rating_description">Rating calculado baseado em:</string>
     <string name="league_rules_show">Como funciona?</string>
     <string name="league_rules_hide">Ocultar regras</string>
+    <string name="podium_title">Top %d</string>
     <string name="league_ranking_title">Ranking</string>
     <string name="league_next_threshold">Prox: ${nextThreshold.toInt()}</string>
     <string name="league_elite">Elite do fut</string>
@@ -1307,5 +1342,455 @@ subir no ranking!</string>
     <string name="stat_defeats">Derrotas</string>
     <string name="stat_presence">Presença</string>
     <string name="stat_all">Todos</string>
+
+    <!-- Profile Screen Strings -->
+    <string name="my_profile">Meu Perfil</string>
+    <string name="version">Versão %s</string>
+    <string name="level_badge">Badge de nível</string>
+    <string name="role_admin">ADMINISTRADOR</string>
+    <string name="role_organizer">ORGANIZADOR</string>
+    <string name="role_owner">Dono</string>
+    <string name="role_member">Membro</string>
+    <string name="role_visitor">Visitante</string>
+    <string name="member_count_one">%d membro</string>
+    <string name="member_count_many">%d membros</string>
+    <string name="level_number">Nível %d</string>
+    <string name="xp_current">%d XP</string>
+    <string name="percentage">%d%%</string>
+    <string name="field_preferences">Preferências de Campo</string>
+    <string name="field_society">Society</string>
+    <string name="field_futsal">Futsal</string>
+    <string name="field_campo">Campo</string>
+    <string name="position_ratings">Avaliações por Posição</string>
+    <string name="position_striker">Atacante</string>
+    <string name="position_midfield">Meio-Campo</string>
+    <string name="position_defender">Defensor</string>
+    <string name="statistics_title">Estatísticas</string>
+    <string name="draws">Empates</string>
+    <string name="mvps">MVPs</string>
+    <string name="cards">Cartões</string>
+    <string name="avg_goals">Média Gols</string>
+    <string name="no_statistics_available">Nenhuma estatística disponível</string>
+    <string name="recent_badges">Conquistas Recentes</string>
+    <string name="administration">Administração</string>
+    <string name="manage_users">Gerenciar Usuários</string>
+    <string name="my_locations">Meus Locais</string>
+    <string name="no_locations_registered">Nenhum local cadastrado</string>
+    <string name="one_location_registered">1 local cadastrado</string>
+    <string name="locations_count">%d locais cadastrados</string>
+    <string name="league_settings">Configurações da Liga</string>
+    <string name="access">Acessar %s</string>
+    <string name="developer_menu">Developer Menu</string>
+    <string name="schedules">Horários</string>
+    <string name="settings">Configurações</string>
+
+    <!-- GameDetail Screen Additional Strings -->
+    <string name="next_game_scheduled">Próximo jogo agendado para %s</string>
+    <string name="scheduling_conflict">Conflito de agendamento em %s</string>
+    <string name="scheduling_error">Erro de agendamento: %s</string>
+    <string name="cancel_presence">Cancelar Presença</string>
+    <string name="accept_invite">Aceitar Convite</string>
+    <string name="teams">Times</string>
+    <string name="attendance_list">Lista de Presença</string>
+    <string name="goals_count">%d gols</string>
+    <string name="real_time">Tempo Real</string>
+    <string name="whatsapp_invite_title">Convite para Pelada</string>
+    <string name="game_at">Jogo em</string>
+    <string name="select_position">Selecionar Posição</string>
+    <string name="goalkeeper">Goleiro</string>
+    <string name="field_player">Linha</string>
+    <string name="how_many_teams">Quantos times?</string>
+    <string name="balance_by_skill">Balancear por habilidade</string>
+    <string name="clear_teams">Limpar Times</string>
+    <string name="move_to">Mover para</string>
+    <string name="match_mvp">MVP da Partida</string>
+    <string name="choose_mvp">Escolher MVP</string>
+    <string name="finish_game">Finalizar Jogo</string>
+    <string name="team_a">Time A</string>
+    <string name="team_b">Time B</string>
+    <string name="list_open">Lista Aberta</string>
+    <string name="list_closed">Lista Fechada</string>
+    <string name="start_game">Iniciar Jogo</string>
+    <string name="field_field">Quadra: %s</string>
+    <string name="generate_teams">Gerar Times</string>
+    <string name="generate">Gerar</string>
+    <string name="share_link">Compartilhar Link</string>
+    <string name="vote_mvp">Votar MVP</string>
+    <string name="generate_game_card">Gerar Card do Jogo</string>
+    <string name="tactical_board">Prancheta Tática</string>
+    <string name="invite_whatsapp">Convidar WhatsApp</string>
+    <string name="cancel_game_confirmation">Tem certeza que deseja cancelar este jogo?</string>
+
+    <!-- MVP Vote Screen Strings -->
+    <string name="mvp_vote_title">Votação</string>
+    <string name="mvp_vote_1_3">Votação (1/3)</string>
+    <string name="mvp_vote_2_3">Votação (2/3)</string>
+    <string name="mvp_vote_3_3">Votação (3/3)</string>
+    <string name="mvp_who_was_star">Quem foi o CRAQUE?</string>
+    <string name="mvp_best_goalkeeper">Melhor Goleiro?</string>
+    <string name="mvp_worst_player">Bola Murcha?</string>
+    <string name="mvp_best_player_desc">O melhor jogador da partida</string>
+    <string name="mvp_goalkeeper_desc">Quem fechou o gol?</string>
+    <string name="mvp_worst_desc">Quem não jogou nada hoje?</string>
+    <string name="mvp_vote_registered">Voto Registrado!</string>
+    <string name="mvp_already_voted">Você já votou!</string>
+    <string name="mvp_wait_all_votes">Aguarde todos os jogadores votarem</string>
+    <string name="mvp_finish_voting_owner">Finalizar Votação (Owner)</string>
+    <string name="player_photo">Foto de %s</string>
+
+    <!-- Navigation Strings (para TopBar) -->
+    <string name="league">Liga</string>
+    <string name="game_detail">Detalhes do Jogo</string>
+    <string name="live_game">Jogo ao Vivo</string>
+    <string name="mvp_vote">Votação MVP</string>
+    <string name="groups">Grupos</string>
+    <string name="create_group">Criar Grupo</string>
+
+    <!-- Live Game Screen Strings -->
+    <string name="live_statistics">Estatísticas</string>
+    <string name="live_events">Eventos</string>
+    <string name="live_game_load_error">Erro ao carregar jogo</string>
+    <string name="live_goal">Gol</string>
+    <string name="live_yellow_card">Cartão Amarelo</string>
+    <string name="live_red_card">Cartão Vermelho</string>
+    <string name="confirm">Confirmar</string>
+    <string name="mvp">MVP</string>
+    <string name="card">Card</string>
+    <string name="yes">Sim</string>
+    <string name="no">Não</string>
+    <string name="finish">Finalizar</string>
+    <string name="cancel_game">Cancelar Jogo</string>
+    <string name="payment">Pagamento</string>
+
+    <!-- Invite Players Screen -->
+    <string name="invite_players_title">Convidar Jogadores</string>
+    <string name="invite_players_search_hint">Buscar por nome, email ou nickname</string>
+    <string name="invite_players_search_icon">Buscar</string>
+    <string name="invite_players_clear">Limpar</string>
+    <string name="invite_players_empty_title">Busque jogadores para convidar</string>
+    <string name="invite_players_empty_description">Digite o nome, email ou nickname do jogador</string>
+    <string name="invite_players_no_results_title">Nenhum jogador encontrado</string>
+    <string name="invite_players_no_results_description">Tente buscar por outro termo</string>
+    <string name="invite_players_already_member">Já é membro</string>
+    <string name="invite_players_pending">Pendente</string>
+    <string name="invite_players_invite_button">Convidar</string>
+    <string name="invite_players_error_title">Erro ao carregar jogadores</string>
+    <string name="invite_players_try_again">Tentar novamente</string>
+    <string name="invite_players_back">Voltar</string>
+
+    <!-- Edit Profile Screen Strings -->
+    <string name="edit_profile_title">Editar Perfil</string>
+    <string name="edit_profile_success">Perfil atualizado com sucesso!</string>
+    <string name="edit_profile_error_loading">Erro ao carregar perfil</string>
+    <string name="edit_profile_photo_tap_to_change">Toque para alterar a foto</string>
+    <string name="edit_profile_photo_description">Foto de perfil</string>
+    <string name="edit_profile_photo_dialog_title">Foto de perfil</string>
+    <string name="edit_profile_photo_take">Tirar foto</string>
+    <string name="edit_profile_photo_gallery">Escolher da galeria</string>
+    <string name="edit_profile_image_selected">Imagem selecionada com sucesso</string>
+    <string name="edit_profile_image_too_large">Imagem muito grande. Tamanho máximo: 10 MB</string>
+    <string name="edit_profile_photo_captured">Foto capturada com sucesso</string>
+    <string name="edit_profile_camera_error">Erro ao abrir câmera</string>
+    <string name="edit_profile_basic_info">Informações Básicas</string>
+    <string name="edit_profile_full_name">Nome Completo *</string>
+    <string name="edit_profile_nickname">Apelido</string>
+    <string name="edit_profile_birth_date">Data de Nascimento</string>
+    <string name="edit_profile_select_date">Selecionar data</string>
+    <string name="edit_profile_physical_info">Informações Físicas</string>
+    <string name="edit_profile_gender">Gênero</string>
+    <string name="edit_profile_height_cm">Altura (cm)</string>
+    <string name="edit_profile_weight_kg">Peso (kg)</string>
+    <string name="edit_profile_dominant_foot">Pé Dominante</string>
+    <string name="edit_profile_field_types">Tipos de Campo Preferidos *</string>
+    <string name="edit_profile_position_style">Posição e Estilo</string>
+    <string name="edit_profile_primary_position">Posição Principal</string>
+    <string name="edit_profile_secondary_position">Posição Secundária</string>
+    <string name="edit_profile_play_style">Estilo de Jogo</string>
+    <string name="edit_profile_experience_years">Anos de Experiência</string>
+    <string name="edit_profile_position_ratings">Avaliações por Posição</string>
+    <string name="edit_profile_based_on_games">Baseado em %d jogos</string>
+    <string name="edit_profile_auto_rating">Auto: %s</string>
+    <string name="edit_profile_save_changes">Salvar Alterações</string>
+    <string name="edit_profile_saving">Salvando...</string>
+    <string name="edit_profile_validation_error">Preencha o nome e selecione ao menos um tipo de campo</string>
+    <string name="edit_profile_dev_mode_enabled">Opções de desenvolvedor ativadas</string>
+
+    <!-- Login Activity -->
+    <string name="login_error_google_signin">Erro no login: %s</string>
+    <string name="login_error_unexpected">Erro inesperado: %s</string>
+    <string name="login_error_token_google">Erro ao processar token do Google</string>
+    <string name="login_error_unsupported_credential">Tipo de credencial nao suportado</string>
+    <string name="login_error_invalid_credential">Credencial invalida</string>
+    <string name="login_error_firebase">Erro Firebase: %s</string>
+    <string name="login_biometric_failed">Falha na autenticacao</string>
+    <string name="login_welcome_user">Bem-vindo, %s!</string>
+    <string name="login_signing_in">Autenticando…</string>
+    <string name="login_google_signin_started">Google Sign-In iniciado</string>
+    <string name="login_showing_progress">Mostrando indicador de progresso</string>
+    <string name="login_credentials_received">Credenciais recebidas: %s</string>
+    <string name="login_parsing_token">Parse do token do Google</string>
+    <string name="login_google_id">Google ID: %s</string>
+    <string name="login_display_name">Nome: %s</string>
+    <string name="login_email">Email: %s</string>
+    <string name="login_custom_credential_type">Tipo: %s</string>
+    <string name="login_not_custom_credential">Nao e CustomCredential: %s</string>
+    <string name="login_unexpected_credential">Tipo de credencial inesperado: %s</string>
+    <string name="login_signin_with_credential">Entrando com credencial Firebase</string>
+    <string name="login_signin_credential_completed">signInWithCredential completado</string>
+    <string name="login_signin_success">signInWithCredential: sucesso - UID: %s</string>
+    <string name="login_user_email">Email do usuario: %s</string>
+    <string name="login_user_display_name">Nome de exibicao: %s</string>
+    <string name="login_calling_viewmodel">Chamando viewModel.onGoogleSignInSuccess()</string>
+    <string name="login_signin_failure">signInWithCredential: falha - %s</string>
+    <string name="login_current_user">Usuario atual: %s</string>
+
+    <!-- Login ViewModel -->
+    <string name="login_viewmodel_signin_called">onGoogleSignInSuccess chamado</string>
+    <string name="login_viewmodel_calling_repo">Chamando authRepository.getCurrentUser()</string>
+    <string name="login_viewmodel_success">getCurrentUser SUCCESS - User: %s (%s)</string>
+    <string name="login_viewmodel_failure">getCurrentUser FAILURE: %s</string>
+    <string name="login_viewmodel_error_login">Erro ao fazer login</string>
+
+    <!-- League/Ranking Screen Additional Strings -->
+    <string name="league_players_count">%d jogadores</string>
+    <string name="league_points_format">%s pts</string>
+    <string name="league_wins_goals_format">%dV • %dG</string>
+    <string name="stat_mvp_times">vezes</string>
+
+    <!-- Locations Screen Strings -->
+    <string name="location_detail_title">Detalhes do Local</string>
+    <string name="location_back">Voltar</string>
+    <string name="location_save">Salvar</string>
+    <string name="location_add_field">Adicionar Quadra</string>
+    <string name="location_edit_field">Editar Quadra</string>
+    <string name="location_delete_field">Deletar Campo</string>
+    <string name="location_delete">Deletar</string>
+    <string name="location_edit">Editar</string>
+    <string name="location_verified">Verificado</string>
+    <string name="location_name_label">Nome do Local *</string>
+    <string name="location_description_label">Descrição</string>
+    <string name="location_phone_label">Telefone/WhatsApp</string>
+    <string name="location_instagram_label">Instagram</string>
+    <string name="location_none_owner_selected">Nenhum dono selecionado</string>
+    <string name="location_no_owner">Nenhum dono</string>
+    <string name="location_cep_label">CEP</string>
+    <string name="location_street_label">Logradouro</string>
+    <string name="location_number_label">Nº</string>
+    <string name="location_complement_label">Complemento</string>
+    <string name="location_neighborhood_label">Bairro</string>
+    <string name="location_city_label">Cidade</string>
+    <string name="location_region_label">Região (Zonal)</string>
+    <string name="location_state_label">UF</string>
+    <string name="location_mins_label">Min (min)</string>
+    <string name="location_closing_label">Fecha</string>
+    <string name="location_active_question">Ativo?</string>
+    <string name="location_covered_question">Coberta?</string>
+    <string name="location_active_question_status">Status só pode ser alterado por Admins</string>
+    <string name="location_no_fields">Nenhuma quadra cadastrada.</string>
+    <string name="location_cep_button">Buscar</string>
+    <string name="location_update_coordinates">Atualizar Coordenadas</string>
+    <string name="location_lat_lng_format">Lat: %1$s / Lng: %2$s</string>
+    <string name="location_geolocation">Geolocalização</string>
+    <string name="location_amenities_title">Comodidades</string>
+    <string name="location_dialog_add_title">Adicionar Quadra</string>
+    <string name="location_dialog_edit_title">Editar Quadra</string>
+    <string name="location_dialog_add">Adicionar</string>
+    <string name="location_dialog_cancel">Cancelar</string>
+    <string name="location_price_label">Preço Hora (R$)</string>
+    <string name="location_surface_label">Superfície</string>
+    <string name="location_my_locations">Meus Locais</string>
+    <string name="location_no_locations_message">Adicione seu primeiro local para começar a gerenciar suas quadras e reservas</string>
+    <string name="location_map_no_locations">Nenhum local cadastrado</string>
+    <string name="location_map_add_first">Adicione locais para vê-los no mapa</string>
+    <string name="location_map_error_title">Erro ao carregar locais</string>
+    <string name="location_map_retry">Tentar Novamente</string>
+
+    <!-- Map Screen -->
+    <string name="map_loading">Carregando mapa…</string>
+
+    <!-- Payments Screen -->
+    <string name="payment_pix_title">Pagamento via Pix</string>
+    <string name="payment_amount_label">Valor</string>
+    <string name="payment_generating">Gerando código Pix...</string>
+    <string name="payment_qr_description">QR Code Pix</string>
+    <string name="payment_scan_instruction">Escaneie o QR Code acima ou copie o código Pix abaixo</string>
+    <string name="payment_pix_code">Código Pix</string>
+    <string name="payment_copy_code">Copiar código</string>
+    <string name="payment_confirm_button">Confirmar Pagamento</string>
+    <string name="payment_copy_instruction">Copie o código Pix para habilitar a confirmação</string>
+    <string name="payment_copied">Código Pix copiado!</string>
+    <string name="payment_confirmed">Pagamento confirmado!</string>
+
+    <!-- Players Screen -->
+    <string name="players_search_hint">Buscar jogadores…</string>
+    <string name="players_search">Buscar</string>
+    <string name="players_clear_search">Limpar busca</string>
+    <string name="players_compare_mode">Comparar jogadores</string>
+    <string name="players_cancel_compare">Cancelar comparação</string>
+    <string name="players_select_two">Selecione 2 jogadores para comparar</string>
+    <string name="players_filter_all">Todos</string>
+    <string name="players_filter_society">Society</string>
+    <string name="players_filter_futsal">Futsal</string>
+    <string name="players_filter_campo">Campo</string>
+    <string name="players_sort_name">Nome</string>
+    <string name="players_sort_striker">Melhor Atacante</string>
+    <string name="players_sort_gk">Melhor Goleiro</string>
+    <string name="players_error_title">Erro ao carregar jogadores</string>
+    <string name="players_invite">Convidar</string>
+    <string name="players_level">Nv %s</string>
+    <string name="players_games">jogos</string>
+    <string name="players_error_loading">Erro ao carregar jogadores</string>
+    <string name="players_error_loading_data">Erro ao carregar dados</string>
+
+    <!-- Statistics Screen -->
+    <string name="stats_no_chart_data">Sem dados para exibir</string>
+
+    <!-- Ranking Screen -->
+    <string name="ranking_podium_second">2º</string>
+    <string name="ranking_podium_first">1º</string>
+    <string name="ranking_podium_third">3º</string>
+    <string name="ranking_games">%d jogos</string>
+    <string name="ranking_pts">pts</string>
+
+    <!-- Evolution Screen -->
+    <string name="evolution_level_badge">Badge nível %s</string>
+    <string name="evolution_xp_total">%s XP</string>
+    <string name="evolution_division_display">%s</string>
+    <string name="evolution_points">%s pts</string>
+    <string name="evolution_wins_draws_losses">%dV %dE %dD</string>
+    <string name="evolution_badge_emoji">🏆</string>
+
+    <!-- Preferences Screen -->
+    <string name="preferences_title">Preferências</string>
+    <string name="preferences_appearance">Aparência</string>
+    <string name="preferences_theme">Tema</string>
+    <string name="preferences_theme_light">Claro</string>
+    <string name="preferences_theme_dark">Escuro</string>
+    <string name="preferences_theme_system">Sistema</string>
+    <string name="preferences_customize_colors">Personalizar Cores</string>
+    <string name="preferences_privacy">Privacidade</string>
+    <string name="preferences_visible">Perfil Visível</string>
+    <string name="preferences_visible_desc">Permite que outros jogadores encontrem seu perfil</string>
+    <string name="preferences_developer">Desenvolvedor</string>
+    <string name="preferences_dev_mode">Modo desenvolvedor ativo</string>
+    <string name="preferences_dev_tools">Ferramentas de Desenvolvedor</string>
+
+    <!-- Admin Screen -->
+    <string name="admin_manage_users">Gerenciar Usuários</string>
+    <string name="admin_search_hint">Buscar por nome ou email</string>
+    <string name="admin_clear">Limpar</string>
+    <string name="admin_no_users">Nenhum usuário encontrado</string>
+    <string name="admin_try_search">Tente buscar por outro nome ou email</string>
+    <string name="admin_change_permission">Alterar Permissão</string>
+    <string name="admin_confirm_permission">Tem certeza que deseja alterar o nível de acesso de %s para %s?</string>
+    <string name="admin_confirm">Confirmar</string>
+
+    <!-- Badges Screen -->
+    <string name="badges_title">Conquistas</string>
+    <string name="badges_progress">Seu Progresso</string>
+    <string name="badges_unlocked">Badges Desbloqueadas</string>
+    <string name="badges_no_badges">Nenhuma conquista</string>
+    <string name="badges_no_badges_category">Nenhuma conquista nesta categoria ainda.\nJogue mais partidas para desbloquear!</string>
+    <string name="badges_no_badges_general">Jogue mais partidas para desbloquear badges!</string>
+    <string name="badges_unlocked_title">🎉 Conquista Desbloqueada!</string>
+    <string name="badges_continue">Continuar</string>
+    <string name="badges_rarity_comum">COMUM</string>
+    <string name="badges_rarity_raro">RARO</string>
+    <string name="badges_rarity_epico">ÉPICO</string>
+    <string name="badges_rarity_lendario">LENDÁRIO</string>
+    <string name="badges_all">Todas</string>
+    <string name="badges_error_title">Erro ao carregar conquistas</string>
+
+    <!-- Home Components -->
+    <string name="streak_widget_title">%d dias de sequência!</string>
+    <string name="streak_widget_record">Recorde: %d dias</string>
+    <string name="streak_widget_days">dias</string>
+    <string name="challenges_title">Desafios em Andamento</string>
+    <string name="recent_badges_title">Conquistas Recentes</string>
+    <string name="home_error_message">Erro ao carregar dados da home</string>
+    <string name="home_retry">Tentar novamente</string>
+
+    <!-- Location Detail Screen -->
+    <string name="location_detail_basic_info">Informações Básicas</string>
+    <string name="location_detail_name_label">Nome do Local *</string>
+    <string name="location_detail_owner_label">Dono da Quadra (Opcional)</string>
+    <string name="location_detail_no_owner">Nenhum dono selecionado</string>
+    <string name="location_detail_no_owner_option">Nenhum dono</string>
+    <string name="location_detail_description_label">Descrição</string>
+    <string name="location_detail_phone_label">Telefone/WhatsApp</string>
+    <string name="location_detail_instagram_label">Instagram</string>
+    <string name="location_detail_operation">Funcionamento</string>
+    <string name="location_detail_opens">Abre</string>
+    <string name="location_detail_closes">Fecha</string>
+    <string name="location_detail_min_duration">Min (min)</string>
+    <string name="location_detail_active">Ativo?</string>
+    <string name="location_detail_address">Endereço</string>
+    <string name="location_detail_cep">CEP</string>
+    <string name="location_detail_street">Logradouro</string>
+    <string name="location_detail_number">Nº</string>
+    <string name="location_detail_complement">Complemento</string>
+    <string name="location_detail_neighborhood">Bairro</string>
+    <string name="location_detail_city">Cidade</string>
+    <string name="location_detail_region">Região (Zonal)</string>
+    <string name="location_detail_state">UF</string>
+    <string name="location_detail_geolocation">Geolocalização</string>
+    <string name="location_detail_coordinates">Lat: %s / Lng: %s</string>
+    <string name="location_detail_update_coords">Atualizar Coordenadas</string>
+    <string name="location_detail_amenities">Comodidades</string>
+    <string name="location_detail_fields">Quadras</string>
+    <string name="location_detail_no_fields">Nenhuma quadra cadastrada.</string>
+    <string name="location_detail_add_field">Adicionar Quadra</string>
+    <string name="location_detail_add_field_title">Adicionar Quadra</string>
+    <string name="location_detail_edit_field_title">Editar Quadra</string>
+    <string name="location_detail_field_name">Nome (ex: Quadra 1)</string>
+    <string name="location_detail_field_type">Tipo</string>
+    <string name="location_detail_field_price">Preço Hora (R$)</string>
+    <string name="location_detail_field_surface">Superfície</string>
+    <string name="location_detail_field_covered">Coberta?</string>
+    <string name="location_detail_field_active">Ativa?</string>
+    <string name="location_detail_field_admin_only">Status só pode ser alterado por Admins</string>
+    <string name="location_detail_add_button">Adicionar</string>
+    <string name="location_detail_save_button">Salvar</string>
+    <string name="location_detail_cancel_button">Cancelar</string>
+    <string name="location_detail_locker_room">Vestiário</string>
+    <string name="location_detail_bar">Bar</string>
+    <string name="location_detail_barbecue">Churrasqueira</string>
+    <string name="location_detail_parking">Estacionamento</string>
+    <string name="location_detail_wifi">Wi-Fi</string>
+    <string name="location_detail_bleachers">Arquibancada</string>
+    <string name="location_detail_field_display">%s - R$ %s/h</string>
+    <string name="location_detail_toast_saved">Local salvo com sucesso</string>
+    <string name="location_detail_toast_error">Erro ao salvar local</string>
+
+    <!-- Locations Map Screen -->
+    <string name="locations_map_loading">Carregando locais…</string>
+    <string name="locations_map_empty_title">Nenhum local cadastrado</string>
+    <string name="locations_map_empty_desc">Adicione locais para vê-los no mapa</string>
+    <string name="locations_map_error_title">Erro ao carregar locais</string>
+    <string name="locations_map_retry">Tentar Novamente</string>
+
+    <!-- Players Screen Additional Strings -->
+    <string name="players_search_hint_players">Buscar jogadores…</string>
+    <string name="players_content_description_search">Buscar</string>
+    <string name="players_content_description_compare">Comparar jogadores</string>
+    <string name="players_content_description_cancel_compare">Cancelar comparação</string>
+    <string name="players_content_description_clear_search">Limpar busca</string>
+    <string name="players_rating_atk">ATK</string>
+    <string name="players_rating_gk">GK</string>
+    <string name="players_level_format">Nv %s</string>
+    <string name="players_content_description_invite">Convidar</string>
+
+    <!-- Location Map Screen -->
+    <string name="location_map_title">Mapa de Locais</string>
+    <string name="location_detail">Detalhes do Local</string>
+    <string name="field_owner_dashboard">Painel do Dono de Quadra</string>
+
+    <!-- Navigation Strings -->
+    <string name="theme_settings">Configurações de Tema</string>
+    <string name="gamification_settings">Configurações de Gamificação</string>
+    <string name="developer">Desenvolvedor</string>
+    <string name="level_journey">Jornada de Níveis</string>
+    <string name="back_button_content_description">Voltar</string>
+    <string name="primary">Primário</string>
 
 </resources>

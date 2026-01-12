@@ -86,6 +86,11 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val myLocations by viewModel.myLocations.collectAsStateWithLifecycle()
 
+    // Carregar dados do perfil quando a tela for aberta
+    LaunchedEffect(Unit) {
+        viewModel.loadProfile()
+    }
+
     // Estado para controle de cliques secretos no avatar
     var avatarClickCount by remember { mutableStateOf(0) }
     var lastAvatarClickTime by remember { mutableStateOf(0L) }

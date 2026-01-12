@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.*
+import com.futebadosparcas.ui.components.EmptyState
+import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
 import kotlinx.coroutines.launch
 
@@ -227,7 +230,7 @@ private fun LiveGameTopBar(
             if (uiState is LiveGameUiState.Success) {
                 Column {
                     Text(
-                        text = "Jogo ao Vivo",
+                        text = stringResource(R.string.live_game_label),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -239,7 +242,7 @@ private fun LiveGameTopBar(
                 }
             } else {
                 Text(
-                    text = "Jogo ao Vivo",
+                    text = stringResource(R.string.live_game_label),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -249,7 +252,7 @@ private fun LiveGameTopBar(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Voltar"
+                    contentDescription = stringResource(R.string.back)
                 )
             }
         },
@@ -284,7 +287,7 @@ private fun IsolatedGameTimer(
     val seconds = (elapsedTime / 1000 % 60).toInt()
 
     Text(
-        text = if (isFinished) "Fim de Jogo" else String.format("%02d:%02d", minutes, seconds),
+        text = if (isFinished) stringResource(R.string.end_game_label) else String.format("%02d:%02d", minutes, seconds),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -440,7 +443,7 @@ private fun LiveGameTabs(
     gameId: String,
     onTabSelected: (Int) -> Unit
 ) {
-    val tabTitles = listOf("Estatísticas", "Eventos")
+    val tabTitles = listOf(stringResource(R.string.live_statistics), stringResource(R.string.live_events))
     val tabIcons = listOf(Icons.Default.BarChart, Icons.AutoMirrored.Filled.EventNote)
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -871,75 +874,49 @@ private fun EventTypeChip(
 }
 
 /**
- * Conteúdo de Loading
+ * Conteúdo de Loading com Shimmer
  */
 @Composable
 private fun LoadingContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(48.dp),
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = "Carregando jogo...",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        ShimmerBox(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+            cornerRadius = 16.dp
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        ShimmerBox(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            cornerRadius = 16.dp
+        )
     }
 }
 
 /**
- * Conteúdo de Erro
+ * Conteúdo de Erro com EmptyState
  */
 @Composable
 private fun ErrorContent(
     message: String,
     onRetry: () -> Unit
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.padding(32.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ErrorOutline,
-                contentDescription = "Erro ao carregar jogo",
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.error
-            )
-            Text(
-                text = "Erro ao carregar jogo",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Button(onClick = onRetry) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Tentar Novamente",
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Tentar Novamente")
-            }
-        }
-    }
+    EmptyState(
+        type = EmptyStateType.Error(
+            title = stringResource(R.string.live_game_load_error),
+            description = message,
+            actionLabel = stringResource(R.string.retry),
+            onRetry = onRetry
+        )
+    )
 }

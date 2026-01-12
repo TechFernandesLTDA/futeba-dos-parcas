@@ -295,9 +295,20 @@ private fun GameCard(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "${game.game.date} ${game.game.time}",
+                    text = buildString {
+                        append(game.game.date)
+                        if (game.game.time.isNotEmpty()) {
+                            append(" ${game.game.time}")
+                        } else {
+                            append(" (--:--)")
+                        }
+                    },
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (game.game.time.isEmpty()) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
                 )
             }
 

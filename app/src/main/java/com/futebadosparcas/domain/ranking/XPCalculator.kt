@@ -96,13 +96,19 @@ object XPCalculator {
     private const val XP_STREAK_7 = 50
     private const val XP_STREAK_10 = 100
 
+    // Limites Anti-Cheat (Tetos de XP por jogo)
+    private const val MAX_GOALS_PER_GAME = 15
+    private const val MAX_ASSISTS_PER_GAME = 10
+    private const val MAX_SAVES_PER_GAME = 30
+    private const val MAX_XP_PER_GAME = 500
+
     /**
      * Calcula o XP ganho por um jogador em uma partida.
      */
     fun calculate(
         playerData: PlayerGameData,
         opponentsGoals: Int = 0,
-        settings: com.futebadosparcas.data.model.GamificationSettings? = null
+        settings: com.futebadosparcas.domain.model.GamificationSettings? = null
     ): XpCalculationResult {
         // Usar settings dinamicas ou fallback para constantes fixas
         val xpPresence = settings?.xpPresence ?: XP_PRESENCE
@@ -120,14 +126,17 @@ object XPCalculator {
         // 1. XP de Presenca (Base operacional)
         val participationXp = xpPresence
 
-        // 2. XP de Gols (Sem teto artificial)
-        val goalsXp = playerData.goals * xpPerGoal
+        // 2. XP de Gols (COM teto anti-cheat)
+        val cappedGoals = playerData.goals.coerceAtMost(MAX_GOALS_PER_GAME)
+        val goalsXp = cappedGoals * xpPerGoal
 
-        // 3. XP de Assistencias (Sem teto artificial)
-        val assistsXp = playerData.assists * xpPerAssist
+        // 3. XP de Assistencias (COM teto anti-cheat)
+        val cappedAssists = playerData.assists.coerceAtMost(MAX_ASSISTS_PER_GAME)
+        val assistsXp = cappedAssists * xpPerAssist
 
-        // 4. XP de Defesas (Para goleiros)
-        val savesXp = playerData.saves * xpPerSave
+        // 4. XP de Defesas (Para goleiros, COM teto anti-cheat)
+        val cappedSaves = playerData.saves.coerceAtMost(MAX_SAVES_PER_GAME)
+        val savesXp = cappedSaves * xpPerSave
 
         // 5. XP de Resultado
         val resultXp = when {
@@ -168,8 +177,8 @@ object XPCalculator {
             penalty = penaltyXp.toLong()
         )
 
-        // Garantir que XP total nunca seja negativo
-        val totalXp = maxOf(0L, breakdown.total)
+        // Garantir que XP total nunca seja negativo e aplica teto máximo
+        val totalXp = maxOf(0L, breakdown.total).coerceAtMost(MAX_XP_PER_GAME.toLong())
 
         return XpCalculationResult(
             totalXp = totalXp,
@@ -191,7 +200,7 @@ object XPCalculator {
         isWorstPlayer: Boolean = false,
         hasBestGoal: Boolean,
         currentStreak: Int,
-        settings: com.futebadosparcas.data.model.GamificationSettings? = null
+        settings: com.futebadosparcas.domain.model.GamificationSettings? = null
     ): XpCalculationResult {
         val playerData = PlayerGameData(
             playerId = confirmation.userId,

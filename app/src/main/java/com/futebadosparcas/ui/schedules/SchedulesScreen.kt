@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.schedules
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,27 +10,37 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.futebadosparcas.data.model.RecurrenceType
 import com.futebadosparcas.data.model.Schedule
+import com.futebadosparcas.ui.components.EmptyState
+import com.futebadosparcas.ui.components.EmptyStateType
+
+private const val TAG = "SchedulesScreen"
 
 /**
  * SchedulesScreen - Lista de Horários Recorrentes
  *
  * Permite:
  * - Visualizar lista de horários recorrentes
+ * - Criar novo horário recorrente
  * - Editar horário existente
  * - Deletar horário (com confirmação)
  *
  * Features:
  * - LazyColumn para lista de schedules
- * - Dialog de edição (ComposeScheduleDialogs)
+ * - Dialog de edição/criação (ComposeScheduleDialogs)
  * - Dialog de confirmação de exclusão
  * - Estados: Loading, Success (lista), Empty (sem schedules), Error
+ *
+ * CMD-08: Debug de filtro vazio com logs aprimorados
+ * CMD-09: EmptyState padrão Material3 com CTA
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,9 +49,32 @@ fun SchedulesScreen(
     onNavigateBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    var currentUserName by remember { mutableStateOf("") }
 
+    // Carrega o nome do usuario
+    LaunchedEffect(Unit) {
+        currentUserName = viewModel.getCurrentUserName()
+    }
+
+    var showCreateDialog by remember { mutableStateOf(false) }
     var scheduleToEdit by remember { mutableStateOf<Schedule?>(null) }
     var scheduleToDelete by remember { mutableStateOf<String?>(null) }
+
+    // CMD-08: Log para debug do estado da UI
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            is SchedulesUiState.Loading -> Log.d(TAG, "Estado: Loading")
+            is SchedulesUiState.Success -> {
+                val count = (uiState as SchedulesUiState.Success).schedules.size
+                Log.d(TAG, "Estado: Success com $count schedules")
+            }
+            is SchedulesUiState.Error -> {
+                val msg = (uiState as SchedulesUiState.Error).message
+                Log.e(TAG, "Estado: Error - $msg")
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -54,10 +88,31 @@ fun SchedulesScreen(
                         )
                     }
                 },
+                actions = {
+                    // Botão de refresh para CMD-08 (debug)
+                    IconButton(onClick = { viewModel.refresh() }) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Atualizar"
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
+        },
+        // CMD-09: FAB para criar novo horário
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showCreateDialog = true },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Criar Horário"
+                )
+            }
         }
     ) { paddingValues ->
         Box(
@@ -76,32 +131,16 @@ fun SchedulesScreen(
                     val schedules = (uiState as SchedulesUiState.Success).schedules
 
                     if (schedules.isEmpty()) {
-                        // Empty State
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.EventRepeat,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        // CMD-09: EmptyState padrão com CTA para criar
+                        EmptyState(
+                            type = EmptyStateType.NoData(
+                                title = "Nenhum horário recorrente",
+                                description = "Configure horários para automatizar a criação de jogos semanais, quinzenais ou mensais.",
+                                icon = Icons.Default.EventRepeat,
+                                actionLabel = "Criar Horário",
+                                onAction = { showCreateDialog = true }
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "Nenhum horário recorrente",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "Configure horários para automatizar criação de jogos",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        )
                     } else {
                         // List of Schedules
                         LazyColumn(
@@ -124,34 +163,35 @@ fun SchedulesScreen(
                 }
 
                 is SchedulesUiState.Error -> {
-                    // Error State
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ErrorOutline,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.error
+                    // CMD-09: Error State com retry usando EmptyState padrão
+                    val errorMsg = (uiState as SchedulesUiState.Error).message
+                    EmptyState(
+                        type = EmptyStateType.Error(
+                            title = "Erro ao carregar horários",
+                            description = errorMsg,
+                            icon = Icons.Default.ErrorOutline,
+                            actionLabel = "Tentar Novamente",
+                            onRetry = { viewModel.refresh() }
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Erro ao carregar horários",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        Text(
-                            text = (uiState as SchedulesUiState.Error).message,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    )
                 }
             }
+        }
+    }
+
+    // Create Schedule Dialog (CMD-08/09)
+    if (showCreateDialog) {
+        val userId = viewModel.getCurrentUserId()
+        if (userId != null) {
+            CreateScheduleDialog(
+                onDismiss = { showCreateDialog = false },
+                onCreate = { newSchedule ->
+                    viewModel.createSchedule(newSchedule)
+                    showCreateDialog = false
+                },
+                userId = userId,
+                userName = currentUserName
+            )
         }
     }
 
@@ -257,9 +297,20 @@ private fun ScheduleCard(
                 }
 
                 Text(
-                    text = "$recurrenceStr • $dayStr às ${schedule.time}",
+                    text = buildString {
+                        append("$recurrenceStr • $dayStr")
+                        if (schedule.time.isNotEmpty()) {
+                            append(" às ${schedule.time}")
+                        } else {
+                            append(" - Horário não definido")
+                        }
+                    },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (schedule.time.isEmpty()) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
                 )
             }
 

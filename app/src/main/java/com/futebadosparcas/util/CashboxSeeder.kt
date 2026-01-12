@@ -1,9 +1,10 @@
 package com.futebadosparcas.util
 
+import com.futebadosparcas.data.model.CashboxAppStatus
 import com.futebadosparcas.data.model.CashboxCategory
-import com.futebadosparcas.data.model.CashboxEntry
 import com.futebadosparcas.data.model.CashboxEntryType
-import com.futebadosparcas.data.repository.CashboxRepository
+import com.futebadosparcas.domain.model.CashboxEntry
+import com.futebadosparcas.domain.repository.CashboxRepository
 import java.util.Calendar
 import java.util.Date
 import javax.inject.Inject
@@ -52,10 +53,13 @@ class CashboxSeeder @Inject constructor(
                 category = category.name,
                 amount = amount,
                 description = description,
+                createdById = memberId,
+                createdByName = memberName,
+                referenceDate = kotlinx.datetime.Instant.fromEpochMilliseconds(date.time),
+                createdAt = kotlinx.datetime.Instant.fromEpochMilliseconds(System.currentTimeMillis()),
                 playerId = if (isIncome) memberId else null,
                 playerName = if (isIncome) memberName else null,
-                referenceDate = date,
-                // Status will be set by repository or default
+                status = CashboxAppStatus.ACTIVE.name
             )
 
             // Calculate 'created_at' to match reference date for history sort simulation?

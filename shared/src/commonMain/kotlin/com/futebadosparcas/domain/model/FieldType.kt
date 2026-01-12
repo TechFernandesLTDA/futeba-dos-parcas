@@ -22,9 +22,4 @@ enum class FieldType(val displayName: String) {
 
     @SerialName("OUTROS")
     OUTROS("Outros");
-
-    // Helper para dropdown
-    override fun toString(): String {
-        return displayName
-    }
 }

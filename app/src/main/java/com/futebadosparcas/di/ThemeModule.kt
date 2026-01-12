@@ -1,7 +1,7 @@
 package com.futebadosparcas.di
 
-import com.futebadosparcas.data.repository.ThemeRepository
-import com.futebadosparcas.data.repository.ThemeRepositoryImpl
+import com.futebadosparcas.data.ThemeRepositoryImpl
+import com.futebadosparcas.domain.repository.ThemeRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

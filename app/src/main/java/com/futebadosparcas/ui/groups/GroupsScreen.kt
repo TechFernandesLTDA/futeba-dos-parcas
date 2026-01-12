@@ -233,7 +233,7 @@ private fun GroupsSuccessContent(
                 onClick = { onGroupClick(group.groupId) },
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .animateItemPlacement()
+                    .animateItem()
             )
         }
     }

@@ -5,13 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Activity
 import com.futebadosparcas.data.model.Game
-import com.futebadosparcas.data.model.WeeklyChallenge
-import com.futebadosparcas.data.model.UserChallengeProgress
-import com.futebadosparcas.data.model.UserBadge
-import com.futebadosparcas.data.model.LeagueDivision
+import com.futebadosparcas.domain.model.WeeklyChallenge
+import com.futebadosparcas.ui.games.GameWithConfirmations
+import com.futebadosparcas.domain.model.UserChallengeProgress
+import com.futebadosparcas.domain.model.UserBadge
+import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.data.repository.GameRepository
-import com.futebadosparcas.data.repository.GamificationRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.GamificationRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.ConnectivityMonitor
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,10 +32,11 @@ import kotlin.math.pow
 class HomeViewModel @Inject constructor(
     private val gameRepository: GameRepository,
     private val userRepository: UserRepository,
-    private val notificationRepository: com.futebadosparcas.data.repository.NotificationRepository,
+    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
     private val gamificationRepository: GamificationRepository,
     private val statisticsRepository: com.futebadosparcas.data.repository.StatisticsRepository,
     private val activityRepository: com.futebadosparcas.data.repository.ActivityRepository,
+    private val gameConfirmationRepository: com.futebadosparcas.domain.repository.GameConfirmationRepository,
     private val connectivityMonitor: ConnectivityMonitor,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -63,6 +65,7 @@ class HomeViewModel @Inject constructor(
     init {
         observeUnreadCount()
         observeConnectivity()
+        loadHomeData()
     }
 
     private fun observeConnectivity() {
@@ -144,7 +147,8 @@ class HomeViewModel @Inject constructor(
                     val gamesDeferred = async {
                         runCatching {
                             withTimeout(TIMEOUT_MILLIS) {
-                                gameRepository.getConfirmedUpcomingGamesForUser()
+                                // Buscar jogos proximos com informacoes de confirmacao
+                                gameRepository.getAllGamesWithConfirmationCount()
                             }
                         }
                     }
@@ -205,7 +209,16 @@ class HomeViewModel @Inject constructor(
                     _loadingState.value = LoadingState.LoadingProgress(70, 100, "Processando...")
 
                     // Extrair dados com fallback para valores vazios
-                    val games = gamesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
+                    // Filtrar apenas jogos futuros (SCHEDULED ou CONFIRMED)
+                    val now = java.util.Date()
+                    val allGames = gamesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
+                    val games = allGames
+                        .filter {
+                            (it.game.status == com.futebadosparcas.data.model.GameStatus.SCHEDULED.name ||
+                             it.game.status == com.futebadosparcas.data.model.GameStatus.CONFIRMED.name) &&
+                            it.game.dateTime != null && it.game.dateTime!! > now
+                        }
+                        .take(10) // Limitar a 10 jogos na home
                     val statistics = statsResult.getOrNull()?.getOrNull()
                     val activities = activitiesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
                     val publicGames = publicGamesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
@@ -239,7 +252,7 @@ class HomeViewModel @Inject constructor(
                                 gamificationRepository.getUserParticipation(user.id, season.id)
                             }
                             participationResult.getOrNull()?.let { participation ->
-                                leagueDivision = participation.division
+                                leagueDivision = participation.getDivisionEnum()
                             }
                         }
                     } catch (e: Exception) {
@@ -359,13 +372,13 @@ data class GamificationSummary(
 sealed class HomeUiState {
     object Loading : HomeUiState()
     data class Success(
-        val user: com.futebadosparcas.domain.model.User, 
-        val games: List<Game>,
+        val user: com.futebadosparcas.domain.model.User,
+        val games: List<GameWithConfirmations>,
         val gamificationSummary: GamificationSummary,
         val statistics: com.futebadosparcas.data.model.UserStatistics? = null,
         val activities: List<Activity> = emptyList(),
         val publicGames: List<Game> = emptyList(),
-        val streak: com.futebadosparcas.data.model.UserStreak? = null,
+        val streak: com.futebadosparcas.domain.model.UserStreak? = null,
         val challenges: List<Pair<WeeklyChallenge, UserChallengeProgress?>> = emptyList(),
         val recentBadges: List<UserBadge> = emptyList(),
         val isGridView: Boolean = false

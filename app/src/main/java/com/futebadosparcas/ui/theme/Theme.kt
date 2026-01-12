@@ -11,8 +11,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import com.futebadosparcas.data.model.AppThemeConfig
-import com.futebadosparcas.data.model.ThemeMode
+import com.futebadosparcas.domain.model.AppThemeConfig
+import com.futebadosparcas.domain.model.ThemeMode
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel

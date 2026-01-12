@@ -16,8 +16,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.data.local.dao.GameDao
-import com.futebadosparcas.data.repository.LocationRepository
-import com.futebadosparcas.ui.auth.LoginActivity
+import com.futebadosparcas.domain.repository.LocationRepository
+import com.futebadosparcas.ui.auth.LoginActivityCompose
 import com.futebadosparcas.util.PreferencesManager
 import kotlinx.coroutines.launch
 
@@ -187,25 +187,21 @@ fun DevToolsScreen(
 
             // Popular Locais
             DevToolButton(
-                title = "Popular 50 Locais (Curitiba/PR)",
-                description = "Adiciona locais de exemplo no Firestore",
+                title = "Popular Ginásio Apollo",
+                description = "Adiciona Ginásio de Esportes Apollo com 6 quadras (4 futsal + 2 society)",
                 icon = Icons.Default.LocationOn,
                 isLoading = isSeedingLocations,
                 onClick = {
                     scope.launch {
                         isSeedingLocations = true
-                        showToast = "Iniciando seed de locais..."
+                        showToast = "Iniciando seed do Ginásio Apollo..."
 
-                        val result = locationRepository.seedCuritibaLocations()
+                        val result = locationRepository.seedGinasioApollo()
 
                         isSeedingLocations = false
                         result.fold(
-                            onSuccess = { count ->
-                                showToast = if (count > 0) {
-                                    "Sucesso! $count novos locais adicionados."
-                                } else {
-                                    "Nenhum novo local. Todos já existem."
-                                }
+                            onSuccess = { location ->
+                                showToast = "Sucesso! ${location.name} criado com 6 quadras (4 futsal + 2 society)."
                             },
                             onFailure = { e ->
                                 showToast = "Erro: ${e.message}"
@@ -246,7 +242,7 @@ fun DevToolsScreen(
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                 onClick = {
-                    val intent = Intent(context, LoginActivity::class.java)
+                    val intent = Intent(context, LoginActivityCompose::class.java)
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     context.startActivity(intent)
                     Runtime.getRuntime().exit(0)

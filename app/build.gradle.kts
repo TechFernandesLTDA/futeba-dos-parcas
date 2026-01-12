@@ -183,6 +183,7 @@ dependencies {
     implementation("com.patrykandpatrick.vico:core:1.14.0")
 
     // Date/Time
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0") // For shared module interop
     // implementation("com.jakewharton.threetenabp:threetenabp:1.4.7") // Migrated to java.time
 
     // Security - Encrypted SharedPreferences

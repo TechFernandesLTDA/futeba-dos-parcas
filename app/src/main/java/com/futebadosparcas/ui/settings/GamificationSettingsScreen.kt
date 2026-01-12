@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.futebadosparcas.data.model.GamificationSettings
+import com.futebadosparcas.domain.model.GamificationSettings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

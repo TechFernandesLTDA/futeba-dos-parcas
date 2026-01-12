@@ -3,6 +3,37 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ============================================
+    // CMD-11: AUTHZ REAL (AUTORIZAÇÃO NO BACKEND)
+    // ============================================
+    //
+    // IMPORTANTE: As regras abaixo são a ÚNICA fonte de verdade
+    // para autorização no backend. Verificações no cliente (UI)
+    // são apenas para UX - a segurança real está aqui.
+    //
+    // Como funciona:
+    // 1. role é definido no campo 'role' do documento users/{userId}
+    // 2. Valores possíveis: 'ADMIN', 'FIELD_OWNER', 'PLAYER'
+    // 3. A função isAdmin() verifica se role == 'ADMIN'
+    // 4. Para operações sensíveis, SEMPRE verificar ownership E role
+    //
+    // Matriz de Permissões (deve corresponder a UserPermissions.kt):
+    //
+    // | Ação                    | ADMIN | FIELD_OWNER | PLAYER |
+    // |-------------------------|-------|-------------|--------|
+    // | Criar jogo              | ✓     | ✓           | ✓      |
+    // | Editar qualquer jogo    | ✓     | próprios    | próprios|
+    // | Deletar qualquer jogo   | ✓     | próprios    | próprios|
+    // | Criar local             | ✓     | ✓           | ✗      |
+    // | Editar qualquer local   | ✓     | próprios    | ✗      |
+    // | Deletar local           | ✓     | ✗           | ✗      |
+    // | Gerenciar usuários      | ✓     | ✗           | ✗      |
+    // | Ver stats globais       | ✓     | leitura     | leitura |
+    // | Editar rankings         | ✓     | ✗           | ✗      |
+    // | Ajustar XP              | ✓     | ✗           | ✗      |
+    //
+    // ============================================
+
+    // ============================================
     // FUNCOES AUXILIARES
     // ============================================
 
@@ -32,38 +63,55 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedFields);
     }
 
-    // Verifica se e uma data valida (timestamp)
-    // function isValidTimestamp(field) {
-    //   return field is timestamp;
-    // }
-
-    // Obtem o role do usuario autenticado
+    // CMD-10: Obtem o role do usuario autenticado com validacao de null
+    // O role é definido no campo 'role' do documento users/{userId}
     function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      if (userDoc == null) return null;
+      return userDoc.data.role;
     }
 
-    // Verifica se o usuario e ADMIN
+    // CMD-10/11: Verifica se o usuario e ADMIN
+    // Usado para operações administrativas em todo o sistema
     function isAdmin() {
       return isAuthenticated() && getUserRole() == 'ADMIN';
     }
 
-    // Verifica se o usuario e FIELD_OWNER ou ADMIN
-    // function isFieldOwner() {
-    //   return isAuthenticated() && (getUserRole() == 'FIELD_OWNER' || getUserRole() == 'ADMIN');
-    // }
+    // CMD-11: Verifica se o usuario e FIELD_OWNER ou ADMIN
+    // Usado para operações de gerenciamento de locais
+    function isFieldOwnerOrAdmin() {
+      return isAdmin() || getUserRole() == 'FIELD_OWNER';
+    }
 
-    // Verifica se o usuario e pelo menos PLAYER (qualquer autenticado)
-    // function isPlayer() {
-    //   return isAuthenticated();
-    // }
-
-    // REMOVED: Mock user pattern bypass (CVE-1: Security vulnerability)
-    // Mock users must be created via Firebase Auth with real credentials
-    // This prevents unauthorized XP/badge manipulation
-
-    // Verifica se o usuario e um jogador confirmado no jogo
+    // Verifica se o usuario e um jogador confirmado no jogo (C-002 fix)
     function isConfirmedPlayer(gameId) {
-      return exists(/databases/$(database)/documents/confirmations/$(gameId + "_" + userId()));
+      let confirmationDoc = get(/databases/$(database)/documents/confirmations/$(gameId + "_" + userId()));
+      return confirmationDoc != null;
+    }
+
+    // Helper global unico para verificar se o usuario e dono do jogo (C-005 fix)
+    // Esta funcao deve ser usada em todas as colecoes que precisam verificar ownership de jogos
+    function isGameOwner(gameId) {
+      let gameDoc = get(/databases/$(database)/documents/games/$(gameId));
+      return gameDoc != null && gameDoc.data.owner_id == userId();
+    }
+
+    // Helper para verificar se usuario e membro ativo de um grupo
+    function isGroupMember(groupId) {
+      let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
+      return memberDoc != null && memberDoc.data.status == 'ACTIVE';
+    }
+
+    // Helper para verificar se usuario e admin/owner de um grupo
+    function isGroupAdmin(groupId) {
+      let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
+      return memberDoc != null && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN');
+    }
+
+    // Helper para verificar se o grupo esta ativo
+    function isGroupActive(groupId) {
+      let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
+      return groupDoc != null && (groupDoc.data.status == 'ACTIVE' || !('status' in groupDoc.data));
     }
 
     // ============================================
@@ -79,57 +127,59 @@ service cloud.firestore {
       // Usuario pode atualizar seu perfil (campos basicos apenas)
       // XP/Level/Milestones SAO atualizados via Cloud Functions (Admin SDK) - NAO client-side
       // SEGURANCA: Removida permissao de FIELD_OWNER editar XP (vulnerabilidade P0-1)
+      //
+      // CMD-05: Regras de atualizacao de perfil
+      // Campos permitidos para edicao pelo usuario:
+      // - name, nickname, photo_url (dados basicos)
+      // - preferred_field_types, preferred_position (preferencias)
+      // - striker_rating, mid_rating, defender_rating, gk_rating (ratings manuais)
+      // - birth_date, gender, height_cm, weight_kg (dados pessoais)
+      // - dominant_foot, primary_position, secondary_position, play_style, experience_years
+      //
+      // Campos protegidos (apenas admin/cloud functions):
+      // - id, created_at, role (identidade e permissões)
+      // - experience_points, level, milestones_achieved (gamificacao)
+      // - fcm_token (gerenciado internamente)
+      // - auto_*_rating, auto_rating_samples (ratings automaticos)
       allow update: if
           isAdmin() ||
           (isOwner(userId) &&
+           // Campos imutaveis (identidade)
            fieldUnchanged('id') &&
            fieldUnchanged('created_at') &&
            fieldUnchanged('role') &&
+           // Campos de gamificacao (apenas cloud functions)
            fieldUnchanged('experience_points') &&
            fieldUnchanged('level') &&
-           fieldUnchanged('milestones_achieved'));
+           fieldUnchanged('milestones_achieved') &&
+           // Campos de rating automatico (apenas cloud functions)
+           fieldUnchanged('auto_striker_rating') &&
+           fieldUnchanged('auto_mid_rating') &&
+           fieldUnchanged('auto_defender_rating') &&
+           fieldUnchanged('auto_gk_rating') &&
+           fieldUnchanged('auto_rating_samples') &&
+           fieldUnchanged('auto_rating_updated_at') &&
+           // FCM token e flags internas
+           fieldUnchanged('fcm_token') &&
+           fieldUnchanged('updated_at'));
 
       allow delete: if false;
     }
-
-    // ... (games, confirmations, teams rules remain unchanged) ...
-    // NOTE: Keeping the structure intact, skipping lines 98-215 for brevity in this replacement block if possible, but tool requires contiguous block.
-    // I will use multiple ReplaceChunks for cleaner diff.
-
-    // ... (games, confirmations, teams rules remain unchanged) ...
 
     // ============================================
     // COLECAO: statistics
     // ============================================
-    // SEGURANCA: Estatisticas sao atualizadas via Cloud Functions (Admin SDK)
-    // Usuarios nao podem manipular suas proprias estatisticas
     match /statistics/{statId} {
       allow read: if isAuthenticated();
-
-      // SOMENTE Admin via Admin SDK pode criar/atualizar
-      // (Cloud Functions have elevated privileges via Admin SDK)
       allow create, update: if isAdmin();
-
       allow delete: if false;
     }
-    
-    // ... (player_stats rules remain unchanged) ...
-
-    // ============================================
-    // COLECAO: xp_logs (historico de XP)
-    // ============================================
-
 
     // ============================================
     // COLECAO: games
     // ============================================
     match /games/{gameId} {
-
-
-      // Regras de leitura:
-      // Qualquer usuario autenticado pode ler jogos.
-      // A filtragem de jogos GROUP_ONLY e feita no cliente quando necessario.
-      // Isso simplifica as queries e evita conflitos com multiplos whereIn.
+      // Qualquer usuario autenticado pode ler jogos
       allow read: if isAuthenticated();
 
       // Qualquer usuario autenticado pode criar jogos
@@ -157,22 +207,39 @@ service cloud.firestore {
     // ============================================
     // COLECAO: schedules
     // ============================================
+    // CMD-07: Ownership de Horarios
+    // - O campo owner_id define quem criou/gestiona o schedule (usuario)
+    // - location_id vincula o schedule a um local/quadra (referencia)
+    // - group_id vincula o schedule a um grupo (opcional, para jogos recorrentes de grupo)
+    //
+    // Nota: Schedules sao criados/gestionados por USUARIOS, nao por locais ou grupos diretamente.
+    // Um usuario com role FIELD_OWNER pode criar schedules para o local que gerencia.
     match /schedules/{scheduleId} {
       // Usuario pode ler suas proprias recorrencias
       // Admins podem ler todas
-      allow read: if isAuthenticated() && (resource.data.owner_id == userId() || isAdmin());
+      // Membros de um grupo podem ler schedules do grupo (se group_id definido)
+      allow read: if isAuthenticated() &&
+        (resource.data.owner_id == userId() ||
+         isAdmin() ||
+         (resource.data.group_id in keys(getAllIds(getMatchingDocuments(/databases/$(database)/documents/groups/$(resource.data.group_id)/members)))));
 
       // Usuario pode criar recorrencias para si mesmo
       // Admins podem criar para qualquer um
-      allow create: if isAuthenticated() && (request.resource.data.owner_id == userId() || isAdmin());
+      // Se tiver group_id, o usuario deve ser membro do grupo
+      allow create: if isAuthenticated() &&
+        (request.resource.data.owner_id == userId() || isAdmin()) &&
+        (request.resource.data.group_id == null ||
+         isGroupMember(request.resource.data.group_id));
 
       // Usuario pode atualizar suas proprias recorrencias
       // Admins podem atualizar qualquer uma
-      allow update: if isAuthenticated() && (resource.data.owner_id == userId() || isAdmin());
+      allow update: if isAuthenticated() &&
+        (resource.data.owner_id == userId() || isAdmin());
 
       // Usuario pode deletar suas proprias recorrencias
       // Admins podem deletar qualquer uma
-      allow delete: if isAuthenticated() && (resource.data.owner_id == userId() || isAdmin());
+      allow delete: if isAuthenticated() &&
+        (resource.data.owner_id == userId() || isAdmin());
     }
 
     // ============================================
@@ -207,12 +274,6 @@ service cloud.firestore {
         resource.data.user_id == userId() ||
         isGameOwner(resource.data.game_id)
       );
-
-      // Funcao auxiliar para verificar dono do jogo
-      function isGameOwner(gameId) {
-        let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId();
-      }
     }
 
     // ============================================
@@ -224,12 +285,7 @@ service cloud.firestore {
 
       // Apenas dono do jogo ou admin pode criar/modificar times
       allow create, update, delete: if isAuthenticated() &&
-                                       (isAdmin() || isGameOwnerForTeam(request.resource.data.game_id));
-
-      function isGameOwnerForTeam(gameId) {
-        let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId();
-      }
+                                       (isAdmin() || isGameOwner(request.resource.data.game_id));
     }
 
     // ============================================
@@ -246,15 +302,10 @@ service cloud.firestore {
 
       // Dono do jogo ou admin pode criar/atualizar estatisticas de jogadores
       allow create, update: if isAuthenticated() &&
-                               (isAdmin() || isGameOwnerForStats(request.resource.data.game_id));
+                               (isAdmin() || isGameOwner(request.resource.data.game_id));
 
       allow delete: if isAuthenticated() &&
-                       (isAdmin() || isGameOwnerForStats(resource.data.game_id));
-
-      function isGameOwnerForStats(gameId) {
-        let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId();
-      }
+                       (isAdmin() || isGameOwner(resource.data.game_id));
     }
 
     // ============================================
@@ -265,24 +316,13 @@ service cloud.firestore {
 
       // Apenas dono do jogo ou admin pode controlar o jogo ao vivo
       allow create, update, delete: if isAuthenticated() &&
-                                       (isAdmin() || isGameOwnerForLive(gameId));
-
-      function isGameOwnerForLive(gameId) {
-        let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId();
-      }
+                                       (isAdmin() || isGameOwner(gameId));
 
       // Sub-colecao: eventos do jogo
       match /events/{eventId} {
         allow read: if isAuthenticated();
-        // Uses global isConfirmedPlayer(gameId) helper
         allow create, update, delete: if isAuthenticated() &&
-                                         (isAdmin() || isGameOwnerForLiveEvent(gameId) || isConfirmedPlayer(gameId));
-
-        function isGameOwnerForLiveEvent(gId) {
-          let owner = get(/databases/$(database)/documents/games/$(gId)).data.owner_id;
-          return owner == userId();
-        }
+                                         (isAdmin() || isGameOwner(gameId) || isConfirmedPlayer(gameId));
       }
     }
 
@@ -307,9 +347,7 @@ service cloud.firestore {
                        fieldUnchanged('is_verified'))
                     );
 
-      // Apenas o dono ou admin pode deletar (ou mocks)
-      // Apenas admin pode deletar (ou mocks se necessário, mas regra diz nunca apagar)
-      allow delete: if isAuthenticated() && (isAdmin());
+      allow delete: if isAuthenticated() && isAdmin();
     }
 
     // ============================================
@@ -327,9 +365,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() &&
                        (isAdmin() || (isLocationOwner(resource.data.location_id) && fieldUnchanged('location_id') && fieldUnchanged('is_active')));
 
-      // Apenas dono do local ou admin pode deletar quadras
-      // Apenas admin pode deletar quadras
-      allow delete: if isAuthenticated() && (isAdmin());
+      allow delete: if isAuthenticated() && isAdmin();
 
       function isLocationOwner(locationId) {
         let locDoc = get(/databases/$(database)/documents/locations/$(locationId));
@@ -341,126 +377,71 @@ service cloud.firestore {
     // COLECAO: groups
     // ============================================
     match /groups/{groupId} {
-      // Qualquer usuario autenticado pode ler grupos
-      // Leitura permitida se:
-      // 1. Grupo for publico (is_public == true)
-      // 2. Usuario for membro do grupo (verificado via subcolecao members - requer query especifica ou get)
-      // 3. Usuario for owner (campo owner_id)
-      // NOTA: Para listar grupos privados que o usuario participa, a query deve ser feita em users/{id}/groups
-      // Para ler UM grupo especifico, validamos abaixo:
       allow read: if isAuthenticated() && (
-        resource.data.is_public == true || 
+        resource.data.is_public == true ||
         resource.data.owner_id == userId() ||
         exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()))
       );
 
-      // Usuario autenticado pode criar grupos
       allow create: if isAuthenticated() && request.resource.data.owner_id == userId();
 
-      // Apenas owner ou admin do grupo pode atualizar
       allow update: if isAuthenticated() && (
         isAdmin() ||
         resource.data.owner_id == userId() ||
         isGroupAdmin(groupId) ||
-        // Permitir atualizacao do contador de membros por qualquer usuario autenticado (para join/leave)
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['member_count', 'updated_at'])
       );
 
-      // Apenas owner pode deletar (soft delete)
       allow delete: if isAuthenticated() && (isAdmin() || resource.data.owner_id == userId());
-
-      // Funcao para verificar se e admin do grupo
-      function isGroupAdmin(gId) {
-        let memberDoc = get(/databases/$(database)/documents/groups/$(gId)/members/$(userId()));
-        return memberDoc != null && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN');
-      }
-
-      // Funcao para verificar se e owner do grupo (usando get direto no grupo)
-      // Necessario quando a subcolecao members ainda nao foi criada
-      function isGroupOwner(gId) {
-        let groupDoc = get(/databases/$(database)/documents/groups/$(gId));
-        return groupDoc != null && groupDoc.data.owner_id == userId();
-      }
 
       // Sub-colecao: members
       match /members/{memberId} {
         allow read: if isAuthenticated();
-        
-        // Permitir criar/atualizar se:
-        // 1. O usuario e admin/owner na subcolecao (logica existente)
-        // 2. OU se o usuario e o owner definido no documento pai (group) e esta se adicionando
-        // 3. OU se esta criando um membro OWNER e o grupo ainda nao existe (criacao atomica)
-        // 4. OU se o usuario esta entrando como MEMBER (aceitando convite)
+
         allow create, update: if isAuthenticated() && (
-           isGroupAdminForMembers(groupId) || 
-           (memberId == userId() && isGroupOwner(groupId)) ||
+           isGroupAdmin(groupId) ||
+           (memberId == userId() && isGroupOwnerById(groupId)) ||
            (request.resource.data.role == 'OWNER' && request.resource.data.user_id == userId() && !exists(/databases/$(database)/documents/groups/$(groupId))) ||
            (request.resource.data.role == 'MEMBER' && request.resource.data.user_id == userId())
         );
 
         allow delete: if isAuthenticated() && (
-          memberId == userId() ||  // Usuario pode sair
-          isGroupAdminForMembers(groupId)  // Admin pode remover
+          memberId == userId() ||
+          isGroupAdmin(groupId)
         );
 
-        function isGroupAdminForMembers(gId) {
-          let memberDoc = get(/databases/$(database)/documents/groups/$(gId)/members/$(userId()));
-          return memberDoc != null && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN');
+        function isGroupOwnerById(gId) {
+          let groupDoc = get(/databases/$(database)/documents/groups/$(gId));
+          return groupDoc != null && groupDoc.data.owner_id == userId();
         }
       }
 
-      // ... existing cashbox rules ...
       match /cashbox/{entryId} {
         allow read: if isAuthenticated() && isGroupMember(groupId);
-        
-        // Admin ou Dono podem criar lançamentos
-        // REGRAS ADICIONAIS:
-        // 1. Grupo deve estar ATIVO
-        // 2. Valor (amount) deve ser positivo
-        allow create: if isAuthenticated() && 
-                         isGroupAdminForCashbox(groupId) && 
+
+        allow create: if isAuthenticated() &&
+                         isGroupAdmin(groupId) &&
                          isGroupActive(groupId) &&
                          request.resource.data.amount > 0 &&
                          (request.resource.data.type == 'INCOME' || request.resource.data.type == 'EXPENSE');
-        
-        // Apenas o Dono pode estornar (Soft Delete)
-        allow update: if isAuthenticated() && isGroupOwner(groupId) && 
+
+        // M-001 fix: validacao de timestamp em voided_at
+        allow update: if isAuthenticated() && isGroupAdmin(groupId) &&
                       isGroupActive(groupId) &&
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'voided_at', 'voided_by']) &&
                       request.resource.data.status == 'VOIDED' &&
                       request.resource.data.voided_by == userId() &&
                       request.resource.data.voided_at == request.time;
-        
-        // Ninguém pode deletar fisicamente (Hard Delete)
-        allow delete: if false;
 
-        function isGroupAdminForCashbox(gId) {
-          let memberDoc = get(/databases/$(database)/documents/groups/$(gId)/members/$(userId()));
-          return memberDoc != null && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN');
-        }
-        function isGroupMember(gId) {
-          let memberDoc = get(/databases/$(database)/documents/groups/$(gId)/members/$(userId()));
-          return memberDoc != null && memberDoc.data.status == 'ACTIVE';
-        }
-        function isGroupActive(gId) {
-          let groupDoc = get(/databases/$(database)/documents/groups/$(gId));
-          return groupDoc != null && (groupDoc.data.status == 'ACTIVE' || !('status' in groupDoc.data));
-        }
+        allow delete: if false;
       }
 
       match /cashbox_summary/{docId} {
         allow read: if isAuthenticated();
-        allow create, update: if isAuthenticated() && isGroupAdminForSummary(groupId);
-        function isGroupAdminForSummary(gId) {
-          let memberDoc = get(/databases/$(database)/documents/groups/$(gId)/members/$(userId()));
-          return memberDoc != null && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN');
-        }
+        allow create, update: if isAuthenticated() && isGroupAdmin(groupId);
       }
     }
 
-    // ============================================
-    // COLECAO: group_invites
-    // ============================================
     // ============================================
     // COLECAO: group_invites
     // ============================================
@@ -470,27 +451,19 @@ service cloud.firestore {
         return member != null && (member.data.role == 'OWNER' || member.data.role == 'ADMIN');
       }
 
-      // Leitura permitida se:
-      // 1. Sou o convitado
-      // 2. Sou quem convidou
-      // 3. Sou Admin/Owner do grupo (para checar duplicatas)
       allow read: if isAuthenticated() && (
         resource.data.invited_user_id == userId() ||
         resource.data.invited_by_id == userId() ||
         canManageInvites(resource.data.group_id)
       );
 
-      // Criacao permitida se:
-      // 1. Sou Admin/Owner do grupo (validado em canManageInvites)
-      // 2. E estou me listando como 'invited_by' (seguranca basica)
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                        request.resource.data.invited_by_id == userId() &&
                        canManageInvites(request.resource.data.group_id);
 
-      // Destinatario pode aceitar/recusar, remetente pode cancelar
       allow update: if isAuthenticated() && (
-        resource.data.invited_user_id == userId() ||  // Destinatario
-        resource.data.invited_by_id == userId()       // Remetente
+        resource.data.invited_user_id == userId() ||
+        resource.data.invited_by_id == userId()
       );
 
       allow delete: if isAuthenticated() && (
@@ -503,16 +476,13 @@ service cloud.firestore {
     // COLECAO: game_summons
     // ============================================
     match /game_summons/{summonId} {
-      // Convocado pode ler suas convocacoes
       allow read: if isAuthenticated() && (
         resource.data.user_id == userId() ||
         resource.data.summoned_by == userId()
       );
 
-      // Criador do jogo pode criar convocacoes
       allow create: if isAuthenticated();
 
-      // Convocado pode responder
       allow update: if isAuthenticated() && resource.data.user_id == userId();
 
       allow delete: if isAuthenticated() && (
@@ -525,13 +495,15 @@ service cloud.firestore {
     // COLECAO: notifications
     // ============================================
     match /notifications/{notificationId} {
-      // Usuario so pode ler suas proprias notificacoes
       allow read: if isAuthenticated() && resource.data.user_id == userId();
 
-      // Sistema cria notificacoes (via app ou Cloud Functions)
-      allow create: if isAuthenticated();
+      // C-003 fix: validacao de created_by e user_id
+      allow create: if isAuthenticated() &&
+                       request.resource.data.created_by == userId() &&
+                       request.resource.data.user_id != userId() &&
+                       exists(/databases/$(database)/documents/users/$(request.resource.data.user_id)) &&
+                       request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'title']);
 
-      // Usuario pode marcar como lida
       allow update: if isAuthenticated() &&
                        resource.data.user_id == userId() &&
                        onlyAllowedFields(['read', 'read_at']);
@@ -544,10 +516,8 @@ service cloud.firestore {
     // ============================================
     match /users/{userId}/groups/{groupId} {
       allow read: if isAuthenticated() && userId == userId();
-      // Permitir escrita se for o proprio usuario
-      // OU se for um admin/owner do grupo (para atualizar metadados denormalizados)
       allow create, update, delete: if isAuthenticated() && (
-        userId == userId() || 
+        userId == userId() ||
         isGroupAdmin(groupId)
       );
 
@@ -562,134 +532,93 @@ service cloud.firestore {
     // ============================================
     match /users/{userId}/upcoming_games/{gameId} {
       allow read: if isAuthenticated() && userId == userId();
-      // Permitir escrita se for o proprio usuario
-      // OU se for admin do jogo
       allow create, update, delete: if isAuthenticated() && (
         userId == userId() ||
         isGameOwner(gameId)
       );
-
-      function isGameOwner(gId) {
-        let owner = get(/databases/$(database)/documents/games/$(gId)).data.owner_id;
-        return owner == request.auth.uid;
-      }
     }
 
     // ============================================
     // COLECAO: game_events (eventos de jogos ao vivo)
     // ============================================
     match /game_events/{eventId} {
-      // Qualquer usuario autenticado pode ler eventos
       allow read: if isAuthenticated();
 
-      // Usuario pode criar/atualizar eventos se for:
-      // 1. Owner do jogo
-      // 2. Jogador confirmado no jogo
       allow create: if isAuthenticated() && (
         isAdmin() ||
-        isGameOwnerForEvent(request.resource.data.game_id) ||
-        // Use global helper
+        isGameOwner(request.resource.data.game_id) ||
         isConfirmedPlayer(request.resource.data.game_id)
       );
 
       allow update: if isAuthenticated() && (
         isAdmin() ||
-        isGameOwnerForEvent(resource.data.game_id) ||
+        isGameOwner(resource.data.game_id) ||
         isConfirmedPlayer(resource.data.game_id)
       );
 
       allow delete: if isAuthenticated() && (
         isAdmin() ||
-        isGameOwnerForEvent(resource.data.game_id) ||
+        isGameOwner(resource.data.game_id) ||
         isConfirmedPlayer(resource.data.game_id)
       );
-
-      function isGameOwnerForEvent(gameId) {
-        let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId();
-      }
     }
 
     // ============================================
     // COLECAO: live_scores (placar ao vivo)
     // ============================================
     match /live_scores/{scoreId} {
-      // Qualquer usuario autenticado pode ler placar
       allow read: if isAuthenticated();
 
-      // Usuario pode criar/atualizar placar se for owner ou jogador confirmado
       allow create, update: if isAuthenticated() && (
         isAdmin() ||
-        isGameOwnerForScore(scoreId) ||
-        // Assuming scoreId is gameId
+        isGameOwner(scoreId) ||
         isConfirmedPlayer(scoreId)
       );
 
       allow delete: if isAuthenticated() && (
         isAdmin() ||
-        isGameOwnerForScore(scoreId)
+        isGameOwner(scoreId)
       );
-
-      function isGameOwnerForScore(gameId) {
-        let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId();
-      }
     }
 
     // ============================================
     // COLECAO: live_player_stats (estatisticas ao vivo)
     // ============================================
     match /live_player_stats/{statId} {
-      // Qualquer usuario autenticado pode ler
       allow read: if isAuthenticated();
 
-      // Usuario pode criar/atualizar stats se for owner ou jogador confirmado
       allow create, update: if isAuthenticated() && (
         isAdmin() ||
-        isGameOwnerForLiveStats(request.resource.data.game_id) ||
+        isGameOwner(request.resource.data.game_id) ||
         isConfirmedPlayer(request.resource.data.game_id)
       );
 
       allow delete: if isAuthenticated() && (
         isAdmin() ||
-        isGameOwnerForLiveStats(resource.data.game_id)
+        isGameOwner(resource.data.game_id)
       );
-
-      function isGameOwnerForLiveStats(gameId) {
-        let owner = get(/databases/$(database)/documents/games/$(gameId)).data.owner_id;
-        return owner == userId();
-      }
     }
 
     // ============================================
     // COLECAO: mvp_votes (votacao MVP)
     // ============================================
     match /mvp_votes/{voteId} {
-      // Qualquer usuario autenticado pode ler votos
       allow read: if isAuthenticated();
 
-      // Usuario pode criar voto se for jogador confirmado no jogo
       allow create: if isAuthenticated() && (
         isConfirmedPlayer(request.resource.data.game_id) &&
         request.resource.data.voter_id == userId()
       );
 
-      // Nao pode atualizar ou deletar votos
       allow update, delete: if isAdmin();
     }
 
     // ============================================
     // COLECAO: xp_logs (historico de XP)
     // ============================================
-    // SEGURANCA: XP logs sao criados APENAS por Cloud Functions (Admin SDK)
     match /xp_logs/{logId} {
-      // Usuario pode ler seu proprio historico
       allow read: if isAuthenticated() && resource.data.user_id == userId();
-
-      // SOMENTE Admin (Cloud Functions) pode criar logs
       allow create: if isAdmin();
-
-      // Nao pode editar ou deletar logs
       allow update, delete: if false;
     }
 
@@ -698,15 +627,12 @@ service cloud.firestore {
     // ============================================
     match /ranking_deltas/{deltaId} {
       allow read: if isAuthenticated();
-      
-      // CRITICO: Apenas Admin ou Backend deve criar deltas diretamente para evitar fraude.
-      // Se o app cliente cria isso, ele deve ser Game Owner.
-      // Assumindo que o delta tem 'game_id', validamos o dono.
+
       allow create: if isAuthenticated() && (
         isAdmin() ||
         (request.resource.data.keys().hasAll(['game_id']) && isGameOwner(request.resource.data.game_id))
       );
-      
+
       allow update: if isAuthenticated() && (
         isAdmin() ||
         (resource.data.keys().hasAll(['game_id']) && isGameOwner(resource.data.game_id))
@@ -734,7 +660,7 @@ service cloud.firestore {
     // ============================================
     match /season_participation/{partId} {
       allow read: if isAuthenticated();
-      allow create, update: if isAuthenticated() && isAdmin(); // Client-side updates should be discouraged
+      allow create, update: if isAdmin();
     }
 
     // ============================================
@@ -742,8 +668,7 @@ service cloud.firestore {
     // ============================================
     match /user_streaks/{streakId} {
       allow read: if isAuthenticated();
-      // Apenas Admin (ou Cloud Functions) deve manipular streaks para evitar fraude.
-      allow create, update: if isAuthenticated() && isAdmin();
+      allow create, update: if isAdmin();
     }
 
     // ============================================
@@ -751,62 +676,67 @@ service cloud.firestore {
     // ============================================
     match /user_badges/{badgeId} {
       allow read: if isAuthenticated();
-      // Apenas Admin (ou Cloud Functions) deve conceder badges.
-      allow create: if isAuthenticated() && isAdmin();
+      allow create: if isAdmin();
     }
 
     // ============================================
-    // COLECAO: game_requests (FASE 1 - Solicitações de Jogos Públicos)
+    // COLECAO: game_requests (FASE 1 - Solicitações de Jogos Publicos)
     // ============================================
     match /game_requests/{requestId} {
-      // Qualquer usuário autenticado pode ler suas próprias solicitações
-      // Dono do jogo pode ler todas as solicitações do seu jogo
+      // Qualquer usuario autenticado pode ler suas proprias solicitacoes
+      // Dono do jogo pode ler todas as solicitacoes do seu jogo
       allow read: if isAuthenticated() &&
         (resource.data.user_id == userId() || isGameOwner(resource.data.game_id));
 
-      // Usuário pode criar solicitação apenas para si mesmo
+      // C-006 fix: Usuario pode criar solicitacao apenas para si mesmo
+      // Validacoes adicionais para prevenir abuso:
+      // 1. user_id deve ser o proprio usuario
+      // 2. status deve ser PENDING
+      // 3. game_id deve existir
+      // 4. Campos obrigatorios devem estar presentes
       allow create: if isAuthenticated() &&
         request.resource.data.user_id == userId() &&
-        request.resource.data.status == 'PENDING';
+        request.resource.data.status == 'PENDING' &&
+        exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
+        request.resource.data.keys().hasAll(['user_id', 'game_id', 'status']);
 
       // Dono do jogo pode aprovar/rejeitar (update status)
-      // Usuário pode cancelar sua própria solicitação (delete)
+      // Validacao: apenas status, reviewed_at, reviewed_by, rejection_reason podem ser alterados
       allow update: if isAuthenticated() &&
-        (isGameOwner(resource.data.game_id) &&
-         onlyAllowedFields(['status', 'reviewed_at', 'reviewed_by', 'rejection_reason']));
+        isGameOwner(resource.data.game_id) &&
+        onlyAllowedFields(['status', 'reviewed_at', 'reviewed_by', 'rejection_reason']);
 
-      // Usuário pode deletar sua própria solicitação
-      allow delete: if isAuthenticated() && resource.data.user_id == userId();
-    }
-
-    // Helper function para verificar se usuário é dono do jogo
-    function isGameOwner(gameId) {
-      return exists(/databases/$(database)/documents/games/$(gameId)) &&
-        get(/databases/$(database)/documents/games/$(gameId)).data.owner_id == userId();
+      allow delete: if isAuthenticated() && (
+        resource.data.user_id == userId() ||
+        isGameOwner(resource.data.game_id)
+      );
     }
 
     // ============================================
     // COLECAO: activities (feed de atividades)
     // ============================================
     match /activities/{activityId} {
-      // Qualquer usuario autenticado pode ler atividades publicas
-      allow read: if isAuthenticated() && resource.data.visibility == 'PUBLIC';
+      // C-004 fix: validacao de visibility e created_by
+      allow read: if isAuthenticated() && (
+        resource.data.visibility == 'PUBLIC' ||
+        resource.data.created_by == userId()
+      );
 
-      // Usuario pode criar suas proprias atividades
-      allow create: if isAuthenticated() && request.resource.data.user_id == userId();
+      allow create: if isAuthenticated() &&
+                       request.resource.data.created_by == userId() &&
+                       (request.resource.data.visibility == 'PUBLIC' || request.resource.data.visibility == 'PRIVATE') &&
+                       request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'visibility']);
 
-      // Usuario pode atualizar/deletar suas proprias atividades
-      allow update, delete: if isAuthenticated() && resource.data.user_id == userId();
+      allow update, delete: if isAuthenticated() &&
+                               resource.data.created_by == userId() &&
+                               fieldUnchanged('created_by');
     }
 
     // ============================================
     // COLECAO: challenges (desafios semanais)
     // ============================================
     match /challenges/{challengeId} {
-      // Qualquer usuario autenticado pode ler desafios
       allow read: if isAuthenticated();
-
-      // Apenas Admin pode criar/atualizar/deletar desafios
       allow create, update, delete: if isAdmin();
     }
 
@@ -814,11 +744,9 @@ service cloud.firestore {
     // COLECAO: challenge_progress (progresso dos desafios)
     // ============================================
     match /challenge_progress/{progressId} {
-      // Usuario pode ler seu proprio progresso
       allow read: if isAuthenticated() && resource.data.userId == userId();
 
       // Usuario pode criar/atualizar seu proprio progresso
-      // (via app ao completar objetivos)
       allow create, update: if isAuthenticated() && request.resource.data.userId == userId();
 
       // Admin pode gerenciar qualquer progresso
