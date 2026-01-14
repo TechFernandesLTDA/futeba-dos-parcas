@@ -998,3 +998,4 @@ export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) =
 export * from "./activities";
 export * from "./season";
 export * from "./seeding";
+export * from "./user-management";

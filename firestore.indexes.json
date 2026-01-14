@@ -1,52 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "date_time",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "location_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "date_time",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "owner_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "date_time",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "cashbox",
       "queryScope": "COLLECTION",
       "fields": [
@@ -191,7 +145,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "unlockedAt",
+          "fieldPath": "unlocked_at",
           "order": "DESCENDING"
         }
       ]
@@ -351,6 +305,24 @@
         {
           "fieldPath": "created_at",
           "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "confirmations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "game_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "confirmed_at",
+          "order": "ASCENDING"
         }
       ]
     },
@@ -574,6 +546,20 @@
         },
         {
           "fieldPath": "points",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "season_participation",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "season_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "league_rating",
           "order": "DESCENDING"
         }
       ]
@@ -1107,46 +1093,6 @@
       ]
     },
     {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "dateTime",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "confirmations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "gameId",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "teams",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "game_id",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "live_player_stats",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "game_id",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "game_events",
       "queryScope": "COLLECTION",
       "fields": [
@@ -1168,16 +1114,6 @@
           "fieldPath": "role",
           "order": "ASCENDING"
         },
-        {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "locations",
-      "queryScope": "COLLECTION",
-      "fields": [
         {
           "fieldPath": "name",
           "order": "ASCENDING"

@@ -67,20 +67,13 @@ service cloud.firestore {
     // O role é definido no campo 'role' do documento users/{userId}
     function getUserRole() {
       let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      if (userDoc == null) return null;
-      return userDoc.data.role;
+      return userDoc != null ? userDoc.data.role : null;
     }
 
     // CMD-10/11: Verifica se o usuario e ADMIN
     // Usado para operações administrativas em todo o sistema
     function isAdmin() {
       return isAuthenticated() && getUserRole() == 'ADMIN';
-    }
-
-    // CMD-11: Verifica se o usuario e FIELD_OWNER ou ADMIN
-    // Usado para operações de gerenciamento de locais
-    function isFieldOwnerOrAdmin() {
-      return isAdmin() || getUserRole() == 'FIELD_OWNER';
     }
 
     // Verifica se o usuario e um jogador confirmado no jogo (C-002 fix)
@@ -108,6 +101,12 @@ service cloud.firestore {
       return memberDoc != null && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN');
     }
 
+    // C-003 FIX: Valida se o ID de confirmation segue o padrao esperado
+    // Padrão: {gameId}_{userId}
+    function isValidConfirmationId(confirmationId, gameId, userId) {
+      return confirmationId == (gameId + '_' + userId);
+    }
+
     // Helper para verificar se o grupo esta ativo
     function isGroupActive(groupId) {
       let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
@@ -118,8 +117,9 @@ service cloud.firestore {
     // COLECAO: users
     // ============================================
     match /users/{userId} {
-      // Qualquer usuario autenticado pode ler perfis publicos
-      allow read: if isAuthenticated();
+      // S-001 FIX: Restringir leitura - apenas proprio usuario ou admin pode ver perfil completo
+      // Exceção: usuarios marcados como is_searchable podem ser lidos por qualquer autenticado
+      allow read: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.is_searchable == true);
 
       // Usuario so pode criar seu proprio perfil (com role padrao PLAYER)
       allow create: if isOwner(userId) && request.resource.data.role == 'PLAYER';
@@ -249,12 +249,15 @@ service cloud.firestore {
       // Qualquer usuario autenticado pode ler confirmacoes
       allow read: if isAuthenticated();
 
-      // Usuario pode criar sua propria confirmacao
+      // C-003 FIX: Usuario pode criar sua propria confirmacao com validação de ID
       // ID deve seguir padrao: {gameId}_{userId}
       // OU o dono do jogo pode criar convites (summon) para outros
       allow create: if isAuthenticated() &&
-                       (request.resource.data.user_id == userId() ||
-                        isGameOwner(request.resource.data.game_id));
+                       ((request.resource.data.user_id == userId() &&
+                         isValidConfirmationId(confirmationId, request.resource.data.game_id, userId())) ||
+                        (isGameOwner(request.resource.data.game_id) &&
+                         // Para summon, o ID não precisa seguir o padrão gameId_userId pois pode ser convite para outro usuário
+                         request.resource.data.game_id != null));
 
       // Usuario pode atualizar sua propria confirmacao
       allow update: if isAuthenticated() && (
@@ -750,6 +753,54 @@ service cloud.firestore {
       allow create, update: if isAuthenticated() && request.resource.data.userId == userId();
 
       // Admin pode gerenciar qualquer progresso
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // APP SETTINGS - Configurações globais do app (XP rates, etc)
+    // CMD-12: Proteção de configurações de gamificação
+    // ============================================
+    match /app_settings/{docId} {
+      // Qualquer usuário autenticado pode ler configurações
+      allow read: if isAuthenticated();
+
+      // Apenas ADMINs podem criar/modificar configurações
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // GAME TEMPLATES - Templates de jogos salvos por usuário
+    // CMD-12: Templates são privados por usuário
+    // ============================================
+    match /users/{userId}/game_templates/{templateId} {
+      // Usuário só pode ler seus próprios templates
+      allow read: if isOwner(userId);
+
+      // Usuário só pode criar/modificar/deletar seus próprios templates
+      allow create, update, delete: if isOwner(userId);
+    }
+
+    // ============================================
+    // SEASON FINAL STANDINGS - Rankings finais de temporadas encerradas
+    // CMD-12: Histórico de rankings é público, edição apenas admin
+    // ============================================
+    match /season_final_standings/{standingId} {
+      // Qualquer usuário autenticado pode ler rankings históricos
+      allow read: if isAuthenticated();
+
+      // Apenas Admin ou Cloud Functions podem criar/modificar
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // BADGES - Definições de badges (metadata)
+    // CMD-12: Badges metadata é público, edição apenas admin
+    // ============================================
+    match /badges/{badgeId} {
+      // Qualquer usuário autenticado pode ler definições de badges
+      allow read: if isAuthenticated();
+
+      // Apenas Admin pode criar/modificar badges
       allow create, update, delete: if isAdmin();
     }
 
