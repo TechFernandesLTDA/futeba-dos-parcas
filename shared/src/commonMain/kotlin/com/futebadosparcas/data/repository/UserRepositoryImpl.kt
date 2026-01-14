@@ -44,7 +44,7 @@ class UserRepositoryImpl(
                 }
 
                 // 3. Buscar do Firebase
-                firebaseDataSource.getCurrentUser().also { result ->
+                return@withContext firebaseDataSource.getCurrentUser().also { result ->
                     result.getOrNull()?.let { user ->
                         cacheUser(user)
                     }
@@ -60,7 +60,8 @@ class UserRepositoryImpl(
 
     companion object {
         private const val TAG = "UserRepository"
-        private const val CURRENT_USER_CACHE_TTL_MS = 15 * 60 * 1000L // 15 minutos para usuário atual
+        // Cache reduzido para 1 minuto - garante dados frescos para permissões/role
+        private const val CURRENT_USER_CACHE_TTL_MS = 60 * 1000L // 1 minuto para usuário atual
         private const val OTHER_USER_CACHE_TTL_MS = 30 * 60 * 1000L // 30 minutos para outros usuários
     }
 
@@ -75,7 +76,7 @@ class UserRepositoryImpl(
                     return@withContext Result.success(cachedUser.toUser())
                 }
 
-                firebaseDataSource.getUserById(userId).also { result ->
+                return@withContext firebaseDataSource.getUserById(userId).also { result ->
                     result.getOrNull()?.let { user ->
                         cacheUser(user)
                     }
@@ -134,18 +135,19 @@ class UserRepositoryImpl(
 
     override fun observeCurrentUser(): Flow<User?> {
         val userId = getCurrentUserId() ?: return flowOf(null)
-        
+
         return database.futebaDatabaseQueries
             .selectUserById(userId)
             .asFlow()
             .mapToOneOrNull(Dispatchers.Default)
             .map { it?.toUser() }
             .onStart {
-                // Tenta atualizar o cache em background ao começar a observar
+                // SEMPRE buscar dados frescos do Firebase
+                // Isso garante que mudanças de role/permissões sejam refletidas imediatamente
                 try {
-                    getCurrentUser()
+                    getCurrentUser() // Força atualização do cache
                 } catch (e: Exception) {
-                    // Ignore errors silently in flow trigger
+                    PlatformLogger.w(TAG, "observeCurrentUser: Failed to refresh (using cache): ${e.message}")
                 }
             }
     }
@@ -186,7 +188,7 @@ class UserRepositoryImpl(
 
                 PlatformLogger.d(TAG, "updateUser: Sending updates to Firebase: ${updates.keys}")
 
-                firebaseDataSource.updateUser(user.id, updates).also { result ->
+                return@withContext firebaseDataSource.updateUser(user.id, updates).also { result ->
                     if (result.isSuccess) {
                         // Invalidar cache para forcar recarga do Firebase com dados atualizados
                         database.futebaDatabaseQueries.deleteUserById(user.id)
@@ -219,7 +221,7 @@ class UserRepositoryImpl(
     override suspend fun updateUserXp(userId: String, newXp: Long, newLevel: Int): Result<Unit> {
          return withContext(Dispatchers.Default) {
             try {
-                firebaseDataSource.updateUserLevel(userId, newLevel, newXp).onSuccess {
+                return@withContext firebaseDataSource.updateUserLevel(userId, newLevel, newXp).onSuccess {
                     // Invalidar ou atualizar cache
                      database.futebaDatabaseQueries.deleteUserById(userId)
                 }
@@ -232,7 +234,7 @@ class UserRepositoryImpl(
     override suspend fun addMilestone(userId: String, milestoneId: String): Result<Unit> {
         return withContext(Dispatchers.Default) {
             try {
-                firebaseDataSource.unlockMilestone(userId, milestoneId).onSuccess {
+                return@withContext firebaseDataSource.unlockMilestone(userId, milestoneId).onSuccess {
                      // Invalidar ou atualizar cache
                      database.futebaDatabaseQueries.deleteUserById(userId)
                 }
@@ -265,7 +267,7 @@ class UserRepositoryImpl(
     override suspend fun updateUserRole(userId: String, newRole: String): Result<Unit> {
         return withContext(Dispatchers.Default) {
             try {
-                firebaseDataSource.updateUserRole(userId, newRole).also {
+                return@withContext firebaseDataSource.updateUserRole(userId, newRole).also {
                     if (it.isSuccess) {
                         // Invalidar cache
                         database.futebaDatabaseQueries.deleteUserById(userId)
@@ -287,7 +289,7 @@ class UserRepositoryImpl(
     ): Result<Unit> {
         return withContext(Dispatchers.Default) {
             try {
-                firebaseDataSource.updateAutoRatings(
+                return@withContext firebaseDataSource.updateAutoRatings(
                     userId,
                     autoStrikerRating,
                     autoMidRating,
@@ -317,7 +319,7 @@ class UserRepositoryImpl(
     override suspend fun updateProfileVisibility(userId: String, isSearchable: Boolean): Result<Unit> {
         return withContext(Dispatchers.Default) {
             try {
-                firebaseDataSource.updateProfileVisibility(userId, isSearchable).also {
+                return@withContext firebaseDataSource.updateProfileVisibility(userId, isSearchable).also {
                     if (it.isSuccess) {
                         // Invalidar cache
                         database.futebaDatabaseQueries.deleteUserById(userId)
@@ -342,7 +344,7 @@ class UserRepositoryImpl(
     override suspend fun updateFcmToken(token: String): Result<Unit> {
         return withContext(Dispatchers.Default) {
             try {
-                firebaseDataSource.updateFcmToken(token).also {
+                return@withContext firebaseDataSource.updateFcmToken(token).also {
                     if (it.isSuccess) {
                         // Invalidar cache do usuário atual
                         getCurrentUserId()?.let { userId ->
@@ -369,6 +371,7 @@ class UserRepositoryImpl(
             experiencePoints = user.experiencePoints,
             level = user.level.toLong(),
             milestonesAchieved = user.milestonesAchieved.joinToString(","),
+            role = user.role,  // ✅ CRITICAL FIX: Cachear role para suportar permissões
             cachedAt = now
         )
     }
@@ -401,6 +404,7 @@ private fun com.futebadosparcas.db.Users.toUser(): User {
         fcmToken = this.fcmToken,
         experiencePoints = this.experiencePoints,
         level = this.level.toInt(),
-        milestonesAchieved = milestones
+        milestonesAchieved = milestones,
+        role = this.role  // ✅ CRITICAL FIX: Mapear role do cache para suportar permissões
     )
 }

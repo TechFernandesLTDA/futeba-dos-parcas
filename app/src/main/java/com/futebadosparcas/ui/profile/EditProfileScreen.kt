@@ -57,6 +57,13 @@ fun EditProfileScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    // Carregar dados do perfil se ainda não foram carregados
+    LaunchedEffect(Unit) {
+        if (uiState !is ProfileUiState.Success && uiState !is ProfileUiState.ProfileUpdateSuccess) {
+            viewModel.loadProfile()
+        }
+    }
+
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var devModeClickCount by remember { mutableIntStateOf(0) }
     var firstPhotoClickTime by remember { mutableLongStateOf(0L) }
@@ -493,8 +500,18 @@ private fun DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
-                datePickerState.selectedDateMillis?.let {
-                    onDateSelected(Date(it))
+                datePickerState.selectedDateMillis?.let { selectedMillis ->
+                    // O DatePicker retorna o timestamp em UTC meia-noite
+                    // Precisamos converter para a data local correta
+                    // Criar um Calendar no timezone local e definir a data
+                    val localCalendar = Calendar.getInstance()
+                    localCalendar.timeInMillis = selectedMillis
+                    // Forçar meia-noite no timezone local
+                    localCalendar.set(Calendar.HOUR_OF_DAY, 0)
+                    localCalendar.set(Calendar.MINUTE, 0)
+                    localCalendar.set(Calendar.SECOND, 0)
+                    localCalendar.set(Calendar.MILLISECOND, 0)
+                    onDateSelected(localCalendar.time)
                 }
                 onDismiss()
             }) {

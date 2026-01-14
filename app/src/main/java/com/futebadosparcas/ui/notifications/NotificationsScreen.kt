@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,6 +33,7 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerListContent
 import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.theme.statusBarsPadding
 import java.text.SimpleDateFormat
 import java.util.*
@@ -165,7 +167,7 @@ fun NotificationsScreen(
                     is NotificationsUiState.Error -> {
                         EmptyState(
                             type = EmptyStateType.Error(
-                                title = "Erro ao carregar",
+                                title = stringResource(R.string.notifications_load_error),
                                 description = state.message,
                                 onRetry = { viewModel.loadNotifications() }
                             )
@@ -206,7 +208,7 @@ private fun NotificationsTopBar(
                 if (unreadCount > 0) {
                     Surface(
                         shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.defaultMinSize(minWidth = 24.dp, minHeight = 24.dp)
                     ) {
                         Box(
@@ -216,7 +218,7 @@ private fun NotificationsTopBar(
                             Text(
                                 text = if (unreadCount > 99) "99+" else unreadCount.toString(),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onPrimary,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -228,7 +230,7 @@ private fun NotificationsTopBar(
             IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Voltar"
+                    contentDescription = stringResource(R.string.notifications_cd_back)
                 )
             }
         },
@@ -236,7 +238,7 @@ private fun NotificationsTopBar(
             IconButton(onClick = { showMenu = true }) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Menu"
+                    contentDescription = stringResource(R.string.notifications_cd_menu)
                 )
             }
 
@@ -266,10 +268,7 @@ private fun NotificationsTopBar(
                 )
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
-        ),
+        colors = AppTopBar.surfaceColors(),
         modifier = Modifier.statusBarsPadding()
     )
 }
@@ -285,9 +284,11 @@ private fun NotificationsContent(
     onDecline: (AppNotification) -> Unit,
     onDelete: (AppNotification) -> Unit
 ) {
+    val context = LocalContext.current
+
     // Agrupa notificações por data
     val groupedNotifications = remember(notifications) {
-        groupNotificationsByDate(notifications)
+        groupNotificationsByDate(context, notifications)
     }
 
     LazyColumn(
@@ -368,7 +369,7 @@ private fun SwipeableNotificationCard(
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Deletar",
+                    contentDescription = stringResource(R.string.notifications_cd_delete),
                     tint = MaterialTheme.colorScheme.onError
                 )
             }
@@ -599,7 +600,10 @@ private fun NotificationShimmerCard(brush: androidx.compose.ui.graphics.Brush) {
 /**
  * Agrupa notificações por data (Hoje, Ontem, Esta Semana, Antigas)
  */
-private fun groupNotificationsByDate(notifications: List<AppNotification>): Map<String, List<AppNotification>> {
+private fun groupNotificationsByDate(
+    context: android.content.Context,
+    notifications: List<AppNotification>
+): Map<String, List<AppNotification>> {
     val grouped = LinkedHashMap<String, MutableList<AppNotification>>()
     val now = Calendar.getInstance()
     val today = Calendar.getInstance().apply {
@@ -618,11 +622,11 @@ private fun groupNotificationsByDate(notifications: List<AppNotification>): Map<
     notifications.forEach { notification ->
         val date = notification.createdAt
         val section = when {
-            date == null -> "Antigas"
-            date.time >= today.timeInMillis -> "Hoje"
-            date.time >= yesterday.timeInMillis -> "Ontem"
-            date.time >= weekAgo.timeInMillis -> "Esta Semana"
-            else -> "Antigas"
+            date == null -> context.getString(R.string.notifications_old)
+            date.time >= today.timeInMillis -> context.getString(R.string.notifications_today)
+            date.time >= yesterday.timeInMillis -> context.getString(R.string.notifications_yesterday)
+            date.time >= weekAgo.timeInMillis -> context.getString(R.string.notifications_this_week)
+            else -> context.getString(R.string.notifications_old)
         }
 
         grouped.getOrPut(section) { mutableListOf() }.add(notification)

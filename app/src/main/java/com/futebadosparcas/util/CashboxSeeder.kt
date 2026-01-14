@@ -1,10 +1,13 @@
 package com.futebadosparcas.util
 
+import android.content.Context
+import com.futebadosparcas.R
 import com.futebadosparcas.data.model.CashboxAppStatus
 import com.futebadosparcas.data.model.CashboxCategory
 import com.futebadosparcas.data.model.CashboxEntryType
 import com.futebadosparcas.domain.model.CashboxEntry
 import com.futebadosparcas.domain.repository.CashboxRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.Calendar
 import java.util.Date
 import javax.inject.Inject
@@ -13,12 +16,13 @@ import kotlin.random.Random
 
 @Singleton
 class CashboxSeeder @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val cashboxRepository: CashboxRepository
 ) {
 
     suspend fun seedHistory(groupId: String, memberId: String, memberName: String) {
         val calendar = Calendar.getInstance()
-        
+
         // Generate entries for the last 3 months
         for (i in 90 downTo 0 step 2) {
             calendar.time = Date()
@@ -27,7 +31,7 @@ class CashboxSeeder @Inject constructor(
 
             val isIncome = Random.nextBoolean()
             val entryType = if (isIncome) CashboxEntryType.INCOME else CashboxEntryType.EXPENSE
-            
+
             val category = if (isIncome) {
                 if (Random.nextBoolean()) CashboxCategory.MONTHLY_FEE else CashboxCategory.DONATION
             } else {
@@ -41,11 +45,11 @@ class CashboxSeeder @Inject constructor(
             }
 
             val description = when (category) {
-                CashboxCategory.MONTHLY_FEE -> "Mensalidade Ref. ${i} dias atrás"
-                CashboxCategory.DONATION -> "Vaquinha para churrasco"
-                CashboxCategory.FIELD_RENTAL -> "Pagamento Quadra"
-                CashboxCategory.EQUIPMENT -> "Compra de Bola/Coletes"
-                else -> "Movimentação Geral"
+                CashboxCategory.MONTHLY_FEE -> context.getString(R.string.cashbox_monthly_fee, i)
+                CashboxCategory.DONATION -> context.getString(R.string.cashbox_donation)
+                CashboxCategory.FIELD_RENTAL -> context.getString(R.string.cashbox_field_rental)
+                CashboxCategory.EQUIPMENT -> context.getString(R.string.cashbox_equipment)
+                else -> context.getString(R.string.cashbox_general_movement)
             }
 
             val entry = CashboxEntry(

@@ -6,16 +6,51 @@ import kotlin.concurrent.Volatile
 
 /**
  * Definio de um nvel.
+ *
+ * Inclui uma frase inspiradora para cada nvel.
  */
 @Serializable
 data class LevelDefinition(
     val level: Int,
     @SerialName("xp_required") val xpRequired: Long,
-    val name: String
+    val name: String,
+    val phrase: String = ""
+)
+
+/**
+ * Frases inspiradoras para cada nvel (0-20).
+ */
+private val levelPhrases = mapOf(
+    0 to "Toda jornada comea com o primeiro passo. Vamos l!",
+    1 to "O comeo da sua lendria caminhada no futebol.",
+    2 to "A prtica leva perfeio. Continue assim!",
+    3 to "Cada jogo uma nova oportunidade de brilhar.",
+    4 to "Sua evoluo est impressionante. Continue firme!",
+    5 to "Voc est se tornando um jogador temido.",
+    6 to "A profissionalizao do seu jogo est completa.",
+    7 to "Seu talento j no pode mais ser ignorado.",
+    8 to "Mestre das peladas, respeitado por todos.",
+    9 to "Seu nome j escrito na histria do grupo.",
+    10 to "A imortalidade no futebol comea aqui.",
+    11 to "Nenhuma barreira pode deter sua evoluo.",
+    12 to "Tcnica apurada, viso de jogo incomparvel.",
+    13 to "O campo o seu palco, e voc brilha.",
+    14 to "Genialidade pura em cada toque na bola.",
+    15 to "Um mago com a bola nos ps.",
+    16 to "Lenda viva do futebol amador.",
+    17 to "Rei do drible, mestre da finalizao.",
+    18 to "O melhor do mundo em sua poca.",
+    19 to "Incomparvel, extraordinrio, o puro gnio.",
+    20 to "O Rei do Futebol. O Deus dos Deuses."
 )
 
 /**
  * Tabela de nveis e XP necessrio.
+ *
+ * Progresso:
+ * - Nveis 0-10: ~1,5 anos para jogador que joga 1x/sem (~78 jogos)
+ * - Nveis 11-20: ~1,5 anos adicionais (mais ~78 jogos)
+ * - Nvel 20: Pelé, a maior honra do futebol
  *
  * Suporta configurao dinmica via Firebase Remote Config ou Firestore.
  * Se nenhuma configurao for fornecida, usa valores padro.
@@ -23,19 +58,35 @@ data class LevelDefinition(
 object LevelTable {
     /**
      * Nveis padro (fallback se no houver configurao).
+     * Total de 20 nveis, sendo o nvel 20 dedicado a Pelé.
      */
     private val defaultLevels = listOf(
-        LevelDefinition(0, 0L, "Novato"),
-        LevelDefinition(1, 100L, "Iniciante"),
-        LevelDefinition(2, 350L, "Amador"),
-        LevelDefinition(3, 850L, "Regular"),
-        LevelDefinition(4, 1850L, "Experiente"),
-        LevelDefinition(5, 3850L, "Habilidoso"),
-        LevelDefinition(6, 7350L, "Profissional"),
-        LevelDefinition(7, 12850L, "Expert"),
-        LevelDefinition(8, 20850L, "Mestre"),
-        LevelDefinition(9, 32850L, "Lenda"),
-        LevelDefinition(10, 52850L, "Imortal")
+        // FASE 1: Iniciante (0-10) - ~1,5 anos jogando 1x/sem
+        LevelDefinition(0, 0L, "Novato", levelPhrases[0]!!),
+        LevelDefinition(1, 100L, "Iniciante", levelPhrases[1]!!),
+        LevelDefinition(2, 350L, "Amador", levelPhrases[2]!!),
+        LevelDefinition(3, 850L, "Regular", levelPhrases[3]!!),
+        LevelDefinition(4, 1850L, "Experiente", levelPhrases[4]!!),
+        LevelDefinition(5, 3850L, "Habilidoso", levelPhrases[5]!!),
+        LevelDefinition(6, 7350L, "Profissional", levelPhrases[6]!!),
+        LevelDefinition(7, 12850L, "Expert", levelPhrases[7]!!),
+        LevelDefinition(8, 20850L, "Mestre", levelPhrases[8]!!),
+        LevelDefinition(9, 32850L, "Lenda", levelPhrases[9]!!),
+        LevelDefinition(10, 52850L, "Imortal", levelPhrases[10]!!),
+
+        // FASE 2: lendas do Futebol (11-20) - ~1,5 anos adicionais
+        // Nveis 11-20 usam o mesmo badge do Imortal (nvel 10)
+        // Nomes em ordem crescente de fama, culminando com Pelé
+        LevelDefinition(11, 75000L, "Garrincha", levelPhrases[11]!!),
+        LevelDefinition(12, 100000L, "Zico", levelPhrases[12]!!),
+        LevelDefinition(13, 128000L, "Cruyff", levelPhrases[13]!!),
+        LevelDefinition(14, 160000L, "Beckham", levelPhrases[14]!!),
+        LevelDefinition(15, 198000L, "Ronaldinho", levelPhrases[15]!!),
+        LevelDefinition(16, 242000L, "Ronaldo Fenmeno", levelPhrases[16]!!),
+        LevelDefinition(17, 295000L, "Messi", levelPhrases[17]!!),
+        LevelDefinition(18, 360000L, "Cristiano Ronaldo", levelPhrases[18]!!),
+        LevelDefinition(19, 440000L, "Diego Maradona", levelPhrases[19]!!),
+        LevelDefinition(20, 528500L, "Pelé", levelPhrases[20]!!)
     )
 
     /**
@@ -157,6 +208,20 @@ object LevelTable {
      */
     fun getLevelName(level: Int): String {
         return levels.find { it.level == level }?.name ?: "Desconhecido"
+    }
+
+    /**
+     * Retorna a frase inspiradora do nvel.
+     */
+    fun getLevelPhrase(level: Int): String {
+        return levels.find { it.level == level }?.phrase ?: ""
+    }
+
+    /**
+     * Retorna a definio completa do nvel.
+     */
+    fun getLevelDefinition(level: Int): LevelDefinition? {
+        return levels.find { it.level == level }
     }
 
     /**

@@ -119,4 +119,24 @@ class GameConfirmationRepositoryImpl @Inject constructor(
             }
             .catch { emit(emptySet()) }
     }
+
+    override suspend fun acceptInvitation(
+        gameId: String,
+        position: String
+    ): Result<GameConfirmation> {
+        val userId = dataSource.getCurrentUserId()
+            ?: return Result.failure(Exception("Usuario nao autenticado"))
+
+        return dataSource.acceptInvitation(gameId, userId, position)
+    }
+
+    override suspend fun updateConfirmationStatus(
+        gameId: String,
+        status: String
+    ): Result<Unit> {
+        val userId = dataSource.getCurrentUserId()
+            ?: return Result.failure(Exception("Usuario nao autenticado"))
+
+        return dataSource.updateConfirmationStatus(gameId, userId, status)
+    }
 }

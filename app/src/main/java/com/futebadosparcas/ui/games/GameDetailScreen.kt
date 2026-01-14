@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.*
@@ -59,6 +60,23 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+
+/**
+ * Cores semânticas para eventos de jogo (Material Design 3 compliant)
+ */
+object MatchEventColors {
+    @Composable
+    fun goalColor() = MaterialTheme.colorScheme.onSurface
+
+    @Composable
+    fun yellowCardColor() = Color(0xFFFDD835)  // Material Yellow A700 - bom contraste
+
+    @Composable
+    fun redCardColor() = MaterialTheme.colorScheme.error
+
+    @Composable
+    fun defaultColor() = MaterialTheme.colorScheme.onSurfaceVariant
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,8 +139,8 @@ fun GameDetailScreen(
                     game = state.game,
                     hasTeams = state.teams.isNotEmpty(),
                     onBackClick = onNavigateBack,
-                    onInviteWhatsApp = { inviteToWhatsApp(context, state) },
-                    onShare = { shareGameDetails(context, state) },
+                    onInviteWhatsApp = { inviteToWhatsApp(context, state, context.getString(R.string.whatsapp_invite_title)) },
+                    onShare = { shareGameDetails(context, state, context.getString(R.string.game_at), context.getString(R.string.share)) },
                     onVoteMvp = { onNavigateToMvpVote(gameId) },
                     onShareCard = { generateAndShareCard(context, state) },
                     onTacticalBoard = onNavigateToTacticalBoard
@@ -204,34 +222,37 @@ fun GameDetailTopBar(
             IconButton(onClick = onInviteWhatsApp) {
                 Icon(painterResource(R.drawable.ic_whatsapp), stringResource(R.string.invite_whatsapp), tint = com.futebadosparcas.ui.theme.BrandColors.WhatsApp)
             }
-            IconButton(onClick = { showMenu = true }) {
-                Icon(Icons.Default.MoreVert, stringResource(R.string.more_options))
-            }
-            DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.share_link)) },
-                    onClick = { onShare(); showMenu = false },
-                    leadingIcon = { Icon(Icons.Outlined.Share, stringResource(R.string.share)) }
-                )
-                if (game.status == "FINISHED") {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.vote_mvp)) },
-                        onClick = { onVoteMvp(); showMenu = false },
-                        leadingIcon = { Icon(Icons.Default.Star, stringResource(R.string.mvp)) }
-                    )
-                    if (hasTeams) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.generate_game_card)) },
-                            onClick = { onShareCard(); showMenu = false },
-                            leadingIcon = { Icon(Icons.Default.Share, stringResource(R.string.card)) }
-                        )
-                    }
+            // Box para ancorar o DropdownMenu ao IconButton
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(Icons.Default.MoreVert, stringResource(R.string.more_options))
                 }
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.tactical_board)) },
-                    onClick = { onTacticalBoard(); showMenu = false },
-                    leadingIcon = { Icon(Icons.Default.Create, stringResource(R.string.tactical_board)) }
-                )
+                DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.share_link)) },
+                        onClick = { onShare(); showMenu = false },
+                        leadingIcon = { Icon(Icons.Outlined.Share, stringResource(R.string.share)) }
+                    )
+                    if (game.status == "FINISHED") {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.vote_mvp)) },
+                            onClick = { onVoteMvp(); showMenu = false },
+                            leadingIcon = { Icon(Icons.Default.Star, stringResource(R.string.mvp)) }
+                        )
+                        if (hasTeams) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.generate_game_card)) },
+                                onClick = { onShareCard(); showMenu = false },
+                                leadingIcon = { Icon(Icons.Default.Share, stringResource(R.string.card)) }
+                            )
+                        }
+                    }
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.tactical_board)) },
+                        onClick = { onTacticalBoard(); showMenu = false },
+                        leadingIcon = { Icon(Icons.Default.Create, stringResource(R.string.tactical_board)) }
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -324,7 +345,7 @@ fun GameDetailContent(
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
-            contentPadding = PaddingValues(bottom = 80.dp)
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             // Header
             item {
@@ -565,7 +586,7 @@ fun ConfirmationCard(
             } else {
                 if (isOwner || currentUserId == confirmation.userId) {
                     val payColor = if (confirmation.paymentStatus == "PAID")
-                        com.futebadosparcas.ui.theme.BrandColors.WhatsApp else Color.Gray
+                        com.futebadosparcas.ui.theme.BrandColors.WhatsApp else MaterialTheme.colorScheme.onSurfaceVariant
                     IconButton(onClick = onPaymentClick) {
                         Icon(painterResource(R.drawable.ic_money), stringResource(R.string.payment), tint = payColor)
                     }
@@ -634,8 +655,8 @@ private fun getLastLocationAndStartGame(context: Context, viewModel: GameDetailV
     }
 }
 
-fun inviteToWhatsApp(context: Context, state: GameDetailUiState.Success) {
-    val message = "⚽ *${context.getString(R.string.whatsapp_invite_title)}*\n\n📅 *${state.game.date}* às *${state.game.time}*\n📍 ${state.game.locationName}\n"
+fun inviteToWhatsApp(context: Context, state: GameDetailUiState.Success, inviteTitle: String) {
+    val message = "⚽ *$inviteTitle*\n\n📅 *${state.game.date}* às *${state.game.time}*\n📍 ${state.game.locationName}\n"
     try {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse("https://wa.me/?text=${Uri.encode(message)}")
@@ -646,12 +667,12 @@ fun inviteToWhatsApp(context: Context, state: GameDetailUiState.Success) {
     }
 }
 
-fun shareGameDetails(context: Context, state: GameDetailUiState.Success) {
+fun shareGameDetails(context: Context, state: GameDetailUiState.Success, gameAt: String, share: String) {
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, "${context.getString(R.string.game_at)} ${state.game.locationName}")
+        putExtra(Intent.EXTRA_TEXT, "$gameAt ${state.game.locationName}")
     }
-    context.startActivity(Intent.createChooser(intent, context.getString(R.string.share)))
+    context.startActivity(Intent.createChooser(intent, share))
 }
 
 fun generateAndShareCard(context: Context, state: GameDetailUiState.Success) {
@@ -833,7 +854,7 @@ fun FinishGameDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )
@@ -881,13 +902,13 @@ fun LiveMatchSection(
             if (state.canLogEvents && state.game.status == "LIVE") {
                 Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
                     IconButton(onClick = { onAddEvent(GameEventType.GOAL) }) {
-                        Icon(painterResource(R.drawable.ic_football), stringResource(R.string.live_goal), tint = Color.Black)
+                        Icon(painterResource(R.drawable.ic_football), stringResource(R.string.live_goal), tint = MatchEventColors.goalColor())
                     }
                     IconButton(onClick = { onAddEvent(GameEventType.YELLOW_CARD) }) {
-                        Icon(painterResource(R.drawable.ic_card_filled), stringResource(R.string.live_yellow_card), tint = Color.Yellow)
+                        Icon(painterResource(R.drawable.ic_card_filled), stringResource(R.string.live_yellow_card), tint = MatchEventColors.yellowCardColor())
                     }
                     IconButton(onClick = { onAddEvent(GameEventType.RED_CARD) }) {
-                        Icon(painterResource(R.drawable.ic_card_filled), stringResource(R.string.live_red_card), tint = Color.Red)
+                        Icon(painterResource(R.drawable.ic_card_filled), stringResource(R.string.live_red_card), tint = MatchEventColors.redCardColor())
                     }
                 }
             }
@@ -903,12 +924,13 @@ fun getEventIcon(type: String): Int {
     }
 }
 
+@Composable
 fun getEventColor(type: String): Color {
     return when(type) {
-        "GOAL" -> Color.Black
-        "YELLOW_CARD" -> Color.Yellow
-        "RED_CARD" -> Color.Red
-        else -> Color.Gray
+        "GOAL" -> MatchEventColors.goalColor()
+        "YELLOW_CARD" -> MatchEventColors.yellowCardColor()
+        "RED_CARD" -> MatchEventColors.redCardColor()
+        else -> MatchEventColors.defaultColor()
     }
 }
 

@@ -54,14 +54,16 @@ service firebase.storage {
 
     // ============================================
     // FOTOS DE PERFIL DE USUÁRIOS
-    // Path: users/{userId}/profile.jpg
+    // Path: users/{userId}/profile.jpg e users/{userId}/thumb.jpg
+    // Cache-Control: public, max-age=2592000 (30 dias)
     // ============================================
-    match /users/{userId}/profile.jpg {
+    match /users/{userId}/{fileName} {
       // Qualquer usuário autenticado pode ler fotos de perfil
+      // As regras de cache são definidas via metadados no upload
       allow read: if isAuthenticated();
 
-      // Apenas o próprio usuário pode escrever sua foto
-      // Máximo 2MB, apenas imagem
+      // Apenas o próprio usuário pode escrever suas fotos
+      // Máximo 2MB, apenas imagem, valida contentType
       allow write: if isOwner(userId) && isImage() && isUnderSize(2);
 
       // Apenas o próprio usuário pode deletar

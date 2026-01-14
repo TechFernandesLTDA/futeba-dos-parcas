@@ -43,6 +43,7 @@ import com.futebadosparcas.ui.components.EmptyPlayersState
 import com.futebadosparcas.ui.components.EmptySearchState
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.components.PlayerCardShareHelper
 import com.futebadosparcas.ui.components.ShimmerPlayerCard
 import com.futebadosparcas.ui.theme.bottomBarPadding
 import com.futebadosparcas.ui.theme.GamificationColors
@@ -66,7 +67,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  * - Modo comparação de jogadores
  * - Material Design 3
  */
-@OptIn(FlowPreview::class, ExperimentalFoundationApi::class)
+@OptIn(FlowPreview::class, ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun PlayersScreen(
     viewModel: PlayersViewModel,
@@ -87,7 +88,13 @@ fun PlayersScreen(
     var isComparisonMode by remember { mutableStateOf(false) }
     var selectedPlayers by remember { mutableStateOf(setOf<String>()) }
 
-  
+    // Estado para PlayerCard BottomSheet
+    var selectedPlayerForCard by remember { mutableStateOf<User?>(null) }
+    val playerCardSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Context para compartilhamento
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     Scaffold(
         topBar = {
             com.futebadosparcas.ui.components.FutebaTopBar(
@@ -183,7 +190,8 @@ fun PlayersScreen(
                                         }
                                     }
                                 } else {
-                                    onPlayerClick(user)
+                                    // Abre o PlayerCard BottomSheet ao clicar no jogador
+                                    selectedPlayerForCard = user
                                 }
                             },
                             onInviteClick = { user ->
@@ -224,9 +232,34 @@ fun PlayersScreen(
                     }
                 )
             }
+
+            // PlayerCard BottomSheet
+            selectedPlayerForCard?.let { player ->
+                ModalBottomSheet(
+                    onDismissRequest = { selectedPlayerForCard = null },
+                    sheetState = playerCardSheetState,
+                    containerColor = MaterialTheme.colorScheme.surface
+                ) {
+                    PlayerCardContent(
+                        user = player,
+                        stats = null,  // TODO: Buscar estatísticas do jogador se necessário
+                        onClose = { selectedPlayerForCard = null },
+                        onShare = {
+                            PlayerCardShareHelper.shareAsImage(
+                                context = context,
+                                user = player,
+                                stats = null,
+                                generatedBy = "Futeba dos Parças"
+                            )
+                        },
+                        modifier = Modifier.padding(bottom = 32.dp)
+                    )
+                }
+            }
         }
     }
 }
+
 
 /**
  * Barra de busca e filtros

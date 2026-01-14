@@ -36,7 +36,7 @@ selectUsersByIds:
 SELECT * FROM users WHERE id IN ?;
 
 insertUser:
-INSERT OR REPLACE INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 deleteUserById:
 DELETE FROM users WHERE id = ?;

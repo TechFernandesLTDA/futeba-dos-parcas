@@ -2,6 +2,7 @@ package com.futebadosparcas.ui.locations
 
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,9 +22,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.data.model.FieldType
@@ -232,12 +233,21 @@ fun LocationDetailScreen(
                             onValueChange = {},
                             label = { Text(stringResource(R.string.location_detail_owner_label)) },
                             readOnly = true,
+                            enabled = false,
                             trailingIcon = {
                                 IconButton(onClick = { ownerDropdownExpanded = true }) {
                                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, Modifier.rotate(270f))
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .clickable { ownerDropdownExpanded = true }
+                                .fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         )
                         DropdownMenu(
                             expanded = ownerDropdownExpanded,

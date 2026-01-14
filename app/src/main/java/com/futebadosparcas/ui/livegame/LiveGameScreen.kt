@@ -24,14 +24,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.data.model.*
+import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
@@ -252,7 +252,7 @@ private fun LiveGameTopBar(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.back)
+                    contentDescription = stringResource(R.string.action_back)
                 )
             }
         },
@@ -287,7 +287,7 @@ private fun IsolatedGameTimer(
     val seconds = (elapsedTime / 1000 % 60).toInt()
 
     Text(
-        text = if (isFinished) stringResource(R.string.end_game_label) else String.format("%02d:%02d", minutes, seconds),
+        text = if (isFinished) stringResource(R.string.live_game_end_label) else String.format("%02d:%02d", minutes, seconds),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -346,7 +346,7 @@ private fun LiveGameHeader(
 
                 // VS
                 Text(
-                    text = "VS",
+                    text = stringResource(R.string.live_game_vs),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -374,11 +374,11 @@ private fun LiveGameHeader(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = stringResource(R.string.dialog_finish_game_text_1),
+                        contentDescription = stringResource(R.string.live_game_finish),
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = stringResource(R.string.dialog_finish_game_text_1))
+                    Text(text = stringResource(R.string.live_game_finish_content))
                 }
             }
         }
@@ -443,7 +443,7 @@ private fun LiveGameTabs(
     gameId: String,
     onTabSelected: (Int) -> Unit
 ) {
-    val tabTitles = listOf(stringResource(R.string.live_statistics), stringResource(R.string.live_events))
+    val tabTitles = listOf(stringResource(R.string.live_game_statistics), stringResource(R.string.live_game_events))
     val tabIcons = listOf(Icons.Default.BarChart, Icons.AutoMirrored.Filled.EventNote)
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -559,11 +559,11 @@ private fun LiveGameFAB(
         icon = {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = "Adicionar evento"
+                contentDescription = stringResource(R.string.live_game_add_event)
             )
         },
         text = {
-            Text(text = "Adicionar Evento")
+            Text(text = stringResource(R.string.live_game_add_event))
         },
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -613,7 +613,7 @@ private fun AddEventBottomSheet(
         ) {
             // Título
             Text(
-                text = stringResource(R.string.dialog_add_event_text_1),
+                text = stringResource(R.string.live_game_add_event_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -623,7 +623,7 @@ private fun AddEventBottomSheet(
 
             // Tipo de Evento
             Text(
-                text = stringResource(R.string.dialog_add_event_text_2),
+                text = stringResource(R.string.live_game_event_type),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -633,14 +633,14 @@ private fun AddEventBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 EventTypeChip(
-                    label = stringResource(R.string.dialog_add_event_text_3),
+                    label = stringResource(R.string.live_game_goal),
                     icon = "⚽",
                     selected = selectedEventType == GameEventType.GOAL,
                     onClick = { selectedEventType = GameEventType.GOAL },
                     modifier = Modifier.weight(1f)
                 )
                 EventTypeChip(
-                    label = stringResource(R.string.dialog_add_event_text_4),
+                    label = stringResource(R.string.live_game_save),
                     icon = "🧤",
                     selected = selectedEventType == GameEventType.SAVE,
                     onClick = { selectedEventType = GameEventType.SAVE },
@@ -653,14 +653,14 @@ private fun AddEventBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 EventTypeChip(
-                    label = stringResource(R.string.dialog_add_event_text_5),
+                    label = stringResource(R.string.live_game_yellow_card),
                     icon = "🟨",
                     selected = selectedEventType == GameEventType.YELLOW_CARD,
                     onClick = { selectedEventType = GameEventType.YELLOW_CARD },
                     modifier = Modifier.weight(1f)
                 )
                 EventTypeChip(
-                    label = stringResource(R.string.dialog_add_event_text_6),
+                    label = stringResource(R.string.live_game_red_card),
                     icon = "🟥",
                     selected = selectedEventType == GameEventType.RED_CARD,
                     onClick = { selectedEventType = GameEventType.RED_CARD },
@@ -672,7 +672,7 @@ private fun AddEventBottomSheet(
 
             // Seleção de Time
             Text(
-                text = stringResource(R.string.dialog_add_event_text_7),
+                text = stringResource(R.string.live_game_select_team),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -701,7 +701,7 @@ private fun AddEventBottomSheet(
             OutlinedTextField(
                 value = minute,
                 onValueChange = { minute = it.filter { char -> char.isDigit() } },
-                label = { Text(stringResource(R.string.dialog_add_event_hint_12)) },
+                label = { Text(stringResource(R.string.live_game_minute)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -714,11 +714,11 @@ private fun AddEventBottomSheet(
             // Seleção de Jogador (Dropdown)
             var playerExpanded by remember { mutableStateOf(false) }
             val playerLabel = when (selectedEventType) {
-                GameEventType.GOAL -> "Quem fez o Gol?"
-                GameEventType.SAVE -> "Quem fez a Defesa?"
-                GameEventType.YELLOW_CARD -> "Quem tomou cartão Amarelo?"
-                GameEventType.RED_CARD -> "Quem tomou cartão Vermelho?"
-                else -> "Jogador"
+                GameEventType.GOAL -> stringResource(R.string.live_game_goal_label)
+                GameEventType.SAVE -> stringResource(R.string.live_game_save_label)
+                GameEventType.YELLOW_CARD -> stringResource(R.string.live_game_yellow_card_label)
+                GameEventType.RED_CARD -> stringResource(R.string.live_game_red_card_label)
+                else -> stringResource(R.string.live_game_player_label)
             }
 
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -729,7 +729,7 @@ private fun AddEventBottomSheet(
                     readOnly = true,
                     trailingIcon = {
                         IconButton(onClick = { playerExpanded = true }) {
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = "Expandir")
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = stringResource(R.string.live_game_expand))
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
@@ -750,7 +750,7 @@ private fun AddEventBottomSheet(
                     }
                     if (currentPlayers.isEmpty()) {
                         DropdownMenuItem(
-                            text = { Text("Nenhum jogador encontrado") },
+                            text = { Text(stringResource(R.string.live_game_no_player)) },
                             onClick = { playerExpanded = false },
                             enabled = false
                         )
@@ -761,16 +761,16 @@ private fun AddEventBottomSheet(
             // Assistência (Apenas para Gols)
             if (selectedEventType == GameEventType.GOAL) {
                 var assistExpanded by remember { mutableStateOf(false) }
-                
+
                 Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = selectedAssist?.userName ?: "",
                         onValueChange = {},
-                        label = { Text("Assistência (Opcional)") },
+                        label = { Text(stringResource(R.string.live_game_assist)) },
                         readOnly = true,
                         trailingIcon = {
                             IconButton(onClick = { assistExpanded = true }) {
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = "Expandir")
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = stringResource(R.string.live_game_expand))
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
@@ -781,7 +781,7 @@ private fun AddEventBottomSheet(
                          modifier = Modifier.fillMaxWidth()
                     ) {
                          DropdownMenuItem(
-                            text = { Text("Sem assistência") },
+                            text = { Text(stringResource(R.string.live_game_no_assist_label)) },
                             onClick = {
                                 selectedAssist = null
                                 assistExpanded = false
@@ -812,7 +812,7 @@ private fun AddEventBottomSheet(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(R.string.dialog_add_event_text_14))
+                    Text(stringResource(R.string.action_cancel))
                 }
                 Button(
                     onClick = {
@@ -831,7 +831,7 @@ private fun AddEventBottomSheet(
                     },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(R.string.dialog_add_event_text_15))
+                    Text(stringResource(R.string.action_confirm))
                 }
             }
 
@@ -915,7 +915,7 @@ private fun ErrorContent(
         type = EmptyStateType.Error(
             title = stringResource(R.string.live_game_load_error),
             description = message,
-            actionLabel = stringResource(R.string.retry),
+            actionLabel = stringResource(R.string.action_retry),
             onRetry = onRetry
         )
     )

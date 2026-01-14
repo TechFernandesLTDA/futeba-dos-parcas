@@ -6,7 +6,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,7 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.domain.model.ThemeMode
+import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.ThemeViewModel
 import com.futebadosparcas.util.PreferencesManager
 
@@ -34,13 +35,11 @@ import com.futebadosparcas.util.PreferencesManager
  * - Navegação para customização de cores
  * - Navegação para ferramentas de desenvolvedor (condicional)
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PreferencesScreen(
     preferencesViewModel: PreferencesViewModel,
     themeViewModel: ThemeViewModel,
     preferencesManager: PreferencesManager,
-    onNavigateBack: () -> Unit = {},
     onNavigateToThemeSettings: () -> Unit = {},
     onNavigateToDeveloper: () -> Unit = {}
 ) {
@@ -49,35 +48,16 @@ fun PreferencesScreen(
 
     val isDevModeEnabled = preferencesManager.isDevModeEnabled()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Preferências") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
             // ========== TEMA ==========
             Text(
-                text = "Aparência",
+                text = stringResource(R.string.preferences_appearance),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -98,7 +78,7 @@ fun PreferencesScreen(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "Tema",
+                        text = stringResource(R.string.preferences_theme),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(bottom = 12.dp)
@@ -110,7 +90,7 @@ fun PreferencesScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         ThemeButton(
-                            text = "Claro",
+                            text = stringResource(R.string.preferences_theme_light),
                             icon = Icons.Default.LightMode,
                             isSelected = themeConfig.mode == ThemeMode.LIGHT,
                             onClick = { themeViewModel.setThemeMode(ThemeMode.LIGHT) },
@@ -118,7 +98,7 @@ fun PreferencesScreen(
                         )
 
                         ThemeButton(
-                            text = "Escuro",
+                            text = stringResource(R.string.preferences_theme_dark),
                             icon = Icons.Default.DarkMode,
                             isSelected = themeConfig.mode == ThemeMode.DARK,
                             onClick = { themeViewModel.setThemeMode(ThemeMode.DARK) },
@@ -126,7 +106,7 @@ fun PreferencesScreen(
                         )
 
                         ThemeButton(
-                            text = "Sistema",
+                            text = stringResource(R.string.preferences_theme_system),
                             icon = Icons.Default.SettingsBrightness,
                             isSelected = themeConfig.mode == ThemeMode.SYSTEM,
                             onClick = { themeViewModel.setThemeMode(ThemeMode.SYSTEM) },
@@ -163,7 +143,7 @@ fun PreferencesScreen(
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "Personalizar Cores",
+                            text = stringResource(R.string.preferences_customize_colors),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
@@ -177,7 +157,7 @@ fun PreferencesScreen(
 
             // ========== PRIVACIDADE ==========
             Text(
-                text = "Privacidade",
+                text = stringResource(R.string.preferences_privacy),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -201,12 +181,12 @@ fun PreferencesScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Perfil Visível",
+                            text = stringResource(R.string.preferences_profile_visible),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = "Permite que outros jogadores encontrem seu perfil",
+                            text = stringResource(R.string.preferences_profile_visible_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 4.dp)
@@ -226,7 +206,7 @@ fun PreferencesScreen(
             // ========== DESENVOLVEDOR ==========
             if (isDevModeEnabled) {
                 Text(
-                    text = "Desenvolvedor",
+                    text = stringResource(R.string.preferences_developer),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -260,13 +240,13 @@ fun PreferencesScreen(
                             )
                             Column {
                                 Text(
-                                    text = "Ferramentas de Desenvolvedor",
+                                    text = stringResource(R.string.preferences_developer_tools),
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer
                                 )
                                 Text(
-                                    text = "Modo desenvolvedor ativo",
+                                    text = stringResource(R.string.preferences_dev_mode_active),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                                 )
@@ -281,9 +261,8 @@ fun PreferencesScreen(
                 }
             }
 
-            // Bottom spacing
-            Spacer(modifier = Modifier.height(32.dp))
-        }
+        // Bottom spacing
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 

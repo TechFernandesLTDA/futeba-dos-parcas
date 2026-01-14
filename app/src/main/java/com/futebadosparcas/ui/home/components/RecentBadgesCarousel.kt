@@ -66,7 +66,7 @@ fun RecentBadgesCarousel(
                 verticalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing),
                 modifier = Modifier.padding(bottom = spacing.sm)
             ) {
-                items(badges.take(columns), key = { it.badgeId }) { badge ->
+                items(badges.take(columns), key = { it.id.ifEmpty { "${it.badgeId}_${it.unlockedAt}" } }) { badge ->
                     BadgeCard(badge = badge, size = adaptiveValue(
                         compact = 80.dp,
                         medium = 96.dp,
@@ -80,7 +80,7 @@ fun RecentBadgesCarousel(
                 contentPadding = PaddingValues(horizontal = spacing.contentPaddingHorizontal),
                 horizontalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing)
             ) {
-                items(badges, key = { it.badgeId }) { badge ->
+                items(badges, key = { it.id.ifEmpty { "${it.badgeId}_${it.unlockedAt}" } }) { badge ->
                     BadgeCard(badge = badge, size = 80.dp)
                 }
             }

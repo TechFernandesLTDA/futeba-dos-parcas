@@ -141,4 +141,12 @@ interface GameRepository {
      * @return Result com lista de jogos PUBLIC_OPEN
      */
     suspend fun getOpenPublicGames(limit: Int = 20): Result<List<Game>>
+
+    /**
+     * Aceita um convite para jogo (atualiza status de PENDING para CONFIRMED).
+     */
+    suspend fun acceptInvitation(
+        gameId: String,
+        position: String = "FIELD"
+    ): Result<GameConfirmation>
 }

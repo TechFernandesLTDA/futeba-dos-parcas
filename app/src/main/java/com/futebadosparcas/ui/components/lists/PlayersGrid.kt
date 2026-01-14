@@ -322,7 +322,7 @@ private fun getLevelGradient(level: Int): Brush {
         level >= 30 -> Brush.linearGradient(
             colors = listOf(
                 GamificationColors.Silver,
-                Color.White
+                MaterialTheme.colorScheme.surface
             )
         )
         level >= 15 -> Brush.linearGradient(

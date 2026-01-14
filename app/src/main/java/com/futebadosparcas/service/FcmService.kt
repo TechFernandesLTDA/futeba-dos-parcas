@@ -35,18 +35,16 @@ class FcmService : FirebaseMessagingService() {
     companion object {
         private const val TAG = "FcmService"
         private const val CHANNEL_ID = "futeba_notifications"
-        private const val CHANNEL_NAME = "Futeba dos Parcas"
-        private const val CHANNEL_DESCRIPTION = "Notificacoes de jogos e confirmacoes"
     }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        AppLogger.d(TAG) { "Novo FCM token recebido" }
+        AppLogger.d(TAG) { getString(R.string.fcm_new_token_received) }
         serviceScope.launch {
             try {
                 userRepository.updateFcmToken(token)
             } catch (e: Exception) {
-                AppLogger.e(TAG, "Erro ao atualizar FCM token", e)
+                AppLogger.e(TAG, getString(R.string.fcm_error_updating_token), e)
             }
         }
     }
@@ -75,10 +73,10 @@ class FcmService : FirebaseMessagingService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                CHANNEL_NAME,
+                getString(R.string.fcm_channel_name),
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = CHANNEL_DESCRIPTION
+                description = getString(R.string.fcm_channel_description)
                 enableLights(true)
                 enableVibration(true)
             }
@@ -121,7 +119,7 @@ class FcmService : FirebaseMessagingService() {
                     // Reciclar pode causar crash: "Canvas: trying to use a recycled bitmap"
                 }
             } catch (e: Exception) {
-                AppLogger.e(TAG, "Erro ao adicionar brasao na notificacao", e)
+                AppLogger.e(TAG, getString(R.string.fcm_error_badge_notification), e)
             }
         }
 

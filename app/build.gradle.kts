@@ -123,6 +123,9 @@ dependencies {
     implementation("com.google.accompanist:accompanist-themeadapter-material3:0.36.0") // Bridge M3 XML Theme to Compose
     implementation("com.google.accompanist:accompanist-swiperefresh:0.36.0") // Pull-to-refresh para Compose
 
+    // Compose Multiplatform Resources
+    implementation(project(":shared"))
+
 
 
     // Architecture Components

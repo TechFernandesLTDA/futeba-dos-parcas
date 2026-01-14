@@ -21,9 +21,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
-import com.futebadosparcas.R
 import com.futebadosparcas.BuildConfig
+import com.futebadosparcas.R
 
 /**
  * Tela de Registro (descontinuada).
@@ -73,7 +74,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Registro",
+                    text = stringResource(R.string.auth_register_title),
                     style = typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.primary
@@ -82,7 +83,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "O registro agora é feito apenas via Google Sign-In.",
+                    text = stringResource(R.string.auth_register_message),
                     style = typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = colorScheme.onSurface
@@ -91,7 +92,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Você será redirecionado para a tela de login.",
+                    text = stringResource(R.string.auth_register_redirect),
                     style = typography.bodySmall,
                     textAlign = TextAlign.Center,
                     color = colorScheme.onSurfaceVariant

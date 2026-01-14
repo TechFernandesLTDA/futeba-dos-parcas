@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,8 +16,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.data.model.RecurrenceType
 import com.futebadosparcas.data.model.Schedule
+import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 
@@ -42,14 +43,11 @@ private const val TAG = "SchedulesScreen"
  * CMD-08: Debug de filtro vazio com logs aprimorados
  * CMD-09: EmptyState padrão Material3 com CTA
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SchedulesScreen(
-    viewModel: SchedulesViewModel,
-    onNavigateBack: () -> Unit = {}
+    viewModel: SchedulesViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
     var currentUserName by remember { mutableStateOf("") }
 
     // Carrega o nome do usuario
@@ -76,106 +74,76 @@ fun SchedulesScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Horários Recorrentes") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
-                        )
-                    }
-                },
-                actions = {
-                    // Botão de refresh para CMD-08 (debug)
-                    IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Atualizar"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        },
-        // CMD-09: FAB para criar novo horário
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showCreateDialog = true },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Criar Horário"
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (uiState) {
+            is SchedulesUiState.Loading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
                 )
             }
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when (uiState) {
-                is SchedulesUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
 
-                is SchedulesUiState.Success -> {
-                    val schedules = (uiState as SchedulesUiState.Success).schedules
+            is SchedulesUiState.Success -> {
+                val schedules = (uiState as SchedulesUiState.Success).schedules
 
-                    if (schedules.isEmpty()) {
-                        // CMD-09: EmptyState padrão com CTA para criar
-                        EmptyState(
-                            type = EmptyStateType.NoData(
-                                title = "Nenhum horário recorrente",
-                                description = "Configure horários para automatizar a criação de jogos semanais, quinzenais ou mensais.",
-                                icon = Icons.Default.EventRepeat,
-                                actionLabel = "Criar Horário",
-                                onAction = { showCreateDialog = true }
-                            )
+                if (schedules.isEmpty()) {
+                    // CMD-09: EmptyState padrão com CTA para criar
+                    EmptyState(
+                        type = EmptyStateType.NoData(
+                            title = stringResource(R.string.schedules_no_schedules),
+                            description = stringResource(R.string.schedules_empty_description),
+                            icon = Icons.Default.EventRepeat,
+                            actionLabel = stringResource(R.string.schedules_create_schedule),
+                            onAction = { showCreateDialog = true }
                         )
-                    } else {
-                        // List of Schedules
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(
-                                items = schedules,
-                                key = { it.id }
-                            ) { schedule ->
-                                ScheduleCard(
-                                    schedule = schedule,
-                                    onEditClick = { scheduleToEdit = schedule },
-                                    onDeleteClick = { scheduleToDelete = schedule.id }
-                                )
-                            }
+                    )
+                } else {
+                    // List of Schedules
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(
+                            items = schedules,
+                            key = { it.id }
+                        ) { schedule ->
+                            ScheduleCard(
+                                schedule = schedule,
+                                onEditClick = { scheduleToEdit = schedule },
+                                onDeleteClick = { scheduleToDelete = schedule.id }
+                            )
                         }
                     }
                 }
-
-                is SchedulesUiState.Error -> {
-                    // CMD-09: Error State com retry usando EmptyState padrão
-                    val errorMsg = (uiState as SchedulesUiState.Error).message
-                    EmptyState(
-                        type = EmptyStateType.Error(
-                            title = "Erro ao carregar horários",
-                            description = errorMsg,
-                            icon = Icons.Default.ErrorOutline,
-                            actionLabel = "Tentar Novamente",
-                            onRetry = { viewModel.refresh() }
-                        )
-                    )
-                }
             }
+
+            is SchedulesUiState.Error -> {
+                // CMD-09: Error State com retry usando EmptyState padrão
+                val errorMsg = (uiState as SchedulesUiState.Error).message
+                EmptyState(
+                    type = EmptyStateType.Error(
+                        title = stringResource(R.string.schedules_error_loading),
+                        description = errorMsg,
+                        icon = Icons.Default.ErrorOutline,
+                        actionLabel = stringResource(R.string.schedules_try_again),
+                        onRetry = { viewModel.refresh() }
+                    )
+                )
+            }
+        }
+
+        // CMD-09: FAB para criar novo horário
+        FloatingActionButton(
+            onClick = { showCreateDialog = true },
+            containerColor = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = stringResource(R.string.schedules_fab_description)
+            )
         }
     }
 
@@ -219,10 +187,10 @@ fun SchedulesScreen(
                 )
             },
             title = {
-                Text("Excluir Recorrência")
+                Text(stringResource(R.string.schedules_delete_title))
             },
             text = {
-                Text("Deseja interromper esta recorrência? Novos jogos não serão mais agendados automaticamente para esta série.")
+                Text(stringResource(R.string.schedules_delete_message))
             },
             confirmButton = {
                 TextButton(
@@ -234,12 +202,12 @@ fun SchedulesScreen(
                         contentColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Interromper")
+                    Text(stringResource(R.string.schedules_stop))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { scheduleToDelete = null }) {
-                    Text("Cancelar")
+                    Text(stringResource(R.string.schedules_cancel))
                 }
             }
         )
@@ -269,7 +237,7 @@ private fun ScheduleCard(
         ) {
             // Nome do horário
             Text(
-                text = schedule.name.ifEmpty { "Sem nome" },
+                text = schedule.name.ifEmpty { stringResource(R.string.schedules_no_name) },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -290,19 +258,15 @@ private fun ScheduleCard(
                 )
 
                 val dayStr = getDayOfWeekString(schedule.dayOfWeek)
-                val recurrenceStr = when (schedule.recurrenceType) {
-                    RecurrenceType.weekly -> "Semanal"
-                    RecurrenceType.biweekly -> "Quinzenal"
-                    RecurrenceType.monthly -> "Mensal"
-                }
+                val recurrenceStr = getRecurrenceString(schedule.recurrenceType)
 
                 Text(
                     text = buildString {
                         append("$recurrenceStr • $dayStr")
                         if (schedule.time.isNotEmpty()) {
-                            append(" às ${schedule.time}")
+                            append(" ${stringResource(R.string.schedules_at)} ${schedule.time}")
                         } else {
-                            append(" - Horário não definido")
+                            append(" - ${stringResource(R.string.schedules_time_not_defined)}")
                         }
                     },
                     style = MaterialTheme.typography.bodyMedium,
@@ -356,7 +320,7 @@ private fun ScheduleCard(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Editar")
+                    Text(stringResource(R.string.schedules_edit))
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -374,7 +338,7 @@ private fun ScheduleCard(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Excluir")
+                    Text(stringResource(R.string.schedules_delete))
                 }
             }
         }
@@ -384,15 +348,28 @@ private fun ScheduleCard(
 /**
  * Helper function para converter dia da semana em string
  */
+@Composable
 private fun getDayOfWeekString(day: Int): String {
     return when (day) {
-        0 -> "Domingo"
-        1 -> "Segunda-feira"
-        2 -> "Terça-feira"
-        3 -> "Quarta-feira"
-        4 -> "Quinta-feira"
-        5 -> "Sexta-feira"
-        6 -> "Sábado"
+        0 -> stringResource(R.string.schedules_day_sunday)
+        1 -> stringResource(R.string.schedules_day_monday)
+        2 -> stringResource(R.string.schedules_day_tuesday)
+        3 -> stringResource(R.string.schedules_day_wednesday)
+        4 -> stringResource(R.string.schedules_day_thursday)
+        5 -> stringResource(R.string.schedules_day_friday)
+        6 -> stringResource(R.string.schedules_day_saturday)
         else -> "Desconhecido"
+    }
+}
+
+/**
+ * Helper function para converter tipo de recorrência em string
+ */
+@Composable
+private fun getRecurrenceString(recurrenceType: RecurrenceType): String {
+    return when (recurrenceType) {
+        RecurrenceType.weekly -> stringResource(R.string.schedules_recurrence_weekly)
+        RecurrenceType.biweekly -> stringResource(R.string.schedules_recurrence_biweekly)
+        RecurrenceType.monthly -> stringResource(R.string.schedules_recurrence_monthly)
     }
 }

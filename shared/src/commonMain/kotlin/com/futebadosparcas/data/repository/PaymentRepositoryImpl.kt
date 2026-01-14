@@ -34,7 +34,7 @@ class PaymentRepositoryImpl(
             try {
                 PlatformLogger.d(TAG, "Criando pagamento: userId=${payment.userId}, amount=${payment.amount}")
 
-                firebaseDataSource.createPayment(payment).also { result ->
+                return@withContext firebaseDataSource.createPayment(payment).also { result ->
                     result.onSuccess { newPayment ->
                         PlatformLogger.i(TAG, "Pagamento criado com sucesso: id=${newPayment.id}")
                     }.onFailure { error ->
@@ -68,7 +68,7 @@ class PaymentRepositoryImpl(
             try {
                 PlatformLogger.d(TAG, "Confirmando pagamento: id=$paymentId")
 
-                firebaseDataSource.confirmPayment(paymentId).also { result ->
+                return@withContext firebaseDataSource.confirmPayment(paymentId).also { result ->
                     result.onSuccess {
                         PlatformLogger.i(TAG, "Pagamento confirmado com sucesso: id=$paymentId")
                     }.onFailure { error ->
@@ -87,7 +87,7 @@ class PaymentRepositoryImpl(
             try {
                 PlatformLogger.d(TAG, "Buscando pagamentos do usuario: userId=$userId")
 
-                firebaseDataSource.getPaymentsByUser(userId).also { result ->
+                return@withContext firebaseDataSource.getPaymentsByUser(userId).also { result ->
                     result.onSuccess { payments ->
                         PlatformLogger.i(TAG, "${payments.size} pagamentos encontrados para userId=$userId")
                     }.onFailure { error ->

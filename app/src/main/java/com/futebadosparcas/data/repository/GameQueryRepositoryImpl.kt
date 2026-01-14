@@ -421,7 +421,7 @@ class GameQueryRepositoryImpl @Inject constructor(
                     try {
                         firestore.collection("games").document(gameId)
                             .collection("events")
-                            .orderBy("createdAt", Query.Direction.DESCENDING)
+                            .orderBy("created_at", Query.Direction.DESCENDING)
                             .limit(100)
                             .get()
                             .await()

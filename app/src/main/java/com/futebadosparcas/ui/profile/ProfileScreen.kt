@@ -1,15 +1,5 @@
 package com.futebadosparcas.ui.profile
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,9 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -43,7 +30,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.futebadosparcas.BuildConfig
-import com.futebadosparcas.R
 import com.futebadosparcas.data.model.*
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.model.PlayerRatingRole
@@ -57,11 +43,17 @@ import java.util.Locale
 /**
  * Tela principal do Perfil do usuário em Jetpack Compose
  *
+ * OTIMIZADO PARA SCROLL SUAVE (ESTILO INSTAGRAM/FACEBOOK):
+ * - SEM animações durante scroll
+ * - Valores estáveis com remember
+ * - Keys estáveis em todos os itens
+ * - LazyColumn com configurações nativas
+ *
  * Features:
  * - Header com avatar, nome, nível e XP
  * - Estatísticas resumidas
  * - Badges recentes
- * - Ratings por posição
+ * - Ratings por posição (SEM animação)
  * - Preferências de campo
  * - Seção administrativa (Admin/Field Owner)
  * - Estados: Loading (Shimmer), Success, Error
@@ -157,6 +149,12 @@ fun ProfileScreen(
 
 /**
  * Conteúdo principal do perfil
+ *
+ * OTIMIZADO PARA SCROLL PERFEITO:
+ * - SEM animações que rodam durante scroll
+ * - Todos os valores estabilizados com remember
+ * - Keys estáveis para evitar recomposições
+ * - LazyColumn sem fling customizado (usa nativo)
  */
 @Composable
 private fun ProfileContent(
@@ -179,52 +177,84 @@ private fun ProfileContent(
     onLogoutClick: () -> Unit,
     onAvatarClick: () -> Unit
 ) {
+    // Estabilizar valores que não mudam durante scroll - CRÍTICO para scroll suave
+    val stableUser = remember(user.id) { user }
+    val stableBadges = remember(badges.map { it.badgeId }) { badges }
+    val stableStatistics = remember(statistics) { statistics }
+
+    // Calcular valores estáticos uma vez (SEM animação)
+    val xpPercentage = remember(stableUser.id) {
+        LevelHelper.getProgressPercentage(stableUser.experiencePoints)
+    }
+    val currentXP = remember(stableUser.id) {
+        LevelHelper.getProgressInCurrentLevel(stableUser.experiencePoints).first
+    }
+    val levelTitle = remember(stableUser.level) {
+        LevelHelper.getLevelTitle(stableUser.level)
+    }
+    val motivationalMessage = remember(stableUser.experiencePoints) {
+        LevelHelper.getMotivationalMessage(stableUser.experiencePoints)
+    }
+
+    // Ratings calculados uma vez, SEM animação
+    val ratings = remember(stableUser.id) {
+        listOf(
+            RatingData("Atacante", stableUser.getEffectiveRating(PlayerRatingRole.STRIKER), Icons.Default.SportsSoccer),
+            RatingData("Meio-Campo", stableUser.getEffectiveRating(PlayerRatingRole.MID), Icons.AutoMirrored.Filled.DirectionsRun),
+            RatingData("Defensor", stableUser.getEffectiveRating(PlayerRatingRole.DEFENDER), Icons.Default.Shield),
+            RatingData("Goleiro", stableUser.getEffectiveRating(PlayerRatingRole.GOALKEEPER), Icons.Default.SportsKabaddi)
+        )
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header: Avatar, Nome, Role
-        item {
+        item(key = "header") {
             ProfileHeader(
-                user = user,
+                user = stableUser,
                 onAvatarClick = onAvatarClick
             )
         }
 
-        // Card de Nível e XP
-        item {
-            LevelCard(
-                level = user.level,
-                totalXP = user.experiencePoints,
+        // Card de Nível e XP - SEM ANIMAÇÃO, valores estáticos
+        item(key = "level") {
+            StaticLevelCard(
+                level = stableUser.level,
+                currentXP = currentXP,
+                xpPercentage = xpPercentage,
+                levelTitle = levelTitle,
+                motivationalMessage = motivationalMessage,
                 onClick = onLevelJourneyClick
             )
         }
 
         // Preferências de Campo
-        item {
-            FieldPreferencesCard(preferredTypes = user.preferredFieldTypes)
+        item(key = "field_prefs") {
+            FieldPreferencesCard(preferredTypes = stableUser.preferredFieldTypes)
         }
 
-        // Ratings por Posição
-        item {
-            RatingsCard(user = user)
+        // Ratings por Posição - SEM ANIMAÇÃO
+        item(key = "ratings") {
+            StaticRatingsCard(ratings = ratings)
         }
 
         // Estatísticas Resumidas
-        item {
-            StatisticsCard(statistics = statistics)
+        item(key = "statistics") {
+            StatisticsCard(statistics = stableStatistics)
         }
 
         // Badges Recentes
-        if (badges.isNotEmpty()) {
-            item {
-                BadgesSection(badges = badges)
+        if (stableBadges.isNotEmpty()) {
+            item(key = "badges") {
+                BadgesSection(badges = stableBadges)
             }
         }
 
         // Botões de Ação
-        item {
+        item(key = "actions") {
             ActionButtonsSection(
                 onEditProfileClick = onEditProfileClick,
                 onLogoutClick = onLogoutClick
@@ -232,7 +262,7 @@ private fun ProfileContent(
         }
 
         // Seção de Configurações
-        item {
+        item(key = "settings") {
             SettingsSection(
                 onNotificationsClick = onNotificationsClick,
                 onSettingsClick = onSettingsClick,
@@ -242,11 +272,11 @@ private fun ProfileContent(
         }
 
         // Seção Administrativa
-        val isAdmin = user.isAdmin()
-        val isFieldOwner = user.isFieldOwner()
+        val isAdmin = stableUser.isAdmin()
+        val isFieldOwner = stableUser.isFieldOwner()
 
         if (isAdmin || isFieldOwner) {
-            item {
+            item(key = "admin") {
                 AdminSection(
                     isAdmin = isAdmin,
                     isFieldOwner = isFieldOwner,
@@ -261,13 +291,13 @@ private fun ProfileContent(
 
         // Developer Menu (se ativado)
         if (isDevMode) {
-            item {
+            item(key = "developer") {
                 DeveloperMenuCard(onClick = onDeveloperMenuClick)
             }
         }
 
         // Versão do App
-        item {
+        item(key = "version") {
             Text(
                 text = "Versão ${BuildConfig.VERSION_NAME}",
                 style = MaterialTheme.typography.bodySmall,
@@ -311,8 +341,9 @@ private fun ProfileHeader(
             ) {
                 // Avatar circular
                 if (user.photoUrl != null) {
+                    val photoUrl = remember(user.photoUrl) { user.photoUrl }
                     AsyncImage(
-                        model = "${user.photoUrl}?ts=${System.currentTimeMillis()}",
+                        model = photoUrl,
                         contentDescription = "Foto de perfil",
                         modifier = Modifier
                             .size(120.dp)
@@ -394,26 +425,20 @@ private fun ProfileHeader(
 }
 
 /**
- * Card de Nível e XP com barra de progresso
+ * Card de Nível e XP - VERSÃO ESTÁTICA (SEM ANIMAÇÃO)
+ *
+ * Scroll suave requer zero animações durante a rolagem.
+ * Valores são pré-calculados e passados como parâmetros.
  */
 @Composable
-private fun LevelCard(
+private fun StaticLevelCard(
     level: Int,
-    totalXP: Long,
+    currentXP: Long,
+    xpPercentage: Int,
+    levelTitle: String,
+    motivationalMessage: String,
     onClick: () -> Unit
 ) {
-    val (currentXP, neededXP) = LevelHelper.getProgressInCurrentLevel(totalXP)
-    val percentage = LevelHelper.getProgressPercentage(totalXP)
-    val levelTitle = LevelHelper.getLevelTitle(level)
-    val motivationalMessage = LevelHelper.getMotivationalMessage(totalXP)
-
-    // Animação da barra de progresso
-    val animatedProgress by animateFloatAsState(
-        targetValue = percentage / 100f,
-        animationSpec = tween(durationMillis = 1200),
-        label = "xp_progress"
-    )
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -456,36 +481,34 @@ private fun LevelCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Barra de progresso
-            Column {
-                LinearProgressIndicator(
-                    progress = { animatedProgress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    color = GamificationColors.XpGreen,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            // Barra de progresso ESTÁTICA
+            LinearProgressIndicator(
+                progress = { xpPercentage / 100f },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp)),
+                color = GamificationColors.XpGreen,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "$currentXP XP",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "$currentXP XP",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = "$percentage%",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+                Text(
+                    text = "$xpPercentage%",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -582,10 +605,12 @@ private fun FieldTypeIcon(
 }
 
 /**
- * Card de ratings por posição
+ * Card de ratings por posição - VERSÃO ESTÁTICA (SEM ANIMAÇÃO)
+ *
+ * Ratings são pré-calculados e exibidos diretamente sem animação.
  */
 @Composable
-private fun RatingsCard(user: User) {
+private fun StaticRatingsCard(ratings: List<RatingData>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
@@ -603,51 +628,38 @@ private fun RatingsCard(user: User) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            RatingItem(
-                label = "Atacante",
-                rating = user.getEffectiveRating(PlayerRatingRole.STRIKER),
-                icon = Icons.Default.SportsSoccer
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            RatingItem(
-                label = "Meio-Campo",
-                rating = user.getEffectiveRating(PlayerRatingRole.MID),
-                icon = Icons.AutoMirrored.Filled.DirectionsRun
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            RatingItem(
-                label = "Defensor",
-                rating = user.getEffectiveRating(PlayerRatingRole.DEFENDER),
-                icon = Icons.Default.Shield
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            RatingItem(
-                label = "Goleiro",
-                rating = user.getEffectiveRating(PlayerRatingRole.GOALKEEPER),
-                icon = Icons.Default.SportsKabaddi
-            )
+            ratings.forEachIndexed { index, ratingData ->
+                if (index > 0) Spacer(modifier = Modifier.height(12.dp))
+                StaticRatingItem(
+                    label = ratingData.label,
+                    rating = ratingData.rating,
+                    icon = ratingData.icon
+                )
+            }
         }
     }
 }
 
 /**
- * Item de rating individual com animação
+ * Dados de rating para estabilização
+ */
+private data class RatingData(
+    val label: String,
+    val rating: Double,
+    val icon: ImageVector
+)
+
+/**
+ * Item de rating ESTÁTICO (SEM ANIMAÇÃO)
+ *
+ * Exibe diretamente o valor sem animação para scroll perfeito.
  */
 @Composable
-private fun RatingItem(
+private fun StaticRatingItem(
     label: String,
     rating: Double,
     icon: ImageVector
 ) {
-    val animatedRating by animateFloatAsState(
-        targetValue = rating.toFloat(),
-        animationSpec = tween(durationMillis = 1000),
-        label = "rating_$label"
-    )
-
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -672,7 +684,7 @@ private fun RatingItem(
             }
 
             Text(
-                text = String.format(Locale.getDefault(), "%.1f", animatedRating),
+                text = String.format(Locale.getDefault(), "%.1f", rating),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -682,7 +694,7 @@ private fun RatingItem(
         Spacer(modifier = Modifier.height(6.dp))
 
         LinearProgressIndicator(
-            progress = { (animatedRating / 5f).coerceIn(0f, 1f) },
+            progress = { (rating.toFloat() / 5f).coerceIn(0f, 1f) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(6.dp)

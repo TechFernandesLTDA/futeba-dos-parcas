@@ -35,8 +35,8 @@ data class SeedColors(
  */
 data class AppThemeConfig(
     val seedColors: SeedColors = SeedColors(
-        primary = 0x58CC02, // Verde Futeba (RGB: 88, 204, 2)
-        secondary = 0xFF9600 // Laranja Badge (RGB: 255, 150, 0)
+        primary = 0xFF58CC02.toInt(), // Verde Futeba (ARGB: FF 58 CC 02)
+        secondary = 0xFFFF9600.toInt() // Laranja Badge (ARGB: FF FF 96 00)
     ),
     val mode: ThemeMode = ThemeMode.LIGHT,
     val contrastLevel: ContrastLevel = ContrastLevel.NORMAL

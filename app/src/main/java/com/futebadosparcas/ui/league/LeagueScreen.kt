@@ -523,7 +523,7 @@ fun DivisionSelector(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        "• XP/jogo (40%)\n• Taxa de vitória (30%)\n• Saldo de gols (20%)\n• MVPs (10%)",
+                        stringResource(R.string.league_rating_components),
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -638,15 +638,22 @@ fun RankingListItem(
                     .size(32.dp)
                     .clip(CircleShape)
                     .background(
-                        if (position <= 3) getRankColor(position) 
+                        if (position <= 3) getRankColor(position)
                         else MaterialTheme.colorScheme.surfaceVariant
                     ),
                 contentAlignment = Alignment.Center
             ) {
+                val backgroundColor = if (position <= 3) getRankColor(position)
+                                     else MaterialTheme.colorScheme.surfaceVariant
+
                 Text(
                     text = position.toString(),
                     fontWeight = FontWeight.Bold,
-                    color = if (position <= 3) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (position <= 3) {
+                        com.futebadosparcas.util.ContrastHelper.getContrastingTextColor(backgroundColor)
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     fontSize = 14.sp
                 )
             }
@@ -753,7 +760,7 @@ fun getRankColor(position: Int): Color {
         1 -> GamificationColors.Gold
         2 -> GamificationColors.Silver
         3 -> GamificationColors.Bronze
-        else -> Color.Gray
+        else -> Color.Transparent  // Não usado - MaterialTheme.colorScheme.surfaceVariant é usado no código
     }
 }
 

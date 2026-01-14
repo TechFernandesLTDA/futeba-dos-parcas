@@ -199,6 +199,9 @@ class GameRepositoryImpl @Inject constructor(
     override suspend fun summonPlayers(gameId: String, confirmations: List<AndroidGameConfirmation>): Result<Unit> =
         confirmationRepository.summonPlayers(gameId, confirmations.map { it.toKmpModel() })
 
+    override suspend fun acceptInvitation(gameId: String, position: String): Result<AndroidGameConfirmation> =
+        confirmationRepository.acceptInvitation(gameId, position).map { it.toAndroidModel() }
+
     // ========== Events Methods - Delegação para GameEventsRepository ==========
     override fun getGameEventsFlow(gameId: String): Flow<Result<List<GameEvent>>> =
         eventsRepository.getGameEventsFlow(gameId)

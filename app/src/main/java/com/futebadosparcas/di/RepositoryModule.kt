@@ -7,6 +7,8 @@ import com.futebadosparcas.data.database.DatabaseFactory
 import com.futebadosparcas.data.repository.LiveGameRepositoryImpl
 import com.futebadosparcas.data.repository.UserRepositoryImpl
 import com.futebadosparcas.db.FutebaDatabase
+import com.futebadosparcas.domain.repository.GroupRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.storage.PreferencesService
 import com.google.firebase.auth.FirebaseAuth
@@ -148,9 +150,10 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideGroupRepository(
-        firebaseDataSource: FirebaseDataSource
-    ): com.futebadosparcas.domain.repository.GroupRepository {
-        return com.futebadosparcas.data.GroupRepositoryImpl(firebaseDataSource)
+        firebaseDataSource: FirebaseDataSource,
+        userRepository: UserRepository
+    ): GroupRepository {
+        return GroupRepositoryImpl(firebaseDataSource, userRepository)
     }
 
     @Provides

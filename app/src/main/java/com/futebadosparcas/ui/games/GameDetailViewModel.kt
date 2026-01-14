@@ -10,8 +10,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 import java.time.*
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
@@ -41,6 +44,7 @@ class GameDetailViewModel @Inject constructor(
     private var gameId: String? = null
     private var gameDetailsJob: Job? = null
 
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
     fun loadGameDetails(id: String) {
         if (id.isEmpty()) {
             _uiState.value = GameDetailUiState.Error("ID do jogo inválido")
@@ -63,7 +67,12 @@ class GameDetailViewModel @Inject constructor(
                     gameRepository.getLiveScoreFlow(id)
                 ) { gameResult, confirmationsResult, eventsResult, teamsResult, liveScore ->
                     CombinedData(gameResult, confirmationsResult, eventsResult, teamsResult, liveScore)
-                }.collect { data ->
+                }
+                .catch { e ->
+                    AppLogger.e(TAG, "Erro no combine de Flows", e)
+                    _uiState.value = GameDetailUiState.Error(e.message ?: "Erro ao carregar jogo")
+                }
+                .collect { data ->
                     val gameResult = data.gameResult
                     val confirmationsResult = data.confirmationsResult
                     val eventsResult = data.eventsResult
@@ -173,7 +182,14 @@ class GameDetailViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            val result = gameRepository.confirmPresence(gameId, position.name, false)
+            // Se usuario ja tem convite (PENDING), aceitar o convite
+            // Caso contrario, criar nova confirmacao
+            val result = if (currentState.isUserPending) {
+                gameRepository.acceptInvitation(gameId, position.name)
+            } else {
+                gameRepository.confirmPresence(gameId, position.name, false)
+            }
+
             if (result.isFailure) {
                 _uiState.value = currentState.copy(
                     userMessage = "Erro ao atualizar presença: ${result.exceptionOrNull()?.message}"

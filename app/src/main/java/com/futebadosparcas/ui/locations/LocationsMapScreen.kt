@@ -10,6 +10,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.R
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
@@ -35,19 +37,19 @@ fun LocationsMapScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mapa de Locais") },
+                title = { Text(stringResource(R.string.locations_map_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
+                            contentDescription = stringResource(R.string.locations_map_back)
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -150,12 +152,12 @@ private fun EmptyState() {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Nenhum local cadastrado",
+                text = stringResource(R.string.locations_map_no_locations),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Adicione locais para vê-los no mapa",
+                text = stringResource(R.string.locations_map_add_first),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -178,7 +180,7 @@ private fun ErrorState(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Erro ao carregar locais",
+                text = stringResource(R.string.locations_map_error_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.error
             )
@@ -188,7 +190,7 @@ private fun ErrorState(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Button(onClick = onRetry) {
-                Text("Tentar Novamente")
+                Text(stringResource(R.string.locations_map_retry))
             }
         }
     }

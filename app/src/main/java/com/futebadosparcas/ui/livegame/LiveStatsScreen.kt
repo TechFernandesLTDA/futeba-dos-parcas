@@ -16,14 +16,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.data.model.LivePlayerStats
+import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.util.ContrastHelper
 
 /**
  * LiveStatsScreen - Exibe estatísticas ao vivo dos jogadores
@@ -186,7 +187,7 @@ private fun PlayerStatsCard(
                             color = MaterialTheme.colorScheme.errorContainer
                         ) {
                             Text(
-                                text = "SAIU",
+                                text = stringResource(R.string.live_game_substituted_out),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
@@ -242,7 +243,7 @@ private fun PlayerStatsCard(
                                         text = "×${stats.yellowCards}",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = androidx.compose.ui.graphics.Color.Black,
+                                        color = ContrastHelper.getContrastingTextColor(com.futebadosparcas.ui.theme.MatchEventColors.YellowCard),
                                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
                                         fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.8f
                                     )
@@ -258,7 +259,7 @@ private fun PlayerStatsCard(
                                         text = "×${stats.redCards}",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = androidx.compose.ui.graphics.Color.White,
+                                        color = ContrastHelper.getContrastingTextColor(com.futebadosparcas.ui.theme.MatchEventColors.RedCard),
                                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
                                         fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.8f
                                     )
@@ -338,13 +339,13 @@ private fun LiveStatsEmptyState() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.no_stats),
+            text = stringResource(R.string.live_game_no_stats),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
-            text = stringResource(R.string.no_stats_description),
+            text = stringResource(R.string.live_game_no_stats_description),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)

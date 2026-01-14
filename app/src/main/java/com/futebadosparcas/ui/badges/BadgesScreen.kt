@@ -1,7 +1,20 @@
 package com.futebadosparcas.ui.badges
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,7 +32,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -202,12 +214,10 @@ private fun BadgeProgressHeader(
         (totalUnlocked.toFloat() / totalAvailable * 100).toInt()
     } else 0
 
-    // Animação do progresso
-    val animatedProgress by animateFloatAsState(
-        targetValue = totalUnlocked.toFloat() / totalAvailable,
-        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
-        label = "progress_animation"
-    )
+    // Valor estático pré-calculado para otimização de scroll
+    val staticProgress = if (totalAvailable > 0) {
+        totalUnlocked.toFloat() / totalAvailable
+    } else 0f
 
     Card(
         modifier = Modifier
@@ -239,7 +249,7 @@ private fun BadgeProgressHeader(
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
-                    progress = { animatedProgress },
+                    progress = { staticProgress },
                     modifier = Modifier.size(120.dp),
                     strokeWidth = 8.dp,
                     color = MaterialTheme.colorScheme.primary,
@@ -351,92 +361,80 @@ private fun BadgeCard(
     val badge = badgeWithData.badge
     val rarityColor = getRarityColor(badge.rarity)
 
-    // Animação de entrada
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        visible = true
-    }
-
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn() + scaleIn(),
-        exit = fadeOut() + scaleOut()
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(0.85f)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Card(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(0.85f)
-                .clickable(onClick = onClick),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(
+            // Rarity label
+            BadgeRarityLabel(rarity = badge.rarity)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Badge icon/emoji com borda colorida
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Rarity label
-                BadgeRarityLabel(rarity = badge.rarity)
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Badge icon/emoji com borda colorida
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .border(
-                            width = 3.dp,
-                            color = rarityColor,
-                            shape = CircleShape
-                        )
-                        .background(
-                            color = rarityColor.copy(alpha = 0.1f),
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = getBadgeEmoji(badge.type),
-                        style = MaterialTheme.typography.displayMedium,
-                        textAlign = TextAlign.Center
+                    .size(80.dp)
+                    .border(
+                        width = 3.dp,
+                        color = rarityColor,
+                        shape = CircleShape
                     )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Nome da badge
+                    .background(
+                        color = rarityColor.copy(alpha = 0.1f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
-                    text = badge.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    text = getBadgeEmoji(badge.type),
+                    style = MaterialTheme.typography.displayMedium,
+                    textAlign = TextAlign.Center
                 )
+            }
 
-                // Descrição
-                Text(
-                    text = badge.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.height(36.dp)
-                )
+            Spacer(modifier = Modifier.height(12.dp))
 
-                // Count (se > 1)
-                if (badgeWithData.userBadge.count > 1) {
-                    BadgeCountChip(count = badgeWithData.userBadge.count)
-                } else {
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
+            // Nome da badge
+            Text(
+                text = badge.name,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            // Descrição
+            Text(
+                text = badge.description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.height(36.dp)
+            )
+
+            // Count (se > 1)
+            if (badgeWithData.userBadge.count > 1) {
+                BadgeCountChip(count = badgeWithData.userBadge.count)
+            } else {
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -516,26 +514,9 @@ private fun BadgeDetailDialog(
     val userBadge = badgeWithData.userBadge
     val rarityColor = getRarityColor(badge.rarity)
 
-    // Animação de escala ao abrir
-    var animationPlayed by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (animationPlayed) 1f else 0.8f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "badge_dialog_scale"
-    )
-
-    LaunchedEffect(Unit) {
-        animationPlayed = true
-    }
-
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .scale(scale),
+            modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface

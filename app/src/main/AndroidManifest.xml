@@ -72,7 +72,9 @@
             android:name=".ui.main.MainActivityCompose"
             android:exported="false"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.FutebaDosParcas" />
+            android:theme="@style/Theme.FutebaDosParcas"
+            android:resizeableActivity="true"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation" />
 
         <service
             android:name=".service.FcmService"

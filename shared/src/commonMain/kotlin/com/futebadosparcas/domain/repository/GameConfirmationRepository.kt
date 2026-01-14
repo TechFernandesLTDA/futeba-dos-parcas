@@ -66,4 +66,20 @@ interface GameConfirmationRepository {
      * Flow que observa confirmacoes de um usuario em tempo real.
      */
     fun getUserConfirmationsFlow(userId: String): Flow<Set<String>>
+
+    /**
+     * Aceita um convite para jogo (atualiza status de PENDING para CONFIRMED).
+     */
+    suspend fun acceptInvitation(
+        gameId: String,
+        position: String = "FIELD"
+    ): Result<GameConfirmation>
+
+    /**
+     * Atualiza o status da confirmacao (para aceitar/recusar convite).
+     */
+    suspend fun updateConfirmationStatus(
+        gameId: String,
+        status: String
+    ): Result<Unit>
 }

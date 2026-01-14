@@ -81,7 +81,7 @@ fun StreakWidget(
                 Icon(
                     imageVector = Icons.Default.LocalFireDepartment,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(iconSize)
                 )
             }

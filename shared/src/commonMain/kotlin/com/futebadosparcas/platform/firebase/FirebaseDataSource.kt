@@ -52,6 +52,16 @@ expect class FirebaseDataSource {
         isPaid: Boolean
     ): Result<Unit>
     suspend fun summonPlayers(gameId: String, confirmations: List<GameConfirmation>): Result<Unit>
+    suspend fun acceptInvitation(
+        gameId: String,
+        userId: String,
+        position: String
+    ): Result<GameConfirmation>
+    suspend fun updateConfirmationStatus(
+        gameId: String,
+        userId: String,
+        status: String
+    ): Result<Unit>
 
     // ========== TEAMS ==========
 

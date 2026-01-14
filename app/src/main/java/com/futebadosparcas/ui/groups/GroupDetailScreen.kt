@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.util.ContrastHelper
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.futebadosparcas.R
@@ -295,17 +296,19 @@ private fun GroupDetailTopBar(
             }
         },
         actions = {
-            IconButton(onClick = { showMenu = true }) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = stringResource(R.string.more_options)
-                )
-            }
+            // Box para ancorar o DropdownMenu ao IconButton
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = stringResource(R.string.more_options)
+                    )
+                }
 
-            DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { showMenu = false }
-            ) {
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
                 // Invite (admin+)
                 if (isOwnerOrAdmin) {
                     DropdownMenuItem(
@@ -421,10 +424,13 @@ private fun GroupDetailTopBar(
                     )
                 }
             }
+            }
         },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }
@@ -660,6 +666,11 @@ private fun EnhancedGroupHeader(
                             else -> MaterialTheme.colorScheme.secondary
                         }
                     ) {
+                        val medalColor = when (myRole) {
+                            GroupMemberRole.OWNER -> GamificationColors.Gold
+                            GroupMemberRole.ADMIN -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.secondary
+                        }
                         Icon(
                             imageVector = when (myRole) {
                                 GroupMemberRole.OWNER -> Icons.Default.Star
@@ -668,7 +679,7 @@ private fun EnhancedGroupHeader(
                             },
                             contentDescription = null,
                             modifier = Modifier.size(14.dp),
-                            tint = Color.White
+                            tint = ContrastHelper.getContrastingTextColor(medalColor)
                         )
                     }
                 }
@@ -706,8 +717,8 @@ private fun EnhancedGroupHeader(
                     onClick = { },
                     label = {
                         val memberCountText = when (membersCount) {
-                            1 -> "1 membro"
-                            else -> "$membersCount membros"
+                            1 -> stringResource(R.string.groups_member_count_one, membersCount)
+                            else -> stringResource(R.string.groups_member_count_many, membersCount)
                         }
                         Text(memberCountText)
                     },
@@ -737,22 +748,22 @@ private fun EnhancedGroupHeader(
 private fun RoleBadgeChip(myRole: GroupMemberRole?) {
     val (text, icon, color) = when (myRole) {
         GroupMemberRole.OWNER -> Triple(
-            stringResource(R.string.role_owner),
+            stringResource(R.string.groups_role_owner),
             Icons.Default.Star,
             GamificationColors.Gold
         )
         GroupMemberRole.ADMIN -> Triple(
-            stringResource(R.string.role_admin),
+            stringResource(R.string.groups_role_admin),
             Icons.Default.Shield,
             MaterialTheme.colorScheme.primary
         )
         GroupMemberRole.MEMBER -> Triple(
-            stringResource(R.string.role_member),
+            stringResource(R.string.groups_role_member),
             Icons.Default.Person,
             MaterialTheme.colorScheme.secondary
         )
         null -> Triple(
-            stringResource(R.string.role_visitor),
+            stringResource(R.string.groups_role_visitor),
             Icons.Default.Visibility,
             MaterialTheme.colorScheme.surfaceVariant
         )
@@ -826,7 +837,7 @@ private fun MembersSectionHeader(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Gerenciar",
+                    text = stringResource(R.string.groups_manage),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -867,14 +878,14 @@ private fun EmptyMembersState(
             )
 
             Text(
-                text = "Nenhum membro ainda",
+                text = stringResource(R.string.groups_no_members_yet),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Text(
-                text = "Convide jogadores para começar a organizar jogos",
+                text = stringResource(R.string.groups_invite_to_start),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -889,7 +900,7 @@ private fun EmptyMembersState(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Convidar Jogadores")
+                    Text(stringResource(R.string.groups_invite_players))
                 }
             }
         }
@@ -1034,9 +1045,9 @@ private fun GroupMemberListItem(
         photoUrl = member.userPhoto,
         name = member.getDisplayName(),
         role = when (memberRole) {
-            GroupMemberRole.OWNER -> stringResource(R.string.role_owner)
-            GroupMemberRole.ADMIN -> stringResource(R.string.role_admin)
-            GroupMemberRole.MEMBER -> stringResource(R.string.role_member)
+            GroupMemberRole.OWNER -> stringResource(R.string.groups_role_owner)
+            GroupMemberRole.ADMIN -> stringResource(R.string.groups_role_admin)
+            GroupMemberRole.MEMBER -> stringResource(R.string.groups_role_member)
         },
         roleIcon = when (memberRole) {
             GroupMemberRole.OWNER -> Icons.Default.Star

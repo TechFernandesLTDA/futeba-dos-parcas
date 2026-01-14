@@ -6,7 +6,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -21,58 +20,37 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.futebadosparcas.domain.model.GamificationSettings
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GamificationSettingsScreen(
     viewModel: SettingsViewModel,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val scrollState = rememberScrollState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Configurações da Liga", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        when (val state = uiState) {
+            is SettingsUiState.Loading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
                 )
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            when (val state = uiState) {
-                is SettingsUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                        color = MaterialTheme.colorScheme.primary
-                    )
+            }
+            is SettingsUiState.Success -> {
+                SettingsForm(state.settings) { updated ->
+                    viewModel.saveSettings(updated)
                 }
-                is SettingsUiState.Success -> {
-                    SettingsForm(state.settings) { updated ->
-                        viewModel.saveSettings(updated)
-                    }
-                }
-                is SettingsUiState.Error -> {
-                    ErrorMessage(state.message) { viewModel.loadSettings() }
-                }
-                is SettingsUiState.Saved -> {
-                    SuccessMessage {
-                        viewModel.resetState()
-                        onBack()
-                    }
+            }
+            is SettingsUiState.Error -> {
+                ErrorMessage(state.message) { viewModel.loadSettings() }
+            }
+            is SettingsUiState.Saved -> {
+                SuccessMessage {
+                    viewModel.resetState()
+                    onBack()
                 }
             }
         }
@@ -95,13 +73,13 @@ fun SettingsForm(
     ) {
         // Categoria: Partida e Resultado
         SectionCard(title = "Partida e Resultado", icon = Icons.Filled.EmojiEvents) {
-            SettingsInput("Vitoria", settings.xpWin, Icons.Filled.CheckCircle) { settings = settings.copy(xpWin = it) }
+            SettingsInput("Vitória", settings.xpWin, Icons.Filled.CheckCircle) { settings = settings.copy(xpWin = it) }
             SettingsInput("Empate", settings.xpDraw, Icons.Filled.RemoveCircle) { settings = settings.copy(xpDraw = it) }
             SettingsInput("Presença", settings.xpPresence, Icons.Filled.Person) { settings = settings.copy(xpPresence = it) }
             SettingsInput("MVP", settings.xpMvp, Icons.Filled.Star) { settings = settings.copy(xpMvp = it) }
         }
 
-        // Categoria: Acões Técnicas
+        // Categoria: Ações Técnicas
         SectionCard(title = "Ações Técnicas", icon = Icons.Filled.SportsFootball) {
             SettingsInput("Ponto por Gol", settings.xpPerGoal, Icons.Filled.AddCircle) { settings = settings.copy(xpPerGoal = it) }
             SettingsInput("Ponto por Assistência", settings.xpPerAssist, Icons.Filled.Handshake) { settings = settings.copy(xpPerAssist = it) }

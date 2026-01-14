@@ -6,7 +6,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,6 +15,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.R
 
 /**
  * DeveloperScreen - Ferramentas de Geração e Análise de Dados
@@ -32,11 +33,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
  * - Estados de loading e erro
  * - Mensagens de sucesso/erro
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeveloperScreen(
-    viewModel: DeveloperViewModel,
-    onNavigateBack: () -> Unit = {}
+    viewModel: DeveloperViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -54,39 +53,17 @@ fun DeveloperScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Developer Tools") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
-    ) { paddingValues ->
-        Box(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
                 // ========== GERAÇÃO DE DADOS ==========
                 Text(
-                    text = "Geração de Dados",
+                    text = stringResource(R.string.developer_data_generation),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -94,8 +71,8 @@ fun DeveloperScreen(
                 )
 
                 DeveloperActionCard(
-                    title = "Gerar Dados Mock",
-                    description = "Cria dados históricos mockados (jogos, estatísticas, XP)",
+                    title = stringResource(R.string.developer_generate_mock),
+                    description = stringResource(R.string.developer_generate_mock_desc),
                     icon = Icons.Default.AddCircle,
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -104,8 +81,8 @@ fun DeveloperScreen(
                 )
 
                 DeveloperActionCard(
-                    title = "Popular Quadras",
-                    description = "Adiciona quadras a todos os locais existentes",
+                    title = stringResource(R.string.developer_populate_fields),
+                    description = stringResource(R.string.developer_populate_fields_desc),
                     icon = Icons.Default.Stadium,
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -115,7 +92,7 @@ fun DeveloperScreen(
 
                 // ========== ANÁLISE ==========
                 Text(
-                    text = "Análise",
+                    text = stringResource(R.string.developer_analysis),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -123,8 +100,8 @@ fun DeveloperScreen(
                 )
 
                 DeveloperActionCard(
-                    title = "Analisar Firestore",
-                    description = "Gera relatório completo do banco (ver Logcat)",
+                    title = stringResource(R.string.developer_analyze_firestore),
+                    description = stringResource(R.string.developer_analyze_firestore_desc),
                     icon = Icons.Default.Analytics,
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -134,7 +111,7 @@ fun DeveloperScreen(
 
                 // ========== LIMPEZA ==========
                 Text(
-                    text = "Limpeza de Dados",
+                    text = stringResource(R.string.developer_data_cleanup),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.error,
@@ -142,8 +119,8 @@ fun DeveloperScreen(
                 )
 
                 DeveloperActionCard(
-                    title = "Limpar Dados Inválidos",
-                    description = "Remove jogos inválidos, stats mock e invites pendentes",
+                    title = stringResource(R.string.developer_clean_invalid),
+                    description = stringResource(R.string.developer_clean_invalid_desc),
                     icon = Icons.Default.CleaningServices,
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -151,40 +128,37 @@ fun DeveloperScreen(
                     enabled = uiState !is DeveloperUiState.Loading
                 )
 
-                // Bottom spacing
-                Spacer(modifier = Modifier.height(32.dp))
-            }
+            // Bottom spacing
+            Spacer(modifier = Modifier.height(32.dp))
+        }
 
-            // Loading overlay
-            if (uiState is DeveloperUiState.Loading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
+        // Loading overlay
+        if (uiState is DeveloperUiState.Loading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier.padding(32.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
                 ) {
-                    Card(
+                    Column(
                         modifier = Modifier.padding(32.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(48.dp),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                text = "Processando...",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(48.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = stringResource(R.string.developer_processing),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }
@@ -259,7 +233,7 @@ private fun DeveloperActionCard(
 
             Icon(
                 imageVector = Icons.Default.PlayArrow,
-                contentDescription = "Executar",
+                contentDescription = stringResource(R.string.developer_cd_execute),
                 tint = contentColor,
                 modifier = Modifier.size(28.dp)
             )

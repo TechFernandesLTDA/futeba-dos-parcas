@@ -1,0 +1,39 @@
+# Podfile para Futeba dos Parças iOS
+# Usar CocoaPods para gerenciar dependências nativas
+
+platform :ios, '15.0'
+
+use_frameworks!
+inhibit_all_warnings!
+
+target 'FutebaDosParcas-ios' do
+  pod 'FirebaseAnalytics'
+  pod 'FirebaseAuth'
+  pod 'FirebaseFirestore'
+  pod 'FirebaseStorage'
+  pod 'FirebaseMessaging'
+  pod 'FirebaseCrashlytics'
+
+  # Google Sign In
+  pod 'GoogleSignIn', '~> 7.0'
+
+  # Apple Sign In
+  pod 'AuthenticationServices', '~> 1.0'
+
+  # Facebook Sign In (opcional)
+  # pod 'FBSDKLoginKit'
+
+  # Utilitários
+  pod 'SDWebImage', '~> 5.18'  # Image loading e caching
+  pod 'SwiftLint', '~> 0.54'   # Linting (development)
+
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+    end
+  end
+end

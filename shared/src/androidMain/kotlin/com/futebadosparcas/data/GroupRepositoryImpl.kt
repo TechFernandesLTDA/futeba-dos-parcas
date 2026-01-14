@@ -5,6 +5,7 @@ import com.futebadosparcas.domain.model.GroupMember
 import com.futebadosparcas.domain.model.GroupMemberRole
 import com.futebadosparcas.domain.model.UserGroup
 import com.futebadosparcas.domain.repository.GroupRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.logging.PlatformLogger
 import kotlinx.coroutines.flow.Flow
@@ -17,7 +18,8 @@ import kotlinx.coroutines.flow.map
  * Gerencia grupos de pelada incluindo criação, edição, membros e permissões.
  */
 class GroupRepositoryImpl(
-    private val firebaseDataSource: FirebaseDataSource
+    private val firebaseDataSource: FirebaseDataSource,
+    private val userRepository: UserRepository
 ) : GroupRepository {
 
     companion object {
@@ -95,7 +97,17 @@ class GroupRepositoryImpl(
             val updates = mutableMapOf<String, Any>()
             updates["name"] = name
             updates["description"] = description
-            // TODO: Handle photoUri upload
+
+            // Fazer upload da foto se fornecida
+            if (photoUri != null) {
+                val uploadResult = firebaseDataSource.uploadGroupPhoto(groupId, photoUri)
+                if (uploadResult.isSuccess) {
+                    uploadResult.getOrNull()?.let { photoUrl ->
+                        updates["photo_url"] = photoUrl
+                    }
+                }
+            }
+
             firebaseDataSource.updateGroup(groupId, updates)
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao atualizar grupo", e)
@@ -195,8 +207,12 @@ class GroupRepositoryImpl(
 
     override suspend fun getMyRoleInGroup(groupId: String): Result<GroupMemberRole?> {
         return try {
-            // TODO: Implementar no FirebaseDataSource
-            Result.success(null)
+            val userId = firebaseDataSource.getCurrentAuthUserId() ?: throw Exception("Usuario nao autenticado")
+            val roleResult = firebaseDataSource.getMyRoleInGroup(groupId, userId)
+
+            roleResult.map { roleString ->
+                roleString?.let { GroupMemberRole.valueOf(it) }
+            }
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao buscar role", e)
             Result.failure(e)
@@ -205,8 +221,8 @@ class GroupRepositoryImpl(
 
     override suspend fun isMemberOfGroup(groupId: String): Result<Boolean> {
         return try {
-            // TODO: Implementar no FirebaseDataSource
-            Result.success(false)
+            val userId = firebaseDataSource.getCurrentAuthUserId() ?: throw Exception("Usuario nao autenticado")
+            firebaseDataSource.isMemberOfGroup(groupId, userId)
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao verificar membro", e)
             Result.failure(e)
@@ -219,8 +235,15 @@ class GroupRepositoryImpl(
         return try {
             PlatformLogger.d(TAG, "Entrando no grupo com código: $inviteCode")
             val userId = firebaseDataSource.getCurrentAuthUserId() ?: throw Exception("Usuario nao autenticado")
-            // TODO: Precisamos obter userName e userPhoto tambem
-            firebaseDataSource.joinGroupByInviteCode(inviteCode, userId, "", null)
+
+            // Obter dados do usuário atual
+            val userResult = userRepository.getUserById(userId)
+            if (userResult.isFailure) {
+                return Result.failure(userResult.exceptionOrNull() ?: Exception("Falha ao obter dados do usuario"))
+            }
+
+            val user = userResult.getOrNull()!!
+            firebaseDataSource.joinGroupByInviteCode(inviteCode, userId, user.name, user.photoUrl)
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao entrar com código", e)
             Result.failure(e)
@@ -284,8 +307,15 @@ class GroupRepositoryImpl(
         return try {
             PlatformLogger.d(TAG, "Transferindo propriedade do grupo $groupId para $newOwnerId")
             val currentUserId = firebaseDataSource.getCurrentAuthUserId() ?: throw Exception("Usuario nao autenticado")
-            // TODO: Precisamos obter newOwnerName tambem
-            firebaseDataSource.transferGroupOwnership(groupId, newOwnerId, currentUserId, "")
+
+            // Obter nome do novo proprietário
+            val newOwnerResult = userRepository.getUserById(newOwnerId)
+            if (newOwnerResult.isFailure) {
+                return Result.failure(newOwnerResult.exceptionOrNull() ?: Exception("Falha ao obter dados do novo proprietario"))
+            }
+
+            val newOwnerName = newOwnerResult.getOrNull()?.name ?: ""
+            firebaseDataSource.transferGroupOwnership(groupId, newOwnerId, currentUserId, newOwnerName)
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao transferir propriedade", e)
             Result.failure(e)
@@ -297,8 +327,18 @@ class GroupRepositoryImpl(
     override suspend fun getValidGroupsForGame(): Result<List<UserGroup>> {
         return try {
             PlatformLogger.d(TAG, "Buscando grupos válidos para jogos")
-            // TODO: Implementar no FirebaseDataSource
-            Result.success(emptyList())
+            val userId = firebaseDataSource.getCurrentAuthUserId() ?: throw Exception("Usuario nao autenticado")
+
+            // Obter todos os grupos do usuário
+            val userGroups = firebaseDataSource.getUserGroups(userId).getOrNull() ?: emptyList()
+
+            // Filtrar apenas grupos onde usuário é admin/owner
+            val validGroups = userGroups.filter { userGroup ->
+                val role = try { GroupMemberRole.valueOf(userGroup.role) } catch (e: Exception) { GroupMemberRole.MEMBER }
+                role == GroupMemberRole.OWNER || role == GroupMemberRole.ADMIN
+            }
+
+            Result.success(validGroups)
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao buscar grupos válidos", e)
             Result.failure(e)
@@ -307,8 +347,8 @@ class GroupRepositoryImpl(
 
     override suspend fun canCreateGames(): Result<Boolean> {
         return try {
-            // TODO: Implementar no FirebaseDataSource
-            Result.success(false)
+            val userId = firebaseDataSource.getCurrentAuthUserId() ?: throw Exception("Usuario nao autenticado")
+            firebaseDataSource.canCreateGames(userId)
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao verificar se pode criar jogos", e)
             Result.failure(e)
@@ -317,8 +357,8 @@ class GroupRepositoryImpl(
 
     override suspend fun countMyAdminGroups(): Result<Int> {
         return try {
-            // TODO: Implementar no FirebaseDataSource
-            Result.success(0)
+            val userId = firebaseDataSource.getCurrentAuthUserId() ?: throw Exception("Usuario nao autenticado")
+            firebaseDataSource.countMyAdminGroups(userId)
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao contar grupos admin", e)
             Result.failure(e)
@@ -330,8 +370,15 @@ class GroupRepositoryImpl(
     override suspend fun syncGroupMemberCount(groupId: String): Result<Unit> {
         return try {
             PlatformLogger.d(TAG, "Sincronizando member_count do grupo: $groupId")
-            // TODO: Precisamos da lista de userIds
-            firebaseDataSource.syncGroupMemberCount(groupId, emptyList())
+
+            // Obter lista de membros ativos do grupo
+            val userIdsResult = firebaseDataSource.getGroupActiveMemberIds(groupId)
+            if (userIdsResult.isFailure) {
+                return userIdsResult as Result<Unit>
+            }
+
+            val userIds = userIdsResult.getOrNull() ?: emptyList()
+            firebaseDataSource.syncGroupMemberCount(groupId, userIds)
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao sincronizar member_count", e)
             Result.failure(e)
@@ -341,8 +388,8 @@ class GroupRepositoryImpl(
     override suspend fun syncAllMyGroupsMemberCount(): Result<Unit> {
         return try {
             PlatformLogger.d(TAG, "Sincronizando member_count de todos os grupos")
-            // TODO: Implementar no FirebaseDataSource
-            Result.success(Unit)
+            val userId = firebaseDataSource.getCurrentAuthUserId() ?: throw Exception("Usuario nao autenticado")
+            firebaseDataSource.syncAllMyGroupsMemberCount(userId)
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao sincronizar todos os member_counts", e)
             Result.failure(e)
@@ -354,8 +401,7 @@ class GroupRepositoryImpl(
     override suspend fun uploadGroupPhoto(groupId: String, photoPath: String): Result<String> {
         return try {
             PlatformLogger.d(TAG, "Fazendo upload de foto do grupo: $groupId")
-            // TODO: Implementar no FirebaseDataSource
-            Result.success("")
+            firebaseDataSource.uploadGroupPhoto(groupId, photoPath)
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao fazer upload de foto", e)
             Result.failure(e)

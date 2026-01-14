@@ -41,7 +41,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Sports
 
@@ -217,9 +217,9 @@ fun MainScreen(
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            AppNavHost(navController = navController)
-        }
+        // Padding é gerenciado internamente por cada tela via Scaffold individual
+        // para ter controle granular do comportamento de cada destino
+        AppNavHost(navController = navController)
     }
 }
 
@@ -282,7 +282,7 @@ private fun rememberBottomNavItems(): List<BottomNavItem> {
     val homeLabel = stringResource(R.string.nav_home)
     val gamesLabel = stringResource(R.string.nav_games)
     val playersLabel = stringResource(R.string.nav_players)
-    val statisticsLabel = stringResource(R.string.nav_statistics)
+    val leagueLabel = stringResource(R.string.league)
     val profileLabel = stringResource(R.string.nav_profile)
 
     return remember {
@@ -306,10 +306,10 @@ private fun rememberBottomNavItems(): List<BottomNavItem> {
                 screen = Screen.Players
             ),
             BottomNavItem(
-                route = Screen.Statistics.route,
-                icon = Icons.Filled.BarChart,
-                label = statisticsLabel,
-                screen = Screen.Statistics
+                route = Screen.League.route,
+                icon = Icons.Filled.EmojiEvents,
+                label = leagueLabel,
+                screen = Screen.League
             ),
             BottomNavItem(
                 route = Screen.Profile.route,

@@ -1,12 +1,17 @@
 package com.futebadosparcas.ui.statistics
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,6 +42,7 @@ import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.lists.RankingItemShimmer
 import com.futebadosparcas.ui.components.lists.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.util.ContrastHelper
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,7 +133,7 @@ private fun RankingHeader(
         ) {
             Column {
                 Text(
-                    text = stringResource(R.string.fragment_statistics_text_1),
+                    text = stringResource(R.string.statistics_rankings_general),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary
@@ -238,30 +244,13 @@ private fun RankingList(
             items = rankings.drop(3),
             key = { _, item -> item.userId }
         ) { index, player ->
-            val animatedProgress by animateFloatAsState(
-                targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = 400,
-                    delayMillis = index * 20,
-                    easing = FastOutSlowInEasing
-                ),
-                label = "itemAnimation"
+            RankingItem(
+                rank = index + 4,
+                player = player,
+                category = category,
+                isCurrentUser = player.userId == getCurrentUserId(),
+                onClick = { onPlayerClick(player.userId) }
             )
-
-            Box(
-                modifier = Modifier.graphicsLayer(
-                    alpha = animatedProgress,
-                    translationY = (1f - animatedProgress) * 30f
-                )
-            ) {
-                RankingItem(
-                    rank = index + 4,
-                    player = player,
-                    category = category,
-                    isCurrentUser = player.userId == getCurrentUserId(),
-                    onClick = { onPlayerClick(player.userId) }
-                )
-            }
         }
     }
 }
@@ -362,7 +351,7 @@ private fun PodiumPlayer(
                 },
                 fontSize = fontSize,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = ContrastHelper.getContrastingTextColor(badgeColor)
             )
         }
 
@@ -540,7 +529,7 @@ private fun RankBadge(rank: Int) {
     }
 
     val contentColor = when (rank) {
-        1, 2, 3 -> Color.White
+        1, 2, 3 -> ContrastHelper.getContrastingTextColor(backgroundColor)
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -771,12 +760,13 @@ private fun getCategoryUnit(category: RankingCategory): String {
     }
 }
 
+@Composable
 private fun getRankColor(position: Int): Color {
     return when (position) {
         1 -> GamificationColors.Gold
         2 -> GamificationColors.Silver
         3 -> GamificationColors.Bronze
-        else -> Color.Gray
+        else -> MaterialTheme.colorScheme.surfaceVariant
     }
 }
 

@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.futebadosparcas.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -36,12 +37,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.util.LevelBadgeHelper
 
 /**
@@ -59,6 +60,7 @@ fun StatisticsScreen(
     viewModel: StatisticsViewModel = hiltViewModel(),
     onNavigateToRanking: () -> Unit,
     onNavigateToEvolution: () -> Unit,
+    onNavigateToLeague: () -> Unit = {},
     onPlayerClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -69,6 +71,7 @@ fun StatisticsScreen(
         onRefresh = { viewModel.loadStatistics() },
         onNavigateToRanking = onNavigateToRanking,
         onNavigateToEvolution = onNavigateToEvolution,
+        onNavigateToLeague = onNavigateToLeague,
         onPlayerClick = onPlayerClick,
         modifier = modifier
     )
@@ -81,6 +84,7 @@ private fun StatisticsContent(
     onRefresh: () -> Unit,
     onNavigateToRanking: () -> Unit,
     onNavigateToEvolution: () -> Unit,
+    onNavigateToLeague: () -> Unit,
     onPlayerClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -100,6 +104,7 @@ private fun StatisticsContent(
                     statistics = uiState.statistics,
                     onNavigateToRanking = onNavigateToRanking,
                     onNavigateToEvolution = onNavigateToEvolution,
+                    onNavigateToLeague = onNavigateToLeague,
                     onPlayerClick = onPlayerClick
                 )
             }
@@ -230,6 +235,7 @@ private fun StatisticsSuccessContent(
     statistics: CombinedStatistics,
     onNavigateToRanking: () -> Unit,
     onNavigateToEvolution: () -> Unit,
+    onNavigateToLeague: () -> Unit,
     onPlayerClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -243,7 +249,7 @@ private fun StatisticsSuccessContent(
         // Título
         item {
             Text(
-                text = stringResource(R.string.my_statistics),
+                text = stringResource(R.string.statistics_my_stats),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -254,7 +260,8 @@ private fun StatisticsSuccessContent(
         item {
             NavigationButtons(
                 onNavigateToRanking = onNavigateToRanking,
-                onNavigateToEvolution = onNavigateToEvolution
+                onNavigateToEvolution = onNavigateToEvolution,
+                onNavigateToLeague = onNavigateToLeague
             )
         }
 
@@ -273,7 +280,7 @@ private fun StatisticsSuccessContent(
         // Seção de Rankings
         item {
             Text(
-                text = stringResource(R.string.rankings),
+                text = stringResource(R.string.statistics_rankings_general),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -285,7 +292,7 @@ private fun StatisticsSuccessContent(
         if (statistics.topScorers.isNotEmpty()) {
             item {
                 RankingSection(
-                    title = stringResource(R.string.fragment_statistics_text_7),
+                    title = stringResource(R.string.statistics_top_scorers),
                     rankingItems = statistics.topScorers,
                     icon = Icons.Default.SportsScore,
                     iconTint = MaterialTheme.colorScheme.tertiary,
@@ -298,7 +305,7 @@ private fun StatisticsSuccessContent(
         if (statistics.topGoalkeepers.isNotEmpty()) {
             item {
                 RankingSection(
-                    title = stringResource(R.string.fragment_statistics_text_8),
+                    title = stringResource(R.string.statistics_top_goalkeepers),
                     rankingItems = statistics.topGoalkeepers,
                     icon = Icons.Default.Shield,
                     iconTint = MaterialTheme.colorScheme.secondary,
@@ -311,7 +318,7 @@ private fun StatisticsSuccessContent(
         if (statistics.bestPlayers.isNotEmpty()) {
             item {
                 RankingSection(
-                    title = stringResource(R.string.fragment_statistics_text_9),
+                    title = stringResource(R.string.statistics_best_players),
                     rankingItems = statistics.bestPlayers,
                     icon = Icons.Default.Star,
                     iconTint = GamificationColors.Gold,
@@ -323,42 +330,66 @@ private fun StatisticsSuccessContent(
 }
 
 /**
- * Botões de navegação para Ranking e Evolução
+ * Botões de navegação para Liga, Ranking e Evolução
  */
 @Composable
 private fun NavigationButtons(
     onNavigateToRanking: () -> Unit,
     onNavigateToEvolution: () -> Unit,
+    onNavigateToLeague: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        OutlinedButton(
-            onClick = onNavigateToRanking,
-            modifier = Modifier.weight(1f)
+        // Botão principal: Liga (com seletor de período)
+        Button(
+            onClick = onNavigateToLeague,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
         ) {
             Icon(
-                imageVector = Icons.Default.Leaderboard,
-                contentDescription = stringResource(R.string.fragment_statistics_text_1),
+                imageVector = Icons.Default.EmojiEvents,
+                contentDescription = stringResource(R.string.statistics_league),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.fragment_statistics_text_1))
+            Text(stringResource(R.string.statistics_league))
         }
 
-        OutlinedButton(
-            onClick = onNavigateToEvolution,
-            modifier = Modifier.weight(1f)
+        // Botões secundários: Ranking e Evolução
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.TrendingUp,
-                contentDescription = stringResource(R.string.fragment_statistics_text_2),
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.fragment_statistics_text_2))
+            OutlinedButton(
+                onClick = onNavigateToRanking,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Leaderboard,
+                    contentDescription = stringResource(R.string.statistics_rankings_general),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.statistics_rankings_general))
+            }
+
+            OutlinedButton(
+                onClick = onNavigateToEvolution,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.TrendingUp,
+                    contentDescription = stringResource(R.string.statistics_evolution),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.statistics_evolution))
+            }
         }
     }
 }
@@ -383,7 +414,7 @@ private fun PersonalStatsCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.fragment_statistics_text_3),
+                text = stringResource(R.string.statistics_my_stats),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -419,7 +450,7 @@ private fun PersonalStatsCard(
                     icon = Icons.Default.Star,
                     iconTint = GamificationColors.Gold,
                     value = statistics.bestPlayerCount.toString(),
-                    label = stringResource(R.string.fragment_statistics_text_4),
+                    label = stringResource(R.string.statistics_best_players),
                     modifier = Modifier.weight(1f)
                 )
                 StatItem(
@@ -491,7 +522,7 @@ private fun GoalEvolutionCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.fragment_statistics_text_5),
+                text = stringResource(R.string.statistics_goal_evolution),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -517,6 +548,7 @@ private fun GoalEvolutionChart(
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    val surfaceColor = MaterialTheme.colorScheme.surface
 
     if (data.isEmpty()) {
         Box(
@@ -524,7 +556,7 @@ private fun GoalEvolutionChart(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Sem dados para exibir",
+                text = stringResource(R.string.statistics_no_data),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -618,7 +650,7 @@ private fun GoalEvolutionChart(
                     center = Offset(x, y)
                 )
                 drawCircle(
-                    color = Color.White,
+                    color = surfaceColor,  // Adapta ao tema dark/light
                     radius = 3.dp.toPx(),
                     center = Offset(x, y)
                 )
@@ -741,7 +773,7 @@ private fun RankingItem(
                         text = item.rank.toString(),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (item.rank <= 3) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (item.rank <= 3) ContrastHelper.getContrastingTextColor(rankColor) else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -755,7 +787,7 @@ private fun RankingItem(
                         .data(item.photoUrl)
                         .crossfade(true)
                         .build(),
-                    contentDescription = "Avatar de ${item.playerName}",
+                    contentDescription = stringResource(R.string.statistics_avatar, item.playerName),
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(CircleShape),
@@ -767,7 +799,7 @@ private fun RankingItem(
                 // Badge de nível
                 Image(
                     painter = painterResource(LevelBadgeHelper.getBadgeForLevel(item.level)),
-                    contentDescription = "Badge nível ${item.level}",
+                    contentDescription = stringResource(R.string.statistics_level_badge, item.level),
                     modifier = Modifier
                         .size(20.dp)
                         .align(Alignment.BottomEnd)
@@ -788,7 +820,7 @@ private fun RankingItem(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "${item.gamesPlayed} jogos • Média: ${"%.1f".format(item.average)}",
+                    text = "${item.gamesPlayed} ${stringResource(R.string.statistics_jogos)} • ${stringResource(R.string.statistics_average)}: ${"%.1f".format(item.average)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -806,7 +838,7 @@ private fun RankingItem(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "pts",
+                    text = stringResource(R.string.statistics_points),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

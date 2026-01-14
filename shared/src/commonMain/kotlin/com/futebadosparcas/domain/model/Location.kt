@@ -1,5 +1,6 @@
 package com.futebadosparcas.domain.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -150,13 +151,13 @@ data class LocationWithFields(
 @Serializable
 data class LocationReview(
     val id: String = "",
-    val locationId: String = "",
-    val userId: String = "",
-    val userName: String = "",
-    val userPhotoUrl: String? = null,
+    @SerialName("location_id") val locationId: String = "",
+    @SerialName("user_id") val userId: String = "",
+    @SerialName("user_name") val userName: String = "",
+    @SerialName("user_photo_url") val userPhotoUrl: String? = null,
     val rating: Float = 0f,
     val comment: String = "",
-    val createdAt: Long? = null
+    @SerialName("created_at") val createdAt: Long? = null
 )
 
 /**

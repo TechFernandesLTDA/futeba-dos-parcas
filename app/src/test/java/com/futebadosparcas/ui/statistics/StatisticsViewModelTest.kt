@@ -377,6 +377,6 @@ class StatisticsViewModelTest {
         photoUrl = "",
         level = level,
         experiencePoints = 1000L,
-        createdAt = System.currentTimeMillis()
+        createdAt = Date()
     )
 }

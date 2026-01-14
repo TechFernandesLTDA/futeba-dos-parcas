@@ -8,6 +8,7 @@ import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.LiveGameRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -56,7 +57,12 @@ class LiveGameViewModel @Inject constructor(
 
             combine(gameFlow, scoreFlow) { gameResult, score ->
                 Pair(gameResult, score)
-            }.collect { (gameResult, score) ->
+            }
+            .catch { e ->
+                com.futebadosparcas.util.AppLogger.e("LiveGameViewModel", "Erro no combine de flows", e)
+                _uiState.value = LiveGameUiState.Error(e.message ?: "Erro ao carregar jogo")
+            }
+            .collect { (gameResult, score) ->
                 val game = gameResult.getOrElse {
                     _uiState.value = LiveGameUiState.Error(it.message ?: "Erro ao carregar jogo")
                     return@collect
