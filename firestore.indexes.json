@@ -4,1134 +4,426 @@
       "collectionGroup": "cashbox",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "cashbox",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "type",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "reference_date", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "cashbox",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "category",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "player_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "cashbox",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "reference_date",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "cashbox",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "type",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "reference_date",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "cashbox",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "category",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "reference_date",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "cashbox",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "player_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "cashbox",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "player_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "reference_date",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "player_id", "order": "ASCENDING" },
+        { "fieldPath": "reference_date", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "user_badges",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "unlocked_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "unlocked_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "challenge_progress",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "userId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "challengeId",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "challengeId", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "fields",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "location_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "is_active",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "type",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "location_id", "order": "ASCENDING" },
+        { "fieldPath": "is_active", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "fields",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "location_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "type",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "location_id", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "fields",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "location_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "is_active",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "location_id", "order": "ASCENDING" },
+        { "fieldPath": "is_active", "order": "ASCENDING" },
+        { "fieldPath": "__name__", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "games",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dateTime",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "dateTime", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "games",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "location_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dateTime",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "location_id", "order": "ASCENDING" },
+        { "fieldPath": "dateTime", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "games",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "owner_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dateTime",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "owner_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "dateTime", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "visibility", "order": "ASCENDING" },
+        { "fieldPath": "dateTime", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "visibility", "order": "ASCENDING" },
+        { "fieldPath": "group_id", "order": "ASCENDING" },
+        { "fieldPath": "dateTime", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "games",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "group_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "dateTime", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "confirmations",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "game_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "game_id", "order": "ASCENDING" },
+        { "fieldPath": "user_id", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "confirmations",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "game_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "game_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "confirmations",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "game_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "confirmed_at",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "locations",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "is_active",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "neighborhood",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "is_active", "order": "ASCENDING" },
+        { "fieldPath": "neighborhood", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "locations",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "owner_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "locations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "owner_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "is_active",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "owner_id", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "notifications",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "notifications",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "read",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "read", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "notifications",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "type",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "player_stats",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "game_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "team_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "game_id", "order": "ASCENDING" },
+        { "fieldPath": "team_id", "order": "ASCENDING" },
+        { "fieldPath": "user_id", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "is_searchable",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "is_searchable", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "role", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "xp_logs",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "xp_logs",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "payments",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "ranking_deltas",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "period",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "period_key",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "goals_added",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "ranking_deltas",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "period",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "period_key",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "xp_added",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "period", "order": "ASCENDING" },
+        { "fieldPath": "period_key", "order": "ASCENDING" },
+        { "fieldPath": "xp_added", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "season_participation",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "season_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "points",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "season_id", "order": "ASCENDING" },
+        { "fieldPath": "points", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "season_participation",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "season_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "league_rating",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "season_id", "order": "ASCENDING" },
+        { "fieldPath": "league_rating", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "season_participation",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "season_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "division",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "league_rating",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "season_id", "order": "ASCENDING" },
+        { "fieldPath": "division", "order": "ASCENDING" },
+        { "fieldPath": "league_rating", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "season_participation",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "season_id", "order": "ASCENDING" },
+        { "fieldPath": "group_id", "order": "ASCENDING" },
+        { "fieldPath": "league_rating", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "groups",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "group_invites",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "invited_user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "invited_user_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "group_invites",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "group_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "group_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "game_summons",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "game_summons",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "game_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "summoned_at",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "game_id", "order": "ASCENDING" },
+        { "fieldPath": "summoned_at", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "members",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "joined_at",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dateTime",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dateTime",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "is_public",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dateTime",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "ranking_deltas",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "period",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "period_key",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "assists_added",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "ranking_deltas",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "period",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "period_key",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "saves_added",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "ranking_deltas",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "period",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "period_key",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "wins_added",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "ranking_deltas",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "period",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "period_key",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "mvp_added",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "ranking_deltas",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "period",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "period_key",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "games_added",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "visibility",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dateTime",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "joined_at", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "game_requests",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "game_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "requested_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "game_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "requested_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "game_requests",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "requested_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "requested_at", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "game_requests",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "game_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "game_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "activities",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "visibility",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "visibility", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "activities",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "visibility",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dateTime",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "visibility",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dateTime",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "visibility",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "group_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dateTime",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "visibility",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "group_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dateTime",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "group_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dateTime",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "statistics",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "group_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "player_id",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "group_id", "order": "ASCENDING" },
+        { "fieldPath": "player_id", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "statistics",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "group_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "games_played",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "group_id", "order": "ASCENDING" },
+        { "fieldPath": "games_played", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "statistics",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "group_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "goals",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "season_participation",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "season_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "group_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "league_rating",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "confirmations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "user_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "group_id", "order": "ASCENDING" },
+        { "fieldPath": "goals", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "seasons",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "is_active",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "end_date",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "is_active", "order": "ASCENDING" },
+        { "fieldPath": "end_date", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "game_events",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "game_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "minute",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "role",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "game_id", "order": "ASCENDING" },
+        { "fieldPath": "minute", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "schedules",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "owner_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "created_at",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "owner_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
       ]
     }
   ],
