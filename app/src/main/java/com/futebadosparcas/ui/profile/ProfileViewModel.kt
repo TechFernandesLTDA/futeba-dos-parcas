@@ -24,6 +24,7 @@ import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -40,6 +41,7 @@ class ProfileViewModel @Inject constructor(
     private val gamificationRepository: GamificationRepository,
     private val statisticsRepository: StatisticsRepository,
     private val locationRepository: LocationRepository,
+    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
     private val preferencesManager: com.futebadosparcas.util.PreferencesManager,
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
@@ -55,19 +57,50 @@ class ProfileViewModel @Inject constructor(
     private val _myLocations = MutableStateFlow<List<Location>>(emptyList())
     val myLocations: StateFlow<List<Location>> = _myLocations
 
+    private val _unreadCount = MutableStateFlow(0)
+    val unreadCount: StateFlow<Int> = _unreadCount
+
     private var statisticsListener: com.google.firebase.firestore.ListenerRegistration? = null
+    private var unreadCountJob: kotlinx.coroutines.Job? = null
+    private var loadProfileJob: kotlinx.coroutines.Job? = null
+
+    init {
+        observeUnreadCount()
+    }
+
+    private fun observeUnreadCount() {
+        unreadCountJob?.cancel()
+        unreadCountJob = viewModelScope.launch {
+            notificationRepository.getUnreadCountFlow()
+                .catch { e ->
+                    android.util.Log.e("ProfileViewModel", "Erro ao observar notificações", e)
+                    _unreadCount.value = 0
+                }
+                .collect { count ->
+                    _unreadCount.value = count
+                }
+        }
+    }
 
     fun loadProfile() {
+        // Cancelar job anterior para evitar coleções concorrentes
+        loadProfileJob?.cancel()
+
         // Remover listener anterior para evitar race condition ao recarregar
         statisticsListener?.remove()
         statisticsListener = null
 
-        viewModelScope.launch {
+        loadProfileJob = viewModelScope.launch {
             if (_uiState.value !is ProfileUiState.Success) {
                 _uiState.value = ProfileUiState.Loading
             }
 
-            userRepository.observeCurrentUser().collect { user ->
+            userRepository.observeCurrentUser()
+                .catch { e ->
+                    android.util.Log.e("ProfileViewModel", "Erro ao observar usuário", e)
+                    _uiState.value = ProfileUiState.Error(e.message ?: "Erro ao carregar perfil")
+                }
+                .collect { user ->
                 if (user != null) {
                     // Buscar badges do repositório de domínio e converter para modelo de dados
                     val badgesResult = gamificationRepository.getUserBadges(user.id)
@@ -178,7 +211,8 @@ class ProfileViewModel @Inject constructor(
                 if (photoUri != null) {
                     try {
                         val userId = currentUser.id
-                        val photoRef = storage.reference.child("profile_photos/$userId.jpg")
+                        // Path padronizado: users/{userId}/profile.jpg
+                        val photoRef = storage.reference.child("users/$userId/profile.jpg")
                         photoRef.putFile(photoUri).await()
                         val urlResult = photoRef.downloadUrl.await()
                         photoUrl = urlResult.toString()
@@ -220,15 +254,50 @@ class ProfileViewModel @Inject constructor(
                 val updateResult = userRepository.updateUser(updatedUser)
 
                 updateResult.fold(
-                    onSuccess = {
-                        _uiState.value = ProfileUiState.ProfileUpdateSuccess(updatedUser)
+                    onSuccess = { updatedUserFromRepo ->
+                        android.util.Log.d("ProfileViewModel", "Perfil atualizado com sucesso.")
+                        // Buscar dados atualizados do repositório
+                        val refreshedUserResult = userRepository.getCurrentUser()
+                        refreshedUserResult.fold(
+                            onSuccess = { refreshedUser ->
+                                // Buscar badges e estatísticas atualizadas
+                                val badgesResult = gamificationRepository.getUserBadges(refreshedUser.id)
+                                val badges = badgesResult.getOrNull()?.toDataBadges() ?: emptyList()
+
+                                val statsResult = statisticsRepository.getUserStatistics(refreshedUser.id)
+                                val stats = statsResult.getOrNull()?.toDataModel(refreshedUser.id)
+
+                                _uiState.value = ProfileUiState.ProfileUpdateSuccess(
+                                    user = refreshedUser,
+                                    badges = badges,
+                                    statistics = stats,
+                                    isDevMode = isDevModeEnabled()
+                                )
+                            },
+                            onFailure = { error ->
+                                android.util.Log.e("ProfileViewModel", "Erro ao recarregar usuário: ${error.message}", error)
+                                // Mesmo com erro ao recarregar, mostrar sucesso com o usuário atualizado
+                                _uiState.value = ProfileUiState.ProfileUpdateSuccess(
+                                    user = updatedUser,
+                                    badges = emptyList(),
+                                    statistics = null,
+                                    isDevMode = isDevModeEnabled()
+                                )
+                            }
+                        )
                     },
                     onFailure = { error ->
+                        android.util.Log.e("ProfileViewModel", "Erro ao atualizar perfil: ${error.message}", error)
                         _uiState.value = ProfileUiState.Error(error.message ?: "Erro ao atualizar perfil")
+                        // Tentar recarregar para voltar ao estado anterior
+                        loadProfile()
                     }
                 )
             } catch (e: Exception) {
+                android.util.Log.e("ProfileViewModel", "Exceção ao atualizar perfil", e)
                 _uiState.value = ProfileUiState.Error(e.message ?: "Erro ao atualizar perfil")
+                // Recarregar em caso de exceção também
+                loadProfile()
             }
         }
     }
@@ -309,6 +378,9 @@ class ProfileViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        // Cancelar jobs para evitar memory leaks
+        loadProfileJob?.cancel()
+        unreadCountJob?.cancel()
         // Remover listener de tempo real ao destruir o ViewModel
         statisticsListener?.remove()
         // Fechar Channel para evitar memory leak
@@ -319,12 +391,17 @@ class ProfileViewModel @Inject constructor(
 sealed class ProfileUiState {
     object Loading : ProfileUiState()
     data class Success(
-        val user: User, 
+        val user: User,
         val badges: List<com.futebadosparcas.data.model.UserBadge>,
         val statistics: com.futebadosparcas.data.model.UserStatistics?,
         val isDevMode: Boolean
     ) : ProfileUiState()
-    data class ProfileUpdateSuccess(val user: User) : ProfileUiState()
+    data class ProfileUpdateSuccess(
+        val user: User,
+        val badges: List<com.futebadosparcas.data.model.UserBadge> = emptyList(),
+        val statistics: com.futebadosparcas.data.model.UserStatistics? = null,
+        val isDevMode: Boolean = false
+    ) : ProfileUiState()
     data class Error(val message: String) : ProfileUiState()
     object LoggedOut : ProfileUiState()
     object DataReset : ProfileUiState()

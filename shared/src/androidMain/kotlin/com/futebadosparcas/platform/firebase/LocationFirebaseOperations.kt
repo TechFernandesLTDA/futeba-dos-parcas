@@ -385,7 +385,7 @@ actual suspend fun getLocationReviews(locationId: String): Result<List<LocationR
         val snapshot = firestore.collection("locations")
             .document(locationId)
             .collection("reviews")
-            .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .orderBy("created_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .get()
             .await()
 
@@ -725,11 +725,18 @@ actual suspend fun deleteField(fieldId: String): Result<Unit> {
     }
 }
 
+/**
+ * Upload de foto de campo (field).
+ * NOTA: Esta função não recebe locationId, então usa um caminho temporário.
+ * Path: temp_fields/{timestamp}.jpg
+ * TODO: Idealmente, passar locationId e usar locations/{locationId}/fields/{timestamp}.jpg
+ */
 actual suspend fun uploadFieldPhoto(filePath: String): Result<String> {
     return try {
         val storage = FirebaseStorage.getInstance()
         val filename = "${System.currentTimeMillis()}.jpg"
-        val ref = storage.reference.child("fields_photos/$filename")
+        // Path temporário genérico para fotos de fields (sem locationId específico)
+        val ref = storage.reference.child("temp_fields/$filename")
 
         val file = File(filePath)
         val uri = Uri.fromFile(file)

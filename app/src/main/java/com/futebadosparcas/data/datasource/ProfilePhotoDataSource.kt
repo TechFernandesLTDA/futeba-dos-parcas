@@ -37,11 +37,13 @@ class ProfilePhotoDataSource @Inject constructor(
 ) {
     companion object {
         private const val TAG = "ProfilePhotoDataSource"
-        private const val MAX_FILE_SIZE_MB = 10
+        private const val MAX_FILE_SIZE_MB = 2  // Limite de 2MB conforme storage.rules
         private const val MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
         private const val COMPRESS_QUALITY = 85
         private const val MAX_DIMENSION = 1024
-        private const val PROFILE_IMAGES_PATH = "profile_images"
+        // Path padronizado: users/{userId}/profile.jpg
+        private const val PROFILE_PHOTO_PATH = "users"
+        private const val PROFILE_PHOTO_NAME = "profile.jpg"
     }
 
     /**
@@ -99,9 +101,9 @@ class ProfilePhotoDataSource @Inject constructor(
 
                 // 5. Fazer upload para Firebase Storage
                 val storageRef = storage.reference
-                    .child("$PROFILE_IMAGES_PATH/$userId")
+                    .child("$PROFILE_PHOTO_PATH/$userId/$PROFILE_PHOTO_NAME")
 
-                Log.d(TAG, "Uploading to: $PROFILE_IMAGES_PATH/$userId")
+                Log.d(TAG, "Uploading to: $PROFILE_PHOTO_PATH/$userId/$PROFILE_PHOTO_NAME")
 
                 val uploadTask = storageRef.putBytes(compressedBytes).await()
                 val downloadUrl = uploadTask.storage.downloadUrl.await().toString()
@@ -225,7 +227,7 @@ class ProfilePhotoDataSource @Inject constructor(
      */
     suspend fun getProfilePhotoUrl(userId: String): String? {
         return try {
-            val storageRef = storage.reference.child("$PROFILE_IMAGES_PATH/$userId")
+            val storageRef = storage.reference.child("$PROFILE_PHOTO_PATH/$userId/$PROFILE_PHOTO_NAME")
             storageRef.downloadUrl.await().toString()
         } catch (e: Exception) {
             // Foto não existe ou erro de permissão
@@ -242,7 +244,7 @@ class ProfilePhotoDataSource @Inject constructor(
      */
     suspend fun deleteProfilePhoto(userId: String): Boolean {
         return try {
-            val storageRef = storage.reference.child("$PROFILE_IMAGES_PATH/$userId")
+            val storageRef = storage.reference.child("$PROFILE_PHOTO_PATH/$userId/$PROFILE_PHOTO_NAME")
             storageRef.delete().await()
             Log.d(TAG, "Profile photo deleted for user: $userId")
             true

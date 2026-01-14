@@ -1,5 +1,6 @@
 package com.futebadosparcas.platform.firebase
 
+import android.net.Uri
 import com.futebadosparcas.domain.model.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.*
@@ -360,6 +361,75 @@ actual class FirebaseDataSource(
                     "isCasualPlayer" to confirmation.isCasualPlayer
                 )
                 batch.set(docRef, confirmationData)
+            }
+            batch.commit().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun acceptInvitation(
+        gameId: String,
+        userId: String,
+        position: String
+    ): Result<GameConfirmation> {
+        return try {
+            // Buscar confirmacao existente com status PENDING
+            val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
+                .whereEqualTo("gameId", gameId)
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+
+            if (snapshot.isEmpty) {
+                return Result.failure(Exception("Convite não encontrado"))
+            }
+
+            val doc = snapshot.documents[0]
+            val updates = mapOf(
+                "status" to "CONFIRMED",
+                "position" to position
+            )
+            doc.reference.update(updates).await()
+
+            // Construir confirmacao atualizada manualmente
+            val confirmation = GameConfirmation(
+                id = doc.id,
+                gameId = gameId,
+                userId = userId,
+                userName = doc.getString("userName") ?: "",
+                userPhoto = doc.getString("userPhoto"),
+                position = position,
+                status = "CONFIRMED",
+                isCasualPlayer = doc.getBoolean("isCasualPlayer") ?: false
+            )
+
+            Result.success(confirmation)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun updateConfirmationStatus(
+        gameId: String,
+        userId: String,
+        status: String
+    ): Result<Unit> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
+                .whereEqualTo("gameId", gameId)
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+
+            if (snapshot.isEmpty) {
+                return Result.failure(Exception("Confirmação não encontrada"))
+            }
+
+            val batch = firestore.batch()
+            snapshot.documents.forEach { doc ->
+                batch.update(doc.reference, "status", status)
             }
             batch.commit().await()
             Result.success(Unit)
@@ -1201,6 +1271,9 @@ actual class FirebaseDataSource(
     }
 
     actual fun getLiveScoreFlow(gameId: String): Flow<Result<LiveScore>> = callbackFlow {
+        // Emitir null inicialmente para jogos que não estão live
+        trySend(Result.success(LiveScore()))
+
         val listener = firestore.collection("live_scores")
             .document(gameId)
             .addSnapshotListener { snapshot, error ->
@@ -2080,6 +2153,211 @@ actual class FirebaseDataSource(
         }
     }
 
+    // ========== MÉTODOS AUXILIARES DE GRUPO ==========
+
+    /**
+     * Obtém o role do usuário atual em um grupo.
+     */
+    suspend fun getMyRoleInGroup(groupId: String, userId: String): Result<String?> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_GROUPS)
+                .document(groupId)
+                .collection("members")
+                .document(userId)
+                .get()
+                .await()
+
+            val role = snapshot.getString("role")
+            Result.success(role)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Verifica se o usuário é membro de um grupo.
+     */
+    suspend fun isMemberOfGroup(groupId: String, userId: String): Result<Boolean> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_GROUPS)
+                .document(groupId)
+                .collection("members")
+                .document(userId)
+                .get()
+                .await()
+
+            val isMember = snapshot.exists() && snapshot.getString("status") == "ACTIVE"
+            Result.success(isMember)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Obtém grupos onde o usuário é admin ou owner.
+     */
+    suspend fun getMyAdminGroups(userId: String): Result<List<String>> {
+        return try {
+            val snapshot = firestore.collection("users")
+                .document(userId)
+                .collection("groups")
+                .whereIn("role", listOf("OWNER", "ADMIN"))
+                .get()
+                .await()
+
+            val groupIds = snapshot.documents.map { it.id }
+            Result.success(groupIds)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Obtém grupos ativos do usuário onde pode criar jogos (admin/owner).
+     */
+    suspend fun getValidGroupsForGame(userId: String): Result<List<String>> {
+        return try {
+            val snapshot = firestore.collection("users")
+                .document(userId)
+                .collection("groups")
+                .whereEqualTo("status", "ACTIVE")
+                .whereIn("role", listOf("OWNER", "ADMIN"))
+                .get()
+                .await()
+
+            val groupIds = snapshot.documents.map { it.id }
+            Result.success(groupIds)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Verifica se o usuário pode criar jogos (tem pelo menos um grupo como admin/owner).
+     */
+    suspend fun canCreateGames(userId: String): Result<Boolean> {
+        return try {
+            val snapshot = firestore.collection("users")
+                .document(userId)
+                .collection("groups")
+                .whereEqualTo("status", "ACTIVE")
+                .whereIn("role", listOf("OWNER", "ADMIN"))
+                .limit(1)
+                .get()
+                .await()
+
+            Result.success(!snapshot.isEmpty)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Conta grupos onde o usuário é admin ou owner.
+     */
+    suspend fun countMyAdminGroups(userId: String): Result<Int> {
+        return try {
+            val snapshot = firestore.collection("users")
+                .document(userId)
+                .collection("groups")
+                .whereIn("role", listOf("OWNER", "ADMIN"))
+                .get()
+                .await()
+
+            Result.success(snapshot.size())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Sincroniza member_count de todos os grupos do usuário.
+     */
+    suspend fun syncAllMyGroupsMemberCount(userId: String): Result<Unit> {
+        return try {
+            // Buscar grupos do usuário
+            val groupsSnapshot = firestore.collection("users")
+                .document(userId)
+                .collection("groups")
+                .get()
+                .await()
+
+            // Para cada grupo, buscar membros e atualizar contagem
+            groupsSnapshot.documents.forEach { userGroupDoc ->
+                val groupId = userGroupDoc.id
+
+                // Buscar membros do grupo
+                val membersSnapshot = firestore.collection(COLLECTION_GROUPS)
+                    .document(groupId)
+                    .collection("members")
+                    .whereEqualTo("status", "ACTIVE")
+                    .get()
+                    .await()
+
+                val memberCount = membersSnapshot.size()
+
+                // Atualizar contagem
+                firestore.runTransaction { transaction ->
+                    val groupRef = firestore.collection(COLLECTION_GROUPS).document(groupId)
+                    transaction.update(groupRef, "member_count", memberCount)
+
+                    // Atualizar também na coleção do usuário
+                    val userGroupRef = firestore.collection("users")
+                        .document(userId)
+                        .collection("groups").document(groupId)
+                    transaction.update(userGroupRef, "member_count", memberCount)
+                }.await()
+            }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Obtém a lista de IDs de membros ativos de um grupo.
+     */
+    suspend fun getGroupActiveMemberIds(groupId: String): Result<List<String>> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_GROUPS)
+                .document(groupId)
+                .collection("members")
+                .whereEqualTo("status", "ACTIVE")
+                .get()
+                .await()
+
+            val userIds = snapshot.documents.map { it.id }
+            Result.success(userIds)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Faz upload da foto/logo do grupo para o Firebase Storage.
+     * Path padronizado: groups/{groupId}/logo.jpg
+     */
+    suspend fun uploadGroupPhoto(groupId: String, photoPath: String): Result<String> {
+        return try {
+            val storage = FirebaseStorage.getInstance()
+            // Path padronizado: groups/{groupId}/logo.jpg (sobrescreve a logo anterior)
+            val photoRef = storage.reference.child("groups/$groupId/logo.jpg")
+
+            val file = java.io.File(photoPath)
+            val uploadTask = photoRef.putFile(Uri.fromFile(file))
+
+            // Aguardar upload completar
+            uploadTask.await()
+
+            // Obter URL de download
+            val downloadUrl = photoRef.downloadUrl.await()
+            Result.success(downloadUrl.toString())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // ========== BATCH OPERATIONS ==========
 
     actual suspend fun executeBatch(operations: List<BatchOperation>): Result<Unit> {
@@ -2179,7 +2457,8 @@ actual class FirebaseDataSource(
     actual suspend fun uploadCashboxReceipt(groupId: String, filePath: String): Result<String> {
         return try {
             val filename = "receipt_${System.currentTimeMillis()}.jpg"
-            val ref = storage.reference.child("groups/$groupId/cashbox_receipts/$filename")
+            // Path padronizado: groups/{groupId}/receipts/{timestamp}.jpg
+            val ref = storage.reference.child("groups/$groupId/receipts/$filename")
 
             val file = File(filePath)
             val uri = android.net.Uri.fromFile(file)

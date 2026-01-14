@@ -3,13 +3,22 @@ rules_version = '2';
 // ============================================
 // FIREBASE STORAGE SECURITY RULES
 // Futeba dos Parças - v1.4.2
+//
+// Estrutura de Caminhos Padronizada:
+// - users/{userId}/profile.jpg
+// - groups/{groupId}/logo.jpg
+// - groups/{groupId}/receipts/{timestamp}.jpg
+// - locations/{locationId}/photos/{timestamp}.jpg
+// - locations/{locationId}/fields/{timestamp}.jpg
+// - temp_fields/{timestamp}.jpg (temporário, sem locationId)
+// - games/{gameId}/photos/{timestamp}.jpg
 // ============================================
 
 service firebase.storage {
   match /b/{bucket}/o {
 
     // ============================================
-    // FUNCOES AUXILIARES
+    // FUNÇÕES AUXILIARES
     // ============================================
 
     // Verifica se o usuário está autenticado
@@ -33,59 +42,143 @@ service firebase.storage {
       return member != null && (member.role == 'OWNER' || member.role == 'ADMIN');
     }
 
-    // Verifica se o arquivo é uma imagem
+    // Verifica se o arquivo é uma imagem válida
     function isImage() {
       return request.resource.contentType.matches('image/.*');
     }
 
-    // Verifica tamanho máximo do arquivo
+    // Verifica tamanho máximo do arquivo (em MB)
     function isUnderSize(maxSizeMB) {
       return request.resource.size < maxSizeMB * 1024 * 1024;
     }
 
     // ============================================
-    // COMPROVANTES DO CAIXINHA
-    // ============================================
-    match /groups/{groupId}/cashbox_receipts/{fileName} {
-      allow read: if isAuthenticated() && isGroupMember(groupId);
-      allow write: if isAuthenticated() && isGroupAdmin(groupId) && isImage() && isUnderSize(5);
-      allow delete: if isAuthenticated() && isGroupAdmin(groupId);
-    }
-
-    // ============================================
     // FOTOS DE PERFIL DE USUÁRIOS
+    // Path: users/{userId}/profile.jpg
     // ============================================
-    match /users/{userId}/photos/{fileName} {
+    match /users/{userId}/profile.jpg {
+      // Qualquer usuário autenticado pode ler fotos de perfil
       allow read: if isAuthenticated();
+
+      // Apenas o próprio usuário pode escrever sua foto
+      // Máximo 2MB, apenas imagem
       allow write: if isOwner(userId) && isImage() && isUnderSize(2);
+
+      // Apenas o próprio usuário pode deletar
       allow delete: if isOwner(userId);
     }
 
     // ============================================
-    // IMAGENS DE GAME EXPERIENCE
-    // ============================================
-    match /games/{gameId}/images/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && firestore.exists(/databases/(default)/documents/confirmations/$(gameId + "_" + request.auth.uid)) && isImage() && isUnderSize(10);
-      allow delete: if isAuthenticated() && firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid;
-    }
-
-    // ============================================
     // LOGOS DE GRUPOS
+    // Path: groups/{groupId}/logo.jpg
     // ============================================
-    match /groups/{groupId}/logo/{fileName} {
+    match /groups/{groupId}/logo.jpg {
+      // Membros do grupo podem ver o logo
       allow read: if isAuthenticated() && isGroupMember(groupId);
+
+      // Apenas admins podem alterar o logo
+      // Máximo 1MB, apenas imagem
       allow write: if isAuthenticated() && isGroupAdmin(groupId) && isImage() && isUnderSize(1);
+
+      // Apenas admins podem deletar
       allow delete: if isAuthenticated() && isGroupAdmin(groupId);
     }
 
     // ============================================
-    // FOTOS DE LOCAIS
+    // COMPROVANTES DO CAIXINHA
+    // Path: groups/{groupId}/receipts/{timestamp}.jpg
+    // ============================================
+    match /groups/{groupId}/receipts/{fileName} {
+      // Membros do grupo podem ver os comprovantes
+      allow read: if isAuthenticated() && isGroupMember(groupId);
+
+      // Apenas admins podem fazer upload de comprovantes
+      // Máximo 5MB, apenas imagem
+      allow write: if isAuthenticated() && isGroupAdmin(groupId) && isImage() && isUnderSize(5);
+
+      // Apenas admins podem deletar
+      allow delete: if isAuthenticated() && isGroupAdmin(groupId);
+    }
+
+    // ============================================
+    // FOTOS DE LOCAIS (FIELD/Locais)
+    // Path: locations/{locationId}/photos/{timestamp}.jpg
     // ============================================
     match /locations/{locationId}/photos/{fileName} {
+      // Qualquer usuário autenticado pode ver fotos de locais
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid && isImage() && isUnderSize(5);
-      allow delete: if isAuthenticated() && firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid;
+
+      // Apenas o dono do local pode fazer upload
+      // Máximo 5MB por foto, apenas imagem
+      allow write: if isAuthenticated() &&
+                     firestore.exists(/databases/(default)/documents/locations/$(locationId)) &&
+                     firestore.get(/databases/(default)/documents/$(locationId)).data.owner_id == request.auth.uid &&
+                     isImage() && isUnderSize(5);
+
+      // Apenas o dono do local pode deletar
+      allow delete: if isAuthenticated() &&
+                      firestore.exists(/databases/(default)/documents/locations/$(locationId)) &&
+                      firestore.get(/databases/(default)/documents/$(locationId)).data.owner_id == request.auth.uid;
+    }
+
+    // ============================================
+    // FOTOS DE CAMPOS (Fields dentro de Locations)
+    // Path: locations/{locationId}/fields/{timestamp}.jpg
+    // ============================================
+    match /locations/{locationId}/fields/{fileName} {
+      // Qualquer usuário autenticado pode ver fotos de campos
+      allow read: if isAuthenticated();
+
+      // Apenas o dono do local pode fazer upload
+      // Máximo 5MB por foto, apenas imagem
+      allow write: if isAuthenticated() &&
+                     firestore.exists(/databases/(default)/documents/locations/$(locationId)) &&
+                     firestore.get(/databases/(default)/documents/$(locationId)).data.owner_id == request.auth.uid &&
+                     isImage() && isUnderSize(5);
+
+      // Apenas o dono do local pode deletar
+      allow delete: if isAuthenticated() &&
+                      firestore.exists(/databases/(default)/documents/locations/$(locationId)) &&
+                      firestore.get(/databases/(default)/documents/$(locationId)).data.owner_id == request.auth.uid;
+    }
+
+    // ============================================
+    // FOTOS TEMPORÁRIAS DE CAMPOS
+    // Path: temp_fields/{timestamp}.jpg
+    // NOTA: Usado quando locationId não está disponível no momento do upload
+    // TODO: Refatorar para passar locationId e usar locations/{locationId}/fields/
+    // ============================================
+    match /temp_fields/{fileName} {
+      // Qualquer usuário autenticado pode fazer upload
+      // Máximo 5MB, apenas imagem
+      allow write: if isAuthenticated() && isImage() && isUnderSize(5);
+
+      // Qualquer usuário autenticado pode ler
+      allow read: if isAuthenticated();
+
+      // Apenas quem fez o upload pode deletar (não implementado ainda)
+      allow delete: if false;
+    }
+
+    // ============================================
+    // FOTOS DE JOGOS
+    // Path: games/{gameId}/photos/{timestamp}.jpg
+    // Para uso futuro - jogadores confirmados podem postar fotos
+    // ============================================
+    match /games/{gameId}/photos/{fileName} {
+      // Qualquer usuário autenticado pode ver fotos de jogos
+      allow read: if isAuthenticated();
+
+      // Apenas jogadores confirmados podem fazer upload
+      // Máximo 10MB por foto, apenas imagem
+      allow write: if isAuthenticated() &&
+                     firestore.exists(/databases/(default)/documents/confirmations/$(gameId + '_' + request.auth.uid)) &&
+                     isImage() && isUnderSize(10);
+
+      // Apenas o dono do jogo pode deletar fotos
+      allow delete: if isAuthenticated() &&
+                      firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
+                      firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid;
     }
 
     // ============================================
