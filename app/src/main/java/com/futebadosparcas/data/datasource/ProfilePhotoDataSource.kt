@@ -10,13 +10,19 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.storageMetadata
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.SupervisorJob
+import kotlin.coroutines.CoroutineContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
@@ -135,20 +141,17 @@ class ProfilePhotoDataSource @Inject constructor(
                 )
                 trySend(progress)
             }.addOnSuccessListener {
-                // Upload completo, obter URL
-                viewModelScope.launch {
-                    try {
-                        val downloadUrl = storageRef.downloadUrl.await().toString()
-
-                        // Upload do thumbnail
+                // Upload completo - usar Tasks API para obter URL
+                storageRef.downloadUrl.addOnSuccessListener { uri ->
+                    // Upload do thumbnail em background
+                    CoroutineScope(Dispatchers.IO).launch {
                         val thumbUrl = uploadThumbnail(userId, thumbnailData)
-
-                        trySend(UploadResult.Success(downloadUrl, thumbUrl))
-                        close()
-                    } catch (e: Exception) {
-                        trySend(UploadResult.Error("Erro ao obter URL: ${e.message}"))
+                        trySend(UploadResult.Success(uri.toString(), thumbUrl))
                         close()
                     }
+                }.addOnFailureListener { e ->
+                    trySend(UploadResult.Error("Erro ao obter URL: ${e.message}"))
+                    close()
                 }
             }.addOnFailureListener { e ->
                 Log.e(TAG, "Upload failed", e)
@@ -257,6 +260,17 @@ class ProfilePhotoDataSource @Inject constructor(
         }
 
         return null
+    }
+
+    /**
+     * Verifica se um ByteArray começa com outro ByteArray.
+     */
+    private fun ByteArray.startsWith(prefix: ByteArray): Boolean {
+        if (this.size < prefix.size) return false
+        for (i in prefix.indices) {
+            if (this[i] != prefix[i]) return false
+        }
+        return true
     }
 
     /**
@@ -526,9 +540,9 @@ class ProfilePhotoDataSource @Inject constructor(
             val thumbRef = storage.reference.child("$PROFILE_PHOTO_PATH/$userId/$THUMBNAIL_NAME")
 
             // Deletar ambos em paralelo
-            kotlinx.coroutines.coroutineScope {
-                kotlinx.coroutines.launch { photoRef.delete().await() }
-                kotlinx.coroutines.launch { thumbRef.delete().await() }
+            coroutineScope {
+                launch { photoRef.delete().await() }
+                launch { thumbRef.delete().await() }
             }
 
             Log.d(TAG, "Profile photo deleted for user: $userId")
@@ -556,8 +570,3 @@ class ProfilePhotoDataSource @Inject constructor(
         val originalSize: Int
     )
 }
-
-// Extensão necessária para o viewModelScope no callbackFlow
-private val viewModelScope = kotlinx.coroutines.CoroutineScope(
-    kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Main
-)
