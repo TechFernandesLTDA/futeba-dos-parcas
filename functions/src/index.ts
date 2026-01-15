@@ -996,11 +996,7 @@ export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) =
 });
 
 export * from "./activities";
+export * from "./notifications";
 export * from "./season";
 export * from "./seeding";
 export * from "./user-management";
-
-// NOTA: Arquivos de manutenção criados mas com erros de TypeScript a corrigir:
-// - cleanup.ts (funções HTTP para limpeza de temp_fields)
-// - maintenance.ts (auto-finalize games, ranking recalc, weekly reports)
-// - database-utils.ts (counter shards, denormalização, soft delete, audit log)

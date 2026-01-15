@@ -133,20 +133,16 @@ private fun GamesByStatusSection(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isPending) {
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f)
             } else {
                 MaterialTheme.colorScheme.surfaceVariant
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isPending) 4.dp else 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isPending) 3.dp else 2.dp),
         border = if (isPending) {
-            CardDefaults.outlinedCardBorder().copy(
-                brush = Brush.horizontalGradient(
-                    colors = listOf(
-                        iconTint.copy(alpha = 0.5f),
-                        iconTint.copy(alpha = 0.1f)
-                    )
-                )
+            BorderStroke(
+                width = 1.5.dp,
+                color = MaterialTheme.colorScheme.error.copy(alpha = 0.4f)
             )
         } else null
     ) {
