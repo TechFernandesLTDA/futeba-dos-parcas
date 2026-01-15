@@ -30,6 +30,7 @@ import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.cards.GroupMemberCard
 import com.futebadosparcas.ui.components.dialogs.*
 import com.futebadosparcas.ui.components.EmptyState
@@ -531,14 +532,10 @@ private fun GroupHeader(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Foto do grupo
-            AsyncImage(
-                model = group.photoUrl?.ifEmpty { null } ?: R.drawable.ic_groups,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                contentScale = ContentScale.Crop
+            CachedProfileImage(
+                photoUrl = group.photoUrl?.ifEmpty { null },
+                userName = group.name,
+                size = 80.dp
             )
 
             Spacer(modifier = Modifier.height(12.dp))

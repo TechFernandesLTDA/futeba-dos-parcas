@@ -37,6 +37,7 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.lists.RankingItemShimmer
 import com.futebadosparcas.ui.components.FutebaTopBar
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -661,18 +662,10 @@ fun RankingListItem(
             Spacer(modifier = Modifier.width(12.dp))
 
             // Avatar
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(item.user.photoUrl)
-                    .crossfade(true)
-                    .placeholder(R.drawable.ic_person)
-                    .error(R.drawable.ic_person)
-                    .build(),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+            CachedProfileImage(
+                photoUrl = item.user.photoUrl,
+                userName = item.user.name,
+                size = 44.dp
             )
 
             Spacer(modifier = Modifier.width(12.dp))

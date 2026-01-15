@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.components.CachedProfileImage
 
 /**
  * Card de usuário reutilizável
@@ -92,14 +93,10 @@ fun UserCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Foto do usuário
-            AsyncImage(
-                model = photoUrl?.ifEmpty { null } ?: R.drawable.ic_person,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                contentScale = ContentScale.Crop
+            CachedProfileImage(
+                photoUrl = photoUrl,
+                userName = name,
+                size = 48.dp
             )
 
             // Nome e subtitle
@@ -278,14 +275,10 @@ fun UserCardCompact(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Foto
-        AsyncImage(
-            model = photoUrl?.ifEmpty { null } ?: R.drawable.ic_person,
-            contentDescription = null,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-            contentScale = ContentScale.Crop
+        CachedProfileImage(
+            photoUrl = photoUrl,
+            userName = name,
+            size = 40.dp
         )
 
         // Nome e subtitle

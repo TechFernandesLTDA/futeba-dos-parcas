@@ -139,10 +139,10 @@ private fun PlayerHeader(user: User, color: Color) {
                 .background(color.copy(alpha = 0.1f)),
             contentAlignment = Alignment.Center
         ) {
-            AsyncImage(
-                model = user.photoUrl,
-                contentDescription = user.getDisplayName(),
-                modifier = Modifier.fillMaxSize().clip(CircleShape)
+            CachedProfileImage(
+                photoUrl = user.photoUrl,
+                userName = user.getDisplayName(),
+                size = 60.dp
             )
              if (user.photoUrl.isNullOrEmpty()) {
                  Text(
@@ -342,16 +342,12 @@ fun PlayerCardContent(
                 modifier = Modifier.size(100.dp)
             ) {
                 // Foto
-                AsyncImage(
-                    model = user.photoUrl,
-                    contentDescription = user.getDisplayName(),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                CachedProfileImage(
+                    photoUrl = user.photoUrl,
+                    userName = user.getDisplayName(),
+                    size = 100.dp
                 )
-                
+
                 // Badge
                 val badgeRes = LevelBadgeHelper.getBadgeForLevel(user.level)
                 Image(

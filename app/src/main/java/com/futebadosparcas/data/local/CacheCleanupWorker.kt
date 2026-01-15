@@ -7,9 +7,12 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import coil.Coil
 import com.futebadosparcas.data.local.dao.GameDao
 import com.futebadosparcas.data.local.dao.UserDao
+import com.futebadosparcas.domain.cache.SharedCacheService
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.PerformanceTracker
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.concurrent.TimeUnit
@@ -17,17 +20,22 @@ import java.util.concurrent.TimeUnit
 /**
  * Worker para limpeza automatica de cache expirado.
  *
- * TTL configurados:
- * - Usuarios: 24 horas
- * - Jogos ativos: 7 dias
- * - Jogos finalizados: 3 dias
+ * Tipos de limpeza:
+ * - Room: Usuarios (24h), Jogos finalizados (3d), Jogos gerais (7d)
+ * - SharedCache: Usuários e jogos com TTL expirado
+ * - Coil Disk Cache: Arquivos com mais de 7 dias
+ * - Performance: Log de estatísticas de cache
+ *
+ * Agendado: A cada 12 horas via WorkManager
  */
 @HiltWorker
 class CacheCleanupWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
     private val gameDao: GameDao,
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val sharedCache: SharedCacheService,
+    private val performanceTracker: PerformanceTracker
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {

@@ -360,13 +360,10 @@ private fun InvitePlayerCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar
-            AsyncImage(
-                model = user.photoUrl?.ifEmpty { null } ?: R.drawable.ic_person,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+            CachedProfileImage(
+                photoUrl = user.photoUrl,
+                userName = user.getDisplayName(),
+                size = 48.dp
             )
 
             // Nome e info secundária

@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.futebadosparcas.data.model.User
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.components.CachedProfileImage
 
 /**
  * Grid moderna de jogadores com LazyVerticalGrid adaptativo.
@@ -165,17 +166,14 @@ fun PlayerCard(
                 )
 
                 // Avatar
-                if (!player.photoUrl.isNullOrEmpty()) {
-                    AsyncImage(
-                        model = player.photoUrl,
-                        contentDescription = "Foto de ${player.getDisplayName()}",
-                        modifier = Modifier
-                            .size(68.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
+                CachedProfileImage(
+                    photoUrl = player.photoUrl,
+                    userName = player.getDisplayName(),
+                    size = 68.dp
+                )
+
+                // Fallback rendering removed - handled by CachedProfileImage
+                if (false) {
                     Box(
                         modifier = Modifier
                             .size(68.dp)
