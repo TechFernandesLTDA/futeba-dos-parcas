@@ -4,7 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.data.model.Location
-import com.futebadosparcas.data.repository.LocationRepository
+import com.futebadosparcas.domain.repository.LocationRepository
+import com.futebadosparcas.util.toAndroidField
+import com.futebadosparcas.util.toAndroidFields
+import com.futebadosparcas.util.toAndroidLocation
+import com.futebadosparcas.util.toAndroidLocations
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -92,16 +96,16 @@ class ManageLocationsViewModel @Inject constructor(
             val locationsResult = locationRepository.getAllLocations()
             
             locationsResult.fold(
-                onSuccess = { locations ->
+                onSuccess = { kmpLocations ->
                     // Paralelizar a busca de quadras para ganho de performance (resolve N+1)
-                    val locationsWithFields = locations.map { location ->
+                    val locationsWithFields = kmpLocations.map { kmpLocation ->
                         async {
-                            val fieldsResult = locationRepository.getFieldsByLocation(location.id)
-                            val fields = fieldsResult.getOrNull() ?: emptyList()
-                            LocationWithFieldsData(location, fields)
+                            val fieldsResult = locationRepository.getFieldsByLocation(kmpLocation.id)
+                            val fields = fieldsResult.getOrNull()?.map { it.toAndroidField() } ?: emptyList()
+                            LocationWithFieldsData(kmpLocation.toAndroidLocation(), fields)
                         }
                     }.awaitAll()
-                    
+
                     allLocations = locationsWithFields
                     filterLocations()
                 },
@@ -120,8 +124,8 @@ class ManageLocationsViewModel @Inject constructor(
             
             // Primeiro deletar todas as quadras do local
             val fieldsResult = locationRepository.getFieldsByLocation(locationId)
-            fieldsResult.getOrNull()?.forEach { field ->
-                locationRepository.deleteField(field.id)
+            fieldsResult.getOrNull()?.forEach { kmpField ->
+                locationRepository.deleteField(kmpField.id)
             }
             
             // Depois deletar o local

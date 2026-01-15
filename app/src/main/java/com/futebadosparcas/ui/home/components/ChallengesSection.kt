@@ -20,10 +20,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.data.model.WeeklyChallenge
-import com.futebadosparcas.data.model.UserChallengeProgress
+import com.futebadosparcas.R
+import com.futebadosparcas.domain.model.WeeklyChallenge
+import com.futebadosparcas.domain.model.UserChallengeProgress
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
@@ -46,7 +48,7 @@ fun ChallengesSection(
 
     Column(modifier = modifier) {
         Text(
-            text = "Desafios em Andamento",
+            text = stringResource(R.string.challenges_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = spacing.contentPaddingHorizontal, vertical = spacing.sm)
@@ -67,7 +69,7 @@ fun ChallengesSection(
                 verticalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing),
                 modifier = Modifier.padding(bottom = spacing.sm)
             ) {
-                items(challenges) { (challenge, progress) ->
+                items(challenges, key = { it.first.id }) { (challenge, progress) ->
                     ChallengeCard(challenge, progress, fillWidth = true)
                 }
             }
@@ -77,7 +79,7 @@ fun ChallengesSection(
                 contentPadding = PaddingValues(horizontal = spacing.contentPaddingHorizontal),
                 horizontalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing)
             ) {
-                items(challenges) { (challenge, progress) ->
+                items(challenges, key = { it.first.id }) { (challenge, progress) ->
                     ChallengeCard(challenge, progress, fillWidth = false)
                 }
             }

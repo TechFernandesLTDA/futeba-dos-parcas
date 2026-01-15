@@ -1,144 +1,118 @@
 package com.futebadosparcas.domain.ranking
 
-import com.futebadosparcas.domain.model.GameResult
 import com.futebadosparcas.domain.model.LeagueDivision
-import kotlin.math.pow
-import kotlin.math.roundToInt
 
 /**
- * Calculador de rating da liga (sistema Elo modificado).
- * Logica pura compartilhavel entre plataformas.
+ * Dados de um jogo recente para calculo de League Rating.
+ */
+data class RecentGameData(
+    val gameId: String = "",
+    val xpEarned: Long = 0L,
+    val won: Boolean = false,
+    val drew: Boolean = false,
+    val goalDiff: Int = 0,
+    val wasMvp: Boolean = false
+)
+
+/**
+ * Calculador de rating da liga (sistema 0-100 em producao).
+ *
+ * SISTEMA DE RATING: Escala 0-100 (media ponderada)
+ * -------------------------------------------------
+ * O sistema usa uma formula ponderada baseada nos ultimos 10 jogos:
+ * LR = (PPJ * 40%) + (WR * 30%) + (GD * 20%) + (MVP_Rate * 10%)
+ *
+ * Onde:
+ * - PPJ = Pontos (XP) por Jogo (max 200 XP = 100 pontos)
+ * - WR = Win Rate (100% = 100 pontos)
+ * - GD = Goal Difference medio (+3 = 100, -3 = 0)
+ * - MVP_Rate = Taxa de MVP (50% = 100 pontos, cap)
+ *
+ * DECISAO DE ARQUITETURA:
+ * Este sistema 0-100 foi mantido em detrimento do sistema Elo (100-3000)
+ * porque ja esta em producao e todos os thresholds estao definidos baseados nele.
+ * O sistema Elo foi removido para evitar duplicidade e confusao.
+ *
+ * Thresholds de Divisao:
+ * - Bronze: 0-29
+ * - Prata: 30-49
+ * - Ouro: 50-69
+ * - Diamante: 70-100
+ *
+ * Logica pura compartilhavel entre plataformas (KMP).
  */
 object LeagueRatingCalculator {
 
-    // Constantes do sistema de rating
-    private const val DEFAULT_RATING = 1000
-    private const val K_FACTOR_BASE = 32
-    private const val K_FACTOR_NEW_PLAYER = 48  // Maior variacao para novos jogadores
-    private const val MIN_RATING = 100
-    private const val MAX_RATING = 3000
-    private const val NEW_PLAYER_THRESHOLD = 10  // Jogos para ser considerado "novo"
-
     /**
-     * Resultado do calculo de rating.
-     */
-    data class RatingCalculationResult(
-        val newRating: Int,
-        val ratingChange: Int,
-        val newDivision: LeagueDivision,
-        val divisionChanged: Boolean,
-        val previousDivision: LeagueDivision
-    )
-
-    /**
-     * Calcula o novo rating apos um jogo.
+     * Calcula o League Rating baseado nos ultimos jogos.
      *
-     * @param currentRating Rating atual do jogador
-     * @param opponentAverageRating Rating medio dos oponentes
-     * @param gameResult Resultado do jogo (WIN, DRAW, LOSS)
-     * @param gamesPlayed Numero de jogos jogados (para K-factor)
-     * @param wasMvp Se foi eleito MVP (bonus)
-     * @param goals Gols marcados (bonus)
-     * @param assists Assistencias (bonus)
+     * LR = (PPJ * 40) + (WR * 30) + (GD * 20) + (MVP_Rate * 10)
+     * Normalizado para 0-100
+     *
+     * @param recentGames Lista de jogos recentes (max 10 recomendado)
+     * @return Rating entre 0.0 e 100.0
      */
-    fun calculateNewRating(
-        currentRating: Int,
-        opponentAverageRating: Int,
-        gameResult: GameResult,
-        gamesPlayed: Int = 0,
-        wasMvp: Boolean = false,
-        goals: Int = 0,
-        assists: Int = 0
-    ): RatingCalculationResult {
-        // K-factor ajustado para novos jogadores
-        val kFactor = if (gamesPlayed < NEW_PLAYER_THRESHOLD) {
-            K_FACTOR_NEW_PLAYER
-        } else {
-            K_FACTOR_BASE
-        }
+    fun calculate(recentGames: List<RecentGameData>): Double {
+        if (recentGames.isEmpty()) return 0.0
 
-        // Expectativa de resultado (formula Elo)
-        val expectedScore = calculateExpectedScore(currentRating, opponentAverageRating)
+        val gamesCount = recentGames.size
 
-        // Score real baseado no resultado
-        val actualScore = when (gameResult) {
-            GameResult.WIN -> 1.0
-            GameResult.DRAW -> 0.5
-            GameResult.LOSS -> 0.0
-        }
+        // PPJ - Pontos (XP) por Jogo (max 200 = 100 pontos)
+        val avgXp = recentGames.map { it.xpEarned }.average()
+        val ppjScore = (avgXp / 200.0).coerceAtMost(1.0) * 100
 
-        // Calculo base do rating change
-        var ratingChange = (kFactor * (actualScore - expectedScore)).roundToInt()
+        // WR - Win Rate (100% = 100 pontos)
+        val winRate = recentGames.count { it.won }.toDouble() / gamesCount * 100
 
-        // Bonus por performance individual
-        if (wasMvp) {
-            ratingChange += 5
-        }
-        if (goals >= 3) {
-            ratingChange += 3  // Hat trick bonus
-        } else if (goals >= 2) {
-            ratingChange += 2
-        }
-        if (assists >= 2) {
-            ratingChange += 2
-        }
+        // GD - Goal Difference medio (+3 = 100, -3 = 0)
+        val avgGD = recentGames.map { it.goalDiff }.average()
+        val gdScore = ((avgGD + 3) / 6.0).coerceIn(0.0, 1.0) * 100
 
-        // Aplicar limites
-        val newRating = (currentRating + ratingChange).coerceIn(MIN_RATING, MAX_RATING)
-        val actualChange = newRating - currentRating
+        // MVP Rate (50% = 100 pontos, cap)
+        val mvpRate = recentGames.count { it.wasMvp }.toDouble() / gamesCount
+        val mvpScore = (mvpRate / 0.5).coerceAtMost(1.0) * 100
 
-        // Verificar mudanca de divisao
-        val previousDivision = LeagueDivision.fromRating(currentRating)
-        val newDivision = LeagueDivision.fromRating(newRating)
-
-        return RatingCalculationResult(
-            newRating = newRating,
-            ratingChange = actualChange,
-            newDivision = newDivision,
-            divisionChanged = previousDivision != newDivision,
-            previousDivision = previousDivision
-        )
+        return (ppjScore * 0.4) + (winRate * 0.3) + (gdScore * 0.2) + (mvpScore * 0.1)
     }
 
     /**
-     * Calcula a expectativa de resultado usando formula Elo.
+     * Retorna a divisao correspondente ao rating fornecido.
+     *
+     * @param rating Rating entre 0.0 e 100.0
+     * @return Divisao correspondente
      */
-    private fun calculateExpectedScore(playerRating: Int, opponentRating: Int): Double {
-        val exponent = (opponentRating - playerRating) / 400.0
-        return 1.0 / (1.0 + 10.0.pow(exponent))
+    fun getDivisionForRating(rating: Double): LeagueDivision {
+        return LeagueDivision.fromRating(rating)
     }
 
     /**
-     * Retorna o rating inicial para novos jogadores.
+     * Retorna o threshold de rating para a proxima divisao.
+     *
+     * @param division Divisao atual
+     * @return Rating minimo para subir de divisao
      */
-    fun getInitialRating(): Int = DEFAULT_RATING
-
-    /**
-     * Calcula rating medio de um grupo de jogadores.
-     */
-    fun calculateAverageRating(ratings: List<Int>): Int {
-        if (ratings.isEmpty()) return DEFAULT_RATING
-        return ratings.average().roundToInt()
+    fun getNextDivisionThreshold(division: LeagueDivision): Double {
+        return LeagueDivision.getNextDivisionThreshold(division)
     }
 
     /**
-     * Estima o impacto de uma vitoria/derrota no rating.
+     * Retorna o threshold de rating para a divisao anterior.
+     *
+     * @param division Divisao atual
+     * @return Rating minimo para cair de divisao
      */
-    fun estimateRatingChange(
-        currentRating: Int,
-        opponentRating: Int,
-        gameResult: GameResult
-    ): Int {
-        return calculateNewRating(
-            currentRating = currentRating,
-            opponentAverageRating = opponentRating,
-            gameResult = gameResult
-        ).ratingChange
+    fun getPreviousDivisionThreshold(division: LeagueDivision): Double {
+        return LeagueDivision.getPreviousDivisionThreshold(division)
     }
 
     /**
      * Calcula pontos para ranking da temporada.
      * Sistema simples: 3 pontos vitoria, 1 empate, 0 derrota.
+     *
+     * @param wins Numero de vitorias
+     * @param draws Numero de empates
+     * @param losses Numero de derrotas
+     * @return Total de pontos
      */
     fun calculateSeasonPoints(
         wins: Int,
@@ -146,5 +120,36 @@ object LeagueRatingCalculator {
         losses: Int
     ): Int {
         return (wins * 3) + (draws * 1)
+    }
+}
+
+/**
+ * @deprecated Use o calculador 0-100 acima.
+ * Sistema Elo (100-3000) foi descontinuado em favor do sistema 0-100 em producao.
+ *
+ * Mantido apenas por compatibilidade temporaria. Sera removido em versao futura.
+ */
+@Deprecated(
+    message = "Sistema Elo foi descontinuado. Use calculate() com escala 0-100.",
+    replaceWith = ReplaceWith("LeagueRatingCalculator.calculate(recentGames)")
+)
+object LeagueRatingCalculatorElo {
+    private const val DEFAULT_RATING = 1000
+    private const val MIN_RATING = 100
+    private const val MAX_RATING = 3000
+
+    /**
+     * @deprecated Use o calculador 0-100 (LeagueRatingCalculator.calculate)
+     */
+    @Deprecated("Use o calculador 0-100")
+    fun getInitialRating(): Int = DEFAULT_RATING
+
+    /**
+     * @deprecated Use o calculador 0-100 (LeagueRatingCalculator.calculate)
+     */
+    @Deprecated("Use o calculador 0-100")
+    fun calculateAverageRating(ratings: List<Int>): Int {
+        if (ratings.isEmpty()) return DEFAULT_RATING
+        return ratings.average().toInt()
     }
 }

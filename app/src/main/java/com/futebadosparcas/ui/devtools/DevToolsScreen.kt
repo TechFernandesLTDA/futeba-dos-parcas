@@ -13,11 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 import com.futebadosparcas.data.local.dao.GameDao
-import com.futebadosparcas.data.repository.LocationRepository
-import com.futebadosparcas.ui.auth.LoginActivity
+import com.futebadosparcas.domain.repository.LocationRepository
+import com.futebadosparcas.ui.auth.LoginActivityCompose
 import com.futebadosparcas.util.PreferencesManager
 import kotlinx.coroutines.launch
 
@@ -62,12 +64,12 @@ fun DevToolsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Ferramentas de Desenvolvedor") },
+                title = { Text(stringResource(R.string.dev_tools_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 },
@@ -168,8 +170,8 @@ fun DevToolsScreen(
 
             // Limpar Cache Local
             DevToolButton(
-                title = "Limpar Cache Local",
-                description = "Remove todos os jogos do banco de dados Room",
+                title = stringResource(R.string.dev_tools_clear_cache),
+                description = stringResource(R.string.dev_tools_clear_cache_desc),
                 icon = Icons.Default.CleaningServices,
                 containerColor = MaterialTheme.colorScheme.errorContainer,
                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -187,25 +189,21 @@ fun DevToolsScreen(
 
             // Popular Locais
             DevToolButton(
-                title = "Popular 50 Locais (Curitiba/PR)",
-                description = "Adiciona locais de exemplo no Firestore",
+                title = stringResource(R.string.dev_tools_seed_apollo),
+                description = stringResource(R.string.dev_tools_seed_apollo_desc),
                 icon = Icons.Default.LocationOn,
                 isLoading = isSeedingLocations,
                 onClick = {
                     scope.launch {
                         isSeedingLocations = true
-                        showToast = "Iniciando seed de locais..."
+                        showToast = "Iniciando seed do Ginásio Apollo..."
 
-                        val result = locationRepository.seedCuritibaLocations()
+                        val result = locationRepository.seedGinasioApollo()
 
                         isSeedingLocations = false
                         result.fold(
-                            onSuccess = { count ->
-                                showToast = if (count > 0) {
-                                    "Sucesso! $count novos locais adicionados."
-                                } else {
-                                    "Nenhum novo local. Todos já existem."
-                                }
+                            onSuccess = { location ->
+                                showToast = "Sucesso! ${location.name} criado com 6 quadras (4 futsal + 2 society)."
                             },
                             onFailure = { e ->
                                 showToast = "Erro: ${e.message}"
@@ -217,8 +215,8 @@ fun DevToolsScreen(
 
             // Limpar Preferências
             DevToolButton(
-                title = "Resetar Preferências",
-                description = "Limpa todas as configurações salvas",
+                title = stringResource(R.string.dev_tools_reset_prefs),
+                description = stringResource(R.string.dev_tools_reset_prefs_desc),
                 icon = Icons.Default.SettingsBackupRestore,
                 containerColor = MaterialTheme.colorScheme.errorContainer,
                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -240,13 +238,13 @@ fun DevToolsScreen(
 
             // Reiniciar App
             DevToolButton(
-                title = "Reiniciar App",
-                description = "Força reinício do processo (aplica modo mock)",
+                title = stringResource(R.string.dev_tools_restart_app),
+                description = stringResource(R.string.dev_tools_restart_app_desc),
                 icon = Icons.Default.RestartAlt,
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                 onClick = {
-                    val intent = Intent(context, LoginActivity::class.java)
+                    val intent = Intent(context, LoginActivityCompose::class.java)
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     context.startActivity(intent)
                     Runtime.getRuntime().exit(0)

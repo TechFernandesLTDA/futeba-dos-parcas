@@ -4,9 +4,10 @@ import com.futebadosparcas.data.model.LevelTable
 import com.futebadosparcas.data.model.MilestoneType
 import com.futebadosparcas.data.model.SeasonParticipationV2
 import com.futebadosparcas.data.model.UserStatistics
-import com.futebadosparcas.data.model.XpLog
-import com.futebadosparcas.data.repository.RankingCategory
-import com.futebadosparcas.data.repository.RankingPeriod
+import com.futebadosparcas.domain.model.PlayerRankingItem
+import com.futebadosparcas.domain.model.RankingCategory
+import com.futebadosparcas.domain.model.RankingPeriod
+import com.futebadosparcas.domain.model.XpLog
 
 data class CombinedStatistics(
     val myStats: UserStatistics,
@@ -16,21 +17,6 @@ data class CombinedStatistics(
     val goalEvolution: Map<String, Int> = emptyMap()
 )
 
-data class PlayerRankingItem(
-    val rank: Int,
-    val playerName: String,
-    val value: Long,
-    val photoUrl: String?,
-    val userId: String = "",
-    val gamesPlayed: Int = 0,
-    val average: Double = 0.0,
-    val nickname: String? = null,
-    val level: Int = 0
-) {
-    fun getDisplayName(): String {
-        return if (!nickname.isNullOrBlank()) nickname else playerName
-    }
-}
 sealed class StatisticsUiState {
     object Loading : StatisticsUiState()
     data class Success(val statistics: CombinedStatistics) : StatisticsUiState()

@@ -39,6 +39,11 @@ import java.time.format.DateTimeFormatter
  * Tela moderna de criação/edição de jogos em Jetpack Compose
  * Preparada para KMP/iOS com Material Design 3
  *
+ * Arquitetura KMP-Ready (3 camadas):
+ * - CreateGameScreen: State collection + callbacks (stateful)
+ * - CreateGameContent: UI pura sem Scaffold (stateless, KMP-ready)
+ * - TopBar gerenciada por SecondaryScreenWrapper (platform-specific)
+ *
  * Features:
  * - Validação em tempo real
  * - Date/Time Pickers Material3
@@ -135,163 +140,126 @@ fun CreateGameScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (isEditing) {
-                            stringResource(R.string.create_game_edit_title)
+    Box(modifier = Modifier.fillMaxSize()) {
+        CreateGameContent(
+            ownerName = ownerName,
+            onOwnerNameChange = {
+                ownerName = it
+                ownerNameError = null
+            },
+            ownerNameError = ownerNameError,
+            price = price,
+            onPriceChange = {
+                price = it
+                priceError = null
+            },
+            priceError = priceError,
+            maxPlayers = maxPlayers,
+            onMaxPlayersChange = {
+                maxPlayers = it
+                maxPlayersError = null
+            },
+            maxPlayersError = maxPlayersError,
+            selectedDate = selectedDate,
+            onDateClick = {
+                hapticManager.tick()
+                showDatePicker = true
+            },
+            selectedTime = selectedTime,
+            onStartTimeClick = {
+                hapticManager.tick()
+                showStartTimePicker = true
+            },
+            selectedEndTime = selectedEndTime,
+            onEndTimeClick = {
+                hapticManager.tick()
+                showEndTimePicker = true
+            },
+            selectedLocation = selectedLocation,
+            onLocationClick = {
+                hapticManager.tick()
+                showLocationDialog = true
+            },
+            selectedField = selectedField,
+            onFieldClick = {
+                hapticManager.tick()
+                selectedLocation?.let {
+                    showFieldDialog = true
+                }
+            },
+            availableGroups = availableGroups,
+            selectedGroup = selectedGroup,
+            onGroupSelected = { viewModel.selectGroup(it) },
+            selectedVisibility = selectedVisibility,
+            onVisibilitySelected = {
+                hapticManager.tick()
+                viewModel.setVisibility(it)
+            },
+            recurrenceEnabled = recurrenceEnabled,
+            onRecurrenceEnabledChange = { recurrenceEnabled = it },
+            recurrenceType = recurrenceType,
+            onRecurrenceTypeChange = { recurrenceType = it },
+            timeConflicts = timeConflicts,
+            onCancelClick = {
+                hapticManager.tick()
+                onNavigateBack()
+            },
+            onSaveClick = {
+                hapticManager.tick()
+
+                // Validações de campo
+                var hasError = false
+
+                if (ownerName.trim().length < 3) {
+                    ownerNameError = context.getString(R.string.create_game_error_owner_name)
+                    hasError = true
+                }
+
+                val priceValue = price.toDoubleOrNull()
+                if (priceValue == null || priceValue < 0) {
+                    priceError = context.getString(R.string.create_game_error_price)
+                    hasError = true
+                }
+
+                val maxPlayersValue = maxPlayers.toIntOrNull()
+                if (maxPlayersValue == null || maxPlayersValue < 4 || maxPlayersValue > 100) {
+                    maxPlayersError = context.getString(R.string.create_game_error_max_players)
+                    hasError = true
+                }
+
+                if (!hasError) {
+                    val recurrenceMap = mapOf(
+                        "Semanal" to "weekly",
+                        "Quinzenal" to "biweekly",
+                        "Mensal" to "monthly"
+                    )
+
+                    viewModel.saveGame(
+                        gameId = gameId,
+                        ownerName = ownerName.trim(),
+                        price = priceValue ?: 0.0,
+                        maxPlayers = maxPlayersValue ?: 14,
+                        recurrence = if (recurrenceEnabled) {
+                            recurrenceMap[recurrenceType] ?: "none"
                         } else {
-                            stringResource(R.string.fragment_create_game_text_1)
+                            "none"
                         }
                     )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            hapticManager.tick()
-                            onNavigateBack()
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            CreateGameContent(
-                ownerName = ownerName,
-                onOwnerNameChange = {
-                    ownerName = it
-                    ownerNameError = null
-                },
-                ownerNameError = ownerNameError,
-                price = price,
-                onPriceChange = {
-                    price = it
-                    priceError = null
-                },
-                priceError = priceError,
-                maxPlayers = maxPlayers,
-                onMaxPlayersChange = {
-                    maxPlayers = it
-                    maxPlayersError = null
-                },
-                maxPlayersError = maxPlayersError,
-                selectedDate = selectedDate,
-                onDateClick = {
-                    hapticManager.tick()
-                    showDatePicker = true
-                },
-                selectedTime = selectedTime,
-                onStartTimeClick = {
-                    hapticManager.tick()
-                    showStartTimePicker = true
-                },
-                selectedEndTime = selectedEndTime,
-                onEndTimeClick = {
-                    hapticManager.tick()
-                    showEndTimePicker = true
-                },
-                selectedLocation = selectedLocation,
-                onLocationClick = {
-                    hapticManager.tick()
-                    showLocationDialog = true
-                },
-                selectedField = selectedField,
-                onFieldClick = {
-                    hapticManager.tick()
-                    selectedLocation?.let {
-                        showFieldDialog = true
-                    }
-                },
-                availableGroups = availableGroups,
-                selectedGroup = selectedGroup,
-                onGroupSelected = { viewModel.selectGroup(it) },
-                selectedVisibility = selectedVisibility,
-                onVisibilitySelected = {
-                    hapticManager.tick()
-                    viewModel.setVisibility(it)
-                },
-                recurrenceEnabled = recurrenceEnabled,
-                onRecurrenceEnabledChange = { recurrenceEnabled = it },
-                recurrenceType = recurrenceType,
-                onRecurrenceTypeChange = { recurrenceType = it },
-                timeConflicts = timeConflicts,
-                onCancelClick = {
-                    hapticManager.tick()
-                    onNavigateBack()
-                },
-                onSaveClick = {
-                    hapticManager.tick()
-
-                    // Validações de campo
-                    var hasError = false
-
-                    if (ownerName.trim().length < 3) {
-                        ownerNameError = context.getString(R.string.create_game_error_owner_name)
-                        hasError = true
-                    }
-
-                    val priceValue = price.toDoubleOrNull()
-                    if (priceValue == null || priceValue < 0) {
-                        priceError = context.getString(R.string.create_game_error_price)
-                        hasError = true
-                    }
-
-                    val maxPlayersValue = maxPlayers.toIntOrNull()
-                    if (maxPlayersValue == null || maxPlayersValue < 4 || maxPlayersValue > 100) {
-                        maxPlayersError = context.getString(R.string.create_game_error_max_players)
-                        hasError = true
-                    }
-
-                    if (!hasError) {
-                        val recurrenceMap = mapOf(
-                            "Semanal" to "weekly",
-                            "Quinzenal" to "biweekly",
-                            "Mensal" to "monthly"
-                        )
-
-                        viewModel.saveGame(
-                            gameId = gameId,
-                            ownerName = ownerName.trim(),
-                            price = priceValue ?: 0.0,
-                            maxPlayers = maxPlayersValue ?: 14,
-                            recurrence = if (recurrenceEnabled) {
-                                recurrenceMap[recurrenceType] ?: "none"
-                            } else {
-                                "none"
-                            }
-                        )
-                    }
-                },
-                isLoading = uiState is CreateGameUiState.Loading,
-                errorMessage = (uiState as? CreateGameUiState.Error)?.message
-            )
-
-            // Loading overlay
-            if (uiState is CreateGameUiState.Loading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
                 }
+            },
+            isLoading = uiState is CreateGameUiState.Loading,
+            errorMessage = (uiState as? CreateGameUiState.Error)?.message
+        )
+
+        // Loading overlay
+        if (uiState is CreateGameUiState.Loading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
             }
         }
     }
@@ -333,7 +301,7 @@ fun CreateGameScreen(
 
     if (showStartTimePicker) {
         TimePickerDialog(
-            title = stringResource(R.string.fragment_create_game_hint_14),
+            title = stringResource(R.string.create_game_hint_start),
             onDismiss = { showStartTimePicker = false },
             onTimeSelected = { hour, minute ->
                 viewModel.setTime(hour, minute)
@@ -345,7 +313,7 @@ fun CreateGameScreen(
 
     if (showEndTimePicker) {
         TimePickerDialog(
-            title = stringResource(R.string.fragment_create_game_hint_15),
+            title = stringResource(R.string.create_game_hint_end),
             onDismiss = { showEndTimePicker = false },
             onTimeSelected = { hour, minute ->
                 viewModel.setEndTime(hour, minute)
@@ -452,12 +420,12 @@ private fun CreateGameContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = stringResource(R.string.fragment_create_game_contentdescription_9),
+                        contentDescription = stringResource(R.string.create_game_cd_alert),
                         tint = MaterialTheme.colorScheme.tertiary
                     )
                     Column {
                         Text(
-                            text = stringResource(R.string.fragment_create_game_text_10),
+                            text = stringResource(R.string.create_game_conflict_detected),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -501,7 +469,7 @@ private fun CreateGameContent(
         OutlinedTextField(
             value = ownerName,
             onValueChange = onOwnerNameChange,
-            label = { Text(stringResource(R.string.fragment_create_game_hint_11)) },
+            label = { Text(stringResource(R.string.create_game_hint_owner)) },
             isError = ownerNameError != null,
             supportingText = ownerNameError?.let { { Text(it) } },
             modifier = Modifier.fillMaxWidth(),
@@ -520,11 +488,11 @@ private fun CreateGameContent(
                     value = selectedGroup?.groupName ?: "",
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text(stringResource(R.string.fragment_create_game_hint_12)) },
+                    label = { Text(stringResource(R.string.create_game_hint_group)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .menuAnchor(),
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                     colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
                 )
 
@@ -558,8 +526,9 @@ private fun CreateGameContent(
         OutlinedTextField(
             value = selectedDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "",
             onValueChange = {},
-            label = { Text(stringResource(R.string.fragment_create_game_hint_13)) },
+            label = { Text(stringResource(R.string.create_game_hint_date)) },
             readOnly = true,
+            enabled = false,
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.DateRange,
@@ -567,8 +536,14 @@ private fun CreateGameContent(
                 )
             },
             modifier = Modifier
-                .fillMaxWidth()
                 .clickable(onClick = onDateClick)
+                .fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         )
 
         Row(
@@ -578,8 +553,9 @@ private fun CreateGameContent(
             OutlinedTextField(
                 value = selectedTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "",
                 onValueChange = {},
-                label = { Text(stringResource(R.string.fragment_create_game_hint_14)) },
+                label = { Text(stringResource(R.string.create_game_hint_start)) },
                 readOnly = true,
+                enabled = false,
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Schedule,
@@ -587,15 +563,22 @@ private fun CreateGameContent(
                     )
                 },
                 modifier = Modifier
-                    .weight(1f)
                     .clickable(onClick = onStartTimeClick)
+                    .weight(1f),
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledBorderColor = MaterialTheme.colorScheme.outline,
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
 
             OutlinedTextField(
                 value = selectedEndTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "",
                 onValueChange = {},
-                label = { Text(stringResource(R.string.fragment_create_game_hint_15)) },
+                label = { Text(stringResource(R.string.create_game_hint_end)) },
                 readOnly = true,
+                enabled = false,
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Schedule,
@@ -603,8 +586,14 @@ private fun CreateGameContent(
                     )
                 },
                 modifier = Modifier
-                    .weight(1f)
                     .clickable(onClick = onEndTimeClick)
+                    .weight(1f),
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledBorderColor = MaterialTheme.colorScheme.outline,
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
         }
 
@@ -624,7 +613,7 @@ private fun CreateGameContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.fragment_create_game_text_16),
+                        text = stringResource(R.string.create_game_label_auto_schedule),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -643,7 +632,7 @@ private fun CreateGameContent(
                         modifier = Modifier.padding(top = 8.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.fragment_create_game_text_17),
+                            text = stringResource(R.string.create_game_desc_auto_schedule),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 8.dp)
@@ -660,11 +649,11 @@ private fun CreateGameContent(
                                 value = recurrenceType,
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text(stringResource(R.string.fragment_create_game_hint_18)) },
+                                label = { Text(stringResource(R.string.create_game_hint_frequency)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedRecurrence) },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .menuAnchor()
+                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                             )
 
                             ExposedDropdownMenu(
@@ -688,7 +677,7 @@ private fun CreateGameContent(
         }
 
         // Seção: Visibilidade
-        SectionTitle(stringResource(R.string.fragment_create_game_text_21))
+        SectionTitle(stringResource(R.string.create_game_label_visibility))
 
         VisibilitySelector(
             selectedVisibility = selectedVisibility,
@@ -705,7 +694,7 @@ private fun CreateGameContent(
             OutlinedTextField(
                 value = price,
                 onValueChange = onPriceChange,
-                label = { Text(stringResource(R.string.fragment_create_game_hint_26)) },
+                label = { Text(stringResource(R.string.create_game_hint_price)) },
                 isError = priceError != null,
                 supportingText = priceError?.let { { Text(it) } },
                 modifier = Modifier.weight(1f),
@@ -721,7 +710,7 @@ private fun CreateGameContent(
             OutlinedTextField(
                 value = maxPlayers,
                 onValueChange = onMaxPlayersChange,
-                label = { Text(stringResource(R.string.fragment_create_game_hint_27)) },
+                label = { Text(stringResource(R.string.create_game_hint_max_players)) },
                 isError = maxPlayersError != null,
                 supportingText = maxPlayersError?.let { { Text(it) } },
                 modifier = Modifier.weight(1f),
@@ -741,7 +730,7 @@ private fun CreateGameContent(
                 modifier = Modifier.weight(1f),
                 enabled = !isLoading
             ) {
-                Text(stringResource(R.string.fragment_create_game_text_28))
+                Text(stringResource(R.string.create_game_button_cancel))
             }
 
             Button(
@@ -755,7 +744,7 @@ private fun CreateGameContent(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text(stringResource(R.string.fragment_create_game_text_29))
+                    Text(stringResource(R.string.create_game_button_schedule))
                 }
             }
         }
@@ -801,7 +790,7 @@ private fun LocationSelectionCard(
         ) {
             Icon(
                 imageVector = Icons.Default.Place,
-                contentDescription = stringResource(R.string.fragment_create_game_contentdescription_2),
+                contentDescription = stringResource(R.string.create_game_cd_location_icon),
                 tint = if (selectedLocation != null) {
                     MaterialTheme.colorScheme.onPrimaryContainer
                 } else {
@@ -811,7 +800,7 @@ private fun LocationSelectionCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.fragment_create_game_text_3),
+                    text = stringResource(R.string.create_game_label_location),
                     style = MaterialTheme.typography.labelMedium,
                     color = if (selectedLocation != null) {
                         MaterialTheme.colorScheme.onPrimaryContainer
@@ -820,7 +809,7 @@ private fun LocationSelectionCard(
                     }
                 )
                 Text(
-                    text = selectedLocation?.name ?: stringResource(R.string.fragment_create_game_text_4),
+                    text = selectedLocation?.name ?: stringResource(R.string.create_game_tap_to_select),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (selectedLocation != null) FontWeight.Bold else FontWeight.Normal,
                     color = if (selectedLocation != null) {
@@ -840,7 +829,7 @@ private fun LocationSelectionCard(
 
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = stringResource(R.string.fragment_create_game_contentdescription_5),
+                contentDescription = stringResource(R.string.create_game_cd_select),
                 tint = if (selectedLocation != null) {
                     MaterialTheme.colorScheme.onPrimaryContainer
                 } else {
@@ -878,7 +867,7 @@ private fun FieldSelectionCard(
         ) {
             Icon(
                 imageVector = Icons.Default.SportsScore,
-                contentDescription = stringResource(R.string.fragment_create_game_contentdescription_6),
+                contentDescription = stringResource(R.string.create_game_cd_field_icon),
                 tint = if (selectedField != null) {
                     MaterialTheme.colorScheme.onSecondaryContainer
                 } else {
@@ -888,7 +877,7 @@ private fun FieldSelectionCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.fragment_create_game_text_7),
+                    text = stringResource(R.string.create_game_label_field),
                     style = MaterialTheme.typography.labelMedium,
                     color = if (selectedField != null) {
                         MaterialTheme.colorScheme.onSecondaryContainer
@@ -897,7 +886,7 @@ private fun FieldSelectionCard(
                     }
                 )
                 Text(
-                    text = selectedField?.name ?: stringResource(R.string.fragment_create_game_text_8),
+                    text = selectedField?.name ?: stringResource(R.string.create_game_tap_to_select),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (selectedField != null) FontWeight.Bold else FontWeight.Normal,
                     color = if (selectedField != null) {
@@ -917,7 +906,7 @@ private fun FieldSelectionCard(
 
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = stringResource(R.string.fragment_create_game_contentdescription_5),
+                contentDescription = stringResource(R.string.create_game_cd_select),
                 tint = if (selectedField != null) {
                     MaterialTheme.colorScheme.onSecondaryContainer
                 } else {
@@ -938,24 +927,24 @@ private fun VisibilitySelector(
     ) {
         VisibilityOption(
             icon = Icons.Default.Group,
-            title = stringResource(R.string.fragment_create_game_text_23),
-            description = stringResource(R.string.fragment_create_game_text_22),
+            title = stringResource(R.string.create_game_visibility_group_only_label),
+            description = stringResource(R.string.create_game_visibility_group_only),
             isSelected = selectedVisibility == GameVisibility.GROUP_ONLY,
             onClick = { onVisibilitySelected(GameVisibility.GROUP_ONLY) }
         )
 
         VisibilityOption(
             icon = Icons.Default.Lock,
-            title = stringResource(R.string.fragment_create_game_text_24),
-            description = "Visível para todos (App). Requer solicitação para entrar.",
+            title = stringResource(R.string.create_game_visibility_public_closed),
+            description = stringResource(R.string.create_game_visibility_public_closed_desc),
             isSelected = selectedVisibility == GameVisibility.PUBLIC_CLOSED,
             onClick = { onVisibilitySelected(GameVisibility.PUBLIC_CLOSED) }
         )
 
         VisibilityOption(
             icon = Icons.Default.Public,
-            title = stringResource(R.string.fragment_create_game_text_25),
-            description = "Visível para todos (App). Entrada automática.",
+            title = stringResource(R.string.create_game_visibility_public_open),
+            description = stringResource(R.string.create_game_visibility_public_open_desc),
             isSelected = selectedVisibility == GameVisibility.PUBLIC_OPEN,
             onClick = { onVisibilitySelected(GameVisibility.PUBLIC_OPEN) }
         )

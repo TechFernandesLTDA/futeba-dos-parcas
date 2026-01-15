@@ -147,6 +147,156 @@ app/src/main/java/com/futebadosparcas/
 - Bottom navigation with badge support
 - Gamification badges and level indicators
 
+## Material Design 3 - Color Guidelines
+
+### Color Usage Rules
+
+**CRITICAL**: All colors MUST use `MaterialTheme.colorScheme.*` to support dark/light themes and ensure accessibility.
+
+#### ✅ CORRECT - Using Theme Colors
+
+```kotlin
+// Icons
+Icon(
+    imageVector = Icons.Default.Star,
+    tint = MaterialTheme.colorScheme.primary
+)
+
+// Text
+Text(
+    text = "Hello",
+    color = MaterialTheme.colorScheme.onSurface
+)
+
+// Backgrounds
+Box(
+    modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+)
+```
+
+#### ❌ INCORRECT - Hardcoded Colors
+
+```kotlin
+// ❌ NEVER do this - breaks dark theme
+Icon(tint = Color.Black)  // Invisible in dark mode!
+Text(color = Color.White)  // Invisible in light mode!
+Box(modifier = Modifier.background(Color.Gray))
+```
+
+### Material3 ColorScheme Reference
+
+| Token | Usage | Example |
+|-------|-------|---------|
+| `primary` | Main brand color, CTAs | FAB, Important buttons |
+| `onPrimary` | Text/icons on primary | Text on primary button |
+| `secondary` | Accents, less prominent | Secondary actions |
+| `onSecondary` | Text/icons on secondary | Text on secondary button |
+| `surface` | Card/sheet backgrounds | Cards, Dialogs, BottomSheets |
+| `onSurface` | Text/icons on surface | Most text and icons |
+| `surfaceVariant` | Subtle backgrounds | Disabled states, dividers |
+| `onSurfaceVariant` | Low-emphasis text | Captions, placeholders |
+| `error` | Error states | Error messages, destructive actions |
+| `onError` | Text/icons on error | Text on error snackbar |
+
+### Special Cases: Gamification Colors
+
+Some colors are **intentionally hardcoded** for gamification (medals, trophies):
+
+```kotlin
+// ✅ APPROVED - Gamification colors (universal recognition)
+object GamificationColors {
+    val Gold = Color(0xFFFFD700)      // 1st place medal
+    val Silver = Color(0xFFE0E0E0)    // 2nd place medal
+    val Bronze = Color(0xFFCD7F32)    // 3rd place medal
+    val Diamond = Color(0xFFB9F2FF)   // Special league division
+    val XpGreen = Color(0xFF00C853)   // XP bars/progress
+}
+```
+
+**When using gamification colors with text, ALWAYS use `ContrastHelper`:**
+
+```kotlin
+// ✅ CORRECT - Ensures readable text over colored backgrounds
+Text(
+    text = "1º",
+    color = ContrastHelper.getContrastingTextColor(GamificationColors.Gold)
+)
+```
+
+### ContrastHelper Utility
+
+Use `ContrastHelper` for dynamic text colors over custom backgrounds:
+
+```kotlin
+// Automatic contrast calculation (WCAG AA compliant)
+val textColor = ContrastHelper.getContrastingTextColor(backgroundColor)
+
+// Check if contrast meets WCAG AA standard (4.5:1 for normal text)
+val isAccessible = ContrastHelper.meetsWCAGAA(foregroundColor, backgroundColor)
+
+// Get contrast ratio
+val ratio = ContrastHelper.getContrastRatio(foregroundColor, backgroundColor)
+```
+
+**Located at**: `app/src/main/java/com/futebadosparcas/util/ContrastHelper.kt`
+
+### TopBar Colors
+
+All TopBars MUST use standardized colors from `AppTopBars.kt`:
+
+```kotlin
+// ✅ Use predefined color functions
+TopAppBar(
+    colors = AppTopBar.surfaceColors()  // Most common
+)
+
+// Available options:
+AppTopBar.surfaceColors()   // Surface background, onSurface text/icons
+AppTopBar.primaryColors()   // Primary background, onPrimary text/icons
+```
+
+### Icon Tinting Best Practices
+
+```kotlin
+// ✅ CORRECT - Contextual tinting
+Icon(
+    imageVector = Icons.Default.Delete,
+    tint = MaterialTheme.colorScheme.error  // Red for destructive action
+)
+
+Icon(
+    imageVector = Icons.Default.Star,
+    tint = GamificationColors.Gold  // Gold for special items
+)
+
+Icon(
+    imageVector = Icons.Default.Info,
+    tint = MaterialTheme.colorScheme.onSurfaceVariant  // Subtle info
+)
+
+// ❌ INCORRECT
+Icon(tint = Color.Red)  // Use colorScheme.error instead
+Icon(tint = Color.Yellow)  // Poor contrast, use Material Yellow A700: Color(0xFFFDD835)
+```
+
+### Accessibility Requirements
+
+- **Minimum contrast ratio**: 4.5:1 for normal text (WCAG AA)
+- **Minimum contrast ratio**: 3.0:1 for large text (18pt+ or 14pt+ bold)
+- **Always test in dark theme**: Ensure colors adapt properly
+- **Use ContrastHelper**: For any custom background + text combination
+
+### Quick Reference Checklist
+
+Before committing UI code:
+
+- [ ] No `Color.Black`, `Color.White`, `Color.Gray` hardcoded
+- [ ] All icons use `MaterialTheme.colorScheme.*` tint
+- [ ] TopBars use `AppTopBar.*Colors()` functions
+- [ ] Custom colors (gamification) use `ContrastHelper` for text
+- [ ] Tested in both light and dark themes
+- [ ] Contrast ratio ≥ 4.5:1 (verified with `ContrastHelper.getContrastRatio()`)
+
 ## Code Style
 
 ### Naming Conventions
@@ -178,6 +328,8 @@ app/src/main/java/com/futebadosparcas/
 6. **Close channels** - Always close Channels in `onCleared()`
 7. **Use `.catch {}`** - Always handle Flow errors
 8. **Paginate large lists** - Max 50 items per page
+9. **Never hardcode colors** - Always use `MaterialTheme.colorScheme.*` (see Material Design 3 section)
+10. **Use ContrastHelper** - For any custom background + text combination to ensure WCAG AA compliance
 
 ## Performance Optimizations (Applied)
 

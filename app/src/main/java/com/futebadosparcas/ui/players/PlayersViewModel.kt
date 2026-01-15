@@ -29,8 +29,8 @@ class PlayersViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val statisticsRepository: com.futebadosparcas.data.repository.IStatisticsRepository,
     private val groupRepository: com.futebadosparcas.data.repository.GroupRepository,
-    private val inviteRepository: com.futebadosparcas.data.repository.InviteRepository,
-    private val notificationRepository: com.futebadosparcas.data.repository.NotificationRepository,
+    private val inviteRepository: com.futebadosparcas.domain.repository.InviteRepository,
+    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -72,12 +72,13 @@ class PlayersViewModel @Inject constructor(
     private var unreadCountJob: Job? = null
 
     init {
-        // Lazy loading: não buscar jogadores no init
-        // Apenas se já havia uma query salva, recarregar
+        // Sempre carregar jogadores ao inicializar
+        // Query vazia = todos os jogadores
         if (currentQuery.isNotEmpty()) {
             loadPlayers(currentQuery)
         } else {
-            _uiState.value = PlayersUiState.Empty
+            // Carregar lista completa de jogadores (query vazia)
+            loadPlayers("")
         }
         observeUnreadCount()
         observeSearchQuery()
@@ -145,7 +146,14 @@ class PlayersViewModel @Inject constructor(
             try {
                 _uiState.value = PlayersUiState.Loading
 
-                userRepository.searchUsers(query).fold(
+                // Query vazia = carregar todos os jogadores
+                val result = if (query.isEmpty()) {
+                    userRepository.getAllUsers()
+                } else {
+                    userRepository.searchUsers(query, limit = 100)
+                }
+
+                result.fold(
                     onSuccess = { users ->
                         allPlayers = users
                         applyFiltersAndSort()

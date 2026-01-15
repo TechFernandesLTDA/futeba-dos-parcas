@@ -16,8 +16,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
+import com.futebadosparcas.R
+
+/**
+ * Cores para o quadro tático (Material Design 3 compliant)
+ */
+object TacticalBoardColors {
+    val TeamRed = Color.RED      // Gamification: Team color (intentional)
+    val TeamBlue = Color.BLUE    // Gamification: Team color (intentional)
+    // Árbitro usa cor do tema para adaptar a dark/light mode
+}
 
 /**
  * TacticalBoardScreen - Tela de quadro tático para desenhar jogadas
@@ -25,7 +36,7 @@ import androidx.core.content.FileProvider
  * Features:
  * - Campo de futebol desenhado
  * - Desenho livre com touch
- * - Seleção de cores (Vermelho, Azul, Preto)
+ * - Seleção de cores (Vermelho, Azul, Preto adaptável ao tema)
  * - Limpar quadro
  * - Compartilhar imagem
  */
@@ -40,12 +51,12 @@ fun TacticalBoardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Quadro Tático") },
+                title = { Text(stringResource(R.string.tactical_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
+                            contentDescription = stringResource(R.string.tactical_back)
                         )
                     }
                 },
@@ -102,16 +113,16 @@ fun TacticalBoardScreen(
                                 putExtra(Intent.EXTRA_STREAM, uri)
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
-                            context.startActivity(Intent.createChooser(intent, "Compartilhar Tática"))
+                            context.startActivity(Intent.createChooser(intent, context.getString(R.string.tactical_share_tactic)))
                         } catch (e: Exception) {
                             Toast.makeText(
                                 context,
-                                "Erro ao compartilhar: ${e.message}",
+                                context.getString(R.string.tactical_error_share, e.message ?: ""),
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
                     } else {
-                        Toast.makeText(context, "Erro ao salvar imagem", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.tactical_error_save), Toast.LENGTH_SHORT).show()
                     }
                 }
             )
@@ -125,7 +136,9 @@ private fun TacticalBoardControls(
     onClear: () -> Unit,
     onShare: () -> Unit
 ) {
-    var selectedColor by remember { mutableStateOf(Color.BLACK) }
+    // Cor padrão adaptada ao tema (usar onSurface para dark/light mode)
+    val defaultColor = MaterialTheme.colorScheme.onSurface.toArgb()
+    var selectedColor by remember { mutableStateOf(defaultColor) }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -140,7 +153,7 @@ private fun TacticalBoardControls(
         ) {
             // Color Selection
             Text(
-                text = "Cor do Desenho",
+                text = stringResource(R.string.tactical_draw_color),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -150,35 +163,37 @@ private fun TacticalBoardControls(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Gamification: Team color (intentional)
                 ColorButton(
                     color = androidx.compose.ui.graphics.Color.Red,
-                    isSelected = selectedColor == Color.RED,
+                    isSelected = selectedColor == TacticalBoardColors.TeamRed,
                     onClick = {
-                        selectedColor = Color.RED
-                        onColorSelected(Color.RED)
+                        selectedColor = TacticalBoardColors.TeamRed
+                        onColorSelected(TacticalBoardColors.TeamRed)
                     }
                 )
 
+                // Gamification: Team color (intentional)
                 ColorButton(
                     color = androidx.compose.ui.graphics.Color.Blue,
-                    isSelected = selectedColor == Color.BLUE,
+                    isSelected = selectedColor == TacticalBoardColors.TeamBlue,
                     onClick = {
-                        selectedColor = Color.BLUE
-                        onColorSelected(Color.BLUE)
+                        selectedColor = TacticalBoardColors.TeamBlue
+                        onColorSelected(TacticalBoardColors.TeamBlue)
                     }
                 )
 
                 ColorButton(
-                    color = androidx.compose.ui.graphics.Color.Black,
-                    isSelected = selectedColor == Color.BLACK,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    isSelected = selectedColor == defaultColor,
                     onClick = {
-                        selectedColor = Color.BLACK
-                        onColorSelected(Color.BLACK)
+                        selectedColor = defaultColor
+                        onColorSelected(defaultColor)
                     }
                 )
             }
 
-            Divider()
+            HorizontalDivider()
 
             // Actions
             Row(
@@ -195,7 +210,7 @@ private fun TacticalBoardControls(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Limpar")
+                    Text(stringResource(R.string.tactical_clear))
                 }
 
                 Button(
@@ -208,7 +223,7 @@ private fun TacticalBoardControls(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Compartilhar")
+                    Text(stringResource(R.string.tactical_share))
                 }
             }
         }

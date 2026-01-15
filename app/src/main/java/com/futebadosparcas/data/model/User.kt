@@ -128,6 +128,13 @@ data class User(
 
     /**
      * Retorna o enum de Role do usuario
+     *
+     * CMD-10: O role é definido no campo 'role' do documento do usuário no Firestore.
+     * Possíveis valores: "ADMIN", "FIELD_OWNER", "PLAYER" (padrão)
+     *
+     * O role é definido manualmente no banco ou via Cloud Functions.
+     * Não existe custom claim do Firebase Auth - a verificação é feita
+     * apenas no documento do usuário no Firestore.
      */
     @Exclude
     fun getRoleEnum(): UserRole = try {
@@ -138,33 +145,56 @@ data class User(
 
     /**
      * Verifica se o usuario tem permissao de admin
+     *
+     * CMD-10: Padronização - admin é definido via UserRole.ADMIN
+     * CMD-11: AUTHZ real - use esta função apenas para UI gating,
+     * verificação real deve estar no Firestore rules.
      */
     @Exclude
     fun isAdmin(): Boolean = getRoleEnum() == UserRole.ADMIN
 
     /**
      * Verifica se o usuario e dono de quadra/local
+     *
+     * CMD-10: FIELD_OWNER é definido via UserRole.FIELD_OWNER
+     * Admins também têm acesso a permissões de FIELD_OWNER.
      */
     @Exclude
     fun isFieldOwner(): Boolean = getRoleEnum() == UserRole.FIELD_OWNER || isAdmin()
 
     /**
      * Verifica se pode gerenciar locais e quadras
+     *
+     * CMD-11: Permissão para criar/editar locais próprios.
+     * No backend, verificar também via ownerId no documento.
      */
     @Exclude
     fun canManageLocations(): Boolean = isFieldOwner()
 
     /**
      * Verifica se pode aprovar reservas
+     *
+     * CMD-11: Permissão para gerenciar reservas de locais próprios.
      */
     @Exclude
     fun canApproveBookings(): Boolean = isFieldOwner()
 
     /**
      * Verifica se pode ver estatisticas globais
+     *
+     * CMD-11: Apenas admins podem ver estatísticas globais de todos os usuários.
      */
     @Exclude
     fun canViewGlobalStats(): Boolean = isAdmin()
+
+    /**
+     * Verifica se pode gerenciar usuários (role, ban, etc)
+     *
+     * CMD-11: Apenas admins podem gerenciar outros usuários.
+     * Esta verificação é apenas UI gating - a regra real está no Firestore.
+     */
+    @Exclude
+    fun canManageUsers(): Boolean = isAdmin()
 
     /**
      * Retorna o nome de exibição (Apelido se houver, senão o Nome)
@@ -250,20 +280,58 @@ enum class PlayerRatingRole {
 
 /**
  * Roles/papeis do sistema
- * 
+ *
+ * CMD-10: Definição padronizada de roles no sistema.
+ *
+ * Como o admin é definido:
+ * - Campo 'role' no documento do usuário no Firestore (users/{userId})
+ * - Valores possíveis: "ADMIN", "FIELD_OWNER", "PLAYER"
+ * - Valor padrão para novos usuários: "PLAYER"
+ * - Alteração de role é feita manualmente no banco ou via Cloud Function
+ *
+ * IMPORTANTE: Não usamos Custom Claims do Firebase Auth porque
+ * requer SDK Admin para atualizar e pode ter latência. A verificação
+ * é feita apenas no documento do usuário no Firestore.
+ *
+ * Matriz de Permissões (CMD-11):
+ *
+ * | Ação                    | ADMIN | FIELD_OWNER | PLAYER |
+ * |-------------------------|-------|-------------|--------|
+ * | Criar jogo              | ✓     | ✓           | ✓      |
+ * | Editar qualquer jogo    | ✓     | próprios    | próprios|
+ * | Deletar qualquer jogo   | ✓     | próprios    | próprios|
+ * | Criar local             | ✓     | ✓           | ✗      |
+ * | Editar qualquer local   | ✓     | próprios    | ✗      |
+ * | Gerenciar usuários      | ✓     | ✗           | ✗      |
+ * | Ver stats globais       | ✓     | ✓           | ✗      |
+ * | Editar rankings         | ✓     | ✗           | ✗      |
+ * | Ajustar XP              | ✓     | ✗           | ✗      |
+ *
  * ADMIN: Tudo - gerenciar usuarios, quadras, jogos, estatisticas globais
  * FIELD_OWNER: Cadastrar/editar seus locais, quadras, horarios, precos, fotos, aprovar reservas
  * PLAYER: Criar jogos (como dono do horario), confirmar presenca, ver estatisticas pessoais
  */
 enum class UserRole(val displayName: String, val description: String) {
+    /**
+     * Administrador do sistema.
+     * Tem acesso total a todas as funcionalidades.
+     */
     ADMIN(
         displayName = "Administrador",
         description = "Acesso total ao sistema"
     ),
+    /**
+     * Dono de quadra/local.
+     * Pode gerenciar seus próprios locais e quadras.
+     */
     FIELD_OWNER(
         displayName = "Dono de Quadra",
         description = "Gerencia locais, quadras e reservas"
     ),
+    /**
+     * Jogador comum.
+     * Pode criar jogos, confirmar presença e ver estatísticas pessoais.
+     */
     PLAYER(
         displayName = "Jogador",
         description = "Cria jogos e confirma presença"
@@ -271,7 +339,7 @@ enum class UserRole(val displayName: String, val description: String) {
 
     companion object {
         fun fromString(value: String?): UserRole {
-            return entries.find { it.name == value } ?: PLAYER
+            return entries.find { it.name.equals(value, ignoreCase = true) } ?: PLAYER
         }
     }
 }

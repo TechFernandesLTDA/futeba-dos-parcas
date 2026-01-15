@@ -10,13 +10,19 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 import java.time.*
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
-import com.futebadosparcas.data.repository.ScheduleRepository
+import com.futebadosparcas.domain.repository.ScheduleRepository
+import com.futebadosparcas.util.toAndroidSchedule
+import com.futebadosparcas.util.toKmpSchedule
 import javax.inject.Inject
+import com.futebadosparcas.util.toKmpAppNotifications
 
 @HiltViewModel
 class GameDetailViewModel @Inject constructor(
@@ -25,7 +31,7 @@ class GameDetailViewModel @Inject constructor(
     private val gameExperienceRepository: com.futebadosparcas.data.repository.GameExperienceRepository,
     private val scheduleRepository: ScheduleRepository,
     private val groupRepository: com.futebadosparcas.data.repository.GroupRepository,
-    private val notificationRepository: com.futebadosparcas.data.repository.NotificationRepository
+    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GameDetailUiState>(GameDetailUiState.Loading)
@@ -38,6 +44,7 @@ class GameDetailViewModel @Inject constructor(
     private var gameId: String? = null
     private var gameDetailsJob: Job? = null
 
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
     fun loadGameDetails(id: String) {
         if (id.isEmpty()) {
             _uiState.value = GameDetailUiState.Error("ID do jogo inválido")
@@ -60,7 +67,12 @@ class GameDetailViewModel @Inject constructor(
                     gameRepository.getLiveScoreFlow(id)
                 ) { gameResult, confirmationsResult, eventsResult, teamsResult, liveScore ->
                     CombinedData(gameResult, confirmationsResult, eventsResult, teamsResult, liveScore)
-                }.collect { data ->
+                }
+                .catch { e ->
+                    AppLogger.e(TAG, "Erro no combine de Flows", e)
+                    _uiState.value = GameDetailUiState.Error(e.message ?: "Erro ao carregar jogo")
+                }
+                .collect { data ->
                     val gameResult = data.gameResult
                     val confirmationsResult = data.confirmationsResult
                     val eventsResult = data.eventsResult
@@ -170,7 +182,14 @@ class GameDetailViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            val result = gameRepository.confirmPresence(gameId, position.name, false)
+            // Se usuario ja tem convite (PENDING), aceitar o convite
+            // Caso contrario, criar nova confirmacao
+            val result = if (currentState.isUserPending) {
+                gameRepository.acceptInvitation(gameId, position.name)
+            } else {
+                gameRepository.confirmPresence(gameId, position.name, false)
+            }
+
             if (result.isFailure) {
                 _uiState.value = currentState.copy(
                     userMessage = "Erro ao atualizar presença: ${result.exceptionOrNull()?.message}"
@@ -296,10 +315,10 @@ class GameDetailViewModel @Inject constructor(
                 if (currentScheduleId.isNotEmpty()) {
                     val existingScheduleResult = scheduleRepository.getScheduleById(currentScheduleId)
                     if (existingScheduleResult.isFailure) {
-                        AppLogger.i(TAG) { "Agendamento automático cancelado: O template de recorrência foi excluído pelo usuário." }
+                        AppLogger.i(TAG) { "Agendamento automatico cancelado: O template de recorrencia foi excluido pelo usuario." }
                         return@launch
                     }
-                    scheduleTemplate = existingScheduleResult.getOrNull()
+                    scheduleTemplate = existingScheduleResult.getOrNull()?.toAndroidSchedule()
                 } else {
                     // Create a template if it doesn't exist but game is recurring
                     val newSchedule = Schedule(
@@ -329,8 +348,9 @@ class GameDetailViewModel @Inject constructor(
                             if (isoDay == 7) 0 else isoDay
                         } catch (e: Exception) { 0 }
                     )
-                    
-                    val result = scheduleRepository.createSchedule(newSchedule)
+
+                    val kmpSchedule = newSchedule.toKmpSchedule()
+                    val result = scheduleRepository.createSchedule(kmpSchedule)
                     result.onSuccess { id ->
                         currentScheduleId = id
                         scheduleTemplate = newSchedule.copy(id = id)
@@ -500,7 +520,7 @@ class GameDetailViewModel @Inject constructor(
                     )
                 }
                 if (notifications.isNotEmpty()) {
-                    notificationRepository.batchCreateNotifications(notifications)
+                    notificationRepository.batchCreateNotifications(notifications.toKmpAppNotifications())
                 }
             }
         }

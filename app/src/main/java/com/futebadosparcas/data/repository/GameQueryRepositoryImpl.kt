@@ -3,12 +3,26 @@ package com.futebadosparcas.data.repository
 import com.futebadosparcas.data.local.dao.GameDao
 import com.futebadosparcas.data.local.model.toDomain
 import com.futebadosparcas.data.local.model.toEntity
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.data.model.Game as AndroidGame
+import com.futebadosparcas.data.model.GameConfirmation as AndroidGameConfirmation
+import com.futebadosparcas.data.model.GameEvent as AndroidGameEvent
 import com.futebadosparcas.data.model.GameStatus
+import com.futebadosparcas.data.model.Team as AndroidTeam
+import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.GameDetailConsolidated
+import com.futebadosparcas.domain.model.GameEvent
+import com.futebadosparcas.domain.model.GameFilterType
+import com.futebadosparcas.domain.model.GameWithConfirmations
+import com.futebadosparcas.domain.model.PaginatedGames
+import com.futebadosparcas.domain.model.Team
+import com.futebadosparcas.domain.model.TimeConflict
+import com.futebadosparcas.domain.repository.GameQueryRepository as KmpGameQueryRepository
+import com.futebadosparcas.domain.repository.GameConfirmationRepository
 import com.futebadosparcas.domain.util.deduplicateSortAndLimit
 import com.futebadosparcas.domain.util.mergeAndDeduplicate
-import com.futebadosparcas.ui.games.GameWithConfirmations
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.toKmpGame
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
@@ -28,6 +42,12 @@ import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Implementacao Android do GameQueryRepository.
+ *
+ * Durante a migracao KMP, esta implementacao usa modelos Android internamente
+ * e converte para modelos KMP nos retornos dos metodos.
+ */
 @Singleton
 class GameQueryRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
@@ -35,13 +55,70 @@ class GameQueryRepositoryImpl @Inject constructor(
     private val gameDao: GameDao,
     private val groupRepository: GroupRepository,
     private val confirmationRepository: GameConfirmationRepository
-) : GameQueryRepository {
+) : KmpGameQueryRepository {
 
     private val gamesCollection = firestore.collection("games")
 
     companion object {
         private const val TAG = "GameQueryRepository"
     }
+
+    // ========== Helper Methods para Conversao ==========
+
+    private fun List<AndroidGame>.toKmpGames(): List<Game> = map { it.toKmpGame() }
+
+    private fun List<AndroidGameConfirmation>.toKmpConfirmations(): List<GameConfirmation> = map { it.toKmpConfirmation() }
+
+    private fun AndroidGameConfirmation.toKmpConfirmation(): GameConfirmation = GameConfirmation(
+        id = id,
+        gameId = gameId,
+        userId = userId,
+        userName = userName,
+        userPhoto = userPhoto,
+        position = position,
+        teamId = null, // Android GameConfirmation nao tem teamId
+        status = status,
+        paymentStatus = paymentStatus,
+        isCasualPlayer = isCasualPlayer,
+        goals = goals,
+        assists = assists,
+        saves = saves,
+        yellowCards = yellowCards,
+        redCards = redCards,
+        nickname = nickname,
+        xpEarned = xpEarned,
+        isMvp = isMvp,
+        isBestGk = isBestGk,
+        isWorstPlayer = isWorstPlayer,
+        confirmedAt = confirmedAt?.time
+    )
+
+    private fun List<AndroidGameEvent>.toKmpEvents(): List<GameEvent> = map { it.toKmpEvent() }
+
+    private fun AndroidGameEvent.toKmpEvent(): GameEvent = GameEvent(
+        id = id,
+        gameId = gameId,
+        eventType = eventType,
+        playerId = playerId,
+        playerName = playerName,
+        teamId = teamId,
+        assistedById = assistedById,
+        assistedByName = assistedByName,
+        minute = minute,
+        createdBy = createdBy,
+        createdAt = createdAt?.time
+    )
+
+    private fun List<AndroidTeam>.toKmpTeams(): List<Team> = map { it.toKmpTeam() }
+
+    private fun AndroidTeam.toKmpTeam(): Team = Team(
+        id = id,
+        gameId = gameId,
+        name = name,
+        color = color,
+        playerIds = playerIds,
+        score = score
+    )
 
     override suspend fun getUpcomingGames(): Result<List<Game>> {
         return try {
@@ -103,23 +180,24 @@ class GameQueryRepositoryImpl @Inject constructor(
                 tasks.awaitAll()
             }
 
-            val allGames = allSnapshots.flatMap { it.documents }
-                .mapNotNull { doc -> doc.toObject(Game::class.java)?.apply { id = doc.id } }
+            val allAndroidGames = allSnapshots.flatMap { it.documents }
+                .mapNotNull { doc -> doc.toObject(AndroidGame::class.java)?.apply { id = doc.id } }
                 .deduplicateSortAndLimit(
                     idSelector = { it.id },
                     sortSelector = { it.dateTime },
                     limit = 20
                 )
 
-            val games = allGames
             // Sync to local
-            val entities = games.map { it.toEntity() }
+            val entities = allAndroidGames.map { it.toEntity() }
             gameDao.insertGames(entities)
 
-            Result.success(games)
+            // Converter para KMP
+            val kmpGames = allAndroidGames.map { it.toKmpGame() }
+            Result.success(kmpGames)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos remotos, tentando local", e)
-            val localGames = gameDao.getUpcomingGamesSnapshot().map { it.toDomain() }
+            val localGames = gameDao.getUpcomingGamesSnapshot().map { it.toDomain().toKmpGame() }
             Result.success(localGames)
         }
     }
@@ -133,19 +211,19 @@ class GameQueryRepositoryImpl @Inject constructor(
                 .get()
                 .await()
 
-            val games = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(Game::class.java)?.apply { id = doc.id }
+            val androidGames = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
             }
 
             // Sync to Local DB
-            val entities = games.map { it.toEntity() }
+            val entities = androidGames.map { it.toEntity() }
             gameDao.insertGames(entities)
 
-            Result.success(games)
+            Result.success((androidGames as List<AndroidGame>).toKmpGames())
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos remotos, tentando local", e)
             try {
-                val localGames = gameDao.getAllGamesSnapshot().map { it.toDomain() }
+                val localGames = gameDao.getAllGamesSnapshot().map { (it.toDomain() as AndroidGame).toKmpGame() }
                 if (localGames.isNotEmpty()) {
                     Result.success(localGames)
                 } else {
@@ -172,12 +250,12 @@ class GameQueryRepositoryImpl @Inject constructor(
             val userConfirmations = confirmationRepository.getUserConfirmationIds(uid)
 
             val result = gamesSnapshot.documents.mapNotNull { doc ->
-                val game = doc.toObject(Game::class.java)?.apply { id = doc.id } ?: return@mapNotNull null
+                val androidGame = doc.toObject(AndroidGame::class.java)?.apply { id = doc.id } ?: return@mapNotNull null
 
                 GameWithConfirmations(
-                    game = game,
-                    confirmedCount = game.playersCount,
-                    isUserConfirmed = game.id in userConfirmations
+                    game = androidGame.toKmpGame(),
+                    confirmedCount = androidGame.playersCount,
+                    isUserConfirmed = androidGame.id in userConfirmations
                 )
             }
 
@@ -198,14 +276,14 @@ class GameQueryRepositoryImpl @Inject constructor(
                 .limit(50)
                 .addSnapshotListener { snapshot, e ->
                     if (e != null) {
-                        trySend(Result.failure<List<Game>>(e))
+                        trySend(Result.failure<List<AndroidGame>>(e))
                         return@addSnapshotListener
                     }
                     if (snapshot != null) {
-                        val games = snapshot.documents.mapNotNull { doc ->
-                            doc.toObject(Game::class.java)?.apply { id = doc.id }
+                        val androidGames = snapshot.documents.mapNotNull { doc ->
+                            doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
                         }
-                        trySend(Result.success(games))
+                        trySend(Result.success(androidGames))
                     }
                 }
             awaitClose { subscription.remove() }
@@ -215,12 +293,12 @@ class GameQueryRepositoryImpl @Inject constructor(
 
         return combine(gamesFlow, userConfFlow) { gamesResult, userConfs ->
             if (gamesResult.isSuccess) {
-                val games = gamesResult.getOrNull() ?: emptyList()
-                val result = games.map { game ->
+                val androidGames = gamesResult.getOrNull() ?: emptyList()
+                val result = androidGames.map { androidGame ->
                     GameWithConfirmations(
-                        game = game,
-                        confirmedCount = game.playersCount,
-                        isUserConfirmed = game.id in userConfs
+                        game = androidGame.toKmpGame(),
+                        confirmedCount = androidGame.playersCount,
+                        isUserConfirmed = androidGame.id in userConfs
                     )
                 }
                 Result.success(result)
@@ -237,8 +315,8 @@ class GameQueryRepositoryImpl @Inject constructor(
             val games = withTimeout(8000L) {
                 val gameIds = confirmationRepository.getConfirmedGameIds(uid)
 
-                val gamesList = if (gameIds.isEmpty()) {
-                    emptyList<Game>()
+                val androidGamesList = if (gameIds.isEmpty()) {
+                    emptyList<AndroidGame>()
                 } else {
                     // Paraleliza os chunks para reduzir latência
                     coroutineScope {
@@ -250,7 +328,7 @@ class GameQueryRepositoryImpl @Inject constructor(
                                     .await()
 
                                 snapshot.documents.mapNotNull { doc ->
-                                    doc.toObject(Game::class.java)?.apply { id = doc.id }
+                                    doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
                                 }
                             }
                         }
@@ -260,12 +338,12 @@ class GameQueryRepositoryImpl @Inject constructor(
 
                 // Filtra apenas jogos futuros e ordena por data
                 val now = java.util.Date()
-                gamesList
+                androidGamesList
                     .filter { it.dateTime != null && it.dateTime!! > now }
                     .sortedBy { it.dateTime }
             }
 
-            Result.success(games)
+            Result.success((games as List<AndroidGame>).map { it.toKmpGame() })
 
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos confirmados do usuario", e)
@@ -276,12 +354,12 @@ class GameQueryRepositoryImpl @Inject constructor(
     override suspend fun getGameDetails(gameId: String): Result<Game> {
         return try {
             val doc = gamesCollection.document(gameId).get().await()
-            val game = doc.toObject(Game::class.java)
+            val androidGame = doc.toObject(AndroidGame::class.java)
                 ?: return Result.failure(Exception("Erro ao converter jogo"))
 
             // Cache Update
             try {
-                gameDao.insertGame(game.toEntity())
+                gameDao.insertGame(androidGame.toEntity())
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao salvar cache local do jogo", e)
             }
@@ -289,11 +367,11 @@ class GameQueryRepositoryImpl @Inject constructor(
             // Crashlytics Context
             com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().setCustomKey("active_game_id", gameId)
 
-            Result.success(game)
+            Result.success(androidGame.toKmpGame())
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar detalhes do jogo remoto, tentando local", e)
             try {
-                val localGame = gameDao.getGameById(gameId)?.toDomain()
+                val localGame = gameDao.getGameById(gameId)?.toDomain()?.toKmpGame()
                 if (localGame != null) {
                     Result.success(localGame)
                 } else {
@@ -343,11 +421,11 @@ class GameQueryRepositoryImpl @Inject constructor(
                     try {
                         firestore.collection("games").document(gameId)
                             .collection("events")
-                            .orderBy("createdAt", Query.Direction.DESCENDING)
+                            .orderBy("created_at", Query.Direction.DESCENDING)
                             .limit(100)
                             .get()
                             .await()
-                            .toObjects(com.futebadosparcas.data.model.GameEvent::class.java)
+                            .toObjects(AndroidGameEvent::class.java)
                     } catch (e: Exception) {
                         AppLogger.e(TAG, "Erro ao buscar eventos consolidados", e)
                         emptyList()
@@ -360,7 +438,7 @@ class GameQueryRepositoryImpl @Inject constructor(
                             .collection("teams")
                             .get()
                             .await()
-                            .toObjects(com.futebadosparcas.data.model.Team::class.java)
+                            .toObjects(AndroidTeam::class.java)
                     } catch (e: Exception) {
                         AppLogger.e(TAG, "Erro ao buscar times consolidados", e)
                         emptyList()
@@ -370,19 +448,19 @@ class GameQueryRepositoryImpl @Inject constructor(
                 // ✅ Aguardar todas as queries em paralelo
                 val gameSnapshot = gameTask.await()
                 val confirmations = confirmationsTask.await()
-                val events = eventsTask.await()
-                val teams = teamsTask.await()
+                val androidEvents = eventsTask.await()
+                val androidTeams = teamsTask.await()
 
                 if (gameSnapshot == null || !gameSnapshot.exists()) {
                     return@coroutineScope Result.failure(Exception("Jogo não encontrado"))
                 }
 
-                val game = gameSnapshot.toObject(Game::class.java)
+                val androidGame = gameSnapshot.toObject(AndroidGame::class.java)
                     ?: return@coroutineScope Result.failure(Exception("Erro ao converter jogo consolidado"))
 
                 // Cache do jogo
                 try {
-                    gameDao.insertGame(game.toEntity())
+                    gameDao.insertGame(androidGame.toEntity())
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Erro ao salvar game cache consolidado", e)
                 }
@@ -391,10 +469,10 @@ class GameQueryRepositoryImpl @Inject constructor(
                 AppLogger.d(TAG) { "✅ getGameDetailConsolidated: 3 queries em paralelo para gameId=$gameId" }
 
                 Result.success(GameDetailConsolidated(
-                    game = game,
+                    game = androidGame.toKmpGame(),
                     confirmations = confirmations,
-                    events = events,
-                    teams = teams
+                    events = androidEvents.toKmpEvents(),
+                    teams = androidTeams.toKmpTeams()
                 ))
             }
         } catch (e: Exception) {
@@ -411,9 +489,9 @@ class GameQueryRepositoryImpl @Inject constructor(
             }
 
             if (snapshot != null && snapshot.exists()) {
-                val game = snapshot.toObject(Game::class.java)
-                if (game != null) {
-                    trySend(Result.success(game))
+                val androidGame = snapshot.toObject(AndroidGame::class.java)
+                if (androidGame != null) {
+                    trySend(Result.success(androidGame.toKmpGame()))
                 } else {
                     trySend(Result.failure(Exception("Erro de conversão")))
                 }
@@ -472,8 +550,8 @@ class GameQueryRepositoryImpl @Inject constructor(
                             return@addSnapshotListener
                         }
 
-                        val games = snap?.toObjects(Game::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
-                        trySend(games)
+                        val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                        trySend(androidGames)
                     }
                     awaitClose { sub.remove() }
                 }
@@ -486,8 +564,8 @@ class GameQueryRepositoryImpl @Inject constructor(
                                 trySend(emptyList())
                                 return@addSnapshotListener
                             }
-                            val games = snap?.toObjects(Game::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
-                            trySend(games)
+                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                            trySend(androidGames)
                         }
                         awaitClose { sub.remove() }
                     }
@@ -500,16 +578,16 @@ class GameQueryRepositoryImpl @Inject constructor(
 
                 // 5. Combine everything
                 combine(publicFlow, groupGamesFlow, userConfFlow) { publicGames, groupGames, userConfs ->
-                    val allGames = publicGames.mergeAndDeduplicate(groupGames) { it.id }
+                    val allAndroidGames = publicGames.mergeAndDeduplicate(groupGames) { it.id }
                         .filter { it.status == GameStatus.SCHEDULED.name || it.status == GameStatus.CONFIRMED.name || it.status == GameStatus.LIVE.name }
                         .sortedBy { it.dateTime }
                         .take(20)
 
-                    val result = allGames.map { game ->
+                    val result = allAndroidGames.map { androidGame ->
                         GameWithConfirmations(
-                            game = game,
-                            confirmedCount = game.playersCount,
-                            isUserConfirmed = game.id in userConfs
+                            game = androidGame.toKmpGame(),
+                            confirmedCount = androidGame.playersCount,
+                            isUserConfirmed = androidGame.id in userConfs
                         )
                     }
                     Result.success(result)
@@ -554,8 +632,8 @@ class GameQueryRepositoryImpl @Inject constructor(
                 val publicFlow = callbackFlow {
                     val sub = publicQuery.addSnapshotListener { snap, e ->
                         if (e != null) { trySend(emptyList()); return@addSnapshotListener }
-                        val games = snap?.toObjects(Game::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
-                        trySend(games)
+                        val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                        trySend(androidGames)
                     }
                     awaitClose { sub.remove() }
                 }
@@ -564,8 +642,8 @@ class GameQueryRepositoryImpl @Inject constructor(
                     callbackFlow {
                         val sub = groupQuery.addSnapshotListener { snap, e ->
                             if (e != null) { trySend(emptyList()); return@addSnapshotListener }
-                            val games = snap?.toObjects(Game::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
-                            trySend(games)
+                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                            trySend(androidGames)
                         }
                         awaitClose { sub.remove() }
                     }
@@ -576,16 +654,16 @@ class GameQueryRepositoryImpl @Inject constructor(
                 val userConfFlow = confirmationRepository.getUserConfirmationsFlow(uid)
 
                 combine(publicFlow, groupGamesFlow, userConfFlow) { publicGames, groupGames, userConfs ->
-                    val allGames = publicGames.mergeAndDeduplicate(groupGames) { it.id }
+                    val allAndroidGames = publicGames.mergeAndDeduplicate(groupGames) { it.id }
                         .filter { it.status == GameStatus.FINISHED.name || it.status == GameStatus.CANCELLED.name }
                         .sortedByDescending { it.dateTime }
                         .take(limit)
 
-                    val result = allGames.map { game ->
+                    val result = allAndroidGames.map { androidGame ->
                         GameWithConfirmations(
-                            game = game,
-                            confirmedCount = game.playersCount,
-                            isUserConfirmed = game.id in userConfs
+                            game = androidGame.toKmpGame(),
+                            confirmedCount = androidGame.playersCount,
+                            isUserConfirmed = androidGame.id in userConfs
                         )
                     }
                     Result.success(result)
@@ -658,28 +736,28 @@ class GameQueryRepositoryImpl @Inject constructor(
 
                 groupQuery.limit((pageSize + 1).toLong()).get().await()
                     .documents.mapNotNull { doc ->
-                        doc.toObject(Game::class.java)?.apply { id = doc.id }
+                        doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
                     }
             } else {
                 emptyList()
             }
 
             val publicGames = publicSnapshot.documents.mapNotNull { doc ->
-                doc.toObject(Game::class.java)?.apply { id = doc.id }
+                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
             }
 
             // Combinar e deduplicar
-            val allGames = (publicGames + groupGames)
+            val allAndroidGames = (publicGames + groupGames)
                 .distinctBy { it.id }
                 .sortedByDescending { it.dateTime }
 
             // Verificar se ha mais paginas
-            val hasMore = allGames.size > pageSize
-            val gamesPage = allGames.take(pageSize)
+            val hasMore = allAndroidGames.size > pageSize
+            val androidGamesPage = allAndroidGames.take(pageSize)
 
             // Atualizar cursor para proxima pagina
-            val newLastGameId = if (gamesPage.isNotEmpty()) {
-                val lastGame = gamesPage.last()
+            val newLastGameId = if (androidGamesPage.isNotEmpty()) {
+                val lastGame = androidGamesPage.last()
                 // Guardar snapshot para reutilizar
                 lastDocumentSnapshot = publicSnapshot.documents.find { it.id == lastGame.id }
                 lastGame.id
@@ -691,11 +769,11 @@ class GameQueryRepositoryImpl @Inject constructor(
             val userConfirmations = confirmationRepository.getUserConfirmationIds(uid)
 
             // Mapear para GameWithConfirmations
-            val result = gamesPage.map { game ->
+            val result = androidGamesPage.map { androidGame ->
                 GameWithConfirmations(
-                    game = game,
-                    confirmedCount = game.playersCount,
-                    isUserConfirmed = game.id in userConfirmations
+                    game = androidGame.toKmpGame(),
+                    confirmedCount = androidGame.playersCount,
+                    isUserConfirmed = androidGame.id in userConfirmations
                 )
             }
 
@@ -717,29 +795,29 @@ class GameQueryRepositoryImpl @Inject constructor(
             val uid = auth.currentUser?.uid ?: ""
             if (uid.isEmpty()) return Result.success(emptyList())
 
-            val games = when (filterType) {
+            val androidGames = when (filterType) {
                 GameFilterType.MY_GAMES -> {
                     val gameIds = confirmationRepository.getConfirmedGameIds(uid)
                     if (gameIds.isEmpty()) emptyList()
                     else {
                         val chunks = gameIds.chunked(10)
-                        val allGames = mutableListOf<Game>()
+                        val allAndroidGames = mutableListOf<AndroidGame>()
                         chunks.forEach { chunk ->
                             val g = gamesCollection.whereIn(FieldPath.documentId(), chunk).get().await()
-                            allGames.addAll(g.toObjects(Game::class.java).mapNotNull {
+                            allAndroidGames.addAll(g.toObjects(AndroidGame::class.java).mapNotNull {
                                 it.apply { id = g.documents.find { d -> d.id == it.id }?.id ?: it.id }
                             })
                         }
-                        allGames.sortedByDescending { it.dateTime }
+                        allAndroidGames.sortedByDescending { it.dateTime }
                     }
                 }
                 else -> emptyList()
             }
 
-            val result = games.map { game ->
+            val result = androidGames.map { androidGame ->
                 GameWithConfirmations(
-                    game = game,
-                    confirmedCount = game.playersCount,
+                    game = androidGame.toKmpGame(),
+                    confirmedCount = androidGame.playersCount,
                     isUserConfirmed = true
                 )
             }
@@ -765,12 +843,12 @@ class GameQueryRepositoryImpl @Inject constructor(
                 .get()
                 .await()
 
-            val games = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(Game::class.java)?.apply { id = doc.id }
+            val androidGames = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
             }
 
-            AppLogger.d(TAG) { "Encontrados ${games.size} jogos públicos" }
-            Result.success(games)
+            AppLogger.d(TAG) { "Encontrados ${androidGames.size} jogos públicos" }
+            Result.success(androidGames.toKmpGames())
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos públicos", e)
             Result.failure(e)
@@ -795,11 +873,11 @@ class GameQueryRepositoryImpl @Inject constructor(
                     return@addSnapshotListener
                 }
 
-                val games = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(Game::class.java)?.apply { id = doc.id }
+                val androidGames = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
                 } ?: emptyList()
 
-                trySend(games)
+                trySend(androidGames.toKmpGames())
             }
 
         awaitClose { listener.remove() }
@@ -855,12 +933,12 @@ class GameQueryRepositoryImpl @Inject constructor(
                 .get()
                 .await()
 
-            val games = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(Game::class.java)?.apply { id = doc.id }
+            val androidGames = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
             }
 
-            AppLogger.d(TAG) { "Encontrados ${games.size} jogos abertos para solicitações" }
-            Result.success(games)
+            AppLogger.d(TAG) { "Encontrados ${androidGames.size} jogos abertos para solicitações" }
+            Result.success(androidGames.toKmpGames())
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos abertos", e)
             Result.failure(e)
@@ -890,7 +968,7 @@ class GameQueryRepositoryImpl @Inject constructor(
 
             val conflicts = mutableListOf<TimeConflict>()
 
-            // Converte horarios para minutos desde meia-noite para facilitar comparação
+            // Converte horarios para minutos desde meia-noite para facilitar comparacao
             val newStart = timeToMinutes(startTime)
             var newEnd = timeToMinutes(endTime)
 
@@ -914,7 +992,7 @@ class GameQueryRepositoryImpl @Inject constructor(
                     val overlapEnd = minOf(newEnd, existingEnd)
                     val overlapMinutes = overlapEnd - overlapStart
 
-                    conflicts.add(TimeConflict(game, overlapMinutes))
+                    conflicts.add(TimeConflict(conflictingGame = game, overlapMinutes = overlapMinutes))
                 }
             }
 
@@ -933,8 +1011,8 @@ class GameQueryRepositoryImpl @Inject constructor(
                 .get()
                 .await()
 
-            val games = snapshot.toObjects(Game::class.java)
-            Result.success(games)
+            val androidGames = snapshot.toObjects(AndroidGame::class.java)
+            Result.success(androidGames.toKmpGames())
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos por quadra e data", e)
             Result.failure(e)

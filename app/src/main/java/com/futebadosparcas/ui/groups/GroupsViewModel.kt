@@ -68,19 +68,7 @@ class GroupsViewModel @Inject constructor(
     private var allGroups: List<UserGroup> = emptyList()
 
     init {
-        // Sincroniza member_count na inicialização (corrige dados legados)
-        syncMemberCounts()
         loadMyGroups()
-    }
-
-    /**
-     * Sincroniza o member_count de todos os grupos do usuário
-     * Corrige dados inconsistentes de versões anteriores
-     */
-    private fun syncMemberCounts() {
-        viewModelScope.launch {
-            groupRepository.syncAllMyGroupsMemberCount()
-        }
     }
 
     fun loadMyGroups() {
@@ -108,9 +96,6 @@ class GroupsViewModel @Inject constructor(
 
     fun refreshGroups() {
         _isRefreshing.value = true
-        // Sincroniza dados importantes primeiro
-        syncMemberCounts()
-        
         // Cancela e reinicia o listener para forçar nova busca
         groupsFlowJob?.cancel()
         loadMyGroups()

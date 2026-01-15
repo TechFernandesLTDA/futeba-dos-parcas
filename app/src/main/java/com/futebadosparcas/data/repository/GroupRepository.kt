@@ -29,16 +29,17 @@ class GroupRepository @Inject constructor(
     private val usersCollection = firestore.collection("users")
 
     /**
-     * Faz upload da foto do grupo
+     * Faz upload da foto/logo do grupo
+     * Path padronizado: groups/{groupId}/logo.jpg
      */
     suspend fun uploadGroupPhoto(groupId: String, imageUri: Uri): Result<String> {
         return try {
-            val filename = "group_photo_${System.currentTimeMillis()}.jpg"
-            val ref = storage.reference.child("groups_photos/$groupId/$filename")
-            
+            // Path padronizado: groups/{groupId}/logo.jpg (sobrescreve a logo anterior)
+            val ref = storage.reference.child("groups/$groupId/logo.jpg")
+
             ref.putFile(imageUri).await()
             val downloadUrl = ref.downloadUrl.await()
-            
+
             Result.success(downloadUrl.toString())
         } catch (e: Exception) {
             Result.failure(e)

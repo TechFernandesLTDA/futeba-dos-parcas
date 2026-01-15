@@ -3,8 +3,8 @@ package com.futebadosparcas.domain.usecase
 import com.futebadosparcas.data.datasource.FirebaseDataSource
 import com.futebadosparcas.data.model.User
 import com.futebadosparcas.data.model.UserStatistics
-import com.futebadosparcas.data.repository.RankingCategory
-import com.futebadosparcas.data.repository.RankingPeriod
+import com.futebadosparcas.domain.model.RankingCategory
+import com.futebadosparcas.domain.model.RankingPeriod
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot

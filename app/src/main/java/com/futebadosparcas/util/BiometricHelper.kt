@@ -5,6 +5,7 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import com.futebadosparcas.R
 
 class BiometricHelper(private val context: Context) {
 
@@ -24,9 +25,9 @@ class BiometricHelper(private val context: Context) {
      */
     fun showBiometricPrompt(
         activity: FragmentActivity,
-        title: String = "Autenticação Biométrica",
-        subtitle: String = "Use sua digital para continuar",
-        negativeButtonText: String = "Cancelar",
+        title: String = context.getString(R.string.biometric_title),
+        subtitle: String = context.getString(R.string.biometric_default_subtitle),
+        negativeButtonText: String = context.getString(R.string.biometric_negative_button_default),
         onSuccess: () -> Unit,
         onError: (String) -> Unit,
         onFailed: () -> Unit

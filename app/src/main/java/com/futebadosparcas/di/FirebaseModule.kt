@@ -1,5 +1,6 @@
 package com.futebadosparcas.di
 
+import com.futebadosparcas.data.datasource.ProfilePhotoDataSource
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.MemoryCacheSettings
@@ -68,5 +69,15 @@ object FirebaseModule {
             }
         }
         return storage
+    }
+
+    // CMD-06: Provider para ProfilePhotoDataSource
+    @Provides
+    @Singleton
+    fun provideProfilePhotoDataSource(
+        storage: FirebaseStorage,
+        application: android.app.Application
+    ): ProfilePhotoDataSource {
+        return ProfilePhotoDataSource(storage, application)
     }
 }

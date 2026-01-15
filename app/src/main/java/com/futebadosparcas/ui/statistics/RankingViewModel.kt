@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.LevelTable
 import com.futebadosparcas.data.model.MilestoneType
-import com.futebadosparcas.data.repository.IStatisticsRepository
-import com.futebadosparcas.data.repository.RankingCategory
-import com.futebadosparcas.data.repository.RankingPeriod
-import com.futebadosparcas.data.repository.RankingRepository
+import com.futebadosparcas.domain.repository.StatisticsRepository
+import com.futebadosparcas.domain.model.PlayerRankingItem
+import com.futebadosparcas.util.toDataModel
+import com.futebadosparcas.domain.model.RankingCategory
+import com.futebadosparcas.domain.model.RankingPeriod
+import com.futebadosparcas.domain.repository.RankingRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.LeagueService
 import com.futebadosparcas.domain.ranking.MilestoneChecker
@@ -22,10 +24,10 @@ import javax.inject.Inject
 @HiltViewModel
 class RankingViewModel @Inject constructor(
     private val rankingRepository: RankingRepository,
-    private val statisticsRepository: IStatisticsRepository,
+    private val statisticsRepository: StatisticsRepository,
     private val userRepository: UserRepository,
     private val leagueService: LeagueService,
-    private val gamificationRepository: com.futebadosparcas.data.repository.GamificationRepository,
+    private val gamificationRepository: com.futebadosparcas.domain.repository.GamificationRepository,
     private val auth: FirebaseAuth
 ) : ViewModel() {
 
@@ -141,7 +143,7 @@ class RankingViewModel @Inject constructor(
 
                 // Buscar evolucao de XP por mes
                 val evolutionResult = rankingRepository.getXpEvolution(uid, 6)
-                val xpEvolution = evolutionResult.getOrNull() ?: emptyMap()
+                val xpEvolution = evolutionResult.getOrNull()?.monthlyXp ?: emptyMap()
 
                 // Calcular progresso de nivel
                 val currentXp = user.experiencePoints
@@ -162,9 +164,10 @@ class RankingViewModel @Inject constructor(
 
                 // Calcular proximos milestones
                 val nextMilestones = if (stats != null) {
-                    MilestoneChecker.getNextMilestones(stats, achievedMilestones.map { it.name })
+                    val dataStats = stats.toDataModel(uid)
+                    MilestoneChecker.getNextMilestones(dataStats, achievedMilestones.map { it.name })
                         .map { milestone ->
-                            val (current, target) = MilestoneChecker.getProgress(stats, milestone)
+                            val (current, target) = MilestoneChecker.getProgress(dataStats, milestone)
                             MilestoneProgress(
                                 milestone = milestone,
                                 current = current,

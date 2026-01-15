@@ -7,7 +7,7 @@ import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
-import com.futebadosparcas.data.repository.GameTemplateRepository
+import com.futebadosparcas.domain.repository.GameTemplateRepository
 import com.futebadosparcas.data.repository.TimeConflict
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import com.futebadosparcas.data.repository.ScheduleRepository
+import com.futebadosparcas.domain.repository.ScheduleRepository
 import com.futebadosparcas.data.model.Schedule
 import com.futebadosparcas.data.model.RecurrenceType
 import com.futebadosparcas.data.repository.GroupRepository
@@ -24,7 +24,11 @@ import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.GameVisibility
+import com.futebadosparcas.util.toKmpSchedule
 import javax.inject.Inject
+import com.futebadosparcas.util.toKmpAppNotifications
+import com.futebadosparcas.util.toKmpGameTemplate
+import com.futebadosparcas.util.toAndroidGameTemplate
 
 @HiltViewModel
 class CreateGameViewModel @Inject constructor(
@@ -33,7 +37,7 @@ class CreateGameViewModel @Inject constructor(
     private val gameTemplateRepository: GameTemplateRepository,
     private val scheduleRepository: ScheduleRepository,
     private val groupRepository: GroupRepository,
-    private val notificationRepository: com.futebadosparcas.data.repository.NotificationRepository
+    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<CreateGameUiState>(CreateGameUiState.Idle)
@@ -210,12 +214,26 @@ class CreateGameViewModel @Inject constructor(
                    val date = LocalDate.parse(game.date, DateTimeFormatter.ISO_LOCAL_DATE)
                    _selectedDate.value = date
 
-                   val time = LocalTime.parse(game.time, DateTimeFormatter.ofPattern("HH:mm"))
-                   _selectedTime.value = time
+                   // Parse do horario com tratamento para campos vazios
+                   if (game.time.isNotEmpty()) {
+                       try {
+                           val time = LocalTime.parse(game.time, DateTimeFormatter.ofPattern("HH:mm"))
+                           _selectedTime.value = time
+                       } catch (e: Exception) {
+                           // Usar horario padrao se parse falhar
+                           _selectedTime.value = LocalTime.of(19, 0)
+                       }
+                   } else {
+                       _selectedTime.value = LocalTime.of(19, 0)
+                   }
 
                    if (game.endTime.isNotEmpty()){
-                       val endTime = LocalTime.parse(game.endTime, DateTimeFormatter.ofPattern("HH:mm"))
-                       _selectedEndTime.value = endTime
+                       try {
+                           val endTime = LocalTime.parse(game.endTime, DateTimeFormatter.ofPattern("HH:mm"))
+                           _selectedEndTime.value = endTime
+                       } catch (e: Exception) {
+                           _selectedEndTime.value = _selectedTime.value?.plusHours(1)
+                       }
                    }
 
                    _currentUser.value = game.ownerName
@@ -400,8 +418,9 @@ class CreateGameViewModel @Inject constructor(
                     groupId = group?.id,
                     groupName = group?.groupName
                 )
-                
-                val scheduleResult = scheduleRepository.createSchedule(newSchedule)
+
+                val kmpSchedule = newSchedule.toKmpSchedule()
+                val scheduleResult = scheduleRepository.createSchedule(kmpSchedule)
                 scheduleResult.onSuccess { id ->
                     scheduleId = id
                 }
@@ -492,7 +511,7 @@ class CreateGameViewModel @Inject constructor(
                         )
                     }
                 if (notifications.isNotEmpty()) {
-                    notificationRepository.batchCreateNotifications(notifications)
+                    notificationRepository.batchCreateNotifications(notifications.toKmpAppNotifications())
                 }
             }
         }
@@ -515,8 +534,8 @@ class CreateGameViewModel @Inject constructor(
 
         viewModelScope.launch {
             val userId = authRepository.getCurrentUserId() ?: return@launch
-            
-            val template = com.futebadosparcas.data.model.GameTemplate(
+
+            val androidTemplate = com.futebadosparcas.data.model.GameTemplate(
                 userId = userId,
                 templateName = templateName,
                 locationName = location.name,
@@ -524,17 +543,19 @@ class CreateGameViewModel @Inject constructor(
                 locationId = location.id,
                 fieldName = field?.name ?: "",
                 fieldId = field?.id ?: "",
-                
+
                 gameTime = _selectedTime.value?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "19:00",
                 gameEndTime = _selectedEndTime.value?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "20:00",
-                
+
                 maxPlayers = maxPlayers,
                 dailyPrice = price,
                 recurrence = recurrence
             )
 
-            gameTemplateRepository.saveTemplate(template)
-                .onSuccess { 
+            val kmpTemplate = androidTemplate.toKmpGameTemplate()
+
+            gameTemplateRepository.saveTemplate(kmpTemplate)
+                .onSuccess {
                      _uiState.value = CreateGameUiState.SuccessTemplateSaved
                      loadTemplates() // Reload list
                 }
@@ -548,9 +569,10 @@ class CreateGameViewModel @Inject constructor(
         viewModelScope.launch {
             val userId = authRepository.getCurrentUserId() ?: return@launch
             gameTemplateRepository.getUserTemplates(userId)
-                .onSuccess { list ->
-                    _templates.value = list
-                    _uiState.value = CreateGameUiState.TemplatesLoaded(list)
+                .onSuccess { kmpList ->
+                    val androidList = kmpList.map { it.toAndroidGameTemplate() }
+                    _templates.value = androidList
+                    _uiState.value = CreateGameUiState.TemplatesLoaded(androidList)
                 }
                 .onFailure {
                     _uiState.value = CreateGameUiState.Error("Erro ao carregar templates")

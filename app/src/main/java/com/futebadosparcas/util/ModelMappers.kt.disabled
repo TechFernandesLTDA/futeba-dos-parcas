@@ -1,0 +1,270 @@
+package com.futebadosparcas.util
+
+import com.futebadosparcas.data.model.Game as AndroidGame
+import com.futebadosparcas.data.model.GameVisibility as AndroidGameVisibility
+import com.futebadosparcas.data.model.Group as AndroidGroup
+import com.futebadosparcas.data.model.GroupMember as AndroidGroupMember
+import com.futebadosparcas.data.model.GroupMemberRole as AndroidGroupMemberRole
+import com.futebadosparcas.data.model.UserGroup as AndroidUserGroup
+import com.futebadosparcas.domain.model.Game as KmpGame
+import com.futebadosparcas.domain.model.GameVisibility as KmpGameVisibility
+import com.futebadosparcas.domain.model.Group as KmpGroup
+import com.futebadosparcas.domain.model.GroupMember as KmpGroupMember
+import com.futebadosparcas.domain.model.GroupMemberRole as KmpGroupMemberRole
+import com.futebadosparcas.domain.model.UserGroup as KmpUserGroup
+
+/**
+ * Funções de conversão entre models Android (data.model) e models KMP (domain.model).
+ *
+ * NOTA: Estas são soluções temporárias durante a migração KMP.
+ * Quando a migração estiver completa, os models Android serão removidos.
+ */
+
+// ========== Game Mappers ==========
+
+/**
+ * Converte Game Android para Game KMP.
+ */
+fun AndroidGame.toKmpGame(): KmpGame {
+    return KmpGame(
+        id = id,
+        scheduleId = scheduleId,
+        date = date,
+        time = time,
+        endTime = endTime,
+        status = status,
+        maxPlayers = maxPlayers,
+        maxGoalkeepers = maxGoalkeepers,
+        playersCount = playersCount,
+        goalkeepersCount = goalkeepersCount,
+        dailyPrice = dailyPrice,
+        totalCost = totalCost,
+        pixKey = pixKey,
+        numberOfTeams = numberOfTeams,
+        ownerId = ownerId,
+        ownerName = ownerName,
+        locationId = locationId,
+        fieldId = fieldId,
+        locationName = locationName,
+        locationAddress = locationAddress,
+        locationLat = locationLat,
+        locationLng = locationLng,
+        fieldName = fieldName,
+        gameType = gameType,
+        recurrence = recurrence,
+        visibility = visibility,
+        createdAt = createdAt?.time,
+        xpProcessed = false, // Campo não existe no model Android
+        mvpId = null, // Campo não existe no model Android
+        team1Score = 0, // Campo não existe no model Android
+        team2Score = 0, // Campo não existe no model Android
+        team1Name = "Time 1", // Campo não existe no model Android
+        team2Name = "Time 2", // Campo não existe no model Android
+        groupId = null, // Campo não existe no model Android
+        groupName = null // Campo não existe no model Android
+    )
+}
+
+/**
+ * Converte Game KMP para Game Android.
+ */
+fun KmpGame.toAndroidGame(): AndroidGame {
+    return AndroidGame(
+        id = id,
+        scheduleId = scheduleId,
+        date = date,
+        time = time,
+        endTime = endTime,
+        status = status,
+        maxPlayers = maxPlayers,
+        maxGoalkeepers = maxGoalkeepers,
+        playersCount = playersCount,
+        goalkeepersCount = goalkeepersCount,
+        dailyPrice = dailyPrice,
+        totalCost = totalCost,
+        pixKey = pixKey,
+        numberOfTeams = numberOfTeams,
+        ownerId = ownerId,
+        ownerName = ownerName,
+        locationId = locationId,
+        fieldId = fieldId,
+        locationName = locationName,
+        locationAddress = locationAddress,
+        locationLat = locationLat,
+        locationLng = locationLng,
+        fieldName = fieldName,
+        gameType = gameType,
+        recurrence = recurrence,
+        isPublic = visibility != AndroidGameVisibility.GROUP_ONLY.name, // Conversão aproximada
+        visibility = visibility,
+        dateTime = createdAt?.let { java.util.Date(it) }
+    )
+}
+
+/**
+ * Converte uma lista de Game Android para Game KMP.
+ */
+fun List<AndroidGame>.toKmpGames(): List<KmpGame> = map { it.toKmpGame() }
+
+/**
+ * Converte uma lista de Game KMP para Game Android.
+ */
+fun List<KmpGame>.toAndroidGames(): List<AndroidGame> = map { it.toAndroidGame() }
+
+// ========== Group Mappers ==========
+
+/**
+ * Converte Group Android para Group KMP.
+ */
+fun AndroidGroup.toKmpGroup(): KmpGroup {
+    return KmpGroup(
+        id = id,
+        name = name,
+        description = description,
+        photoUrl = photoUrl,
+        ownerId = ownerId,
+        ownerName = ownerName,
+        memberCount = memberCount,
+        status = status,
+        createdAt = createdAt?.time,
+        updatedAt = updatedAt?.time
+    )
+}
+
+/**
+ * Converte Group KMP para Group Android.
+ */
+fun KmpGroup.toAndroidGroup(): AndroidGroup {
+    return AndroidGroup(
+        id = id,
+        name = name,
+        description = description,
+        photoUrl = photoUrl,
+        ownerId = ownerId,
+        ownerName = ownerName,
+        memberCount = memberCount,
+        status = status,
+        createdAt = createdAt?.let { java.util.Date(it) },
+        updatedAt = updatedAt?.let { java.util.Date(it) }
+    )
+}
+
+/**
+ * Converte uma lista de Group Android para Group KMP.
+ */
+fun List<AndroidGroup>.toKmpGroups(): List<KmpGroup> = map { it.toKmpGroup() }
+
+/**
+ * Converte uma lista de Group KMP para Group Android.
+ */
+fun List<KmpGroup>.toAndroidGroups(): List<AndroidGroup> = map { it.toAndroidGroup() }
+
+// ========== GroupMember Mappers ==========
+
+/**
+ * Converte GroupMemberRole Android para GroupMemberRole KMP.
+ */
+fun AndroidGroupMemberRole.toKmpGroupMemberRole(): KmpGroupMemberRole {
+    return when (this) {
+        AndroidGroupMemberRole.OWNER -> KmpGroupMemberRole.OWNER
+        AndroidGroupMemberRole.ADMIN -> KmpGroupMemberRole.ADMIN
+        AndroidGroupMemberRole.MEMBER -> KmpGroupMemberRole.MEMBER
+    }
+}
+
+/**
+ * Converte GroupMemberRole KMP para GroupMemberRole Android.
+ */
+fun KmpGroupMemberRole.toAndroidGroupMemberRole(): AndroidGroupMemberRole {
+    return when (this) {
+        KmpGroupMemberRole.OWNER -> AndroidGroupMemberRole.OWNER
+        KmpGroupMemberRole.ADMIN -> AndroidGroupMemberRole.ADMIN
+        KmpGroupMemberRole.MEMBER -> AndroidGroupMemberRole.MEMBER
+    }
+}
+
+/**
+ * Converte GroupMember Android para GroupMember KMP.
+ */
+fun AndroidGroupMember.toKmpGroupMember(): KmpGroupMember {
+    return KmpGroupMember(
+        id = id,
+        userId = userId,
+        userName = userName,
+        userPhoto = userPhoto,
+        role = role.toKmpGroupMemberRole().name,
+        status = status,
+        joinedAt = joinedAt?.time,
+        invitedBy = invitedBy,
+        nickname = nickname
+    )
+}
+
+/**
+ * Converte GroupMember KMP para GroupMember Android.
+ */
+fun KmpGroupMember.toAndroidGroupMember(): AndroidGroupMember {
+    return AndroidGroupMember(
+        id = id,
+        userId = userId,
+        userName = userName,
+        userPhoto = userPhoto,
+        role = role.toAndroidGroupMemberRole(),
+        status = status,
+        joinedAt = joinedAt?.let { java.util.Date(it) },
+        invitedBy = invitedBy,
+        nickname = nickname
+    )
+}
+
+/**
+ * Converte uma lista de GroupMember Android para GroupMember KMP.
+ */
+fun List<AndroidGroupMember>.toKmpGroupMembers(): List<KmpGroupMember> = map { it.toKmpGroupMember() }
+
+/**
+ * Converte uma lista de GroupMember KMP para GroupMember Android.
+ */
+fun List<KmpGroupMember>.toAndroidGroupMembers(): List<AndroidGroupMember> = map { it.toAndroidGroupMember() }
+
+// ========== UserGroup Mappers ==========
+
+/**
+ * Converte UserGroup Android para UserGroup KMP.
+ */
+fun AndroidUserGroup.toKmpUserGroup(): KmpUserGroup {
+    return KmpUserGroup(
+        id = id,
+        groupId = groupId,
+        groupName = groupName,
+        groupPhoto = groupPhoto,
+        role = role.toKmpGroupMemberRole().name,
+        memberCount = memberCount,
+        joinedAt = joinedAt?.time
+    )
+}
+
+/**
+ * Converte UserGroup KMP para UserGroup Android.
+ */
+fun KmpUserGroup.toAndroidUserGroup(): AndroidUserGroup {
+    return AndroidUserGroup(
+        id = id,
+        groupId = groupId,
+        groupName = groupName,
+        groupPhoto = groupPhoto,
+        role = role.toAndroidGroupMemberRole(),
+        memberCount = memberCount,
+        joinedAt = joinedAt?.let { java.util.Date(it) }
+    )
+}
+
+/**
+ * Converte uma lista de UserGroup Android para UserGroup KMP.
+ */
+fun List<AndroidUserGroup>.toKmpUserGroups(): List<KmpUserGroup> = map { it.toKmpUserGroup() }
+
+/**
+ * Converte uma lista de UserGroup KMP para UserGroup Android.
+ */
+fun List<KmpUserGroup>.toAndroidUserGroups(): List<AndroidUserGroup> = map { it.toAndroidUserGroup() }

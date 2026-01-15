@@ -1,7 +1,7 @@
 package com.futebadosparcas.domain.usecase.notification
 
-import com.futebadosparcas.data.model.AppNotification
-import com.futebadosparcas.data.repository.NotificationRepository
+import com.futebadosparcas.domain.model.AppNotification
+import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -55,7 +55,7 @@ class GetNotificationsUseCase @Inject constructor(
             val older = mutableListOf<AppNotification>()
 
             notifications.forEach { notification ->
-                val createdAt = notification.createdAt?.time ?: 0L
+                val createdAt = notification.createdAt ?: 0L
                 val age = now - createdAt
 
                 when {
@@ -67,10 +67,10 @@ class GetNotificationsUseCase @Inject constructor(
             }
 
             GroupedNotifications(
-                today = today.sortedByDescending { it.createdAt?.time ?: 0L },
-                yesterday = yesterday.sortedByDescending { it.createdAt?.time ?: 0L },
-                thisWeek = thisWeek.sortedByDescending { it.createdAt?.time ?: 0L },
-                older = older.sortedByDescending { it.createdAt?.time ?: 0L },
+                today = today.sortedByDescending { it.createdAt ?: 0L },
+                yesterday = yesterday.sortedByDescending { it.createdAt ?: 0L },
+                thisWeek = thisWeek.sortedByDescending { it.createdAt ?: 0L },
+                older = older.sortedByDescending { it.createdAt ?: 0L },
                 unreadCount = notifications.count { !it.read }
             )
         }

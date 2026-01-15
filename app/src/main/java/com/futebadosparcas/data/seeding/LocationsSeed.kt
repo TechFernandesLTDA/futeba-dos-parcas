@@ -1,6 +1,6 @@
 package com.futebadosparcas.data.seeding
 
-import com.futebadosparcas.data.repository.LocationMigrationData
+import com.futebadosparcas.domain.model.LocationMigrationData
 
 object LocationsSeed {
     val data = listOf(

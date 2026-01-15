@@ -1,8 +1,8 @@
 package com.futebadosparcas.domain.usecase.badge
 
-import com.futebadosparcas.data.model.Badge
-import com.futebadosparcas.data.model.UserBadge
-import com.futebadosparcas.data.repository.GamificationRepository
+import com.futebadosparcas.domain.model.BadgeDefinition
+import com.futebadosparcas.domain.model.UserBadge
+import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import javax.inject.Inject
@@ -29,7 +29,7 @@ class GetUserBadgesUseCase @Inject constructor(
      */
     data class BadgesSummary(
         val earnedBadges: List<UserBadge>,
-        val availableBadges: List<Badge>,
+        val availableBadges: List<BadgeDefinition>,
         val recentBadges: List<UserBadge>,
         val totalEarned: Int,
         val totalAvailable: Int,
@@ -178,7 +178,7 @@ class GetUserBadgesUseCase @Inject constructor(
         }
 
         val allBadges = allBadgesResult.getOrNull()!!
-        val badgesInCategory = allBadges.filter { it.type.name == category }.map { it.id }.toSet()
+        val badgesInCategory = allBadges.filter { it.category.name == category }.map { it.id }.toSet()
 
         val filteredBadges = earnedResult.getOrNull()!!.filter {
             it.badgeId in badgesInCategory

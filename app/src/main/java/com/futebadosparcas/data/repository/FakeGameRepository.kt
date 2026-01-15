@@ -121,6 +121,21 @@ class FakeGameRepository @Inject constructor() : GameRepository {
         return Result.success(games.filter { it.visibility == "PUBLIC_OPEN" }.take(limit))
     }
 
+    override suspend fun acceptInvitation(
+        gameId: String,
+        position: String
+    ): Result<GameConfirmation> {
+        val existing = confirmations.find { it.gameId == gameId && it.status == "PENDING" }
+        return if (existing != null) {
+            val updated = existing.copy(status = "CONFIRMED", position = position)
+            confirmations.remove(existing)
+            confirmations.add(updated)
+            Result.success(updated)
+        } else {
+            Result.failure(Exception("Convite não encontrado"))
+        }
+    }
+
     override suspend fun createGame(game: Game): Result<Game> {
         val newGame = game.copy(id = (games.size + 1).toString())
         games.add(newGame)

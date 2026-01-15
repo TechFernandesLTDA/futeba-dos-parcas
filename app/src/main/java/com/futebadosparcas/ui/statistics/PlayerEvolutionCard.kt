@@ -1,6 +1,5 @@
 package com.futebadosparcas.ui.statistics
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,7 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.data.model.LeagueDivision
+import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.GamificationColors
 
 /**
@@ -34,13 +35,11 @@ fun PlayerEvolutionCard(
     xpProgress: Long,
     xpNeeded: Long,
     progressPercentage: Float,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPrimaryColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
-    val animatedProgress by animateFloatAsState(
-        targetValue = progressPercentage,
-        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
-        label = "progress"
-    )
+    // Valor estático pré-calculado para otimização de scroll
+    val staticProgress = progressPercentage
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -64,16 +63,16 @@ fun PlayerEvolutionCard(
                 // Background circle
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.2f),
+                        color = onPrimaryColor.copy(alpha = 0.2f),
                         radius = size.minDimension / 2
                     )
                 }
 
                 // Progress arc
                 Canvas(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-                    val sweepAngle = animatedProgress * 360f
+                    val sweepAngle = staticProgress * 360f
                     drawArc(
-                        color = Color.White,
+                        color = onPrimaryColor,
                         startAngle = -90f,
                         sweepAngle = sweepAngle,
                         useCenter = false,
@@ -88,12 +87,12 @@ fun PlayerEvolutionCard(
                         text = "$currentLevel",
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = onPrimaryColor
                     )
                     Text(
-                        text = "NIVEL",
+                        text = stringResource(R.string.player_evolution_level),
                         fontSize = 10.sp,
-                        color = Color.White.copy(alpha = 0.8f)
+                        color = onPrimaryColor.copy(alpha = 0.8f)
                     )
                 }
             }
@@ -105,7 +104,7 @@ fun PlayerEvolutionCard(
                 text = levelName,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = onPrimaryColor
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -119,33 +118,33 @@ fun PlayerEvolutionCard(
                     Text(
                         text = "$xpProgress XP",
                         fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.8f)
+                        color = onPrimaryColor.copy(alpha = 0.8f)
                     )
                     Text(
                         text = "$xpNeeded XP",
                         fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.8f)
+                        color = onPrimaryColor.copy(alpha = 0.8f)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 LinearProgressIndicator(
-                    progress = { animatedProgress },
+                    progress = { staticProgress },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp)),
-                    color = Color.White,
-                    trackColor = Color.White.copy(alpha = 0.3f)
+                    color = onPrimaryColor,
+                    trackColor = onPrimaryColor.copy(alpha = 0.3f)
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Faltam ${xpNeeded - xpProgress} XP para o proximo nivel",
+                    text = stringResource(R.string.player_evolution_xp_remaining, xpNeeded - xpProgress),
                     fontSize = 11.sp,
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = onPrimaryColor.copy(alpha = 0.7f),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
@@ -155,10 +154,10 @@ fun PlayerEvolutionCard(
 
             // Total XP
             Text(
-                text = "Total: $currentXp XP",
+                text = stringResource(R.string.player_evolution_total, currentXp),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color.White
+                color = onPrimaryColor
             )
         }
     }
@@ -211,7 +210,7 @@ fun PlayerLeagueCard(
                     Text(
                         text = getDivisionIcon(division),
                         fontSize = 24.sp,
-                        color = if (division == LeagueDivision.OURO || division == LeagueDivision.PRATA || division == LeagueDivision.BRONZE) Color.White else Color.White
+                        color = com.futebadosparcas.util.ContrastHelper.getContrastingTextColor(divisionColor)
                     )
                 }
 
@@ -219,13 +218,13 @@ fun PlayerLeagueCard(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Liga ${division.displayName}",
+                        text = stringResource(R.string.player_evolution_league, division.displayName),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Rating: ${"%.1f".format(leagueRating)}",
+                        text = stringResource(R.string.player_evolution_rating, leagueRating.toFloat()),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -427,7 +426,7 @@ fun MilestoneProgressCard(
                     color = MaterialTheme.colorScheme.tertiary
                 )
                 Text(
-                    text = "XP",
+                    text = stringResource(R.string.player_evolution_xp, xpReward),
                     fontSize = 10.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

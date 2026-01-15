@@ -68,6 +68,7 @@ kotlin {
                 // Firebase Android SDK (para androidMain only)
                 implementation("com.google.firebase:firebase-firestore-ktx:24.10.0")
                 implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
+                implementation("com.google.firebase:firebase-storage-ktx:20.2.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
             }
         }

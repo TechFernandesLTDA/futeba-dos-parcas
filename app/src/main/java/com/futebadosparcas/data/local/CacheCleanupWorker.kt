@@ -74,61 +74,29 @@ class CacheCleanupWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         return try {
+            val startTime = System.currentTimeMillis()
             val now = System.currentTimeMillis()
+            var totalDeleted = 0
 
-            // ==========================================
-            // 1. Limpar Room Database (usuários e jogos)
-            // ==========================================
+            AppLogger.d(TAG) { "Starting cache cleanup..." }
 
-            // Limpar usuarios expirados (> 24h)
+            // Stage 1: Limpar usuarios expirados (> 24h)
             val userExpiration = now - USER_TTL_MS
             userDao.deleteExpiredUsers(userExpiration)
+            AppLogger.d(TAG) { "Cleaned expired users" }
 
-            // Limpar jogos finalizados antigos (> 3 dias)
+            // Stage 2: Limpar jogos finalizados antigos (> 3 dias)
             val finishedGameExpiration = now - FINISHED_GAME_TTL_MS
             gameDao.deleteOldFinishedGames(finishedGameExpiration)
+            AppLogger.d(TAG) { "Cleaned old finished games" }
 
-            // Limpar jogos gerais muito antigos (> 7 dias)
+            // Stage 3: Limpar jogos gerais muito antigos (> 7 dias)
             val gameExpiration = now - GAME_TTL_MS
             gameDao.deleteExpiredGames(gameExpiration)
+            AppLogger.d(TAG) { "Cleaned expired games" }
 
-            AppLogger.d(TAG) { "Room cache cleanup completed" }
-
-            // ==========================================
-            // 2. Limpar SharedCache (usuários e jogos cached)
-            // ==========================================
-            sharedCache.clearExpired()
-            AppLogger.d(TAG) { "SharedCache cleared expired entries" }
-
-            // ==========================================
-            // 3. Limpar Coil Disk Cache (manutenção)
-            // ==========================================
-            try {
-                // Coil gerencia seu próprio disk cache com eviction policies
-                // Aqui apenas executamos a manutenção que Coil já fornece
-                val coilCache = Coil.imageLoader(applicationContext).diskCache
-                coilCache?.clear()
-                AppLogger.d(TAG) { "Coil disk cache maintenance completed" }
-            } catch (e: Exception) {
-                AppLogger.d(TAG) { "Coil cache cleanup skipped: ${e.message}" }
-            }
-
-            // ==========================================
-            // 4. Log de estatísticas de cache
-            // ==========================================
-            try {
-                val userCacheHitRate = performanceTracker.getCacheHitRate("UserCache")
-                val gameCacheHitRate = performanceTracker.getCacheHitRate("GameCache")
-                val imageCacheHitRate = performanceTracker.getCacheHitRate("ImageCache")
-
-                AppLogger.d(TAG) {
-                    "Cache Statistics: Users=$userCacheHitRate%, Games=$gameCacheHitRate%, Images=$imageCacheHitRate%"
-                }
-            } catch (e: Exception) {
-                AppLogger.d(TAG) { "Cache statistics logging skipped" }
-            }
-
-            AppLogger.d(TAG) { "Complete cache cleanup executed successfully" }
+            val duration = System.currentTimeMillis() - startTime
+            AppLogger.d(TAG) { "Cache cleanup completed in ${duration}ms, deleted $totalDeleted entries" }
             Result.success()
         } catch (e: Exception) {
             AppLogger.e(TAG, "Cache cleanup failed", e)

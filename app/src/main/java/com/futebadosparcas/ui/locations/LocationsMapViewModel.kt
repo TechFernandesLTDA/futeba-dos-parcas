@@ -3,8 +3,9 @@ package com.futebadosparcas.ui.locations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Location
-import com.futebadosparcas.data.repository.LocationRepository
+import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.toAndroidLocations
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,11 +29,11 @@ class LocationsMapViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = LocationsMapUiState.Loading
             locationRepository.getAllLocations().fold(
-                onSuccess = { locations ->
-                    _uiState.value = if (locations.isEmpty()) {
+                onSuccess = { kmpLocations ->
+                    _uiState.value = if (kmpLocations.isEmpty()) {
                         LocationsMapUiState.Empty
                     } else {
-                        LocationsMapUiState.Success(locations)
+                        LocationsMapUiState.Success(kmpLocations.toAndroidLocations())
                     }
                 },
                 onFailure = { error ->

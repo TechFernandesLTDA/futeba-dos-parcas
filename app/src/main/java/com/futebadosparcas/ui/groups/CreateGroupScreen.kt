@@ -4,8 +4,6 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
@@ -29,7 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.stringResource as androidStringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.TextFieldValue
@@ -38,6 +36,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.FutebaTheme
@@ -240,7 +239,7 @@ fun CreateGroupScreen(
                         text = if (selectedPhotoUri != null) {
                             stringResource(R.string.create_group_uploading)
                         } else {
-                            "Criando grupo..."
+                            stringResource(R.string.create_group_creating)
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
@@ -344,19 +343,13 @@ private fun GroupPhotoSection(
     val context = LocalContext.current
     val hasPhoto = photoUri != null
 
-    // Animação de borda quando foto é selecionada
-    val borderColor by animateColorAsState(
-        targetValue = if (hasPhoto)
-            MaterialTheme.colorScheme.primary
-        else
-            MaterialTheme.colorScheme.outlineVariant,
-        label = "borderColor"
-    )
+    // Valores estáticos para otimização - sem animação
+    val borderColor = if (hasPhoto)
+        MaterialTheme.colorScheme.primary
+    else
+        MaterialTheme.colorScheme.outlineVariant
 
-    val borderWidth by animateDpAsState(
-        targetValue = if (hasPhoto) 3.dp else 1.dp,
-        label = "borderWidth"
-    )
+    val borderWidth = if (hasPhoto) 3.dp else 1.dp
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -414,9 +407,9 @@ private fun GroupPhotoSection(
             Text(
                 text = stringResource(
                     if (hasPhoto)
-                        R.string.create_group_photo_change
+                        R.string.create_group_change_photo
                     else
-                        R.string.fragment_create_group_text_1
+                        R.string.create_group_add_photo
                 )
             )
         }
@@ -494,7 +487,7 @@ private fun PhotoOptionsDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.cancel))
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )

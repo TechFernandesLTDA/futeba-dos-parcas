@@ -2,16 +2,24 @@ package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.local.dao.GameDao
 import com.futebadosparcas.data.model.Game
-import com.futebadosparcas.data.model.GameConfirmation
+import com.futebadosparcas.data.model.GameConfirmation as AndroidGameConfirmation
 import com.futebadosparcas.data.model.GameEvent
 import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.data.model.LiveGameScore
 import com.futebadosparcas.data.model.Team
+import com.futebadosparcas.domain.model.Game as KmpGame
+import com.futebadosparcas.domain.model.GameConfirmation as KmpGameConfirmation
+import com.futebadosparcas.domain.model.GameFilterType as KmpGameFilterType
+import com.futebadosparcas.domain.model.GameWithConfirmations as KmpGameWithConfirmations
+import com.futebadosparcas.domain.model.TimeConflict as KmpTimeConflict
 import com.futebadosparcas.ui.games.GameWithConfirmations
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.toAndroidGame
+import com.futebadosparcas.util.toAndroidGames
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -30,8 +38,8 @@ class GameRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
     private val gameDao: GameDao,
-    private val queryRepository: GameQueryRepository,
-    private val confirmationRepository: GameConfirmationRepository,
+    private val queryRepository: com.futebadosparcas.domain.repository.GameQueryRepository,
+    private val confirmationRepository: com.futebadosparcas.domain.repository.GameConfirmationRepository,
     private val eventsRepository: GameEventsRepository,
     private val teamRepository: GameTeamRepository,
     private val liveGameRepository: LiveGameRepository
@@ -42,53 +50,107 @@ class GameRepositoryImpl @Inject constructor(
         private const val TAG = "GameRepository"
     }
 
-    // ========== Query Methods - Delegação para GameQueryRepository ==========
-    override suspend fun getUpcomingGames(): Result<List<Game>> = queryRepository.getUpcomingGames()
+    // ========== Helper Methods para Conversao KMP -> Android ==========
 
-    override suspend fun getAllGames(): Result<List<Game>> = queryRepository.getAllGames()
+    private fun KmpGameWithConfirmations.toAndroidGameWithConfirmations(): GameWithConfirmations = GameWithConfirmations(
+        game = game.toAndroidGame(),
+        confirmedCount = confirmedCount,
+        isUserConfirmed = isUserConfirmed
+    )
+
+    private fun List<KmpGameWithConfirmations>.toAndroidGameWithConfirmations(): List<GameWithConfirmations> = map { it.toAndroidGameWithConfirmations() }
+
+    private fun toAndroidPaginatedGames(
+        kmpGames: List<KmpGameWithConfirmations>,
+        lastGameId: String?,
+        hasMore: Boolean
+    ): PaginatedGames = PaginatedGames(
+        games = kmpGames.map { it.toAndroidGameWithConfirmations() },
+        lastGameId = lastGameId,
+        hasMore = hasMore
+    )
+
+    private fun KmpTimeConflict.toAndroidTimeConflict(): TimeConflict = TimeConflict(
+        conflictingGame = conflictingGame.toAndroidGame(),
+        overlapMinutes = overlapMinutes
+    )
+
+    private fun List<KmpTimeConflict>.toAndroidTimeConflicts(): List<TimeConflict> = map { it.toAndroidTimeConflict() }
+
+    private fun KmpGameFilterType.toAndroidFilterType(): GameFilterType = when (this) {
+        KmpGameFilterType.ALL -> GameFilterType.ALL
+        KmpGameFilterType.OPEN -> GameFilterType.OPEN
+        KmpGameFilterType.MY_GAMES -> GameFilterType.MY_GAMES
+        KmpGameFilterType.LIVE -> GameFilterType.LIVE
+    }
+
+    private fun GameFilterType.toKmpFilterType(): KmpGameFilterType = when (this) {
+        GameFilterType.ALL -> KmpGameFilterType.ALL
+        GameFilterType.OPEN -> KmpGameFilterType.OPEN
+        GameFilterType.MY_GAMES -> KmpGameFilterType.MY_GAMES
+        GameFilterType.LIVE -> KmpGameFilterType.LIVE
+    }
+
+    // ========== Query Methods - Delegação para GameQueryRepository ==========
+    override suspend fun getUpcomingGames(): Result<List<Game>> =
+        queryRepository.getUpcomingGames().map { it.toAndroidGames() }
+
+    override suspend fun getAllGames(): Result<List<Game>> =
+        queryRepository.getAllGames().map { it.toAndroidGames() }
 
     override suspend fun getAllGamesWithConfirmationCount(): Result<List<GameWithConfirmations>> =
-        queryRepository.getAllGamesWithConfirmationCount()
+        queryRepository.getAllGamesWithConfirmationCount().map { it.toAndroidGameWithConfirmations() }
 
     override fun getAllGamesWithConfirmationCountFlow(): Flow<Result<List<GameWithConfirmations>>> =
-        queryRepository.getAllGamesWithConfirmationCountFlow()
+        queryRepository.getAllGamesWithConfirmationCountFlow().map { result ->
+            result.map { it.toAndroidGameWithConfirmations() }
+        }
 
     override suspend fun getConfirmedUpcomingGamesForUser(): Result<List<Game>> =
-        queryRepository.getConfirmedUpcomingGamesForUser()
+        queryRepository.getConfirmedUpcomingGamesForUser().map { it.toAndroidGames() }
 
     override fun getLiveAndUpcomingGamesFlow(): Flow<Result<List<GameWithConfirmations>>> =
-        queryRepository.getLiveAndUpcomingGamesFlow()
+        queryRepository.getLiveAndUpcomingGamesFlow().map { result ->
+            result.map { it.toAndroidGameWithConfirmations() }
+        }
 
     override fun getHistoryGamesFlow(limit: Int): Flow<Result<List<GameWithConfirmations>>> =
-        queryRepository.getHistoryGamesFlow(limit)
+        queryRepository.getHistoryGamesFlow(limit).map { result ->
+            result.map { it.toAndroidGameWithConfirmations() }
+        }
 
     override suspend fun getGamesByFilter(filterType: GameFilterType): Result<List<GameWithConfirmations>> =
-        queryRepository.getGamesByFilter(filterType)
+        queryRepository.getGamesByFilter(filterType.toKmpFilterType()).map { it.toAndroidGameWithConfirmations() }
 
     override suspend fun getHistoryGamesPaginated(pageSize: Int, lastGameId: String?): Result<PaginatedGames> =
-        queryRepository.getHistoryGamesPaginated(pageSize, lastGameId)
+        queryRepository.getHistoryGamesPaginated(pageSize, lastGameId).map {
+            toAndroidPaginatedGames(it.games, it.lastGameId, it.hasMore)
+        }
 
     override suspend fun getGameDetails(gameId: String): Result<Game> =
-        queryRepository.getGameDetails(gameId)
+        queryRepository.getGameDetails(gameId).map { it.toAndroidGame() }
 
     override fun getGameDetailsFlow(gameId: String): Flow<Result<Game>> =
-        queryRepository.getGameDetailsFlow(gameId)
+        queryRepository.getGameDetailsFlow(gameId).map { result ->
+            result.map { it.toAndroidGame() }
+        }
 
     override suspend fun getPublicGames(limit: Int): Result<List<Game>> =
-        queryRepository.getPublicGames(limit)
+        queryRepository.getPublicGames(limit).map { it.toAndroidGames() }
 
     override fun getPublicGamesFlow(limit: Int): Flow<List<Game>> =
-        queryRepository.getPublicGamesFlow(limit)
+        queryRepository.getPublicGamesFlow(limit).map { it.toAndroidGames() }
 
     override suspend fun getNearbyPublicGames(
         userLat: Double,
         userLng: Double,
         radiusKm: Double,
         limit: Int
-    ): Result<List<Game>> = queryRepository.getNearbyPublicGames(userLat, userLng, radiusKm, limit)
+    ): Result<List<Game>> =
+        queryRepository.getNearbyPublicGames(userLat, userLng, radiusKm, limit).map { it.toAndroidGames() }
 
     override suspend fun getOpenPublicGames(limit: Int): Result<List<Game>> =
-        queryRepository.getOpenPublicGames(limit)
+        queryRepository.getOpenPublicGames(limit).map { it.toAndroidGames() }
 
     override suspend fun checkTimeConflict(
         fieldId: String,
@@ -97,23 +159,30 @@ class GameRepositoryImpl @Inject constructor(
         endTime: String,
         excludeGameId: String?
     ): Result<List<TimeConflict>> =
-        queryRepository.checkTimeConflict(fieldId, date, startTime, endTime, excludeGameId)
+        queryRepository.checkTimeConflict(fieldId, date, startTime, endTime, excludeGameId).map { it.toAndroidTimeConflicts() }
 
     override suspend fun getGamesByFieldAndDate(fieldId: String, date: String): Result<List<Game>> =
-        queryRepository.getGamesByFieldAndDate(fieldId, date)
+        queryRepository.getGamesByFieldAndDate(fieldId, date).map { it.toAndroidGames() }
 
     // ========== Confirmation Methods - Delegação para GameConfirmationRepository ==========
-    override suspend fun getGameConfirmations(gameId: String): Result<List<GameConfirmation>> =
-        confirmationRepository.getGameConfirmations(gameId)
+    override suspend fun getGameConfirmations(gameId: String): Result<List<AndroidGameConfirmation>> =
+        confirmationRepository.getGameConfirmations(gameId).map { kmpConfirmations ->
+            kmpConfirmations.map { it.toAndroidModel() }
+        }
 
-    override fun getGameConfirmationsFlow(gameId: String): Flow<Result<List<GameConfirmation>>> =
-        confirmationRepository.getGameConfirmationsFlow(gameId)
+    override fun getGameConfirmationsFlow(gameId: String): Flow<Result<List<AndroidGameConfirmation>>> =
+        confirmationRepository.getGameConfirmationsFlow(gameId).map { result ->
+            result.map { kmpConfirmations ->
+                kmpConfirmations.map { it.toAndroidModel() }
+            }
+        }
 
     override suspend fun confirmPresence(
         gameId: String,
         position: String,
         isCasual: Boolean
-    ): Result<GameConfirmation> = confirmationRepository.confirmPresence(gameId, position, isCasual)
+    ): Result<AndroidGameConfirmation> =
+        confirmationRepository.confirmPresence(gameId, position, isCasual).map { it.toAndroidModel() }
 
     override suspend fun getGoalkeeperCount(gameId: String): Result<Int> =
         confirmationRepository.getGoalkeeperCount(gameId)
@@ -127,8 +196,11 @@ class GameRepositoryImpl @Inject constructor(
     override suspend fun updatePaymentStatus(gameId: String, userId: String, isPaid: Boolean): Result<Unit> =
         confirmationRepository.updatePaymentStatus(gameId, userId, isPaid)
 
-    override suspend fun summonPlayers(gameId: String, confirmations: List<GameConfirmation>): Result<Unit> =
-        confirmationRepository.summonPlayers(gameId, confirmations)
+    override suspend fun summonPlayers(gameId: String, confirmations: List<AndroidGameConfirmation>): Result<Unit> =
+        confirmationRepository.summonPlayers(gameId, confirmations.map { it.toKmpModel() })
+
+    override suspend fun acceptInvitation(gameId: String, position: String): Result<AndroidGameConfirmation> =
+        confirmationRepository.acceptInvitation(gameId, position).map { it.toAndroidModel() }
 
     // ========== Events Methods - Delegação para GameEventsRepository ==========
     override fun getGameEventsFlow(gameId: String): Flow<Result<List<GameEvent>>> =
@@ -354,4 +426,60 @@ class GameRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+}
+
+/**
+ * Converte modelo KMP para Android.
+ */
+private fun KmpGameConfirmation.toAndroidModel(): AndroidGameConfirmation {
+    return AndroidGameConfirmation(
+        id = id,
+        gameId = gameId,
+        userId = userId,
+        userName = userName,
+        userPhoto = userPhoto,
+        position = position,
+        status = status,
+        paymentStatus = paymentStatus,
+        isCasualPlayer = isCasualPlayer,
+        goals = goals,
+        yellowCards = yellowCards,
+        redCards = redCards,
+        assists = assists,
+        saves = saves,
+        confirmedAt = confirmedAt?.let { java.util.Date(it) },
+        nickname = nickname,
+        xpEarned = xpEarned,
+        isMvp = isMvp,
+        isBestGk = isBestGk,
+        isWorstPlayer = isWorstPlayer
+    )
+}
+
+/**
+ * Converte modelo Android para KMP.
+ */
+private fun AndroidGameConfirmation.toKmpModel(): KmpGameConfirmation {
+    return KmpGameConfirmation(
+        id = id,
+        gameId = gameId,
+        userId = userId,
+        userName = userName,
+        userPhoto = userPhoto,
+        position = position,
+        status = status,
+        paymentStatus = paymentStatus,
+        isCasualPlayer = isCasualPlayer,
+        goals = goals,
+        yellowCards = yellowCards,
+        redCards = redCards,
+        assists = assists,
+        saves = saves,
+        confirmedAt = confirmedAt?.time,
+        nickname = nickname,
+        xpEarned = xpEarned,
+        isMvp = isMvp,
+        isBestGk = isBestGk,
+        isWorstPlayer = isWorstPlayer
+    )
 }

@@ -9,8 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,7 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.futebadosparcas.R
-import com.futebadosparcas.data.model.ThemeMode
+import com.futebadosparcas.domain.model.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +28,7 @@ fun ThemeSettingsScreen(
     viewModel: ThemeViewModel = hiltViewModel(),
     onBackClick: () -> Unit = {}
 ) {
-    val config by viewModel.themeConfig.collectAsState()
+    val config by viewModel.themeConfig.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
