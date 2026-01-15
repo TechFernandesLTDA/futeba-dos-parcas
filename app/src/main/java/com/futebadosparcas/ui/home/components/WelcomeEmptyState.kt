@@ -1,6 +1,5 @@
 package com.futebadosparcas.ui.home.components
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,10 +7,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -22,13 +19,14 @@ import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 
 /**
- * Estado vazio amigável para usuários novos
+ * Estado vazio amigavel para usuarios novos
  *
  * Mostra:
  * - Boas-vindas personalizadas
- * - Brasão do nível inicial
+ * - Brasao do nivel inicial
  * - Dicas de primeiros passos
- * - Animações sutis
+ *
+ * OTIMIZADO: Removidas animacoes para scroll suave
  */
 @Composable
 fun WelcomeEmptyState(
@@ -36,17 +34,6 @@ fun WelcomeEmptyState(
     userLevel: Int = 0,
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "welcome_pulse")
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "scale"
-    )
-
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -54,11 +41,9 @@ fun WelcomeEmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Brasão do Nível Animado
+        // Brasao do Nivel (sem animacao)
         Box(
-            modifier = Modifier
-                .size(120.dp)
-                .scale(scale),
+            modifier = Modifier.size(120.dp),
             contentAlignment = Alignment.Center
         ) {
             androidx.compose.foundation.Image(

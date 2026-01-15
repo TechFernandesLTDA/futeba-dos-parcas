@@ -29,7 +29,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.repository.LocationRepository
+import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
@@ -40,6 +40,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.text.Normalizer
 import javax.inject.Inject
+import com.futebadosparcas.util.toAndroidLocations
+import com.futebadosparcas.util.toAndroidFields
 
 /**
  * Dialog moderno de seleção de local com busca integrada ao Google Places
@@ -58,7 +60,7 @@ fun LocationSelectionDialog(
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    AlertDialog(
+    BasicAlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier
             .fillMaxWidth()
@@ -343,7 +345,7 @@ fun FieldSelectionDialog(
         viewModel.loadFields(location.id)
     }
 
-    AlertDialog(
+    BasicAlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier
             .fillMaxWidth()
@@ -656,8 +658,8 @@ class LocationSelectionViewModel @Inject constructor(
                 val result = locationRepository.getAllLocations()
                 result.fold(
                     onSuccess = { list ->
-                        savedLocations = list
-                        _locations.value = list
+                        savedLocations = list.toAndroidLocations()
+                        _locations.value = list.toAndroidLocations()
                         _uiState.value = LocationSelectionUiState.Success
                     },
                     onFailure = { error ->
@@ -732,7 +734,7 @@ class FieldSelectionViewModel @Inject constructor(
                 val result = locationRepository.getFieldsByLocation(locationId)
                 result.fold(
                     onSuccess = { list ->
-                        allFields = list
+                        allFields = list.toAndroidFields()
                         applyFilter()
                         _uiState.value = FieldSelectionUiState.Success
                     },

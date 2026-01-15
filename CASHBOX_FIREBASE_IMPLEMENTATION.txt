@@ -1,0 +1,488 @@
+// ========== CASHBOX ==========
+
+// Adicione estes métodos dentro da classe FirebaseDataSource (após o último método atual)
+
+actual suspend fun uploadCashboxReceipt(groupId: String, filePath: String): Result<String> {
+    return try {
+        // TODO: Implementar upload de arquivo usando Firebase Storage
+        // Por enquanto, retorna sucesso com URL mock
+        Result.success("https://mock.receipt.url/$groupId/${System.currentTimeMillis()}")
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+
+actual suspend fun addCashboxEntry(
+    groupId: String,
+    entry: CashboxEntry,
+    receiptFilePath: String?
+): Result<String> {
+    return try {
+        val userId = auth.currentUser?.uid
+            ?: return Result.failure(Exception("Usuário não autenticado"))
+
+        // Verificar permissão - apenas ADMIN e OWNER podem lançar no caixa
+        val memberDoc = firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("members")
+            .document(userId)
+            .get()
+            .await()
+
+        if (!memberDoc.exists()) {
+            return Result.failure(Exception("Você não é membro deste grupo"))
+        }
+
+        val role = memberDoc.getString("role")
+        if (role != GroupMemberRole.ADMIN.name && role != GroupMemberRole.OWNER.name) {
+            return Result.failure(Exception("Apenas administradores podem lançar no caixa"))
+        }
+
+        // Upload da foto se houver
+        val finalEntry = if (receiptFilePath != null) {
+            val uploadResult = uploadCashboxReceipt(groupId, receiptFilePath)
+            if (uploadResult.isSuccess) {
+                entry.copy(receiptUrl = uploadResult.getOrNull())
+            } else {
+                return Result.failure(uploadResult.exceptionOrNull()!!)
+            }
+        } else {
+            entry
+        }
+
+        val userName = memberDoc.getString("user_name") ?: ""
+
+        val entryRef = firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("cashbox")
+            .document()
+
+        val summaryRef = firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("cashbox_summary")
+            .document("current")
+
+        if (finalEntry.amount <= 0) {
+            return Result.failure(Exception("O valor deve ser maior que zero"))
+        }
+
+        val now = com.google.firebase.firestore.FieldValue.serverTimestamp()
+        val entryWithData = finalEntry.copy(
+            id = entryRef.id,
+            createdById = userId,
+            createdByName = userName,
+            createdAt = null, // Será preenchido pelo ServerTimestamp
+            referenceDate = finalEntry.referenceDate,
+            status = CashboxAppStatus.ACTIVE.name
+        )
+
+        firestore.runTransaction { transaction ->
+            // 1. Buscar sumário atual
+            val summarySnapshot = transaction.get(summaryRef)
+            val summary = if (summarySnapshot.exists()) {
+                summarySnapshot.toCashboxSummaryOrNull() ?: CashboxSummary()
+            } else {
+                CashboxSummary()
+            }
+
+            // 2. Calcular novos valores
+            val amount = entryWithData.amount
+            val newSummary = if (entryWithData.isIncome()) {
+                summary.copy(
+                    totalIncome = summary.totalIncome + amount,
+                    entryCount = summary.entryCount + 1
+                )
+            } else {
+                summary.copy(
+                    totalExpense = summary.totalExpense + amount,
+                    entryCount = summary.entryCount + 1
+                )
+            }
+
+            val newBalance = newSummary.totalIncome - newSummary.totalExpense
+
+            // 3. Atualizar resumo
+            transaction.set(summaryRef, mapOf(
+                "balance" to newBalance,
+                "total_income" to newSummary.totalIncome,
+                "total_expense" to newSummary.totalExpense,
+                "last_entry_at" to now,
+                "entry_count" to newSummary.entryCount
+            ))
+
+            // 4. Adicionar entrada
+            val entryData = mapOf(
+                "id" to entryWithData.id,
+                "type" to entryWithData.type,
+                "category" to entryWithData.category,
+                "custom_category" to entryWithData.customCategory,
+                "amount" to entryWithData.amount,
+                "description" to entryWithData.description,
+                "created_by_id" to entryWithData.createdById,
+                "created_by_name" to entryWithData.createdByName,
+                "reference_date" to entryWithData.referenceDate.toEpochMilliseconds(),
+                "created_at" to now,
+                "player_id" to entryWithData.playerId,
+                "player_name" to entryWithData.playerName,
+                "game_id" to entryWithData.gameId,
+                "receipt_url" to entryWithData.receiptUrl,
+                "status" to entryWithData.status
+            )
+            transaction.set(entryRef, entryData)
+
+            entryRef.id
+        }.await()
+
+        Result.success(entryRef.id)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+
+actual suspend fun getCashboxSummary(groupId: String): Result<CashboxSummary> {
+    return try {
+        val doc = firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("cashbox_summary")
+            .document("current")
+            .get()
+            .await()
+
+        if (doc.exists()) {
+            val summary = doc.toCashboxSummaryOrNull() ?: CashboxSummary()
+            Result.success(summary)
+        } else {
+            Result.success(CashboxSummary())
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+
+actual fun getCashboxSummaryFlow(groupId: String): Flow<Result<CashboxSummary>> = callbackFlow {
+    val listener = firestore.collection(COLLECTION_GROUPS)
+        .document(groupId)
+        .collection("cashbox_summary")
+        .document("current")
+        .addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                trySend(Result.failure(error))
+                return@addSnapshotListener
+            }
+
+            val summary = snapshot?.toCashboxSummaryOrNull() ?: CashboxSummary()
+            trySend(Result.success(summary))
+        }
+
+    awaitClose { listener.remove() }
+}
+
+actual suspend fun getCashboxHistory(groupId: String, limit: Int): Result<List<CashboxEntry>> {
+    return try {
+        val snapshot = firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("cashbox")
+            .whereEqualTo("status", CashboxAppStatus.ACTIVE.name)
+            .orderBy("created_at", Query.Direction.DESCENDING)
+            .limit(limit.toLong())
+            .get()
+            .await()
+
+        val entries = snapshot.documents.mapNotNull { it.toCashboxEntryOrNull() }
+        Result.success(entries)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+
+actual fun getCashboxHistoryFlow(groupId: String, limit: Int): Flow<Result<List<CashboxEntry>>> = callbackFlow {
+    val listener = firestore.collection(COLLECTION_GROUPS)
+        .document(groupId)
+        .collection("cashbox")
+        .whereEqualTo("status", CashboxAppStatus.ACTIVE.name)
+        .orderBy("created_at", Query.Direction.DESCENDING)
+        .limit(limit.toLong())
+        .addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                trySend(Result.failure(error))
+                return@addSnapshotListener
+            }
+            val entries = snapshot?.documents?.mapNotNull { it.toCashboxEntryOrNull() } ?: emptyList()
+            trySend(Result.success(entries))
+        }
+
+    awaitClose { listener.remove() }
+}
+
+actual suspend fun getCashboxHistoryFiltered(
+    groupId: String,
+    filter: CashboxFilter,
+    limit: Int
+): Result<List<CashboxEntry>> {
+    return try {
+        var query: Query = firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("cashbox")
+            .whereEqualTo("status", CashboxAppStatus.ACTIVE.name)
+
+        // Aplicar filtro de tipo
+        filter.type?.let {
+            query = query.whereEqualTo("type", it.name)
+        }
+
+        // Aplicar filtro de categoria
+        filter.category?.let {
+            query = query.whereEqualTo("category", it.name)
+        }
+
+        // Aplicar filtro de jogador
+        filter.playerId?.let {
+            query = query.whereEqualTo("player_id", it)
+        }
+
+        // Aplicar filtro de data inicial
+        filter.startDate?.let {
+            query = query.whereGreaterThanOrEqualTo("reference_date", it.toEpochMilliseconds())
+        }
+
+        // Aplicar filtro de data final
+        filter.endDate?.let {
+            query = query.whereLessThanOrEqualTo("reference_date", it.toEpochMilliseconds())
+        }
+
+        // Determinar campo de ordenação
+        val orderByField = if (filter.startDate != null || filter.endDate != null) {
+            "reference_date"
+        } else {
+            "created_at"
+        }
+
+        val snapshot = query
+            .orderBy(orderByField, Query.Direction.DESCENDING)
+            .limit(limit.toLong())
+            .get()
+            .await()
+
+        val entries = snapshot.documents.mapNotNull { it.toCashboxEntryOrNull() }
+        Result.success(entries)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+
+actual suspend fun getCashboxEntriesByMonth(
+    groupId: String,
+    year: Int,
+    month: Int
+): Result<List<CashboxEntry>> {
+    return try {
+        val calendar = java.util.Calendar.getInstance()
+        calendar.set(year, month - 1, 1, 0, 0, 0)
+        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        val startDate = calendar.timeInMillis
+
+        calendar.set(year, month, 1, 0, 0, 0)
+        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        val endDate = calendar.timeInMillis
+
+        val snapshot = firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("cashbox")
+            .whereEqualTo("status", CashboxAppStatus.ACTIVE.name)
+            .whereGreaterThanOrEqualTo("reference_date", startDate)
+            .whereLessThan("reference_date", endDate)
+            .orderBy("reference_date", Query.Direction.DESCENDING)
+            .get()
+            .await()
+
+        val entries = snapshot.documents.mapNotNull { it.toCashboxEntryOrNull() }
+        Result.success(entries)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+
+actual suspend fun getCashboxEntryById(groupId: String, entryId: String): Result<CashboxEntry> {
+    return try {
+        val doc = firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("cashbox")
+            .document(entryId)
+            .get()
+            .await()
+
+        if (doc.exists()) {
+            val entry = doc.toCashboxEntryOrNull()
+                ?: return Result.failure(Exception("Erro ao converter entrada"))
+            Result.success(entry)
+        } else {
+            Result.failure(Exception("Entrada não encontrada"))
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+
+actual suspend fun deleteCashboxEntry(groupId: String, entryId: String): Result<Unit> {
+    return try {
+        val userId = auth.currentUser?.uid
+            ?: return Result.failure(Exception("Usuário não autenticado"))
+
+        // Verificar se é owner do grupo
+        val memberDoc = firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("members")
+            .document(userId)
+            .get()
+            .await()
+
+        if (!memberDoc.exists()) {
+            return Result.failure(Exception("Você não é membro deste grupo"))
+        }
+
+        val role = memberDoc.getString("role")
+        if (role != GroupMemberRole.OWNER.name) {
+            return Result.failure(Exception("Apenas o dono do grupo pode estornar entradas"))
+        }
+
+        // Buscar entrada para saber o valor
+        val entryDoc = firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("cashbox")
+            .document(entryId)
+            .get()
+            .await()
+
+        if (!entryDoc.exists()) {
+            return Result.failure(Exception("Entrada não encontrada"))
+        }
+
+        val entry = entryDoc.toCashboxEntryOrNull()
+            ?: return Result.failure(Exception("Erro ao converter entrada"))
+
+        if (entry.status == CashboxAppStatus.VOIDED.name) {
+            return Result.failure(Exception("Esta entrada já foi estornada"))
+        }
+
+        // Executar transação
+        firestore.runTransaction { transaction ->
+            val summaryRef = firestore.collection(COLLECTION_GROUPS)
+                .document(groupId)
+                .collection("cashbox_summary")
+                .document("current")
+
+            val summaryDoc = transaction.get(summaryRef)
+            val currentSummary = if (summaryDoc.exists()) {
+                summaryDoc.toCashboxSummaryOrNull() ?: CashboxSummary()
+            } else {
+                CashboxSummary()
+            }
+
+            val amountDelta = if (entry.isIncome()) -entry.amount else entry.amount
+            val newBalance = currentSummary.balance + amountDelta
+            val newTotalIncome = if (entry.isIncome()) {
+                currentSummary.totalIncome - entry.amount
+            } else {
+                currentSummary.totalIncome
+            }
+            val newTotalExpense = if (entry.isExpense()) {
+                currentSummary.totalExpense - entry.amount
+            } else {
+                currentSummary.totalExpense
+            }
+
+            transaction.set(summaryRef, mapOf(
+                "balance" to newBalance,
+                "total_income" to newTotalIncome,
+                "total_expense" to newTotalExpense,
+                "last_entry_at" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                "entry_count" to (currentSummary.entryCount - 1).coerceAtLeast(0)
+            ))
+
+            val entryRef = firestore.collection(COLLECTION_GROUPS)
+                .document(groupId)
+                .collection("cashbox")
+                .document(entryId)
+
+            transaction.update(entryRef, mapOf(
+                "status" to CashboxAppStatus.VOIDED.name,
+                "voided_at" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                "voided_by" to userId
+            ))
+        }.await()
+
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+
+actual suspend fun recalculateCashboxBalance(groupId: String): Result<CashboxSummary> {
+    return try {
+        val userId = auth.currentUser?.uid
+            ?: return Result.failure(Exception("Usuário não autenticado"))
+
+        // Verificar se é admin do grupo
+        val memberDoc = firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("members")
+            .document(userId)
+            .get()
+            .await()
+
+        val role = memberDoc.getString("role")
+        if (role != GroupMemberRole.ADMIN.name && role != GroupMemberRole.OWNER.name) {
+            return Result.failure(Exception("Apenas administradores podem recalcular o saldo"))
+        }
+
+        // Buscar todas as entradas
+        // WARN: Esta operação é custosa. Use com cuidado.
+        val entriesSnapshot = firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("cashbox")
+            .whereEqualTo("status", CashboxAppStatus.ACTIVE.name)
+            .get()
+            .await()
+
+        var totalIncome = 0.0
+        var totalExpense = 0.0
+        var lastEntryDate: Long? = null
+
+        val entries = entriesSnapshot.documents.mapNotNull { it.toCashboxEntryOrNull() }
+
+        entries.forEach { entry ->
+            if (entry.isIncome()) {
+                totalIncome += entry.amount
+            } else {
+                totalExpense += entry.amount
+            }
+
+            entry.createdAt?.let { createdAt ->
+                if (lastEntryDate == null || createdAt > lastEntryDate) {
+                    lastEntryDate = createdAt
+                }
+            }
+        }
+
+        val balance = totalIncome - totalExpense
+
+        val summary = CashboxSummary(
+            balance = balance,
+            totalIncome = totalIncome,
+            totalExpense = totalExpense,
+            lastEntryAt = lastEntryDate?.let { kotlinx.datetime.Instant.fromEpochMilliseconds(it) },
+            entryCount = entries.size
+        )
+
+        firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("cashbox_summary")
+            .document("current")
+            .set(summary)
+            .await()
+
+        Result.success(summary)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}

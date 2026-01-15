@@ -2,9 +2,8 @@ package com.futebadosparcas.ui.admin
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.User
-import com.futebadosparcas.data.model.UserRole
-import com.futebadosparcas.data.repository.UserRepositoryLegacy
+import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +12,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UserManagementViewModel @Inject constructor(
-    private val userRepository: UserRepositoryLegacy
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UserManagementUiState>(UserManagementUiState.Loading)
@@ -28,9 +27,7 @@ class UserManagementViewModel @Inject constructor(
     fun loadUsers() {
         viewModelScope.launch {
             _uiState.value = UserManagementUiState.Loading
-            // Admin carrega todos os usuários usando a versão sem paginação
-            @Suppress("DEPRECATION")
-            userRepository.getAllUsersUnpaginated().fold(
+            userRepository.getAllUsers().fold(
                 onSuccess = { users ->
                     allUsers = users
                     _uiState.value = UserManagementUiState.Success(users)
@@ -54,9 +51,9 @@ class UserManagementViewModel @Inject constructor(
         _uiState.value = UserManagementUiState.Success(filtered)
     }
 
-    fun updateUserRole(user: User, newRole: UserRole) {
+    fun updateUserRole(user: User, newRole: String) {
         viewModelScope.launch {
-            userRepository.updateUserRole(user.id, newRole.name).fold(
+            userRepository.updateUserRole(user.id, newRole).fold(
                 onSuccess = {
                     loadUsers() // Reload to reflect changes
                 },

@@ -3,14 +3,15 @@ package com.futebadosparcas.ui.players
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
-import com.futebadosparcas.data.model.FieldType
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.data.model.GroupInvite
 import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.data.repository.IStatisticsRepository
 import com.futebadosparcas.data.repository.InviteRepository
-import com.futebadosparcas.data.repository.NotificationRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.model.User as SharedUser
+import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.domain.repository.NotificationRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -374,7 +375,15 @@ class PlayersViewModelTest {
         val groups = listOf(createTestGroup("group1", "Grupo 1", isAdmin = true))
         coEvery { userRepository.searchUsers("") } returns Result.success(emptyList())
         coEvery { groupRepository.getMyGroups() } returns Result.success(groups)
-        coEvery { inviteRepository.createInvite("group1", "target") } returns Result.success(Unit)
+        coEvery { inviteRepository.createInvite("group1", "target") } returns Result.success(
+            GroupInvite(
+                id = "invite1",
+                groupId = "group1",
+                groupName = "Test Group",
+                invitedUserId = "target",
+                invitedUserName = "Target User"
+            )
+        )
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -417,7 +426,15 @@ class PlayersViewModelTest {
         // Given
         val targetUser = createTestUser("target", "Target User", true)
         coEvery { userRepository.searchUsers("") } returns Result.success(emptyList())
-        coEvery { inviteRepository.createInvite("group1", "target") } returns Result.success(Unit)
+        coEvery { inviteRepository.createInvite("group1", "target") } returns Result.success(
+            GroupInvite(
+                id = "invite1",
+                groupId = "group1",
+                groupName = "Test Group",
+                invitedUserId = "target",
+                invitedUserName = "Target User"
+            )
+        )
 
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -462,7 +479,7 @@ class PlayersViewModelTest {
         name: String,
         isPublic: Boolean,
         fieldTypes: List<FieldType> = emptyList()
-    ) = User(
+    ) = SharedUser(
         id = id,
         name = name,
         email = "$id@test.com",
@@ -485,12 +502,12 @@ class PlayersViewModelTest {
 
     private fun createTestGroup(
         id: String,
-        name: String,
+        groupName: String,
         isAdmin: Boolean
     ): UserGroup {
         return mockk<UserGroup>().apply {
             every { this@apply.groupId } returns id
-            every { this@apply.name } returns name
+            every { this@apply.name } returns groupName
             every { isAdmin() } returns isAdmin
         }
     }

@@ -1,27 +1,22 @@
 package com.futebadosparcas.ui.home.components
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.home.GamificationSummary
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.HapticManager
@@ -38,19 +33,14 @@ fun ExpressiveHubHeader(
     statistics: com.futebadosparcas.data.model.UserStatistics? = null,
     onProfileClick: () -> Unit,
     hapticManager: HapticManager? = null,
+    onLevelClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val windowSizeClass = rememberWindowSizeClass()
     val spacing = rememberAdaptiveSpacing()
 
-    val animatedProgress by animateFloatAsState(
-        targetValue = summary.progressPercent / 100f,
-        animationSpec = spring(
-            dampingRatio = 0.6f,
-            stiffness = 100f
-        ),
-        label = "xpProgress"
-    )
+    // VERSÃO ESTÁTICA para scroll suave - SEM animação
+    val animatedProgress = summary.progressPercent / 100f
 
     // Tamanhos adaptativos
     val photoSize = if (windowSizeClass.isCompact) 64.dp else 80.dp
@@ -80,6 +70,7 @@ fun ExpressiveHubHeader(
                     photoSize = photoSize,
                     badgeSize = badgeSize,
                     onProfileClick = onProfileClick,
+                    onLevelClick = onLevelClick,
                     hapticManager = hapticManager
                 )
             } else {
@@ -93,6 +84,7 @@ fun ExpressiveHubHeader(
                     badgeSize = badgeSize,
                     spacing = spacing,
                     onProfileClick = onProfileClick,
+                    onLevelClick = onLevelClick,
                     hapticManager = hapticManager
                 )
             }
@@ -109,6 +101,7 @@ private fun CompactHeaderLayout(
     photoSize: Dp,
     badgeSize: Dp,
     onProfileClick: () -> Unit,
+    onLevelClick: () -> Unit,
     hapticManager: HapticManager?
 ) {
     Row(
@@ -122,14 +115,10 @@ private fun CompactHeaderLayout(
                 onProfileClick()
             }
         ) {
-            AsyncImage(
-                model = user.photoUrl ?: com.futebadosparcas.R.drawable.ic_player_placeholder,
-                contentDescription = "Foto do usuário",
-                modifier = Modifier
-                    .size(photoSize)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface),
-                contentScale = ContentScale.Crop
+            CachedProfileImage(
+                photoUrl = user.photoUrl,
+                userName = user.name,
+                size = photoSize
             )
 
             // Brasão de Nível
@@ -159,11 +148,16 @@ private fun CompactHeaderLayout(
             )
         }
 
-        // Badge de Nível (Expressivo)
+        // Badge de Nível (Expressivo) - Clicável para Rumo ao Estrelato
         Surface(
             color = MaterialTheme.colorScheme.primaryContainer,
             shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.height(32.dp)
+            modifier = Modifier
+                .height(32.dp)
+                .clickable {
+                    hapticManager?.tick()
+                    onLevelClick()
+                }
         ) {
             Box(
                 contentAlignment = Alignment.Center,
@@ -211,6 +205,7 @@ private fun ExpandedHeaderLayout(
     badgeSize: Dp,
     spacing: com.futebadosparcas.ui.adaptive.AdaptiveSpacing,
     onProfileClick: () -> Unit,
+    onLevelClick: () -> Unit,
     hapticManager: HapticManager?
 ) {
     Row(
@@ -228,14 +223,10 @@ private fun ExpandedHeaderLayout(
                     onProfileClick()
                 }
             ) {
-                AsyncImage(
-                    model = user.photoUrl ?: com.futebadosparcas.R.drawable.ic_player_placeholder,
-                    contentDescription = "Foto do usuário",
-                    modifier = Modifier
-                        .size(photoSize)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surface),
-                    contentScale = ContentScale.Crop
+                CachedProfileImage(
+                    photoUrl = user.photoUrl,
+                    userName = user.name,
+                    size = photoSize
                 )
 
                 androidx.compose.foundation.Image(
@@ -268,7 +259,12 @@ private fun ExpandedHeaderLayout(
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer,
                     shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier.height(36.dp)
+                    modifier = Modifier
+                        .height(36.dp)
+                        .clickable {
+                            hapticManager?.tick()
+                            onLevelClick()
+                        }
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,

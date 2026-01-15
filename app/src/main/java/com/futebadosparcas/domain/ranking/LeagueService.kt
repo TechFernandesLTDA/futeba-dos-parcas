@@ -1,6 +1,8 @@
 package com.futebadosparcas.domain.ranking
 
 import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.LeagueDivision as SharedLeagueDivision
+import com.futebadosparcas.domain.ranking.RecentGameData as SharedRecentGameData
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -14,8 +16,8 @@ import javax.inject.Singleton
  */
 data class LeagueUpdateResult(
     val userId: String,
-    val oldDivision: LeagueDivision,
-    val newDivision: LeagueDivision,
+    val oldDivision: SharedLeagueDivision,
+    val newDivision: SharedLeagueDivision,
     val leagueRating: Double,
     val promoted: Boolean,
     val relegated: Boolean
@@ -33,6 +35,9 @@ data class LeagueUpdateResult(
  * Promocao: LR >= limite superior por 3 jogos consecutivos
  * Rebaixamento: LR < limite inferior por 3 jogos consecutivos
  * Protecao: 5 jogos de imunidade apos promocao
+ *
+ * NOTA: O calculador de League Rating foi movido para o shared module (KMP).
+ * Este service converte entre os modelos Android e shared.
  */
 @Singleton
 class LeagueService @Inject constructor(
@@ -44,6 +49,32 @@ class LeagueService @Inject constructor(
         private const val RELEGATION_GAMES_REQUIRED = 3
         private const val PROTECTION_GAMES = 5
         private const val MAX_RECENT_GAMES = 10
+
+        /**
+         * Converte LeagueDivision do Android para Shared.
+         * Ambos usam os mesmos nomes em portugues.
+         */
+        fun toSharedDivision(division: com.futebadosparcas.data.model.LeagueDivision): SharedLeagueDivision {
+            return when (division) {
+                com.futebadosparcas.data.model.LeagueDivision.BRONZE -> SharedLeagueDivision.BRONZE
+                com.futebadosparcas.data.model.LeagueDivision.PRATA -> SharedLeagueDivision.PRATA
+                com.futebadosparcas.data.model.LeagueDivision.OURO -> SharedLeagueDivision.OURO
+                com.futebadosparcas.data.model.LeagueDivision.DIAMANTE -> SharedLeagueDivision.DIAMANTE
+            }
+        }
+
+        /**
+         * Converte LeagueDivision do Shared para Android.
+         * Ambos usam os mesmos nomes em portugues.
+         */
+        fun toAndroidDivision(division: SharedLeagueDivision): com.futebadosparcas.data.model.LeagueDivision {
+            return when (division) {
+                SharedLeagueDivision.BRONZE -> com.futebadosparcas.data.model.LeagueDivision.BRONZE
+                SharedLeagueDivision.PRATA -> com.futebadosparcas.data.model.LeagueDivision.PRATA
+                SharedLeagueDivision.OURO -> com.futebadosparcas.data.model.LeagueDivision.OURO
+                SharedLeagueDivision.DIAMANTE -> com.futebadosparcas.data.model.LeagueDivision.DIAMANTE
+            }
+        }
     }
 
     private val seasonParticipationCollection = firestore.collection("season_participation")
@@ -87,23 +118,35 @@ class LeagueService @Inject constructor(
             val updatedRecentGames = (listOf(newRecentGame) + participation.recentGames)
                 .take(MAX_RECENT_GAMES)
 
-            // 3. Calcular novo League Rating
-            val newLeagueRating = com.futebadosparcas.data.model.LeagueRatingCalculator.calculate(updatedRecentGames)
-            val suggestedDivision = com.futebadosparcas.data.model.LeagueRatingCalculator.getDivisionForRating(newLeagueRating)
+            // 3. Calcular novo League Rating usando o calculador do shared module
+            val sharedRecentGames = updatedRecentGames.map { game ->
+                SharedRecentGameData(
+                    gameId = game.gameId,
+                    xpEarned = game.xpEarned,
+                    won = game.won,
+                    drew = game.drew,
+                    goalDiff = game.goalDiff,
+                    wasMvp = game.wasMvp
+                )
+            }
+            val newLeagueRating = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.calculate(sharedRecentGames)
+            val suggestedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating)
+
+            // Converter divisao Android para Shared
+            val oldDivisionShared = toSharedDivision(participation.division)
 
             // 4. Verificar promocao/rebaixamento
             // Thresholds
-            val nextTierThreshold = com.futebadosparcas.data.model.LeagueRatingCalculator.getNextDivisionThreshold(participation.division)
-            val prevTierThreshold = com.futebadosparcas.data.model.LeagueRatingCalculator.getPreviousDivisionThreshold(participation.division)
-            
+            val nextTierThreshold = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getNextDivisionThreshold(oldDivisionShared)
+            val prevTierThreshold = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getPreviousDivisionThreshold(oldDivisionShared)
+
             var currentProtection = participation.protectionGames
             var currentPromotionProgress = participation.promotionProgress
             var currentRelegationProgress = participation.relegationProgress
-            
-            val oldDivision = participation.division
+
             var promoted = false
             var relegated = false
-            var newDivision = participation.division
+            var newDivisionShared = oldDivisionShared
 
             // Se estiver protegido, decrementa e nao altera progressos
             if (currentProtection > 0) {
@@ -112,27 +155,27 @@ class LeagueService @Inject constructor(
                 currentRelegationProgress = 0
             } else {
                 // Checa Promocao
-                if (newLeagueRating >= nextTierThreshold && participation.division != LeagueDivision.DIAMANTE) {
+                if (newLeagueRating >= nextTierThreshold && oldDivisionShared != SharedLeagueDivision.DIAMANTE) {
                     currentPromotionProgress++
                     currentRelegationProgress = 0 // Reseta o oposto
-                    
+
                     if (currentPromotionProgress >= PROMOTION_GAMES_REQUIRED) {
                         promoted = true
                         currentPromotionProgress = 0
                         currentProtection = PROTECTION_GAMES
-                        newDivision = getNextDivision(participation.division)
+                        newDivisionShared = SharedLeagueDivision.getNextDivision(oldDivisionShared)
                     }
-                } 
+                }
                 // Checa Rebaixamento
-                else if (newLeagueRating < prevTierThreshold && participation.division != LeagueDivision.BRONZE) {
+                else if (newLeagueRating < prevTierThreshold && oldDivisionShared != SharedLeagueDivision.BRONZE) {
                     currentRelegationProgress++
                     currentPromotionProgress = 0 // Reseta o oposto
-                    
+
                     if (currentRelegationProgress >= RELEGATION_GAMES_REQUIRED) {
                         relegated = true
                         currentRelegationProgress = 0
                         currentProtection = PROTECTION_GAMES // Ganha protecao na nova (inferior) divisao? Discutivel. Por enquanto sim.
-                        newDivision = getPreviousDivision(participation.division)
+                        newDivisionShared = SharedLeagueDivision.getPreviousDivision(oldDivisionShared)
                     }
                 } else {
                     // Mantem status quo mas pode resetar progressos se saiu da zona
@@ -142,14 +185,18 @@ class LeagueService @Inject constructor(
                     if (newLeagueRating >= prevTierThreshold) currentRelegationProgress = 0
                 }
             }
-            
+
+            // Converter de volta para Android
+            val newDivision = toAndroidDivision(newDivisionShared)
+            val oldDivision = participation.division
+
             // REGRA DE TEMPORADA: Se a regra for mudar apenas no fim da temporada,
             // nos sobrescrevemos newDivision aqui.
             // Porem, como o usuario pediu logica completa, vamos permitir a mudanca dinamica
             // OU manter a logica visual.
             // Para manter consistencia com "Season a Season", vamos comentar a atribuicao de newDivision real
             // mas manter os campos de progresso atualizados para feedback visual.
-            
+
             // newDivision = oldDivision // DESCOMENTAR PARA TRAVAR A DIVISAO
             // Se mantivermos dinamico:
             if (promoted || relegated) {
@@ -188,8 +235,8 @@ class LeagueService @Inject constructor(
             Result.success(
                 LeagueUpdateResult(
                     userId = userId,
-                    oldDivision = oldDivision,
-                    newDivision = newDivision,
+                    oldDivision = oldDivisionShared,
+                    newDivision = newDivisionShared,
                     leagueRating = newLeagueRating,
                     promoted = promoted,
                     relegated = relegated
@@ -247,13 +294,14 @@ class LeagueService @Inject constructor(
      */
     suspend fun getPlayersByDivision(
         seasonId: String,
-        division: LeagueDivision,
+        division: SharedLeagueDivision,
         limit: Int = 50
     ): Result<List<SeasonParticipationV2>> {
         return try {
+            val androidDivision = toAndroidDivision(division)
             val snapshot = seasonParticipationCollection
                 .whereEqualTo("season_id", seasonId)
-                .whereEqualTo("division", division.name)
+                .whereEqualTo("division", androidDivision.name)
                 .orderBy("league_rating", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .limit(limit.toLong())
                 .get()
@@ -268,7 +316,7 @@ class LeagueService @Inject constructor(
     }
 
     private suspend fun createNewParticipation(userId: String, seasonId: String): SeasonParticipationV2 {
-        var startDivision = LeagueDivision.BRONZE
+        var startDivision = com.futebadosparcas.data.model.LeagueDivision.BRONZE
         var momentumGames = emptyList<RecentGameData>()
 
         // Tenta buscar QUALQUER historico anterior para definir a divisao inicial e momentum
@@ -285,13 +333,14 @@ class LeagueService @Inject constructor(
 
              if (lastParticipation != null) {
                 // Bug #2 Fix: Busca ultima participacao independente do mes
-                startDivision = com.futebadosparcas.data.model.LeagueRatingCalculator.getDivisionForRating(lastParticipation.leagueRating)
-                
+                val sharedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(lastParticipation.leagueRating)
+                startDivision = toAndroidDivision(sharedDivision)
+
                 // Bug #3 Fix: Momentum - Carregar últimos jogos (max 5) para não zerar rating
                 momentumGames = lastParticipation.recentGames.take(5)
 
-                AppLogger.d(TAG) { 
-                    "Usuario $userId inicia a temporada $seasonId em $startDivision (Rating anterior: ${lastParticipation.leagueRating}, Momentum: ${momentumGames.size} jogos)" 
+                AppLogger.d(TAG) {
+                    "Usuario $userId inicia a temporada $seasonId em $startDivision (Rating anterior: ${lastParticipation.leagueRating}, Momentum: ${momentumGames.size} jogos)"
                 }
              }
         } catch (e: Exception) {
@@ -306,23 +355,4 @@ class LeagueService @Inject constructor(
             recentGames = momentumGames // Começa com histórico anterior (momentum)
         )
     }
-
-    private fun getNextDivision(current: LeagueDivision): LeagueDivision {
-        return when (current) {
-            LeagueDivision.BRONZE -> LeagueDivision.PRATA
-            LeagueDivision.PRATA -> LeagueDivision.OURO
-            LeagueDivision.OURO -> LeagueDivision.DIAMANTE
-            LeagueDivision.DIAMANTE -> LeagueDivision.DIAMANTE
-        }
-    }
-
-    private fun getPreviousDivision(current: LeagueDivision): LeagueDivision {
-        return when (current) {
-            LeagueDivision.BRONZE -> LeagueDivision.BRONZE
-            LeagueDivision.PRATA -> LeagueDivision.BRONZE
-            LeagueDivision.OURO -> LeagueDivision.PRATA
-            LeagueDivision.DIAMANTE -> LeagueDivision.OURO
-        }
-    }
 }
-

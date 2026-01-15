@@ -295,9 +295,20 @@ private fun GameCard(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "${game.game.date} ${game.game.time}",
+                    text = buildString {
+                        append(game.game.date)
+                        if (game.game.time.isNotEmpty()) {
+                            append(" ${game.game.time}")
+                        } else {
+                            append(" (--:--)")
+                        }
+                    },
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (game.game.time.isEmpty()) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
                 )
             }
 
@@ -314,7 +325,7 @@ private fun GameCard(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "${game.game.playersCount} confirmados",
+                    text = "${game.game.playersCount} ${stringResource(R.string.confirmed_players)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -329,7 +340,7 @@ private fun GameCard(
                         modifier = Modifier.padding(end = 4.dp)
                     ) {
                         Text(
-                            text = game.game.status,
+                            text = getStatusText(game.game.status),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -465,13 +476,27 @@ private fun getFieldTypeColor(fieldType: String) = when (fieldType.lowercase()) 
 /**
  * Obtém cor baseada no status do jogo
  */
-private fun getStatusColor(status: String) = when (status.lowercase()) {
-    "aberto" -> com.futebadosparcas.ui.theme.GameStatusColors.Scheduled
-    "confirmado" -> com.futebadosparcas.ui.theme.GameStatusColors.InProgress
-    "em andamento" -> com.futebadosparcas.ui.theme.GameStatusColors.Full
-    "finalizado" -> com.futebadosparcas.ui.theme.GameStatusColors.Finished
-    "cancelado" -> com.futebadosparcas.ui.theme.GameStatusColors.Cancelled
+private fun getStatusColor(status: String) = when (status.uppercase()) {
+    "OPEN" -> com.futebadosparcas.ui.theme.GameStatusColors.Scheduled
+    "CONFIRMED" -> com.futebadosparcas.ui.theme.GameStatusColors.InProgress
+    "SCHEDULED" -> com.futebadosparcas.ui.theme.GameStatusColors.Scheduled
+    "LIVE" -> com.futebadosparcas.ui.theme.GameStatusColors.Full
+    "FINISHED" -> com.futebadosparcas.ui.theme.GameStatusColors.Finished
+    "CANCELLED" -> com.futebadosparcas.ui.theme.GameStatusColors.Cancelled
     else -> com.futebadosparcas.ui.theme.GameStatusColors.Finished
+}
+
+/**
+ * Traduz o status do jogo para texto legível
+ */
+private fun getStatusText(status: String): String = when (status.uppercase()) {
+    "OPEN" -> "Aberto"
+    "CONFIRMED" -> "Confirmado"
+    "SCHEDULED" -> "Agendado"
+    "LIVE" -> "Ao Vivo"
+    "FINISHED" -> "Finalizado"
+    "CANCELLED" -> "Cancelado"
+    else -> status
 }
 
 /**

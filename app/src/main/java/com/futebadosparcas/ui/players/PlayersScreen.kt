@@ -38,16 +38,17 @@ import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.PlayerRatingRole
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.ui.components.EmptyPlayersState
 import com.futebadosparcas.ui.components.EmptySearchState
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.components.PlayerCardShareHelper
 import com.futebadosparcas.ui.components.ShimmerPlayerCard
 import com.futebadosparcas.ui.theme.bottomBarPadding
 import com.futebadosparcas.ui.theme.GamificationColors
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -66,7 +67,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  * - Modo comparação de jogadores
  * - Material Design 3
  */
-@OptIn(FlowPreview::class, ExperimentalFoundationApi::class)
+@OptIn(FlowPreview::class, ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun PlayersScreen(
     viewModel: PlayersViewModel,
@@ -87,7 +88,13 @@ fun PlayersScreen(
     var isComparisonMode by remember { mutableStateOf(false) }
     var selectedPlayers by remember { mutableStateOf(setOf<String>()) }
 
-  
+    // Estado para PlayerCard BottomSheet
+    var selectedPlayerForCard by remember { mutableStateOf<User?>(null) }
+    val playerCardSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Context para compartilhamento
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     Scaffold(
         topBar = {
             com.futebadosparcas.ui.components.FutebaTopBar(
@@ -183,7 +190,8 @@ fun PlayersScreen(
                                         }
                                     }
                                 } else {
-                                    onPlayerClick(user)
+                                    // Abre o PlayerCard BottomSheet ao clicar no jogador
+                                    selectedPlayerForCard = user
                                 }
                             },
                             onInviteClick = { user ->
@@ -197,8 +205,9 @@ fun PlayersScreen(
                         // Error state
                         EmptyState(
                             type = EmptyStateType.Error(
-                                title = "Erro ao carregar jogadores",
+                                title = stringResource(R.string.players_error_title),
                                 description = state.message,
+                                actionLabel = stringResource(R.string.retry),
                                 onRetry = { viewModel.loadPlayers(searchQuery) }
                             ),
                             modifier = Modifier.fillMaxSize()
@@ -223,9 +232,34 @@ fun PlayersScreen(
                     }
                 )
             }
+
+            // PlayerCard BottomSheet
+            selectedPlayerForCard?.let { player ->
+                ModalBottomSheet(
+                    onDismissRequest = { selectedPlayerForCard = null },
+                    sheetState = playerCardSheetState,
+                    containerColor = MaterialTheme.colorScheme.surface
+                ) {
+                    PlayerCardContent(
+                        user = player,
+                        stats = null,  // TODO: Buscar estatísticas do jogador se necessário
+                        onClose = { selectedPlayerForCard = null },
+                        onShare = {
+                            PlayerCardShareHelper.shareAsImage(
+                                context = context,
+                                user = player,
+                                stats = null,
+                                generatedBy = "Futeba dos Parças"
+                            )
+                        },
+                        modifier = Modifier.padding(bottom = 32.dp)
+                    )
+                }
+            }
         }
     }
 }
+
 
 /**
  * Barra de busca e filtros
@@ -257,11 +291,11 @@ private fun PlayersSearchAndFilters(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Buscar jogadores...") },
+            placeholder = { Text(stringResource(R.string.players_search_hint_players)) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = "Buscar"
+                    contentDescription = stringResource(R.string.players_content_description_search)
                 )
             },
             trailingIcon = {
@@ -279,7 +313,7 @@ private fun PlayersSearchAndFilters(
                     ) {
                         Icon(
                             imageVector = if (isComparisonMode) Icons.Default.Close else Icons.Outlined.Compare,
-                            contentDescription = if (isComparisonMode) "Cancelar comparação" else "Comparar jogadores"
+                            contentDescription = if (isComparisonMode) stringResource(R.string.players_content_description_cancel_compare) else stringResource(R.string.players_content_description_compare)
                         )
                     }
 
@@ -288,7 +322,7 @@ private fun PlayersSearchAndFilters(
                         IconButton(onClick = { onSearchQueryChange("") }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
-                                contentDescription = "Limpar busca"
+                                contentDescription = stringResource(R.string.players_content_description_clear_search)
                             )
                         }
                     }
@@ -310,7 +344,7 @@ private fun PlayersSearchAndFilters(
                 color = MaterialTheme.colorScheme.errorContainer
             ) {
                 Text(
-                    text = "Selecione 2 jogadores para comparar",
+                    text = stringResource(R.string.players_select_two),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.padding(12.dp)
@@ -326,7 +360,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedFieldType == null,
                 onClick = { onFieldTypeChange(null) },
-                label = { Text("Todos") },
+                label = { Text(stringResource(R.string.players_filter_all)) },
                 leadingIcon = if (selectedFieldType == null) {
                     { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
                 } else null
@@ -335,7 +369,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedFieldType == FieldType.SOCIETY,
                 onClick = { onFieldTypeChange(FieldType.SOCIETY) },
-                label = { Text("Society") },
+                label = { Text(stringResource(R.string.players_filter_society)) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (selectedFieldType == FieldType.SOCIETY) Icons.Default.Check else Icons.Default.Sports,
@@ -348,7 +382,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedFieldType == FieldType.FUTSAL,
                 onClick = { onFieldTypeChange(FieldType.FUTSAL) },
-                label = { Text("Futsal") },
+                label = { Text(stringResource(R.string.players_filter_futsal)) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (selectedFieldType == FieldType.FUTSAL) Icons.Default.Check else Icons.Default.SportsSoccer,
@@ -361,7 +395,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedFieldType == FieldType.CAMPO,
                 onClick = { onFieldTypeChange(FieldType.CAMPO) },
-                label = { Text("Campo") },
+                label = { Text(stringResource(R.string.players_filter_campo)) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (selectedFieldType == FieldType.CAMPO) Icons.Default.Check else Icons.Default.Grass,
@@ -380,7 +414,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedSortOption == PlayersViewModel.SortOption.NAME,
                 onClick = { onSortOptionChange(PlayersViewModel.SortOption.NAME) },
-                label = { Text("Nome") },
+                label = { Text(stringResource(R.string.players_sort_name)) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (selectedSortOption == PlayersViewModel.SortOption.NAME) Icons.Default.Check else Icons.Default.SortByAlpha,
@@ -393,7 +427,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedSortOption == PlayersViewModel.SortOption.BEST_STRIKER,
                 onClick = { onSortOptionChange(PlayersViewModel.SortOption.BEST_STRIKER) },
-                label = { Text("Melhor Atacante") },
+                label = { Text(stringResource(R.string.players_sort_striker)) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (selectedSortOption == PlayersViewModel.SortOption.BEST_STRIKER) Icons.Default.Check else Icons.AutoMirrored.Filled.TrendingUp,
@@ -406,7 +440,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedSortOption == PlayersViewModel.SortOption.BEST_GK,
                 onClick = { onSortOptionChange(PlayersViewModel.SortOption.BEST_GK) },
-                label = { Text("Melhor Goleiro") },
+                label = { Text(stringResource(R.string.players_sort_gk)) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (selectedSortOption == PlayersViewModel.SortOption.BEST_GK) Icons.Default.Check else Icons.Default.Shield,
@@ -469,7 +503,7 @@ private fun PlayersListContent(
                 isComparisonMode = isComparisonMode,
                 onClick = { onPlayerClick(player) },
                 onInviteClick = { onInviteClick(player) },
-                modifier = Modifier.animateItemPlacement()
+                modifier = Modifier.animateItem()
             )
         }
     }
@@ -509,38 +543,11 @@ private fun PlayerCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-            ) {
-                AsyncImage(
-                    model = player.photoUrl?.ifEmpty { null },
-                    contentDescription = player.getDisplayName(),
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-                // Fallback se não houver foto
-                if (player.photoUrl.isNullOrEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = player.getDisplayName().take(1).uppercase(),
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
+            CachedProfileImage(
+                photoUrl = player.photoUrl,
+                userName = player.getDisplayName(),
+                size = 64.dp
+            )
 
             Spacer(modifier = Modifier.width(12.dp))
 
@@ -563,13 +570,13 @@ private fun PlayerCard(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     PlayerRatingBadge(
-                        label = "ATK",
+                        label = stringResource(R.string.players_rating_atk),
                         rating = player.getEffectiveRating(PlayerRatingRole.STRIKER),
                         color = MaterialTheme.colorScheme.tertiary
                     )
 
                     PlayerRatingBadge(
-                        label = "GK",
+                        label = stringResource(R.string.players_rating_gk),
                         rating = player.getEffectiveRating(PlayerRatingRole.GOALKEEPER),
                         color = MaterialTheme.colorScheme.secondary
                     )
@@ -587,7 +594,7 @@ private fun PlayerCard(
                     color = GamificationColors.Gold.copy(alpha = 0.15f)
                 ) {
                     Text(
-                        text = "Nv ${player.level}",
+                        text = stringResource(R.string.players_level_format, player.level),
                         style = MaterialTheme.typography.labelMedium,
                         color = GamificationColors.Gold,
                         fontWeight = FontWeight.Bold,
@@ -603,7 +610,7 @@ private fun PlayerCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.PersonAdd,
-                            contentDescription = "Convidar",
+                            contentDescription = stringResource(R.string.players_content_description_invite),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }

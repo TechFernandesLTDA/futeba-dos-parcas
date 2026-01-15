@@ -299,13 +299,27 @@ data class SeasonParticipationV2(
 
 // ========== LEAGUE RATING CALCULATOR ==========
 
+/**
+ * Calculador de League Rating do Android.
+ *
+ * @deprecated MOVIDO PARA SHARED MODULE.
+ * Use `com.futebadosparcas.domain.ranking.LeagueRatingCalculator` do shared module.
+ *
+ * Este objeto sera removido em versao futura. Mantido apenas para compatibilidade
+ * durante a migracao para KMP.
+ *
+ * O sistema de rating usa escala 0-100 (media ponderada):
+ * - Bronze: 0-29
+ * - Prata: 30-49
+ * - Ouro: 50-69
+ * - Diamante: 70-100
+ */
+@Deprecated("Movido para shared module. Use com.futebadosparcas.domain.ranking.LeagueRatingCalculator")
 object LeagueRatingCalculator {
     /**
-     * Calcula o League Rating baseado nos ultimos jogos.
-     *
-     * LR = (PPJ * 40) + (WR * 30) + (GD * 20) + (MVP_Rate * 10)
-     * Normalizado para 0-100
+     * @deprecated Use com.futebadosparcas.domain.ranking.LeagueRatingCalculator.calculate()
      */
+    @Deprecated("Movido para shared module")
     fun calculate(recentGames: List<RecentGameData>): Double {
         if (recentGames.isEmpty()) return 0.0
 
@@ -329,6 +343,10 @@ object LeagueRatingCalculator {
         return (ppjScore * 0.4) + (winRate * 0.3) + (gdScore * 0.2) + (mvpScore * 0.1)
     }
 
+    /**
+     * @deprecated Use LeagueDivision.fromRating()
+     */
+    @Deprecated("Use LeagueDivision.fromRating()")
     fun getDivisionForRating(rating: Double): LeagueDivision {
         return when {
             rating >= 70 -> LeagueDivision.DIAMANTE
@@ -338,6 +356,10 @@ object LeagueRatingCalculator {
         }
     }
 
+    /**
+     * @deprecated Use LeagueDivision.getNextDivisionThreshold()
+     */
+    @Deprecated("Use LeagueDivision.getNextDivisionThreshold()")
     fun getNextDivisionThreshold(division: LeagueDivision): Double {
         return when (division) {
             LeagueDivision.BRONZE -> 30.0
@@ -347,6 +369,10 @@ object LeagueRatingCalculator {
         }
     }
 
+    /**
+     * @deprecated Use LeagueDivision.getPreviousDivisionThreshold()
+     */
+    @Deprecated("Use LeagueDivision.getPreviousDivisionThreshold()")
     fun getPreviousDivisionThreshold(division: LeagueDivision): Double {
         return when (division) {
             LeagueDivision.BRONZE -> 0.0

@@ -20,6 +20,15 @@ enum class GameFilterType {
     LIVE
 }
 
+/**
+ * Resultado de uma query paginada
+ */
+data class PaginatedGames(
+    val games: List<GameWithConfirmations>,
+    val lastGameId: String?, // Cursor para proxima pagina
+    val hasMore: Boolean
+)
+
 interface GameRepository {
     suspend fun getUpcomingGames(): Result<List<Game>>
     suspend fun getAllGames(): Result<List<Game>>
@@ -132,4 +141,12 @@ interface GameRepository {
      * @return Result com lista de jogos PUBLIC_OPEN
      */
     suspend fun getOpenPublicGames(limit: Int = 20): Result<List<Game>>
+
+    /**
+     * Aceita um convite para jogo (atualiza status de PENDING para CONFIRMED).
+     */
+    suspend fun acceptInvitation(
+        gameId: String,
+        position: String = "FIELD"
+    ): Result<GameConfirmation>
 }

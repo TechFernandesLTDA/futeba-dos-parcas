@@ -5,15 +5,51 @@ import kotlinx.serialization.Serializable
 
 /**
  * Roles/papeis do sistema.
+ *
+ * CMD-10: Definição padronizada de roles no sistema (compartilhada KMP).
+ *
+ * Como o admin é definido:
+ * - Campo 'role' no documento do usuário no Firestore (users/{userId})
+ * - Valores possíveis: "ADMIN", "FIELD_OWNER", "PLAYER"
+ * - Valor padrão para novos usuários: "PLAYER"
+ * - Alteração de role é feita manualmente no banco ou via Cloud Function
+ *
+ * Matriz de Permissões (CMD-11):
+ *
+ * | Ação                    | ADMIN | FIELD_OWNER | PLAYER |
+ * |-------------------------|-------|-------------|--------|
+ * | Criar jogo              | ✓     | ✓           | ✓      |
+ * | Editar qualquer jogo    | ✓     | próprios    | próprios|
+ * | Deletar qualquer jogo   | ✓     | próprios    | próprios|
+ * | Criar local             | ✓     | ✓           | ✗      |
+ * | Editar qualquer local   | ✓     | próprios    | ✗      |
+ * | Gerenciar usuários      | ✓     | ✗           | ✗      |
+ * | Ver stats globais       | ✓     | ✓           | ✗      |
+ * | Editar rankings         | ✓     | ✗           | ✗      |
+ * | Ajustar XP              | ✓     | ✗           | ✗      |
+ *
+ * Veja também: UserPermissions.kt para matriz de permissões completa.
  */
 @Serializable
 enum class UserRole(val displayName: String, val description: String) {
+    /**
+     * Administrador do sistema.
+     * Tem acesso total a todas as funcionalidades.
+     */
     @SerialName("ADMIN")
     ADMIN("Administrador", "Acesso total ao sistema"),
 
+    /**
+     * Dono de quadra/local.
+     * Pode gerenciar seus próprios locais e quadras.
+     */
     @SerialName("FIELD_OWNER")
     FIELD_OWNER("Dono de Quadra", "Gerencia locais, quadras e reservas"),
 
+    /**
+     * Jogador comum.
+     * Pode criar jogos, confirmar presença e ver estatísticas pessoais.
+     */
     @SerialName("PLAYER")
     PLAYER("Jogador", "Cria jogos e confirma presença");
 

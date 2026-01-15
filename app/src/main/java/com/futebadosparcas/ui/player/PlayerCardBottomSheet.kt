@@ -3,37 +3,32 @@ package com.futebadosparcas.ui.player
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.FileProvider
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
-import coil.load
-import coil.transform.CircleCropTransformation
-import com.futebadosparcas.R
-import com.futebadosparcas.domain.model.PlayerRatingRole
-import com.futebadosparcas.databinding.BottomSheetPlayerCardBinding
-import com.futebadosparcas.util.LevelHelper
-import com.futebadosparcas.util.LevelBadgeHelper
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.futebadosparcas.ui.players.PlayerCardContent
+import com.futebadosparcas.ui.theme.FutebaTheme
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
-import java.text.SimpleDateFormat
-import java.util.Locale
 
+/**
+ * BottomSheet do Cartão de Jogador com Jetpack Compose
+ *
+ * Substitui a implementação XML por uma versão Compose moderna
+ * seguindo os padrões Material Design 3 do projeto.
+ */
 @AndroidEntryPoint
 class PlayerCardBottomSheet : BottomSheetDialogFragment() {
 
-    private var _binding: BottomSheetPlayerCardBinding? = null
-    private val binding get() = _binding!!
-
     private val viewModel: PlayerCardViewModel by viewModels()
-    
     private var userId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,157 +41,85 @@ class PlayerCardBottomSheet : BottomSheetDialogFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = BottomSheetPlayerCardBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+        return ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+            // Carregar dados imediatamente
+            userId?.let { viewModel.loadPlayerData(it) }
 
-        setupClickListeners()
-        observeViewModel()
+            setContent {
+                FutebaTheme {
+                    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
 
-        // Carregar dados do jogador
-        userId?.let { viewModel.loadPlayerData(it) }
-    }
-
-    private fun setupClickListeners() {
-        binding.btnShare.setOnClickListener {
-            sharePlayerCard()
-        }
-    }
-
-    private fun observeViewModel() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
-                when (state) {
-                    is PlayerCardUiState.Loading -> {
-                        // Mostrar loading se necessário
-                    }
-                    is PlayerCardUiState.Success -> {
-                        bindPlayerData(state)
-                    }
-                    is PlayerCardUiState.Error -> {
-                        // Mostrar erro
-                        android.widget.Toast.makeText(
-                            requireContext(),
-                            state.message,
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
-                        dismiss()
+                    when (uiState) {
+                        is PlayerCardUiState.Success -> {
+                            PlayerCardContent(
+                                user = uiState.user,
+                                stats = uiState.statistics,
+                                onClose = { dismiss() },
+                                onShare = { sharePlayerCard(this@apply) }
+                            )
+                        }
+                        is PlayerCardUiState.Error -> {
+                            // Mostrar erro e fechar
+                            android.widget.Toast.makeText(
+                                requireContext(),
+                                uiState.message,
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                            dismiss()
+                        }
+                        is PlayerCardUiState.Loading -> {
+                            // Estado de carregamento
+                            com.futebadosparcas.ui.components.ShimmerPlayerCard()
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun bindPlayerData(state: PlayerCardUiState.Success) {
-        val user = state.user
-        val stats = state.statistics
-
-        // Foto
-        if (!user.photoUrl.isNullOrEmpty()) {
-            binding.ivPlayerPhoto.load(user.photoUrl) {
-                crossfade(true)
-                placeholder(R.drawable.ic_player_placeholder)
-                error(R.drawable.ic_player_placeholder)
-                transformations(CircleCropTransformation())
-            }
-        } else {
-            binding.ivPlayerPhoto.setImageResource(R.drawable.ic_player_placeholder)
-        }
-
-        // Brasão de Nível
-        binding.ivLevelBadgeBottomSheet.setImageResource(LevelBadgeHelper.getBadgeForLevel(user.level))
-
-        // Nome
-        binding.tvPlayerName.text = user.name
-
-        // Membro desde
-        user.createdAt?.let { date ->
-            val format = SimpleDateFormat("MMM yyyy", Locale("pt", "BR"))
-            binding.tvMemberSince.text = "Membro desde ${format.format(date)}"
-        } ?: run {
-            binding.tvMemberSince.text = "Membro desde 2024"
-        }
-
-        // Nível e XP
-        binding.tvLevel.text = user.level.toString()
-        binding.tvLevelName.text = com.futebadosparcas.data.model.LevelTable.getLevelName(user.level)
-
-        val nextLevelXP = LevelHelper.getXPForNextLevel(user.level)
-        binding.tvXpProgress.text = "${user.experiencePoints} / $nextLevelXP XP"
-        
-        val percentage = LevelHelper.getProgressPercentage(user.experiencePoints)
-        binding.progressXp.progress = percentage
-
-        // Estatísticas
-        binding.tvTotalGames.text = stats?.totalGames?.toString() ?: "0"
-        binding.tvTotalGoals.text = stats?.totalGoals?.toString() ?: "0"
-        binding.tvTotalAssists.text = stats?.totalAssists?.toString() ?: "0"
-        binding.tvWins.text = stats?.gamesWon?.toString() ?: "0"
-        binding.tvMvp.text = stats?.bestPlayerCount?.toString() ?: "0"
-        binding.tvSaves.text = stats?.totalSaves?.toString() ?: "0"
-
-        // Habilidades (Ratings)
-        val strikerRating = user.getEffectiveRating(PlayerRatingRole.STRIKER)
-        val midRating = user.getEffectiveRating(PlayerRatingRole.MID)
-        val defenderRating = user.getEffectiveRating(PlayerRatingRole.DEFENDER)
-        val gkRating = user.getEffectiveRating(PlayerRatingRole.GOALKEEPER)
-
-        binding.tvStrikerRating.text = String.format(Locale.getDefault(), "%.1f", strikerRating)
-        binding.progressStriker.progress = ((strikerRating / 5.0) * 100).toInt()
-
-        binding.tvMidRating.text = String.format(Locale.getDefault(), "%.1f", midRating)
-        binding.progressMid.progress = ((midRating / 5.0) * 100).toInt()
-
-        binding.tvDefenderRating.text = String.format(Locale.getDefault(), "%.1f", defenderRating)
-        binding.progressDefender.progress = ((defenderRating / 5.0) * 100).toInt()
-
-        binding.tvGkRating.text = String.format(Locale.getDefault(), "%.1f", gkRating)
-        binding.progressGk.progress = ((gkRating / 5.0) * 100).toInt()
-    }
-
-    private fun sharePlayerCard() {
+    private fun sharePlayerCard(view: View) {
         try {
-            // Capturar o card como bitmap
-            val bitmap = captureView(binding.bottomSheet)
-            
-            // Salvar em cache
-            val cachePath = File(requireContext().cacheDir, "images")
-            cachePath.mkdirs()
-            val file = File(cachePath, "player_card_${System.currentTimeMillis()}.png")
-            
-            FileOutputStream(file).use { out ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-            }
-            
-            // Obter URI usando FileProvider
-            val contentUri = FileProvider.getUriForFile(
-                requireContext(),
-                "${requireContext().packageName}.fileprovider",
-                file
-            )
-            
-            // Criar intent de compartilhamento
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/png"
-                putExtra(Intent.EXTRA_STREAM, contentUri)
-                putExtra(Intent.EXTRA_TEXT, "Confira meu cartão de jogador no Futeba dos Parças! ⚽")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                
-                // Tentar abrir diretamente no WhatsApp
-                setPackage("com.whatsapp")
-            }
-            
+            val bitmap = captureView(view)
+
             try {
-                startActivity(shareIntent)
-            } catch (e: Exception) {
-                // Se WhatsApp não estiver instalado, mostrar seletor geral
-                shareIntent.setPackage(null)
-                startActivity(Intent.createChooser(shareIntent, "Compartilhar via"))
+                val cachePath = File(requireContext().cacheDir, "images")
+                cachePath.mkdirs()
+                val file = File(cachePath, "player_card_${System.currentTimeMillis()}.png")
+
+                FileOutputStream(file).use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                }
+
+                val contentUri = FileProvider.getUriForFile(
+                    requireContext(),
+                    "${requireContext().packageName}.fileprovider",
+                    file
+                )
+
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "image/png"
+                    putExtra(Intent.EXTRA_STREAM, contentUri)
+                    putExtra(Intent.EXTRA_TEXT, "Confira meu cartão de jogador no Futeba dos Parças! ⚽")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+                    // Tentar abrir diretamente no WhatsApp
+                    setPackage("com.whatsapp")
+                }
+
+                try {
+                    startActivity(shareIntent)
+                } catch (e: Exception) {
+                    // Se WhatsApp não estiver instalado, mostrar seletor geral
+                    shareIntent.setPackage(null)
+                    startActivity(Intent.createChooser(shareIntent, "Compartilhar via"))
+                }
+            } finally {
+                // Reciclar bitmap para evitar memory leak
+                bitmap.recycle()
             }
-            
+
         } catch (e: Exception) {
             android.widget.Toast.makeText(
                 requireContext(),
@@ -211,11 +134,6 @@ class PlayerCardBottomSheet : BottomSheetDialogFragment() {
         val canvas = Canvas(bitmap)
         view.draw(canvas)
         return bitmap
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 
     companion object {

@@ -2,9 +2,9 @@ package com.futebadosparcas.ui.theme
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.AppThemeConfig
-import com.futebadosparcas.data.model.ThemeMode
-import com.futebadosparcas.data.repository.ThemeRepository
+import com.futebadosparcas.domain.model.AppThemeConfig
+import com.futebadosparcas.domain.model.ThemeMode
+import com.futebadosparcas.domain.repository.ThemeRepository
 import com.futebadosparcas.util.PreferencesManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted

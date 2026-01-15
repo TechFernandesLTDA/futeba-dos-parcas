@@ -20,11 +20,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.data.model.*
+import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.dialogs.ConfirmationDialog
@@ -67,6 +70,7 @@ fun CashboxScreen(
     var totalsDialogData by remember { mutableStateOf<Map<String, Double>>(emptyMap()) }
     var showAddEntryDialog by remember { mutableStateOf<CashboxEntryType?>(null) }
 
+    val context = LocalContext.current
     val canManage = userRole == GroupMemberRole.ADMIN || userRole == GroupMemberRole.OWNER
     val canDelete = userRole == GroupMemberRole.OWNER
 
@@ -86,13 +90,13 @@ fun CashboxScreen(
                 viewModel.resetActionState()
             }
             is CashboxActionState.TotalsByCategory -> {
-                totalsDialogTitle = "Totais por Categoria"
+                totalsDialogTitle = context.getString(R.string.cashbox_totals_by_category)
                 totalsDialogData = state.totals.mapKeys { it.key.displayName }
                 showTotalsDialog = true
                 viewModel.resetActionState()
             }
             is CashboxActionState.TotalsByPlayer -> {
-                totalsDialogTitle = "Totais por Jogador"
+                totalsDialogTitle = context.getString(R.string.cashbox_totals_by_player)
                 totalsDialogData = state.totals
                 showTotalsDialog = true
                 viewModel.resetActionState()
@@ -121,9 +125,9 @@ fun CashboxScreen(
     if (showRecalculateDialog) {
         ConfirmationDialog(
             visible = true,
-            title = "Recalcular Saldo",
-            message = "Isso irá recalcular o saldo com base em todas as entradas e saídas. Continuar?",
-            confirmText = "Recalcular",
+            title = stringResource(R.string.cashbox_recalculate_balance),
+            message = stringResource(R.string.cashbox_recalculate_message),
+            confirmText = stringResource(R.string.cashbox_recalculate),
             type = ConfirmationDialogType.WARNING,
             icon = Icons.Default.Refresh,
             onConfirm = {
@@ -138,9 +142,9 @@ fun CashboxScreen(
     if (showDeleteDialog && selectedEntry != null) {
         ConfirmationDialog(
             visible = true,
-            title = "Estornar Entrada",
-            message = "Deseja realmente estornar esta entrada? Esta ação não pode ser desfeita.",
-            confirmText = "Estornar",
+            title = stringResource(R.string.cashbox_void_entry),
+            message = stringResource(R.string.cashbox_void_message),
+            confirmText = stringResource(R.string.cashbox_void),
             type = ConfirmationDialogType.DESTRUCTIVE,
             icon = Icons.Default.Delete,
             onConfirm = {
@@ -179,10 +183,34 @@ fun CashboxScreen(
         topBar = {
             CashboxTopBar(
                 canManage = canManage,
+                showFilterMenu = showFilterMenu,
+                showReportMenu = showReportMenu,
                 onNavigateBack = onNavigateBack,
                 onFilterClick = { showFilterMenu = true },
+                onFilterDismiss = { showFilterMenu = false },
+                onFilterAll = {
+                    viewModel.clearFilter()
+                    showFilterMenu = false
+                },
+                onFilterIncome = {
+                    viewModel.filterByType(CashboxEntryType.INCOME)
+                    showFilterMenu = false
+                },
+                onFilterExpense = {
+                    viewModel.filterByType(CashboxEntryType.EXPENSE)
+                    showFilterMenu = false
+                },
                 onRecalculateClick = { showRecalculateDialog = true },
-                onReportClick = { showReportMenu = true }
+                onReportClick = { showReportMenu = true },
+                onReportDismiss = { showReportMenu = false },
+                onReportByCategory = {
+                    viewModel.getTotalsByCategory()
+                    showReportMenu = false
+                },
+                onReportByPlayer = {
+                    viewModel.getTotalsByPlayer()
+                    showReportMenu = false
+                }
             )
         },
         floatingActionButton = {
@@ -239,11 +267,11 @@ fun CashboxScreen(
                 is CashboxHistoryState.Empty -> {
                     EmptyState(
                         type = EmptyStateType.NoData(
-                            title = "Nenhuma movimentação",
+                            title = stringResource(R.string.cashbox_no_movement),
                             description = if (canManage) {
-                                "Adicione sua primeira entrada ou saída para começar"
+                                stringResource(R.string.cashbox_add_first)
                             } else {
-                                "Não há movimentações registradas no caixa"
+                                stringResource(R.string.cashbox_no_movements)
                             },
                             icon = Icons.Default.Receipt
                         )
@@ -275,59 +303,6 @@ fun CashboxScreen(
             }
         }
 
-        // Menu de filtros
-        DropdownMenu(
-            expanded = showFilterMenu,
-            onDismissRequest = { showFilterMenu = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text("Todos") },
-                onClick = {
-                    viewModel.clearFilter()
-                    showFilterMenu = false
-                },
-                leadingIcon = { Icon(Icons.Default.FilterList, contentDescription = "Mostrar todos") }
-            )
-            DropdownMenuItem(
-                text = { Text("Receitas") },
-                onClick = {
-                    viewModel.filterByType(CashboxEntryType.INCOME)
-                    showFilterMenu = false
-                },
-                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = "Receitas") }
-            )
-            DropdownMenuItem(
-                text = { Text("Despesas") },
-                onClick = {
-                    viewModel.filterByType(CashboxEntryType.EXPENSE)
-                    showFilterMenu = false
-                },
-                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingDown, contentDescription = "Despesas") }
-            )
-        }
-
-        // Menu de relatórios
-        DropdownMenu(
-            expanded = showReportMenu,
-            onDismissRequest = { showReportMenu = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text("Totais por Categoria") },
-                onClick = {
-                    viewModel.getTotalsByCategory()
-                    showReportMenu = false
-                },
-                leadingIcon = { Icon(Icons.Default.Category, contentDescription = "Categoria") }
-            )
-            DropdownMenuItem(
-                text = { Text("Totais por Jogador") },
-                onClick = {
-                    viewModel.getTotalsByPlayer()
-                    showReportMenu = false
-                },
-                leadingIcon = { Icon(Icons.Default.Person, contentDescription = "Jogador") }
-            )
-        }
     }
 }
 
@@ -346,33 +321,88 @@ sealed class CashboxListItem {
 @Composable
 private fun CashboxTopBar(
     canManage: Boolean,
+    showFilterMenu: Boolean,
+    showReportMenu: Boolean,
     onNavigateBack: () -> Unit,
     onFilterClick: () -> Unit,
+    onFilterDismiss: () -> Unit,
+    onFilterAll: () -> Unit,
+    onFilterIncome: () -> Unit,
+    onFilterExpense: () -> Unit,
     onRecalculateClick: () -> Unit,
-    onReportClick: () -> Unit
+    onReportClick: () -> Unit,
+    onReportDismiss: () -> Unit,
+    onReportByCategory: () -> Unit,
+    onReportByPlayer: () -> Unit
 ) {
     TopAppBar(
-        title = { Text("Caixa do Grupo") },
+        title = { Text(stringResource(R.string.cashbox_group_title)) },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
             }
         },
         actions = {
-            IconButton(onClick = onFilterClick) {
-                Icon(Icons.Default.FilterList, contentDescription = "Filtrar")
-            }
-            if (canManage) {
-                IconButton(onClick = onRecalculateClick) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Recalcular")
+            // Menu de Filtros ancorado ao botão
+            Box {
+                IconButton(onClick = onFilterClick) {
+                    Icon(Icons.Default.FilterList, contentDescription = stringResource(R.string.cashbox_filter))
+                }
+                DropdownMenu(
+                    expanded = showFilterMenu,
+                    onDismissRequest = onFilterDismiss
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.cashbox_all)) },
+                        onClick = onFilterAll,
+                        leadingIcon = { Icon(Icons.Default.FilterList, contentDescription = null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.cashbox_income_short)) },
+                        onClick = onFilterIncome,
+                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.cashbox_expense_short)) },
+                        onClick = onFilterExpense,
+                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingDown, contentDescription = null) }
+                    )
                 }
             }
-            IconButton(onClick = onReportClick) {
-                Icon(Icons.Default.BarChart, contentDescription = "Relatórios")
+
+            if (canManage) {
+                IconButton(onClick = onRecalculateClick) {
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cashbox_recalculate))
+                }
+            }
+
+            // Menu de Relatórios ancorado ao botão
+            Box {
+                IconButton(onClick = onReportClick) {
+                    Icon(Icons.Default.BarChart, contentDescription = stringResource(R.string.cashbox_reports))
+                }
+                DropdownMenu(
+                    expanded = showReportMenu,
+                    onDismissRequest = onReportDismiss
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.cashbox_totals_by_category)) },
+                        onClick = onReportByCategory,
+                        leadingIcon = { Icon(Icons.Default.Category, contentDescription = null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.cashbox_totals_by_player)) },
+                        onClick = onReportByPlayer,
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) }
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }
@@ -396,7 +426,7 @@ private fun SummaryCard(summary: CashboxSummary) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Saldo Atual",
+                text = stringResource(R.string.cashbox_current_balance),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -429,7 +459,7 @@ private fun SummaryCard(summary: CashboxSummary) {
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "Receitas",
+                            text = stringResource(R.string.cashbox_income_short),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
@@ -455,7 +485,7 @@ private fun SummaryCard(summary: CashboxSummary) {
                             tint = MaterialTheme.colorScheme.error
                         )
                         Text(
-                            text = "Despesas",
+                            text = stringResource(R.string.cashbox_expense_short),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
@@ -488,7 +518,7 @@ private fun FilterChips(
         FilterChip(
             selected = currentFilter == null,
             onClick = onFilterAll,
-            label = { Text("Todos") },
+            label = { Text(stringResource(R.string.cashbox_all)) },
             leadingIcon = if (currentFilter == null) {
                 { Icon(Icons.Default.Check, null, Modifier.size(18.dp)) }
             } else null
@@ -497,7 +527,7 @@ private fun FilterChips(
         FilterChip(
             selected = currentFilter?.type == CashboxEntryType.INCOME,
             onClick = onFilterIncome,
-            label = { Text("Receitas") },
+            label = { Text(stringResource(R.string.cashbox_income_short)) },
             leadingIcon = if (currentFilter?.type == CashboxEntryType.INCOME) {
                 { Icon(Icons.Default.Check, null, Modifier.size(18.dp)) }
             } else null
@@ -506,7 +536,7 @@ private fun FilterChips(
         FilterChip(
             selected = currentFilter?.type == CashboxEntryType.EXPENSE,
             onClick = onFilterExpense,
-            label = { Text("Despesas") },
+            label = { Text(stringResource(R.string.cashbox_expense_short)) },
             leadingIcon = if (currentFilter?.type == CashboxEntryType.EXPENSE) {
                 { Icon(Icons.Default.Check, null, Modifier.size(18.dp)) }
             } else null
@@ -690,7 +720,7 @@ private fun CashboxFABs(
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer
         ) {
-            Icon(Icons.Default.Remove, contentDescription = "Adicionar Despesa")
+            Icon(Icons.Default.Remove, contentDescription = stringResource(R.string.cashbox_add_expense))
         }
 
         // FAB Adicionar Receita
@@ -700,7 +730,7 @@ private fun CashboxFABs(
                 onAddIncome()
             }
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Adicionar Receita")
+            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cashbox_add_income))
         }
     }
 }
@@ -717,33 +747,33 @@ private fun EntryDetailsDialog(
         icon = {
             Icon(Icons.Default.Receipt, contentDescription = null)
         },
-        title = { Text("Detalhes da Entrada") },
+        title = { Text(stringResource(R.string.cashbox_entry_details)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                DetailRow("Descrição", entry.description)
-                DetailRow("Categoria", entry.getCategoryEnum().displayName)
-                DetailRow("Valor", currencyFormat.format(entry.amount))
-                
+                DetailRow(stringResource(R.string.label_description), entry.description)
+                DetailRow(stringResource(R.string.label_category), entry.getCategoryEnum().displayName)
+                DetailRow(stringResource(R.string.label_value), currencyFormat.format(entry.amount))
+
                 val playerName = entry.playerName
                 if (!playerName.isNullOrEmpty()) {
-                    DetailRow("Jogador", playerName)
+                    DetailRow(stringResource(R.string.cashbox_player), playerName)
                 }
-                
+
                 if (entry.status == "VOIDED") {
-                    DetailRow("Status", "ESTORNADO/CANCELADO")
+                    DetailRow(stringResource(R.string.cashbox_status), stringResource(R.string.cashbox_status_cancelled))
                 }
 
                 if (!entry.receiptUrl.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Comprovante:",
+                        text = stringResource(R.string.cashbox_receipt) + ":",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     coil.compose.AsyncImage(
                         model = entry.receiptUrl,
-                        contentDescription = "Comprovante",
+                        contentDescription = stringResource(R.string.cashbox_receipt),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
@@ -755,7 +785,7 @@ private fun EntryDetailsDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("OK")
+                Text(stringResource(R.string.action_ok))
             }
         }
     )
@@ -795,7 +825,7 @@ private fun TotalsDialog(
         title = { Text(title) },
         text = {
             if (totals.isEmpty()) {
-                Text("Nenhum dado encontrado.")
+                Text(stringResource(R.string.cashbox_no_data))
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     totals.forEach { (name, amount) ->
@@ -819,7 +849,7 @@ private fun TotalsDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("OK")
+                Text(stringResource(R.string.action_ok))
             }
         }
     )

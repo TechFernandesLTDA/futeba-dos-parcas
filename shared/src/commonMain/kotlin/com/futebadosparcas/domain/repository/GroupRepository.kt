@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.Flow
  */
 interface GroupRepository {
 
+    // ========== OPERAÇÕES BÁSICAS ==========
+
     /**
      * Busca grupos do usuario atual.
      */
@@ -32,18 +34,39 @@ interface GroupRepository {
      */
     fun observeGroup(groupId: String): Flow<Group?>
 
-    /**
-     * Cria um novo grupo.
-     */
-    suspend fun createGroup(group: Group): Result<String>
+    // ========== CRIAÇÃO E EDIÇÃO ==========
 
     /**
-     * Atualiza um grupo.
+     * Cria um novo grupo com o usuário atual como owner.
+     * @param name Nome do grupo
+     * @param description Descrição do grupo
+     * @param photoUri URI da foto (opcional, plataforma-específico)
+     * @return Group criado com ID
      */
-    suspend fun updateGroup(group: Group): Result<Unit>
+    suspend fun createGroup(
+        name: String,
+        description: String,
+        photoUri: String? = null
+    ): Result<Group>
 
     /**
-     * Busca membros de um grupo.
+     * Atualiza um grupo (nome, descrição, foto).
+     * @param groupId ID do grupo
+     * @param name Novo nome
+     * @param description Nova descrição
+     * @param photoUri URI da nova foto (opcional, plataforma-específico)
+     */
+    suspend fun updateGroup(
+        groupId: String,
+        name: String,
+        description: String,
+        photoUri: String? = null
+    ): Result<Unit>
+
+    // ========== MEMBROS ==========
+
+    /**
+     * Busca membros de um grupo (apenas ativos).
      */
     suspend fun getGroupMembers(groupId: String): Result<List<GroupMember>>
 
@@ -51,6 +74,11 @@ interface GroupRepository {
      * Observa membros em tempo real.
      */
     fun observeGroupMembers(groupId: String): Flow<List<GroupMember>>
+
+    /**
+     * Observa membros ordenados por role (Owner > Admin > Member).
+     */
+    fun observeOrderedGroupMembers(groupId: String): Flow<List<GroupMember>>
 
     /**
      * Adiciona membro ao grupo.
@@ -67,6 +95,16 @@ interface GroupRepository {
     suspend fun removeMember(groupId: String, userId: String): Result<Unit>
 
     /**
+     * Promove um membro a admin (apenas owner).
+     */
+    suspend fun promoteMemberToAdmin(groupId: String, memberId: String): Result<Unit>
+
+    /**
+     * Rebaixa um admin a membro (apenas owner).
+     */
+    suspend fun demoteAdminToMember(groupId: String, memberId: String): Result<Unit>
+
+    /**
      * Atualiza role do membro.
      */
     suspend fun updateMemberRole(
@@ -74,6 +112,18 @@ interface GroupRepository {
         userId: String,
         role: GroupMemberRole
     ): Result<Unit>
+
+    /**
+     * Busca o papel do usuário atual em um grupo.
+     */
+    suspend fun getMyRoleInGroup(groupId: String): Result<GroupMemberRole?>
+
+    /**
+     * Verifica se o usuário é membro ativo de um grupo.
+     */
+    suspend fun isMemberOfGroup(groupId: String): Result<Boolean>
+
+    // ========== CONVITES ==========
 
     /**
      * Entra em um grupo por codigo de convite.
@@ -85,8 +135,69 @@ interface GroupRepository {
      */
     suspend fun generateInviteCode(groupId: String): Result<String>
 
+    // ========== SAIR E GERENCIAR ==========
+
     /**
-     * Sai do grupo.
+     * Sai do grupo (nao pode ser owner).
      */
     suspend fun leaveGroup(groupId: String): Result<Unit>
+
+    /**
+     * Arquiva o grupo (apenas owner).
+     */
+    suspend fun archiveGroup(groupId: String): Result<Unit>
+
+    /**
+     * Restaura um grupo arquivado (apenas owner).
+     */
+    suspend fun restoreGroup(groupId: String): Result<Unit>
+
+    /**
+     * Deleta o grupo - soft delete (apenas owner).
+     */
+    suspend fun deleteGroup(groupId: String): Result<Unit>
+
+    /**
+     * Transfere a propriedade do grupo para outro membro.
+     */
+    suspend fun transferOwnership(groupId: String, newOwnerId: String): Result<Unit>
+
+    // ========== CONSULTAS ÚTEIS ==========
+
+    /**
+     * Busca grupos válidos para criar jogos (>= 2 membros ativos e usuario é admin).
+     */
+    suspend fun getValidGroupsForGame(): Result<List<UserGroup>>
+
+    /**
+     * Verifica se o usuário pode criar jogos (tem grupo válido).
+     */
+    suspend fun canCreateGames(): Result<Boolean>
+
+    /**
+     * Conta quantos grupos o usuário possui onde é admin.
+     */
+    suspend fun countMyAdminGroups(): Result<Int>
+
+    // ========== SINCRONIZAÇÃO ==========
+
+    /**
+     * Sincroniza o member_count de um grupo específico em todos os UserGroups.
+     * Útil para corrigir dados inconsistentes.
+     */
+    suspend fun syncGroupMemberCount(groupId: String): Result<Unit>
+
+    /**
+     * Sincroniza o member_count de todos os grupos do usuário atual.
+     */
+    suspend fun syncAllMyGroupsMemberCount(): Result<Unit>
+
+    // ========== FOTO (Plataforma-Específico) ==========
+
+    /**
+     * Faz upload da foto do grupo (plataforma-específico).
+     * No Android, recebe Uri. No iOS, recebe caminho de arquivo.
+     * Implementação deve retornar URL pública.
+     */
+    suspend fun uploadGroupPhoto(groupId: String, photoPath: String): Result<String>
 }

@@ -1,7 +1,10 @@
 package com.futebadosparcas.domain.ranking
 
 import com.futebadosparcas.data.model.*
-import com.futebadosparcas.data.repository.NotificationRepository
+import com.futebadosparcas.domain.model.AppNotification as DomainAppNotification
+import com.futebadosparcas.domain.model.NotificationAction
+import com.futebadosparcas.domain.model.NotificationType
+import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -57,7 +60,7 @@ class SeasonClosureService @Inject constructor(
                 .await()
 
             val participations = participationsSnapshot.toObjects(SeasonParticipationV2::class.java)
-            val notifications = mutableListOf<AppNotification>()
+            val notifications = mutableListOf<DomainAppNotification>()
 
             val batch = firestore.batch()
             var batchCount = 0
@@ -82,13 +85,13 @@ class SeasonClosureService @Inject constructor(
 
                 // Preparar notificação
                 notifications.add(
-                    AppNotification(
+                    DomainAppNotification(
                         userId = participation.userId,
                         title = "Temporada Encerrada!",
                         message = "A temporada ${season?.name ?: ""} chegou ao fim. Confira sua classificação final!",
-                        type = NotificationType.SYSTEM.name, // Usando name/string pois NotificationType pode não estar atualizado
+                        type = NotificationType.SYSTEM,
                         read = false,
-                        createdAtRaw = Date()
+                        createdAt = System.currentTimeMillis()
                     )
                 )
 

@@ -94,10 +94,9 @@ class PlayerCardDialog : DialogFragment() {
                     putExtra(Intent.EXTRA_STREAM, contentUri)
                     putExtra(Intent.EXTRA_TEXT, "Confira meu cartão de jogador no Futeba dos Parças! ⚽")
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    setPackage("com.whatsapp")
                 }
 
-                startActivity(Intent.createChooser(shareIntent, "Compartilhar via WhatsApp"))
+                startActivity(Intent.createChooser(shareIntent, "Compartilhar cartão"))
             } finally {
                 // FIX: Recycle bitmap to prevent 50-200MB memory leak
                 bitmap.recycle()

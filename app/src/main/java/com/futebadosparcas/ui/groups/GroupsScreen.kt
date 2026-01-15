@@ -36,6 +36,7 @@ import com.futebadosparcas.R
 import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.components.CachedProfileImage
 
 /**
  * Tela principal de listagem de grupos em Jetpack Compose
@@ -233,7 +234,7 @@ private fun GroupsSuccessContent(
                 onClick = { onGroupClick(group.groupId) },
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .animateItemPlacement()
+                    .animateItem()
             )
         }
     }
@@ -397,25 +398,11 @@ private fun GroupPhoto(
             ),
         contentAlignment = Alignment.Center
     ) {
-        if (!photoUrl.isNullOrBlank()) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(photoUrl)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = groupName,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            // Fallback com inicial do nome
-            Text(
-                text = groupName.firstOrNull()?.uppercase() ?: "G",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
-        }
+        CachedProfileImage(
+            photoUrl = photoUrl,
+            userName = groupName,
+            size = 56.dp
+        )
     }
 }
 

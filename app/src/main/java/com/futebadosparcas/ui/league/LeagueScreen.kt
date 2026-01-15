@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -18,8 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-
-
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -30,9 +31,13 @@ import coil.request.ImageRequest
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.LeagueDivision
 import com.futebadosparcas.data.model.Season
+import com.futebadosparcas.domain.model.LeagueDivision as DomainLeagueDivision
 import com.futebadosparcas.data.model.SeasonParticipationV2
-import com.futebadosparcas.data.model.LeagueRatingCalculator
+import com.futebadosparcas.ui.components.EmptyState
+import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.components.lists.RankingItemShimmer
 import com.futebadosparcas.ui.components.FutebaTopBar
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,14 +90,29 @@ fun LeagueScreen(
                 when (uiState) {
                     is LeagueUiState.Loading -> {
                         if (!isRefreshing) {
-                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                            LeagueLoadingState(modifier = Modifier.align(Alignment.Center))
                         }
                     }
                     is LeagueUiState.Error -> {
-                        ErrorMessage(uiState.message, onRefresh)
+                        EmptyState(
+                            type = EmptyStateType.Error(
+                                title = stringResource(R.string.error),
+                                description = uiState.message,
+                                actionLabel = stringResource(R.string.retry),
+                                onRetry = onRefresh
+                            ),
+                            modifier = Modifier.align(Alignment.Center)
+                        )
                     }
                     is LeagueUiState.NoActiveSeason -> {
-                        EmptySeasonMessage()
+                        EmptyState(
+                            type = EmptyStateType.NoData(
+                                title = stringResource(R.string.league_no_season),
+                                description = stringResource(R.string.league_season_message),
+                                icon = Icons.Default.EmojiEvents
+                            ),
+                            modifier = Modifier.align(Alignment.Center)
+                        )
                     }
                     is LeagueUiState.Success -> {
                         LeagueContent(
@@ -159,12 +179,12 @@ fun LeagueContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Classificação",
+                            text = stringResource(R.string.league_classification),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "${filteredRanking.size} jogadores",
+                            text = stringResource(R.string.league_players_count, filteredRanking.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -183,7 +203,7 @@ fun LeagueContent(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "Nenhum jogador nesta divisão",
+                        text = stringResource(R.string.league_no_players),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
@@ -239,14 +259,14 @@ fun LeagueHeader(
                         value = season.name,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Período") },
+                        label = { Text(stringResource(R.string.league_period)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.surface,
                             unfocusedContainerColor = MaterialTheme.colorScheme.surface
                         ),
                         modifier = Modifier
-                            .menuAnchor()
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                             .fillMaxWidth(),
                         textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
@@ -265,7 +285,7 @@ fun LeagueHeader(
                                         )
                                         if (s.isActive) {
                                             Text(
-                                                text = "Ativa",
+                                                text = stringResource(R.string.league_active),
                                                 fontSize = 11.sp,
                                                 color = MaterialTheme.colorScheme.primary
                                             )
@@ -283,9 +303,9 @@ fun LeagueHeader(
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(20.dp))
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -293,7 +313,7 @@ fun LeagueHeader(
                 ) {
                     Column {
                         Text(
-                            text = "Minha Posição",
+                            text = stringResource(R.string.league_my_position),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 14.sp
                         )
@@ -334,9 +354,11 @@ fun LeagueHeader(
                 if (myParticipation != null) {
                     val currentRating = myParticipation.leagueRating
                     val division = myParticipation.division
-                    val nextThreshold = LeagueRatingCalculator.getNextDivisionThreshold(division)
-                    val prevThreshold = LeagueRatingCalculator.getPreviousDivisionThreshold(division)
-                    
+                    // Converter para domain model se necessário, ou usar Companion object
+                    val domainDivision = DomainLeagueDivision.valueOf(division.name)
+                    val nextThreshold = DomainLeagueDivision.getNextDivisionThreshold(domainDivision)
+                    val prevThreshold = DomainLeagueDivision.getPreviousDivisionThreshold(domainDivision)
+
                     // Normalizar progresso (0 a 1 dentro da faixa da divisão)
                     val range = nextThreshold - prevThreshold
                     val progress = ((currentRating - prevThreshold) / range).coerceIn(0.0, 1.0).toFloat()
@@ -349,13 +371,13 @@ fun LeagueHeader(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Rating: ${"%.1f".format(currentRating)}",
+                                text = stringResource(R.string.league_rating_format, "%.1f".format(currentRating)),
                                 color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Prox: ${nextThreshold.toInt()}",
+                                text = stringResource(R.string.league_next_threshold, nextThreshold.toInt()),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 12.sp
                             )
@@ -372,29 +394,29 @@ fun LeagueHeader(
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(20.dp))
-                
+
                 // Mini Stats - Row 1
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    MiniStatItem("Pontos", "${myParticipation?.points ?: 0}")
-                    MiniStatItem("Jogos", "${myParticipation?.gamesPlayed ?: 0}")
-                    MiniStatItem("Vitórias", "✅ ${myParticipation?.wins ?: 0}")
+                    MiniStatItem(stringResource(R.string.league_points), "${myParticipation?.points ?: 0}")
+                    MiniStatItem(stringResource(R.string.league_games_played), "${myParticipation?.gamesPlayed ?: 0}")
+                    MiniStatItem(stringResource(R.string.league_victories), "✅ ${myParticipation?.wins ?: 0}")
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Mini Stats - Row 2
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    MiniStatItem("Gols", "⚽ ${myParticipation?.goalsScored ?: 0}")
-                    MiniStatItem("Assists", "👟 ${myParticipation?.assists ?: 0}")
-                    MiniStatItem("MVPs", "⭐ ${myParticipation?.mvpCount ?: 0}")
+                    MiniStatItem(stringResource(R.string.league_goals), "⚽ ${myParticipation?.goalsScored ?: 0}")
+                    MiniStatItem(stringResource(R.string.league_assists), "👟 ${myParticipation?.assists ?: 0}")
+                    MiniStatItem(stringResource(R.string.league_mvp_count), "⭐ ${myParticipation?.mvpCount ?: 0}")
                 }
             }
         }
@@ -432,14 +454,14 @@ fun DivisionSelector(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Divisões",
+                stringResource(R.string.league_divisions),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             TextButton(onClick = { showInfo = !showInfo }) {
                 Text(
-                    if (showInfo) "Ocultar regras" else "Como funciona?",
+                    if (showInfo) stringResource(R.string.league_rules_hide) else stringResource(R.string.league_rules_show),
                     fontSize = 12.sp
                 )
             }
@@ -456,7 +478,7 @@ fun DivisionSelector(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        "Sistema de Ligas",
+                        stringResource(R.string.league_title),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -465,44 +487,44 @@ fun DivisionSelector(
 
                     DivisionInfoItem(
                         emoji = "💎",
-                        name = "DIAMANTE",
+                        name = stringResource(R.string.league_division_diamond),
                         rating = "70-100",
                         color = GamificationColors.Diamond,
-                        description = "Elite do fut"
+                        description = stringResource(R.string.league_elite)
                     )
                     DivisionInfoItem(
                         emoji = "🥇",
-                        name = "OURO",
+                        name = stringResource(R.string.league_division_gold),
                         rating = "50-69",
                         color = GamificationColors.Gold,
-                        description = "Jogadores experientes"
+                        description = stringResource(R.string.league_experienced)
                     )
                     DivisionInfoItem(
                         emoji = "🥈",
-                        name = "PRATA",
+                        name = stringResource(R.string.league_division_silver),
                         rating = "30-49",
                         color = GamificationColors.Silver,
-                        description = "Em evolução"
+                        description = stringResource(R.string.league_evolving)
                     )
                     DivisionInfoItem(
                         emoji = "🥉",
-                        name = "BRONZE",
+                        name = stringResource(R.string.league_division_bronze),
                         rating = "0-29",
                         color = GamificationColors.Bronze,
-                        description = "Iniciantes"
+                        description = stringResource(R.string.league_beginners)
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        "Rating calculado baseado em:",
+                        stringResource(R.string.league_rating_description),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        "• XP/jogo (40%)\n• Taxa de vitória (30%)\n• Saldo de gols (20%)\n• MVPs (10%)",
+                        stringResource(R.string.league_rating_components),
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -617,15 +639,22 @@ fun RankingListItem(
                     .size(32.dp)
                     .clip(CircleShape)
                     .background(
-                        if (position <= 3) getRankColor(position) 
+                        if (position <= 3) getRankColor(position)
                         else MaterialTheme.colorScheme.surfaceVariant
                     ),
                 contentAlignment = Alignment.Center
             ) {
+                val backgroundColor = if (position <= 3) getRankColor(position)
+                                     else MaterialTheme.colorScheme.surfaceVariant
+
                 Text(
                     text = position.toString(),
                     fontWeight = FontWeight.Bold,
-                    color = if (position <= 3) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (position <= 3) {
+                        com.futebadosparcas.util.ContrastHelper.getContrastingTextColor(backgroundColor)
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     fontSize = 14.sp
                 )
             }
@@ -633,18 +662,10 @@ fun RankingListItem(
             Spacer(modifier = Modifier.width(12.dp))
 
             // Avatar
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(item.user.photoUrl)
-                    .crossfade(true)
-                    .placeholder(R.drawable.ic_person)
-                    .error(R.drawable.ic_person)
-                    .build(),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+            CachedProfileImage(
+                photoUrl = item.user.photoUrl,
+                userName = item.user.name,
+                size = 44.dp
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -670,19 +691,19 @@ fun RankingListItem(
             // Pontos e Stats
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "${item.participation.points} pts",
+                    text = stringResource(R.string.league_points_format, item.participation.points),
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 16.sp
                 )
                 Text(
-                    text = "Rating: ${"%.1f".format(item.participation.leagueRating)}",
+                    text = stringResource(R.string.league_rating_format, "%.1f".format(item.participation.leagueRating)),
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "${item.participation.wins}V • ${item.participation.goalsScored}G",
+                    text = stringResource(R.string.league_wins_goals_format, item.participation.wins, item.participation.goalsScored),
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -691,46 +712,20 @@ fun RankingListItem(
     }
 }
 
+/**
+ * Estado de loading para a tela de liga usando ShimmerBox
+ */
 @Composable
-fun ErrorMessage(message: String, onRetry: () -> Unit) {
+private fun LeagueLoadingState(modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(text = "❌", fontSize = 48.sp)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = message, textAlign = TextAlign.Center)
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onRetry) {
-            Text("Tentar Novamente")
+        repeat(5) {
+            RankingItemShimmer(
+                modifier = Modifier.fillMaxWidth()
+            )
         }
-    }
-}
-
-@Composable
-fun EmptySeasonMessage() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(text = "🏆", fontSize = 64.sp)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Nenhuma temporada ativa no momento.",
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
-        )
-        Text(
-            text = "Aguarde o início da próxima temporada para subir no ranking!",
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }
 
@@ -758,7 +753,7 @@ fun getRankColor(position: Int): Color {
         1 -> GamificationColors.Gold
         2 -> GamificationColors.Silver
         3 -> GamificationColors.Bronze
-        else -> Color.Gray
+        else -> Color.Transparent  // Não usado - MaterialTheme.colorScheme.surfaceVariant é usado no código
     }
 }
 

@@ -4,8 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.model.UserStatistics
-import com.futebadosparcas.data.repository.StatisticsRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.StatisticsRepository
+import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.util.toDataModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +44,7 @@ class PlayerCardViewModel @Inject constructor(
 
                 // Buscar estatísticas
                 val statsResult = statisticsRepository.getUserStatistics(userId)
-                val statistics = statsResult.getOrNull()
+                val statistics = statsResult.getOrNull()?.toDataModel(userId)
 
                 _uiState.value = PlayerCardUiState.Success(
                     user = user,

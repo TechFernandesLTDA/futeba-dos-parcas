@@ -3,11 +3,13 @@ package com.futebadosparcas.ui.league
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.LeagueDivision
-import com.futebadosparcas.data.model.Season
+import com.futebadosparcas.data.model.Season as AndroidSeason
 import com.futebadosparcas.data.model.SeasonParticipationV2
 import com.futebadosparcas.data.model.User
-import com.futebadosparcas.data.repository.AuthRepository
-import com.futebadosparcas.data.repository.GamificationRepository
+import com.futebadosparcas.data.mapper.SeasonMapper
+import com.futebadosparcas.domain.model.Season
+import com.futebadosparcas.domain.repository.AuthRepository
+import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,7 +33,7 @@ class LeagueViewModel @Inject constructor(
     private val gamificationRepository: GamificationRepository,
     private val authRepository: AuthRepository,
     private val firestore: FirebaseFirestore,
-    private val notificationRepository: com.futebadosparcas.data.repository.NotificationRepository
+    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LeagueUiState>(LeagueUiState.Loading)
@@ -40,11 +42,11 @@ class LeagueViewModel @Inject constructor(
     private val _unreadCount = MutableStateFlow(0)
     val unreadCount: StateFlow<Int> = _unreadCount
 
-    private val _availableSeasons = MutableStateFlow<List<Season>>(emptyList())
-    val availableSeasons: StateFlow<List<Season>> = _availableSeasons
+    private val _availableSeasons = MutableStateFlow<List<AndroidSeason>>(emptyList())
+    val availableSeasons: StateFlow<List<AndroidSeason>> = _availableSeasons
 
-    private val _selectedSeason = MutableStateFlow<Season?>(null)
-    val selectedSeason: StateFlow<Season?> = _selectedSeason
+    private val _selectedSeason = MutableStateFlow<AndroidSeason?>(null)
+    val selectedSeason: StateFlow<AndroidSeason?> = _selectedSeason
 
     init {
         loadAvailableSeasons()
@@ -74,13 +76,14 @@ class LeagueViewModel @Inject constructor(
                 val seasonsResult = gamificationRepository.getAllSeasons()
                 val seasons = seasonsResult.getOrNull() ?: emptyList()
 
-                _availableSeasons.value = seasons
+                // Converter para Android Season models
+                _availableSeasons.value = SeasonMapper.toAndroidSeasons(seasons)
 
                 // Se há seasons, selecionar a primeira (mais recente) ou a ativa
                 if (seasons.isNotEmpty()) {
                     // Preferir season ativa
                     val activeSeason = seasons.find { it.isActive }
-                    _selectedSeason.value = activeSeason ?: seasons.first()
+                    _selectedSeason.value = SeasonMapper.toAndroidSeason(activeSeason ?: seasons.first())
                     loadLeagueData()
                 } else {
                     _uiState.value = LeagueUiState.NoActiveSeason
@@ -95,7 +98,7 @@ class LeagueViewModel @Inject constructor(
     /**
      * Seleciona uma season diferente e recarrega os dados
      */
-    fun selectSeason(season: Season) {
+    fun selectSeason(season: AndroidSeason) {
         _selectedSeason.value = season
         loadLeagueData()
     }
@@ -153,8 +156,11 @@ class LeagueViewModel @Inject constructor(
                     _uiState.value = LeagueUiState.Error("Erro ao carregar ranking: ${e.message}")
                 }
                 .collect { participations ->
+                    // Converter SeasonParticipation para SeasonParticipationV2
+                    val participationsV2 = participations.map { SeasonMapper.toSeasonParticipationV2(it) }
+
                     // 1. Identificar usuários faltantes no cache
-                    val missingUserIds = participations.map { it.userId }
+                    val missingUserIds = participationsV2.map { it.userId }
                         .filter { !_userCache.containsKey(it) }
                         .distinct()
 
@@ -172,7 +178,7 @@ class LeagueViewModel @Inject constructor(
                     }
 
                     // 3. Montar RankingItems
-                    val rankingItems = participations.mapNotNull { part ->
+                    val rankingItems = participationsV2.mapNotNull { part ->
                          _userCache[part.userId]?.let { user ->
                              RankingItem(participation = part, user = user)
                          }
@@ -180,9 +186,9 @@ class LeagueViewModel @Inject constructor(
 
                     // 4. Identificar usuário atual
                     val currentUserId = authRepository.getCurrentUserId()
-                    val myParticipation = participations.find { it.userId == currentUserId }
+                    val myParticipation = participationsV2.find { it.userId == currentUserId }
                     val myPosition = if (myParticipation != null) {
-                        participations.indexOf(myParticipation) + 1
+                        participationsV2.indexOf(myParticipation) + 1
                     } else null
 
                     // 5. Atualizar Estado
@@ -304,7 +310,7 @@ sealed class LeagueUiState {
     object NoActiveSeason : LeagueUiState()
     data class Error(val message: String) : LeagueUiState()
     data class Success(
-        val season: Season,
+        val season: AndroidSeason,
         val allRankings: List<RankingItem>,
         val myParticipation: SeasonParticipationV2?,
         val myPosition: Int?,

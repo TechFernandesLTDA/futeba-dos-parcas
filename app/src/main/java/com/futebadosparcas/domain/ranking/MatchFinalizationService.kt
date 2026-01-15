@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
@@ -52,7 +53,7 @@ data class GameProcessingResult(
 @Singleton
 class MatchFinalizationService @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val settingsRepository: com.futebadosparcas.data.repository.SettingsRepository,
+    private val settingsRepository: com.futebadosparcas.domain.repository.SettingsRepository,
     private val leagueService: LeagueService
 ) {
     companion object {
@@ -146,7 +147,7 @@ class MatchFinalizationService @Inject constructor(
             // 9. Buscar Temporada Ativa e Configuracoes de XP
             val activeSeason = getActiveSeason()
             val gamificationSettings = settingsRepository.getGamificationSettings().getOrNull()
-                ?: GamificationSettings().also {
+                ?: com.futebadosparcas.domain.model.GamificationSettings().also {
                     AppLogger.w(TAG) { "GamificationSettings não encontrado, usando valores padrão" }
                 }
 
@@ -289,7 +290,7 @@ class MatchFinalizationService @Inject constructor(
         teamResults: Map<String, GameResult>,
         liveScore: LiveGameScore?,
         activeSeason: Season?,
-        settings: GamificationSettings,
+        settings: com.futebadosparcas.domain.model.GamificationSettings,
         batch: com.google.firebase.firestore.WriteBatch
     ): PlayerProcessingResult {
         val userId = confirmation.userId
@@ -492,9 +493,20 @@ class MatchFinalizationService @Inject constructor(
             return Pair(1, streakDocId)
         }
 
-        // Calcular se é jogo consecutivo (simplificado: verifica se é diferente do último)
+        // Calcular se é jogo consecutivo (CORRIGIDO: verifica diferença em dias)
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val lastDate = existingStreak.lastGameDate
-        val isConsecutive = lastDate != gameDate // Se é um jogo diferente, conta
+
+        val isConsecutive = try {
+            val lastParsed = dateFormat.parse(lastDate)
+            val currentParsed = dateFormat.parse(gameDate)
+            val diffInDays = ((currentParsed.time - lastParsed.time) / (24 * 60 * 60 * 1000)).toInt()
+            // Mesmo dia (0) ou dia seguinte (1) conta como consecutivo
+            diffInDays in 0..1
+        } catch (e: Exception) {
+            AppLogger.w(TAG) { "Erro ao parsear datas para streak: $lastDate, $gameDate" }
+            false
+        }
 
         val newCurrentStreak = if (isConsecutive) {
             existingStreak.currentStreak + 1

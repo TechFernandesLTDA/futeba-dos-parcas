@@ -59,7 +59,7 @@ class GameSummonViewModel @Inject constructor(
     }
 
     private fun observeUpcomingGames() {
-        gameSummonRepository.getMyUpcomingGamesFlow()
+        gameSummonRepository.getMyUpcomingGamesFlow(limit = 10)
             .onEach { games ->
                 _upcomingGamesState.value = if (games.isEmpty()) {
                     UpcomingGamesState.Empty
@@ -103,7 +103,7 @@ class GameSummonViewModel @Inject constructor(
         viewModelScope.launch {
             _upcomingGamesState.value = UpcomingGamesState.Loading
 
-            val result = gameSummonRepository.getMyUpcomingGames()
+            val result = gameSummonRepository.getMyUpcomingGames(limit = 10)
 
             result.fold(
                 onSuccess = { games ->

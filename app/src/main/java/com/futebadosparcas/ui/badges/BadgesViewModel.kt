@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Badge
 import com.futebadosparcas.data.model.BadgeType
 import com.futebadosparcas.data.model.UserBadge
-import com.futebadosparcas.data.repository.AuthRepository
-import com.futebadosparcas.data.repository.GamificationRepository
+import com.futebadosparcas.domain.repository.AuthRepository
+import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -67,9 +67,16 @@ class BadgesViewModel @Inject constructor(
 
                         val badge = badgeDoc.toObject(Badge::class.java)
                         if (badge != null) {
+                            // Converter domain.UserBadge para data.UserBadge
+                            val dataUserBadge = com.futebadosparcas.data.model.UserBadge(
+                                id = userBadge.id,
+                                userId = userBadge.userId,
+                                badgeId = userBadge.badgeId,
+                                unlockedAt = userBadge.unlockedAt?.let { java.util.Date(it) }
+                            )
                             badgesWithData.add(
                                 BadgeWithData(
-                                    userBadge = userBadge,
+                                    userBadge = dataUserBadge,
                                     badge = badge
                                 )
                             )

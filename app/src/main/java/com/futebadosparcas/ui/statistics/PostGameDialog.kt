@@ -1,6 +1,5 @@
 package com.futebadosparcas.ui.statistics
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -18,8 +17,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.GamificationColors
 
 /**
@@ -30,18 +31,9 @@ fun PostGameDialog(
     summary: PostGameSummary,
     onDismiss: () -> Unit
 ) {
-    val animatedXpFloat by animateFloatAsState(
-        targetValue = summary.xpEarned.toFloat(),
-        animationSpec = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
-        label = "xp"
-    )
-    val animatedXp = animatedXpFloat.toLong()
-
-    val animatedProgress by animateFloatAsState(
-        targetValue = summary.progressToNextLevel,
-        animationSpec = tween(durationMillis = 1000, delayMillis = 500),
-        label = "progress"
-    )
+    // Valores estáticos pré-calculados para otimização de scroll
+    val staticXp = summary.xpEarned
+    val staticProgress = summary.progressToNextLevel
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -69,7 +61,7 @@ fun PostGameDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "VOCÊ EVOLUIU!",
+                        text = stringResource(R.string.post_game_leveled_up),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.primary,
@@ -78,7 +70,7 @@ fun PostGameDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Filled.Close,
-                            contentDescription = "Fechar",
+                            contentDescription = stringResource(R.string.post_game_close),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -101,7 +93,7 @@ fun PostGameDialog(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "+$animatedXp",
+                            text = "+$staticXp",
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimary
@@ -127,7 +119,7 @@ fun PostGameDialog(
                     newLevel = summary.newLevel,
                     leveledUp = summary.leveledUp,
                     newLevelName = summary.newLevelName,
-                    progress = animatedProgress
+                    progress = staticProgress
                 )
 
                 // Milestones desbloqueados
@@ -148,7 +140,7 @@ fun PostGameDialog(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "RUMO AO PRÓXIMO NÍVEL",
+                        text = stringResource(R.string.post_game_rumoa),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(vertical = 4.dp),
@@ -163,9 +155,9 @@ fun PostGameDialog(
 @Composable
 private fun GameResultBadge(result: String) {
     val (backgroundColor, text) = when (result.uppercase()) {
-        "WIN" -> MaterialTheme.colorScheme.primary to "VITÓRIA ÉPICA!"
-        "LOSS" -> MaterialTheme.colorScheme.error to "NÃO DESISTA!"
-        else -> GamificationColors.LevelUpGold to "MÁXIMO ESFORÇO!"
+        "WIN" -> MaterialTheme.colorScheme.primary to stringResource(R.string.post_game_win)
+        "LOSS" -> MaterialTheme.colorScheme.error to stringResource(R.string.post_game_loss)
+        else -> GamificationColors.LevelUpGold to stringResource(R.string.post_game_max_effort)
     }
 
     Box(
@@ -178,7 +170,7 @@ private fun GameResultBadge(result: String) {
             text = text,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = if (backgroundColor == GamificationColors.LevelUpGold) Color.Black else Color.White
+            color = com.futebadosparcas.util.ContrastHelper.getContrastingTextColor(backgroundColor)
         )
     }
 }
@@ -196,7 +188,7 @@ private fun XpBreakdownSection(breakdown: Map<String, Long>) {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "SUA JORNADA NA PARTIDA",
+                text = stringResource(R.string.post_game_journey),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -1,26 +1,25 @@
 package com.futebadosparcas.domain.usecase.ranking
 
 import com.futebadosparcas.data.model.LeagueDivision
-import com.futebadosparcas.data.model.Season
 import com.futebadosparcas.data.model.SeasonParticipationV2
+import com.futebadosparcas.domain.model.LeagueDivision as SharedLeagueDivision
+import com.futebadosparcas.domain.model.Season
 import com.futebadosparcas.domain.model.User
-import com.futebadosparcas.data.repository.GamificationRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.GamificationRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.LeagueService
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
-import java.text.SimpleDateFormat
-import java.util.Locale
 import javax.inject.Inject
 
 /**
- * Use Case para buscar classificação da liga.
+ * Use Case para buscar classificacao da liga.
  *
  * Responsabilidades:
- * - Buscar classificação por divisão
- * - Calcular posição do jogador
- * - Verificar critérios de promoção/rebaixamento
- * - Fornecer estatísticas da temporada
+ * - Buscar classificacao por divisao
+ * - Calcular posicao do jogador
+ * - Verificar criterios de promocao/rebaixamento
+ * - Fornecer estatisticas da temporada
  */
 class GetLeagueStandingsUseCase @Inject constructor(
     private val gamificationRepository: GamificationRepository,
@@ -30,6 +29,18 @@ class GetLeagueStandingsUseCase @Inject constructor(
 ) {
     companion object {
         private const val TAG = "GetLeagueStandingsUseCase"
+
+        /**
+         * Converte LeagueDivision do Android para Shared.
+         */
+        private fun toSharedDivision(division: LeagueDivision): SharedLeagueDivision {
+            return when (division) {
+                LeagueDivision.BRONZE -> SharedLeagueDivision.BRONZE
+                LeagueDivision.PRATA -> SharedLeagueDivision.PRATA
+                LeagueDivision.OURO -> SharedLeagueDivision.OURO
+                LeagueDivision.DIAMANTE -> SharedLeagueDivision.DIAMANTE
+            }
+        }
     }
 
     /**
@@ -92,8 +103,9 @@ class GetLeagueStandingsUseCase @Inject constructor(
             }
             val season = seasonResult.getOrNull()!!
 
-            // 2. Buscar classificação da divisão
-            val rankingResult = leagueService.getPlayersByDivision(season.id, division, limit)
+            // 2. Buscar classificacao da divisao (converter para SharedLeagueDivision)
+            val sharedDivision = toSharedDivision(division)
+            val rankingResult = leagueService.getPlayersByDivision(season.id, sharedDivision, limit)
             if (rankingResult.isFailure) {
                 return Result.failure(rankingResult.exceptionOrNull()!!)
             }
@@ -221,14 +233,32 @@ class GetLeagueStandingsUseCase @Inject constructor(
             if (participationResult.isFailure) {
                 return Result.success(null) // Usuário não está participando
             }
-            val participation = participationResult.getOrNull()!!
+            val domainParticipation = participationResult.getOrNull()!!
 
             // 3. Buscar dados do usuário
             val userResult = userRepository.getCurrentUser()
             val user = userResult.getOrNull() ?: createUnknownUser(currentUserId)
 
-            // 4. Buscar posição na divisão
-            val division = participation.division
+            // 4. Converter para SeasonParticipationV2 (compatibilidade com LeagueService)
+            val division = LeagueDivision.valueOf(domainParticipation.division)
+            val participation = SeasonParticipationV2(
+                id = domainParticipation.id,
+                userId = domainParticipation.userId,
+                seasonId = domainParticipation.seasonId,
+                division = division,
+                points = domainParticipation.points,
+                gamesPlayed = domainParticipation.gamesPlayed,
+                wins = domainParticipation.wins,
+                draws = domainParticipation.draws,
+                losses = domainParticipation.losses,
+                goalsScored = domainParticipation.goals,
+                goalsConceded = 0,
+                assists = domainParticipation.assists,
+                mvpCount = domainParticipation.mvpCount,
+                leagueRating = domainParticipation.leagueRating.toDouble()
+            )
+
+            // 5. Buscar posição na divisão
             val standingsResult = getDivisionStandings(division, 100)
             val position = standingsResult.getOrNull()?.currentUserPosition ?: 0
 
@@ -270,14 +300,8 @@ class GetLeagueStandingsUseCase @Inject constructor(
 
     private fun calculateDaysRemaining(season: Season): Int {
         return try {
-            val endDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                .parse(season.endDate)
-            if (endDate != null) {
-                val diff = endDate.time - System.currentTimeMillis()
-                (diff / (1000 * 60 * 60 * 24)).toInt().coerceAtLeast(0)
-            } else {
-                0
-            }
+            val diff = season.endDate - System.currentTimeMillis()
+            (diff / (1000 * 60 * 60 * 24)).toInt().coerceAtLeast(0)
         } catch (e: Exception) {
             0
         }
