@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.io.File
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 import java.util.Date
 
 /**
@@ -3498,23 +3501,45 @@ actual class FirebaseDataSource(
 
     actual suspend fun getActiveSeason(): Result<Season?> {
         return try {
-            val snapshot = firestore.collection("seasons")
-                .get()
-                .await()
+            // SEMPRE usar a season do mês atual (formato: monthly_YYYY_MM)
+            val now = LocalDate.now()
+            val seasonId = "monthly_${now.year}_${String.format("%02d", now.monthValue)}"
 
-            val seasons = snapshot.documents.mapNotNull { doc ->
-                val isActive = doc.getBoolean("is_active") ?: doc.getBoolean("isActive") ?: false
-                if (isActive) doc.toSeasonOrNull() else null
+            // Buscar a season do mês atual
+            val doc = firestore.collection("seasons").document(seasonId).get().await()
+
+            val season = if (doc.exists()) {
+                doc.toSeasonOrNull()
+            } else {
+                // Se não existe, criar automaticamente
+                val yearMonth = YearMonth.from(now)
+                val startOfMonth = now.atStartOfDay()
+                val endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59)
+
+                val newSeason = Season(
+                    id = seasonId,
+                    name = yearMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")).replaceFirstChar { it.uppercase() },
+                    startDate = startOfMonth.toEpochSecond(java.time.ZoneOffset.UTC) * 1000,
+                    endDate = endOfMonth.toEpochSecond(java.time.ZoneOffset.UTC) * 1000,
+                    isActive = true
+                )
+
+                // Salvar no Firestore
+                firestore.collection("seasons").document(seasonId).set(
+                    mapOf(
+                        "id" to newSeason.id,
+                        "name" to newSeason.name,
+                        "start_date" to com.google.firebase.Timestamp(Date(newSeason.startDate)),
+                        "end_date" to com.google.firebase.Timestamp(Date(newSeason.endDate)),
+                        "is_active" to true,
+                        "created_at" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+                    )
+                ).await()
+
+                newSeason
             }
 
-            // Priorizar: data de fim mais distante, depois mensal
-            val selectedSeason = seasons.sortedWith(
-                compareByDescending<Season> { it.endDate }
-                    .thenByDescending { it.id.startsWith("monthly") }
-                    .thenByDescending { it.id }
-            ).firstOrNull()
-
-            Result.success(selectedSeason)
+            Result.success(season)
         } catch (e: Exception) {
             Result.failure(e)
         }
