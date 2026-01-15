@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.futebadosparcas.data.model.LeagueDivision
 import com.futebadosparcas.data.model.RankingEntryV2
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
 
@@ -231,32 +232,11 @@ fun RankingItem(
             Spacer(modifier = Modifier.width(12.dp))
 
             // Avatar
-            if (!entry.userPhoto.isNullOrEmpty()) {
-                AsyncImage(
-                    model = entry.userPhoto,
-                    contentDescription = "Foto de ${entry.userName}",
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            CachedProfileImage(
+                photoUrl = entry.userPhoto,
+                userName = entry.userName,
+                size = 48.dp
+            )
 
             Spacer(modifier = Modifier.width(12.dp))
 

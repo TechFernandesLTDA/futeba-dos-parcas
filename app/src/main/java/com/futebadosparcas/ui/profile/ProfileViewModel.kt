@@ -192,8 +192,10 @@ class ProfileViewModel @Inject constructor(
         playStyle: String?,
         experienceYears: Int?
     ) {
-        android.util.Log.d("ProfileViewModel", "updateProfile called.")
         viewModelScope.launch {
+            val currentState = _uiState.value
+            if (currentState !is ProfileUiState.Success) return@launch
+
             _uiState.value = ProfileUiState.Loading
 
             try {
@@ -409,4 +411,5 @@ sealed class ProfileUiState {
 
 sealed class ProfileUiEvent {
     object LoadComplete : ProfileUiEvent()
+    object ProfileUpdated : ProfileUiEvent()
 }

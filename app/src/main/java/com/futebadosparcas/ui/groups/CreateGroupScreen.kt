@@ -38,6 +38,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.FutebaTheme
 import java.io.File
 
@@ -371,16 +372,10 @@ private fun GroupPhotoSection(
             contentAlignment = Alignment.Center
         ) {
             if (photoUri != null) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(photoUri)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                    placeholder = painterResource(R.drawable.ic_groups),
-                    error = painterResource(R.drawable.ic_groups)
+                CachedProfileImage(
+                    photoUrl = photoUri.toString(),
+                    userName = "Grupo",
+                    size = 120.dp
                 )
             } else {
                 Surface(

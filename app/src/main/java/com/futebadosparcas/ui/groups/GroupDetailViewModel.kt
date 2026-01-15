@@ -7,6 +7,7 @@ import com.futebadosparcas.data.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.data.repository.GroupRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.usecase.group.ArchiveGroupUseCase
 import com.futebadosparcas.domain.usecase.group.DeleteGroupUseCase
 import com.futebadosparcas.domain.usecase.group.LeaveGroupUseCase

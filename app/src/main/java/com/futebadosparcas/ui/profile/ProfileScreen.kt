@@ -34,6 +34,7 @@ import com.futebadosparcas.data.model.*
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
@@ -207,7 +208,9 @@ private fun ProfileContent(
     }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding(),  // 🔧 OTIMIZADO: Respeita status/navigation bars (consistent com HomeScreen)
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -832,10 +835,13 @@ private fun BadgesSection(badges: List<UserBadge>) {
  */
 @Composable
 private fun BadgeItem(badge: UserBadge) {
-    val badgeType = try {
-        BadgeType.valueOf(badge.badgeId)
-    } catch (e: Exception) {
-        null
+    // 🔧 OTIMIZADO: Memoizar parsing de BadgeType para evitar recomposição desnecessária
+    val badgeType = remember(badge.badgeId) {
+        try {
+            BadgeType.valueOf(badge.badgeId)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     Column(

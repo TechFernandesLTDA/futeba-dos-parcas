@@ -356,6 +356,10 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    actual suspend fun updateFcmToken(userId: String, token: String): Result<Unit> {
+        TODO("Implementar com Firebase iOS SDK - updateData(fcm_token, token)")
+    }
+
     // ========== GROUPS ==========
 
     actual suspend fun getUserGroups(userId: String): Result<List<UserGroup>> {
