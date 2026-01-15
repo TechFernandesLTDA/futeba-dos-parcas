@@ -15,12 +15,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.data.model.GameEvent
+import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.ShimmerBox
 
 /**
@@ -160,7 +160,7 @@ private fun GameEventCard(
                 // Assistência (se houver)
                 if (!event.assistedById.isNullOrEmpty()) {
                     Text(
-                        text = "Assistência: ${event.assistedByName ?: event.assistedById}",
+                        text = stringResource(R.string.live_game_assist_by, event.assistedByName ?: event.assistedById ?: ""),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -206,13 +206,13 @@ private fun LiveEventsEmptyState() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.no_events),
+            text = stringResource(R.string.live_game_no_events),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
-            text = stringResource(R.string.no_events_description),
+            text = stringResource(R.string.live_game_no_events_description),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)
@@ -250,11 +250,23 @@ private fun getEventIcon(eventType: String) = when (eventType.lowercase()) {
 /**
  * Obtém label do tipo de evento
  */
-private fun getEventTypeLabel(eventType: String) = when (eventType.lowercase()) {
-    "goal" -> "⚽ Gol"
-    "substitution" -> "🔄 Substituição"
-    "yellowcard" -> "🟨 Cartão Amarelo"
-    "redcard" -> "🔴 Cartão Vermelho"
-    "foul" -> "⚠️ Falta"
-    else -> "📝 Evento"
+@Composable
+private fun getEventTypeLabel(eventType: String): String {
+    val prefix = when (eventType.lowercase()) {
+        "goal" -> "⚽ "
+        "substitution" -> "🔄 "
+        "yellowcard" -> "🟨 "
+        "redcard" -> "🔴 "
+        "foul" -> "⚠️ "
+        else -> "📝 "
+    }
+    val label = when (eventType.lowercase()) {
+        "goal" -> stringResource(R.string.live_game_event_goal)
+        "substitution" -> stringResource(R.string.live_game_event_substitution)
+        "yellowcard" -> stringResource(R.string.live_game_event_yellow_card)
+        "redcard" -> stringResource(R.string.live_game_event_red_card)
+        "foul" -> stringResource(R.string.live_game_event_foul)
+        else -> stringResource(R.string.live_game_event_default)
+    }
+    return prefix + label
 }

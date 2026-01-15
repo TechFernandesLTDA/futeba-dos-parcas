@@ -2,8 +2,26 @@ package com.futebadosparcas.ui.home
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
-import com.futebadosparcas.data.model.*
-import com.futebadosparcas.data.repository.*
+import com.futebadosparcas.data.model.Activity as AndroidActivity
+import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.data.model.GameStatus
+import com.futebadosparcas.data.model.SeasonParticipationV2
+import com.futebadosparcas.data.model.UserStatistics as AndroidUserStatistics
+import com.futebadosparcas.data.repository.ActivityRepository
+import com.futebadosparcas.data.repository.GameRepository
+import com.futebadosparcas.data.repository.IStatisticsRepository as StatisticsRepository
+import com.futebadosparcas.data.repository.NotificationRepository as AndroidNotificationRepository
+import com.futebadosparcas.domain.model.Activity
+import com.futebadosparcas.domain.model.Season
+import com.futebadosparcas.domain.model.SeasonParticipation
+import com.futebadosparcas.domain.model.User as SharedUser
+import com.futebadosparcas.domain.model.UserBadge
+import com.futebadosparcas.domain.model.UserChallengeProgress
+import com.futebadosparcas.domain.model.UserStreak
+import com.futebadosparcas.domain.model.WeeklyChallenge
+import com.futebadosparcas.domain.repository.GamificationRepository
+import com.futebadosparcas.domain.repository.NotificationRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.ConnectivityMonitor
 import io.mockk.coEvery
 import io.mockk.every
@@ -18,6 +36,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import org.junit.Rule
+import java.util.Date
 
 /**
  * Testes unitários para HomeViewModel.
@@ -154,7 +173,7 @@ class HomeViewModelTest {
         coEvery { gamificationRepository.getRecentBadges(testUser.id) } returns Result.success(emptyList())
         coEvery { gamificationRepository.getActiveSeason() } returns Result.success(testSeason)
         coEvery { gamificationRepository.getUserParticipation(testUser.id, testSeason.id) } returns Result.success(testParticipation)
-        coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getChallengesProgress(any()) } returns Result.success(emptyList())
 
         // When - Quando carregar dados
         viewModel.loadHomeData()
@@ -205,7 +224,7 @@ class HomeViewModelTest {
         coEvery { gamificationRepository.getRecentBadges(any()) } returns Result.success(emptyList())
         coEvery { gamificationRepository.getActiveSeason() } returns Result.success(createTestSeason())
         coEvery { gamificationRepository.getUserParticipation(any(), any()) } returns Result.success(createTestParticipation())
-        coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getChallengesProgress(any()) } returns Result.success(emptyList())
 
         // When - Quando carregar dados
         viewModel.loadHomeData()
@@ -240,7 +259,7 @@ class HomeViewModelTest {
         coEvery { gamificationRepository.getRecentBadges(any()) } returns Result.success(emptyList())
         coEvery { gamificationRepository.getActiveSeason() } returns Result.success(createTestSeason())
         coEvery { gamificationRepository.getUserParticipation(any(), any()) } returns Result.success(createTestParticipation())
-        coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getChallengesProgress(any()) } returns Result.success(emptyList())
 
         viewModel.loadHomeData()
         advanceUntilIdle()
@@ -288,7 +307,7 @@ class HomeViewModelTest {
         coEvery { gamificationRepository.getRecentBadges(any()) } returns Result.success(emptyList())
         coEvery { gamificationRepository.getActiveSeason() } returns Result.success(createTestSeason())
         coEvery { gamificationRepository.getUserParticipation(any(), any()) } returns Result.success(createTestParticipation())
-        coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getChallengesProgress(any()) } returns Result.success(emptyList())
 
         // When - Quando chamar loadHomeData duas vezes rapidamente
         viewModel.loadHomeData()
@@ -300,7 +319,7 @@ class HomeViewModelTest {
     }
 
     // Helper functions para criar dados de teste
-    private fun createTestUser() = User(
+    private fun createTestUser() = SharedUser(
         id = "user123",
         name = "Test User",
         email = "test@test.com",
@@ -322,37 +341,62 @@ class HomeViewModelTest {
         ownerName = "Test User"
     )
 
-    private fun createTestStatistics() = UserStatistics(
-        userId = "user123",
-        gamesPlayed = 50,
-        wins = 30,
-        draws = 10,
-        losses = 10,
-        goals = 45,
-        assists = 20
+    private fun createTestStatistics() = AndroidUserStatistics(
+        id = "user123",
+        totalGames = 50,
+        totalGoals = 45,
+        totalAssists = 20,
+        totalSaves = 0,
+        totalYellowCards = 0,
+        totalRedCards = 0,
+        bestPlayerCount = 5,
+        worstPlayerCount = 0,
+        bestGoalCount = 2,
+        gamesWon = 30,
+        gamesLost = 10,
+        gamesDraw = 10,
+        gamesInvited = 50,
+        gamesAttended = 50
     )
 
-    private fun createTestActivity() = Activity(
+    private fun createTestActivity() = AndroidActivity(
         id = "act1",
         userId = "user123",
+        userName = "Test User",
         type = "GAME_CONFIRMED",
-        message = "Você confirmou presença no jogo",
-        timestamp = System.currentTimeMillis()
+        title = "Presença confirmada",
+        description = "Você confirmou presença no jogo",
+        createdAt = Date(System.currentTimeMillis())
     )
 
     private fun createTestSeason() = Season(
         id = "season1",
         name = "Season 2026",
-        startDate = "2026-01-01",
-        endDate = "2026-03-31",
+        description = "Temporada de teste",
+        startDate = parseDate("2026-01-01"),
+        endDate = parseDate("2026-03-31"),
         isActive = true
     )
 
+    private fun parseDate(dateStr: String): Long {
+        val format = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+        return format.parse(dateStr)?.time ?: 0L
+    }
+
     private fun createTestParticipation() = SeasonParticipation(
+        id = "participation1",
         userId = "user123",
         seasonId = "season1",
-        division = LeagueDivision.GOLD,
+        division = com.futebadosparcas.domain.model.LeagueDivision.OURO.name,
+        leagueRating = 55,
         points = 100,
-        position = 5
+        gamesPlayed = 10,
+        wins = 5,
+        draws = 2,
+        losses = 3,
+        goals = 15,
+        assists = 5,
+        saves = 0,
+        mvpCount = 2
     )
 }

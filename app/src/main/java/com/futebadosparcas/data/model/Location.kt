@@ -35,10 +35,13 @@ data class Location(
     @set:PropertyName("place_id")
     var placeId: String? = null,
     
-    // Proprietário
+    // Proprietário e Gerentes
     @get:PropertyName("owner_id")
     @set:PropertyName("owner_id")
     var ownerId: String = "",
+    @get:PropertyName("managers")
+    @set:PropertyName("managers")
+    var managers: List<String> = emptyList(), // Lista de IDs de usuarios gerentes do local
     @get:PropertyName("is_verified")
     @set:PropertyName("is_verified")
     var isVerified: Boolean = false,
@@ -80,10 +83,15 @@ data class Location(
     @set:PropertyName("min_game_duration_minutes")
     var minGameDurationMinutes: Int = 60,
 
+    // Auditoria
     @ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
-    var createdAt: Date? = null
+    var createdAt: Date? = null,
+    @ServerTimestamp
+    @get:PropertyName("updated_at")
+    @set:PropertyName("updated_at")
+    var updatedAt: Date? = null
 ) {
     constructor() : this(id = "")
 
@@ -98,6 +106,24 @@ data class Location(
             address
         }
     }
+
+    /**
+     * Verifica se um usuario eh o dono do local
+     */
+    @Exclude
+    fun isOwner(userId: String): Boolean = ownerId == userId
+
+    /**
+     * Verifica se um usuario eh gerente do local
+     */
+    @Exclude
+    fun isManager(userId: String): Boolean = managers.contains(userId)
+
+    /**
+     * Verifica se um usuario tem permissao para gerenciar o local (dono ou gerente)
+     */
+    @Exclude
+    fun canManage(userId: String): Boolean = isOwner(userId) || isManager(userId)
 }
 
 /**

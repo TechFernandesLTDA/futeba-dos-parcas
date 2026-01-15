@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -26,7 +27,9 @@ import com.futebadosparcas.R
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.PlayerPosition
 import com.futebadosparcas.data.model.VoteCategory
-import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.components.EmptyState
+import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.components.ShimmerBox
 
 /**
  * MVPVoteScreen - Tela de Votação MVP/Melhor Goleiro/Bola Murcha
@@ -34,14 +37,15 @@ import com.futebadosparcas.ui.components.CachedProfileImage
  * Permite:
  * - Votar em 3 categorias sequencialmente (MVP, Melhor Goleiro, Bola Murcha)
  * - Ver estado de já votado
- * - Ver tela de sucesso com animação Lottie
+ * - Ver tela de sucesso
  * - Owner pode finalizar votação manualmente
  *
  * Features:
  * - LazyVerticalGrid com 2 colunas para candidatos
  * - Navegação automática entre categorias
  * - Estados: Loading, Voting, AlreadyVoted, Finished, Error
- * - Animação Lottie de sucesso
+ * - ShimmerBox para loading
+ * - EmptyState para erro
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,12 +69,12 @@ fun MVPVoteScreen(
                             is MVPVoteUiState.Voting -> {
                                 val category = (uiState as MVPVoteUiState.Voting).currentCategory
                                 when (category) {
-                                    VoteCategory.MVP -> "Votação (1/3)"
-                                    VoteCategory.BEST_GOALKEEPER -> "Votação (2/3)"
-                                    VoteCategory.WORST -> "Votação (3/3)"
+                                    VoteCategory.MVP -> stringResource(R.string.mvp_vote_1_3)
+                                    VoteCategory.BEST_GOALKEEPER -> stringResource(R.string.mvp_vote_2_3)
+                                    VoteCategory.WORST -> stringResource(R.string.mvp_vote_3_3)
                                 }
                             }
-                            else -> "Votação"
+                            else -> stringResource(R.string.mvp_vote_title)
                         }
                     )
                 },
@@ -78,7 +82,7 @@ fun MVPVoteScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -95,9 +99,7 @@ fun MVPVoteScreen(
         ) {
             when (val state = uiState) {
                 is MVPVoteUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+                    MVPVoteLoadingState()
                 }
 
                 is MVPVoteUiState.Voting -> {
@@ -139,9 +141,13 @@ fun MVPVoteScreen(
                 }
 
                 is MVPVoteUiState.Error -> {
-                    ErrorContent(
-                        message = state.message,
-                        onCloseClick = onNavigateBack
+                    EmptyState(
+                        type = EmptyStateType.Error(
+                            title = stringResource(R.string.error),
+                            description = state.message,
+                            actionLabel = stringResource(R.string.retry),
+                            onRetry = { viewModel.loadCandidates(gameId) }
+                        )
                     )
                 }
             }
@@ -179,9 +185,9 @@ private fun VotingContent(
             ) {
                 Text(
                     text = when (category) {
-                        VoteCategory.MVP -> "Quem foi o CRAQUE?"
-                        VoteCategory.BEST_GOALKEEPER -> "Melhor Goleiro?"
-                        VoteCategory.WORST -> "Bola Murcha?"
+                        VoteCategory.MVP -> stringResource(R.string.mvp_who_was_star)
+                        VoteCategory.BEST_GOALKEEPER -> stringResource(R.string.mvp_best_goalkeeper)
+                        VoteCategory.WORST -> stringResource(R.string.mvp_worst_player)
                     },
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
@@ -192,9 +198,9 @@ private fun VotingContent(
 
                 Text(
                     text = when (category) {
-                        VoteCategory.MVP -> "O melhor jogador da partida"
-                        VoteCategory.BEST_GOALKEEPER -> "Quem fechou o gol?"
-                        VoteCategory.WORST -> "Quem não jogou nada hoje?"
+                        VoteCategory.MVP -> stringResource(R.string.mvp_best_player_desc)
+                        VoteCategory.BEST_GOALKEEPER -> stringResource(R.string.mvp_goalkeeper_desc)
+                        VoteCategory.WORST -> stringResource(R.string.mvp_worst_desc)
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -252,10 +258,18 @@ private fun CandidateCard(
             verticalArrangement = Arrangement.Center
         ) {
             // Avatar
-            CachedProfileImage(
-                photoUrl = candidate.userPhoto,
-                userName = candidate.getDisplayName(),
-                size = 80.dp
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(candidate.userPhoto)
+                    .crossfade(true)
+                    .placeholder(R.drawable.ic_person)
+                    .error(R.drawable.ic_person)
+                    .build(),
+                contentDescription = stringResource(R.string.player_photo, candidate.getDisplayName()),
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -280,7 +294,9 @@ private fun CandidateCard(
             }
 
             Text(
-                text = if (posEnum == PlayerPosition.GOALKEEPER) "Goleiro" else "Linha",
+                text = stringResource(
+                    if (posEnum == PlayerPosition.GOALKEEPER) R.string.goalkeeper else R.string.field_player
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -317,7 +333,7 @@ private fun FinishedContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Voto Registrado!",
+                text = stringResource(R.string.mvp_vote_registered),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -333,7 +349,7 @@ private fun FinishedContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Você já votou!",
+                text = stringResource(R.string.mvp_already_voted),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -343,7 +359,7 @@ private fun FinishedContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Aguarde todos os jogadores votarem",
+            text = stringResource(R.string.mvp_wait_all_votes),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -365,7 +381,7 @@ private fun FinishedContent(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Finalizar Votação (Owner)")
+                Text(stringResource(R.string.mvp_finish_voting_owner))
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -375,58 +391,48 @@ private fun FinishedContent(
             onClick = onCloseClick,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Fechar")
+            Text(stringResource(R.string.close))
         }
     }
 }
 
 /**
- * Conteúdo de erro
+ * Estado de loading com Shimmer
  */
 @Composable
-private fun ErrorContent(
-    message: String,
-    onCloseClick: () -> Unit
-) {
+private fun MVPVoteLoadingState() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            imageVector = Icons.Default.ErrorOutline,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Erro",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+        // Header shimmer
+        ShimmerBox(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+            cornerRadius = 16.dp
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Button(
-            onClick = onCloseClick,
-            modifier = Modifier.fillMaxWidth()
+        // Grid de shimmers para os cards de candidatos
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Fechar")
+            items(6) {
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(0.85f),
+                    cornerRadius = 16.dp
+                )
+            }
         }
     }
 }

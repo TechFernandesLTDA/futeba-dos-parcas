@@ -276,6 +276,15 @@ data class GameConfirmation(
     @set:PropertyName("is_worst_player")
     var isWorstPlayer: Boolean = false
 ) {
+    // Validações anti-cheat no momento da criação/atualização
+    init {
+        require(goals >= 0) { "Goals cannot be negative" }
+        require(assists >= 0) { "Assists cannot be negative" }
+        require(saves >= 0) { "Saves cannot be negative" }
+        require(yellowCards >= 0) { "Yellow cards cannot be negative" }
+        require(redCards >= 0) { "Red cards cannot be negative" }
+    }
+
     constructor() : this(id = "")
 
     @Exclude

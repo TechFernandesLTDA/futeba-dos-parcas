@@ -8,12 +8,15 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.data.model.User
-import com.futebadosparcas.data.model.UserRole
+import com.futebadosparcas.R
+import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.domain.model.UserRole
 import com.futebadosparcas.ui.components.cards.UserCard
 import com.futebadosparcas.ui.components.cards.UserCardMenuItem
 import com.futebadosparcas.ui.components.dialogs.ConfirmationDialog
@@ -44,14 +47,18 @@ fun UserManagementScreen(
     if (showRoleChangeDialog && selectedUser != null && selectedNewRole != null) {
         ConfirmationDialog(
             visible = true,
-            title = "Alterar Permissão",
-            message = "Tem certeza que deseja alterar o nível de acesso de ${selectedUser!!.getDisplayName()} para ${selectedNewRole!!.displayName}?",
-            confirmText = "Confirmar",
-            dismissText = "Cancelar",
+            title = stringResource(R.string.admin_change_permission),
+            message = stringResource(
+                R.string.admin_confirm_permission,
+                selectedUser!!.getDisplayName(),
+                selectedNewRole!!.displayName
+            ),
+            confirmText = stringResource(R.string.admin_confirm),
+            dismissText = stringResource(R.string.cancel),
             type = ConfirmationDialogType.WARNING,
             icon = Icons.Default.Security,
             onConfirm = {
-                viewModel.updateUserRole(selectedUser!!, selectedNewRole!!)
+                viewModel.updateUserRole(selectedUser!!, selectedNewRole!!.name)
                 showRoleChangeDialog = false
                 selectedUser = null
                 selectedNewRole = null
@@ -128,10 +135,10 @@ private fun UserManagementTopBar(
     onNavigateBack: () -> Unit
 ) {
     TopAppBar(
-        title = { Text("Gerenciar Usuários") },
+        title = { Text(stringResource(R.string.admin_manage_users)) },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -150,14 +157,14 @@ private fun SearchField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier,
-        placeholder = { Text("Buscar por nome ou email") },
+        placeholder = { Text(stringResource(R.string.admin_search_hint)) },
         leadingIcon = {
             Icon(Icons.Default.Search, contentDescription = null)
         },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Close, contentDescription = "Limpar")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.admin_clear))
                 }
             }
         },
@@ -200,7 +207,7 @@ private fun UserManagementCard(
                 val (icon, _) = getRoleIconAndColor(role)
                 add(
                     UserCardMenuItem(
-                        label = "Alterar para ${role.displayName}",
+                        label = stringResource(R.string.admin_change_permission) + " ${role.displayName}",
                         icon = icon,
                         isDestructive = false,
                         onClick = { onRoleChangeRequested(user, role) }
@@ -230,7 +237,7 @@ private fun EmptySearchResults() {
             .fillMaxSize()
             .padding(32.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
             imageVector = Icons.Default.SearchOff,
@@ -242,7 +249,7 @@ private fun EmptySearchResults() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Nenhum usuário encontrado",
+            text = stringResource(R.string.admin_no_users),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -250,7 +257,7 @@ private fun EmptySearchResults() {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Tente buscar por outro nome ou email",
+            text = stringResource(R.string.admin_try_search),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )

@@ -5,8 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.AppNotification
 import com.futebadosparcas.data.model.NotificationType
 import com.futebadosparcas.data.repository.GameSummonRepository
-import com.futebadosparcas.data.repository.InviteRepository
-import com.futebadosparcas.data.repository.NotificationRepository
+import com.futebadosparcas.domain.repository.InviteRepository
+import com.futebadosparcas.domain.repository.NotificationRepository
+import com.futebadosparcas.util.toAndroidAppNotifications
+import com.futebadosparcas.util.toAndroidNotificationType
+import com.futebadosparcas.util.toKmpNotificationType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,8 +42,9 @@ class NotificationsViewModel @Inject constructor(
 
     private fun observeNotifications() {
         notificationRepository.getMyNotificationsFlow()
-            .onEach { notifications ->
-                val sortedNotifications = sortNotifications(notifications)
+            .onEach { kmpNotifications ->
+                val androidNotifications = kmpNotifications.toAndroidAppNotifications()
+                val sortedNotifications = sortNotifications(androidNotifications)
                 _uiState.value = if (sortedNotifications.isEmpty()) {
                     NotificationsUiState.Empty
                 } else {
@@ -71,8 +75,9 @@ class NotificationsViewModel @Inject constructor(
             val result = notificationRepository.getMyNotifications()
 
             result.fold(
-                onSuccess = { notifications ->
-                    val sortedNotifications = sortNotifications(notifications)
+                onSuccess = { kmpNotifications ->
+                    val androidNotifications = kmpNotifications.toAndroidAppNotifications()
+                    val sortedNotifications = sortNotifications(androidNotifications)
                     _uiState.value = if (sortedNotifications.isEmpty()) {
                         NotificationsUiState.Empty
                     } else {
@@ -226,11 +231,12 @@ class NotificationsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = NotificationsUiState.Loading
 
-            val result = notificationRepository.getNotificationsByType(type)
+            val result = notificationRepository.getNotificationsByType(type.toKmpNotificationType())
 
             result.fold(
-                onSuccess = { notifications ->
-                    val sortedNotifications = sortNotifications(notifications)
+                onSuccess = { kmpNotifications ->
+                    val androidNotifications = kmpNotifications.toAndroidAppNotifications()
+                    val sortedNotifications = sortNotifications(androidNotifications)
                     _uiState.value = if (sortedNotifications.isEmpty()) {
                         NotificationsUiState.Empty
                     } else {

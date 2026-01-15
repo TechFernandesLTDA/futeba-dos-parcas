@@ -2,8 +2,10 @@ package com.futebadosparcas.ui.statistics
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.repository.IStatisticsRepository
+import com.futebadosparcas.domain.repository.StatisticsRepository
+import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.util.toDataModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,12 +15,16 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
-    private val statisticsRepository: IStatisticsRepository,
+    private val statisticsRepository: StatisticsRepository,
     private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<StatisticsUiState>(StatisticsUiState.Loading)
     val uiState: StateFlow<StatisticsUiState> = _uiState
+
+    init {
+        loadStatistics()
+    }
 
     fun loadStatistics() {
         viewModelScope.launch {
@@ -48,7 +54,7 @@ class StatisticsViewModel @Inject constructor(
                 val userMap = userRepository.getUsersByIds(allUserIds).getOrNull()?.associateBy { it.id } ?: emptyMap()
 
                 val combined = CombinedStatistics(
-                    myStats = myStats,
+                    myStats = myStats.toDataModel(myStats.userId),
                     topScorers = topScorers.mapIndexed { index, stats ->
                         PlayerRankingItem(
                             rank = index + 1,
@@ -79,11 +85,11 @@ class StatisticsViewModel @Inject constructor(
                         PlayerRankingItem(
                             rank = index + 1,
                             playerName = userMap[stats.id]?.name ?: "Jogador",
-                            value = stats.bestPlayerCount.toLong(),
+                            value = stats.mvpCount.toLong(),
                             photoUrl = userMap[stats.id]?.photoUrl,
                             userId = stats.id,
                             gamesPlayed = stats.totalGames,
-                            average = if (stats.totalGames > 0) stats.bestPlayerCount.toDouble() / stats.totalGames else 0.0,
+                            average = if (stats.totalGames > 0) stats.mvpCount.toDouble() / stats.totalGames else 0.0,
                             nickname = userMap[stats.id]?.nickname,
                             level = userMap[stats.id]?.level ?: 0
                         )

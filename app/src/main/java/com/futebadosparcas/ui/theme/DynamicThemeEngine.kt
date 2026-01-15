@@ -6,7 +6,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
-import com.futebadosparcas.data.model.AppThemeConfig
+import com.futebadosparcas.domain.model.AppThemeConfig
 
 object DynamicThemeEngine {
 

@@ -17,10 +17,10 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.ui.components.dialogs.ConfirmationDialog
@@ -100,7 +100,7 @@ fun ManageLocationsScreen(
                             onDismissRequest = { expanded = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Popular Banco de Dados") },
+                                text = { Text(stringResource(R.string.locations_populate_db)) },
                                 onClick = {
                                     expanded = false
                                     showSeedDialog = true
@@ -111,7 +111,7 @@ fun ManageLocationsScreen(
                             )
 
                             DropdownMenuItem(
-                                text = { Text("Remover Duplicatas") },
+                                text = { Text(stringResource(R.string.locations_remove_duplicates)) },
                                 onClick = {
                                     expanded = false
                                     showDeduplicateDialog = true
@@ -367,7 +367,7 @@ private fun LocationCard(
                     ) {
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription = "Editar",
+                            contentDescription = stringResource(R.string.locations_edit),
                             modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -379,7 +379,7 @@ private fun LocationCard(
                     ) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "Deletar",
+                            contentDescription = stringResource(R.string.locations_delete),
                             modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.error
                         )
@@ -392,7 +392,7 @@ private fun LocationCard(
                 HorizontalDivider()
 
                 Text(
-                    text = "Campos (${locationWithFields.fields.size})",
+                    text = stringResource(R.string.locations_fields_count, locationWithFields.fields.size),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -410,7 +410,7 @@ private fun LocationCard(
                 }
             } else {
                 Text(
-                    text = "Nenhum campo",
+                    text = stringResource(R.string.locations_no_fields),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
@@ -462,7 +462,7 @@ private fun FieldRow(
         ) {
             Icon(
                 Icons.Default.Close,
-                contentDescription = "Deletar campo",
+                contentDescription = stringResource(R.string.locations_delete_field),
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.error
             )
@@ -529,9 +529,9 @@ private fun DeleteLocationDialog(
 ) {
     ConfirmationDialog(
         visible = true,
-        title = "Deletar Local",
-        message = "Tem certeza que deseja deletar \"$locationName\" e todos seus campos?",
-        confirmText = "Deletar",
+        title = stringResource(R.string.locations_delete_location_title),
+        message = stringResource(R.string.locations_delete_location_message, locationName),
+        confirmText = stringResource(R.string.locations_delete),
         type = ConfirmationDialogType.DESTRUCTIVE,
         icon = Icons.Default.Delete,
         onConfirm = onConfirm,
@@ -547,9 +547,9 @@ private fun DeleteFieldDialog(
 ) {
     ConfirmationDialog(
         visible = true,
-        title = "Deletar Campo",
-        message = "Tem certeza que deseja deletar \"$fieldName\"?",
-        confirmText = "Deletar",
+        title = stringResource(R.string.locations_delete_field_title),
+        message = stringResource(R.string.locations_delete_field_message, fieldName),
+        confirmText = stringResource(R.string.locations_delete),
         type = ConfirmationDialogType.DESTRUCTIVE,
         icon = Icons.Default.Delete,
         onConfirm = onConfirm,
@@ -564,9 +564,9 @@ private fun SeedDatabaseDialog(
 ) {
     ConfirmationDialog(
         visible = true,
-        title = "Popular Banco de Dados",
-        message = "Deseja importar/atualizar os 52 locais padrão? Isso pode levar alguns segundos.",
-        confirmText = "Sim",
+        title = stringResource(R.string.locations_populate_db),
+        message = stringResource(R.string.locations_populate_db_message),
+        confirmText = stringResource(R.string.action_yes),
         type = ConfirmationDialogType.NORMAL,
         icon = Icons.Default.CloudDownload,
         onConfirm = onConfirm,
@@ -581,9 +581,9 @@ private fun DeduplicateDialog(
 ) {
     ConfirmationDialog(
         visible = true,
-        title = "Remover Duplicatas",
-        message = "Deseja analisar e remover locais duplicados? Será mantido o registro com dados mais completos.",
-        confirmText = "Sim",
+        title = stringResource(R.string.locations_remove_duplicates),
+        message = stringResource(R.string.locations_remove_duplicates_message),
+        confirmText = stringResource(R.string.action_yes),
         type = ConfirmationDialogType.WARNING,
         icon = Icons.Default.CleaningServices,
         onConfirm = onConfirm,

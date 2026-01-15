@@ -1,0 +1,7 @@
+-- Migration to Version 3 (Add role field for permissions)
+--
+-- CRITICAL FIX: Adiciona campo 'role' para suportar permissões de ADMIN e FIELD_OWNER.
+-- Sem este campo, todos os usuários são tratados como PLAYER no cache local,
+-- fazendo com que menus administrativos não apareçam mesmo quando o usuário é admin no Firestore.
+
+ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'PLAYER';

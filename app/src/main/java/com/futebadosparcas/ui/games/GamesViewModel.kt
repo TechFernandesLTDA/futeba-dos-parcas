@@ -29,7 +29,7 @@ data class GameWithConfirmations(
 @HiltViewModel
 class GamesViewModel @Inject constructor(
     private val gameRepository: GameRepository,
-    private val notificationRepository: com.futebadosparcas.data.repository.NotificationRepository,
+    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 

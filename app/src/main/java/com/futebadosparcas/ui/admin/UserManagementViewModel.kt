@@ -2,10 +2,8 @@ package com.futebadosparcas.ui.admin
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.User
-import com.futebadosparcas.data.model.UserRole
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.UserRepository
-import com.futebadosparcas.util.toDataModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,12 +27,10 @@ class UserManagementViewModel @Inject constructor(
     fun loadUsers() {
         viewModelScope.launch {
             _uiState.value = UserManagementUiState.Loading
-            // Admin carrega todos os usuários usando a versão sem paginação
-            @Suppress("DEPRECATION")
-            userRepository.getAllUsersUnpaginated().fold(
-                onSuccess = { domainUsers ->
-                    allUsers = domainUsers.map { it.toDataModel() }
-                    _uiState.value = UserManagementUiState.Success(allUsers)
+            userRepository.getAllUsers().fold(
+                onSuccess = { users ->
+                    allUsers = users
+                    _uiState.value = UserManagementUiState.Success(users)
                 },
                 onFailure = { error ->
                     _uiState.value = UserManagementUiState.Error(error.message ?: "Erro ao carregar usuários")
@@ -55,9 +51,9 @@ class UserManagementViewModel @Inject constructor(
         _uiState.value = UserManagementUiState.Success(filtered)
     }
 
-    fun updateUserRole(user: User, newRole: UserRole) {
+    fun updateUserRole(user: User, newRole: String) {
         viewModelScope.launch {
-            userRepository.updateUserRole(user.id, newRole.name).fold(
+            userRepository.updateUserRole(user.id, newRole).fold(
                 onSuccess = {
                     loadUsers() // Reload to reflect changes
                 },

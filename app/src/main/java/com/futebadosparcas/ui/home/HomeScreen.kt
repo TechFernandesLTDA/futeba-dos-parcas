@@ -16,17 +16,30 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.R
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.ui.components.PlayerCardShareHelper
+import com.futebadosparcas.ui.players.PlayerCardContent
+import com.futebadosparcas.data.model.Activity
+import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.ui.games.GameWithConfirmations
+import com.futebadosparcas.domain.model.UserStreak
+import com.futebadosparcas.domain.model.WeeklyChallenge
+import com.futebadosparcas.domain.model.UserChallengeProgress
+import com.futebadosparcas.domain.model.UserBadge
 import com.futebadosparcas.ui.components.*
 import com.futebadosparcas.ui.home.components.*
 import com.futebadosparcas.util.HapticManager
@@ -52,15 +65,18 @@ import com.futebadosparcas.util.HapticManager
  * - Estados de loading, success, error
  * - Navegação via callbacks
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
     onGameClick: (gameId: String) -> Unit = {},
-    onProfileClick: () -> Unit = {},
+    onConfirmGame: (gameId: String) -> Unit = {},
+    onProfileClick: () -> Unit = {},  // Mantido para compatibilidade, mas não usado para foto
     onSettingsClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
     onGroupsClick: () -> Unit = {},
     onMapClick: () -> Unit = {},
+    onLevelJourneyClick: () -> Unit = {},  // Navegação para Rumo ao Estrelato
     hapticManager: HapticManager? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -68,37 +84,82 @@ fun HomeScreen(
     val unreadCount by viewModel.unreadCount.collectAsStateWithLifecycle()
     val loadingState by viewModel.loadingState.collectAsStateWithLifecycle()
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        when (uiState) {
-            is HomeUiState.Loading -> {
-                HomeLoadingState()
-            }
-            is HomeUiState.Success -> {
-                val state = uiState as HomeUiState.Success
-                HomeSuccessContent(
-                    state = state,
-                    isOnline = isOnline,
-                    unreadCount = unreadCount,
-                    viewModel = viewModel,
-                    hapticManager = hapticManager,
-                    onGameClick = onGameClick,
-                    onProfileClick = onProfileClick,
-                    onSettingsClick = onSettingsClick,
-                    onNotificationsClick = onNotificationsClick,
-                    onGroupsClick = onGroupsClick,
-                    onMapClick = onMapClick
-                )
-            }
-            is HomeUiState.Error -> {
-                val state = uiState as HomeUiState.Error
-                HomeErrorState(
-                    message = state.message,
-                    onRetry = { viewModel.loadHomeData(forceRetry = true) }
-                )
+    // Estado para controlar exibição do PlayerCard BottomSheet
+    var showPlayerCard by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val context = LocalContext.current
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            FutebaTopBar(
+                unreadCount = unreadCount,
+                onNavigateNotifications = onNotificationsClick,
+                onNavigateGroups = onGroupsClick,
+                onNavigateMap = onMapClick
+            )
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0) // Remove padding padrão, vamos gerenciar manualmente
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            when (uiState) {
+                is HomeUiState.Loading -> {
+                    HomeLoadingState()
+                }
+                is HomeUiState.Success -> {
+                    val state = uiState as HomeUiState.Success
+                    HomeSuccessContent(
+                        state = state,
+                        isOnline = isOnline,
+                        unreadCount = unreadCount,
+                        viewModel = viewModel,
+                        hapticManager = hapticManager,
+                        onGameClick = onGameClick,
+                        onConfirmGame = onConfirmGame,
+                        onShowPlayerCard = { showPlayerCard = true },
+                        onSettingsClick = onSettingsClick,
+                        onNotificationsClick = onNotificationsClick,
+                        onGroupsClick = onGroupsClick,
+                        onMapClick = onMapClick,
+                        onLevelJourneyClick = onLevelJourneyClick
+                    )
+
+                    // PlayerCard BottomSheet
+                    if (showPlayerCard) {
+                        ModalBottomSheet(
+                            onDismissRequest = { showPlayerCard = false },
+                            sheetState = sheetState,
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ) {
+                            PlayerCardContent(
+                                user = state.user,
+                                stats = state.statistics,
+                                onClose = { showPlayerCard = false },
+                                onShare = {
+                                    PlayerCardShareHelper.shareAsImage(
+                                        context = context,
+                                        user = state.user,
+                                        stats = state.statistics,
+                                        generatedBy = state.user.getDisplayName()
+                                    )
+                                },
+                                modifier = Modifier.padding(bottom = 32.dp)
+                            )
+                        }
+                    }
+                }
+                is HomeUiState.Error -> {
+                    val state = uiState as HomeUiState.Error
+                    HomeErrorState(
+                        message = state.message,
+                        onRetry = { viewModel.loadHomeData(forceRetry = true) }
+                    )
+                }
             }
         }
     }
@@ -106,6 +167,11 @@ fun HomeScreen(
 
 /**
  * Conteúdo da tela quando sucesso
+ *
+ * Otimizado para scroll suave:
+ * - Keys estáveis em todos os itens
+ * - Valores estabilizados com remember
+ * - Evita recomposições durante scroll
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -116,98 +182,65 @@ private fun HomeSuccessContent(
     viewModel: HomeViewModel,
     hapticManager: HapticManager?,
     onGameClick: (gameId: String) -> Unit,
-    onProfileClick: () -> Unit,
+    onConfirmGame: (gameId: String) -> Unit,
+    onShowPlayerCard: () -> Unit,
     onSettingsClick: () -> Unit,
     onNotificationsClick: () -> Unit,
     onGroupsClick: () -> Unit,
-    onMapClick: () -> Unit
+    onMapClick: () -> Unit,
+    onLevelJourneyClick: () -> Unit
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
 
-    // 🔧 OTIMIZADO: Removed unnecessary remember() - StateFlow already handles memoization
-    // Using state.games directly is efficient since state is from collectAsStateWithLifecycle
+    // Usar remember para evitar recomposições desnecessárias
+    val games = remember(state.games) { state.games }
+    val activities = remember(state.activities) { state.activities }
+    val publicGames = remember(state.publicGames) { state.publicGames }
+    val challenges = remember(state.challenges) { state.challenges }
+    val recentBadges = remember(state.recentBadges) { state.recentBadges }
+    val user = remember(state.user.id) { state.user }
+    val statistics = remember(state.statistics) { state.statistics }
+    val gamificationSummary = remember(state.gamificationSummary) { state.gamificationSummary }
+    val streak = remember(state.streak) { state.streak }
 
     LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding(),
+            .fillMaxSize(),
         verticalArrangement = Arrangement.Top,
-        contentPadding = PaddingValues(bottom = 16.dp)
+        contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp) // Padding reduzido
     ) {
-        // Top Bar com notificações
-        item {
-            FutebaTopBar(
-                unreadCount = unreadCount,
-                onNavigateNotifications = onNotificationsClick,
-                onNavigateGroups = onGroupsClick,
-                onNavigateMap = onMapClick
-            )
-        }
-
         // Status de Sincronização
-        item {
+        item(key = "sync_status") {
             SyncStatusBanner(isConnected = isOnline)
         }
 
         // Header Expressivo com Perfil
-        item {
+        item(key = "header") {
             ExpressiveHubHeader(
-                user = state.user,
-                summary = state.gamificationSummary,
-                statistics = state.statistics,
+                user = user,
+                summary = gamificationSummary,
+                statistics = statistics,
                 hapticManager = hapticManager,
-                onProfileClick = onProfileClick
+                onProfileClick = onShowPlayerCard,
+                onLevelClick = onLevelJourneyClick  // Abre Rumo ao Estrelato ao clicar no nível
             )
         }
 
         // Streak Widget
-        item {
-            if (state.streak != null) {
-                StreakWidget(streak = state.streak)
+        if (streak != null) {
+            item(key = "streak") {
+                StreakWidget(streak = streak)
             }
         }
 
-        // Jogos Próximos
-        if (state.games.isNotEmpty()) {
-            item(key = "games_header") {
-                Text(
-                    text = stringResource(R.string.upcoming_games),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+        // Jogos Próximos - Nova seção com status de confirmação
+        if (games.isNotEmpty()) {
+            item(key = "upcoming_games") {
+                UpcomingGamesSection(
+                    games = games,
+                    onGameClick = onGameClick,
+                    onConfirmClick = onConfirmGame
                 )
-            }
-
-            if (state.isGridView) {
-                // Grid view - usando FlowRow para evitar LazyVerticalGrid aninhado
-                item(key = "games_grid") {
-                    FlowRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        state.games.take(6).forEach { game -> // Limitar a 6 jogos no grid
-                            UpcomingGameCard(
-                                game = game,
-                                onClick = { onGameClick(game.id) },
-                                modifier = Modifier.fillMaxWidth(0.48f)
-                            )
-                        }
-                    }
-                }
-            } else {
-                // List view
-                items(state.games, key = { it.id }) { game ->
-                    UpcomingGameCard(
-                        game = game,
-                        onClick = { onGameClick(game.id) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
             }
         }
 
@@ -243,10 +276,10 @@ private fun HomeSuccessContent(
         }
 
         // Statistics
-        if (state.statistics != null) {
+        if (statistics != null) {
             item(key = "statistics") {
                 ExpandableStatsSection(
-                    statistics = state.statistics,
+                    statistics = statistics,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
@@ -270,59 +303,6 @@ private fun HomeSuccessContent(
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
-        }
-    }
-}
-
-/**
- * Card de jogo próximo - exibível em grid ou lista
- */
-@Composable
-private fun UpcomingGameCard(
-    game: Game,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .fillMaxWidth()
-            .heightIn(min = 100.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            // Local e Data
-            Text(
-                text = game.locationName,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-            )
-
-            Text(
-                text = "${game.date} às ${game.time}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-            )
-
-            // Confirmações (Placeholder)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Confirmados: ${game.playersCount}/${game.maxPlayers}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1
-            )
         }
     }
 }
@@ -377,7 +357,7 @@ private fun HomeErrorState(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = stringResource(R.string.error),
+            text = stringResource(R.string.error_default),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -391,15 +371,8 @@ private fun HomeErrorState(
         )
 
         Button(onClick = onRetry) {
-            Text(stringResource(R.string.retry))
+            Text(stringResource(R.string.action_retry))
         }
     }
 }
 
-/**
- * Formata data/hora do jogo
- */
-private fun formatGameDateTime(timestamp: Long): String {
-    val sdf = java.text.SimpleDateFormat("dd/MM HH:mm", java.util.Locale.getDefault())
-    return sdf.format(java.util.Date(timestamp))
-}

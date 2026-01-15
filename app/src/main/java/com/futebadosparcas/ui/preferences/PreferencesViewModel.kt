@@ -32,8 +32,11 @@ class PreferencesViewModel @Inject constructor(
 
     fun setProfileVisibility(isSearchable: Boolean) {
         viewModelScope.launch {
-            userRepository.updateProfileVisibility(isSearchable)
-            _isSearchable.value = isSearchable
+            val userId = userRepository.getCurrentUserId()
+            if (userId != null) {
+                userRepository.updateProfileVisibility(userId, isSearchable)
+                _isSearchable.value = isSearchable
+            }
         }
     }
 }

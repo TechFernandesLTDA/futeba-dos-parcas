@@ -123,6 +123,9 @@ dependencies {
     implementation("com.google.accompanist:accompanist-themeadapter-material3:0.36.0") // Bridge M3 XML Theme to Compose
     implementation("com.google.accompanist:accompanist-swiperefresh:0.36.0") // Pull-to-refresh para Compose
 
+    // Compose Multiplatform Resources
+    implementation(project(":shared"))
+
 
 
     // Architecture Components
@@ -183,6 +186,7 @@ dependencies {
     implementation("com.patrykandpatrick.vico:core:1.14.0")
 
     // Date/Time
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0") // For shared module interop
     // implementation("com.jakewharton.threetenabp:threetenabp:1.4.7") // Migrated to java.time
 
     // Security - Encrypted SharedPreferences

@@ -1,6 +1,5 @@
 package com.futebadosparcas.ui.components.lists
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,6 +26,7 @@ import com.futebadosparcas.data.model.LeagueDivision
 import com.futebadosparcas.data.model.RankingEntryV2
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.util.ContrastHelper
 
 /**
  * Lista moderna de ranking com sticky headers por divisão e animações.
@@ -200,36 +199,10 @@ fun RankingItem(
     modifier: Modifier = Modifier,
     isTopThree: Boolean = false
 ) {
-    // Animação de entrada
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        visible = true
-    }
-
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 300),
-        label = "rank_item_alpha"
-    )
-
-    val scale by animateFloatAsState(
-        targetValue = if (visible) 1f else 0.8f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "rank_item_scale"
-    )
-
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .graphicsLayer {
-                this.alpha = alpha
-                scaleX = scale
-                scaleY = scale
-            }
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(
@@ -339,7 +312,7 @@ private fun RankBadge(
                 colors = listOf(GamificationColors.Gold, GamificationColors.GoldLight)
             )
             2 -> Brush.linearGradient(
-                colors = listOf(GamificationColors.Silver, Color.White)
+                colors = listOf(GamificationColors.Silver, MaterialTheme.colorScheme.surface)
             )
             3 -> Brush.linearGradient(
                 colors = listOf(GamificationColors.Bronze, GamificationColors.BronzeLight)
@@ -350,6 +323,13 @@ private fun RankBadge(
                     MaterialTheme.colorScheme.primaryContainer
                 )
             )
+        }
+
+        val medalColor = when (rank) {
+            1 -> GamificationColors.Gold
+            2 -> GamificationColors.Silver
+            3 -> GamificationColors.Bronze
+            else -> MaterialTheme.colorScheme.primary
         }
 
         Box(
@@ -363,7 +343,7 @@ private fun RankBadge(
                 text = rank.toString(),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color.White
+                color = ContrastHelper.getContrastingTextColor(medalColor)
             )
         }
     } else {

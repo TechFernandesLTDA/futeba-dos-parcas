@@ -5,8 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.GroupInvite
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.repository.GroupRepository
-import com.futebadosparcas.data.repository.InviteRepository
+import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.util.toAndroidGroupInvites
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,7 +50,8 @@ class InviteViewModel @Inject constructor(
 
     private fun observePendingInvites() {
         inviteRepository.getMyPendingInvitesFlow()
-            .onEach { invites ->
+            .onEach { kmpInvites ->
+                val invites = kmpInvites.toAndroidGroupInvites()
                 _pendingCount.value = invites.size
                 _pendingInvitesState.value = if (invites.isEmpty()) {
                     PendingInvitesState.Empty
@@ -72,7 +74,8 @@ class InviteViewModel @Inject constructor(
             val result = inviteRepository.getMyPendingInvites()
 
             result.fold(
-                onSuccess = { invites ->
+                onSuccess = { kmpInvites ->
+                    val invites = kmpInvites.toAndroidGroupInvites()
                     _pendingCount.value = invites.size
                     _pendingInvitesState.value = if (invites.isEmpty()) {
                         PendingInvitesState.Empty
@@ -207,11 +210,12 @@ class InviteViewModel @Inject constructor(
     fun loadGroupPendingInvites(groupId: String) {
         viewModelScope.launch {
             _groupPendingInvitesState.value = GroupPendingInvitesState.Loading
-            
+
             val result = inviteRepository.getGroupPendingInvites(groupId)
-            
+
             result.fold(
-                onSuccess = { invites ->
+                onSuccess = { kmpInvites ->
+                    val invites = kmpInvites.toAndroidGroupInvites()
                     _groupPendingInvitesState.value = GroupPendingInvitesState.Success(invites)
                 },
                 onFailure = { error ->

@@ -5,7 +5,7 @@ import app.cash.turbine.test
 import com.futebadosparcas.data.model.User
 import com.futebadosparcas.data.model.UserStatistics
 import com.futebadosparcas.data.repository.IStatisticsRepository
-import com.futebadosparcas.data.repository.UserRepository
+import com.futebadosparcas.domain.repository.UserRepository
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -377,6 +377,6 @@ class StatisticsViewModelTest {
         photoUrl = "",
         level = level,
         experiencePoints = 1000L,
-        createdAt = System.currentTimeMillis()
+        createdAt = Date()
     )
 }

@@ -20,10 +20,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.data.model.UserBadge
+import com.futebadosparcas.R
+import com.futebadosparcas.domain.model.UserBadge
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
@@ -43,7 +45,7 @@ fun RecentBadgesCarousel(
 
     Column(modifier = modifier) {
         Text(
-            text = "Conquistas Recentes",
+            text = stringResource(R.string.recent_badges_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = spacing.contentPaddingHorizontal, vertical = spacing.sm)
@@ -64,7 +66,7 @@ fun RecentBadgesCarousel(
                 verticalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing),
                 modifier = Modifier.padding(bottom = spacing.sm)
             ) {
-                items(badges.take(columns)) { badge ->
+                items(badges.take(columns), key = { it.id.ifEmpty { "${it.badgeId}_${it.unlockedAt}" } }) { badge ->
                     BadgeCard(badge = badge, size = adaptiveValue(
                         compact = 80.dp,
                         medium = 96.dp,
@@ -78,7 +80,7 @@ fun RecentBadgesCarousel(
                 contentPadding = PaddingValues(horizontal = spacing.contentPaddingHorizontal),
                 horizontalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing)
             ) {
-                items(badges) { badge ->
+                items(badges, key = { it.id.ifEmpty { "${it.badgeId}_${it.unlockedAt}" } }) { badge ->
                     BadgeCard(badge = badge, size = 80.dp)
                 }
             }
