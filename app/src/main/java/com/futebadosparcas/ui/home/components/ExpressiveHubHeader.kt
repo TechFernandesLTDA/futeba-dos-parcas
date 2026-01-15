@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.home.GamificationSummary
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.HapticManager
@@ -114,14 +115,10 @@ private fun CompactHeaderLayout(
                 onProfileClick()
             }
         ) {
-            AsyncImage(
-                model = user.photoUrl ?: com.futebadosparcas.R.drawable.ic_player_placeholder,
-                contentDescription = "Foto do usuário",
-                modifier = Modifier
-                    .size(photoSize)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface),
-                contentScale = ContentScale.Crop
+            CachedProfileImage(
+                photoUrl = user.photoUrl,
+                userName = user.name,
+                size = photoSize
             )
 
             // Brasão de Nível
@@ -226,14 +223,10 @@ private fun ExpandedHeaderLayout(
                     onProfileClick()
                 }
             ) {
-                AsyncImage(
-                    model = user.photoUrl ?: com.futebadosparcas.R.drawable.ic_player_placeholder,
-                    contentDescription = "Foto do usuário",
-                    modifier = Modifier
-                        .size(photoSize)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surface),
-                    contentScale = ContentScale.Crop
+                CachedProfileImage(
+                    photoUrl = user.photoUrl,
+                    userName = user.name,
+                    size = photoSize
                 )
 
                 androidx.compose.foundation.Image(

@@ -33,6 +33,8 @@ import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.CashboxCategory
+import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.components.CachedAsyncImage
 import com.futebadosparcas.data.model.CashboxEntryType
 import com.futebadosparcas.data.model.Group
 import com.futebadosparcas.data.model.GroupMember
@@ -177,13 +179,10 @@ fun EditGroupDialog(
                         .clickable { showPhotoOptions = true },
                     contentAlignment = Alignment.Center
                 ) {
-                    AsyncImage(
-                        model = selectedPhotoUri ?: group.photoUrl,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
-                        placeholder = painterResource(R.drawable.ic_groups),
-                        error = painterResource(R.drawable.ic_groups)
+                    CachedProfileImage(
+                        photoUrl = selectedPhotoUri?.toString() ?: group.photoUrl,
+                        userName = group.name,
+                        size = 100.dp
                     )
                 }
                 TextButton(onClick = { showPhotoOptions = true }) {
@@ -347,12 +346,10 @@ fun TransferOwnershipDialog(
                             ListItem(
                                 headlineContent = { Text(member.getDisplayName()) },
                                 leadingContent = {
-                                    AsyncImage(
-                                        model = member.userPhoto,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(40.dp).clip(CircleShape),
-                                        placeholder = painterResource(R.drawable.ic_player_placeholder),
-                                        error = painterResource(R.drawable.ic_player_placeholder)
+                                    CachedProfileImage(
+                                        photoUrl = member.userPhoto,
+                                        userName = member.getDisplayName(),
+                                        size = 40.dp
                                     )
                                 },
                                 modifier = Modifier

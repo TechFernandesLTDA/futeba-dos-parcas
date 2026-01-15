@@ -245,20 +245,20 @@ private fun HomeSuccessContent(
         }
 
         // Activity Feed
-        if (activities.isNotEmpty()) {
+        if (state.activities.isNotEmpty()) {
             item(key = "activity_feed") {
                 ActivityFeedSection(
-                    activities = activities,
+                    activities = state.activities,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
         }
 
         // Public Games Suggestions
-        if (publicGames.isNotEmpty()) {
+        if (state.publicGames.isNotEmpty()) {
             item(key = "public_games") {
                 PublicGamesSuggestions(
-                    games = publicGames,
+                    games = state.publicGames,
                     onGameClick = { game -> onGameClick(game.id) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
@@ -266,10 +266,10 @@ private fun HomeSuccessContent(
         }
 
         // Challenges
-        if (challenges.isNotEmpty()) {
+        if (state.challenges.isNotEmpty()) {
             item(key = "challenges") {
                 ChallengesSection(
-                    challenges = challenges,
+                    challenges = state.challenges,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
@@ -296,10 +296,10 @@ private fun HomeSuccessContent(
         // }
 
         // Recent Badges
-        if (recentBadges.isNotEmpty()) {
+        if (state.recentBadges.isNotEmpty()) {
             item(key = "badges") {
                 RecentBadgesCarousel(
-                    badges = recentBadges,
+                    badges = state.recentBadges,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }

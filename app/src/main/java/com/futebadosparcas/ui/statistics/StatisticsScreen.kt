@@ -41,6 +41,7 @@ import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.util.LevelBadgeHelper
@@ -779,6 +780,13 @@ private fun RankingItem(
             }
 
             // Avatar do jogador
+            CachedProfileImage(
+                photoUrl = item.photoUrl,
+                userName = item.playerName,
+                size = 48.dp
+            )
+
+            // Badge de nível (now as sibling, not nested)
             Box(
                 modifier = Modifier.size(48.dp)
             ) {

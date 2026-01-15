@@ -22,6 +22,9 @@ import javax.inject.Singleton
 
 /**
  * Módulo Hilt para repositórios compartilhados (KMP).
+ *
+ * Configuração moderna com Kotlin Multiplatform, Jetpack Compose,
+ * e injeção de dependência centralizada.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -55,8 +58,13 @@ object RepositoryModule {
         firebaseDataSource: FirebaseDataSource,
         database: FutebaDatabase,
         preferencesService: PreferencesService
-    ): com.futebadosparcas.domain.repository.UserRepository {
-        return UserRepositoryImpl(firebaseDataSource, database, preferencesService)
+    ): UserRepository {
+        // Instancia o UserRepositoryImpl compartilhado (KMP) do módulo shared
+        return com.futebadosparcas.data.repository.UserRepositoryImpl(
+            firebaseDataSource,
+            database,
+            preferencesService
+        )
     }
 
     @Provides
