@@ -736,10 +736,14 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                         }
                     }
 
-                    // PAREDAO / CLEAN_SHEET - Goleiro sem sofrer gols
+                    // CLEAN_SHEET - Goleiro sem sofrer gols
                     if (opponentScore === 0) {
-                        awardFullBadge("PAREDAO");
                         awardFullBadge("CLEAN_SHEET");
+
+                        // PAREDAO - Clean sheet COM 5+ defesas (mais dificil)
+                        if (conf.saves >= 5) {
+                            awardFullBadge("PAREDAO");
+                        }
                     }
 
                     // DEFENSIVE_WALL - 10+ defesas

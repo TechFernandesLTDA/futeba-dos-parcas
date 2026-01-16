@@ -69,10 +69,11 @@ object BadgeDefinitions {
         BadgeDefinition(
             id = "paredao",
             name = "Paredao",
-            description = "Nao sofra gols como goleiro",
+            description = "Nao sofra gols E faca 5+ defesas como goleiro",
             emoji = "🧱",
             category = BadgeCategory.PERFORMANCE,
-            rarity = BadgeRarity.RARE
+            rarity = BadgeRarity.EPIC,  // Mais dificil que clean_sheet
+            requiredValue = 5
         ),
         BadgeDefinition(
             id = "defensive_wall",

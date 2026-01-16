@@ -2,16 +2,21 @@ package com.futebadosparcas.data
 
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.GameStatus
+import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.domain.repository.GameConfirmationRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
+import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val TAG = "GameConfirmationRepo"
 
 /**
  * Implementacao Android do GameConfirmationRepository (KMP).
@@ -39,6 +44,15 @@ class GameConfirmationRepositoryImpl @Inject constructor(
         position: String,
         isCasual: Boolean
     ): Result<GameConfirmation> {
+        // ========== VALIDACAO 0: Validar parametro position ==========
+        val validPositions = PlayerPosition.entries.map { it.name }
+        if (position !in validPositions) {
+            AppLogger.w(TAG, "Posicao invalida recebida: $position")
+            return Result.failure(
+                IllegalArgumentException("Posicao invalida: $position. Valores aceitos: $validPositions")
+            )
+        }
+
         // Buscar usuario atual para obter informacoes necessarias
         val currentUserResult = dataSource.getCurrentUser()
         if (currentUserResult.isFailure) {
@@ -102,18 +116,37 @@ class GameConfirmationRepositoryImpl @Inject constructor(
             }
         }
 
-        // ========== VALIDACAO 3: Verificar deadline (se definido) ==========
-        // O deadline eh verificado pela data/hora do jogo - nao pode confirmar apos inicio
-        try {
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-            val gameDateTime = dateFormat.parse("${game.date} ${game.time}")
-            if (gameDateTime != null && Date().after(gameDateTime)) {
-                return Result.failure(
-                    IllegalStateException("Nao eh possivel confirmar apos o inicio do jogo")
-                )
+        // ========== VALIDACAO 3: Verificar deadline (jogo ja iniciou?) ==========
+        // SEGURANCA: Validacao estrita - nao permite confirmacao apos inicio do jogo
+        val gameDateTime: Date? = try {
+            // Tentar parsear data/hora do jogo
+            if (!game.date.isNullOrBlank() && !game.time.isNullOrBlank()) {
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+                dateFormat.isLenient = false // Parsing estrito
+                dateFormat.parse("${game.date} ${game.time}")
+            } else if (game.dateTimeMillis != null && game.dateTimeMillis > 0) {
+                // Fallback para timestamp se disponivel
+                Date(game.dateTimeMillis)
+            } else {
+                null
             }
-        } catch (e: Exception) {
-            // Se nao conseguir parsear a data, deixar passar (melhor nao bloquear)
+        } catch (e: ParseException) {
+            // SEGURANCA: Logar tentativa de parsing com dados invalidos
+            AppLogger.w(TAG, "Falha ao parsear data/hora do jogo $gameId: date=${game.date}, time=${game.time}", e)
+            // Fallback para timestamp se disponivel
+            if (game.dateTimeMillis != null && game.dateTimeMillis > 0) {
+                Date(game.dateTimeMillis)
+            } else {
+                null
+            }
+        }
+
+        // Se conseguimos determinar a data/hora, verificar se jogo ja iniciou
+        if (gameDateTime != null && Date().after(gameDateTime)) {
+            AppLogger.w(TAG, "Tentativa de confirmacao apos inicio do jogo $gameId por usuario ${user.id}")
+            return Result.failure(
+                IllegalStateException("Nao eh possivel confirmar apos o inicio do jogo")
+            )
         }
 
         return dataSource.confirmPresence(
