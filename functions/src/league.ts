@@ -142,6 +142,8 @@ export function calculateLeaguePromotion(
 /**
  * Calcula o League Rating baseado nos últimos jogos.
  * Fórmula: 40% PPJ + 30% WR + 20% GD + 10% MVP
+ *
+ * O resultado é sempre bound entre 0.0 e 100.0 para garantir integridade.
  */
 export function calculateLeagueRating(recentGames: any[]): number {
     if (!recentGames || recentGames.length === 0) return 0;
@@ -163,7 +165,9 @@ export function calculateLeagueRating(recentGames: any[]): number {
     const mvpRate = recentGames.filter(g => g.was_mvp).length / gamesCount;
     const mvpScore = Math.min(mvpRate / 0.5, 1.0) * 100;
 
-    return (ppjScore * 0.4) + (winRate * 0.3) + (gdScore * 0.2) + (mvpScore * 0.1);
+    // Calcular e garantir bounds (0.0 - 100.0)
+    const rating = (ppjScore * 0.4) + (winRate * 0.3) + (gdScore * 0.2) + (mvpScore * 0.1);
+    return Math.max(0, Math.min(100, rating));
 }
 
 /**

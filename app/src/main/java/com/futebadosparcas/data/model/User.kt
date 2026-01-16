@@ -1,5 +1,7 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
@@ -123,6 +125,30 @@ data class User(
     @set:PropertyName("auto_rating_updated_at")
     var autoRatingUpdatedAt: Date? = null
 ) {
+    // Bloco de inicializacao para normalizar valores e garantir integridade
+    init {
+        // Normaliza ratings para o range válido (0.0 - 5.0)
+        strikerRating = strikerRating.coerceIn(ValidationHelper.RATING_MIN, ValidationHelper.RATING_MAX)
+        midRating = midRating.coerceIn(ValidationHelper.RATING_MIN, ValidationHelper.RATING_MAX)
+        defenderRating = defenderRating.coerceIn(ValidationHelper.RATING_MIN, ValidationHelper.RATING_MAX)
+        gkRating = gkRating.coerceIn(ValidationHelper.RATING_MIN, ValidationHelper.RATING_MAX)
+
+        // Normaliza auto-ratings para o range válido (0.0 - 5.0)
+        autoStrikerRating = autoStrikerRating.coerceIn(ValidationHelper.RATING_MIN, ValidationHelper.RATING_MAX)
+        autoMidRating = autoMidRating.coerceIn(ValidationHelper.RATING_MIN, ValidationHelper.RATING_MAX)
+        autoDefenderRating = autoDefenderRating.coerceIn(ValidationHelper.RATING_MIN, ValidationHelper.RATING_MAX)
+        autoGkRating = autoGkRating.coerceIn(ValidationHelper.RATING_MIN, ValidationHelper.RATING_MAX)
+
+        // Normaliza level para o range válido (0 - 10)
+        level = level.coerceIn(ValidationHelper.LEVEL_MIN, ValidationHelper.LEVEL_MAX)
+
+        // Garante que XP não seja negativo
+        experiencePoints = experiencePoints.coerceAtLeast(ValidationHelper.XP_MIN)
+
+        // Garante que amostras de auto-rating não seja negativo
+        autoRatingSamples = autoRatingSamples.coerceAtLeast(0)
+    }
+
     // Construtor vazio necessario para Firestore
     constructor() : this(id = "")
 
@@ -266,6 +292,89 @@ data class User(
 
         val confidence = getAutoRatingConfidence()
         return ((manual * (1.0 - confidence)) + (auto * confidence)).coerceIn(0.0, 5.0)
+    }
+
+    // ==================== VALIDAÇÃO ====================
+
+    /**
+     * Valida todos os campos do usuário antes de salvar.
+     *
+     * @param requireEmail Se true, email é obrigatório
+     * @param requireName Se true, nome é obrigatório
+     * @return Lista de erros de validação (vazia se tudo válido)
+     */
+    @Exclude
+    fun validate(requireEmail: Boolean = false, requireName: Boolean = true): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+
+        // Validação de nome
+        if (requireName) {
+            val nameResult = ValidationHelper.validateName(name, "nome")
+            if (nameResult is ValidationResult.Invalid) {
+                errors.add(nameResult)
+            }
+        }
+
+        // Validação de email (se fornecido ou obrigatório)
+        if (requireEmail || email.isNotBlank()) {
+            if (email.isNotBlank() && !ValidationHelper.isValidEmail(email)) {
+                errors.add(
+                    ValidationResult.Invalid(
+                        "email",
+                        "Formato de email inválido",
+                        com.futebadosparcas.domain.validation.ValidationErrorCode.INVALID_EMAIL
+                    )
+                )
+            } else if (requireEmail && email.isBlank()) {
+                errors.add(
+                    ValidationResult.Invalid(
+                        "email",
+                        "Email é obrigatório",
+                        com.futebadosparcas.domain.validation.ValidationErrorCode.REQUIRED_FIELD
+                    )
+                )
+            }
+        }
+
+        // Validação de ratings (já normalizados no init, mas verifica por segurança)
+        if (!ValidationHelper.isValidRating(strikerRating)) {
+            errors.add(ValidationResult.Invalid("striker_rating", "Rating de atacante inválido"))
+        }
+        if (!ValidationHelper.isValidRating(midRating)) {
+            errors.add(ValidationResult.Invalid("mid_rating", "Rating de meio-campo inválido"))
+        }
+        if (!ValidationHelper.isValidRating(defenderRating)) {
+            errors.add(ValidationResult.Invalid("defender_rating", "Rating de zagueiro inválido"))
+        }
+        if (!ValidationHelper.isValidRating(gkRating)) {
+            errors.add(ValidationResult.Invalid("gk_rating", "Rating de goleiro inválido"))
+        }
+
+        // Validação de nível
+        if (!ValidationHelper.isValidLevel(level)) {
+            errors.add(ValidationResult.Invalid("level", "Nível inválido (deve ser entre 0 e 10)"))
+        }
+
+        // Validação de XP
+        if (!ValidationHelper.isValidXP(experiencePoints)) {
+            errors.add(ValidationResult.Invalid("experience_points", "XP não pode ser negativo"))
+        }
+
+        // Validação de timestamps
+        val timestampResult = ValidationHelper.validateTimestampOrder(createdAt, updatedAt)
+        if (timestampResult is ValidationResult.Invalid) {
+            errors.add(timestampResult)
+        }
+
+        return errors
+    }
+
+    /**
+     * Verifica se o usuário é válido para salvar.
+     */
+    @Exclude
+    fun isValid(requireEmail: Boolean = false, requireName: Boolean = true): Boolean {
+        return validate(requireEmail, requireName).isEmpty()
     }
 }
 

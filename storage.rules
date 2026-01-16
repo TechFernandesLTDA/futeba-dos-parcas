@@ -146,19 +146,37 @@ service firebase.storage {
 
     // ============================================
     // FOTOS TEMPORÁRIAS DE CAMPOS
-    // Path: temp_fields/{timestamp}.jpg
+    // Path: temp_fields/{userId}/{timestamp}.jpg
     // NOTA: Usado quando locationId não está disponível no momento do upload
+    // SEGURANÇA: Agora inclui userId no path para rastreamento de ownership
     // TODO: Refatorar para passar locationId e usar locations/{locationId}/fields/
     // ============================================
-    match /temp_fields/{fileName} {
-      // Qualquer usuário autenticado pode fazer upload
+    match /temp_fields/{userId}/{fileName} {
+      // Apenas o próprio usuário pode fazer upload em seu diretório
       // Máximo 5MB, apenas imagem
-      allow write: if isAuthenticated() && isImage() && isUnderSize(5);
+      allow write: if isOwner(userId) && isImage() && isUnderSize(5);
 
-      // Qualquer usuário autenticado pode ler
+      // Qualquer usuário autenticado pode ler (para preview durante criação)
       allow read: if isAuthenticated();
 
-      // Apenas quem fez o upload pode deletar (não implementado ainda)
+      // Apenas o dono pode deletar suas fotos temporárias
+      allow delete: if isOwner(userId);
+    }
+
+    // ============================================
+    // FOTOS TEMPORÁRIAS LEGADAS (sem userId no path)
+    // Path: temp_fields/{timestamp}.jpg
+    // DEPRECADO: Manter apenas para leitura de arquivos antigos
+    // Novos uploads devem usar temp_fields/{userId}/{fileName}
+    // ============================================
+    match /temp_fields/{fileName} {
+      // Bloqueia novos uploads no path antigo
+      allow write: if false;
+
+      // Permite leitura de arquivos existentes
+      allow read: if isAuthenticated();
+
+      // Bloqueia deleção (será feita via script de limpeza)
       allow delete: if false;
     }
 

@@ -1,5 +1,7 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.futebadosparcas.util.Identifiable
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
@@ -135,6 +137,28 @@ data class Game(
     @set:PropertyName("group_name")
     var groupName: String? = null
 ) : Identifiable {
+    // Bloco de inicializacao para normalizar valores e garantir integridade
+    init {
+        // Normaliza scores para valores nao-negativos
+        team1Score = team1Score.coerceAtLeast(0)
+        team2Score = team2Score.coerceAtLeast(0)
+
+        // Normaliza contadores para valores nao-negativos
+        playersCount = playersCount.coerceAtLeast(0)
+        goalkeepersCount = goalkeepersCount.coerceAtLeast(0)
+
+        // Garante max_players >= 1
+        maxPlayers = maxPlayers.coerceAtLeast(1)
+        maxGoalkeepers = maxGoalkeepers.coerceAtLeast(0)
+
+        // Garante numero de times >= 2
+        numberOfTeams = numberOfTeams.coerceAtLeast(2)
+
+        // Normaliza precos para valores nao-negativos
+        dailyPrice = dailyPrice.coerceAtLeast(0.0)
+        totalCost = totalCost.coerceAtLeast(0.0)
+    }
+
     constructor() : this(id = "")
 
     /**
@@ -201,6 +225,65 @@ data class Game(
         val vis = getVisibilityEnum()
         return vis == GameVisibility.PUBLIC_CLOSED || vis == GameVisibility.PUBLIC_OPEN
     }
+
+    // ==================== VALIDAÇÃO ====================
+
+    /**
+     * Valida todos os campos do jogo antes de salvar.
+     *
+     * @return Lista de erros de validação (vazia se tudo válido)
+     */
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+
+        // Validação de max_players (> 0)
+        if (maxPlayers < 1) {
+            errors.add(ValidationResult.Invalid("max_players", "Número máximo de jogadores deve ser pelo menos 1"))
+        }
+
+        // Validação de scores (>= 0)
+        if (team1Score < 0) {
+            errors.add(ValidationResult.Invalid("team1_score", "Placar não pode ser negativo"))
+        }
+        if (team2Score < 0) {
+            errors.add(ValidationResult.Invalid("team2_score", "Placar não pode ser negativo"))
+        }
+
+        // Validação de contadores (>= 0)
+        if (playersCount < 0) {
+            errors.add(ValidationResult.Invalid("players_count", "Contagem de jogadores não pode ser negativa"))
+        }
+        if (goalkeepersCount < 0) {
+            errors.add(ValidationResult.Invalid("goalkeepers_count", "Contagem de goleiros não pode ser negativa"))
+        }
+
+        // Validação de preços (>= 0)
+        if (dailyPrice < 0) {
+            errors.add(ValidationResult.Invalid("daily_price", "Preço não pode ser negativo"))
+        }
+        if (totalCost < 0) {
+            errors.add(ValidationResult.Invalid("total_cost", "Custo total não pode ser negativo"))
+        }
+
+        // Validação de número de times (>= 2)
+        if (numberOfTeams < 2) {
+            errors.add(ValidationResult.Invalid("number_of_teams", "Número de times deve ser pelo menos 2"))
+        }
+
+        // Validação de owner_id obrigatório
+        if (ownerId.isBlank()) {
+            errors.add(ValidationResult.Invalid("owner_id", "Jogo deve ter um dono"))
+        }
+
+        return errors
+    }
+
+    /**
+     * Verifica se o jogo é válido para salvar.
+     */
+    @Exclude
+    fun isValid(): Boolean = validate().isEmpty()
 }
 
 enum class GameStatus {
