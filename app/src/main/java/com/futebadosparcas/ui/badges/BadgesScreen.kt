@@ -334,8 +334,16 @@ private fun BadgesGrid(
     badges: List<BadgeWithData>,
     onBadgeClick: (BadgeWithData) -> Unit
 ) {
+    // Grid adaptativo: 2 colunas em telefone, 3 em tablet, 4 em landscape grande
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val columns = when {
+        configuration.screenWidthDp >= 840 -> 4
+        configuration.screenWidthDp >= 600 -> 3
+        else -> 2
+    }
+
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+        columns = GridCells.Fixed(columns),
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),

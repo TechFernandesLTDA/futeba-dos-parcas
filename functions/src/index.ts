@@ -6,6 +6,7 @@ import {
     PROMOTION_GAMES_REQUIRED,
     RELEGATION_GAMES_REQUIRED
 } from "./league";
+import { sendStreakNotificationIfMilestone } from "./notifications";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -80,13 +81,15 @@ interface XpLog {
     xp_saves: number;
     xp_result: number;
     xp_mvp: number;
+    xp_clean_sheet: number;   // NOVO: XP por clean sheet (goleiro)
     xp_milestones: number;
     xp_streak: number;
-    xp_penalty: number; // Penalidade "Bola Murcha"
+    xp_penalty: number;       // Penalidade "Bola Murcha"
     goals: number;
     assists: number;
     saves: number;
     was_mvp: boolean;
+    was_clean_sheet: boolean; // NOVO: Flag clean sheet
     was_worst_player: boolean; // Flag "Bola Murcha"
     game_result: string;
     milestones_unlocked: string[];
@@ -102,8 +105,10 @@ interface GamificationSettings {
     xp_draw: number;
     xp_mvp: number;
     xp_streak_3: number;
+    xp_streak_5: number;      // NOVO: Bonus streak 5 jogos
     xp_streak_7: number;
     xp_streak_10: number;
+    xp_clean_sheet: number;   // NOVO: Bonus goleiro sem sofrer gols
 }
 
 // ==========================================
@@ -114,13 +119,15 @@ const DEFAULT_SETTINGS: GamificationSettings = {
     xp_presence: 10,
     xp_per_goal: 10,
     xp_per_assist: 7,
-    xp_per_save: 5,
+    xp_per_save: 8,            // Aumentado de 5 para 8 (balance goleiros)
     xp_win: 20,
     xp_draw: 10,
     xp_mvp: 30,
     xp_streak_3: 20,
+    xp_streak_5: 35,           // NOVO: Bonus intermediário
     xp_streak_7: 50,
-    xp_streak_10: 100
+    xp_streak_10: 100,
+    xp_clean_sheet: 15         // NOVO: Bonus goleiro clean sheet
 };
 
 // Limites Anti-Cheat (Tetos de XP por jogo)
@@ -519,12 +526,37 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 // MVP XP (now validated)
                 if (isMvp) xp += settings.xp_mvp;
 
-                // Streak XP
+                // Clean Sheet XP (NOVO: bonus para goleiros que não sofrem gols)
+                let cleanSheetXp = 0;
+                if (conf.position === "GOALKEEPER") {
+                    let opponentScoreForXp = -1;
+                    if (liveScore) {
+                        if (team && team.id === liveScore.team1Id) opponentScoreForXp = liveScore.team2Score;
+                        else if (team && team.id === liveScore.team2Id) opponentScoreForXp = liveScore.team1Score;
+                    } else if (teams.length >= 2 && team) {
+                        const opponent = teams.find(t => t.id !== team.id);
+                        if (opponent) opponentScoreForXp = opponent.score;
+                    }
+                    if (opponentScoreForXp === 0) {
+                        cleanSheetXp = settings.xp_clean_sheet;
+                        console.log(`[CLEAN_SHEET] Goalkeeper ${uid} gets +${cleanSheetXp} XP bonus`);
+                    }
+                }
+                xp += cleanSheetXp;
+
+                // Streak XP (escalonado: 3 -> 5 -> 7 -> 10)
                 let streakXp = 0;
                 if (streak >= 10) streakXp = settings.xp_streak_10;
                 else if (streak >= 7) streakXp = settings.xp_streak_7;
+                else if (streak >= 5) streakXp = settings.xp_streak_5;  // NOVO: Bonus intermediário
                 else if (streak >= 3) streakXp = settings.xp_streak_3;
                 xp += streakXp;
+
+                // Enviar notificação de streak se atingiu milestone (3, 7, 10 ou 30)
+                // Nota: A notificação é enviada de forma assíncrona, não bloqueia o processamento
+                sendStreakNotificationIfMilestone(uid, streak).catch((err) => {
+                    console.error(`[STREAK] Error sending notification for user ${uid}:`, err);
+                });
 
                 // "Bola Murcha" Penalty (worst player) - synced with XPCalculator.kt
                 let penaltyXp = 0;
@@ -591,11 +623,12 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                     level_before: currentLevel,
                     level_after: newLevel,
                     xp_participation: settings.xp_presence,
-                    xp_goals: conf.goals * settings.xp_per_goal,
-                    xp_assists: conf.assists * settings.xp_per_assist,
-                    xp_saves: conf.saves * settings.xp_per_save,
+                    xp_goals: Math.min(conf.goals, MAX_GOALS_PER_GAME) * settings.xp_per_goal,
+                    xp_assists: Math.min(conf.assists, MAX_ASSISTS_PER_GAME) * settings.xp_per_assist,
+                    xp_saves: Math.min(conf.saves, MAX_SAVES_PER_GAME) * settings.xp_per_save,
                     xp_result: result === "WIN" ? settings.xp_win : (result === "DRAW" ? settings.xp_draw : 0),
                     xp_mvp: isMvp ? settings.xp_mvp : 0,
+                    xp_clean_sheet: cleanSheetXp,         // NOVO: XP clean sheet
                     xp_milestones: milesXp,
                     xp_streak: streakXp,
                     xp_penalty: penaltyXp,
@@ -603,6 +636,7 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                     assists: conf.assists,
                     saves: conf.saves,
                     was_mvp: isMvp,
+                    was_clean_sheet: cleanSheetXp > 0,    // NOVO: Flag clean sheet
                     was_worst_player: isWorstPlayer,
                     game_result: result,
                     milestones_unlocked: newMilestones,
@@ -635,14 +669,62 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                     }, { merge: true });
                 };
 
-                // STREAK BADGES
-                if (streak >= 30) awardFullBadge("STREAK_30");
-                else if (streak >= 7) awardFullBadge("STREAK_7");
+                // ==========================================
+                // BADGE AWARDING LOGIC
+                // ==========================================
 
-                // HAT_TRICK
-                if (conf.goals >= 3) awardFullBadge("HAT_TRICK");
+                // STREAK BADGES (sequencia de jogos)
+                if (streak >= 30) awardFullBadge("streak_30");
+                else if (streak >= 10) awardFullBadge("iron_man");  // 10+ jogos consecutivos
+                else if (streak >= 7) awardFullBadge("streak_7");
 
-                // PAREDAO (Clean Sheet for Goalkeeper)
+                // PERFORMANCE BADGES - Gols
+                if (conf.goals >= 5) {
+                    awardFullBadge("hat_trick");
+                    awardFullBadge("poker");
+                    awardFullBadge("manita");  // 5+ gols = todas as badges de gol
+                } else if (conf.goals >= 4) {
+                    awardFullBadge("hat_trick");
+                    awardFullBadge("poker");
+                } else if (conf.goals >= 3) {
+                    awardFullBadge("hat_trick");
+                }
+
+                // PLAYMAKER BADGE - 3+ assistencias
+                if (conf.assists >= 3) {
+                    awardFullBadge("playmaker");
+                }
+
+                // BALANCED PLAYER - 2+ gols E 2+ assists no mesmo jogo
+                if (conf.goals >= 2 && conf.assists >= 2) {
+                    awardFullBadge("balanced_player");
+                }
+
+                // MVP BADGE - Foi MVP do jogo
+                if (isMvp) {
+                    // Verificar MVP streak (precisa de tracking adicional)
+                    // Por enquanto, apenas registra MVP individual
+                    // TODO: Implementar mvp_streak tracking para MVP_STREAK_3
+                }
+
+                // VETERAN BADGES - Baseado em totalGames (usar newStats APÓS incremento)
+                // Usar === para premiar exatamente no milestone, evitando duplicatas
+                if (newStats.totalGames === 100) {
+                    awardFullBadge("veteran_100");
+                }
+                if (newStats.totalGames === 50) {
+                    awardFullBadge("veteran_50");
+                }
+
+                // LEVEL BADGES
+                if (newLevel >= 10) {
+                    awardFullBadge("level_10");
+                    awardFullBadge("level_5");
+                } else if (newLevel >= 5) {
+                    awardFullBadge("level_5");
+                }
+
+                // GOALKEEPER BADGES
                 if (conf.position === "GOALKEEPER") {
                     let opponentScore = -1;
                     if (liveScore) {
@@ -650,15 +732,36 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                         else if (team && team.id === liveScore.team2Id) opponentScore = liveScore.team1Score;
                     } else {
                         // Fallback to team scores if live score missing (legacy)
-                        // Find opponent team
                         if (teams.length >= 2 && team) {
                             const opponent = teams.find(t => t.id !== team.id);
                             if (opponent) opponentScore = opponent.score;
                         }
                     }
 
+                    // CLEAN_SHEET - Goleiro sem sofrer gols
                     if (opponentScore === 0) {
-                        awardFullBadge("PAREDAO");
+                        awardFullBadge("clean_sheet");
+
+                        // PAREDAO - Clean sheet COM 5+ defesas (mais dificil)
+                        if (conf.saves >= 5) {
+                            awardFullBadge("paredao");
+                        }
+                    }
+
+                    // DEFENSIVE_WALL - 10+ defesas
+                    if (conf.saves >= 10) {
+                        awardFullBadge("defensive_wall");
+                    }
+                }
+
+                // WINNER BADGES - Baseado em vitorias (usar newStats APÓS incremento)
+                // Usar === para premiar exatamente no milestone, evitando duplicatas
+                if (result === "WIN") {
+                    if (newStats.gamesWon === 50) {
+                        awardFullBadge("winner_50");
+                    }
+                    if (newStats.gamesWon === 25) {
+                        awardFullBadge("winner_25");
                     }
                 }
             }
@@ -678,6 +781,7 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 xp_processing: false,
                 xp_processing_error: String(error)
             });
+            throw error; // Re-throw para permitir retry do Cloud Functions
         }
     }
 });
@@ -997,6 +1101,7 @@ export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) =
 
 export * from "./activities";
 export * from "./notifications";
+export * from "./reminders";
 export * from "./season";
 export * from "./seeding";
 export * from "./user-management";

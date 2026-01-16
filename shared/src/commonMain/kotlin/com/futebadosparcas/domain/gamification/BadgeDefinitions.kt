@@ -47,6 +47,16 @@ object BadgeDefinitions {
             rarity = BadgeRarity.RARE
         ),
 
+        // Performance - Jogador Completo
+        BadgeDefinition(
+            id = "balanced_player",
+            name = "Jogador Completo",
+            description = "Marque 2+ gols E 2+ assists no mesmo jogo",
+            emoji = "⚖️",
+            category = BadgeCategory.PERFORMANCE,
+            rarity = BadgeRarity.RARE
+        ),
+
         // Performance - Goleiro
         BadgeDefinition(
             id = "clean_sheet",
@@ -57,15 +67,42 @@ object BadgeDefinitions {
             rarity = BadgeRarity.RARE
         ),
         BadgeDefinition(
+            id = "paredao",
+            name = "Paredao",
+            description = "Nao sofra gols E faca 5+ defesas como goleiro",
+            emoji = "🧱",
+            category = BadgeCategory.PERFORMANCE,
+            rarity = BadgeRarity.EPIC,  // Mais dificil que clean_sheet
+            requiredValue = 5
+        ),
+        BadgeDefinition(
+            id = "defensive_wall",
+            name = "Muralha",
+            description = "Faca 10+ defesas em um jogo",
+            emoji = "🛡️",
+            category = BadgeCategory.PERFORMANCE,
+            rarity = BadgeRarity.RARE,
+            requiredValue = 10
+        ),
+        BadgeDefinition(
             id = "penalty_saver",
             name = "Pegador de Penalti",
             description = "Defenda um penalti",
-            emoji = "🛡️",
+            emoji = "✋",
             category = BadgeCategory.PERFORMANCE,
             rarity = BadgeRarity.EPIC
         ),
 
-        // Presenca
+        // Presenca - Streaks
+        BadgeDefinition(
+            id = "streak_7",
+            name = "Sequencia 7",
+            description = "Jogue 7 jogos consecutivos",
+            emoji = "🔥",
+            category = BadgeCategory.PRESENCE,
+            rarity = BadgeRarity.RARE,
+            requiredValue = 7
+        ),
         BadgeDefinition(
             id = "iron_man",
             name = "Homem de Ferro",
@@ -76,6 +113,26 @@ object BadgeDefinitions {
             requiredValue = 10
         ),
         BadgeDefinition(
+            id = "streak_30",
+            name = "Invencivel",
+            description = "Jogue 30 jogos consecutivos",
+            emoji = "💪",
+            category = BadgeCategory.PRESENCE,
+            rarity = BadgeRarity.LEGENDARY,
+            requiredValue = 30
+        ),
+
+        // Presenca - Veteranos
+        BadgeDefinition(
+            id = "veteran_50",
+            name = "Veterano 50",
+            description = "Complete 50 jogos",
+            emoji = "🏅",
+            category = BadgeCategory.PRESENCE,
+            rarity = BadgeRarity.EPIC,
+            requiredValue = 50
+        ),
+        BadgeDefinition(
             id = "veteran_100",
             name = "Veterano 100",
             description = "Complete 100 jogos",
@@ -83,6 +140,26 @@ object BadgeDefinitions {
             category = BadgeCategory.PRESENCE,
             rarity = BadgeRarity.LEGENDARY,
             requiredValue = 100
+        ),
+
+        // Presenca - Vitorias
+        BadgeDefinition(
+            id = "winner_25",
+            name = "Vencedor 25",
+            description = "Venca 25 jogos",
+            emoji = "🏆",
+            category = BadgeCategory.PRESENCE,
+            rarity = BadgeRarity.RARE,
+            requiredValue = 25
+        ),
+        BadgeDefinition(
+            id = "winner_50",
+            name = "Campeao",
+            description = "Venca 50 jogos",
+            emoji = "🥇",
+            category = BadgeCategory.PRESENCE,
+            rarity = BadgeRarity.EPIC,
+            requiredValue = 50
         ),
 
         // Comunidade

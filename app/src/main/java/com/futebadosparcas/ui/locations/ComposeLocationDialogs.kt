@@ -94,7 +94,7 @@ fun FieldEditDialog(
                 Column {
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.location_dialog_take_photo)) },
-                        leadingContent = { Icon(Icons.Default.CameraAlt, null) },
+                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = stringResource(R.string.location_dialog_take_photo)) },
                         modifier = Modifier.clickable {
                             try {
                                 val file = File.createTempFile("field_", ".jpg", context.cacheDir)
@@ -110,7 +110,7 @@ fun FieldEditDialog(
                     )
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.location_dialog_choose_gallery)) },
-                        leadingContent = { Icon(Icons.Default.PhotoLibrary, null) },
+                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(R.string.location_dialog_choose_gallery)) },
                         modifier = Modifier.clickable {
                             pickImageLauncher.launch("image/*")
                             showPhotoOptions = false
@@ -207,7 +207,7 @@ fun FieldEditDialog(
                             TextButton(
                                 onClick = { showPhotoOptions = true }
                             ) {
-                                Icon(Icons.Default.Edit, null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.location_dialog_change_photo), modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(4.dp))
                                 Text(stringResource(R.string.location_dialog_change_photo))
                             }
@@ -242,7 +242,7 @@ fun FieldEditDialog(
                             label = { Text(stringResource(R.string.location_dialog_field_type)) },
                             readOnly = true,
                             enabled = false,
-                            trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
+                            trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },  // Decorativo (dropdown)
                             modifier = Modifier
                                 .clickable { expandedType = true }
                                 .fillMaxWidth(),

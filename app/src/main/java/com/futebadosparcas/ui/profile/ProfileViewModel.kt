@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.profile
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.data.datasource.ProfilePhotoDataSource
 import com.futebadosparcas.data.model.AutoRatings
 import com.futebadosparcas.data.model.FieldType
 import com.futebadosparcas.data.model.Location
@@ -20,7 +21,6 @@ import com.futebadosparcas.util.toDataLocations
 import com.futebadosparcas.util.toDataModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,9 +43,9 @@ class ProfileViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
     private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
     private val preferencesManager: com.futebadosparcas.util.PreferencesManager,
+    private val profilePhotoDataSource: ProfilePhotoDataSource,
     private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth,
-    private val storage: FirebaseStorage
+    private val auth: FirebaseAuth
 ) : ViewModel() {
 
     private val _uiEvents = kotlinx.coroutines.channels.Channel<ProfileUiEvent>()
@@ -208,19 +208,31 @@ class ProfileViewModel @Inject constructor(
                     return@launch
                 }
 
-                // Upload de foto se fornecida
+                // Upload de foto se fornecida (usando ProfilePhotoDataSource com compressão)
                 var photoUrl: String? = currentUser.photoUrl
                 if (photoUri != null) {
-                    try {
-                        val userId = currentUser.id
-                        // Path padronizado: users/{userId}/profile.jpg
-                        val photoRef = storage.reference.child("users/$userId/profile.jpg")
-                        photoRef.putFile(photoUri).await()
-                        val urlResult = photoRef.downloadUrl.await()
-                        photoUrl = urlResult.toString()
-                    } catch (e: Exception) {
-                        android.util.Log.e("ProfileViewModel", "Erro ao fazer upload de foto", e)
-                        // Continuar sem foto se o upload falhar
+                    val uploadResult = profilePhotoDataSource.uploadProfilePhoto(
+                        userId = currentUser.id,
+                        imageUri = photoUri
+                    )
+                    photoUrl = when (uploadResult) {
+                        is ProfilePhotoDataSource.UploadResult.Success -> uploadResult.url
+                        is ProfilePhotoDataSource.UploadResult.FileTooLarge -> {
+                            android.util.Log.w("ProfileViewModel", "Foto muito grande para upload")
+                            currentUser.photoUrl // Manter foto atual
+                        }
+                        is ProfilePhotoDataSource.UploadResult.InvalidImage -> {
+                            android.util.Log.w("ProfileViewModel", "Arquivo de imagem inválido")
+                            currentUser.photoUrl // Manter foto atual
+                        }
+                        is ProfilePhotoDataSource.UploadResult.Error -> {
+                            android.util.Log.e("ProfileViewModel", "Erro no upload: ${uploadResult.message}")
+                            currentUser.photoUrl // Manter foto atual
+                        }
+                        is ProfilePhotoDataSource.UploadResult.Progress -> {
+                            // Progress não deveria ser retornado na versão simplificada
+                            currentUser.photoUrl
+                        }
                     }
                 }
 

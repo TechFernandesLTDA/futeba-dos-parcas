@@ -216,10 +216,12 @@ fun MainScreen(
                 )
             }
         }
-    ) { padding ->
-        // Padding é gerenciado internamente por cada tela via Scaffold individual
-        // para ter controle granular do comportamento de cada destino
-        AppNavHost(navController = navController)
+    ) { innerPadding ->
+        // Padding do Scaffold aplicado ao NavHost
+        // Cada tela pode ter Scaffold adicional para controle granular
+        Box(modifier = Modifier.padding(innerPadding)) {
+            AppNavHost(navController = navController)
+        }
     }
 }
 

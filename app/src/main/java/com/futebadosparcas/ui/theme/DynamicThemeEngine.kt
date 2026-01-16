@@ -34,9 +34,9 @@ object DynamicThemeEngine {
         val secondarySeed = Color(secondaryInt)
         val tertiarySeed = Color(tertiaryInt)
 
-        // Semantic Colors (Fixed)
+        // Semantic Colors (Fixed) - Usando cores hexadecimais para consistência
         val errorColor = if(isDark) Color(0xFFFFB4AB) else Color(0xFFBA1A1A)
-        val onErrorColor = if(isDark) Color(0xFF690005) else Color.White
+        val onErrorColor = if(isDark) Color(0xFF690005) else Color(0xFFFFFFFF)  // Branco em hex para consistência
         val errorContainerColor = if(isDark) Color(0xFF93000A) else Color(0xFFFFDAD6)
         val onErrorContainerColor = if(isDark) Color(0xFFFFDAD6) else Color(0xFF410002)
 
