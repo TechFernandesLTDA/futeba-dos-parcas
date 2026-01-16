@@ -115,6 +115,7 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
                 }
             } catch (e) {
                 console.error("Error calculating next season", e);
+                throw e; // Re-throw para permitir retry do Cloud Functions
             }
         }
     }
