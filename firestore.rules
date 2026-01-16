@@ -301,9 +301,9 @@ service cloud.firestore {
       // Admins podem ler todas
       // Membros de um grupo podem ler schedules do grupo (se group_id definido)
       allow read: if isAuthenticated() &&
-        (resource.data.owner_id == userId() ||
+        (resource.data.owner_id == request.auth.uid ||
          isAdmin() ||
-         (resource.data.group_id in keys(getAllIds(getMatchingDocuments(/databases/$(database)/documents/groups/$(resource.data.group_id)/members)))));
+         (resource.data.group_id != null && isGroupMember(resource.data.group_id)));
 
       // Usuario pode criar recorrencias para si mesmo
       // Admins podem criar para qualquer um
@@ -612,9 +612,9 @@ service cloud.firestore {
     // SUB-COLECAO: users/{userId}/groups
     // ============================================
     match /users/{userId}/groups/{groupId} {
-      allow read: if isAuthenticated() && userId == userId();
+      allow read: if isAuthenticated() && request.auth.uid == userId;
       allow create, update, delete: if isAuthenticated() && (
-        userId == userId() ||
+        request.auth.uid == userId ||
         isGroupAdmin(groupId)
       );
 
@@ -628,9 +628,9 @@ service cloud.firestore {
     // SUB-COLECAO: users/{userId}/upcoming_games
     // ============================================
     match /users/{userId}/upcoming_games/{gameId} {
-      allow read: if isAuthenticated() && userId == userId();
+      allow read: if isAuthenticated() && request.auth.uid == userId;
       allow create, update, delete: if isAuthenticated() && (
-        userId == userId() ||
+        request.auth.uid == userId ||
         isGameOwner(gameId)
       );
     }

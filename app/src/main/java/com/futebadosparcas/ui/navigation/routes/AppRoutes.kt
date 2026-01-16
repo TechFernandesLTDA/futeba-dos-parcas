@@ -263,19 +263,20 @@ sealed class AppRoutes(
 
     data object League : AppRoutes(
         route = "league",
-        isRootDestination = false,
+        isRootDestination = true,  // League é root destination (bottom nav)
         showsTopBar = true
     )
 }
 
 /**
  * Lista de todas as rotas root (Bottom Nav)
+ * Nota: League substituiu Statistics como root destination
  */
 val rootRoutes: List<AppRoutes> = listOf(
     AppRoutes.Home,
     AppRoutes.Games,
     AppRoutes.Players,
-    AppRoutes.Statistics,
+    AppRoutes.League,  // Corrigido: League é root, não Statistics
     AppRoutes.Profile
 )
 

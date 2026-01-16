@@ -19,8 +19,13 @@ class LiveStatsViewModel @Inject constructor(
     private val _stats = MutableStateFlow<List<LivePlayerStats>>(emptyList())
     val stats: StateFlow<List<LivePlayerStats>> = _stats
 
+    // Job tracking para cancelamento em onCleared (fix memory leak)
+    private var statsJob: kotlinx.coroutines.Job? = null
+
     fun observeStats(gameId: String) {
-        viewModelScope.launch {
+        // Cancelar job anterior para evitar listeners duplicados
+        statsJob?.cancel()
+        statsJob = viewModelScope.launch {
             liveGameRepository.observeLivePlayerStats(gameId)
                 .catch { e ->
                     // Tratamento de erro: em caso de falha, manter lista vazia
@@ -32,5 +37,12 @@ class LiveStatsViewModel @Inject constructor(
                     _stats.value = statsList.sortedByDescending { it.goals }
                 }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        // Cancelar job de observacao para evitar memory leaks
+        statsJob?.cancel()
+        statsJob = null
     }
 }

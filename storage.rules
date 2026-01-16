@@ -79,8 +79,8 @@ service firebase.storage {
       allow read: if isAuthenticated() && isGroupMember(groupId);
 
       // Apenas admins podem alterar o logo
-      // Máximo 1MB, apenas imagem
-      allow write: if isAuthenticated() && isGroupAdmin(groupId) && isImage() && isUnderSize(1);
+      // Máximo 5MB, apenas imagem
+      allow write: if isAuthenticated() && isGroupAdmin(groupId) && isImage() && isUnderSize(5);
 
       // Apenas admins podem deletar
       allow delete: if isAuthenticated() && isGroupAdmin(groupId);
@@ -114,13 +114,13 @@ service firebase.storage {
       // Máximo 5MB por foto, apenas imagem
       allow write: if isAuthenticated() &&
                      firestore.exists(/databases/(default)/documents/locations/$(locationId)) &&
-                     firestore.get(/databases/(default)/documents/$(locationId)).data.owner_id == request.auth.uid &&
+                     firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid &&
                      isImage() && isUnderSize(5);
 
       // Apenas o dono do local pode deletar
       allow delete: if isAuthenticated() &&
                       firestore.exists(/databases/(default)/documents/locations/$(locationId)) &&
-                      firestore.get(/databases/(default)/documents/$(locationId)).data.owner_id == request.auth.uid;
+                      firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid;
     }
 
     // ============================================
@@ -135,13 +135,13 @@ service firebase.storage {
       // Máximo 5MB por foto, apenas imagem
       allow write: if isAuthenticated() &&
                      firestore.exists(/databases/(default)/documents/locations/$(locationId)) &&
-                     firestore.get(/databases/(default)/documents/$(locationId)).data.owner_id == request.auth.uid &&
+                     firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid &&
                      isImage() && isUnderSize(5);
 
       // Apenas o dono do local pode deletar
       allow delete: if isAuthenticated() &&
                       firestore.exists(/databases/(default)/documents/locations/$(locationId)) &&
-                      firestore.get(/databases/(default)/documents/$(locationId)).data.owner_id == request.auth.uid;
+                      firestore.get(/databases/(default)/documents/locations/$(locationId)).data.owner_id == request.auth.uid;
     }
 
     // ============================================

@@ -10,13 +10,17 @@ import androidx.navigation.navArgument
 /**
  * NavGraph principal da aplicação usando Type-Safe Navigation
  *
- * Este é o grafo de navegação para telas Compose.
- * As telas XML ainda usam nav_graph.xml.
+ * @deprecated Este arquivo está OBSOLETO. Use AppNavGraph.kt em vez disso.
+ * A migração para Compose está completa e AppNavGraph é o grafo de navegação ativo.
  *
- * IMPORTANTE: Este arquivo é preparado para migração gradual.
- * À medida que telas XML forem convertidas para Compose,
- * adicione-as aqui com seus respectivos composables.
+ * Este arquivo será removido em uma versão futura.
+ * TODO: Remover este arquivo após validação completa
  */
+@Deprecated(
+    message = "Use AppNavGraph.kt em vez disso. Este NavGraph está obsoleto.",
+    replaceWith = ReplaceWith("AppNavGraph", "com.futebadosparcas.ui.navigation.AppNavGraph"),
+    level = DeprecationLevel.WARNING
+)
 @Composable
 fun FutebaNavGraph(
     navController: NavHostController,
