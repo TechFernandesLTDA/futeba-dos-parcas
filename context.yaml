@@ -1,0 +1,379 @@
+# CTX Configuration - Futeba dos Parcas
+# Gera contextos estruturados para uso com LLMs (Claude, ChatGPT)
+# Docs: https://github.com/context-hub/generator
+
+$schema: https://raw.githubusercontent.com/context-hub/generator/main/json-schema.json
+
+# =============================================================================
+# DOCUMENTOS DE CONTEXTO
+# =============================================================================
+
+documents:
+  # ---------------------------------------------------------------------------
+  # 1. ARQUITETURA GERAL - Visao macro do projeto
+  # ---------------------------------------------------------------------------
+  - description: "Arquitetura e estrutura do projeto"
+    outputPath: "llm-context/architecture.md"
+    sources:
+      # Documentacao principal
+      - type: file
+        description: "Documentacao do projeto"
+        sourcePaths:
+          - "CLAUDE.md"
+          - "README.md"
+          - "ARCHITECTURE.md"
+          - "KOTLIN_MULTIPLATFORM_PLAN.md"
+
+      # Estrutura de diretorios
+      - type: tree
+        description: "Estrutura do modulo app"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas"
+        maxDepth: 2
+
+      - type: tree
+        description: "Estrutura do modulo shared (KMP)"
+        sourcePaths:
+          - "shared/src"
+        maxDepth: 3
+
+      # Build configs
+      - type: file
+        description: "Configuracoes de build"
+        sourcePaths:
+          - "app/build.gradle.kts"
+          - "shared/build.gradle.kts"
+          - "settings.gradle.kts"
+
+  # ---------------------------------------------------------------------------
+  # 2. DATA MODELS - Modelos de dados do app
+  # ---------------------------------------------------------------------------
+  - description: "Modelos de dados (Data Classes)"
+    outputPath: "llm-context/data-models.md"
+    sources:
+      - type: file
+        description: "Modelos do app"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/data/model"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Modelos do shared (KMP)"
+        sourcePaths:
+          - "shared/src/commonMain/kotlin/com/futebadosparcas/domain/model"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Entidades Room (cache local)"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/data/local/entities"
+        filePattern: "*.kt"
+
+  # ---------------------------------------------------------------------------
+  # 3. REPOSITORIES - Camada de dados
+  # ---------------------------------------------------------------------------
+  - description: "Repositories e DataSources"
+    outputPath: "llm-context/repositories.md"
+    sources:
+      - type: file
+        description: "Repositories do app"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/data/repository"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Repositories KMP"
+        sourcePaths:
+          - "shared/src/commonMain/kotlin/com/futebadosparcas/data/repository"
+          - "shared/src/androidMain/kotlin/com/futebadosparcas/data/repository"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Firebase DataSource"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/data/datasource"
+        filePattern: "*.kt"
+
+  # ---------------------------------------------------------------------------
+  # 4. USE CASES - Logica de negocio
+  # ---------------------------------------------------------------------------
+  - description: "Use Cases (Domain Layer)"
+    outputPath: "llm-context/use-cases.md"
+    sources:
+      - type: file
+        description: "Use Cases do app"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/domain/usecase"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Use Cases KMP"
+        sourcePaths:
+          - "shared/src/commonMain/kotlin/com/futebadosparcas/domain/usecase"
+        filePattern: "*.kt"
+
+  # ---------------------------------------------------------------------------
+  # 5. VIEWMODELS - Camada de apresentacao
+  # ---------------------------------------------------------------------------
+  - description: "ViewModels (UI State Management)"
+    outputPath: "llm-context/viewmodels.md"
+    sources:
+      - type: file
+        description: "ViewModels"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/ui"
+        filePattern: "*ViewModel.kt"
+
+  # ---------------------------------------------------------------------------
+  # 6. UI SCREENS - Telas Compose
+  # ---------------------------------------------------------------------------
+  - description: "Telas Jetpack Compose"
+    outputPath: "llm-context/ui-screens.md"
+    sources:
+      - type: file
+        description: "Screens Compose"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/ui"
+        filePattern: "*Screen.kt"
+
+      - type: file
+        description: "Componentes reutilizaveis"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/ui/components"
+        filePattern: "*.kt"
+
+  # ---------------------------------------------------------------------------
+  # 7. GAMIFICATION - Sistema de XP, Badges, Ranking
+  # ---------------------------------------------------------------------------
+  - description: "Sistema de Gamificacao"
+    outputPath: "llm-context/gamification.md"
+    sources:
+      - type: file
+        description: "Gamificacao app"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/domain/gamification"
+          - "app/src/main/java/com/futebadosparcas/domain/ranking"
+          - "app/src/main/java/com/futebadosparcas/app/domain/ranking"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Gamificacao KMP"
+        sourcePaths:
+          - "shared/src/commonMain/kotlin/com/futebadosparcas/domain/gamification"
+          - "shared/src/commonMain/kotlin/com/futebadosparcas/domain/ranking"
+        filePattern: "*.kt"
+
+  # ---------------------------------------------------------------------------
+  # 8. DEPENDENCY INJECTION - Hilt Modules
+  # ---------------------------------------------------------------------------
+  - description: "Modulos de Injecao de Dependencia (Hilt)"
+    outputPath: "llm-context/di-modules.md"
+    sources:
+      - type: file
+        description: "Hilt Modules"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/di"
+        filePattern: "*.kt"
+
+  # ---------------------------------------------------------------------------
+  # 9. FIREBASE - Regras e Cloud Functions
+  # ---------------------------------------------------------------------------
+  - description: "Firebase Configuration"
+    outputPath: "llm-context/firebase.md"
+    sources:
+      - type: file
+        description: "Firestore Rules"
+        sourcePaths:
+          - "firestore.rules"
+
+      - type: file
+        description: "Firestore Indexes"
+        sourcePaths:
+          - "firestore.indexes.json"
+
+      - type: file
+        description: "Storage Rules"
+        sourcePaths:
+          - "storage.rules"
+
+      - type: file
+        description: "Cloud Functions"
+        sourcePaths:
+          - "functions/src"
+        filePattern: "*.ts"
+
+      - type: file
+        description: "Firebase Platform (KMP)"
+        sourcePaths:
+          - "shared/src/androidMain/kotlin/com/futebadosparcas/platform/firebase"
+        filePattern: "*.kt"
+
+  # ---------------------------------------------------------------------------
+  # 10. TESTES - Unit Tests
+  # ---------------------------------------------------------------------------
+  - description: "Testes Unitarios"
+    outputPath: "llm-context/tests.md"
+    sources:
+      - type: file
+        description: "Testes do app"
+        sourcePaths:
+          - "app/src/test/java/com/futebadosparcas"
+        filePattern: "*Test.kt"
+
+  # ---------------------------------------------------------------------------
+  # 11. NAVIGATION - Rotas e navegacao
+  # ---------------------------------------------------------------------------
+  - description: "Sistema de Navegacao"
+    outputPath: "llm-context/navigation.md"
+    sources:
+      - type: file
+        description: "Navigation"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/ui/navigation"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Main Activity"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/ui/main"
+        filePattern: "*.kt"
+
+  # ---------------------------------------------------------------------------
+  # 12. THEME - Design System
+  # ---------------------------------------------------------------------------
+  - description: "Design System e Theme"
+    outputPath: "llm-context/theme.md"
+    sources:
+      - type: file
+        description: "Theme Compose"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/ui/theme"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Utilitarios de UI"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/util/ContrastHelper.kt"
+          - "app/src/main/java/com/futebadosparcas/util/HapticManager.kt"
+
+  # ---------------------------------------------------------------------------
+  # 13. GIT CHANGES - Mudancas recentes
+  # ---------------------------------------------------------------------------
+  - description: "Mudancas recentes (Git)"
+    outputPath: "llm-context/recent-changes.md"
+    sources:
+      - type: git_diff
+        description: "Diff atual (uncommitted)"
+        commit: "HEAD"
+        showStats: true
+
+      - type: git_log
+        description: "Ultimos 10 commits"
+        limit: 10
+        showDiff: false
+
+  # ---------------------------------------------------------------------------
+  # 14. FULL PROJECT - Contexto completo (para tarefas complexas)
+  # ---------------------------------------------------------------------------
+  - description: "Contexto Completo do Projeto"
+    outputPath: "llm-context/full-project.md"
+    sources:
+      - type: file
+        description: "Documentacao"
+        sourcePaths:
+          - "CLAUDE.md"
+          - "README.md"
+
+      - type: tree
+        description: "Estrutura completa"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas"
+          - "shared/src"
+        maxDepth: 4
+
+      - type: file
+        description: "Todos os arquivos Kotlin do app"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas"
+        filePattern: "*.kt"
+        modifiers:
+          - signatures  # Extrai apenas assinaturas de funcoes/classes
+
+  # ---------------------------------------------------------------------------
+  # 15. FEATURE: HOME - Contexto focado na Home
+  # ---------------------------------------------------------------------------
+  - description: "Feature: Home Screen"
+    outputPath: "llm-context/features/home.md"
+    sources:
+      - type: file
+        description: "Home UI"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/ui/home"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Use Cases relacionados"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/domain/usecase/GetUpcomingGamesUseCase.kt"
+          - "app/src/main/java/com/futebadosparcas/domain/usecase/GetPlayerStatisticsUseCase.kt"
+
+  # ---------------------------------------------------------------------------
+  # 16. FEATURE: GAMES - Contexto focado em Jogos
+  # ---------------------------------------------------------------------------
+  - description: "Feature: Games"
+    outputPath: "llm-context/features/games.md"
+    sources:
+      - type: file
+        description: "Games UI"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/ui/games"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Game Use Cases"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/domain/usecase/game"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Live Game"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/ui/livegame"
+        filePattern: "*.kt"
+
+  # ---------------------------------------------------------------------------
+  # 17. FEATURE: GROUPS - Contexto focado em Grupos
+  # ---------------------------------------------------------------------------
+  - description: "Feature: Groups"
+    outputPath: "llm-context/features/groups.md"
+    sources:
+      - type: file
+        description: "Groups UI"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/ui/groups"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Group Use Cases"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/domain/usecase/group"
+        filePattern: "*.kt"
+
+  # ---------------------------------------------------------------------------
+  # 18. FEATURE: STATISTICS - Contexto focado em Estatisticas
+  # ---------------------------------------------------------------------------
+  - description: "Feature: Statistics & League"
+    outputPath: "llm-context/features/statistics.md"
+    sources:
+      - type: file
+        description: "Statistics UI"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/ui/statistics"
+          - "app/src/main/java/com/futebadosparcas/ui/league"
+        filePattern: "*.kt"
+
+      - type: file
+        description: "Ranking Use Cases"
+        sourcePaths:
+          - "app/src/main/java/com/futebadosparcas/domain/usecase/ranking"
+        filePattern: "*.kt"

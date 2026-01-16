@@ -1,12 +1,13 @@
 package com.futebadosparcas.ui.games
 
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.data.repository.GameRepository
-import com.futebadosparcas.data.repository.NotificationRepository
+import com.futebadosparcas.domain.repository.NotificationRepository
+import com.futebadosparcas.util.InstantTaskExecutorExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -20,7 +21,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
-import org.junit.Rule
+import org.junit.jupiter.api.extension.ExtendWith
 
 /**
  * Testes unitários para GamesViewModel.
@@ -28,16 +29,19 @@ import org.junit.Rule
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("GamesViewModel Tests")
+@ExtendWith(InstantTaskExecutorExtension::class)
 class GamesViewModelTest {
-
-    @get:Rule
-    val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var gameRepository: GameRepository
     private lateinit var notificationRepository: NotificationRepository
+    private lateinit var savedStateHandle: SavedStateHandle
     private lateinit var viewModel: GamesViewModel
+
+    private fun createViewModel(): GamesViewModel {
+        return GamesViewModel(gameRepository, notificationRepository, savedStateHandle)
+    }
 
     @BeforeEach
     fun setup() {
@@ -45,6 +49,7 @@ class GamesViewModelTest {
 
         gameRepository = mockk()
         notificationRepository = mockk()
+        savedStateHandle = SavedStateHandle()
 
         // Setup default mock behaviors
         every { notificationRepository.getUnreadCountFlow() } returns flowOf(0)
@@ -62,7 +67,7 @@ class GamesViewModelTest {
         every { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(emptyList()))
 
         // When - Quando criar ViewModel
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
         advanceUntilIdle()
 
         // Then - Deve estar em estado Empty (sem jogos)
@@ -80,7 +85,7 @@ class GamesViewModelTest {
         every { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(games))
 
         // When - Quando carregar com filtro ALL
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
         viewModel.loadGames(GameFilterType.ALL)
         advanceUntilIdle()
 
@@ -102,7 +107,7 @@ class GamesViewModelTest {
         every { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(games))
 
         // When - Quando carregar com filtro OPEN
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
         viewModel.loadGames(GameFilterType.OPEN)
         advanceUntilIdle()
 
@@ -125,7 +130,7 @@ class GamesViewModelTest {
         coEvery { gameRepository.getGamesByFilter(GameFilterType.MY_GAMES) } returns Result.success(myGames)
 
         // When - Quando carregar MY_GAMES
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
         viewModel.loadGames(GameFilterType.MY_GAMES)
         advanceUntilIdle()
 
@@ -143,7 +148,7 @@ class GamesViewModelTest {
         every { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(emptyList()))
 
         // When - Quando carregar jogos
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
         viewModel.loadGames(GameFilterType.ALL)
         advanceUntilIdle()
 
@@ -158,7 +163,7 @@ class GamesViewModelTest {
         coEvery { gameRepository.getGamesByFilter(GameFilterType.MY_GAMES) } returns Result.success(emptyList())
 
         // When - Quando carregar MY_GAMES
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
         viewModel.loadGames(GameFilterType.MY_GAMES)
         advanceUntilIdle()
 
@@ -174,7 +179,7 @@ class GamesViewModelTest {
         every { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.failure(exception))
 
         // When - Quando carregar jogos
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
         viewModel.loadGames(GameFilterType.ALL)
         advanceUntilIdle()
 
@@ -192,7 +197,7 @@ class GamesViewModelTest {
         coEvery { gameRepository.getGamesByFilter(GameFilterType.MY_GAMES) } returns Result.failure(exception)
 
         // When - Quando carregar MY_GAMES
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
         viewModel.loadGames(GameFilterType.MY_GAMES)
         advanceUntilIdle()
 
@@ -210,7 +215,7 @@ class GamesViewModelTest {
         every { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(emptyList()))
         coEvery { gameRepository.confirmPresence(gameId, "FIELD", false) } returns Result.success(mockk(relaxed = true))
 
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
 
         // When - Quando confirmar presença rapidamente
         viewModel.quickConfirmPresence(gameId)
@@ -228,7 +233,7 @@ class GamesViewModelTest {
         every { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(emptyList()))
         coEvery { gameRepository.confirmPresence(gameId, "FIELD", false) } returns Result.failure(Exception("Jogo lotado"))
 
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
 
         // When - Quando confirmar presença
         viewModel.quickConfirmPresence(gameId)
@@ -247,7 +252,7 @@ class GamesViewModelTest {
         every { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(emptyList()))
 
         // When - Quando criar ViewModel
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
         advanceUntilIdle()
 
         // Then - Deve observar contador
@@ -263,7 +268,7 @@ class GamesViewModelTest {
         every { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(emptyList()))
         coEvery { gameRepository.getGamesByFilter(GameFilterType.MY_GAMES) } returns Result.success(emptyList())
 
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
         advanceUntilIdle()
 
         // When - Quando trocar filtro rapidamente
@@ -292,7 +297,7 @@ class GamesViewModelTest {
         )
 
         // When - Quando criar ViewModel
-        viewModel = GamesViewModel(gameRepository, notificationRepository)
+        viewModel = createViewModel()
         advanceUntilIdle()
 
         // Then - Deve refletir a última atualização

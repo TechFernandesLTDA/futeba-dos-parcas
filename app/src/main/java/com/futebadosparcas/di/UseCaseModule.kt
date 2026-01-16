@@ -2,7 +2,7 @@ package com.futebadosparcas.di
 
 import com.futebadosparcas.data.datasource.FirebaseDataSource
 import com.futebadosparcas.data.datasource.FirebaseDataSourceImpl
-import com.futebadosparcas.domain.ai.TeamBalancer
+import com.futebadosparcas.domain.ai.AiTeamBalancer
 import com.futebadosparcas.domain.usecase.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -86,7 +86,7 @@ object UseCaseModule {
     @Singleton
     fun provideCalculateTeamBalanceUseCase(
         firebaseDataSource: FirebaseDataSource,
-        teamBalancer: TeamBalancer
+        teamBalancer: AiTeamBalancer
     ): CalculateTeamBalanceUseCase {
         return CalculateTeamBalanceUseCase(firebaseDataSource, teamBalancer)
     }

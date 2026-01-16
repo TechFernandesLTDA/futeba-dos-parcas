@@ -1,5 +1,6 @@
 package com.futebadosparcas.domain.ranking
 
+import com.futebadosparcas.app.domain.ranking.XPCalculator
 import com.futebadosparcas.data.model.*
 import com.futebadosparcas.data.repository.GameResult
 import com.futebadosparcas.util.AppLogger

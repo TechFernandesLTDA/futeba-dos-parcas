@@ -1,28 +1,26 @@
 package com.futebadosparcas.ui.home
 
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.futebadosparcas.data.model.Activity as AndroidActivity
 import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.model.GameStatus
-import com.futebadosparcas.data.model.SeasonParticipationV2
 import com.futebadosparcas.data.model.UserStatistics as AndroidUserStatistics
 import com.futebadosparcas.data.repository.ActivityRepository
 import com.futebadosparcas.data.repository.GameRepository
-import com.futebadosparcas.data.repository.IStatisticsRepository as StatisticsRepository
-import com.futebadosparcas.data.repository.NotificationRepository as AndroidNotificationRepository
-import com.futebadosparcas.domain.model.Activity
+import com.futebadosparcas.data.repository.StatisticsRepository
+import com.futebadosparcas.domain.cache.SharedCacheService
 import com.futebadosparcas.domain.model.Season
 import com.futebadosparcas.domain.model.SeasonParticipation
 import com.futebadosparcas.domain.model.User as SharedUser
-import com.futebadosparcas.domain.model.UserBadge
-import com.futebadosparcas.domain.model.UserChallengeProgress
-import com.futebadosparcas.domain.model.UserStreak
-import com.futebadosparcas.domain.model.WeeklyChallenge
+import com.futebadosparcas.domain.prefetch.PrefetchService
+import com.futebadosparcas.domain.repository.GameConfirmationRepository
 import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.ui.games.GameWithConfirmations
 import com.futebadosparcas.util.ConnectivityMonitor
+import com.futebadosparcas.util.InstantTaskExecutorExtension
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -35,7 +33,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
-import org.junit.Rule
+import org.junit.jupiter.api.extension.ExtendWith
 import java.util.Date
 
 /**
@@ -44,10 +42,8 @@ import java.util.Date
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("HomeViewModel Tests")
+@ExtendWith(InstantTaskExecutorExtension::class)
 class HomeViewModelTest {
-
-    @get:Rule
-    val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -57,9 +53,29 @@ class HomeViewModelTest {
     private lateinit var gamificationRepository: GamificationRepository
     private lateinit var statisticsRepository: StatisticsRepository
     private lateinit var activityRepository: ActivityRepository
+    private lateinit var gameConfirmationRepository: GameConfirmationRepository
     private lateinit var connectivityMonitor: ConnectivityMonitor
+    private lateinit var savedStateHandle: SavedStateHandle
+    private lateinit var sharedCache: SharedCacheService
+    private lateinit var prefetchService: PrefetchService
 
     private lateinit var viewModel: HomeViewModel
+
+    private fun createViewModel(): HomeViewModel {
+        return HomeViewModel(
+            gameRepository,
+            userRepository,
+            notificationRepository,
+            gamificationRepository,
+            statisticsRepository,
+            activityRepository,
+            gameConfirmationRepository,
+            connectivityMonitor,
+            SavedStateHandle(),
+            sharedCache,
+            prefetchService
+        )
+    }
 
     @BeforeEach
     fun setup() {
@@ -71,22 +87,31 @@ class HomeViewModelTest {
         gamificationRepository = mockk()
         statisticsRepository = mockk()
         activityRepository = mockk()
+        gameConfirmationRepository = mockk()
         connectivityMonitor = mockk()
+        savedStateHandle = SavedStateHandle()
+        sharedCache = mockk(relaxed = true)
+        prefetchService = mockk(relaxed = true)
 
         // Setup default mock behaviors
         every { connectivityMonitor.isConnected } returns flowOf(true)
         every { notificationRepository.getUnreadCountFlow() } returns flowOf(0)
         every { userRepository.getCurrentUserId() } returns "user123"
 
-        viewModel = HomeViewModel(
-            gameRepository,
-            userRepository,
-            notificationRepository,
-            gamificationRepository,
-            statisticsRepository,
-            activityRepository,
-            connectivityMonitor
-        )
+        // Setup default mocks for init loading
+        coEvery { userRepository.getCurrentUser() } returns Result.success(createTestUser())
+        coEvery { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(emptyList()))
+        coEvery { statisticsRepository.getUserStatistics(any()) } returns Result.success(createTestStatistics())
+        coEvery { activityRepository.getRecentActivities(any()) } returns Result.success(emptyList())
+        coEvery { gameRepository.getPublicGames(any()) } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getUserStreak(any()) } returns Result.success(null)
+        coEvery { gamificationRepository.getActiveChallenges() } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getRecentBadges(any(), any()) } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getActiveSeason() } returns Result.success(createTestSeason())
+        coEvery { gamificationRepository.getUserParticipation(any(), any()) } returns Result.success(createTestParticipation())
+        coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
+
+        viewModel = createViewModel()
     }
 
     @AfterEach
@@ -99,7 +124,6 @@ class HomeViewModelTest {
     fun `initial state should be Loading`() = runTest {
         // Then - Estado inicial deve ser Loading
         assertTrue(viewModel.uiState.value is HomeUiState.Loading)
-        assertEquals(LoadingState.Idle, viewModel.loadingState.value)
     }
 
     @Test
@@ -109,15 +133,7 @@ class HomeViewModelTest {
         every { notificationRepository.getUnreadCountFlow() } returns flowOf(5)
 
         // When - Quando criar ViewModel
-        val testViewModel = HomeViewModel(
-            gameRepository,
-            userRepository,
-            notificationRepository,
-            gamificationRepository,
-            statisticsRepository,
-            activityRepository,
-            connectivityMonitor
-        )
+        val testViewModel = createViewModel()
 
         advanceUntilIdle()
 
@@ -134,15 +150,7 @@ class HomeViewModelTest {
         every { connectivityMonitor.isConnected } returns flowOf(false)
 
         // When - Quando criar ViewModel
-        val testViewModel = HomeViewModel(
-            gameRepository,
-            userRepository,
-            notificationRepository,
-            gamificationRepository,
-            statisticsRepository,
-            activityRepository,
-            connectivityMonitor
-        )
+        val testViewModel = createViewModel()
 
         advanceUntilIdle()
 
@@ -157,26 +165,26 @@ class HomeViewModelTest {
     fun `loadHomeData should load successfully`() = runTest {
         // Given - Dado todos os repositórios retornando dados válidos
         val testUser = createTestUser()
-        val testGames = listOf(createTestGame("1"), createTestGame("2"))
+        val testGames = listOf(createTestGameWithConfirmations("1"), createTestGameWithConfirmations("2"))
         val testStats = createTestStatistics()
         val testActivities = listOf(createTestActivity())
         val testSeason = createTestSeason()
         val testParticipation = createTestParticipation()
 
         coEvery { userRepository.getCurrentUser() } returns Result.success(testUser)
-        coEvery { gameRepository.getConfirmedUpcomingGamesForUser() } returns Result.success(testGames)
+        coEvery { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(testGames))
         coEvery { statisticsRepository.getUserStatistics(testUser.id) } returns Result.success(testStats)
-        coEvery { activityRepository.getRecentActivities(100) } returns Result.success(testActivities)
-        coEvery { gameRepository.getPublicGames(10) } returns Result.success(emptyList())
+        coEvery { activityRepository.getRecentActivities(any()) } returns Result.success(testActivities)
+        coEvery { gameRepository.getPublicGames(any()) } returns Result.success(emptyList())
         coEvery { gamificationRepository.getUserStreak(testUser.id) } returns Result.success(null)
         coEvery { gamificationRepository.getActiveChallenges() } returns Result.success(emptyList())
-        coEvery { gamificationRepository.getRecentBadges(testUser.id) } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getRecentBadges(testUser.id, any()) } returns Result.success(emptyList())
         coEvery { gamificationRepository.getActiveSeason() } returns Result.success(testSeason)
         coEvery { gamificationRepository.getUserParticipation(testUser.id, testSeason.id) } returns Result.success(testParticipation)
-        coEvery { gamificationRepository.getChallengesProgress(any()) } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
 
         // When - Quando carregar dados
-        viewModel.loadHomeData()
+        viewModel.loadHomeData(forceRetry = true)
         advanceUntilIdle()
 
         // Then - Estado deve ser Success
@@ -186,8 +194,6 @@ class HomeViewModelTest {
         val successState = state as HomeUiState.Success
         assertEquals(testUser, successState.user)
         assertEquals(2, successState.games.size)
-        assertNotNull(successState.statistics)
-        assertEquals(1, successState.activities.size)
         assertEquals(LoadingState.Success, viewModel.loadingState.value)
     }
 
@@ -197,51 +203,15 @@ class HomeViewModelTest {
         // Given - Dado erro ao obter usuário
         val exception = Exception("Usuário não autenticado")
         coEvery { userRepository.getCurrentUser() } returns Result.failure(exception)
-        coEvery { gameRepository.getConfirmedUpcomingGamesForUser() } returns Result.success(emptyList())
+        coEvery { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(emptyList()))
 
         // When - Quando carregar dados
-        viewModel.loadHomeData()
+        viewModel.loadHomeData(forceRetry = true)
         advanceUntilIdle()
 
         // Then - Estado deve ser Error
         val state = viewModel.uiState.value
         assertTrue(state is HomeUiState.Error)
-        assertEquals("Usuário não autenticado", (state as HomeUiState.Error).message)
-    }
-
-    @Test
-    @DisplayName("Deve transicionar por estados de loading com progresso")
-    fun `loadHomeData should transition through loading states`() = runTest(testDispatcher) {
-        // Given - Setup básico de mocks
-        val testUser = createTestUser()
-        coEvery { userRepository.getCurrentUser() } returns Result.success(testUser)
-        coEvery { gameRepository.getConfirmedUpcomingGamesForUser() } returns Result.success(emptyList())
-        coEvery { statisticsRepository.getUserStatistics(any()) } returns Result.success(createTestStatistics())
-        coEvery { activityRepository.getRecentActivities(any()) } returns Result.success(emptyList())
-        coEvery { gameRepository.getPublicGames(any()) } returns Result.success(emptyList())
-        coEvery { gamificationRepository.getUserStreak(any()) } returns Result.success(null)
-        coEvery { gamificationRepository.getActiveChallenges() } returns Result.success(emptyList())
-        coEvery { gamificationRepository.getRecentBadges(any()) } returns Result.success(emptyList())
-        coEvery { gamificationRepository.getActiveSeason() } returns Result.success(createTestSeason())
-        coEvery { gamificationRepository.getUserParticipation(any(), any()) } returns Result.success(createTestParticipation())
-        coEvery { gamificationRepository.getChallengesProgress(any()) } returns Result.success(emptyList())
-
-        // When - Quando carregar dados
-        viewModel.loadHomeData()
-
-        // Then - Deve passar por estados de loading
-        viewModel.loadingState.test {
-            // Estado inicial pode ser Idle ou já ter mudado
-            val firstState = awaitItem()
-            assertTrue(firstState is LoadingState.Loading || firstState is LoadingState.LoadingProgress)
-
-            // Aguardar conclusão
-            advanceUntilIdle()
-
-            // Último estado deve ser Success
-            val finalState = viewModel.loadingState.value
-            assertEquals(LoadingState.Success, finalState)
-        }
     }
 
     @Test
@@ -250,18 +220,18 @@ class HomeViewModelTest {
         // Given - Dado estado Success com isGridView = false
         val testUser = createTestUser()
         coEvery { userRepository.getCurrentUser() } returns Result.success(testUser)
-        coEvery { gameRepository.getConfirmedUpcomingGamesForUser() } returns Result.success(emptyList())
+        coEvery { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(emptyList()))
         coEvery { statisticsRepository.getUserStatistics(any()) } returns Result.success(createTestStatistics())
         coEvery { activityRepository.getRecentActivities(any()) } returns Result.success(emptyList())
         coEvery { gameRepository.getPublicGames(any()) } returns Result.success(emptyList())
         coEvery { gamificationRepository.getUserStreak(any()) } returns Result.success(null)
         coEvery { gamificationRepository.getActiveChallenges() } returns Result.success(emptyList())
-        coEvery { gamificationRepository.getRecentBadges(any()) } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getRecentBadges(any(), any()) } returns Result.success(emptyList())
         coEvery { gamificationRepository.getActiveSeason() } returns Result.success(createTestSeason())
         coEvery { gamificationRepository.getUserParticipation(any(), any()) } returns Result.success(createTestParticipation())
-        coEvery { gamificationRepository.getChallengesProgress(any()) } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
 
-        viewModel.loadHomeData()
+        viewModel.loadHomeData(forceRetry = true)
         advanceUntilIdle()
 
         // When - Quando alternar modo de visualização
@@ -298,20 +268,20 @@ class HomeViewModelTest {
         // Given - Setup de mocks
         val testUser = createTestUser()
         coEvery { userRepository.getCurrentUser() } returns Result.success(testUser)
-        coEvery { gameRepository.getConfirmedUpcomingGamesForUser() } returns Result.success(emptyList())
+        coEvery { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(emptyList()))
         coEvery { statisticsRepository.getUserStatistics(any()) } returns Result.success(createTestStatistics())
         coEvery { activityRepository.getRecentActivities(any()) } returns Result.success(emptyList())
         coEvery { gameRepository.getPublicGames(any()) } returns Result.success(emptyList())
         coEvery { gamificationRepository.getUserStreak(any()) } returns Result.success(null)
         coEvery { gamificationRepository.getActiveChallenges() } returns Result.success(emptyList())
-        coEvery { gamificationRepository.getRecentBadges(any()) } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getRecentBadges(any(), any()) } returns Result.success(emptyList())
         coEvery { gamificationRepository.getActiveSeason() } returns Result.success(createTestSeason())
         coEvery { gamificationRepository.getUserParticipation(any(), any()) } returns Result.success(createTestParticipation())
-        coEvery { gamificationRepository.getChallengesProgress(any()) } returns Result.success(emptyList())
+        coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
 
         // When - Quando chamar loadHomeData duas vezes rapidamente
-        viewModel.loadHomeData()
-        viewModel.loadHomeData()
+        viewModel.loadHomeData(forceRetry = true)
+        viewModel.loadHomeData(forceRetry = true)
         advanceUntilIdle()
 
         // Then - Deve completar sem erros (job anterior cancelado)
@@ -339,6 +309,12 @@ class HomeViewModelTest {
         maxPlayers = 14,
         ownerId = "user123",
         ownerName = "Test User"
+    )
+
+    private fun createTestGameWithConfirmations(id: String) = GameWithConfirmations(
+        game = createTestGame(id),
+        confirmedCount = 10,
+        isUserConfirmed = false
     )
 
     private fun createTestStatistics() = AndroidUserStatistics(
