@@ -707,10 +707,12 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                     // TODO: Implementar mvp_streak tracking para MVP_STREAK_3
                 }
 
-                // VETERAN BADGES - Baseado em totalGames
-                if (stats.totalGames >= 100) {
+                // VETERAN BADGES - Baseado em totalGames (usar newStats APÓS incremento)
+                // Usar === para premiar exatamente no milestone, evitando duplicatas
+                if (newStats.totalGames === 100) {
                     awardFullBadge("VETERAN_100");
-                } else if (stats.totalGames >= 50) {
+                }
+                if (newStats.totalGames === 50) {
                     awardFullBadge("VETERAN_50");
                 }
 
@@ -752,11 +754,13 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                     }
                 }
 
-                // WINNER BADGES - Baseado em vitorias
+                // WINNER BADGES - Baseado em vitorias (usar newStats APÓS incremento)
+                // Usar === para premiar exatamente no milestone, evitando duplicatas
                 if (result === "WIN") {
-                    if (stats.gamesWon >= 50) {
+                    if (newStats.gamesWon === 50) {
                         awardFullBadge("WINNER_50");
-                    } else if (stats.gamesWon >= 25) {
+                    }
+                    if (newStats.gamesWon === 25) {
                         awardFullBadge("WINNER_25");
                     }
                 }
