@@ -1,6 +1,9 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
@@ -57,7 +60,43 @@ data class Payment(
     @set:PropertyName("created_at")
     var createdAt: Date? = null
 ) {
+    // Bloco de inicializacao para normalizar valores
+    init {
+        // Amount deve ser sempre positivo
+        amount.coerceAtLeast(0.0)
+    }
+
     constructor() : this(id = "")
+
+    // ==================== VALIDAÇÃO ====================
+
+    /**
+     * Valida todos os campos do pagamento antes de salvar.
+     *
+     * @return Lista de erros de validação (vazia se tudo válido)
+     */
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+
+        // Validação de amount (> 0)
+        if (amount <= 0) {
+            errors.add(ValidationResult.Invalid("amount", "Valor deve ser maior que zero"))
+        }
+
+        // Validação de userId obrigatório
+        if (userId.isBlank()) {
+            errors.add(ValidationResult.Invalid("user_id", "Usuário é obrigatório"))
+        }
+
+        return errors
+    }
+
+    /**
+     * Verifica se o pagamento é válido para salvar.
+     */
+    @Exclude
+    fun isValid(): Boolean = validate().isEmpty()
 
     fun isOverdue(): Boolean {
         if (status == PaymentStatus.PAID || status == PaymentStatus.CANCELLED) return false
@@ -129,7 +168,49 @@ data class Crowdfunding(
     @set:PropertyName("created_at")
     var createdAt: Date? = null
 ) {
+    // Bloco de inicializacao para normalizar valores
+    init {
+        targetAmount = targetAmount.coerceAtLeast(0.0)
+        currentAmount = currentAmount.coerceAtLeast(0.0)
+    }
+
     constructor() : this(id = "")
+
+    // ==================== VALIDAÇÃO ====================
+
+    /**
+     * Valida todos os campos da vaquinha antes de salvar.
+     *
+     * @return Lista de erros de validação (vazia se tudo válido)
+     */
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+
+        // Validação de título (obrigatório, 3-100 chars)
+        val titleResult = ValidationHelper.validateName(title, "title", 3, 100)
+        if (titleResult is ValidationResult.Invalid) {
+            errors.add(titleResult)
+        }
+
+        // Validação de targetAmount (> 0)
+        if (targetAmount <= 0) {
+            errors.add(ValidationResult.Invalid("target_amount", "Meta deve ser maior que zero"))
+        }
+
+        // Validação de organizerId obrigatório
+        if (organizerId.isBlank()) {
+            errors.add(ValidationResult.Invalid("organizer_id", "Organizador é obrigatório"))
+        }
+
+        return errors
+    }
+
+    /**
+     * Verifica se a vaquinha é válida para salvar.
+     */
+    @Exclude
+    fun isValid(): Boolean = validate().isEmpty()
 
     fun getProgressPercentage(): Int {
         return if (targetAmount > 0) {

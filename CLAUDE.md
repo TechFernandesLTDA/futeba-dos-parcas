@@ -1,5 +1,29 @@
 # CLAUDE.md - Futeba dos Parças
 
+## Fontes de Referência Oficiais (OBRIGATÓRIO)
+
+**IMPORTANTE**: Para qualquer implementação de UI/Compose, SEMPRE consulte estas fontes oficiais:
+
+### Documentação Principal
+- **[android/compose-samples](https://github.com/android/compose-samples)** - Exemplos oficiais do Google
+  - `Reply/` - Material 3 completo com temas dinâmicos
+  - `Jetchat/` - Chat com temas dinâmicos
+  - `Jetsnack/` - Sistema de cores customizado
+  - `JetNews/` - Tipografia e componentes
+
+### Codelabs e Guias
+- **[Codelab: Temas no Compose com Material 3](https://codelabs.developers.google.com/jetpack-compose-theming)** - Tutorial completo (9 etapas)
+- **[Material Design 3 no Compose](https://developer.android.com/develop/ui/compose/designsystems/material3)** - Documentação oficial Android
+
+### Material Design
+- **[m3.material.io](https://m3.material.io/)** - Guidelines oficiais M3
+- **[Material Theme Builder](https://material-foundation.github.io/material-theme-builder/)** - Gerador de temas
+
+### Referência Interna do Projeto
+- **`.claude/rules/material3-compose-reference.md`** - Guia completo consolidado com exemplos de código
+
+---
+
 ## Project Overview
 
 **Futeba dos Parças** is an Android application for managing amateur soccer groups ("peladas"), featuring gamification, statistics, and team balancing.
