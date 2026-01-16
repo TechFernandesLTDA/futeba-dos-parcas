@@ -674,30 +674,30 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 // ==========================================
 
                 // STREAK BADGES (sequencia de jogos)
-                if (streak >= 30) awardFullBadge("STREAK_30");
-                else if (streak >= 10) awardFullBadge("IRON_MAN");  // 10+ jogos consecutivos
-                else if (streak >= 7) awardFullBadge("STREAK_7");
+                if (streak >= 30) awardFullBadge("streak_30");
+                else if (streak >= 10) awardFullBadge("iron_man");  // 10+ jogos consecutivos
+                else if (streak >= 7) awardFullBadge("streak_7");
 
                 // PERFORMANCE BADGES - Gols
                 if (conf.goals >= 5) {
-                    awardFullBadge("HAT_TRICK");
-                    awardFullBadge("POKER");
-                    awardFullBadge("MANITA");  // 5+ gols = todas as badges de gol
+                    awardFullBadge("hat_trick");
+                    awardFullBadge("poker");
+                    awardFullBadge("manita");  // 5+ gols = todas as badges de gol
                 } else if (conf.goals >= 4) {
-                    awardFullBadge("HAT_TRICK");
-                    awardFullBadge("POKER");
+                    awardFullBadge("hat_trick");
+                    awardFullBadge("poker");
                 } else if (conf.goals >= 3) {
-                    awardFullBadge("HAT_TRICK");
+                    awardFullBadge("hat_trick");
                 }
 
                 // PLAYMAKER BADGE - 3+ assistencias
                 if (conf.assists >= 3) {
-                    awardFullBadge("PLAYMAKER");
+                    awardFullBadge("playmaker");
                 }
 
                 // BALANCED PLAYER - 2+ gols E 2+ assists no mesmo jogo
                 if (conf.goals >= 2 && conf.assists >= 2) {
-                    awardFullBadge("BALANCED_PLAYER");
+                    awardFullBadge("balanced_player");
                 }
 
                 // MVP BADGE - Foi MVP do jogo
@@ -710,18 +710,18 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 // VETERAN BADGES - Baseado em totalGames (usar newStats APÓS incremento)
                 // Usar === para premiar exatamente no milestone, evitando duplicatas
                 if (newStats.totalGames === 100) {
-                    awardFullBadge("VETERAN_100");
+                    awardFullBadge("veteran_100");
                 }
                 if (newStats.totalGames === 50) {
-                    awardFullBadge("VETERAN_50");
+                    awardFullBadge("veteran_50");
                 }
 
                 // LEVEL BADGES
                 if (newLevel >= 10) {
-                    awardFullBadge("LEVEL_10");
-                    awardFullBadge("LEVEL_5");
+                    awardFullBadge("level_10");
+                    awardFullBadge("level_5");
                 } else if (newLevel >= 5) {
-                    awardFullBadge("LEVEL_5");
+                    awardFullBadge("level_5");
                 }
 
                 // GOALKEEPER BADGES
@@ -740,17 +740,17 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
 
                     // CLEAN_SHEET - Goleiro sem sofrer gols
                     if (opponentScore === 0) {
-                        awardFullBadge("CLEAN_SHEET");
+                        awardFullBadge("clean_sheet");
 
                         // PAREDAO - Clean sheet COM 5+ defesas (mais dificil)
                         if (conf.saves >= 5) {
-                            awardFullBadge("PAREDAO");
+                            awardFullBadge("paredao");
                         }
                     }
 
                     // DEFENSIVE_WALL - 10+ defesas
                     if (conf.saves >= 10) {
-                        awardFullBadge("DEFENSIVE_WALL");
+                        awardFullBadge("defensive_wall");
                     }
                 }
 
@@ -758,10 +758,10 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 // Usar === para premiar exatamente no milestone, evitando duplicatas
                 if (result === "WIN") {
                     if (newStats.gamesWon === 50) {
-                        awardFullBadge("WINNER_50");
+                        awardFullBadge("winner_50");
                     }
                     if (newStats.gamesWon === 25) {
-                        awardFullBadge("WINNER_25");
+                        awardFullBadge("winner_25");
                     }
                 }
             }
