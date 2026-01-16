@@ -2452,4 +2452,15 @@ subir no ranking!</string>
     <string name="stat_label_cards">Cartoes</string>
     <string name="stat_label_avg_goals">Media Gols</string>
 
+    <!-- Game Confirmation Errors -->
+    <string name="error_invalid_position">Posicao invalida: %1$s. Valores aceitos: %2$s</string>
+    <string name="error_already_confirmed">Voce ja esta confirmado neste jogo</string>
+    <string name="error_game_not_accepting">Este jogo nao esta aceitando confirmacoes (status: %1$s)</string>
+    <string name="error_goalkeeper_limit">Limite de goleiros atingido (%1$d)</string>
+    <string name="error_game_full">Jogo lotado (%1$d/%2$d jogadores)</string>
+    <string name="error_game_already_started">Nao eh possivel confirmar apos o inicio do jogo</string>
+    <string name="error_user_not_authenticated">Usuario nao autenticado</string>
+    <string name="error_failed_to_get_user">Falha ao obter usuario atual</string>
+    <string name="error_failed_to_get_game">Falha ao obter detalhes do jogo</string>
+
 </resources>
