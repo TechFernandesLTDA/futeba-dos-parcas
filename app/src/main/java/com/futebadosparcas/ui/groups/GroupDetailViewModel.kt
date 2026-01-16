@@ -64,6 +64,9 @@ class GroupDetailViewModel @Inject constructor(
 
     private var currentGroupId: String? = null
 
+    // Job tracking para cancelamento em onCleared (fix memory leak)
+    private var groupDetailJob: kotlinx.coroutines.Job? = null
+
     // Cache de membros com TTL de 5 minutos (CMD-30 #1)
     private var membersCacheTimestamp = 0L
     private val CACHE_TTL_MS = 5 * 60 * 1000L
@@ -150,7 +153,11 @@ class GroupDetailViewModel @Inject constructor(
         .onEach { state ->
             _uiState.value = state
         }
-        .launchIn(viewModelScope)
+        .also { flow ->
+            // Cancelar job anterior antes de iniciar novo
+            groupDetailJob?.cancel()
+            groupDetailJob = flow.launchIn(viewModelScope)
+        }
     }
 
     /**
@@ -497,6 +504,8 @@ class GroupDetailViewModel @Inject constructor(
      */
     override fun onCleared() {
         super.onCleared()
-        // Limpeza de recursos se necessário
+        // Cancelar job de observação do grupo para evitar memory leaks
+        groupDetailJob?.cancel()
+        groupDetailJob = null
     }
 }

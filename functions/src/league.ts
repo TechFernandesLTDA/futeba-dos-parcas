@@ -150,9 +150,9 @@ export function calculateLeagueRating(recentGames: any[]): number {
 
     const gamesCount = recentGames.length;
 
-    // PPJ - Pontos (XP) por Jogo (max 200 = 100 pontos)
+    // PPJ - Pontos (XP) por Jogo (max 500 = 100 pontos)
     const avgXp = recentGames.reduce((sum, g) => sum + (g.xp_earned || 0), 0) / gamesCount;
-    const ppjScore = Math.min(avgXp / 200.0, 1.0) * 100;
+    const ppjScore = Math.min(avgXp / 500.0, 1.0) * 100;
 
     // WR - Win Rate (100% = 100 pontos)
     const winRate = (recentGames.filter(g => g.won).length / gamesCount) * 100;

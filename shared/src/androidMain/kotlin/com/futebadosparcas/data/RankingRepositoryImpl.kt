@@ -11,9 +11,7 @@ import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.temporal.WeekFields
+import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.datetime.Clock
 
@@ -216,10 +214,16 @@ class RankingRepositoryImpl(
         months: Int
     ): Result<XpEvolution> {
         return try {
-            val startDate = LocalDate.now().minusMonths(months.toLong())
-            val startTimestamp = java.util.Date.from(
-                startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()
-            ).time
+            // Calcular data de início usando Calendar (API 24 compatível)
+            val startCalendar = Calendar.getInstance().apply {
+                add(Calendar.MONTH, -months)
+                set(Calendar.DAY_OF_MONTH, 1)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val startTimestamp = startCalendar.timeInMillis
 
             // Buscar logs de XP no período
             val logsResult = firebaseDataSource.getUserXpLogs(userId, 500)
@@ -231,14 +235,11 @@ class RankingRepositoryImpl(
                 ?.filter { it.createdAt != null && it.createdAt >= startTimestamp }
                 ?: emptyList()
 
-            // Agrupar por mês
-            val formatter = DateTimeFormatter.ofPattern("MM/yyyy")
+            // Agrupar por mês usando SimpleDateFormat (API 24 compatível)
+            val formatter = SimpleDateFormat("MM/yyyy", Locale.getDefault())
             val monthlyXp = logs.groupBy { log ->
                 log.createdAt?.let {
-                    java.time.Instant.ofEpochMilli(it)
-                        .atZone(java.time.ZoneId.systemDefault())
-                        .toLocalDate()
-                        .format(formatter)
+                    formatter.format(Date(it))
                 } ?: "N/A"
             }.mapValues { (_, logsInMonth) ->
                 logsInMonth.sumOf { it.xpEarned }
@@ -408,17 +409,20 @@ class RankingRepositoryImpl(
     }
 
     private fun getCurrentWeekKey(): String {
-        val now = LocalDate.now()
-        val weekFields = WeekFields.of(Locale.getDefault())
-        val weekNumber = now.get(weekFields.weekOfWeekBasedYear())
-        return "${now.year}-W${weekNumber.toString().padStart(2, '0')}"
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val weekNumber = calendar.get(Calendar.WEEK_OF_YEAR)
+        return "${year}-W${weekNumber.toString().padStart(2, '0')}"
     }
 
     private fun getCurrentMonthKey(): String {
-        return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"))
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH) + 1
+        return "${year}-${month.toString().padStart(2, '0')}"
     }
 
     private fun getCurrentYearKey(): String {
-        return LocalDate.now().year.toString()
+        return Calendar.getInstance().get(Calendar.YEAR).toString()
     }
 }

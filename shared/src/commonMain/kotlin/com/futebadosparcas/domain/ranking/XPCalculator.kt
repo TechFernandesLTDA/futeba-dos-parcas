@@ -72,11 +72,13 @@ data class PlayerGameData(
  * - Participacao: 10 XP por jogo
  * - Gols: 10 XP cada
  * - Assistencias: 7 XP cada
- * - Defesas (goleiro): 5 XP cada
+ * - Defesas (goleiro): 8 XP cada (aumentado para balance)
+ * - Clean Sheet (goleiro): 15 XP bonus
  * - Vitoria: 20 XP
  * - Empate: 10 XP
  * - MVP: 30 XP
  * - Streak 3: 20 XP
+ * - Streak 5: 35 XP (NOVO)
  * - Streak 7: 50 XP
  * - Streak 10: 100 XP
  * - Bola Murcha (worst player): -10 XP (penalidade)
@@ -87,7 +89,8 @@ object XPCalculator {
     private const val DEFAULT_XP_PRESENCE = 10
     private const val DEFAULT_XP_PER_GOAL = 10
     private const val DEFAULT_XP_PER_ASSIST = 7
-    private const val DEFAULT_XP_PER_SAVE = 5
+    private const val DEFAULT_XP_PER_SAVE = 8         // Aumentado de 5 para 8 (balance goleiros)
+    private const val DEFAULT_XP_CLEAN_SHEET = 15    // NOVO: Bonus goleiro clean sheet
     private const val DEFAULT_XP_WIN = 20
     private const val DEFAULT_XP_DRAW = 10
     private const val DEFAULT_XP_MVP = 30
@@ -95,6 +98,7 @@ object XPCalculator {
 
     // Bonus de Sequencia (Streak)
     private const val DEFAULT_XP_STREAK_3 = 20
+    private const val DEFAULT_XP_STREAK_5 = 35       // NOVO: Bonus intermediário
     private const val DEFAULT_XP_STREAK_7 = 50
     private const val DEFAULT_XP_STREAK_10 = 100
 
@@ -123,8 +127,10 @@ object XPCalculator {
         val xpWorstPlayerPenalty = settings?.xpWorstPlayerPenalty ?: DEFAULT_XP_WORST_PLAYER_PENALTY
 
         val xpStreak3 = settings?.xpStreak3 ?: DEFAULT_XP_STREAK_3
+        val xpStreak5 = settings?.xpStreak5 ?: DEFAULT_XP_STREAK_5
         val xpStreak7 = settings?.xpStreak7 ?: DEFAULT_XP_STREAK_7
         val xpStreak10 = settings?.xpStreak10 ?: DEFAULT_XP_STREAK_10
+        val xpCleanSheet = settings?.xpCleanSheet ?: DEFAULT_XP_CLEAN_SHEET
 
         // 1. XP de Presenca (Base operacional)
         val participationXp = xpPresence
@@ -151,10 +157,11 @@ object XPCalculator {
         // 6. XP de MVP
         val mvpXp = if (playerData.isMvp) xpMvp else 0
 
-        // 7. XP de Sequencia (Streak)
+        // 7. XP de Sequencia (Streak) - escalonado: 3 -> 5 -> 7 -> 10
         val streakXp = when {
             playerData.currentStreak >= 10 -> xpStreak10
             playerData.currentStreak >= 7 -> xpStreak7
+            playerData.currentStreak >= 5 -> xpStreak5   // NOVO: Bonus intermediário
             playerData.currentStreak >= 3 -> xpStreak3
             else -> 0
         }

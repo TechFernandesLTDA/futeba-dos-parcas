@@ -12,10 +12,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.io.File
-import java.time.LocalDate
-import java.time.YearMonth
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 
 /**
  * Implementação Android do FirebaseDataSource usando Firebase Android SDK.
@@ -3502,8 +3502,10 @@ actual class FirebaseDataSource(
     actual suspend fun getActiveSeason(): Result<Season?> {
         return try {
             // SEMPRE usar a season do mês atual (formato: monthly_YYYY_MM)
-            val now = LocalDate.now()
-            val seasonId = "monthly_${now.year}_${String.format("%02d", now.monthValue)}"
+            val calendar = Calendar.getInstance()
+            val year = calendar.get(Calendar.YEAR)
+            val month = calendar.get(Calendar.MONTH) + 1 // Calendar.MONTH é 0-indexed
+            val seasonId = "monthly_${year}_${String.format("%02d", month)}"
 
             // Buscar a season do mês atual
             val doc = firestore.collection("seasons").document(seasonId).get().await()
@@ -3512,15 +3514,38 @@ actual class FirebaseDataSource(
                 doc.toSeasonOrNull()
             } else {
                 // Se não existe, criar automaticamente
-                val yearMonth = YearMonth.from(now)
-                val startOfMonth = now.atStartOfDay()
-                val endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59)
+                // Início do mês (dia 1, 00:00:00)
+                val startCalendar = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, year)
+                    set(Calendar.MONTH, month - 1)
+                    set(Calendar.DAY_OF_MONTH, 1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+
+                // Fim do mês (último dia, 23:59:59)
+                val endCalendar = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, year)
+                    set(Calendar.MONTH, month - 1)
+                    set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
+                    set(Calendar.HOUR_OF_DAY, 23)
+                    set(Calendar.MINUTE, 59)
+                    set(Calendar.SECOND, 59)
+                    set(Calendar.MILLISECOND, 999)
+                }
+
+                // Nome da season (ex: "Janeiro 2025")
+                val dateFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+                val seasonName = dateFormat.format(startCalendar.time)
+                    .replaceFirstChar { it.uppercase() }
 
                 val newSeason = Season(
                     id = seasonId,
-                    name = yearMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")).replaceFirstChar { it.uppercase() },
-                    startDate = startOfMonth.toEpochSecond(java.time.ZoneOffset.UTC) * 1000,
-                    endDate = endOfMonth.toEpochSecond(java.time.ZoneOffset.UTC) * 1000,
+                    name = seasonName,
+                    startDate = startCalendar.timeInMillis,
+                    endDate = endCalendar.timeInMillis,
                     isActive = true
                 )
 
