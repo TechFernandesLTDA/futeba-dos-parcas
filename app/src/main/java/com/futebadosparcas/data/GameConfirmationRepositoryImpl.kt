@@ -47,7 +47,7 @@ class GameConfirmationRepositoryImpl @Inject constructor(
         // ========== VALIDACAO 0: Validar parametro position ==========
         val validPositions = PlayerPosition.entries.map { it.name }
         if (position !in validPositions) {
-            AppLogger.w(TAG, "Posicao invalida recebida: $position")
+            AppLogger.w(TAG) { "Posicao invalida recebida: $position" }
             return Result.failure(
                 IllegalArgumentException("Posicao invalida: $position. Valores aceitos: $validPositions")
             )
@@ -120,30 +120,22 @@ class GameConfirmationRepositoryImpl @Inject constructor(
         // SEGURANCA: Validacao estrita - nao permite confirmacao apos inicio do jogo
         val gameDateTime: Date? = try {
             // Tentar parsear data/hora do jogo
-            if (!game.date.isNullOrBlank() && !game.time.isNullOrBlank()) {
+            if (game.date.isNotBlank() && game.time.isNotBlank()) {
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
                 dateFormat.isLenient = false // Parsing estrito
                 dateFormat.parse("${game.date} ${game.time}")
-            } else if (game.dateTimeMillis != null && game.dateTimeMillis > 0) {
-                // Fallback para timestamp se disponivel
-                Date(game.dateTimeMillis)
             } else {
                 null
             }
         } catch (e: ParseException) {
             // SEGURANCA: Logar tentativa de parsing com dados invalidos
-            AppLogger.w(TAG, "Falha ao parsear data/hora do jogo $gameId: date=${game.date}, time=${game.time}", e)
-            // Fallback para timestamp se disponivel
-            if (game.dateTimeMillis != null && game.dateTimeMillis > 0) {
-                Date(game.dateTimeMillis)
-            } else {
-                null
-            }
+            AppLogger.w(TAG) { "Falha ao parsear data/hora do jogo $gameId: date=${game.date}, time=${game.time}" }
+            null
         }
 
         // Se conseguimos determinar a data/hora, verificar se jogo ja iniciou
         if (gameDateTime != null && Date().after(gameDateTime)) {
-            AppLogger.w(TAG, "Tentativa de confirmacao apos inicio do jogo $gameId por usuario ${user.id}")
+            AppLogger.w(TAG) { "Tentativa de confirmacao apos inicio do jogo $gameId por usuario ${user.id}" }
             return Result.failure(
                 IllegalStateException("Nao eh possivel confirmar apos o inicio do jogo")
             )
