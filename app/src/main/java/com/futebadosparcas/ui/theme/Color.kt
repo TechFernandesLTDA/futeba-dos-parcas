@@ -58,6 +58,15 @@ private val md3_light_inverseSurface = Color(0xFF2F3033)
 private val md3_light_inverseOnSurface = Color(0xFFF1F4F5)
 private val md3_light_inversePrimary = Color(0xFF4ADE80)
 
+// Surface Containers (M3 1.2+) - Hierarquia de elevacao visual
+private val md3_light_surfaceDim = Color(0xFFDDD8DD)
+private val md3_light_surfaceBright = Color(0xFFFDF8FD)
+private val md3_light_surfaceContainerLowest = Color(0xFFFFFFFF)
+private val md3_light_surfaceContainerLow = Color(0xFFF7F5F8)
+private val md3_light_surfaceContainer = Color(0xFFF1EFF2)
+private val md3_light_surfaceContainerHigh = Color(0xFFEBE9EC)
+private val md3_light_surfaceContainerHighest = Color(0xFFE5E3E6)
+
 // ==========================================
 // DARK THEME COLORS (OLED Optimized)
 // ==========================================
@@ -95,6 +104,15 @@ private val md3_dark_outlineVariant = Color(0xFF30373C)
 private val md3_dark_inverseSurface = Color(0xFFE6E6E6)
 private val md3_dark_inverseOnSurface = Color(0xFF1C1B1F)
 private val md3_dark_inversePrimary = Color(0xFF00C853)
+
+// Surface Containers Dark (M3 1.2+) - OLED optimized
+private val md3_dark_surfaceDim = Color(0xFF0F1114)
+private val md3_dark_surfaceBright = Color(0xFF36393E)
+private val md3_dark_surfaceContainerLowest = Color(0xFF0A0C0E)
+private val md3_dark_surfaceContainerLow = Color(0xFF15191C)
+private val md3_dark_surfaceContainer = Color(0xFF1A1D21)
+private val md3_dark_surfaceContainerHigh = Color(0xFF24282C)
+private val md3_dark_surfaceContainerHighest = Color(0xFF2F3337)
 
 /**
  * Material Design 3 Light Color Scheme
@@ -135,7 +153,16 @@ val FutebaLightColorScheme = lightColorScheme(
     inverseOnSurface = md3_light_inverseOnSurface,
     inversePrimary = md3_light_inversePrimary,
 
-    surfaceTint = md3_light_primary
+    surfaceTint = md3_light_primary,
+
+    // Surface Containers (M3 1.2+)
+    surfaceDim = md3_light_surfaceDim,
+    surfaceBright = md3_light_surfaceBright,
+    surfaceContainerLowest = md3_light_surfaceContainerLowest,
+    surfaceContainerLow = md3_light_surfaceContainerLow,
+    surfaceContainer = md3_light_surfaceContainer,
+    surfaceContainerHigh = md3_light_surfaceContainerHigh,
+    surfaceContainerHighest = md3_light_surfaceContainerHighest
 )
 
 /**
@@ -177,7 +204,16 @@ val FutebaDarkColorScheme = darkColorScheme(
     inverseOnSurface = md3_dark_inverseOnSurface,
     inversePrimary = md3_dark_inversePrimary,
 
-    surfaceTint = md3_dark_primary
+    surfaceTint = md3_dark_primary,
+
+    // Surface Containers (M3 1.2+) - OLED optimized
+    surfaceDim = md3_dark_surfaceDim,
+    surfaceBright = md3_dark_surfaceBright,
+    surfaceContainerLowest = md3_dark_surfaceContainerLowest,
+    surfaceContainerLow = md3_dark_surfaceContainerLow,
+    surfaceContainer = md3_dark_surfaceContainer,
+    surfaceContainerHigh = md3_dark_surfaceContainerHigh,
+    surfaceContainerHighest = md3_dark_surfaceContainerHighest
 )
 
 // ==========================================

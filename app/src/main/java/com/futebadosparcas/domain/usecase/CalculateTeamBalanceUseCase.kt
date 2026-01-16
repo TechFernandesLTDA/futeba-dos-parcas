@@ -3,7 +3,7 @@ package com.futebadosparcas.domain.usecase
 import com.futebadosparcas.data.datasource.FirebaseDataSource
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.Team
-import com.futebadosparcas.domain.ai.TeamBalancer
+import com.futebadosparcas.domain.ai.AiTeamBalancer
 import com.futebadosparcas.util.AppLogger
 import javax.inject.Inject
 
@@ -18,7 +18,7 @@ import javax.inject.Inject
  */
 class CalculateTeamBalanceUseCase @Inject constructor(
     private val firebaseDataSource: FirebaseDataSource,
-    private val teamBalancer: TeamBalancer
+    private val teamBalancer: AiTeamBalancer
 ) {
     companion object {
         private const val TAG = "CalculateTeamBalanceUseCase"

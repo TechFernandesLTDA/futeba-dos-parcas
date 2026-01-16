@@ -4,7 +4,7 @@ import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.data.model.Team
 import com.futebadosparcas.domain.repository.UserRepository
-import com.futebadosparcas.domain.ai.TeamBalancer
+import com.futebadosparcas.domain.ai.AiTeamBalancer
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.ceil
@@ -12,7 +12,7 @@ import kotlin.math.ceil
 @Singleton
 class GeminiTeamBalancer @Inject constructor(
     private val userRepository: UserRepository
-) : TeamBalancer {
+) : AiTeamBalancer {
 
     override suspend fun balanceTeams(
         gameId: String,

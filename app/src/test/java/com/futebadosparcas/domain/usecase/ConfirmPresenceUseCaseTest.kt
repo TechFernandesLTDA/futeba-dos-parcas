@@ -48,7 +48,7 @@ class ConfirmPresenceUseCaseTest {
         val confirmation = result.getOrNull()!!
         assertEquals(gameId, confirmation.gameId)
         assertEquals("FIELD", confirmation.position)
-        assertEquals(false, confirmation.isCasual)
+        assertEquals(false, confirmation.isCasualPlayer)
         coVerify(exactly = 1) { gameRepository.confirmPresence(gameId, "FIELD", false) }
     }
 
@@ -77,7 +77,7 @@ class ConfirmPresenceUseCaseTest {
     fun `invoke should confirm presence as casual player`() = runTest {
         // Given - Dado um jogador casual
         val gameId = "game789"
-        val expectedConfirmation = createGameConfirmation(gameId, "user789", "FIELD", isCasual = true)
+        val expectedConfirmation = createGameConfirmation(gameId, "user789", "FIELD", isCasualPlayer = true)
         coEvery {
             gameRepository.confirmPresence(gameId, "FIELD", true)
         } returns Result.success(expectedConfirmation)
@@ -87,7 +87,7 @@ class ConfirmPresenceUseCaseTest {
 
         // Then - Então deve marcar como casual
         assertTrue(result.isSuccess)
-        assertEquals(true, result.getOrNull()?.isCasual)
+        assertEquals(true, result.getOrNull()?.isCasualPlayer)
         coVerify(exactly = 1) { gameRepository.confirmPresence(gameId, "FIELD", true) }
     }
 
@@ -189,15 +189,14 @@ class ConfirmPresenceUseCaseTest {
         gameId: String,
         userId: String,
         position: String,
-        isCasual: Boolean = false
+        isCasualPlayer: Boolean = false
     ) = GameConfirmation(
         gameId = gameId,
         userId = userId,
         userName = "Test User",
-        userPhotoUrl = "",
+        userPhoto = "",
         position = position,
-        isCasual = isCasual,
-        confirmedAt = System.currentTimeMillis(),
-        isPaid = false
+        isCasualPlayer = isCasualPlayer,
+        confirmedAt = java.util.Date()
     )
 }

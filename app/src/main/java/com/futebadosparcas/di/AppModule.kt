@@ -194,7 +194,7 @@ object AppModule {
     @Singleton
     fun provideTeamBalancer(
         userRepository: KmpUserRepository
-    ): com.futebadosparcas.domain.ai.TeamBalancer {
+    ): com.futebadosparcas.domain.ai.AiTeamBalancer {
         return com.futebadosparcas.data.ai.GeminiTeamBalancer(userRepository)
     }
 
