@@ -1,6 +1,9 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
@@ -72,7 +75,49 @@ data class CashboxEntry(
     @set:PropertyName("voided_by")
     var voidedBy: String? = null
 ) {
+    // Bloco de inicializacao para normalizar valores
+    init {
+        // Amount deve ser sempre positivo (tipo determina entrada/saída)
+        amount.coerceAtLeast(0.0)
+    }
+
     constructor() : this(id = "")
+
+    // ==================== VALIDAÇÃO ====================
+
+    /**
+     * Valida todos os campos da entrada do caixa antes de salvar.
+     *
+     * @return Lista de erros de validação (vazia se tudo válido)
+     */
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+
+        // Validação de amount (> 0)
+        if (amount <= 0) {
+            errors.add(ValidationResult.Invalid("amount", "Valor deve ser maior que zero"))
+        }
+
+        // Validação de descrição (max 500 chars)
+        val descResult = ValidationHelper.validateLength(description, "description", 0, 500)
+        if (descResult is ValidationResult.Invalid) {
+            errors.add(descResult)
+        }
+
+        // Validação de createdById obrigatório
+        if (createdById.isBlank()) {
+            errors.add(ValidationResult.Invalid("created_by_id", "Responsável é obrigatório"))
+        }
+
+        return errors
+    }
+
+    /**
+     * Verifica se a entrada é válida para salvar.
+     */
+    @Exclude
+    fun isValid(): Boolean = validate().isEmpty()
 
     fun getTypeEnum(): CashboxEntryType = try {
         CashboxEntryType.valueOf(type)

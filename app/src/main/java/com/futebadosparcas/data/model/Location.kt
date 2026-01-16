@@ -1,5 +1,7 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
@@ -93,7 +95,61 @@ data class Location(
     @set:PropertyName("updated_at")
     var updatedAt: Date? = null
 ) {
+    // Bloco de inicializacao para normalizar valores
+    init {
+        // Normaliza rating para o range válido (0.0 - 5.0)
+        rating.coerceIn(ValidationHelper.RATING_MIN, ValidationHelper.RATING_MAX)
+
+        // Normaliza ratingCount para valor não-negativo
+        ratingCount = ratingCount.coerceAtLeast(0)
+
+        // Normaliza duração mínima para pelo menos 30 minutos
+        minGameDurationMinutes = minGameDurationMinutes.coerceAtLeast(30)
+    }
+
     constructor() : this(id = "")
+
+    // ==================== VALIDAÇÃO ====================
+
+    /**
+     * Valida todos os campos do local antes de salvar.
+     *
+     * @return Lista de erros de validação (vazia se tudo válido)
+     */
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+
+        // Validação de nome (obrigatório, 2-100 chars)
+        val nameResult = ValidationHelper.validateName(name, "name")
+        if (nameResult is ValidationResult.Invalid) {
+            errors.add(nameResult)
+        }
+
+        // Validação de rating (0.0-5.0)
+        if (!ValidationHelper.isValidRating(rating)) {
+            errors.add(ValidationResult.Invalid("rating", "Rating deve estar entre 0 e 5"))
+        }
+
+        // Validação de ownerId obrigatório
+        if (ownerId.isBlank()) {
+            errors.add(ValidationResult.Invalid("owner_id", "Local deve ter um proprietário"))
+        }
+
+        // Validação de timestamps
+        val timestampResult = ValidationHelper.validateTimestampOrder(createdAt, updatedAt)
+        if (timestampResult is ValidationResult.Invalid) {
+            errors.add(timestampResult)
+        }
+
+        return errors
+    }
+
+    /**
+     * Verifica se o local é válido para salvar.
+     */
+    @Exclude
+    fun isValid(): Boolean = validate().isEmpty()
 
     /**
      * Retorna endereco formatado completo

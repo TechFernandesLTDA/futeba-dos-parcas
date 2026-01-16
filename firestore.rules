@@ -114,6 +114,55 @@ service cloud.firestore {
     }
 
     // ============================================
+    // FUNCOES DE VALIDACAO DE DADOS
+    // ============================================
+
+    // Valida tamanho de string (min e max)
+    function isValidStringLength(value, min, max) {
+      return value is string && value.size() >= min && value.size() <= max;
+    }
+
+    // Valida formato de email (basico)
+    function isValidEmail(email) {
+      return email == null || email == '' || email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    // Valida rating no range 0.0 - 5.0
+    function isValidRating(rating) {
+      return rating == null || (rating >= 0.0 && rating <= 5.0);
+    }
+
+    // Valida league rating no range 0.0 - 100.0
+    function isValidLeagueRating(rating) {
+      return rating == null || (rating >= 0.0 && rating <= 100.0);
+    }
+
+    // Valida level no range 0 - 10
+    function isValidLevel(level) {
+      return level == null || (level >= 0 && level <= 10);
+    }
+
+    // Valida valor positivo (> 0)
+    function isPositiveNumber(value) {
+      return value is number && value > 0;
+    }
+
+    // Valida valor nao-negativo (>= 0)
+    function isNonNegativeNumber(value) {
+      return value is number && value >= 0;
+    }
+
+    // Valida nome (2-100 caracteres)
+    function isValidName(name) {
+      return name is string && name.size() >= 2 && name.size() <= 100;
+    }
+
+    // Valida descricao (max 500 caracteres)
+    function isValidDescription(desc) {
+      return desc == null || desc == '' || (desc is string && desc.size() <= 500);
+    }
+
+    // ============================================
     // COLECAO: users
     // ============================================
     match /users/{userId} {
@@ -122,7 +171,18 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.is_searchable == true);
 
       // Usuario so pode criar seu proprio perfil (com role padrao PLAYER)
-      allow create: if isOwner(userId) && request.resource.data.role == 'PLAYER';
+      // Validações de dados obrigatorias na criacao
+      allow create: if isOwner(userId) &&
+                       request.resource.data.role == 'PLAYER' &&
+                       // Validacao de nome (2-100 chars)
+                       isValidName(request.resource.data.name) &&
+                       // Validacao de email (formato valido)
+                       isValidEmail(request.resource.data.email) &&
+                       // Validacao de ratings (0.0-5.0)
+                       isValidRating(request.resource.data.striker_rating) &&
+                       isValidRating(request.resource.data.mid_rating) &&
+                       isValidRating(request.resource.data.defender_rating) &&
+                       isValidRating(request.resource.data.gk_rating);
 
       // Usuario pode atualizar seu perfil (campos basicos apenas)
       // XP/Level/Milestones SAO atualizados via Cloud Functions (Admin SDK) - NAO client-side
@@ -161,7 +221,14 @@ service cloud.firestore {
            fieldUnchanged('auto_rating_updated_at') &&
            // FCM token e flags internas
            fieldUnchanged('fcm_token') &&
-           fieldUnchanged('updated_at'));
+           fieldUnchanged('updated_at') &&
+           // Validacao de dados no update
+           isValidName(request.resource.data.name) &&
+           isValidEmail(request.resource.data.email) &&
+           isValidRating(request.resource.data.striker_rating) &&
+           isValidRating(request.resource.data.mid_rating) &&
+           isValidRating(request.resource.data.defender_rating) &&
+           isValidRating(request.resource.data.gk_rating));
 
       allow delete: if false;
     }
@@ -183,8 +250,17 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // Qualquer usuario autenticado pode criar jogos
+      // Validacoes na criacao de jogo
       allow create: if isAuthenticated() &&
-                       (isAdmin() || request.resource.data.owner_id == userId());
+                       (isAdmin() || request.resource.data.owner_id == userId()) &&
+                       // Validacao de max_players (> 0)
+                       isPositiveNumber(request.resource.data.max_players) &&
+                       // Validacao de scores (>= 0)
+                       isNonNegativeNumber(request.resource.data.team1_score) &&
+                       isNonNegativeNumber(request.resource.data.team2_score) &&
+                       // Validacao de contadores (>= 0)
+                       isNonNegativeNumber(request.resource.data.players_count) &&
+                       isNonNegativeNumber(request.resource.data.goalkeepers_count);
 
       // Apenas o dono pode atualizar o jogo
       // Excecao: contadores (players_count, goalkeepers_count) podem ser
@@ -192,10 +268,16 @@ service cloud.firestore {
       // Admins têm acesso total
       allow update: if isAuthenticated() && (
         isAdmin() ||
-        // Dono pode fazer qualquer atualizacao
-        resource.data.owner_id == userId() ||
+        // Dono pode fazer qualquer atualizacao (com validacao de dados)
+        (resource.data.owner_id == userId() &&
+         isNonNegativeNumber(request.resource.data.team1_score) &&
+         isNonNegativeNumber(request.resource.data.team2_score) &&
+         isNonNegativeNumber(request.resource.data.players_count) &&
+         isNonNegativeNumber(request.resource.data.goalkeepers_count)) ||
         // Outros usuarios so podem atualizar contadores via transacao
-        onlyAllowedFields(['players_count', 'goalkeepers_count']) ||
+        (onlyAllowedFields(['players_count', 'goalkeepers_count']) &&
+         isNonNegativeNumber(request.resource.data.players_count) &&
+         isNonNegativeNumber(request.resource.data.goalkeepers_count)) ||
         // Permitir que jogadores confirmados atualizem o MVP no final da votacao
         (isConfirmedPlayer(gameId) && onlyAllowedFields(['mvp_id']))
       );
@@ -386,12 +468,24 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()))
       );
 
-      allow create: if isAuthenticated() && request.resource.data.owner_id == userId();
+      // Validacoes na criacao de grupo
+      allow create: if isAuthenticated() &&
+                       request.resource.data.owner_id == userId() &&
+                       // Nome do grupo: 3-50 caracteres
+                       isValidStringLength(request.resource.data.name, 3, 50) &&
+                       // Descricao: max 500 caracteres
+                       isValidDescription(request.resource.data.description);
 
+      // Validacoes no update de grupo
       allow update: if isAuthenticated() && (
         isAdmin() ||
-        resource.data.owner_id == userId() ||
-        isGroupAdmin(groupId) ||
+        (
+          (resource.data.owner_id == userId() || isGroupAdmin(groupId)) &&
+          // Validacao de dados no update
+          isValidStringLength(request.resource.data.name, 3, 50) &&
+          isValidDescription(request.resource.data.description)
+        ) ||
+        // Atualizacao de contadores permitida
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['member_count', 'updated_at'])
       );
 
