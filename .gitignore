@@ -1,3 +1,6 @@
+# CTX - Generated context files for LLMs
+llm-context/
+
 # Built application files
 *.apk
 *.aar

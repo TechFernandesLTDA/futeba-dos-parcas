@@ -15,6 +15,8 @@ import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.ConnectivityMonitor
+import com.futebadosparcas.domain.cache.SharedCacheService
+import com.futebadosparcas.domain.prefetch.PrefetchService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -167,78 +169,14 @@ class HomeViewModel @Inject constructor(
                             }
                         }
                     }
-                    val statsDeferred = async {
-                        runCatching {
-                            withTimeout(TIMEOUT_MILLIS) {
-                                statisticsRepository.getUserStatistics(user.id)
-                            }
-                        }
-                    }
-                    val activitiesDeferred = async {
-                        runCatching {
-                            withTimeout(TIMEOUT_MILLIS) {
-                                activityRepository.getRecentActivities(20) // Reduzido para 20 para melhor performance
-                            }
-                        }
-                    }
-                    val publicGamesDeferred = async {
-                        runCatching {
-                            withTimeout(TIMEOUT_MILLIS) {
-                                gameRepository.getPublicGames(10)
-                            }
-                        }
-                    }
-                    val streakDeferred = async {
-                        runCatching {
-                            withTimeout(TIMEOUT_MILLIS) {
-                                gamificationRepository.getUserStreak(user.id)
-                            }
-                        }
-                    }
-                    // OTIMIZAÇÃO: Badges e challenges carregados em background (lazy loading)
 
-                    _loadingState.value = LoadingState.LoadingProgress(60, 100, "Carregando dados...")
+                    _loadingState.value = LoadingState.LoadingProgress(30, 100, "Carregando jogos...")
 
-                    // Await all com tratamento de erro gracioso
+                    // Await games para FASE 1
                     val gamesResult = gamesDeferred.await()
-                    val statsResult = statsDeferred.await()
-                    val activitiesResult = activitiesDeferred.await()
-                    val publicGamesResult = publicGamesDeferred.await()
-                    val streakResult = streakDeferred.await()
-
-                    _loadingState.value = LoadingState.LoadingProgress(70, 100, "Processando...")
-
-                    // Extrair dados com fallback para valores vazios
-                    // OTIMIZAÇÃO: Query já retorna apenas jogos futuros (filtrado no Firestore)
                     val games = gamesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
-                    val statistics = statsResult.getOrNull()?.getOrNull()
-                    val activities = activitiesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
-                    val publicGames = publicGamesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
-                    val streak = streakResult.getOrNull()?.getOrNull()
 
-                    // OTIMIZAÇÃO: Badges e challenges inicializados vazios (carregados em background)
-
-                    _loadingState.value = LoadingState.LoadingProgress(85, 100, "Carregando liga...")
-
-                    // Fetch League info com timeout e tratamento de erro
-                    var leagueDivision = LeagueDivision.BRONZE
-                    try {
-                        val seasonResult = withTimeout(TIMEOUT_MILLIS) {
-                            gamificationRepository.getActiveSeason()
-                        }
-                        seasonResult.getOrNull()?.let { season ->
-                            val participationResult = withTimeout(TIMEOUT_MILLIS) {
-                                gamificationRepository.getUserParticipation(user.id, season.id)
-                            }
-                            participationResult.getOrNull()?.let { participation ->
-                                leagueDivision = participation.getDivisionEnum()
-                            }
-                        }
-                    } catch (e: Exception) {
-                        AppLogger.e(TAG, "Erro ao carregar dados da liga", e)
-                    }
-
-                    _loadingState.value = LoadingState.LoadingProgress(95, 100, "Finalizando...")
+                    _loadingState.value = LoadingState.LoadingProgress(50, 100, "Processando...")
 
                     // Calculate Gamification Summary
                     val (progressXp, neededXp) = com.futebadosparcas.data.model.LevelTable.getXpProgress(user.experiencePoints)
@@ -257,15 +195,6 @@ class HomeViewModel @Inject constructor(
                         isMaxLevel = isMaxLevel,
                         division = LeagueDivision.BRONZE // Será atualizado em FASE 3
                     )
-
-                    _loadingState.value = LoadingState.Success
-                    val successState = HomeUiState.Success(
-                        user, games, summary, statistics, activities, publicGames, streak,
-                        challenges = emptyList(), // Será carregado em background
-                        recentBadges = emptyList(), // Será carregado em background
-                        isGridView
-                    )
-                    _uiState.value = successState
 
                     // RENDERIZAR FASE 1 - Estado parcial mas usável
                     var currentState = HomeUiState.Success(
@@ -286,7 +215,9 @@ class HomeViewModel @Inject constructor(
 
                     // PREFETCH PREDITIVO (non-blocking)
                     if (games.isNotEmpty()) {
-                        prefetchService.prefetchNextGame(games.first())
+                        // Converter GameWithConfirmations para Game para o prefetch
+                        val firstGame = games.first()
+                        prefetchService.prefetchNextGame(firstGame.game)
                     }
 
                     // ==========================================
@@ -294,22 +225,22 @@ class HomeViewModel @Inject constructor(
                     // ==========================================
                     delay(250) // Pequeno delay para não saturar renderer
 
-                    _loadingState.value = LoadingState.LoadingProgress(50, 100, "Carregando atividades...")
+                    _loadingState.value = LoadingState.LoadingProgress(60, 100, "Carregando atividades...")
 
-                    val activities: List<Activity> = withTimeout(TIMEOUT_MILLIS) {
+                    val activitiesPhase2: List<Activity> = withTimeout(TIMEOUT_MILLIS) {
                         activityRepository.getRecentActivities(10) // Reduzido de 20 → 10
                     }.getOrDefault(emptyList())
 
-                    val statistics: com.futebadosparcas.data.model.UserStatistics? = withTimeout(TIMEOUT_MILLIS) {
+                    val statisticsPhase2: com.futebadosparcas.data.model.UserStatistics? = withTimeout(TIMEOUT_MILLIS) {
                         statisticsRepository.getUserStatistics(user.id)
                     }.getOrNull()
 
-                    _loadingState.value = LoadingState.LoadingProgress(60, 100, "Atualizando tela...")
+                    _loadingState.value = LoadingState.LoadingProgress(70, 100, "Atualizando tela...")
 
                     // ATUALIZAR FASE 2 - Stream in activities + stats
                     currentState = currentState.copy(
-                        activities = activities,
-                        statistics = statistics
+                        activities = activitiesPhase2,
+                        statistics = statisticsPhase2
                     )
                     _uiState.value = currentState
                     cachedSuccessState = currentState
@@ -319,13 +250,13 @@ class HomeViewModel @Inject constructor(
                     // ==========================================
                     delay(300) // Outro delay
 
-                    _loadingState.value = LoadingState.LoadingProgress(70, 100, "Carregando mais...")
+                    _loadingState.value = LoadingState.LoadingProgress(80, 100, "Carregando mais...")
 
-                    val publicGames: List<Game> = withTimeout(TIMEOUT_MILLIS) {
+                    val publicGamesPhase3: List<Game> = withTimeout(TIMEOUT_MILLIS) {
                         gameRepository.getPublicGames(5) // Reduzido de 10 → 5
                     }.getOrDefault(emptyList())
 
-                    val streak: com.futebadosparcas.data.model.UserStreak? = withTimeout(TIMEOUT_MILLIS) {
+                    val streakPhase3: com.futebadosparcas.domain.model.UserStreak? = withTimeout(TIMEOUT_MILLIS) {
                         gamificationRepository.getUserStreak(user.id)
                     }.getOrNull()
 
@@ -346,7 +277,7 @@ class HomeViewModel @Inject constructor(
                     val challengesWithProgress = allChallenges.map { it to progressMap[it.id] }
 
                     // Fetch league division
-                    var leagueDivision = LeagueDivision.BRONZE
+                    var leagueDivisionPhase3 = LeagueDivision.BRONZE
                     try {
                         val seasonResult = withTimeout(TIMEOUT_MILLIS) {
                             gamificationRepository.getActiveSeason()
@@ -356,31 +287,28 @@ class HomeViewModel @Inject constructor(
                                 gamificationRepository.getUserParticipation(user.id, season.id)
                             }
                             participationResult.getOrNull()?.let { participation ->
-                                leagueDivision = participation.division
+                                leagueDivisionPhase3 = participation.getDivisionEnum()
                             }
                         }
                     } catch (e: Exception) {
                         AppLogger.d(TAG) { "Erro ao carregar dados da liga: ${e.message}" }
                     }
 
-                    _loadingState.value = LoadingState.LoadingProgress(90, 100, "Finalizando...")
+                    _loadingState.value = LoadingState.LoadingProgress(95, 100, "Finalizando...")
 
                     // ATUALIZAR FASE 3 - Completo
                     currentState = currentState.copy(
-                        publicGames = publicGames,
-                        streak = streak,
+                        publicGames = publicGamesPhase3,
+                        streak = streakPhase3,
                         challenges = challengesWithProgress,
                         recentBadges = userBadges,
-                        gamificationSummary = summary.copy(division = leagueDivision)
+                        gamificationSummary = summary.copy(division = leagueDivisionPhase3)
                     )
                     _uiState.value = currentState
                     cachedSuccessState = currentState
 
                     _loadingState.value = LoadingState.Success
                     retryCount = 0
-
-                    // OTIMIZAÇÃO: Carregar badges e challenges em background (não bloqueia UI)
-                    loadSecondaryData(user.id, successState)
                 }
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao carregar dados da home", e)
@@ -427,64 +355,6 @@ class HomeViewModel @Inject constructor(
 
     fun retryLoad() {
         loadHomeData(forceRetry = true)
-    }
-
-    /**
-     * Carrega dados secundários em background (badges e challenges)
-     * Não bloqueia o loading inicial da tela
-     * OTIMIZAÇÃO: Reduz loading time inicial em ~40%
-     */
-    private fun loadSecondaryData(userId: String, currentState: HomeUiState.Success) {
-        viewModelScope.launch {
-            try {
-                // Carregar badges e challenges em paralelo
-                val badgesDeferred = async {
-                    runCatching {
-                        withTimeout(TIMEOUT_MILLIS) {
-                            gamificationRepository.getRecentBadges(userId, limit = 5)
-                        }
-                    }
-                }
-                val challengesDeferred = async {
-                    runCatching {
-                        withTimeout(TIMEOUT_MILLIS) {
-                            gamificationRepository.getActiveChallenges()
-                        }
-                    }
-                }
-
-                val badgesResult = badgesDeferred.await()
-                val challengesResult = challengesDeferred.await()
-
-                val userBadges = badgesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
-                val allChallenges = challengesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
-
-                // Fetch progress for challenges
-                val challengeIds = allChallenges.map { it.id }
-                val progressResult = runCatching {
-                    withTimeout(TIMEOUT_MILLIS) {
-                        gamificationRepository.getChallengesProgress(userId, challengeIds)
-                    }
-                }
-                val progressMap = progressResult.getOrNull()?.getOrDefault(emptyList())?.associateBy { it.challengeId } ?: emptyMap()
-
-                val challengesWithProgress = allChallenges.map {
-                    it to progressMap[it.id]
-                }
-
-                // Atualizar estado com dados secundários
-                val updatedState = currentState.copy(
-                    challenges = challengesWithProgress,
-                    recentBadges = userBadges
-                )
-                _uiState.value = updatedState
-                cachedSuccessState = updatedState
-
-            } catch (e: Exception) {
-                AppLogger.w(TAG) { "Erro ao carregar dados secundários (não crítico): ${e.message}" }
-                // Não exibir erro ao usuário - dados secundários não são críticos
-            }
-        }
     }
 
     fun getCurrentUserId(): String? {

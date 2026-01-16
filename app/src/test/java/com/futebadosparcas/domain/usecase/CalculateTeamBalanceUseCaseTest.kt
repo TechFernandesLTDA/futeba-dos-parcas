@@ -2,7 +2,7 @@ package com.futebadosparcas.domain.usecase
 
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.Team
-import com.futebadosparcas.domain.ai.TeamBalancer
+import com.futebadosparcas.domain.ai.AiTeamBalancer
 import com.futebadosparcas.domain.usecase.game.CalculateTeamBalanceUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.DisplayName
 @DisplayName("CalculateTeamBalanceUseCase Tests")
 class CalculateTeamBalanceUseCaseTest {
 
-    private lateinit var teamBalancer: TeamBalancer
+    private lateinit var teamBalancer: AiTeamBalancer
     private lateinit var useCase: CalculateTeamBalanceUseCase
 
     @BeforeEach
@@ -250,10 +250,9 @@ class CalculateTeamBalanceUseCaseTest {
         gameId = "",
         userId = userId,
         userName = "Player $userId",
-        userPhotoUrl = "",
+        userPhoto = "",
         position = position,
-        isCasual = false,
-        confirmedAt = System.currentTimeMillis(),
-        isPaid = false
+        isCasualPlayer = false,
+        confirmedAt = java.util.Date()
     )
 }

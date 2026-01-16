@@ -30,6 +30,7 @@ import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.model.UserStatistics
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 import com.futebadosparcas.util.LevelHelper
