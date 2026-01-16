@@ -1,17 +1,17 @@
 package com.futebadosparcas.ui.players
 
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
-import com.futebadosparcas.data.model.GroupInvite
+import com.futebadosparcas.domain.model.GroupInvite
 import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.data.repository.IStatisticsRepository
-import com.futebadosparcas.data.repository.InviteRepository
+import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.model.User as SharedUser
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.util.InstantTaskExecutorExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
-import org.junit.Rule
+import org.junit.jupiter.api.extension.ExtendWith
 
 /**
  * Testes unitários para PlayersViewModel.
@@ -33,10 +33,8 @@ import org.junit.Rule
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("PlayersViewModel Tests")
+@ExtendWith(InstantTaskExecutorExtension::class)
 class PlayersViewModelTest {
-
-    @get:Rule
-    val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -381,7 +379,10 @@ class PlayersViewModelTest {
                 groupId = "group1",
                 groupName = "Test Group",
                 invitedUserId = "target",
-                invitedUserName = "Target User"
+                invitedUserName = "Target User",
+                invitedUserEmail = "target@test.com",
+                invitedById = "user123",
+                invitedByName = "Admin User"
             )
         )
 
@@ -432,7 +433,10 @@ class PlayersViewModelTest {
                 groupId = "group1",
                 groupName = "Test Group",
                 invitedUserId = "target",
-                invitedUserName = "Target User"
+                invitedUserName = "Target User",
+                invitedUserEmail = "target@test.com",
+                invitedById = "user123",
+                invitedByName = "Admin User"
             )
         )
 
@@ -502,13 +506,13 @@ class PlayersViewModelTest {
 
     private fun createTestGroup(
         id: String,
-        groupName: String,
+        name: String,
         isAdmin: Boolean
     ): UserGroup {
         return mockk<UserGroup>().apply {
             every { this@apply.groupId } returns id
-            every { this@apply.name } returns groupName
-            every { isAdmin() } returns isAdmin
+            every { this@apply.groupName } returns name
+            every { this@apply.isAdmin() } returns isAdmin
         }
     }
 }

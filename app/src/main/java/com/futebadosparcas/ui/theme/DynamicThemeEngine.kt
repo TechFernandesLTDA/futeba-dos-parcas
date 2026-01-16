@@ -86,7 +86,16 @@ object DynamicThemeEngine {
                 error = errorColor,
                 onError = onErrorColor,
                 errorContainer = errorContainerColor,
-                onErrorContainer = onErrorContainerColor
+                onErrorContainer = onErrorContainerColor,
+
+                // Surface Containers (M3 1.2+) - OLED optimized
+                surfaceDim = Color(0xFF0F1114),
+                surfaceBright = Color(0xFF36393E),
+                surfaceContainerLowest = Color(0xFF0A0C0E),
+                surfaceContainerLow = Color(0xFF15191C),
+                surfaceContainer = Color(0xFF1A1D21),
+                surfaceContainerHigh = Color(0xFF24282C),
+                surfaceContainerHighest = Color(0xFF2F3337)
             )
         } else {
             val primary = primarySeed
@@ -128,7 +137,16 @@ object DynamicThemeEngine {
                 error = errorColor,
                 onError = onErrorColor,
                 errorContainer = errorContainerColor,
-                onErrorContainer = onErrorContainerColor
+                onErrorContainer = onErrorContainerColor,
+
+                // Surface Containers (M3 1.2+) - Clean light hierarchy
+                surfaceDim = Color(0xFFDDD9DE),
+                surfaceBright = Color(0xFFFDF8FD),
+                surfaceContainerLowest = Color(0xFFFFFFFF),
+                surfaceContainerLow = Color(0xFFF7F2F7),
+                surfaceContainer = Color(0xFFF1ECF1),
+                surfaceContainerHigh = Color(0xFFEBE6EB),
+                surfaceContainerHighest = Color(0xFFE5E1E6)
             )
         }
     }

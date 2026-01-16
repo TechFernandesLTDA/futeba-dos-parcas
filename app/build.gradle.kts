@@ -89,6 +89,16 @@ android {
     testOptions {
         unitTests.all {
             it.useJUnitPlatform()
+            // Fix encoding issues for paths with special characters (ç, etc.)
+            it.jvmArgs(
+                "-Dfile.encoding=UTF-8",
+                "-Dsun.jnu.encoding=UTF-8",
+                "-Dconsole.encoding=UTF-8",
+                "-Dstdout.encoding=UTF-8",
+                "-Dstderr.encoding=UTF-8"
+            )
+            // Set working directory to temp to avoid path issues
+            it.workingDir = file("C:/TEMP")
         }
     }
 
