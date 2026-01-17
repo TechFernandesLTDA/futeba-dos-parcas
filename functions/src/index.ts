@@ -65,6 +65,7 @@ interface UserStatistics {
     gamesDraw: number;
     bestPlayerCount: number;
     worstPlayerCount: number;
+    currentMvpStreak: number;  // Sequencia atual de jogos como MVP
 }
 
 interface XpLog {
@@ -416,7 +417,8 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                         result.set(doc.id, (doc.data() || {
                             totalGames: 0, totalGoals: 0, totalAssists: 0, totalSaves: 0,
                             totalYellowCards: 0, totalRedCards: 0,
-                            gamesWon: 0, gamesLost: 0, gamesDraw: 0, bestPlayerCount: 0, worstPlayerCount: 0
+                            gamesWon: 0, gamesLost: 0, gamesDraw: 0, bestPlayerCount: 0, worstPlayerCount: 0,
+                            currentMvpStreak: 0
                         }) as UserStatistics);
                     }
                 }
@@ -426,7 +428,8 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                         result.set(id, {
                             totalGames: 0, totalGoals: 0, totalAssists: 0, totalSaves: 0,
                             totalYellowCards: 0, totalRedCards: 0,
-                            gamesWon: 0, gamesLost: 0, gamesDraw: 0, bestPlayerCount: 0, worstPlayerCount: 0
+                            gamesWon: 0, gamesLost: 0, gamesDraw: 0, bestPlayerCount: 0, worstPlayerCount: 0,
+                            currentMvpStreak: 0
                         });
                     }
                 }
@@ -567,6 +570,9 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                 xp += penaltyXp;
 
                 // Update Stats locally for Milestone Check
+                // MVP Streak: incrementa se MVP, reseta se nao
+                const newMvpStreak = isMvp ? (stats.currentMvpStreak || 0) + 1 : 0;
+
                 const newStats: UserStatistics = {
                     ...stats,
                     totalGames: (stats.totalGames || 0) + 1,
@@ -579,7 +585,8 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
                     gamesLost: (stats.gamesLost || 0) + (result === "LOSS" ? 1 : 0),
                     gamesDraw: (stats.gamesDraw || 0) + (result === "DRAW" ? 1 : 0),
                     bestPlayerCount: (stats.bestPlayerCount || 0) + (isMvp ? 1 : 0),
-                    worstPlayerCount: (stats.worstPlayerCount || 0) + (isWorstPlayer ? 1 : 0)
+                    worstPlayerCount: (stats.worstPlayerCount || 0) + (isWorstPlayer ? 1 : 0),
+                    currentMvpStreak: newMvpStreak
                 };
 
                 // Milestones
@@ -702,9 +709,12 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
 
                 // MVP BADGE - Foi MVP do jogo
                 if (isMvp) {
-                    // Verificar MVP streak (precisa de tracking adicional)
-                    // Por enquanto, apenas registra MVP individual
-                    // TODO: Implementar mvp_streak tracking para MVP_STREAK_3
+                    // MVP_STREAK_3 - Ser MVP 3 jogos consecutivos
+                    // newMvpStreak ja foi calculado acima
+                    if (newMvpStreak === 3) {
+                        awardFullBadge("mvp_streak_3");
+                        console.log(`[BADGE] User ${uid} earned mvp_streak_3 (3 consecutive MVP games)`);
+                    }
                 }
 
                 // VETERAN BADGES - Baseado em totalGames (usar newStats APÓS incremento)

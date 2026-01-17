@@ -25,6 +25,8 @@ data class UserStatistics(
     var gamesWon: Int = 0,
     var gamesLost: Int = 0,
     var gamesDraw: Int = 0,
+    // MVP Streak - sequencia atual de jogos como MVP
+    var currentMvpStreak: Int = 0,
     // Contadores para calculo de presenca
     @get:PropertyName("games_invited")
     @set:PropertyName("games_invited")
