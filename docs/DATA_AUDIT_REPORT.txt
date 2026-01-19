@@ -1,0 +1,66 @@
+
+========================================
+              RESUMO GERAL
+========================================
+
+Gerado em: 2026-01-16T11:06:23.506Z
+Total de documentos analisados: 32
+Total de issues encontradas: 13
+  - Críticas: 1
+  - Warnings: 12
+
+========================================
+           POR COLEÇÃO
+========================================
+
+--- USERS ---
+Total: 4
+Com issues: 0
+  ratingIssues: 0
+  levelIssues: 0
+  missingName: 0
+
+--- GAMES ---
+Total: 15
+Com issues: 12
+  negativeScores: 0
+  invalidStatus: 0
+  missingGroup: 12
+  futureFinishedGames: 0
+
+--- GROUPS ---
+Total: 3
+Com issues: 0
+  missingName: 0
+  missingOwner: 0
+  emptyGroups: 0
+
+--- STATISTICS ---
+Total: 4
+Com issues: 0
+  negativeValues: 0
+  impossibleStats: 0
+
+--- XP_LOGS ---
+Total: 0
+Com issues: 0
+  negativeXP: 0
+  excessiveXP: 0
+  missingUser: 0
+
+--- SEASONS ---
+Total: 6
+Com issues: 0
+  multipleActive: 2
+  invalidDates: 0
+
+========================================
+        ISSUES CRÍTICAS (primeiras 30)
+========================================
+
+[seasons] GLOBAL
+  is_active: 2 temporadas ativas simultaneamente
+
+========================================
+                FIM DO RELATÓRIO
+========================================
