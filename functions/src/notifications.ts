@@ -8,8 +8,9 @@ import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/fire
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 
-const db = admin.firestore();
-const fcm = admin.messaging();
+// Lazy initialization para evitar erro de initializeApp
+const getDb = () => admin.firestore();
+const getFcm = () => admin.messaging();
 
 // ==========================================
 // CONSTANTES DE RETRY
@@ -113,7 +114,7 @@ async function sendWithRetry(
 ): Promise<{ success: boolean; error?: any }> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      await fcm.send(message);
+      await getFcm().send(message);
       return { success: true };
     } catch (e: any) {
       const errorCode = e?.code || e?.errorInfo?.code || "unknown";
@@ -147,7 +148,7 @@ async function sendWithRetry(
 async function removeInvalidToken(userId: string, token: string): Promise<void> {
   try {
     console.log(`Removendo token invalido do usuario ${userId}`);
-    await db.collection("users").doc(userId).update({
+    await getDb().collection("users").doc(userId).update({
       fcm_token: admin.firestore.FieldValue.delete(),
     });
   } catch (e) {
@@ -157,7 +158,7 @@ async function removeInvalidToken(userId: string, token: string): Promise<void> 
 
 async function getUserFcmToken(userId: string): Promise<string | null> {
   try {
-    const userDoc = await db.collection("users").doc(userId).get();
+    const userDoc = await getDb().collection("users").doc(userId).get();
     if (!userDoc.exists) return null;
 
     const userData = userDoc.data();
@@ -191,7 +192,7 @@ async function getUserFcmTokensWithMapping(
 
   for (const chunk of chunks) {
     try {
-      const snapshot = await db.collection("users")
+      const snapshot = await getDb().collection("users")
         .where(admin.firestore.FieldPath.documentId(), "in", chunk)
         .get();
 
@@ -323,7 +324,7 @@ export async function sendNotificationToUsers(
         },
       };
 
-      const response = await fcm.sendEachForMulticast(message);
+      const response = await getFcm().sendEachForMulticast(message);
       totalSuccess += response.successCount;
 
       // Processar falhas individuais
@@ -428,7 +429,7 @@ export async function saveNotificationToFirestore(
   userId: string,
   payload: NotificationPayload
 ): Promise<string> {
-  const notificationRef = db.collection("notifications").doc();
+  const notificationRef = getDb().collection("notifications").doc();
 
   await notificationRef.set({
     id: notificationRef.id,
@@ -480,7 +481,7 @@ export const onGameCreated = onDocumentCreated("games/{gameId}", async (event) =
 
   if (game.group_id) {
     try {
-      const membersSnap = await db.collection("groups")
+      const membersSnap = await getDb().collection("groups")
         .doc(game.group_id)
         .collection("members")
         .where("role", "in", ["MEMBER", "ADMIN", "OWNER"])
@@ -491,7 +492,7 @@ export const onGameCreated = onDocumentCreated("games/{gameId}", async (event) =
         .filter((id: string) => id !== ownerId);
 
       if (memberIds.length > 0) {
-        const ownerDoc = await db.collection("users").doc(ownerId).get();
+        const ownerDoc = await getDb().collection("users").doc(ownerId).get();
         const ownerName = ownerDoc.exists
           ? (ownerDoc.data()?.name || ownerDoc.data()?.nickname || "Alguem")
           : "Alguem";
@@ -521,7 +522,7 @@ export const onGameUpdatedNotification = onDocumentUpdated("games/{gameId}", asy
 
   if (before.status !== "CANCELLED" && after.status === "CANCELLED") {
     try {
-      const confirmationsSnap = await db.collection("confirmations")
+      const confirmationsSnap = await getDb().collection("confirmations")
         .where("game_id", "==", gameId)
         .where("status", "==", "CONFIRMED")
         .get();
@@ -545,7 +546,7 @@ export const onGameUpdatedNotification = onDocumentUpdated("games/{gameId}", asy
 
   if (before.date !== after.date || before.location_id !== after.location_id) {
     try {
-      const confirmationsSnap = await db.collection("confirmations")
+      const confirmationsSnap = await getDb().collection("confirmations")
         .where("game_id", "==", gameId)
         .where("status", "==", "CONFIRMED")
         .get();
@@ -578,14 +579,14 @@ export const onGameConfirmed = onDocumentCreated(
     const userId = confirmation.user_id || confirmation.userId;
 
     try {
-      const gameDoc = await db.collection("games").doc(gameId).get();
+      const gameDoc = await getDb().collection("games").doc(gameId).get();
       if (!gameDoc.exists) return;
 
       const game = gameDoc.data();
       if (!game) return;
 
       if (game.owner_id !== userId) {
-        const userDoc = await db.collection("users").doc(userId).get();
+        const userDoc = await getDb().collection("users").doc(userId).get();
         const userName = userDoc.exists
           ? (userDoc.data()?.name || userDoc.data()?.nickname || "Um jogador")
           : "Um jogador";
@@ -660,7 +661,7 @@ export const createFakeGameNotifications = onCall(async (data: any, context: any
   const userId = context.auth.uid;
   const { count = 3 } = data;
 
-  const userDoc = await db.collection("users").doc(userId).get();
+  const userDoc = await getDb().collection("users").doc(userId).get();
   const userName = userDoc.exists
     ? (userDoc.data()?.name || userDoc.data()?.nickname || "Jogador")
     : "Jogador";
@@ -764,7 +765,7 @@ export const onBadgeAwarded = onDocumentCreated(
 
     try {
       // Buscar dados da badge para nome e icone
-      const badgeDoc = await db.collection("badges").doc(badgeId).get();
+      const badgeDoc = await getDb().collection("badges").doc(badgeId).get();
       const badge = badgeDoc.exists ? badgeDoc.data() : null;
 
       const badgeName = badge?.name || badge?.title || badgeId;
@@ -928,7 +929,7 @@ export const cleanupExpiredInvites = onSchedule("every 24 hours", async (event) 
     const expirationTime = new Date(Date.now() - INVITE_EXPIRATION_MS);
 
     // Buscar convites pendentes criados há mais de 48 horas
-    const expiredInvitesSnap = await db.collection("group_invites")
+    const expiredInvitesSnap = await getDb().collection("group_invites")
       .where("status", "==", "PENDING")
       .where("created_at", "<", expirationTime)
       .get();
@@ -951,7 +952,7 @@ export const cleanupExpiredInvites = onSchedule("every 24 hours", async (event) 
     let totalUpdated = 0;
 
     for (const chunk of chunks) {
-      const batch = db.batch();
+      const batch = getDb().batch();
 
       for (const doc of chunk) {
         batch.update(doc.ref, {

@@ -16,7 +16,8 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 import { sendNotificationToUser, NotificationType, saveNotificationToFirestore } from "./notifications";
 
-const db = admin.firestore();
+// Lazy initialization para evitar erro de initializeApp
+const getDb = () => admin.firestore();
 
 // ==========================================
 // CONSTANTES
@@ -141,7 +142,7 @@ async function fetchGamesInReminderWindow(hoursBeforeGame: number): Promise<Game
 
     // Query: jogos com dateTime na janela e status não excluído
     // Nota: Firestore não suporta NOT IN, então filtramos depois
-    const gamesSnap = await db.collection("games")
+    const gamesSnap = await getDb().collection("games")
         .where("dateTime", ">=", admin.firestore.Timestamp.fromDate(windowStart))
         .where("dateTime", "<=", admin.firestore.Timestamp.fromDate(windowEnd))
         .get();
@@ -184,7 +185,7 @@ async function fetchPendingConfirmations(
     const reminderField = reminderType === "24h" ? "reminder_24h_sent" : "reminder_2h_sent";
 
     // Buscar todas as confirmações do jogo
-    const confirmationsSnap = await db.collection("confirmations")
+    const confirmationsSnap = await getDb().collection("confirmations")
         .where("game_id", "==", gameId)
         .get();
 
@@ -229,7 +230,7 @@ async function fetchGroupMembersWithoutConfirmation(
     reminderType: "24h" | "2h"
 ): Promise<string[]> {
     // Buscar membros do grupo
-    const membersSnap = await db.collection("groups")
+    const membersSnap = await getDb().collection("groups")
         .doc(groupId)
         .collection("members")
         .where("role", "in", ["MEMBER", "ADMIN", "OWNER"])
@@ -238,7 +239,7 @@ async function fetchGroupMembersWithoutConfirmation(
     const memberIds = membersSnap.docs.map(doc => doc.id);
 
     // Buscar confirmações existentes para o jogo
-    const confirmationsSnap = await db.collection("confirmations")
+    const confirmationsSnap = await getDb().collection("confirmations")
         .where("game_id", "==", gameId)
         .get();
 
@@ -331,7 +332,7 @@ async function markReminderSent(
     const reminderField = reminderType === "24h" ? "reminder_24h_sent" : "reminder_2h_sent";
 
     try {
-        const confirmationRef = db.collection("confirmations").doc(confirmationId);
+        const confirmationRef = getDb().collection("confirmations").doc(confirmationId);
         const confirmationDoc = await confirmationRef.get();
 
         if (confirmationDoc.exists) {
@@ -473,7 +474,7 @@ export const testGameReminders = onSchedule(
         console.log(`[REMINDERS TEST] Hora atual: ${now.toISOString()}`);
 
         // Buscar próximos jogos para debug
-        const upcomingGamesSnap = await db.collection("games")
+        const upcomingGamesSnap = await getDb().collection("games")
             .where("status", "in", ["SCHEDULED", "CONFIRMED"])
             .orderBy("dateTime", "asc")
             .limit(10)
