@@ -154,8 +154,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
     // Dependency Injection - Hilt
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    ksp("com.google.dagger:hilt-compiler:2.51.1")
+    implementation("com.google.dagger:hilt-android:2.56.2")
+    ksp("com.google.dagger:hilt-compiler:2.56.2")
 
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     // Firebase - usando BoM para gerenciar versoes
@@ -236,10 +236,10 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     // Hilt Testing
-    testImplementation("com.google.dagger:hilt-android-testing:2.51.1")
-    kspTest("com.google.dagger:hilt-compiler:2.51.1")
-    androidTestImplementation("com.google.dagger:hilt-android-testing:2.51.1")
-    kspAndroidTest("com.google.dagger:hilt-compiler:2.51.1")
+    testImplementation("com.google.dagger:hilt-android-testing:2.56.2")
+    kspTest("com.google.dagger:hilt-compiler:2.56.2")
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.56.2")
+    kspAndroidTest("com.google.dagger:hilt-compiler:2.56.2")
 
     // Arch Core Testing (for InstantTaskExecutorRule)
     testImplementation("androidx.arch.core:core-testing:2.2.0")
