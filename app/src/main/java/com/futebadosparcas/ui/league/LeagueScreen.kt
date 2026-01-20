@@ -196,14 +196,15 @@ fun LeagueContent(
         // 3. Lista de Ranking ou Empty State
         if (filteredRanking.isEmpty()) {
             item {
-                Box(
+                Column(
                     modifier = Modifier
-                        .fillParentMaxHeight(0.6f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp, horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = stringResource(R.string.league_no_players),
+                        style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )

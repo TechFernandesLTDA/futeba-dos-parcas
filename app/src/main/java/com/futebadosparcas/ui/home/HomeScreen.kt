@@ -233,6 +233,25 @@ private fun HomeSuccessContent(
             }
         }
 
+        // Verificar se há conteudo para exibir
+        val hasAnyContent = games.isNotEmpty() ||
+            state.activities.isNotEmpty() ||
+            state.publicGames.isNotEmpty() ||
+            state.challenges.isNotEmpty() ||
+            statistics != null ||
+            state.recentBadges.isNotEmpty()
+
+        // Exibir estado vazio amigavel quando nao ha conteudo
+        if (!hasAnyContent) {
+            item(key = "welcome_empty_state") {
+                WelcomeEmptyState(
+                    userName = user.name.split(" ").firstOrNull() ?: "Jogador",
+                    userLevel = gamificationSummary?.level ?: 0,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+        }
+
         // Jogos Próximos - Nova seção com status de confirmação
         if (games.isNotEmpty()) {
             item(key = "upcoming_games") {
