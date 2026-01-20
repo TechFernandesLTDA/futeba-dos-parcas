@@ -143,75 +143,78 @@ fun PlayersScreen(
                 )
 
                 // Conteúdo baseado no estado
-                when (val state = uiState) {
-                    is PlayersUiState.Loading -> {
-                        // Shimmer loading
-                        PlayersLoadingContent()
-                    }
+                // Usar weight(1f) para preencher o espaço restante após os filtros
+                Box(modifier = Modifier.weight(1f)) {
+                    when (val state = uiState) {
+                        is PlayersUiState.Loading -> {
+                            // Shimmer loading
+                            PlayersLoadingContent(modifier = Modifier.fillMaxSize())
+                        }
 
-                    is PlayersUiState.Empty -> {
-                        // Empty state
-                        if (searchQuery.isNotBlank()) {
-                            EmptySearchState(
-                                query = searchQuery,
-                                onClearSearch = {
-                                    searchQuery = ""
+                        is PlayersUiState.Empty -> {
+                            // Empty state
+                            if (searchQuery.isNotBlank()) {
+                                EmptySearchState(
+                                    query = searchQuery,
+                                    onClearSearch = {
+                                        searchQuery = ""
+                                    },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } else {
+                                EmptyPlayersState(
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
+
+                        is PlayersUiState.Success -> {
+                            // Lista de jogadores
+                            PlayersListContent(
+                                players = state.players,
+                                isComparisonMode = isComparisonMode,
+                                selectedPlayers = selectedPlayers,
+                                onPlayerClick = { user ->
+                                    if (isComparisonMode) {
+                                        selectedPlayers = if (selectedPlayers.contains(user.id)) {
+                                            selectedPlayers - user.id
+                                        } else if (selectedPlayers.size < 2) {
+                                            selectedPlayers + user.id
+                                        } else {
+                                            selectedPlayers
+                                        }
+
+                                        // Se selecionou 2, carrega comparação
+                                        if (selectedPlayers.size == 2) {
+                                            val users = state.players.filter { it.id in selectedPlayers }
+                                            if (users.size == 2) {
+                                                viewModel.loadComparisonData(users[0], users[1])
+                                            }
+                                        }
+                                    } else {
+                                        // Abre o PlayerCard BottomSheet ao clicar no jogador
+                                        selectedPlayerForCard = user
+                                    }
+                                },
+                                onInviteClick = { user ->
+                                    viewModel.invitePlayer(user)
                                 },
                                 modifier = Modifier.fillMaxSize()
                             )
-                        } else {
-                            EmptyPlayersState(
+                        }
+
+                        is PlayersUiState.Error -> {
+                            // Error state
+                            EmptyState(
+                                type = EmptyStateType.Error(
+                                    title = stringResource(R.string.players_error_title),
+                                    description = state.message,
+                                    actionLabel = stringResource(R.string.retry),
+                                    onRetry = { viewModel.loadPlayers(searchQuery) }
+                                ),
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
-                    }
-
-                    is PlayersUiState.Success -> {
-                        // Lista de jogadores
-                        PlayersListContent(
-                            players = state.players,
-                            isComparisonMode = isComparisonMode,
-                            selectedPlayers = selectedPlayers,
-                            onPlayerClick = { user ->
-                                if (isComparisonMode) {
-                                    selectedPlayers = if (selectedPlayers.contains(user.id)) {
-                                        selectedPlayers - user.id
-                                    } else if (selectedPlayers.size < 2) {
-                                        selectedPlayers + user.id
-                                    } else {
-                                        selectedPlayers
-                                    }
-
-                                    // Se selecionou 2, carrega comparação
-                                    if (selectedPlayers.size == 2) {
-                                        val users = state.players.filter { it.id in selectedPlayers }
-                                        if (users.size == 2) {
-                                            viewModel.loadComparisonData(users[0], users[1])
-                                        }
-                                    }
-                                } else {
-                                    // Abre o PlayerCard BottomSheet ao clicar no jogador
-                                    selectedPlayerForCard = user
-                                }
-                            },
-                            onInviteClick = { user ->
-                                viewModel.invitePlayer(user)
-                            },
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-
-                    is PlayersUiState.Error -> {
-                        // Error state
-                        EmptyState(
-                            type = EmptyStateType.Error(
-                                title = stringResource(R.string.players_error_title),
-                                description = state.message,
-                                actionLabel = stringResource(R.string.retry),
-                                onRetry = { viewModel.loadPlayers(searchQuery) }
-                            ),
-                            modifier = Modifier.fillMaxSize()
-                        )
                     }
                 }
             }
