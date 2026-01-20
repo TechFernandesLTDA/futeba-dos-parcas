@@ -233,7 +233,10 @@ private fun HomeSuccessContent(
             }
         }
 
-        // Verificar se há conteudo para exibir
+        // Verificar se há conteudo para exibir na tela principal.
+        // Inclui: jogos, atividades, jogos publicos, desafios, estatisticas, badges e streak.
+        // Se nenhum conteudo existir, exibe WelcomeEmptyState para usuarios novos
+        // ou que ainda nao participaram de jogos, evitando tela em branco.
         val hasAnyContent = games.isNotEmpty() ||
             state.activities.isNotEmpty() ||
             state.publicGames.isNotEmpty() ||
@@ -246,7 +249,7 @@ private fun HomeSuccessContent(
         if (!hasAnyContent) {
             item(key = "welcome_empty_state") {
                 WelcomeEmptyState(
-                    userName = user.name.split(" ").firstOrNull() ?: stringResource(R.string.default_player_name),
+                    userName = user.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: stringResource(R.string.default_player_name),
                     userLevel = gamificationSummary?.level ?: 0,
                     modifier = Modifier.padding(top = 8.dp)
                 )
