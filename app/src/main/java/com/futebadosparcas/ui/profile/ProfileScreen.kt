@@ -22,6 +22,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -918,11 +920,11 @@ private fun ActionButtonsSection(
         ) {
             Icon(
                 imageVector = Icons.Default.Edit,
-                contentDescription = "Editar Perfil",
+                contentDescription = stringResource(R.string.edit_profile),
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Editar Perfil")
+            Text(stringResource(R.string.edit_profile))
         }
 
         OutlinedButton(
@@ -932,11 +934,11 @@ private fun ActionButtonsSection(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Logout,
-                contentDescription = "Sair",
+                contentDescription = stringResource(R.string.logout),
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Sair")
+            Text(stringResource(R.string.logout))
         }
     }
 }
@@ -1210,11 +1212,11 @@ private fun ErrorState(
         Button(onClick = onRetry) {
             Icon(
                 imageVector = Icons.Default.Refresh,
-                contentDescription = "Tentar novamente",
+                contentDescription = stringResource(R.string.retry),
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Tentar Novamente")
+            Text(stringResource(R.string.retry))
         }
     }
 }

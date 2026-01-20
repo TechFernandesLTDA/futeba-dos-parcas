@@ -211,7 +211,7 @@ private fun GroupsSuccessContent(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 88.dp) // Espaço para o FAB
+        contentPadding = PaddingValues(vertical = 8.dp) // Padding mínimo, FAB já é posicionado pelo Scaffold
     ) {
         // Campo de busca
         if (showSearch) {

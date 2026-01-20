@@ -17,7 +17,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
+import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.GamificationSettings
 
 @Composable
@@ -100,7 +102,7 @@ fun SettingsForm(
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text("SALVAR ALTERAÇÕES", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(stringResource(R.string.edit_profile_save_changes).uppercase(), fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
         
         Spacer(modifier = Modifier.height(32.dp))
@@ -211,7 +213,7 @@ fun ErrorMessage(message: String, onRetry: () -> Unit) {
         Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) {
-            Text("Tentar Novamente")
+            Text(stringResource(R.string.retry))
         }
     }
 }
