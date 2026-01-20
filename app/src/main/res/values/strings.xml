@@ -2463,4 +2463,7 @@ subir no ranking!</string>
     <string name="error_failed_to_get_user">Falha ao obter usuario atual</string>
     <string name="error_failed_to_get_game">Falha ao obter detalhes do jogo</string>
 
+    <!-- Default Values -->
+    <string name="default_player_name">Jogador</string>
+
 </resources>
