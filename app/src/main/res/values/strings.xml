@@ -2574,4 +2574,25 @@ subir no ranking!</string>
     <string name="gamification_xp_streak_7">Bônus 7 Jogos</string>
     <string name="gamification_xp_streak_10">Bônus 10 Jogos</string>
 
+    <!-- ==================== DEV TOOLS SCREEN (i18n audit) ==================== -->
+
+    <string name="dev_tools_data_source">Fonte de Dados</string>
+    <string name="dev_tools_use_mock_data">Usar Dados Mockados</string>
+    <string name="dev_tools_mock_description">FakeRepository ao invés de Firebase</string>
+    <string name="dev_tools_mode_changed">Modo alterado. Reinicie o app para aplicar.</string>
+    <string name="dev_tools_mode_mock">Modo atual: Dados Mockados (FakeRepository)</string>
+    <string name="dev_tools_mode_real">Modo atual: Firebase Real</string>
+    <string name="dev_tools_cache_data">Cache e Dados</string>
+    <string name="dev_tools_cache_cleared">Cache local limpo!</string>
+    <string name="dev_tools_error_prefix">Erro: %s</string>
+    <string name="dev_tools_seeding_apollo">Iniciando seed do Ginasio Apollo...</string>
+    <string name="dev_tools_seed_success">Sucesso! %s criado com 6 quadras (4 futsal + 2 society).</string>
+    <string name="dev_tools_prefs_reset">Preferencias resetadas!</string>
+    <string name="dev_tools_system">Sistema</string>
+    <string name="dev_tools_execute">Executar</string>
+
+    <!-- ==================== POST GAME DIALOG ADDITIONS (i18n audit) ==================== -->
+
+    <string name="post_game_xp_label">XP</string>
+
 </resources>
