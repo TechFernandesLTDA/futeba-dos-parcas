@@ -52,7 +52,7 @@ class AuthRepository @Inject constructor(
             android.util.Log.d("AuthRepository", "Starting retry loop (max $maxRetries attempts)")
             while (uid == null && retries < maxRetries) {
                 uid = auth.currentUser?.uid
-                android.util.Log.d("AuthRepository", "Retry $retries: uid = $uid")
+                android.util.Log.d("AuthRepository", "Retry $retries: uid exists = ${uid != null}")
                 if (uid == null) {
                     // Exponential backoff: 300ms, 600ms, 900ms, 1200ms, etc.
                     val delay = baseDelay * (retries + 1)
@@ -67,11 +67,11 @@ class AuthRepository @Inject constructor(
                 return Result.failure(Exception("Usuario nao autenticado"))
             }
 
-            android.util.Log.d("AuthRepository", "SUCCESS: Got UID = $uid")
+            android.util.Log.d("AuthRepository", "SUCCESS: Got UID")
             android.util.Log.d("AuthRepository", "Waiting 100ms for Firestore sync")
             kotlinx.coroutines.delay(100)
 
-            android.util.Log.d("AuthRepository", "Querying Firestore for user doc: $uid")
+            android.util.Log.d("AuthRepository", "Querying Firestore for user document")
             val doc = usersCollection.document(uid).get().await()
 
             if (doc.exists()) {
@@ -79,7 +79,7 @@ class AuthRepository @Inject constructor(
                 var user = doc.toObject(User::class.java)
                     ?: return Result.failure(Exception("Erro ao converter usuario"))
 
-                android.util.Log.d("AuthRepository", "User loaded: ${user.name} (${user.email})")
+                android.util.Log.d("AuthRepository", "User loaded successfully")
 
                 // Verifica se a foto do Google mudou e atualiza
                 val firebaseUser = auth.currentUser
@@ -104,7 +104,7 @@ class AuthRepository @Inject constructor(
                     name = firebaseUser.displayName.orEmpty(),
                     photoUrl = firebaseUser.photoUrl?.toString()
                 )
-                android.util.Log.d("AuthRepository", "Creating user: ${newUser.name} (${newUser.email})")
+                android.util.Log.d("AuthRepository", "Creating new user document")
                 usersCollection.document(uid).set(newUser).await()
                 android.util.Log.d("AuthRepository", "=== getCurrentUser() SUCCESS (new user created) ===")
                 Result.success(newUser)

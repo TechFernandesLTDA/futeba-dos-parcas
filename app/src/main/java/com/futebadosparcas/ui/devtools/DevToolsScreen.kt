@@ -89,7 +89,7 @@ fun DevToolsScreen(
         ) {
             // ========== MODO DE DADOS ==========
             Text(
-                text = "Fonte de Dados",
+                text = stringResource(R.string.dev_tools_data_source),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -115,12 +115,12 @@ fun DevToolsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Usar Dados Mockados",
+                                text = stringResource(R.string.dev_tools_use_mock_data),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = "FakeRepository ao invés de Firebase",
+                                text = stringResource(R.string.dev_tools_mock_description),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 4.dp)
@@ -131,7 +131,7 @@ fun DevToolsScreen(
                             onCheckedChange = { checked ->
                                 isMockMode = checked
                                 preferencesManager.setMockModeEnabled(checked)
-                                showToast = "Modo alterado. Reinicie o app para aplicar."
+                                showToast = context.getString(R.string.dev_tools_mode_changed)
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = MaterialTheme.colorScheme.primary,
@@ -144,9 +144,9 @@ fun DevToolsScreen(
 
                     Text(
                         text = if (isMockMode) {
-                            "📱 Modo atual: Dados Mockados (FakeRepository)"
+                            "📱 " + stringResource(R.string.dev_tools_mode_mock)
                         } else {
-                            "☁️ Modo atual: Firebase Real"
+                            "☁️ " + stringResource(R.string.dev_tools_mode_real)
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isMockMode) {
@@ -161,7 +161,7 @@ fun DevToolsScreen(
 
             // ========== AÇÕES DE CACHE ==========
             Text(
-                text = "Cache e Dados",
+                text = stringResource(R.string.dev_tools_cache_data),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -179,9 +179,9 @@ fun DevToolsScreen(
                     scope.launch {
                         try {
                             gameDao.clearAll()
-                            showToast = "Cache local limpo!"
+                            showToast = context.getString(R.string.dev_tools_cache_cleared)
                         } catch (e: Exception) {
-                            showToast = "Erro: ${e.message}"
+                            showToast = context.getString(R.string.dev_tools_error_prefix, e.message ?: "")
                         }
                     }
                 }
@@ -196,17 +196,17 @@ fun DevToolsScreen(
                 onClick = {
                     scope.launch {
                         isSeedingLocations = true
-                        showToast = "Iniciando seed do Ginásio Apollo..."
+                        showToast = context.getString(R.string.dev_tools_seeding_apollo)
 
                         val result = locationRepository.seedGinasioApollo()
 
                         isSeedingLocations = false
                         result.fold(
                             onSuccess = { location ->
-                                showToast = "Sucesso! ${location.name} criado com 6 quadras (4 futsal + 2 society)."
+                                showToast = context.getString(R.string.dev_tools_seed_success, location.name)
                             },
                             onFailure = { e ->
-                                showToast = "Erro: ${e.message}"
+                                showToast = context.getString(R.string.dev_tools_error_prefix, e.message ?: "")
                             }
                         )
                     }
@@ -223,13 +223,13 @@ fun DevToolsScreen(
                 onClick = {
                     preferencesManager.clearAll()
                     isMockMode = preferencesManager.isMockModeEnabled()
-                    showToast = "Preferências resetadas!"
+                    showToast = context.getString(R.string.dev_tools_prefs_reset)
                 }
             )
 
             // ========== SISTEMA ==========
             Text(
-                text = "Sistema",
+                text = stringResource(R.string.dev_tools_system),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -333,7 +333,7 @@ private fun DevToolButton(
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Executar"
+                        contentDescription = stringResource(R.string.dev_tools_execute)
                     )
                 }
             }
