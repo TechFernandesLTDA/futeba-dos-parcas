@@ -239,7 +239,8 @@ private fun HomeSuccessContent(
             state.publicGames.isNotEmpty() ||
             state.challenges.isNotEmpty() ||
             statistics != null ||
-            state.recentBadges.isNotEmpty()
+            state.recentBadges.isNotEmpty() ||
+            streak != null
 
         // Exibir estado vazio amigavel quando nao ha conteudo
         if (!hasAnyContent) {
