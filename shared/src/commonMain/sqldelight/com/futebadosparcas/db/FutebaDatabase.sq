@@ -36,7 +36,15 @@ selectUsersByIds:
 SELECT * FROM users WHERE id IN ?;
 
 insertUser:
-INSERT OR REPLACE INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO users (
+    id, email, name, photoUrl, fcmToken, experiencePoints, level, milestonesAchieved, role, cachedAt,
+    nickname, phone, isSearchable, isProfilePublic,
+    birthDate, gender, heightCm, weightKg, dominantFoot,
+    primaryPosition, secondaryPosition, playStyle, experienceYears, preferredPosition, preferredFieldTypes,
+    strikerRating, midRating, defenderRating, gkRating,
+    autoStrikerRating, autoMidRating, autoDefenderRating, autoGkRating, autoRatingSamples,
+    createdAt, updatedAt
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 deleteUserById:
 DELETE FROM users WHERE id = ?;

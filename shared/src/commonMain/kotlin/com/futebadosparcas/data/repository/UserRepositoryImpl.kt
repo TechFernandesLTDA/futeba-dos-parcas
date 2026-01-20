@@ -363,6 +363,7 @@ class UserRepositoryImpl(
     private fun cacheUser(user: User) {
         val now = currentTimeMillis()
         database.futebaDatabaseQueries.insertUser(
+            // Campos básicos
             id = user.id,
             email = user.email,
             name = user.name,
@@ -371,8 +372,40 @@ class UserRepositoryImpl(
             experiencePoints = user.experiencePoints,
             level = user.level.toLong(),
             milestonesAchieved = user.milestonesAchieved.joinToString(","),
-            role = user.role,  // ✅ CRITICAL FIX: Cachear role para suportar permissões
-            cachedAt = now
+            role = user.role,
+            cachedAt = now,
+            // Campos de perfil
+            nickname = user.nickname,
+            phone = user.phone,
+            isSearchable = if (user.isSearchable) 1L else 0L,
+            isProfilePublic = if (user.isProfilePublic) 1L else 0L,
+            // Informações pessoais
+            birthDate = user.birthDate,
+            gender = user.gender,
+            heightCm = user.heightCm?.toLong(),
+            weightKg = user.weightKg?.toLong(),
+            dominantFoot = user.dominantFoot,
+            // Posições e estilo
+            primaryPosition = user.primaryPosition,
+            secondaryPosition = user.secondaryPosition,
+            playStyle = user.playStyle,
+            experienceYears = user.experienceYears?.toLong(),
+            preferredPosition = user.preferredPosition,
+            preferredFieldTypes = user.preferredFieldTypes.joinToString(",") { it.name },
+            // Ratings manuais
+            strikerRating = user.strikerRating,
+            midRating = user.midRating,
+            defenderRating = user.defenderRating,
+            gkRating = user.gkRating,
+            // Ratings automáticos
+            autoStrikerRating = user.autoStrikerRating,
+            autoMidRating = user.autoMidRating,
+            autoDefenderRating = user.autoDefenderRating,
+            autoGkRating = user.autoGkRating,
+            autoRatingSamples = user.autoRatingSamples.toLong(),
+            // Timestamps
+            createdAt = user.createdAt,
+            updatedAt = user.updatedAt
         )
     }
 
@@ -387,7 +420,7 @@ class UserRepositoryImpl(
 }
 
 /**
- * Extensão para converter row do SQLDelight em User (com campos de gamificação).
+ * Extensão para converter row do SQLDelight em User (com todos os campos de perfil).
  */
 private fun com.futebadosparcas.db.Users.toUser(): User {
     val milestones: List<String> = if (this.milestonesAchieved.isNotEmpty()) {
@@ -396,15 +429,62 @@ private fun com.futebadosparcas.db.Users.toUser(): User {
         emptyList()
     }
 
+    val fieldTypes: List<com.futebadosparcas.domain.model.FieldType> =
+        if (this.preferredFieldTypes.isNotEmpty()) {
+            this.preferredFieldTypes.split(",").mapNotNull { name ->
+                try {
+                    com.futebadosparcas.domain.model.FieldType.valueOf(name)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        } else {
+            emptyList()
+        }
+
     return User(
+        // Campos básicos
         id = this.id,
         email = this.email,
         name = this.name,
         photoUrl = this.photoUrl,
         fcmToken = this.fcmToken,
+        role = this.role,
+        // Gamificação
         experiencePoints = this.experiencePoints,
         level = this.level.toInt(),
         milestonesAchieved = milestones,
-        role = this.role  // ✅ CRITICAL FIX: Mapear role do cache para suportar permissões
+        // Campos de perfil
+        nickname = this.nickname,
+        phone = this.phone,
+        isSearchable = this.isSearchable == 1L,
+        isProfilePublic = this.isProfilePublic == 1L,
+        // Informações pessoais
+        birthDate = this.birthDate,
+        gender = this.gender,
+        heightCm = this.heightCm?.toInt(),
+        weightKg = this.weightKg?.toInt(),
+        dominantFoot = this.dominantFoot,
+        // Posições e estilo
+        primaryPosition = this.primaryPosition,
+        secondaryPosition = this.secondaryPosition,
+        playStyle = this.playStyle,
+        experienceYears = this.experienceYears?.toInt(),
+        preferredPosition = this.preferredPosition,
+        preferredFieldTypes = fieldTypes,
+        // Ratings manuais
+        strikerRating = this.strikerRating,
+        midRating = this.midRating,
+        defenderRating = this.defenderRating,
+        gkRating = this.gkRating,
+        // Ratings automáticos
+        autoStrikerRating = this.autoStrikerRating,
+        autoMidRating = this.autoMidRating,
+        autoDefenderRating = this.autoDefenderRating,
+        autoGkRating = this.autoGkRating,
+        autoRatingSamples = this.autoRatingSamples.toInt(),
+        // Timestamps
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt
     )
 }

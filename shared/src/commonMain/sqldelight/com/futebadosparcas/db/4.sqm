@@ -1,0 +1,43 @@
+-- Migration to Version 4 (Add profile fields)
+--
+-- CRITICAL FIX: Adiciona todos os campos de perfil do jogador para cache local.
+-- Sem estes campos, o observeCurrentUser() retorna User com dados incompletos,
+-- causando campos vazios nas telas Profile e EditProfile.
+
+-- Campos basicos
+ALTER TABLE users ADD COLUMN nickname TEXT;
+ALTER TABLE users ADD COLUMN phone TEXT;
+ALTER TABLE users ADD COLUMN isSearchable INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE users ADD COLUMN isProfilePublic INTEGER NOT NULL DEFAULT 1;
+
+-- Informacoes pessoais
+ALTER TABLE users ADD COLUMN birthDate INTEGER;
+ALTER TABLE users ADD COLUMN gender TEXT;
+ALTER TABLE users ADD COLUMN heightCm INTEGER;
+ALTER TABLE users ADD COLUMN weightKg INTEGER;
+ALTER TABLE users ADD COLUMN dominantFoot TEXT;
+
+-- Posicoes e estilo
+ALTER TABLE users ADD COLUMN primaryPosition TEXT;
+ALTER TABLE users ADD COLUMN secondaryPosition TEXT;
+ALTER TABLE users ADD COLUMN playStyle TEXT;
+ALTER TABLE users ADD COLUMN experienceYears INTEGER;
+ALTER TABLE users ADD COLUMN preferredPosition TEXT;
+ALTER TABLE users ADD COLUMN preferredFieldTypes TEXT NOT NULL DEFAULT '';
+
+-- Ratings manuais
+ALTER TABLE users ADD COLUMN strikerRating REAL NOT NULL DEFAULT 0.0;
+ALTER TABLE users ADD COLUMN midRating REAL NOT NULL DEFAULT 0.0;
+ALTER TABLE users ADD COLUMN defenderRating REAL NOT NULL DEFAULT 0.0;
+ALTER TABLE users ADD COLUMN gkRating REAL NOT NULL DEFAULT 0.0;
+
+-- Ratings automaticos
+ALTER TABLE users ADD COLUMN autoStrikerRating REAL NOT NULL DEFAULT 0.0;
+ALTER TABLE users ADD COLUMN autoMidRating REAL NOT NULL DEFAULT 0.0;
+ALTER TABLE users ADD COLUMN autoDefenderRating REAL NOT NULL DEFAULT 0.0;
+ALTER TABLE users ADD COLUMN autoGkRating REAL NOT NULL DEFAULT 0.0;
+ALTER TABLE users ADD COLUMN autoRatingSamples INTEGER NOT NULL DEFAULT 0;
+
+-- Timestamps
+ALTER TABLE users ADD COLUMN createdAt INTEGER;
+ALTER TABLE users ADD COLUMN updatedAt INTEGER;
