@@ -245,7 +245,7 @@ private fun HomeSuccessContent(
         if (!hasAnyContent) {
             item(key = "welcome_empty_state") {
                 WelcomeEmptyState(
-                    userName = user.name.split(" ").firstOrNull() ?: "Jogador",
+                    userName = user.name.split(" ").firstOrNull() ?: stringResource(R.string.default_player_name),
                     userLevel = gamificationSummary?.level ?: 0,
                     modifier = Modifier.padding(top = 8.dp)
                 )
