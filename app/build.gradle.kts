@@ -105,6 +105,22 @@ android {
         }
     }
 
+    lint {
+        // Detectar strings hardcoded em XML layouts
+        enable += "HardcodedText"
+        // Detectar uso incorreto de locale em String.format
+        enable += "DefaultLocale"
+        // Nivel de severidade
+        warningsAsErrors = false
+        abortOnError = false
+        // Relatorio HTML
+        htmlReport = true
+        htmlOutput = file("build/reports/lint-results.html")
+        // Checagens baseline (para CI/CD)
+        baseline = file("lint-baseline.xml")
+        // Nota: Para strings hardcoded em Compose, usar ktlint ou detekt
+    }
+
 }
 
 dependencies {
