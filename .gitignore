@@ -22,6 +22,9 @@ out/
 .gradle/
 build/
 
+# Kotlin build artifacts
+.kotlin/
+
 # Local configuration file (sdk path, etc)
 local.properties
 

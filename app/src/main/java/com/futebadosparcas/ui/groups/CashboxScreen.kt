@@ -229,7 +229,6 @@ fun CashboxScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .systemBarsPadding()
         ) {
             // Card de resumo
             when (val summary = summaryState) {

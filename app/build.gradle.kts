@@ -87,6 +87,9 @@ android {
     }
 
     testOptions {
+        // Make Android framework methods return default values instead of throwing
+        unitTests.isReturnDefaultValues = true
+
         unitTests.all {
             it.useJUnitPlatform()
             // Fix encoding issues for paths with special characters (ç, etc.)
@@ -212,6 +215,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.1")
 
     // JUnit 4 for Android Instrumentation Tests
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

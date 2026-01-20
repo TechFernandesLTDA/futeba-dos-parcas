@@ -59,7 +59,6 @@ import java.util.Locale
  * - Seção administrativa (Admin/Field Owner)
  * - Estados: Loading (Shimmer), Success, Error
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
@@ -88,62 +87,53 @@ fun ProfileScreen(
     var avatarClickCount by remember { mutableStateOf(0) }
     var lastAvatarClickTime by remember { mutableStateOf(0L) }
 
-    Scaffold(
-        // topBar removido conforme solicitação (design limpo)
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when (val state = uiState) {
-                is ProfileUiState.Loading -> {
-                    ProfileLoadingShimmer()
-                }
-                is ProfileUiState.Success -> {
-                    ProfileContent(
-                        user = state.user,
-                        badges = state.badges,
-                        statistics = state.statistics,
-                        isDevMode = state.isDevMode,
-                        myLocationsCount = myLocations.size,
-                        onEditProfileClick = onEditProfileClick,
-                        onSettingsClick = onSettingsClick,
-                        onNotificationsClick = onNotificationsClick,
-                        onAboutClick = onAboutClick,
-                        onSchedulesClick = onSchedulesClick,
-                        onLevelJourneyClick = onLevelJourneyClick,
-                        onUserManagementClick = onUserManagementClick,
-                        onMyLocationsClick = onMyLocationsClick,
-                        onManageLocationsClick = onManageLocationsClick,
-                        onGamificationSettingsClick = onGamificationSettingsClick,
-                        onDeveloperMenuClick = onDeveloperMenuClick,
-                        onLogoutClick = onLogoutClick,
-                        onAvatarClick = {
-                            val currentTime = System.currentTimeMillis()
-                            if (currentTime - lastAvatarClickTime > 1000) {
-                                avatarClickCount = 0
-                            }
-                            lastAvatarClickTime = currentTime
-                            avatarClickCount++
+    // Scaffold removido - o padding já é gerenciado pelo MainActivityCompose
+    when (val state = uiState) {
+        is ProfileUiState.Loading -> {
+            ProfileLoadingShimmer()
+        }
+        is ProfileUiState.Success -> {
+            ProfileContent(
+                user = state.user,
+                badges = state.badges,
+                statistics = state.statistics,
+                isDevMode = state.isDevMode,
+                myLocationsCount = myLocations.size,
+                onEditProfileClick = onEditProfileClick,
+                onSettingsClick = onSettingsClick,
+                onNotificationsClick = onNotificationsClick,
+                onAboutClick = onAboutClick,
+                onSchedulesClick = onSchedulesClick,
+                onLevelJourneyClick = onLevelJourneyClick,
+                onUserManagementClick = onUserManagementClick,
+                onMyLocationsClick = onMyLocationsClick,
+                onManageLocationsClick = onManageLocationsClick,
+                onGamificationSettingsClick = onGamificationSettingsClick,
+                onDeveloperMenuClick = onDeveloperMenuClick,
+                onLogoutClick = onLogoutClick,
+                onAvatarClick = {
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastAvatarClickTime > 1000) {
+                        avatarClickCount = 0
+                    }
+                    lastAvatarClickTime = currentTime
+                    avatarClickCount++
 
-                            if (avatarClickCount == 7) {
-                                viewModel.enableDevMode()
-                                avatarClickCount = 0
-                            }
-                        }
-                    )
+                    if (avatarClickCount == 7) {
+                        viewModel.enableDevMode()
+                        avatarClickCount = 0
+                    }
                 }
-                is ProfileUiState.Error -> {
-                    ErrorState(
-                        message = state.message,
-                        onRetry = { viewModel.loadProfile() }
-                    )
-                }
-                else -> {
-                    // LoggedOut ou outros estados são tratados pelo Fragment
-                }
-            }
+            )
+        }
+        is ProfileUiState.Error -> {
+            ErrorState(
+                message = state.message,
+                onRetry = { viewModel.loadProfile() }
+            )
+        }
+        else -> {
+            // LoggedOut ou outros estados são tratados pelo Fragment
         }
     }
 }
@@ -208,11 +198,9 @@ private fun ProfileContent(
     }
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding(),  // 🔧 OTIMIZADO: Respeita status/navigation bars (consistent com HomeScreen)
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Header: Avatar, Nome, Role
         item(key = "header") {
@@ -297,6 +285,11 @@ private fun ProfileContent(
             item(key = "developer") {
                 DeveloperMenuCard(onClick = onDeveloperMenuClick)
             }
+        }
+
+        // Espaçamento antes da versão
+        item(key = "bottom_spacer") {
+            Spacer(modifier = Modifier.height(24.dp))
         }
 
         // Versão do App
@@ -1196,17 +1189,17 @@ private fun ErrorState(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = Icons.Default.Error,
             contentDescription = "Erro ao carregar perfil",
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(56.dp),
             tint = MaterialTheme.colorScheme.error
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyLarge,
@@ -1233,8 +1226,8 @@ private fun ErrorState(
 private fun ProfileLoadingShimmer() {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Header shimmer
         item {
