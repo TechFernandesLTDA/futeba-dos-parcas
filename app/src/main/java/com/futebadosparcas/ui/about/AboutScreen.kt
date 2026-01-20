@@ -318,29 +318,29 @@ private fun LinksCard(
 
             LinkMenuItem(
                 icon = Icons.Default.Star,
-                title = "Avaliar o App",
-                subtitle = "Deixe sua avaliacao na Play Store",
+                title = stringResource(R.string.about_rate_app),
+                subtitle = stringResource(R.string.about_rate_app_desc),
                 onClick = onRateClick
             )
             HorizontalDivider()
             LinkMenuItem(
                 icon = Icons.Default.Email,
-                title = "Fale Conosco",
-                subtitle = "Envie feedback ou relato de problemas",
+                title = stringResource(R.string.about_contact_us),
+                subtitle = stringResource(R.string.about_contact_us_desc),
                 onClick = onContactClick
             )
             HorizontalDivider()
             LinkMenuItem(
                 icon = Icons.Default.Security,
-                title = "Politica de Privacidade",
-                subtitle = "Como tratamos seus dados",
+                title = stringResource(R.string.about_privacy_policy),
+                subtitle = stringResource(R.string.about_privacy_policy_desc),
                 onClick = onPrivacyClick
             )
             HorizontalDivider()
             LinkMenuItem(
                 icon = Icons.Default.Description,
-                title = "Termos de Uso",
-                subtitle = "Condicoes de uso do aplicativo",
+                title = stringResource(R.string.about_terms_of_service),
+                subtitle = stringResource(R.string.about_terms_of_service_desc),
                 onClick = onTermsClick
             )
         }
