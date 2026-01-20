@@ -117,6 +117,7 @@
     <string name="error">Erro</string>
     <string name="success">Sucesso</string>
     <string name="cancel">Cancelar</string>
+    <string name="ok">OK</string>
     <string name="close">Fechar</string>
     <string name="badge_icon">Ícone da conquista</string>
     <string name="save">Salvar</string>
@@ -2465,5 +2466,133 @@ subir no ranking!</string>
 
     <!-- Default Values -->
     <string name="default_player_name">Jogador</string>
+
+    <!-- ==================== HOME COMPONENTS (i18n audit) ==================== -->
+
+    <!-- PublicGamesSuggestions -->
+    <string name="public_games_region_title">Jogos na Região</string>
+    <string name="public_games_see_all">Ver todos</string>
+    <string name="public_games_location_unknown">Local não informado</string>
+    <string name="public_games_slots_available">Vagas disponíveis</string>
+
+    <!-- WelcomeEmptyState -->
+    <string name="welcome_level_badge_cd">Brasão de nível %d</string>
+    <string name="welcome_greeting">Bem-vindo, %s! ⚽</string>
+    <string name="welcome_no_games">Você ainda não tem jogos agendados</string>
+    <string name="welcome_first_steps">Primeiros Passos</string>
+    <string name="welcome_step_create_game">Vá na aba de Jogos para criar sua primeira partida</string>
+    <string name="welcome_step_invite_friends">Convide seus amigos e monte os times</string>
+    <string name="welcome_step_earn_xp">Jogue, ganhe XP e suba de nível!</string>
+    <string name="welcome_xp_tip">Cada jogo te dá XP e ajuda a evoluir como jogador!</string>
+
+    <!-- ActivityFeedSection -->
+    <string name="activity_feed_title">Atividades Recentes</string>
+    <string name="activity_feed_level_badge_cd">Brasão de nível %d</string>
+    <string name="activity_feed_no_activity">Nenhuma atividade recente</string>
+    <string name="activity_feed_time_now">agora</string>
+    <string name="activity_feed_time_minutes">%dm</string>
+    <string name="activity_feed_time_hours">%dh</string>
+    <string name="activity_feed_time_days">%dd</string>
+
+    <!-- ExpressiveHubHeader -->
+    <string name="hub_welcome_back">Bem-vindo de volta,</string>
+    <string name="hub_level_short">Nv. %d</string>
+    <string name="hub_level_full">Nível %d - %s</string>
+    <string name="hub_stat_games">Jogos</string>
+    <string name="hub_stat_goals">Gols</string>
+    <string name="hub_stat_assists">Assist.</string>
+    <string name="hub_stat_mvp">MVP</string>
+    <string name="hub_max_level_reached">Você atingiu o nível máximo!</string>
+    <string name="hub_max_level_message">Continue jogando para manter seu status!</string>
+    <string name="hub_xp_remaining">Faltam %1$d XP para %2$s</string>
+
+    <!-- NotificationPreviewSheet -->
+    <string name="notifications_recent_title">Notificações Recentes</string>
+    <string name="notifications_no_new">Nenhuma notificação nova</string>
+
+    <!-- UpcomingGamesSection -->
+    <string name="upcoming_games_pending">Para Confirmar</string>
+    <string name="upcoming_games_confirmed">Confirmados</string>
+    <string name="upcoming_games_see_all">Ver todos os jogos</string>
+    <string name="upcoming_games_status_confirmed">Confirmado</string>
+    <string name="upcoming_games_status_user_confirmed">Você está em</string>
+    <string name="upcoming_games_status_pending">Para confirmar</string>
+    <string name="upcoming_games_today">Hoje às %s</string>
+    <string name="upcoming_games_tomorrow">Amanhã às %s</string>
+    <string name="upcoming_games_date_not_set">Data não definida</string>
+    <string name="upcoming_games_goalkeepers">%d/%d goleiros</string>
+    <string name="upcoming_location_unknown">Local não informado</string>
+
+    <!-- ==================== LEVEL JOURNEY SCREEN (i18n audit) ==================== -->
+
+    <string name="level_journey_title">Rumo ao Estrelato</string>
+    <string name="level_journey_your_journey">Sua Jornada</string>
+    <string name="level_journey_level">Nível %d</string>
+    <string name="level_journey_progress">Progresso</string>
+    <string name="level_journey_level_quote">Frase do Nível</string>
+    <string name="level_journey_expand_cd">Expandir</string>
+    <string name="level_journey_collapse_cd">Recolher</string>
+    <string name="level_journey_xp_to_next">%d XP para o próximo nível</string>
+    <string name="level_journey_xp_remaining">Faltam %d XP</string>
+    <string name="level_journey_max_reached">Você atingiu o nível máximo!</string>
+    <string name="level_journey_continue_playing">Continue jogando para manter seu status!</string>
+    <string name="level_journey_current_level_cd">Nível atual</string>
+    <string name="level_journey_current_badge">ATUAL</string>
+    <string name="level_journey_unlocked">Desbloqueado!</string>
+    <string name="level_journey_locked_cd">Nível bloqueado</string>
+    <string name="level_journey_unlocked_cd">Nível desbloqueado</string>
+    <string name="level_journey_how_to_earn_xp">Como Ganhar XP</string>
+    <string name="level_journey_xp_source_games">Jogar partidas</string>
+    <string name="level_journey_xp_source_wins">Vencer jogos</string>
+    <string name="level_journey_xp_source_goals">Marcar gols</string>
+    <string name="level_journey_xp_source_assists">Dar assistências</string>
+    <string name="level_journey_xp_source_saves">Fazer defesas</string>
+    <string name="level_journey_xp_source_mvp">Ser eleito MVP</string>
+    <string name="level_journey_xp_tip">Dica: Mantenha uma sequência de jogos para ganhar bônus de XP!</string>
+    <string name="level_journey_close_cd">Fechar</string>
+
+    <!-- ==================== PROFILE SCREEN ADDITIONS (i18n audit) ==================== -->
+
+    <string name="profile_edit_profile">Editar Perfil</string>
+    <string name="profile_logout">Sair</string>
+
+    <!-- ==================== ERROR STATE ADDITIONS (i18n audit) ==================== -->
+
+    <string name="error_state_title">Erro</string>
+    <string name="error_state_access_denied">Acesso Negado</string>
+
+    <!-- ==================== GAMIFICATION SETTINGS ADDITIONS (i18n audit) ==================== -->
+
+    <string name="gamification_xp_win">Vitória</string>
+    <string name="gamification_xp_draw">Empate</string>
+    <string name="gamification_xp_presence">Presença</string>
+    <string name="gamification_xp_mvp">MVP</string>
+    <string name="gamification_xp_per_goal">Ponto por Gol</string>
+    <string name="gamification_xp_per_assist">Ponto por Assistência</string>
+    <string name="gamification_xp_per_save">Ponto por Defesa</string>
+    <string name="gamification_xp_streak_3">Bônus 3 Jogos</string>
+    <string name="gamification_xp_streak_7">Bônus 7 Jogos</string>
+    <string name="gamification_xp_streak_10">Bônus 10 Jogos</string>
+
+    <!-- ==================== DEV TOOLS SCREEN (i18n audit) ==================== -->
+
+    <string name="dev_tools_data_source">Fonte de Dados</string>
+    <string name="dev_tools_use_mock_data">Usar Dados Mockados</string>
+    <string name="dev_tools_mock_description">FakeRepository ao invés de Firebase</string>
+    <string name="dev_tools_mode_changed">Modo alterado. Reinicie o app para aplicar.</string>
+    <string name="dev_tools_mode_mock">Modo atual: Dados Mockados (FakeRepository)</string>
+    <string name="dev_tools_mode_real">Modo atual: Firebase Real</string>
+    <string name="dev_tools_cache_data">Cache e Dados</string>
+    <string name="dev_tools_cache_cleared">Cache local limpo!</string>
+    <string name="dev_tools_error_prefix">Erro: %s</string>
+    <string name="dev_tools_seeding_apollo">Iniciando seed do Ginasio Apollo...</string>
+    <string name="dev_tools_seed_success">Sucesso! %s criado com 6 quadras (4 futsal + 2 society).</string>
+    <string name="dev_tools_prefs_reset">Preferencias resetadas!</string>
+    <string name="dev_tools_system">Sistema</string>
+    <string name="dev_tools_execute">Executar</string>
+
+    <!-- ==================== POST GAME DIALOG ADDITIONS (i18n audit) ==================== -->
+
+    <string name="post_game_xp_label">XP</string>
 
 </resources>

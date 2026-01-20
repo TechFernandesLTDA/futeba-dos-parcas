@@ -9,6 +9,8 @@ import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.toAndroidGroupInvites
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -23,6 +25,13 @@ class InviteViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val groupRepository: GroupRepository
 ) : ViewModel() {
+
+    companion object {
+        private const val SEARCH_DEBOUNCE_MS = 300L
+    }
+
+    // Job tracking para cancelar buscas anteriores
+    private var searchJob: Job? = null
 
     private val _pendingInvitesState = MutableStateFlow<PendingInvitesState>(PendingInvitesState.Loading)
     val pendingInvitesState: StateFlow<PendingInvitesState> = _pendingInvitesState
@@ -92,9 +101,18 @@ class InviteViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Busca usuários com debounce para evitar requisições excessivas.
+     * Cancela buscas anteriores antes de iniciar uma nova.
+     */
     fun searchUsers(query: String) {
-        // Allow empty query to fetch initial list
-        viewModelScope.launch {
+        // Cancelar busca anterior para evitar race conditions
+        searchJob?.cancel()
+
+        searchJob = viewModelScope.launch {
+            // Debounce: aguardar antes de executar a busca
+            delay(SEARCH_DEBOUNCE_MS)
+
             _searchUsersState.value = SearchUsersState.Loading
 
             val result = userRepository.searchUsers(query)
@@ -250,7 +268,13 @@ class InviteViewModel @Inject constructor(
     }
 
     fun clearSearch() {
+        searchJob?.cancel()
         _searchUsersState.value = SearchUsersState.Idle
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        searchJob?.cancel()
     }
 }
 

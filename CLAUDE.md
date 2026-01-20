@@ -1,5 +1,92 @@
 # CLAUDE.md - Futeba dos Parças
 
+---
+
+## ⚠️ SPEC-DRIVEN DEVELOPMENT (SDD) - REGRAS OBRIGATÓRIAS
+
+> **LEIA ISTO PRIMEIRO.** Estas regras são inegociáveis.
+
+### Regra #1: NUNCA implementar sem SPEC aprovada
+
+- Toda feature ou bugfix DEVE ter uma spec em `/specs/` **antes** de escrever código
+- Copie o template apropriado: `_TEMPLATE_FEATURE_MOBILE.md` ou `_TEMPLATE_BUGFIX_MOBILE.md`
+- Status da spec deve ser `APPROVED` antes de iniciar implementação
+
+### Regra #2: Fases obrigatórias
+
+```
+REQUIREMENTS → UX/UI → TECHNICAL DESIGN → TASKS → IMPLEMENTATION → VERIFY
+```
+
+Não pule fases. Cada uma existe por um motivo.
+
+### Regra #3: Sempre propor plano antes de editar código
+
+Antes de modificar qualquer arquivo:
+1. Explique o que vai fazer
+2. Liste os arquivos que serão alterados
+3. Aguarde confirmação (ou use EnterPlanMode para features complexas)
+
+### Regra #4: Registrar decisões
+
+Toda decisão técnica ou de produto relevante vai para `/specs/DECISIONS.md` com:
+- Data
+- Contexto
+- Alternativas consideradas
+- Justificativa
+
+### Regra #5: Não inventar comandos
+
+Se não encontrar um comando de build/test/lint no repo:
+1. Marque como `TODO` na spec
+2. Pergunte ao usuário
+3. Documente a resposta aqui no CLAUDE.md
+
+**Comandos confirmados:**
+```bash
+./gradlew assembleDebug          # Build debug
+./gradlew assembleRelease        # Build release
+./gradlew test                   # Unit tests
+./gradlew connectedAndroidTest   # Instrumented tests
+./gradlew lint                   # Lint check
+./gradlew compileDebugKotlin     # Fast compilation check
+```
+
+### Regra #6: Mobile Definition of Done (DoD)
+
+Todo PR deve atender ao checklist em `/specs/_CHECKLIST_MOBILE_DOD.md`:
+
+- [ ] **Responsividade**: Phone portrait, landscape, tablet (se aplicável)
+- [ ] **Acessibilidade**: contentDescription, touch targets >= 48dp, contraste >= 4.5:1
+- [ ] **Performance**: Sem recomposições desnecessárias, listas otimizadas
+- [ ] **Observabilidade**: Analytics de eventos chave, logs sem PII
+- [ ] **Offline/Erros**: Comportamento definido (cache/retry/fallback)
+- [ ] **Segurança**: Sem tokens hardcoded, dados sensíveis protegidos
+- [ ] **Testes**: Unit para lógica, UI para fluxo crítico
+- [ ] **Release Ready**: Version code, changelog, sem SNAPSHOT
+
+### Regra #7: Estados obrigatórios em toda tela
+
+Toda tela deve implementar:
+- `Loading` - Shimmer/skeleton enquanto carrega
+- `Empty` - Mensagem e ação quando não há dados
+- `Error` - Mensagem clara + botão retry
+- `Success` - Estado normal com dados
+
+### Fluxo de Trabalho Resumido
+
+```
+1. Receber pedido de feature/bugfix
+2. Criar spec em /specs/ usando template
+3. Preencher Requirements + UX/UI + Technical
+4. Solicitar aprovação da spec
+5. Implementar seguindo a spec
+6. Preencher checklist DoD
+7. Abrir PR com link para spec
+```
+
+---
+
 ## Fontes de Referência Oficiais (OBRIGATÓRIO)
 
 **IMPORTANTE**: Para qualquer implementação de UI/Compose, SEMPRE consulte estas fontes oficiais:

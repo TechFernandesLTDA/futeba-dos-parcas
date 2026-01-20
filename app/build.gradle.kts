@@ -105,6 +105,22 @@ android {
         }
     }
 
+    lint {
+        // Detectar strings hardcoded em XML layouts
+        enable += "HardcodedText"
+        // Detectar uso incorreto de locale em String.format
+        enable += "DefaultLocale"
+        // Nivel de severidade
+        warningsAsErrors = false
+        abortOnError = false
+        // Relatorio HTML
+        htmlReport = true
+        htmlOutput = file("build/reports/lint-results.html")
+        // Checagens baseline (para CI/CD)
+        baseline = file("lint-baseline.xml")
+        // Nota: Para strings hardcoded em Compose, usar ktlint ou detekt
+    }
+
 }
 
 dependencies {
@@ -230,6 +246,7 @@ dependencies {
 
     // Coroutines Test
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 
     // Truth for better assertions
     testImplementation("com.google.truth:truth:1.1.5")
@@ -255,6 +272,7 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     ksp("androidx.room:room-compiler:$roomVersion")
+    androidTestImplementation("androidx.room:room-testing:$roomVersion")
 
     // WorkManager (for background cache cleanup)
     implementation("androidx.work:work-runtime-ktx:2.9.1")

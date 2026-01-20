@@ -99,7 +99,7 @@ fun PostGameDialog(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                         Text(
-                            text = "XP",
+                            text = stringResource(R.string.post_game_xp_label),
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
@@ -241,7 +241,7 @@ private fun LevelProgressSection(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "SUBIU DE NIVEL!",
+                    text = stringResource(R.string.post_game_level_up),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.tertiary
@@ -255,7 +255,7 @@ private fun LevelProgressSection(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Nivel $previousLevel",
+                    text = stringResource(R.string.post_game_level, previousLevel),
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -265,7 +265,7 @@ private fun LevelProgressSection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Nivel $newLevel - $newLevelName",
+                    text = stringResource(R.string.post_game_level_to, newLevel, newLevelName),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -273,7 +273,7 @@ private fun LevelProgressSection(
             }
         } else {
             Text(
-                text = "Nivel $newLevel",
+                text = stringResource(R.string.post_game_current_level, newLevel),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
@@ -294,7 +294,7 @@ private fun LevelProgressSection(
         )
 
         Text(
-            text = "${(progress * 100).toInt()}% para o proximo nivel",
+            text = stringResource(R.string.post_game_progress, (progress * 100).toInt()),
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp)
@@ -328,7 +328,7 @@ private fun MilestonesUnlockedSection(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Conquistas Desbloqueadas!",
+                    text = stringResource(R.string.post_game_conquistas),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.tertiary
