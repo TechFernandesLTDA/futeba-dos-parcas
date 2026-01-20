@@ -12,9 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 
@@ -48,7 +50,7 @@ fun WelcomeEmptyState(
         ) {
             androidx.compose.foundation.Image(
                 painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(userLevel)),
-                contentDescription = "Brasão de nível $userLevel",
+                contentDescription = stringResource(R.string.welcome_level_badge_cd, userLevel),
                 modifier = Modifier.size(120.dp)
             )
         }
@@ -57,7 +59,7 @@ fun WelcomeEmptyState(
 
         // Mensagem de Boas-vindas
         Text(
-            text = "Bem-vindo, $userName! ⚽",
+            text = stringResource(R.string.welcome_greeting, userName),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -67,7 +69,7 @@ fun WelcomeEmptyState(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Você ainda não tem jogos agendados",
+            text = stringResource(R.string.welcome_no_games),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -89,7 +91,7 @@ fun WelcomeEmptyState(
                     .padding(20.dp)
             ) {
                 Text(
-                    text = "Primeiros Passos",
+                    text = stringResource(R.string.welcome_first_steps),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -99,21 +101,21 @@ fun WelcomeEmptyState(
 
                 TipItem(
                     icon = Icons.Default.SportsSoccer,
-                    text = "Vá na aba de Jogos para criar sua primeira partida"
+                    text = stringResource(R.string.welcome_step_create_game)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 TipItem(
                     icon = Icons.Default.Group,
-                    text = "Convide seus amigos e monte os times"
+                    text = stringResource(R.string.welcome_step_invite_friends)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 TipItem(
                     icon = Icons.Default.EmojiEvents,
-                    text = "Jogue, ganhe XP e suba de nível!"
+                    text = stringResource(R.string.welcome_step_earn_xp)
                 )
             }
         }
@@ -146,7 +148,7 @@ fun WelcomeEmptyState(
             Spacer(modifier = Modifier.width(12.dp))
 
             Text(
-                text = "Cada jogo te dá XP e ajuda a evoluir como jogador!",
+                text = stringResource(R.string.welcome_xp_tip),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
