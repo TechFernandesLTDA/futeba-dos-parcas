@@ -82,7 +82,6 @@ fun UserManagementScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .systemBarsPadding()
         ) {
             // Campo de busca
             SearchField(

@@ -233,6 +233,29 @@ private fun HomeSuccessContent(
             }
         }
 
+        // Verificar se há conteudo para exibir na tela principal.
+        // Inclui: jogos, atividades, jogos publicos, desafios, estatisticas, badges e streak.
+        // Se nenhum conteudo existir, exibe WelcomeEmptyState para usuarios novos
+        // ou que ainda nao participaram de jogos, evitando tela em branco.
+        val hasAnyContent = games.isNotEmpty() ||
+            state.activities.isNotEmpty() ||
+            state.publicGames.isNotEmpty() ||
+            state.challenges.isNotEmpty() ||
+            statistics != null ||
+            state.recentBadges.isNotEmpty() ||
+            streak != null
+
+        // Exibir estado vazio amigavel quando nao ha conteudo
+        if (!hasAnyContent) {
+            item(key = "welcome_empty_state") {
+                WelcomeEmptyState(
+                    userName = user.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: stringResource(R.string.default_player_name),
+                    userLevel = gamificationSummary?.level ?: 0,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+        }
+
         // Jogos Próximos - Nova seção com status de confirmação
         if (games.isNotEmpty()) {
             item(key = "upcoming_games") {
@@ -315,7 +338,6 @@ private fun HomeLoadingState() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .systemBarsPadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -351,7 +373,6 @@ private fun HomeErrorState(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .systemBarsPadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally

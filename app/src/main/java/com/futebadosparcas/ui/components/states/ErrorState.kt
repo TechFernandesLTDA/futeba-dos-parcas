@@ -47,18 +47,18 @@ fun ErrorState(
         modifier = modifier
             .fillMaxSize()
             .systemBarsPadding()
-            .padding(32.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.size(80.dp),
+            modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "Erro",
@@ -75,7 +75,7 @@ fun ErrorState(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = onRetry,
@@ -189,18 +189,18 @@ fun PermissionDeniedErrorState(
         modifier = modifier
             .fillMaxSize()
             .systemBarsPadding()
-            .padding(32.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
             imageVector = Icons.Default.Lock,
             contentDescription = null,
-            modifier = Modifier.size(80.dp),
+            modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "Acesso Negado",
@@ -218,7 +218,7 @@ fun PermissionDeniedErrorState(
         )
 
         if (onRetry != null) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedButton(onClick = onRetry) {
                 Text("Voltar")

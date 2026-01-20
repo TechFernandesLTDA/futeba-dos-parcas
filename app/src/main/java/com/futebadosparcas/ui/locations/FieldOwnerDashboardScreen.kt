@@ -60,7 +60,6 @@ fun FieldOwnerDashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .systemBarsPadding()
         ) {
             when (val state = uiState) {
                 is FieldOwnerDashboardUiState.Loading -> {

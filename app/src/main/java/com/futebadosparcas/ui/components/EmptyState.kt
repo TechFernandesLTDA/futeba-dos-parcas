@@ -139,7 +139,7 @@ private fun EmptyStateContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -147,11 +147,11 @@ private fun EmptyStateContent(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.size(120.dp),
+            modifier = Modifier.size(96.dp),
             tint = iconTint.copy(alpha = 0.7f)
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Título
         Text(
