@@ -21,6 +21,7 @@ import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.ui.games.GameWithConfirmations
 import com.futebadosparcas.util.ConnectivityMonitor
 import com.futebadosparcas.util.InstantTaskExecutorExtension
+import com.futebadosparcas.util.MockLogExtension
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -42,7 +43,7 @@ import java.util.Date
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("HomeViewModel Tests")
-@ExtendWith(InstantTaskExecutorExtension::class)
+@ExtendWith(InstantTaskExecutorExtension::class, MockLogExtension::class)
 class HomeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
