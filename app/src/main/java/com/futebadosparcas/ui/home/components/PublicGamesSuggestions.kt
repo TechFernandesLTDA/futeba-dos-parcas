@@ -31,8 +31,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
@@ -64,13 +66,13 @@ fun PublicGamesSuggestions(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Jogos na Região",
+                text = stringResource(R.string.public_games_region_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "Ver todos",
+                text = stringResource(R.string.public_games_see_all),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { /* Navigate to search/filter */ }
@@ -112,6 +114,7 @@ fun PublicGamesSuggestions(
 
 @Composable
 fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) {
+    val locationUnknown = stringResource(R.string.public_games_location_unknown)
     Card(
         modifier = if (fillWidth) {
             Modifier
@@ -146,7 +149,7 @@ fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) 
 
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
-                    text = game.locationName ?: "Local não informado",
+                    text = game.locationName ?: locationUnknown,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -181,7 +184,7 @@ fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) 
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Vagas disponíveis", // Should calculate actual spots if possible
+                        text = stringResource(R.string.public_games_slots_available),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )

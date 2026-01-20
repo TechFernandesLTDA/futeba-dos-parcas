@@ -77,7 +77,7 @@ fun LevelJourneyScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Rumo ao Estrelato",
+                        text = stringResource(R.string.level_journey_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -198,7 +198,7 @@ private fun LevelJourneyContent(
                     color = MaterialTheme.colorScheme.outlineVariant
                 )
                 Text(
-                    text = " Sua Jornada ",
+                    text = stringResource(R.string.level_journey_your_journey),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -333,7 +333,7 @@ private fun CurrentLevelCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Progresso",
+                        text = stringResource(R.string.level_journey_progress),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -402,7 +402,7 @@ private fun CurrentLevelCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Frase do Nível",
+                            text = stringResource(R.string.level_journey_level_quote),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -738,7 +738,7 @@ private fun XpGuideSection() {
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Como Ganhar XP",
+                    text = stringResource(R.string.level_journey_how_to_earn_xp),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
