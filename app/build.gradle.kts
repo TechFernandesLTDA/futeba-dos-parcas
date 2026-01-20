@@ -230,6 +230,7 @@ dependencies {
 
     // Coroutines Test
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 
     // Truth for better assertions
     testImplementation("com.google.truth:truth:1.1.5")
@@ -255,6 +256,7 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     ksp("androidx.room:room-compiler:$roomVersion")
+    androidTestImplementation("androidx.room:room-testing:$roomVersion")
 
     // WorkManager (for background cache cleanup)
     implementation("androidx.work:work-runtime-ktx:2.9.1")
