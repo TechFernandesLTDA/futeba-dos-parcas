@@ -615,7 +615,10 @@ fun AppNavHost(
                 viewModel = viewModel,
                 preferencesManager = preferencesManager,
                 onBackClick = { navController.popBackStack() },
-                onProfileUpdated = { /* Refetch profile */ }
+                onProfileUpdated = {
+                    // Navegar de volta para a tela de perfil após salvar
+                    navController.popBackStack()
+                }
             )
         }
 
