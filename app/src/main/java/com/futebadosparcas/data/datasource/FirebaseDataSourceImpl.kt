@@ -45,6 +45,10 @@ class FirebaseDataSourceImpl @Inject constructor(
         private const val COLLECTION_USER_GROUPS = "user_groups"
         private const val COLLECTION_XP_LOGS = "xp_logs"
         private const val COLLECTION_RANKING_DELTAS = "ranking_deltas"
+
+        // Limites de seguranca para buscas
+        private const val MAX_SEARCH_QUERY_LENGTH = 100
+        private const val MAX_SEARCH_RESULTS = 50
     }
 
     // ========== GAMES ==========
@@ -603,20 +607,26 @@ class FirebaseDataSourceImpl @Inject constructor(
 
     override suspend fun searchUsers(query: String, limit: Int): Result<List<User>> {
         return suspendWithRetryResult(RetryPolicy.DEFAULT) {
-            AppLogger.d(TAG) { "Pesquisando usuários: query='$query'" }
+            // Validacao de input para prevenir queries malformadas
+            val sanitizedQuery = query
+                .trim()
+                .take(MAX_SEARCH_QUERY_LENGTH) // Limita comprimento
+                .replace(Regex("[\\p{Cc}\\p{Cf}]"), "") // Remove caracteres de controle
 
-            val snapshot = if (query.isBlank()) {
+            AppLogger.d(TAG) { "Pesquisando usuários: query='$sanitizedQuery'" }
+
+            val snapshot = if (sanitizedQuery.isBlank()) {
                 firestore.collection(COLLECTION_USERS)
                     .orderBy("name")
-                    .limit(limit.toLong())
+                    .limit(limit.toLong().coerceIn(1, MAX_SEARCH_RESULTS.toLong()))
                     .get()
                     .await()
             } else {
                 firestore.collection(COLLECTION_USERS)
                     .orderBy("name")
-                    .startAt(query)
-                    .endAt(query + "\uf8ff")
-                    .limit(limit.toLong())
+                    .startAt(sanitizedQuery)
+                    .endAt(sanitizedQuery + "\uf8ff")
+                    .limit(limit.toLong().coerceIn(1, MAX_SEARCH_RESULTS.toLong()))
                     .get()
                     .await()
             }

@@ -368,7 +368,7 @@ fun TransferOwnershipDialog(
                     TextButton(onClick = onDismiss) {
                         Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Cancelar")
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             }

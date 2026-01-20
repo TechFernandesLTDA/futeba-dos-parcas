@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.R
 import com.futebadosparcas.data.model.AppNotification
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,7 +38,7 @@ fun NotificationPreviewSheet(
                 .padding(bottom = 24.dp)
         ) {
             Text(
-                text = "Notificações Recentes",
+                text = stringResource(R.string.notifications_recent_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -50,7 +52,7 @@ fun NotificationPreviewSheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Nenhuma notificação nova",
+                        text = stringResource(R.string.notifications_no_new),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Configuracao de Lint para Futeba dos Parcas
+
+    Detecta strings hardcoded e outras issues comuns.
+    Execute: ./gradlew lint
+-->
+<lint>
+    <!-- Detectar strings hardcoded em layouts XML -->
+    <issue id="HardcodedText" severity="warning" />
+
+    <!-- Detectar strings hardcoded em codigo -->
+    <issue id="SetTextI18n" severity="warning" />
+
+    <!-- Avisos de seguranca -->
+    <issue id="HardcodedDebugMode" severity="error" />
+    <issue id="AllowBackup" severity="warning" />
+
+    <!-- Performance -->
+    <issue id="UnusedResources" severity="warning" />
+    <issue id="TypographyQuotes" severity="informational" />
+
+    <!-- Ignorar em testes -->
+    <issue id="HardcodedText">
+        <ignore path="**/test/**" />
+        <ignore path="**/androidTest/**" />
+    </issue>
+
+    <!-- Ignorar arquivos gerados -->
+    <issue id="all">
+        <ignore path="**/build/**" />
+        <ignore path="**/generated/**" />
+    </issue>
+</lint>

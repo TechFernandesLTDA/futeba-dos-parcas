@@ -22,6 +22,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -401,8 +403,8 @@ private fun ProfileHeader(
                     label = {
                         Text(
                             text = when {
-                                user.isAdmin() -> "ADMINISTRADOR"
-                                user.isFieldOwner() -> "ORGANIZADOR"
+                                user.isAdmin() -> stringResource(R.string.profile_role_admin)
+                                user.isFieldOwner() -> stringResource(R.string.profile_role_organizer)
                                 else -> ""
                             }
                         )
@@ -456,7 +458,7 @@ private fun StaticLevelCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Nível $level",
+                        text = stringResource(R.string.profile_level, level),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -470,7 +472,7 @@ private fun StaticLevelCard(
 
                 Image(
                     painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
-                    contentDescription = "Badge de nível",
+                    contentDescription = stringResource(R.string.level_badge),
                     modifier = Modifier.size(48.dp)
                 )
             }
@@ -535,7 +537,7 @@ private fun FieldPreferencesCard(preferredTypes: List<FieldType>) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "Preferências de Campo",
+                text = stringResource(R.string.field_preferences),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -549,17 +551,17 @@ private fun FieldPreferencesCard(preferredTypes: List<FieldType>) {
                 FieldTypeIcon(
                     type = FieldType.SOCIETY,
                     isEnabled = preferredTypes.contains(FieldType.SOCIETY),
-                    label = "Society"
+                    label = stringResource(R.string.field_type_society_short)
                 )
                 FieldTypeIcon(
                     type = FieldType.FUTSAL,
                     isEnabled = preferredTypes.contains(FieldType.FUTSAL),
-                    label = "Futsal"
+                    label = stringResource(R.string.field_type_futsal_short)
                 )
                 FieldTypeIcon(
                     type = FieldType.CAMPO,
                     isEnabled = preferredTypes.contains(FieldType.CAMPO),
-                    label = "Campo"
+                    label = stringResource(R.string.field_type_field_short)
                 )
             }
         }
@@ -617,7 +619,7 @@ private fun StaticRatingsCard(ratings: List<RatingData>) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "Avaliações por Posição",
+                text = stringResource(R.string.position_ratings),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -716,7 +718,7 @@ private fun StatisticsCard(statistics: UserStatistics?) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "Estatísticas",
+                text = stringResource(R.string.statistics_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -805,7 +807,7 @@ private fun BadgesSection(badges: List<UserBadge>) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "Conquistas Recentes",
+                text = stringResource(R.string.recent_badges),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -918,11 +920,11 @@ private fun ActionButtonsSection(
         ) {
             Icon(
                 imageVector = Icons.Default.Edit,
-                contentDescription = "Editar Perfil",
+                contentDescription = stringResource(R.string.edit_profile),
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Editar Perfil")
+            Text(stringResource(R.string.edit_profile))
         }
 
         OutlinedButton(
@@ -932,11 +934,11 @@ private fun ActionButtonsSection(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Logout,
-                contentDescription = "Sair",
+                contentDescription = stringResource(R.string.logout),
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Sair")
+            Text(stringResource(R.string.logout))
         }
     }
 }
@@ -1164,7 +1166,7 @@ private fun DeveloperMenuCard(onClick: () -> Unit) {
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = "Developer Menu",
+                text = stringResource(R.string.developer_menu),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier.weight(1f)
@@ -1210,11 +1212,11 @@ private fun ErrorState(
         Button(onClick = onRetry) {
             Icon(
                 imageVector = Icons.Default.Refresh,
-                contentDescription = "Tentar novamente",
+                contentDescription = stringResource(R.string.retry),
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Tentar Novamente")
+            Text(stringResource(R.string.retry))
         }
     }
 }

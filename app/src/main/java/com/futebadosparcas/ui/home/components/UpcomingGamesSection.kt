@@ -41,7 +41,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.ui.theme.GamificationColors
@@ -82,7 +84,7 @@ fun UpcomingGamesSection(
         // Seção "Para Confirmar" - Prioridade máxima
         if (pendingGames.isNotEmpty()) {
             GamesByStatusSection(
-                title = "Para Confirmar",
+                title = stringResource(R.string.upcoming_games_pending),
                 count = pendingGames.size,
                 icon = Icons.Default.NotificationsActive,
                 iconTint = MaterialTheme.colorScheme.error,
@@ -99,7 +101,7 @@ fun UpcomingGamesSection(
                 Spacer(modifier = Modifier.height(8.dp))
             }
             GamesByStatusSection(
-                title = "Confirmados",
+                title = stringResource(R.string.upcoming_games_confirmed),
                 count = confirmedGames.size,
                 icon = Icons.Default.CheckCircle,
                 iconTint = GamificationColors.XpGreen,
@@ -185,7 +187,7 @@ private fun GamesByStatusSection(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Ver todos os jogos",
+                    text = stringResource(R.string.upcoming_games_see_all),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Medium
@@ -339,7 +341,7 @@ private fun GameConfirmationCard(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = game.locationName.takeIf { it.isNotEmpty() } ?: "Local não informado",
+                        text = game.locationName.takeIf { it.isNotEmpty() } ?: stringResource(R.string.public_games_location_unknown),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = if (isPending) FontWeight.Bold else FontWeight.SemiBold,
                         color = if (isPending) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -403,9 +405,9 @@ private fun GameConfirmationCard(
                 ) {
                     Text(
                         text = when {
-                            gameStatus == GameStatus.CONFIRMED -> "Confirmado"
-                            isUserConfirmed -> "Você está em"
-                            else -> "Para confirmar"
+                            gameStatus == GameStatus.CONFIRMED -> stringResource(R.string.upcoming_games_status_confirmed)
+                            isUserConfirmed -> stringResource(R.string.upcoming_games_status_user_confirmed)
+                            else -> stringResource(R.string.upcoming_games_status_pending)
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = statusColor,
@@ -429,7 +431,7 @@ private fun GameConfirmationCard(
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Confirmar", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(R.string.confirm), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
