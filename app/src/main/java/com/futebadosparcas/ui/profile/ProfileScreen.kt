@@ -287,6 +287,11 @@ private fun ProfileContent(
             }
         }
 
+        // Espaçamento antes da versão
+        item(key = "bottom_spacer") {
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
         // Versão do App
         item(key = "version") {
             Text(
