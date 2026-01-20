@@ -117,6 +117,7 @@
     <string name="error">Erro</string>
     <string name="success">Sucesso</string>
     <string name="cancel">Cancelar</string>
+    <string name="ok">OK</string>
     <string name="close">Fechar</string>
     <string name="badge_icon">Ícone da conquista</string>
     <string name="save">Salvar</string>

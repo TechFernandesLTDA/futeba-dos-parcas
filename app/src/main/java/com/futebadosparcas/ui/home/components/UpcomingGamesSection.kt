@@ -41,7 +41,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.ui.theme.GamificationColors
@@ -429,7 +431,7 @@ private fun GameConfirmationCard(
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Confirmar", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(R.string.confirm), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }

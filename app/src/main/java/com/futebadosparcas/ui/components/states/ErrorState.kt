@@ -8,8 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 
 /**
  * Estado de erro padrão com retry button
@@ -221,7 +223,7 @@ fun PermissionDeniedErrorState(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedButton(onClick = onRetry) {
-                Text("Voltar")
+                Text(stringResource(R.string.back))
             }
         }
     }

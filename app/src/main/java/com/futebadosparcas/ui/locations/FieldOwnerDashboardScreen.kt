@@ -12,8 +12,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.ui.components.EmptyState
@@ -97,10 +99,10 @@ private fun FieldOwnerDashboardTopBar(
     onNavigateBack: () -> Unit
 ) {
     TopAppBar(
-        title = { Text("Meus Locais") },
+        title = { Text(stringResource(R.string.profile_menu_my_locations)) },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
