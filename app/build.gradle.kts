@@ -87,6 +87,9 @@ android {
     }
 
     testOptions {
+        // Make Android framework methods return default values instead of throwing
+        unitTests.isReturnDefaultValues = true
+
         unitTests.all {
             it.useJUnitPlatform()
             // Fix encoding issues for paths with special characters (ç, etc.)
