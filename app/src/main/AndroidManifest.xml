@@ -57,6 +57,7 @@
         <activity
             android:name=".ui.splash.SplashActivityCompose"
             android:exported="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.FutebaDosParcas.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -67,20 +68,22 @@
         <activity
             android:name=".ui.auth.LoginActivityCompose"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".ui.auth.RegisterActivityCompose"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".ui.main.MainActivityCompose"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.FutebaDosParcas"
-            android:resizeableActivity="true"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation" />
+            android:configChanges="screenSize|smallestScreenSize|screenLayout" />
 
         <service
             android:name=".service.FcmService"

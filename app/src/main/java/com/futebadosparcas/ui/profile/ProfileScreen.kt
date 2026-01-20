@@ -1196,17 +1196,17 @@ private fun ErrorState(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = Icons.Default.Error,
             contentDescription = "Erro ao carregar perfil",
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(56.dp),
             tint = MaterialTheme.colorScheme.error
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyLarge,

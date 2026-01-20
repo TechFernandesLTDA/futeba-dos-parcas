@@ -73,7 +73,7 @@ fun WelcomeEmptyState(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Card de Dicas
         Card(
@@ -118,7 +118,7 @@ fun WelcomeEmptyState(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Informação sobre XP
         Row(
