@@ -129,9 +129,7 @@ private fun GamesSuccessContent(
     var selectedFilter by remember { mutableStateOf(GameFilterType.ALL) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding()
+        modifier = Modifier.fillMaxSize()
     ) {
         // Filtros
         GamesFilters(
@@ -360,7 +358,6 @@ private fun GamesLoadingState() {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .systemBarsPadding()
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -380,7 +377,6 @@ private fun GamesEmptyState(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .systemBarsPadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -426,7 +422,6 @@ private fun GamesErrorState(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .systemBarsPadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
