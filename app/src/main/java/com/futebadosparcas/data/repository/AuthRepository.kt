@@ -96,11 +96,12 @@ class AuthRepository @Inject constructor(
             } else {
                 android.util.Log.d("AuthRepository", "User document DOES NOT EXIST - creating new user")
                 // Criar usuario automaticamente se nao existir
-                val firebaseUser = auth.currentUser!!
+                val firebaseUser = auth.currentUser
+                    ?: return Result.failure(Exception("Usuario desconectado durante operacao"))
                 val newUser = User(
                     id = uid,
-                    email = firebaseUser.email ?: "",
-                    name = firebaseUser.displayName ?: "",
+                    email = firebaseUser.email.orEmpty(),
+                    name = firebaseUser.displayName.orEmpty(),
                     photoUrl = firebaseUser.photoUrl?.toString()
                 )
                 android.util.Log.d("AuthRepository", "Creating user: ${newUser.name} (${newUser.email})")
