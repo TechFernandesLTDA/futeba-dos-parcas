@@ -59,7 +59,6 @@ import java.util.Locale
  * - Seção administrativa (Admin/Field Owner)
  * - Estados: Loading (Shimmer), Success, Error
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
@@ -88,62 +87,53 @@ fun ProfileScreen(
     var avatarClickCount by remember { mutableStateOf(0) }
     var lastAvatarClickTime by remember { mutableStateOf(0L) }
 
-    Scaffold(
-        // topBar removido conforme solicitação (design limpo)
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when (val state = uiState) {
-                is ProfileUiState.Loading -> {
-                    ProfileLoadingShimmer()
-                }
-                is ProfileUiState.Success -> {
-                    ProfileContent(
-                        user = state.user,
-                        badges = state.badges,
-                        statistics = state.statistics,
-                        isDevMode = state.isDevMode,
-                        myLocationsCount = myLocations.size,
-                        onEditProfileClick = onEditProfileClick,
-                        onSettingsClick = onSettingsClick,
-                        onNotificationsClick = onNotificationsClick,
-                        onAboutClick = onAboutClick,
-                        onSchedulesClick = onSchedulesClick,
-                        onLevelJourneyClick = onLevelJourneyClick,
-                        onUserManagementClick = onUserManagementClick,
-                        onMyLocationsClick = onMyLocationsClick,
-                        onManageLocationsClick = onManageLocationsClick,
-                        onGamificationSettingsClick = onGamificationSettingsClick,
-                        onDeveloperMenuClick = onDeveloperMenuClick,
-                        onLogoutClick = onLogoutClick,
-                        onAvatarClick = {
-                            val currentTime = System.currentTimeMillis()
-                            if (currentTime - lastAvatarClickTime > 1000) {
-                                avatarClickCount = 0
-                            }
-                            lastAvatarClickTime = currentTime
-                            avatarClickCount++
+    // Scaffold removido - o padding já é gerenciado pelo MainActivityCompose
+    when (val state = uiState) {
+        is ProfileUiState.Loading -> {
+            ProfileLoadingShimmer()
+        }
+        is ProfileUiState.Success -> {
+            ProfileContent(
+                user = state.user,
+                badges = state.badges,
+                statistics = state.statistics,
+                isDevMode = state.isDevMode,
+                myLocationsCount = myLocations.size,
+                onEditProfileClick = onEditProfileClick,
+                onSettingsClick = onSettingsClick,
+                onNotificationsClick = onNotificationsClick,
+                onAboutClick = onAboutClick,
+                onSchedulesClick = onSchedulesClick,
+                onLevelJourneyClick = onLevelJourneyClick,
+                onUserManagementClick = onUserManagementClick,
+                onMyLocationsClick = onMyLocationsClick,
+                onManageLocationsClick = onManageLocationsClick,
+                onGamificationSettingsClick = onGamificationSettingsClick,
+                onDeveloperMenuClick = onDeveloperMenuClick,
+                onLogoutClick = onLogoutClick,
+                onAvatarClick = {
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastAvatarClickTime > 1000) {
+                        avatarClickCount = 0
+                    }
+                    lastAvatarClickTime = currentTime
+                    avatarClickCount++
 
-                            if (avatarClickCount == 7) {
-                                viewModel.enableDevMode()
-                                avatarClickCount = 0
-                            }
-                        }
-                    )
+                    if (avatarClickCount == 7) {
+                        viewModel.enableDevMode()
+                        avatarClickCount = 0
+                    }
                 }
-                is ProfileUiState.Error -> {
-                    ErrorState(
-                        message = state.message,
-                        onRetry = { viewModel.loadProfile() }
-                    )
-                }
-                else -> {
-                    // LoggedOut ou outros estados são tratados pelo Fragment
-                }
-            }
+            )
+        }
+        is ProfileUiState.Error -> {
+            ErrorState(
+                message = state.message,
+                onRetry = { viewModel.loadProfile() }
+            )
+        }
+        else -> {
+            // LoggedOut ou outros estados são tratados pelo Fragment
         }
     }
 }
