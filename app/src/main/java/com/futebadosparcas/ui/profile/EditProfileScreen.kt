@@ -69,12 +69,23 @@ fun EditProfileScreen(
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var devModeClickCount by remember { mutableIntStateOf(0) }
     var firstPhotoClickTime by remember { mutableLongStateOf(0L) }
+    var isSaving by remember { mutableStateOf(false) }
 
-    // Handle profile update success
+    // Handle profile update success e reset do estado de saving
     LaunchedEffect(uiState) {
-        if (uiState is ProfileUiState.ProfileUpdateSuccess) {
-            Toast.makeText(context, context.getString(R.string.edit_profile_success), Toast.LENGTH_SHORT).show()
-            onProfileUpdated()
+        when (uiState) {
+            is ProfileUiState.ProfileUpdateSuccess -> {
+                isSaving = false
+                Toast.makeText(context, context.getString(R.string.edit_profile_success), Toast.LENGTH_SHORT).show()
+                onProfileUpdated()
+            }
+            is ProfileUiState.Error -> {
+                isSaving = false
+            }
+            is ProfileUiState.Success -> {
+                isSaving = false
+            }
+            else -> {}
         }
     }
 
@@ -120,6 +131,7 @@ fun EditProfileScreen(
                     user = user,
                     statistics = (state as? ProfileUiState.Success)?.statistics,
                     selectedImageUri = selectedImageUri,
+                    isSaving = isSaving,
                     onImageSelected = { uri -> selectedImageUri = uri },
                     onPhotoClick = {
                         val currentTime = System.currentTimeMillis()
@@ -149,6 +161,7 @@ fun EditProfileScreen(
                         }
                     },
                     onSaveClick = { formData ->
+                        isSaving = true
                         viewModel.updateProfile(
                             name = formData.name,
                             nickname = formData.nickname,
@@ -207,6 +220,7 @@ private fun EditProfileContent(
     user: com.futebadosparcas.domain.model.User,
     statistics: com.futebadosparcas.data.model.UserStatistics?,
     selectedImageUri: Uri?,
+    isSaving: Boolean,
     onImageSelected: (Uri?) -> Unit,
     onPhotoClick: () -> Unit,
     onSaveClick: (ProfileFormData) -> Unit,
@@ -330,9 +344,11 @@ private fun EditProfileContent(
             statistics = statistics
         )
 
-        // Save Button
+        // Save Button com Loading
         Button(
             onClick = {
+                if (isSaving) return@Button // Evita cliques duplos
+
                 val preferredFieldTypes = mutableListOf<FieldType>()
                 if (societyChecked) preferredFieldTypes.add(FieldType.SOCIETY)
                 if (futsalChecked) preferredFieldTypes.add(FieldType.FUTSAL)
@@ -372,9 +388,18 @@ private fun EditProfileContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            enabled = !isSaving
         ) {
-            Text(stringResource(R.string.edit_profile_save_changes), style = MaterialTheme.typography.titleMedium)
+            if (isSaving) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(stringResource(R.string.edit_profile_save_changes), style = MaterialTheme.typography.titleMedium)
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))

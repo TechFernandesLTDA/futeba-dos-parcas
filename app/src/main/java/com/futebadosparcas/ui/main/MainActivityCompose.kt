@@ -35,6 +35,8 @@ import com.futebadosparcas.ui.navigation.AppNavHost
 import com.futebadosparcas.ui.navigation.Screen
 import com.futebadosparcas.ui.theme.CoilConfig
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.ui.onboarding.PermissionOnboardingScreen
+import com.futebadosparcas.util.PreferencesManager
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -67,6 +69,9 @@ class MainActivityCompose : AppCompatActivity() {
     @javax.inject.Inject
     lateinit var notificationRepository: NotificationRepository
 
+    @javax.inject.Inject
+    lateinit var preferencesManager: PreferencesManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
@@ -85,16 +90,30 @@ class MainActivityCompose : AppCompatActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkMode()
             }
 
+            // Estado para controlar exibição do onboarding de permissões
+            var showPermissionOnboarding by remember {
+                mutableStateOf(!preferencesManager.isPermissionOnboardingCompleted())
+            }
+
             SetupSystemBars(isDark)
 
             FutebaTheme(
                 themeConfig = themeConfig,
                 darkTheme = isDark
             ) {
-                MainScreen(
-                    themeConfig = themeConfig,
-                    onThemeChange = { recreate() }
-                )
+                if (showPermissionOnboarding) {
+                    PermissionOnboardingScreen(
+                        onComplete = {
+                            preferencesManager.setPermissionOnboardingCompleted(true)
+                            showPermissionOnboarding = false
+                        }
+                    )
+                } else {
+                    MainScreen(
+                        themeConfig = themeConfig,
+                        onThemeChange = { recreate() }
+                    )
+                }
             }
         }
 
