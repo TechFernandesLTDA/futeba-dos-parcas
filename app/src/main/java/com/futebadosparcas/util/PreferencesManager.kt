@@ -104,6 +104,22 @@ class PreferencesManager @Inject constructor(
         return sharedPreferences.getBoolean(KEY_FIRST_LAUNCH, true)
     }
 
+    /**
+     * Marca se o onboarding de permissões foi concluído
+     */
+    fun setPermissionOnboardingCompleted(completed: Boolean) {
+        sharedPreferences.edit()
+            .putBoolean(KEY_PERMISSION_ONBOARDING_COMPLETED, completed)
+            .apply()
+    }
+
+    /**
+     * Verifica se o onboarding de permissões foi concluído
+     */
+    fun isPermissionOnboardingCompleted(): Boolean {
+        return sharedPreferences.getBoolean(KEY_PERMISSION_ONBOARDING_COMPLETED, false)
+    }
+
     fun setNotificationsEnabled(enabled: Boolean) {
         sharedPreferences.edit()
             .putBoolean(KEY_NOTIFICATIONS_ENABLED, enabled)
@@ -224,6 +240,7 @@ class PreferencesManager @Inject constructor(
         private const val KEY_THEME_PREFERENCE = "theme_preference"
         private const val KEY_MOCK_MODE_ENABLED = "mock_mode_enabled"
         private const val KEY_DEV_MODE_ENABLED = "dev_mode_enabled"
+        private const val KEY_PERMISSION_ONBOARDING_COMPLETED = "permission_onboarding_completed"
 
         // Chaves para EncryptedSharedPreferences (dados sensíveis)
         private const val KEY_LAST_LOGIN_TIME = "last_login_time"

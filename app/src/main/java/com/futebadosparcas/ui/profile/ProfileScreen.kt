@@ -41,6 +41,11 @@ import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 import com.futebadosparcas.util.LevelHelper
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import java.util.Locale
 
 /**
@@ -298,6 +303,11 @@ private fun ProfileContent(
                 onSchedulesClick = onSchedulesClick,
                 onAboutClick = onAboutClick
             )
+        }
+
+        // Seção de Feedback
+        item(key = "feedback") {
+            FeedbackSection()
         }
 
         // Seção Administrativa
@@ -1016,6 +1026,65 @@ private fun SettingsSection(
                 icon = Icons.Default.Info,
                 title = "Sobre",
                 onClick = onAboutClick
+            )
+        }
+    }
+}
+
+/**
+ * Seção de Feedback para reportar problemas
+ */
+@Composable
+private fun FeedbackSection() {
+    val context = LocalContext.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.feedback_section),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            SettingsMenuItem(
+                icon = Icons.Default.BugReport,
+                title = stringResource(R.string.report_problem),
+                onClick = {
+                    val appVersion = BuildConfig.VERSION_NAME
+                    val androidVersion = Build.VERSION.RELEASE
+                    val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}"
+
+                    val subject = context.getString(R.string.report_problem_email_subject, appVersion)
+                    val body = context.getString(
+                        R.string.report_problem_email_body,
+                        appVersion,
+                        androidVersion,
+                        deviceModel
+                    )
+
+                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = Uri.parse("mailto:")
+                        putExtra(Intent.EXTRA_EMAIL, arrayOf("suporte@futebadosparcas.com"))
+                        putExtra(Intent.EXTRA_SUBJECT, subject)
+                        putExtra(Intent.EXTRA_TEXT, body)
+                    }
+
+                    try {
+                        context.startActivity(Intent.createChooser(intent, context.getString(R.string.report_problem)))
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.report_problem_no_email_app),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
             )
         }
     }

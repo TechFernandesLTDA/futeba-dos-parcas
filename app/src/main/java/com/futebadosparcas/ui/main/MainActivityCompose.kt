@@ -35,6 +35,8 @@ import com.futebadosparcas.ui.navigation.AppNavHost
 import com.futebadosparcas.ui.navigation.Screen
 import com.futebadosparcas.ui.theme.CoilConfig
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.ui.onboarding.OnboardingFlow
+import com.futebadosparcas.util.PreferencesManager
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -67,6 +69,9 @@ class MainActivityCompose : AppCompatActivity() {
     @javax.inject.Inject
     lateinit var notificationRepository: NotificationRepository
 
+    @javax.inject.Inject
+    lateinit var preferencesManager: PreferencesManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
@@ -85,16 +90,36 @@ class MainActivityCompose : AppCompatActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkMode()
             }
 
+            // Estado para controlar exibição do onboarding de permissões
+            var showPermissionOnboarding by remember {
+                mutableStateOf(!preferencesManager.isPermissionOnboardingCompleted())
+            }
+
             SetupSystemBars(isDark)
 
             FutebaTheme(
                 themeConfig = themeConfig,
                 darkTheme = isDark
             ) {
-                MainScreen(
-                    themeConfig = themeConfig,
-                    onThemeChange = { recreate() }
-                )
+                if (showPermissionOnboarding) {
+                    OnboardingFlow(
+                        preferencesManager = preferencesManager,
+                        onComplete = {
+                            showPermissionOnboarding = false
+                        },
+                        onProfileSetup = { profileData ->
+                            // Os dados do perfil serão salvos quando o usuário
+                            // entrar na tela de edição de perfil ou através do ViewModel
+                            // Por enquanto, apenas logamos os dados
+                            android.util.Log.d("Onboarding", "Profile setup: $profileData")
+                        }
+                    )
+                } else {
+                    MainScreen(
+                        themeConfig = themeConfig,
+                        onThemeChange = { recreate() }
+                    )
+                }
             }
         }
 
