@@ -13,8 +13,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 import com.futebadosparcas.data.model.UserStatistics
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
@@ -53,7 +55,7 @@ fun ExpandableStatsSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Estatísticas da Temporada",
+                    text = stringResource(R.string.season_stats_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -68,7 +70,7 @@ fun ExpandableStatsSection(
                 Column(modifier = Modifier.padding(horizontal = spacing.md, vertical = spacing.sm)) {
 
                     Text(
-                        text = "Resumo Geral",
+                        text = stringResource(R.string.general_summary_title),
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(bottom = spacing.sm)
                     )

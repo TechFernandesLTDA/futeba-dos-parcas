@@ -63,7 +63,7 @@ fun ErrorState(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Erro",
+            text = stringResource(R.string.error_title),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -205,7 +205,7 @@ fun PermissionDeniedErrorState(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Acesso Negado",
+            text = stringResource(R.string.access_denied_title),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface
         )
