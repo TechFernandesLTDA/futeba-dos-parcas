@@ -228,6 +228,12 @@ fun AppNavHost(
                 },
                 onLevelJourneyClick = {
                     navController.navigate(Screen.LevelJourney.route)
+                },
+                onCreateGameClick = {
+                    navController.navigate(Screen.CreateGame.route)
+                },
+                onJoinGroupClick = {
+                    navController.navigate(Screen.Groups.route)
                 }
             )
         }
