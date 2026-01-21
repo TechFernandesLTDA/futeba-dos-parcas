@@ -69,12 +69,43 @@ fun EditProfileScreen(
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var devModeClickCount by remember { mutableIntStateOf(0) }
     var firstPhotoClickTime by remember { mutableLongStateOf(0L) }
+    var isSaving by remember { mutableStateOf(false) }
 
-    // Handle profile update success
+    // Cache do usuário para manter o formulário visível durante Loading
+    var cachedUser by remember { mutableStateOf<com.futebadosparcas.domain.model.User?>(null) }
+    var cachedStatistics by remember { mutableStateOf<com.futebadosparcas.data.model.UserStatistics?>(null) }
+
+    // Atualiza o cache quando temos dados
     LaunchedEffect(uiState) {
-        if (uiState is ProfileUiState.ProfileUpdateSuccess) {
-            Toast.makeText(context, context.getString(R.string.edit_profile_success), Toast.LENGTH_SHORT).show()
-            onProfileUpdated()
+        when (val state = uiState) {
+            is ProfileUiState.Success -> {
+                cachedUser = state.user
+                cachedStatistics = state.statistics
+            }
+            is ProfileUiState.ProfileUpdateSuccess -> {
+                cachedUser = state.user
+                cachedStatistics = state.statistics
+            }
+            else -> {}
+        }
+    }
+
+    // Handle profile update success e reset do estado de saving
+    // IMPORTANTE: Só navega de volta quando isSaving é true para evitar navegação
+    // indesejada ao reabrir a tela com estado ProfileUpdateSuccess anterior
+    LaunchedEffect(uiState, isSaving) {
+        when (uiState) {
+            is ProfileUiState.ProfileUpdateSuccess -> {
+                if (isSaving) {
+                    isSaving = false
+                    Toast.makeText(context, context.getString(R.string.edit_profile_success), Toast.LENGTH_SHORT).show()
+                    onProfileUpdated()
+                }
+            }
+            is ProfileUiState.Error -> {
+                isSaving = false
+            }
+            else -> {}
         }
     }
 
@@ -98,8 +129,23 @@ fun EditProfileScreen(
             )
         }
     ) { paddingValues ->
-        when (val state = uiState) {
-            is ProfileUiState.Loading -> {
+        // Determina o usuário a ser exibido (do estado atual ou do cache durante Loading)
+        val displayUser: com.futebadosparcas.domain.model.User? = when (val state = uiState) {
+            is ProfileUiState.Success -> state.user
+            is ProfileUiState.ProfileUpdateSuccess -> state.user
+            is ProfileUiState.Loading -> cachedUser // Usa cache durante loading para evitar piscar
+            else -> cachedUser
+        }
+
+        val displayStatistics = when (val state = uiState) {
+            is ProfileUiState.Success -> state.statistics
+            is ProfileUiState.ProfileUpdateSuccess -> state.statistics
+            else -> cachedStatistics
+        }
+
+        when {
+            // Mostra loading apenas se não temos dados em cache
+            uiState is ProfileUiState.Loading && displayUser == null -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -109,17 +155,13 @@ fun EditProfileScreen(
                     CircularProgressIndicator()
                 }
             }
-            is ProfileUiState.Success, is ProfileUiState.ProfileUpdateSuccess -> {
-                val user = when (state) {
-                    is ProfileUiState.Success -> state.user
-                    is ProfileUiState.ProfileUpdateSuccess -> state.user
-                    else -> return@Scaffold
-                }
-
+            // Mostra o formulário se temos usuário (do estado ou cache)
+            displayUser != null -> {
                 EditProfileContent(
-                    user = user,
-                    statistics = (state as? ProfileUiState.Success)?.statistics,
+                    user = displayUser,
+                    statistics = displayStatistics,
                     selectedImageUri = selectedImageUri,
+                    isSaving = isSaving,
                     onImageSelected = { uri -> selectedImageUri = uri },
                     onPhotoClick = {
                         val currentTime = System.currentTimeMillis()
@@ -149,6 +191,7 @@ fun EditProfileScreen(
                         }
                     },
                     onSaveClick = { formData ->
+                        isSaving = true
                         viewModel.updateProfile(
                             name = formData.name,
                             nickname = formData.nickname,
@@ -174,7 +217,9 @@ fun EditProfileScreen(
                     modifier = Modifier.padding(paddingValues)
                 )
             }
-            is ProfileUiState.Error -> {
+            // Erro sem dados em cache
+            uiState is ProfileUiState.Error -> {
+                val errorState = uiState as ProfileUiState.Error
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -190,14 +235,13 @@ fun EditProfileScreen(
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.error
                         )
-                        Text(text = state.message)
+                        Text(text = errorState.message)
                         Button(onClick = { viewModel.loadProfile() }) {
                             Text(stringResource(R.string.retry))
                         }
                     }
                 }
             }
-            else -> {}
         }
     }
 }
@@ -207,6 +251,7 @@ private fun EditProfileContent(
     user: com.futebadosparcas.domain.model.User,
     statistics: com.futebadosparcas.data.model.UserStatistics?,
     selectedImageUri: Uri?,
+    isSaving: Boolean,
     onImageSelected: (Uri?) -> Unit,
     onPhotoClick: () -> Unit,
     onSaveClick: (ProfileFormData) -> Unit,
@@ -330,9 +375,11 @@ private fun EditProfileContent(
             statistics = statistics
         )
 
-        // Save Button
+        // Save Button com Loading
         Button(
             onClick = {
+                if (isSaving) return@Button // Evita cliques duplos
+
                 val preferredFieldTypes = mutableListOf<FieldType>()
                 if (societyChecked) preferredFieldTypes.add(FieldType.SOCIETY)
                 if (futsalChecked) preferredFieldTypes.add(FieldType.FUTSAL)
@@ -372,9 +419,18 @@ private fun EditProfileContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            enabled = !isSaving
         ) {
-            Text(stringResource(R.string.edit_profile_save_changes), style = MaterialTheme.typography.titleMedium)
+            if (isSaving) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(stringResource(R.string.edit_profile_save_changes), style = MaterialTheme.typography.titleMedium)
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -501,15 +557,20 @@ private fun DatePickerDialog(
             TextButton(onClick = {
                 datePickerState.selectedDateMillis?.let { selectedMillis ->
                     // O DatePicker retorna o timestamp em UTC meia-noite
-                    // Precisamos converter para a data local correta
-                    // Criar um Calendar no timezone local e definir a data
+                    // Precisamos extrair ano/mês/dia do UTC e criar a data local
+                    val utcCalendar = Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+                    utcCalendar.timeInMillis = selectedMillis
+
+                    // Extrair os componentes da data em UTC
+                    val year = utcCalendar.get(Calendar.YEAR)
+                    val month = utcCalendar.get(Calendar.MONTH)
+                    val day = utcCalendar.get(Calendar.DAY_OF_MONTH)
+
+                    // Criar Calendar local com a mesma data (sem deslocamento de timezone)
                     val localCalendar = Calendar.getInstance()
-                    localCalendar.timeInMillis = selectedMillis
-                    // Forçar meia-noite no timezone local
-                    localCalendar.set(Calendar.HOUR_OF_DAY, 0)
-                    localCalendar.set(Calendar.MINUTE, 0)
-                    localCalendar.set(Calendar.SECOND, 0)
+                    localCalendar.set(year, month, day, 0, 0, 0)
                     localCalendar.set(Calendar.MILLISECOND, 0)
+
                     onDateSelected(localCalendar.time)
                 }
                 onDismiss()

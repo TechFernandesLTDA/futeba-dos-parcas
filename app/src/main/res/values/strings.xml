@@ -2654,4 +2654,66 @@ subir no ranking!</string>
     <!-- Conflicts -->
     <string name="conflict_with">Conflito com %s (%s - %s)</string>
 
+    <!-- Permission Onboarding -->
+    <string name="permission_onboarding_title">Bem-vindo ao Futeba!</string>
+    <string name="permission_onboarding_subtitle">Para a melhor experiência, precisamos de algumas permissões</string>
+    <string name="permission_notifications_title">Notificações</string>
+    <string name="permission_notifications_description">Receba avisos de jogos, convites e atualizações</string>
+    <string name="permission_location_title">Localização</string>
+    <string name="permission_location_description">Encontre jogos e quadras próximas a você</string>
+    <string name="permission_camera_title">Câmera</string>
+    <string name="permission_camera_description">Tire fotos para seu perfil e compartilhe momentos</string>
+    <string name="permission_allow">Permitir</string>
+    <string name="permission_onboarding_continue">Continuar</string>
+    <string name="permission_onboarding_skip_info">Você pode alterar as permissões a qualquer momento nas configurações do dispositivo</string>
+
+    <!-- Feedback / Report Problem -->
+    <string name="report_problem">Reportar Problema</string>
+    <string name="report_problem_title">Encontrou um problema?</string>
+    <string name="report_problem_description">Nos ajude a melhorar o app reportando bugs ou sugestões</string>
+    <string name="report_problem_email_subject">Problema no Futeba dos Parças v%s</string>
+    <string name="report_problem_email_body">Descreva o problema abaixo:\n\n\n\n---\nInformações do dispositivo:\nVersão do app: %1$s\nAndroid: %2$s\nDispositivo: %3$s</string>
+    <string name="report_problem_no_email_app">Nenhum app de email encontrado</string>
+    <string name="feedback_section">Feedback</string>
+
+    <!-- Welcome Screen -->
+    <string name="welcome_title">Futeba dos Parças</string>
+    <string name="welcome_subtitle">O app completo para organizar suas peladas</string>
+    <string name="welcome_feature_games">Organize jogos e convide a galera</string>
+    <string name="welcome_feature_ranking">Acompanhe o ranking e evolua de nivel</string>
+    <string name="welcome_feature_stats">Estatisticas detalhadas de cada jogador</string>
+    <string name="welcome_feature_balance">Times equilibrados com IA</string>
+    <string name="welcome_get_started">Vamos comecar!</string>
+
+    <!-- Profile Setup Screen -->
+    <string name="profile_setup_title">Configure seu perfil</string>
+    <string name="profile_setup_subtitle">Conte um pouco sobre voce para melhorar sua experiencia</string>
+    <string name="profile_setup_name">Nome completo</string>
+    <string name="profile_setup_name_hint">Como voce se chama?</string>
+    <string name="profile_setup_nickname">Apelido (opcional)</string>
+    <string name="profile_setup_nickname_hint">Como a galera te chama?</string>
+    <string name="profile_setup_position">Posicao preferida</string>
+    <string name="profile_setup_field_type">Tipo de campo preferido</string>
+    <string name="profile_setup_skip">Pular por enquanto</string>
+    <string name="continue_button">Continuar</string>
+    <string name="field_type_society">Society</string>
+    <string name="field_type_futsal">Futsal</string>
+    <string name="field_type_campo">Campo</string>
+
+    <!-- App Guide Screen -->
+    <string name="app_guide_title">Como usar o Futeba</string>
+    <string name="app_guide_subtitle">Conheça as principais funcionalidades</string>
+    <string name="app_guide_home_title">Inicio</string>
+    <string name="app_guide_home_desc">Veja proximos jogos, atividades recentes e seu progresso</string>
+    <string name="app_guide_games_title">Jogos</string>
+    <string name="app_guide_games_desc">Crie e gerencie jogos, confirme presenca e acompanhe ao vivo</string>
+    <string name="app_guide_players_title">Jogadores</string>
+    <string name="app_guide_players_desc">Veja perfis, estatisticas e ratings de todos os jogadores</string>
+    <string name="app_guide_league_title">Liga</string>
+    <string name="app_guide_league_desc">Acompanhe o ranking mensal e dispute por posições</string>
+    <string name="app_guide_groups_title">Grupos</string>
+    <string name="app_guide_groups_desc">Participe de grupos de pelada e organize jogos com a galera</string>
+    <string name="app_guide_tip">Dica: Jogue regularmente para subir de nivel e desbloquear badges exclusivas!</string>
+    <string name="app_guide_start">Comecar a usar</string>
+
 </resources>
