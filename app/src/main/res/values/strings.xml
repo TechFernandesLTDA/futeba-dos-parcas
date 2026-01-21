@@ -2676,4 +2676,44 @@ subir no ranking!</string>
     <string name="report_problem_no_email_app">Nenhum app de email encontrado</string>
     <string name="feedback_section">Feedback</string>
 
+    <!-- Welcome Screen -->
+    <string name="welcome_title">Futeba dos Parças</string>
+    <string name="welcome_subtitle">O app completo para organizar suas peladas</string>
+    <string name="welcome_feature_games">Organize jogos e convide a galera</string>
+    <string name="welcome_feature_ranking">Acompanhe o ranking e evolua de nivel</string>
+    <string name="welcome_feature_stats">Estatisticas detalhadas de cada jogador</string>
+    <string name="welcome_feature_balance">Times equilibrados com IA</string>
+    <string name="welcome_get_started">Vamos comecar!</string>
+
+    <!-- Profile Setup Screen -->
+    <string name="profile_setup_title">Configure seu perfil</string>
+    <string name="profile_setup_subtitle">Conte um pouco sobre voce para melhorar sua experiencia</string>
+    <string name="profile_setup_name">Nome completo</string>
+    <string name="profile_setup_name_hint">Como voce se chama?</string>
+    <string name="profile_setup_nickname">Apelido (opcional)</string>
+    <string name="profile_setup_nickname_hint">Como a galera te chama?</string>
+    <string name="profile_setup_position">Posicao preferida</string>
+    <string name="profile_setup_field_type">Tipo de campo preferido</string>
+    <string name="profile_setup_skip">Pular por enquanto</string>
+    <string name="continue_button">Continuar</string>
+    <string name="field_type_society">Society</string>
+    <string name="field_type_futsal">Futsal</string>
+    <string name="field_type_campo">Campo</string>
+
+    <!-- App Guide Screen -->
+    <string name="app_guide_title">Como usar o Futeba</string>
+    <string name="app_guide_subtitle">Conheça as principais funcionalidades</string>
+    <string name="app_guide_home_title">Inicio</string>
+    <string name="app_guide_home_desc">Veja proximos jogos, atividades recentes e seu progresso</string>
+    <string name="app_guide_games_title">Jogos</string>
+    <string name="app_guide_games_desc">Crie e gerencie jogos, confirme presenca e acompanhe ao vivo</string>
+    <string name="app_guide_players_title">Jogadores</string>
+    <string name="app_guide_players_desc">Veja perfis, estatisticas e ratings de todos os jogadores</string>
+    <string name="app_guide_league_title">Liga</string>
+    <string name="app_guide_league_desc">Acompanhe o ranking mensal e dispute por posições</string>
+    <string name="app_guide_groups_title">Grupos</string>
+    <string name="app_guide_groups_desc">Participe de grupos de pelada e organize jogos com a galera</string>
+    <string name="app_guide_tip">Dica: Jogue regularmente para subir de nivel e desbloquear badges exclusivas!</string>
+    <string name="app_guide_start">Comecar a usar</string>
+
 </resources>
