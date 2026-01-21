@@ -128,6 +128,42 @@ fun ProfileScreen(
                 }
             )
         }
+        is ProfileUiState.ProfileUpdateSuccess -> {
+            // Tratar ProfileUpdateSuccess da mesma forma que Success
+            // para exibir os dados atualizados após edição
+            ProfileContent(
+                user = state.user,
+                badges = state.badges,
+                statistics = state.statistics,
+                isDevMode = state.isDevMode,
+                myLocationsCount = myLocations.size,
+                onEditProfileClick = onEditProfileClick,
+                onSettingsClick = onSettingsClick,
+                onNotificationsClick = onNotificationsClick,
+                onAboutClick = onAboutClick,
+                onSchedulesClick = onSchedulesClick,
+                onLevelJourneyClick = onLevelJourneyClick,
+                onUserManagementClick = onUserManagementClick,
+                onMyLocationsClick = onMyLocationsClick,
+                onManageLocationsClick = onManageLocationsClick,
+                onGamificationSettingsClick = onGamificationSettingsClick,
+                onDeveloperMenuClick = onDeveloperMenuClick,
+                onLogoutClick = onLogoutClick,
+                onAvatarClick = {
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastAvatarClickTime > 1000) {
+                        avatarClickCount = 0
+                    }
+                    lastAvatarClickTime = currentTime
+                    avatarClickCount++
+
+                    if (avatarClickCount == 7) {
+                        viewModel.enableDevMode()
+                        avatarClickCount = 0
+                    }
+                }
+            )
+        }
         is ProfileUiState.Error -> {
             ErrorState(
                 message = state.message,
@@ -297,7 +333,7 @@ private fun ProfileContent(
         // Versão do App
         item(key = "version") {
             Text(
-                text = "Versão ${BuildConfig.VERSION_NAME}",
+                text = stringResource(R.string.version_format, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
@@ -758,7 +794,7 @@ private fun StatisticsCard(statistics: UserStatistics?) {
                 }
             } else {
                 Text(
-                    text = "Nenhuma estatística disponível",
+                    text = stringResource(R.string.no_stats_available),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -1008,7 +1044,7 @@ private fun AdminSection(
         Column(modifier = Modifier.fillMaxWidth()) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Administração",
+                text = stringResource(R.string.administration_section),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onErrorContainer,

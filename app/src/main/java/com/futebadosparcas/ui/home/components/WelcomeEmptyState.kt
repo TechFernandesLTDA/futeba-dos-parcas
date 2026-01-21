@@ -27,6 +27,7 @@ import com.futebadosparcas.util.LevelBadgeHelper
  * - Boas-vindas personalizadas
  * - Brasao do nivel inicial
  * - Dicas de primeiros passos
+ * - Botoes de acao (Criar Jogo, Entrar em Grupo)
  *
  * OTIMIZADO: Removidas animacoes para scroll suave
  */
@@ -34,6 +35,8 @@ import com.futebadosparcas.util.LevelBadgeHelper
 fun WelcomeEmptyState(
     userName: String = "Jogador",
     userLevel: Int = 0,
+    onCreateGame: (() -> Unit)? = null,
+    onJoinGroup: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -153,6 +156,61 @@ fun WelcomeEmptyState(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
+        }
+
+        // Botoes de acao principais
+        if (onCreateGame != null || onJoinGroup != null) {
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Botao Criar Jogo (primario)
+                if (onCreateGame != null) {
+                    Button(
+                        onClick = onCreateGame,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.welcome_action_create_game),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                }
+
+                // Botao Entrar em Grupo (secundario)
+                if (onJoinGroup != null) {
+                    OutlinedButton(
+                        onClick = onJoinGroup,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.GroupAdd,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.welcome_action_join_group),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                }
+            }
         }
     }
 }

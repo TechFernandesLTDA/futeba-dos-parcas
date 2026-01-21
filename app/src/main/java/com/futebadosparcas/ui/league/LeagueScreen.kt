@@ -34,6 +34,7 @@ import com.futebadosparcas.data.model.Season
 import com.futebadosparcas.domain.model.LeagueDivision as DomainLeagueDivision
 import com.futebadosparcas.data.model.SeasonParticipationV2
 import com.futebadosparcas.ui.components.EmptyState
+import com.futebadosparcas.ui.components.EmptyStateCompact
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.lists.RankingItemShimmer
 import com.futebadosparcas.ui.components.FutebaTopBar
@@ -196,19 +197,13 @@ fun LeagueContent(
         // 3. Lista de Ranking ou Empty State
         if (filteredRanking.isEmpty()) {
             item {
-                Column(
+                EmptyStateCompact(
+                    icon = Icons.Default.EmojiEvents,
+                    message = stringResource(R.string.league_no_players),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 48.dp, horizontal = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = stringResource(R.string.league_no_players),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                }
+                        .padding(vertical = 48.dp)
+                )
             }
         } else {
             itemsIndexed(

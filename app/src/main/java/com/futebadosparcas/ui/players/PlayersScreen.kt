@@ -527,7 +527,7 @@ private fun PlayerCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 72.dp, max = 110.dp)
+            .heightIn(min = 72.dp, max = 120.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),

@@ -624,7 +624,7 @@ private fun BadgeDetailDialog(
                 userBadge.unlockedAt?.let { date ->
                     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
                     Text(
-                        text = "Desbloqueado em ${dateFormat.format(date)}",
+                        text = stringResource(R.string.badge_unlocked_at, dateFormat.format(date)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -634,7 +634,7 @@ private fun BadgeDetailDialog(
                 if (userBadge.count > 1) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Conquistado ${userBadge.count}× vezes",
+                        text = stringResource(R.string.badge_count_times, userBadge.count),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.tertiary,
                         fontWeight = FontWeight.Bold

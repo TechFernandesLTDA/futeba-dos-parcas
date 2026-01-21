@@ -244,10 +244,10 @@ class PlayersViewModel @Inject constructor(
 
                 // Log de erros se houver
                 if (result1.isFailure) {
-                    AppLogger.e(TAG, "Erro ao carregar estatísticas de ${user1.name}", result1.exceptionOrNull())
+                    AppLogger.e(TAG, "Erro ao carregar estatísticas do usuário ${user1.id}", result1.exceptionOrNull())
                 }
                 if (result2.isFailure) {
-                    AppLogger.e(TAG, "Erro ao carregar estatísticas de ${user2.name}", result2.exceptionOrNull())
+                    AppLogger.e(TAG, "Erro ao carregar estatísticas do usuário ${user2.id}", result2.exceptionOrNull())
                 }
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao carregar comparação", e)

@@ -127,7 +127,7 @@ class LiveGameRepository @Inject constructor(
         assistedByName: String? = null,
         minute: Int = 0
     ): Result<GameEvent> {
-        AppLogger.d(TAG) { "addGameEvent: Iniciando - gameId=$gameId, eventType=$eventType, playerId=$playerId, playerName=$playerName, teamId=$teamId" }
+        AppLogger.d(TAG) { "addGameEvent: Iniciando - gameId=$gameId, eventType=$eventType, playerId=$playerId, teamId=$teamId" }
 
         return try {
             // Validar permissão
@@ -163,7 +163,7 @@ class LiveGameRepository @Inject constructor(
             // Atualizar estatísticas do jogador
             updatePlayerStats(gameId, playerId, teamId, eventType, assistedById)
 
-            AppLogger.d(TAG) { "Evento adicionado: ${eventType.name} por $playerName" }
+            AppLogger.d(TAG) { "Evento adicionado: ${eventType.name} playerId=$playerId" }
             Result.success(event)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao adicionar evento", e)
