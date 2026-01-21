@@ -2484,6 +2484,8 @@ subir no ranking!</string>
     <string name="welcome_step_invite_friends">Convide seus amigos e monte os times</string>
     <string name="welcome_step_earn_xp">Jogue, ganhe XP e suba de nível!</string>
     <string name="welcome_xp_tip">Cada jogo te dá XP e ajuda a evoluir como jogador!</string>
+    <string name="welcome_action_create_game">Criar Jogo</string>
+    <string name="welcome_action_join_group">Entrar em Grupo</string>
 
     <!-- ActivityFeedSection -->
     <string name="activity_feed_title">Atividades Recentes</string>
@@ -2594,5 +2596,62 @@ subir no ranking!</string>
     <!-- ==================== POST GAME DIALOG ADDITIONS (i18n audit) ==================== -->
 
     <string name="post_game_xp_label">XP</string>
+
+    <!-- ==================== REMAINING HARDCODED STRINGS (audit) ==================== -->
+
+    <!-- Badges -->
+    <string name="badge_unlocked_at">Desbloqueado em %s</string>
+    <string name="badge_count_times">Conquistado %d× vezes</string>
+
+    <!-- Lists -->
+    <string name="list_end">Fim da lista</string>
+    <string name="division_label">Divisão %s</string>
+
+    <!-- Error States -->
+    <string name="error_title">Erro</string>
+    <string name="access_denied_title">Acesso Negado</string>
+
+    <!-- Currency -->
+    <string name="currency_prefix">R$</string>
+    <string name="currency_format">R$ %.2f</string>
+    <string name="price_per_hour">R$ %s/h</string>
+
+    <!-- Cashbox -->
+    <string name="refunded_label">ESTORNADO</string>
+
+    <!-- Home Sections -->
+    <string name="game_frequency_title">Frequência de Jogos</string>
+    <string name="season_stats_title">Estatísticas da Temporada</string>
+    <string name="general_summary_title">Resumo Geral</string>
+
+    <!-- Live Stats -->
+    <string name="card_count_format">×%d</string>
+
+    <!-- Field Owner -->
+    <string name="verified_label">Verificado</string>
+
+    <!-- Placeholder -->
+    <string name="screen_in_development">Screen: %s\n(Em desenvolvimento)</string>
+
+    <!-- Level Journey -->
+    <string name="level_short">Nv. %d</string>
+    <string name="level_current_label">ATUAL</string>
+    <string name="level_max_reached">Você atingiu o nível máximo! %s!</string>
+
+    <!-- Profile -->
+    <string name="version_format">Versão %s</string>
+    <string name="no_stats_available">Nenhuma estatística disponível</string>
+    <string name="administration_section">Administração</string>
+
+    <!-- Player Evolution -->
+    <string name="status_protected">Protegido</string>
+    <string name="status_rising">Subindo (%d/3)</string>
+    <string name="status_at_risk">Risco (%d/3)</string>
+
+    <!-- Ranking -->
+    <string name="average_format">Média: %.2f</string>
+
+    <!-- Conflicts -->
+    <string name="conflict_with">Conflito com %s (%s - %s)</string>
 
 </resources>

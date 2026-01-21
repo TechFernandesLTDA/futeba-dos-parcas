@@ -1,0 +1,53 @@
+name: PR Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate:
+    name: Validate PR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Create local.properties
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      - name: Create google-services.json placeholder
+        run: |
+          mkdir -p app
+          echo '{"project_info":{"project_number":"000000000000","project_id":"placeholder"},"client":[{"client_info":{"mobilesdk_app_id":"1:000000000000:android:0000000000000000000000","android_client_info":{"package_name":"com.futebadosparcas"}},"api_key":[{"current_key":"placeholder"}]}]}' > app/google-services.json
+
+      - name: Check for spec file
+        run: |
+          # Verifica se o PR tem uma spec linkada (opcional - apenas warning)
+          echo "Reminder: PRs should reference a spec file in /specs/"
+
+      - name: Build Check
+        run: ./gradlew compileDebugKotlin --no-daemon
+
+      - name: Unit Tests
+        run: ./gradlew test --no-daemon
+
+      - name: Check for hardcoded strings
+        run: |
+          # Verifica se há strings hardcoded em arquivos modificados
+          HARDCODED=$(git diff origin/master --name-only -- '*.kt' | xargs grep -l 'text = "' 2>/dev/null | grep -v "Test" || true)
+          if [ -n "$HARDCODED" ]; then
+            echo "::warning::Possible hardcoded strings found in: $HARDCODED"
+          fi
