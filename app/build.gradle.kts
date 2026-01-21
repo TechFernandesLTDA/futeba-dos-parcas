@@ -12,6 +12,7 @@ plugins {
     id("com.google.firebase.firebase-perf")
     id("org.jetbrains.kotlin.plugin.compose")
     id("kotlin-parcelize")
+    id("androidx.baselineprofile")
 }
 
 val localProperties = Properties()
@@ -284,6 +285,10 @@ dependencies {
 
     // Lottie Animations
     implementation("com.airbnb.android:lottie:6.0.0")
+
+    // Baseline Profile - ProfileInstaller para aplicar profiles em runtime
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+    "baselineProfile"(project(":baselineprofile"))
 
     // CircleImageView
     implementation("de.hdodenhof:circleimageview:3.1.0")
