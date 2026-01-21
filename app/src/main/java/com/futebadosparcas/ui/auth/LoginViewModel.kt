@@ -56,7 +56,7 @@ class LoginViewModel @Inject constructor(
             val result = authRepository.getCurrentUser()
             result.fold(
                 onSuccess = { user ->
-                    android.util.Log.d(TAG, "getCurrentUser SUCCESS - User: ${user.name} (${user.email})")
+                    android.util.Log.d(TAG, "getCurrentUser SUCCESS - userId: ${user.id}")
                     _loginState.value = LoginState.Success(user)
                 },
                 onFailure = { error ->

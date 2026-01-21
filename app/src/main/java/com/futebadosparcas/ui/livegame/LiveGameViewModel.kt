@@ -156,7 +156,7 @@ class LiveGameViewModel @Inject constructor(
 
     fun addGoal(playerId: String, playerName: String, teamId: String, assistedById: String? = null, assistedByName: String? = null, minute: Int = 0) {
         viewModelScope.launch {
-            com.futebadosparcas.util.AppLogger.d("LiveGameViewModel") { "addGoal: currentGameId=$currentGameId, playerId=$playerId, playerName=$playerName, teamId=$teamId" }
+            com.futebadosparcas.util.AppLogger.d("LiveGameViewModel") { "addGoal: currentGameId=$currentGameId, playerId=$playerId, teamId=$teamId" }
 
             if (currentGameId.isEmpty()) {
                 _userMessage.emit("Erro: ID do jogo não carregado")
