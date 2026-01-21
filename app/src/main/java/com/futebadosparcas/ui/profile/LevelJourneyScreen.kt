@@ -305,7 +305,7 @@ private fun CurrentLevelCard(
                 shape = RoundedCornerShape(20.dp)
             ) {
                 Text(
-                    text = "Nível $level",
+                    text = stringResource(R.string.level_number, level),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onPrimary,
@@ -493,7 +493,7 @@ private fun CurrentLevelCard(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Você atingiu o nível máximo! $levelName!",
+                            text = stringResource(R.string.level_max_reached, levelName),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -630,7 +630,7 @@ private fun LevelJourneyItemContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Nv. $level",
+                        text = stringResource(R.string.level_short, level),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = if (isUnlocked) {
@@ -647,7 +647,7 @@ private fun LevelJourneyItemContent(
                             color = GamificationColors.XpGreen
                         ) {
                             Text(
-                                text = "ATUAL",
+                                text = stringResource(R.string.level_current_label),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -913,7 +913,7 @@ private fun LevelBadgeDialog(
                     shape = RoundedCornerShape(20.dp)
                 ) {
                     Text(
-                        text = "Nível $level",
+                        text = stringResource(R.string.level_number, level),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,

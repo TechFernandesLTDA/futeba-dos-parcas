@@ -14,7 +14,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.ui.theme.AppDimensions
 import kotlinx.coroutines.flow.StateFlow
@@ -107,7 +109,7 @@ fun <T : Any> PaginatedRankingList(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Fim da lista",
+                            text = stringResource(R.string.list_end),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
