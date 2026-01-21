@@ -615,7 +615,11 @@ fun AppNavHost(
         // ==================== PROFILE & SETTINGS ====================
 
         composable(Screen.EditProfile.route) {
-            val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = hiltViewModel()
+            // Compartilhar o mesmo ViewModel do ProfileScreen para manter estado sincronizado
+            val parentEntry = remember(it) {
+                navController.getBackStackEntry(Screen.Profile.route)
+            }
+            val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = hiltViewModel(parentEntry)
             // EditProfileScreen tem sua própria TopBar no Scaffold
             EditProfileScreen(
                 viewModel = viewModel,
@@ -687,7 +691,11 @@ fun AppNavHost(
         }
 
         composable(Screen.LevelJourney.route) {
-            val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = hiltViewModel()
+            // Compartilhar o mesmo ViewModel do ProfileScreen
+            val parentEntry = remember(it) {
+                navController.getBackStackEntry(Screen.Profile.route)
+            }
+            val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = hiltViewModel(parentEntry)
             // LevelJourneyScreen tem sua própria TopBar no Scaffold
             LevelJourneyScreen(
                 viewModel = viewModel,
