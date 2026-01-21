@@ -2484,6 +2484,8 @@ subir no ranking!</string>
     <string name="welcome_step_invite_friends">Convide seus amigos e monte os times</string>
     <string name="welcome_step_earn_xp">Jogue, ganhe XP e suba de nível!</string>
     <string name="welcome_xp_tip">Cada jogo te dá XP e ajuda a evoluir como jogador!</string>
+    <string name="welcome_action_create_game">Criar Jogo</string>
+    <string name="welcome_action_join_group">Entrar em Grupo</string>
 
     <!-- ActivityFeedSection -->
     <string name="activity_feed_title">Atividades Recentes</string>

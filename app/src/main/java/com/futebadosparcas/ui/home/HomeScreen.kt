@@ -76,7 +76,9 @@ fun HomeScreen(
     onNotificationsClick: () -> Unit = {},
     onGroupsClick: () -> Unit = {},
     onMapClick: () -> Unit = {},
-    onLevelJourneyClick: () -> Unit = {},  // Navegação para Rumo ao Estrelato
+    onLevelJourneyClick: () -> Unit = {},  // Navegacao para Rumo ao Estrelato
+    onCreateGameClick: () -> Unit = {},    // Navegacao para criar novo jogo
+    onJoinGroupClick: () -> Unit = {},     // Navegacao para entrar em grupo
     hapticManager: HapticManager? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -126,7 +128,9 @@ fun HomeScreen(
                         onNotificationsClick = onNotificationsClick,
                         onGroupsClick = onGroupsClick,
                         onMapClick = onMapClick,
-                        onLevelJourneyClick = onLevelJourneyClick
+                        onLevelJourneyClick = onLevelJourneyClick,
+                        onCreateGameClick = onCreateGameClick,
+                        onJoinGroupClick = onJoinGroupClick
                     )
 
                     // PlayerCard BottomSheet
@@ -188,7 +192,9 @@ private fun HomeSuccessContent(
     onNotificationsClick: () -> Unit,
     onGroupsClick: () -> Unit,
     onMapClick: () -> Unit,
-    onLevelJourneyClick: () -> Unit
+    onLevelJourneyClick: () -> Unit,
+    onCreateGameClick: () -> Unit,
+    onJoinGroupClick: () -> Unit
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
 
@@ -251,6 +257,8 @@ private fun HomeSuccessContent(
                 WelcomeEmptyState(
                     userName = user.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: stringResource(R.string.default_player_name),
                     userLevel = gamificationSummary?.level ?: 0,
+                    onCreateGame = onCreateGameClick,
+                    onJoinGroup = onJoinGroupClick,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
