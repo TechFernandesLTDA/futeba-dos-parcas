@@ -35,7 +35,7 @@ import com.futebadosparcas.ui.navigation.AppNavHost
 import com.futebadosparcas.ui.navigation.Screen
 import com.futebadosparcas.ui.theme.CoilConfig
 import com.futebadosparcas.ui.theme.FutebaTheme
-import com.futebadosparcas.ui.onboarding.PermissionOnboardingScreen
+import com.futebadosparcas.ui.onboarding.OnboardingFlow
 import com.futebadosparcas.util.PreferencesManager
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
@@ -102,10 +102,16 @@ class MainActivityCompose : AppCompatActivity() {
                 darkTheme = isDark
             ) {
                 if (showPermissionOnboarding) {
-                    PermissionOnboardingScreen(
+                    OnboardingFlow(
+                        preferencesManager = preferencesManager,
                         onComplete = {
-                            preferencesManager.setPermissionOnboardingCompleted(true)
                             showPermissionOnboarding = false
+                        },
+                        onProfileSetup = { profileData ->
+                            // Os dados do perfil serão salvos quando o usuário
+                            // entrar na tela de edição de perfil ou através do ViewModel
+                            // Por enquanto, apenas logamos os dados
+                            android.util.Log.d("Onboarding", "Profile setup: $profileData")
                         }
                     )
                 } else {
