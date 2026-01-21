@@ -691,11 +691,21 @@ fun AppNavHost(
         }
 
         composable(Screen.LevelJourney.route) {
-            // Compartilhar o mesmo ViewModel do ProfileScreen
-            val parentEntry = remember(it) {
-                navController.getBackStackEntry(Screen.Profile.route)
+            // Verificar se ProfileScreen está no back stack antes de tentar compartilhar ViewModel
+            // Quando navegando de HomeScreen, Profile não está no back stack
+            val profileInBackStack = remember(it) {
+                navController.currentBackStack.value.any { entry ->
+                    entry.destination.route == Screen.Profile.route
+                }
             }
-            val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = hiltViewModel(parentEntry)
+
+            val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = if (profileInBackStack) {
+                val parentEntry = navController.getBackStackEntry(Screen.Profile.route)
+                hiltViewModel(parentEntry)
+            } else {
+                // Criar instância própria quando Profile não está no back stack
+                hiltViewModel()
+            }
             // LevelJourneyScreen tem sua própria TopBar no Scaffold
             LevelJourneyScreen(
                 viewModel = viewModel,

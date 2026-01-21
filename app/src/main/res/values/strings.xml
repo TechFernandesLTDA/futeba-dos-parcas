@@ -2654,4 +2654,26 @@ subir no ranking!</string>
     <!-- Conflicts -->
     <string name="conflict_with">Conflito com %s (%s - %s)</string>
 
+    <!-- Permission Onboarding -->
+    <string name="permission_onboarding_title">Bem-vindo ao Futeba!</string>
+    <string name="permission_onboarding_subtitle">Para a melhor experiência, precisamos de algumas permissões</string>
+    <string name="permission_notifications_title">Notificações</string>
+    <string name="permission_notifications_description">Receba avisos de jogos, convites e atualizações</string>
+    <string name="permission_location_title">Localização</string>
+    <string name="permission_location_description">Encontre jogos e quadras próximas a você</string>
+    <string name="permission_camera_title">Câmera</string>
+    <string name="permission_camera_description">Tire fotos para seu perfil e compartilhe momentos</string>
+    <string name="permission_allow">Permitir</string>
+    <string name="permission_onboarding_continue">Continuar</string>
+    <string name="permission_onboarding_skip_info">Você pode alterar as permissões a qualquer momento nas configurações do dispositivo</string>
+
+    <!-- Feedback / Report Problem -->
+    <string name="report_problem">Reportar Problema</string>
+    <string name="report_problem_title">Encontrou um problema?</string>
+    <string name="report_problem_description">Nos ajude a melhorar o app reportando bugs ou sugestões</string>
+    <string name="report_problem_email_subject">Problema no Futeba dos Parças v%s</string>
+    <string name="report_problem_email_body">Descreva o problema abaixo:\n\n\n\n---\nInformações do dispositivo:\nVersão do app: %1$s\nAndroid: %2$s\nDispositivo: %3$s</string>
+    <string name="report_problem_no_email_app">Nenhum app de email encontrado</string>
+    <string name="feedback_section">Feedback</string>
+
 </resources>
