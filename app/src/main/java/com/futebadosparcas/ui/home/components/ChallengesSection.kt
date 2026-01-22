@@ -1,7 +1,10 @@
 package com.futebadosparcas.ui.home.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,10 +32,8 @@ import com.futebadosparcas.domain.model.UserChallengeProgress
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ChallengesSection(
     challenges: List<Pair<WeeklyChallenge, UserChallengeProgress?>>,
@@ -55,22 +56,25 @@ fun ChallengesSection(
         )
 
         if (useGrid) {
-            // Grid para tablets e landscape
+            // #016 - FlowRow em vez de LazyVerticalGrid (evita scroll aninhado)
             val columns = adaptiveValue(
                 compact = 2,
                 medium = 2,
                 expanded = 3
             )
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(columns),
-                contentPadding = PaddingValues(horizontal = spacing.contentPaddingHorizontal),
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = spacing.contentPaddingHorizontal, vertical = spacing.sm),
                 horizontalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing),
                 verticalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing),
-                modifier = Modifier.padding(bottom = spacing.sm)
+                maxItemsInEachRow = columns
             ) {
-                items(challenges, key = { it.first.id }) { (challenge, progress) ->
-                    ChallengeCard(challenge, progress, fillWidth = true)
+                challenges.forEach { (challenge, progress) ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        ChallengeCard(challenge, progress, fillWidth = true)
+                    }
                 }
             }
         } else {
