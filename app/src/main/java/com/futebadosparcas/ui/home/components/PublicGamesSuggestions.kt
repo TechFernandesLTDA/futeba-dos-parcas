@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,12 +41,10 @@ import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PublicGamesSuggestions(
     games: List<Game>,
@@ -80,22 +80,25 @@ fun PublicGamesSuggestions(
         }
 
         if (useGrid) {
-            // Grid para tablets e landscape
+            // #016 - FlowRow em vez de LazyVerticalGrid (evita scroll aninhado)
             val columns = adaptiveValue(
                 compact = 2,
                 medium = 2,
                 expanded = 3
             )
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(columns),
-                contentPadding = PaddingValues(horizontal = spacing.contentPaddingHorizontal),
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = spacing.contentPaddingHorizontal, vertical = spacing.sm),
                 horizontalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing),
                 verticalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing),
-                modifier = Modifier.padding(bottom = spacing.sm)
+                maxItemsInEachRow = columns
             ) {
-                items(games.take(columns * 2)) { game ->
-                    PublicGameCard(game = game, onClick = { onGameClick(game) }, fillWidth = true)
+                games.take(columns * 2).forEach { game ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        PublicGameCard(game = game, onClick = { onGameClick(game) }, fillWidth = true)
+                    }
                 }
             }
         } else {
