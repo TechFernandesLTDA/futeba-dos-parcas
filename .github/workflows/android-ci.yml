@@ -7,9 +7,16 @@ on:
     branches: [ master, develop ]
 
 jobs:
+  # #064 - Build Matrix: Test on multiple API levels
   build:
-    name: Build & Test
+    name: Build & Test (API ${{ matrix.api-level }})
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Test on min SDK (24), target SDK (35), and one in-between (29)
+        api-level: [24, 29, 35]
 
     steps:
       - name: Checkout code
@@ -48,14 +55,14 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: lint-results
+          name: lint-results-api${{ matrix.api-level }}
           path: app/build/reports/lint-results*.html
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results
+          name: test-results-api${{ matrix.api-level }}
           path: app/build/reports/tests/
 
   lint-check:
