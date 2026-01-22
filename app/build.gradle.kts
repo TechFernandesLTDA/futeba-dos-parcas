@@ -276,6 +276,12 @@ dependencies {
     ksp("androidx.room:room-compiler:$roomVersion")
     androidTestImplementation("androidx.room:room-testing:$roomVersion")
 
+    // Paging 3 - For efficient large list loading
+    val pagingVersion = "3.3.5"
+    implementation("androidx.paging:paging-runtime:$pagingVersion")
+    implementation("androidx.paging:paging-compose:$pagingVersion")
+    testImplementation("androidx.paging:paging-common:$pagingVersion")
+
     // WorkManager (for background cache cleanup)
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("androidx.hilt:hilt-work:1.2.0")
