@@ -121,11 +121,7 @@ fun EditProfileScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
-                )
+                colors = AppTopBar.surfaceColors()  // #027 - Standardized colors
             )
         }
     ) { paddingValues ->
