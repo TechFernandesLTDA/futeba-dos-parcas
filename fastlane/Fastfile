@@ -1,0 +1,137 @@
+# #063 - Fastlane Configuration
+# Automated deployment and release management
+
+default_platform(:android)
+
+platform :android do
+
+  # ==============================================
+  # LANES
+  # ==============================================
+
+  desc "Runs all the tests"
+  lane :test do
+    gradle(task: "test")
+  end
+
+  desc "Build debug APK"
+  lane :build_debug do
+    gradle(
+      task: "assemble",
+      build_type: "Debug"
+    )
+  end
+
+  desc "Build release APK"
+  lane :build_release do
+    gradle(
+      task: "assemble",
+      build_type: "Release"
+    )
+  end
+
+  desc "Build release AAB for Play Store"
+  lane :build_aab do
+    gradle(
+      task: "bundle",
+      build_type: "Release"
+    )
+  end
+
+  # ==============================================
+  # DEPLOYMENT LANES
+  # ==============================================
+
+  desc "Deploy to Firebase App Distribution (Beta Testing)"
+  lane :beta do
+    # Build the release APK
+    build_release
+
+    # Upload to Firebase App Distribution
+    firebase_app_distribution(
+      app: ENV["FIREBASE_APP_ID"],
+      groups: "beta-testers",
+      release_notes: "New beta build with latest features and improvements",
+      apk_path: "app/build/outputs/apk/release/app-release.apk"
+    )
+
+    # Send notification to Slack (optional)
+    # slack(
+    #   message: "New beta build deployed to Firebase App Distribution! 🎉",
+    #   slack_url: ENV["SLACK_WEBHOOK_URL"]
+    # )
+  end
+
+  desc "Deploy to Google Play Store (Internal Testing)"
+  lane :internal do
+    # Build AAB
+    build_aab
+
+    # Upload to Play Store Internal Testing track
+    upload_to_play_store(
+      track: 'internal',
+      aab: 'app/build/outputs/bundle/release/app-release.aab',
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Promote to Production (with staged rollout)"
+  lane :production do
+    # Promote from internal to production with 10% rollout
+    upload_to_play_store(
+      track: 'internal',
+      track_promote_to: 'production',
+      rollout: '0.1',  # 10% staged rollout
+      skip_upload_metadata: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false
+    )
+  end
+
+  # ==============================================
+  # UTILITY LANES
+  # ==============================================
+
+  desc "Increment version code"
+  lane :bump_version do
+    # Run the bump version script
+    sh("node ../scripts/bump-version.js")
+  end
+
+  desc "Run static analysis (Detekt + Lint)"
+  lane :static_analysis do
+    gradle(task: "detekt")
+    gradle(task: "lintDebug")
+  end
+
+  desc "Run all quality checks (tests + static analysis)"
+  lane :quality do
+    test
+    static_analysis
+  end
+
+  desc "Take screenshots for Play Store"
+  lane :screenshots do
+    gradle(task: "assembleDebug assembleAndroidTest")
+
+    capture_android_screenshots(
+      locales: ["pt-BR", "en-US"],
+      clear_previous_screenshots: true
+    )
+  end
+
+  # ==============================================
+  # ERROR HANDLING
+  # ==============================================
+
+  error do |lane, exception|
+    # Send error notification (optional)
+    # slack(
+    #   message: "❌ Fastlane lane '#{lane}' failed: #{exception.message}",
+    #   success: false,
+    #   slack_url: ENV["SLACK_WEBHOOK_URL"]
+    # )
+  end
+end
