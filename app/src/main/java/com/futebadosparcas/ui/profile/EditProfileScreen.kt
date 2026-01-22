@@ -33,6 +33,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.ui.components.AppTopBar
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.util.PreferencesManager
 import java.text.SimpleDateFormat
