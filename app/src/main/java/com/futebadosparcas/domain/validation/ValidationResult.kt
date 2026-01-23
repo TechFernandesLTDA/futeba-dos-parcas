@@ -82,6 +82,7 @@ enum class ValidationErrorCode {
     INVALID_LENGTH,
     OUT_OF_RANGE,
     INVALID_EMAIL,
+    INVALID_CEP,
     NEGATIVE_VALUE,
     INVALID_TIMESTAMP,
     FOREIGN_KEY_NOT_FOUND,

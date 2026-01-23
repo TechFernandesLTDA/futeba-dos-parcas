@@ -15,6 +15,12 @@ import com.futebadosparcas.domain.model.User as KmpUser
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.repository.AddressRepository as KmpAddressRepository
+import com.futebadosparcas.util.LocationAnalytics
+import com.futebadosparcas.util.LocationEditTracker
+import com.futebadosparcas.util.LocationError
+import com.futebadosparcas.util.LocationErrorHandler
+import com.futebadosparcas.util.LocationSources
+import com.futebadosparcas.util.RecoveryAction
 import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidLocationReview
@@ -23,6 +29,7 @@ import com.futebadosparcas.util.toKmpField
 import com.futebadosparcas.util.toKmpLocation
 import com.futebadosparcas.util.toKmpLocationReview
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -33,7 +40,8 @@ import javax.inject.Inject
 class LocationDetailViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
     private val userRepository: UserRepository,
-    private val addressRepository: KmpAddressRepository
+    private val addressRepository: KmpAddressRepository,
+    private val locationAnalytics: LocationAnalytics
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LocationDetailUiState>(LocationDetailUiState.Success(AndroidLocation(), emptyList()))
@@ -44,8 +52,23 @@ class LocationDetailViewModel @Inject constructor(
 
     private var currentLocation: AndroidLocation? = null
 
+    // Job tracking para evitar race conditions
+    private var loadLocationJob: Job? = null
+    private var loadDataJob: Job? = null
+
+    // Armazena a fonte de navegação para rastreamento
+    private var navigationSource: String = LocationSources.LIST
+
     init {
         loadFieldOwners()
+    }
+
+    /**
+     * Define a fonte de navegação para rastreamento de analytics.
+     * Deve ser chamado antes de loadLocation quando aplicável.
+     */
+    fun setNavigationSource(source: String) {
+        navigationSource = source
     }
 
     private fun loadFieldOwners() {
@@ -83,7 +106,7 @@ class LocationDetailViewModel @Inject constructor(
 
             val currentUserId = userRepository.getCurrentUserId()
             if (currentUserId == null) {
-                _uiState.value = LocationDetailUiState.Error("Usuário não autenticado")
+                _uiState.value = LocationDetailUiState.Error.auth("Usuário não autenticado")
                 return@launch
             }
 
@@ -109,23 +132,37 @@ class LocationDetailViewModel @Inject constructor(
                 complement = complement,
                 city = city,
                 state = state,
-                country = country
+                country = country,
+                createdAt = java.util.Date()
             )
+
+            // Validar antes de salvar
+            val validationErrors = newLocation.validate()
+            if (validationErrors.isNotEmpty()) {
+                _uiState.value = LocationDetailUiState.Error(
+                    validationErrors.joinToString(", ") { it.message }
+                )
+                return@launch
+            }
 
             locationRepository.createLocation(newLocation.toKmpLocation()).fold(
                 onSuccess = { kmpLocation ->
                     currentLocation = kmpLocation.toAndroidLocation()
+                    // Rastreia criação de local
+                    locationAnalytics.trackLocationCreated(kmpLocation.id)
                     _uiState.value = LocationDetailUiState.Success(kmpLocation.toAndroidLocation(), emptyList())
                 },
                 onFailure = { error ->
-                     _uiState.value = LocationDetailUiState.Error(error.message ?: "Erro ao criar local")
+                     _uiState.value = LocationDetailUiState.Error.fromThrowable(error)
                 }
             )
         }
     }
 
     fun loadLocation(locationId: String) {
-        viewModelScope.launch {
+        // Cancelar job anterior para evitar race conditions
+        loadLocationJob?.cancel()
+        loadLocationJob = viewModelScope.launch {
             _uiState.value = LocationDetailUiState.Loading
 
             val locResult = locationRepository.getLocationById(locationId)
@@ -133,17 +170,24 @@ class LocationDetailViewModel @Inject constructor(
             locResult.fold(
                 onSuccess = { kmpLocation ->
                     currentLocation = kmpLocation.toAndroidLocation()
+                    // Rastreia abertura de detalhes do local
+                    locationAnalytics.trackLocationDetailOpened(
+                        locationId = kmpLocation.id,
+                        source = navigationSource
+                    )
                     loadData(kmpLocation.id, kmpLocation.toAndroidLocation())
                 },
                 onFailure = { error ->
-                    _uiState.value = LocationDetailUiState.Error(error.message ?: "Erro ao carregar local")
+                    _uiState.value = LocationDetailUiState.Error.fromThrowable(error)
                 }
             )
         }
     }
 
     private fun loadData(locationId: String, location: AndroidLocation) {
-        viewModelScope.launch {
+        // Cancelar job anterior para evitar race conditions
+        loadDataJob?.cancel()
+        loadDataJob = viewModelScope.launch {
             val fieldsDeferred = async { locationRepository.getFieldsByLocation(locationId) }
             val reviewsDeferred = async { locationRepository.getLocationReviews(locationId) }
 
@@ -157,7 +201,12 @@ class LocationDetailViewModel @Inject constructor(
                      reviewsResult.getOrNull()?.map { it.toAndroidLocationReview() } ?: emptyList()
                  )
             } else {
-                 _uiState.value = LocationDetailUiState.Error(fieldsResult.exceptionOrNull()?.message ?: "Erro ao carregar dados")
+                 val exception = fieldsResult.exceptionOrNull()
+                 _uiState.value = if (exception != null) {
+                     LocationDetailUiState.Error.fromThrowable(exception)
+                 } else {
+                     LocationDetailUiState.Error("Erro ao carregar dados")
+                 }
             }
         }
     }
@@ -209,8 +258,18 @@ class LocationDetailViewModel @Inject constructor(
             complement = complement,
             city = city,
             state = state,
-            country = country
+            country = country,
+            updatedAt = java.util.Date()
         )
+
+        // Validar antes de salvar
+        val validationErrors = updatedLocation.validate()
+        if (validationErrors.isNotEmpty()) {
+            _uiState.value = LocationDetailUiState.Error(
+                validationErrors.joinToString(", ") { it.message }
+            )
+            return
+        }
 
         viewModelScope.launch {
             _uiState.value = LocationDetailUiState.Loading
@@ -220,7 +279,7 @@ class LocationDetailViewModel @Inject constructor(
                     loadData(updatedLocation.id, updatedLocation)
                 },
                 onFailure = { error ->
-                    _uiState.value = LocationDetailUiState.Error(error.message ?: "Erro ao atualizar local")
+                    _uiState.value = LocationDetailUiState.Error.fromThrowable(error)
                 }
             )
         }
@@ -339,7 +398,7 @@ class LocationDetailViewModel @Inject constructor(
 
             val currentUser = userRepository.getCurrentUser().getOrNull()
             if (currentUser == null) {
-                _uiState.value = LocationDetailUiState.Error("Usuário não autenticado")
+                _uiState.value = LocationDetailUiState.Error.auth("Usuário não autenticado")
                 return@launch
             }
 
@@ -360,14 +419,14 @@ class LocationDetailViewModel @Inject constructor(
 
             // Verifica permissao: deve ser owner do local, gerente do local, gerente do campo, ou admin
             if (!isOwner && !isLocationManager && !isFieldManager && !isAdmin) {
-                 _uiState.value = LocationDetailUiState.Error("Sem permissão para editar esta quadra")
+                 _uiState.value = LocationDetailUiState.Error.auth("Sem permissão para editar esta quadra", "permission_denied")
                  return@launch
             }
 
             // Gerentes de campo nao podem alterar status Ativo/Inativo
             if (isFieldManager && !isOwner && !isLocationManager && !isAdmin) {
                 if (isActive != field.isActive) {
-                     _uiState.value = LocationDetailUiState.Error("Gerentes de campo não podem alterar status Ativo/Inativo")
+                     _uiState.value = LocationDetailUiState.Error.auth("Gerentes de campo não podem alterar status Ativo/Inativo", "permission_denied")
                      return@launch
                 }
             }
@@ -375,7 +434,7 @@ class LocationDetailViewModel @Inject constructor(
             // Owners e gerentes do local nao podem alterar status Ativo/Inativo (apenas admin)
             if ((isOwner || isLocationManager) && !isAdmin) {
                 if (isActive != field.isActive) {
-                     _uiState.value = LocationDetailUiState.Error("Apenas Administradores podem alterar o status Ativo/Inativo")
+                     _uiState.value = LocationDetailUiState.Error.auth("Apenas Administradores podem alterar o status Ativo/Inativo", "permission_denied")
                      return@launch
                 }
             }
@@ -406,7 +465,7 @@ class LocationDetailViewModel @Inject constructor(
                     loadData(location.id, location)
                 },
                 onFailure = { error ->
-                    _uiState.value = LocationDetailUiState.Error(error.message ?: "Erro ao atualizar quadra")
+                    _uiState.value = LocationDetailUiState.Error.fromThrowable(error)
                     loadData(location.id, location)
                 }
             )
@@ -420,7 +479,7 @@ class LocationDetailViewModel @Inject constructor(
              val currentUserResult = userRepository.getCurrentUser()
              val currentUser = currentUserResult.getOrNull()
              if (currentUser == null) {
-                 _uiState.value = LocationDetailUiState.Error("Usuário não logado")
+                 _uiState.value = LocationDetailUiState.Error.auth("Usuário não logado")
                  return@launch
              }
              val review = AndroidLocationReview(
@@ -433,18 +492,81 @@ class LocationDetailViewModel @Inject constructor(
              )
              locationRepository.addLocationReview(review.toKmpLocationReview()).fold(
                  onSuccess = { loadData(location.id, location) },
-                 onFailure = { error -> _uiState.value = LocationDetailUiState.Error(error.message ?: "Erro ao enviar avaliação") }
+                 onFailure = { error -> _uiState.value = LocationDetailUiState.Error.fromThrowable(error) }
              )
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        loadLocationJob?.cancel()
+        loadDataJob?.cancel()
     }
 }
 
 sealed class LocationDetailUiState {
-    object Loading : LocationDetailUiState()
+    data object Loading : LocationDetailUiState()
     data class Success(
         val location: AndroidLocation,
         val fields: List<AndroidField>,
         val reviews: List<AndroidLocationReview> = emptyList()
     ) : LocationDetailUiState()
-    data class Error(val message: String) : LocationDetailUiState()
+
+    /**
+     * Estado de erro com informações contextuais para recuperação.
+     *
+     * @param message Mensagem de erro para exibição
+     * @param errorType Tipo categorizado do erro para tratamento específico
+     * @param recoveryAction Ação sugerida para recuperação do erro
+     * @param originalThrowable Exceção original para logging/debug (opcional)
+     */
+    data class Error(
+        val message: String,
+        val errorType: LocationError = LocationErrorHandler.fromMessage(message),
+        val recoveryAction: RecoveryAction = LocationErrorHandler.getRecoveryAction(
+            LocationErrorHandler.fromMessage(message)
+        ),
+        val originalThrowable: Throwable? = null
+    ) : LocationDetailUiState() {
+
+        companion object {
+            /**
+             * Cria um estado de erro a partir de um Throwable.
+             * Categoriza automaticamente o erro e determina a ação de recuperação.
+             */
+            fun fromThrowable(throwable: Throwable): Error {
+                val errorType = LocationErrorHandler.categorizeError(throwable)
+                return Error(
+                    message = throwable.message ?: "Erro desconhecido",
+                    errorType = errorType,
+                    recoveryAction = LocationErrorHandler.getRecoveryAction(errorType),
+                    originalThrowable = throwable
+                )
+            }
+
+            /**
+             * Cria um estado de erro de validação com campos específicos.
+             */
+            fun validation(fields: List<String>, message: String): Error {
+                val errorType = LocationError.Validation(fields)
+                return Error(
+                    message = message,
+                    errorType = errorType,
+                    recoveryAction = RecoveryAction.FixFields(fields)
+                )
+            }
+
+            /**
+             * Cria um estado de erro de autenticação.
+             */
+            fun auth(message: String, reason: String = "not_authenticated"): Error {
+                val errorType = LocationError.Auth(reason)
+                return Error(
+                    message = message,
+                    errorType = errorType,
+                    recoveryAction = LocationErrorHandler.getRecoveryAction(errorType)
+                )
+            }
+        }
+    }
 }

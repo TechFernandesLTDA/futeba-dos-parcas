@@ -90,6 +90,94 @@ object ValidationHelper {
         Pattern.CASE_INSENSITIVE
     )
 
+    /** Pattern para validação de CEP brasileiro (com ou sem hífen) */
+    private val CEP_PATTERN: Pattern = Pattern.compile(
+        "^\\d{5}-?\\d{3}$"
+    )
+
+    // ==================== VALIDAÇÕES DE CEP ====================
+
+    /**
+     * Verifica se o CEP tem formato válido (brasileiro).
+     * Aceita com ou sem hífen: "12345678" ou "12345-678"
+     *
+     * @param cep CEP a ser validado
+     * @return true se o formato é válido
+     */
+    fun isValidCep(cep: String?): Boolean {
+        if (cep.isNullOrBlank()) return false
+        return CEP_PATTERN.matcher(cep.trim()).matches()
+    }
+
+    /**
+     * Valida CEP com resultado detalhado.
+     *
+     * @param cep CEP a ser validado
+     * @param fieldName Nome do campo para mensagem de erro
+     * @param required Se o campo é obrigatório
+     * @return ValidationResult indicando se é válido ou inválido
+     */
+    fun validateCep(
+        cep: String?,
+        fieldName: String = "cep",
+        required: Boolean = false
+    ): ValidationResult {
+        if (cep.isNullOrBlank()) {
+            return if (required) {
+                ValidationResult.invalid(
+                    fieldName,
+                    "CEP é obrigatório",
+                    ValidationErrorCode.REQUIRED_FIELD
+                )
+            } else {
+                ValidationResult.Valid
+            }
+        }
+
+        if (!CEP_PATTERN.matcher(cep.trim()).matches()) {
+            return ValidationResult.invalid(
+                fieldName,
+                "CEP inválido. Use o formato 12345-678 ou 12345678",
+                ValidationErrorCode.INVALID_CEP
+            )
+        }
+
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Formata CEP inserindo hífen automaticamente.
+     * "12345678" → "12345-678"
+     * "12345-678" → "12345-678" (mantém se já formatado)
+     *
+     * @param cep CEP a ser formatado (apenas dígitos ou já formatado)
+     * @return CEP formatado com hífen ou string original se inválido
+     */
+    fun formatCep(cep: String?): String {
+        if (cep.isNullOrBlank()) return ""
+
+        val digitsOnly = cep.replace(Regex("[^0-9]"), "")
+
+        return when {
+            digitsOnly.length == 8 -> "${digitsOnly.substring(0, 5)}-${digitsOnly.substring(5)}"
+            digitsOnly.length < 8 -> digitsOnly // Retorna parcial enquanto digita
+            else -> digitsOnly.take(8).let { "${it.substring(0, 5)}-${it.substring(5)}" }
+        }
+    }
+
+    /**
+     * Remove formatação do CEP, mantendo apenas dígitos.
+     * Útil para armazenamento no banco de dados.
+     * "12345-678" → "12345678"
+     *
+     * @param cep CEP a ser sanitizado
+     * @return CEP apenas com dígitos
+     */
+    fun sanitizeCep(cep: String?): String {
+        if (cep.isNullOrBlank()) return ""
+        return cep.replace(Regex("[^0-9]"), "")
+    }
+
     // ==================== VALIDAÇÕES DE STRING ====================
 
     /**

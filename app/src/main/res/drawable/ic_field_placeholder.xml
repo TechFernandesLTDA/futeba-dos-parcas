@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#757575">
+    <!-- Soccer field icon -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M3,5v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2H5C3.9,3 3,3.9 3,5zM19,19H5V5h14V19z"/>
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M12,7L12,17"/>
+    <path
+        android:fillColor="@android:color/white"
+        android:strokeWidth="1.5"
+        android:strokeColor="@android:color/white"
+        android:pathData="M12,7L12,17"/>
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M12,12m-2.5,0a2.5,2.5 0,1 1,5 0a2.5,2.5 0,1 1,-5 0"/>
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M5,9h3v6h-3z"/>
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M16,9h3v6h-3z"/>
+</vector>

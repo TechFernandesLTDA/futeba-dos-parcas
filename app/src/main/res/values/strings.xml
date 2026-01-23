@@ -2201,6 +2201,22 @@ subir no ranking!</string>
     <string name="locations_map_no_locations">Nenhum local encontrado</string>
     <string name="locations_map_add_first">Adicione seu primeiro local</string>
 
+    <!-- Locations Accessibility strings -->
+    <string name="location_marker_description">%1$s, %2$s, %3$.1f estrelas</string>
+    <string name="location_marker_description_no_rating">%1$s, %2$s</string>
+    <string name="location_marker_description_no_neighborhood">%1$s, %2$.1f estrelas</string>
+    <string name="location_marker_description_name_only">%1$s</string>
+    <string name="location_search_description">Buscar locais por nome ou endereco</string>
+    <string name="location_search_clear_description">Limpar busca</string>
+    <string name="location_filter_description">Filtrar por %1$s</string>
+    <string name="location_card_description">%1$s, %2$s, %3$.1f estrelas, %4$d campos</string>
+    <string name="location_card_description_no_fields">%1$s, %2$s, %3$.1f estrelas</string>
+    <string name="location_fab_add_description">Adicionar novo local</string>
+    <string name="location_fab_map_description">Ver mapa de locais</string>
+    <string name="location_menu_more_options_description">Mais opcoes</string>
+    <string name="location_loading_description">Carregando locais</string>
+    <string name="location_map_region_description">Mapa mostrando %1$d locais</string>
+
     <!-- Manage Locations missing strings -->
     <string name="locations_edit">Editar</string>
     <string name="locations_fields_count">Campos: %d</string>
@@ -2715,5 +2731,109 @@ subir no ranking!</string>
     <string name="app_guide_groups_desc">Participe de grupos de pelada e organize jogos com a galera</string>
     <string name="app_guide_tip">Dica: Jogue regularmente para subir de nivel e desbloquear badges exclusivas!</string>
     <string name="app_guide_start">Comecar a usar</string>
+
+    <!-- ==================== LOCATION ONBOARDING (progressive empty state) ==================== -->
+
+    <string name="location_onboarding_title">Configure seus Locais</string>
+    <string name="location_onboarding_subtitle">Siga os passos abaixo para comecar a gerenciar suas quadras</string>
+
+    <!-- Step 1 -->
+    <string name="location_onboarding_step1_title">Crie seu primeiro local</string>
+    <string name="location_onboarding_step1_desc">Cadastre o endereco e informacoes basicas do seu local</string>
+    <string name="location_onboarding_step1_action">Criar Local</string>
+
+    <!-- Step 2 -->
+    <string name="location_onboarding_step2_title">Adicione quadras ao local</string>
+    <string name="location_onboarding_step2_desc">Cadastre as quadras disponiveis com tipo e dimensoes</string>
+    <string name="location_onboarding_step2_action">Adicionar Quadra</string>
+
+    <!-- Step 3 -->
+    <string name="location_onboarding_step3_title">Defina precos e horarios</string>
+    <string name="location_onboarding_step3_desc">Configure valores por hora e horarios de funcionamento</string>
+    <string name="location_onboarding_step3_action">Configurar</string>
+
+    <!-- Misc -->
+    <string name="location_onboarding_step_completed">Passo completado</string>
+    <string name="location_onboarding_tip">Locais bem configurados atraem mais jogadores para suas quadras!</string>
+
+    <!-- Location Time Formatting -->
+    <string name="location_time_operating_hours">Horario de Funcionamento</string>
+    <string name="location_time_open_now">Aberto agora</string>
+    <string name="location_time_closed">Fechado</string>
+    <string name="location_time_all_days">Todos os dias</string>
+    <string name="location_time_weekdays">Seg - Sex</string>
+    <string name="location_time_weekend">Fim de semana</string>
+    <string name="location_time_hours_format">%1$s - %2$s</string>
+    <string name="location_time_days_and_hours">%1$s %2$s</string>
+
+    <!-- Time Format Preferences -->
+    <string name="time_format_preference">Formato de Horario</string>
+    <string name="time_format_auto">Automatico (Sistema)</string>
+    <string name="time_format_12h">12 horas (AM/PM)</string>
+    <string name="time_format_24h">24 horas</string>
+    <string name="time_format_description">Escolha como os horarios sao exibidos no aplicativo</string>
+
+    <!-- ==================== LOCATION EXPORT ==================== -->
+
+    <!-- Export Dialog -->
+    <string name="location_export_title">Exportar Locais</string>
+    <string name="location_export_count">%d locais selecionados para exportar</string>
+    <string name="location_export_select_format">Selecione o formato de exportacao:</string>
+    <string name="location_export_json">JSON</string>
+    <string name="location_export_json_description">Formato completo com todos os dados estruturados</string>
+    <string name="location_export_csv">CSV</string>
+    <string name="location_export_csv_description">Planilha compativel com Excel e Google Sheets</string>
+    <string name="location_export_button">Exportar</string>
+
+    <!-- Export Results -->
+    <string name="location_export_success">Exportacao concluida com sucesso!</string>
+    <string name="location_export_error">Erro ao exportar: %s</string>
+    <string name="location_export_no_locations">Nenhum local para exportar</string>
+    <string name="location_export_share_title">Compartilhar backup de locais</string>
+
+    <!-- Export Menu Item -->
+    <string name="locations_export">Exportar Locais</string>
+    <string name="locations_export_description">Exportar dados de locais para backup</string>
+
+    <!-- ==================== RATE LIMITING ==================== -->
+
+    <!-- Rate Limit Messages -->
+    <string name="location_rate_limit_title">Limite de criação atingido</string>
+    <string name="location_rate_limit_message">Você pode criar até %d locais por hora. Aguarde o tempo restante para criar mais.</string>
+    <string name="location_rate_limit_banner">Limite de criação atingido. Aguarde para criar mais locais.</string>
+    <string name="understood">Entendido</string>
+    <string name="minutes_short">min</string>
+    <string name="seconds_short">seg</string>
+
+    <!-- ==================== LOCATION ERROR STATES ==================== -->
+
+    <!-- Location Error Titles -->
+    <string name="location_error_title_timeout">Tempo esgotado</string>
+    <string name="location_error_title_no_connection">Sem conexão</string>
+    <string name="location_error_title_permission">Permissão negada</string>
+    <string name="location_error_title_auth">Sessão expirada</string>
+    <string name="location_error_title_data">Erro de dados</string>
+    <string name="location_error_title_validation">Dados inválidos</string>
+
+    <!-- Location Error Messages -->
+    <string name="location_error_timeout">A operação demorou muito. Verifique sua conexão e tente novamente.</string>
+    <string name="location_error_no_connection">Sem conexão com a internet. Verifique sua rede e tente novamente.</string>
+    <string name="location_error_not_authenticated">Você precisa estar logado para realizar esta ação.</string>
+    <string name="location_error_permission_denied">Você não tem permissão para realizar esta ação.</string>
+    <string name="location_error_session_expired">Sua sessão expirou. Faça login novamente.</string>
+    <string name="location_error_auth_generic">Erro de autenticação. Faça login novamente.</string>
+    <string name="location_error_not_found">Local não encontrado. Pode ter sido removido.</string>
+    <string name="location_error_corrupted_data">Os dados do local estão corrompidos.</string>
+    <string name="location_error_data_generic">Erro ao processar dados do local.</string>
+    <string name="location_error_validation_fields">Corrija os campos: %1$s</string>
+    <string name="location_error_validation_generic">Alguns dados estão inválidos. Verifique os campos.</string>
+
+    <!-- Location Error Actions -->
+    <string name="location_error_action_go_back">Voltar</string>
+    <string name="location_error_action_retry">Tentar novamente</string>
+    <string name="location_error_action_check_connection">Verificar conexão</string>
+    <string name="location_error_action_login">Fazer login</string>
+    <string name="location_error_action_fix_fields">Corrigir campos</string>
+    <string name="location_error_fields_to_fix">Campos a corrigir:</string>
 
 </resources>

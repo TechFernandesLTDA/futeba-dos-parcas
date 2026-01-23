@@ -58,6 +58,11 @@ data class Location(
     val operatingDays: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7),
     val minGameDurationMinutes: Int = 60,
 
+    // Dados Denormalizados de Fields (para reduzir queries)
+    val fieldCount: Int = 0,
+    val primaryFieldType: String? = null, // Tipo de campo mais comum
+    val hasActiveFields: Boolean = false,
+
     // Auditoria
     val createdAt: Long? = null,
     val updatedAt: Long? = null

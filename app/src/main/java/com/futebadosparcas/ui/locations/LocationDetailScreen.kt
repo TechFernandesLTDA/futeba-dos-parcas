@@ -2,7 +2,13 @@ package com.futebadosparcas.ui.locations
 
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +24,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,7 +37,10 @@ import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.data.model.FieldType
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.data.model.User
+import com.futebadosparcas.ui.components.FieldImage
+import com.futebadosparcas.ui.components.LocationHeaderImage
 import com.futebadosparcas.ui.components.design.AppTopBar
+import com.futebadosparcas.ui.components.input.CepVisualTransformation
 import com.futebadosparcas.ui.navigation.components.SecondaryTopBar
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -347,10 +357,14 @@ fun LocationDetailScreen(
                 ) {
                     OutlinedTextField(
                         value = cep,
-                        onValueChange = { cep = it },
+                        onValueChange = { newValue ->
+                            // Filtra apenas dígitos e limita a 8 caracteres
+                            cep = newValue.filter { it.isDigit() }.take(8)
+                        },
                         label = { Text(stringResource(R.string.location_detail_cep)) },
                         modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        visualTransformation = CepVisualTransformation.Instance
                     )
                     Button(onClick = { viewModel.searchCep(cep) }) {
                         Icon(Icons.Default.Search, contentDescription = null)
@@ -433,16 +447,16 @@ fun LocationDetailScreen(
                  Text(stringResource(R.string.location_detail_amenities), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                  FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                      availableAmenities.forEach { amenity ->
-                         FilterChip(
-                             selected = selectedAmenities.contains(amenity),
-                             onClick = {
+                         AnimatedAmenityChip(
+                             amenity = amenity,
+                             isSelected = selectedAmenities.contains(amenity),
+                             onToggle = {
                                  if (selectedAmenities.contains(amenity)) {
                                      selectedAmenities.remove(amenity)
                                  } else {
                                      selectedAmenities.add(amenity)
                                  }
-                             },
-                             label = { Text(amenity) }
+                             }
                          )
                      }
                  }
@@ -597,14 +611,67 @@ fun FieldDialog(
 
 @Composable
 fun FieldItem(field: Field, onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    // Animacao de elevacao ao pressionar
+    val elevation by animateDpAsState(
+        targetValue = if (isPressed) 1.dp else 2.dp,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "fieldItemElevation"
+    )
+
+    // Animacao de escala ao pressionar
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "fieldItemScale"
+    )
+
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .scale(scale),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        onClick = onClick
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation),
+        onClick = onClick,
+        interactionSource = interactionSource
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(field.name, style = MaterialTheme.typography.bodyLarge)
             Text(stringResource(R.string.location_detail_field_display, field.type, field.hourlyPrice.toString()), style = MaterialTheme.typography.bodyMedium)
         }
     }
+}
+
+/**
+ * Chip de amenidade com animacao de escala ao selecionar
+ * Micro-interacao para feedback visual ao usuario
+ */
+@Composable
+fun AnimatedAmenityChip(
+    amenity: String,
+    isSelected: Boolean,
+    onToggle: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+
+    // Animacao de escala quando selecionado
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.05f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "amenityChipScale"
+    )
+
+    FilterChip(
+        selected = isSelected,
+        onClick = onToggle,
+        label = { Text(amenity) },
+        modifier = Modifier.scale(scale),
+        interactionSource = interactionSource
+    )
 }

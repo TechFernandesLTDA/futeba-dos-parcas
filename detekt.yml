@@ -331,8 +331,7 @@ potential-bugs:
     active: false
   NullableToStringCall:
     active: false
-  ReturnsNullInsteadOfEmptyCollection:
-    active: false
+  # ReturnsNullInsteadOfEmptyCollection - removed, rule not available in current detekt version
   UnconditionalJumpStatementInLoop:
     active: false
   UnnecessaryNotNullCheck:

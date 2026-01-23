@@ -212,6 +212,23 @@ expect class FirebaseDataSource {
 
     suspend fun getAllLocations(): Result<List<Location>>
     suspend fun getLocationsWithPagination(limit: Int, lastLocationName: String?): Result<List<Location>>
+
+    /**
+     * Busca locais com paginação baseada em cursor de DocumentSnapshot.
+     *
+     * Usa cursor-based pagination com DocumentSnapshot.startAfter() para garantir
+     * consistência mesmo quando documentos são adicionados/removidos entre páginas.
+     *
+     * @param pageSize Número máximo de locais por página (máximo 50)
+     * @param cursor Cursor codificado da página anterior (null para primeira página)
+     * @param sortBy Campo de ordenação
+     * @return PaginatedResult com os locais, cursor para próxima página e flag hasMore
+     */
+    suspend fun getLocationsPaginated(
+        pageSize: Int,
+        cursor: String?,
+        sortBy: LocationSortField
+    ): Result<PaginatedResult<Location>>
     suspend fun deleteLocation(locationId: String): Result<Unit>
     suspend fun getLocationsByOwner(ownerId: String): Result<List<Location>>
     suspend fun getLocationById(locationId: String): Result<Location>
@@ -233,6 +250,24 @@ expect class FirebaseDataSource {
     suspend fun seedGinasioApollo(): Result<Location>
     suspend fun migrateLocations(migrationData: List<LocationMigrationData>): Result<Int>
     suspend fun deduplicateLocations(): Result<Int>
+
+    /**
+     * Deleta um local e todas as suas quadras em uma operação atômica usando batch.
+     *
+     * Esta operação:
+     * 1. Busca todas as quadras do local
+     * 2. Cria um batch com operações de delete para o local e todas as quadras
+     * 3. Se houver mais de 499 quadras, divide em múltiplos batches (limite Firestore: 500 ops/batch)
+     * 4. Executa os batches em sequência
+     *
+     * @param locationId ID do local a ser deletado
+     * @return Result<Int> com o número total de documentos deletados (location + fields)
+     *         ou Result.failure com:
+     *         - LocationNotFoundException se o local não existir
+     *         - PartialDeleteException se alguns campos foram deletados mas outros não
+     *         - Exception genérica para erros de rede
+     */
+    suspend fun deleteLocationWithFields(locationId: String): Result<Int>
 
     // ========== FIELDS ==========
 
@@ -571,6 +606,27 @@ expect class FirebaseDataSource {
      * @return Lista de notificações com ação pendente
      */
     suspend fun getPendingActionNotifications(): Result<List<AppNotification>>
+
+    // ========== LOCATION AUDIT LOGS ==========
+
+    /**
+     * Registra uma entrada de log de auditoria para alteracoes em locais.
+     *
+     * Armazena em: locations/{locationId}/audit_logs/{logId}
+     *
+     * @param log Dados do log de auditoria
+     * @return Result<Unit> indicando sucesso ou falha
+     */
+    suspend fun logLocationAudit(log: LocationAuditLog): Result<Unit>
+
+    /**
+     * Busca os logs de auditoria de um local.
+     *
+     * @param locationId ID do local
+     * @param limit Numero maximo de logs (padrao 30)
+     * @return Lista de logs ordenada por timestamp (mais recentes primeiro)
+     */
+    suspend fun getLocationAuditLogs(locationId: String, limit: Int = 30): Result<List<LocationAuditLog>>
 }
 
 /**
