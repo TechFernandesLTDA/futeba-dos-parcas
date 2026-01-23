@@ -94,6 +94,10 @@ class PreferencesManager @Inject constructor(
     @Volatile
     private var cachedTheme: String? = null
 
+    // Cache do formato de hora para evitar leituras repetidas de disco
+    @Volatile
+    private var cachedTimeFormat: String? = null
+
     fun setFirstLaunch(isFirst: Boolean) {
         sharedPreferences.edit()
             .putBoolean(KEY_FIRST_LAUNCH, isFirst)
@@ -156,6 +160,42 @@ class PreferencesManager @Inject constructor(
             val theme = sharedPreferences.getString(KEY_THEME_PREFERENCE, DEFAULT_THEME) ?: DEFAULT_THEME
             cachedTheme = theme
             theme
+        }
+    }
+
+    /**
+     * Define a preferencia de formato de hora.
+     *
+     * @param format Formato: "auto", "12h", ou "24h"
+     */
+    fun setTimeFormatPreference(format: String) {
+        cachedTimeFormat = format
+        sharedPreferences.edit()
+            .putString(KEY_TIME_FORMAT_PREFERENCE, format)
+            .apply()
+    }
+
+    /**
+     * Retorna a preferencia de formato de hora com cache.
+     *
+     * @return "auto" (padrao), "12h", ou "24h"
+     */
+    fun getTimeFormatPreference(): String {
+        return cachedTimeFormat ?: run {
+            val format = sharedPreferences.getString(KEY_TIME_FORMAT_PREFERENCE, DEFAULT_TIME_FORMAT) ?: DEFAULT_TIME_FORMAT
+            cachedTimeFormat = format
+            format
+        }
+    }
+
+    /**
+     * Converte a preferencia de formato de hora para o enum do LocationTimeFormatter.
+     */
+    fun getTimeFormatPreferenceEnum(): LocationTimeFormatter.TimeFormatPreference {
+        return when (getTimeFormatPreference()) {
+            TIME_FORMAT_12H -> LocationTimeFormatter.TimeFormatPreference.FORMAT_12H
+            TIME_FORMAT_24H -> LocationTimeFormatter.TimeFormatPreference.FORMAT_24H
+            else -> LocationTimeFormatter.TimeFormatPreference.AUTO
         }
     }
 
@@ -222,8 +262,20 @@ class PreferencesManager @Inject constructor(
         return encryptedPreferences.getString(KEY_FCM_TOKEN, null)
     }
 
+    /**
+     * Retorna acesso ao EncryptedSharedPreferences para uso interno.
+     *
+     * IMPORTANTE: Use com cuidado. Preferir metodos especificos desta classe
+     * para operacoes comuns. Este metodo existe para permitir que outros
+     * componentes (como LocationRateLimiter) armazenem dados de forma segura.
+     *
+     * @return SharedPreferences encriptado
+     */
+    fun getSecurePreferences(): SharedPreferences = encryptedPreferences
+
     fun clearAll() {
         cachedTheme = null
+        cachedTimeFormat = null
         sharedPreferences.edit().clear().apply()
         encryptedPreferences.edit().clear().apply()
     }
@@ -232,12 +284,14 @@ class PreferencesManager @Inject constructor(
         private const val PREFS_NAME = "futeba_prefs"
         private const val ENCRYPTED_PREFS_NAME = "futeba_secure_prefs"
         private const val DEFAULT_THEME = "light"
+        private const val DEFAULT_TIME_FORMAT = "auto"
 
         // Chaves para SharedPreferences padrão (dados não-sensíveis)
         private const val KEY_FIRST_LAUNCH = "first_launch"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
         private const val KEY_PREFERRED_FIELD_TYPE = "preferred_field_type"
         private const val KEY_THEME_PREFERENCE = "theme_preference"
+        private const val KEY_TIME_FORMAT_PREFERENCE = "time_format_preference"
         private const val KEY_MOCK_MODE_ENABLED = "mock_mode_enabled"
         private const val KEY_DEV_MODE_ENABLED = "dev_mode_enabled"
         private const val KEY_PERMISSION_ONBOARDING_COMPLETED = "permission_onboarding_completed"
@@ -245,5 +299,10 @@ class PreferencesManager @Inject constructor(
         // Chaves para EncryptedSharedPreferences (dados sensíveis)
         private const val KEY_LAST_LOGIN_TIME = "last_login_time"
         private const val KEY_FCM_TOKEN = "fcm_token"
+
+        // Valores validos para formato de hora
+        const val TIME_FORMAT_AUTO = "auto"
+        const val TIME_FORMAT_12H = "12h"
+        const val TIME_FORMAT_24H = "24h"
     }
 }

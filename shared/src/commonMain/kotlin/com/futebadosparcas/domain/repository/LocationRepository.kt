@@ -19,8 +19,29 @@ interface LocationRepository {
      * Busca locais com paginação (PERF FIX: Previne loading 1000+ items)
      * @param limit Número máximo de locais por página (padrão 50)
      * @param lastLocationName Nome do último local da página anterior para cursor-based pagination
+     * @deprecated Use getLocationsPaginated() para cursor-based pagination com DocumentSnapshot
      */
     suspend fun getLocationsWithPagination(limit: Int = 50, lastLocationName: String? = null): Result<List<Location>>
+
+    /**
+     * Busca locais com paginação baseada em cursor de DocumentSnapshot.
+     *
+     * Usa cursor-based pagination para garantir consistência mesmo quando documentos
+     * são adicionados/removidos entre páginas. O cursor é uma string codificada que
+     * representa a posição exata do último documento retornado.
+     *
+     * @param pageSize Número máximo de locais por página (padrão 20, máximo 50)
+     * @param cursor Cursor codificado da página anterior (null para primeira página)
+     * @param sortBy Campo de ordenação (padrão: NAME)
+     * @return PaginatedResult contendo os locais, cursor para próxima página e flag hasMore
+     * @throws CursorExpiredException Se o cursor expirou (>15 minutos)
+     * @throws CursorDocumentNotFoundException Se o documento do cursor não existe mais
+     */
+    suspend fun getLocationsPaginated(
+        pageSize: Int = 20,
+        cursor: String? = null,
+        sortBy: LocationSortField = LocationSortField.NAME
+    ): Result<PaginatedResult<Location>>
 
     /**
      * Deleta um local
@@ -51,6 +72,12 @@ interface LocationRepository {
      * Atualiza um local existente
      */
     suspend fun updateLocation(location: Location): Result<Unit>
+
+    /**
+     * Busca a versao mais recente de um local diretamente do servidor (sem cache).
+     * Usado para verificar conflitos antes de atualizar.
+     */
+    suspend fun getServerLocationVersion(locationId: String): Result<Location>
 
     /**
      * Busca locais pelo nome (para autocomplete)

@@ -85,6 +85,17 @@ data class Location(
     @set:PropertyName("min_game_duration_minutes")
     var minGameDurationMinutes: Int = 60,
 
+    // Dados Denormalizados de Fields (para reduzir queries)
+    @get:PropertyName("field_count")
+    @set:PropertyName("field_count")
+    var fieldCount: Int = 0,
+    @get:PropertyName("primary_field_type")
+    @set:PropertyName("primary_field_type")
+    var primaryFieldType: String? = null, // Tipo de campo mais comum
+    @get:PropertyName("has_active_fields")
+    @set:PropertyName("has_active_fields")
+    var hasActiveFields: Boolean = false,
+
     // Auditoria
     @ServerTimestamp
     @get:PropertyName("created_at")
@@ -124,6 +135,12 @@ data class Location(
         val nameResult = ValidationHelper.validateName(name, "name")
         if (nameResult is ValidationResult.Invalid) {
             errors.add(nameResult)
+        }
+
+        // Validação de CEP (opcional, mas se preenchido deve ser válido)
+        val cepResult = ValidationHelper.validateCep(cep, "cep", required = false)
+        if (cepResult is ValidationResult.Invalid) {
+            errors.add(cepResult)
         }
 
         // Validação de rating (0.0-5.0)

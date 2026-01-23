@@ -12,6 +12,7 @@ import com.futebadosparcas.domain.usecase.group.ArchiveGroupUseCase
 import com.futebadosparcas.domain.usecase.group.CreateGroupUseCase
 import com.futebadosparcas.domain.usecase.group.DeleteGroupUseCase
 import com.futebadosparcas.domain.usecase.group.GetGroupsUseCase
+import com.futebadosparcas.domain.usecase.group.LeaveGroupParams
 import com.futebadosparcas.domain.usecase.group.LeaveGroupUseCase
 import com.futebadosparcas.domain.usecase.group.ManageMembersUseCase
 import com.futebadosparcas.domain.usecase.group.TransferOwnershipUseCase
@@ -223,7 +224,7 @@ class GroupsViewModel @Inject constructor(
         viewModelScope.launch {
             _actionState.value = GroupActionState.Loading
 
-            val result = leaveGroupUseCase(groupId)
+            val result = leaveGroupUseCase(LeaveGroupParams(groupId))
 
             result.fold(
                 onSuccess = {

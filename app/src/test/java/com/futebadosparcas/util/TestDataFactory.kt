@@ -1,9 +1,13 @@
 package com.futebadosparcas.util
 
 import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.data.model.User
-import com.futebadosparcas.data.model.Badge
 import com.futebadosparcas.data.model.Group
+import com.futebadosparcas.data.model.GroupStatus
+import com.futebadosparcas.domain.model.BadgeDefinition
+import com.futebadosparcas.domain.model.BadgeCategory
+import com.futebadosparcas.domain.model.BadgeRarity
 import java.util.Date
 
 /**
@@ -15,7 +19,7 @@ import java.util.Date
  * Usage:
  * ```kotlin
  * val testUser = TestDataFactory.createUser(name = "Test User")
- * val testGame = TestDataFactory.createGame(title = "Test Game")
+ * val testGame = TestDataFactory.createGame(date = "2024-02-15")
  * ```
  */
 object TestDataFactory {
@@ -28,22 +32,22 @@ object TestDataFactory {
         id: String = "test-user-id",
         name: String = "Test User",
         email: String = "test@example.com",
-        phone: String = "+5511999999999",
-        xp: Int = 100,
-        level: Int = 1,
-        groupIds: List<String> = listOf("test-group-id"),
+        phone: String? = "+5511999999999",
+        nickname: String? = null,
         photoUrl: String? = null,
-        createdAt: Date = Date()
+        level: Int = 1,
+        experiencePoints: Long = 100L,
+        createdAt: Date? = Date()
     ): User {
         return User(
             id = id,
             name = name,
             email = email,
             phone = phone,
-            xp = xp,
-            level = level,
-            groupIds = groupIds,
+            nickname = nickname,
             photoUrl = photoUrl,
+            level = level,
+            experiencePoints = experiencePoints,
             createdAt = createdAt
         )
     }
@@ -54,7 +58,7 @@ object TestDataFactory {
                 id = "user-$i",
                 name = "User $i",
                 email = "user$i@example.com",
-                xp = i * 100
+                experiencePoints = i * 100L
             )
         }
     }
@@ -65,23 +69,27 @@ object TestDataFactory {
 
     fun createGame(
         id: String = "test-game-id",
-        title: String = "Test Game",
-        groupId: String = "test-group-id",
-        date: Date = Date(),
-        maxPlayers: Int = 20,
-        price: Double = 50.0,
-        confirmed: List<String> = emptyList(),
-        finished: Boolean = false
+        date: String = "2024-02-15",
+        time: String = "19:00",
+        status: String = GameStatus.SCHEDULED.name,
+        maxPlayers: Int = 14,
+        dailyPrice: Double = 50.0,
+        ownerId: String = "test-owner-id",
+        ownerName: String = "Test Owner",
+        groupId: String? = "test-group-id",
+        xpProcessed: Boolean = false
     ): Game {
         return Game(
             id = id,
-            title = title,
-            groupId = groupId,
             date = date,
+            time = time,
+            status = status,
             maxPlayers = maxPlayers,
-            price = price,
-            confirmed = confirmed,
-            finished = finished
+            dailyPrice = dailyPrice,
+            ownerId = ownerId,
+            ownerName = ownerName,
+            groupId = groupId,
+            xpProcessed = xpProcessed
         )
     }
 
@@ -89,8 +97,7 @@ object TestDataFactory {
         return (1..count).map { i ->
             createGame(
                 id = "game-$i",
-                title = "Game $i",
-                date = Date(System.currentTimeMillis() + i * 86400000L) // i days from now
+                date = "2024-02-${15 + i}"
             )
         }
     }
@@ -103,15 +110,19 @@ object TestDataFactory {
         id: String = "test-group-id",
         name: String = "Test Group",
         description: String = "Test group description",
-        adminIds: List<String> = listOf("test-user-id"),
-        memberIds: List<String> = listOf("test-user-id")
+        ownerId: String = "test-user-id",
+        ownerName: String = "Test Owner",
+        memberCount: Int = 5,
+        status: String = GroupStatus.ACTIVE.name
     ): Group {
         return Group(
             id = id,
             name = name,
             description = description,
-            adminIds = adminIds,
-            memberIds = memberIds
+            ownerId = ownerId,
+            ownerName = ownerName,
+            memberCount = memberCount,
+            status = status
         )
     }
 
@@ -119,19 +130,23 @@ object TestDataFactory {
     // Badge Factory
     // ============================================
 
-    fun createBadge(
+    fun createBadgeDefinition(
         id: String = "test-badge-id",
         name: String = "Test Badge",
         description: String = "Test badge description",
-        iconUrl: String = "https://example.com/badge.png",
-        requiredXp: Int = 100
-    ): Badge {
-        return Badge(
+        emoji: String = "🏆",
+        category: BadgeCategory = BadgeCategory.PERFORMANCE,
+        rarity: BadgeRarity = BadgeRarity.COMMON,
+        requiredValue: Int = 1
+    ): BadgeDefinition {
+        return BadgeDefinition(
             id = id,
             name = name,
             description = description,
-            iconUrl = iconUrl,
-            requiredXp = requiredXp
+            emoji = emoji,
+            category = category,
+            rarity = rarity,
+            requiredValue = requiredValue
         )
     }
 

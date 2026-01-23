@@ -97,7 +97,7 @@ fun AndroidLocation.toKmpLocation(): KmpLocation {
         street = street,
         number = number,
         complement = complement,
-        district = neighborhood,
+        district = district.ifEmpty { neighborhood },
         city = city,
         state = state,
         country = country,
@@ -105,9 +105,10 @@ fun AndroidLocation.toKmpLocation(): KmpLocation {
         region = region,
         latitude = latitude,
         longitude = longitude,
-        placeId = null,
+        placeId = placeId,
         ownerId = ownerId,
-        isVerified = false,
+        managers = managers,
+        isVerified = isVerified,
         isActive = isActive,
         rating = rating,
         ratingCount = ratingCount,
@@ -115,13 +116,14 @@ fun AndroidLocation.toKmpLocation(): KmpLocation {
         photoUrl = photoUrl,
         amenities = amenities,
         phone = phone,
-        website = null,
+        website = website,
         instagram = instagram,
         openingTime = openingTime,
         closingTime = closingTime,
-        operatingDays = listOf(1, 2, 3, 4, 5, 6, 7),
+        operatingDays = operatingDays,
         minGameDurationMinutes = minGameDurationMinutes,
-        createdAt = createdAt?.time
+        createdAt = createdAt?.time,
+        updatedAt = updatedAt?.time
     )
 }
 
@@ -132,16 +134,21 @@ fun KmpLocation.toAndroidLocation(): AndroidLocation {
     return AndroidLocation(
         id = id,
         ownerId = ownerId,
+        managers = managers,
         name = name,
         address = address,
         phone = phone,
+        website = website,
         openingTime = openingTime,
         closingTime = closingTime,
+        operatingDays = operatingDays,
         minGameDurationMinutes = minGameDurationMinutes,
         region = region,
         neighborhood = neighborhood,
+        district = district.ifEmpty { neighborhood },
         description = description,
         amenities = amenities,
+        isVerified = isVerified,
         isActive = isActive,
         instagram = instagram,
         cep = cep,
@@ -153,10 +160,12 @@ fun KmpLocation.toAndroidLocation(): AndroidLocation {
         country = country,
         latitude = latitude,
         longitude = longitude,
+        placeId = placeId,
         rating = rating,
         ratingCount = ratingCount,
         photoUrl = photoUrl,
-        createdAt = createdAt?.let { java.util.Date(it) }
+        createdAt = createdAt?.let { java.util.Date(it) },
+        updatedAt = updatedAt?.let { java.util.Date(it) }
     )
 }
 

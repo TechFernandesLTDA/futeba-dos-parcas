@@ -10,6 +10,7 @@ import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.usecase.group.ArchiveGroupUseCase
 import com.futebadosparcas.domain.usecase.group.DeleteGroupUseCase
+import com.futebadosparcas.domain.usecase.group.LeaveGroupParams
 import com.futebadosparcas.domain.usecase.group.LeaveGroupUseCase
 import com.futebadosparcas.domain.usecase.group.ManageMembersUseCase
 import com.futebadosparcas.domain.usecase.group.TransferOwnershipUseCase
@@ -430,7 +431,7 @@ class GroupDetailViewModel @Inject constructor(
 
             AppLogger.i("GroupDetailVM") { "Leaving group $groupId" }
 
-            val result = leaveGroupUseCase(groupId)
+            val result = leaveGroupUseCase(LeaveGroupParams(groupId))
 
             result.fold(
                 onSuccess = {

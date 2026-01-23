@@ -1,15 +1,18 @@
 package com.futebadosparcas.data
 
+import com.futebadosparcas.data.cache.LocationCache
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.logging.PlatformLogger
 
 /**
- * Implementação iOS do LocationRepository.
+ * Implementacao iOS do LocationRepository.
  *
- * NOTA: Esta é uma implementação stub que precisa ser completada
- * com Firebase iOS SDK (CocoaPods).
+ * Usa FirebaseDataSource para operacoes de Firebase e LocationCache
+ * para cache LRU com TTL de 5 minutos e max 50 entradas.
+ *
+ * NOTA: Esta implementacao usa o mesmo cache multiplataforma do Android.
  *
  * @see FirebaseDataSource (iOS implementation needed)
  */
@@ -18,6 +21,9 @@ class LocationRepositoryImpl(
 ) : LocationRepository {
 
     private val logger = PlatformLogger("LocationRepository")
+
+    // Cache LRU com TTL para locais (max 50 entradas, TTL 5 minutos)
+    private val cache = LocationCache()
 
     // ========== LOCATIONS ==========
 
@@ -36,10 +42,10 @@ class LocationRepositoryImpl(
         lastLocationName: String?
     ): Result<List<Location>> {
         return try {
-            logger.d("Buscando locais com paginação (iOS): limit=$limit, last=$lastLocationName")
+            logger.d("Buscando locais com paginacao (iOS): limit=$limit, last=$lastLocationName")
             firebaseDataSource.getLocationsWithPagination(limit, lastLocationName)
         } catch (e: Exception) {
-            logger.e("Erro ao buscar locais com paginação", e)
+            logger.e("Erro ao buscar locais com paginacao", e)
             Result.failure(e)
         }
     }
@@ -47,7 +53,13 @@ class LocationRepositoryImpl(
     override suspend fun deleteLocation(locationId: String): Result<Unit> {
         return try {
             logger.d("Deletando local (iOS): $locationId")
-            firebaseDataSource.deleteLocation(locationId)
+            firebaseDataSource.deleteLocation(locationId).also { result ->
+                if (result.isSuccess) {
+                    // Invalidar cache apos deletar
+                    cache.invalidate(locationId)
+                    logger.d("Cache invalidado para local: $locationId")
+                }
+            }
         } catch (e: Exception) {
             logger.e("Erro ao deletar local", e)
             Result.failure(e)
@@ -56,18 +68,42 @@ class LocationRepositoryImpl(
 
     override suspend fun getLocationsByOwner(ownerId: String): Result<List<Location>> {
         return try {
-            logger.d("Buscando locais do proprietário (iOS): $ownerId")
-            firebaseDataSource.getLocationsByOwner(ownerId)
+            // Tentar buscar do cache primeiro
+            val cached = cache.getByOwner(ownerId)
+            if (cached != null) {
+                logger.d("Cache HIT: locais do proprietario $ownerId (${cached.size} locais)")
+                return Result.success(cached)
+            }
+
+            logger.d("Cache MISS: buscando locais do proprietario (iOS): $ownerId")
+            firebaseDataSource.getLocationsByOwner(ownerId).also { result ->
+                result.getOrNull()?.let { locations ->
+                    cache.putByOwner(ownerId, locations)
+                    logger.d("Cache atualizado para owner $ownerId com ${locations.size} locais")
+                }
+            }
         } catch (e: Exception) {
-            logger.e("Erro ao buscar locais do proprietário", e)
+            logger.e("Erro ao buscar locais do proprietario", e)
             Result.failure(e)
         }
     }
 
     override suspend fun getLocationById(locationId: String): Result<Location> {
         return try {
-            logger.d("Buscando local (iOS): $locationId")
-            firebaseDataSource.getLocationById(locationId)
+            // Tentar buscar do cache primeiro
+            val cached = cache.getById(locationId)
+            if (cached != null) {
+                logger.d("Cache HIT: local $locationId")
+                return Result.success(cached)
+            }
+
+            logger.d("Cache MISS: buscando local (iOS): $locationId")
+            firebaseDataSource.getLocationById(locationId).also { result ->
+                result.getOrNull()?.let { location ->
+                    cache.putById(location)
+                    logger.d("Cache atualizado para local ${location.id}")
+                }
+            }
         } catch (e: Exception) {
             logger.e("Erro ao buscar local", e)
             Result.failure(e)
@@ -77,7 +113,12 @@ class LocationRepositoryImpl(
     override suspend fun getLocationWithFields(locationId: String): Result<LocationWithFields> {
         return try {
             logger.d("Buscando local com quadras (iOS): $locationId")
-            firebaseDataSource.getLocationWithFields(locationId)
+            firebaseDataSource.getLocationWithFields(locationId).also { result ->
+                // Cachear o local (sem as quadras)
+                result.getOrNull()?.let { locationWithFields ->
+                    cache.putById(locationWithFields.location)
+                }
+            }
         } catch (e: Exception) {
             logger.e("Erro ao buscar local com quadras", e)
             Result.failure(e)
@@ -87,7 +128,17 @@ class LocationRepositoryImpl(
     override suspend fun createLocation(location: Location): Result<Location> {
         return try {
             logger.d("Criando local (iOS): ${location.name}")
-            firebaseDataSource.createLocation(location)
+            firebaseDataSource.createLocation(location).also { result ->
+                result.getOrNull()?.let { createdLocation ->
+                    // Cachear o local criado
+                    cache.putById(createdLocation)
+                    // Invalidar cache do owner para forcar refresh da lista
+                    if (createdLocation.ownerId.isNotEmpty()) {
+                        cache.invalidateByOwner(createdLocation.ownerId)
+                    }
+                    logger.d("Local criado e cacheado: ${createdLocation.id}")
+                }
+            }
         } catch (e: Exception) {
             logger.e("Erro ao criar local", e)
             Result.failure(e)
@@ -97,17 +148,53 @@ class LocationRepositoryImpl(
     override suspend fun updateLocation(location: Location): Result<Unit> {
         return try {
             logger.d("Atualizando local (iOS): ${location.id}")
-            firebaseDataSource.updateLocation(location)
+            firebaseDataSource.updateLocation(location).also { result ->
+                if (result.isSuccess) {
+                    // Invalidar cache do local e do owner
+                    cache.invalidate(location.id)
+                    if (location.ownerId.isNotEmpty()) {
+                        cache.invalidateByOwner(location.ownerId)
+                    }
+                    logger.d("Cache invalidado apos atualizar local: ${location.id}")
+                }
+            }
         } catch (e: Exception) {
             logger.e("Erro ao atualizar local", e)
             Result.failure(e)
         }
     }
 
+    override suspend fun getServerLocationVersion(locationId: String): Result<Location> {
+        return try {
+            logger.d("Buscando versao do servidor (bypass cache) para local (iOS): $locationId")
+            // Busca diretamente do Firebase, sem usar cache
+            firebaseDataSource.getLocationById(locationId)
+        } catch (e: Exception) {
+            logger.e("Erro ao buscar versao do servidor", e)
+            Result.failure(e)
+        }
+    }
+
     override suspend fun searchLocations(query: String): Result<List<Location>> {
         return try {
-            logger.d("Buscando locais (iOS): $query")
-            firebaseDataSource.searchLocations(query)
+            // Tentar buscar do cache primeiro (para queries com pelo menos 2 caracteres)
+            if (query.trim().length >= 2) {
+                val cached = cache.getBySearchQuery(query)
+                if (cached != null) {
+                    logger.d("Cache HIT: busca '$query' (${cached.size} resultados)")
+                    return Result.success(cached)
+                }
+            }
+
+            logger.d("Cache MISS: buscando locais (iOS): $query")
+            firebaseDataSource.searchLocations(query).also { result ->
+                result.getOrNull()?.let { locations ->
+                    if (query.trim().length >= 2) {
+                        cache.putBySearchQuery(query, locations)
+                        logger.d("Cache atualizado para busca '$query' com ${locations.size} resultados")
+                    }
+                }
+            }
         } catch (e: Exception) {
             logger.e("Erro ao buscar locais", e)
             Result.failure(e)
@@ -127,7 +214,12 @@ class LocationRepositoryImpl(
             logger.d("Buscando/criando local do lugar (iOS): $name")
             firebaseDataSource.getOrCreateLocationFromPlace(
                 placeId, name, address, city, state, latitude, longitude
-            )
+            ).also { result ->
+                result.getOrNull()?.let { location ->
+                    cache.putById(location)
+                    logger.d("Local do place cacheado: ${location.id}")
+                }
+            }
         } catch (e: Exception) {
             logger.e("Erro ao buscar/criar local", e)
             Result.failure(e)
@@ -137,7 +229,12 @@ class LocationRepositoryImpl(
     override suspend fun addLocationReview(review: LocationReview): Result<Unit> {
         return try {
             logger.d("Adicionando review ao local (iOS): ${review.locationId}")
-            firebaseDataSource.addLocationReview(review)
+            firebaseDataSource.addLocationReview(review).also { result ->
+                if (result.isSuccess) {
+                    // Invalidar cache do local (rating pode ter mudado)
+                    cache.invalidate(review.locationId)
+                }
+            }
         } catch (e: Exception) {
             logger.e("Erro ao adicionar review", e)
             Result.failure(e)
@@ -156,8 +253,12 @@ class LocationRepositoryImpl(
 
     override suspend fun seedGinasioApollo(): Result<Location> {
         return try {
-            logger.d("Fazendo seed do Ginásio Apollo (iOS)")
-            firebaseDataSource.seedGinasioApollo()
+            logger.d("Fazendo seed do Ginasio Apollo (iOS)")
+            firebaseDataSource.seedGinasioApollo().also { result ->
+                result.getOrNull()?.let { location ->
+                    cache.putById(location)
+                }
+            }
         } catch (e: Exception) {
             logger.e("Erro ao fazer seed", e)
             Result.failure(e)
@@ -167,7 +268,13 @@ class LocationRepositoryImpl(
     override suspend fun migrateLocations(migrationData: List<LocationMigrationData>): Result<Int> {
         return try {
             logger.d("Migrando ${migrationData.size} locais (iOS)")
-            firebaseDataSource.migrateLocations(migrationData)
+            firebaseDataSource.migrateLocations(migrationData).also { result ->
+                if (result.isSuccess) {
+                    // Limpar cache apos migracao em massa
+                    cache.clear()
+                    logger.d("Cache limpo apos migracao")
+                }
+            }
         } catch (e: Exception) {
             logger.e("Erro ao migrar locais", e)
             Result.failure(e)
@@ -177,7 +284,13 @@ class LocationRepositoryImpl(
     override suspend fun deduplicateLocations(): Result<Int> {
         return try {
             logger.d("Deduplicando locais (iOS)")
-            firebaseDataSource.deduplicateLocations()
+            firebaseDataSource.deduplicateLocations().also { result ->
+                if (result.isSuccess) {
+                    // Limpar cache apos deduplicacao
+                    cache.clear()
+                    logger.d("Cache limpo apos deduplicacao")
+                }
+            }
         } catch (e: Exception) {
             logger.e("Erro ao deduplicar locais", e)
             Result.failure(e)
@@ -209,7 +322,12 @@ class LocationRepositoryImpl(
     override suspend fun createField(field: Field): Result<Field> {
         return try {
             logger.d("Criando quadra (iOS): ${field.name}")
-            firebaseDataSource.createField(field)
+            firebaseDataSource.createField(field).also { result ->
+                if (result.isSuccess) {
+                    // Invalidar cache do local pai (numero de quadras pode ter mudado)
+                    cache.invalidate(field.locationId)
+                }
+            }
         } catch (e: Exception) {
             logger.e("Erro ao criar quadra", e)
             Result.failure(e)
@@ -244,5 +362,23 @@ class LocationRepositoryImpl(
             logger.e("Erro ao fazer upload de foto", e)
             Result.failure(e)
         }
+    }
+
+    // ========== CACHE MANAGEMENT ==========
+
+    /**
+     * Limpa todo o cache de locais.
+     * Util para refresh forcado ou logout.
+     */
+    suspend fun clearCache() {
+        cache.clear()
+        logger.d("Cache de locais limpo")
+    }
+
+    /**
+     * Retorna estatisticas do cache.
+     */
+    suspend fun getCacheStats(): String {
+        return cache.stats().toString()
     }
 }
