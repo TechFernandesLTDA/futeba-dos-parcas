@@ -1,4 +1,6 @@
-# CLAUDE.md - Futeba dos Parças
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ---
 
@@ -42,15 +44,7 @@ Se não encontrar um comando de build/test/lint no repo:
 2. Pergunte ao usuário
 3. Documente a resposta aqui no CLAUDE.md
 
-**Comandos confirmados:**
-```bash
-./gradlew assembleDebug          # Build debug
-./gradlew assembleRelease        # Build release
-./gradlew test                   # Unit tests
-./gradlew connectedAndroidTest   # Instrumented tests
-./gradlew lint                   # Lint check
-./gradlew compileDebugKotlin     # Fast compilation check
-```
+**Ver seção "Build & Run Commands" abaixo para lista completa de comandos confirmados.**
 
 ### Regra #6: Mobile Definition of Done (DoD)
 
@@ -128,9 +122,9 @@ Toda tela deve implementar:
 
 ### Version
 
-- **Current**: 1.4.0
+- **Current**: 1.5.0
 - **Min SDK**: 24 (Android 7.0)
-- **Target SDK**: 34 (Android 14)
+- **Target/Compile SDK**: 35 (Android 15)
 
 ## Build & Run Commands
 
@@ -141,15 +135,35 @@ Toda tela deve implementar:
 ./gradlew installDebug           # Install on connected device
 
 # Tests
-./gradlew test                   # Unit tests
-./gradlew connectedAndroidTest   # Instrumented tests
+./gradlew test                   # Unit tests (all modules)
+./gradlew :app:testDebugUnitTest # Unit tests (app module only)
+./gradlew connectedAndroidTest   # Instrumented tests (requires device/emulator)
 
-# Utilities
-./gradlew clean                  # Clean build
+# Quality
+./gradlew lint                   # Lint check
 ./gradlew compileDebugKotlin     # Fast Kotlin compilation check
+./gradlew clean                  # Clean build
+
+# Cloud Functions (in /functions directory)
+cd functions && npm install      # Install dependencies
+npm run build                    # Compile TypeScript
+firebase deploy --only functions # Deploy to Firebase
 ```
 
 ## Architecture Guidelines
+
+### Module Structure
+
+```
+futeba-dos-parcas/
+├── app/                    # Android application (UI, ViewModels, DI)
+├── shared/                 # Kotlin Multiplatform shared code
+│   ├── commonMain/         # Platform-agnostic code (domain, use cases)
+│   ├── androidMain/        # Android-specific implementations (Firebase)
+│   └── iosMain/            # iOS-specific implementations (future)
+├── functions/              # Firebase Cloud Functions (TypeScript)
+└── scripts/                # Node.js utility scripts
+```
 
 ### Layers
 
@@ -160,10 +174,10 @@ UI (Fragments/Activities/Compose)
 ViewModels (@HiltViewModel + StateFlow)
     |
     v
-Domain (Use Cases, Services, Business Logic)
+Domain (Use Cases, Services, Business Logic) ← shared/commonMain
     |
     v
-Data (Repositories -> Firebase/Room)
+Data (Repositories -> Firebase/Room) ← shared/androidMain
 ```
 
 ### Key Patterns
@@ -188,28 +202,43 @@ Data (Repositories -> Firebase/Room)
 
 ## Project Structure
 
+### Android App (`app/`)
 ```
 app/src/main/java/com/futebadosparcas/
 ├── data/
 │   ├── model/          # Data classes (User, Game, Group, etc.)
-│   ├── repository/     # Data access layer (Firebase, Room)
-│   └── local/          # Room database and DAOs
+│   └── repository/     # Data access layer (Firebase, Room)
 ├── domain/
 │   ├── usecase/        # Business logic use cases
-│   ├── ranking/        # XP and ranking calculations
-│   ├── gamification/   # Badges, levels, challenges
 │   └── ai/             # Team balancing algorithms
 ├── ui/
 │   ├── auth/           # Login, Register screens
 │   ├── home/           # Home fragment
-│   ├── games/          # Game listing and details
+│   ├── games/          # Game listing, details, CreateGameScreen
 │   ├── league/         # Rankings and seasons
 │   ├── players/        # Player listing and profiles
 │   ├── groups/         # Group management
 │   ├── profile/        # User profile
-│   └── livegame/       # Live match tracking
-├── di/                 # Hilt modules
-└── util/               # Utilities (Logger, Extensions, etc.)
+│   ├── livegame/       # Live match tracking
+│   └── game_experience/# Post-game voting (MVP, etc.)
+├── di/                 # Hilt modules (RepositoryModule, etc.)
+└── util/               # Utilities (ContrastHelper, Logger, Extensions)
+```
+
+### Shared KMP Module (`shared/`)
+```
+shared/src/
+├── commonMain/kotlin/com/futebadosparcas/
+│   ├── domain/
+│   │   ├── model/      # Domain entities (User, Game, Badge, etc.)
+│   │   ├── repository/ # Repository interfaces
+│   │   ├── usecase/    # Platform-agnostic use cases
+│   │   ├── ranking/    # XPCalculator, LevelCalculator, LeagueRating
+│   │   ├── gamification/ # BadgeDefinitions, MilestoneChecker
+│   │   └── ai/         # TeamBalancer algorithm
+│   └── data/           # Shared data utilities
+├── androidMain/        # Android implementations (FirebaseRepositoryImpl)
+└── iosMain/            # iOS implementations (future)
 ```
 
 ## Firebase Structure
@@ -227,12 +256,17 @@ app/src/main/java/com/futebadosparcas/
 - `locations` - Soccer field locations
 - `cashbox` - Group financial tracking
 
-### Cloud Functions (v2)
+### Cloud Functions (`functions/src/`)
 
-- `onUserCreate` - Initialize new user data
-- `onGameFinished` - Process XP, stats, rankings
-- `recalculateLeagueRating` - Update league positions (with infinite loop protection)
-- `checkSeasonClosure` - Monthly season management
+| File | Functions |
+|------|-----------|
+| `index.ts` | Main entry, onUserCreate, onGameFinished |
+| `league.ts` | recalculateLeagueRating, league progression |
+| `season/index.ts` | checkSeasonClosure, season management |
+| `badges/badge-helper.ts` | Badge unlock logic |
+| `notifications.ts` | Push notification helpers |
+| `reminders.ts` | Game reminder scheduling |
+| `activities.ts` | Activity feed generation |
 
 ## Design System
 
