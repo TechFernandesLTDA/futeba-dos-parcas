@@ -193,6 +193,9 @@ class GameRepositoryImpl @Inject constructor(
     override suspend fun removePlayerFromGame(gameId: String, userId: String): Result<Unit> =
         confirmationRepository.removePlayerFromGame(gameId, userId)
 
+    override suspend fun confirmPlayerAsOwner(gameId: String, userId: String): Result<Unit> =
+        confirmationRepository.updateConfirmationStatusForUser(gameId, userId, "CONFIRMED")
+
     override suspend fun updatePaymentStatus(gameId: String, userId: String, isPaid: Boolean): Result<Unit> =
         confirmationRepository.updatePaymentStatus(gameId, userId, isPaid)
 
@@ -253,6 +256,13 @@ class GameRepositoryImpl @Inject constructor(
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "createGame: Error parsing dateTime from date/time strings", e)
                 }
+            }
+
+            // Validar o jogo antes de salvar (#28 - Validação de bounds)
+            val validationErrors = finalGame.validate()
+            if (validationErrors.isNotEmpty()) {
+                val errorMsg = validationErrors.joinToString(", ") { it.message }
+                return Result.failure(IllegalArgumentException("Validação falhou: $errorMsg"))
             }
 
             docRef.set(finalGame).await()
@@ -320,7 +330,19 @@ class GameRepositoryImpl @Inject constructor(
 
     override suspend fun updateGame(game: Game): Result<Unit> {
         return try {
-            gamesCollection.document(game.id).set(game).await()
+            // Validar o jogo antes de salvar (#28 - Validação de bounds)
+            val validationErrors = game.validate()
+            if (validationErrors.isNotEmpty()) {
+                val errorMsg = validationErrors.joinToString(", ") { it.message }
+                return Result.failure(IllegalArgumentException("Validação falhou: $errorMsg"))
+            }
+
+            // Atualizar o timestamp de atualização (#1 - Campo updatedAt)
+            val updatedGame = game.copy().apply {
+                updatedAt = java.util.Date()
+            }
+
+            gamesCollection.document(game.id).set(updatedGame).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -423,6 +445,35 @@ class GameRepositoryImpl @Inject constructor(
 
             Result.success(Unit)
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updatePartialPayment(
+        gameId: String,
+        userId: String,
+        amount: Double
+    ): Result<Unit> {
+        return try {
+            val confirmationsCollection = firestore.collection("confirmations")
+            val query = confirmationsCollection
+                .whereEqualTo("game_id", gameId)
+                .whereEqualTo("user_id", userId)
+                .limit(1)
+                .get()
+                .await()
+
+            if (query.documents.isNotEmpty()) {
+                val doc = query.documents.first()
+                val updates = mapOf(
+                    "partial_payment" to amount,
+                    "payment_status" to if (amount > 0) "PARTIAL" else "PENDING"
+                )
+                doc.reference.update(updates).await()
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao atualizar pagamento parcial", e)
             Result.failure(e)
         }
     }

@@ -47,11 +47,38 @@ data class Group(
     @set:PropertyName("updated_at")
     var updatedAt: Date? = null,
 
+    // Última atividade do grupo (#11 - Validação Firebase)
+    @get:PropertyName("last_activity_at")
+    @set:PropertyName("last_activity_at")
+    var lastActivityAt: Date? = null,
+
     @get:PropertyName("is_public")
     @set:PropertyName("is_public")
-    var isPublic: Boolean = false
+    var isPublic: Boolean = false,
+
+    // === GAME OWNER FEATURES (Issues #64, #68) ===
+
+    // Lista de jogadores bloqueados (Issue #64)
+    @get:PropertyName("blocked_players")
+    @set:PropertyName("blocked_players")
+    var blockedPlayers: List<BlockedPlayer> = emptyList(),
+
+    // Regras do grupo visíveis para todos (Issue #68)
+    @get:PropertyName("rules")
+    @set:PropertyName("rules")
+    var rules: String = "",
+
+    // Configurações de votação MVP (Issues #51-60)
+    @get:PropertyName("voting_settings")
+    @set:PropertyName("voting_settings")
+    var votingSettings: VotingSettings? = null
 ) {
     constructor() : this(id = "")
+
+    @Exclude
+    fun getVotingSettingsOrDefault(): VotingSettings {
+        return votingSettings ?: VotingSettings()
+    }
 
     @Exclude
     fun getStatusEnum(): GroupStatus = try {
@@ -65,6 +92,48 @@ data class Group(
 
     @Exclude
     fun isArchived(): Boolean = getStatusEnum() == GroupStatus.ARCHIVED
+
+    /**
+     * Verifica se um jogador está bloqueado (Issue #64).
+     */
+    @Exclude
+    fun isPlayerBlocked(userId: String): Boolean =
+        blockedPlayers.any { it.userId == userId }
+
+    /**
+     * Retorna o motivo do bloqueio de um jogador (Issue #64).
+     */
+    @Exclude
+    fun getBlockReason(userId: String): String? =
+        blockedPlayers.find { it.userId == userId }?.reason
+}
+
+/**
+ * Representa um jogador bloqueado do grupo (Issue #64).
+ */
+@IgnoreExtraProperties
+data class BlockedPlayer(
+    @get:PropertyName("user_id")
+    @set:PropertyName("user_id")
+    var userId: String = "",
+
+    @get:PropertyName("user_name")
+    @set:PropertyName("user_name")
+    var userName: String = "",
+
+    @get:PropertyName("reason")
+    @set:PropertyName("reason")
+    var reason: String = "",
+
+    @get:PropertyName("blocked_by")
+    @set:PropertyName("blocked_by")
+    var blockedBy: String = "",
+
+    @get:PropertyName("blocked_at")
+    @set:PropertyName("blocked_at")
+    var blockedAt: Date? = null
+) {
+    constructor() : this(userId = "")
 }
 
 /**
@@ -187,7 +256,8 @@ enum class GroupMemberRole(val displayName: String, val description: String) {
 enum class GroupMemberStatus {
     ACTIVE,     // Membro ativo
     INACTIVE,   // Saiu voluntariamente
-    REMOVED     // Removido por admin/owner
+    REMOVED,    // Removido por admin/owner
+    BLOCKED     // Bloqueado de participar
 }
 
 /**

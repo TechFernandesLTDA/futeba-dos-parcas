@@ -104,7 +104,12 @@ data class Location(
     @ServerTimestamp
     @get:PropertyName("updated_at")
     @set:PropertyName("updated_at")
-    var updatedAt: Date? = null
+    var updatedAt: Date? = null,
+
+    // Quem fez a última atualização (#6 - Validação Firebase)
+    @get:PropertyName("updated_by")
+    @set:PropertyName("updated_by")
+    var updatedBy: String? = null
 ) {
     // Bloco de inicializacao para normalizar valores
     init {
@@ -157,6 +162,18 @@ data class Location(
         val timestampResult = ValidationHelper.validateTimestampOrder(createdAt, updatedAt)
         if (timestampResult is ValidationResult.Invalid) {
             errors.add(timestampResult)
+        }
+
+        // Validação de coordenadas (#29 - Validação de coordenadas)
+        latitude?.let { lat ->
+            if (lat < -90.0 || lat > 90.0) {
+                errors.add(ValidationResult.Invalid("latitude", "Latitude deve estar entre -90 e 90"))
+            }
+        }
+        longitude?.let { lng ->
+            if (lng < -180.0 || lng > 180.0) {
+                errors.add(ValidationResult.Invalid("longitude", "Longitude deve estar entre -180 e 180"))
+            }
         }
 
         return errors

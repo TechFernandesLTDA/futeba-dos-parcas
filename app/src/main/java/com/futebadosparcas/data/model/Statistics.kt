@@ -2,6 +2,8 @@ package com.futebadosparcas.data.model
 
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.PropertyName
+import com.google.firebase.firestore.ServerTimestamp
+import java.util.Date
 
 /**
  * Estatisticas do usuario.
@@ -33,7 +35,13 @@ data class UserStatistics(
     var gamesInvited: Int = 0, // Total de jogos para os quais foi convidado
     @get:PropertyName("games_attended")
     @set:PropertyName("games_attended")
-    var gamesAttended: Int = 0 // Total de jogos que compareceu (confirmou e jogou)
+    var gamesAttended: Int = 0, // Total de jogos que compareceu (confirmou e jogou)
+
+    // Data do último cálculo de estatísticas (#12 - Validação Firebase)
+    @ServerTimestamp
+    @get:PropertyName("last_calculated_at")
+    @set:PropertyName("last_calculated_at")
+    var lastCalculatedAt: Date? = null
 ) {
     constructor() : this(id = "")
 
