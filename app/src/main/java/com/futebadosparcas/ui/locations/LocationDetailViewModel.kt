@@ -1,8 +1,10 @@
 package com.futebadosparcas.ui.locations
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.futebadosparcas.data.datasource.FieldPhotoDataSource
 import com.futebadosparcas.data.model.Field as AndroidField
 import com.futebadosparcas.data.model.FieldType
 import com.futebadosparcas.data.model.Location as AndroidLocation
@@ -36,12 +38,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
 import javax.inject.Inject
 
+private const val TAG = "LocationDetailViewModel"
+
 @HiltViewModel
 class LocationDetailViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
     private val userRepository: UserRepository,
     private val addressRepository: KmpAddressRepository,
-    private val locationAnalytics: LocationAnalytics
+    private val locationAnalytics: LocationAnalytics,
+    private val fieldPhotoDataSource: FieldPhotoDataSource
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LocationDetailUiState>(LocationDetailUiState.Success(AndroidLocation(), emptyList()))
@@ -354,14 +359,41 @@ class LocationDetailViewModel @Inject constructor(
         val location = currentLocation ?: return
         viewModelScope.launch {
             _uiState.value = LocationDetailUiState.Loading
+
+            // Gerar ID temporário para o field (será substituído pelo ID real após criação)
+            val tempFieldId = System.currentTimeMillis().toString()
+
+            // Upload da foto usando FieldPhotoDataSource (com validação e compressão)
             var photosList = emptyList<String>()
             if (photoUri != null) {
-                locationRepository.uploadFieldPhoto(photoUri.toString()).onSuccess { url -> photosList = listOf(url) }
-                    .onFailure {
-                         _uiState.value = LocationDetailUiState.Error("Erro ao fazer upload da imagem")
-                         return@launch
+                Log.d(TAG, "Uploading field photo for new field in location: ${location.id}")
+
+                when (val result = fieldPhotoDataSource.uploadFieldPhoto(location.id, tempFieldId, photoUri)) {
+                    is FieldPhotoDataSource.UploadResult.Success -> {
+                        Log.d(TAG, "Field photo uploaded successfully: ${result.url}")
+                        photosList = listOf(result.url)
                     }
+                    is FieldPhotoDataSource.UploadResult.FileTooLarge -> {
+                        Log.w(TAG, "Field photo too large")
+                        _uiState.value = LocationDetailUiState.Error("Imagem muito grande. O tamanho máximo é 3MB.")
+                        return@launch
+                    }
+                    is FieldPhotoDataSource.UploadResult.InvalidImage -> {
+                        Log.w(TAG, "Invalid field photo")
+                        _uiState.value = LocationDetailUiState.Error("Arquivo inválido. Selecione uma imagem JPEG, PNG ou WebP.")
+                        return@launch
+                    }
+                    is FieldPhotoDataSource.UploadResult.Error -> {
+                        Log.e(TAG, "Error uploading field photo: ${result.message}")
+                        _uiState.value = LocationDetailUiState.Error("Erro ao fazer upload da imagem: ${result.message}")
+                        return@launch
+                    }
+                    is FieldPhotoDataSource.UploadResult.Progress -> {
+                        // Progresso não deveria ser retornado na versão simplificada
+                    }
+                }
             }
+
             val newField = AndroidField(
                 locationId = location.id,
                 name = name,
@@ -441,11 +473,31 @@ class LocationDetailViewModel @Inject constructor(
 
             var currentPhotos = field.photos
             if (photoUri != null) {
-                 locationRepository.uploadFieldPhoto(photoUri.toString()).onSuccess { url ->
-                    currentPhotos = listOf(url)
-                }.onFailure {
-                     _uiState.value = LocationDetailUiState.Error("Erro ao fazer upload da imagem")
-                     return@launch
+                Log.d(TAG, "Uploading field photo for field: $fieldId in location: ${location.id}")
+
+                when (val result = fieldPhotoDataSource.uploadFieldPhoto(location.id, fieldId, photoUri)) {
+                    is FieldPhotoDataSource.UploadResult.Success -> {
+                        Log.d(TAG, "Field photo uploaded successfully: ${result.url}")
+                        currentPhotos = listOf(result.url)
+                    }
+                    is FieldPhotoDataSource.UploadResult.FileTooLarge -> {
+                        Log.w(TAG, "Field photo too large")
+                        _uiState.value = LocationDetailUiState.Error("Imagem muito grande. O tamanho máximo é 3MB.")
+                        return@launch
+                    }
+                    is FieldPhotoDataSource.UploadResult.InvalidImage -> {
+                        Log.w(TAG, "Invalid field photo")
+                        _uiState.value = LocationDetailUiState.Error("Arquivo inválido. Selecione uma imagem JPEG, PNG ou WebP.")
+                        return@launch
+                    }
+                    is FieldPhotoDataSource.UploadResult.Error -> {
+                        Log.e(TAG, "Error uploading field photo: ${result.message}")
+                        _uiState.value = LocationDetailUiState.Error("Erro ao fazer upload da imagem: ${result.message}")
+                        return@launch
+                    }
+                    is FieldPhotoDataSource.UploadResult.Progress -> {
+                        // Progresso não deveria ser retornado na versão simplificada
+                    }
                 }
             }
 
