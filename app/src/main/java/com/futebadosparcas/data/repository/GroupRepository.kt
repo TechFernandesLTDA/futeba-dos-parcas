@@ -1,5 +1,6 @@
 package com.futebadosparcas.data.repository
 
+import com.futebadosparcas.data.datasource.GroupPhotoDataSource
 import com.futebadosparcas.data.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
@@ -12,6 +13,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import android.net.Uri
+import android.util.Log
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -19,29 +21,59 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private const val TAG = "GroupRepository"
+
 @Singleton
 class GroupRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
-    private val storage: FirebaseStorage
+    private val storage: FirebaseStorage,
+    private val groupPhotoDataSource: GroupPhotoDataSource
 ) {
     private val groupsCollection = firestore.collection("groups")
     private val usersCollection = firestore.collection("users")
 
     /**
-     * Faz upload da foto/logo do grupo
-     * Path padronizado: groups/{groupId}/logo.jpg
+     * Faz upload da foto/logo do grupo com validação e compressão.
+     *
+     * Usa GroupPhotoDataSource que implementa:
+     * - Validação de tamanho máximo (2MB)
+     * - Validação de magic bytes (JPEG, PNG, WebP)
+     * - Compressão adaptativa (90%/85%/75%)
+     * - Redimensionamento para 600x600
+     * - Geração de thumbnail (200x200)
+     * - Metadados de upload
+     *
+     * Path padronizado: groups/{groupId}/logo.jpg + groups/{groupId}/thumb.jpg
      */
     suspend fun uploadGroupPhoto(groupId: String, imageUri: Uri): Result<String> {
         return try {
-            // Path padronizado: groups/{groupId}/logo.jpg (sobrescreve a logo anterior)
-            val ref = storage.reference.child("groups/$groupId/logo.jpg")
+            Log.d(TAG, "Uploading group photo for group: $groupId")
 
-            ref.putFile(imageUri).await()
-            val downloadUrl = ref.downloadUrl.await()
-
-            Result.success(downloadUrl.toString())
+            when (val result = groupPhotoDataSource.uploadGroupPhoto(groupId, imageUri)) {
+                is GroupPhotoDataSource.UploadResult.Success -> {
+                    Log.d(TAG, "Group photo uploaded successfully: ${result.url}")
+                    Result.success(result.url)
+                }
+                is GroupPhotoDataSource.UploadResult.FileTooLarge -> {
+                    Log.w(TAG, "Group photo too large (max 2MB)")
+                    Result.failure(Exception("Imagem muito grande. O tamanho máximo é 2MB."))
+                }
+                is GroupPhotoDataSource.UploadResult.InvalidImage -> {
+                    Log.w(TAG, "Invalid image file")
+                    Result.failure(Exception("Arquivo inválido. Selecione uma imagem JPEG, PNG ou WebP."))
+                }
+                is GroupPhotoDataSource.UploadResult.Error -> {
+                    Log.e(TAG, "Error uploading group photo: ${result.message}")
+                    Result.failure(Exception(result.message))
+                }
+                is GroupPhotoDataSource.UploadResult.Progress -> {
+                    // Progresso não deveria ser retornado na versão simplificada
+                    Result.failure(Exception("Erro inesperado no upload"))
+                }
+            }
         } catch (e: Exception) {
+            Log.e(TAG, "Exception uploading group photo", e)
             Result.failure(e)
         }
     }
@@ -870,6 +902,86 @@ class GroupRepository @Inject constructor(
                 val groupId = doc.getString("group_id") ?: doc.id
                 syncGroupMemberCount(groupId)
             }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Bloqueia um jogador no grupo
+     */
+    suspend fun blockPlayer(
+        groupId: String,
+        userId: String,
+        userName: String,
+        reason: String,
+        blockedBy: String
+    ): Result<Unit> {
+        return try {
+            val currentUserId = auth.currentUser?.uid
+                ?: return Result.failure(Exception("Usuário não autenticado"))
+
+            // Verificar permissão (owner ou admin)
+            val roleResult = getMyRoleInGroup(groupId)
+            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
+
+            val role = roleResult.getOrNull()
+            if (role != GroupMemberRole.OWNER && role != GroupMemberRole.ADMIN) {
+                return Result.failure(Exception("Sem permissão para bloquear jogadores"))
+            }
+
+            // Adicionar na lista de bloqueados
+            val blockedRef = groupsCollection.document(groupId)
+                .collection("blocked_players").document(userId)
+
+            val blockedData = mapOf(
+                "user_id" to userId,
+                "user_name" to userName,
+                "reason" to reason,
+                "blocked_by" to blockedBy,
+                "blocked_at" to FieldValue.serverTimestamp()
+            )
+
+            blockedRef.set(blockedData).await()
+
+            // Remover da lista de membros se ainda for membro
+            val memberRef = groupsCollection.document(groupId)
+                .collection("members").document(userId)
+            val memberDoc = memberRef.get().await()
+            if (memberDoc.exists()) {
+                memberRef.update("status", GroupMemberStatus.BLOCKED.name).await()
+            }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Desbloqueia um jogador no grupo
+     */
+    suspend fun unblockPlayer(groupId: String, userId: String): Result<Unit> {
+        return try {
+            val currentUserId = auth.currentUser?.uid
+                ?: return Result.failure(Exception("Usuário não autenticado"))
+
+            // Verificar permissão (owner ou admin)
+            val roleResult = getMyRoleInGroup(groupId)
+            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
+
+            val role = roleResult.getOrNull()
+            if (role != GroupMemberRole.OWNER && role != GroupMemberRole.ADMIN) {
+                return Result.failure(Exception("Sem permissão para desbloquear jogadores"))
+            }
+
+            // Remover da lista de bloqueados
+            val blockedRef = groupsCollection.document(groupId)
+                .collection("blocked_players").document(userId)
+
+            blockedRef.delete().await()
 
             Result.success(Unit)
         } catch (e: Exception) {
