@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -14,6 +15,8 @@ import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -139,12 +142,17 @@ fun LeagueContent(
     onDivisionSelected: (LeagueDivision) -> Unit,
     onSeasonSelected: (Season) -> Unit
 ) {
-    val filteredRanking = remember(state.allRankings, state.selectedDivision) {
-        state.allRankings.filter { it.participation.division == state.selectedDivision }
+    // Usa derivedStateOf para evitar recálculos desnecessários durante scroll
+    val filteredRanking by remember(state.allRankings, state.selectedDivision) {
+        derivedStateOf {
+            state.allRankings.filter { it.participation.division == state.selectedDivision }
+        }
     }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        // Adiciona contentPadding para melhor performance de scroll
+        contentPadding = PaddingValues(bottom = 16.dp)
     ) {
         // 1. Cabeçalho Dinâmico (Sobe com o scroll)
         item {
@@ -606,19 +614,21 @@ fun RankingListItem(
     position: Int,
     isMe: Boolean
 ) {
-    val backgroundColor = if (isMe) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-    } else {
-        MaterialTheme.colorScheme.surface
-    }
-
-    Surface(
+    // Usa Card ao invés de Surface com tonalElevation dinâmico para melhor performance de scroll
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp),
         shape = RoundedCornerShape(16.dp),
-        color = backgroundColor,
-        tonalElevation = if (isMe) 4.dp else 1.dp,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isMe) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            }
+        ),
+        // Remove tonalElevation variável - causa jank no scroll
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = if (isMe) {
             BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
         } else null
