@@ -47,6 +47,11 @@ data class AppNotification(
     @set:PropertyName("reference_type")
     var referenceType: String? = null,
 
+    // Referência ao grupo para filtros (#13 - Validação Firebase)
+    @get:PropertyName("group_id")
+    @set:PropertyName("group_id")
+    var groupId: String? = null,
+
     @get:PropertyName("action_type")
     @set:PropertyName("action_type")
     var actionType: String? = null,
@@ -130,6 +135,7 @@ data class AppNotification(
             NotificationType.GAME_REMINDER -> com.futebadosparcas.R.drawable.ic_football
             NotificationType.GAME_CANCELLED -> com.futebadosparcas.R.drawable.ic_football
             NotificationType.GAME_CONFIRMED -> com.futebadosparcas.R.drawable.ic_football
+            NotificationType.GAME_VACANCY -> com.futebadosparcas.R.drawable.ic_football
             NotificationType.MEMBER_JOINED -> com.futebadosparcas.R.drawable.ic_group
             NotificationType.MEMBER_LEFT -> com.futebadosparcas.R.drawable.ic_group
             NotificationType.CASHBOX_ENTRY -> com.futebadosparcas.R.drawable.ic_notifications
@@ -253,6 +259,7 @@ enum class NotificationType(val displayName: String) {
     GAME_REMINDER("Lembrete de jogo"),
     GAME_CANCELLED("Jogo cancelado"),
     GAME_CONFIRMED("Jogo confirmado"),
+    GAME_VACANCY("Vaga disponivel"),
     MEMBER_JOINED("Novo membro"),
     MEMBER_LEFT("Membro saiu"),
     CASHBOX_ENTRY("Entrada no caixa"),

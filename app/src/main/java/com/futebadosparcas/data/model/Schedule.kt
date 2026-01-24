@@ -71,7 +71,35 @@ data class Schedule(
     @ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
-    var createdAt: Date? = null
+    var createdAt: Date? = null,
+
+    // === GAME OWNER FEATURES (Issues #64, #65, #68) ===
+
+    // Lista de jogadores bloqueados da recorrência (Issue #64)
+    @get:PropertyName("blocked_players")
+    @set:PropertyName("blocked_players")
+    var blockedPlayers: List<String> = emptyList(),
+
+    // Horas antes do jogo para fechar confirmações (Issue #65)
+    @get:PropertyName("auto_close_hours")
+    @set:PropertyName("auto_close_hours")
+    var autoCloseHours: Int? = null,
+
+    // Regras da recorrência (Issue #68)
+    @get:PropertyName("rules")
+    @set:PropertyName("rules")
+    var rules: String = "",
+
+    // Auditoria: última atualização (#15 - Validação Firebase)
+    @get:PropertyName("updated_at")
+    @set:PropertyName("updated_at")
+    var updatedAt: Date? = null,
+
+    // Lista de datas de exceção onde não haverá jogo (#15 - Validação Firebase)
+    // Formato: "YYYY-MM-DD" para cada data
+    @get:PropertyName("exceptions")
+    @set:PropertyName("exceptions")
+    var exceptions: List<String> = emptyList()
 ) {
     constructor() : this(id = "")
 }

@@ -42,7 +42,22 @@ data class User(
     @get:PropertyName("updated_at")
     @set:PropertyName("updated_at")
     var updatedAt: Date? = null,
-    
+
+    // Rastreamento de atividade (#4 - Validação Firebase)
+    @get:PropertyName("last_active_at")
+    @set:PropertyName("last_active_at")
+    var lastActiveAt: Date? = null,
+
+    // Soft delete para LGPD compliance (#5 - Validação Firebase)
+    @get:PropertyName("deleted_at")
+    @set:PropertyName("deleted_at")
+    var deletedAt: Date? = null,
+
+    // Motivo da exclusão (LGPD)
+    @get:PropertyName("deletion_reason")
+    @set:PropertyName("deletion_reason")
+    var deletionReason: String? = null,
+
     // Ratings (0.0 - 5.0)
     @get:PropertyName("striker_rating")
     @set:PropertyName("striker_rating")
@@ -375,6 +390,47 @@ data class User(
     @Exclude
     fun isValid(requireEmail: Boolean = false, requireName: Boolean = true): Boolean {
         return validate(requireEmail, requireName).isEmpty()
+    }
+
+    /**
+     * Verifica se o usuário foi soft-deleted (#5 - LGPD compliance).
+     */
+    @Exclude
+    fun isDeleted(): Boolean = deletedAt != null
+
+    /**
+     * Marca o usuário como deletado (soft delete) para LGPD compliance.
+     *
+     * @param reason Motivo da exclusão (opcional)
+     */
+    @Exclude
+    fun softDelete(reason: String? = null) {
+        deletedAt = Date()
+        deletionReason = reason
+        updatedAt = Date()
+    }
+
+    /**
+     * Atualiza o timestamp de última atividade (#4 - Rastreamento).
+     */
+    @Exclude
+    fun updateLastActive() {
+        lastActiveAt = Date()
+    }
+
+    /**
+     * Verifica se o usuário está inativo por mais de X dias.
+     *
+     * @param days Número de dias para considerar inativo
+     * @return true se o usuário está inativo
+     */
+    @Exclude
+    fun isInactive(days: Int = 30): Boolean {
+        val lastActive = lastActiveAt ?: createdAt ?: return true
+        val now = Date()
+        val diffMs = now.time - lastActive.time
+        val diffDays = diffMs / (1000 * 60 * 60 * 24)
+        return diffDays > days
     }
 }
 

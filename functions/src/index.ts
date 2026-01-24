@@ -1109,6 +1109,149 @@ export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) =
     }
 });
 
+// ==========================================
+// DELEÇÃO EM CASCATA DE GRUPOS (#36 - Validação Firebase)
+// ==========================================
+
+export const onGroupDeleted = onDocumentDeleted("groups/{groupId}", async (event) => {
+    const groupId = event.params.groupId;
+    console.log(`[CASCADE DELETE] Starting cascade deletion for group ${groupId}`);
+
+    try {
+        // Nota: Batch limit é 500 operações. Para grupos grandes,
+        // pode ser necessário dividir em múltiplos batches.
+        const batch = db.batch();
+        let totalDeleted = 0;
+
+        // 1. Delete all members (subcollection)
+        const membersSnap = await db.collection("groups").doc(groupId)
+            .collection("members").get();
+        membersSnap.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            totalDeleted++;
+        });
+        console.log(`[CASCADE DELETE] Found ${membersSnap.size} members to delete`);
+
+        // 2. Delete cashbox entries (subcollection)
+        const cashboxSnap = await db.collection("groups").doc(groupId)
+            .collection("cashbox").get();
+        cashboxSnap.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            totalDeleted++;
+        });
+        console.log(`[CASCADE DELETE] Found ${cashboxSnap.size} cashbox entries to delete`);
+
+        // 3. Delete cashbox_summary (subcollection)
+        const summarySnap = await db.collection("groups").doc(groupId)
+            .collection("cashbox_summary").get();
+        summarySnap.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            totalDeleted++;
+        });
+
+        // 4. Delete group invites related to this group
+        const invitesSnap = await db.collection("group_invites")
+            .where("group_id", "==", groupId)
+            .get();
+        invitesSnap.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            totalDeleted++;
+        });
+        console.log(`[CASCADE DELETE] Found ${invitesSnap.size} invites to delete`);
+
+        // 5. Delete schedules related to this group
+        const schedulesSnap = await db.collection("schedules")
+            .where("group_id", "==", groupId)
+            .get();
+        schedulesSnap.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            totalDeleted++;
+        });
+        console.log(`[CASCADE DELETE] Found ${schedulesSnap.size} schedules to delete`);
+
+        // 6. Update users who had this group in their groups subcollection
+        const usersWithGroup = await db.collectionGroup("groups")
+            .where(admin.firestore.FieldPath.documentId(), "==", groupId)
+            .get();
+        usersWithGroup.docs.forEach(doc => {
+            batch.delete(doc.ref);
+            totalDeleted++;
+        });
+        console.log(`[CASCADE DELETE] Found ${usersWithGroup.size} user group references to delete`);
+
+        // 7. Mark games from this group as orphaned (don't delete - preserve history)
+        const gamesSnap = await db.collection("games")
+            .where("group_id", "==", groupId)
+            .get();
+        gamesSnap.docs.forEach(doc => {
+            batch.update(doc.ref, {
+                group_id: null,
+                group_deleted: true,
+                group_deleted_at: admin.firestore.FieldValue.serverTimestamp()
+            });
+        });
+        console.log(`[CASCADE DELETE] Marked ${gamesSnap.size} games as orphaned`);
+
+        // Commit all deletions
+        if (totalDeleted > 0) {
+            await batch.commit();
+            console.log(`[CASCADE DELETE] Successfully deleted ${totalDeleted} related documents for group ${groupId}`);
+        } else {
+            console.log(`[CASCADE DELETE] No related documents found for group ${groupId}`);
+        }
+    } catch (error) {
+        console.error(`[CASCADE DELETE] Error during cascade deletion for group ${groupId}:`, error);
+        throw error; // Re-throw to trigger retry
+    }
+});
+
+// ==========================================
+// SYNC DE CONTADORES (#38, #40 - Validação Firebase)
+// ==========================================
+
+// Sync de players_count quando confirmações mudam
+export const onConfirmationWrite = onDocumentUpdated("confirmations/{confirmationId}", async (event) => {
+    if (!event.data) return;
+
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+    const gameId = after?.game_id || before?.game_id;
+
+    if (!gameId) return;
+
+    // Status mudou (confirmou ou cancelou)
+    const statusBefore = before?.status;
+    const statusAfter = after?.status;
+
+    if (statusBefore === statusAfter) return;
+
+    console.log(`[SYNC] Confirmation status changed: ${statusBefore} -> ${statusAfter} for game ${gameId}`);
+
+    try {
+        // Recontagem das confirmações
+        const confirmationsSnap = await db.collection("confirmations")
+            .where("game_id", "==", gameId)
+            .where("status", "==", "CONFIRMED")
+            .get();
+
+        const playersCount = confirmationsSnap.size;
+        const goalkeeperCount = confirmationsSnap.docs.filter(
+            doc => doc.data().position === "GOALKEEPER"
+        ).length;
+
+        // Atualizar contador no jogo
+        await db.collection("games").doc(gameId).update({
+            players_count: playersCount,
+            goalkeepers_count: goalkeeperCount,
+            updated_at: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        console.log(`[SYNC] Game ${gameId}: players=${playersCount}, goalkeepers=${goalkeeperCount}`);
+    } catch (error) {
+        console.error(`[SYNC] Error syncing counts for game ${gameId}:`, error);
+    }
+});
+
 export * from "./activities";
 export * from "./notifications";
 export * from "./reminders";

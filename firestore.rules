@@ -152,6 +152,32 @@ service cloud.firestore {
       return value is number && value >= 0;
     }
 
+    // Valida max_players no range 2-50 (#28 - Validação de bounds)
+    function isValidMaxPlayers(value) {
+      return value is number && value >= 2 && value <= 50;
+    }
+
+    // Valida max_goalkeepers no range 0-10 (#28 - Validação de bounds)
+    function isValidMaxGoalkeepers(value) {
+      return value == null || (value is number && value >= 0 && value <= 10);
+    }
+
+    // Valida latitude no range -90 a 90 (#29 - Validação de coordenadas)
+    function isValidLatitude(lat) {
+      return lat == null || (lat is number && lat >= -90.0 && lat <= 90.0);
+    }
+
+    // Valida longitude no range -180 a 180 (#29 - Validação de coordenadas)
+    function isValidLongitude(lng) {
+      return lng == null || (lng is number && lng >= -180.0 && lng <= 180.0);
+    }
+
+    // Valida coordenadas (#29 - Validação de coordenadas)
+    function hasValidCoordinates(data) {
+      return isValidLatitude(data.get('location_lat', null)) &&
+             isValidLongitude(data.get('location_lng', null));
+    }
+
     // Valida nome (2-100 caracteres)
     function isValidName(name) {
       return name is string && name.size() >= 2 && name.size() <= 100;
@@ -287,17 +313,21 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // Qualquer usuario autenticado pode criar jogos
-      // Validacoes na criacao de jogo
+      // Validacoes na criacao de jogo (#28, #29 - Validações de bounds e coordenadas)
       allow create: if isAuthenticated() &&
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
-                       // Validacao de max_players (> 0)
-                       isPositiveNumber(request.resource.data.max_players) &&
+                       // Validacao de max_players (2-50) - #28
+                       isValidMaxPlayers(request.resource.data.max_players) &&
+                       // Validacao de max_goalkeepers (0-10) - #28
+                       isValidMaxGoalkeepers(request.resource.data.get('max_goalkeepers', null)) &&
                        // Validacao de scores (>= 0)
                        isNonNegativeNumber(request.resource.data.team1_score) &&
                        isNonNegativeNumber(request.resource.data.team2_score) &&
                        // Validacao de contadores (>= 0)
                        isNonNegativeNumber(request.resource.data.players_count) &&
-                       isNonNegativeNumber(request.resource.data.goalkeepers_count);
+                       isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
+                       // Validacao de coordenadas (#29)
+                       hasValidCoordinates(request.resource.data);
 
       // Apenas o dono pode atualizar o jogo
       // Excecao: contadores (players_count, goalkeepers_count) podem ser
@@ -503,7 +533,10 @@ service cloud.firestore {
           data.owner_id is string &&
           data.owner_id.size() > 0 &&
           // Rating opcional: 0.0-5.0
-          isValidRating(data.get('rating', null));
+          isValidRating(data.get('rating', null)) &&
+          // Validacao de coordenadas (#29)
+          isValidLatitude(data.get('latitude', null)) &&
+          isValidLongitude(data.get('longitude', null));
       }
 
       // ------------------------------------------
