@@ -871,7 +871,7 @@ private fun BadgesSection(badges: List<UserBadge>) {
             ) {
                 items(
                     items = badges.take(5),
-                    key = { it.badgeId }  // Key estável para evitar recomposições
+                    key = { it.id.ifEmpty { "${it.badgeId}_${it.unlockedAt}" } }  // Key única por instância de badge
                 ) { badge ->
                     BadgeItem(badge = badge)
                 }
