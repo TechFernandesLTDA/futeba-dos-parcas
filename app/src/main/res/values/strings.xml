@@ -141,7 +141,7 @@
     <string name="activity_login_text_6"> Cadastre-se</string>
     <string name="activity_login_text_7">Desenvolvido por</string>
     <string name="activity_login_text_8">Renan Locatiz Fernandes</string>
-    <string name="activity_login_text_9">v1.0.0</string>
+    <string name="activity_login_text_9">v1.5.0</string>
     <string name="activity_register_text_1">Criar Conta</string>
     <string name="activity_register_text_2">Preencha seus dados</string>
     <string name="activity_register_text_3"> Entrar</string>
@@ -808,7 +808,7 @@ subir no ranking!</string>
     <string name="layout_share_card_text_2">X</string>
     <string name="layout_share_card_text_3">Baixe o App e jogue com a gente!</string>
     <string name="layout_splash_branding_text_1">Futeba dos Parças</string>
-    <string name="layout_splash_branding_text_3">v1.4.0</string>
+    <string name="layout_splash_branding_text_3">v1.5.0</string>
     <string name="layout_splash_branding_text_2">Desenvolvido por Renan Locatiz Fernandes</string>
     <string name="bottom_nav_menu_title_1">Liga</string>
     <string name="game_detail_menu_title_1">Convidar no WhatsApp</string>
@@ -1230,6 +1230,8 @@ subir no ranking!</string>
     <string name="action_close">Fechar</string>
     <string name="action_back">Voltar</string>
     <string name="action_confirm">Confirmar</string>
+    <string name="confirm_player">Confirmar jogador</string>
+    <string name="awaiting_confirmation">Aguardando</string>
     <string name="action_invite">Convidar</string>
     <string name="action_promote">Promover</string>
     <string name="action_promote_admin">Promover a Admin</string>
@@ -1448,6 +1450,39 @@ subir no ranking!</string>
     <string name="mvp_wait_all_votes">Aguarde todos os jogadores votarem</string>
     <string name="mvp_finish_voting_owner">Finalizar Votação (Owner)</string>
     <string name="player_photo">Foto de %s</string>
+    <string name="mvp_vote_progress">Votação (%1$d/%2$d)</string>
+    <string name="mvp_custom_category">Categoria Especial</string>
+
+    <!-- MVP Vote Screen - New Features (Issues #51-60) -->
+    <string name="mvp_skip_vote">Pular</string>
+    <string name="mvp_confirm_vote">Confirmar Voto</string>
+    <string name="mvp_voting_expired">Votação Encerrada</string>
+    <string name="mvp_voting_expired_desc">O prazo para votação já expirou.</string>
+    <string name="mvp_no_votes">Nenhum voto registrado</string>
+    <string name="mvp_total_votes">Total de votos</string>
+    <string name="mvp_skipped_votes">Pularam</string>
+
+    <!-- MVP Vote Categories -->
+    <string name="mvp_category_mvp">Craque da Partida</string>
+    <string name="mvp_category_goalkeeper">Melhor Goleiro</string>
+    <string name="mvp_category_worst">Bola Murcha</string>
+    <string name="mvp_category_custom">Categoria Especial</string>
+
+    <!-- MVP Vote Results -->
+    <string name="mvp_results_title">Resultados da Votação</string>
+    <string name="mvp_reveal">E O CRAQUE É...</string>
+    <string name="mvp_reveal_subtitle">Preparando o reveal...</string>
+
+    <!-- MVP Attribute Rating (Issue #53) -->
+    <string name="mvp_attr_defense">Defesa</string>
+    <string name="mvp_attr_attack">Ataque</string>
+    <string name="mvp_attr_technique">Técnica</string>
+    <string name="mvp_attr_hustle">Raça</string>
+    <string name="mvp_attr_fair_play">Fair Play</string>
+
+    <!-- MVP Share Card (Issue #58) -->
+    <string name="share_mvp_card">Compartilhar Card do MVP</string>
+    <string name="share_mvp_text">%1$s foi eleito %2$s! %3$d votos (%4$.0f%%)</string>
 
     <!-- Navigation Strings (para TopBar) -->
     <string name="league">Liga</string>
@@ -1790,6 +1825,8 @@ subir no ranking!</string>
     <string name="players_rating_gk">GK</string>
     <string name="players_level_format">Nv %s</string>
     <string name="players_content_description_invite">Convidar</string>
+    <string name="select_group_for_invite">Selecione o grupo</string>
+    <string name="invite_sent_success">Convite enviado para %s</string>
 
     <!-- Location Map Screen -->
     <string name="location_map_title">Mapa de Locais</string>
@@ -2288,6 +2325,51 @@ subir no ranking!</string>
     <string name="live_game_statistics">Estatisticas</string>
     <string name="live_game_events">Eventos</string>
     <string name="live_game_assist_by">Assistido por %s</string>
+
+    <!-- Live Game - New Features (Voice, Timer, Referee Mode, etc.) -->
+    <string name="live_game_referee_mode">Modo Arbitro</string>
+    <string name="live_game_toggle_referee_mode">Alternar modo arbitro</string>
+    <string name="live_game_first_half">1o Tempo</string>
+    <string name="live_game_second_half">2o Tempo</string>
+    <string name="live_game_first_half_abbr">1T</string>
+    <string name="live_game_second_half_abbr">2T</string>
+    <string name="live_game_pause">Pausar</string>
+    <string name="live_game_resume">Retomar</string>
+    <string name="live_game_start_second_half">2o Tempo</string>
+    <string name="live_game_timer_config">Configurar Tempo</string>
+    <string name="live_game_half_duration">Duracao de cada tempo</string>
+    <string name="live_game_minutes">minutos</string>
+    <string name="live_game_substitution">Substituicao</string>
+    <string name="live_game_player_out">Jogador que sai</string>
+    <string name="live_game_player_in">Jogador que entra</string>
+    <string name="live_game_voice_command">Comando de voz</string>
+    <string name="live_game_heat_map">Mapa de Calor</string>
+    <string name="live_game_view_heat_map">Ver Mapa de Calor</string>
+    <string name="live_game_no_goals_with_position">Nenhum gol com posicao registrada</string>
+    <string name="live_game_undo">Desfazer</string>
+    <string name="live_game_event_registered">Evento registrado</string>
+    <string name="live_game_goal_notification_title">GOL!</string>
+    <string name="live_game_goal_notification_body">%1$s marcou! Placar: %2$s</string>
+    <string name="live_game_interval">Intervalo</string>
+    <string name="live_game_tap_to_mark_position">Toque para marcar a posicao do gol</string>
+    <string name="live_game_heat_map_description">Veja onde os gols foram marcados</string>
+    <string name="live_game_goals_by_zone">Gols por zona</string>
+    <string name="live_game_voice_prompt">Fale o evento (ex: Gol do Joao)</string>
+    <string name="live_game_voice_listening">Ouvindo...</string>
+    <string name="live_game_voice_permission_denied">Permissao de microfone negada</string>
+    <string name="live_game_voice_no_match">Nao entendi, tente novamente</string>
+    <string name="live_game_voice_timeout">Tempo esgotado, tente novamente</string>
+    <string name="live_game_voice_error">Erro no reconhecimento de voz</string>
+    <string name="live_game_voice_not_understood">Comando nao reconhecido</string>
+    <string name="live_game_voice_not_available">Reconhecimento de voz nao disponivel</string>
+    <string name="live_game_voice_hints_title">Exemplos de comandos:</string>
+    <string name="live_game_sound_enabled">Sons habilitados</string>
+    <string name="live_game_sound_disabled">Sons desabilitados</string>
+    <string name="live_game_toggle_sound">Alternar som</string>
+
+    <!-- Widget Live Score -->
+    <string name="widget_live_score_description">Mostra o placar do jogo ao vivo</string>
+    <string name="widget_no_live_game">Nenhum jogo ao vivo</string>
 
     <!-- Cashbox Dialogs missing strings -->
     <string name="cashbox_add_income_type">Adicionar Receita</string>
@@ -2835,5 +2917,432 @@ subir no ranking!</string>
     <string name="location_error_action_login">Fazer login</string>
     <string name="location_error_action_fix_fields">Corrigir campos</string>
     <string name="location_error_fields_to_fix">Campos a corrigir:</string>
+
+    <!-- Location Selector Screen (Enhanced) -->
+    <string name="location_selector_title">Selecionar Local</string>
+    <string name="location_selector_toggle_view">Alternar visualização</string>
+    <string name="location_selector_sort">Ordenar</string>
+    <string name="location_selector_filter">Filtrar</string>
+    <string name="location_selector_search_hint">Buscar local por nome ou endereço...</string>
+    <string name="location_selector_create_new">Cadastrar Local</string>
+    <string name="location_selector_sort_name">Nome (A-Z)</string>
+    <string name="location_selector_sort_distance">Distância</string>
+    <string name="location_selector_sort_rating">Avaliação</string>
+    <string name="location_selector_sort_favorites">Favoritos primeiro</string>
+    <string name="location_selector_remove_filter">Remover filtro</string>
+    <string name="location_selector_clear_filters">Limpar todos</string>
+    <string name="location_selector_recent">Locais Recentes</string>
+    <string name="location_selector_search_results">Resultados da Busca</string>
+    <string name="location_selector_all_locations">Todos os Locais</string>
+    <string name="location_selector_favorite">Favorito</string>
+    <string name="location_selector_field_count">%1$d quadra(s)</string>
+    <string name="location_selector_map_placeholder">Visualização em mapa disponível em breve</string>
+    <string name="location_selector_locations_count">%1$d locais encontrados</string>
+    <string name="location_selector_reviews">avaliações</string>
+    <string name="location_selector_amenities">Comodidades</string>
+    <string name="location_selector_photos">Fotos</string>
+    <string name="location_selector_fields">Quadras Disponíveis</string>
+    <string name="location_selector_recent_reviews">Avaliações Recentes</string>
+    <string name="location_selector_select_location">Selecionar este Local</string>
+    <string name="location_selector_price_per_hour">R$ %.2f/hora</string>
+    <string name="location_selector_available">Disponível</string>
+    <string name="location_selector_unavailable">Indisponível</string>
+    <string name="location_selector_filter_amenities">Filtrar por Comodidades</string>
+    <string name="location_selector_apply_filters">Aplicar Filtros</string>
+    <string name="location_selector_create_title">Cadastrar Novo Local</string>
+    <string name="location_selector_field_name">Nome do local</string>
+    <string name="location_selector_field_address">Endereço</string>
+    <string name="location_selector_field_city">Cidade</string>
+    <string name="location_selector_field_state">UF</string>
+    <string name="location_selector_field_neighborhood">Bairro</string>
+    <string name="location_selector_field_required">Campo obrigatório</string>
+    <string name="location_selector_no_results">Nenhum local encontrado para sua busca</string>
+    <string name="location_selector_no_locations">Nenhum local cadastrado ainda</string>
+
+    <!-- Location Amenities (Additional) -->
+    <string name="location_amenity_lighting">Iluminação</string>
+    <string name="location_amenity_restaurant">Restaurante</string>
+    <string name="location_amenity_bathroom">Banheiro</string>
+
+    <!-- Photo Gallery -->
+    <string name="photo_gallery_title">Galeria de Fotos</string>
+    <string name="photo_gallery_count">%1$d de %2$d</string>
+    <string name="photo_gallery_close">Fechar galeria</string>
+    <string name="photo_gallery_next">Próxima foto</string>
+    <string name="photo_gallery_previous">Foto anterior</string>
+
+    <!-- Team Formation -->
+    <string name="team_formation_title">Formação de Times</string>
+    <string name="start_draft">Iniciar Sorteio</string>
+    <string name="reset">Reiniciar</string>
+    <string name="available_players">Jogadores Disponíveis (%1$d)</string>
+    <string name="add_pair">Manter Juntos</string>
+    <string name="configured_pairs">Pares Configurados</string>
+    <string name="select_draft_mode">Modo de Sorteio</string>
+    <string name="draft_mode_description">Escolha como os times serão formados</string>
+    <string name="auto_draft">Sorteio Automático</string>
+    <string name="captain_picks">Escolha por Capitães</string>
+    <string name="select_captains">Escolher Capitães</string>
+    <string name="captain_1">Capitão 1</string>
+    <string name="captain_2">Capitão 2</string>
+    <string name="captain_turn">Vez de %1$s</string>
+    <string name="pick_number">Escolha #%1$d</string>
+    <string name="team_strength">Força: %.1f</string>
+    <string name="drag_players_here">Arraste jogadores aqui</string>
+    <string name="has_goalkeeper">Goleiro definido</string>
+    <string name="no_goalkeeper">Sem goleiro!</string>
+    <string name="team_comparison">Comparação de Times</string>
+    <string name="teams_balanced">Times equilibrados</string>
+    <string name="teams_unbalanced">Diferença de %.1f%%</string>
+    <string name="head_to_head">Confronto Direto</string>
+    <string name="rotation_suggestions">Sugestões de Rotação</string>
+    <string name="swap_suggestion">Trocar %1$s por %2$s</string>
+    <string name="favorite_formations">Formações Favoritas</string>
+    <string name="save_formation">Salvar Formação</string>
+    <string name="confirm_teams">Confirmar Times</string>
+    <string name="formation_name">Nome da Formação</string>
+    <string name="formation_players">%1$d vs %2$d jogadores</string>
+    <string name="saved_formations">Formações Salvas</string>
+    <string name="no_saved_formations">Nenhuma formação salva</string>
+    <string name="times_used">Usado %1$d vezes</string>
+    <string name="load">Carregar</string>
+    <string name="select_vest_color">Cor do Colete</string>
+    <string name="keep_together">Manter Juntos</string>
+    <string name="keep_together_description">Estes jogadores sempre ficarão no mesmo time</string>
+    <string name="player_1">Jogador 1</string>
+    <string name="player_2">Jogador 2</string>
+    <string name="draft_settings">Configurações do Sorteio</string>
+    <string name="consider_positions">Considerar posições</string>
+    <string name="goalkeepers_per_team">Goleiros por time</string>
+    <string name="see_all">Ver todos</string>
+    <string name="start">Iniciar</string>
+    <string name="remove">Remover</string>
+    <string name="team_strength_value">%.1f</string>
+    <string name="assists_count">%1$d A</string>
+
+    <!-- Team Formation Enhancements (Issues #41-50) -->
+    <string name="shuffle_teams">Embaralhar Times</string>
+    <string name="shuffling">Embaralhando...</string>
+    <string name="teams_defined">Times Definidos!</string>
+    <string name="no_history">Sem histórico</string>
+    <string name="first_matchup">O primeiro confronto entre estes times!</string>
+    <string name="last_games">Últimos %1$d Jogos</string>
+    <string name="rivalry_balanced">Rivalidade Equilibrada!</string>
+    <string name="team_leads">%1$s lidera o confronto</string>
+    <string name="games_played">%1$d jogos disputados</string>
+    <string name="consecutive_wins">%1$s: %2$d vitórias seguidas!</string>
+    <string name="position_distribution">Distribuição de Posições</string>
+    <string name="attack">Ataque</string>
+    <string name="midfield">Meio-campo</string>
+    <string name="defense">Defesa</string>
+    <string name="goalkeeper_position">Goleiro</string>
+    <string name="pick_player">Escolha um jogador</string>
+    <string name="tap_to_add_player">Toque em um jogador para adicioná-lo ao seu time</string>
+    <string name="no_pairs_configured">Nenhum par configurado</string>
+    <string name="delete_formation_title">Excluir formação?</string>
+    <string name="delete_formation_message">Deseja excluir a formação \"%1$s\"?</string>
+    <string name="formation_name_hint">Dê um nome para lembrar desta formação</string>
+    <string name="formation_suggestions">Sugestões:</string>
+    <string name="suggestion_main_team">Time Principal</string>
+    <string name="suggestion_reserves">Reservas</string>
+    <string name="suggestion_balanced">Balanceado</string>
+    <string name="suggestion_friends">Amigos</string>
+    <string name="suggestion_family">Família</string>
+    <string name="name_required">Nome obrigatório</string>
+    <string name="max_characters">Máximo %1$d caracteres</string>
+    <string name="times_used_count">Vezes usado</string>
+    <string name="players_count_label">Jogadores</string>
+
+    <!-- ========== GAME OWNER FEATURES (Issues #61-70) ========== -->
+
+    <!-- Issue #61: Financial Dashboard -->
+    <string name="owner_financial_dashboard">Dashboard Financeiro</string>
+    <string name="owner_financial_short">Financeiro</string>
+    <string name="owner_total_cost">Custo Total</string>
+    <string name="owner_collected">Arrecadado</string>
+    <string name="owner_pending">Pendente</string>
+    <string name="owner_surplus">Excedente</string>
+    <string name="owner_per_player">Por jogador: %1$s</string>
+    <string name="owner_paid">Pagos</string>
+    <string name="owner_partial">Parcial</string>
+    <string name="owner_pending_short">Devendo</string>
+    <string name="owner_payment_list">Lista de Pagamentos</string>
+    <string name="owner_financial_summary">Resumo Financeiro</string>
+    <string name="owner_collected_count">Pagos: %1$d</string>
+    <string name="owner_pending_count">Devendo: %1$d</string>
+
+    <!-- Issue #62: Mass Message -->
+    <string name="owner_mass_message">Avisar Todos</string>
+    <string name="owner_notify_short">Avisar</string>
+    <string name="owner_select_template">Escolha o modelo de mensagem:</string>
+    <string name="owner_template_confirmed">Jogo Confirmado!</string>
+    <string name="owner_template_reminder">Lembrete</string>
+    <string name="owner_template_pix">Chave Pix</string>
+    <string name="owner_template_confirmed_msg">Salve, galera! O jogo de %1$s às %2$s está confirmado! Local: %3$s. Bora jogar!</string>
+    <string name="owner_template_reminder_msg">Lembrete: Nosso jogo é dia %1$s às %2$s. Não esqueçam!</string>
+    <string name="owner_template_pix_msg">Chave Pix para pagamento: %1$s\nValor: R$ %.2f\nFaça o Pix e confirme aqui!</string>
+    <string name="owner_only_unpaid">Enviar apenas para quem ainda não pagou</string>
+    <string name="owner_send_message">Enviar</string>
+
+    <!-- Issue #63: Delegate Administration -->
+    <string name="owner_delegate_admin">Delegar Administração</string>
+    <string name="owner_delegate_admin_subtitle">Permite editar jogo e marcar pagamentos</string>
+    <string name="owner_delegate_admin_desc">Selecione jogadores que poderão ajudar a gerenciar este jogo. Eles poderão editar informações e marcar pagamentos.</string>
+    <string name="owner_no_players_to_delegate">Nenhum jogador confirmado para delegar</string>
+    <string name="owner_co_organizers">Co-org: %1$s</string>
+    <string name="owner_role_owner">Organizador</string>
+    <string name="owner_role_co_organizer">Co-organizador</string>
+
+    <!-- Issue #64: Block Player -->
+    <string name="owner_blocked_players">Jogadores Bloqueados</string>
+    <string name="owner_blocked_players_subtitle">Impede confirmação em futuros jogos</string>
+    <string name="owner_block_player">Bloquear Jogador</string>
+    <string name="owner_block_player_desc">Jogadores bloqueados não podem ver nem confirmar jogos deste grupo.</string>
+    <string name="owner_no_blocked_players">Nenhum jogador bloqueado</string>
+    <string name="owner_no_blocked_players_desc">Jogadores que causarem problemas podem ser bloqueados aqui.</string>
+    <string name="owner_no_players_to_block">Nenhum jogador disponível para bloquear</string>
+    <string name="owner_select_player">Selecione o jogador:</string>
+    <string name="owner_block_reason_label">Motivo (opcional)</string>
+    <string name="owner_block_reason">Motivo: %1$s</string>
+    <string name="owner_blocked_since">Bloqueado em: %1$s</string>
+    <string name="owner_block">Bloquear</string>
+    <string name="owner_unblock">Desbloquear</string>
+
+    <!-- Issue #65: Automatic Closing -->
+    <string name="owner_auto_close_title">Fechamento Automático</string>
+    <string name="owner_auto_close_desc">A lista de confirmações será fechada automaticamente no horário selecionado antes do jogo.</string>
+    <string name="owner_auto_close_disabled">Desabilitado</string>
+    <string name="owner_auto_close_enabled">%1$d horas antes</string>
+    <string name="owner_auto_close_1h">1 hora antes</string>
+    <string name="owner_auto_close_2h">2 horas antes</string>
+    <string name="owner_auto_close_4h">4 horas antes</string>
+    <string name="owner_auto_close_12h">12 horas antes</string>
+    <string name="owner_auto_close_24h">24 horas antes</string>
+
+    <!-- Issue #66: Post-Game Report -->
+    <string name="owner_post_game_report">Relatório Pós-Jogo</string>
+    <string name="owner_report_short">Relatório</string>
+    <string name="owner_mvp_title">MVP da Partida</string>
+    <string name="owner_match_stats">Estatísticas da Partida</string>
+    <string name="owner_present">Presentes</string>
+    <string name="owner_absent">Ausentes</string>
+    <string name="owner_yellow">Amarelos</string>
+    <string name="owner_red">Vermelhos</string>
+    <string name="owner_top_scorers">Artilheiros</string>
+    <string name="owner_top_assists">Garçons</string>
+    <string name="owner_present_players">Presentes (%1$d)</string>
+    <string name="owner_absent_players">Ausentes (%1$d)</string>
+    <string name="owner_unpaid_players">Devendo (%1$d)</string>
+
+    <!-- Issue #67: Organization History -->
+    <string name="owner_stats_title">Meu Histórico de Organizador</string>
+    <string name="owner_my_stats">Minhas Estatísticas</string>
+    <string name="owner_my_stats_subtitle">Histórico de jogos organizados</string>
+    <string name="owner_stats_overview">Visão Geral</string>
+    <string name="owner_games_organized">Jogos Organizados</string>
+    <string name="owner_players_hosted">Jogadores Recebidos</string>
+    <string name="owner_avg_attendance">Taxa Média de Presença</string>
+    <string name="owner_total_revenue">Total Arrecadado</string>
+    <string name="owner_attendance_trend">Tendência de Presença</string>
+    <string name="owner_last_n_games">Últimos %1$d jogos</string>
+    <string name="owner_best_game">Melhor Jogo</string>
+    <string name="owner_worst_game">Pior Jogo</string>
+    <string name="owner_recent_games">Jogos Recentes</string>
+
+    <!-- Issue #68: Schedule Rules -->
+    <string name="owner_rules">Regras do Jogo</string>
+    <string name="owner_rules_empty">Nenhuma regra definida</string>
+    <string name="owner_game_rules">Regras</string>
+    <string name="owner_edit_rules">Editar Regras</string>
+    <string name="owner_rules_label">Regras visíveis para todos os jogadores</string>
+    <string name="owner_rule_templates">Adicionar regra sugerida:</string>
+    <string name="owner_rule_template_1">Quem cancelar 2x consecutivas fica fora do grupo.</string>
+    <string name="owner_rule_template_2">Pagamento deve ser feito até 24h antes do jogo.</string>
+    <string name="owner_rule_template_3">Atrasos de mais de 15 min perdem a vaga.</string>
+
+    <!-- Issue #69: Partial Payment -->
+    <string name="owner_partial_payment">Pagamento Parcial</string>
+    <string name="owner_partial_payment_for">Informe quanto %1$s já pagou:</string>
+    <string name="owner_total_due">Total a pagar: %1$s</string>
+    <string name="owner_amount_paid">Valor pago</string>
+    <string name="owner_paid_partial_amount">Pagou: %1$s</string>
+
+    <!-- Issue #70: Transfer Ownership -->
+    <string name="owner_transfer_ownership">Transferir Titularidade</string>
+    <string name="owner_transfer_ownership_subtitle">Passar jogo para outro organizador</string>
+    <string name="owner_transfer_warning">Atenção: Você perderá o controle deste jogo. Esta ação não pode ser desfeita.</string>
+    <string name="owner_no_players_to_transfer">Nenhum jogador confirmado para transferir</string>
+    <string name="owner_confirm_transfer">Transferir</string>
+
+    <!-- Owner Tools Section -->
+    <string name="owner_tools_title">Ferramentas do Organizador</string>
+
+    <!-- Create Game Wizard (Improvement #8) -->
+    <string name="create_game_wizard_previous">Anterior</string>
+    <string name="create_game_wizard_next">Proximo</string>
+    <string name="create_game_wizard_finish">Agendar</string>
+    <string name="create_game_step_location">Local</string>
+    <string name="create_game_step_details">Detalhes</string>
+    <string name="create_game_step_datetime">Horario</string>
+    <string name="create_game_step_confirmation">Confirmar</string>
+
+    <!-- Game Templates (Improvement #1) -->
+    <string name="create_game_templates_title">Meus Templates</string>
+    <string name="create_game_templates_empty">Voce ainda nao tem templates salvos</string>
+    <string name="create_game_templates_hint">Crie um jogo e salve como template para usar depois</string>
+    <string name="create_game_save_template">Salvar como Template</string>
+    <string name="create_game_save_template_title">Salvar Template</string>
+    <string name="create_game_save_template_hint">De um nome para este template para facilitar a identificacao</string>
+    <string name="create_game_template_name">Nome do Template</string>
+    <string name="create_game_use_template">Usar Template</string>
+
+    <!-- Duplicate Game (Improvement #2) -->
+    <string name="create_game_duplicate_title">Duplicar Jogo Anterior</string>
+    <string name="create_game_duplicate_empty">Nenhum jogo anterior encontrado</string>
+    <string name="create_game_duplicate_button">Duplicar Jogo</string>
+
+    <!-- Time Suggestion (Improvement #3) -->
+    <string name="create_game_time_suggestion">Horario com maior adesao: %1$s (%2$d%% de presenca)</string>
+    <string name="create_game_apply">Aplicar</string>
+
+    <!-- Availability Calendar (Improvement #4) -->
+    <string name="create_game_availability_title">Disponibilidade da Quadra</string>
+    <string name="create_game_availability_available">Disponivel</string>
+    <string name="create_game_availability_occupied">Ocupado</string>
+
+    <!-- CEP Lookup (Improvement #5) -->
+    <string name="create_game_cep_label">CEP</string>
+    <string name="create_game_cep_found">Endereco encontrado:</string>
+    <string name="create_game_cep_use_address">Usar este endereco</string>
+    <string name="create_game_cep_not_found">CEP nao encontrado</string>
+
+    <!-- Price Per Player (Improvement #6) -->
+    <string name="create_game_price_per_player_label">Valor por jogador</string>
+    <string name="create_game_price_per_player_count">%d jogadores</string>
+    <string name="create_game_manual_price">Manual</string>
+    <string name="create_game_price_per_player_input">Valor individual</string>
+    <string name="create_game_court_price_label">Diaria</string>
+
+    <!-- Time Picker Improvements -->
+    <string name="time_picker_toggle_mode">Alternar modo</string>
+    <string name="time_picker_suggestions">Horarios populares:</string>
+
+    <!-- Multi-field (Improvement #7) -->
+    <string name="create_game_add_field">Adicionar outra quadra</string>
+    <string name="create_game_remove_field">Remover quadra</string>
+    <string name="create_game_fields_selected">%d quadras selecionadas</string>
+
+    <!-- Auto-Save Draft (Improvement #9) -->
+    <string name="create_game_draft_title">Continuar rascunho?</string>
+    <string name="create_game_draft_message">Voce tem um jogo em andamento que nao foi salvo. Deseja continuar de onde parou?</string>
+    <string name="create_game_draft_restore">Continuar</string>
+    <string name="create_game_draft_discard">Descartar</string>
+    <string name="create_game_draft_saving">Salvando...</string>
+    <string name="create_game_draft_saved">Salvo automaticamente as %s</string>
+
+    <!-- Google Calendar (Improvement #10) -->
+    <string name="create_game_add_to_calendar">Adicionar ao Calendario</string>
+    <string name="create_game_calendar_added">Evento adicionado ao calendario</string>
+
+    <!-- Create Game Success -->
+    <string name="create_game_success_title">Jogo Agendado!</string>
+    <string name="create_game_success_message">Seu jogo foi agendado com sucesso</string>
+    <string name="create_game_success_view">Ver Jogo</string>
+    <string name="create_game_success_new">Criar Outro</string>
+
+    <!-- ========== PRESENCE AND CONFIRMATION FEATURES (Issues #31-40) ========== -->
+
+    <!-- Issue #31: Confirmation Deadline -->
+    <string name="confirmation_deadline_title">Prazo para Confirmacao</string>
+    <string name="confirmation_deadline_remaining">Prazo: %1$s</string>
+    <string name="confirmation_deadline_passed">Prazo encerrado</string>
+    <string name="confirmation_deadline_none">Sem prazo</string>
+
+    <!-- Issue #32: Automatic Waitlist -->
+    <string name="waitlist_title">Lista de Espera</string>
+    <string name="waitlist_empty">Nenhum jogador na lista de espera</string>
+    <string name="waitlist_position">Posicao na fila: %1$d</string>
+    <string name="waitlist_enter">Entrar na Lista de Espera</string>
+    <string name="waitlist_leave">Sair da Lista de Espera</string>
+    <string name="waitlist_added">Adicionado a lista de espera (posicao %1$d)</string>
+    <string name="waitlist_count">%1$d na fila</string>
+
+    <!-- Issue #33: Vacancy Notification -->
+    <string name="vacancy_notification_title">Vaga Aberta!</string>
+    <string name="vacancy_notification_body">Uma vaga abriu no jogo de %1$s. Confirme em %2$d minutos!</string>
+    <string name="vacancy_confirm">Confirmar Vaga</string>
+    <string name="vacancy_time_remaining">Tempo restante: %1$s</string>
+
+    <!-- Issue #34: Pix Payment Integration -->
+    <string name="pix_payment_title">Pagamento via Pix</string>
+    <string name="pix_key">Chave Pix</string>
+    <string name="pix_key_copied">Chave Pix copiada!</string>
+    <string name="pix_show_qr">Mostrar QR Code</string>
+    <string name="pix_qr_title">QR Code Pix</string>
+    <string name="share_pix_payment">Compartilhar dados de pagamento</string>
+    <string name="pix_copy_key">Copiar chave</string>
+    <string name="pix_key_type">Tipo de chave</string>
+    <string name="pix_beneficiary">Beneficiário</string>
+
+    <!-- Issue #35: On My Way Status -->
+    <string name="on_the_way">A Caminho</string>
+    <string name="on_the_way_button">Estou a Caminho!</string>
+    <string name="on_the_way_with_eta">A caminho (%1$s)</string>
+    <string name="on_the_way_marked">Voce foi marcado como a caminho</string>
+
+    <!-- Issue #36: Location Check-in -->
+    <string name="checkin_title">Check-in</string>
+    <string name="checkin_button">Fazer Check-in</string>
+    <string name="checkin_success">Check-in realizado!</string>
+    <string name="checkin_error_far">Voce esta muito longe do local (%1$dm)</string>
+    <string name="checkin_done_at">Check-in as %1$s</string>
+
+    <!-- Issue #37: Absence History and Reliability -->
+    <string name="reliability_title">Confiabilidade</string>
+    <string name="reliability_rate">Taxa de presenca: %1$d%%</string>
+    <string name="reliability_warning">Jogador com baixa confiabilidade</string>
+
+    <!-- Issue #38: Invite Guest -->
+    <string name="invite_guest_title">Convidar Convidado</string>
+    <string name="invite_guest_generate">Gerar Link de Convite</string>
+    <string name="invite_guest_share">Compartilhar Convite</string>
+    <string name="invite_guest_copied">Link copiado!</string>
+    <string name="invite_guest_badge">Convidado</string>
+
+    <!-- Issue #39: Cancellation Reason -->
+    <string name="cancel_reason_title">Motivo do Cancelamento</string>
+    <string name="cancel_reason_unexpected">Imprevisto</string>
+    <string name="cancel_reason_injury">Lesao</string>
+    <string name="cancel_reason_work">Trabalho</string>
+    <string name="cancel_reason_family">Familia</string>
+    <string name="cancel_reason_other">Outro</string>
+    <string name="cancel_reason_other_hint">Descreva o motivo...</string>
+
+    <!-- Issue #40: Order by Confirmation Time -->
+    <string name="confirmation_order_position">%1$do</string>
+    <string name="confirmed_at">Confirmado as %1$s</string>
+
+    <!-- Presence Status Labels -->
+    <string name="status_on_the_way">A Caminho</string>
+    <string name="status_checked_in">Check-in Feito</string>
+
+    <!-- Issue #40: Player Confirmation Card Swipe Actions -->
+    <string name="player_card_click">Ver detalhes do jogador</string>
+    <string name="mark_paid">Marcar como Pago</string>
+    <string name="mark_unpaid">Marcar como Pendente</string>
+    <string name="partial_payment">Pagamento Parcial</string>
+    <string name="partial_payment_description">Total: R$ %.2f. Informe quanto o jogador já pagou:</string>
+    <string name="partial_value">Parcial: R$ %.2f</string>
+    <string name="pending_payment">Pendente</string>
+    <string name="paid">Pago</string>
+    <string name="remove_player">Remover Jogador</string>
+    <string name="amount">Valor</string>
+    <string name="goalkeeper_short">GOL</string>
+    <string name="waitlist_notified">Notificado</string>
+    <string name="waitlist_expired">Expirado</string>
+    <string name="waitlist_waiting_message">Aguardando vaga abrir</string>
+    <string name="waitlist_vacancy_available">Vaga disponivel! Confirme sua presenca.</string>
+    <string name="waitlist_since">Desde %1$s</string>
+    <string name="game_full_message">Jogo lotado. Entre na lista de espera para ser notificado quando abrir vaga.</string>
 
 </resources>

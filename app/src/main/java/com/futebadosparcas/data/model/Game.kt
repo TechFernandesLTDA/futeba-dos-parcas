@@ -729,7 +729,7 @@ data class GameConfirmation(
 
     @Exclude
     fun getDisplayName(): String {
-        return if (!nickname.isNullOrBlank()) nickname!! else userName
+        return nickname?.takeIf { it.isNotBlank() } ?: userName
     }
 
     @Exclude

@@ -107,7 +107,7 @@ fun PublicGamesSuggestions(
                 contentPadding = PaddingValues(horizontal = spacing.contentPaddingHorizontal),
                 horizontalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing)
             ) {
-                items(games) { game ->
+                items(games, key = { it.id }) { game ->
                     PublicGameCard(game = game, onClick = { onGameClick(game) }, fillWidth = false)
                 }
             }

@@ -187,7 +187,7 @@ data class GroupMember(
 
     @Exclude
     fun getDisplayName(): String {
-        return if (!nickname.isNullOrBlank()) nickname!! else userName
+        return nickname?.takeIf { it.isNotBlank() } ?: userName
     }
 
     @Exclude

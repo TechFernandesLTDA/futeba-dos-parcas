@@ -58,7 +58,7 @@ fun ShimmerListContent(
         contentPadding = contentPadding,
         verticalArrangement = verticalArrangement
     ) {
-        items(count) {
+        items(count, key = { "shimmer_$it" }) {
             shimmerContent(brush)
         }
     }
@@ -71,7 +71,7 @@ fun LazyListScope.shimmerItems(
     count: Int,
     shimmerContent: @Composable (Brush) -> Unit
 ) {
-    items(count) {
+    items(count, key = { "shimmer_ext_$it" }) {
         // Nota: Brush deve ser criado dentro do composable com animação
         ShimmerBox {
             shimmerContent(it)

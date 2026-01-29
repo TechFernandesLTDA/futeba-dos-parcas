@@ -680,7 +680,7 @@ private fun BadgesLoadingState() {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(6) {
+            items(6, key = { "shimmer_$it" }) {
                 BadgeCardShimmer()
             }
         }

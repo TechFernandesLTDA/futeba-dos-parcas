@@ -7,6 +7,7 @@ import com.futebadosparcas.data.model.NotificationType
 import com.futebadosparcas.data.repository.GameSummonRepository
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
+import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toAndroidAppNotifications
 import com.futebadosparcas.util.toAndroidNotificationType
 import com.futebadosparcas.util.toKmpNotificationType
@@ -64,7 +65,10 @@ class NotificationsViewModel @Inject constructor(
             .onEach { count ->
                 _unreadCount.value = count
             }
-            .catch { /* Ignore errors */ }
+            .catch { e ->
+                // Erro ao observar contagem - mantém último valor conhecido
+                AppLogger.w("NotificationsVM") { "Erro ao observar unread count: ${e.message}" }
+            }
             .launchIn(viewModelScope)
     }
 
