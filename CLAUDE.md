@@ -139,6 +139,12 @@ Toda tela deve implementar:
 ./gradlew :app:testDebugUnitTest # Unit tests (app module only)
 ./gradlew connectedAndroidTest   # Instrumented tests (requires device/emulator)
 
+# Run single test class
+./gradlew :app:testDebugUnitTest --tests "com.futebadosparcas.YourTestClass"
+
+# Run single test method
+./gradlew :app:testDebugUnitTest --tests "com.futebadosparcas.YourTestClass.testMethodName"
+
 # Quality
 ./gradlew lint                   # Lint check
 ./gradlew compileDebugKotlin     # Fast Kotlin compilation check
@@ -149,6 +155,13 @@ cd functions && npm install      # Install dependencies
 npm run build                    # Compile TypeScript
 firebase deploy --only functions # Deploy to Firebase
 ```
+
+## Windows Development Notes
+
+- **Path Encoding**: Test runner is configured to handle UTF-8 paths (chars like "ç")
+- **Working Directory**: Tests run from `C:/TEMP` to avoid Windows path issues
+- **Line Endings**: Git handles CRLF/LF automatically via `.gitattributes`
+- **Gradle Wrapper**: Use `./gradlew` (or `gradlew.bat` on Windows)
 
 ## Architecture Guidelines
 
@@ -240,6 +253,18 @@ shared/src/
 ├── androidMain/        # Android implementations (FirebaseRepositoryImpl)
 └── iosMain/            # iOS implementations (future)
 ```
+
+### When to Use shared/ vs app/
+
+| Code Type | Location | Reason |
+|-----------|----------|--------|
+| Domain entities | `shared/commonMain` | Platform-agnostic |
+| Repository interfaces | `shared/commonMain` | Contracts for any platform |
+| Firebase implementations | `shared/androidMain` | Android-specific SDK |
+| ViewModels | `app/ui/` | Android lifecycle-aware |
+| Compose UI | `app/ui/` | Android-only (for now) |
+| XP/Level calculations | `shared/commonMain` | Business logic |
+| Use Cases | `shared/commonMain` | Platform-agnostic business rules |
 
 ## Firebase Structure
 
@@ -475,6 +500,8 @@ Before committing UI code:
 8. **Paginate large lists** - Max 50 items per page
 9. **Never hardcode colors** - Always use `MaterialTheme.colorScheme.*` (see Material Design 3 section)
 10. **Use ContrastHelper** - For any custom background + text combination to ensure WCAG AA compliance
+11. **Test encoding** - Tests use UTF-8 JVM args and run from `C:/TEMP` to avoid Windows path issues
+12. **Spec-Driven Development** - NEVER implement features without an approved spec in `/specs/`
 
 ## Performance Optimizations (Applied)
 
