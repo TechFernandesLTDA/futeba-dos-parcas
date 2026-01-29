@@ -67,7 +67,7 @@ fun ActivityFeedSection(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(activities) { activity ->
+                items(activities, key = { it.id }) { activity ->
                     ActivityCard(activity)
                 }
             }

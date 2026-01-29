@@ -242,7 +242,7 @@ data class User(
      */
     @Exclude
     fun getDisplayName(): String {
-        return if (!nickname.isNullOrBlank()) nickname!! else name
+        return nickname?.takeIf { it.isNotBlank() } ?: name
     }
 
     /**

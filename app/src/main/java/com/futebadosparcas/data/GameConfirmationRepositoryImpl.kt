@@ -61,7 +61,8 @@ class GameConfirmationRepositoryImpl @Inject constructor(
             )
         }
 
-        val user = currentUserResult.getOrNull()!!
+        val user = currentUserResult.getOrNull()
+            ?: return Result.failure(Exception("Usuario atual nao encontrado"))
 
         // ========== VALIDACAO 1: Verificar se usuario ja confirmou (duplicata) ==========
         val existingConfirmations = dataSource.getGameConfirmations(gameId).getOrNull() ?: emptyList()
@@ -81,11 +82,16 @@ class GameConfirmationRepositoryImpl @Inject constructor(
                 gameResult.exceptionOrNull() ?: Exception("Falha ao obter detalhes do jogo")
             )
         }
-        val game = gameResult.getOrNull()!!
+        val game = gameResult.getOrNull()
+            ?: return Result.failure(Exception("Jogo nao encontrado"))
 
         // Verificar se jogo esta em status que aceita confirmacoes
+        // SCHEDULED = jogo agendado, lista aberta
+        // CONFIRMED = lista fechada (apenas manager pode adicionar, validado no ViewModel)
+        // IN_PROGRESS/FINISHED = jogo em andamento ou encerrado, nao aceita confirmacoes
         val gameStatus = try { GameStatus.valueOf(game.status) } catch (e: Exception) { GameStatus.SCHEDULED }
-        if (gameStatus != GameStatus.SCHEDULED) {
+        val acceptsConfirmations = gameStatus in listOf(GameStatus.SCHEDULED, GameStatus.CONFIRMED)
+        if (!acceptsConfirmations) {
             return Result.failure(
                 IllegalStateException("Este jogo nao esta aceitando confirmacoes (status: ${game.status})")
             )
@@ -234,6 +240,14 @@ class GameConfirmationRepositoryImpl @Inject constructor(
         val userId = dataSource.getCurrentUserId()
             ?: return Result.failure(Exception("Usuario nao autenticado"))
 
+        return dataSource.updateConfirmationStatus(gameId, userId, status)
+    }
+
+    override suspend fun updateConfirmationStatusForUser(
+        gameId: String,
+        userId: String,
+        status: String
+    ): Result<Unit> {
         return dataSource.updateConfirmationStatus(gameId, userId, status)
     }
 }

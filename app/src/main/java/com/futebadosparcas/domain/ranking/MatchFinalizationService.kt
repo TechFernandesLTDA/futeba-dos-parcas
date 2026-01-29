@@ -512,7 +512,7 @@ class MatchFinalizationService @Inject constructor(
         val newCurrentStreak = if (isConsecutive) {
             existingStreak.currentStreak + 1
         } else {
-            existingStreak.currentStreak // Mesmo jogo, não incrementa
+            1 // Streak quebrado - reinicia com 1 (jogo atual conta)
         }
 
         val newLongestStreak = maxOf(existingStreak.longestStreak, newCurrentStreak)

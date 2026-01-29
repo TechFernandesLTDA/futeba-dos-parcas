@@ -95,7 +95,11 @@ private fun MapContent(
     // Find first valid location for camera position, or use Curitiba as default
     val initialPosition = locations
         .firstOrNull { it.latitude != null && it.longitude != null }
-        ?.let { LatLng(it.latitude!!, it.longitude!!) }
+        ?.let { location ->
+            val lat = location.latitude
+            val lng = location.longitude
+            if (lat != null && lng != null) LatLng(lat, lng) else null
+        }
         ?: curitiba
 
     val cameraPositionState = rememberCameraPositionState {
@@ -128,11 +132,13 @@ private fun MapContent(
     ) {
         // Add markers for all valid locations with accessibility contentDescription
         locations.forEach { location ->
-            if (location.latitude != null && location.longitude != null) {
+            val lat = location.latitude
+            val lng = location.longitude
+            if (lat != null && lng != null) {
                 val markerDescription = buildMarkerDescription(location)
 
                 Marker(
-                    state = MarkerState(position = LatLng(location.latitude!!, location.longitude!!)),
+                    state = MarkerState(position = LatLng(lat, lng)),
                     title = location.name,
                     snippet = location.address,
                     contentDescription = markerDescription
