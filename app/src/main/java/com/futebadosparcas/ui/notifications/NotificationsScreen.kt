@@ -1,12 +1,20 @@
 package com.futebadosparcas.ui.notifications
 
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,10 +26,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -34,23 +49,44 @@ import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerListContent
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.components.design.AppTopBar
+import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.ui.theme.statusBarsPadding
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Tela principal de notificações com Material Design 3
  *
  * Características:
  * - Pull-to-refresh
- * - Swipe-to-dismiss
+ * - Swipe-to-dismiss com undo
  * - Agrupamento por data (Hoje, Ontem, Esta Semana, Antigas)
- * - Badge de não lidas
+ * - Badge animado de não lidas
  * - Loading shimmer
  * - Empty states
  * - Action buttons (Aceitar/Recusar convites)
+ * - Filtro por tipo de notificação
+ * - Destaque especial para conquistas
+ * - Feedback háptico
+ * - Animações de entrada
  */
+
+// ========== Filtros de Notificação ==========
+
+/**
+ * Tipos de filtro disponíveis
+ */
+enum class NotificationFilter(val labelRes: Int, val icon: ImageVector) {
+    ALL(R.string.notifications_filter_all, Icons.Default.AllInbox),
+    GAMES(R.string.notifications_filter_games, Icons.Default.SportsScore),
+    GROUPS(R.string.notifications_filter_groups, Icons.Default.Groups),
+    ACHIEVEMENTS(R.string.notifications_filter_achievements, Icons.Default.Star),
+    SYSTEM(R.string.notifications_filter_system, Icons.Default.Info)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationsScreen(
@@ -63,8 +99,20 @@ fun NotificationsScreen(
     val actionState by viewModel.actionState.collectAsStateWithLifecycle()
     val unreadCount by viewModel.unreadCount.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // Melhoria 2: Filtro por tipo
+    var selectedFilter by remember { mutableStateOf(NotificationFilter.ALL) }
+
     // Pull-to-refresh state
     var isRefreshing by remember { mutableStateOf(false) }
+
+    // Melhoria 5: Dialog de confirmação para excluir antigas
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+
+    // Melhoria 8: Estado para undo de delete
+    var lastDeletedNotification by remember { mutableStateOf<AppNotification?>(null) }
 
     // Reseta o estado de refresh quando terminar
     LaunchedEffect(uiState) {
@@ -98,9 +146,53 @@ fun NotificationsScreen(
         }
     }
 
+    // Melhoria 8: Mostrar snackbar com undo após delete
+    LaunchedEffect(lastDeletedNotification) {
+        lastDeletedNotification?.let { notification ->
+            val result = snackbarHostState.showSnackbar(
+                message = context.getString(R.string.notifications_deleted),
+                actionLabel = context.getString(R.string.notifications_undo),
+                duration = SnackbarDuration.Short
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                // Restaurar notificação
+                viewModel.restoreNotification(notification)
+            }
+            lastDeletedNotification = null
+        }
+    }
+
     // String resources (must be read at composable level)
     val emptyTitle = stringResource(R.string.fragment_notifications_text_1)
     val emptyDescription = stringResource(R.string.fragment_notifications_text_2)
+
+    // Melhoria 5: Dialog de confirmação
+    if (showDeleteConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            icon = { Icon(Icons.Default.DeleteSweep, contentDescription = null) },
+            title = { Text(stringResource(R.string.notifications_delete_old_title)) },
+            text = { Text(stringResource(R.string.notifications_delete_old_message)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteOldNotifications()
+                        showDeleteConfirmDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(stringResource(R.string.notifications_delete_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -109,69 +201,118 @@ fun NotificationsScreen(
                 unreadCount = unreadCount,
                 onBackClick = onBackClick,
                 onMarkAllRead = { viewModel.markAllAsRead() },
-                onDeleteOld = { viewModel.deleteOldNotifications() }
+                onDeleteOld = { showDeleteConfirmDialog = true } // Melhoria 5
             )
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
+        // Melhoria 13: FAB para limpar todas (quando há muitas)
+        floatingActionButton = {
+            val state = uiState
+            if (state is NotificationsUiState.Success && state.notifications.size > 20) {
+                ExtendedFloatingActionButton(
+                    onClick = { showDeleteConfirmDialog = true },
+                    icon = { Icon(Icons.Default.ClearAll, contentDescription = null) },
+                    text = { Text(stringResource(R.string.notifications_clear_all)) },
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = {
-                    isRefreshing = true
-                    viewModel.loadNotifications()
-                },
-                modifier = Modifier.fillMaxSize()
-            ) {
-                when (val state = uiState) {
-                    is NotificationsUiState.Loading -> {
-                        NotificationsLoadingState()
-                    }
+            // Melhoria 2: Filtros de tipo
+            NotificationFilterChips(
+                selectedFilter = selectedFilter,
+                onFilterSelected = { selectedFilter = it },
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
 
-                    is NotificationsUiState.Empty -> {
-                        EmptyState(
-                            type = EmptyStateType.NoData(
-                                title = emptyTitle,
-                                description = emptyDescription,
-                                icon = Icons.Default.Notifications
+            Box(modifier = Modifier.weight(1f)) {
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        isRefreshing = true
+                        viewModel.loadNotifications()
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    when (val state = uiState) {
+                        is NotificationsUiState.Loading -> {
+                            NotificationsLoadingState()
+                        }
+
+                        is NotificationsUiState.Empty -> {
+                            EmptyState(
+                                type = EmptyStateType.NoData(
+                                    title = emptyTitle,
+                                    description = emptyDescription,
+                                    icon = Icons.Default.Notifications
+                                )
                             )
-                        )
-                    }
+                        }
 
-                    is NotificationsUiState.Success -> {
-                        NotificationsContent(
-                            notifications = state.notifications,
-                            onNotificationClick = { notification ->
-                                viewModel.markAsRead(notification.id)
-                                onNotificationClick(notification)
-                            },
-                            onAccept = { notification ->
-                                viewModel.handleNotificationAction(notification, accept = true)
-                            },
-                            onDecline = { notification ->
-                                viewModel.handleNotificationAction(notification, accept = false)
-                            },
-                            onDelete = { notification ->
-                                viewModel.deleteNotification(notification.id)
+                        is NotificationsUiState.Success -> {
+                            // Melhoria 2: Aplicar filtro
+                            val filteredNotifications = remember(state.notifications, selectedFilter) {
+                                filterNotifications(state.notifications, selectedFilter)
                             }
-                        )
-                    }
 
-                    is NotificationsUiState.Error -> {
-                        EmptyState(
-                            type = EmptyStateType.Error(
-                                title = stringResource(R.string.notifications_load_error),
-                                description = state.message,
-                                onRetry = { viewModel.loadNotifications() }
+                            if (filteredNotifications.isEmpty()) {
+                                EmptyState(
+                                    type = EmptyStateType.NoData(
+                                        title = stringResource(R.string.notifications_filter_empty),
+                                        description = stringResource(R.string.notifications_filter_empty_desc),
+                                        icon = Icons.Default.FilterList
+                                    )
+                                )
+                            } else {
+                                NotificationsContent(
+                                    notifications = filteredNotifications,
+                                    onNotificationClick = { notification ->
+                                        viewModel.markAsRead(notification.id)
+                                        onNotificationClick(notification)
+                                    },
+                                    onAccept = { notification ->
+                                        viewModel.handleNotificationAction(notification, accept = true)
+                                    },
+                                    onDecline = { notification ->
+                                        viewModel.handleNotificationAction(notification, accept = false)
+                                    },
+                                    onDelete = { notification ->
+                                        // Melhoria 11: Feedback háptico
+                                        vibrateDevice(context)
+                                        viewModel.deleteNotification(notification.id)
+                                        // Melhoria 8: Guardar para undo
+                                        lastDeletedNotification = notification
+                                    },
+                                    onToggleRead = { notification ->
+                                        // Melhoria 3: Toggle lida/não lida
+                                        if (notification.read) {
+                                            viewModel.markAsUnread(notification.id)
+                                        } else {
+                                            viewModel.markAsRead(notification.id)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        is NotificationsUiState.Error -> {
+                            EmptyState(
+                                type = EmptyStateType.Error(
+                                    title = stringResource(R.string.notifications_load_error),
+                                    description = state.message,
+                                    onRetry = { viewModel.loadNotifications() }
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
@@ -180,7 +321,81 @@ fun NotificationsScreen(
 }
 
 /**
- * TopBar com badge de não lidas e menu de ações
+ * Melhoria 2: Chips de filtro por tipo
+ */
+@Composable
+private fun NotificationFilterChips(
+    selectedFilter: NotificationFilter,
+    onFilterSelected: (NotificationFilter) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp)
+    ) {
+        items(NotificationFilter.entries) { filter ->
+            FilterChip(
+                selected = selectedFilter == filter,
+                onClick = { onFilterSelected(filter) },
+                label = { Text(stringResource(filter.labelRes)) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = filter.icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            )
+        }
+    }
+}
+
+/**
+ * Filtra notificações por tipo
+ */
+private fun filterNotifications(
+    notifications: List<AppNotification>,
+    filter: NotificationFilter
+): List<AppNotification> {
+    if (filter == NotificationFilter.ALL) return notifications
+
+    return notifications.filter { notification ->
+        when (filter) {
+            NotificationFilter.ALL -> true
+            NotificationFilter.GAMES -> notification.getTypeEnum() in listOf(
+                NotificationType.GAME_SUMMON,
+                NotificationType.GAME_REMINDER,
+                NotificationType.GAME_CANCELLED,
+                NotificationType.GAME_CONFIRMED,
+                NotificationType.GAME_VACANCY
+            )
+            NotificationFilter.GROUPS -> notification.getTypeEnum() in listOf(
+                NotificationType.GROUP_INVITE,
+                NotificationType.GROUP_INVITE_ACCEPTED,
+                NotificationType.GROUP_INVITE_DECLINED,
+                NotificationType.MEMBER_JOINED,
+                NotificationType.MEMBER_LEFT
+            )
+            NotificationFilter.ACHIEVEMENTS -> notification.getTypeEnum() == NotificationType.ACHIEVEMENT
+            NotificationFilter.SYSTEM -> notification.getTypeEnum() in listOf(
+                NotificationType.ADMIN_MESSAGE,
+                NotificationType.SYSTEM,
+                NotificationType.GENERAL,
+                NotificationType.CASHBOX_ENTRY,
+                NotificationType.CASHBOX_EXIT
+            )
+        }
+    }
+}
+
+/**
+ * TopBar com badge animado de não lidas e menu de ações
+ * Melhoria 6 e 14: Badge com animação de pulsação/bounce
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -191,6 +406,42 @@ private fun NotificationsTopBar(
     onDeleteOld: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
+
+    // Melhoria 14: Animação quando o badge muda
+    var previousCount by remember { mutableIntStateOf(unreadCount) }
+    val badgeScale = remember { Animatable(1f) }
+
+    LaunchedEffect(unreadCount) {
+        if (unreadCount != previousCount && unreadCount > 0) {
+            // Bounce animation
+            badgeScale.animateTo(
+                targetValue = 1.3f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
+            badgeScale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy
+                )
+            )
+        }
+        previousCount = unreadCount
+    }
+
+    // Melhoria 6: Pulsação contínua quando há não lidas
+    val pulseAnimation = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by pulseAnimation.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "badgePulse"
+    )
 
     TopAppBar(
         title = {
@@ -204,12 +455,18 @@ private fun NotificationsTopBar(
                     fontWeight = FontWeight.Bold
                 )
 
-                // Badge de não lidas
-                if (unreadCount > 0) {
+                // Badge de não lidas com animação
+                AnimatedVisibility(
+                    visible = unreadCount > 0,
+                    enter = scaleIn() + fadeIn(),
+                    exit = scaleOut() + fadeOut()
+                ) {
                     Surface(
                         shape = CircleShape,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.defaultMinSize(minWidth = 24.dp, minHeight = 24.dp)
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier
+                            .defaultMinSize(minWidth = 24.dp, minHeight = 24.dp)
+                            .scale(badgeScale.value * pulseScale)
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
@@ -218,7 +475,7 @@ private fun NotificationsTopBar(
                             Text(
                                 text = if (unreadCount > 99) "99+" else unreadCount.toString(),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colorScheme.onError,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -227,7 +484,13 @@ private fun NotificationsTopBar(
             }
         },
         navigationIcon = {
-            IconButton(onClick = onBackClick) {
+            IconButton(
+                onClick = onBackClick,
+                modifier = Modifier.semantics {
+                    contentDescription = "Voltar para tela anterior"
+                    role = Role.Button
+                }
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.notifications_cd_back)
@@ -275,6 +538,7 @@ private fun NotificationsTopBar(
 
 /**
  * Conteúdo principal com notificações agrupadas
+ * Melhoria 1: Animação de entrada
  */
 @Composable
 private fun NotificationsContent(
@@ -282,9 +546,11 @@ private fun NotificationsContent(
     onNotificationClick: (AppNotification) -> Unit,
     onAccept: (AppNotification) -> Unit,
     onDecline: (AppNotification) -> Unit,
-    onDelete: (AppNotification) -> Unit
+    onDelete: (AppNotification) -> Unit,
+    onToggleRead: (AppNotification) -> Unit // Melhoria 3
 ) {
     val context = LocalContext.current
+    val listState = rememberLazyListState()
 
     // Agrupa notificações por data
     val groupedNotifications = remember(notifications) {
@@ -292,48 +558,144 @@ private fun NotificationsContent(
     }
 
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
         groupedNotifications.forEach { (section, notificationsList) ->
-            // Cabeçalho da seção
+            // Melhoria 7 e 12: Cabeçalho melhorado com contagem
             item(key = "header_$section") {
-                NotificationSectionHeader(section)
+                NotificationSectionHeader(
+                    section = section,
+                    count = notificationsList.size
+                )
             }
 
-            // Itens da seção
-            items(
+            // Melhoria 1: Itens com animação de entrada
+            itemsIndexed(
                 items = notificationsList,
-                key = { it.id }
-            ) { notification ->
-                SwipeableNotificationCard(
+                key = { _, notification -> notification.id }
+            ) { index, notification ->
+                AnimatedNotificationItem(
                     notification = notification,
+                    index = index,
                     onClick = { onNotificationClick(notification) },
                     onAccept = { onAccept(notification) },
                     onDecline = { onDecline(notification) },
-                    onDelete = { onDelete(notification) }
+                    onDelete = { onDelete(notification) },
+                    onToggleRead = { onToggleRead(notification) }
                 )
             }
+        }
+
+        // Melhoria 9: Espaço final para FAB
+        item {
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
 
 /**
- * Cabeçalho de seção (Hoje, Ontem, etc.)
+ * Melhoria 1: Item com animação de entrada
  */
 @Composable
-private fun NotificationSectionHeader(section: String) {
-    Text(
-        text = section,
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-    )
+private fun AnimatedNotificationItem(
+    notification: AppNotification,
+    index: Int,
+    onClick: () -> Unit,
+    onAccept: () -> Unit,
+    onDecline: () -> Unit,
+    onDelete: () -> Unit,
+    onToggleRead: () -> Unit
+) {
+    var visible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        delay(index * 50L) // Stagger effect
+        visible = true
+    }
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInHorizontally(
+            initialOffsetX = { it },
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        ) + fadeIn(animationSpec = tween(300))
+    ) {
+        SwipeableNotificationCard(
+            notification = notification,
+            onClick = onClick,
+            onAccept = onAccept,
+            onDecline = onDecline,
+            onDelete = onDelete,
+            onToggleRead = onToggleRead
+        )
+    }
+}
+
+/**
+ * Melhoria 7 e 12: Cabeçalho de seção melhorado
+ */
+@Composable
+private fun NotificationSectionHeader(
+    section: String,
+    count: Int
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Linha decorativa
+        HorizontalDivider(
+            modifier = Modifier.width(24.dp),
+            thickness = 2.dp,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Text(
+            text = section,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        // Melhoria 12: Badge com contagem
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            modifier = Modifier.defaultMinSize(minWidth = 24.dp, minHeight = 24.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = count.toString(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        // Linha decorativa expandida
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
+    }
 }
 
 /**
  * Card de notificação com swipe-to-dismiss
+ * Melhoria 4: Animação do ícone de delete
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -342,7 +704,8 @@ private fun SwipeableNotificationCard(
     onClick: () -> Unit,
     onAccept: () -> Unit,
     onDecline: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onToggleRead: () -> Unit
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
@@ -356,22 +719,41 @@ private fun SwipeableNotificationCard(
         }
     )
 
+    // Melhoria 4: Escala do ícone baseada no progresso do swipe
+    val progress = dismissState.progress
+    val iconScale = remember(progress) {
+        when {
+            progress < 0.3f -> 0.8f
+            progress < 0.6f -> 1f + (progress - 0.3f)
+            else -> 1.3f
+        }
+    }
+
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
-            // Fundo ao arrastar (ícone de lixeira)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.error)
-                    .padding(horizontal = 20.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.notifications_cd_delete),
-                    tint = MaterialTheme.colorScheme.onError
-                )
+            // Fundo só aparece durante o swipe
+            val isSwipeActive = dismissState.targetValue != SwipeToDismissBoxValue.Settled
+
+            if (isSwipeActive) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.error)
+                        .padding(horizontal = 20.dp),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.notifications_cd_delete),
+                        tint = MaterialTheme.colorScheme.onError,
+                        modifier = Modifier
+                            .scale(iconScale)
+                            .graphicsLayer {
+                                rotationZ = if (progress > 0.5f) -15f else 0f
+                            }
+                    )
+                }
             }
         },
         enableDismissFromStartToEnd = false
@@ -380,25 +762,59 @@ private fun SwipeableNotificationCard(
             notification = notification,
             onClick = onClick,
             onAccept = onAccept,
-            onDecline = onDecline
+            onDecline = onDecline,
+            onToggleRead = onToggleRead
         )
     }
 }
 
 /**
  * Card individual de notificação
+ * Melhoria 10: Destaque especial para conquistas
+ * Melhoria 15: Acessibilidade melhorada
  */
 @Composable
 private fun NotificationCard(
     notification: AppNotification,
     onClick: () -> Unit,
     onAccept: () -> Unit,
-    onDecline: () -> Unit
+    onDecline: () -> Unit,
+    onToggleRead: () -> Unit
 ) {
+    val isAchievement = notification.getTypeEnum() == NotificationType.ACHIEVEMENT
+
+    // Melhoria 10: Gradiente dourado para conquistas
+    val cardBackground = if (isAchievement && !notification.read) {
+        Brush.linearGradient(
+            colors = listOf(
+                GamificationColors.Gold.copy(alpha = 0.15f),
+                GamificationColors.Gold.copy(alpha = 0.05f)
+            )
+        )
+    } else {
+        null
+    }
+
+    // Melhoria 15: Descrição de acessibilidade completa
+    val accessibilityDescription = buildString {
+        append(notification.title)
+        append(". ")
+        append(notification.message)
+        if (!notification.read) append(". Não lida")
+        notification.createdAt?.let {
+            append(". ")
+            append(formatRelativeTime(it))
+        }
+    }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
+            .semantics {
+                contentDescription = accessibilityDescription
+                role = Role.Button
+            }
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         color = if (!notification.read) {
@@ -406,87 +822,121 @@ private fun NotificationCard(
         } else {
             MaterialTheme.colorScheme.surface
         },
-        tonalElevation = if (!notification.read) 2.dp else 1.dp
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Ícone da notificação
-            NotificationIcon(
-                type = notification.getTypeEnum(),
-                isRead = notification.read
+        tonalElevation = if (!notification.read) 2.dp else 1.dp,
+        border = if (isAchievement && !notification.read) {
+            androidx.compose.foundation.BorderStroke(
+                width = 1.dp,
+                color = GamificationColors.Gold.copy(alpha = 0.5f)
             )
-
-            // Conteúdo
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+        } else null
+    ) {
+        Box(
+            modifier = if (cardBackground != null) {
+                Modifier.background(cardBackground)
+            } else Modifier
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Título
-                Text(
-                    text = notification.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = if (!notification.read) FontWeight.Bold else FontWeight.Normal,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                // Ícone da notificação (com efeito especial para conquistas)
+                NotificationIcon(
+                    type = notification.getTypeEnum(),
+                    isRead = notification.read,
+                    isAchievement = isAchievement
                 )
 
-                // Mensagem
-                Text(
-                    text = notification.message,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                // Data/hora
-                notification.createdAt?.let { date ->
+                // Conteúdo
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // Título
                     Text(
-                        text = formatRelativeTime(date),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        text = notification.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = if (!notification.read) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isAchievement) GamificationColors.Gold else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                }
 
-                // Botões de ação (se necessário)
-                if (notification.requiresResponse() && !notification.read) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = onDecline,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.error
-                            )
-                        ) {
-                            Text(stringResource(R.string.item_notification_text_1))
-                        }
+                    // Mensagem
+                    Text(
+                        text = notification.message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
 
-                        Button(
-                            onClick = onAccept,
-                            modifier = Modifier.weight(1f)
+                    // Data/hora
+                    notification.createdAt?.let { date ->
+                        Text(
+                            text = formatRelativeTime(date),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+
+                    // Botões de ação (se necessário)
+                    if (notification.requiresResponse() && !notification.read) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(stringResource(R.string.item_notification_text_2))
+                            OutlinedButton(
+                                onClick = onDecline,
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.error
+                                )
+                            ) {
+                                Text(stringResource(R.string.item_notification_text_1))
+                            }
+
+                            Button(
+                                onClick = onAccept,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(stringResource(R.string.item_notification_text_2))
+                            }
                         }
                     }
                 }
-            }
 
-            // Indicador de não lida
-            if (!notification.read) {
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                )
+                // Coluna de indicadores e ações
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Indicador de não lida / botão toggle
+                    IconButton(
+                        onClick = onToggleRead,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        if (!notification.read) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (isAchievement) GamificationColors.Gold
+                                        else MaterialTheme.colorScheme.primary
+                                    )
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.MarkEmailUnread,
+                                contentDescription = stringResource(R.string.notifications_mark_unread),
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -494,11 +944,13 @@ private fun NotificationCard(
 
 /**
  * Ícone da notificação baseado no tipo
+ * Melhoria 10: Efeito especial para conquistas
  */
 @Composable
 private fun NotificationIcon(
     type: NotificationType,
-    isRead: Boolean
+    isRead: Boolean,
+    isAchievement: Boolean = false
 ) {
     val (icon, color) = when (type) {
         NotificationType.GROUP_INVITE -> Icons.Default.GroupAdd to MaterialTheme.colorScheme.secondary
@@ -508,20 +960,43 @@ private fun NotificationIcon(
         NotificationType.GAME_REMINDER -> Icons.Default.AccessTime to MaterialTheme.colorScheme.tertiary
         NotificationType.GAME_CANCELLED -> Icons.Default.Cancel to MaterialTheme.colorScheme.error
         NotificationType.GAME_CONFIRMED -> Icons.Default.CheckCircle to MaterialTheme.colorScheme.primary
+        NotificationType.GAME_VACANCY -> Icons.Default.PersonAdd to MaterialTheme.colorScheme.primary
         NotificationType.MEMBER_JOINED -> Icons.Default.PersonAdd to MaterialTheme.colorScheme.secondary
         NotificationType.MEMBER_LEFT -> Icons.Default.PersonRemove to MaterialTheme.colorScheme.onSurfaceVariant
         NotificationType.CASHBOX_ENTRY -> Icons.Default.AttachMoney to MaterialTheme.colorScheme.primary
         NotificationType.CASHBOX_EXIT -> Icons.Default.MoneyOff to MaterialTheme.colorScheme.error
-        NotificationType.ACHIEVEMENT -> Icons.Default.Star to com.futebadosparcas.ui.theme.GamificationColors.Gold
+        NotificationType.ACHIEVEMENT -> Icons.Default.Star to GamificationColors.Gold
         NotificationType.ADMIN_MESSAGE -> Icons.Default.AdminPanelSettings to MaterialTheme.colorScheme.tertiary
         NotificationType.SYSTEM -> Icons.Default.Info to MaterialTheme.colorScheme.secondary
         NotificationType.GENERAL -> Icons.Default.Notifications to MaterialTheme.colorScheme.onSurfaceVariant
     }
 
+    // Melhoria 10: Animação de brilho para conquistas
+    val shimmerAnimation = rememberInfiniteTransition(label = "shimmer")
+    val shimmerAlpha by shimmerAnimation.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "shimmerAlpha"
+    )
+
     Surface(
         shape = CircleShape,
-        color = color.copy(alpha = if (isRead) 0.2f else 0.3f),
-        modifier = Modifier.size(48.dp)
+        color = if (isAchievement && !isRead) {
+            GamificationColors.Gold.copy(alpha = shimmerAlpha)
+        } else {
+            color.copy(alpha = if (isRead) 0.2f else 0.3f)
+        },
+        modifier = Modifier.size(48.dp),
+        border = if (isAchievement && !isRead) {
+            androidx.compose.foundation.BorderStroke(
+                width = 1.dp,
+                color = GamificationColors.Gold
+            )
+        } else null
     ) {
         Box(
             contentAlignment = Alignment.Center,
@@ -555,7 +1030,7 @@ private fun NotificationsLoadingState() {
  * Card shimmer para notificação
  */
 @Composable
-private fun NotificationShimmerCard(brush: androidx.compose.ui.graphics.Brush) {
+private fun NotificationShimmerCard(brush: Brush) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -659,5 +1134,28 @@ private fun formatRelativeTime(date: Date): String {
         else -> {
             SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")).format(date)
         }
+    }
+}
+
+/**
+ * Melhoria 11: Feedback háptico ao deletar
+ */
+@Suppress("DEPRECATION")
+private fun vibrateDevice(context: Context) {
+    try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            val vibrator = vibratorManager.defaultVibrator
+            vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                vibrator.vibrate(50)
+            }
+        }
+    } catch (e: Exception) {
+        // Ignora erros de vibração
     }
 }

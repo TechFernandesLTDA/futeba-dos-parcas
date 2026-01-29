@@ -52,9 +52,10 @@ object AppModule {
         auth: FirebaseAuth,
         gameDao: com.futebadosparcas.data.local.dao.GameDao,
         groupRepository: GroupRepository,
-        confirmationRepository: KmpGameConfirmationRepository
+        confirmationRepository: KmpGameConfirmationRepository,
+        permissionManager: com.futebadosparcas.domain.permission.PermissionManager
     ): com.futebadosparcas.domain.repository.GameQueryRepository {
-        return GameQueryRepositoryImpl(firestore, auth, gameDao, groupRepository, confirmationRepository)
+        return GameQueryRepositoryImpl(firestore, auth, gameDao, groupRepository, confirmationRepository, permissionManager)
     }
 
     @Provides

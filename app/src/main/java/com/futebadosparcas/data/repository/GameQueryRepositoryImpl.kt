@@ -49,6 +49,8 @@ import javax.inject.Singleton
  *
  * Durante a migracao KMP, esta implementacao usa modelos Android internamente
  * e converte para modelos KMP nos retornos dos metodos.
+ *
+ * Permissões são gerenciadas pelo PermissionManager centralizado.
  */
 @Singleton
 class GameQueryRepositoryImpl @Inject constructor(
@@ -56,7 +58,8 @@ class GameQueryRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val gameDao: GameDao,
     private val groupRepository: GroupRepository,
-    private val confirmationRepository: GameConfirmationRepository
+    private val confirmationRepository: GameConfirmationRepository,
+    private val permissionManager: com.futebadosparcas.domain.permission.PermissionManager
 ) : KmpGameQueryRepository {
 
     private val gamesCollection = firestore.collection("games")
@@ -65,47 +68,18 @@ class GameQueryRepositoryImpl @Inject constructor(
         private const val TAG = "GameQueryRepository"
     }
 
-    // ========== Admin Check ==========
+    // ========== Permissões (delegado ao PermissionManager) ==========
 
     /**
-     * Cache do status de admin para evitar queries repetidas
+     * Verifica se o usuario atual pode ver todos os jogos (admin).
+     * Delegado ao PermissionManager centralizado.
      */
-    @Volatile
-    private var isAdminCached: Boolean? = null
-    @Volatile
-    private var adminCacheUid: String? = null
+    private suspend fun isCurrentUserAdmin(): Boolean = permissionManager.isAdmin()
 
     /**
-     * Verifica se o usuario atual e admin.
-     * Resultado é cacheado para evitar queries repetidas ao Firestore.
+     * Verifica se o usuario atual pode ver todo o histórico.
      */
-    private suspend fun isCurrentUserAdmin(): Boolean {
-        val uid = auth.currentUser?.uid ?: return false
-
-        // Verificar cache (se uid mudou, invalidar cache)
-        if (adminCacheUid == uid && isAdminCached != null) {
-            return isAdminCached!!
-        }
-
-        return try {
-            val userDoc = firestore.collection("users").document(uid).get().await()
-            val user = userDoc.toObject(User::class.java)
-            val isAdmin = user?.isAdmin() ?: false
-
-            // Atualizar cache
-            adminCacheUid = uid
-            isAdminCached = isAdmin
-
-            if (isAdmin) {
-                AppLogger.d(TAG) { "Usuario $uid é ADMIN - pode ver todos os jogos" }
-            }
-
-            isAdmin
-        } catch (e: Exception) {
-            AppLogger.e(TAG, "Erro ao verificar status de admin", e)
-            false
-        }
-    }
+    private suspend fun canViewAllHistory(): Boolean = permissionManager.canViewAllHistory()
 
     // ========== Helper Methods para Conversao ==========
 
@@ -899,6 +873,42 @@ class GameQueryRepositoryImpl @Inject constructor(
         val uid = auth.currentUser?.uid ?: ""
 
         return channelFlow {
+            // ADMIN SUPPORT: Se admin, buscar TODOS os jogos finalizados sem filtro
+            val isAdmin = isCurrentUserAdmin()
+            if (isAdmin) {
+                AppLogger.d(TAG) { "Admin acessando histórico - mostrando TODOS os jogos finalizados" }
+
+                val adminQuery = gamesCollection
+                    .whereIn("status", listOf(GameStatus.FINISHED.name, GameStatus.CANCELLED.name))
+                    .orderBy("dateTime", Query.Direction.DESCENDING)
+                    .limit(limit.toLong())
+
+                val adminFlow = callbackFlow {
+                    val sub = adminQuery.addSnapshotListener { snap, e ->
+                        if (e != null) {
+                            trySend(Result.failure<List<GameWithConfirmations>>(e))
+                            return@addSnapshotListener
+                        }
+                        val androidGames = snap?.documents?.mapNotNull { doc ->
+                            doc.toObject(AndroidGame::class.java)?.also { it.id = doc.id }
+                        } ?: emptyList()
+
+                        val result = androidGames.map { androidGame ->
+                            GameWithConfirmations(
+                                game = androidGame.toKmpGame(),
+                                confirmedCount = androidGame.playersCount,
+                                isUserConfirmed = false
+                            )
+                        }
+                        trySend(Result.success(result))
+                    }
+                    awaitClose { sub.remove() }
+                }
+
+                adminFlow.collect { send(it) }
+                return@channelFlow
+            }
+
             // 1. Obter grupos do usuário
             val userGroupsFlow = if (uid.isNotEmpty()) groupRepository.getMyGroupsFlow() else flowOf(emptyList())
 
@@ -974,16 +984,26 @@ class GameQueryRepositoryImpl @Inject constructor(
 
                 val userConfFlow = confirmationRepository.getUserConfirmationsFlow(uid)
 
-                // FIX: inclui ownerGamesFlow no combine
+                // FIX: Usuários normais só veem jogos que PARTICIPARAM ou são DONOS
+                // Admin já foi tratado acima e retorna todos os jogos
                 combine(publicFlow, groupGamesFlow, ownerGamesFlow, userConfFlow) { publicGames, groupGames, ownerGames, userConfs ->
-                    val allAndroidGames = publicGames
-                        .mergeAndDeduplicate(groupGames) { it.id }
-                        .mergeAndDeduplicate(ownerGames) { it.id }
+                    // Primeiro, junta todos os jogos candidatos e remove duplicatas
+                    val allCandidateGames = (publicGames + groupGames + ownerGames)
+                        .distinctBy { it.id }
                         .filter { it.status == GameStatus.FINISHED.name || it.status == GameStatus.CANCELLED.name }
+
+                    // FIX: Filtra para mostrar APENAS jogos onde usuário:
+                    // 1. É o dono (owner_id == uid), OU
+                    // 2. Participou (está na lista de confirmações)
+                    val filteredGames = allCandidateGames.filter { game ->
+                        game.ownerId == uid || game.id in userConfs
+                    }
+
+                    val sortedGames = filteredGames
                         .sortedByDescending { it.dateTime }
                         .take(limit)
 
-                    val result = allAndroidGames.map { androidGame ->
+                    val result = sortedGames.map { androidGame ->
                         GameWithConfirmations(
                             game = androidGame.toKmpGame(),
                             confirmedCount = androidGame.playersCount,
@@ -1007,6 +1027,13 @@ class GameQueryRepositoryImpl @Inject constructor(
     ): Result<PaginatedGames> {
         return try {
             val uid = auth.currentUser?.uid ?: ""
+
+            // ADMIN SUPPORT: Se admin, buscar TODOS os jogos finalizados
+            val isAdmin = isCurrentUserAdmin()
+            if (isAdmin) {
+                AppLogger.d(TAG) { "Admin acessando histórico paginado - mostrando TODOS os jogos" }
+                return getHistoryGamesPaginatedForAdmin(pageSize, lastGameId)
+            }
 
             // Buscar grupos do usuario
             val userGroupIds = if (uid.isNotEmpty()) {
@@ -1089,14 +1116,23 @@ class GameQueryRepositoryImpl @Inject constructor(
                 doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
             }
 
-            // Combinar e deduplicar (FIX: inclui ownerGames)
-            val allAndroidGames = (publicGames + groupGames + ownerGames)
+            // Buscar confirmacoes do usuario ANTES de filtrar
+            val userConfirmations = confirmationRepository.getUserConfirmationIds(uid)
+
+            // Combinar e deduplicar
+            val allCandidateGames = (publicGames + groupGames + ownerGames)
                 .distinctBy { it.id }
-                .sortedByDescending { it.dateTime }
+
+            // FIX: Filtrar para mostrar APENAS jogos onde usuário:
+            // 1. É o dono (owner_id == uid), OU
+            // 2. Participou (está na lista de confirmações)
+            val filteredGames = allCandidateGames.filter { game ->
+                game.ownerId == uid || game.id in userConfirmations
+            }.sortedByDescending { it.dateTime }
 
             // Verificar se ha mais paginas
-            val hasMore = allAndroidGames.size > pageSize
-            val androidGamesPage = allAndroidGames.take(pageSize)
+            val hasMore = filteredGames.size > pageSize
+            val androidGamesPage = filteredGames.take(pageSize)
 
             // Atualizar cursor para proxima pagina
             val newLastGameId = if (androidGamesPage.isNotEmpty()) {
@@ -1108,9 +1144,6 @@ class GameQueryRepositoryImpl @Inject constructor(
                 null
             }
 
-            // Buscar confirmacoes do usuario
-            val userConfirmations = confirmationRepository.getUserConfirmationIds(uid)
-
             // Mapear para GameWithConfirmations
             val result = androidGamesPage.map { androidGame ->
                 GameWithConfirmations(
@@ -1120,7 +1153,7 @@ class GameQueryRepositoryImpl @Inject constructor(
                 )
             }
 
-            AppLogger.d(TAG) { "getHistoryGamesPaginated: ${result.size} jogos, hasMore=$hasMore" }
+            AppLogger.d(TAG) { "getHistoryGamesPaginated: ${result.size} jogos (filtrado por participação), hasMore=$hasMore" }
 
             Result.success(PaginatedGames(
                 games = result,
@@ -1129,6 +1162,71 @@ class GameQueryRepositoryImpl @Inject constructor(
             ))
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar historico paginado", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Versão de admin para histórico paginado - retorna TODOS os jogos finalizados.
+     * Admins podem ver todos os jogos para supervisão e análise.
+     */
+    private suspend fun getHistoryGamesPaginatedForAdmin(
+        pageSize: Int,
+        lastGameId: String?
+    ): Result<PaginatedGames> {
+        return try {
+            // Se temos um cursor, buscar o documento de referência
+            val startAfterDoc: DocumentSnapshot? = if (lastGameId != null && lastDocumentSnapshot?.id == lastGameId) {
+                lastDocumentSnapshot
+            } else if (lastGameId != null) {
+                gamesCollection.document(lastGameId).get().await()
+            } else {
+                null
+            }
+
+            // Query para TODOS os jogos finalizados (sem filtro de visibilidade)
+            var query = gamesCollection
+                .whereIn("status", listOf(GameStatus.FINISHED.name, GameStatus.CANCELLED.name))
+                .orderBy("dateTime", Query.Direction.DESCENDING)
+
+            if (startAfterDoc != null && startAfterDoc.exists()) {
+                query = query.startAfter(startAfterDoc)
+            }
+
+            val snapshot = query.limit((pageSize + 1).toLong()).get().await()
+
+            val androidGames = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+            }
+
+            val hasMore = androidGames.size > pageSize
+            val gamesPage = androidGames.take(pageSize)
+
+            val newLastGameId = if (gamesPage.isNotEmpty()) {
+                val lastGame = gamesPage.last()
+                lastDocumentSnapshot = snapshot.documents.find { it.id == lastGame.id }
+                lastGame.id
+            } else {
+                null
+            }
+
+            val result = gamesPage.map { androidGame ->
+                GameWithConfirmations(
+                    game = androidGame.toKmpGame(),
+                    confirmedCount = androidGame.playersCount,
+                    isUserConfirmed = false
+                )
+            }
+
+            AppLogger.d(TAG) { "getHistoryGamesPaginatedForAdmin: ${result.size} jogos (ADMIN), hasMore=$hasMore" }
+
+            Result.success(PaginatedGames(
+                games = result,
+                lastGameId = newLastGameId,
+                hasMore = hasMore
+            ))
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar historico paginado (admin)", e)
             Result.failure(e)
         }
     }
@@ -1345,10 +1443,10 @@ class GameQueryRepositoryImpl @Inject constructor(
 
             val gamesResult = getGamesByFieldAndDate(fieldId, date)
             if (gamesResult.isFailure) {
-                return Result.failure(gamesResult.exceptionOrNull()!!)
+                return Result.failure(gamesResult.exceptionOrNull() ?: Exception("Erro ao buscar jogos"))
             }
 
-            val existingGames = gamesResult.getOrNull()!!
+            val existingGames = (gamesResult.getOrNull() ?: emptyList())
                 .filter { it.id != excludeGameId }
                 .filter { it.status != GameStatus.CANCELLED.name }
 

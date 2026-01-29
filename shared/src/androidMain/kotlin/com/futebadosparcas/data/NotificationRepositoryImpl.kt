@@ -41,6 +41,10 @@ class NotificationRepositoryImpl(
         return firebaseDataSource.markNotificationAsRead(notificationId)
     }
 
+    override suspend fun markAsUnread(notificationId: String): Result<Unit> {
+        return firebaseDataSource.markNotificationAsUnread(notificationId)
+    }
+
     override suspend fun markAllAsRead(): Result<Unit> {
         return firebaseDataSource.markAllNotificationsAsRead()
     }

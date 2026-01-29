@@ -103,6 +103,15 @@ class NotificationsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Melhoria 3: Marca uma notificação como não lida
+     */
+    fun markAsUnread(notificationId: String) {
+        viewModelScope.launch {
+            notificationRepository.markAsUnread(notificationId)
+        }
+    }
+
     fun markAllAsRead() {
         viewModelScope.launch {
             val result = notificationRepository.markAllAsRead()
@@ -128,11 +137,45 @@ class NotificationsViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = {
-                    _actionState.value = NotificationActionState.Success("Notificacao removida")
+                    // Não mostra mensagem aqui - a tela mostra snackbar com undo
                 },
                 onFailure = { error ->
                     _actionState.value = NotificationActionState.Error(
                         error.message ?: "Erro ao remover notificacao"
+                    )
+                }
+            )
+        }
+    }
+
+    /**
+     * Restaura uma notificação deletada (undo).
+     */
+    fun restoreNotification(notification: AppNotification) {
+        viewModelScope.launch {
+            // Converte para KMP model e recria
+            val kmpNotification = com.futebadosparcas.domain.model.AppNotification(
+                id = notification.id,
+                userId = notification.userId,
+                type = notification.getTypeEnum().toKmpNotificationType(),
+                title = notification.title,
+                message = notification.message,
+                read = notification.read,
+                createdAt = notification.createdAt?.time,
+                referenceId = notification.referenceId,
+                referenceType = notification.referenceType,
+                expiresAt = notification.expiresAt?.time
+            )
+
+            val result = notificationRepository.createNotification(kmpNotification)
+
+            result.fold(
+                onSuccess = {
+                    _actionState.value = NotificationActionState.Success("Notificação restaurada")
+                },
+                onFailure = { error ->
+                    _actionState.value = NotificationActionState.Error(
+                        error.message ?: "Erro ao restaurar notificação"
                     )
                 }
             )

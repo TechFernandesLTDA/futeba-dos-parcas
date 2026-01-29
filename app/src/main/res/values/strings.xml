@@ -2228,6 +2228,22 @@ subir no ranking!</string>
     <string name="notifications_cd_back">Voltar</string>
     <string name="notifications_cd_menu">Menu</string>
 
+    <!-- Notifications Screen Improvements -->
+    <string name="notifications_filter_all">Todas</string>
+    <string name="notifications_filter_games">Jogos</string>
+    <string name="notifications_filter_groups">Grupos</string>
+    <string name="notifications_filter_achievements">Conquistas</string>
+    <string name="notifications_filter_system">Sistema</string>
+    <string name="notifications_filter_empty">Nenhuma notificação</string>
+    <string name="notifications_filter_empty_desc">Não há notificações para este filtro</string>
+    <string name="notifications_deleted">Notificação excluída</string>
+    <string name="notifications_undo">Desfazer</string>
+    <string name="notifications_delete_old_title">Excluir notificações antigas?</string>
+    <string name="notifications_delete_old_message">Isso irá remover todas as notificações com mais de 7 dias. Esta ação não pode ser desfeita.</string>
+    <string name="notifications_delete_confirm">Excluir</string>
+    <string name="notifications_clear_all">Limpar todas</string>
+    <string name="notifications_mark_unread">Marcar como não lida</string>
+
     <!-- Location Dialogs missing strings -->
     <string name="location_dialog_active">Ativo</string>
     <string name="location_dialog_save">Salvar</string>

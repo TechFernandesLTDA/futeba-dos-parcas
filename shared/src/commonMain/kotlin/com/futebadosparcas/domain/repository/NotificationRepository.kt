@@ -57,6 +57,14 @@ interface NotificationRepository {
     suspend fun markAsRead(notificationId: String): Result<Unit>
 
     /**
+     * Marca uma notificação como não lida.
+     *
+     * @param notificationId ID da notificação
+     * @return Result<Unit> indicando sucesso ou falha
+     */
+    suspend fun markAsUnread(notificationId: String): Result<Unit>
+
+    /**
      * Marca todas as notificações do usuário como lidas.
      *
      * @return Result<Unit> indicando sucesso ou falha
