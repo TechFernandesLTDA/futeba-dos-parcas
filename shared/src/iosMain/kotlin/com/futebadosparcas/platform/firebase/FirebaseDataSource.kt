@@ -1476,6 +1476,15 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    actual suspend fun markNotificationAsUnread(notificationId: String): Result<Unit> {
+        return try {
+            IosFirebaseBridge.markNotificationAsUnread(notificationId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     actual suspend fun markAllNotificationsAsRead(): Result<Unit> {
         return try {
             IosFirebaseBridge.markAllNotificationsAsRead()
@@ -1911,6 +1920,7 @@ object IosFirebaseBridge {
     fun getUnreadNotifications(): List<AppNotification> = emptyList()
     fun getUnreadCount(): Int = 0
     fun markNotificationAsRead(notificationId: String) {}
+    fun markNotificationAsUnread(notificationId: String) {}
     fun markAllNotificationsAsRead() {}
 
     fun getNotificationById(notificationId: String): AppNotification {

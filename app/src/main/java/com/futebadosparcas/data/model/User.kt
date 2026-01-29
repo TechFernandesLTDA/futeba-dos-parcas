@@ -476,31 +476,142 @@ enum class PlayerRatingRole {
  * FIELD_OWNER: Cadastrar/editar seus locais, quadras, horarios, precos, fotos, aprovar reservas
  * PLAYER: Criar jogos (como dono do horario), confirmar presenca, ver estatisticas pessoais
  */
-enum class UserRole(val displayName: String, val description: String) {
+enum class UserRole(
+    val displayName: String,
+    val description: String,
+    val gamePermissions: Set<String>,
+    val groupPermissions: Set<String>,
+    val userPermissions: Set<String>,
+    val locationPermissions: Set<String>
+) {
     /**
      * Administrador do sistema.
      * Tem acesso total a todas as funcionalidades.
      */
     ADMIN(
         displayName = "Administrador",
-        description = "Acesso total ao sistema"
+        description = "Acesso total ao sistema",
+        gamePermissions = setOf(
+            "ViewAllGames", "ViewOwnedGames", "ViewParticipatedGames",
+            "ViewAllHistory", "ViewOwnHistory",
+            "EditAllGames", "EditOwnedGames",
+            "DeleteAllGames", "DeleteOwnedGames",
+            "JoinAllGames", "ManageAllConfirmations", "ManageOwnConfirmations",
+            "FinalizeAllGames", "FinalizeOwnedGames",
+            "ViewAllPlayerStats", "ViewOwnStats"
+        ),
+        groupPermissions = setOf(
+            "ViewAllGroups", "EditAllGroups", "EditOwnedGroups",
+            "ManageAllMembers", "ManageOwnMembers"
+        ),
+        userPermissions = setOf(
+            "ViewAllProfiles", "EditAllProfiles", "EditOwnProfile",
+            "BanUsers", "ChangeUserRoles"
+        ),
+        locationPermissions = setOf(
+            "ViewAllLocations", "EditAllLocations", "EditOwnedLocations",
+            "ApproveAllReservations", "ApproveOwnReservations"
+        )
     ),
+
     /**
      * Dono de quadra/local.
      * Pode gerenciar seus próprios locais e quadras.
      */
     FIELD_OWNER(
         displayName = "Dono de Quadra",
-        description = "Gerencia locais, quadras e reservas"
+        description = "Gerencia locais, quadras e reservas",
+        gamePermissions = setOf(
+            "ViewOwnedGames", "ViewParticipatedGames",
+            "ViewOwnHistory",
+            "EditOwnedGames",
+            "DeleteOwnedGames",
+            "ManageOwnConfirmations",
+            "FinalizeOwnedGames",
+            "ViewOwnStats"
+        ),
+        groupPermissions = setOf(
+            "EditOwnedGroups", "ManageOwnMembers"
+        ),
+        userPermissions = setOf(
+            "ViewAllProfiles", "EditOwnProfile"
+        ),
+        locationPermissions = setOf(
+            "ViewAllLocations", "EditOwnedLocations", "ApproveOwnReservations"
+        )
     ),
+
     /**
      * Jogador comum.
      * Pode criar jogos, confirmar presença e ver estatísticas pessoais.
      */
     PLAYER(
         displayName = "Jogador",
-        description = "Cria jogos e confirma presença"
+        description = "Cria jogos e confirma presença",
+        gamePermissions = setOf(
+            "ViewOwnedGames", "ViewParticipatedGames",
+            "ViewOwnHistory",
+            "EditOwnedGames",
+            "DeleteOwnedGames",
+            "ManageOwnConfirmations",
+            "FinalizeOwnedGames",
+            "ViewOwnStats"
+        ),
+        groupPermissions = setOf(
+            "EditOwnedGroups", "ManageOwnMembers"
+        ),
+        userPermissions = setOf(
+            "ViewAllProfiles", "EditOwnProfile"
+        ),
+        locationPermissions = setOf(
+            "ViewAllLocations"
+        )
     );
+
+    /**
+     * Verifica se o role tem uma permissão específica de jogo.
+     */
+    fun hasGamePermission(permission: String): Boolean = permission in gamePermissions
+
+    /**
+     * Verifica se o role tem uma permissão específica de grupo.
+     */
+    fun hasGroupPermission(permission: String): Boolean = permission in groupPermissions
+
+    /**
+     * Verifica se o role tem uma permissão específica de usuário.
+     */
+    fun hasUserPermission(permission: String): Boolean = permission in userPermissions
+
+    /**
+     * Verifica se o role tem uma permissão específica de local.
+     */
+    fun hasLocationPermission(permission: String): Boolean = permission in locationPermissions
+
+    /**
+     * Verifica se é admin (atalho comum).
+     */
+    fun isAdmin(): Boolean = this == ADMIN
+
+    /**
+     * Verifica se pode ver todos os jogos.
+     */
+    fun canViewAllGames(): Boolean = hasGamePermission("ViewAllGames")
+
+    /**
+     * Verifica se pode ver todo o histórico.
+     */
+    fun canViewAllHistory(): Boolean = hasGamePermission("ViewAllHistory")
+
+    /**
+     * Verifica se pode editar qualquer jogo.
+     */
+    fun canEditAllGames(): Boolean = hasGamePermission("EditAllGames")
+
+    /**
+     * Verifica se pode entrar em qualquer jogo.
+     */
+    fun canJoinAllGames(): Boolean = hasGamePermission("JoinAllGames")
 
     companion object {
         fun fromString(value: String?): UserRole {

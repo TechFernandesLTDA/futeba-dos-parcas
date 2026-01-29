@@ -3190,6 +3190,23 @@ actual class FirebaseDataSource(
         }
     }
 
+    actual suspend fun markNotificationAsUnread(notificationId: String): Result<Unit> {
+        return try {
+            firestore.collection("notifications")
+                .document(notificationId)
+                .update(mapOf(
+                    "read" to false,
+                    "read_at" to com.google.firebase.firestore.FieldValue.delete()
+                ))
+                .await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseDataSource", "Erro ao marcar notificação como não lida", e)
+            Result.failure(e)
+        }
+    }
+
     actual suspend fun markAllNotificationsAsRead(): Result<Unit> {
         return try {
             val userId = auth.currentUser?.uid
