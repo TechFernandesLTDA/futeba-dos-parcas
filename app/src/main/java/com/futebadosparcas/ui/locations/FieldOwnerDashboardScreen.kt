@@ -223,7 +223,27 @@ private fun LocationDashboardCard(
                     )
                 }
 
-                // TODO: Número de quadras (requer LocationWithFields ou campo separado)
+                // Número de quadras
+                if (location.fieldCount > 0) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Stadium,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = if (location.fieldCount == 1) "1 quadra" else "${location.fieldCount} quadras",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
 
             // Seta para detalhes

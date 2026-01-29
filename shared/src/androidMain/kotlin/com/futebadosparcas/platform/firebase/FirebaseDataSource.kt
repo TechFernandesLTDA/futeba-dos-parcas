@@ -3069,6 +3069,22 @@ actual class FirebaseDataSource(
         }
     }
 
+    actual suspend fun getStatisticsRanking(orderByField: String, limit: Int): Result<List<Statistics>> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_STATISTICS)
+                .orderBy(orderByField, Query.Direction.DESCENDING)
+                .limit(limit.toLong())
+                .get()
+                .await()
+
+            val statistics = snapshot.documents.mapNotNull { it.toRankingStatisticsOrNull() }
+            Result.success(statistics)
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseDataSource", "Erro ao buscar ranking de estatísticas", e)
+            Result.failure(e)
+        }
+    }
+
     // ========== NOTIFICATIONS ==========
 
     actual suspend fun getMyNotifications(limit: Int): Result<List<AppNotification>> {

@@ -234,6 +234,9 @@ fun AppNavHost(
                 },
                 onJoinGroupClick = {
                     navController.navigate(Screen.Groups.route)
+                },
+                onSeeAllGamesClick = {
+                    navController.navigate(Screen.Games.route)
                 }
             )
         }

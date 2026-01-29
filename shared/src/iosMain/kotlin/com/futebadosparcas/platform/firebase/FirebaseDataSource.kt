@@ -1434,6 +1434,11 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    actual suspend fun getStatisticsRanking(orderByField: String, limit: Int): Result<List<Statistics>> {
+        // TODO: Implementar com Firebase iOS SDK
+        return Result.success(emptyList())
+    }
+
     // ========== NOTIFICATIONS ==========
 
     actual suspend fun getMyNotifications(limit: Int): Result<List<AppNotification>> {

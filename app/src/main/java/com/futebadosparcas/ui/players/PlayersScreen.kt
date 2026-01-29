@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.futebadosparcas.R
+import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.ui.components.CachedProfileImage
@@ -95,7 +97,47 @@ fun PlayersScreen(
     // Context para compartilhamento
     val context = androidx.compose.ui.platform.LocalContext.current
 
+    // Estado para Snackbar
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Estado para dialog de seleção de grupo
+    var groupSelectionData by remember { mutableStateOf<Pair<List<UserGroup>, User>?>(null) }
+
+    // Observer para eventos de convite
+    LaunchedEffect(Unit) {
+        viewModel.inviteEvent.collect { event ->
+            when (event) {
+                is InviteUiEvent.InviteSent -> {
+                    snackbarHostState.showSnackbar(
+                        message = context.getString(R.string.invite_sent_success, event.userName)
+                    )
+                }
+                is InviteUiEvent.Error -> {
+                    snackbarHostState.showSnackbar(
+                        message = event.message
+                    )
+                }
+                is InviteUiEvent.ShowGroupSelection -> {
+                    groupSelectionData = event.groups to event.targetUser
+                }
+            }
+        }
+    }
+
+    // Dialog de seleção de grupo
+    groupSelectionData?.let { (groups, targetUser) ->
+        GroupSelectionDialog(
+            groups = groups,
+            onGroupSelected = { groupId ->
+                viewModel.sendInvite(groupId, targetUser)
+                groupSelectionData = null
+            },
+            onDismiss = { groupSelectionData = null }
+        )
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             com.futebadosparcas.ui.components.FutebaTopBar(
                 unreadCount = unreadCount,
@@ -237,21 +279,34 @@ fun PlayersScreen(
             }
 
             // PlayerCard BottomSheet
+            val selectedPlayerStats by viewModel.selectedPlayerStats.collectAsStateWithLifecycle()
+
             selectedPlayerForCard?.let { player ->
+                // Carregar estatísticas quando o jogador é selecionado
+                LaunchedEffect(player.id) {
+                    viewModel.loadPlayerStats(player.id)
+                }
+
                 ModalBottomSheet(
-                    onDismissRequest = { selectedPlayerForCard = null },
+                    onDismissRequest = {
+                        selectedPlayerForCard = null
+                        viewModel.clearPlayerStats()
+                    },
                     sheetState = playerCardSheetState,
                     containerColor = MaterialTheme.colorScheme.surface
                 ) {
                     PlayerCardContent(
                         user = player,
-                        stats = null,  // TODO: Buscar estatísticas do jogador se necessário
-                        onClose = { selectedPlayerForCard = null },
+                        stats = selectedPlayerStats,
+                        onClose = {
+                            selectedPlayerForCard = null
+                            viewModel.clearPlayerStats()
+                        },
                         onShare = {
                             PlayerCardShareHelper.shareAsImage(
                                 context = context,
                                 user = player,
-                                stats = null,
+                                stats = selectedPlayerStats,
                                 generatedBy = "Futeba dos Parças"
                             )
                         },
@@ -668,4 +723,69 @@ private fun PlayerRatingBadge(
             )
         }
     }
+}
+
+/**
+ * Dialog para selecionar grupo ao convidar jogador
+ */
+@Composable
+private fun GroupSelectionDialog(
+    groups: List<UserGroup>,
+    onGroupSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Groups,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        title = {
+            Text(
+                text = stringResource(R.string.select_group_for_invite),
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
+        text = {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(groups, key = { it.groupId }) { group ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onGroupSelected(group.groupId) },
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Group,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                text = group.groupName,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
