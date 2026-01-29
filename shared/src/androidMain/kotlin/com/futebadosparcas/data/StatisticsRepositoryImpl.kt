@@ -201,13 +201,17 @@ class StatisticsRepositoryImpl(
         limit: Int
     ): Result<List<Statistics>> {
         return try {
-            // Como o FirebaseDataSource nao suporta queries genericas de ranking,
-            // vamos buscar todas as estatisticas e ordenar na memoria
-            // NOTA: Em producao, isso deveria ser otimizado com indices compostos
+            // Mapear enum para campo do Firestore
+            val orderByField = when (orderBy) {
+                RankingOrderBy.GOALS -> "total_goals"
+                RankingOrderBy.ASSISTS -> "total_assists"
+                RankingOrderBy.GAMES -> "total_games"
+                RankingOrderBy.WINS -> "total_wins"
+                RankingOrderBy.MVP_COUNT -> "mvp_count"
+                RankingOrderBy.WIN_RATE -> "total_wins" // Ordenar por wins, calcular rate no app
+            }
 
-            // Por enquanto, retornar lista vazia com notificacao
-            // TODO: Implementar query com orderBy especifico no FirebaseDataSource
-            Result.success(emptyList())
+            dataSource.getStatisticsRanking(orderByField, limit)
         } catch (e: Exception) {
             Result.failure(e)
         }

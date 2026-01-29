@@ -280,6 +280,44 @@ class PreferencesManager @Inject constructor(
         encryptedPreferences.edit().clear().apply()
     }
 
+    // ==================== LOCAIS FAVORITOS ====================
+
+    /**
+     * Salva os IDs dos locais favoritos do usuário.
+     */
+    fun setFavoriteLocations(locationIds: Set<String>) {
+        sharedPreferences.edit()
+            .putStringSet(KEY_FAVORITE_LOCATIONS, locationIds)
+            .apply()
+    }
+
+    /**
+     * Retorna os IDs dos locais favoritos do usuário.
+     */
+    fun getFavoriteLocations(): Set<String> {
+        return sharedPreferences.getStringSet(KEY_FAVORITE_LOCATIONS, emptySet()) ?: emptySet()
+    }
+
+    // ==================== LOCAIS RECENTES ====================
+
+    /**
+     * Salva os IDs dos locais recentes (últimos selecionados).
+     * Armazenados como string separada por vírgula para manter ordem.
+     */
+    fun setRecentLocationIds(locationIds: List<String>) {
+        sharedPreferences.edit()
+            .putString(KEY_RECENT_LOCATIONS, locationIds.joinToString(","))
+            .apply()
+    }
+
+    /**
+     * Retorna os IDs dos locais recentes em ordem (mais recente primeiro).
+     */
+    fun getRecentLocationIds(): List<String> {
+        val stored = sharedPreferences.getString(KEY_RECENT_LOCATIONS, null)
+        return stored?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+    }
+
     companion object {
         private const val PREFS_NAME = "futeba_prefs"
         private const val ENCRYPTED_PREFS_NAME = "futeba_secure_prefs"
@@ -295,6 +333,8 @@ class PreferencesManager @Inject constructor(
         private const val KEY_MOCK_MODE_ENABLED = "mock_mode_enabled"
         private const val KEY_DEV_MODE_ENABLED = "dev_mode_enabled"
         private const val KEY_PERMISSION_ONBOARDING_COMPLETED = "permission_onboarding_completed"
+        private const val KEY_FAVORITE_LOCATIONS = "favorite_locations"
+        private const val KEY_RECENT_LOCATIONS = "recent_locations"
 
         // Chaves para EncryptedSharedPreferences (dados sensíveis)
         private const val KEY_LAST_LOGIN_TIME = "last_login_time"

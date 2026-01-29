@@ -79,6 +79,7 @@ fun HomeScreen(
     onLevelJourneyClick: () -> Unit = {},  // Navegacao para Rumo ao Estrelato
     onCreateGameClick: () -> Unit = {},    // Navegacao para criar novo jogo
     onJoinGroupClick: () -> Unit = {},     // Navegacao para entrar em grupo
+    onSeeAllGamesClick: () -> Unit = {},   // Navegacao para ver todos os jogos
     hapticManager: HapticManager? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -130,7 +131,8 @@ fun HomeScreen(
                         onMapClick = onMapClick,
                         onLevelJourneyClick = onLevelJourneyClick,
                         onCreateGameClick = onCreateGameClick,
-                        onJoinGroupClick = onJoinGroupClick
+                        onJoinGroupClick = onJoinGroupClick,
+                        onSeeAllGamesClick = onSeeAllGamesClick
                     )
 
                     // PlayerCard BottomSheet
@@ -194,7 +196,8 @@ private fun HomeSuccessContent(
     onMapClick: () -> Unit,
     onLevelJourneyClick: () -> Unit,
     onCreateGameClick: () -> Unit,
-    onJoinGroupClick: () -> Unit
+    onJoinGroupClick: () -> Unit,
+    onSeeAllGamesClick: () -> Unit
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
 
@@ -270,7 +273,8 @@ private fun HomeSuccessContent(
                 UpcomingGamesSection(
                     games = games,
                     onGameClick = onGameClick,
-                    onConfirmClick = onConfirmGame
+                    onConfirmClick = onConfirmGame,
+                    onSeeAllClick = onSeeAllGamesClick
                 )
             }
         }

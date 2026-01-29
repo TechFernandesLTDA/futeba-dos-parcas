@@ -496,6 +496,15 @@ expect class FirebaseDataSource {
      */
     suspend fun getUsersStatistics(userIds: List<String>): Result<Map<String, Statistics>>
 
+    /**
+     * Busca ranking global de estatísticas ordenado por um campo específico.
+     *
+     * @param orderByField Campo para ordenação (ex: "total_goals", "mvp_count")
+     * @param limit Número máximo de resultados
+     * @return Lista de Statistics ordenada pelo campo especificado (decrescente)
+     */
+    suspend fun getStatisticsRanking(orderByField: String, limit: Int): Result<List<Statistics>>
+
     // ========== NOTIFICATIONS ==========
 
     /**

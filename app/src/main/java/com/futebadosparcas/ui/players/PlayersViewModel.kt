@@ -40,6 +40,10 @@ class PlayersViewModel @Inject constructor(
     private val _unreadCount = MutableStateFlow(0)
     val unreadCount: StateFlow<Int> = _unreadCount
 
+    // Estatísticas do jogador selecionado para o PlayerCard
+    private val _selectedPlayerStats = MutableStateFlow<com.futebadosparcas.data.model.UserStatistics?>(null)
+    val selectedPlayerStats: StateFlow<com.futebadosparcas.data.model.UserStatistics?> = _selectedPlayerStats
+
     // Flow para busca com debounce automático
     private val _searchQuery = MutableSharedFlow<String>(replay = 1)
 
@@ -97,6 +101,30 @@ class PlayersViewModel @Inject constructor(
                     _unreadCount.value = count
                 }
         }
+    }
+
+    /**
+     * Carrega estatísticas de um jogador específico para exibir no PlayerCard.
+     */
+    fun loadPlayerStats(userId: String) {
+        viewModelScope.launch {
+            _selectedPlayerStats.value = null // Limpar anterior
+            statisticsRepository.getUserStatistics(userId)
+                .onSuccess { stats ->
+                    _selectedPlayerStats.value = stats
+                }
+                .onFailure { e ->
+                    AppLogger.w(TAG) { "Erro ao carregar estatísticas do jogador $userId: ${e.message}" }
+                    _selectedPlayerStats.value = null
+                }
+        }
+    }
+
+    /**
+     * Limpa as estatísticas do jogador selecionado.
+     */
+    fun clearPlayerStats() {
+        _selectedPlayerStats.value = null
     }
 
     /**
