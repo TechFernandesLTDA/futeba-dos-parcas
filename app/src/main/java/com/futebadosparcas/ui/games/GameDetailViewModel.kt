@@ -23,6 +23,11 @@ import com.futebadosparcas.util.toAndroidSchedule
 import com.futebadosparcas.util.toKmpSchedule
 import javax.inject.Inject
 import com.futebadosparcas.util.toKmpAppNotifications
+import com.futebadosparcas.data.model.CancellationReason
+import com.futebadosparcas.data.model.GameWaitlist
+import com.futebadosparcas.data.model.GameInviteLink
+import com.futebadosparcas.data.model.PlayerAttendance
+import com.futebadosparcas.data.model.PixKeyType
 
 @HiltViewModel
 class GameDetailViewModel @Inject constructor(
@@ -31,7 +36,10 @@ class GameDetailViewModel @Inject constructor(
     private val gameExperienceRepository: com.futebadosparcas.data.repository.GameExperienceRepository,
     private val scheduleRepository: ScheduleRepository,
     private val groupRepository: com.futebadosparcas.data.repository.GroupRepository,
-    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository
+    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
+    private val waitlistRepository: com.futebadosparcas.data.repository.WaitlistRepository,
+    private val confirmationUseCase: com.futebadosparcas.domain.usecase.ConfirmationUseCase,
+    private val permissionManager: com.futebadosparcas.domain.permission.PermissionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GameDetailUiState>(GameDetailUiState.Loading)
@@ -43,6 +51,15 @@ class GameDetailViewModel @Inject constructor(
 
     private var gameId: String? = null
     private var gameDetailsJob: Job? = null
+    private var waitlistJob: Job? = null
+
+    // Estado da lista de espera (Issue #32)
+    private val _waitlistState = MutableStateFlow<WaitlistState>(WaitlistState.Empty)
+    val waitlistState: StateFlow<WaitlistState> = _waitlistState
+
+    // Estado do deadline de confirmacao (Issue #31)
+    private val _confirmationDeadline = MutableStateFlow<ConfirmationDeadlineState?>(null)
+    val confirmationDeadline: StateFlow<ConfirmationDeadlineState?> = _confirmationDeadline
 
     @OptIn(kotlinx.coroutines.FlowPreview::class)
     fun loadGameDetails(id: String) {
@@ -97,14 +114,23 @@ class GameDetailViewModel @Inject constructor(
                     val currentUserResult = authRepository.getCurrentUser()
                     val currentUserObj = currentUserResult.getOrNull()
                     val currentUserId = currentUserObj?.id ?: authRepository.getCurrentUserId()
-                    val isAdmin = currentUserObj?.isAdmin() == true
+
+                    // Permissões centralizadas via PermissionManager
+                    val isAdmin = permissionManager.isAdmin()
+                    val canManageGame = permissionManager.canEditGame(game.ownerId, game.coOrganizers)
 
                     val isConfirmed = confirmations.find { it.userId == currentUserId }
                     val isUserConfirmed = isConfirmed?.status == "CONFIRMED"
                     val isUserPending = isConfirmed?.status == "PENDING"
+                    val isUserInWaitlist = isConfirmed?.status == ConfirmationStatus.WAITLIST.name
                     val isOwner = game.ownerId == currentUserId
-                    val canManageGame = isOwner || isAdmin
                     val canLogEvents = canManageGame || isUserConfirmed
+
+                    // Verificar deadline de confirmacao (Issue #31)
+                    updateConfirmationDeadlineState(game)
+
+                    // Carregar lista de espera (Issue #32)
+                    loadWaitlist(id)
 
                     val currentMessage = (_uiState.value as? GameDetailUiState.Success)?.userMessage
 
@@ -125,13 +151,17 @@ class GameDetailViewModel @Inject constructor(
                         hasVoted = voteResult.getOrNull() ?: false
                     }
 
+                    // Ordenar por ordem de confirmacao (Issue #40)
+                    val sortedConfirmations = confirmedWithStats.sortedBy { it.confirmationOrder }
+
                     _uiState.value = GameDetailUiState.Success(
                         game = game,
-                        confirmations = confirmedWithStats,
+                        confirmations = sortedConfirmations,
                         teams = teams,
                         events = events,
                         isUserConfirmed = isUserConfirmed,
                         isUserPending = isUserPending,
+                        isUserInWaitlist = isUserInWaitlist,
                         isOwner = isOwner,
                         isAdmin = isAdmin,
                         canManageGame = canManageGame,
@@ -232,13 +262,15 @@ class GameDetailViewModel @Inject constructor(
             }
 
             // 2. Validação de Localização (Geofencing)
-            if (game.locationLat != null && game.locationLng != null && game.locationLat != 0.0) {
+            val gameLat = game.locationLat
+            val gameLng = game.locationLng
+            if (gameLat != null && gameLng != null && gameLat != 0.0) {
                 if (currentLat == null || currentLng == null) {
                     _uiState.value = state.copy(userMessage = "Ative o GPS para confirmar que está no local do jogo.")
                     return
                 }
 
-                val distance = calculateDistance(currentLat, currentLng, game.locationLat!!, game.locationLng!!)
+                val distance = calculateDistance(currentLat, currentLng, gameLat, gameLng)
                 val maxDistanceMeters = 500.0 // Tolerância de 500m
 
                 if (distance > maxDistanceMeters) {
@@ -462,7 +494,7 @@ class GameDetailViewModel @Inject constructor(
 
                 val result = gameRepository.createGame(nextGame)
                 if (result.isSuccess) {
-                    val savedGame = result.getOrNull()!!
+                    val savedGame = result.getOrNull() ?: return@launch
                     // Summon group members if available
                     if (savedGame.groupId != null) {
                         summonGroupMembers(savedGame)
@@ -613,6 +645,21 @@ class GameDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Permite ao dono/organizador confirmar um jogador pendente.
+     */
+    fun confirmPlayerAsOwner(gameId: String, userId: String) {
+        viewModelScope.launch {
+            val result = gameRepository.confirmPlayerAsOwner(gameId, userId)
+            if (result.isFailure) {
+                val currentState = _uiState.value as? GameDetailUiState.Success
+                currentState?.let {
+                    _uiState.value = it.copy(userMessage = "Erro ao confirmar jogador: ${result.exceptionOrNull()?.message}")
+                }
+            }
+        }
+    }
+
     fun togglePaymentStatus(gameId: String, userId: String, currentStatus: String) {
         viewModelScope.launch {
             val isPaid = currentStatus != PaymentStatus.PAID.name
@@ -656,9 +703,470 @@ class GameDetailViewModel @Inject constructor(
         _uiState.value = currentState.copy(userMessage = null)
     }
 
+    // === PRESENCE & CONFIRMATION FEATURES (Issues #31-40) ===
+
+    /**
+     * Issue #31: Atualiza o estado do deadline de confirmacao.
+     */
+    private fun updateConfirmationDeadlineState(game: Game) {
+        val deadline = game.getConfirmationDeadline()
+        if (deadline == null) {
+            _confirmationDeadline.value = null
+        } else {
+            val now = java.util.Date()
+            val isPassed = now.after(deadline)
+            val timeRemaining = if (!isPassed) deadline.time - now.time else 0L
+            _confirmationDeadline.value = ConfirmationDeadlineState(
+                deadline = deadline,
+                isPassed = isPassed,
+                timeRemainingMs = timeRemaining
+            )
+        }
+    }
+
+    /**
+     * Issue #32: Carrega a lista de espera do jogo.
+     */
+    private fun loadWaitlist(gameId: String) {
+        waitlistJob?.cancel()
+        waitlistJob = viewModelScope.launch {
+            waitlistRepository.getWaitlistFlow(gameId)
+                .catch { e ->
+                    AppLogger.e(TAG, "Erro ao carregar lista de espera", e)
+                    _waitlistState.value = WaitlistState.Error(e.message ?: "Erro")
+                }
+                .collect { result ->
+                    result.fold(
+                        onSuccess = { list ->
+                            _waitlistState.value = if (list.isEmpty()) {
+                                WaitlistState.Empty
+                            } else {
+                                WaitlistState.Loaded(list)
+                            }
+                        },
+                        onFailure = { e ->
+                            _waitlistState.value = WaitlistState.Error(e.message ?: "Erro")
+                        }
+                    )
+                }
+        }
+    }
+
+    /**
+     * Issue #32: Adiciona jogador a lista de espera.
+     */
+    fun addToWaitlist(gameId: String, position: String) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+            val result = confirmationUseCase.confirmPresence(gameId, position, false)
+            result.fold(
+                onSuccess = { confirmResult ->
+                    if (confirmResult.addedToWaitlist) {
+                        _uiState.value = currentState.copy(
+                            userMessage = "Adicionado a lista de espera (posicao ${confirmResult.waitlistPosition})"
+                        )
+                    }
+                },
+                onFailure = { e ->
+                    _uiState.value = currentState.copy(
+                        userMessage = "Erro: ${e.message}"
+                    )
+                }
+            )
+        }
+    }
+
+    /**
+     * Issue #32: Remove jogador da lista de espera.
+     */
+    fun removeFromWaitlist(gameId: String) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+            val result = waitlistRepository.removeFromWaitlist(gameId, currentState.currentUserId ?: "")
+            result.fold(
+                onSuccess = {
+                    _uiState.value = currentState.copy(
+                        userMessage = "Removido da lista de espera"
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = currentState.copy(
+                        userMessage = "Erro: ${e.message}"
+                    )
+                }
+            )
+        }
+    }
+
+    /**
+     * Issue #35: Marca jogador como "A caminho".
+     */
+    fun markOnTheWay(gameId: String, etaMinutes: Int? = null) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+            val result = confirmationUseCase.markOnTheWay(gameId, etaMinutes)
+            result.fold(
+                onSuccess = {
+                    _uiState.value = currentState.copy(
+                        userMessage = "Marcado como 'A caminho'" + (etaMinutes?.let { " (ETA: $it min)" } ?: "")
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = currentState.copy(
+                        userMessage = "Erro: ${e.message}"
+                    )
+                }
+            )
+        }
+    }
+
+    /**
+     * Issue #36: Realiza check-in por GPS.
+     */
+    fun checkIn(gameId: String, latitude: Double, longitude: Double) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+
+            val location = android.location.Location("").apply {
+                this.latitude = latitude
+                this.longitude = longitude
+            }
+
+            val result = confirmationUseCase.checkIn(gameId, location)
+            result.fold(
+                onSuccess = { checkInResult ->
+                    _uiState.value = currentState.copy(
+                        userMessage = if (checkInResult.success) {
+                            "Check-in realizado com sucesso!"
+                        } else {
+                            checkInResult.errorMessage ?: "Erro no check-in"
+                        }
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = currentState.copy(
+                        userMessage = "Erro: ${e.message}"
+                    )
+                }
+            )
+        }
+    }
+
+    /**
+     * Issue #39: Cancela confirmacao com motivo.
+     */
+    fun cancelWithReason(gameId: String, reason: CancellationReason, reasonText: String? = null) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+            val result = confirmationUseCase.cancelWithReason(gameId, reason, reasonText)
+            result.fold(
+                onSuccess = {
+                    _uiState.value = currentState.copy(
+                        userMessage = "Presenca cancelada",
+                        isUserConfirmed = false
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = currentState.copy(
+                        userMessage = "Erro: ${e.message}"
+                    )
+                }
+            )
+        }
+    }
+
+    /**
+     * Issue #37: Busca historico de presenca do jogador.
+     */
+    suspend fun getPlayerAttendance(userId: String): PlayerAttendance? {
+        return confirmationUseCase.getAttendanceHistory(userId).getOrNull()
+    }
+
+    /**
+     * Issue #38: Gera link de convite para o jogo.
+     */
+    fun generateInviteLink(gameId: String): GameInviteLink? {
+        val currentState = _uiState.value as? GameDetailUiState.Success ?: return null
+        val currentUserId = authRepository.getCurrentUserId() ?: return null
+        val currentUserName = authRepository.getCurrentFirebaseUser()?.displayName ?: "Organizador"
+
+        return GameInviteLink.generate(
+            gameId = gameId,
+            game = currentState.game,
+            createdById = currentUserId,
+            createdByName = currentUserName
+        )
+    }
+
+    /**
+     * Issue #31: Atualiza deadline de confirmacao.
+     */
+    fun updateConfirmationDeadline(gameId: String, hours: Int) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+            val updatedGame = currentState.game.copy(confirmationDeadlineHours = hours)
+            val result = gameRepository.updateGame(updatedGame)
+            if (result.isFailure) {
+                _uiState.value = currentState.copy(
+                    userMessage = "Erro ao atualizar deadline: ${result.exceptionOrNull()?.message}"
+                )
+            }
+        }
+    }
+
+    /**
+     * Issue #34: Atualiza configuracoes de Pix.
+     */
+    fun updatePixSettings(
+        gameId: String,
+        pixKey: String,
+        pixKeyType: PixKeyType,
+        beneficiaryName: String,
+        enabled: Boolean
+    ) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+            val updatedGame = currentState.game.copy(
+                pixKey = pixKey,
+                pixKeyType = pixKeyType.name,
+                pixBeneficiaryName = beneficiaryName,
+                pixPaymentEnabled = enabled
+            )
+            val result = gameRepository.updateGame(updatedGame)
+            if (result.isFailure) {
+                _uiState.value = currentState.copy(
+                    userMessage = "Erro ao atualizar Pix: ${result.exceptionOrNull()?.message}"
+                )
+            }
+        }
+    }
+
+    /**
+     * Issue #36: Atualiza configuracoes de check-in.
+     */
+    fun updateCheckinSettings(gameId: String, required: Boolean, radiusMeters: Int) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+            val updatedGame = currentState.game.copy(
+                requireCheckin = required,
+                checkinRadiusMeters = radiusMeters
+            )
+            val result = gameRepository.updateGame(updatedGame)
+            if (result.isFailure) {
+                _uiState.value = currentState.copy(
+                    userMessage = "Erro ao atualizar check-in: ${result.exceptionOrNull()?.message}"
+                )
+            }
+        }
+    }
+
+    // === GAME OWNER FEATURES (Issues #61-70) ===
+
+    /**
+     * Issue #69: Atualiza pagamento parcial de um jogador.
+     */
+    fun updatePartialPayment(gameId: String, userId: String, amount: Double) {
+        viewModelScope.launch {
+            val result = gameRepository.updatePartialPayment(gameId, userId, amount)
+            if (result.isFailure) {
+                val currentState = _uiState.value as? GameDetailUiState.Success
+                if (currentState != null) {
+                    _uiState.value = currentState.copy(
+                        userMessage = "Erro ao atualizar pagamento: ${result.exceptionOrNull()?.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Issue #63: Atualiza lista de co-organizadores.
+     */
+    fun updateCoOrganizers(gameId: String, coOrganizers: List<String>) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+            val updatedGame = currentState.game.copy(coOrganizers = coOrganizers)
+            val result = gameRepository.updateGame(updatedGame)
+            if (result.isFailure) {
+                _uiState.value = currentState.copy(
+                    userMessage = "Erro ao atualizar co-organizadores: ${result.exceptionOrNull()?.message}"
+                )
+            }
+        }
+    }
+
+    /**
+     * Issue #65: Configura fechamento automatico de confirmacoes.
+     */
+    fun updateAutoCloseHours(gameId: String, hours: Int?) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+            val updatedGame = currentState.game.copy(autoCloseHours = hours)
+            val result = gameRepository.updateGame(updatedGame)
+            if (result.isFailure) {
+                _uiState.value = currentState.copy(
+                    userMessage = "Erro ao atualizar configuracao: ${result.exceptionOrNull()?.message}"
+                )
+            }
+        }
+    }
+
+    /**
+     * Issue #68: Atualiza regras do jogo.
+     */
+    fun updateGameRules(gameId: String, rules: String) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+            val updatedGame = currentState.game.copy(rules = rules)
+            val result = gameRepository.updateGame(updatedGame)
+            if (result.isFailure) {
+                _uiState.value = currentState.copy(
+                    userMessage = "Erro ao atualizar regras: ${result.exceptionOrNull()?.message}"
+                )
+            }
+        }
+    }
+
+    /**
+     * Issue #70: Transfere propriedade do jogo para outro jogador.
+     */
+    fun transferOwnership(gameId: String, newOwnerId: String) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+            val newOwner = currentState.confirmations.find { it.userId == newOwnerId }
+
+            val updatedGame = currentState.game.copy(
+                ownerId = newOwnerId,
+                ownerName = newOwner?.userName ?: currentState.game.ownerName
+            )
+
+            val result = gameRepository.updateGame(updatedGame)
+            if (result.isSuccess) {
+                _uiState.value = currentState.copy(
+                    userMessage = "Propriedade transferida com sucesso!",
+                    isOwner = false,
+                    canManageGame = false
+                )
+            } else {
+                _uiState.value = currentState.copy(
+                    userMessage = "Erro ao transferir propriedade: ${result.exceptionOrNull()?.message}"
+                )
+            }
+        }
+    }
+
+    /**
+     * Issue #64: Bloqueia um jogador do grupo/recorrencia.
+     */
+    fun blockPlayer(groupId: String?, userId: String, userName: String, reason: String) {
+        if (groupId == null) return
+        viewModelScope.launch {
+            val result = groupRepository.blockPlayer(groupId, userId, userName, reason, authRepository.getCurrentUserId() ?: "")
+            if (result.isFailure) {
+                val currentState = _uiState.value as? GameDetailUiState.Success
+                if (currentState != null) {
+                    _uiState.value = currentState.copy(
+                        userMessage = "Erro ao bloquear jogador: ${result.exceptionOrNull()?.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Issue #64: Desbloqueia um jogador do grupo/recorrencia.
+     */
+    fun unblockPlayer(groupId: String?, userId: String) {
+        if (groupId == null) return
+        viewModelScope.launch {
+            val result = groupRepository.unblockPlayer(groupId, userId)
+            if (result.isFailure) {
+                val currentState = _uiState.value as? GameDetailUiState.Success
+                if (currentState != null) {
+                    _uiState.value = currentState.copy(
+                        userMessage = "Erro ao desbloquear jogador: ${result.exceptionOrNull()?.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Issue #66: Gera relatorio pos-jogo.
+     */
+    fun generatePostGameReport(): com.futebadosparcas.ui.games.owner.PostGameReport? {
+        val state = _uiState.value as? GameDetailUiState.Success ?: return null
+
+        val mvpPlayer = state.confirmations.find { it.userId == state.game.mvpId }
+
+        // Calcular top scorers
+        val topScorers = state.confirmations
+            .filter { it.goals > 0 }
+            .sortedByDescending { it.goals }
+            .take(5)
+            .map { it to it.goals }
+
+        // Calcular top assists
+        val topAssists = state.confirmations
+            .filter { it.assists > 0 }
+            .sortedByDescending { it.assists }
+            .take(5)
+            .map { it to it.assists }
+
+        // Contar cartoes
+        val totalGoals = state.events.count { it.eventType == com.futebadosparcas.data.model.GameEventType.GOAL.name }
+        val yellowCards = state.events.count { it.eventType == com.futebadosparcas.data.model.GameEventType.YELLOW_CARD.name }
+        val redCards = state.events.count { it.eventType == com.futebadosparcas.data.model.GameEventType.RED_CARD.name }
+
+        return com.futebadosparcas.ui.games.owner.PostGameReport(
+            game = state.game,
+            confirmations = state.confirmations,
+            teams = state.teams,
+            mvpPlayer = mvpPlayer,
+            totalGoals = totalGoals,
+            topScorers = topScorers,
+            topAssists = topAssists,
+            yellowCards = yellowCards,
+            redCards = redCards
+        )
+    }
+
     override fun onCleared() {
         super.onCleared()
         gameDetailsJob?.cancel()
+        waitlistJob?.cancel()
+    }
+}
+
+/**
+ * Estado da lista de espera (Issue #32).
+ */
+sealed class WaitlistState {
+    object Empty : WaitlistState()
+    data class Loaded(val entries: List<GameWaitlist>) : WaitlistState()
+    data class Error(val message: String) : WaitlistState()
+}
+
+/**
+ * Estado do deadline de confirmacao (Issue #31).
+ */
+data class ConfirmationDeadlineState(
+    val deadline: java.util.Date,
+    val isPassed: Boolean,
+    val timeRemainingMs: Long
+) {
+    fun getTimeRemainingDisplay(): String {
+        if (timeRemainingMs <= 0) return "Encerrado"
+
+        val minutes = timeRemainingMs / (1000 * 60)
+        val hours = minutes / 60
+        val remainingMinutes = minutes % 60
+
+        return when {
+            hours > 24 -> "${hours / 24}d ${hours % 24}h"
+            hours > 0 -> "${hours}h ${remainingMinutes}min"
+            else -> "${remainingMinutes}min"
+        }
     }
 }
 
@@ -672,6 +1180,7 @@ sealed class GameDetailUiState {
         val events: List<GameEvent> = emptyList(),
         val isUserConfirmed: Boolean,
         val isUserPending: Boolean = false,
+        val isUserInWaitlist: Boolean = false,
         val isOwner: Boolean,
         val isAdmin: Boolean = false,
         val canManageGame: Boolean = false,

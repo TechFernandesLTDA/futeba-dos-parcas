@@ -42,7 +42,10 @@ class SeasonClosureService @Inject constructor(
             }
 
             val season = seasonDoc.toObject(Season::class.java)
-            if (season?.isActive == false) {
+            if (season == null) {
+                return Result.failure(Exception("Falha ao deserializar temporada $seasonId"))
+            }
+            if (!season.isActive) {
                 AppLogger.w(TAG) { "Temporada $seasonId já está encerrada." }
                 return Result.success(Unit)
             }

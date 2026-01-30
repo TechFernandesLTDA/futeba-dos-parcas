@@ -14,4 +14,20 @@ plugins {
     id("com.google.firebase.firebase-perf") version "2.0.2" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10" apply false
     id("androidx.baselineprofile") version "1.3.3" apply false
+    id("io.gitlab.arturbosch.detekt") version "1.23.7" // #061 - Static analysis
+}
+
+// #061 - Configure Detekt for all projects
+allprojects {
+    apply(plugin = "io.gitlab.arturbosch.detekt")
+
+    detekt {
+        config.setFrom(files("$rootDir/detekt.yml"))
+        buildUponDefaultConfig = true
+        allRules = false
+    }
+
+    dependencies {
+        detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.7")
+    }
 }

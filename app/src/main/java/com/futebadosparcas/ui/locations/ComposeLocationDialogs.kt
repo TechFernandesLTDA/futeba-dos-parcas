@@ -55,16 +55,17 @@ fun FieldEditDialog(
     onDismiss: () -> Unit,
     onSave: (String, FieldType, Double, Boolean, Uri?, String?, Boolean, String?) -> Unit
 ) {
-    var name by remember { mutableStateOf(field?.name ?: "") }
-    var selectedType by remember { mutableStateOf(field?.getTypeEnum() ?: defaultType) }
-    var price by remember { mutableStateOf(field?.hourlyPrice?.toString() ?: "") }
-    var surface by remember { mutableStateOf(field?.surface ?: "") }
-    var dimensions by remember { mutableStateOf(field?.dimensions ?: "") }
-    var isCovered by remember { mutableStateOf(field?.isCovered ?: false) }
-    var isActive by remember { mutableStateOf(field?.isActive ?: true) }
-    var selectedPhotoUri by remember { mutableStateOf<Uri?>(null) }
-    var showNameError by remember { mutableStateOf(false) }
-    var showPriceError by remember { mutableStateOf(false) }
+    // Usar field?.id como chave para resetar estado quando o campo muda
+    var name by remember(field?.id) { mutableStateOf(field?.name ?: "") }
+    var selectedType by remember(field?.id) { mutableStateOf(field?.getTypeEnum() ?: defaultType) }
+    var price by remember(field?.id) { mutableStateOf(field?.hourlyPrice?.toString() ?: "") }
+    var surface by remember(field?.id) { mutableStateOf(field?.surface ?: "") }
+    var dimensions by remember(field?.id) { mutableStateOf(field?.dimensions ?: "") }
+    var isCovered by remember(field?.id) { mutableStateOf(field?.isCovered ?: false) }
+    var isActive by remember(field?.id) { mutableStateOf(field?.isActive ?: true) }
+    var selectedPhotoUri by remember(field?.id) { mutableStateOf<Uri?>(null) }
+    var showNameError by remember(field?.id) { mutableStateOf(false) }
+    var showPriceError by remember(field?.id) { mutableStateOf(false) }
     var showPhotoOptions by remember { mutableStateOf(false) }
 
     val context = LocalContext.current

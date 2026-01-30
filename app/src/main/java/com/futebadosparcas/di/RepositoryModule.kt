@@ -112,7 +112,9 @@ object RepositoryModule {
     fun provideLocationRepository(
         firebaseDataSource: FirebaseDataSource
     ): com.futebadosparcas.domain.repository.LocationRepository {
-        return LocationRepositoryImpl(firebaseDataSource)
+        // Usa o MeteredLocationRepository para tracking de métricas de performance
+        val baseRepository = LocationRepositoryImpl(firebaseDataSource)
+        return com.futebadosparcas.data.repository.MeteredLocationRepository(baseRepository)
     }
 
     @Provides

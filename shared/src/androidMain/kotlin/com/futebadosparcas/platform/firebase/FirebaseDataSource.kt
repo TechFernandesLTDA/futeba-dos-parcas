@@ -3069,6 +3069,22 @@ actual class FirebaseDataSource(
         }
     }
 
+    actual suspend fun getStatisticsRanking(orderByField: String, limit: Int): Result<List<Statistics>> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_STATISTICS)
+                .orderBy(orderByField, Query.Direction.DESCENDING)
+                .limit(limit.toLong())
+                .get()
+                .await()
+
+            val statistics = snapshot.documents.mapNotNull { it.toRankingStatisticsOrNull() }
+            Result.success(statistics)
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseDataSource", "Erro ao buscar ranking de estatísticas", e)
+            Result.failure(e)
+        }
+    }
+
     // ========== NOTIFICATIONS ==========
 
     actual suspend fun getMyNotifications(limit: Int): Result<List<AppNotification>> {
@@ -3186,6 +3202,23 @@ actual class FirebaseDataSource(
             Result.success(Unit)
         } catch (e: Exception) {
             android.util.Log.e("FirebaseDataSource", "Erro ao marcar notificação como lida", e)
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun markNotificationAsUnread(notificationId: String): Result<Unit> {
+        return try {
+            firestore.collection("notifications")
+                .document(notificationId)
+                .update(mapOf(
+                    "read" to false,
+                    "read_at" to com.google.firebase.firestore.FieldValue.delete()
+                ))
+                .await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseDataSource", "Erro ao marcar notificação como não lida", e)
             Result.failure(e)
         }
     }
@@ -3734,7 +3767,7 @@ actual class FirebaseDataSource(
 
             Result.success(snapshot.documents.mapNotNull { it.toLocationOrNull() })
         } catch (e: Exception) {
-            android.util.Log.e("FirebaseDataSource", "Erro ao buscar todos os locais", e)
+            logLocationQueryError("getAllLocations", e)
             Result.failure(e)
         }
     }
@@ -3752,7 +3785,151 @@ actual class FirebaseDataSource(
             val snapshot = query.get().await()
             Result.success(snapshot.documents.mapNotNull { it.toLocationOrNull() })
         } catch (e: Exception) {
+            logLocationQueryError(
+                "getLocationsWithPagination",
+                e,
+                mapOf("limit" to limit.toString(), "lastLocationName" to (lastLocationName ?: "null"))
+            )
             Result.failure(e)
+        }
+    }
+
+    actual suspend fun getLocationsPaginated(
+        pageSize: Int,
+        cursor: String?,
+        sortBy: LocationSortField
+    ): Result<PaginatedResult<Location>> {
+        return try {
+            // Limita tamanho da página (máximo 50)
+            val effectivePageSize = pageSize.coerceIn(1, 50)
+
+            var query = firestore.collection("locations")
+                .orderBy(sortBy.firestoreField, Query.Direction.ASCENDING)
+                .limit((effectivePageSize + 1).toLong()) // +1 para verificar se há mais
+
+            // Se há cursor, buscar o documento e usar como âncora
+            if (!cursor.isNullOrBlank()) {
+                val cursorData = decodeCursor(cursor)
+                    ?: return Result.failure(CursorDecodingException("Cursor inválido ou expirado"))
+
+                // Verificar se o campo de ordenação do cursor corresponde ao atual
+                if (cursorData.sortField != sortBy) {
+                    return Result.failure(CursorMismatchException(
+                        "Campo de ordenação do cursor (${cursorData.sortField}) " +
+                        "não corresponde ao solicitado ($sortBy)"
+                    ))
+                }
+
+                // Buscar documento de referência para usar como âncora
+                val anchorDoc = firestore.collection("locations")
+                    .document(cursorData.documentId)
+                    .get()
+                    .await()
+
+                if (!anchorDoc.exists()) {
+                    return Result.failure(CursorDocumentNotFoundException(
+                        "Documento do cursor não existe mais: ${cursorData.documentId}"
+                    ))
+                }
+
+                query = query.startAfter(anchorDoc)
+            }
+
+            val snapshot = query.get().await()
+            val allDocs = snapshot.documents
+
+            // Verifica se há mais páginas
+            val hasMore = allDocs.size > effectivePageSize
+            val docsToReturn = if (hasMore) allDocs.take(effectivePageSize) else allDocs
+
+            // Converte para Location
+            val locations = docsToReturn.mapNotNull { it.toLocationOrNull() }
+
+            // Gera cursor para próxima página (baseado no último documento retornado)
+            val nextCursor = if (hasMore && docsToReturn.isNotEmpty()) {
+                val lastDoc = docsToReturn.last()
+                val lastValue = when (sortBy) {
+                    LocationSortField.NAME -> lastDoc.getString("name")
+                    LocationSortField.CITY -> lastDoc.getString("city")
+                    LocationSortField.RATING -> lastDoc.getDouble("rating")?.toString()
+                    LocationSortField.CREATED_AT -> lastDoc.getLong("createdAt")?.toString()
+                }
+                encodeCursor(lastDoc.reference.path, sortBy, lastValue)
+            } else {
+                null
+            }
+
+            Result.success(
+                PaginatedResult(
+                    items = locations,
+                    cursor = nextCursor,
+                    hasMore = hasMore
+                )
+            )
+        } catch (e: CursorDecodingException) {
+            Result.failure(e)
+        } catch (e: CursorMismatchException) {
+            Result.failure(e)
+        } catch (e: CursorDocumentNotFoundException) {
+            Result.failure(e)
+        } catch (e: Exception) {
+            logLocationQueryError(
+                "getLocationsPaginated",
+                e,
+                mapOf(
+                    "pageSize" to pageSize.toString(),
+                    "cursor" to (cursor ?: "null"),
+                    "sortBy" to sortBy.name
+                )
+            )
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Codifica dados do cursor para string Base64.
+     */
+    private fun encodeCursor(documentPath: String, sortField: LocationSortField, lastValue: Any?): String {
+        val json = org.json.JSONObject().apply {
+            put("documentPath", documentPath)
+            put("sortField", sortField.name)
+            put("lastValue", lastValue?.toString() ?: "")
+            put("timestamp", System.currentTimeMillis())
+        }
+        return android.util.Base64.encodeToString(
+            json.toString().toByteArray(Charsets.UTF_8),
+            android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP
+        )
+    }
+
+    /**
+     * Decodifica cursor de string Base64.
+     * Retorna null se cursor inválido ou expirado (>15 minutos).
+     */
+    private fun decodeCursor(cursor: String): CursorInfo? {
+        return try {
+            val jsonString = String(
+                android.util.Base64.decode(cursor, android.util.Base64.URL_SAFE),
+                Charsets.UTF_8
+            )
+            val json = org.json.JSONObject(jsonString)
+
+            // Verificar expiração (15 minutos)
+            val timestamp = json.optLong("timestamp", 0)
+            if (timestamp > 0 && System.currentTimeMillis() - timestamp > 15 * 60 * 1000) {
+                android.util.Log.w("FirebaseDataSource", "Cursor expirado")
+                return null
+            }
+
+            CursorInfo(
+                documentPath = json.getString("documentPath"),
+                sortField = LocationSortField.fromString(json.optString("sortField", "NAME")),
+                lastValue = json.optString("lastValue").takeIf { it.isNotEmpty() },
+                timestamp = timestamp
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseDataSource", "Erro ao decodificar cursor", e)
+            null
         }
     }
 
@@ -3764,6 +3941,71 @@ actual class FirebaseDataSource(
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
+            logLocationUpdateError(locationId, "delete", e)
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun deleteLocationWithFields(locationId: String): Result<Int> {
+        return try {
+            // 1. Verificar se o local existe
+            val locationDoc = firestore.collection("locations")
+                .document(locationId)
+                .get()
+                .await()
+
+            if (!locationDoc.exists()) {
+                return Result.failure(Exception("Local não encontrado: $locationId"))
+            }
+
+            // 2. Buscar todas as quadras (fields) associadas ao local
+            val fieldsSnapshot = firestore.collection("fields")
+                .whereEqualTo("location_id", locationId)
+                .get()
+                .await()
+
+            val fieldIds = fieldsSnapshot.documents.map { it.id }
+            val totalDocsToDelete = 1 + fieldIds.size // 1 location + N fields
+
+            android.util.Log.d(
+                "FirebaseDataSource",
+                "deleteLocationWithFields: location=$locationId, fields=${fieldIds.size}, total=$totalDocsToDelete"
+            )
+
+            // 3. Criar batch de delete (limite: 500 operações)
+            val maxFieldsPerBatch = 499
+
+            if (fieldIds.size <= maxFieldsPerBatch) {
+                // Tudo cabe em um único batch
+                val batch = firestore.batch()
+                batch.delete(firestore.collection("locations").document(locationId))
+                fieldIds.forEach { fieldId ->
+                    batch.delete(firestore.collection("fields").document(fieldId))
+                }
+                batch.commit().await()
+            } else {
+                // Múltiplos batches necessários
+                val fieldChunks = fieldIds.chunked(maxFieldsPerBatch)
+
+                for ((index, chunk) in fieldChunks.withIndex()) {
+                    val batch = firestore.batch()
+
+                    // Deletar location apenas no primeiro batch
+                    if (index == 0) {
+                        batch.delete(firestore.collection("locations").document(locationId))
+                    }
+
+                    chunk.forEach { fieldId ->
+                        batch.delete(firestore.collection("fields").document(fieldId))
+                    }
+
+                    batch.commit().await()
+                }
+            }
+
+            Result.success(totalDocsToDelete)
+        } catch (e: Exception) {
+            logLocationUpdateError(locationId, "deleteWithFields", e)
             Result.failure(e)
         }
     }
@@ -3778,6 +4020,7 @@ actual class FirebaseDataSource(
 
             Result.success(snapshot.documents.mapNotNull { it.toLocationOrNull() })
         } catch (e: Exception) {
+            logLocationQueryError("getLocationsByOwner", e, mapOf("owner_id" to ownerId))
             Result.failure(e)
         }
     }
@@ -3793,6 +4036,7 @@ actual class FirebaseDataSource(
                 ?: return Result.failure(Exception("Local não encontrado"))
             Result.success(location)
         } catch (e: Exception) {
+            logLocationQueryError("getLocationById", e, mapOf("location_id" to locationId))
             Result.failure(e)
         }
     }
@@ -3827,6 +4071,7 @@ actual class FirebaseDataSource(
                 Result.success(LocationWithFields(location, fields))
             }
         } catch (e: Exception) {
+            logLocationQueryError("getLocationWithFields", e, mapOf("location_id" to locationId))
             Result.failure(e)
         }
     }
@@ -3846,6 +4091,7 @@ actual class FirebaseDataSource(
             docRef.set(locationWithId).await()
             Result.success(locationWithId)
         } catch (e: Exception) {
+            logLocationUpdateError(location.name, "create", e)
             Result.failure(e)
         }
     }
@@ -3858,6 +4104,7 @@ actual class FirebaseDataSource(
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
+            logLocationUpdateError(location.id, "update", e)
             Result.failure(e)
         }
     }
@@ -4295,6 +4542,69 @@ actual class FirebaseDataSource(
         return try {
             Result.failure(Exception("Upload de fotos requer Firebase Storage - não implementado ainda"))
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ========== LOCATION AUDIT LOGS ==========
+
+    actual suspend fun logLocationAudit(log: LocationAuditLog): Result<Unit> {
+        return try {
+            val docRef = firestore.collection("locations")
+                .document(log.locationId)
+                .collection("audit_logs")
+                .document()
+
+            val logWithId = log.copy(
+                id = docRef.id,
+                timestamp = if (log.timestamp == 0L) System.currentTimeMillis() else log.timestamp
+            )
+
+            val data = mutableMapOf<String, Any?>(
+                "id" to logWithId.id,
+                "location_id" to logWithId.locationId,
+                "user_id" to logWithId.userId,
+                "user_name" to logWithId.userName,
+                "action" to logWithId.action.name,
+                "timestamp" to logWithId.timestamp
+            )
+
+            // Adiciona changes se houver (para UPDATE)
+            if (logWithId.changes != null) {
+                val changesMap = logWithId.changes.mapValues { (_, fieldChange) ->
+                    mapOf(
+                        "before" to fieldChange.before,
+                        "after" to fieldChange.after
+                    )
+                }
+                data["changes"] = changesMap
+            }
+
+            docRef.set(data).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseDataSource", "Erro ao registrar log de auditoria", e)
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun getLocationAuditLogs(locationId: String, limit: Int): Result<List<LocationAuditLog>> {
+        return try {
+            val snapshot = firestore.collection("locations")
+                .document(locationId)
+                .collection("audit_logs")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(limit.toLong())
+                .get()
+                .await()
+
+            val logs = snapshot.documents.mapNotNull { doc ->
+                doc.toLocationAuditLogOrNull()
+            }
+
+            Result.success(logs)
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseDataSource", "Erro ao buscar logs de auditoria", e)
             Result.failure(e)
         }
     }
@@ -4904,85 +5214,109 @@ private fun DocumentSnapshot.toAppNotificationOrNull(): AppNotification? {
 
 /**
  * Extensão para converter DocumentSnapshot para Location.
+ * Inclui logging de erros no Crashlytics para monitoramento de deserializacao.
  */
 private fun DocumentSnapshot.toLocationOrNull(): Location? {
     if (!exists()) return null
 
-    return Location(
-        id = id,
-        name = getString("name") ?: "",
-        address = getString("address") ?: "",
-        cep = getString("cep") ?: "",
-        street = getString("street") ?: "",
-        number = getString("number") ?: "",
-        complement = getString("complement") ?: "",
-        district = getString("district") ?: "",
-        city = getString("city") ?: "",
-        state = getString("state") ?: "",
-        country = getString("country") ?: "Brasil",
-        neighborhood = getString("neighborhood") ?: "",
-        region = getString("region") ?: "",
-        latitude = getDouble("latitude"),
-        longitude = getDouble("longitude"),
-        placeId = getString("place_id"),
-        ownerId = getString("owner_id") ?: "",
-        isVerified = getBoolean("is_verified") ?: false,
-        isActive = getBoolean("is_active") ?: true,
-        rating = getDouble("rating") ?: 0.0,
-        ratingCount = getLong("rating_count")?.toInt() ?: 0,
-        description = getString("description") ?: "",
-        photoUrl = getString("photo_url"),
-        amenities = (get("amenities") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
-        phone = getString("phone"),
-        website = getString("website"),
-        instagram = getString("instagram"),
-        openingTime = getString("opening_time") ?: "08:00",
-        closingTime = getString("closing_time") ?: "23:00",
-        operatingDays = (get("operating_days") as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: listOf(1, 2, 3, 4, 5, 6, 7),
-        minGameDurationMinutes = getLong("min_game_duration_minutes")?.toInt() ?: 60,
-        createdAt = safeLong("created_at")
-    )
+    return try {
+        Location(
+            id = id,
+            name = getString("name") ?: "",
+            address = getString("address") ?: "",
+            cep = getString("cep") ?: "",
+            street = getString("street") ?: "",
+            number = getString("number") ?: "",
+            complement = getString("complement") ?: "",
+            district = getString("district") ?: "",
+            city = getString("city") ?: "",
+            state = getString("state") ?: "",
+            country = getString("country") ?: "Brasil",
+            neighborhood = getString("neighborhood") ?: "",
+            region = getString("region") ?: "",
+            latitude = getDouble("latitude"),
+            longitude = getDouble("longitude"),
+            placeId = getString("place_id"),
+            ownerId = getString("owner_id") ?: "",
+            managers = (get("managers") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
+            isVerified = getBoolean("is_verified") ?: false,
+            isActive = getBoolean("is_active") ?: true,
+            rating = getDouble("rating") ?: 0.0,
+            ratingCount = getLong("rating_count")?.toInt() ?: 0,
+            description = getString("description") ?: "",
+            photoUrl = getString("photo_url"),
+            amenities = (get("amenities") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
+            phone = getString("phone"),
+            website = getString("website"),
+            instagram = getString("instagram"),
+            openingTime = getString("opening_time") ?: "08:00",
+            closingTime = getString("closing_time") ?: "23:00",
+            operatingDays = (get("operating_days") as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: listOf(1, 2, 3, 4, 5, 6, 7),
+            minGameDurationMinutes = getLong("min_game_duration_minutes")?.toInt() ?: 60,
+            // Dados denormalizados de Fields
+            fieldCount = getLong("field_count")?.toInt() ?: 0,
+            primaryFieldType = getString("primary_field_type"),
+            hasActiveFields = getBoolean("has_active_fields") ?: false,
+            createdAt = safeLong("created_at"),
+            updatedAt = safeLong("updated_at")
+        )
+    } catch (e: Exception) {
+        logLocationDeserializationError(id, getString("owner_id"), e)
+        null
+    }
 }
 
 /**
  * Extensão para converter DocumentSnapshot para Field.
+ * Inclui logging de erros no Crashlytics para monitoramento de deserializacao.
  */
 private fun DocumentSnapshot.toFieldOrNull(): Field? {
     if (!exists()) return null
 
-    return Field(
-        id = id,
-        locationId = getString("location_id") ?: "",
-        name = getString("name") ?: "",
-        type = getString("type") ?: "SOCIETY",
-        description = getString("description"),
-        photoUrl = getString("photo_url"),
-        isActive = getBoolean("is_active") ?: true,
-        hourlyPrice = getDouble("hourly_price") ?: 0.0,
-        photos = (get("photos") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
-        managers = (get("managers") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
-        surface = getString("surface"),
-        isCovered = getBoolean("is_covered") ?: false,
-        dimensions = getString("dimensions")
-    )
+    return try {
+        Field(
+            id = id,
+            locationId = getString("location_id") ?: "",
+            name = getString("name") ?: "",
+            type = getString("type") ?: "SOCIETY",
+            description = getString("description"),
+            photoUrl = getString("photo_url"),
+            isActive = getBoolean("is_active") ?: true,
+            hourlyPrice = getDouble("hourly_price") ?: 0.0,
+            photos = (get("photos") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
+            managers = (get("managers") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
+            surface = getString("surface"),
+            isCovered = getBoolean("is_covered") ?: false,
+            dimensions = getString("dimensions")
+        )
+    } catch (e: Exception) {
+        logFieldDeserializationError(id, getString("location_id"), e)
+        null
+    }
 }
 
 /**
  * Extensão para converter DocumentSnapshot para LocationReview.
+ * Inclui logging de erros no Crashlytics para monitoramento de deserializacao.
  */
 private fun DocumentSnapshot.toLocationReviewOrNull(): LocationReview? {
     if (!exists()) return null
 
-    return LocationReview(
-        id = id,
-        locationId = getString("location_id") ?: "",
-        userId = getString("user_id") ?: "",
-        userName = getString("user_name") ?: "",
-        userPhotoUrl = getString("user_photo_url"),
-        rating = getLong("rating")?.toFloat() ?: 0f,
-        comment = getString("comment") ?: "",
-        createdAt = safeLong("created_at")
-    )
+    return try {
+        LocationReview(
+            id = id,
+            locationId = getString("location_id") ?: "",
+            userId = getString("user_id") ?: "",
+            userName = getString("user_name") ?: "",
+            userPhotoUrl = getString("user_photo_url"),
+            rating = getLong("rating")?.toFloat() ?: 0f,
+            comment = getString("comment") ?: "",
+            createdAt = safeLong("created_at")
+        )
+    } catch (e: Exception) {
+        logLocationReviewDeserializationError(id, getString("location_id"), e)
+        null
+    }
 }
 
 /**
@@ -5023,6 +5357,154 @@ private fun activityToMap(activity: Activity): Map<String, Any?> {
         "metadata" to activity.metadata,
         "created_at" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
         "visibility" to activity.visibility
+    )
+}
+
+// ========== CURSOR PAGINATION CLASSES ==========
+
+/**
+ * Informações decodificadas de um cursor de paginação.
+ */
+private data class CursorInfo(
+    val documentPath: String,
+    val sortField: LocationSortField,
+    val lastValue: String?,
+    val timestamp: Long
+) {
+    /**
+     * Extrai o ID do documento do path.
+     * Path tem formato: "locations/documentId"
+     */
+    val documentId: String
+        get() = documentPath.substringAfterLast("/")
+}
+
+/**
+ * Exceção lançada quando um cursor não pode ser decodificado.
+ */
+class CursorDecodingException(message: String) : Exception(message)
+
+/**
+ * Exceção lançada quando o campo de ordenação do cursor não corresponde ao solicitado.
+ */
+class CursorMismatchException(message: String) : Exception(message)
+
+/**
+ * Exceção lançada quando o documento referenciado pelo cursor não existe mais.
+ */
+class CursorDocumentNotFoundException(message: String) : Exception(message)
+
+// ========== AUDIT LOG EXTENSION ==========
+
+/**
+ * Extensão para converter DocumentSnapshot para LocationAuditLog.
+ */
+private fun DocumentSnapshot.toLocationAuditLogOrNull(): LocationAuditLog? {
+    if (!exists()) return null
+
+    return try {
+        val changesMap = (get("changes") as? Map<*, *>)?.mapNotNull { (key, value) ->
+            val fieldKey = key as? String ?: return@mapNotNull null
+            val fieldValue = value as? Map<*, *> ?: return@mapNotNull null
+            val before = fieldValue["before"] as? String
+            val after = fieldValue["after"] as? String
+            fieldKey to FieldChange(before = before, after = after)
+        }?.toMap()
+
+        LocationAuditLog(
+            id = id,
+            locationId = getString("location_id") ?: "",
+            userId = getString("user_id") ?: "",
+            userName = getString("user_name") ?: "",
+            action = LocationAuditAction.valueOf(
+                getString("action")?.uppercase() ?: "UPDATE"
+            ),
+            changes = changesMap,
+            timestamp = safeLong("timestamp") ?: 0L
+        )
+    } catch (e: Exception) {
+        android.util.Log.e("FirebaseDataSource", "Erro ao deserializar LocationAuditLog: $id", e)
+        null
+    }
+}
+
+// ========== CRASHLYTICS LOGGING HELPERS ==========
+
+/**
+ * Registra erro de deserializacao de Location no Crashlytics.
+ */
+private fun logLocationDeserializationError(
+    documentId: String,
+    ownerId: String?,
+    error: Throwable
+) {
+    android.util.Log.e(
+        "FirebaseDataSource",
+        "Location deserialization error [id=$documentId, owner=$ownerId]: ${error.message}",
+        error
+    )
+}
+
+/**
+ * Registra erro de deserializacao de Field no Crashlytics.
+ */
+private fun logFieldDeserializationError(
+    documentId: String,
+    locationId: String?,
+    error: Throwable
+) {
+    android.util.Log.e(
+        "FirebaseDataSource",
+        "Field deserialization error [id=$documentId, locationId=$locationId]: ${error.message}",
+        error
+    )
+}
+
+/**
+ * Registra erro de deserializacao de LocationReview no Crashlytics.
+ */
+private fun logLocationReviewDeserializationError(
+    documentId: String,
+    locationId: String?,
+    error: Throwable
+) {
+    android.util.Log.e(
+        "FirebaseDataSource",
+        "LocationReview deserialization error [id=$documentId, locationId=$locationId]: ${error.message}",
+        error
+    )
+}
+
+/**
+ * Registra erro de query de Location no Crashlytics.
+ */
+private fun logLocationQueryError(
+    queryName: String,
+    error: Throwable,
+    context: Map<String, String> = emptyMap()
+) {
+    val contextStr = if (context.isNotEmpty()) {
+        context.entries.joinToString(", ") { "${it.key}=${it.value}" }
+    } else ""
+    android.util.Log.e(
+        "FirebaseDataSource",
+        "Location query error [query=$queryName, $contextStr]: ${error.message}",
+        error
+    )
+}
+
+/**
+ * Registra erro de atualizacao de Location no Crashlytics.
+ */
+private fun logLocationUpdateError(
+    locationId: String,
+    operation: String,
+    error: Throwable
+) {
+    android.util.Log.e(
+        "FirebaseDataSource",
+        "Location $operation error [id=$locationId]: ${error.message}",
+        error
     )
 }
 

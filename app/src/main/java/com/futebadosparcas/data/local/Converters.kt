@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.local
 
 import androidx.room.TypeConverter
+import com.futebadosparcas.data.local.model.SyncAction
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.util.Date
@@ -27,5 +28,20 @@ class Converters {
     @TypeConverter
     fun dateToTimestamp(date: Date?): Long? {
         return date?.time
+    }
+
+    // SyncAction converters para LocationSyncEntity
+    @TypeConverter
+    fun fromSyncAction(action: SyncAction): String {
+        return action.name
+    }
+
+    @TypeConverter
+    fun toSyncAction(value: String): SyncAction {
+        return try {
+            SyncAction.valueOf(value)
+        } catch (e: IllegalArgumentException) {
+            SyncAction.UPDATE // Fallback seguro
+        }
     }
 }

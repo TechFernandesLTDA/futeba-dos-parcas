@@ -8,6 +8,8 @@ import com.futebadosparcas.data.model.GameConfirmation as AndroidGameConfirmatio
 import com.futebadosparcas.data.model.GameEvent as AndroidGameEvent
 import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.data.model.Team as AndroidTeam
+import com.futebadosparcas.data.model.User
+import com.futebadosparcas.data.model.UserRole
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.GameDetailConsolidated
@@ -47,6 +49,8 @@ import javax.inject.Singleton
  *
  * Durante a migracao KMP, esta implementacao usa modelos Android internamente
  * e converte para modelos KMP nos retornos dos metodos.
+ *
+ * Permissões são gerenciadas pelo PermissionManager centralizado.
  */
 @Singleton
 class GameQueryRepositoryImpl @Inject constructor(
@@ -54,7 +58,8 @@ class GameQueryRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val gameDao: GameDao,
     private val groupRepository: GroupRepository,
-    private val confirmationRepository: GameConfirmationRepository
+    private val confirmationRepository: GameConfirmationRepository,
+    private val permissionManager: com.futebadosparcas.domain.permission.PermissionManager
 ) : KmpGameQueryRepository {
 
     private val gamesCollection = firestore.collection("games")
@@ -62,6 +67,19 @@ class GameQueryRepositoryImpl @Inject constructor(
     companion object {
         private const val TAG = "GameQueryRepository"
     }
+
+    // ========== Permissões (delegado ao PermissionManager) ==========
+
+    /**
+     * Verifica se o usuario atual pode ver todos os jogos (admin).
+     * Delegado ao PermissionManager centralizado.
+     */
+    private suspend fun isCurrentUserAdmin(): Boolean = permissionManager.isAdmin()
+
+    /**
+     * Verifica se o usuario atual pode ver todo o histórico.
+     */
+    private suspend fun canViewAllHistory(): Boolean = permissionManager.canViewAllHistory()
 
     // ========== Helper Methods para Conversao ==========
 
@@ -123,6 +141,13 @@ class GameQueryRepositoryImpl @Inject constructor(
     override suspend fun getUpcomingGames(): Result<List<Game>> {
         return try {
             val uid = auth.currentUser?.uid
+
+            // ADMIN SUPPORT: Se admin, buscar TODOS os jogos sem filtro de visibilidade
+            val isAdmin = isCurrentUserAdmin()
+            if (isAdmin) {
+                return getUpcomingGamesForAdmin()
+            }
+
             val userGroupIds = if (uid != null) {
                 groupRepository.getMyGroups()
                     .getOrElse { emptyList() }
@@ -169,13 +194,34 @@ class GameQueryRepositoryImpl @Inject constructor(
                     .get()
             } else null
 
-            // Executar queries em paralelo
+            // FIX: Query para jogos do owner (garante que o dono sempre veja seus jogos)
+            val ownerScheduledTask = if (uid != null) {
+                gamesCollection
+                    .whereEqualTo("owner_id", uid)
+                    .whereEqualTo("status", GameStatus.SCHEDULED.name)
+                    .orderBy("dateTime", Query.Direction.ASCENDING)
+                    .limit(20)
+                    .get()
+            } else null
+
+            val ownerConfirmedTask = if (uid != null) {
+                gamesCollection
+                    .whereEqualTo("owner_id", uid)
+                    .whereEqualTo("status", GameStatus.CONFIRMED.name)
+                    .orderBy("dateTime", Query.Direction.ASCENDING)
+                    .limit(20)
+                    .get()
+            } else null
+
+            // Executar queries em paralelo (FIX: inclui ownerTasks)
             val allSnapshots = coroutineScope {
                 val tasks = listOfNotNull(
                     async { scheduledTask.await() },
                     async { confirmedTask.await() },
                     if (privateScheduledTask != null) async { privateScheduledTask.await() } else null,
-                    if (privateConfirmedTask != null) async { privateConfirmedTask.await() } else null
+                    if (privateConfirmedTask != null) async { privateConfirmedTask.await() } else null,
+                    if (ownerScheduledTask != null) async { ownerScheduledTask.await() } else null,
+                    if (ownerConfirmedTask != null) async { ownerConfirmedTask.await() } else null
                 )
                 tasks.awaitAll()
             }
@@ -202,24 +248,116 @@ class GameQueryRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getAllGames(): Result<List<Game>> {
+    /**
+     * ADMIN ONLY: Busca TODOS os jogos futuros sem filtro de visibilidade.
+     * Admins podem ver jogos de qualquer grupo ou visibilidade.
+     */
+    private suspend fun getUpcomingGamesForAdmin(): Result<List<Game>> {
         return try {
-            val snapshot = gamesCollection
-                .whereIn("visibility", listOf("PUBLIC_OPEN", "PUBLIC_CLOSED"))
+            AppLogger.d(TAG) { "Admin: buscando TODOS os jogos futuros" }
+
+            // Query para jogos SCHEDULED
+            val scheduledTask = gamesCollection
+                .whereEqualTo("status", GameStatus.SCHEDULED.name)
                 .orderBy("dateTime", Query.Direction.ASCENDING)
                 .limit(50)
                 .get()
-                .await()
 
-            val androidGames = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+            // Query para jogos CONFIRMED
+            val confirmedTask = gamesCollection
+                .whereEqualTo("status", GameStatus.CONFIRMED.name)
+                .orderBy("dateTime", Query.Direction.ASCENDING)
+                .limit(50)
+                .get()
+
+            // Query para jogos LIVE
+            val liveTask = gamesCollection
+                .whereEqualTo("status", GameStatus.LIVE.name)
+                .orderBy("dateTime", Query.Direction.ASCENDING)
+                .limit(20)
+                .get()
+
+            // Executar queries em paralelo
+            val allSnapshots = coroutineScope {
+                val tasks = listOf(
+                    async { scheduledTask.await() },
+                    async { confirmedTask.await() },
+                    async { liveTask.await() }
+                )
+                tasks.awaitAll()
             }
 
-            // Sync to Local DB
-            val entities = androidGames.map { it.toEntity() }
+            val allAndroidGames = allSnapshots.flatMap { it.documents }
+                .mapNotNull { doc -> doc.toObject(AndroidGame::class.java)?.apply { id = doc.id } }
+                .deduplicateSortAndLimit(
+                    idSelector = { it.id },
+                    sortSelector = { it.dateTime },
+                    limit = 50
+                )
+
+            AppLogger.d(TAG) { "Admin: encontrados ${allAndroidGames.size} jogos" }
+
+            // Sync to local
+            val entities = allAndroidGames.map { it.toEntity() }
             gameDao.insertGames(entities)
 
-            Result.success((androidGames as List<AndroidGame>).toKmpGames())
+            // Converter para KMP
+            val kmpGames = allAndroidGames.map { it.toKmpGame() }
+            Result.success(kmpGames)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Admin: Erro ao buscar todos os jogos", e)
+            val localGames = gameDao.getUpcomingGamesSnapshot().map { it.toDomain().toKmpGame() }
+            Result.success(localGames)
+        }
+    }
+
+    override suspend fun getAllGames(): Result<List<Game>> {
+        return try {
+            val uid = auth.currentUser?.uid
+
+            // FIX: Buscar jogos públicos + jogos do owner em paralelo
+            coroutineScope {
+                val publicGamesDeferred = async {
+                    gamesCollection
+                        .whereIn("visibility", listOf("PUBLIC_OPEN", "PUBLIC_CLOSED"))
+                        .orderBy("dateTime", Query.Direction.ASCENDING)
+                        .limit(50)
+                        .get()
+                        .await()
+                        .documents.mapNotNull { doc ->
+                            doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                        }
+                }
+
+                val ownerGamesDeferred = if (uid != null) {
+                    async {
+                        gamesCollection
+                            .whereEqualTo("owner_id", uid)
+                            .orderBy("dateTime", Query.Direction.ASCENDING)
+                            .limit(50)
+                            .get()
+                            .await()
+                            .documents.mapNotNull { doc ->
+                                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                            }
+                    }
+                } else null
+
+                val publicGames = publicGamesDeferred.await()
+                val ownerGames = ownerGamesDeferred?.await() ?: emptyList()
+
+                // Combinar e deduplicar
+                val allGames = (publicGames + ownerGames)
+                    .distinctBy { it.id }
+                    .sortedBy { it.dateTime }
+                    .take(50)
+
+                // Sync to Local DB
+                val entities = allGames.map { it.toEntity() }
+                gameDao.insertGames(entities)
+
+                Result.success(allGames.toKmpGames())
+            }
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos remotos, tentando local", e)
             try {
@@ -239,27 +377,56 @@ class GameQueryRepositoryImpl @Inject constructor(
         return try {
             val uid = auth.currentUser?.uid ?: ""
 
-            val gamesSnapshot = gamesCollection
-                .whereIn("visibility", listOf("PUBLIC_OPEN", "PUBLIC_CLOSED"))
-                .orderBy("dateTime", Query.Direction.DESCENDING)
-                .limit(50)
-                .get()
-                .await()
+            // FIX: Buscar jogos públicos + jogos do owner em paralelo
+            coroutineScope {
+                val publicGamesDeferred = async {
+                    gamesCollection
+                        .whereIn("visibility", listOf("PUBLIC_OPEN", "PUBLIC_CLOSED"))
+                        .orderBy("dateTime", Query.Direction.DESCENDING)
+                        .limit(50)
+                        .get()
+                        .await()
+                        .documents.mapNotNull { doc ->
+                            doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                        }
+                }
 
-            // Fetch user confirmations
-            val userConfirmations = confirmationRepository.getUserConfirmationIds(uid)
+                val ownerGamesDeferred = if (uid.isNotEmpty()) {
+                    async {
+                        gamesCollection
+                            .whereEqualTo("owner_id", uid)
+                            .orderBy("dateTime", Query.Direction.DESCENDING)
+                            .limit(50)
+                            .get()
+                            .await()
+                            .documents.mapNotNull { doc ->
+                                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                            }
+                    }
+                } else null
 
-            val result = gamesSnapshot.documents.mapNotNull { doc ->
-                val androidGame = doc.toObject(AndroidGame::class.java)?.apply { id = doc.id } ?: return@mapNotNull null
+                val publicGames = publicGamesDeferred.await()
+                val ownerGames = ownerGamesDeferred?.await() ?: emptyList()
 
-                GameWithConfirmations(
-                    game = androidGame.toKmpGame(),
-                    confirmedCount = androidGame.playersCount,
-                    isUserConfirmed = androidGame.id in userConfirmations
-                )
+                // Combinar e deduplicar
+                val allGames = (publicGames + ownerGames)
+                    .distinctBy { it.id }
+                    .sortedByDescending { it.dateTime }
+                    .take(50)
+
+                // Fetch user confirmations
+                val userConfirmations = confirmationRepository.getUserConfirmationIds(uid)
+
+                val result = allGames.map { androidGame ->
+                    GameWithConfirmations(
+                        game = androidGame.toKmpGame(),
+                        confirmedCount = androidGame.playersCount,
+                        isUserConfirmed = androidGame.id in userConfirmations || androidGame.ownerId == uid
+                    )
+                }
+
+                Result.success(result)
             }
-
-            Result.success(result)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos com contagem", e)
             Result.failure(e)
@@ -269,42 +436,70 @@ class GameQueryRepositoryImpl @Inject constructor(
     override fun getAllGamesWithConfirmationCountFlow(): Flow<Result<List<GameWithConfirmations>>> {
         val uid = auth.currentUser?.uid ?: ""
 
-        val gamesFlow = callbackFlow {
+        // Flow para jogos públicos
+        val publicGamesFlow = callbackFlow {
             val subscription = gamesCollection
                 .whereIn("visibility", listOf("PUBLIC_OPEN", "PUBLIC_CLOSED"))
                 .orderBy("dateTime", Query.Direction.DESCENDING)
                 .limit(50)
                 .addSnapshotListener { snapshot, e ->
                     if (e != null) {
-                        trySend(Result.failure<List<AndroidGame>>(e))
+                        trySend(emptyList())
                         return@addSnapshotListener
                     }
                     if (snapshot != null) {
                         val androidGames = snapshot.documents.mapNotNull { doc ->
                             doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
                         }
-                        trySend(Result.success(androidGames))
+                        trySend(androidGames)
                     }
                 }
             awaitClose { subscription.remove() }
         }
 
+        // FIX: Flow para jogos do owner
+        val ownerGamesFlow = if (uid.isNotEmpty()) {
+            callbackFlow {
+                val subscription = gamesCollection
+                    .whereEqualTo("owner_id", uid)
+                    .orderBy("dateTime", Query.Direction.DESCENDING)
+                    .limit(50)
+                    .addSnapshotListener { snapshot, e ->
+                        if (e != null) {
+                            trySend(emptyList())
+                            return@addSnapshotListener
+                        }
+                        if (snapshot != null) {
+                            val androidGames = snapshot.documents.mapNotNull { doc ->
+                                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                            }
+                            trySend(androidGames)
+                        }
+                    }
+                awaitClose { subscription.remove() }
+            }
+        } else {
+            flowOf(emptyList())
+        }
+
         val userConfFlow = confirmationRepository.getUserConfirmationsFlow(uid)
 
-        return combine(gamesFlow, userConfFlow) { gamesResult, userConfs ->
-            if (gamesResult.isSuccess) {
-                val androidGames = gamesResult.getOrNull() ?: emptyList()
-                val result = androidGames.map { androidGame ->
-                    GameWithConfirmations(
-                        game = androidGame.toKmpGame(),
-                        confirmedCount = androidGame.playersCount,
-                        isUserConfirmed = androidGame.id in userConfs
-                    )
-                }
-                Result.success(result)
-            } else {
-                Result.failure(gamesResult.exceptionOrNull() ?: Exception("Unknown error"))
+        // FIX: Combina jogos públicos + jogos do owner
+        return combine(publicGamesFlow, ownerGamesFlow, userConfFlow) { publicGames, ownerGames, userConfs ->
+            // Merge e deduplica
+            val allGames = (publicGames + ownerGames)
+                .distinctBy { it.id }
+                .sortedByDescending { it.dateTime }
+                .take(50)
+
+            val result = allGames.map { androidGame ->
+                GameWithConfirmations(
+                    game = androidGame.toKmpGame(),
+                    confirmedCount = androidGame.playersCount,
+                    isUserConfirmed = androidGame.id in userConfs || androidGame.ownerId == uid
+                )
             }
+            Result.success(result)
         }
     }
 
@@ -505,11 +700,14 @@ class GameQueryRepositoryImpl @Inject constructor(
     override fun getLiveAndUpcomingGamesFlow(): Flow<Result<List<GameWithConfirmations>>> {
         val uid = auth.currentUser?.uid ?: ""
 
-        // Flow principal combinando Publicos + Privados
+        // Flow principal combinando Publicos + Privados + Jogos do Owner (ou TODOS para admin)
         return channelFlow {
+            // ADMIN SUPPORT: Verificar se usuário é admin
+            val isAdmin = isCurrentUserAdmin()
+
             // 1. Obter grupos do usuário (para filtro de GROUP_ONLY)
             // Monitora mudanças nos grupos para atualizar a lista de jogos se entrar/sair de grupos
-            val userGroupsFlow = if (uid.isNotEmpty()) groupRepository.getMyGroupsFlow() else flowOf(emptyList())
+            val userGroupsFlow = if (uid.isNotEmpty() && !isAdmin) groupRepository.getMyGroupsFlow() else flowOf(emptyList())
 
             userGroupsFlow.collect { userGroups ->
                 val userGroupIds = userGroups.map { it.id.ifEmpty { it.groupId } }
@@ -521,18 +719,28 @@ class GameQueryRepositoryImpl @Inject constructor(
                     add(java.util.Calendar.HOUR_OF_DAY, -4) // Include recent live games
                 }.time
 
-                // Query A: Jogos Públicos
-                val publicQuery = gamesCollection
-                    .whereIn("visibility", listOf(
-                        com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN.name,
-                        com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED.name
-                    ))
-                    .whereGreaterThan("dateTime", now)
-                    .orderBy("dateTime", Query.Direction.ASCENDING)
-                    .limit(30)
+                // ADMIN: Query para TODOS os jogos (sem filtro de visibilidade)
+                val adminQuery = if (isAdmin) {
+                    gamesCollection
+                        .whereGreaterThan("dateTime", now)
+                        .orderBy("dateTime", Query.Direction.ASCENDING)
+                        .limit(50)
+                } else null
 
-                // Query B: Jogos do Grupo (se houver grupos)
-                val groupQuery = if (userGroupIds.isNotEmpty()) {
+                // Query A: Jogos Públicos (não-admin)
+                val publicQuery = if (!isAdmin) {
+                    gamesCollection
+                        .whereIn("visibility", listOf(
+                            com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN.name,
+                            com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED.name
+                        ))
+                        .whereGreaterThan("dateTime", now)
+                        .orderBy("dateTime", Query.Direction.ASCENDING)
+                        .limit(30)
+                } else null
+
+                // Query B: Jogos do Grupo (não-admin, se houver grupos)
+                val groupQuery = if (!isAdmin && userGroupIds.isNotEmpty()) {
                     gamesCollection
                         .whereEqualTo("visibility", com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY.name)
                         .whereIn("group_id", userGroupIds)
@@ -541,19 +749,52 @@ class GameQueryRepositoryImpl @Inject constructor(
                         .limit(30)
                 } else null
 
-                // 3. Listeners
-                val publicFlow = callbackFlow {
-                    val sub = publicQuery.addSnapshotListener { snap, e ->
-                        if (e != null) {
-                            AppLogger.e(TAG, "getLiveAndUpcomingGamesFlow: Erro na Query Publica", e)
-                            trySend(emptyList())
-                            return@addSnapshotListener
-                        }
+                // Query C: Jogos onde o usuário é OWNER (não-admin)
+                val ownerQuery = if (!isAdmin && uid.isNotEmpty()) {
+                    gamesCollection
+                        .whereEqualTo("owner_id", uid)
+                        .whereGreaterThan("dateTime", now)
+                        .orderBy("dateTime", Query.Direction.ASCENDING)
+                        .limit(30)
+                } else null
 
-                        val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
-                        trySend(androidGames)
+                // 3. Listeners
+
+                // ADMIN: Flow para TODOS os jogos
+                val adminGamesFlow = if (adminQuery != null) {
+                    callbackFlow {
+                        val sub = adminQuery.addSnapshotListener { snap, e ->
+                            if (e != null) {
+                                AppLogger.e(TAG, "getLiveAndUpcomingGamesFlow: Erro na Query de Admin", e)
+                                trySend(emptyList())
+                                return@addSnapshotListener
+                            }
+                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                            AppLogger.d(TAG) { "Admin: recebidos ${androidGames.size} jogos em tempo real" }
+                            trySend(androidGames)
+                        }
+                        awaitClose { sub.remove() }
                     }
-                    awaitClose { sub.remove() }
+                } else {
+                    flowOf(emptyList())
+                }
+
+                val publicFlow = if (publicQuery != null) {
+                    callbackFlow {
+                        val sub = publicQuery.addSnapshotListener { snap, e ->
+                            if (e != null) {
+                                AppLogger.e(TAG, "getLiveAndUpcomingGamesFlow: Erro na Query Publica", e)
+                                trySend(emptyList())
+                                return@addSnapshotListener
+                            }
+
+                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                            trySend(androidGames)
+                        }
+                        awaitClose { sub.remove() }
+                    }
+                } else {
+                    flowOf(emptyList())
                 }
 
                 val groupGamesFlow = if (groupQuery != null) {
@@ -573,15 +814,45 @@ class GameQueryRepositoryImpl @Inject constructor(
                     flowOf(emptyList())
                 }
 
+                // Flow para jogos do owner (FIX)
+                val ownerGamesFlow = if (ownerQuery != null) {
+                    callbackFlow {
+                        val sub = ownerQuery.addSnapshotListener { snap, e ->
+                            if (e != null) {
+                                AppLogger.e(TAG, "getLiveAndUpcomingGamesFlow: Erro na Query de Owner", e)
+                                trySend(emptyList())
+                                return@addSnapshotListener
+                            }
+                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                            trySend(androidGames)
+                        }
+                        awaitClose { sub.remove() }
+                    }
+                } else {
+                    flowOf(emptyList())
+                }
+
                 // 4. User Confirmations (para UI state)
                 val userConfFlow = confirmationRepository.getUserConfirmationsFlow(uid)
 
-                // 5. Combine everything
-                combine(publicFlow, groupGamesFlow, userConfFlow) { publicGames, groupGames, userConfs ->
-                    val allAndroidGames = publicGames.mergeAndDeduplicate(groupGames) { it.id }
-                        .filter { it.status == GameStatus.SCHEDULED.name || it.status == GameStatus.CONFIRMED.name || it.status == GameStatus.LIVE.name }
-                        .sortedBy { it.dateTime }
-                        .take(20)
+                // 5. Combine everything (FIX: inclui adminGamesFlow para admins)
+                combine(adminGamesFlow, publicFlow, groupGamesFlow, ownerGamesFlow, userConfFlow) { adminGames, publicGames, groupGames, ownerGames, userConfs ->
+                    // Se admin, usar apenas adminGames; caso contrário, merge das outras fontes
+                    val allAndroidGames = if (adminGames.isNotEmpty()) {
+                        // Admin: usa todos os jogos sem merge
+                        adminGames
+                            .filter { it.status == GameStatus.SCHEDULED.name || it.status == GameStatus.CONFIRMED.name || it.status == GameStatus.LIVE.name }
+                            .sortedBy { it.dateTime }
+                            .take(50)
+                    } else {
+                        // Não-admin: merge das fontes filtradas
+                        publicGames
+                            .mergeAndDeduplicate(groupGames) { it.id }
+                            .mergeAndDeduplicate(ownerGames) { it.id }
+                            .filter { it.status == GameStatus.SCHEDULED.name || it.status == GameStatus.CONFIRMED.name || it.status == GameStatus.LIVE.name }
+                            .sortedBy { it.dateTime }
+                            .take(20)
+                    }
 
                     val result = allAndroidGames.map { androidGame ->
                         GameWithConfirmations(
@@ -602,6 +873,42 @@ class GameQueryRepositoryImpl @Inject constructor(
         val uid = auth.currentUser?.uid ?: ""
 
         return channelFlow {
+            // ADMIN SUPPORT: Se admin, buscar TODOS os jogos finalizados sem filtro
+            val isAdmin = isCurrentUserAdmin()
+            if (isAdmin) {
+                AppLogger.d(TAG) { "Admin acessando histórico - mostrando TODOS os jogos finalizados" }
+
+                val adminQuery = gamesCollection
+                    .whereIn("status", listOf(GameStatus.FINISHED.name, GameStatus.CANCELLED.name))
+                    .orderBy("dateTime", Query.Direction.DESCENDING)
+                    .limit(limit.toLong())
+
+                val adminFlow = callbackFlow {
+                    val sub = adminQuery.addSnapshotListener { snap, e ->
+                        if (e != null) {
+                            trySend(Result.failure<List<GameWithConfirmations>>(e))
+                            return@addSnapshotListener
+                        }
+                        val androidGames = snap?.documents?.mapNotNull { doc ->
+                            doc.toObject(AndroidGame::class.java)?.also { it.id = doc.id }
+                        } ?: emptyList()
+
+                        val result = androidGames.map { androidGame ->
+                            GameWithConfirmations(
+                                game = androidGame.toKmpGame(),
+                                confirmedCount = androidGame.playersCount,
+                                isUserConfirmed = false
+                            )
+                        }
+                        trySend(Result.success(result))
+                    }
+                    awaitClose { sub.remove() }
+                }
+
+                adminFlow.collect { send(it) }
+                return@channelFlow
+            }
+
             // 1. Obter grupos do usuário
             val userGroupsFlow = if (uid.isNotEmpty()) groupRepository.getMyGroupsFlow() else flowOf(emptyList())
 
@@ -616,6 +923,7 @@ class GameQueryRepositoryImpl @Inject constructor(
                         com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN.name,
                         com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED.name
                     ))
+                    .whereIn("status", listOf(GameStatus.FINISHED.name, GameStatus.CANCELLED.name))
                     .orderBy("dateTime", Query.Direction.DESCENDING)
                     .limit(limit.toLong())
 
@@ -624,6 +932,15 @@ class GameQueryRepositoryImpl @Inject constructor(
                     gamesCollection
                         .whereEqualTo("visibility", com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY.name)
                         .whereIn("group_id", userGroupIds)
+                        .orderBy("dateTime", Query.Direction.DESCENDING)
+                        .limit(limit.toLong())
+                } else null
+
+                // Query C: Owner History (FIX: garante que o dono sempre veja seu histórico)
+                val ownerQuery = if (uid.isNotEmpty()) {
+                    gamesCollection
+                        .whereEqualTo("owner_id", uid)
+                        .whereIn("status", listOf(GameStatus.FINISHED.name, GameStatus.CANCELLED.name))
                         .orderBy("dateTime", Query.Direction.DESCENDING)
                         .limit(limit.toLong())
                 } else null
@@ -651,15 +968,42 @@ class GameQueryRepositoryImpl @Inject constructor(
                     flowOf(emptyList())
                 }
 
+                // Flow para histórico do owner (FIX)
+                val ownerGamesFlow = if (ownerQuery != null) {
+                    callbackFlow {
+                        val sub = ownerQuery.addSnapshotListener { snap, e ->
+                            if (e != null) { trySend(emptyList()); return@addSnapshotListener }
+                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                            trySend(androidGames)
+                        }
+                        awaitClose { sub.remove() }
+                    }
+                } else {
+                    flowOf(emptyList())
+                }
+
                 val userConfFlow = confirmationRepository.getUserConfirmationsFlow(uid)
 
-                combine(publicFlow, groupGamesFlow, userConfFlow) { publicGames, groupGames, userConfs ->
-                    val allAndroidGames = publicGames.mergeAndDeduplicate(groupGames) { it.id }
+                // FIX: Usuários normais só veem jogos que PARTICIPARAM ou são DONOS
+                // Admin já foi tratado acima e retorna todos os jogos
+                combine(publicFlow, groupGamesFlow, ownerGamesFlow, userConfFlow) { publicGames, groupGames, ownerGames, userConfs ->
+                    // Primeiro, junta todos os jogos candidatos e remove duplicatas
+                    val allCandidateGames = (publicGames + groupGames + ownerGames)
+                        .distinctBy { it.id }
                         .filter { it.status == GameStatus.FINISHED.name || it.status == GameStatus.CANCELLED.name }
+
+                    // FIX: Filtra para mostrar APENAS jogos onde usuário:
+                    // 1. É o dono (owner_id == uid), OU
+                    // 2. Participou (está na lista de confirmações)
+                    val filteredGames = allCandidateGames.filter { game ->
+                        game.ownerId == uid || game.id in userConfs
+                    }
+
+                    val sortedGames = filteredGames
                         .sortedByDescending { it.dateTime }
                         .take(limit)
 
-                    val result = allAndroidGames.map { androidGame ->
+                    val result = sortedGames.map { androidGame ->
                         GameWithConfirmations(
                             game = androidGame.toKmpGame(),
                             confirmedCount = androidGame.playersCount,
@@ -683,6 +1027,13 @@ class GameQueryRepositoryImpl @Inject constructor(
     ): Result<PaginatedGames> {
         return try {
             val uid = auth.currentUser?.uid ?: ""
+
+            // ADMIN SUPPORT: Se admin, buscar TODOS os jogos finalizados
+            val isAdmin = isCurrentUserAdmin()
+            if (isAdmin) {
+                AppLogger.d(TAG) { "Admin acessando histórico paginado - mostrando TODOS os jogos" }
+                return getHistoryGamesPaginatedForAdmin(pageSize, lastGameId)
+            }
 
             // Buscar grupos do usuario
             val userGroupIds = if (uid.isNotEmpty()) {
@@ -742,18 +1093,46 @@ class GameQueryRepositoryImpl @Inject constructor(
                 emptyList()
             }
 
+            // Query para jogos do owner (FIX: garante que o dono sempre veja seu histórico)
+            val ownerGames = if (uid.isNotEmpty()) {
+                var ownerQuery = gamesCollection
+                    .whereEqualTo("owner_id", uid)
+                    .whereIn("status", listOf(GameStatus.FINISHED.name, GameStatus.CANCELLED.name))
+                    .orderBy("dateTime", Query.Direction.DESCENDING)
+
+                if (startAfterDoc != null && startAfterDoc.exists()) {
+                    ownerQuery = ownerQuery.startAfter(startAfterDoc)
+                }
+
+                ownerQuery.limit((pageSize + 1).toLong()).get().await()
+                    .documents.mapNotNull { doc ->
+                        doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                    }
+            } else {
+                emptyList()
+            }
+
             val publicGames = publicSnapshot.documents.mapNotNull { doc ->
                 doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
             }
 
+            // Buscar confirmacoes do usuario ANTES de filtrar
+            val userConfirmations = confirmationRepository.getUserConfirmationIds(uid)
+
             // Combinar e deduplicar
-            val allAndroidGames = (publicGames + groupGames)
+            val allCandidateGames = (publicGames + groupGames + ownerGames)
                 .distinctBy { it.id }
-                .sortedByDescending { it.dateTime }
+
+            // FIX: Filtrar para mostrar APENAS jogos onde usuário:
+            // 1. É o dono (owner_id == uid), OU
+            // 2. Participou (está na lista de confirmações)
+            val filteredGames = allCandidateGames.filter { game ->
+                game.ownerId == uid || game.id in userConfirmations
+            }.sortedByDescending { it.dateTime }
 
             // Verificar se ha mais paginas
-            val hasMore = allAndroidGames.size > pageSize
-            val androidGamesPage = allAndroidGames.take(pageSize)
+            val hasMore = filteredGames.size > pageSize
+            val androidGamesPage = filteredGames.take(pageSize)
 
             // Atualizar cursor para proxima pagina
             val newLastGameId = if (androidGamesPage.isNotEmpty()) {
@@ -765,9 +1144,6 @@ class GameQueryRepositoryImpl @Inject constructor(
                 null
             }
 
-            // Buscar confirmacoes do usuario
-            val userConfirmations = confirmationRepository.getUserConfirmationIds(uid)
-
             // Mapear para GameWithConfirmations
             val result = androidGamesPage.map { androidGame ->
                 GameWithConfirmations(
@@ -777,7 +1153,7 @@ class GameQueryRepositoryImpl @Inject constructor(
                 )
             }
 
-            AppLogger.d(TAG) { "getHistoryGamesPaginated: ${result.size} jogos, hasMore=$hasMore" }
+            AppLogger.d(TAG) { "getHistoryGamesPaginated: ${result.size} jogos (filtrado por participação), hasMore=$hasMore" }
 
             Result.success(PaginatedGames(
                 games = result,
@@ -790,6 +1166,71 @@ class GameQueryRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Versão de admin para histórico paginado - retorna TODOS os jogos finalizados.
+     * Admins podem ver todos os jogos para supervisão e análise.
+     */
+    private suspend fun getHistoryGamesPaginatedForAdmin(
+        pageSize: Int,
+        lastGameId: String?
+    ): Result<PaginatedGames> {
+        return try {
+            // Se temos um cursor, buscar o documento de referência
+            val startAfterDoc: DocumentSnapshot? = if (lastGameId != null && lastDocumentSnapshot?.id == lastGameId) {
+                lastDocumentSnapshot
+            } else if (lastGameId != null) {
+                gamesCollection.document(lastGameId).get().await()
+            } else {
+                null
+            }
+
+            // Query para TODOS os jogos finalizados (sem filtro de visibilidade)
+            var query = gamesCollection
+                .whereIn("status", listOf(GameStatus.FINISHED.name, GameStatus.CANCELLED.name))
+                .orderBy("dateTime", Query.Direction.DESCENDING)
+
+            if (startAfterDoc != null && startAfterDoc.exists()) {
+                query = query.startAfter(startAfterDoc)
+            }
+
+            val snapshot = query.limit((pageSize + 1).toLong()).get().await()
+
+            val androidGames = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+            }
+
+            val hasMore = androidGames.size > pageSize
+            val gamesPage = androidGames.take(pageSize)
+
+            val newLastGameId = if (gamesPage.isNotEmpty()) {
+                val lastGame = gamesPage.last()
+                lastDocumentSnapshot = snapshot.documents.find { it.id == lastGame.id }
+                lastGame.id
+            } else {
+                null
+            }
+
+            val result = gamesPage.map { androidGame ->
+                GameWithConfirmations(
+                    game = androidGame.toKmpGame(),
+                    confirmedCount = androidGame.playersCount,
+                    isUserConfirmed = false
+                )
+            }
+
+            AppLogger.d(TAG) { "getHistoryGamesPaginatedForAdmin: ${result.size} jogos (ADMIN), hasMore=$hasMore" }
+
+            Result.success(PaginatedGames(
+                games = result,
+                lastGameId = newLastGameId,
+                hasMore = hasMore
+            ))
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao buscar historico paginado (admin)", e)
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getGamesByFilter(filterType: GameFilterType): Result<List<GameWithConfirmations>> {
         return try {
             val uid = auth.currentUser?.uid ?: ""
@@ -797,32 +1238,75 @@ class GameQueryRepositoryImpl @Inject constructor(
 
             val androidGames = when (filterType) {
                 GameFilterType.MY_GAMES -> {
-                    val gameIds = confirmationRepository.getConfirmedGameIds(uid)
-                    if (gameIds.isEmpty()) emptyList()
-                    else {
-                        val chunks = gameIds.chunked(10)
-                        val allAndroidGames = mutableListOf<AndroidGame>()
-                        chunks.forEach { chunk ->
-                            val g = gamesCollection.whereIn(FieldPath.documentId(), chunk).get().await()
-                            allAndroidGames.addAll(g.toObjects(AndroidGame::class.java).mapNotNull {
-                                it.apply { id = g.documents.find { d -> d.id == it.id }?.id ?: it.id }
-                            })
+                    // FIX: Buscar jogos onde usuário é OWNER + jogos onde tem confirmação
+                    coroutineScope {
+                        // 1. Buscar jogos onde o usuário é dono (owner)
+                        val ownedGamesDeferred = async {
+                            try {
+                                gamesCollection
+                                    .whereEqualTo("owner_id", uid)
+                                    .orderBy("dateTime", Query.Direction.DESCENDING)
+                                    .limit(50)
+                                    .get()
+                                    .await()
+                                    .documents.mapNotNull { doc ->
+                                        doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                                    }
+                            } catch (e: Exception) {
+                                AppLogger.e(TAG, "Erro ao buscar jogos do owner", e)
+                                emptyList()
+                            }
                         }
-                        allAndroidGames.sortedByDescending { it.dateTime }
+
+                        // 2. Buscar jogos onde o usuário tem confirmação
+                        val confirmedGamesDeferred = async {
+                            try {
+                                val gameIds = confirmationRepository.getConfirmedGameIds(uid)
+                                if (gameIds.isEmpty()) {
+                                    emptyList()
+                                } else {
+                                    val chunks = gameIds.chunked(10)
+                                    val allConfirmedGames = mutableListOf<AndroidGame>()
+                                    chunks.forEach { chunk ->
+                                        val g = gamesCollection.whereIn(FieldPath.documentId(), chunk).get().await()
+                                        allConfirmedGames.addAll(g.documents.mapNotNull { doc ->
+                                            doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                                        })
+                                    }
+                                    allConfirmedGames
+                                }
+                            } catch (e: Exception) {
+                                AppLogger.e(TAG, "Erro ao buscar jogos confirmados", e)
+                                emptyList()
+                            }
+                        }
+
+                        // 3. Combinar e deduplicar
+                        val ownedGames = ownedGamesDeferred.await()
+                        val confirmedGames = confirmedGamesDeferred.await()
+
+                        (ownedGames + confirmedGames)
+                            .distinctBy { it.id }
+                            .sortedByDescending { it.dateTime }
                     }
                 }
                 else -> emptyList()
             }
 
+            // Buscar confirmações do usuário para marcar corretamente isUserConfirmed
+            val userConfirmations = confirmationRepository.getUserConfirmationIds(uid)
+
             val result = androidGames.map { androidGame ->
                 GameWithConfirmations(
                     game = androidGame.toKmpGame(),
                     confirmedCount = androidGame.playersCount,
-                    isUserConfirmed = true
+                    // FIX: Verificar se realmente tem confirmação (pode ser apenas owner sem confirmação)
+                    isUserConfirmed = androidGame.id in userConfirmations || androidGame.ownerId == uid
                 )
             }
             Result.success(result)
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro em getGamesByFilter", e)
             Result.failure(e)
         }
     }
@@ -959,10 +1443,10 @@ class GameQueryRepositoryImpl @Inject constructor(
 
             val gamesResult = getGamesByFieldAndDate(fieldId, date)
             if (gamesResult.isFailure) {
-                return Result.failure(gamesResult.exceptionOrNull()!!)
+                return Result.failure(gamesResult.exceptionOrNull() ?: Exception("Erro ao buscar jogos"))
             }
 
-            val existingGames = gamesResult.getOrNull()!!
+            val existingGames = (gamesResult.getOrNull() ?: emptyList())
                 .filter { it.id != excludeGameId }
                 .filter { it.status != GameStatus.CANCELLED.name }
 

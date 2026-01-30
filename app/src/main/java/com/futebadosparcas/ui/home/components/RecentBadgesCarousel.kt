@@ -3,15 +3,14 @@ package com.futebadosparcas.ui.home.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,6 +29,14 @@ import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
 
+/**
+ * Carrossel de badges recentes.
+ *
+ * FIX: Usa FlowRow ao invés de LazyVerticalGrid em telas grandes
+ * para evitar crash de "infinite height constraints" quando
+ * aninhado dentro de LazyColumn (Issue #016).
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RecentBadgesCarousel(
     badges: List<UserBadge>,
@@ -52,26 +59,27 @@ fun RecentBadgesCarousel(
         )
 
         if (useGrid) {
-            // Grid para tablets e landscape
-            val columns = adaptiveValue(
+            // FIX: FlowRow ao invés de LazyVerticalGrid (evita crash de scroll aninhado)
+            val maxItems = adaptiveValue(
                 compact = 4,
                 medium = 6,
                 expanded = 8
             )
+            val badgeSize = adaptiveValue(
+                compact = 80.dp,
+                medium = 96.dp,
+                expanded = 104.dp
+            )
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(columns),
-                contentPadding = PaddingValues(horizontal = spacing.contentPaddingHorizontal),
+            FlowRow(
+                modifier = Modifier
+                    .padding(horizontal = spacing.contentPaddingHorizontal)
+                    .padding(bottom = spacing.sm),
                 horizontalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing),
-                verticalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing),
-                modifier = Modifier.padding(bottom = spacing.sm)
+                verticalArrangement = Arrangement.spacedBy(spacing.gridItemSpacing)
             ) {
-                items(badges.take(columns), key = { it.id.ifEmpty { "${it.badgeId}_${it.unlockedAt}" } }) { badge ->
-                    BadgeCard(badge = badge, size = adaptiveValue(
-                        compact = 80.dp,
-                        medium = 96.dp,
-                        expanded = 104.dp
-                    ))
+                badges.take(maxItems).forEach { badge ->
+                    BadgeCard(badge = badge, size = badgeSize)
                 }
             }
         } else {

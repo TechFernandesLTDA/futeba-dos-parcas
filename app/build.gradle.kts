@@ -53,6 +53,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true  // #029 - Remove unused resources
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -274,6 +275,12 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     ksp("androidx.room:room-compiler:$roomVersion")
     androidTestImplementation("androidx.room:room-testing:$roomVersion")
+
+    // Paging 3 - For efficient large list loading
+    val pagingVersion = "3.3.5"
+    implementation("androidx.paging:paging-runtime:$pagingVersion")
+    implementation("androidx.paging:paging-compose:$pagingVersion")
+    testImplementation("androidx.paging:paging-common:$pagingVersion")
 
     // WorkManager (for background cache cleanup)
     implementation("androidx.work:work-runtime-ktx:2.9.1")

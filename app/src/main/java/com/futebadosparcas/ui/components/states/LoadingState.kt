@@ -10,6 +10,7 @@ import com.futebadosparcas.ui.components.lists.ShimmerBox
 import com.futebadosparcas.ui.components.lists.GameCardShimmer
 import com.futebadosparcas.ui.components.lists.PlayerCardShimmer
 import com.futebadosparcas.ui.components.lists.RankingItemShimmer
+import com.futebadosparcas.ui.components.LocationCardSkeleton
 
 /**
  * Estado de loading padrão com shimmer
@@ -43,7 +44,7 @@ fun LoadingState(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        repeat(shimmerCount) {
+        repeat(shimmerCount) { index ->
             when (itemType) {
                 LoadingItemType.CARD -> ShimmerBox(
                     modifier = Modifier
@@ -57,6 +58,10 @@ fun LoadingState(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(72.dp)
+                )
+                LoadingItemType.LOCATION_CARD -> LocationCardSkeleton(
+                    animationDelay = index * 100,
+                    showFieldRows = true
                 )
             }
         }
@@ -76,7 +81,9 @@ enum class LoadingItemType {
     /** Item de ranking */
     RANKING_ITEM,
     /** Item de lista simples */
-    LIST_ITEM
+    LIST_ITEM,
+    /** Card de local/campo com efeito wave staggered */
+    LOCATION_CARD
 }
 
 /**

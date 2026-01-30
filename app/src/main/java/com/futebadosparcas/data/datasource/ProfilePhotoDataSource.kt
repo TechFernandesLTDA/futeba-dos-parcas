@@ -293,10 +293,12 @@ class ProfilePhotoDataSource @Inject constructor(
      * Processa a imagem: redimensiona, comprime e otimiza.
      */
     private fun processImage(uri: Uri): ProcessedImageData {
-        val inputStream = context.contentResolver.openInputStream(uri)!!
+        val inputStream = context.contentResolver.openInputStream(uri)
+            ?: throw IllegalArgumentException("Nao foi possivel abrir a imagem")
         val originalSize = inputStream.available()
-        val originalBitmap = BitmapFactory.decodeStream(inputStream)!!
-        inputStream.close()
+        val originalBitmap = inputStream.use { stream ->
+            BitmapFactory.decodeStream(stream)
+        } ?: throw IllegalArgumentException("Imagem invalida ou corrompida")
 
         Log.d(TAG, "Original: ${originalBitmap.width}x${originalBitmap.height}, ${originalSize / 1024}KB")
 

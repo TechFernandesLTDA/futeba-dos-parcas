@@ -85,6 +85,17 @@ data class Location(
     @set:PropertyName("min_game_duration_minutes")
     var minGameDurationMinutes: Int = 60,
 
+    // Dados Denormalizados de Fields (para reduzir queries)
+    @get:PropertyName("field_count")
+    @set:PropertyName("field_count")
+    var fieldCount: Int = 0,
+    @get:PropertyName("primary_field_type")
+    @set:PropertyName("primary_field_type")
+    var primaryFieldType: String? = null, // Tipo de campo mais comum
+    @get:PropertyName("has_active_fields")
+    @set:PropertyName("has_active_fields")
+    var hasActiveFields: Boolean = false,
+
     // Auditoria
     @ServerTimestamp
     @get:PropertyName("created_at")
@@ -93,7 +104,12 @@ data class Location(
     @ServerTimestamp
     @get:PropertyName("updated_at")
     @set:PropertyName("updated_at")
-    var updatedAt: Date? = null
+    var updatedAt: Date? = null,
+
+    // Quem fez a última atualização (#6 - Validação Firebase)
+    @get:PropertyName("updated_by")
+    @set:PropertyName("updated_by")
+    var updatedBy: String? = null
 ) {
     // Bloco de inicializacao para normalizar valores
     init {
@@ -126,6 +142,12 @@ data class Location(
             errors.add(nameResult)
         }
 
+        // Validação de CEP (opcional, mas se preenchido deve ser válido)
+        val cepResult = ValidationHelper.validateCep(cep, "cep", required = false)
+        if (cepResult is ValidationResult.Invalid) {
+            errors.add(cepResult)
+        }
+
         // Validação de rating (0.0-5.0)
         if (!ValidationHelper.isValidRating(rating)) {
             errors.add(ValidationResult.Invalid("rating", "Rating deve estar entre 0 e 5"))
@@ -140,6 +162,18 @@ data class Location(
         val timestampResult = ValidationHelper.validateTimestampOrder(createdAt, updatedAt)
         if (timestampResult is ValidationResult.Invalid) {
             errors.add(timestampResult)
+        }
+
+        // Validação de coordenadas (#29 - Validação de coordenadas)
+        latitude?.let { lat ->
+            if (lat < -90.0 || lat > 90.0) {
+                errors.add(ValidationResult.Invalid("latitude", "Latitude deve estar entre -90 e 90"))
+            }
+        }
+        longitude?.let { lng ->
+            if (lng < -180.0 || lng > 180.0) {
+                errors.add(ValidationResult.Invalid("longitude", "Longitude deve estar entre -180 e 180"))
+            }
         }
 
         return errors

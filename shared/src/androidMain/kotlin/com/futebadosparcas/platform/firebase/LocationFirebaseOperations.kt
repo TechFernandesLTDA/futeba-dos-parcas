@@ -77,6 +77,11 @@ private fun com.google.firebase.firestore.DocumentSnapshot.toLocationOrNull(): L
         minGameDurationMinutes = getLong("min_game_duration_minutes")?.toInt()
             ?: getLong("minGameDurationMinutes")?.toInt() ?: 60,
 
+        // Dados denormalizados de Fields
+        fieldCount = getLong("field_count")?.toInt() ?: getLong("fieldCount")?.toInt() ?: 0,
+        primaryFieldType = getString("primary_field_type") ?: getString("primaryFieldType"),
+        hasActiveFields = getBoolean("has_active_fields") ?: getBoolean("hasActiveFields") ?: false,
+
         createdAt = safeLongLocation("created_at") ?: safeLongLocation("createdAt")
     )
 }
@@ -651,6 +656,145 @@ actual suspend fun deduplicateLocations(): Result<Int> {
         Result.failure(e)
     }
 }
+
+/**
+ * Deleta um local e todas as suas quadras em uma operação atômica usando batch.
+ *
+ * Implementa:
+ * 1. Verificação de existência do local
+ * 2. Busca de todas as quadras associadas
+ * 3. Batch delete respeitando limite de 500 operações por batch
+ * 4. Tratamento de erros específicos
+ *
+ * @param locationId ID do local a ser deletado
+ * @return Result<Int> com o número total de documentos deletados
+ */
+actual suspend fun deleteLocationWithFields(locationId: String): Result<Int> {
+    return try {
+        // 1. Verificar se o local existe
+        val locationDoc = firestore.collection("locations")
+            .document(locationId)
+            .get()
+            .await()
+
+        if (!locationDoc.exists()) {
+            return Result.failure(LocationNotFoundException("Local não encontrado: $locationId"))
+        }
+
+        // 2. Buscar todas as quadras (fields) associadas ao local
+        // Não filtra por is_active para garantir deleção completa
+        val fieldsSnapshot = firestore.collection("fields")
+            .whereEqualTo("location_id", locationId)
+            .get()
+            .await()
+
+        val fieldIds = fieldsSnapshot.documents.map { it.id }
+        val totalDocsToDelete = 1 + fieldIds.size // 1 location + N fields
+
+        android.util.Log.d(
+            "FirebaseDataSource",
+            "deleteLocationWithFields: location=$locationId, fields=${fieldIds.size}, total=$totalDocsToDelete"
+        )
+
+        // 3. Criar operações de delete
+        // Firestore batch limit: 500 operações por batch
+        // Reservamos 1 operação para o location, então max 499 fields por batch
+        val maxFieldsPerBatch = 499
+
+        if (fieldIds.size <= maxFieldsPerBatch) {
+            // Caso simples: tudo cabe em um único batch
+            val batch = firestore.batch()
+
+            // Delete location
+            batch.delete(firestore.collection("locations").document(locationId))
+
+            // Delete all fields
+            fieldIds.forEach { fieldId ->
+                batch.delete(firestore.collection("fields").document(fieldId))
+            }
+
+            batch.commit().await()
+        } else {
+            // Caso com muitas quadras: dividir em múltiplos batches
+            // Primeiro batch: location + primeiros 499 fields
+            // Batches seguintes: até 500 fields cada
+
+            val fieldChunks = fieldIds.chunked(maxFieldsPerBatch)
+            var deletedSoFar = 0
+
+            try {
+                // Primeiro batch: inclui o location document
+                val firstBatch = firestore.batch()
+                firstBatch.delete(firestore.collection("locations").document(locationId))
+
+                fieldChunks.firstOrNull()?.forEach { fieldId ->
+                    firstBatch.delete(firestore.collection("fields").document(fieldId))
+                }
+
+                firstBatch.commit().await()
+                deletedSoFar = 1 + (fieldChunks.firstOrNull()?.size ?: 0)
+
+                // Batches restantes (se houver)
+                fieldChunks.drop(1).forEach { chunk ->
+                    val batch = firestore.batch()
+                    chunk.forEach { fieldId ->
+                        batch.delete(firestore.collection("fields").document(fieldId))
+                    }
+                    batch.commit().await()
+                    deletedSoFar += chunk.size
+                }
+            } catch (e: Exception) {
+                // Falha parcial - alguns documentos podem ter sido deletados
+                if (deletedSoFar > 0) {
+                    android.util.Log.e(
+                        "FirebaseDataSource",
+                        "Partial delete failure: deleted $deletedSoFar of $totalDocsToDelete docs",
+                        e
+                    )
+                    return Result.failure(
+                        PartialDeleteException(
+                            "Deleção parcial: $deletedSoFar de $totalDocsToDelete documentos deletados",
+                            deletedSoFar,
+                            totalDocsToDelete,
+                            e
+                        )
+                    )
+                }
+                throw e
+            }
+        }
+
+        android.util.Log.d(
+            "FirebaseDataSource",
+            "deleteLocationWithFields completed: $totalDocsToDelete documents deleted"
+        )
+
+        Result.success(totalDocsToDelete)
+    } catch (e: LocationNotFoundException) {
+        Result.failure(e)
+    } catch (e: PartialDeleteException) {
+        Result.failure(e)
+    } catch (e: Exception) {
+        android.util.Log.e("FirebaseDataSource", "Error in deleteLocationWithFields", e)
+        Result.failure(e)
+    }
+}
+
+/**
+ * Exceção lançada quando o local não é encontrado.
+ */
+class LocationNotFoundException(message: String) : Exception(message)
+
+/**
+ * Exceção lançada quando uma deleção parcial ocorre.
+ * Alguns documentos foram deletados, mas outros não.
+ */
+class PartialDeleteException(
+    message: String,
+    val deletedCount: Int,
+    val totalCount: Int,
+    cause: Throwable? = null
+) : Exception(message, cause)
 
 // ========== FIELDS ==========
 

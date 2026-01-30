@@ -1,0 +1,9 @@
+# #063 - Fastlane App Configuration
+
+# Google Play Store package name
+package_name("com.futebadosparcas")
+
+# Path to JSON key file for Google Play API access
+# Generate this from Google Cloud Console -> Service Accounts
+# Store it securely and add to .gitignore
+json_key_file(ENV["PLAY_STORE_JSON_KEY_PATH"] || "fastlane/play-store-key.json")

@@ -8,10 +8,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.R
+import com.futebadosparcas.data.model.Location
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
@@ -84,7 +87,7 @@ fun LocationsMapScreen(
 
 @Composable
 private fun MapContent(
-    locations: List<com.futebadosparcas.data.model.Location>
+    locations: List<Location>
 ) {
     // Default location: Curitiba, Brazil
     val curitiba = LatLng(-25.4284, -49.2733)
@@ -92,7 +95,11 @@ private fun MapContent(
     // Find first valid location for camera position, or use Curitiba as default
     val initialPosition = locations
         .firstOrNull { it.latitude != null && it.longitude != null }
-        ?.let { LatLng(it.latitude!!, it.longitude!!) }
+        ?.let { location ->
+            val lat = location.latitude
+            val lng = location.longitude
+            if (lat != null && lng != null) LatLng(lat, lng) else null
+        }
         ?: curitiba
 
     val cameraPositionState = rememberCameraPositionState {
@@ -110,28 +117,89 @@ private fun MapContent(
         )
     }
 
+    // Descricao para acessibilidade do mapa inteiro
+    val validLocationCount = locations.count { it.latitude != null && it.longitude != null }
+    val mapDescription = stringResource(R.string.location_map_region_description, validLocationCount)
+
     GoogleMap(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .semantics {
+                contentDescription = mapDescription
+            },
         cameraPositionState = cameraPositionState,
         uiSettings = uiSettings
     ) {
-        // Add markers for all valid locations
+        // Add markers for all valid locations with accessibility contentDescription
         locations.forEach { location ->
-            if (location.latitude != null && location.longitude != null) {
+            val lat = location.latitude
+            val lng = location.longitude
+            if (lat != null && lng != null) {
+                val markerDescription = buildMarkerDescription(location)
+
                 Marker(
-                    state = MarkerState(position = LatLng(location.latitude!!, location.longitude!!)),
+                    state = MarkerState(position = LatLng(lat, lng)),
                     title = location.name,
-                    snippet = location.address
+                    snippet = location.address,
+                    contentDescription = markerDescription
                 )
             }
         }
     }
 }
 
+/**
+ * Constroi a descricao de acessibilidade para o marcador do mapa.
+ * Formato: "Nome, Bairro, X.X estrelas"
+ * Adaptado para quando bairro ou rating nao estao disponiveis.
+ */
+@Composable
+private fun buildMarkerDescription(location: Location): String {
+    val hasNeighborhood = location.neighborhood.isNotEmpty()
+    val hasRating = location.rating > 0.0
+
+    return when {
+        hasNeighborhood && hasRating -> {
+            stringResource(
+                R.string.location_marker_description,
+                location.name,
+                location.neighborhood,
+                location.rating
+            )
+        }
+        hasNeighborhood && !hasRating -> {
+            stringResource(
+                R.string.location_marker_description_no_rating,
+                location.name,
+                location.neighborhood
+            )
+        }
+        !hasNeighborhood && hasRating -> {
+            stringResource(
+                R.string.location_marker_description_no_neighborhood,
+                location.name,
+                location.rating
+            )
+        }
+        else -> {
+            stringResource(
+                R.string.location_marker_description_name_only,
+                location.name
+            )
+        }
+    }
+}
+
 @Composable
 private fun LoadingState() {
+    val loadingDescription = stringResource(R.string.location_loading_description)
+
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .semantics {
+                contentDescription = loadingDescription
+            },
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(

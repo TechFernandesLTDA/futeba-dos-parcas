@@ -66,6 +66,7 @@ fun UpcomingGamesSection(
     games: List<GameWithConfirmations>,
     onGameClick: (gameId: String) -> Unit,
     onConfirmClick: (gameId: String) -> Unit = {},
+    onSeeAllClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (games.isEmpty()) return
@@ -91,6 +92,7 @@ fun UpcomingGamesSection(
                 games = pendingGames,
                 onGameClick = onGameClick,
                 onConfirmClick = onConfirmClick,
+                onSeeAllClick = onSeeAllClick,
                 isPending = true
             )
         }
@@ -108,6 +110,7 @@ fun UpcomingGamesSection(
                 games = confirmedGames,
                 onGameClick = onGameClick,
                 onConfirmClick = onConfirmClick,
+                onSeeAllClick = onSeeAllClick,
                 isPending = false
             )
         }
@@ -126,6 +129,7 @@ private fun GamesByStatusSection(
     games: List<GameWithConfirmations>,
     onGameClick: (gameId: String) -> Unit,
     onConfirmClick: (gameId: String) -> Unit,
+    onSeeAllClick: () -> Unit,
     isPending: Boolean
 ) {
     Card(
@@ -181,7 +185,7 @@ private fun GamesByStatusSection(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { /* TODO: Navegar para lista completa */ }
+                    .clickable(onClick = onSeeAllClick)
                     .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f))
                     .padding(12.dp),
                 contentAlignment = Alignment.Center
