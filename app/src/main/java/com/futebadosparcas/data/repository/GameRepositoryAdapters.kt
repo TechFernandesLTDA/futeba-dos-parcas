@@ -313,6 +313,7 @@ private fun MVPVote.toKmpModel(): KmpMVPVote {
             com.futebadosparcas.data.model.VoteCategory.MVP -> KmpVoteCategory.MVP
             com.futebadosparcas.data.model.VoteCategory.WORST -> KmpVoteCategory.WORST
             com.futebadosparcas.data.model.VoteCategory.BEST_GOALKEEPER -> KmpVoteCategory.BEST_GOALKEEPER
+            com.futebadosparcas.data.model.VoteCategory.CUSTOM -> KmpVoteCategory.CUSTOM
         },
         votedAt = votedAt?.time
     )
@@ -328,6 +329,7 @@ private fun KmpMVPVote.toAndroidModel(): MVPVote {
             KmpVoteCategory.MVP -> com.futebadosparcas.data.model.VoteCategory.MVP
             KmpVoteCategory.WORST -> com.futebadosparcas.data.model.VoteCategory.WORST
             KmpVoteCategory.BEST_GOALKEEPER -> com.futebadosparcas.data.model.VoteCategory.BEST_GOALKEEPER
+            KmpVoteCategory.CUSTOM -> com.futebadosparcas.data.model.VoteCategory.CUSTOM
         },
         votedAt = votedAt?.let { java.util.Date(it) }
     )

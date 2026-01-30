@@ -168,18 +168,33 @@ data class AppNotification(
  * Usado para categorizar e determinar a apresentação das notificações.
  */
 enum class NotificationType(val displayName: String) {
+    // Grupo
     GROUP_INVITE("Convite de grupo"),
     GROUP_INVITE_ACCEPTED("Convite aceito"),
     GROUP_INVITE_DECLINED("Convite recusado"),
+    MEMBER_JOINED("Novo membro"),
+    MEMBER_LEFT("Membro saiu"),
+
+    // Jogo
+    GAME_INVITE("Convite de jogo"),
     GAME_SUMMON("Convocação de jogo"),
     GAME_REMINDER("Lembrete de jogo"),
     GAME_CANCELLED("Jogo cancelado"),
     GAME_CONFIRMED("Jogo confirmado"),
-    MEMBER_JOINED("Novo membro"),
-    MEMBER_LEFT("Membro saiu"),
+    GAME_UPDATED("Jogo atualizado"),
+    GAME_VACANCY("Vaga disponível"),
+
+    // Financeiro
     CASHBOX_ENTRY("Entrada no caixa"),
     CASHBOX_EXIT("Saída do caixa"),
+
+    // Gamificação
     ACHIEVEMENT("Conquista"),
+    LEVEL_UP("Subiu de nível"),
+    MVP_RECEIVED("MVP da partida"),
+    RANKING_CHANGED("Mudança de divisão"),
+
+    // Sistema
     ADMIN_MESSAGE("Mensagem do Admin"),
     SYSTEM("Sistema"),
     GENERAL("Geral");

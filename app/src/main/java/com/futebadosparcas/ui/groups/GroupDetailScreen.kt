@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -25,11 +24,11 @@ import androidx.compose.ui.unit.dp
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
+import com.futebadosparcas.ui.components.CachedGroupImage
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.cards.GroupMemberCard
 import com.futebadosparcas.ui.components.dialogs.*
@@ -640,14 +639,10 @@ private fun EnhancedGroupHeader(
                 modifier = Modifier.size(88.dp),
                 contentAlignment = Alignment.Center
             ) {
-                AsyncImage(
-                    model = group.photoUrl?.ifEmpty { null } ?: R.drawable.ic_groups,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                    contentScale = ContentScale.Crop
+                CachedGroupImage(
+                    photoUrl = group.photoUrl?.ifEmpty { null },
+                    groupName = group.name,
+                    size = 80.dp
                 )
 
                 // Badge de role (se admin ou owner) (CMD-30 #14)

@@ -494,3 +494,131 @@ export const testGameReminders = onSchedule(
         console.log("[REMINDERS TEST] Teste concluído!");
     }
 );
+
+// ==========================================
+// WAITLIST EXPIRED ENTRIES PROCESSING
+// ==========================================
+
+/**
+ * Função agendada que roda a cada 5 minutos para processar
+ * entradas expiradas na lista de espera.
+ *
+ * Quando um jogador é notificado sobre uma vaga, ele tem 30 minutos
+ * para responder. Se não responder, a entrada expira e o próximo
+ * jogador na fila é notificado.
+ *
+ * Issue #: Waitlist auto-promotion
+ */
+export const processExpiredWaitlistEntries = onSchedule(
+    {
+        schedule: "every 5 minutes",
+        timeZone: "America/Sao_Paulo",
+        retryCount: 3,
+        memory: "256MiB"
+    },
+    async (event) => {
+        console.log("\n========================================");
+        console.log("[WAITLIST] Processando entradas expiradas da lista de espera");
+        console.log(`[WAITLIST] Timestamp: ${new Date().toISOString()}`);
+        console.log("========================================\n");
+
+        try {
+            const now = new Date();
+            let expiredCount = 0;
+            let promotedCount = 0;
+
+            // Buscar todas as entradas de waitlist com status NOTIFIED
+            // onde response_deadline já passou
+            const waitlistQuery = await getDb().collectionGroup("waitlist")
+                .where("status", "==", "NOTIFIED")
+                .where("response_deadline", "<=", admin.firestore.Timestamp.fromDate(now))
+                .get();
+
+            console.log(`[WAITLIST] Encontradas ${waitlistQuery.size} entradas expiradas`);
+
+            for (const doc of waitlistQuery.docs) {
+                const data = doc.data();
+                const gameId = data.game_id;
+                const userId = data.user_id;
+                const userName = data.user_name || "Jogador";
+
+                console.log(`[WAITLIST] Processando entrada expirada: ${doc.id} (game: ${gameId}, user: ${userId})`);
+
+                try {
+                    // 1. Marcar entrada como EXPIRED
+                    await doc.ref.update({
+                        status: "EXPIRED",
+                        expired_at: admin.firestore.FieldValue.serverTimestamp()
+                    });
+                    expiredCount++;
+
+                    // 2. Buscar próximo na fila com status WAITING
+                    const nextInLineQuery = await getDb()
+                        .collection("games")
+                        .doc(gameId)
+                        .collection("waitlist")
+                        .where("status", "==", "WAITING")
+                        .orderBy("added_at", "asc")
+                        .limit(1)
+                        .get();
+
+                    if (!nextInLineQuery.empty) {
+                        const nextEntry = nextInLineQuery.docs[0];
+                        const nextData = nextEntry.data();
+                        const nextUserId = nextData.user_id;
+                        const nextUserName = nextData.user_name || "Jogador";
+
+                        // 3. Calcular novo deadline (30 minutos)
+                        const newDeadline = new Date(now.getTime() + 30 * 60 * 1000);
+
+                        // 4. Atualizar status para NOTIFIED
+                        await nextEntry.ref.update({
+                            status: "NOTIFIED",
+                            notified_at: admin.firestore.FieldValue.serverTimestamp(),
+                            response_deadline: admin.firestore.Timestamp.fromDate(newDeadline)
+                        });
+
+                        // 5. Enviar notificação
+                        await sendNotificationToUser(nextUserId, {
+                            title: "Vaga Disponível!",
+                            body: `Uma vaga abriu para o jogo. Você tem 30 minutos para confirmar!`,
+                            type: NotificationType.GAME_SUMMON,
+                            data: {
+                                gameId: gameId,
+                                action: `game_detail/${gameId}`,
+                                urgency: "high"
+                            }
+                        });
+
+                        // 6. Salvar notificação no Firestore
+                        await saveNotificationToFirestore(nextUserId, {
+                            userId: nextUserId,
+                            title: "Vaga Disponível!",
+                            body: `Uma vaga abriu! Confirme sua presença em até 30 minutos.`,
+                            type: NotificationType.GAME_SUMMON,
+                            gameId: gameId,
+                            action: `game_detail/${gameId}`
+                        });
+
+                        promotedCount++;
+                        console.log(`[WAITLIST] Próximo jogador notificado: ${nextUserId} (${nextUserName})`);
+                    } else {
+                        console.log(`[WAITLIST] Nenhum jogador na fila para o jogo ${gameId}`);
+                    }
+                } catch (entryError) {
+                    console.error(`[WAITLIST] Erro ao processar entrada ${doc.id}:`, entryError);
+                }
+            }
+
+            console.log(`\n========================================`);
+            console.log(`[WAITLIST] Processamento concluído!`);
+            console.log(`  - Entradas expiradas: ${expiredCount}`);
+            console.log(`  - Próximos notificados: ${promotedCount}`);
+            console.log("========================================\n");
+
+        } catch (error) {
+            console.error("[WAITLIST] Erro fatal ao processar lista de espera:", error);
+            throw error; // Re-throw para acionar retry
+        }
+    }
+);

@@ -369,6 +369,23 @@ class FakeGameRepository @Inject constructor() : GameRepository {
         ))
     }
 
+    override suspend fun confirmPlayerAsOwner(gameId: String, userId: String): Result<Unit> {
+        confirmations.find { it.gameId == gameId && it.userId == userId }?.let {
+            val index = confirmations.indexOf(it)
+            confirmations[index] = it.copy(status = "CONFIRMED")
+        }
+        return Result.success(Unit)
+    }
+
+    override suspend fun updatePartialPayment(gameId: String, userId: String, amount: Double): Result<Unit> {
+        confirmations.find { it.gameId == gameId && it.userId == userId }?.let {
+            val index = confirmations.indexOf(it)
+            val status = if (amount > 0) "PARTIAL" else "PENDING"
+            confirmations[index] = it.copy(partialPayment = amount, paymentStatus = status)
+        }
+        return Result.success(Unit)
+    }
+
     private fun timeToMinutes(time: String): Int {
         return try {
             val parts = time.split(":")

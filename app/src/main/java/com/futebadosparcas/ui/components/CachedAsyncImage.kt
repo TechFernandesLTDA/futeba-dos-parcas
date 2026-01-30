@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.BrokenImage
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.ImageNotSupported
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -199,6 +200,77 @@ fun CachedFieldImage(
                         contentDescription = "Erro ao carregar imagem",
                         modifier = Modifier
                             .size(width * 0.4f)
+                            .align(Alignment.Center),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+                else -> { /* Sucesso - imagem já renderizada */ }
+            }
+        }
+    }
+}
+
+/**
+ * CachedGroupImage - Componente para fotos de grupos
+ * Usa ícone de grupo como fallback ao invés de AccountCircle
+ */
+@Composable
+fun CachedGroupImage(
+    photoUrl: String?,
+    groupName: String,
+    modifier: Modifier = Modifier,
+    size: Dp = 80.dp
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+        contentAlignment = Alignment.Center
+    ) {
+        if (photoUrl.isNullOrEmpty()) {
+            // Sem URL - mostrar ícone de grupo
+            Icon(
+                imageVector = Icons.Filled.Groups,
+                contentDescription = "Foto do grupo $groupName",
+                modifier = Modifier.size(size * 0.5f),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            )
+        } else {
+            // AsyncImage com caching via Coil
+            val context = LocalContext.current
+            var paintState by remember { mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty) }
+
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(photoUrl)
+                    .crossfade(durationMillis = 300)
+                    .build(),
+                contentDescription = "Foto do grupo $groupName",
+                modifier = Modifier
+                    .size(size)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop,
+                onState = { state -> paintState = state }
+            )
+
+            // Sobrepor loading/error estados
+            when (paintState) {
+                is AsyncImagePainter.State.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(size * 0.4f)
+                            .align(Alignment.Center),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                is AsyncImagePainter.State.Error -> {
+                    Icon(
+                        imageVector = Icons.Filled.BrokenImage,
+                        contentDescription = "Erro ao carregar foto do grupo",
+                        modifier = Modifier
+                            .size(size * 0.5f)
                             .align(Alignment.Center),
                         tint = MaterialTheme.colorScheme.error
                     )

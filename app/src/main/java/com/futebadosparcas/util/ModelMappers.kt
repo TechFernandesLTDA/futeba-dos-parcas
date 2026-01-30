@@ -284,18 +284,29 @@ fun List<KmpLocationReview>.toAndroidLocationReviews(): List<AndroidLocationRevi
  */
 fun AndroidNotificationType.toKmpNotificationType(): KmpNotificationType {
     return when (this) {
+        // Grupo
         AndroidNotificationType.GROUP_INVITE -> KmpNotificationType.GROUP_INVITE
         AndroidNotificationType.GROUP_INVITE_ACCEPTED -> KmpNotificationType.GROUP_INVITE_ACCEPTED
         AndroidNotificationType.GROUP_INVITE_DECLINED -> KmpNotificationType.GROUP_INVITE_DECLINED
+        AndroidNotificationType.MEMBER_JOINED -> KmpNotificationType.MEMBER_JOINED
+        AndroidNotificationType.MEMBER_LEFT -> KmpNotificationType.MEMBER_LEFT
+        // Jogo
+        AndroidNotificationType.GAME_INVITE -> KmpNotificationType.GAME_INVITE
         AndroidNotificationType.GAME_SUMMON -> KmpNotificationType.GAME_SUMMON
         AndroidNotificationType.GAME_REMINDER -> KmpNotificationType.GAME_REMINDER
         AndroidNotificationType.GAME_CANCELLED -> KmpNotificationType.GAME_CANCELLED
         AndroidNotificationType.GAME_CONFIRMED -> KmpNotificationType.GAME_CONFIRMED
-        AndroidNotificationType.MEMBER_JOINED -> KmpNotificationType.MEMBER_JOINED
-        AndroidNotificationType.MEMBER_LEFT -> KmpNotificationType.MEMBER_LEFT
+        AndroidNotificationType.GAME_UPDATED -> KmpNotificationType.GAME_UPDATED
+        AndroidNotificationType.GAME_VACANCY -> KmpNotificationType.GAME_VACANCY
+        // Financeiro
         AndroidNotificationType.CASHBOX_ENTRY -> KmpNotificationType.CASHBOX_ENTRY
         AndroidNotificationType.CASHBOX_EXIT -> KmpNotificationType.CASHBOX_EXIT
+        // Gamificação
         AndroidNotificationType.ACHIEVEMENT -> KmpNotificationType.ACHIEVEMENT
+        AndroidNotificationType.LEVEL_UP -> KmpNotificationType.LEVEL_UP
+        AndroidNotificationType.MVP_RECEIVED -> KmpNotificationType.MVP_RECEIVED
+        AndroidNotificationType.RANKING_CHANGED -> KmpNotificationType.RANKING_CHANGED
+        // Sistema
         AndroidNotificationType.ADMIN_MESSAGE -> KmpNotificationType.ADMIN_MESSAGE
         AndroidNotificationType.SYSTEM -> KmpNotificationType.SYSTEM
         AndroidNotificationType.GENERAL -> KmpNotificationType.GENERAL
@@ -307,18 +318,29 @@ fun AndroidNotificationType.toKmpNotificationType(): KmpNotificationType {
  */
 fun KmpNotificationType.toAndroidNotificationType(): AndroidNotificationType {
     return when (this) {
+        // Grupo
         KmpNotificationType.GROUP_INVITE -> AndroidNotificationType.GROUP_INVITE
         KmpNotificationType.GROUP_INVITE_ACCEPTED -> AndroidNotificationType.GROUP_INVITE_ACCEPTED
         KmpNotificationType.GROUP_INVITE_DECLINED -> AndroidNotificationType.GROUP_INVITE_DECLINED
+        KmpNotificationType.MEMBER_JOINED -> AndroidNotificationType.MEMBER_JOINED
+        KmpNotificationType.MEMBER_LEFT -> AndroidNotificationType.MEMBER_LEFT
+        // Jogo
+        KmpNotificationType.GAME_INVITE -> AndroidNotificationType.GAME_INVITE
         KmpNotificationType.GAME_SUMMON -> AndroidNotificationType.GAME_SUMMON
         KmpNotificationType.GAME_REMINDER -> AndroidNotificationType.GAME_REMINDER
         KmpNotificationType.GAME_CANCELLED -> AndroidNotificationType.GAME_CANCELLED
         KmpNotificationType.GAME_CONFIRMED -> AndroidNotificationType.GAME_CONFIRMED
-        KmpNotificationType.MEMBER_JOINED -> AndroidNotificationType.MEMBER_JOINED
-        KmpNotificationType.MEMBER_LEFT -> AndroidNotificationType.MEMBER_LEFT
+        KmpNotificationType.GAME_UPDATED -> AndroidNotificationType.GAME_UPDATED
+        KmpNotificationType.GAME_VACANCY -> AndroidNotificationType.GAME_VACANCY
+        // Financeiro
         KmpNotificationType.CASHBOX_ENTRY -> AndroidNotificationType.CASHBOX_ENTRY
         KmpNotificationType.CASHBOX_EXIT -> AndroidNotificationType.CASHBOX_EXIT
+        // Gamificação
         KmpNotificationType.ACHIEVEMENT -> AndroidNotificationType.ACHIEVEMENT
+        KmpNotificationType.LEVEL_UP -> AndroidNotificationType.LEVEL_UP
+        KmpNotificationType.MVP_RECEIVED -> AndroidNotificationType.MVP_RECEIVED
+        KmpNotificationType.RANKING_CHANGED -> AndroidNotificationType.RANKING_CHANGED
+        // Sistema
         KmpNotificationType.ADMIN_MESSAGE -> AndroidNotificationType.ADMIN_MESSAGE
         KmpNotificationType.SYSTEM -> AndroidNotificationType.SYSTEM
         KmpNotificationType.GENERAL -> AndroidNotificationType.GENERAL
@@ -1136,6 +1158,7 @@ fun AndroidMVPVote.toKmpMVPVote(): com.futebadosparcas.domain.model.MVPVote {
             VoteCategory.MVP -> com.futebadosparcas.domain.model.VoteCategory.MVP
             VoteCategory.WORST -> com.futebadosparcas.domain.model.VoteCategory.WORST
             VoteCategory.BEST_GOALKEEPER -> com.futebadosparcas.domain.model.VoteCategory.BEST_GOALKEEPER
+            VoteCategory.CUSTOM -> com.futebadosparcas.domain.model.VoteCategory.CUSTOM
         },
         votedAt = votedAt?.time
     )
@@ -1154,6 +1177,7 @@ fun com.futebadosparcas.domain.model.MVPVote.toAndroidMVPVote(): AndroidMVPVote 
             com.futebadosparcas.domain.model.VoteCategory.MVP -> VoteCategory.MVP
             com.futebadosparcas.domain.model.VoteCategory.WORST -> VoteCategory.WORST
             com.futebadosparcas.domain.model.VoteCategory.BEST_GOALKEEPER -> VoteCategory.BEST_GOALKEEPER
+            com.futebadosparcas.domain.model.VoteCategory.CUSTOM -> VoteCategory.CUSTOM
         },
         votedAt = votedAt?.let { java.util.Date(it) }
     )

@@ -4,7 +4,7 @@
  */
 
 import * as admin from "firebase-admin";
-import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentUpdated, onDocumentDeleted } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 
@@ -33,9 +33,14 @@ export enum NotificationType {
   GAME_SUMMON = "GAME_SUMMON",
   GAME_REMINDER = "GAME_REMINDER",
   GAME_UPDATED = "GAME_UPDATED",
+  GAME_VACANCY = "GAME_VACANCY",
   GROUP_INVITE = "GROUP_INVITE",
   GROUP_INVITE_ACCEPTED = "GROUP_INVITE_ACCEPTED",
   GROUP_INVITE_DECLINED = "GROUP_INVITE_DECLINED",
+  MEMBER_JOINED = "MEMBER_JOINED",
+  MEMBER_LEFT = "MEMBER_LEFT",
+  CASHBOX_ENTRY = "CASHBOX_ENTRY",
+  CASHBOX_EXIT = "CASHBOX_EXIT",
   ACHIEVEMENT = "ACHIEVEMENT",
   LEVEL_UP = "LEVEL_UP",
   RANKING_CHANGED = "RANKING_CHANGED",
@@ -971,3 +976,502 @@ export const cleanupExpiredInvites = onSchedule("every 24 hours", async (event) 
     throw e; // Re-throw para que o Cloud Functions tente novamente
   }
 });
+
+// ==========================================
+// MVP RECEIVED NOTIFICATION (#Gap4)
+// ==========================================
+
+/**
+ * Trigger quando um jogador é eleito MVP após a votação.
+ * Escuta mudanças no campo mvp_id do jogo FINISHED.
+ */
+export const onMvpAwarded = onDocumentUpdated("games/{gameId}", async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  if (!before || !after) return;
+
+  const gameId = event.params.gameId;
+
+  // Verificar se MVP foi definido (antes era null/undefined, agora tem valor)
+  const beforeMvpId = before.mvp_id || before.mvpId;
+  const afterMvpId = after.mvp_id || after.mvpId;
+
+  if (!afterMvpId || beforeMvpId === afterMvpId) return;
+
+  // Só notifica se o jogo está FINISHED
+  if (after.status !== "FINISHED") return;
+
+  console.log(`[MVP_AWARDED] MVP definido no jogo ${gameId}: ${afterMvpId}`);
+
+  try {
+    // Buscar nome do jogo para contexto
+    const gameName = after.location_name || after.field_name || "a partida";
+    const gameDate = after.date || "recente";
+
+    await sendAndSaveNotification(afterMvpId, {
+      userId: afterMvpId,
+      title: "🏆 Você foi eleito MVP!",
+      body: `Parabéns! Você foi escolhido o Craque da Partida em ${gameName}`,
+      type: NotificationType.MVP_RECEIVED,
+      gameId: gameId,
+      action: "game_detail/" + gameId,
+    });
+
+    console.log(`[MVP_AWARDED] Notificação enviada para ${afterMvpId}`);
+  } catch (e) {
+    console.error(`[MVP_AWARDED] Erro ao notificar MVP ${afterMvpId}:`, e);
+  }
+});
+
+// ==========================================
+// RANKING/DIVISION CHANGED NOTIFICATION (#Gap4)
+// ==========================================
+
+/**
+ * Trigger quando a divisão de um jogador muda (promoção ou rebaixamento).
+ * Escuta mudanças na coleção season_participation.
+ */
+export const onDivisionChanged = onDocumentUpdated(
+  "season_participation/{partId}",
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+
+    const userId = after.user_id || after.userId;
+    if (!userId) return;
+
+    const beforeDivision = before.division;
+    const afterDivision = after.division;
+
+    // Só notifica se a divisão realmente mudou
+    if (!afterDivision || beforeDivision === afterDivision) return;
+
+    console.log(`[RANKING_CHANGED] User ${userId}: ${beforeDivision} -> ${afterDivision}`);
+
+    // Determinar se foi promoção ou rebaixamento
+    const divisionOrder = ["BRONZE", "SILVER", "GOLD", "DIAMOND"];
+    const beforeIndex = divisionOrder.indexOf(beforeDivision || "BRONZE");
+    const afterIndex = divisionOrder.indexOf(afterDivision);
+    const isPromotion = afterIndex > beforeIndex;
+
+    // Mapear nomes das divisões em português
+    const divisionNames: Record<string, string> = {
+      BRONZE: "Bronze",
+      SILVER: "Prata",
+      GOLD: "Ouro",
+      DIAMOND: "Diamante",
+    };
+
+    const divisionName = divisionNames[afterDivision] || afterDivision;
+    const emoji = isPromotion ? "🎉" : "📉";
+    const title = isPromotion ? "Promoção de Liga!" : "Mudança de Liga";
+    const body = isPromotion
+      ? `${emoji} Parabéns! Você subiu para a divisão ${divisionName}!`
+      : `${emoji} Você desceu para a divisão ${divisionName}. Continue jogando!`;
+
+    try {
+      await sendAndSaveNotification(userId, {
+        userId,
+        title,
+        body,
+        type: NotificationType.RANKING_CHANGED,
+        action: "profile",
+      });
+
+      console.log(`[RANKING_CHANGED] Notificação enviada para ${userId}`);
+    } catch (e) {
+      console.error(`[RANKING_CHANGED] Erro ao notificar ${userId}:`, e);
+    }
+  }
+);
+
+// ==========================================
+// GROUP INVITE RESPONSE NOTIFICATIONS (#Gap4)
+// ==========================================
+
+/**
+ * Trigger quando um convite de grupo é aceito ou recusado.
+ * Notifica quem enviou o convite sobre a resposta.
+ */
+export const onGroupInviteResponse = onDocumentUpdated(
+  "group_invites/{inviteId}",
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+
+    const inviteId = event.params.inviteId;
+    const beforeStatus = before.status;
+    const afterStatus = after.status;
+
+    // Só notifica se mudou de PENDING para ACCEPTED ou DECLINED
+    if (beforeStatus !== "PENDING") return;
+    if (afterStatus !== "ACCEPTED" && afterStatus !== "DECLINED") return;
+
+    const invitedById = after.invited_by_id || after.invitedById;
+    const invitedUserName = after.invited_user_name || after.invitedUserName || "Um jogador";
+    const groupName = after.group_name || after.groupName || "seu grupo";
+
+    if (!invitedById) {
+      console.log(`[GROUP_INVITE_RESPONSE] Convite ${inviteId} sem invited_by_id`);
+      return;
+    }
+
+    console.log(`[GROUP_INVITE_RESPONSE] Convite ${inviteId}: ${beforeStatus} -> ${afterStatus}`);
+
+    try {
+      if (afterStatus === "ACCEPTED") {
+        await sendAndSaveNotification(invitedById, {
+          userId: invitedById,
+          title: "Convite aceito!",
+          body: `${invitedUserName} aceitou seu convite para ${groupName}`,
+          type: NotificationType.GROUP_INVITE_ACCEPTED,
+          groupId: after.group_id || after.groupId,
+          action: "group_detail/" + (after.group_id || after.groupId),
+        });
+      } else {
+        await sendAndSaveNotification(invitedById, {
+          userId: invitedById,
+          title: "Convite recusado",
+          body: `${invitedUserName} recusou seu convite para ${groupName}`,
+          type: NotificationType.GROUP_INVITE_DECLINED,
+          groupId: after.group_id || after.groupId,
+        });
+      }
+
+      console.log(`[GROUP_INVITE_RESPONSE] Notificação enviada para ${invitedById}`);
+    } catch (e) {
+      console.error(`[GROUP_INVITE_RESPONSE] Erro ao notificar ${invitedById}:`, e);
+    }
+  }
+);
+
+// ==========================================
+// MEMBER JOINED/LEFT GROUP NOTIFICATIONS (#Gap4)
+// ==========================================
+
+/**
+ * Trigger quando um membro entra em um grupo.
+ * Notifica admins/owners do grupo.
+ */
+export const onMemberJoined = onDocumentCreated(
+  "groups/{groupId}/members/{memberId}",
+  async (event) => {
+    const member = event.data?.data();
+    if (!member) return;
+
+    const groupId = event.params.groupId;
+    const memberId = event.params.memberId;
+
+    // Não notifica se é o owner (criador do grupo)
+    const role = member.role || member.memberRole;
+    if (role === "OWNER") return;
+
+    console.log(`[MEMBER_JOINED] Member ${memberId} joined group ${groupId}`);
+
+    try {
+      // Buscar dados do grupo e do novo membro
+      const [groupDoc, memberUserDoc] = await Promise.all([
+        getDb().collection("groups").doc(groupId).get(),
+        getDb().collection("users").doc(memberId).get(),
+      ]);
+
+      if (!groupDoc.exists) return;
+
+      const group = groupDoc.data();
+      const memberUser = memberUserDoc.exists ? memberUserDoc.data() : null;
+      const memberName = memberUser?.name || memberUser?.nickname || "Um jogador";
+      const groupName = group?.name || "o grupo";
+
+      // Buscar admins e owners para notificar
+      const adminsSnap = await getDb()
+        .collection("groups")
+        .doc(groupId)
+        .collection("members")
+        .where("role", "in", ["ADMIN", "OWNER"])
+        .get();
+
+      const adminIds = adminsSnap.docs
+        .map((doc: any) => doc.id)
+        .filter((id: string) => id !== memberId);
+
+      if (adminIds.length > 0) {
+        await sendNotificationToUsers(adminIds, {
+          title: "Novo membro!",
+          body: `${memberName} entrou em ${groupName}`,
+          type: NotificationType.MEMBER_JOINED,
+          data: {
+            groupId: groupId,
+            memberId: memberId,
+            action: "group_detail/" + groupId,
+          },
+        });
+
+        console.log(`[MEMBER_JOINED] Notificação enviada para ${adminIds.length} admins`);
+      }
+    } catch (e) {
+      console.error(`[MEMBER_JOINED] Erro ao processar:`, e);
+    }
+  }
+);
+
+/**
+ * Trigger quando um membro sai de um grupo.
+ * Notifica admins/owners do grupo.
+ */
+export const onMemberLeft = onDocumentDeleted(
+  "groups/{groupId}/members/{memberId}",
+  async (event) => {
+    const member = event.data?.data();
+    const groupId = event.params.groupId;
+    const memberId = event.params.memberId;
+
+    console.log(`[MEMBER_LEFT] Member ${memberId} left group ${groupId}`);
+
+    try {
+      // Buscar dados do grupo e do membro que saiu
+      const [groupDoc, memberUserDoc] = await Promise.all([
+        getDb().collection("groups").doc(groupId).get(),
+        getDb().collection("users").doc(memberId).get(),
+      ]);
+
+      if (!groupDoc.exists) return;
+
+      const group = groupDoc.data();
+      const memberUser = memberUserDoc.exists ? memberUserDoc.data() : null;
+      const memberName = memberUser?.name || memberUser?.nickname || "Um jogador";
+      const groupName = group?.name || "o grupo";
+
+      // Buscar admins e owners para notificar
+      const adminsSnap = await getDb()
+        .collection("groups")
+        .doc(groupId)
+        .collection("members")
+        .where("role", "in", ["ADMIN", "OWNER"])
+        .get();
+
+      const adminIds = adminsSnap.docs.map((doc: any) => doc.id);
+
+      if (adminIds.length > 0) {
+        await sendNotificationToUsers(adminIds, {
+          title: "Membro saiu",
+          body: `${memberName} saiu de ${groupName}`,
+          type: NotificationType.MEMBER_LEFT,
+          data: {
+            groupId: groupId,
+            memberId: memberId,
+            action: "group_detail/" + groupId,
+          },
+        });
+
+        console.log(`[MEMBER_LEFT] Notificação enviada para ${adminIds.length} admins`);
+      }
+    } catch (e) {
+      console.error(`[MEMBER_LEFT] Erro ao processar:`, e);
+    }
+  }
+);
+
+// ==========================================
+// CASHBOX NOTIFICATIONS (#Gap4)
+// ==========================================
+
+/**
+ * Trigger quando uma transação de caixa é criada.
+ * Notifica admins do grupo sobre entradas e saídas.
+ */
+export const onCashboxTransaction = onDocumentCreated(
+  "groups/{groupId}/cashbox/{transactionId}",
+  async (event) => {
+    const transaction = event.data?.data();
+    if (!transaction) return;
+
+    const groupId = event.params.groupId;
+    const transactionId = event.params.transactionId;
+
+    const type = transaction.type || transaction.transactionType;
+    const amount = transaction.amount || 0;
+    const description = transaction.description || "";
+    const createdById = transaction.created_by_id || transaction.createdById;
+
+    console.log(`[CASHBOX] Transaction ${transactionId} in group ${groupId}: ${type} R$${amount}`);
+
+    try {
+      // Buscar dados do grupo
+      const groupDoc = await getDb().collection("groups").doc(groupId).get();
+      if (!groupDoc.exists) return;
+
+      const group = groupDoc.data();
+      const groupName = group?.name || "o grupo";
+
+      // Buscar admins e owners para notificar (exceto quem criou)
+      const adminsSnap = await getDb()
+        .collection("groups")
+        .doc(groupId)
+        .collection("members")
+        .where("role", "in", ["ADMIN", "OWNER"])
+        .get();
+
+      const adminIds = adminsSnap.docs
+        .map((doc: any) => doc.id)
+        .filter((id: string) => id !== createdById);
+
+      if (adminIds.length === 0) return;
+
+      const isEntry = type === "ENTRY" || type === "INCOME" || type === "RECEITA";
+      const emoji = isEntry ? "💰" : "💸";
+      const notificationType = isEntry
+        ? NotificationType.CASHBOX_ENTRY
+        : NotificationType.CASHBOX_EXIT;
+
+      const title = isEntry ? "Entrada no caixa" : "Saída do caixa";
+      const body = `${emoji} R$${amount.toFixed(2)} ${isEntry ? "adicionado" : "retirado"} ${
+        description ? `- ${description}` : ""
+      }`;
+
+      await sendNotificationToUsers(adminIds, {
+        title,
+        body,
+        type: notificationType,
+        data: {
+          groupId: groupId,
+          transactionId: transactionId,
+          action: "group_cashbox/" + groupId,
+        },
+      });
+
+      console.log(`[CASHBOX] Notificação enviada para ${adminIds.length} admins`);
+    } catch (e) {
+      console.error(`[CASHBOX] Erro ao processar transação:`, e);
+    }
+  }
+);
+
+// ==========================================
+// GAME VACANCY NOTIFICATION (#Gap4)
+// ==========================================
+
+/**
+ * Trigger quando um jogador cancela presença e abre vaga.
+ * Notifica waitlist e membros do grupo sobre a vaga disponível.
+ */
+export const onGameVacancy = onDocumentUpdated(
+  "confirmations/{confirmationId}",
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+
+    const confirmationId = event.params.confirmationId;
+    const beforeStatus = before.status;
+    const afterStatus = after.status;
+
+    // Só notifica se era CONFIRMED e virou CANCELLED
+    if (beforeStatus !== "CONFIRMED" || afterStatus !== "CANCELLED") return;
+
+    const gameId = after.game_id || after.gameId;
+    if (!gameId) return;
+
+    console.log(`[GAME_VACANCY] Vaga aberta no jogo ${gameId} (confirmação ${confirmationId})`);
+
+    try {
+      // Buscar dados do jogo
+      const gameDoc = await getDb().collection("games").doc(gameId).get();
+      if (!gameDoc.exists) return;
+
+      const game = gameDoc.data();
+      if (!game) return;
+
+      // Só notifica se o jogo ainda está aberto (SCHEDULED ou CONFIRMED)
+      if (game.status !== "SCHEDULED" && game.status !== "CONFIRMED") return;
+
+      const maxPlayers = game.max_players || game.maxPlayers || 14;
+      const groupId = game.group_id || game.groupId;
+      const gameName = game.location_name || game.field_name || "o jogo";
+      const gameDate = game.date || "";
+
+      // Contar confirmações atuais
+      const confirmationsSnap = await getDb()
+        .collection("confirmations")
+        .where("game_id", "==", gameId)
+        .where("status", "==", "CONFIRMED")
+        .get();
+
+      const currentPlayers = confirmationsSnap.size;
+
+      // Se ainda não estava cheio, não notifica
+      // (a vaga é relevante apenas quando estava lotado)
+      if (currentPlayers >= maxPlayers - 1) {
+        // Estava lotado, agora tem vaga - notificar!
+
+        // 1. Primeiro notificar a waitlist
+        const waitlistSnap = await getDb()
+          .collection("waitlist")
+          .where("game_id", "==", gameId)
+          .where("status", "==", "WAITING")
+          .orderBy("created_at", "asc")
+          .limit(5)
+          .get();
+
+        const waitlistUserIds = waitlistSnap.docs.map((doc: any) => {
+          const data = doc.data();
+          return data.user_id || data.userId;
+        });
+
+        if (waitlistUserIds.length > 0) {
+          await sendNotificationToUsers(waitlistUserIds, {
+            title: "Vaga disponível! ⚽",
+            body: `Abriu uma vaga em ${gameName}. Corra para confirmar!`,
+            type: NotificationType.GAME_VACANCY,
+            data: {
+              gameId: gameId,
+              action: "game_detail/" + gameId,
+            },
+          });
+
+          console.log(`[GAME_VACANCY] Notificação enviada para ${waitlistUserIds.length} na waitlist`);
+        }
+
+        // 2. Se não há waitlist ou poucos na espera, notificar grupo também
+        if (groupId && waitlistUserIds.length < 3) {
+          // Buscar membros do grupo que não estão confirmados
+          const membersSnap = await getDb()
+            .collection("groups")
+            .doc(groupId)
+            .collection("members")
+            .get();
+
+          const confirmedUserIds = confirmationsSnap.docs.map((doc: any) => {
+            const data = doc.data();
+            return data.user_id || data.userId;
+          });
+
+          const memberIds = membersSnap.docs
+            .map((doc: any) => doc.id)
+            .filter(
+              (id: string) =>
+                !confirmedUserIds.includes(id) && !waitlistUserIds.includes(id)
+            )
+            .slice(0, 20); // Limitar a 20 para não spam
+
+          if (memberIds.length > 0) {
+            await sendNotificationToUsers(memberIds, {
+              title: "Vaga disponível! ⚽",
+              body: `Abriu uma vaga em ${gameName} (${gameDate}). Confirme sua presença!`,
+              type: NotificationType.GAME_VACANCY,
+              data: {
+                gameId: gameId,
+                action: "game_detail/" + gameId,
+              },
+            });
+
+            console.log(`[GAME_VACANCY] Notificação enviada para ${memberIds.length} membros do grupo`);
+          }
+        }
+      }
+    } catch (e) {
+      console.error(`[GAME_VACANCY] Erro ao processar vaga:`, e);
+    }
+  }
+);
