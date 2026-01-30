@@ -1434,6 +1434,11 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    actual suspend fun getStatisticsRanking(orderByField: String, limit: Int): Result<List<Statistics>> {
+        // TODO: Implementar com Firebase iOS SDK
+        return Result.success(emptyList())
+    }
+
     // ========== NOTIFICATIONS ==========
 
     actual suspend fun getMyNotifications(limit: Int): Result<List<AppNotification>> {
@@ -1470,6 +1475,15 @@ actual class FirebaseDataSource actual constructor() {
     actual suspend fun markNotificationAsRead(notificationId: String): Result<Unit> {
         return try {
             IosFirebaseBridge.markNotificationAsRead(notificationId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun markNotificationAsUnread(notificationId: String): Result<Unit> {
+        return try {
+            IosFirebaseBridge.markNotificationAsUnread(notificationId)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -1911,6 +1925,7 @@ object IosFirebaseBridge {
     fun getUnreadNotifications(): List<AppNotification> = emptyList()
     fun getUnreadCount(): Int = 0
     fun markNotificationAsRead(notificationId: String) {}
+    fun markNotificationAsUnread(notificationId: String) {}
     fun markAllNotificationsAsRead() {}
 
     fun getNotificationById(notificationId: String): AppNotification {

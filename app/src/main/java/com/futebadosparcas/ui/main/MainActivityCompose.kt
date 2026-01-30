@@ -27,9 +27,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.ThemeMode
 import com.futebadosparcas.domain.repository.ThemeRepository
+import com.futebadosparcas.data.model.UserBadge
 import com.futebadosparcas.domain.gamification.BadgeAwarder
 import com.futebadosparcas.domain.ranking.PostGameEventEmitter
 import com.futebadosparcas.domain.repository.NotificationRepository
+import kotlinx.coroutines.flow.collectLatest
 import com.futebadosparcas.ui.adaptive.WindowSizeClass
 import com.futebadosparcas.ui.navigation.AppNavHost
 import com.futebadosparcas.ui.navigation.Screen
@@ -72,6 +74,12 @@ class MainActivityCompose : AppCompatActivity() {
     @javax.inject.Inject
     lateinit var preferencesManager: PreferencesManager
 
+    @javax.inject.Inject
+    lateinit var authRepository: com.futebadosparcas.data.repository.AuthRepository
+
+    @javax.inject.Inject
+    lateinit var updateProfileUseCase: com.futebadosparcas.domain.usecase.user.UpdateProfileUseCase
+
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
@@ -108,16 +116,36 @@ class MainActivityCompose : AppCompatActivity() {
                             showPermissionOnboarding = false
                         },
                         onProfileSetup = { profileData ->
-                            // Os dados do perfil serão salvos quando o usuário
-                            // entrar na tela de edição de perfil ou através do ViewModel
-                            // Por enquanto, apenas logamos os dados
-                            android.util.Log.d("Onboarding", "Profile setup: $profileData")
+                            // Salvar dados do perfil no Firestore
+                            lifecycleScope.launch {
+                                try {
+                                    val currentUserId = authRepository.getCurrentUserId()
+                                    if (currentUserId != null && (profileData.name.isNotBlank() || profileData.nickname != null || profileData.preferredPosition != null || profileData.preferredFieldTypes.isNotEmpty())) {
+                                        val fieldTypes = profileData.preferredFieldTypes.mapNotNull {
+                                            try { com.futebadosparcas.data.model.FieldType.valueOf(it) } catch (e: Exception) { null }
+                                        }
+                                        val params = com.futebadosparcas.domain.usecase.user.UpdateProfileParams(
+                                            userId = currentUserId,
+                                            name = profileData.name.takeIf { it.isNotBlank() },
+                                            nickname = profileData.nickname,
+                                            primaryPosition = profileData.preferredPosition,
+                                            preferredFieldTypes = fieldTypes.takeIf { it.isNotEmpty() }
+                                        )
+                                        updateProfileUseCase(params)
+                                        android.util.Log.d("Onboarding", "Profile saved successfully")
+                                    }
+                                } catch (e: Exception) {
+                                    android.util.Log.e("Onboarding", "Error saving profile: ${e.message}", e)
+                                }
+                            }
                         }
                     )
                 } else {
                     MainScreen(
                         themeConfig = themeConfig,
-                        onThemeChange = { recreate() }
+                        onThemeChange = { recreate() },
+                        badgeAwarder = badgeAwarder,
+                        notificationRepository = notificationRepository
                     )
                 }
             }
@@ -129,13 +157,7 @@ class MainActivityCompose : AppCompatActivity() {
     }
 
     private fun observeGamificationEvents() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                badgeAwarder.newBadges.collect {
-                    // TODO: Show badge notification in Compose
-                }
-            }
-        }
+        // Badge notifications now handled in MainScreen Compose with Snackbar
     }
 
     private fun observePostGameEvents() {
@@ -193,7 +215,9 @@ private fun SetupSystemBars(isDark: Boolean) {
 @Composable
 fun MainScreen(
     themeConfig: com.futebadosparcas.domain.model.AppThemeConfig,
-    onThemeChange: () -> Unit
+    onThemeChange: () -> Unit,
+    badgeAwarder: BadgeAwarder,
+    notificationRepository: NotificationRepository
 ) {
     val context = LocalContext.current
     val navController = androidx.navigation.compose.rememberNavController()
@@ -206,8 +230,22 @@ fun MainScreen(
     // Determine if we should show bottom nav
     val showBottomBar = currentDestination?.route in bottomNavItems.map { it.route }
 
-    // Notification count
-    var notificationCount by remember { mutableIntStateOf(0) }
+    // Snackbar host state para badge notifications
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Notification count - coletado do repositório
+    val notificationCount by notificationRepository.getUnreadCountFlow()
+        .collectAsStateWithLifecycle(initialValue = 0)
+
+    // Observar novos badges e mostrar snackbar
+    LaunchedEffect(Unit) {
+        badgeAwarder.newBadges.collectLatest { badge ->
+            snackbarHostState.showSnackbar(
+                message = "🏆 Nova conquista: ${badge.badgeId}",
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
 
     // Handle back press
     BackHandler(enabled = true) {
@@ -220,6 +258,7 @@ fun MainScreen(
 
     Scaffold(
         modifier = Modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (showBottomBar) {
                 FutebaBottomBar(

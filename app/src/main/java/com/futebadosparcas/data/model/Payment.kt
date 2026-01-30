@@ -30,6 +30,11 @@ data class Payment(
     @get:PropertyName("schedule_id")
     @set:PropertyName("schedule_id")
     var scheduleId: String? = null,
+
+    // Referência ao grupo para queries (#8 - Validação Firebase)
+    @get:PropertyName("group_id")
+    @set:PropertyName("group_id")
+    var groupId: String? = null,
     val type: PaymentType = PaymentType.DAILY,
     val amount: Double = 0.0,
     val status: PaymentStatus = PaymentStatus.PENDING,
@@ -58,7 +63,12 @@ data class Payment(
     @ServerTimestamp
     @get:PropertyName("created_at")
     @set:PropertyName("created_at")
-    var createdAt: Date? = null
+    var createdAt: Date? = null,
+
+    // Auditoria: última atualização (#8 - Validação Firebase)
+    @get:PropertyName("updated_at")
+    @set:PropertyName("updated_at")
+    var updatedAt: Date? = null
 ) {
     // Bloco de inicializacao para normalizar valores
     init {
@@ -110,6 +120,7 @@ data class Payment(
             PaymentStatus.PENDING -> "#FF9600"
             PaymentStatus.OVERDUE -> "#F44336"
             PaymentStatus.CANCELLED -> "#9E9E9E"
+            PaymentStatus.PARTIAL -> "#FFC107"
         }
     }
 
@@ -119,6 +130,7 @@ data class Payment(
             PaymentStatus.PENDING -> "Pendente"
             PaymentStatus.OVERDUE -> "Atrasado"
             PaymentStatus.CANCELLED -> "Cancelado"
+            PaymentStatus.PARTIAL -> "Parcial"
         }
     }
 }

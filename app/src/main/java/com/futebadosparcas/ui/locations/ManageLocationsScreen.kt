@@ -1,5 +1,7 @@
 package com.futebadosparcas.ui.locations
 
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,18 +19,24 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.ui.components.FieldImage
+import com.futebadosparcas.ui.components.LocationImage
 import com.futebadosparcas.ui.components.dialogs.ConfirmationDialog
 import com.futebadosparcas.ui.components.dialogs.ConfirmationDialogType
 import com.futebadosparcas.ui.components.dialogs.DeleteConfirmationDialog
+import com.futebadosparcas.ui.components.dialogs.LocationExportDialog
 import com.futebadosparcas.ui.components.states.ErrorState
-import com.futebadosparcas.ui.components.states.LoadingState
-import com.futebadosparcas.ui.components.states.LoadingItemType
+import com.futebadosparcas.ui.components.LocationListSkeleton
+import com.futebadosparcas.ui.locations.components.WelcomeLocationEmptyState
 
 /**
  * ManageLocationsScreen - Gerencia locais (campos de futebol)
@@ -92,7 +100,10 @@ fun ManageLocationsScreen(
 
                     Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
                         IconButton(onClick = { expanded = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = null)
+                            Icon(
+                                Icons.Default.MoreVert,
+                                contentDescription = stringResource(R.string.location_menu_more_options_description)
+                            )
                         }
 
                         DropdownMenu(
@@ -127,11 +138,15 @@ fun ManageLocationsScreen(
             )
         },
         floatingActionButton = {
+            val fabDescription = stringResource(R.string.location_fab_add_description)
             FloatingActionButton(
                 onClick = onCreateLocationClick,
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.semantics {
+                    contentDescription = fabDescription
+                }
             ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add))
+                Icon(Icons.Default.Add, contentDescription = fabDescription)
             }
         }
     ) { paddingValues ->
@@ -156,9 +171,10 @@ fun ManageLocationsScreen(
                 // Conteúdo
                 when (uiState) {
                     is ManageLocationsUiState.Loading -> {
-                        LoadingState(
-                            shimmerCount = 6,
-                            itemType = LoadingItemType.LIST_ITEM
+                        LocationListSkeleton(
+                            itemCount = 4,
+                            staggerDelayMs = 100,
+                            showFieldRows = true
                         )
                     }
                     is ManageLocationsUiState.Success -> {
@@ -253,7 +269,7 @@ fun ManageLocationsScreen(
 }
 
 /**
- * Barra de busca
+ * Barra de busca com suporte a acessibilidade
  */
 @Composable
 private fun SearchBar(
@@ -261,19 +277,31 @@ private fun SearchBar(
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val searchDescription = stringResource(R.string.location_search_description)
+    val clearDescription = stringResource(R.string.location_search_clear_description)
+
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = searchDescription
+            },
         placeholder = { Text(stringResource(R.string.search_locations)) },
         leadingIcon = {
-            Icon(Icons.Default.Search, contentDescription = null)
+            Icon(
+                Icons.Default.Search,
+                contentDescription = searchDescription
+            )
         },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Clear, contentDescription = null)
+                    Icon(
+                        Icons.Default.Clear,
+                        contentDescription = clearDescription
+                    )
                 }
             }
         },
@@ -311,7 +339,7 @@ private fun ManageLocationsContent(
 }
 
 /**
- * Card de local com seus campos
+ * Card de local com seus campos e suporte a acessibilidade
  */
 @Composable
 private fun LocationCard(
@@ -320,9 +348,33 @@ private fun LocationCard(
     onDeleteLocation: () -> Unit,
     onDeleteField: (com.futebadosparcas.data.model.Field) -> Unit
 ) {
+    val location = locationWithFields.location
+    val fieldCount = locationWithFields.fields.size
+
+    // Descricao de acessibilidade para o card completo
+    val cardDescription = if (fieldCount > 0) {
+        stringResource(
+            R.string.location_card_description,
+            location.name,
+            location.address.ifEmpty { location.neighborhood },
+            location.rating,
+            fieldCount
+        )
+    } else {
+        stringResource(
+            R.string.location_card_description_no_fields,
+            location.name,
+            location.address.ifEmpty { location.neighborhood },
+            location.rating
+        )
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .semantics {
+                contentDescription = cardDescription
+            }
             .clickable(onClick = onLocationClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -334,12 +386,20 @@ private fun LocationCard(
             modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Header com nome e ações
+            // Header com imagem, nome e ações
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Imagem do local com carregamento progressivo
+                LocationImage(
+                    imageUrl = locationWithFields.location.photoUrl,
+                    contentDescription = "Foto de ${locationWithFields.location.name}",
+                    modifier = Modifier.size(64.dp),
+                    thumbnailSize = 32
+                )
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = locationWithFields.location.name,
@@ -421,7 +481,7 @@ private fun LocationCard(
 }
 
 /**
- * Linha de campo dentro do LocationCard
+ * Linha de campo dentro do LocationCard com imagem lazy loading
  */
 @Composable
 private fun FieldRow(
@@ -436,9 +496,19 @@ private fun FieldRow(
                 shape = RoundedCornerShape(6.dp)
             )
             .padding(8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Imagem do campo com carregamento progressivo
+        FieldImage(
+            imageUrl = field.photoUrl,
+            contentDescription = "Foto de ${field.name}",
+            width = 48.dp,
+            height = 36.dp,
+            thumbnailSize = 24,
+            cornerRadius = 4.dp
+        )
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = field.name,

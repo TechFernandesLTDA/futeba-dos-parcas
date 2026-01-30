@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.LocationAnalytics
+import com.futebadosparcas.util.LocationSources
 import com.futebadosparcas.util.toAndroidLocations
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,14 +17,26 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LocationsMapViewModel @Inject constructor(
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val locationAnalytics: LocationAnalytics
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LocationsMapUiState>(LocationsMapUiState.Loading)
     val uiState: StateFlow<LocationsMapUiState> = _uiState.asStateFlow()
 
+    // Armazena a fonte de navegação para rastreamento
+    private var navigationSource: String = LocationSources.MENU
+
     init {
         loadLocations()
+    }
+
+    /**
+     * Define a fonte de navegação para rastreamento de analytics.
+     * Deve ser chamado antes de loadLocations quando aplicável.
+     */
+    fun setNavigationSource(source: String) {
+        navigationSource = source
     }
 
     fun loadLocations() {
@@ -30,10 +44,16 @@ class LocationsMapViewModel @Inject constructor(
             _uiState.value = LocationsMapUiState.Loading
             locationRepository.getAllLocations().fold(
                 onSuccess = { kmpLocations ->
-                    _uiState.value = if (kmpLocations.isEmpty()) {
+                    val androidLocations = kmpLocations.toAndroidLocations()
+                    _uiState.value = if (androidLocations.isEmpty()) {
                         LocationsMapUiState.Empty
                     } else {
-                        LocationsMapUiState.Success(kmpLocations.toAndroidLocations())
+                        // Rastreia visualização do mapa com contagem de locais
+                        locationAnalytics.trackMapViewed(
+                            locationCount = androidLocations.size,
+                            source = navigationSource
+                        )
+                        LocationsMapUiState.Success(androidLocations)
                     }
                 },
                 onFailure = { error ->

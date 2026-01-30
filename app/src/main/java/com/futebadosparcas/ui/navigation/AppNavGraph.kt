@@ -234,6 +234,9 @@ fun AppNavHost(
                 },
                 onJoinGroupClick = {
                     navController.navigate(Screen.Groups.route)
+                },
+                onSeeAllGamesClick = {
+                    navController.navigate(Screen.Games.route)
                 }
             )
         }
@@ -615,11 +618,15 @@ fun AppNavHost(
         // ==================== PROFILE & SETTINGS ====================
 
         composable(Screen.EditProfile.route) {
-            // Compartilhar o mesmo ViewModel do ProfileScreen para manter estado sincronizado
-            val parentEntry = remember(it) {
-                navController.getBackStackEntry(Screen.Profile.route)
+            // FIX: Verificar se Profile está no back stack antes de tentar compartilhar ViewModel
+            val parentEntry = remember(navController.currentBackStackEntry) {
+                runCatching { navController.getBackStackEntry(Screen.Profile.route) }.getOrNull()
             }
-            val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = hiltViewModel(parentEntry)
+            val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = if (parentEntry != null) {
+                hiltViewModel(parentEntry)
+            } else {
+                hiltViewModel()
+            }
             // EditProfileScreen tem sua própria TopBar no Scaffold
             EditProfileScreen(
                 viewModel = viewModel,
@@ -691,19 +698,15 @@ fun AppNavHost(
         }
 
         composable(Screen.LevelJourney.route) {
-            // Verificar se ProfileScreen está no back stack antes de tentar compartilhar ViewModel
-            // Quando navegando de HomeScreen, Profile não está no back stack
-            val profileInBackStack = remember(it) {
-                navController.currentBackStack.value.any { entry ->
-                    entry.destination.route == Screen.Profile.route
-                }
+            // FIX: Verificar se Profile está no back stack antes de tentar compartilhar ViewModel
+            // O remember com NavBackStackEntry garante reavaliação durante recomposição
+            val parentEntry = remember(navController.currentBackStackEntry) {
+                runCatching { navController.getBackStackEntry(Screen.Profile.route) }.getOrNull()
             }
-
-            val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = if (profileInBackStack) {
-                val parentEntry = navController.getBackStackEntry(Screen.Profile.route)
+            val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = if (parentEntry != null) {
                 hiltViewModel(parentEntry)
             } else {
-                // Criar instância própria quando Profile não está no back stack
+                // Profile não está no back stack - criar instância própria
                 hiltViewModel()
             }
             // LevelJourneyScreen tem sua própria TopBar no Scaffold

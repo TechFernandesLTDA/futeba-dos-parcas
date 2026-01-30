@@ -51,9 +51,10 @@ class ConfirmPresenceUseCase @Inject constructor(
         // 2. Buscar detalhes do jogo
         val gameResult = firebaseDataSource.getGameById(gameId)
         if (gameResult.isFailure) {
-            return Result.failure(gameResult.exceptionOrNull()!!)
+            return Result.failure(gameResult.exceptionOrNull() ?: Exception("Erro ao buscar jogo"))
         }
-        val game = gameResult.getOrNull()!!
+        val game = gameResult.getOrNull()
+            ?: return Result.failure(Exception("Jogo nao encontrado"))
 
         // 3. Validar status do jogo
         if (game.getStatusEnum() !in listOf(GameStatus.SCHEDULED, GameStatus.CONFIRMED)) {
@@ -65,10 +66,10 @@ class ConfirmPresenceUseCase @Inject constructor(
         // 4. Verificar se já confirmou
         val confirmationsResult = firebaseDataSource.getGameConfirmations(gameId)
         if (confirmationsResult.isFailure) {
-            return Result.failure(confirmationsResult.exceptionOrNull()!!)
+            return Result.failure(confirmationsResult.exceptionOrNull() ?: Exception("Erro ao buscar confirmacoes"))
         }
 
-        val existingConfirmations = confirmationsResult.getOrNull()!!
+        val existingConfirmations = confirmationsResult.getOrNull() ?: emptyList()
         val alreadyConfirmed = existingConfirmations.any { it.userId == userId }
 
         if (alreadyConfirmed) {
@@ -158,19 +159,20 @@ class ConfirmPresenceUseCase @Inject constructor(
         // 2. Buscar confirmação existente
         val confirmationsResult = firebaseDataSource.getGameConfirmations(gameId)
         if (confirmationsResult.isFailure) {
-            return Result.failure(confirmationsResult.exceptionOrNull()!!)
+            return Result.failure(confirmationsResult.exceptionOrNull() ?: Exception("Erro ao buscar confirmacoes"))
         }
 
-        val confirmations = confirmationsResult.getOrNull()!!
+        val confirmations = confirmationsResult.getOrNull() ?: emptyList()
         val userConfirmation = confirmations.find { it.userId == userId }
             ?: return Result.failure(IllegalStateException("Confirmação não encontrada"))
 
         // 3. Buscar detalhes do jogo
         val gameResult = firebaseDataSource.getGameById(gameId)
         if (gameResult.isFailure) {
-            return Result.failure(gameResult.exceptionOrNull()!!)
+            return Result.failure(gameResult.exceptionOrNull() ?: Exception("Erro ao buscar jogo"))
         }
-        val game = gameResult.getOrNull()!!
+        val game = gameResult.getOrNull()
+            ?: return Result.failure(Exception("Jogo nao encontrado"))
 
         // 4. Validar se pode cancelar
         if (game.getStatusEnum() !in listOf(GameStatus.SCHEDULED, GameStatus.CONFIRMED)) {

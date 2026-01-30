@@ -62,7 +62,7 @@ fun NotificationPreviewSheet(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(notifications) { notification ->
+                    items(notifications, key = { it.id }) { notification ->
                         NotificationItem(
                             notification = notification,
                             onClick = { onNotificationClick(notification) }

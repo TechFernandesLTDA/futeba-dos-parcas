@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.futebadosparcas.data.local.AppDatabase
 import com.futebadosparcas.data.local.dao.GameDao
+import com.futebadosparcas.data.local.dao.LocationSyncDao
 import com.futebadosparcas.data.local.dao.UserDao
 import dagger.Module
 import dagger.Provides
@@ -24,7 +25,10 @@ object DatabaseModule {
             AppDatabase::class.java,
             "futeba_db"
         )
-            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addMigrations(
+                AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_2_3
+            )
             .fallbackToDestructiveMigration() // Fallback para versoes muito antigas
             .build()
     }
@@ -37,5 +41,10 @@ object DatabaseModule {
     @Provides
     fun provideUserDao(database: AppDatabase): UserDao {
         return database.userDao()
+    }
+
+    @Provides
+    fun provideLocationSyncDao(database: AppDatabase): LocationSyncDao {
+        return database.locationSyncDao()
     }
 }

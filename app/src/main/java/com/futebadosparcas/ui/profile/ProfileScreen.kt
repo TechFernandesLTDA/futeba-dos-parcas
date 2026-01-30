@@ -212,9 +212,11 @@ private fun ProfileContent(
     onAvatarClick: () -> Unit
 ) {
     // Estabilizar valores que não mudam durante scroll - CRÍTICO para scroll suave
-    val stableUser = remember(user.id) { user }
-    val stableBadges = remember(badges.map { it.badgeId }) { badges }
-    val stableStatistics = remember(statistics) { statistics }
+    // Usa user.id como chave única para evitar recálculos durante scroll
+    val stableUser = remember(user.id, user.experiencePoints, user.level) { user }
+    // Usa tamanho da lista + primeiro item como chave (mais leve que map)
+    val stableBadges = remember(badges.size, badges.firstOrNull()?.badgeId) { badges }
+    val stableStatistics = remember(statistics?.totalGames) { statistics }
 
     // Calcular valores estáticos uma vez (SEM animação)
     val xpPercentage = remember(stableUser.id) {
@@ -575,7 +577,8 @@ private fun StaticLevelCard(
 private fun FieldPreferencesCard(preferredTypes: List<FieldType>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)  // Sem sombra para scroll suave
     ) {
         Column(
             modifier = Modifier
@@ -657,7 +660,8 @@ private fun FieldTypeIcon(
 private fun StaticRatingsCard(ratings: List<RatingData>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)  // Sem sombra para scroll suave
     ) {
         Column(
             modifier = Modifier
@@ -756,7 +760,8 @@ private fun StaticRatingItem(
 private fun StatisticsCard(statistics: UserStatistics?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)  // Sem sombra para scroll suave
     ) {
         Column(
             modifier = Modifier
@@ -845,7 +850,8 @@ private fun RowScope.StatItem(label: String, value: String) {
 private fun BadgesSection(badges: List<UserBadge>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)  // Sem sombra para scroll suave
     ) {
         Column(
             modifier = Modifier
@@ -863,7 +869,10 @@ private fun BadgesSection(badges: List<UserBadge>) {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(badges.take(5)) { badge ->
+                items(
+                    items = badges.take(5),
+                    key = { it.id.ifEmpty { "${it.badgeId}_${it.unlockedAt}" } }  // Key única por instância de badge
+                ) { badge ->
                     BadgeItem(badge = badge)
                 }
             }
@@ -1001,7 +1010,8 @@ private fun SettingsSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)  // Sem sombra para scroll suave
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             SettingsMenuItem(
@@ -1040,7 +1050,8 @@ private fun FeedbackSection() {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)  // Sem sombra para scroll suave
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Spacer(modifier = Modifier.height(8.dp))

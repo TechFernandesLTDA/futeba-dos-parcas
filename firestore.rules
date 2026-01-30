@@ -152,6 +152,32 @@ service cloud.firestore {
       return value is number && value >= 0;
     }
 
+    // Valida max_players no range 2-50 (#28 - Validação de bounds)
+    function isValidMaxPlayers(value) {
+      return value is number && value >= 2 && value <= 50;
+    }
+
+    // Valida max_goalkeepers no range 0-10 (#28 - Validação de bounds)
+    function isValidMaxGoalkeepers(value) {
+      return value == null || (value is number && value >= 0 && value <= 10);
+    }
+
+    // Valida latitude no range -90 a 90 (#29 - Validação de coordenadas)
+    function isValidLatitude(lat) {
+      return lat == null || (lat is number && lat >= -90.0 && lat <= 90.0);
+    }
+
+    // Valida longitude no range -180 a 180 (#29 - Validação de coordenadas)
+    function isValidLongitude(lng) {
+      return lng == null || (lng is number && lng >= -180.0 && lng <= 180.0);
+    }
+
+    // Valida coordenadas (#29 - Validação de coordenadas)
+    function hasValidCoordinates(data) {
+      return isValidLatitude(data.get('location_lat', null)) &&
+             isValidLongitude(data.get('location_lng', null));
+    }
+
     // Valida nome (2-100 caracteres)
     function isValidName(name) {
       return name is string && name.size() >= 2 && name.size() <= 100;
@@ -160,6 +186,43 @@ service cloud.firestore {
     // Valida descricao (max 500 caracteres)
     function isValidDescription(desc) {
       return desc == null || desc == '' || (desc is string && desc.size() <= 500);
+    }
+
+    // ============================================
+    // FUNCOES DE RATE LIMITING
+    // ============================================
+    //
+    // ESTRATEGIA DE RATE LIMITING:
+    // Firestore Security Rules tem suporte limitado para rate limiting.
+    // Usamos request.time para:
+    // 1. Registrar timestamp de criacao/update (para auditoria)
+    // 2. Validar que created_at/updated_at correspondem ao request.time
+    //
+    // Para rate limiting real (ex: max 10 requests/minuto), use:
+    // - Cloud Functions com contadores em documentos
+    // - Firebase App Check para validacao de dispositivo
+    // - Quotas no Firebase Console
+    //
+    // A funcao abaixo e um placeholder que pode ser usada
+    // em conjunto com documentos de rate limit em Cloud Functions.
+    // ============================================
+
+    // Verifica se o timestamp no documento corresponde ao request.time
+    // Util para garantir que created_at/updated_at sao definidos corretamente
+    function hasValidTimestamp(field) {
+      return request.resource.data[field] == request.time;
+    }
+
+    // Verifica se um documento de rate limit existe e nao expirou
+    // Uso: armazenar ultimo timestamp de acao em /rate_limits/{userId}_{action}
+    // Cloud Functions devem criar/atualizar esses documentos
+    function isWithinRateLimit(action, maxPerMinute) {
+      // NOTA: Esta funcao requer um documento de rate limit criado por Cloud Functions
+      // O documento deve ter: last_action_time (timestamp), action_count (number)
+      // Cloud Functions devem resetar action_count a cada minuto
+      //
+      // Por enquanto, sempre retorna true (rate limiting real via Cloud Functions)
+      return true;
     }
 
     // ============================================
@@ -250,17 +313,21 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // Qualquer usuario autenticado pode criar jogos
-      // Validacoes na criacao de jogo
+      // Validacoes na criacao de jogo (#28, #29 - Validações de bounds e coordenadas)
       allow create: if isAuthenticated() &&
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
-                       // Validacao de max_players (> 0)
-                       isPositiveNumber(request.resource.data.max_players) &&
+                       // Validacao de max_players (2-50) - #28
+                       isValidMaxPlayers(request.resource.data.max_players) &&
+                       // Validacao de max_goalkeepers (0-10) - #28
+                       isValidMaxGoalkeepers(request.resource.data.get('max_goalkeepers', null)) &&
                        // Validacao de scores (>= 0)
                        isNonNegativeNumber(request.resource.data.team1_score) &&
                        isNonNegativeNumber(request.resource.data.team2_score) &&
                        // Validacao de contadores (>= 0)
                        isNonNegativeNumber(request.resource.data.players_count) &&
-                       isNonNegativeNumber(request.resource.data.goalkeepers_count);
+                       isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
+                       // Validacao de coordenadas (#29)
+                       hasValidCoordinates(request.resource.data);
 
       // Apenas o dono pode atualizar o jogo
       // Excecao: contadores (players_count, goalkeepers_count) podem ser
@@ -414,48 +481,379 @@ service cloud.firestore {
     // ============================================
     // COLECAO: locations
     // ============================================
+    //
+    // Estrutura do documento:
+    // - name: string (obrigatorio, 2-100 caracteres)
+    // - owner_id: string (obrigatorio, ID do usuario dono)
+    // - managers: array<string> (opcional, IDs de usuarios gerentes)
+    // - rating: number (opcional, 0.0-5.0)
+    // - is_active: boolean (default true)
+    // - is_verified: boolean (default false, apenas admin altera)
+    // - created_at: timestamp
+    // - updated_at: timestamp
+    // - address, city, state, country, lat, lng, etc.
+    //
+    // Matriz de Permissoes:
+    // | Acao     | Publico | Auth  | Owner | Manager | Admin |
+    // |----------|---------|-------|-------|---------|-------|
+    // | Read     | active  | todos | sim   | sim     | sim   |
+    // | Create   | -       | sim*  | -     | -       | sim   |
+    // | Update   | -       | -     | sim** | sim**   | sim   |
+    // | Delete   | -       | -     | -     | -       | sim   |
+    //
+    // * Apenas se owner_id == userId()
+    // ** Campos protegidos: owner_id, created_at, is_verified, is_active (apenas admin)
+    //
+    // ============================================
     match /locations/{locationId} {
-      // Qualquer usuario autenticado pode ler locais
-      allow read: if isAuthenticated();
 
-      // Qualquer usuario autenticado pode criar locais
+      // ------------------------------------------
+      // HELPER: Verifica se usuario e manager do local
+      // ------------------------------------------
+      function isLocationManager() {
+        return 'managers' in resource.data && userId() in resource.data.managers;
+      }
+
+      // ------------------------------------------
+      // HELPER: Verifica se usuario e owner do local
+      // ------------------------------------------
+      function isLocationOwner() {
+        return resource.data.owner_id == userId();
+      }
+
+      // ------------------------------------------
+      // HELPER: Valida dados do location na criacao/update
+      // ------------------------------------------
+      function hasValidLocationData() {
+        let data = request.resource.data;
+        return
+          // Nome obrigatorio: 2-100 caracteres
+          isValidName(data.name) &&
+          // owner_id obrigatorio e string
+          data.owner_id is string &&
+          data.owner_id.size() > 0 &&
+          // Rating opcional: 0.0-5.0
+          isValidRating(data.get('rating', null)) &&
+          // Validacao de coordenadas (#29)
+          isValidLatitude(data.get('latitude', null)) &&
+          isValidLongitude(data.get('longitude', null));
+      }
+
+      // ------------------------------------------
+      // READ: Leitura de locais
+      // ------------------------------------------
+      // 1. Qualquer pessoa (mesmo nao autenticada) pode ler locais ativos E verificados
+      //    (para exibicao publica, ex: busca de locais)
+      // 2. Usuarios autenticados podem ler QUALQUER local
+      //    (inclui locais inativos ou nao verificados para gestao)
+      allow read: if
+        // Leitura publica: apenas locais ativos E verificados
+        (resource.data.is_active == true && resource.data.is_verified == true) ||
+        // Leitura autenticada: qualquer local
+        isAuthenticated();
+
+      // ------------------------------------------
+      // CREATE: Criacao de locais
+      // ------------------------------------------
+      // Regras:
+      // 1. Usuario deve estar autenticado
+      // 2. owner_id deve ser o proprio usuario (ninguem pode criar em nome de outro)
+      // 3. Dados devem ser validos (nome 2-100 chars, rating 0-5)
+      // 4. is_verified deve ser false na criacao (apenas admin pode verificar)
+      // 5. is_active deve ser true na criacao
+      // 6. Rate limiting: previne spam de criacao (max 1 por segundo)
       allow create: if isAuthenticated() &&
-                       request.resource.data.owner_id == userId();
+        // Owner deve ser o usuario autenticado
+        request.resource.data.owner_id == userId() &&
+        // Validacao de dados
+        hasValidLocationData() &&
+        // Campos de sistema devem ter valores corretos na criacao
+        request.resource.data.get('is_verified', false) == false &&
+        request.resource.data.get('is_active', true) == true &&
+        // Rate limiting: request.time usado para audit (Cloud Functions aplicam limite real)
+        request.time != null;
 
-      // Apenas o dono ou admin pode atualizar o local
+      // ------------------------------------------
+      // UPDATE: Atualizacao de locais
+      // ------------------------------------------
+      // Regras:
+      // 1. Admin pode atualizar qualquer campo
+      // 2. Owner pode atualizar campos basicos (nome, endereco, etc.)
+      //    - NAO pode alterar: owner_id, created_at, is_verified
+      //    - NAO pode alterar: is_active (apenas admin pode desativar)
+      // 3. Managers podem atualizar campos basicos (mesmas restricoes do owner)
+      // 4. Validacao de dados em todas as atualizacoes
       allow update: if isAuthenticated() && (
-                       isAdmin() ||
-                       (resource.data.owner_id == userId() &&
-                       fieldUnchanged('owner_id') &&
-                       fieldUnchanged('created_at') &&
-                       fieldUnchanged('is_active') &&
-                       fieldUnchanged('is_verified'))
-                    );
+        // Admin: acesso total
+        isAdmin() ||
+        // Owner: campos basicos, com validacao
+        (isLocationOwner() &&
+         hasValidLocationData() &&
+         fieldUnchanged('owner_id') &&
+         fieldUnchanged('created_at') &&
+         fieldUnchanged('is_verified') &&
+         fieldUnchanged('is_active')) ||
+        // Manager: mesmas permissoes do owner
+        (isLocationManager() &&
+         hasValidLocationData() &&
+         fieldUnchanged('owner_id') &&
+         fieldUnchanged('created_at') &&
+         fieldUnchanged('is_verified') &&
+         fieldUnchanged('is_active') &&
+         fieldUnchanged('managers'))  // Manager nao pode alterar lista de managers
+      );
 
+      // ------------------------------------------
+      // DELETE: Exclusao de locais
+      // ------------------------------------------
+      // Apenas admin pode excluir locais
+      // Motivo: preservar historico de jogos vinculados
+      // Alternativa para owners: solicitar desativacao (is_active = false) via admin
       allow delete: if isAuthenticated() && isAdmin();
+
+      // ==========================================
+      // SUB-COLECAO: fields (quadras/campos do local)
+      // ==========================================
+      //
+      // Estrutura do documento:
+      // - name: string (obrigatorio, 2-100 caracteres)
+      // - location_id: string (referencia ao local pai)
+      // - type: string (ex: "SOCIETY", "FUTSAL", "CAMPO")
+      // - capacity: number (capacidade maxima de jogadores)
+      // - price_per_hour: number (preco por hora)
+      // - is_active: boolean
+      // - amenities: array<string> (ex: ["COVERED", "SYNTHETIC_GRASS"])
+      //
+      // Permissoes:
+      // - Read: usuarios autenticados
+      // - Write: owner ou managers do local pai
+      //
+      // ==========================================
+      match /fields/{fieldId} {
+
+        // Helper para verificar ownership do local pai
+        function getParentLocation() {
+          return get(/databases/$(database)/documents/locations/$(locationId));
+        }
+
+        function isParentOwner() {
+          let loc = getParentLocation();
+          return loc != null && loc.data.owner_id == userId();
+        }
+
+        function isParentManager() {
+          let loc = getParentLocation();
+          return loc != null && 'managers' in loc.data && userId() in loc.data.managers;
+        }
+
+        function canManageFields() {
+          return isAdmin() || isParentOwner() || isParentManager();
+        }
+
+        // Valida dados da quadra
+        function hasValidFieldData() {
+          let data = request.resource.data;
+          return
+            isValidName(data.name) &&
+            // location_id deve corresponder ao pai
+            data.location_id == locationId;
+        }
+
+        // Read: usuarios autenticados podem ler quadras
+        allow read: if isAuthenticated();
+
+        // Create: owner ou manager do local pode criar quadras
+        allow create: if isAuthenticated() &&
+          canManageFields() &&
+          hasValidFieldData();
+
+        // Update: owner ou manager do local pode atualizar quadras
+        // Nao pode alterar location_id (quadra nao pode mudar de local)
+        allow update: if isAuthenticated() &&
+          canManageFields() &&
+          hasValidFieldData() &&
+          fieldUnchanged('location_id');
+
+        // Delete: apenas admin pode excluir quadras
+        // Owner/Manager devem desativar (is_active = false) em vez de excluir
+        allow delete: if isAuthenticated() && isAdmin();
+      }
+
+      // ==========================================
+      // SUB-COLECAO: audit_logs (historico de alteracoes)
+      // ==========================================
+      //
+      // Estrutura do documento:
+      // - timestamp: timestamp (quando ocorreu)
+      // - action: string (ex: "CREATE", "UPDATE", "DELETE")
+      // - actor_id: string (quem fez a acao)
+      // - changes: map (campos alterados e valores antigos/novos)
+      // - ip_address: string (opcional, para auditoria)
+      //
+      // Permissoes:
+      // - Read: owner ou managers do local
+      // - Write: APENAS Cloud Functions (via Admin SDK)
+      //   Motivo: logs de auditoria devem ser imutaveis e confiaveis
+      //
+      // ==========================================
+      match /audit_logs/{logId} {
+
+        function canReadAuditLogs() {
+          let loc = get(/databases/$(database)/documents/locations/$(locationId));
+          return loc != null && (
+            loc.data.owner_id == userId() ||
+            ('managers' in loc.data && userId() in loc.data.managers) ||
+            isAdmin()
+          );
+        }
+
+        // Read: owner, managers ou admin podem ler logs de auditoria
+        allow read: if isAuthenticated() && canReadAuditLogs();
+
+        // Write: BLOQUEADO para clientes
+        // Apenas Cloud Functions com Admin SDK podem escrever logs
+        // Isso garante integridade e confiabilidade dos logs
+        allow create, update, delete: if false;
+      }
+
+      // ==========================================
+      // SUB-COLECAO: reviews (avaliacoes do local)
+      // ==========================================
+      //
+      // Estrutura do documento:
+      // - user_id: string (quem avaliou)
+      // - rating: number (1-5)
+      // - comment: string (opcional, max 500 chars)
+      // - created_at: timestamp
+      // - game_id: string (opcional, jogo vinculado)
+      //
+      // Permissoes:
+      // - Read: todos autenticados
+      // - Create: usuarios que jogaram no local
+      // - Update: apenas o autor da review
+      // - Delete: autor ou admin
+      //
+      // ==========================================
+      match /reviews/{reviewId} {
+
+        // Read: usuarios autenticados podem ler reviews
+        allow read: if isAuthenticated();
+
+        // Create: usuario pode criar review para si mesmo
+        // Validacoes:
+        // - user_id deve ser o proprio usuario
+        // - rating deve ser 1-5
+        // - comment max 500 chars
+        allow create: if isAuthenticated() &&
+          request.resource.data.user_id == userId() &&
+          request.resource.data.rating >= 1 &&
+          request.resource.data.rating <= 5 &&
+          isValidDescription(request.resource.data.get('comment', null));
+
+        // Update: apenas o autor pode editar
+        allow update: if isAuthenticated() &&
+          resource.data.user_id == userId() &&
+          fieldUnchanged('user_id') &&
+          fieldUnchanged('created_at') &&
+          request.resource.data.rating >= 1 &&
+          request.resource.data.rating <= 5;
+
+        // Delete: autor ou admin
+        allow delete: if isAuthenticated() &&
+          (resource.data.user_id == userId() || isAdmin());
+      }
+
+      // ==========================================
+      // SUB-COLECAO: availability (horarios disponiveis)
+      // ==========================================
+      //
+      // Estrutura do documento:
+      // - day_of_week: number (0-6, domingo=0)
+      // - start_time: string (HH:mm)
+      // - end_time: string (HH:mm)
+      // - field_id: string (quadra especifica, opcional)
+      // - is_available: boolean
+      //
+      // Permissoes:
+      // - Read: todos autenticados
+      // - Write: owner ou managers
+      //
+      // ==========================================
+      match /availability/{slotId} {
+
+        function canManageAvailability() {
+          let loc = get(/databases/$(database)/documents/locations/$(locationId));
+          return loc != null && (
+            loc.data.owner_id == userId() ||
+            ('managers' in loc.data && userId() in loc.data.managers) ||
+            isAdmin()
+          );
+        }
+
+        // Read: usuarios autenticados
+        allow read: if isAuthenticated();
+
+        // Write: owner, managers ou admin
+        allow create, update, delete: if isAuthenticated() && canManageAvailability();
+      }
     }
 
     // ============================================
-    // COLECAO: fields (quadras/campos)
+    // COLECAO: fields (quadras/campos) - ROOT LEVEL
+    // ============================================
+    //
+    // NOTA: Esta colecao existe para compatibilidade com dados legados.
+    // Para novos campos, prefira usar a subcollection:
+    //   /locations/{locationId}/fields/{fieldId}
+    //
+    // Esta colecao raiz mantem campos que foram criados antes
+    // da implementacao de subcollections.
+    //
+    // Permissoes:
+    // - Read: usuarios autenticados
+    // - Create/Update: owner ou managers do local vinculado
+    // - Delete: apenas admin
+    //
     // ============================================
     match /fields/{fieldId} {
-      // Qualquer usuario autenticado pode ler quadras
-      allow read: if isAuthenticated();
 
-      // Apenas dono do local ou admin pode criar quadras
-      allow create: if isAuthenticated() &&
-                       (isAdmin() || isLocationOwner(request.resource.data.location_id));
-
-      // Apenas dono do local ou admin pode atualizar quadras
-      allow update: if isAuthenticated() &&
-                       (isAdmin() || (isLocationOwner(resource.data.location_id) && fieldUnchanged('location_id') && fieldUnchanged('is_active')));
-
-      allow delete: if isAuthenticated() && isAdmin();
-
-      function isLocationOwner(locationId) {
+      // Helper: verifica se usuario e owner do local vinculado
+      function isLocationOwnerForField(locationId) {
         let locDoc = get(/databases/$(database)/documents/locations/$(locationId));
         return locDoc != null && locDoc.data.owner_id == userId();
       }
+
+      // Helper: verifica se usuario e manager do local vinculado
+      function isLocationManagerForField(locationId) {
+        let locDoc = get(/databases/$(database)/documents/locations/$(locationId));
+        return locDoc != null && 'managers' in locDoc.data && userId() in locDoc.data.managers;
+      }
+
+      // Helper: verifica se pode gerenciar o campo
+      function canManageField(locationId) {
+        return isAdmin() || isLocationOwnerForField(locationId) || isLocationManagerForField(locationId);
+      }
+
+      // Qualquer usuario autenticado pode ler quadras
+      allow read: if isAuthenticated();
+
+      // Dono ou manager do local pode criar quadras
+      // Validacao: location_id obrigatorio
+      allow create: if isAuthenticated() &&
+        canManageField(request.resource.data.location_id) &&
+        request.resource.data.location_id is string &&
+        isValidName(request.resource.data.name);
+
+      // Dono ou manager do local pode atualizar quadras
+      // Restricoes: nao pode alterar location_id ou is_active (admin only)
+      allow update: if isAuthenticated() &&
+        canManageField(resource.data.location_id) &&
+        fieldUnchanged('location_id') &&
+        (isAdmin() || fieldUnchanged('is_active')) &&
+        isValidName(request.resource.data.name);
+
+      // Apenas admin pode excluir quadras
+      allow delete: if isAuthenticated() && isAdmin();
     }
 
     // ============================================

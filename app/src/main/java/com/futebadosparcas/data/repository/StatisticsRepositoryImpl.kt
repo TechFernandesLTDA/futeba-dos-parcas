@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -32,7 +33,8 @@ class StatisticsRepositoryImpl @Inject constructor(
                 Result.success(emptyStats)
             }
         } catch (e: Exception) {
-            Result.success(UserStatistics())
+            // BUG FIX: Retornar failure em vez de success com dados vazios
+            Result.failure(e)
         }
     }
 
@@ -48,7 +50,8 @@ class StatisticsRepositoryImpl @Inject constructor(
                 Result.success(UserStatistics(id = userId))
             }
         } catch (e: Exception) {
-            Result.success(UserStatistics())
+            // BUG FIX: Retornar failure em vez de success com dados vazios
+            Result.failure(e)
         }
     }
 
@@ -106,7 +109,8 @@ class StatisticsRepositoryImpl @Inject constructor(
             val stats = snapshot.documents.mapNotNull { it.toObject(UserStatistics::class.java) }
             Result.success(stats)
         } catch (e: Exception) {
-            Result.success(emptyList())
+            AppLogger.e("StatisticsRepo", "Erro ao buscar top scorers", e)
+            Result.failure(e)
         }
     }
 
@@ -121,7 +125,8 @@ class StatisticsRepositoryImpl @Inject constructor(
             val stats = snapshot.documents.mapNotNull { it.toObject(UserStatistics::class.java) }
             Result.success(stats)
         } catch (e: Exception) {
-            Result.success(emptyList())
+            AppLogger.e("StatisticsRepo", "Erro ao buscar top goalkeepers", e)
+            Result.failure(e)
         }
     }
 
@@ -136,7 +141,8 @@ class StatisticsRepositoryImpl @Inject constructor(
             val stats = snapshot.documents.mapNotNull { it.toObject(UserStatistics::class.java) }
             Result.success(stats)
         } catch (e: Exception) {
-            Result.success(emptyList())
+            AppLogger.e("StatisticsRepo", "Erro ao buscar best players", e)
+            Result.failure(e)
         }
     }
 
