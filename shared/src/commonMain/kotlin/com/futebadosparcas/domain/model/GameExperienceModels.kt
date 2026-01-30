@@ -15,7 +15,10 @@ enum class VoteCategory {
     WORST,      // Bola Murcha
 
     @SerialName("BEST_GOALKEEPER")
-    BEST_GOALKEEPER  // Melhor Goleiro
+    BEST_GOALKEEPER,  // Melhor Goleiro
+
+    @SerialName("CUSTOM")
+    CUSTOM  // Categoria personalizada
 }
 
 /**

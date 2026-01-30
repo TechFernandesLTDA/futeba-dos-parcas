@@ -9,5 +9,6 @@ enum class PaymentStatus {
     PENDING,
     PAID,
     OVERDUE,
-    CANCELLED
+    CANCELLED,
+    PARTIAL  // Pagamento parcial
 }

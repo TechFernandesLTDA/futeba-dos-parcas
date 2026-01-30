@@ -82,4 +82,13 @@ interface GameConfirmationRepository {
         gameId: String,
         status: String
     ): Result<Unit>
+
+    /**
+     * Atualiza o status da confirmacao de um usuario especifico (admin).
+     */
+    suspend fun updateConfirmationStatusForUser(
+        gameId: String,
+        userId: String,
+        status: String
+    ): Result<Unit>
 }

@@ -128,19 +128,29 @@ data class AppNotification(
     @Exclude
     fun getIconResource(): Int {
         return when (getTypeEnum()) {
+            // Grupo
             NotificationType.GROUP_INVITE -> com.futebadosparcas.R.drawable.ic_group
             NotificationType.GROUP_INVITE_ACCEPTED -> com.futebadosparcas.R.drawable.ic_group
             NotificationType.GROUP_INVITE_DECLINED -> com.futebadosparcas.R.drawable.ic_group
+            NotificationType.MEMBER_JOINED -> com.futebadosparcas.R.drawable.ic_group
+            NotificationType.MEMBER_LEFT -> com.futebadosparcas.R.drawable.ic_group
+            // Jogo
+            NotificationType.GAME_INVITE -> com.futebadosparcas.R.drawable.ic_football
             NotificationType.GAME_SUMMON -> com.futebadosparcas.R.drawable.ic_football
             NotificationType.GAME_REMINDER -> com.futebadosparcas.R.drawable.ic_football
             NotificationType.GAME_CANCELLED -> com.futebadosparcas.R.drawable.ic_football
             NotificationType.GAME_CONFIRMED -> com.futebadosparcas.R.drawable.ic_football
+            NotificationType.GAME_UPDATED -> com.futebadosparcas.R.drawable.ic_football
             NotificationType.GAME_VACANCY -> com.futebadosparcas.R.drawable.ic_football
-            NotificationType.MEMBER_JOINED -> com.futebadosparcas.R.drawable.ic_group
-            NotificationType.MEMBER_LEFT -> com.futebadosparcas.R.drawable.ic_group
+            // Financeiro
             NotificationType.CASHBOX_ENTRY -> com.futebadosparcas.R.drawable.ic_notifications
             NotificationType.CASHBOX_EXIT -> com.futebadosparcas.R.drawable.ic_notifications
+            // Gamificacao
             NotificationType.ACHIEVEMENT -> com.futebadosparcas.R.drawable.ic_star
+            NotificationType.LEVEL_UP -> com.futebadosparcas.R.drawable.ic_star
+            NotificationType.MVP_RECEIVED -> com.futebadosparcas.R.drawable.ic_star
+            NotificationType.RANKING_CHANGED -> com.futebadosparcas.R.drawable.ic_star
+            // Sistema
             NotificationType.ADMIN_MESSAGE -> com.futebadosparcas.R.drawable.ic_notifications
             NotificationType.SYSTEM -> com.futebadosparcas.R.drawable.ic_notifications
             NotificationType.GENERAL -> com.futebadosparcas.R.drawable.ic_notifications
@@ -252,19 +262,33 @@ data class AppNotification(
  * Tipos de notificacao.
  */
 enum class NotificationType(val displayName: String) {
+    // Grupo
     GROUP_INVITE("Convite de grupo"),
     GROUP_INVITE_ACCEPTED("Convite aceito"),
     GROUP_INVITE_DECLINED("Convite recusado"),
+    MEMBER_JOINED("Novo membro"),
+    MEMBER_LEFT("Membro saiu"),
+
+    // Jogo
+    GAME_INVITE("Convite de jogo"),
     GAME_SUMMON("Convocacao de jogo"),
     GAME_REMINDER("Lembrete de jogo"),
     GAME_CANCELLED("Jogo cancelado"),
     GAME_CONFIRMED("Jogo confirmado"),
+    GAME_UPDATED("Jogo atualizado"),
     GAME_VACANCY("Vaga disponivel"),
-    MEMBER_JOINED("Novo membro"),
-    MEMBER_LEFT("Membro saiu"),
+
+    // Financeiro
     CASHBOX_ENTRY("Entrada no caixa"),
     CASHBOX_EXIT("Saida do caixa"),
+
+    // Gamificacao
     ACHIEVEMENT("Conquista"),
+    LEVEL_UP("Subiu de nivel"),
+    MVP_RECEIVED("MVP da partida"),
+    RANKING_CHANGED("Mudanca de divisao"),
+
+    // Sistema
     ADMIN_MESSAGE("Mensagem do Admin"),
     SYSTEM("Sistema"),
     GENERAL("Geral");

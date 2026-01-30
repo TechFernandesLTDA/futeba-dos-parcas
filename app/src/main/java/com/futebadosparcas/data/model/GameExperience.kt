@@ -10,7 +10,8 @@ import java.util.Date
 enum class VoteCategory {
     MVP, // Craque da Partida
     WORST, // Bola Murcha
-    BEST_GOALKEEPER // Melhor Goleiro
+    BEST_GOALKEEPER, // Melhor Goleiro
+    CUSTOM // Categoria personalizada
 }
 
 data class MVPVote(

@@ -3312,6 +3312,18 @@ subir no ranking!</string>
     <string name="checkin_success">Check-in realizado!</string>
     <string name="checkin_error_far">Voce esta muito longe do local (%1$dm)</string>
     <string name="checkin_done_at">Check-in as %1$s</string>
+    <string name="checkin_required">Check-in Obrigatório</string>
+    <string name="checkin_radius_info">Você precisa estar a no máximo %1$dm do local</string>
+    <string name="checkin_settings_title">Check-in por GPS</string>
+    <string name="checkin_require_label">Exigir check-in no local</string>
+    <string name="checkin_require_description">Jogadores precisarão estar no local para confirmar presença</string>
+    <string name="checkin_radius_label">Raio máximo permitido</string>
+    <string name="checkin_radius_value">%1$d metros</string>
+    <string name="checkin_radius_tip">Raios menores são mais precisos mas podem falhar em locais com GPS fraco</string>
+    <string name="checkin_enabled_with_radius">Ativado (raio de %1$dm)</string>
+    <string name="checkin_disabled">Desativado</string>
+    <string name="on_the_way_eta">A caminho (%1$d min)</string>
+    <string name="mark_on_the_way">Estou indo!</string>
 
     <!-- Issue #37: Absence History and Reliability -->
     <string name="reliability_title">Confiabilidade</string>
@@ -3354,6 +3366,7 @@ subir no ranking!</string>
     <string name="remove_player">Remover Jogador</string>
     <string name="amount">Valor</string>
     <string name="goalkeeper_short">GOL</string>
+    <string name="guest_label">Convidado</string>
     <string name="waitlist_notified">Notificado</string>
     <string name="waitlist_expired">Expirado</string>
     <string name="waitlist_waiting_message">Aguardando vaga abrir</string>

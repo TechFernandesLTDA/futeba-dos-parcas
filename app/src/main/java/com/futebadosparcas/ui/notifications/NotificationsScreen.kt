@@ -953,19 +953,29 @@ private fun NotificationIcon(
     isAchievement: Boolean = false
 ) {
     val (icon, color) = when (type) {
+        // Grupo
         NotificationType.GROUP_INVITE -> Icons.Default.GroupAdd to MaterialTheme.colorScheme.secondary
         NotificationType.GROUP_INVITE_ACCEPTED -> Icons.Default.GroupAdd to MaterialTheme.colorScheme.primary
         NotificationType.GROUP_INVITE_DECLINED -> Icons.Default.GroupRemove to MaterialTheme.colorScheme.error
+        NotificationType.MEMBER_JOINED -> Icons.Default.PersonAdd to MaterialTheme.colorScheme.secondary
+        NotificationType.MEMBER_LEFT -> Icons.Default.PersonRemove to MaterialTheme.colorScheme.onSurfaceVariant
+        // Jogo
+        NotificationType.GAME_INVITE -> Icons.Default.SportsScore to MaterialTheme.colorScheme.primary
         NotificationType.GAME_SUMMON -> Icons.Default.SportsScore to MaterialTheme.colorScheme.tertiary
         NotificationType.GAME_REMINDER -> Icons.Default.AccessTime to MaterialTheme.colorScheme.tertiary
         NotificationType.GAME_CANCELLED -> Icons.Default.Cancel to MaterialTheme.colorScheme.error
         NotificationType.GAME_CONFIRMED -> Icons.Default.CheckCircle to MaterialTheme.colorScheme.primary
+        NotificationType.GAME_UPDATED -> Icons.Default.Update to MaterialTheme.colorScheme.secondary
         NotificationType.GAME_VACANCY -> Icons.Default.PersonAdd to MaterialTheme.colorScheme.primary
-        NotificationType.MEMBER_JOINED -> Icons.Default.PersonAdd to MaterialTheme.colorScheme.secondary
-        NotificationType.MEMBER_LEFT -> Icons.Default.PersonRemove to MaterialTheme.colorScheme.onSurfaceVariant
+        // Financeiro
         NotificationType.CASHBOX_ENTRY -> Icons.Default.AttachMoney to MaterialTheme.colorScheme.primary
         NotificationType.CASHBOX_EXIT -> Icons.Default.MoneyOff to MaterialTheme.colorScheme.error
+        // Gamificacao
         NotificationType.ACHIEVEMENT -> Icons.Default.Star to GamificationColors.Gold
+        NotificationType.LEVEL_UP -> Icons.Default.TrendingUp to GamificationColors.XpGreen
+        NotificationType.MVP_RECEIVED -> Icons.Default.EmojiEvents to GamificationColors.Gold
+        NotificationType.RANKING_CHANGED -> Icons.Default.Leaderboard to MaterialTheme.colorScheme.tertiary
+        // Sistema
         NotificationType.ADMIN_MESSAGE -> Icons.Default.AdminPanelSettings to MaterialTheme.colorScheme.tertiary
         NotificationType.SYSTEM -> Icons.Default.Info to MaterialTheme.colorScheme.secondary
         NotificationType.GENERAL -> Icons.Default.Notifications to MaterialTheme.colorScheme.onSurfaceVariant

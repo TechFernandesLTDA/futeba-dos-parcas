@@ -72,6 +72,7 @@ fun MVPVoteScreen(
                                     VoteCategory.MVP -> stringResource(R.string.mvp_vote_1_3)
                                     VoteCategory.BEST_GOALKEEPER -> stringResource(R.string.mvp_vote_2_3)
                                     VoteCategory.WORST -> stringResource(R.string.mvp_vote_3_3)
+                                    VoteCategory.CUSTOM -> stringResource(R.string.mvp_vote_title)
                                 }
                             }
                             else -> stringResource(R.string.mvp_vote_title)
@@ -188,6 +189,7 @@ private fun VotingContent(
                         VoteCategory.MVP -> stringResource(R.string.mvp_who_was_star)
                         VoteCategory.BEST_GOALKEEPER -> stringResource(R.string.mvp_best_goalkeeper)
                         VoteCategory.WORST -> stringResource(R.string.mvp_worst_player)
+                        VoteCategory.CUSTOM -> stringResource(R.string.mvp_vote_title)
                     },
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
@@ -201,6 +203,7 @@ private fun VotingContent(
                         VoteCategory.MVP -> stringResource(R.string.mvp_best_player_desc)
                         VoteCategory.BEST_GOALKEEPER -> stringResource(R.string.mvp_goalkeeper_desc)
                         VoteCategory.WORST -> stringResource(R.string.mvp_worst_desc)
+                        VoteCategory.CUSTOM -> stringResource(R.string.mvp_vote_title)
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)

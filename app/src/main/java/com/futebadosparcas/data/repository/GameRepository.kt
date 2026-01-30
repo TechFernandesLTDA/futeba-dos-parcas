@@ -149,4 +149,14 @@ interface GameRepository {
         gameId: String,
         position: String = "FIELD"
     ): Result<GameConfirmation>
+
+    /**
+     * Confirma presenca de um jogador como owner/admin (Issue #40).
+     */
+    suspend fun confirmPlayerAsOwner(gameId: String, userId: String): Result<Unit>
+
+    /**
+     * Atualiza pagamento parcial de um jogador.
+     */
+    suspend fun updatePartialPayment(gameId: String, userId: String, amount: Double): Result<Unit>
 }

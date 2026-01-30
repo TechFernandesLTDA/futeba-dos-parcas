@@ -99,6 +99,7 @@ class MVPVoteViewModel @Inject constructor(
             VoteCategory.MVP -> VoteCategory.BEST_GOALKEEPER
             VoteCategory.BEST_GOALKEEPER -> VoteCategory.WORST
             VoteCategory.WORST -> null
+            VoteCategory.CUSTOM -> null
         }
         
         // Skip BEST_GOALKEEPER if no candidates
