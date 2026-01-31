@@ -47,11 +47,15 @@ data class GameEvent(
  */
 enum class GameEventType {
     GOAL,          // Gol
+    OWN_GOAL,      // Gol contra
     ASSIST,        // Assistencia
     SAVE,          // Defesa de goleiro
     YELLOW_CARD,   // Cartao amarelo
     RED_CARD,      // Cartao vermelho
-    SUBSTITUTION   // Substituicao
+    SUBSTITUTION,  // Substituicao
+    PERIOD_START,  // Inicio de periodo
+    PERIOD_END,    // Fim de periodo
+    GAME_END       // Fim do jogo
 }
 
 /**

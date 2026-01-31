@@ -3376,4 +3376,23 @@ subir no ranking!</string>
     <string name="waitlist_since">Desde %1$s</string>
     <string name="game_full_message">Jogo lotado. Entre na lista de espera para ser notificado quando abrir vaga.</string>
 
+    <!-- Navigation (Adaptive) -->
+    <string name="nav_groups">Grupos</string>
+    <string name="nav_rankings">Ranking</string>
+
+    <!-- Widget -->
+    <string name="next_game">Próximo Jogo</string>
+    <string name="widget_description">Mostra o próximo jogo confirmado</string>
+    <string name="widget_no_upcoming_games">Nenhum jogo confirmado</string>
+    <string name="widget_tap_to_open">Toque para abrir</string>
+    <string name="widget_error_loading">Erro ao carregar</string>
+    <string name="widget_tap_to_retry">Toque para tentar novamente</string>
+    <string name="refresh">Atualizar</string>
+
+    <!-- List-Detail -->
+    <string name="select_game_to_view">Selecione um jogo para ver detalhes</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Configurações</string>
+
 </resources>

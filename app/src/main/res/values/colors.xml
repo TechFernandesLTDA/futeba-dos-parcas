@@ -135,4 +135,11 @@
     <color name="rarity_raro">#2196F3</color>
     <color name="rarity_epico">#9C27B0</color>
     <color name="rarity_lendario">#FFD700</color>
+
+    <!-- Widget Colors -->
+    <color name="widget_background">#FFFFFF</color>
+    <color name="widget_text_primary">#1D1B20</color>
+    <color name="widget_text_secondary">#49454F</color>
+    <color name="widget_accent">#58CC02</color>
+    <color name="widget_divider">#E7E0EC</color>
 </resources>
