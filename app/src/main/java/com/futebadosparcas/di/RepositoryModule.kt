@@ -288,4 +288,15 @@ object RepositoryModule {
     ): com.futebadosparcas.data.repository.GameTeamRepository {
         return com.futebadosparcas.data.repository.GameTeamRepositoryAdapter(kmpRepository)
     }
+
+    /**
+     * Repositorio para gerenciar lista de espera de jogos.
+     */
+    @Provides
+    @Singleton
+    fun provideWaitlistRepository(
+        firestore: FirebaseFirestore
+    ): com.futebadosparcas.data.repository.WaitlistRepository {
+        return com.futebadosparcas.data.repository.WaitlistRepositoryImpl(firestore)
+    }
 }
