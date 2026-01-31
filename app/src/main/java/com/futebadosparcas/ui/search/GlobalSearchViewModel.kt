@@ -3,7 +3,7 @@ package com.futebadosparcas.ui.search
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.domain.repository.GameRepository
+import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.GroupRepository
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.UserRepository
