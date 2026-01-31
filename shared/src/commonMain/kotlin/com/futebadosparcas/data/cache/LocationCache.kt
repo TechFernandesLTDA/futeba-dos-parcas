@@ -193,7 +193,7 @@ class LocationCache(
     /**
      * Retorna estatisticas do cache.
      */
-    suspend fun stats(): CacheStats = mutex.withLock {
+    suspend fun stats(): LocationCacheStats = mutex.withLock {
         // Remover entradas expiradas primeiro
         removeExpiredEntries()
 
@@ -201,7 +201,7 @@ class LocationCache(
         val ownerCount = cache.keys.count { it.startsWith(KEY_PREFIX_OWNER) }
         val searchCount = cache.keys.count { it.startsWith(KEY_PREFIX_SEARCH) }
 
-        CacheStats(
+        LocationCacheStats(
             totalEntries = cache.size,
             maxEntries = maxEntries,
             locationByIdCount = idCount,
@@ -298,7 +298,7 @@ class LocationCache(
 /**
  * Estatisticas do cache de locais.
  */
-data class CacheStats(
+data class LocationCacheStats(
     val totalEntries: Int,
     val maxEntries: Int,
     val locationByIdCount: Int,
