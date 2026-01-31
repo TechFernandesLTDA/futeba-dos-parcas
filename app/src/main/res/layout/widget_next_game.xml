@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_football"
+            android:contentDescription="@string/next_game"
+            tools:ignore="UseAppTint" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="@string/next_game"
+            android:textColor="@color/widget_text_primary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/widget_refresh_button"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/refresh"
+            android:src="@android:drawable/ic_popup_sync"
+            tools:ignore="UseAppTint" />
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="8dp"
+        android:background="@color/widget_divider" />
+
+    <!-- Game Info -->
+    <TextView
+        android:id="@+id/widget_game_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/widget_text_primary"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        tools:text="Pelada dos Parças" />
+
+    <TextView
+        android:id="@+id/widget_game_location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:drawablePadding="4dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/widget_text_secondary"
+        android:textSize="12sp"
+        tools:text="Arena Society Norte" />
+
+    <TextView
+        android:id="@+id/widget_game_datetime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="@color/widget_accent"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:text="Sáb, 15/02 às 20:00" />
+
+    <!-- Spacer -->
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Players count -->
+    <TextView
+        android:id="@+id/widget_game_players"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:drawablePadding="4dp"
+        android:textColor="@color/widget_text_secondary"
+        android:textSize="12sp"
+        tools:text="12/14 confirmados" />
+
+</LinearLayout>

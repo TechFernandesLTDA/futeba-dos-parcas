@@ -6,6 +6,9 @@
     <queries>
         <package android:name="com.google.android.gms" />
         <package android:name="com.android.vending" />
+        <!-- Android Auto e Google Maps para navegação -->
+        <package android:name="com.google.android.projection.gearhead" />
+        <package android:name="com.google.android.apps.maps" />
     </queries>
 
     <!-- Permissões de Rede -->
@@ -103,7 +106,8 @@
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.FutebaDosParcas"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout" />
+            android:configChanges="screenSize|smallestScreenSize|screenLayout"
+            android:supportsPictureInPicture="true" />
 
         <service
             android:name=".service.FcmService"
@@ -159,6 +163,35 @@
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
+
+        <!-- Widget de Próximo Jogo -->
+        <receiver
+            android:name=".widget.NextGameWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.futebadosparcas.widget.ACTION_REFRESH" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_next_game_info" />
+        </receiver>
+
+        <!-- Android Auto Service -->
+        <service
+            android:name=".auto.FutebaAutoService"
+            android:exported="true"
+            android:permission="androidx.car.app.permission.TEMPLATE_RENDERER">
+            <intent-filter>
+                <action android:name="androidx.car.app.CarAppService" />
+                <category android:name="androidx.car.app.category.IOT" />
+            </intent-filter>
+        </service>
+
+        <!-- Metadata para Android Auto -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
 
     </application>
 
