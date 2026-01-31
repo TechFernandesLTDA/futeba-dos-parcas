@@ -3395,4 +3395,66 @@ subir no ranking!</string>
     <!-- Settings -->
     <string name="settings_title">Configurações</string>
 
+    <!-- Connection Quality -->
+    <string name="offline_message">Você está offline</string>
+    <string name="connection_excellent">Excelente</string>
+    <string name="connection_good">Boa</string>
+    <string name="connection_fair">Razoável</string>
+    <string name="connection_poor">Fraca</string>
+    <string name="connection_offline">Offline</string>
+    <string name="mobile_data">Dados móveis</string>
+    <string name="unknown_connection">Desconhecido</string>
+    <string name="no_connection">Sem conexão</string>
+
+    <!-- Public Games Map -->
+    <string name="public_games_map">Mapa de Jogos Públicos</string>
+    <string name="filters">Filtros</string>
+    <string name="my_location">Minha localização</string>
+    <string name="map_placeholder">Mapa não disponível no preview</string>
+    <string name="nearby_games">Jogos próximos</string>
+    <string name="free">Grátis</string>
+    <string name="join">Participar</string>
+    <string name="quick_filters">Filtros rápidos</string>
+    <string name="filter_with_vacancies">Com vagas</string>
+    <string name="filter_free_games">Jogos gratuitos</string>
+
+    <!-- Global Search -->
+    <string name="search_all">Todos</string>
+    <string name="search_games">Jogos</string>
+    <string name="search_players">Jogadores</string>
+    <string name="search_groups">Grupos</string>
+    <string name="search_hint">Buscar jogos, jogadores, grupos...</string>
+    <string name="clear">Limpar</string>
+    <string name="recent_searches">Buscas recentes</string>
+    <string name="clear_all">Limpar tudo</string>
+    <string name="popular_searches">Buscas populares</string>
+    <string name="no_results_for">Nenhum resultado para \"%1$s\"</string>
+    <string name="try_different_search">Tente termos diferentes ou verifique a ortografia</string>
+    <string name="search_error">Erro na busca. Tente novamente.</string>
+
+    <!-- Advanced Search Filters -->
+    <string name="filter_today">Hoje</string>
+    <string name="filter_tomorrow">Amanhã</string>
+    <string name="filter_this_week">Esta semana</string>
+    <string name="filter_this_month">Este mês</string>
+    <string name="filter_custom_date">Data personalizada</string>
+    <string name="filter_morning">Manhã</string>
+    <string name="filter_afternoon">Tarde</string>
+    <string name="filter_evening">Noite</string>
+    <string name="filter_night">Madrugada</string>
+    <string name="filter_society">Society</string>
+    <string name="filter_futsal">Futsal</string>
+    <string name="filter_campo">Campo</string>
+    <string name="filter_areia">Areia</string>
+    <string name="filter_date">Data</string>
+    <string name="filter_time">Horário</string>
+    <string name="filter_game_type">Tipo de jogo</string>
+    <string name="filter_distance">Distância</string>
+    <string name="filter_max_distance_km">Até %1$d km</string>
+    <string name="filter_players">Jogadores</string>
+    <string name="filter_player_range">De %1$d a %2$d jogadores</string>
+    <string name="advanced_filters">Filtros avançados</string>
+    <string name="clear_filters">Limpar</string>
+    <string name="apply_filters">Aplicar</string>
+
 </resources>
