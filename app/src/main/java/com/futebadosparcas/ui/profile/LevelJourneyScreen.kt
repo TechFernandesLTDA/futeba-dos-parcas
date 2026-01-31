@@ -292,7 +292,7 @@ private fun CurrentLevelCard(
 
                 androidx.compose.foundation.Image(
                     painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
-                    contentDescription = "Badge de nível $level",
+                    contentDescription = stringResource(R.string.cd_level_journey_badge, level),
                     modifier = Modifier.size(90.dp)
                 )
             }
@@ -410,7 +410,7 @@ private fun CurrentLevelCard(
                         Spacer(modifier = Modifier.weight(1f))
                         Icon(
                             imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = if (expanded) "Recolher" else "Expandir",
+                            contentDescription = stringResource(if (expanded) R.string.level_journey_collapse_cd else R.string.level_journey_expand_cd),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .size(24.dp)
@@ -461,9 +461,9 @@ private fun CurrentLevelCard(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = if (remaining > 0) {
-                                    "Faltam $remaining XP para $nextLevelName"
+                                    stringResource(R.string.level_journey_xp_remaining_to, remaining, nextLevelName)
                                 } else {
-                                    "Próximo nível: $nextLevelName"
+                                    stringResource(R.string.level_journey_next_level, nextLevelName)
                                 },
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
@@ -596,7 +596,7 @@ private fun LevelJourneyItemContent(
         ) {
             androidx.compose.foundation.Image(
                 painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
-                contentDescription = "Badge de nível $level",
+                contentDescription = stringResource(R.string.cd_level_journey_badge, level),
                 modifier = Modifier
                     .size(if (isCurrent) 52.dp else 44.dp)
                     .alpha(if (isUnlocked) 1f else 0.3f)
@@ -614,7 +614,7 @@ private fun LevelJourneyItemContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Nível atual",
+                        contentDescription = stringResource(R.string.level_journey_current_level_cd),
                         modifier = Modifier.size(14.dp),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
@@ -670,7 +670,7 @@ private fun LevelJourneyItemContent(
                 // Mostrar XP necessário
                 Text(
                     text = if (isUnlocked) {
-                        "Desbloqueado!"
+                        "stringResource(R.string.level_journey_unlocked)"
                     } else {
                         "$xpRequired XP"
                     },
@@ -690,11 +690,11 @@ private fun LevelJourneyItemContent(
                     isUnlocked -> Icons.Default.Check
                     else -> Icons.Default.Lock
                 },
-                contentDescription = when {
-                    isCurrent -> "Nível atual"
-                    isUnlocked -> "Desbloqueado"
-                    else -> "Bloqueado"
-                },
+                contentDescription = stringResource(when {
+                    isCurrent -> R.string.level_journey_current_level_cd
+                    isUnlocked -> R.string.level_journey_unlocked_cd
+                    else -> R.string.level_journey_locked_cd
+                }),
                 modifier = Modifier.size(24.dp),
                 tint = when {
                     isCurrent -> GamificationColors.XpGreen
@@ -746,7 +746,7 @@ private fun XpGuideSection() {
                 )
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (expanded) "Recolher" else "Expandir",
+                    contentDescription = stringResource(if (expanded) R.string.level_journey_collapse_cd else R.string.level_journey_expand_cd),
                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
@@ -760,14 +760,14 @@ private fun XpGuideSection() {
                     modifier = Modifier.padding(top = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    XpSourceItem("Presença em jogo", "+50 XP", "Confirmar presença e comparecer")
-                    XpSourceItem("Gol marcado", "+30 XP", "Cada gol contribui para seu nível")
-                    XpSourceItem("Assistência", "+20 XP", "Passe que resulta em gol")
-                    XpSourceItem("Defesa (GK)", "+15 XP", "Cada defesa do goleiro")
-                    XpSourceItem("Vitória", "+25 XP", "Equipe vencedora")
-                    XpSourceItem("MVP da partida", "+50 XP", "Votado como melhor em campo")
-                    XpSourceItem("Hat-trick", "+100 XP", "3+ gols na mesma partida")
-                    XpSourceItem("Sequência de jogos", "+10 XP", "Bônus por jogos consecutivos")
+                    XpSourceItem(stringResource(R.string.level_journey_xp_presence_title), stringResource(R.string.level_journey_xp_presence_value), stringResource(R.string.level_journey_xp_presence_desc))
+                    XpSourceItem(stringResource(R.string.level_journey_xp_goal_title), stringResource(R.string.level_journey_xp_goal_value), stringResource(R.string.level_journey_xp_goal_desc))
+                    XpSourceItem(stringResource(R.string.level_journey_xp_assist_title), stringResource(R.string.level_journey_xp_assist_value), stringResource(R.string.level_journey_xp_assist_desc))
+                    XpSourceItem(stringResource(R.string.level_journey_xp_save_title), stringResource(R.string.level_journey_xp_save_value), stringResource(R.string.level_journey_xp_save_desc))
+                    XpSourceItem(stringResource(R.string.level_journey_xp_win_title), stringResource(R.string.level_journey_xp_win_value), stringResource(R.string.level_journey_xp_win_desc))
+                    XpSourceItem(stringResource(R.string.level_journey_xp_mvp_title), stringResource(R.string.level_journey_xp_mvp_value), stringResource(R.string.level_journey_xp_mvp_desc))
+                    XpSourceItem(stringResource(R.string.level_journey_xp_hattrick_title), stringResource(R.string.level_journey_xp_hattrick_value), stringResource(R.string.level_journey_xp_hattrick_desc))
+                    XpSourceItem(stringResource(R.string.level_journey_xp_streak_title), stringResource(R.string.level_journey_xp_streak_value), stringResource(R.string.level_journey_xp_streak_desc))
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -776,7 +776,7 @@ private fun XpGuideSection() {
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            text = "💡 Dica: Jogue consistentemente para ganhar bônus de sequência e alcance os níveis mais altos!",
+                            text = stringResource(R.string.level_journey_xp_tip_emoji),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.padding(12.dp)
@@ -872,7 +872,7 @@ private fun LevelBadgeDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Fechar",
+                            contentDescription = stringResource(R.string.level_journey_close_cd),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -900,7 +900,7 @@ private fun LevelBadgeDialog(
 
                     androidx.compose.foundation.Image(
                         painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
-                        contentDescription = "Badge de nível $level",
+                        contentDescription = stringResource(R.string.cd_level_journey_badge, level),
                         modifier = Modifier.size(160.dp)
                     )
                 }
