@@ -84,16 +84,15 @@ firebase deploy --only functions           # Deploy
 
 | Purpose | Location |
 |---------|----------|
-| App entry point | `app/.../ui/main/MainActivityCompose.kt` |
-| Navigation graph | `app/.../ui/navigation/AppNavigation.kt` |
-| Hilt DI setup | `app/.../di/RepositoryModule.kt` |
-| Theme/Colors | `app/.../ui/theme/Theme.kt` |
+| App entry point | `app/src/main/java/com/futebadosparcas/ui/main/MainActivityCompose.kt` |
+| Navigation graph | `app/src/main/java/com/futebadosparcas/ui/navigation/AppNavigation.kt` |
+| Nav destinations | `app/src/main/java/com/futebadosparcas/ui/navigation/NavDestinations.kt` |
+| Hilt DI setup | `app/src/main/java/com/futebadosparcas/di/` (FirebaseModule, RepositoryModule, etc.) |
+| Theme/Colors | `app/src/main/java/com/futebadosparcas/ui/theme/Theme.kt` |
 | Firestore rules | `firestore.rules` |
-| Cloud Functions | `functions/src/index.ts` |
+| Cloud Functions | `functions/src/index.ts` (main entry) |
 | Spec templates | `specs/_TEMPLATE_*.md` |
-| Team Formation | `app/.../ui/games/teamformation/` |
-| Live Game | `app/.../ui/livegame/LiveGameScreen.kt` |
-| MVP Voting | `app/.../ui/game_experience/MVPVoteScreen.kt` |
+| Shared KMP module | `shared/commonMain/` (cross-platform domain logic) |
 
 ---
 
@@ -147,19 +146,24 @@ Data (Repositories → Firebase/Room)
 
 | Code Type | Location |
 |-----------|----------|
-| New Compose screen | `app/ui/<feature>/<Feature>Screen.kt` |
-| ViewModel | `app/ui/<feature>/<Feature>ViewModel.kt` |
+| New Compose screen | `app/src/main/java/com/futebadosparcas/ui/<feature>/<Feature>Screen.kt` |
+| ViewModel | `app/src/main/java/com/futebadosparcas/ui/<feature>/<Feature>ViewModel.kt` |
 | Repository interface | `shared/commonMain/.../repository/` |
-| Repository impl | `app/data/repository/` or `shared/androidMain/` |
-| Business logic | `shared/commonMain/.../domain/` |
+| Repository impl | `app/src/main/java/com/futebadosparcas/data/repository/` |
+| Use Cases | `app/src/main/java/com/futebadosparcas/domain/usecase/<feature>/` |
+| DI modules | `app/src/main/java/com/futebadosparcas/di/` |
+| Reusable UI components | `app/src/main/java/com/futebadosparcas/ui/components/` |
+| Adaptive UI | `app/src/main/java/com/futebadosparcas/ui/adaptive/` |
 | Cloud Function | `functions/src/` |
 
 ### Navigation
 
 The app uses a single-activity architecture with Compose Navigation:
 - `MainActivityCompose.kt` hosts `AppNavigation`
-- Routes defined in `AppNavigation.kt`
-- Each screen receives its ViewModel via Hilt
+- Routes defined as sealed classes in `NavDestinations.kt`
+- Navigation graph implemented in `AppNavigation.kt`
+- Each screen receives its ViewModel via Hilt (`hiltViewModel()`)
+- Use `onNavigate: (destination: String) -> Unit` callbacks for navigation
 
 ---
 
@@ -230,22 +234,31 @@ SCHEDULED → CONFIRMED → LIVE → FINISHED
 | Collection | Purpose |
 |------------|---------|
 | `users` | User profiles and settings |
-| `games` | Game events |
-| `groups` | Soccer groups |
-| `statistics` | Player statistics |
+| `games` | Game events and match data |
+| `groups` | Soccer groups ("peladas") |
+| `statistics` | Player statistics per group |
 | `season_participation` | League rankings per season |
+| `seasons` | Active/past season metadata |
 | `xp_logs` | XP transaction history |
-| `user_badges` | Unlocked badges |
-| `locations` | Soccer field locations |
+| `user_badges` | Unlocked badges per user |
+| `locations` | Soccer field locations with reviews |
+| `cashbox` | Group financial tracking |
+| `activities` | Activity feed entries |
 
 ### Cloud Functions (`functions/src/`)
 
-| File | Functions |
-|------|-----------|
+| File | Purpose |
+|------|---------|
 | `index.ts` | Main entry, onUserCreate, onGameFinished, XP processing |
 | `league.ts` | recalculateLeagueRating, division changes |
 | `notifications.ts` | Push triggers (game created, MVP, level up, badges) |
 | `reminders.ts` | Game reminders, waitlist cleanup |
+| `activities.ts` | Activity feed processing |
+| `badges/badge-helper.ts` | Badge unlock logic |
+| `season/index.ts` | Season management, monthly resets |
+| `user-management.ts` | User profile operations |
+| `seeding.ts` | Data seeding utilities |
+| `validation/index.ts` | Input validation helpers |
 
 ---
 
@@ -280,15 +293,21 @@ For in-depth guidance, see `.claude/rules/`:
 
 ## Scripts
 
-Located in `/scripts/`:
+Located in `/scripts/`. Run with: `node scripts/<script_name>.js`
 
 | Script | Purpose |
 |--------|---------|
-| `validate_all_app_data.js` | Firestore data validation |
-| `cleanup_old_games.js` | Remove old/test games |
-| `check_recent_games.js` | Debug recent game data |
+| `migrate_firestore.js` | Firestore data migration utilities |
+| `reset_firestore.js` | Reset Firestore collections (dev only) |
+| `automate_seasons.js` | Season management automation |
+| `bump-version.js` | Version bumping for releases |
+| `analyze_firebase_data.js` | Analyze Firebase data patterns |
+| `add_id_field_to_users.js` | Migration: add missing user IDs |
 
-Run with: `node scripts/<script_name>.js`
+**Quality audits** (bash scripts):
+- `audit-hardcoded-strings.sh` - Find hardcoded strings in code
+- `audit-content-descriptions.sh` - Check accessibility compliance
+- `audit-unused-resources.sh` - Detect unused Android resources
 
 ---
 
