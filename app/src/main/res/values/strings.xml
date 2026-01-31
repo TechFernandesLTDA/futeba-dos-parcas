@@ -2777,6 +2777,8 @@ subir no ranking!</string>
     <string name="permission_location_description">Encontre jogos e quadras próximas a você</string>
     <string name="permission_camera_title">Câmera</string>
     <string name="permission_camera_description">Tire fotos para seu perfil e compartilhe momentos</string>
+    <string name="permission_microphone_title">Microfone</string>
+    <string name="permission_microphone_description">Grave mensagens de voz para o grupo</string>
     <string name="permission_allow">Permitir</string>
     <string name="permission_onboarding_continue">Continuar</string>
     <string name="permission_onboarding_skip_info">Você pode alterar as permissões a qualquer momento nas configurações do dispositivo</string>

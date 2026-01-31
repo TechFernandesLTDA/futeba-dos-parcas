@@ -152,6 +152,26 @@ class PermissionHelper @Inject constructor(
     }
 
     /**
+     * Check if microphone permission is granted (Voice Messages)
+     */
+    fun hasMicrophonePermission(): Boolean {
+        return hasPermission(Manifest.permission.RECORD_AUDIO)
+    }
+
+    /**
+     * Check if exact alarm permission is granted (Android 12+)
+     * Used for Smart Reminders feature
+     */
+    fun hasExactAlarmPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+            alarmManager.canScheduleExactAlarms()
+        } else {
+            true // Not required before Android 12
+        }
+    }
+
+    /**
      * Get required location permissions based on Android version
      */
     fun getLocationPermissions(): Array<String> {
@@ -199,6 +219,68 @@ class PermissionHelper @Inject constructor(
         }
     }
 
+    /**
+     * Get required microphone permissions (Voice Messages)
+     */
+    fun getMicrophonePermissions(): Array<String> {
+        return arrayOf(Manifest.permission.RECORD_AUDIO)
+    }
+
+    /**
+     * Get required audio permissions based on Android version
+     */
+    fun getAudioPermissions(): Array<String> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(Manifest.permission.READ_MEDIA_AUDIO)
+        } else {
+            emptyArray() // Covered by storage permissions on older versions
+        }
+    }
+
+    /**
+     * Get all permissions required for Sprint 1 & 2 features
+     * Includes: notifications, location, camera, storage, microphone
+     */
+    fun getAllRequiredPermissions(): Array<String> {
+        val permissions = mutableListOf<String>()
+
+        // Notifications (Android 13+)
+        permissions.addAll(getNotificationPermissions())
+
+        // Location
+        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
+        permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION)
+
+        // Camera
+        permissions.add(Manifest.permission.CAMERA)
+
+        // Storage (based on Android version)
+        permissions.addAll(getStoragePermissions())
+
+        // Audio (Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.READ_MEDIA_AUDIO)
+        }
+
+        // Microphone (Voice Messages)
+        permissions.add(Manifest.permission.RECORD_AUDIO)
+
+        return permissions.toTypedArray()
+    }
+
+    /**
+     * Open exact alarm settings (Android 12+)
+     * Required for Smart Reminders feature
+     */
+    fun openExactAlarmSettings(activity: Activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                data = Uri.fromParts("package", context.packageName, null)
+            }
+            activity.startActivity(intent)
+        }
+    }
+
     companion object {
         /**
          * Common permission request codes
@@ -207,6 +289,7 @@ class PermissionHelper @Inject constructor(
         const val REQUEST_CODE_CAMERA = 101
         const val REQUEST_CODE_STORAGE = 102
         const val REQUEST_CODE_NOTIFICATION = 103
+        const val REQUEST_CODE_MICROPHONE = 104
         const val REQUEST_CODE_ALL = 999
     }
 }

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -91,6 +92,13 @@ fun PermissionOnboardingScreen(
         )
     }
 
+    var microphoneGranted by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED
+        )
+    }
+
     // Launchers para cada permissão
     val notificationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -109,6 +117,12 @@ fun PermissionOnboardingScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         cameraGranted = granted
+    }
+
+    val microphoneLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        microphoneGranted = granted
     }
 
     Surface(
@@ -184,6 +198,19 @@ fun PermissionOnboardingScreen(
                 isGranted = cameraGranted,
                 onRequest = {
                     cameraLauncher.launch(Manifest.permission.CAMERA)
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Card de Microfone (Mensagens de Voz)
+            PermissionCard(
+                icon = Icons.Default.Mic,
+                title = stringResource(R.string.permission_microphone_title),
+                description = stringResource(R.string.permission_microphone_description),
+                isGranted = microphoneGranted,
+                onRequest = {
+                    microphoneLauncher.launch(Manifest.permission.RECORD_AUDIO)
                 }
             )
 
