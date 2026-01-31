@@ -5,9 +5,9 @@ import kotlinx.serialization.Serializable
 import kotlin.concurrent.Volatile
 
 /**
- * Definio de um nvel.
+ * Definição de um nível.
  *
- * Inclui uma frase inspiradora para cada nvel.
+ * Inclui uma frase inspiradora para cada nível.
  */
 @Serializable
 data class LevelDefinition(
@@ -18,47 +18,47 @@ data class LevelDefinition(
 )
 
 /**
- * Frases inspiradoras para cada nvel (0-20).
+ * Frases inspiradoras para cada nível (0-20).
  */
 private val levelPhrases = mapOf(
-    0 to "Toda jornada comea com o primeiro passo. Vamos l!",
-    1 to "O comeo da sua lendria caminhada no futebol.",
-    2 to "A prtica leva perfeio. Continue assim!",
-    3 to "Cada jogo uma nova oportunidade de brilhar.",
-    4 to "Sua evoluo est impressionante. Continue firme!",
-    5 to "Voc est se tornando um jogador temido.",
-    6 to "A profissionalizao do seu jogo est completa.",
-    7 to "Seu talento j no pode mais ser ignorado.",
+    0 to "Toda jornada começa com o primeiro passo. Vamos lá!",
+    1 to "O começo da sua lendária caminhada no futebol.",
+    2 to "A prática leva à perfeição. Continue assim!",
+    3 to "Cada jogo é uma nova oportunidade de brilhar.",
+    4 to "Sua evolução está impressionante. Continue firme!",
+    5 to "Você está se tornando um jogador temido.",
+    6 to "A profissionalização do seu jogo está completa.",
+    7 to "Seu talento já não pode mais ser ignorado.",
     8 to "Mestre das peladas, respeitado por todos.",
-    9 to "Seu nome j escrito na histria do grupo.",
-    10 to "A imortalidade no futebol comea aqui.",
-    11 to "Nenhuma barreira pode deter sua evoluo.",
-    12 to "Tcnica apurada, viso de jogo incomparvel.",
-    13 to "O campo o seu palco, e voc brilha.",
+    9 to "Seu nome já está escrito na história do grupo.",
+    10 to "A imortalidade no futebol começa aqui.",
+    11 to "Nenhuma barreira pode deter sua evolução.",
+    12 to "Técnica apurada, visão de jogo incomparável.",
+    13 to "O campo é o seu palco, e você brilha.",
     14 to "Genialidade pura em cada toque na bola.",
-    15 to "Um mago com a bola nos ps.",
+    15 to "Um mago com a bola nos pés.",
     16 to "Lenda viva do futebol amador.",
-    17 to "Rei do drible, mestre da finalizao.",
-    18 to "O melhor do mundo em sua poca.",
-    19 to "Incomparvel, extraordinrio, o puro gnio.",
+    17 to "Rei do drible, mestre da finalização.",
+    18 to "O melhor do mundo em sua época.",
+    19 to "Incomparável, extraordinário, o puro gênio.",
     20 to "O Rei do Futebol. O Deus dos Deuses."
 )
 
 /**
- * Tabela de nveis e XP necessrio.
+ * Tabela de níveis e XP necessário.
  *
  * Progresso:
- * - Nveis 0-10: ~1,5 anos para jogador que joga 1x/sem (~78 jogos)
- * - Nveis 11-20: ~1,5 anos adicionais (mais ~78 jogos)
- * - Nvel 20: Pelé, a maior honra do futebol
+ * - Níveis 0-10: ~1,5 anos para jogador que joga 1x/sem (~78 jogos)
+ * - Níveis 11-20: ~1,5 anos adicionais (mais ~78 jogos)
+ * - Nível 20: Pelé, a maior honra do futebol
  *
- * Suporta configurao dinmica via Firebase Remote Config ou Firestore.
- * Se nenhuma configurao for fornecida, usa valores padro.
+ * Suporta configuração dinâmica via Firebase Remote Config ou Firestore.
+ * Se nenhuma configuração for fornecida, usa valores padrão.
  */
 object LevelTable {
     /**
-     * Nveis padro (fallback se no houver configurao).
-     * Total de 20 nveis, sendo o nvel 20 dedicado a Pelé.
+     * Níveis padrão (fallback se não houver configuração).
+     * Total de 20 níveis, sendo o nível 20 dedicado a Pelé.
      */
     private val defaultLevels = listOf(
         // FASE 1: Iniciante (0-10) - ~1,5 anos jogando 1x/sem
@@ -74,15 +74,15 @@ object LevelTable {
         LevelDefinition(9, 32850L, "Lenda", levelPhrases[9]!!),
         LevelDefinition(10, 52850L, "Imortal", levelPhrases[10]!!),
 
-        // FASE 2: lendas do Futebol (11-20) - ~1,5 anos adicionais
-        // Nveis 11-20 usam o mesmo badge do Imortal (nvel 10)
+        // FASE 2: Lendas do Futebol (11-20) - ~1,5 anos adicionais
+        // Níveis 11-20 usam o mesmo badge do Imortal (nível 10)
         // Nomes em ordem crescente de fama, culminando com Pelé
         LevelDefinition(11, 75000L, "Garrincha", levelPhrases[11]!!),
         LevelDefinition(12, 100000L, "Zico", levelPhrases[12]!!),
         LevelDefinition(13, 128000L, "Cruyff", levelPhrases[13]!!),
         LevelDefinition(14, 160000L, "Beckham", levelPhrases[14]!!),
         LevelDefinition(15, 198000L, "Ronaldinho", levelPhrases[15]!!),
-        LevelDefinition(16, 242000L, "Ronaldo Fenmeno", levelPhrases[16]!!),
+        LevelDefinition(16, 242000L, "Ronaldo Fenômeno", levelPhrases[16]!!),
         LevelDefinition(17, 295000L, "Messi", levelPhrases[17]!!),
         LevelDefinition(18, 360000L, "Cristiano Ronaldo", levelPhrases[18]!!),
         LevelDefinition(19, 440000L, "Diego Maradona", levelPhrases[19]!!),
@@ -90,31 +90,31 @@ object LevelTable {
     )
 
     /**
-     * Nveis configurados (podem ser atualizados em runtime).
+     * Níveis configurados (podem ser atualizados em runtime).
      */
     @Volatile
     private var configuredLevels: List<LevelDefinition>? = null
 
     /**
-     * Retorna a lista de nveis atualmente em uso.
+     * Retorna a lista de níveis atualmente em uso.
      */
     val levels: List<LevelDefinition>
         get() = configuredLevels ?: defaultLevels
 
     /**
-     * Configura os nveis a partir de uma fonte externa.
+     * Configura os níveis a partir de uma fonte externa.
      *
-     * @param newLevels Lista de definies de nvel. Deve estar ordenada por level.
-     * @return true se a configurao foi aplicada com sucesso
+     * @param newLevels Lista de definições de nível. Deve estar ordenada por level.
+     * @return true se a configuração foi aplicada com sucesso
      */
     fun configure(newLevels: List<LevelDefinition>): Boolean {
         if (newLevels.isEmpty()) return false
 
-        // Validar que os nveis esto ordenados corretamente
+        // Validar que os níveis estão ordenados corretamente
         val sorted = newLevels.sortedBy { it.level }
         if (sorted.first().level != 0) return false
 
-        // Validar que XP  crescente
+        // Validar que XP é crescente
         for (i in 1 until sorted.size) {
             if (sorted[i].xpRequired <= sorted[i - 1].xpRequired) {
                 return false
@@ -126,7 +126,7 @@ object LevelTable {
     }
 
     /**
-     * Configura os nveis a partir de uma lista de pares chave-valor.
+     * Configura os níveis a partir de uma lista de pares chave-valor.
      *
      * Formato esperado:
      * ```
@@ -149,28 +149,28 @@ object LevelTable {
     }
 
     /**
-     * Reseta para os valores padro.
+     * Reseta para os valores padrão.
      */
     fun reset() {
         configuredLevels = null
     }
 
     /**
-     * Retorna o nvel para uma quantidade de XP.
+     * Retorna o nível para uma quantidade de XP.
      */
     fun getLevelForXp(xp: Long): Int {
         return levels.lastOrNull { xp >= it.xpRequired }?.level ?: 0
     }
 
     /**
-     * Retorna o XP necessrio para um nvel.
+     * Retorna o XP necessário para um nível.
      */
     fun getXpForLevel(level: Int): Long {
         return levels.find { it.level == level }?.xpRequired ?: 0L
     }
 
     /**
-     * Retorna o XP necessrio para o prximo nvel.
+     * Retorna o XP necessário para o próximo nível.
      */
     fun getXpForNextLevel(currentLevel: Int): Long {
         val nextLevel = levels.find { it.level == currentLevel + 1 }
@@ -178,9 +178,9 @@ object LevelTable {
     }
 
     /**
-     * Retorna o progresso de XP dentro do nvel atual.
+     * Retorna o progresso de XP dentro do nível atual.
      *
-     * @return Pair(XP progresso atual, XP total necessrio para o prximo nvel)
+     * @return Pair(XP progresso atual, XP total necessário para o próximo nível)
      */
     fun getXpProgress(xp: Long): Pair<Long, Long> {
         val currentLevel = getLevelForXp(xp)
@@ -192,53 +192,53 @@ object LevelTable {
     }
 
     /**
-     * Retorna a porcentagem de progresso para o prximo nvel (0-100).
+     * Retorna a porcentagem de progresso para o próximo nível (0-100).
      */
     fun getProgressPercent(xp: Long): Int {
         val (progress, needed) = getXpProgress(xp)
         return if (needed > 0) {
             ((progress.toFloat() / needed) * 100).toInt().coerceIn(0, 100)
         } else {
-            100 // Nvel mximo
+            100 // Nível máximo
         }
     }
 
     /**
-     * Retorna o nome do nvel.
+     * Retorna o nome do nível.
      */
     fun getLevelName(level: Int): String {
         return levels.find { it.level == level }?.name ?: "Desconhecido"
     }
 
     /**
-     * Retorna a frase inspiradora do nvel.
+     * Retorna a frase inspiradora do nível.
      */
     fun getLevelPhrase(level: Int): String {
         return levels.find { it.level == level }?.phrase ?: ""
     }
 
     /**
-     * Retorna a definio completa do nvel.
+     * Retorna a definição completa do nível.
      */
     fun getLevelDefinition(level: Int): LevelDefinition? {
         return levels.find { it.level == level }
     }
 
     /**
-     * Retorna o nvel mximo disponvel.
+     * Retorna o nível máximo disponível.
      */
     val maxLevel: Int
         get() = levels.maxOfOrNull { it.level } ?: 0
 
     /**
-     * Verifica se o jogador atingiu o nvel mximo.
+     * Verifica se o jogador atingiu o nível máximo.
      */
     fun isMaxLevel(level: Int): Boolean {
         return level >= maxLevel
     }
 
     /**
-     * Retorna quantos nveis o jogador subiu entre dois valores de XP.
+     * Retorna quantos níveis o jogador subiu entre dois valores de XP.
      */
     fun getLevelsGained(xpBefore: Long, xpAfter: Long): Int {
         val levelBefore = getLevelForXp(xpBefore)
