@@ -141,12 +141,15 @@ class GroupPhotoDataSource @Inject constructor(
                         close()
                     }
                 }.addOnFailureListener { e ->
-                    trySend(UploadResult.Error("Erro ao obter URL: ${e.message}"))
+                    Log.e(TAG, "Failed to get download URL", e)
+                    val errorMessage = parseStorageError(e)
+                    trySend(UploadResult.Error(errorMessage.first, errorMessage.second))
                     close()
                 }
             }.addOnFailureListener { e ->
                 Log.e(TAG, "Upload failed", e)
-                trySend(UploadResult.Error(e.message ?: "Erro no upload"))
+                val errorMessage = parseStorageError(e)
+                trySend(UploadResult.Error(errorMessage.first, errorMessage.second))
                 close()
             }
 
@@ -216,16 +219,43 @@ class GroupPhotoDataSource @Inject constructor(
 
             } catch (e: Exception) {
                 Log.e(TAG, "Error uploading group photo", e)
-                val isRecoverable = when {
-                    e.message?.contains("network", ignoreCase = true) == true -> true
-                    e.message?.contains("timeout", ignoreCase = true) == true -> true
-                    e.message?.contains("storage", ignoreCase = true) == true -> false
-                    else -> true
+
+                // Mapear erros específicos do Firebase Storage para mensagens amigáveis
+                val errorMessage = e.message ?: ""
+                val (message, isRecoverable) = when {
+                    // Erro de permissão (403) - pode ser rate limiting do App Check
+                    errorMessage.contains("403") ||
+                    errorMessage.contains("permission", ignoreCase = true) ||
+                    errorMessage.contains("not authorized", ignoreCase = true) -> {
+                        "Sem permissão para fazer upload. Tente novamente em alguns minutos." to false
+                    }
+                    // Erro de autenticação
+                    errorMessage.contains("401") ||
+                    errorMessage.contains("unauthenticated", ignoreCase = true) -> {
+                        "Sessão expirada. Faça login novamente." to false
+                    }
+                    // Rate limiting
+                    errorMessage.contains("Too many", ignoreCase = true) ||
+                    errorMessage.contains("rate", ignoreCase = true) -> {
+                        "Muitas tentativas. Aguarde alguns minutos e tente novamente." to true
+                    }
+                    // Erro de rede
+                    errorMessage.contains("network", ignoreCase = true) ||
+                    errorMessage.contains("timeout", ignoreCase = true) ||
+                    errorMessage.contains("connection", ignoreCase = true) -> {
+                        "Erro de conexão. Verifique sua internet e tente novamente." to true
+                    }
+                    // Cota excedida
+                    errorMessage.contains("quota", ignoreCase = true) -> {
+                        "Limite de armazenamento atingido." to false
+                    }
+                    // Erro genérico
+                    else -> {
+                        "Erro ao fazer upload da foto. Tente novamente." to true
+                    }
                 }
-                UploadResult.Error(
-                    message = e.message ?: "Erro ao fazer upload da foto",
-                    isRecoverable = isRecoverable
-                )
+
+                UploadResult.Error(message = message, isRecoverable = isRecoverable)
             }
         }
     }
@@ -447,6 +477,46 @@ class GroupPhotoDataSource @Inject constructor(
         } catch (e: Exception) {
             Log.w(TAG, "Error getting file size", e)
             0
+        }
+    }
+
+    /**
+     * Converte erros do Firebase Storage em mensagens amigáveis.
+     * @return Pair(mensagem, isRecoverable)
+     */
+    private fun parseStorageError(e: Exception): Pair<String, Boolean> {
+        val errorMessage = e.message ?: ""
+        return when {
+            // Erro de permissão (403)
+            errorMessage.contains("403") ||
+            errorMessage.contains("permission", ignoreCase = true) ||
+            errorMessage.contains("not authorized", ignoreCase = true) -> {
+                "Sem permissão para fazer upload. Tente novamente em alguns minutos." to false
+            }
+            // Erro de autenticação
+            errorMessage.contains("401") ||
+            errorMessage.contains("unauthenticated", ignoreCase = true) -> {
+                "Sessão expirada. Faça login novamente." to false
+            }
+            // Rate limiting
+            errorMessage.contains("Too many", ignoreCase = true) ||
+            errorMessage.contains("rate", ignoreCase = true) -> {
+                "Muitas tentativas. Aguarde alguns minutos e tente novamente." to true
+            }
+            // Erro de rede
+            errorMessage.contains("network", ignoreCase = true) ||
+            errorMessage.contains("timeout", ignoreCase = true) ||
+            errorMessage.contains("connection", ignoreCase = true) -> {
+                "Erro de conexão. Verifique sua internet e tente novamente." to true
+            }
+            // Cota excedida
+            errorMessage.contains("quota", ignoreCase = true) -> {
+                "Limite de armazenamento atingido." to false
+            }
+            // Erro genérico
+            else -> {
+                "Erro ao fazer upload da foto. Tente novamente." to true
+            }
         }
     }
 
