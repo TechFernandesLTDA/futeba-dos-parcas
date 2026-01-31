@@ -96,8 +96,13 @@ class GroupRepository @Inject constructor(
 
             // Upload da foto se houver
             var photoUrl: String? = null
-            photoUri?.let { uri ->
-                val uploadResult = uploadGroupPhoto(groupId, uri)
+            if (photoUri != null) {
+                val uploadResult = uploadGroupPhoto(groupId, photoUri)
+                if (uploadResult.isFailure) {
+                    Log.e(TAG, "Falha no upload da foto do grupo", uploadResult.exceptionOrNull())
+                    return Result.failure(uploadResult.exceptionOrNull()
+                        ?: Exception("Erro ao fazer upload da foto"))
+                }
                 photoUrl = uploadResult.getOrNull()
             }
 
@@ -372,8 +377,13 @@ class GroupRepository @Inject constructor(
 
             // Upload da foto se houver
             var photoUrl: String? = null
-            photoUri?.let { uri ->
-                val uploadResult = uploadGroupPhoto(groupId, uri)
+            if (photoUri != null) {
+                val uploadResult = uploadGroupPhoto(groupId, photoUri)
+                if (uploadResult.isFailure) {
+                    Log.e(TAG, "Falha no upload da foto do grupo", uploadResult.exceptionOrNull())
+                    return Result.failure(uploadResult.exceptionOrNull()
+                        ?: Exception("Erro ao fazer upload da foto"))
+                }
                 photoUrl = uploadResult.getOrNull()
             }
 
