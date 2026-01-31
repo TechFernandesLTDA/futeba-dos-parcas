@@ -33,7 +33,14 @@ Antes de modificar qualquer arquivo:
 
 Toda decisão técnica ou de produto relevante vai para `/specs/DECISIONS.md`.
 
-### Regra #5: Estados obrigatórios em toda tela
+### Regra #5: Mobile Definition of Done (DoD)
+
+- [ ] Responsividade: Phone portrait, landscape, tablet
+- [ ] Acessibilidade: contentDescription, touch targets >= 48dp
+- [ ] Performance: No unnecessary recompositions
+- [ ] Offline/Errors: Defined behavior (cache/retry/fallback)
+
+### Regra #6: Estados obrigatórios em toda tela
 
 ```kotlin
 sealed class UiState {
@@ -84,6 +91,9 @@ firebase deploy --only functions           # Deploy
 | Firestore rules | `firestore.rules` |
 | Cloud Functions | `functions/src/index.ts` |
 | Spec templates | `specs/_TEMPLATE_*.md` |
+| Team Formation | `app/.../ui/games/teamformation/` |
+| Live Game | `app/.../ui/livegame/LiveGameScreen.kt` |
+| MVP Voting | `app/.../ui/game_experience/MVPVoteScreen.kt` |
 
 ---
 
@@ -102,6 +112,8 @@ firebase deploy --only functions           # Deploy
 | **Streak** | Consecutive games attended |
 | **Season** | Monthly competition period (resets on 1st) |
 | **Dono do Jogo** | Game organizer/owner |
+| **Bola Murcha** | Worst player (voted post-game, loses XP) |
+| **Convocação** | Game invitation/summons |
 
 ### Tech Stack
 
@@ -114,7 +126,7 @@ firebase deploy --only functions           # Deploy
 
 ### Version
 
-- **Current**: 1.5.0 (versionCode: 16)
+- **Current**: 1.6.0 (versionCode: 17)
 - **SDK**: minSdk 24, targetSdk 35, JDK 17
 
 ---
@@ -199,15 +211,15 @@ The app uses a single-activity architecture with Compose Navigation:
 ## Game States
 
 ```
-CREATED → SCHEDULED → CONFIRMED → LIVE → FINISHED → PROCESSED
+SCHEDULED → CONFIRMED → LIVE → FINISHED
 ```
 
-- `CREATED`: Awaiting confirmations
-- `SCHEDULED`: Minimum players confirmed
-- `CONFIRMED`: Teams generated
-- `LIVE`: Game in progress (events being recorded)
-- `FINISHED`: Score final, awaiting XP processing
-- `PROCESSED`: XP distributed, badges unlocked
+- `SCHEDULED`: Game created, awaiting player confirmations
+- `CONFIRMED`: List closed, teams generated
+- `LIVE`: Game in progress (events: goals, assists, saves, cards)
+- `FINISHED`: Score final, MVP voting complete, XP processed
+
+**Post-game flow**: FINISHED → MVP Vote → XP Processing → Badges/Level-ups
 
 ---
 
@@ -230,10 +242,10 @@ CREATED → SCHEDULED → CONFIRMED → LIVE → FINISHED → PROCESSED
 
 | File | Functions |
 |------|-----------|
-| `index.ts` | Main entry, onUserCreate, onGameFinished |
-| `league.ts` | recalculateLeagueRating |
-| `notifications.ts` | Push notification helpers |
-| `reminders.ts` | Game reminder scheduling |
+| `index.ts` | Main entry, onUserCreate, onGameFinished, XP processing |
+| `league.ts` | recalculateLeagueRating, division changes |
+| `notifications.ts` | Push triggers (game created, MVP, level up, badges) |
+| `reminders.ts` | Game reminders, waitlist cleanup |
 
 ---
 
