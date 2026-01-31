@@ -135,8 +135,8 @@ class MemoryCache @Inject constructor() {
     /**
      * Get cache statistics
      */
-    fun stats(): CacheStats {
-        return CacheStats(
+    fun stats(): MemoryCacheStats {
+        return MemoryCacheStats(
             size = cache.size(),
             maxSize = cache.maxSize(),
             hitCount = cache.hitCount(),
@@ -164,7 +164,7 @@ class MemoryCache @Inject constructor() {
 /**
  * Cache statistics
  */
-data class CacheStats(
+data class MemoryCacheStats(
     val size: Int,
     val maxSize: Int,
     val hitCount: Int,
