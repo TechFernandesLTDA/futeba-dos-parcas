@@ -18,6 +18,44 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// ==================== ViewModel-specific Models ====================
+
+/**
+ * Estado da UI de busca global.
+ */
+sealed class GlobalSearchUiState {
+    data object Idle : GlobalSearchUiState()
+    data object Loading : GlobalSearchUiState()
+    data class Success(val results: List<GlobalSearchResult>) : GlobalSearchUiState()
+    data class Error(val message: String) : GlobalSearchUiState()
+}
+
+/**
+ * Filtro de busca.
+ */
+enum class SearchFilter {
+    ALL, GAMES, GROUPS, PLAYERS, LOCATIONS
+}
+
+/**
+ * Tipo de resultado de busca.
+ */
+enum class SearchResultType {
+    GAME, GROUP, PLAYER, LOCATION
+}
+
+/**
+ * Resultado de busca genérico para o ViewModel.
+ */
+data class GlobalSearchResult(
+    val id: String,
+    val type: SearchResultType,
+    val title: String,
+    val subtitle: String?,
+    val imageUrl: String?,
+    val relevanceScore: Float = 0f
+)
+
 /**
  * ViewModel para a tela de busca global.
  * Realiza busca em jogos, grupos, jogadores e locais.
@@ -43,8 +81,8 @@ class GlobalSearchViewModel @Inject constructor(
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
 
-    private val _selectedFilter = MutableStateFlow(SearchFilter.ALL)
-    val selectedFilter: StateFlow<SearchFilter> = _selectedFilter.asStateFlow()
+    private val _selectedCategory = MutableStateFlow(SearchFilter.ALL)
+    val selectedCategory: StateFlow<SearchFilter> = _selectedCategory.asStateFlow()
 
     private val _recentSearches = MutableStateFlow<List<String>>(emptyList())
     val recentSearches: StateFlow<List<String>> = _recentSearches.asStateFlow()
@@ -86,7 +124,7 @@ class GlobalSearchViewModel @Inject constructor(
      * Seleciona um filtro de busca.
      */
     fun onFilterSelected(filter: SearchFilter) {
-        _selectedFilter.value = filter
+        _selectedCategory.value = filter
         if (_query.value.length >= MIN_QUERY_LENGTH) {
             search()
         }
@@ -120,8 +158,8 @@ class GlobalSearchViewModel @Inject constructor(
         _uiState.value = GlobalSearchUiState.Loading
 
         try {
-            val results = mutableListOf<SearchResult>()
-            val filter = _selectedFilter.value
+            val results = mutableListOf<GlobalSearchResult>()
+            val filter = _selectedCategory.value
             val normalizedQuery = query.lowercase().trim()
 
             // Busca em paralelo baseado no filtro
@@ -140,7 +178,7 @@ class GlobalSearchViewModel @Inject constructor(
                             }
                             synchronized(results) {
                                 results.addAll(filteredGames.map { game ->
-                                    SearchResult(
+                                    GlobalSearchResult(
                                         id = game.id,
                                         type = SearchResultType.GAME,
                                         title = game.ownerName.ifEmpty { "Jogo" },
@@ -169,7 +207,7 @@ class GlobalSearchViewModel @Inject constructor(
                             }
                             synchronized(results) {
                                 results.addAll(filteredGroups.map { userGroup ->
-                                    SearchResult(
+                                    GlobalSearchResult(
                                         id = userGroup.groupId,
                                         type = SearchResultType.GROUP,
                                         title = userGroup.groupName,
@@ -195,7 +233,7 @@ class GlobalSearchViewModel @Inject constructor(
                         usersResult.getOrNull()?.let { users ->
                             synchronized(results) {
                                 results.addAll(users.map { user ->
-                                    SearchResult(
+                                    GlobalSearchResult(
                                         id = user.id,
                                         type = SearchResultType.PLAYER,
                                         title = user.getDisplayName(),
@@ -221,7 +259,7 @@ class GlobalSearchViewModel @Inject constructor(
                         locationsResult.getOrNull()?.let { locations ->
                             synchronized(results) {
                                 results.addAll(locations.map { location ->
-                                    SearchResult(
+                                    GlobalSearchResult(
                                         id = location.id,
                                         type = SearchResultType.LOCATION,
                                         title = location.name,
