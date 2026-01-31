@@ -8,35 +8,55 @@
         <package android:name="com.android.vending" />
     </queries>
 
+    <!-- Permissões de Rede -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Permissões de Localização -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
-    <!-- Permissao de localizacao em background para rastreamento de jogos -->
+    <!-- Permissão de localização em background para rastreamento de jogos -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
+    <!-- Permissões de Notificações e Alarmes -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Permissão para agendar alarmes exatos (Smart Reminders) - Android 12+ -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- Permissão para receber boot completo e reiniciar alarmes -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <!-- Permissões para ler/escrever arquivos de mídia -->
-    <!-- Android 12+ (API 31+) usa READ_MEDIA_* -->
+    <!-- Permissões de Autenticação -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
+    <!-- Permissões de Mídia - Imagens -->
+    <!-- Android 13+ (API 33+) usa READ_MEDIA_* -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Android 13+ para áudio (Voice Messages) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!-- Fallback para Android 12 e inferior -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-
     <!-- WRITE_EXTERNAL_STORAGE para Android 9 e inferior (API <= 28) -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
+    <!-- Permissão de Câmera -->
     <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Permissão de Gravação de Áudio (Voice Messages) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
 
-    <!-- Feature declaration para camera -->
+    <!-- Feature declarations -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
     <uses-feature
         android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <!-- Microfone para mensagens de voz -->
+    <uses-feature
+        android:name="android.hardware.microphone"
         android:required="false" />
 
     <application
@@ -118,6 +138,27 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
+
+        <!-- BroadcastReceiver para lembretes inteligentes -->
+        <receiver
+            android:name=".util.ReminderBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="GAME_REMINDER" />
+                <action android:name="STREAK_CHECK" />
+                <action android:name="WEEKLY_RECAP" />
+            </intent-filter>
+        </receiver>
+
+        <!-- BroadcastReceiver para reiniciar alarmes após boot -->
+        <receiver
+            android:name=".util.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
 
     </application>
 
