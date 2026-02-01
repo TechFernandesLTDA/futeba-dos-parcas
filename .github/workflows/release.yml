@@ -54,13 +54,13 @@ jobs:
           fetch-depth: 0
 
       - name: Download AAB
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: app-release-aab
           path: ./
 
       - name: Download APK
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: app-release-apk
           path: ./
