@@ -1,5 +1,50 @@
 # Changelog
 
+Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
+
+O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
+e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
+
+## [1.7.2] - 2026-02-01
+
+### Removido
+- Permissão ACCESS_BACKGROUND_LOCATION (não utilizada)
+- Documentado roadmap para check-in automático via geofence (v1.8.0+)
+
+### Documentação
+- Adicionado ROADMAP_BACKGROUND_LOCATION.md
+
+## [1.7.0] - 2026-01-31
+
+### Adicionado
+- Infraestrutura completa para iOS com Kotlin Multiplatform
+- Compose Multiplatform para UI compartilhada (Android + iOS)
+- Firebase bridges para iOS (Auth, Firestore, Storage)
+- Serviços nativos iOS (Location, Apple Sign-In, Push)
+- GitHub Actions CI/CD para builds iOS
+- Spec completa de desenvolvimento iOS
+
+### Mudado
+- Estrutura do projeto para suportar KMP
+- Compose Multiplatform plugin adicionado
+
+### Documentação
+- SPEC_IOS_KMP_DEVELOPMENT.md criada
+- NEXT_STEPS_iOS.md para guia de setup Mac
+- iosApp/SETUP.md para configuração Xcode
+
+## [1.6.0] - 2026-01-20
+
+### Adicionado
+- Sistema de busca global com filtros avançados
+- Melhorias visuais em múltiplas telas
+- Responsividade para tablets
+- Suporte multi-plataforma (portrait/landscape)
+
+### Melhorado
+- Performance de listas com paginação
+- UI/UX geral do aplicativo
+
 ## [1.3.0] - 2026-01-06
 
 ### Novidades
@@ -32,3 +77,29 @@
 
 - **Interface**: Melhorias na consistência visual do cabeçalho da "Liga" em relação às outras telas principais.
 - **Gamification**: Ajustes nas regras de segurança do Firestore para permitir que donos de jogos validem partidas e atualizem XP.
+
+## [Unreleased]
+
+### Planejado
+- [ ] Check-in automático via geofence (v1.8.0)
+- [ ] App iOS completo (v2.0.0)
+- [ ] Widgets iOS (v2.1.0)
+- [ ] Modo offline completo
+- [ ] Sincronização multi-device
+
+---
+
+## Tipos de Mudanças
+
+- **Adicionado** - Novas funcionalidades
+- **Mudado** - Mudanças em funcionalidades existentes
+- **Depreciado** - Funcionalidades que serão removidas
+- **Removido** - Funcionalidades removidas
+- **Corrigido** - Correção de bugs
+- **Segurança** - Vulnerabilidades corrigidas
+
+---
+
+[1.7.2]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/compare/v1.7.0...v1.7.2
+[1.7.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/compare/v1.6.0...v1.7.0
+[1.6.0]: https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases/tag/v1.6.0

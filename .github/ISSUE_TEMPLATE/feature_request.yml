@@ -1,56 +1,32 @@
-name: ✨ Feature Request
-description: Sugerir uma nova funcionalidade ou melhoria
+name: 💡 Feature Request
+description: Sugerir uma nova funcionalidade
 title: "[FEATURE] "
-labels: ["enhancement", "needs-discussion"]
-assignees: []
-
+labels: ["enhancement", "needs-triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Obrigado por sugerir uma nova funcionalidade! Preencha os campos abaixo para nos ajudar a entender sua ideia.
+        Obrigado pela sugestão! Descreva a feature desejada.
 
   - type: dropdown
-    id: priority
+    id: platform
     attributes:
-      label: Prioridade
-      description: Qual a importância desta funcionalidade?
+      label: Plataforma
       options:
-        - 🔴 Alta - Feature essencial para o produto
-        - 🟡 Média - Funcionalidade importante mas não crítica
-        - 🟢 Baixa - Nice to have
-    validations:
-      required: true
-
-  - type: dropdown
-    id: category
-    attributes:
-      label: Categoria
-      description: Qual área do app esta feature afeta?
-      options:
-        - ⚽ Jogos
-        - 👥 Grupos
-        - 📊 Estatísticas/Rankings
-        - 🎮 Live Game
-        - 👤 Perfil de Usuário
-        - 💰 Financeiro/Caixa
-        - 🎯 Gamificação
-        - 🔔 Notificações
-        - 🗺️ Localização/Mapas
-        - 🔐 Segurança/Privacidade
-        - 🎨 UI/UX
-        - 🔧 Outro
+        - Android
+        - iOS
+        - Web
+        - Todas
     validations:
       required: true
 
   - type: textarea
     id: problem
     attributes:
-      label: Problema/Necessidade
-      description: Qual problema esta funcionalidade resolve?
+      label: Problema que Resolve
+      description: Qual problema esta feature resolve?
       placeholder: |
-        Ex: Atualmente, é difícil saber quem está devendo dinheiro dos jogos.
-        Não temos uma forma centralizada de visualizar pendências financeiras.
+        Como usuário, eu gostaria de...
     validations:
       required: true
 
@@ -58,81 +34,23 @@ body:
     id: solution
     attributes:
       label: Solução Proposta
-      description: Como você imagina que esta funcionalidade funcionaria?
+      description: Como você imagina a feature?
       placeholder: |
-        Ex: Adicionar uma tela de "Pendências Financeiras" que mostra:
-        - Lista de jogadores com pagamentos pendentes
-        - Valor total devido por jogador
-        - Histórico de pagamentos
-        - Notificação automática de cobrança
+        A feature deveria...
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternativas Consideradas (Opcional)
-      description: Você considerou outras soluções para este problema?
-      placeholder: Ex: Pensei em usar WhatsApp para cobranças, mas seria menos organizado.
-
-  - type: textarea
-    id: mockup
-    attributes:
-      label: Mockups/Referências (Opcional)
-      description: Adicione screenshots, links ou desenhos de como você imagina a funcionalidade
-      placeholder: |
-        Cole links de imagens ou apps similares que tenham funcionalidade parecida.
+      label: Alternativas Consideradas
+      description: Outras soluções que você pensou?
 
   - type: dropdown
-    id: platforms
+    id: priority
     attributes:
-      label: Plataformas
-      description: Onde esta funcionalidade deve estar disponível?
-      multiple: true
+      label: Prioridade
       options:
-        - 📱 Android
-        - 🍎 iOS (futuro)
-        - 🌐 Web (futuro)
-    validations:
-      required: true
-
-  - type: textarea
-    id: user_stories
-    attributes:
-      label: User Stories (Opcional)
-      description: Descreva casos de uso específicos
-      placeholder: |
-        Como [tipo de usuário], eu quero [ação] para [benefício].
-
-        Ex:
-        - Como organizador de jogos, eu quero ver lista de pendências para cobrar jogadores devedores
-        - Como jogador, eu quero ver meu histórico de pagamentos para saber se estou em dia
-
-  - type: dropdown
-    id: complexity
-    attributes:
-      label: Complexidade Estimada (Sua Opinião)
-      description: Quão complexo você acha que seria implementar isso?
-      options:
-        - 🟢 Simples - Pequenas mudanças de UI ou lógica
-        - 🟡 Médio - Requer mudanças em múltiplos módulos
-        - 🔴 Complexo - Requer arquitetura nova ou integrações externas
-        - 🤷 Não sei avaliar
-
-  - type: textarea
-    id: additional
-    attributes:
-      label: Informações Adicionais
-      description: Qualquer outra informação relevante
-
-  - type: checkboxes
-    id: checklist
-    attributes:
-      label: Checklist
-      options:
-        - label: Verifiquei que não existe feature request similar
-          required: true
-        - label: Esta funcionalidade alinha com o propósito do app
-          required: true
-        - label: Estou disposto a contribuir com feedback durante desenvolvimento
-          required: false
+        - 🔥 Must-have
+        - ⭐ Nice to have
+        - 💭 Wishlist

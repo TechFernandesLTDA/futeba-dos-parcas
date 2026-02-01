@@ -1,69 +1,227 @@
 # ⚽ Futeba dos Parças
 
-![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
-![Kotlin](https://img.shields.io/badge/Kotlin-0095D5?style=for-the-badge&logo=kotlin&logoColor=white)
-![Firebase](https://img.shields.io/badge/Firebase-039BE5?style=for-the-badge&logo=Firebase&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
+[![Android CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml)
+[![iOS Build](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml)
+[![Version](https://img.shields.io/badge/version-1.6.0-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas)
 
-**Futeba dos Parças** is the ultimate companion app for amateur soccer groups ("peladas"). Manage matches, track statistics, and climb the rankings in a fully gamified experience.
+> Organize suas peladas com gamificação, estatísticas e diversão! 🎮
+
+[📱 Download na Play Store](https://play.google.com/store/apps/details?id=com.futebadosparcas) | [📖 Documentação](https://futebadosparcas.web.app) | [🐛 Report Bug](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=bug_report.yml)
 
 ---
 
-## 🚀 Features
+## 🌟 Features
 
-- **🏆 Gamification**: Earn XP, level up, and unlock achievements based on real-world performance.
-- **📊 Advanced Stats**: Track goals, assists, wins, and clean sheets.
-- **⚖️ Team Balancing**: Smart algorithms to create fair and competitive teams.
-- **📍 Location Management**: Integration with maps to find and save court locations.
-- **🔔 Live Notifications**: Push notifications for game invites and reminders.
+### ⚽ Gestão de Jogos
+- ✅ Criar e gerenciar partidas
+- ✅ Sistema de confirmação de presença
+- ✅ Check-in com validação GPS
+- ✅ Formação automática de times equilibrados
+- ✅ Registro de eventos ao vivo (gols, assistências, cartões)
+
+### 🎮 Gamificação
+- 🏆 Sistema de XP e níveis
+- 🥇 Rankings por temporada (mensal)
+- 🎖️ Badges e conquistas desbloqueáveis
+- 🔥 Streaks de participação
+- 👑 Votação de MVP e Bola Murcha
+
+### 📊 Estatísticas
+- 📈 Histórico completo de jogos
+- ⚽ Gols, assistências, defesas
+- 📉 Win rate e performance
+- 🏅 Divisões (Bronze, Prata, Ouro, Diamante)
+- 📱 Widgets Android para próximos jogos
+
+### 🚀 Moderno & Multiplataforma
+- 🎨 Material Design 3
+- 🌓 Dark Mode
+- 📱 Jetpack Compose (Android)
+- 🍎 SwiftUI + Compose Multiplatform (iOS - em desenvolvimento)
+- 🔄 Kotlin Multiplatform (~95% código compartilhado)
+- ⚡ Performance otimizada com Baseline Profiles
+
+---
+
+## 📱 Screenshots
+
+| Home | Game Detail | Live Game | Profile |
+|------|-------------|-----------|---------|
+| ![Home](screenshots/home.png) | ![Game](screenshots/game.png) | ![Live](screenshots/live.png) | ![Profile](screenshots/profile.png) |
+
+---
+
+## 🛠️ Tech Stack
+
+### Android
+- **Language:** Kotlin 2.0+
+- **UI:** Jetpack Compose + Material 3
+- **Architecture:** MVVM + Clean Architecture
+- **DI:** Hilt
+- **Async:** Coroutines + Flow
+- **Local DB:** Room + DataStore
+- **Network:** Ktor Client
+- **Image Loading:** Coil
+
+### iOS (Em Desenvolvimento)
+- **Language:** Kotlin (shared) + Swift
+- **UI:** Compose Multiplatform
+- **Architecture:** KMP (Kotlin Multiplatform)
+- **Code Reuse:** ~95%
+
+### Backend
+- **Firebase Auth** - Autenticação
+- **Cloud Firestore** - Database NoSQL
+- **Cloud Storage** - Imagens e arquivos
+- **Cloud Functions** - Lógica server-side (TypeScript)
+- **FCM** - Push Notifications
+- **Crashlytics** - Crash reporting
+
+---
+
+## 🚀 Quick Start
+
+### Pré-requisitos
+
+- JDK 17+
+- Android Studio Ladybug (2024.2.1+)
+- Android SDK 35
+- Firebase CLI (para Functions)
+
+### Clone & Build
+
+```bash
+# Clone o repositório
+git clone https://github.com/TechFernandesLTDA/futeba-dos-parcas.git
+cd futeba-dos-parcas
+
+# Build Android
+./gradlew :app:assembleDebug
+
+# Instalar no device
+./gradlew :app:installDebug
+
+# Rodar testes
+./gradlew :app:testDebugUnitTest
+```
+
+### Configuração Firebase
+
+1. Criar projeto no [Firebase Console](https://console.firebase.google.com)
+2. Baixar `google-services.json` → `app/`
+3. Configurar `local.properties`:
+
+```properties
+MAPS_API_KEY=sua_chave_google_maps
+```
+
+4. Instalar Functions:
+
+```bash
+cd functions
+npm install
+firebase emulators:start
+```
+
+---
+
+## 📂 Estrutura do Projeto
+
+```
+futeba-dos-parcas/
+├── app/                    # Android app (Jetpack Compose)
+├── shared/                 # Kotlin Multiplatform (business logic)
+├── composeApp/             # Compose Multiplatform UI (Android + iOS)
+├── iosApp/                 # iOS app (Swift + KMP)
+├── functions/              # Cloud Functions (TypeScript)
+├── firestore.rules         # Firestore security rules
+├── specs/                  # Specs técnicas (SDD)
+└── .github/workflows/      # CI/CD pipelines
+```
+
+---
 
 ## 📖 Documentation
 
 For developers and contributors, please refer to our detailed documentation:
 
-- **[Tech Stack & Context](docs/TECH_STACK_AND_CONTEXT.md)**: Architecture, libraries, and LLM-friendly navigation guide.
-- **[Business Rules](docs/BUSINESS_RULES.md)**: Deep dive into the XP system, Match Lifecycle, and Ranking logic.
+- **[CLAUDE.md](CLAUDE.md)** - Development guidelines and patterns for Claude Code
+- **[Tech Stack & Context](docs/TECH_STACK_AND_CONTEXT.md)** - Architecture, libraries, and navigation guide
+- **[Business Rules](docs/BUSINESS_RULES.md)** - XP system, Match Lifecycle, and Ranking logic
+- **[Setup Guide](SETUP_GUIDE.md)** - Complete development environment setup
+- **[Specs](specs/)** - Technical specifications for all features
 
-## 🛠 Getting Started
+---
 
-### Quick Start (5 minutes)
+## 🤝 Contribuindo
 
-**Requirements:** Android Studio, JDK 17, `google-services.json`
+Contribuições são **muito bem-vindas**!
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-username/futeba-dos-parcas.git
-   cd futeba-dos-parcas
-   ```
+1. Veja o guia em [CONTRIBUTING.md](CONTRIBUTING.md)
+2. Leia as [specs](specs/) antes de implementar features
+3. Siga [Conventional Commits](https://www.conventionalcommits.org/)
+4. Abra um PR com descrição clara
 
-2. **Configure Firebase:**
-   - Download `google-services.json` from [Firebase Console](https://console.firebase.google.com)
-   - Place it in: `app/google-services.json`
+### Spec-Driven Development (SDD)
 
-3. **Run the app:**
-   ```bash
-   # Android Studio → Run → Run 'app' (Shift+F10)
-   # Or terminal:
-   ./gradlew installDebug
-   ```
+Este projeto segue **Spec-Driven Development**. Toda feature ou bugfix DEVE ter uma spec aprovada em `/specs/` antes da implementação. Veja [CLAUDE.md](CLAUDE.md) para detalhes.
 
-4. **For full setup with backend:**
-   - Follow [SETUP_GUIDE.md](./SETUP_GUIDE.md) for Android + Backend + Database setup
-   - Takes ~30 minutes for complete development environment
+---
 
 ## 🔐 Environment & Access
 
-This repository is configured with the necessary environment variables and access keys for development in the current environment.
-- **Firebase Access**: Authenticated via Service Account (`futebadosparcas-firebase-adminsdk-fbsvc-afdd15710a.json` located in project root).
-- **Scripts**: Node.js scripts in `/scripts` are configured to use this service account for maintenance tasks.
+This repository is configured with necessary environment variables and access keys for development:
+- **Firebase Access**: Authenticated via Service Account (located in project root)
+- **Scripts**: Node.js scripts in `/scripts` configured for maintenance tasks
+- **Secrets**: Never commit `google-services.json`, `.env`, or `*.keystore` files
 
-## 🤝 Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to submit Pull Requests.
+---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Este projeto está sob a licença MIT - veja [LICENSE](LICENSE) para detalhes.
 
 ---
-*Built with ❤️ for broken ankles and spectacular goals.*
+
+## 🔗 Links
+
+- 🌐 [Website](https://futebadosparcas.web.app)
+- 📱 [Google Play Store](https://play.google.com/store/apps/details?id=com.futebadosparcas)
+- 📧 [Contato](mailto:techfernandesltda@gmail.com)
+- 🐛 [Reportar Bug](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=bug_report.yml)
+- 💡 [Solicitar Feature](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=feature_request.yml)
+
+---
+
+## 📊 Status do Projeto
+
+- ✅ **Android:** Produção (v1.6.0 na Play Store)
+- 🚧 **iOS:** Em desenvolvimento (FASE 1 completa)
+- ✅ **Backend:** Firebase Cloud Functions v2
+- ✅ **CI/CD:** GitHub Actions
+
+---
+
+## 🎮 Sistema de XP
+
+| Action | XP |
+|--------|-----|
+| Participation | +10 |
+| Goal | +5 |
+| Assist | +3 |
+| Save (GK) | +2 |
+| MVP | +50 |
+| Win | +20 |
+| Streak 3+ | +10 |
+| Streak 7+ | +20 |
+| Streak 10+ | +30 |
+
+**Season Reset**: Mensal no dia 1. XP global nunca reseta.
+
+---
+
+**Feito com ❤️ pela Tech Fernandes Ltda**
+
+*Built for broken ankles and spectacular goals.*
