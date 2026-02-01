@@ -72,7 +72,7 @@ fun AboutScreen(
                 onContactClick = {
                     // Abrir email
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = Uri.parse("mailto:suporte@futebadosparcas.com")
+                        data = Uri.parse("mailto:techfernandesltda@gmail.com")
                         putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.about_feedback_subject))
                     }
                     context.startActivity(intent)
@@ -80,14 +80,14 @@ fun AboutScreen(
                 onPrivacyClick = {
                     // Link para politica de privacidade
                     val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("https://futebadosparcas.com/privacidade")
+                        data = Uri.parse("https://futebadosparcas.web.app/privacy_policy.html")
                     }
                     context.startActivity(intent)
                 },
                 onTermsClick = {
                     // Link para termos de uso
                     val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("https://futebadosparcas.com/termos")
+                        data = Uri.parse("https://futebadosparcas.web.app/terms_of_service.html")
                     }
                     context.startActivity(intent)
                 }
