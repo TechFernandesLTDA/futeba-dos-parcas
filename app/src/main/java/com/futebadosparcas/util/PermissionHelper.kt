@@ -172,21 +172,18 @@ class PermissionHelper @Inject constructor(
     }
 
     /**
-     * Get required location permissions based on Android version
+     * Get required location permissions based on Android version.
+     *
+     * Nota: ACCESS_BACKGROUND_LOCATION removida em v1.7.0.
+     * Check-in atual é manual (foreground). Feature de check-in
+     * automático via geofence planejada para versão futura.
+     * Ver: specs/ROADMAP_BACKGROUND_LOCATION.md
      */
     fun getLocationPermissions(): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            )
-        } else {
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        }
+        return arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
     }
 
     /**
