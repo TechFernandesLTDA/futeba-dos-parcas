@@ -18,8 +18,9 @@
     <!-- Permissões de Localização -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <!-- Permissão de localização em background para rastreamento de jogos -->
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <!-- TODO: ACCESS_BACKGROUND_LOCATION removida temporariamente (v1.7.0)
+         Será reimplementada para check-in automático via geofence.
+         Ver: specs/ROADMAP_BACKGROUND_LOCATION.md -->
 
     <!-- Permissões de Notificações e Alarmes -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
