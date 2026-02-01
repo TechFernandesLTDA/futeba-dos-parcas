@@ -32,7 +32,7 @@ jobs:
         run: ./gradlew :shared:linkDebugFrameworkIosArm64
 
       - name: Upload framework artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: shared-frameworks
           path: |
@@ -77,7 +77,7 @@ jobs:
 
       - name: Upload build logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-logs
           path: |
