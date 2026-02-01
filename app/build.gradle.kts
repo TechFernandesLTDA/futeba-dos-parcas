@@ -283,7 +283,7 @@ dependencies {
     testImplementation("androidx.paging:paging-common:$pagingVersion")
 
     // WorkManager (for background cache cleanup)
-    implementation("androidx.work:work-runtime-ktx:2.9.1")
+    implementation("androidx.work:work-runtime-ktx:2.11.1")
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
 
