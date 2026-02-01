@@ -92,7 +92,9 @@ firebase deploy --only functions           # Deploy
 | Firestore rules | `firestore.rules` |
 | Cloud Functions | `functions/src/index.ts` (main entry) |
 | Spec templates | `specs/_TEMPLATE_*.md` |
+| Modern UI components | `app/.../ui/components/modern/` (ShimmerLoading, ErrorState, etc.) |
 | Shared KMP module | `shared/commonMain/` (cross-platform domain logic) |
+| Project context (LLM) | `.claude/PROJECT_CONTEXT.md` (contexto consolidado para AIs) |
 
 ---
 
@@ -125,8 +127,11 @@ firebase deploy --only functions           # Deploy
 
 ### Version
 
-- **Current**: 1.7.2 (versionCode: 20)
+- **Current**: 1.8.0 (versionCode: 21)
 - **SDK**: minSdk 24, targetSdk 35, JDK 17
+- **Kotlin**: 2.2.10
+- **Compose BOM**: 2025.06.00
+- **Material 3**: Latest (adaptive navigation, pull-to-refresh)
 
 ---
 

@@ -2,7 +2,7 @@
 
 [![Android CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml)
 [![iOS Build](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml)
-[![Version](https://img.shields.io/badge/version-1.6.0-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
+[![Version](https://img.shields.io/badge/version-1.8.0-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas)
 
@@ -197,7 +197,7 @@ Este projeto está sob a licença MIT - veja [LICENSE](LICENSE) para detalhes.
 
 ## 📊 Status do Projeto
 
-- ✅ **Android:** Produção (v1.6.0 na Play Store)
+- ✅ **Android:** Produção (v1.8.0 na Play Store)
 - 🚧 **iOS:** Em desenvolvimento (FASE 1 completa)
 - ✅ **Backend:** Firebase Cloud Functions v2
 - ✅ **CI/CD:** GitHub Actions

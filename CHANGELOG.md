@@ -80,7 +80,30 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Adicionado
+- Componentes modernos UI/UX (Material 3):
+  - `ShimmerLoading.kt` - Skeleton loading states com animação shimmer
+  - `ErrorState.kt` - Estados de erro com retry e ícones ilustrativos (5 tipos)
+  - `EmptyState.kt` - Estados vazios com CTAs (7 variantes pré-configuradas)
+  - `LoadingButton.kt` - Botões com loading interno (6 variantes)
+  - `AdaptiveNavigation.kt` - Navegação responsiva (bottom bar/rail/drawer)
+  - `PullToRefreshContainer.kt` - Pull-to-refresh moderno Material 3
+- Spec completa com 30 melhorias de UI/UX (`specs/UI_UX_IMPROVEMENTS_30.md`)
+- Documentação consolidada para LLMs (`.claude/PROJECT_CONTEXT.md`)
+- `.gitattributes` para padronização de line endings cross-platform
+
+### Melhorado
+- README.md atualizado para versão 1.8.0
+- Documentação otimizada para Claude Code e outros LLMs
+
+### Removido
+- Arquivos temporários obsoletos (`build_errors*.txt`, `nul`)
+
 ### Planejado
+- [ ] Aplicar componentes modernos em telas existentes (Fase 2)
+- [ ] Animações de transição e micro-interações (Fase 3)
+- [ ] Gráficos modernos com Vico Charts (Fase 3)
+- [ ] Onboarding interativo (Fase 4)
 - [ ] Check-in automático via geofence (v1.8.0)
 - [ ] App iOS completo (v2.0.0)
 - [ ] Widgets iOS (v2.1.0)
