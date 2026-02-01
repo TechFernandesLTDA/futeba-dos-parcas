@@ -1081,7 +1081,7 @@ private fun FeedbackSection() {
 
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
                         data = Uri.parse("mailto:")
-                        putExtra(Intent.EXTRA_EMAIL, arrayOf("suporte@futebadosparcas.com"))
+                        putExtra(Intent.EXTRA_EMAIL, arrayOf("techfernandesltda@gmail.com"))
                         putExtra(Intent.EXTRA_SUBJECT, subject)
                         putExtra(Intent.EXTRA_TEXT, body)
                     }
