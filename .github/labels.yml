@@ -1,0 +1,110 @@
+# Type labels
+- name: "type: bug"
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: "type: feature"
+  color: "0e8a16"
+  description: "New feature or request"
+
+- name: "type: enhancement"
+  color: "a2eeef"
+  description: "Improvement to existing feature"
+
+- name: "type: docs"
+  color: "0075ca"
+  description: "Documentation only changes"
+
+- name: "type: refactor"
+  color: "fbca04"
+  description: "Code refactoring"
+
+- name: "type: test"
+  color: "c5def5"
+  description: "Adding or updating tests"
+
+- name: "type: chore"
+  color: "fef2c0"
+  description: "Build, CI, or tooling changes"
+
+# Priority labels
+- name: "priority: critical"
+  color: "b60205"
+  description: "Urgent - needs immediate attention"
+
+- name: "priority: high"
+  color: "d93f0b"
+  description: "High priority"
+
+- name: "priority: medium"
+  color: "fbca04"
+  description: "Medium priority"
+
+- name: "priority: low"
+  color: "0e8a16"
+  description: "Low priority"
+
+# Status labels
+- name: "status: needs-triage"
+  color: "ededed"
+  description: "Needs initial review and categorization"
+
+- name: "status: in-progress"
+  color: "0052cc"
+  description: "Currently being worked on"
+
+- name: "status: blocked"
+  color: "d73a4a"
+  description: "Blocked by another issue or external factor"
+
+- name: "status: needs-review"
+  color: "fbca04"
+  description: "Ready for review"
+
+- name: "status: wont-fix"
+  color: "ffffff"
+  description: "Will not be fixed"
+
+- name: "status: duplicate"
+  color: "cfd3d7"
+  description: "Duplicate of another issue"
+
+# Platform labels
+- name: "platform: android"
+  color: "3ddc84"
+  description: "Android specific"
+
+- name: "platform: ios"
+  color: "000000"
+  description: "iOS specific"
+
+- name: "platform: web"
+  color: "f1e05a"
+  description: "Web/Firebase specific"
+
+- name: "platform: backend"
+  color: "ff6b6b"
+  description: "Backend/Cloud Functions"
+
+- name: "platform: shared"
+  color: "b794f4"
+  description: "Shared KMP code"
+
+# Good labels for contributors
+- name: "good first issue"
+  color: "7057ff"
+  description: "Good for newcomers"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention is needed"
+
+# Dependencies
+- name: "dependencies"
+  color: "0366d6"
+  description: "Dependency updates"
+
+# CI/CD
+- name: "ci/cd"
+  color: "1d76db"
+  description: "Continuous integration/deployment"
