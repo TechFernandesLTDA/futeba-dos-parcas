@@ -125,7 +125,7 @@ firebase deploy --only functions           # Deploy
 
 ### Version
 
-- **Current**: 1.6.0 (versionCode: 17)
+- **Current**: 1.7.2 (versionCode: 20)
 - **SDK**: minSdk 24, targetSdk 35, JDK 17
 
 ---
@@ -308,6 +308,29 @@ Located in `/scripts/`. Run with: `node scripts/<script_name>.js`
 - `audit-hardcoded-strings.sh` - Find hardcoded strings in code
 - `audit-content-descriptions.sh` - Check accessibility compliance
 - `audit-unused-resources.sh` - Detect unused Android resources
+
+---
+
+## Firebase Hosting
+
+Public pages deployed at `https://futebadosparcas.web.app/`:
+
+| Page | Purpose |
+|------|---------|
+| `index.html` | Landing page with links |
+| `privacy_policy.html` | Privacy Policy |
+| `terms_of_service.html` | Terms of Service |
+| `delete_account.html` | Account deletion instructions |
+| `child_safety.html` | Child safety standards |
+
+Deploy: `firebase deploy --only hosting`
+
+---
+
+## Permissions Notes
+
+- **Location**: Uses `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION` for check-in and nearby fields
+- **Background Location**: Removed in v1.7.2 (not implemented). Future feature planned in `specs/ROADMAP_BACKGROUND_LOCATION.md`
 
 ---
 
