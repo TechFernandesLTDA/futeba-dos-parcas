@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>pt_BR</string>
+    <key>CFBundleDisplayName</key>
+    <string>Futeba dos Parças</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.futebadosparcas.ios</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.6.0</string>
+    <key>CFBundleVersion</key>
+    <string>17</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <true/>
+    </dict>
+    <key>UILaunchScreen</key>
+    <dict>
+        <key>UIColorName</key>
+        <string>AccentColor</string>
+    </dict>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>arm64</string>
+    </array>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UIUserInterfaceStyle</key>
+    <string>Automatic</string>
+
+    <!-- Minimum iOS version -->
+    <key>MinimumOSVersion</key>
+    <string>15.0</string>
+
+    <!-- Privacy - Photo Library -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Necessário acessar suas fotos para selecionar foto de perfil e compartilhar imagens dos jogos</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>Salvar fotos dos jogos na sua biblioteca</string>
+
+    <!-- Privacy - Camera -->
+    <key>NSCameraUsageDescription</key>
+    <string>Necessário acessar a câmera para tirar foto de perfil e registrar momentos dos jogos</string>
+
+    <!-- Privacy - Location -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Necessário acessar sua localização para encontrar jogos próximos e marcar locais de peladas</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Necessário acessar sua localização para notificações de jogos próximos</string>
+
+    <!-- Privacy - Notifications -->
+    <key>NSUserNotificationsUsageDescription</key>
+    <string>Receba notificações sobre convites para jogos, lembretes e atualizações importantes</string>
+
+    <!-- Privacy - Contacts (optional for future features) -->
+    <key>NSContactsUsageDescription</key>
+    <string>Encontre amigos que também usam o Futeba dos Parças</string>
+
+    <!-- App Transport Security -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <false/>
+    </dict>
+
+    <!-- Firebase Dynamic Links (optional) -->
+    <key>FirebaseDynamicLinksCustomDomains</key>
+    <array>
+        <string>https://futebadosparcas.page.link</string>
+    </array>
+
+    <!-- URL Types for OAuth -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>com.futebadosparcas.ios</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

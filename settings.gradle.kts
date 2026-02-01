@@ -19,3 +19,4 @@ rootProject.name = "FutebaDosParcas"
 include(":app")
 include(":shared")
 include(":baselineprofile")
+include(":composeApp")
