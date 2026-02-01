@@ -148,7 +148,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.activity:activity-compose:1.9.2")
+    implementation("androidx.activity:activity-compose:1.12.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5")
     implementation("androidx.compose.runtime:runtime-livedata") // Interop with LiveData if needed
     implementation("com.google.accompanist:accompanist-themeadapter-material3:0.36.0") // Bridge M3 XML Theme to Compose
