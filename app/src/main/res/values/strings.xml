@@ -67,7 +67,7 @@
     <string name="stat_offensive">Ofensivo</string>
     <string name="stat_defensive">Defensivo</string>
     <string name="stat_league">Liga</string>
-    <string name="stat_subtitle">Seu desempenho em numeros</string>
+    <string name="stat_subtitle">Seu desempenho em números</string>
     <string name="stat_league_overview">Liga da Temporada</string>
     <string name="stat_season_performance">Desempenho na Temporada</string>
     <string name="stat_recent_performance">Desempenho Recente</string>
@@ -846,7 +846,7 @@ subir no ranking!</string>
     <string name="dialog_void_entry_message">Deseja realmente estornar esta entrada?</string>
     <string name="dialog_void_entry_button">Estornar</string>
     <string name="dialog_recalculate_balance_title">Recalcular Saldo</string>
-    <string name="dialog_recalculate_balance_message">O saldo sera recalculado baseado em todas as entradas ativas.</string>
+    <string name="dialog_recalculate_balance_message">O saldo será recalculado baseado em todas as entradas ativas.</string>
     <string name="dialog_recalculate_button">Recalcular</string>
     <string name="dialog_select_period">Selecione o período</string>
     <string name="dialog_totals_by_category">Totais por Categoria</string>
@@ -899,8 +899,8 @@ subir no ranking!</string>
     <string name="adaptive_nav_profile">Perfil</string>
 
     <!-- Empty States -->
-    <string name="empty_state_no_connection_title">Sem conexao</string>
-    <string name="empty_state_no_connection_desc">Verifique sua conexao com a internet e tente novamente</string>
+    <string name="empty_state_no_connection_title">Sem conexão</string>
+    <string name="empty_state_no_connection_desc">Verifique sua conexão com a internet e tente novamente</string>
     <string name="empty_state_no_results_title">Nenhum resultado encontrado</string>
     <string name="empty_state_no_results_desc">Tente buscar com outras palavras</string>
     <string name="empty_state_no_games_title">Nenhum jogo agendado</string>
@@ -938,7 +938,7 @@ subir no ranking!</string>
     <string name="archive_group">Arquivar Grupo</string>
     <string name="delete_group">Excluir Grupo</string>
     <string name="members">Membros</string>
-    <string name="no_description">Sem descricao</string>
+    <string name="no_description">Sem descrição</string>
     <string name="invite">Convidar</string>
 
     <!-- Locations Screen -->
@@ -1018,7 +1018,7 @@ subir no ranking!</string>
     <string name="team_label_one">Time 1</string>
     <string name="team_label_two">Time 2</string>
     <string name="team_vs">vs</string>
-    <string name="team_score_display">Gols: ${team.score}</string>
+    <string name="team_score_display">Gols: %1$d</string>
 
     <!-- Game Confirmation Messages -->
     <string name="game_confirm_presence">Confirmar Presença</string>
@@ -1043,8 +1043,8 @@ subir no ranking!</string>
     <string name="game_detail_performance">SEU DESEMPENHO</string>
     <string name="game_detail_management">Administração</string>
     <string name="game_detail_event_timeline">Linha do Tempo</string>
-    <string name="game_location_format">Jogo em ${state.game.locationName}</string>
-    <string name="game_field_format">Quadra: ${game.fieldName}</string>
+    <string name="game_location_format">Jogo em %1$s</string>
+    <string name="game_field_format">Quadra: %1$s</string>
 
     <!-- Game Scheduling/Creation -->
     <string name="game_schedule_frequency_weekly">Semanal</string>
@@ -1057,9 +1057,9 @@ subir no ranking!</string>
     <string name="game_field_type_field">Campo</string>
 
     <!-- Game Scheduling Events -->
-    <string name="game_schedule_next_planned">Próximo jogo agendado: ${event.nextDate}</string>
-    <string name="game_schedule_conflict">Conflito! Não foi possível agendar em ${event.date}.</string>
-    <string name="game_schedule_error">Erro no agendamento: ${event.message}</string>
+    <string name="game_schedule_next_planned">Próximo jogo agendado: %1$s</string>
+    <string name="game_schedule_conflict">Conflito! Não foi possível agendar em %1$s.</string>
+    <string name="game_schedule_error">Erro no agendamento: %1$s</string>
     <string name="game_cancelled_success">Jogo cancelado com sucesso</string>
 
     <!-- Cashbox/Payment -->
@@ -1118,18 +1118,18 @@ subir no ranking!</string>
     <string name="league_victories">Vitórias</string>
     <string name="league_mvp_count">MVPs</string>
     <string name="league_goals">Gols</string>
-    <string name="league_assists">Assists</string>
+    <string name="league_assists">Assistências</string>
     <string name="league_division_gold">OURO</string>
     <string name="league_division_silver">PRATA</string>
     <string name="league_division_bronze">BRONZE</string>
     <string name="league_division_diamond">DIAMANTE</string>
-    <string name="league_rating_format">Rating: ${"</string>
+    <string name="league_rating_format">Rating: %1$s</string>
     <string name="league_rating_description">Rating calculado baseado em:</string>
     <string name="league_rules_show">Como funciona?</string>
     <string name="league_rules_hide">Ocultar regras</string>
     <string name="podium_title">Top %d</string>
     <string name="league_ranking_title">Ranking</string>
-    <string name="league_next_threshold">Prox: ${nextThreshold.toInt()}</string>
+    <string name="league_next_threshold">Próx: %1$d</string>
     <string name="league_elite">Elite do fut</string>
     <string name="league_experienced">Jogadores experientes</string>
     <string name="league_evolving">Em evolução</string>
@@ -1154,7 +1154,7 @@ subir no ranking!</string>
     <string name="location_geo_label">Geolocalização</string>
     <string name="location_geo_update">Atualizar Coordenadas</string>
     <string name="location_geo_search">Buscar</string>
-    <string name="location_geo_format">Lat: $latitude / Lng: $longitude</string>
+    <string name="location_geo_format">Lat: %1$s / Lng: %2$s</string>
     <string name="location_amenities">Comodidades</string>
     <string name="location_amenity_locker">Vestiário</string>
     <string name="location_amenity_bar">Bar</string>
@@ -1177,7 +1177,7 @@ subir no ranking!</string>
     <string name="location_instagram_handle">Instagram</string>
 
     <!-- Profile Management -->
-    <string name="profile_level_format">Nível $level</string>
+    <string name="profile_level_format">Nível %1$d</string>
     <string name="profile_title">Perfil</string>
     <string name="profile_edit">Editar Perfil</string>
     <string name="profile_statistics">Estatísticas</string>
@@ -1219,7 +1219,7 @@ subir no ranking!</string>
     <string name="profile_menu_my_locations">Meus Locais</string>
     <string name="profile_menu_about">Sobre</string>
     <string name="profile_menu_dev">Developer Menu</string>
-    <string name="profile_version_format">Versão ${BuildConfig.VERSION_NAME}</string>
+    <string name="profile_version_format">Versão %1$s</string>
 
     <!-- Common UI Actions -->
     <string name="action_save">Salvar</string>
@@ -1272,19 +1272,19 @@ subir no ranking!</string>
     <string name="error_user_not_auth">Usuário não autenticado</string>
     <string name="error_user_not_found">Usuário não encontrado</string>
     <string name="error_notifications">Erro ao observar notificações</string>
-    <string name="error_message_format">Erro: ${e.message}</string>
+    <string name="error_message_format">Erro: %1$s</string>
 
     <!-- Success Messages -->
     <string name="success_group_updated">Grupo atualizado com sucesso</string>
     <string name="success_group_archived">Grupo arquivado com sucesso</string>
-    <string name="success_ownership_transferred">Propriedade transferida para ${newOwner.getDisplayName()}</string>
+    <string name="success_ownership_transferred">Propriedade transferida para %1$s</string>
     <string name="success_loading">Carregando...</string>
 
     <!-- Confirmation Dialogs -->
     <string name="confirm_cancel_game">Tem certeza que deseja cancelar este jogo? Todas as confirmações serão perdidas.</string>
-    <string name="confirm_delete_group">Tem certeza que deseja deletar \</string>
-    <string name="confirm_archive_group">Tem certeza que deseja arquivar o grupo \</string>
-    <string name="confirm_leave_group">Tem certeza que deseja sair do grupo \</string>
+    <string name="confirm_delete_group">Tem certeza que deseja deletar o grupo \"%1$s\"? Esta ação não pode ser desfeita.</string>
+    <string name="confirm_archive_group">Tem certeza que deseja arquivar o grupo \"%1$s\"?</string>
+    <string name="confirm_leave_group">Tem certeza que deseja sair do grupo \"%1$s\"?</string>
 
     <!-- Game Event Prompts -->
     <string name="event_who_scored">Quem fez o Gol?</string>
@@ -1297,7 +1297,7 @@ subir no ranking!</string>
     <string name="currency_br">BR</string>
     <string name="currency_brl">BRL</string>
     <string name="timezone_utc">UTC</string>
-    <string name="search_no_results">Nenhum resultado para \</string>
+    <string name="search_no_results">Nenhum resultado para \"%1$s\"</string>
     <string name="first_game_hint">Que tal criar o primeiro jogo e reunir a galera?</string>
     <string name="no_data_available">Nenhum dado de ranking disponível</string>
     <string name="data_load_error">Não foi possível carregar os dados. Tente novamente.</string>
@@ -1566,7 +1566,7 @@ subir no ranking!</string>
     <string name="login_error_unexpected">Erro inesperado: %s</string>
     <string name="login_error_token_google">Erro ao processar token do Google</string>
     <string name="login_error_unsupported_credential">Tipo de credencial não suportado</string>
-    <string name="login_error_invalid_credential">Credencial invalida</string>
+    <string name="login_error_invalid_credential">Credencial inválida</string>
     <string name="login_error_firebase">Erro Firebase: %s</string>
     <string name="login_biometric_failed">Falha na autenticação</string>
     <string name="login_welcome_user">Bem-vindo, %s!</string>
@@ -1585,7 +1585,7 @@ subir no ranking!</string>
     <string name="login_signin_credential_completed">signInWithCredential completado</string>
     <string name="login_signin_success">signInWithCredential: sucesso - UID: %s</string>
     <string name="login_user_email">Email do usuario: %s</string>
-    <string name="login_user_display_name">Nome de exibicao: %s</string>
+    <string name="login_user_display_name">Nome de exibição: %s</string>
     <string name="login_calling_viewmodel">Chamando viewModel.onGoogleSignInSuccess()</string>
     <string name="login_signin_failure">signInWithCredential: falha - %s</string>
     <string name="login_current_user">Usuário atual: %s</string>
@@ -1936,7 +1936,7 @@ subir no ranking!</string>
     <!-- Auth Register (migrated from moko-resources) -->
     <string name="auth_register_title">Registro</string>
     <string name="auth_register_message">O registro agora e feito via Google Sign-In</string>
-    <string name="auth_register_redirect">Você sera redirecionado para a tela de login</string>
+    <string name="auth_register_redirect">Você será redirecionado para a tela de login</string>
 
     <!-- Developer (migrated from moko-resources) -->
     <string name="developer_data_generation">Geração de Dados</string>
@@ -1948,8 +1948,8 @@ subir no ranking!</string>
     <string name="developer_analyze_firestore">Analisar Firestore</string>
     <string name="developer_analyze_firestore_desc">Verifica a integridade dos dados no Firebase</string>
     <string name="developer_data_cleanup">Limpeza de Dados</string>
-    <string name="developer_clean_invalid">Limpar Dados Invalidos</string>
-    <string name="developer_clean_invalid_desc">Remove entradas com dados invalidos ou corrompidos</string>
+    <string name="developer_clean_invalid">Limpar Dados Inválidos</string>
+    <string name="developer_clean_invalid_desc">Remove entradas com dados inválidos ou corrompidos</string>
     <string name="developer_processing">Processando…</string>
     <string name="developer_cd_execute">Executar</string>
 
@@ -1963,7 +1963,7 @@ subir no ranking!</string>
     <string name="create_game_hint_date">Data</string>
     <string name="create_game_label_auto_schedule">Agendamento Automático</string>
     <string name="create_game_desc_auto_schedule">Cria jogos recorrentes automaticamente</string>
-    <string name="create_game_hint_frequency">Frequencia</string>
+    <string name="create_game_hint_frequency">Frequência</string>
 
     <!-- Statistics (migrated from moko-resources) -->
     <string name="statistics_level_badge">Nível %s</string>
@@ -2056,10 +2056,10 @@ subir no ranking!</string>
 
     <!-- Post Game Dialog -->
     <string name="post_game_close">Fechar</string>
-    <string name="post_game_leveled_up">VOCE SUBIU DE NÍVEL!</string>
+    <string name="post_game_leveled_up">VOCÊ SUBIU DE NÍVEL!</string>
     <string name="post_game_win">VITORIA EPICA!</string>
     <string name="post_game_loss">NAO DESISTA!</string>
-    <string name="post_game_max_effort">MAXIMO ESFORCO!</string>
+    <string name="post_game_max_effort">MÁXIMO ESFORÇO!</string>
     <string name="post_game_journey">SUA JORNADA NA PARTIDA</string>
     <string name="post_game_rumoa">PROXIMO NÍVEL</string>
     <string name="post_game_level_up">SUBIU DE NÍVEL!</string>
@@ -2159,11 +2159,11 @@ subir no ranking!</string>
     <string name="schedules_select_time">Selecionar Horário</string>
     <string name="schedules_edit_schedule">Editar Agendamento</string>
     <string name="schedules_name_optional">Nome (opcional)</string>
-    <string name="schedules_required_field">Campo obrigatorio</string>
+    <string name="schedules_required_field">Campo obrigatório</string>
     <string name="schedules_time_hint">Horário</string>
-    <string name="schedules_tap_to_set_time">Toque para definir o horario</string>
+    <string name="schedules_tap_to_set_time">Toque para definir o horário</string>
     <string name="schedules_day_of_week">Dia da Semana</string>
-    <string name="schedules_frequency_hint">Frequencia</string>
+    <string name="schedules_frequency_hint">Frequência</string>
     <string name="schedules_save">Salvar</string>
     <string name="schedules_no_schedules">Nenhuma recorrência</string>
     <string name="schedules_empty_description">Configure agendamentos para criar automaticamente jogos semanais, quinzenais ou mensais.</string>
@@ -2284,10 +2284,10 @@ subir no ranking!</string>
     <string name="location_dialog_tap_to_add">Toque para adicionar campos</string>
     <string name="location_dialog_change_photo">Alterar foto</string>
     <string name="location_dialog_field_name">Nome do Campo</string>
-    <string name="location_dialog_field_required">Campo obrigatorio</string>
+    <string name="location_dialog_field_required">Campo obrigatório</string>
     <string name="location_dialog_field_type">Tipo</string>
     <string name="location_dialog_price">Preco</string>
-    <string name="location_dialog_price_invalid">Preco invalido</string>
+    <string name="location_dialog_price_invalid">Preço inválido</string>
     <string name="location_dialog_surface">Superficie</string>
     <string name="location_dialog_surface_placeholder">Ex: Gramado, Sintetico</string>
     <string name="location_dialog_dimensions">Dimensoes</string>
@@ -2372,7 +2372,7 @@ subir no ranking!</string>
     <string name="live_game_goals_by_zone">Gols por zona</string>
     <string name="live_game_voice_prompt">Fale o evento (ex: Gol do Joao)</string>
     <string name="live_game_voice_listening">Ouvindo...</string>
-    <string name="live_game_voice_permission_denied">Permissao de microfone negada</string>
+    <string name="live_game_voice_permission_denied">Permissão de microfone negada</string>
     <string name="live_game_voice_no_match">Não entendi, tente novamente</string>
     <string name="live_game_voice_timeout">Tempo esgotado, tente novamente</string>
     <string name="live_game_voice_error">Erro no reconhecimento de voz</string>
@@ -2461,7 +2461,7 @@ subir no ranking!</string>
     <string name="ui_loading_state">%1$s (%2$d/%3$d)</string>
     <string name="ui_offline_message">Você está offline. Algumas funcionalidades podem estar limitadas.</string>
     <string name="ui_error_title">Erro</string>
-    <string name="ui_error_network">Verifique sua conexao com a internet e tente novamente</string>
+    <string name="ui_error_network">Verifique sua conexão com a internet e tente novamente</string>
     <string name="ui_error_timeout">A operação demorou muito tempo. Por favor, tente novamente.</string>
 
     <!-- Dialog Strings -->
@@ -2513,7 +2513,7 @@ subir no ranking!</string>
     <string name="dev_tools_seed_apollo">Popular Ginasio Apollo</string>
     <string name="dev_tools_seed_apollo_desc">Adiciona Ginasio de Esportes Apollo com 6 quadras (4 futsal + 2 society)</string>
     <string name="dev_tools_reset_prefs">Resetar Preferências</string>
-    <string name="dev_tools_reset_prefs_desc">Limpa todas as configuracoes salvas</string>
+    <string name="dev_tools_reset_prefs_desc">Limpa todas as configurações salvas</string>
     <string name="dev_tools_restart_app">Reiniciar App</string>
     <string name="dev_tools_restart_app_desc">Força reinício do processo (aplica modo mock)</string>
 
@@ -2533,7 +2533,7 @@ subir no ranking!</string>
 
     <!-- Gamification Settings Strings -->
     <string name="gamification_section_match_result">Partida e Resultado</string>
-    <string name="gamification_section_technical_skills">Acoes Tecnicas</string>
+    <string name="gamification_section_technical_skills">Ações Técnicas</string>
     <string name="gamification_section_streaks">Sequencias (Streaks)</string>
 
     <!-- Profile Sections -->
@@ -2543,7 +2543,7 @@ subir no ranking!</string>
     <string name="profile_section_about">Sobre</string>
     <string name="profile_section_manage_users">Gerenciar Usuários</string>
     <string name="profile_section_my_locations">Meus Locais</string>
-    <string name="profile_section_league_settings">Configuracoes da Liga</string>
+    <string name="profile_section_league_settings">Configurações da Liga</string>
     <string name="profile_section_manage_locations">Gerenciar Locais</string>
 
     <!-- Field Type Labels -->
@@ -2568,7 +2568,7 @@ subir no ranking!</string>
     <string name="stat_label_avg_goals">Media Gols</string>
 
     <!-- Game Confirmation Errors -->
-    <string name="error_invalid_position">Posição invalida: %1$s. Valores aceitos: %2$s</string>
+    <string name="error_invalid_position">Posição inválida: %1$s. Valores aceitos: %2$s</string>
     <string name="error_already_confirmed">Você já está confirmado neste jogo</string>
     <string name="error_game_not_accepting">Este jogo não está aceitando confirmações (status: %1$s)</string>
     <string name="error_goalkeeper_limit">Limite de goleiros atingido (%1$d)</string>
@@ -2850,7 +2850,7 @@ subir no ranking!</string>
     <string name="app_guide_home_title">Inicio</string>
     <string name="app_guide_home_desc">Veja próximos jogos, atividades recentes e seu progresso</string>
     <string name="app_guide_games_title">Jogos</string>
-    <string name="app_guide_games_desc">Crie e gerencie jogos, confirme presenca e acompanhe ao vivo</string>
+    <string name="app_guide_games_desc">Crie e gerencie jogos, confirme presença e acompanhe ao vivo</string>
     <string name="app_guide_players_title">Jogadores</string>
     <string name="app_guide_players_desc">Veja perfis, estatísticas e ratings de todos os jogadores</string>
     <string name="app_guide_league_title">Liga</string>
@@ -2867,7 +2867,7 @@ subir no ranking!</string>
 
     <!-- Step 1 -->
     <string name="location_onboarding_step1_title">Crie seu primeiro local</string>
-    <string name="location_onboarding_step1_desc">Cadastre o endereco e informacoes basicas do seu local</string>
+    <string name="location_onboarding_step1_desc">Cadastre o endereço e informações básicas do seu local</string>
     <string name="location_onboarding_step1_action">Criar Local</string>
 
     <!-- Step 2 -->
@@ -2899,7 +2899,7 @@ subir no ranking!</string>
     <string name="time_format_auto">Automático (Sistema)</string>
     <string name="time_format_12h">12 horas (AM/PM)</string>
     <string name="time_format_24h">24 horas</string>
-    <string name="time_format_description">Escolha como os horarios sao exibidos no aplicativo</string>
+    <string name="time_format_description">Escolha como os horários são exibidos no aplicativo</string>
 
     <!-- ==================== LOCATION EXPORT ==================== -->
 
@@ -3248,12 +3248,12 @@ subir no ranking!</string>
     <string name="create_game_duplicate_button">Duplicar Jogo</string>
 
     <!-- Time Suggestion (Improvement #3) -->
-    <string name="create_game_time_suggestion">Horário com maior adesao: %1$s (%2$d%% de presenca)</string>
+    <string name="create_game_time_suggestion">Horário com maior adesão: %1$s (%2$d%% de presença)</string>
     <string name="create_game_apply">Aplicar</string>
 
     <!-- Availability Calendar (Improvement #4) -->
     <string name="create_game_availability_title">Disponibilidade da Quadra</string>
-    <string name="create_game_availability_available">Disponivel</string>
+    <string name="create_game_availability_available">Disponível</string>
     <string name="create_game_availability_occupied">Ocupado</string>
 
     <!-- CEP Lookup (Improvement #5) -->
@@ -3357,7 +3357,7 @@ subir no ranking!</string>
 
     <!-- Issue #37: Absence History and Reliability -->
     <string name="reliability_title">Confiabilidade</string>
-    <string name="reliability_rate">Taxa de presenca: %1$d%%</string>
+    <string name="reliability_rate">Taxa de presença: %1$d%%</string>
     <string name="reliability_warning">Jogador com baixa confiabilidade</string>
 
     <!-- Issue #38: Invite Guest -->
@@ -3370,7 +3370,7 @@ subir no ranking!</string>
     <!-- Issue #39: Cancellation Reason -->
     <string name="cancel_reason_title">Motivo do Cancelamento</string>
     <string name="cancel_reason_unexpected">Imprevisto</string>
-    <string name="cancel_reason_injury">Lesao</string>
+    <string name="cancel_reason_injury">Lesão</string>
     <string name="cancel_reason_work">Trabalho</string>
     <string name="cancel_reason_family">Familia</string>
     <string name="cancel_reason_other">Outro</string>
@@ -3400,7 +3400,7 @@ subir no ranking!</string>
     <string name="waitlist_notified">Notificado</string>
     <string name="waitlist_expired">Expirado</string>
     <string name="waitlist_waiting_message">Aguardando vaga abrir</string>
-    <string name="waitlist_vacancy_available">Vaga disponível! Confirme sua presenca.</string>
+    <string name="waitlist_vacancy_available">Vaga disponível! Confirme sua presença.</string>
     <string name="waitlist_since">Desde %1$s</string>
     <string name="game_full_message">Jogo lotado. Entre na lista de espera para ser notificado quando abrir vaga.</string>
 
