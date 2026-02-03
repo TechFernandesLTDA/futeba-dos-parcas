@@ -13,8 +13,10 @@ import com.futebadosparcas.domain.repository.RankingRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.LeagueService
 import com.futebadosparcas.domain.ranking.MilestoneChecker
+import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -31,6 +33,10 @@ class RankingViewModel @Inject constructor(
     private val auth: FirebaseAuth
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "RankingViewModel"
+    }
+
     private val _rankingState = MutableStateFlow(RankingUiState())
     val rankingState: StateFlow<RankingUiState> = _rankingState
 
@@ -40,6 +46,9 @@ class RankingViewModel @Inject constructor(
     private val currentUserId: String?
         get() = auth.currentUser?.uid
 
+    private var rankingJob: Job? = null
+    private var evolutionJob: Job? = null
+
     init {
         loadRanking()
     }
@@ -48,7 +57,8 @@ class RankingViewModel @Inject constructor(
      * Carrega ranking com filtros atuais.
      */
     fun loadRanking() {
-        viewModelScope.launch {
+        rankingJob?.cancel()
+        rankingJob = viewModelScope.launch {
             _rankingState.update { it.copy(isLoading = true, error = null) }
 
             try {
@@ -89,6 +99,7 @@ class RankingViewModel @Inject constructor(
                 }
 
             } catch (e: Exception) {
+                AppLogger.e(TAG, "Erro ao carregar ranking: ${e.message}", e)
                 _rankingState.update {
                     it.copy(isLoading = false, error = e.message)
                 }
@@ -116,7 +127,8 @@ class RankingViewModel @Inject constructor(
      * Carrega dados de evolucao do jogador atual.
      */
     fun loadEvolution() {
-        viewModelScope.launch {
+        evolutionJob?.cancel()
+        evolutionJob = viewModelScope.launch {
             _evolutionState.value = EvolutionUiState.Loading
 
             try {
@@ -207,8 +219,15 @@ class RankingViewModel @Inject constructor(
                 )
 
             } catch (e: Exception) {
+                AppLogger.e(TAG, "Erro ao carregar evolução: ${e.message}", e)
                 _evolutionState.value = EvolutionUiState.Error(e.message ?: "Erro desconhecido")
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        rankingJob?.cancel()
+        evolutionJob?.cancel()
     }
 }
