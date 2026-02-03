@@ -92,7 +92,7 @@ fun PostGameReportScreen(
                 title = { Text(stringResource(R.string.owner_post_game_report)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
@@ -104,7 +104,7 @@ fun PostGameReportScreen(
                         )
                     }
                     IconButton(onClick = onShare) {
-                        Icon(Icons.Outlined.Share, stringResource(R.string.share))
+                        Icon(Icons.Outlined.Share, contentDescription = stringResource(R.string.share))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

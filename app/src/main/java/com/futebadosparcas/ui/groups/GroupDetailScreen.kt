@@ -318,7 +318,7 @@ private fun GroupDetailTopBar(
                             onInviteClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.PersonAdd, null)
+                            Icon(Icons.Default.PersonAdd, contentDescription = null)
                         }
                     )
                 }
@@ -331,7 +331,7 @@ private fun GroupDetailTopBar(
                         onCashboxClick()
                     },
                     leadingIcon = {
-                        Icon(Icons.Default.AccountBalanceWallet, null)
+                        Icon(Icons.Default.AccountBalanceWallet, contentDescription = null)
                     }
                 )
 
@@ -344,7 +344,7 @@ private fun GroupDetailTopBar(
                             onCreateGameClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Add, null)
+                            Icon(Icons.Default.Add, contentDescription = null)
                         }
                     )
                 }
@@ -360,7 +360,7 @@ private fun GroupDetailTopBar(
                             onEditClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Edit, null)
+                            Icon(Icons.Default.Edit, contentDescription = null)
                         }
                     )
                 }
@@ -374,7 +374,7 @@ private fun GroupDetailTopBar(
                             onTransferOwnershipClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.SwapHoriz, null)
+                            Icon(Icons.Default.SwapHoriz, contentDescription = null)
                         }
                     )
                 }
@@ -388,7 +388,7 @@ private fun GroupDetailTopBar(
                             onLeaveGroupClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.AutoMirrored.Filled.ExitToApp, null)
+                            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
                         }
                     )
                 }
@@ -402,7 +402,7 @@ private fun GroupDetailTopBar(
                             onArchiveGroupClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Archive, null)
+                            Icon(Icons.Default.Archive, contentDescription = null)
                         }
                     )
                 }
@@ -416,7 +416,7 @@ private fun GroupDetailTopBar(
                             onDeleteGroupClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Delete, null)
+                            Icon(Icons.Default.Delete, contentDescription = null)
                         },
                         colors = MenuDefaults.itemColors(
                             textColor = MaterialTheme.colorScheme.error

@@ -152,7 +152,7 @@ fun GameDetailScreen(
                     title = { Text(stringResource(R.string.game_details)) },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -216,17 +216,17 @@ fun GameDetailTopBar(
         title = { Text(stringResource(R.string.game_details)) },
         navigationIcon = {
             IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
             }
         },
         actions = {
             IconButton(onClick = onInviteWhatsApp) {
-                Icon(painterResource(R.drawable.ic_whatsapp), stringResource(R.string.invite_whatsapp), tint = com.futebadosparcas.ui.theme.BrandColors.WhatsApp)
+                Icon(painterResource(R.drawable.ic_whatsapp), contentDescription = stringResource(R.string.invite_whatsapp), tint = com.futebadosparcas.ui.theme.BrandColors.WhatsApp)
             }
             // Box para ancorar o DropdownMenu ao IconButton
             Box {
                 IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, stringResource(R.string.more_options))
+                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
                 }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(
@@ -489,7 +489,7 @@ fun GameHeaderSection(
             }
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.Place, null, tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Outlined.Place, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(game.locationName, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.clickable { onLocationClick() })
             }
@@ -501,7 +501,7 @@ fun GameHeaderSection(
             if (canManage) {
                 Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
                     FilledTonalButton(onClick = onEdit) {
-                        Icon(Icons.Outlined.Edit, stringResource(R.string.edit))
+                        Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.edit))
                         Spacer(Modifier.width(4.dp))
                         Text(stringResource(R.string.edit), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
@@ -577,22 +577,22 @@ fun ConfirmationCard(
 
             if (currentUserId == confirmation.userId && confirmation.status == "PENDING") {
                 IconButton(onClick = onAcceptClick) {
-                    Icon(Icons.Default.Check, stringResource(R.string.accept), tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.accept), tint = MaterialTheme.colorScheme.primary)
                 }
                 IconButton(onClick = onDeclineClick) {
-                    Icon(Icons.Default.Close, stringResource(R.string.decline), tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.decline), tint = MaterialTheme.colorScheme.error)
                 }
             } else {
                 if (isOwner || currentUserId == confirmation.userId) {
                     val payColor = if (confirmation.paymentStatus == "PAID")
                         com.futebadosparcas.ui.theme.BrandColors.WhatsApp else MaterialTheme.colorScheme.onSurfaceVariant
                     IconButton(onClick = onPaymentClick) {
-                        Icon(painterResource(R.drawable.ic_money), stringResource(R.string.payment), tint = payColor)
+                        Icon(painterResource(R.drawable.ic_money), contentDescription = stringResource(R.string.payment), tint = payColor)
                     }
                 }
                 if (isOwner) {
                     IconButton(onClick = onRemoveClick) {
-                        Icon(Icons.Outlined.Delete, stringResource(R.string.action_remove), tint = MaterialTheme.colorScheme.error)
+                        Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.action_remove), tint = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -896,7 +896,7 @@ fun LiveMatchSection(
                         Spacer(modifier = Modifier.weight(1f))
                         if (state.canLogEvents) {
                             IconButton(onClick = { onDeleteEvent(event.id) }) {
-                                Icon(Icons.Outlined.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error)
+                                Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -907,13 +907,13 @@ fun LiveMatchSection(
             if (state.canLogEvents && state.game.status == "LIVE") {
                 Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
                     IconButton(onClick = { onAddEvent(GameEventType.GOAL) }) {
-                        Icon(painterResource(R.drawable.ic_football), stringResource(R.string.live_goal), tint = MatchEventColors.goalColor())
+                        Icon(painterResource(R.drawable.ic_football), contentDescription = stringResource(R.string.live_goal), tint = MatchEventColors.goalColor())
                     }
                     IconButton(onClick = { onAddEvent(GameEventType.YELLOW_CARD) }) {
-                        Icon(painterResource(R.drawable.ic_card_filled), stringResource(R.string.live_yellow_card), tint = MatchEventColors.yellowCardColor())
+                        Icon(painterResource(R.drawable.ic_card_filled), contentDescription = stringResource(R.string.live_yellow_card), tint = MatchEventColors.yellowCardColor())
                     }
                     IconButton(onClick = { onAddEvent(GameEventType.RED_CARD) }) {
-                        Icon(painterResource(R.drawable.ic_card_filled), stringResource(R.string.live_red_card), tint = MatchEventColors.redCardColor())
+                        Icon(painterResource(R.drawable.ic_card_filled), contentDescription = stringResource(R.string.live_red_card), tint = MatchEventColors.redCardColor())
                     }
                 }
             }
