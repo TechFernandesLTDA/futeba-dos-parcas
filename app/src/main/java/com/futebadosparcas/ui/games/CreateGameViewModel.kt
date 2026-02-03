@@ -370,7 +370,7 @@ class CreateGameViewModel @Inject constructor(
 
     fun setLocation(location: Location) {
         _selectedLocation.value = location
-        android.util.Log.d("CreateGameVM", "Local selecionado: ${location.name} (${location.id})")
+        AppLogger.d(TAG) { "Local selecionado: ${location.name} (${location.id})" }
         // Limpar quadra quando mudar o local
         _selectedField.value = null
         _selectedFields.value = emptyList()
@@ -382,7 +382,7 @@ class CreateGameViewModel @Inject constructor(
 
     fun setField(field: Field) {
         _selectedField.value = field
-        android.util.Log.d("CreateGameVM", "Quadra selecionada: ${field.name} (${field.id})")
+        AppLogger.d(TAG) { "Quadra selecionada: ${field.name} (${field.id})" }
         checkConflictsIfPossible()
         loadFieldAvailability()
     }
@@ -757,7 +757,7 @@ class CreateGameViewModel @Inject constructor(
         val field = _selectedField.value
         val group = _selectedGroup.value
 
-        android.util.Log.d("CreateGameVM", "saveGame - Local: ${location?.name}, Quadra: ${field?.name}, Data: ${_selectedDate.value}, Hora: ${_selectedTime.value}")
+        AppLogger.d(TAG) { "saveGame - Local: ${location?.name}, Quadra: ${field?.name}, Data: ${_selectedDate.value}, Hora: ${_selectedTime.value}" }
 
         // Validacao de campos obrigatorios
         if (location == null) {

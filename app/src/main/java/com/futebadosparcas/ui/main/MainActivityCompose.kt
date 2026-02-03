@@ -132,10 +132,10 @@ class MainActivityCompose : AppCompatActivity() {
                                             preferredFieldTypes = fieldTypes.takeIf { it.isNotEmpty() }
                                         )
                                         updateProfileUseCase(params)
-                                        android.util.Log.d("Onboarding", "Profile saved successfully")
+                                        com.futebadosparcas.util.AppLogger.d("Onboarding") { "Profile saved successfully" }
                                     }
                                 } catch (e: Exception) {
-                                    android.util.Log.e("Onboarding", "Error saving profile: ${e.message}", e)
+                                    com.futebadosparcas.util.AppLogger.e("Onboarding", "Error saving profile: ${e.message}", e)
                                 }
                             }
                         }

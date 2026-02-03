@@ -16,6 +16,7 @@ import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toDataBadges
 import com.futebadosparcas.util.toDataLocations
 import com.futebadosparcas.util.toDataModel
@@ -48,6 +49,10 @@ class ProfileViewModel @Inject constructor(
     private val auth: FirebaseAuth
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "ProfileViewModel"
+    }
+
     private val _uiEvents = kotlinx.coroutines.channels.Channel<ProfileUiEvent>()
     val uiEvents = _uiEvents.receiveAsFlow()
 
@@ -73,7 +78,7 @@ class ProfileViewModel @Inject constructor(
         unreadCountJob = viewModelScope.launch {
             notificationRepository.getUnreadCountFlow()
                 .catch { e ->
-                    android.util.Log.e("ProfileViewModel", "Erro ao observar notificações", e)
+                    AppLogger.e(TAG, "Erro ao observar notificações: ${e.message}", e)
                     _unreadCount.value = 0
                 }
                 .collect { count ->
@@ -97,7 +102,7 @@ class ProfileViewModel @Inject constructor(
 
             userRepository.observeCurrentUser()
                 .catch { e ->
-                    android.util.Log.e("ProfileViewModel", "Erro ao observar usuário", e)
+                    AppLogger.e(TAG, "Erro ao observar usuário: ${e.message}", e)
                     _uiState.value = ProfileUiState.Error(e.message ?: "Erro ao carregar perfil")
                 }
                 .collect { user ->
@@ -154,7 +159,7 @@ class ProfileViewModel @Inject constructor(
             .document(userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    android.util.Log.e("ProfileViewModel", "Erro no listener de estatísticas", error)
+                    AppLogger.e(TAG, "Erro no listener de estatísticas: ${error.message}", error)
                     return@addSnapshotListener
                 }
 
@@ -219,15 +224,15 @@ class ProfileViewModel @Inject constructor(
                     photoUrl = when (uploadResult) {
                         is ProfilePhotoDataSource.UploadResult.Success -> uploadResult.url
                         is ProfilePhotoDataSource.UploadResult.FileTooLarge -> {
-                            android.util.Log.w("ProfileViewModel", "Foto muito grande para upload")
+                            AppLogger.w(TAG) { "Foto muito grande para upload" }
                             currentUser.photoUrl // Manter foto atual
                         }
                         is ProfilePhotoDataSource.UploadResult.InvalidImage -> {
-                            android.util.Log.w("ProfileViewModel", "Arquivo de imagem inválido")
+                            AppLogger.w(TAG) { "Arquivo de imagem inválido" }
                             currentUser.photoUrl // Manter foto atual
                         }
                         is ProfilePhotoDataSource.UploadResult.Error -> {
-                            android.util.Log.e("ProfileViewModel", "Erro no upload: ${uploadResult.message}")
+                            AppLogger.e(TAG, "Erro no upload: ${uploadResult.message}")
                             currentUser.photoUrl // Manter foto atual
                         }
                         is ProfilePhotoDataSource.UploadResult.Progress -> {
@@ -270,7 +275,7 @@ class ProfileViewModel @Inject constructor(
 
                 updateResult.fold(
                     onSuccess = { updatedUserFromRepo ->
-                        android.util.Log.d("ProfileViewModel", "Perfil atualizado com sucesso.")
+                        AppLogger.d(TAG) { "Perfil atualizado com sucesso." }
                         // Buscar dados atualizados do repositório
                         val refreshedUserResult = userRepository.getCurrentUser()
                         refreshedUserResult.fold(
@@ -290,7 +295,7 @@ class ProfileViewModel @Inject constructor(
                                 )
                             },
                             onFailure = { error ->
-                                android.util.Log.e("ProfileViewModel", "Erro ao recarregar usuário: ${error.message}", error)
+                                AppLogger.e(TAG, "Erro ao recarregar usuário: ${error.message}", error)
                                 // Mesmo com erro ao recarregar, mostrar sucesso com o usuário atualizado
                                 _uiState.value = ProfileUiState.ProfileUpdateSuccess(
                                     user = updatedUser,
@@ -302,14 +307,14 @@ class ProfileViewModel @Inject constructor(
                         )
                     },
                     onFailure = { error ->
-                        android.util.Log.e("ProfileViewModel", "Erro ao atualizar perfil: ${error.message}", error)
+                        AppLogger.e(TAG, "Erro ao atualizar perfil: ${error.message}", error)
                         _uiState.value = ProfileUiState.Error(error.message ?: "Erro ao atualizar perfil")
                         // Tentar recarregar para voltar ao estado anterior
                         loadProfile()
                     }
                 )
             } catch (e: Exception) {
-                android.util.Log.e("ProfileViewModel", "Exceção ao atualizar perfil", e)
+                AppLogger.e(TAG, "Exceção ao atualizar perfil: ${e.message}", e)
                 _uiState.value = ProfileUiState.Error(e.message ?: "Erro ao atualizar perfil")
                 // Recarregar em caso de exceção também
                 loadProfile()

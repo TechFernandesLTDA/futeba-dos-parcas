@@ -92,7 +92,7 @@ class StartupHelper @Inject constructor(
         }
 
         log.append("========================================\n")
-        android.util.Log.i("StartupHelper", log.toString())
+        AppLogger.i("StartupHelper") { log.toString() }
 
         // Send to analytics/performance monitoring
         // performanceMonitor.startTrace("app_startup").apply {

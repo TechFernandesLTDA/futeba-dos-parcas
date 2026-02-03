@@ -115,7 +115,8 @@ class MemoryHelper @Inject constructor(
      */
     fun logMemoryStats(tag: String = "MemoryHelper") {
         val info = getMemoryInfo()
-        android.util.Log.d(tag, """
+        AppLogger.d(tag) {
+            """
             Memory Stats:
             - App: ${info.usedMemoryMB}MB / ${info.maxMemoryMB}MB (${info.usagePercent}%)
             - System: ${info.availableSystemMemoryMB}MB free / ${info.totalSystemMemoryMB}MB total
@@ -123,7 +124,8 @@ class MemoryHelper @Inject constructor(
             - Dalvik Heap: ${info.dalvikHeapSizeMB}MB
             - Other: ${info.otherMemoryMB}MB
             - Low Memory: ${info.isLowMemory}
-        """.trimIndent())
+            """.trimIndent()
+        }
     }
 }
 

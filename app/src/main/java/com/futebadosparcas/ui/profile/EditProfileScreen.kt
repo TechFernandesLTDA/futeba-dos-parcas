@@ -410,7 +410,7 @@ private fun EditProfileContent(
                     experienceYears = experienceYears.toIntOrNull()
                 )
 
-                android.util.Log.d("EditProfileScreen", "Saving profile data: $formData")
+                com.futebadosparcas.util.AppLogger.d("EditProfileScreen") { "Saving profile data: $formData" }
                 onSaveClick(formData)
             },
             modifier = Modifier

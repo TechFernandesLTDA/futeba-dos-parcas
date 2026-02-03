@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.model.User
+import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
@@ -17,6 +18,10 @@ class AuthRepository @Inject constructor(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore
 ) {
+    companion object {
+        private const val TAG = "AuthRepository"
+    }
+
     private val usersCollection = firestore.collection("users")
 
     val authStateFlow: Flow<FirebaseUser?> = callbackFlow {
@@ -40,7 +45,7 @@ class AuthRepository @Inject constructor(
     fun getCurrentUserId(): String? = auth.currentUser?.uid
 
     suspend fun getCurrentUser(): Result<User> {
-        android.util.Log.d("AuthRepository", "=== getCurrentUser() START ===")
+        AppLogger.d(TAG) { "=== getCurrentUser() START ===" }
         return try {
             // Enhanced retry logic for Google Sign-In reliability
             // Firebase Auth may take time to sync after credential validation
@@ -49,52 +54,52 @@ class AuthRepository @Inject constructor(
             val maxRetries = 10 // Increased from 5
             val baseDelay = 300L // Increased from 200ms
 
-            android.util.Log.d("AuthRepository", "Starting retry loop (max $maxRetries attempts)")
+            AppLogger.d(TAG) { "Starting retry loop (max $maxRetries attempts)" }
             while (uid == null && retries < maxRetries) {
                 uid = auth.currentUser?.uid
-                android.util.Log.d("AuthRepository", "Retry $retries: uid exists = ${uid != null}")
+                AppLogger.d(TAG) { "Retry $retries: uid exists = ${uid != null}" }
                 if (uid == null) {
                     // Exponential backoff: 300ms, 600ms, 900ms, 1200ms, etc.
                     val delay = baseDelay * (retries + 1)
-                    android.util.Log.d("AuthRepository", "Waiting ${delay}ms before next retry")
+                    AppLogger.d(TAG) { "Waiting ${delay}ms before next retry" }
                     kotlinx.coroutines.delay(delay)
                     retries++
                 }
             }
 
             if (uid == null) {
-                android.util.Log.e("AuthRepository", "FAILED: No UID after $retries retries")
+                AppLogger.e(TAG, "FAILED: No UID after $retries retries")
                 return Result.failure(Exception("Usuario nao autenticado"))
             }
 
-            android.util.Log.d("AuthRepository", "SUCCESS: Got UID")
-            android.util.Log.d("AuthRepository", "Waiting 100ms for Firestore sync")
+            AppLogger.d(TAG) { "SUCCESS: Got UID" }
+            AppLogger.d(TAG) { "Waiting 100ms for Firestore sync" }
             kotlinx.coroutines.delay(100)
 
-            android.util.Log.d("AuthRepository", "Querying Firestore for user document")
+            AppLogger.d(TAG) { "Querying Firestore for user document" }
             val doc = usersCollection.document(uid).get().await()
 
             if (doc.exists()) {
-                android.util.Log.d("AuthRepository", "User document EXISTS in Firestore")
+                AppLogger.d(TAG) { "User document EXISTS in Firestore" }
                 var user = doc.toObject(User::class.java)
                     ?: return Result.failure(Exception("Erro ao converter usuario"))
 
-                android.util.Log.d("AuthRepository", "User loaded successfully")
+                AppLogger.d(TAG) { "User loaded successfully" }
 
                 // Verifica se a foto do Google mudou e atualiza
                 val firebaseUser = auth.currentUser
                 val googlePhotoUrl = firebaseUser?.photoUrl?.toString()
 
                 if (googlePhotoUrl != null && googlePhotoUrl != user.photoUrl) {
-                    android.util.Log.d("AuthRepository", "Updating photo URL")
+                    AppLogger.d(TAG) { "Updating photo URL" }
                     usersCollection.document(uid).update("photo_url", googlePhotoUrl).await()
                     user = user.copy(photoUrl = googlePhotoUrl)
                 }
 
-                android.util.Log.d("AuthRepository", "=== getCurrentUser() SUCCESS ===")
+                AppLogger.d(TAG) { "=== getCurrentUser() SUCCESS ===" }
                 Result.success(user)
             } else {
-                android.util.Log.d("AuthRepository", "User document DOES NOT EXIST - creating new user")
+                AppLogger.d(TAG) { "User document DOES NOT EXIST - creating new user" }
                 // Criar usuario automaticamente se nao existir
                 val firebaseUser = auth.currentUser
                     ?: return Result.failure(Exception("Usuario desconectado durante operacao"))
@@ -104,13 +109,13 @@ class AuthRepository @Inject constructor(
                     name = firebaseUser.displayName.orEmpty(),
                     photoUrl = firebaseUser.photoUrl?.toString()
                 )
-                android.util.Log.d("AuthRepository", "Creating new user document")
+                AppLogger.d(TAG) { "Creating new user document" }
                 usersCollection.document(uid).set(newUser).await()
-                android.util.Log.d("AuthRepository", "=== getCurrentUser() SUCCESS (new user created) ===")
+                AppLogger.d(TAG) { "=== getCurrentUser() SUCCESS (new user created) ===" }
                 Result.success(newUser)
             }
         } catch (e: Exception) {
-            android.util.Log.e("AuthRepository", "=== getCurrentUser() EXCEPTION: ${e.message} ===", e)
+            AppLogger.e(TAG, "=== getCurrentUser() EXCEPTION: ${e.message} ===", e)
             Result.failure(e)
         }
     }
