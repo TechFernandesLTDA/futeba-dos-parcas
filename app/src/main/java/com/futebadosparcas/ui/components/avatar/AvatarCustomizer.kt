@@ -666,7 +666,7 @@ private fun FaceCustomizer(
         Spacer(modifier = Modifier.height(8.dp))
 
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(Expression.entries) { expression ->
+            items(Expression.entries, key = { it.name }) { expression ->
                 EmojiOption(
                     emoji = expression.icon,
                     label = expression.label,
@@ -855,7 +855,7 @@ private fun ShirtCustomizer(
                     label = { Text(stringResource(R.string.avatar_no_number)) }
                 )
             }
-            items((1..99).toList()) { number ->
+            items((1..99).toList(), key = { it }) { number ->
                 FilterChip(
                     selected = config.shirtNumber == number,
                     onClick = { onConfigChange(config.copy(shirtNumber = number)) },
