@@ -446,7 +446,10 @@ class LocationDetailViewModel @Inject constructor(
                 return@launch
             }
 
-            val field = currentField!!
+            val field = currentField ?: run {
+                _uiState.value = LocationDetailUiState.Error("Quadra não encontrada")
+                return@launch
+            }
             val isFieldManager = field.managers.contains(currentUser.id)
 
             // Verifica permissao: deve ser owner do local, gerente do local, gerente do campo, ou admin
