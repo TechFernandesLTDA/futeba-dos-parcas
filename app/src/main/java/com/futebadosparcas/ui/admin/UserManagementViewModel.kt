@@ -30,7 +30,11 @@ class UserManagementViewModel @Inject constructor(
             userRepository.getAllUsers().fold(
                 onSuccess = { users ->
                     allUsers = users
-                    _uiState.value = UserManagementUiState.Success(users)
+                    _uiState.value = if (users.isEmpty()) {
+                        UserManagementUiState.Empty
+                    } else {
+                        UserManagementUiState.Success(users)
+                    }
                 },
                 onFailure = { error ->
                     _uiState.value = UserManagementUiState.Error(error.message ?: "Erro ao carregar usuários")
@@ -48,7 +52,11 @@ class UserManagementViewModel @Inject constructor(
             it.name.contains(query, ignoreCase = true) ||
             it.email.contains(query, ignoreCase = true)
         }
-        _uiState.value = UserManagementUiState.Success(filtered)
+        _uiState.value = if (filtered.isEmpty()) {
+            UserManagementUiState.Empty
+        } else {
+            UserManagementUiState.Success(filtered)
+        }
     }
 
     fun updateUserRole(user: User, newRole: String) {
@@ -67,6 +75,7 @@ class UserManagementViewModel @Inject constructor(
 
 sealed class UserManagementUiState {
     object Loading : UserManagementUiState()
+    object Empty : UserManagementUiState()
     data class Success(val users: List<User>) : UserManagementUiState()
     data class Error(val message: String) : UserManagementUiState()
 }
