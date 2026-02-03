@@ -10,7 +10,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -84,17 +83,11 @@ fun DraggablePlayerCard(
             .scale(scale)
             .alpha(alpha)
             .shadow(elevation, RoundedCornerShape(12.dp))
-            .dragAndDropSource {
-                detectTapGestures(
-                    onLongPress = {
-                        isDragging = true
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        startTransfer(
-                            DragAndDropTransferData(
-                                clipData = ClipData.newPlainText("playerId", player.id)
-                            )
-                        )
-                    }
+            .dragAndDropSource { _ ->
+                isDragging = true
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                DragAndDropTransferData(
+                    clipData = ClipData.newPlainText("playerId", player.id)
                 )
             },
         colors = CardDefaults.cardColors(

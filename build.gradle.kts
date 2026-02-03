@@ -15,7 +15,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10" apply false
     id("org.jetbrains.compose") version "1.7.3" apply false
     id("androidx.baselineprofile") version "1.3.3" apply false
-    id("io.gitlab.arturbosch.detekt") version "1.23.7" // #061 - Static analysis
+    id("io.gitlab.arturbosch.detekt") version "1.23.8" // #061 - Static analysis
 }
 
 // #061 - Configure Detekt for all projects
