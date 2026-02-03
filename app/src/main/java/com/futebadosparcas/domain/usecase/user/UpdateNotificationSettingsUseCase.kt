@@ -228,7 +228,8 @@ data class NotificationSettings(
      */
     fun minutesUntilUnmuted(): Long {
         if (!isMuted()) return 0
-        return (muteUntilTime!!.time - Date().time) / (1000 * 60)
+        val muteEnd = muteUntilTime ?: return 0
+        return (muteEnd.time - Date().time) / (1000 * 60)
     }
 
     /**

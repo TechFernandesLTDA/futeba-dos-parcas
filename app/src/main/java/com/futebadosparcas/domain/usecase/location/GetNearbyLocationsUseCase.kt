@@ -41,11 +41,12 @@ class GetNearbyLocationsUseCase @Inject constructor(
 
         // Calcular distância e filtrar por raio
         return locations
-            .filter { it.latitude != null && it.longitude != null }
-            .map { location ->
+            .mapNotNull { location ->
+                val lat = location.latitude ?: return@mapNotNull null
+                val lng = location.longitude ?: return@mapNotNull null
                 val distance = calculateDistance(
                     params.latitude, params.longitude,
-                    location.latitude!!, location.longitude!!
+                    lat, lng
                 )
                 LocationWithDistance(location, distance)
             }

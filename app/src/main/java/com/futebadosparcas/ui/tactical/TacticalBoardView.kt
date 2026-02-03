@@ -56,12 +56,12 @@ class TacticalBoardView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         canvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        drawCanvas = Canvas(canvasBitmap!!)
-        drawField(drawCanvas!!)
+        drawCanvas = canvasBitmap?.let { Canvas(it) }
+        drawCanvas?.let { drawField(it) }
     }
 
     override fun onDraw(canvas: Canvas) {
-        canvas.drawBitmap(canvasBitmap!!, 0f, 0f, canvasPaint)
+        canvasBitmap?.let { canvas.drawBitmap(it, 0f, 0f, canvasPaint) }
         canvas.drawPath(drawPath, drawPaint)
     }
 
@@ -138,7 +138,7 @@ class TacticalBoardView @JvmOverloads constructor(
 
     fun clear() {
         drawCanvas?.drawColor(0, PorterDuff.Mode.CLEAR)
-        drawField(drawCanvas!!)
+        drawCanvas?.let { drawField(it) }
         paths.clear()
         invalidate()
     }

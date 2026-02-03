@@ -176,7 +176,7 @@ private fun RecentGameItem(
             if (game.groupName != null) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = game.groupName!!,
+                    text = game.groupName.orEmpty(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
                 )

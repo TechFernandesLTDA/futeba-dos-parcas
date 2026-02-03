@@ -770,17 +770,17 @@ class CreateGameViewModel @Inject constructor(
             return
         }
 
-        if (_selectedDate.value == null) {
+        val selectedDate = _selectedDate.value ?: run {
             _uiState.value = CreateGameUiState.Error("Selecione a data do jogo")
             return
         }
 
-        if (_selectedTime.value == null) {
+        val selectedStartTime = _selectedTime.value ?: run {
             _uiState.value = CreateGameUiState.Error("Selecione o horario de inicio")
             return
         }
 
-        if (_selectedEndTime.value == null) {
+        val selectedEndTime = _selectedEndTime.value ?: run {
             _uiState.value = CreateGameUiState.Error("Selecione o horario de termino")
             return
         }
@@ -817,7 +817,7 @@ class CreateGameViewModel @Inject constructor(
         }
 
         // Validar que data/horario nao sejam no passado
-        val selectedDateTime = java.time.LocalDateTime.of(_selectedDate.value!!, _selectedTime.value!!)
+        val selectedDateTime = java.time.LocalDateTime.of(selectedDate, selectedStartTime)
         val now = java.time.LocalDateTime.now()
 
         if (selectedDateTime.isBefore(now)) {
@@ -825,14 +825,14 @@ class CreateGameViewModel @Inject constructor(
             return
         }
 
-        if (_selectedEndTime.value!!.isBefore(_selectedTime.value!!)) {
+        if (selectedEndTime.isBefore(selectedStartTime)) {
             _uiState.value = CreateGameUiState.Error("O horario de termino deve ser apos o inicio")
             return
         }
 
         // Validar duracao minima de 30 minutos
-        val startMinutes = _selectedTime.value!!.hour * 60 + _selectedTime.value!!.minute
-        var endMinutes = _selectedEndTime.value!!.hour * 60 + _selectedEndTime.value!!.minute
+        val startMinutes = selectedStartTime.hour * 60 + selectedStartTime.minute
+        var endMinutes = selectedEndTime.hour * 60 + selectedEndTime.minute
         // Tratar virada de meia-noite
         if (endMinutes <= startMinutes) {
             endMinutes += 24 * 60
@@ -898,9 +898,9 @@ class CreateGameViewModel @Inject constructor(
             val game = Game(
                 id = gameId ?: _currentGameId ?: "",
                 scheduleId = scheduleId,
-                date = _selectedDate.value!!.format(DateTimeFormatter.ISO_LOCAL_DATE),
-                time = _selectedTime.value!!.format(DateTimeFormatter.ofPattern("HH:mm")),
-                endTime = _selectedEndTime.value!!.format(DateTimeFormatter.ofPattern("HH:mm")),
+                date = selectedDate.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                time = selectedStartTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                endTime = selectedEndTime.format(DateTimeFormatter.ofPattern("HH:mm")),
                 locationId = location.id,
                 fieldId = field?.id ?: "",
                 locationName = location.name,

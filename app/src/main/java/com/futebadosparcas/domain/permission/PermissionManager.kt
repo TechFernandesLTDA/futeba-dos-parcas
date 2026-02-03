@@ -53,8 +53,8 @@ class PermissionManager @Inject constructor(
         val uid = auth.currentUser?.uid ?: return UserRole.PLAYER
 
         // Verificar cache
-        if (cachedUid == uid && cachedRole != null) {
-            return cachedRole!!
+        if (cachedUid == uid) {
+            cachedRole?.let { return it }
         }
 
         return try {

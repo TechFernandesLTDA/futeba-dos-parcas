@@ -142,7 +142,7 @@ class ConfirmationUseCase @Inject constructor(
             val confirmResult = gameRepository.confirmPresence(gameId, position, isCasual)
 
             if (confirmResult.isSuccess) {
-                val confirmation = confirmResult.getOrNull()!!
+                val confirmation = confirmResult.getOrThrow()
 
                 // Calcular ordem de confirmacao (Issue #40)
                 val confirmations = gameRepository.getGameConfirmations(gameId).getOrNull() ?: emptyList()
