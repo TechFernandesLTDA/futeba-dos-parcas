@@ -79,7 +79,7 @@ class ImageHelper @Inject constructor(
 
             Uri.fromFile(outputFile)
         } catch (e: Exception) {
-            android.util.Log.e("ImageHelper", "Error optimizing image", e)
+            AppLogger.e("ImageHelper", "Error optimizing image: ${e.message}", e)
             null
         }
     }
@@ -186,7 +186,7 @@ class ImageHelper @Inject constructor(
 
             Uri.fromFile(outputFile)
         } catch (e: Exception) {
-            android.util.Log.e("ImageHelper", "Error optimizing profile picture", e)
+            AppLogger.e("ImageHelper", "Error optimizing profile picture: ${e.message}", e)
             null
         }
     }

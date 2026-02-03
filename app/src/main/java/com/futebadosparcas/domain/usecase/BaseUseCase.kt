@@ -38,7 +38,7 @@ abstract class SuspendUseCase<in P, out R>(
         try {
             Result.success(execute(params))
         } catch (e: Exception) {
-            android.util.Log.e("UseCase", "Error executing use case: ${this::class.simpleName}", e)
+            com.futebadosparcas.util.AppLogger.e("UseCase", "Error executing use case: ${this::class.simpleName}: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -62,7 +62,7 @@ abstract class SuspendNoParamsUseCase<out R>(
         try {
             Result.success(execute())
         } catch (e: Exception) {
-            android.util.Log.e("UseCase", "Error executing use case: ${this::class.simpleName}", e)
+            com.futebadosparcas.util.AppLogger.e("UseCase", "Error executing use case: ${this::class.simpleName}: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -85,7 +85,7 @@ abstract class FlowUseCase<in P, out R>(
     operator fun invoke(params: P): Flow<Result<R>> {
         return execute(params)
             .catch { e ->
-                android.util.Log.e("UseCase", "Error in flow use case: ${this::class.simpleName}", e)
+                com.futebadosparcas.util.AppLogger.e("UseCase", "Error in flow use case: ${this::class.simpleName}: ${e.message}", e)
                 emit(Result.failure(e))
             }
             .flowOn(dispatcher)
@@ -109,7 +109,7 @@ abstract class FlowNoParamsUseCase<out R>(
     operator fun invoke(): Flow<Result<R>> {
         return execute()
             .catch { e ->
-                android.util.Log.e("UseCase", "Error in flow use case: ${this::class.simpleName}", e)
+                com.futebadosparcas.util.AppLogger.e("UseCase", "Error in flow use case: ${this::class.simpleName}: ${e.message}", e)
                 emit(Result.failure(e))
             }
             .flowOn(dispatcher)
@@ -135,7 +135,7 @@ abstract class CompletableUseCase<in P>(
             execute(params)
             Result.success(Unit)
         } catch (e: Exception) {
-            android.util.Log.e("UseCase", "Error executing completable use case: ${this::class.simpleName}", e)
+            com.futebadosparcas.util.AppLogger.e("UseCase", "Error executing completable use case: ${this::class.simpleName}: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -163,7 +163,7 @@ abstract class BatchUseCase<in P, out R>(
             }
             Result.success(results)
         } catch (e: Exception) {
-            android.util.Log.e("UseCase", "Error executing batch use case: ${this::class.simpleName}", e)
+            com.futebadosparcas.util.AppLogger.e("UseCase", "Error executing batch use case: ${this::class.simpleName}: ${e.message}", e)
             Result.failure(e)
         }
     }

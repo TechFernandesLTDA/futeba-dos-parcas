@@ -141,7 +141,7 @@ abstract class BaseViewModel<S : UiState, E : UiEvent> : ViewModel() {
      */
     protected open fun handleError(throwable: Throwable) {
         val message = throwable.message ?: "Erro desconhecido"
-        android.util.Log.e("ViewModel", "Error in ${this::class.simpleName}", throwable)
+        com.futebadosparcas.util.AppLogger.e("ViewModel", "Error in ${this::class.simpleName}: $message", throwable)
         viewModelScope.launch {
             _errorChannel.send(message)
         }

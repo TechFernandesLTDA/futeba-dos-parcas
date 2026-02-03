@@ -47,10 +47,9 @@ class GetGameDetailsUseCase @Inject constructor(
         val confirmations = try {
             gameRepository.getGameConfirmations(params.gameId).getOrNull() ?: emptyList()
         } catch (e: Exception) {
-            android.util.Log.w(
-                "GetGameDetails",
+            com.futebadosparcas.util.AppLogger.w("GetGameDetails") {
                 "Erro ao obter confirmações para jogo ${params.gameId}: ${e.message}"
-            )
+            }
             emptyList()
         }
 
@@ -58,10 +57,9 @@ class GetGameDetailsUseCase @Inject constructor(
         val teams = try {
             gameRepository.getGameTeams(params.gameId).getOrNull() ?: emptyList()
         } catch (e: Exception) {
-            android.util.Log.w(
-                "GetGameDetails",
+            com.futebadosparcas.util.AppLogger.w("GetGameDetails") {
                 "Erro ao obter times para jogo ${params.gameId}: ${e.message}"
-            )
+            }
             emptyList()
         }
 
