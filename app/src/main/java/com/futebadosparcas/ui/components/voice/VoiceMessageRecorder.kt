@@ -1,6 +1,8 @@
 package com.futebadosparcas.ui.components.voice
 
 import android.Manifest
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
@@ -454,7 +456,7 @@ fun VoiceRecordButton(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = Icons.Default.Mic,
-                        contentDescription = "Gravando",
+                        contentDescription = stringResource(R.string.cd_recording),
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
@@ -468,7 +470,7 @@ fun VoiceRecordButton(
             else -> {
                 Icon(
                     imageVector = Icons.Default.Mic,
-                    contentDescription = "Gravar mensagem de voz",
+                    contentDescription = stringResource(R.string.cd_record_voice),
                     tint = Color.White,
                     modifier = Modifier.size(24.dp)
                 )
@@ -773,7 +775,7 @@ fun VoiceRecorderCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Mic,
-                            contentDescription = "Gravar",
+                            contentDescription = stringResource(R.string.cd_record),
                             tint = Color.White,
                             modifier = Modifier.size(32.dp)
                         )
@@ -821,7 +823,7 @@ fun VoiceRecorderCard(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "Cancelar",
+                                contentDescription = stringResource(R.string.cd_cancel),
                                 tint = MaterialTheme.colorScheme.onErrorContainer
                             )
                         }
@@ -879,7 +881,7 @@ fun VoiceRecorderCard(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
-                                    contentDescription = "Descartar",
+                                    contentDescription = stringResource(R.string.cd_discard),
                                     tint = MaterialTheme.colorScheme.onErrorContainer
                                 )
                             }
@@ -899,7 +901,7 @@ fun VoiceRecorderCard(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Send,
-                                    contentDescription = "Enviar",
+                                    contentDescription = stringResource(R.string.cd_send),
                                     tint = Color.White
                                 )
                             }

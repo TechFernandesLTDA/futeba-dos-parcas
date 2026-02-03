@@ -1,6 +1,8 @@
 package com.futebadosparcas.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,7 +56,7 @@ fun ErrorView(
     ) {
         Icon(
             imageVector = Icons.Default.Error,
-            contentDescription = "Erro",
+            contentDescription = stringResource(R.string.cd_error),
             tint = MaterialTheme.colorScheme.error,
             modifier = Modifier.size(64.dp)
         )

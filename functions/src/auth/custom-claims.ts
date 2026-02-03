@@ -14,7 +14,7 @@
 
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { beforeUserCreated } from "firebase-functions/v2/identity";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { FieldValue } from "firebase-admin/firestore";
 
 const db = admin.firestore();
@@ -180,34 +180,36 @@ export const setUserRole = onCall<SetUserRoleRequest>(
 // ==========================================
 
 /**
- * Triggered quando um novo usuário é criado via Firebase Auth.
+ * Triggered quando um novo documento de usuário é criado em Firestore.
  * Define role padrão "PLAYER" no Custom Claim.
  *
- * IMPORTANTE: Esta função é chamada ANTES do documento users/{uid} ser criado.
- * O documento é criado pelo cliente após autenticação.
+ * IMPORTANTE: Esta função é chamada quando o documento users/{uid} é criado.
+ * Sincroniza o role do Firestore para Custom Claims.
  */
-export const onNewUserCreated = beforeUserCreated(async (event) => {
-    const user = event.data;
+export const onNewUserCreated = onDocumentCreated("users/{userId}", async (event) => {
+    const userId = event.params.userId;
+    const userData = event.data?.data();
 
-    if (!user) {
-        console.error("[USER_CREATED] No user data in event");
-        return {};
+    if (!userData) {
+        console.error(`[USER_CREATED] No user data for ${userId}`);
+        return;
     }
 
-    console.log(`[USER_CREATED] Setting default role for user ${user.uid}`);
+    console.log(`[USER_CREATED] Setting default role for user ${userId}`);
 
     try {
-        // Definir role padrão: PLAYER
-        // beforeUserCreated permite retornar customClaims diretamente
-        return {
-            customClaims: {
-                role: "PLAYER"
-            }
-        };
+        // Pegar role do documento (ou default PLAYER)
+        const role = userData.role || "PLAYER";
+
+        // Definir no Custom Claim
+        await admin.auth().setCustomUserClaims(userId, {
+            role: role
+        });
+
+        console.log(`[USER_CREATED] Successfully set role=${role} for ${userId}`);
     } catch (error) {
-        console.error(`[USER_CREATED] Error setting claims for ${user.uid}:`, error);
-        // Não throw - o usuário ainda pode usar o app, o role será setado no Firestore
-        return {};
+        console.error(`[USER_CREATED] Error setting claims for ${userId}:`, error);
+        // Não throw - o usuário ainda pode usar o app, o role está no Firestore
     }
 });
 

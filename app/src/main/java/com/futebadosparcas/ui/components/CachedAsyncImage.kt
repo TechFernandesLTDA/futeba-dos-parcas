@@ -1,6 +1,8 @@
 package com.futebadosparcas.ui.components
 
 import androidx.compose.foundation.background
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -105,7 +107,7 @@ fun CachedAsyncImage(
                 is AsyncImagePainter.State.Error -> {
                     Icon(
                         imageVector = Icons.Filled.BrokenImage,
-                        contentDescription = "Erro ao carregar imagem",
+                        contentDescription = stringResource(R.string.cd_image_load_error),
                         modifier = Modifier
                             .size(size * 0.5f)
                             .align(Alignment.Center),
@@ -131,7 +133,7 @@ fun CachedProfileImage(
 ) {
     CachedAsyncImage(
         imageUrl = photoUrl,
-        contentDescription = "Foto de perfil de $userName",
+        contentDescription = stringResource(R.string.cd_profile_photo_of, userName),
         modifier = modifier,
         size = size,
         shape = CircleShape,
@@ -162,7 +164,7 @@ fun CachedFieldImage(
         if (imageUrl.isNullOrEmpty()) {
             Icon(
                 imageVector = Icons.Filled.ImageNotSupported,
-                contentDescription = "Imagem do campo",
+                contentDescription = stringResource(R.string.cd_field_image),
                 modifier = Modifier.size(width * 0.4f),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
@@ -175,7 +177,7 @@ fun CachedFieldImage(
                     .data(imageUrl)
                     .crossfade(durationMillis = 300)
                     .build(),
-                contentDescription = "Imagem do campo: $fieldName",
+                contentDescription = stringResource(R.string.cd_field_image_named, fieldName),
                 modifier = Modifier
                     .size(width = width, height = height)
                     .clip(RoundedCornerShape(cornerRadius)),
@@ -197,7 +199,7 @@ fun CachedFieldImage(
                 is AsyncImagePainter.State.Error -> {
                     Icon(
                         imageVector = Icons.Filled.BrokenImage,
-                        contentDescription = "Erro ao carregar imagem",
+                        contentDescription = stringResource(R.string.cd_image_load_error),
                         modifier = Modifier
                             .size(width * 0.4f)
                             .align(Alignment.Center),
@@ -232,7 +234,7 @@ fun CachedGroupImage(
             // Sem URL - mostrar ícone de grupo
             Icon(
                 imageVector = Icons.Filled.Groups,
-                contentDescription = "Foto do grupo $groupName",
+                contentDescription = stringResource(R.string.cd_group_photo, groupName),
                 modifier = Modifier.size(size * 0.5f),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
@@ -246,7 +248,7 @@ fun CachedGroupImage(
                     .data(photoUrl)
                     .crossfade(durationMillis = 300)
                     .build(),
-                contentDescription = "Foto do grupo $groupName",
+                contentDescription = stringResource(R.string.cd_group_photo, groupName),
                 modifier = Modifier
                     .size(size)
                     .clip(CircleShape),
@@ -268,7 +270,7 @@ fun CachedGroupImage(
                 is AsyncImagePainter.State.Error -> {
                     Icon(
                         imageVector = Icons.Filled.BrokenImage,
-                        contentDescription = "Erro ao carregar foto do grupo",
+                        contentDescription = stringResource(R.string.cd_group_photo_error),
                         modifier = Modifier
                             .size(size * 0.5f)
                             .align(Alignment.Center),

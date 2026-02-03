@@ -1,6 +1,7 @@
 package com.futebadosparcas.ui.components.avatar
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -1073,7 +1074,7 @@ private fun FrameOption(
                 if (!isUnlocked) {
                     Icon(
                         imageVector = Icons.Default.Lock,
-                        contentDescription = "Bloqueado",
+                        contentDescription = stringResource(R.string.cd_locked),
                         tint = Color.White,
                         modifier = Modifier.size(16.dp)
                     )
@@ -1123,7 +1124,7 @@ private fun BadgeOption(
                 if (!isUnlocked) {
                     Icon(
                         imageVector = Icons.Default.Lock,
-                        contentDescription = "Bloqueado",
+                        contentDescription = stringResource(R.string.cd_locked),
                         tint = Color.Black.copy(alpha = 0.5f),
                         modifier = Modifier.size(16.dp)
                     )

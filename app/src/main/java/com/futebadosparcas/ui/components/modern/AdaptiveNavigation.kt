@@ -1,5 +1,7 @@
 package com.futebadosparcas.ui.components.modern
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -8,6 +10,9 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 
 /**
  * Destino de navegação
@@ -34,7 +39,6 @@ data class NavDestination(
  * @param destinations Lista de destinos de navegação
  * @param content Conteúdo principal da tela
  */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun AdaptiveNavigationScaffold(
     selectedDestination: String,
@@ -68,37 +72,33 @@ fun AdaptiveNavigationScaffold(
 /**
  * Exemplo de uso com destinos padrão do app
  */
-object AppDestinations {
-    val Home = NavDestination(
+@Composable
+fun AppDestinations() = listOf(
+    NavDestination(
         route = "home",
         label = "Início",
         icon = Icons.Default.Home,
-        contentDescription = "Tela inicial com próximos jogos"
-    )
-
-    val Games = NavDestination(
+        contentDescription = stringResource(R.string.cd_home_screen)
+    ),
+    NavDestination(
         route = "games",
         label = "Jogos",
         icon = Icons.Default.SportsFootball,
-        contentDescription = "Lista de todos os jogos"
-    )
-
-    val League = NavDestination(
+        contentDescription = stringResource(R.string.cd_games_list)
+    ),
+    NavDestination(
         route = "league",
         label = "Liga",
         icon = Icons.Default.EmojiEvents,
-        contentDescription = "Ranking e classificação da liga"
-    )
-
-    val Profile = NavDestination(
+        contentDescription = stringResource(R.string.cd_rankings)
+    ),
+    NavDestination(
         route = "profile",
         label = "Perfil",
         icon = Icons.Default.Person,
-        contentDescription = "Perfil do usuário e estatísticas"
+        contentDescription = stringResource(R.string.cd_user_profile)
     )
-
-    val all = listOf(Home, Games, League, Profile)
-}
+)
 
 /**
  * Navegação manual (para customização completa)
