@@ -610,14 +610,14 @@ fun AvatarCustomizerScreen(
                 onClick = onCancel,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Cancelar")
+                Text(stringResource(R.string.cancel))
             }
 
             Button(
                 onClick = { onSave(config) },
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Salvar")
+                Text(stringResource(R.string.save))
             }
         }
     }
@@ -852,7 +852,7 @@ private fun ShirtCustomizer(
                 FilterChip(
                     selected = config.shirtNumber == null,
                     onClick = { onConfigChange(config.copy(shirtNumber = null)) },
-                    label = { Text("Sem número") }
+                    label = { Text(stringResource(R.string.avatar_no_number)) }
                 )
             }
             items((1..99).toList()) { number ->

@@ -1129,7 +1129,7 @@ private fun SavedFormationCard(
                         .background(Color(formation.getTeam1ColorEnum().hexValue), CircleShape)
                 )
                 Spacer(Modifier.width(4.dp))
-                Text("vs", style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.team_vs), style = MaterialTheme.typography.labelSmall)
                 Spacer(Modifier.width(4.dp))
                 Box(
                     modifier = Modifier

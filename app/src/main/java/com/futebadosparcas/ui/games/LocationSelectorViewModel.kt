@@ -508,6 +508,11 @@ class LocationSelectorViewModel @Inject constructor(
             }
         }
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        searchJob?.cancel()
+    }
 }
 
 // ==================== DATA CLASSES ====================

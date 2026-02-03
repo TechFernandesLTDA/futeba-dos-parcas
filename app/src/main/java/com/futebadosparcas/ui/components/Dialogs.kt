@@ -3,11 +3,13 @@ package com.futebadosparcas.ui.components
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.CheckCircle
+import com.futebadosparcas.R
 
 /**
  * Dialogs
@@ -130,18 +132,18 @@ fun ErrorDialog(
         confirmButton = {
             if (onRetry != null) {
                 TextButton(onClick = onRetry) {
-                    Text("Tentar novamente")
+                    Text(stringResource(R.string.retry))
                 }
             } else {
                 TextButton(onClick = onDismiss) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             }
         },
         dismissButton = if (onRetry != null) {
             {
                 TextButton(onClick = onDismiss) {
-                    Text("Cancelar")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         } else null
@@ -195,7 +197,7 @@ fun <T> ChoiceDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

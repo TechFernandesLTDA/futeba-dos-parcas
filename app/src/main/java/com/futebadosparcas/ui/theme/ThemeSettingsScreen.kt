@@ -39,7 +39,7 @@ fun ThemeSettingsScreen(
         // Theme Mode
         Card {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Modo", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.theme_mode), style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ThemeMode.values().forEach { mode ->
