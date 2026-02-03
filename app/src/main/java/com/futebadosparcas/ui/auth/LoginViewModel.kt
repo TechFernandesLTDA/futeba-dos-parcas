@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -49,18 +50,18 @@ class LoginViewModel @Inject constructor(
      */
     fun onGoogleSignInSuccess() {
         viewModelScope.launch {
-            android.util.Log.d(TAG, "=== onGoogleSignInSuccess called ===")
+            AppLogger.d(TAG) { "=== onGoogleSignInSuccess called ===" }
             _loginState.value = LoginState.Loading
 
-            android.util.Log.d(TAG, "Calling authRepository.getCurrentUser()")
+            AppLogger.d(TAG) { "Calling authRepository.getCurrentUser()" }
             val result = authRepository.getCurrentUser()
             result.fold(
                 onSuccess = { user ->
-                    android.util.Log.d(TAG, "getCurrentUser SUCCESS - userId: ${user.id}")
+                    AppLogger.d(TAG) { "getCurrentUser SUCCESS - userId: ${user.id}" }
                     _loginState.value = LoginState.Success(user)
                 },
                 onFailure = { error ->
-                    android.util.Log.e(TAG, "getCurrentUser FAILURE: ${error.message}", error)
+                    AppLogger.e(TAG, "getCurrentUser FAILURE: ${error.message}", error)
                     _loginState.value = LoginState.Error(
                         error.message ?: "Erro ao fazer login"
                     )

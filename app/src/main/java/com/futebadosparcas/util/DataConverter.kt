@@ -122,7 +122,7 @@ class DataConverter @Inject constructor() {
         return try {
             document.toObject(T::class.java)
         } catch (e: Exception) {
-            android.util.Log.e("DataConverter", "Error parsing document to ${T::class.java.simpleName}", e)
+            AppLogger.e("DataConverter", "Error parsing document to ${T::class.java.simpleName}: ${e.message}", e)
             null
         }
     }
@@ -134,7 +134,7 @@ class DataConverter @Inject constructor() {
         return try {
             document.toObject(T::class.java)
         } catch (e: Exception) {
-            android.util.Log.e("DataConverter", "Error parsing query document to ${T::class.java.simpleName}", e)
+            AppLogger.e("DataConverter", "Error parsing query document to ${T::class.java.simpleName}: ${e.message}", e)
             null
         }
     }
@@ -173,7 +173,7 @@ class DataConverter @Inject constructor() {
 
             instance
         } catch (e: Exception) {
-            android.util.Log.e("DataConverter", "Error converting map to ${T::class.java.simpleName}", e)
+            AppLogger.e("DataConverter", "Error converting map to ${T::class.java.simpleName}: ${e.message}", e)
             null
         }
     }
@@ -188,7 +188,7 @@ class DataConverter @Inject constructor() {
                 field.name to field.get(obj)
             }
         } catch (e: Exception) {
-            android.util.Log.e("DataConverter", "Error converting object to map", e)
+            AppLogger.e("DataConverter", "Error converting object to map: ${e.message}", e)
             emptyMap()
         }
     }

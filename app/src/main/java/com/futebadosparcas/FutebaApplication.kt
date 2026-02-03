@@ -49,7 +49,7 @@ class FutebaApplication : Application(), Configuration.Provider {
                 )
             }
         } catch (e: Exception) {
-            android.util.Log.e(
+            com.futebadosparcas.util.AppLogger.e(
                 "FutebaApplication",
                 "Error initializing Firebase: ${e.message}",
                 e
