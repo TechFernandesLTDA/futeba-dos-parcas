@@ -117,6 +117,9 @@ fun UserManagementScreen(
                         )
                     }
                 }
+                is UserManagementUiState.Empty -> {
+                    EmptySearchResults()
+                }
                 is UserManagementUiState.Error -> {
                     ErrorState(
                         message = state.message,

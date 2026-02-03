@@ -130,28 +130,35 @@ class MVPVoteViewModel @Inject constructor(
              )
 
              gameExperienceRepository.submitVote(vote)
-             
-             // Move to next category or finish
-             val nextCategory = getNextCategory(category)
+                 .onSuccess {
+                     // Move to next category or finish
+                     val nextCategory = getNextCategory(category)
 
-             if (nextCategory != null) {
-                 val nextCandidates = getCandidatesForCategory(nextCategory)
-                 _uiState.value = currentState.copy(
-                     currentCategory = nextCategory,
-                     candidates = nextCandidates,
-                     isOwner = isOwner
-                 )
-             } else {
-                 _uiState.value = MVPVoteUiState.Finished(isOwner)
-                 
-                 // Check if ALL players voted to auto-finish
-                 gameExperienceRepository.checkAllVoted(gameId)
-                    .onSuccess { allVoted ->
-                        if (allVoted) {
-                             finalizeVoting(gameId)
-                        }
-                    }
-             }
+                     if (nextCategory != null) {
+                         val nextCandidates = getCandidatesForCategory(nextCategory)
+                         _uiState.value = currentState.copy(
+                             currentCategory = nextCategory,
+                             candidates = nextCandidates,
+                             isOwner = isOwner
+                         )
+                     } else {
+                         _uiState.value = MVPVoteUiState.Finished(isOwner)
+
+                         // Verifica se todos votaram para finalizar automaticamente
+                         gameExperienceRepository.checkAllVoted(gameId)
+                            .onSuccess { allVoted ->
+                                if (allVoted) {
+                                     finalizeVoting(gameId)
+                                }
+                            }
+                     }
+                 }
+                 .onFailure { error ->
+                     _uiState.value = MVPVoteUiState.Error(
+                         error.message ?: "Erro ao enviar voto",
+                         isOwner
+                     )
+                 }
         }
     }
 

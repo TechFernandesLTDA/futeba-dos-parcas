@@ -172,7 +172,11 @@ class CreateGameViewModel @Inject constructor(
 
     private fun checkForDraft() {
         viewModelScope.launch {
-            _hasDraft.value = draftRepository.hasDraft()
+            try {
+                _hasDraft.value = draftRepository.hasDraft()
+            } catch (e: Exception) {
+                AppLogger.w(TAG) { "Falha ao verificar rascunho: ${e.message}" }
+            }
         }
     }
 
@@ -316,9 +320,13 @@ class CreateGameViewModel @Inject constructor(
 
     private fun loadGroups() {
         viewModelScope.launch {
-            groupRepository.getValidGroupsForGame().onSuccess { groups ->
-                _availableGroups.value = groups
-            }
+            groupRepository.getValidGroupsForGame()
+                .onSuccess { groups ->
+                    _availableGroups.value = groups
+                }
+                .onFailure { error ->
+                    AppLogger.w(TAG) { "Falha ao carregar grupos: ${error.message}" }
+                }
         }
     }
 
@@ -332,9 +340,13 @@ class CreateGameViewModel @Inject constructor(
 
     private fun loadOwnerName() {
         viewModelScope.launch {
-            val user = authRepository.getCurrentFirebaseUser()
-            user?.displayName?.let {
-                _currentUser.value = it
+            try {
+                val user = authRepository.getCurrentFirebaseUser()
+                user?.displayName?.let {
+                    _currentUser.value = it
+                }
+            } catch (e: Exception) {
+                AppLogger.w(TAG) { "Falha ao carregar nome do dono: ${e.message}" }
             }
         }
     }
