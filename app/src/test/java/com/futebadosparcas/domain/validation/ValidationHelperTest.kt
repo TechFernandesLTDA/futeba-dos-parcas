@@ -196,7 +196,6 @@ class ValidationHelperTest {
         fun `null level should return true`() {
             assertTrue(ValidationHelper.isValidLevel(null))
         }
-
     }
 
     // ==================== TESTES DE XP ====================
@@ -450,6 +449,463 @@ class ValidationHelperTest {
             assertEquals(10, ValidationHelper.MAX_ASSISTS_PER_GAME)
             assertEquals(30, ValidationHelper.MAX_SAVES_PER_GAME)
             assertEquals(500, ValidationHelper.MAX_XP_PER_GAME)
+        }
+    }
+
+    // ==================== VALIDAÇÃO 1: CONTAGEM DE JOGADORES ====================
+
+    @Nested
+    @DisplayName("Validação de Contagem de Jogadores")
+    inner class PlayerCountValidation {
+
+        @Test
+        @DisplayName("Contagem válida de jogadores deve passar")
+        fun `valid player count should pass`() {
+            assertTrue(ValidationHelper.validatePlayerCount(4).isValid())
+            assertTrue(ValidationHelper.validatePlayerCount(10).isValid())
+            assertTrue(ValidationHelper.validatePlayerCount(22).isValid())
+            assertTrue(ValidationHelper.validatePlayerCount(30).isValid())
+        }
+
+        @Test
+        @DisplayName("Jogadores abaixo do mínimo deve falhar")
+        fun `below minimum players should fail`() {
+            val result = ValidationHelper.validatePlayerCount(3)
+            assertTrue(result is ValidationResult.Invalid)
+            assertEquals(ValidationErrorCode.OUT_OF_RANGE, (result as ValidationResult.Invalid).code)
+        }
+
+        @Test
+        @DisplayName("Jogadores acima do máximo deve falhar")
+        fun `above maximum players should fail`() {
+            val result = ValidationHelper.validatePlayerCount(31)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+    }
+
+    // ==================== VALIDAÇÃO 2: EQUILÍBRIO DE TIMES ====================
+
+    @Nested
+    @DisplayName("Validação de Equilíbrio de Times")
+    inner class TeamBalanceValidation {
+
+        @Test
+        @DisplayName("Times equilibrados devem passar")
+        fun `balanced teams should pass`() {
+            assertTrue(ValidationHelper.validateTeamBalance(5, 5).isValid())
+            assertTrue(ValidationHelper.validateTeamBalance(5, 6).isValid())
+            assertTrue(ValidationHelper.validateTeamBalance(6, 5).isValid())
+        }
+
+        @Test
+        @DisplayName("Diferença maior que 1 deve falhar")
+        fun `difference greater than 1 should fail`() {
+            val result = ValidationHelper.validateTeamBalance(5, 8)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        @DisplayName("Time com 0 jogadores deve falhar")
+        fun `team with 0 players should fail`() {
+            val result = ValidationHelper.validateTeamBalance(0, 5)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+    }
+
+    // ==================== VALIDAÇÃO 3: DURAÇÃO DO JOGO ====================
+
+    @Nested
+    @DisplayName("Validação de Duração do Jogo")
+    inner class GameDurationValidation {
+
+        @Test
+        @DisplayName("Duração válida deve passar")
+        fun `valid duration should pass`() {
+            assertTrue(ValidationHelper.validateGameDuration(60).isValid())
+            assertTrue(ValidationHelper.validateGameDuration(90).isValid())
+            assertTrue(ValidationHelper.validateGameDuration(120).isValid())
+        }
+
+        @Test
+        @DisplayName("Duração abaixo do mínimo deve falhar")
+        fun `below minimum duration should fail`() {
+            val result = ValidationHelper.validateGameDuration(10)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        @DisplayName("Duração acima do máximo deve falhar")
+        fun `above maximum duration should fail`() {
+            val result = ValidationHelper.validateGameDuration(300)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+    }
+
+    // ==================== VALIDAÇÃO 4: DATA DO JOGO ====================
+
+    @Nested
+    @DisplayName("Validação de Data do Jogo")
+    inner class GameDateValidation {
+
+        @Test
+        @DisplayName("Data futura deve passar")
+        fun `future date should pass`() {
+            val futureDate = Date(System.currentTimeMillis() + 86400000) // +1 dia
+            assertTrue(ValidationHelper.validateGameDate(futureDate).isValid())
+        }
+
+        @Test
+        @DisplayName("Data passada deve falhar")
+        fun `past date should fail`() {
+            val pastDate = Date(System.currentTimeMillis() - 86400000) // -1 dia
+            val result = ValidationHelper.validateGameDate(pastDate)
+            assertTrue(result is ValidationResult.Invalid)
+            assertEquals(ValidationErrorCode.INVALID_TIMESTAMP, (result as ValidationResult.Invalid).code)
+        }
+
+        @Test
+        @DisplayName("Data nula deve falhar")
+        fun `null date should fail`() {
+            val result = ValidationHelper.validateGameDate(null)
+            assertTrue(result is ValidationResult.Invalid)
+            assertEquals(ValidationErrorCode.REQUIRED_FIELD, (result as ValidationResult.Invalid).code)
+        }
+    }
+
+    // ==================== VALIDAÇÃO 5: VALOR DE PAGAMENTO ====================
+
+    @Nested
+    @DisplayName("Validação de Valor de Pagamento")
+    inner class PaymentValueValidation {
+
+        @Test
+        @DisplayName("Valor válido deve passar")
+        fun `valid payment should pass`() {
+            assertTrue(ValidationHelper.validatePaymentValue(25.0).isValid())
+            assertTrue(ValidationHelper.validatePaymentValue(0.01).isValid())
+            assertTrue(ValidationHelper.validatePaymentValue(100.0).isValid())
+        }
+
+        @Test
+        @DisplayName("Valor zero deve falhar")
+        fun `zero value should fail`() {
+            val result = ValidationHelper.validatePaymentValue(0.0)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        @DisplayName("Valor acima do máximo deve falhar")
+        fun `above maximum should fail`() {
+            val result = ValidationHelper.validatePaymentValue(15000.0)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        @DisplayName("Valor nulo deve falhar")
+        fun `null value should fail`() {
+            val result = ValidationHelper.validatePaymentValue(null)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+    }
+
+    // ==================== VALIDAÇÃO 6: TAMANHO DO GRUPO ====================
+
+    @Nested
+    @DisplayName("Validação de Tamanho do Grupo")
+    inner class GroupSizeValidation {
+
+        @Test
+        @DisplayName("Tamanho válido deve passar")
+        fun `valid group size should pass`() {
+            assertTrue(ValidationHelper.validateGroupSize(1).isValid())
+            assertTrue(ValidationHelper.validateGroupSize(50).isValid())
+            assertTrue(ValidationHelper.validateGroupSize(100).isValid())
+        }
+
+        @Test
+        @DisplayName("Zero membros deve falhar")
+        fun `zero members should fail`() {
+            val result = ValidationHelper.validateGroupSize(0)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        @DisplayName("Acima do máximo deve falhar")
+        fun `above maximum should fail`() {
+            val result = ValidationHelper.validateGroupSize(101)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+    }
+
+    // ==================== VALIDAÇÃO 7: DOCUMENT ID ====================
+
+    @Nested
+    @DisplayName("Validação de Document ID")
+    inner class DocumentIdValidation {
+
+        @Test
+        @DisplayName("ID válido deve retornar true")
+        fun `valid id should return true`() {
+            assertTrue(ValidationHelper.isValidDocumentId("abc123"))
+            assertTrue(ValidationHelper.isValidDocumentId("user-id-001"))
+            assertTrue(ValidationHelper.isValidDocumentId("xYz_456"))
+        }
+
+        @Test
+        @DisplayName("ID nulo ou vazio deve retornar false")
+        fun `null or empty id should return false`() {
+            assertFalse(ValidationHelper.isValidDocumentId(null))
+            assertFalse(ValidationHelper.isValidDocumentId(""))
+            assertFalse(ValidationHelper.isValidDocumentId("   "))
+        }
+
+        @Test
+        @DisplayName("ID com barra deve retornar false")
+        fun `id with slash should return false`() {
+            assertFalse(ValidationHelper.isValidDocumentId("path/to/doc"))
+        }
+
+        @Test
+        @DisplayName("ID com pontos duplos deve retornar false")
+        fun `id with double dots should return false`() {
+            assertFalse(ValidationHelper.isValidDocumentId("doc..id"))
+        }
+
+        @Test
+        @DisplayName("ID muito longo deve retornar false")
+        fun `too long id should return false`() {
+            assertFalse(ValidationHelper.isValidDocumentId("a".repeat(129)))
+        }
+    }
+
+    // ==================== VALIDAÇÃO 8: COORDENADAS ====================
+
+    @Nested
+    @DisplayName("Validação de Coordenadas")
+    inner class CoordinateValidation {
+
+        @Test
+        @DisplayName("Coordenadas válidas devem passar")
+        fun `valid coordinates should pass`() {
+            assertTrue(ValidationHelper.validateCoordinates(-23.55, -46.63).isValid()) // SP
+            assertTrue(ValidationHelper.validateCoordinates(0.0, 0.0).isValid())
+            assertTrue(ValidationHelper.validateCoordinates(90.0, 180.0).isValid())
+            assertTrue(ValidationHelper.validateCoordinates(-90.0, -180.0).isValid())
+        }
+
+        @Test
+        @DisplayName("Latitude fora do range deve falhar")
+        fun `out of range latitude should fail`() {
+            val result = ValidationHelper.validateCoordinates(91.0, 0.0)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        @DisplayName("Longitude fora do range deve falhar")
+        fun `out of range longitude should fail`() {
+            val result = ValidationHelper.validateCoordinates(0.0, 181.0)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        @DisplayName("Coordenadas nulas devem falhar")
+        fun `null coordinates should fail`() {
+            assertTrue(ValidationHelper.validateCoordinates(null, null) is ValidationResult.Invalid)
+            assertTrue(ValidationHelper.validateCoordinates(0.0, null) is ValidationResult.Invalid)
+            assertTrue(ValidationHelper.validateCoordinates(null, 0.0) is ValidationResult.Invalid)
+        }
+    }
+
+    // ==================== VALIDAÇÃO 9: PLACAR ====================
+
+    @Nested
+    @DisplayName("Validação de Placar")
+    inner class GameScoreValidation {
+
+        @Test
+        @DisplayName("Placar válido deve passar")
+        fun `valid score should pass`() {
+            assertTrue(ValidationHelper.validateGameScore(3, 2).isValid())
+            assertTrue(ValidationHelper.validateGameScore(0, 0).isValid())
+            assertTrue(ValidationHelper.validateGameScore(10, 8).isValid())
+        }
+
+        @Test
+        @DisplayName("Placar negativo deve falhar")
+        fun `negative score should fail`() {
+            val result = ValidationHelper.validateGameScore(-1, 2)
+            assertTrue(result is ValidationResult.Invalid)
+            assertEquals(ValidationErrorCode.NEGATIVE_VALUE, (result as ValidationResult.Invalid).code)
+        }
+
+        @Test
+        @DisplayName("Placar excessivo deve falhar")
+        fun `excessive score should fail`() {
+            val result = ValidationHelper.validateGameScore(51, 2)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+    }
+
+    // ==================== VALIDAÇÃO 10: URL DE FOTO ====================
+
+    @Nested
+    @DisplayName("Validação de URL de Foto")
+    inner class PhotoUrlValidation {
+
+        @Test
+        @DisplayName("URL válida deve retornar true")
+        fun `valid url should return true`() {
+            assertTrue(ValidationHelper.isValidPhotoUrl("https://example.com/photo.jpg"))
+            assertTrue(ValidationHelper.isValidPhotoUrl("gs://bucket/photo.jpg"))
+        }
+
+        @Test
+        @DisplayName("URL nula ou vazia deve retornar true (opcional)")
+        fun `null or empty url should return true`() {
+            assertTrue(ValidationHelper.isValidPhotoUrl(null))
+            assertTrue(ValidationHelper.isValidPhotoUrl(""))
+        }
+
+        @Test
+        @DisplayName("URL HTTP sem S deve retornar false")
+        fun `http url should return false`() {
+            assertFalse(ValidationHelper.isValidPhotoUrl("http://example.com/photo.jpg"))
+        }
+
+        @Test
+        @DisplayName("URL muito longa deve retornar false")
+        fun `too long url should return false`() {
+            assertFalse(ValidationHelper.isValidPhotoUrl("https://" + "a".repeat(2050)))
+        }
+    }
+
+    // ==================== VALIDAÇÃO 11: NÚMERO DE TIMES ====================
+
+    @Nested
+    @DisplayName("Validação de Número de Times")
+    inner class TeamCountValidation {
+
+        @Test
+        @DisplayName("2-4 times deve passar")
+        fun `valid team count should pass`() {
+            assertTrue(ValidationHelper.validateTeamCount(2).isValid())
+            assertTrue(ValidationHelper.validateTeamCount(3).isValid())
+            assertTrue(ValidationHelper.validateTeamCount(4).isValid())
+        }
+
+        @Test
+        @DisplayName("Menos de 2 times deve falhar")
+        fun `below 2 teams should fail`() {
+            val result = ValidationHelper.validateTeamCount(1)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        @DisplayName("Mais de 4 times deve falhar")
+        fun `above 4 teams should fail`() {
+            val result = ValidationHelper.validateTeamCount(5)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+    }
+
+    // ==================== VALIDAÇÃO 12: STREAK ====================
+
+    @Nested
+    @DisplayName("Validação de Streak")
+    inner class StreakValidation {
+
+        @Test
+        @DisplayName("Streak válido deve passar")
+        fun `valid streak should pass`() {
+            assertTrue(ValidationHelper.validateStreak(0).isValid())
+            assertTrue(ValidationHelper.validateStreak(10).isValid())
+            assertTrue(ValidationHelper.validateStreak(100).isValid())
+            assertTrue(ValidationHelper.validateStreak(365).isValid())
+        }
+
+        @Test
+        @DisplayName("Streak negativo deve falhar")
+        fun `negative streak should fail`() {
+            val result = ValidationHelper.validateStreak(-1)
+            assertTrue(result is ValidationResult.Invalid)
+            assertEquals(ValidationErrorCode.NEGATIVE_VALUE, (result as ValidationResult.Invalid).code)
+        }
+
+        @Test
+        @DisplayName("Streak excessivo deve falhar")
+        fun `excessive streak should fail`() {
+            val result = ValidationHelper.validateStreak(366)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+    }
+
+    // ==================== VALIDAÇÃO COMPLETA DE JOGO ====================
+
+    @Nested
+    @DisplayName("Validação Completa de Criação de Jogo")
+    inner class GameCreationValidation {
+
+        @Test
+        @DisplayName("Dados válidos devem gerar lista vazia de erros")
+        fun `valid data should produce no errors`() {
+            val futureDate = Date(System.currentTimeMillis() + 86400000)
+            val errors = ValidationHelper.validateGameCreation(
+                title = "Pelada de Terça",
+                playerCount = 10,
+                gameDate = futureDate,
+                durationMinutes = 90
+            )
+            assertTrue(errors.isEmpty())
+        }
+
+        @Test
+        @DisplayName("Múltiplos erros devem ser capturados")
+        fun `multiple errors should be captured`() {
+            val pastDate = Date(System.currentTimeMillis() - 86400000)
+            val errors = ValidationHelper.validateGameCreation(
+                title = "AB", // Muito curto (min 3)
+                playerCount = 2, // Abaixo do mínimo (4)
+                gameDate = pastDate, // Data passada
+                durationMinutes = 5 // Abaixo do mínimo (15)
+            )
+            assertTrue(errors.size >= 3) // Ao menos 3 erros
+        }
+    }
+
+    // ==================== TESTES DE CEP ====================
+
+    @Nested
+    @DisplayName("Validação de CEP")
+    inner class CepValidation {
+
+        @Test
+        @DisplayName("CEP válido deve retornar true")
+        fun `valid cep should return true`() {
+            assertTrue(ValidationHelper.isValidCep("12345-678"))
+            assertTrue(ValidationHelper.isValidCep("12345678"))
+        }
+
+        @Test
+        @DisplayName("CEP inválido deve retornar false")
+        fun `invalid cep should return false`() {
+            assertFalse(ValidationHelper.isValidCep("1234"))
+            assertFalse(ValidationHelper.isValidCep("123456789"))
+            assertFalse(ValidationHelper.isValidCep(null))
+            assertFalse(ValidationHelper.isValidCep(""))
+        }
+
+        @Test
+        @DisplayName("formatCep deve formatar corretamente")
+        fun `formatCep should format correctly`() {
+            assertEquals("12345-678", ValidationHelper.formatCep("12345678"))
+            assertEquals("12345-678", ValidationHelper.formatCep("12345-678"))
+        }
+
+        @Test
+        @DisplayName("sanitizeCep deve remover formatação")
+        fun `sanitizeCep should remove formatting`() {
+            assertEquals("12345678", ValidationHelper.sanitizeCep("12345-678"))
+            assertEquals("", ValidationHelper.sanitizeCep(null))
         }
     }
 }

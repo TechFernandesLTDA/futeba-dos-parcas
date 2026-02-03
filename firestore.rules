@@ -64,34 +64,35 @@ service cloud.firestore {
     }
 
     // ============================================
-    // PERF_001: CUSTOM CLAIMS OPTIMIZATION
+    // PERF_001: CUSTOM CLAIMS - FASE 2 COMPLETA
     // ============================================
-    // MIGRATION STRATEGY:
-    // 1. FASE 1 (atual): Manter AMBAS verificações (Custom Claim + Firestore)
-    // 2. FASE 2: Após 95% usuários migrarem (2 semanas), remover fallback getUserRole()
-    // 3. ROLLBACK: Se problemas, reverter regras (Custom Claims não fazem mal)
+    // HISTORICO:
+    // - FASE 1: Dual-source (Custom Claim + Firestore fallback)
+    // - FASE 2 (ATUAL): Apenas Custom Claims (0 Firestore reads)
+    //
+    // TODOS OS 4 USUARIOS MIGRADOS (100%):
+    // - ricardogf2004@gmail.com -> PLAYER
+    // - rafaboumer@gmail.com -> PLAYER
+    // - renankakinho69@gmail.com -> ADMIN
+    // - techfernandesltda@gmail.com -> FIELD_OWNER
     //
     // PERFORMANCE IMPACT:
     // - ANTES: getUserRole() = 1 Firestore read por request
-    // - DEPOIS: request.auth.token.role = 0 reads (incluído no JWT)
-    // - ECONOMIA: ~40% de reads eliminados (~20k reads/dia para 1k usuários)
+    // - DEPOIS: request.auth.token.role = 0 reads (incluido no JWT)
+    // - ECONOMIA: ~40% de reads eliminados
+    //
+    // ROLLBACK: Se necessario, restaurar getUserRole() fallback
+    // do commit anterior (git log para encontrar)
     // ============================================
 
-    // DEPRECATED: getUserRole() - Será removido na Fase 2 (2 semanas)
-    // Mantido temporariamente para backward compatibility
-    function getUserRole() {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      return userDoc != null ? userDoc.data.role : null;
+    // isAdmin() - Usa APENAS Custom Claims (0 Firestore reads)
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'ADMIN';
     }
 
-    // OPTIMIZED: isAdmin() - Prioriza Custom Claim, fallback para Firestore
-    // FASE 1: Aceita AMBOS (Custom Claim OU Firestore)
-    // FASE 2: Remover "|| getUserRole() == 'ADMIN'" após migração completa
-    function isAdmin() {
-      return isAuthenticated() && (
-        request.auth.token.role == 'ADMIN' ||  // NOVO: Custom Claim (0 reads)
-        getUserRole() == 'ADMIN'                // ANTIGO: Fallback Firestore (1 read)
-      );
+    // isFieldOwner() - Verifica Custom Claims para FIELD_OWNER
+    function isFieldOwner() {
+      return isAuthenticated() && request.auth.token.role == 'FIELD_OWNER';
     }
 
     // Verifica se o usuario e um jogador confirmado no jogo (C-002 fix)

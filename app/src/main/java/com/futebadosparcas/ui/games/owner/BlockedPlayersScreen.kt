@@ -45,12 +45,12 @@ fun BlockedPlayersScreen(
                 title = { Text(stringResource(R.string.owner_blocked_players)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { showBlockDialog = true }) {
-                        Icon(Icons.Outlined.PersonAdd, stringResource(R.string.owner_block_player))
+                        Icon(Icons.Outlined.PersonAdd, contentDescription = stringResource(R.string.owner_block_player))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

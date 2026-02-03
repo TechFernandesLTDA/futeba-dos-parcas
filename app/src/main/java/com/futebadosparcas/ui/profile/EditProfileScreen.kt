@@ -518,7 +518,7 @@ private fun BasicInfoSection(
             readOnly = true,
             trailingIcon = {
                 IconButton(onClick = { showDatePicker = true }) {
-                    Icon(Icons.Default.CalendarToday, stringResource(R.string.edit_profile_select_date))
+                    Icon(Icons.Default.CalendarToday, contentDescription = stringResource(R.string.edit_profile_select_date))
                 }
             },
             shape = RoundedCornerShape(12.dp)

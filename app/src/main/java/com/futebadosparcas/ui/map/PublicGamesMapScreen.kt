@@ -149,7 +149,7 @@ fun PublicGamesMapScreen(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = 200.dp),
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             ) {
-                Icon(Icons.Default.MyLocation, stringResource(R.string.my_location),
+                Icon(Icons.Default.MyLocation, contentDescription = stringResource(R.string.my_location),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer)
             }
         }
@@ -161,7 +161,7 @@ private fun MapPlaceholder(games: List<MapGameMarker>, selectedGame: MapGameMark
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainerLow),
         contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Default.Map, null, Modifier.size(96.dp),
+            Icon(Icons.Default.Map, contentDescription = null, Modifier.size(96.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
             Spacer(Modifier.height(16.dp))
             Text(stringResource(R.string.map_placeholder), style = MaterialTheme.typography.bodyLarge,
@@ -201,18 +201,18 @@ private fun MapGameCard(game: MapGameMarker, isSelected: Boolean, onClick: () ->
         Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.SportsScore, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                Icon(Icons.Default.SportsScore, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(game.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(game.locationName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
-                    Icon(Icons.Default.Schedule, null, Modifier.size(14.dp), MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(Icons.Default.Schedule, contentDescription = null, Modifier.size(14.dp), MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.width(4.dp))
                     Text(game.dateTime, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.width(12.dp))
-                    Icon(Icons.Default.Person, null, Modifier.size(14.dp), MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(Icons.Default.Person, contentDescription = null, Modifier.size(14.dp), MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.width(4.dp))
                     Text("${game.confirmedPlayers}/${game.maxPlayers}", style = MaterialTheme.typography.labelSmall,
                         color = if (game.hasVacancies) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)

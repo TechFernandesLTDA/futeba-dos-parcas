@@ -112,7 +112,7 @@ fun EditGroupDialog(
                 Column {
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_camera)) },
-                        leadingContent = { Icon(Icons.Default.CameraAlt, null) },
+                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = null) },
                         modifier = Modifier.clickable {
                             try {
                                 val file = File.createTempFile("group_photo_edit_", ".jpg", context.cacheDir)
@@ -132,7 +132,7 @@ fun EditGroupDialog(
                     )
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_gallery)) },
-                        leadingContent = { Icon(Icons.Default.PhotoLibrary, null) },
+                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = null) },
                         modifier = Modifier.clickable {
                             pickImageLauncher.launch("image/*")
                             showPhotoOptions = false
@@ -188,7 +188,7 @@ fun EditGroupDialog(
                 TextButton(onClick = { showPhotoOptions = true }) {
                     Icon(
                         if (selectedPhotoUri != null) Icons.Default.Edit else Icons.Default.Add,
-                        null,
+                        contentDescription = null,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(Modifier.width(4.dp))
@@ -415,7 +415,7 @@ fun AddCashboxEntryDialog(
                 Column {
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_camera)) },
-                        leadingContent = { Icon(Icons.Default.CameraAlt, null) },
+                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = null) },
                         modifier = Modifier.clickable {
                             try {
                                 val file = File.createTempFile("receipt_", ".jpg", context.cacheDir)
@@ -431,7 +431,7 @@ fun AddCashboxEntryDialog(
                     )
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_gallery)) },
-                        leadingContent = { Icon(Icons.Default.PhotoLibrary, null) },
+                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = null) },
                         modifier = Modifier.clickable {
                             pickImageLauncher.launch("image/*")
                             showPhotoOptions = false
@@ -523,7 +523,7 @@ fun AddCashboxEntryDialog(
                             modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
                                 .background(MaterialTheme.colorScheme.surface.copy(alpha=0.7f), CircleShape)
                         ) {
-                            Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 } else {
@@ -531,7 +531,7 @@ fun AddCashboxEntryDialog(
                         onClick = { showPhotoOptions = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(Icons.Default.Image, null)
+                        Icon(Icons.Default.Image, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.cashbox_add_receipt))
                     }
