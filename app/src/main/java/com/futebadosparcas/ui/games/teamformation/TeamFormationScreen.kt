@@ -1319,8 +1319,10 @@ private fun CaptainSelectionDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    if (captain1Id != null && captain2Id != null) {
-                        onConfirm(captain1Id!!, captain2Id!!)
+                    val c1 = captain1Id
+                    val c2 = captain2Id
+                    if (c1 != null && c2 != null) {
+                        onConfirm(c1, c2)
                     }
                 },
                 enabled = captain1Id != null && captain2Id != null
@@ -1461,8 +1463,10 @@ private fun PairSelectionDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    if (player1Id != null && player2Id != null) {
-                        onConfirm(player1Id!!, player2Id!!)
+                    val p1 = player1Id
+                    val p2 = player2Id
+                    if (p1 != null && p2 != null) {
+                        onConfirm(p1, p2)
                     }
                 },
                 enabled = player1Id != null && player2Id != null

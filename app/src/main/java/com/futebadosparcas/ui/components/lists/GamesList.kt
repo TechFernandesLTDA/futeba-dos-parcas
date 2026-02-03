@@ -259,7 +259,7 @@ fun GameCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = game.groupName!!,
+                        text = game.groupName.orEmpty(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.tertiary,
                         maxLines = 1,

@@ -149,8 +149,9 @@ class FlowCache<T>(private val ttlMs: Long) {
         val currentTime = System.currentTimeMillis()
         val isCacheValid = cachedValue != null && (currentTime - cacheTime) < ttlMs
 
-        if (isCacheValid) {
-            emit(cachedValue!!)
+        val cached = cachedValue
+        if (isCacheValid && cached != null) {
+            emit(cached)
         } else {
             val newValue = producer()
             cachedValue = newValue

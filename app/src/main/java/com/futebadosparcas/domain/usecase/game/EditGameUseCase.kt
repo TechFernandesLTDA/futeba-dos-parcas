@@ -82,14 +82,14 @@ class EditGameUseCase @Inject constructor(
         )
 
         // Validar número de jogadores se foi alterado
-        if (params.maxPlayers != null) {
-            val playerCountError = ValidationHelper.validatePlayerCount(params.maxPlayers!!)
+        params.maxPlayers?.let { maxPlayers ->
+            val playerCountError = ValidationHelper.validatePlayerCount(maxPlayers)
             require(playerCountError == null) { playerCountError ?: "Número de jogadores inválido" }
         }
 
         // Validar preço se foi alterado
-        if (params.dailyPrice != null) {
-            val priceError = ValidationHelper.validatePrice(params.dailyPrice!!)
+        params.dailyPrice?.let { price ->
+            val priceError = ValidationHelper.validatePrice(price)
             require(priceError == null) { priceError ?: "Preço inválido" }
         }
 

@@ -139,35 +139,39 @@ fun CashboxScreen(
     }
 
     // Dialog de confirmação de exclusão
-    if (showDeleteDialog && selectedEntry != null) {
-        ConfirmationDialog(
-            visible = true,
-            title = stringResource(R.string.cashbox_void_entry),
-            message = stringResource(R.string.cashbox_void_message),
-            confirmText = stringResource(R.string.cashbox_void),
-            type = ConfirmationDialogType.DESTRUCTIVE,
-            icon = Icons.Default.Delete,
-            onConfirm = {
-                viewModel.deleteEntry(selectedEntry!!.id)
-                showDeleteDialog = false
-                selectedEntry = null
-            },
-            onDismiss = {
-                showDeleteDialog = false
-                selectedEntry = null
-            }
-        )
+    if (showDeleteDialog) {
+        selectedEntry?.let { entry ->
+            ConfirmationDialog(
+                visible = true,
+                title = stringResource(R.string.cashbox_void_entry),
+                message = stringResource(R.string.cashbox_void_message),
+                confirmText = stringResource(R.string.cashbox_void),
+                type = ConfirmationDialogType.DESTRUCTIVE,
+                icon = Icons.Default.Delete,
+                onConfirm = {
+                    viewModel.deleteEntry(entry.id)
+                    showDeleteDialog = false
+                    selectedEntry = null
+                },
+                onDismiss = {
+                    showDeleteDialog = false
+                    selectedEntry = null
+                }
+            )
+        }
     }
 
     // Dialog de detalhes da entrada
-    if (showEntryDetails && selectedEntry != null) {
-        EntryDetailsDialog(
-            entry = selectedEntry!!,
-            onDismiss = {
-                showEntryDetails = false
-                selectedEntry = null
-            }
-        )
+    if (showEntryDetails) {
+        selectedEntry?.let { entry ->
+            EntryDetailsDialog(
+                entry = entry,
+                onDismiss = {
+                    showEntryDetails = false
+                    selectedEntry = null
+                }
+            )
+        }
     }
 
     // Dialog de totais

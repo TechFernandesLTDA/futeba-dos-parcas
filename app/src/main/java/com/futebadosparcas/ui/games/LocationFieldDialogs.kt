@@ -164,8 +164,9 @@ fun LocationSelectionDialog(
                                 LocationList(
                                     locations = locations,
                                     onLocationClick = { location ->
-                                        if (location.id.startsWith("places_") && location.placeId != null) {
-                                            viewModel.fetchAndSavePlace(location.placeId!!) { savedLocation ->
+                                        val placeId = location.placeId
+                                        if (location.id.startsWith("places_") && placeId != null) {
+                                            viewModel.fetchAndSavePlace(placeId) { savedLocation ->
                                                 onLocationSelected(savedLocation)
                                             }
                                         } else {

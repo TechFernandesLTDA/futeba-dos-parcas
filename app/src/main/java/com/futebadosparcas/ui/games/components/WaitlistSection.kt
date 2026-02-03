@@ -108,8 +108,10 @@ fun WaitlistSection(
 
                     // Posicao do usuario atual na fila
                     if (isUserInWaitlist) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        UserWaitlistPositionCard(entry = userEntry!!)
+                        userEntry?.let { entry ->
+                            Spacer(modifier = Modifier.height(12.dp))
+                            UserWaitlistPositionCard(entry = entry)
+                        }
                     }
 
                     // Lista expandida

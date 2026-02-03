@@ -44,31 +44,35 @@ fun UserManagementScreen(
     var selectedNewRole by remember { mutableStateOf<UserRole?>(null) }
 
     // Dialog de confirmação de mudança de role
-    if (showRoleChangeDialog && selectedUser != null && selectedNewRole != null) {
-        ConfirmationDialog(
-            visible = true,
-            title = stringResource(R.string.admin_change_permission),
-            message = stringResource(
-                R.string.admin_confirm_permission,
-                selectedUser!!.getDisplayName(),
-                selectedNewRole!!.displayName
-            ),
-            confirmText = stringResource(R.string.admin_confirm),
-            dismissText = stringResource(R.string.cancel),
-            type = ConfirmationDialogType.WARNING,
-            icon = Icons.Default.Security,
-            onConfirm = {
-                viewModel.updateUserRole(selectedUser!!, selectedNewRole!!.name)
-                showRoleChangeDialog = false
-                selectedUser = null
-                selectedNewRole = null
-            },
-            onDismiss = {
-                showRoleChangeDialog = false
-                selectedUser = null
-                selectedNewRole = null
-            }
-        )
+    if (showRoleChangeDialog) {
+        val user = selectedUser
+        val newRole = selectedNewRole
+        if (user != null && newRole != null) {
+            ConfirmationDialog(
+                visible = true,
+                title = stringResource(R.string.admin_change_permission),
+                message = stringResource(
+                    R.string.admin_confirm_permission,
+                    user.getDisplayName(),
+                    newRole.displayName
+                ),
+                confirmText = stringResource(R.string.admin_confirm),
+                dismissText = stringResource(R.string.cancel),
+                type = ConfirmationDialogType.WARNING,
+                icon = Icons.Default.Security,
+                onConfirm = {
+                    viewModel.updateUserRole(user, newRole.name)
+                    showRoleChangeDialog = false
+                    selectedUser = null
+                    selectedNewRole = null
+                },
+                onDismiss = {
+                    showRoleChangeDialog = false
+                    selectedUser = null
+                    selectedNewRole = null
+                }
+            )
+        }
     }
 
     Scaffold(

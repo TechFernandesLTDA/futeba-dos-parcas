@@ -217,34 +217,38 @@ fun ManageLocationsScreen(
     }
 
     // Diálogos
-    if (showDeleteLocationDialog && selectedLocationToDelete != null) {
-        DeleteLocationDialog(
-            locationName = selectedLocationToDelete!!.location.name,
-            onConfirm = {
-                viewModel.deleteLocation(selectedLocationToDelete!!.location.id)
-                showDeleteLocationDialog = false
-                selectedLocationToDelete = null
-            },
-            onDismiss = {
-                showDeleteLocationDialog = false
-                selectedLocationToDelete = null
-            }
-        )
+    if (showDeleteLocationDialog) {
+        selectedLocationToDelete?.let { locationData ->
+            DeleteLocationDialog(
+                locationName = locationData.location.name,
+                onConfirm = {
+                    viewModel.deleteLocation(locationData.location.id)
+                    showDeleteLocationDialog = false
+                    selectedLocationToDelete = null
+                },
+                onDismiss = {
+                    showDeleteLocationDialog = false
+                    selectedLocationToDelete = null
+                }
+            )
+        }
     }
 
-    if (showDeleteFieldDialog && selectedFieldToDelete != null) {
-        DeleteFieldDialog(
-            fieldName = selectedFieldToDelete!!.name,
-            onConfirm = {
-                viewModel.deleteField(selectedFieldToDelete!!.id)
-                showDeleteFieldDialog = false
-                selectedFieldToDelete = null
-            },
-            onDismiss = {
-                showDeleteFieldDialog = false
-                selectedFieldToDelete = null
-            }
-        )
+    if (showDeleteFieldDialog) {
+        selectedFieldToDelete?.let { field ->
+            DeleteFieldDialog(
+                fieldName = field.name,
+                onConfirm = {
+                    viewModel.deleteField(field.id)
+                    showDeleteFieldDialog = false
+                    selectedFieldToDelete = null
+                },
+                onDismiss = {
+                    showDeleteFieldDialog = false
+                    selectedFieldToDelete = null
+                }
+            )
+        }
     }
 
     if (showSeedDialog) {

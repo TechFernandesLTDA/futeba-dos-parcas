@@ -147,7 +147,7 @@ fun GameOwnerSection(
                         icon = Icons.Outlined.Timer,
                         title = stringResource(R.string.owner_auto_close_title),
                         subtitle = if (game.autoCloseHours != null)
-                            stringResource(R.string.owner_auto_close_enabled, game.autoCloseHours!!)
+                            stringResource(R.string.owner_auto_close_enabled, game.autoCloseHours ?: 0)
                         else stringResource(R.string.owner_auto_close_disabled),
                         onClick = onShowAutoClose
                     )
