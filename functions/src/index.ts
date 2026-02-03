@@ -227,7 +227,20 @@ function checkMilestones(stats: UserStatistics, achieved: string[]): { newMilest
 }
 
 // ==========================================
-// CLOUD FUNCTION
+// CLOUD FUNCTION: onGameStatusUpdate
+// ==========================================
+//
+// PERF_001 - APP CHECK STRATEGY:
+// ==========================================
+// onDocumentUpdated triggers NÃO suportam enforceAppCheck diretamente.
+// A segurança é garantida por:
+//
+// 1. Firestore Security Rules - Validam que apenas owner/admin podem atualizar status
+// 2. App Check no Cliente (FutebaApplication.kt) - Valida app legítimo
+// 3. Server-side validation abaixo - Valida owner_id, previne fraud
+//
+// Para callable functions (onCall), App Check é enforçado diretamente.
+// Ver: auth/custom-claims.ts para exemplo de enforceAppCheck
 // ==========================================
 
 export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (event) => {
@@ -238,7 +251,7 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
     const gameId = event.params.gameId;
 
     // ==========================================
-    // SECURITY VALIDATION
+    // SECURITY VALIDATION (PERF_001 Enhanced)
     // ==========================================
 
     // 1. Validate owner_id exists
@@ -1258,3 +1271,16 @@ export * from "./reminders";
 export * from "./season";
 export * from "./seeding";
 export * from "./user-management";
+
+// Infrastructure & Monitoring
+export * from "./maintenance/cleanup-old-logs";
+export * from "./maintenance/soft-delete";
+export * from "./monitoring/collect-metrics";
+export * from "./storage/generate-thumbnails";
+
+// ==========================================
+// PERF_001: CUSTOM CLAIMS & SECURITY
+// ==========================================
+// Importar funções de gerenciamento de Custom Claims
+// Referência: specs/PERF_001_SECURITY_RULES_OPTIMIZATION.md
+export * from "./auth/custom-claims";
