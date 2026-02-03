@@ -95,6 +95,13 @@ fun BadgesScreen(
                         onRetry = { viewModel.loadBadges() }
                     )
                 }
+                is BadgesUiState.Empty -> {
+                    com.futebadosparcas.ui.components.modern.EmptyState(
+                        icon = Icons.Default.EmojiEvents,
+                        title = "Nenhuma conquista ainda",
+                        message = "Jogue partidas para desbloquear conquistas e badges!"
+                    )
+                }
                 is BadgesUiState.Success -> {
                     BadgesSuccessContent(
                         state = state,
