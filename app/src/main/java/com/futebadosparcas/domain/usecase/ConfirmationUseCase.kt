@@ -20,8 +20,6 @@ import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val TAG = "ConfirmationUseCase"
-
 /**
  * Use case para gerenciar confirmacoes de presenca em jogos (Issues #31-40).
  *
@@ -43,6 +41,8 @@ class ConfirmationUseCase @Inject constructor(
 ) {
 
     companion object {
+        private const val TAG = "ConfirmationUseCase"
+
         // Raio padrao para check-in em metros
         const val DEFAULT_CHECKIN_RADIUS_METERS = 100
 
