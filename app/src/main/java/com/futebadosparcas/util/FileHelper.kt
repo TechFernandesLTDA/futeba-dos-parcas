@@ -56,7 +56,7 @@ class FileHelper @Inject constructor(
 
             outputFile
         } catch (e: Exception) {
-            android.util.Log.e("FileHelper", "Error creating file from URI", e)
+            AppLogger.e("FileHelper", "Error creating file from URI: ${e.message}", e)
             null
         }
     }
@@ -138,7 +138,7 @@ class FileHelper @Inject constructor(
         return try {
             file.readText()
         } catch (e: Exception) {
-            android.util.Log.e("FileHelper", "Error reading file", e)
+            AppLogger.e("FileHelper", "Error reading file: ${e.message}", e)
             null
         }
     }
@@ -150,7 +150,7 @@ class FileHelper @Inject constructor(
         return try {
             file.delete()
         } catch (e: Exception) {
-            android.util.Log.e("FileHelper", "Error deleting file", e)
+            AppLogger.e("FileHelper", "Error deleting file: ${e.message}", e)
             false
         }
     }

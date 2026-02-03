@@ -95,7 +95,7 @@ abstract class BaseRepository(
     ): Result<T> = try {
         Result.success(operation())
     } catch (e: Exception) {
-        android.util.Log.e("Repository", "Error executing operation", e)
+        com.futebadosparcas.util.AppLogger.e("Repository", "Error executing operation: ${e.message}", e)
         Result.failure(e)
     }
 
@@ -114,7 +114,7 @@ abstract class BaseRepository(
                 return Result.success(operation())
             } catch (e: Exception) {
                 lastException = e
-                android.util.Log.w("Repository", "Attempt ${attempt + 1} failed", e)
+                com.futebadosparcas.util.AppLogger.w("Repository") { "Attempt ${attempt + 1} failed: ${e.message}" }
                 if (attempt < maxAttempts - 1) {
                     kotlinx.coroutines.delay(delayMs * (attempt + 1))
                 }

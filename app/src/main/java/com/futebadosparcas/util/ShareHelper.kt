@@ -284,7 +284,7 @@ class ShareHelper @Inject constructor(
             context.startActivity(intent)
         } catch (e: Exception) {
             // Instagram not installed
-            android.util.Log.e("ShareHelper", "Instagram not installed", e)
+            AppLogger.e("ShareHelper", "Instagram not installed: ${e.message}", e)
         }
     }
 
@@ -307,7 +307,7 @@ class ShareHelper @Inject constructor(
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
         } catch (e: Exception) {
-            android.util.Log.e("ShareHelper", "No email app installed", e)
+            AppLogger.e("ShareHelper", "No email app installed: ${e.message}", e)
         }
     }
 
