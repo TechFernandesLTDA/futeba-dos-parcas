@@ -534,7 +534,7 @@ class GameQueryRepositoryImpl @Inject constructor(
                 // Filtra apenas jogos futuros e ordena por data
                 val now = java.util.Date()
                 androidGamesList
-                    .filter { it.dateTime != null && it.dateTime!! > now }
+                    .filter { val dt = it.dateTime; dt != null && dt > now }
                     .sortedBy { it.dateTime }
             }
 
@@ -1380,12 +1380,9 @@ class GameQueryRepositoryImpl @Inject constructor(
 
             // Filtrar por distância usando fórmula de Haversine
             val nearbyGames = allPublicGames.filter { game ->
-                if (game.locationLat == null || game.locationLng == null) return@filter false
-
-                val distance = calculateDistance(
-                    userLat, userLng,
-                    game.locationLat!!, game.locationLng!!
-                )
+                val lat = game.locationLat ?: return@filter false
+                val lng = game.locationLng ?: return@filter false
+                val distance = calculateDistance(userLat, userLng, lat, lng)
                 distance <= radiusKm
             }.sortedBy { game ->
                 // Ordenar por distância

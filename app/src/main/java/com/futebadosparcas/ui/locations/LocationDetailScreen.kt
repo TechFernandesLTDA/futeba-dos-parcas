@@ -489,10 +489,11 @@ fun LocationDetailScreen(
                 field = selectedField,
                 onDismiss = { showFieldDialog = false },
                 onConfirm = { name, type, price, surface, covered, active ->
-                    if (selectedField == null) {
+                    val field = selectedField
+                    if (field == null) {
                         viewModel.addField(name, type, price, active, null, surface, covered, null)
                     } else {
-                        viewModel.updateField(selectedField!!.id, name, type, price, active, null, surface, covered, null)
+                        viewModel.updateField(field.id, name, type, price, active, null, surface, covered, null)
                     }
                     showFieldDialog = false
                 }

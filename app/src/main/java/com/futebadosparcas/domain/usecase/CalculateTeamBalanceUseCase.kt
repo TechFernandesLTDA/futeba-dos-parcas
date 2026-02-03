@@ -49,12 +49,8 @@ class CalculateTeamBalanceUseCase @Inject constructor(
         }
 
         // 2. Buscar confirmações de presença
-        val confirmationsResult = firebaseDataSource.getGameConfirmations(gameId)
-        if (confirmationsResult.isFailure) {
-            return Result.failure(confirmationsResult.exceptionOrNull()!!)
-        }
-
-        val confirmations = confirmationsResult.getOrNull()!!
+        val confirmations = firebaseDataSource.getGameConfirmations(gameId)
+            .getOrElse { return Result.failure(it) }
 
         // 3. Filtrar apenas jogadores confirmados
         val confirmedPlayers = confirmations.filter {
@@ -80,18 +76,14 @@ class CalculateTeamBalanceUseCase @Inject constructor(
         }
 
         // 4. Executar algoritmo de balanceamento
-        val balanceResult = teamBalancer.balanceTeams(
+        val teams = teamBalancer.balanceTeams(
             gameId = gameId,
             players = confirmedPlayers,
             numberOfTeams = numberOfTeams
-        )
-
-        if (balanceResult.isFailure) {
-            AppLogger.e(TAG, "Erro ao balancear times", balanceResult.exceptionOrNull())
-            return balanceResult
+        ).getOrElse {
+            AppLogger.e(TAG, "Erro ao balancear times", it)
+            return Result.failure(it)
         }
-
-        val teams = balanceResult.getOrNull()!!
 
         AppLogger.d(TAG) {
             "Times balanceados com sucesso: ${teams.size} times gerados"
@@ -108,10 +100,8 @@ class CalculateTeamBalanceUseCase @Inject constructor(
             }
 
             // Salvar novos times
-            val saveResult = firebaseDataSource.saveTeams(gameId, teams)
-            if (saveResult.isFailure) {
-                return Result.failure(saveResult.exceptionOrNull()!!)
-            }
+            firebaseDataSource.saveTeams(gameId, teams)
+                .getOrElse { return Result.failure(it) }
 
             AppLogger.d(TAG) { "Times salvos com sucesso no Firebase" }
         }

@@ -321,9 +321,11 @@ class GroupPhotoDataSource @Inject constructor(
      * Processa a imagem: redimensiona, comprime e otimiza.
      */
     private fun processImage(uri: Uri): ProcessedImageData {
-        val inputStream = context.contentResolver.openInputStream(uri)!!
+        val inputStream = context.contentResolver.openInputStream(uri)
+            ?: throw IllegalStateException("Não foi possível abrir a imagem")
         val originalSize = inputStream.available()
-        val originalBitmap = BitmapFactory.decodeStream(inputStream)!!
+        val originalBitmap = BitmapFactory.decodeStream(inputStream)
+            ?: throw IllegalStateException("Não foi possível decodificar a imagem")
         inputStream.close()
 
         AppLogger.d(TAG) { "Original: ${originalBitmap.width}x${originalBitmap.height}, ${originalSize / 1024}KB" }

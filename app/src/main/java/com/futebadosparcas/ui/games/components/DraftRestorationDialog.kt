@@ -95,7 +95,7 @@ fun AutoSaveIndicator(
             } else {
                 stringResource(
                     R.string.create_game_draft_saved,
-                    dateFormat.format(Date(lastSavedAt!!))
+                    dateFormat.format(Date(lastSavedAt ?: 0L))
                 )
             },
             style = MaterialTheme.typography.labelSmall,
