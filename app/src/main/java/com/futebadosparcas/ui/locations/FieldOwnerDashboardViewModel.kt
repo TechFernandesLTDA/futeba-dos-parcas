@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toAndroidLocations
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -18,11 +20,18 @@ class FieldOwnerDashboardViewModel @Inject constructor(
     private val userRepository: UserRepository
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "FieldOwnerDashboardVM"
+    }
+
     private val _uiState = MutableStateFlow<FieldOwnerDashboardUiState>(FieldOwnerDashboardUiState.Loading)
     val uiState: StateFlow<FieldOwnerDashboardUiState> = _uiState
 
+    private var loadJob: Job? = null
+
     fun loadLocations() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.value = FieldOwnerDashboardUiState.Loading
 
             val userId = userRepository.getCurrentUserId()
@@ -40,6 +49,11 @@ class FieldOwnerDashboardViewModel @Inject constructor(
                 }
             )
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        loadJob?.cancel()
     }
 }
 
