@@ -1,6 +1,6 @@
 package com.futebadosparcas.util
 
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 
 /**
@@ -43,7 +43,7 @@ object LocationCrashlytics {
         error: Throwable,
         context: Map<String, String> = emptyMap()
     ) {
-        Log.e(TAG, "Erro de deserializacao de Location: $documentId", error)
+        AppLogger.e(TAG, "Erro de deserializacao de Location: $documentId")
 
         crashlytics.apply {
             setCustomKey("error_type", "location_deserialization")
@@ -72,7 +72,7 @@ object LocationCrashlytics {
         error: Throwable,
         context: Map<String, String> = emptyMap()
     ) {
-        Log.e(TAG, "Erro de deserializacao de Field: $documentId", error)
+        AppLogger.e(TAG, "Erro de deserializacao de Field: $documentId")
 
         crashlytics.apply {
             setCustomKey("error_type", "field_deserialization")
@@ -100,7 +100,7 @@ object LocationCrashlytics {
         locationId: String? = null,
         error: Throwable
     ) {
-        Log.e(TAG, "Erro de deserializacao de LocationReview: $documentId", error)
+        AppLogger.e(TAG, "Erro de deserializacao de LocationReview: $documentId")
 
         crashlytics.apply {
             setCustomKey("error_type", "location_review_deserialization")
@@ -124,7 +124,7 @@ object LocationCrashlytics {
         error: Throwable,
         context: Map<String, String> = emptyMap()
     ) {
-        Log.e(TAG, "Erro de query de Location: $query", error)
+        AppLogger.e(TAG, "Erro de query de Location: $query")
 
         crashlytics.apply {
             setCustomKey("error_type", "location_query")
@@ -151,7 +151,7 @@ object LocationCrashlytics {
         error: Throwable,
         operation: String = "update"
     ) {
-        Log.e(TAG, "Erro de $operation de Location: $locationId", error)
+        AppLogger.e(TAG, "Erro de $operation de Location: $locationId")
 
         crashlytics.apply {
             setCustomKey("error_type", "location_$operation")
@@ -177,7 +177,7 @@ object LocationCrashlytics {
         error: Throwable,
         operation: String = "update"
     ) {
-        Log.e(TAG, "Erro de $operation de Field: $fieldId", error)
+        AppLogger.e(TAG, "Erro de $operation de Field: $fieldId")
 
         crashlytics.apply {
             setCustomKey("error_type", "field_$operation")
@@ -202,7 +202,7 @@ object LocationCrashlytics {
         entityId: String,
         error: Throwable
     ) {
-        Log.e(TAG, "Erro de upload de foto de $entityType: $entityId", error)
+        AppLogger.e(TAG, "Erro de upload de foto de $entityType: $entityId")
 
         crashlytics.apply {
             setCustomKey("error_type", "${entityType}_photo_upload")
@@ -226,7 +226,7 @@ object LocationCrashlytics {
         error: Throwable,
         context: Map<String, String> = emptyMap()
     ) {
-        Log.e(TAG, "Erro de Location ($operation)", error)
+        AppLogger.e(TAG, "Erro de Location ($operation)")
 
         crashlytics.apply {
             setCustomKey("error_type", "location_generic")

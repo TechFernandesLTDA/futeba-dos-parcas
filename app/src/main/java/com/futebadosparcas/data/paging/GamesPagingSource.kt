@@ -1,6 +1,6 @@
 package com.futebadosparcas.data.paging
 
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.futebadosparcas.data.model.Game
@@ -71,7 +71,7 @@ class GamesPagingSource(
                 try {
                     doc.toObject(Game::class.java)?.copy(id = doc.id)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error parsing game document ${doc.id}", e)
+                    AppLogger.e(TAG, "Error parsing game document ${doc.id}", e)
                     null
                 }
             }
@@ -83,7 +83,7 @@ class GamesPagingSource(
                 nextKey = if (games.size < params.loadSize) null else snapshot
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading games page", e)
+            AppLogger.e(TAG, "Error loading games page", e)
             LoadResult.Error(e)
         }
     }

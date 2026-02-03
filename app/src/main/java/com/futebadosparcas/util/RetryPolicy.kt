@@ -1,6 +1,6 @@
 package com.futebadosparcas.util
 
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.delay
 import kotlin.math.pow
 
@@ -86,7 +86,7 @@ suspend fun <T> retryWithPolicy(
             val isRetryable = config.retryableExceptions.any { it.isInstance(e) }
 
             if (!isRetryable || currentAttempt >= config.maxAttempts) {
-                Log.e("RetryPolicy", "Operation failed after $currentAttempt attempts (non-retryable or max attempts reached)", e)
+                AppLogger.e("RetryPolicy", "Operation failed after $currentAttempt attempts (non-retryable or max attempts reached)", e)
                 throw e
             }
 
@@ -98,11 +98,7 @@ suspend fun <T> retryWithPolicy(
                 multiplier = config.backoffMultiplier
             )
 
-            Log.w(
-                "RetryPolicy",
-                "Retry attempt $currentAttempt/${config.maxAttempts} failed. Retrying in ${delayMs}ms...",
-                e
-            )
+            AppLogger.w("RetryPolicy") { "Retry attempt $currentAttempt/${config.maxAttempts} failed. Retrying in ${delayMs}ms..." }
 
             delay(delayMs)
             currentAttempt++
