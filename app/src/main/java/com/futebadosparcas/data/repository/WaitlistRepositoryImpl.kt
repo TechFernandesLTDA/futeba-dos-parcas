@@ -14,8 +14,6 @@ import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val TAG = "WaitlistRepository"
-
 /**
  * Implementacao do WaitlistRepository usando Firebase Firestore.
  *
@@ -28,6 +26,7 @@ class WaitlistRepositoryImpl @Inject constructor(
 ) : WaitlistRepository {
 
     companion object {
+        private const val TAG = "WaitlistRepository"
         private const val COLLECTION_GAMES = "games"
         private const val SUBCOLLECTION_WAITLIST = "waitlist"
     }
