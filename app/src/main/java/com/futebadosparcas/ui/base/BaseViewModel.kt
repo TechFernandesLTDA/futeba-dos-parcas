@@ -56,6 +56,9 @@ abstract class BaseViewModel<S : UiState, E : UiEvent> : ViewModel() {
 
     private val jobs = mutableMapOf<String, Job>()
 
+    // Firestore listeners tracking para cleanup
+    private val firestoreListeners = mutableListOf<com.google.firebase.firestore.ListenerRegistration>()
+
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         handleError(throwable)
     }
@@ -64,6 +67,21 @@ abstract class BaseViewModel<S : UiState, E : UiEvent> : ViewModel() {
      * Create initial UI state
      */
     protected abstract fun createInitialState(): S
+
+    /**
+     * Registra um Firestore listener para cleanup automático
+     */
+    protected fun registerFirestoreListener(listener: com.google.firebase.firestore.ListenerRegistration) {
+        firestoreListeners.add(listener)
+    }
+
+    /**
+     * Remove todos os listeners do Firestore
+     */
+    protected fun removeAllFirestoreListeners() {
+        firestoreListeners.forEach { it.remove() }
+        firestoreListeners.clear()
+    }
 
     /**
      * Update UI state
@@ -148,6 +166,7 @@ abstract class BaseViewModel<S : UiState, E : UiEvent> : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         cancelAllJobs()
+        removeAllFirestoreListeners()
         _errorChannel.close()
     }
 }

@@ -27,7 +27,8 @@ object DatabaseModule {
         )
             .addMigrations(
                 AppDatabase.MIGRATION_1_2,
-                AppDatabase.MIGRATION_2_3
+                AppDatabase.MIGRATION_2_3,
+                AppDatabase.MIGRATION_3_4
             )
             .fallbackToDestructiveMigration() // Fallback para versoes muito antigas
             .build()
@@ -46,5 +47,10 @@ object DatabaseModule {
     @Provides
     fun provideLocationSyncDao(database: AppDatabase): LocationSyncDao {
         return database.locationSyncDao()
+    }
+
+    @Provides
+    fun provideGroupDao(database: AppDatabase): com.futebadosparcas.data.local.dao.GroupDao {
+        return database.groupDao()
     }
 }

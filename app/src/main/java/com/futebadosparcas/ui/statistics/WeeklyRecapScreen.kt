@@ -55,6 +55,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -183,7 +184,7 @@ fun WeeklyRecapScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "Fechar",
+                    contentDescription = stringResource(R.string.cd_close),
                     tint = Color.White
                 )
             }
@@ -233,7 +234,7 @@ fun WeeklyRecapScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Share,
-                    contentDescription = "Compartilhar",
+                    contentDescription = stringResource(R.string.cd_share),
                     tint = Color.White
                 )
             }
@@ -285,7 +286,7 @@ fun WeeklyRecapScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Anterior",
+                        contentDescription = stringResource(R.string.cd_previous),
                         tint = Color.White
                     )
                 }
@@ -306,7 +307,7 @@ fun WeeklyRecapScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Próximo",
+                        contentDescription = stringResource(R.string.cd_next),
                         tint = Color.White
                     )
                 }

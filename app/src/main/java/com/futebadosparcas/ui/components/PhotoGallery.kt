@@ -100,7 +100,7 @@ fun PhotoGalleryPreview(
                 ) {
                     AsyncImage(
                         model = photo,
-                        contentDescription = "Foto ${index + 1}",
+                        contentDescription = stringResource(R.string.cd_photo_number, index + 1),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )

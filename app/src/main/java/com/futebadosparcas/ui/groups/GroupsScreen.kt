@@ -349,7 +349,7 @@ private fun GroupCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.People,
-                            contentDescription = "${group.memberCount} ${if (group.memberCount == 1) "membro" else "membros"}",
+                            contentDescription = stringResource(R.string.cd_member_count, group.memberCount, if (group.memberCount == 1) "membro" else "membros"),
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -369,7 +369,7 @@ private fun GroupCard(
             // Ícone de navegação
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = "Acessar grupo",
+                contentDescription = stringResource(R.string.cd_access_group),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

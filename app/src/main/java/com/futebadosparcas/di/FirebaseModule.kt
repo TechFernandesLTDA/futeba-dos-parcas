@@ -37,6 +37,7 @@ object FirebaseModule {
     @Singleton
     fun provideFirebaseFirestore(): FirebaseFirestore {
         val firestore = FirebaseFirestore.getInstance()
+
         if (com.futebadosparcas.BuildConfig.DEBUG && USE_EMULATOR) {
             try {
                 firestore.useEmulator("10.0.2.2", 8085)
@@ -47,7 +48,23 @@ object FirebaseModule {
             } catch (e: Exception) {
                 // Ignore
             }
+        } else {
+            // PERFORMANCE OPTIMIZATION: Enable Persistent Cache (100MB)
+            // Permite funcionar offline com cache local persistente
+            try {
+                val settings = com.google.firebase.firestore.FirebaseFirestoreSettings.Builder()
+                    .setLocalCacheSettings(
+                        com.google.firebase.firestore.PersistentCacheSettings.newBuilder()
+                            .setSizeBytes(100L * 1024L * 1024L) // 100MB cache size
+                            .build()
+                    )
+                    .build()
+                firestore.firestoreSettings = settings
+            } catch (e: Exception) {
+                // Settings already configured
+            }
         }
+
         return firestore
     }
 

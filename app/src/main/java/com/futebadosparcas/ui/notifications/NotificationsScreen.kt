@@ -487,7 +487,6 @@ private fun NotificationsTopBar(
             IconButton(
                 onClick = onBackClick,
                 modifier = Modifier.semantics {
-                    contentDescription = "Voltar para tela anterior"
                     role = Role.Button
                 }
             ) {

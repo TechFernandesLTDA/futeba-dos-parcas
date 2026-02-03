@@ -3485,4 +3485,45 @@ subir no ranking!</string>
     <string name="clear_filters">Limpar</string>
     <string name="apply_filters">Aplicar</string>
 
+
+    <!-- Content Descriptions (Acessibilidade) -->
+    <string name="cd_home_screen">Tela inicial com próximos jogos</string>
+    <string name="cd_games_list">Lista de todos os jogos</string>
+    <string name="cd_rankings">Ranking e classificação da liga</string>
+    <string name="cd_user_profile">Perfil do usuário e estatísticas</string>
+    <string name="cd_share">Compartilhar</string>
+    <string name="cd_previous">Anterior</string>
+    <string name="cd_next">Próximo</string>
+    <string name="cd_refresh">Atualizar</string>
+    <string name="cd_clear_metrics">Limpar metricas</string>
+    <string name="cd_send_analytics">Enviar ao Analytics</string>
+    <string name="cd_locked">Bloqueado</string>
+    <string name="cd_member_count">%1$d %2$s</string>
+    <string name="cd_image_load_error">Erro ao carregar imagem</string>
+    <string name="cd_profile_photo_of">Foto de perfil de %s</string>
+    <string name="cd_field_image">Imagem do campo</string>
+    <string name="cd_field_image_named">Imagem do campo: %s</string>
+    <string name="cd_group_photo">Foto do grupo %s</string>
+    <string name="cd_group_photo_error">Erro ao carregar foto do grupo</string>
+    <string name="cd_error">Erro</string>
+    <string name="cd_back_to_previous">Voltar para tela anterior</string>
+    <string name="cd_photo_number">Foto %1$d</string>
+    <string name="cd_profile_error">Erro ao carregar perfil</string>
+    <string name="cd_access_title">Acessar %s</string>
+    <string name="cd_field_photo">Foto de %s</string>
+    <string name="cd_location_photo">Foto de %s</string>
+    <string name="cd_retry">Tentar novamente</string>
+    <string name="cd_search">Buscar</string>
+    <string name="cd_clear">Limpar</string>
+    <string name="cd_recording">Gravando</string>
+    <string name="cd_record_voice">Gravar mensagem de voz</string>
+    <string name="cd_record">Gravar</string>
+    <string name="cd_cancel">Cancelar</string>
+    <string name="cd_discard">Descartar</string>
+    <string name="cd_send">Enviar</string>
+    <string name="cd_level_badge_main">Badge de nível</string>
+
+    <!-- Error Messages -->
+    <string name="error_sharing">Erro ao compartilhar</string>
+
 </resources>

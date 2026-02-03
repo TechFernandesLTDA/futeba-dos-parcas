@@ -395,7 +395,7 @@ private fun LocationCard(
                 // Imagem do local com carregamento progressivo
                 LocationImage(
                     imageUrl = locationWithFields.location.photoUrl,
-                    contentDescription = "Foto de ${locationWithFields.location.name}",
+                    contentDescription = stringResource(R.string.cd_location_photo, locationWithFields.location.name),
                     modifier = Modifier.size(64.dp),
                     thumbnailSize = 32
                 )
@@ -502,7 +502,7 @@ private fun FieldRow(
         // Imagem do campo com carregamento progressivo
         FieldImage(
             imageUrl = field.photoUrl,
-            contentDescription = "Foto de ${field.name}",
+            contentDescription = stringResource(R.string.cd_field_photo, field.name),
             width = 48.dp,
             height = 36.dp,
             thumbnailSize = 24,

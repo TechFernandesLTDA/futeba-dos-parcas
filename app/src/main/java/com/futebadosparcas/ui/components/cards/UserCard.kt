@@ -1,6 +1,7 @@
 package com.futebadosparcas.ui.components.cards
 
 import androidx.compose.foundation.background
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -153,7 +154,7 @@ fun UserCard(
                     }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Mais opções"
+                            contentDescription = stringResource(R.string.cd_more_options)
                         )
                     }
 

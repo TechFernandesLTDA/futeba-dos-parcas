@@ -54,7 +54,7 @@ fun FieldOwnerDashboardScreen(
                 onClick = onNavigateToAddLocation,
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Adicionar Local")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_location))
             }
         }
     ) { paddingValues ->

@@ -367,7 +367,7 @@ object AppTopBar {
                 IconButton(onClick = onMenuClick) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "Menu"
+                        contentDescription = stringResource(R.string.cd_menu)
                     )
                 }
             },

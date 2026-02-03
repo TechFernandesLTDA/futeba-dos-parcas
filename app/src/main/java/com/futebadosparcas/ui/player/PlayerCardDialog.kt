@@ -103,7 +103,7 @@ class PlayerCardDialog : DialogFragment() {
             }
 
         } catch (e: Exception) {
-            android.widget.Toast.makeText(requireContext(), "Erro ao compartilhar", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(requireContext(), getString(R.string.error_sharing), android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 
