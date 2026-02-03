@@ -56,10 +56,30 @@
 -keepnames class * extends android.os.Parcelable
 -keepnames class * extends java.io.Serializable
 
-# Room
+# Room - Complete rules to prevent crashes
 -keep class * extends androidx.room.RoomDatabase
+-keep class androidx.room.** { *; }
 -keep @androidx.room.Entity class *
+-keep @androidx.room.Dao class *
 -dontwarn androidx.room.paging.**
+
+# Room Database implementations (generated classes like *_Impl)
+-keep class **_Impl { *; }
+-keepclassmembers class **_Impl {
+    <init>();
+}
+
+# WorkManager - Required for Hilt WorkManager integration
+-keep class * extends androidx.work.Worker
+-keep class * extends androidx.work.InputMerger
+-keep class androidx.work.** { *; }
+-keep class androidx.work.impl.** { *; }
+-keep class androidx.work.impl.WorkDatabase { *; }
+-keep class androidx.work.impl.WorkDatabase_Impl { *; }
+
+# Hilt WorkManager Factory
+-keep class * extends androidx.work.WorkerFactory
+-keep class androidx.hilt.work.HiltWorkerFactory { *; }
 
 # Silence benign R8 warnings from third-party libraries
 -ignorewarnings

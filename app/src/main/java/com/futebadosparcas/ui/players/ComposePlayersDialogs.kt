@@ -353,7 +353,7 @@ fun PlayerCardContent(
                 val badgeRes = LevelBadgeHelper.getBadgeForLevel(user.level)
                 Image(
                     painter = painterResource(id = badgeRes),
-                    contentDescription = "Level Badge",
+                    contentDescription = stringResource(R.string.cd_level_badge),
                     modifier = Modifier
                         .size(36.dp)
                         .offset(x = 4.dp, y = 4.dp)

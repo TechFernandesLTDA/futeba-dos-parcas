@@ -3,17 +3,18 @@
     <application
         android:allowBackup="true"
         android:icon="@android:drawable/ic_menu_compass"
-        android:label="Futeba Compose"
+        android:label="Futeba dos Parças"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <!-- ComposeApp MainActivity - DISABLED as standalone launcher -->
+        <!-- This is a KMP shared module, not a standalone app -->
+        <!-- The main app launcher is in :app module (SplashActivityCompose) -->
+        <!--
         <activity
             android:name=".MainActivity"
-            android:exported="true"
+            android:exported="false"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
+        -->
     </application>
 </manifest>

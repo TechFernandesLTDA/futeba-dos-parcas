@@ -1,6 +1,8 @@
 package com.futebadosparcas.ui.debug
 
 import androidx.compose.foundation.background
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -66,7 +68,7 @@ fun LocationMetricsScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 },
@@ -75,7 +77,7 @@ fun LocationMetricsScreen(
                     IconButton(onClick = { refreshTrigger++ }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Atualizar"
+                            contentDescription = stringResource(R.string.cd_refresh)
                         )
                     }
                     // Botao de limpar metricas
@@ -85,7 +87,7 @@ fun LocationMetricsScreen(
                     }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Limpar metricas"
+                            contentDescription = stringResource(R.string.cd_clear_metrics)
                         )
                     }
                     // Botao de enviar ao Analytics
@@ -94,7 +96,7 @@ fun LocationMetricsScreen(
                     }) {
                         Icon(
                             imageVector = Icons.Default.CloudUpload,
-                            contentDescription = "Enviar ao Analytics"
+                            contentDescription = stringResource(R.string.cd_send_analytics)
                         )
                     }
                 },

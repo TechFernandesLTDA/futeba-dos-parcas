@@ -101,7 +101,7 @@ fun WaitlistSection(
 
                         Icon(
                             imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = if (isExpanded) "Recolher" else "Expandir",
+                            contentDescription = if (isExpanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }

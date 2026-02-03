@@ -6,9 +6,11 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.futebadosparcas.data.local.dao.GameDao
+import com.futebadosparcas.data.local.dao.GroupDao
 import com.futebadosparcas.data.local.dao.LocationSyncDao
 import com.futebadosparcas.data.local.dao.UserDao
 import com.futebadosparcas.data.local.model.GameEntity
+import com.futebadosparcas.data.local.model.GroupEntity
 import com.futebadosparcas.data.local.model.LocationSyncEntity
 import com.futebadosparcas.data.local.model.UserEntity
 
@@ -16,9 +18,10 @@ import com.futebadosparcas.data.local.model.UserEntity
     entities = [
         GameEntity::class,
         UserEntity::class,
-        LocationSyncEntity::class
+        LocationSyncEntity::class,
+        GroupEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -26,6 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun gameDao(): GameDao
     abstract fun userDao(): UserDao
     abstract fun locationSyncDao(): LocationSyncDao
+    abstract fun groupDao(): GroupDao
 
     companion object {
         // Migracao v1 -> v2: Adiciona coluna cachedAt para TTL
@@ -59,6 +63,33 @@ abstract class AppDatabase : RoomDatabase() {
 
                 // Indice para busca por nextRetryAt (para encontrar itens prontos para sync)
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_location_sync_queue_nextRetryAt ON location_sync_queue(nextRetryAt)")
+            }
+        }
+
+        // Migracao v3 -> v4: Adiciona tabela groups para cache de grupos
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS groups (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        description TEXT,
+                        ownerId TEXT NOT NULL,
+                        ownerName TEXT NOT NULL,
+                        photoUrl TEXT,
+                        memberCount INTEGER NOT NULL DEFAULT 0,
+                        status TEXT NOT NULL DEFAULT 'ACTIVE',
+                        createdAt INTEGER,
+                        updatedAt INTEGER,
+                        cachedAt INTEGER NOT NULL DEFAULT ${System.currentTimeMillis()}
+                    )
+                """.trimIndent())
+
+                // Indice para busca por status (para filtrar grupos ativos)
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_groups_status ON groups(status)")
+
+                // Indice para busca por ownerId
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_groups_ownerId ON groups(ownerId)")
             }
         }
     }

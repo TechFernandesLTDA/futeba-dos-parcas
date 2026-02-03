@@ -555,7 +555,7 @@ fun FormationDetailCard(
                             contentColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Icon(Icons.Default.Delete, null, Modifier.size(18.dp))
+                        Icon(Icons.Default.Delete, contentDescription = null, Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
                         Text(stringResource(R.string.delete))
                     }
@@ -564,7 +564,7 @@ fun FormationDetailCard(
                         onClick = onLoad,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Icon(Icons.Default.Download, null, Modifier.size(18.dp))
+                        Icon(Icons.Default.Download, contentDescription = null, Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
                         Text(stringResource(R.string.load))
                     }

@@ -390,7 +390,7 @@ private fun ProfileHeader(
                     val photoUrl = remember(user.photoUrl) { user.photoUrl }
                     AsyncImage(
                         model = photoUrl,
-                        contentDescription = "Foto de perfil",
+                        contentDescription = stringResource(R.string.cd_profile_photo),
                         modifier = Modifier
                             .size(120.dp)
                             .clip(CircleShape),
@@ -417,7 +417,7 @@ private fun ProfileHeader(
                 // Badge de nível sobreposto
                 Image(
                     painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(user.level)),
-                    contentDescription = "Badge de nível",
+                    contentDescription = stringResource(R.string.cd_level_badge_main),
                     modifier = Modifier
                         .size(40.dp)
                         .align(Alignment.BottomEnd)
@@ -1203,7 +1203,7 @@ private fun SettingsMenuItem(
         )
         Icon(
             imageVector = Icons.Default.ChevronRight,
-            contentDescription = "Acessar $title",
+            contentDescription = stringResource(R.string.cd_access_title, title),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -1249,7 +1249,7 @@ private fun AdminMenuItem(
         }
         Icon(
             imageVector = Icons.Default.ChevronRight,
-            contentDescription = "Acessar $title",
+            contentDescription = stringResource(R.string.cd_access_title, title),
             tint = MaterialTheme.colorScheme.onErrorContainer
         )
     }
@@ -1276,7 +1276,7 @@ private fun DeveloperMenuCard(onClick: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Default.Code,
-                contentDescription = "Developer Menu",
+                contentDescription = stringResource(R.string.cd_developer_menu),
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
@@ -1289,7 +1289,7 @@ private fun DeveloperMenuCard(onClick: () -> Unit) {
             )
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = "Acessar Developer Menu",
+                contentDescription = stringResource(R.string.cd_access_developer_menu),
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
@@ -1313,7 +1313,7 @@ private fun ErrorState(
     ) {
         Icon(
             imageVector = Icons.Default.Error,
-            contentDescription = "Erro ao carregar perfil",
+            contentDescription = stringResource(R.string.cd_profile_error),
             modifier = Modifier.size(56.dp),
             tint = MaterialTheme.colorScheme.error
         )

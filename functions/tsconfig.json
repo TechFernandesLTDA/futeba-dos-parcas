@@ -13,5 +13,10 @@
   "compileOnSave": true,
   "include": [
     "src"
+  ],
+  "exclude": [
+    "src/**/*.example.ts",
+    "src/**/*.test.ts",
+    "node_modules"
   ]
 }

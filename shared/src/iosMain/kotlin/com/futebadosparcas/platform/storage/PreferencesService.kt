@@ -1,75 +1,96 @@
 package com.futebadosparcas.platform.storage
 
+import platform.Foundation.NSUserDefaults
+import platform.Foundation.setValue
+
 /**
- * Implementação iOS do PreferencesService usando NSUserDefaults.
+ * Implementacao iOS do PreferencesService usando NSUserDefaults.
  *
- * TODO (QUANDO TIVER MAC DISPONÍVEL):
- * 1. Importar platform.Foundation.NSUserDefaults
- * 2. Implementar métodos usando NSUserDefaults.standardUserDefaults
+ * NSUserDefaults eh o mecanismo padrao do iOS para armazenamento
+ * de preferencias simples (key-value), analogo ao SharedPreferences do Android.
  *
- * Exemplo:
- * ```
- * import platform.Foundation.NSUserDefaults
- *
- * actual class PreferencesService {
- *     private val userDefaults = NSUserDefaults.standardUserDefaults
- *
- *     actual fun getString(key: String, default: String?): String? {
- *         return userDefaults.stringForKey(key) ?: default
- *     }
- * }
- * ```
+ * NOTA: Para dados sensíveis (tokens, senhas), usar Keychain do iOS.
  */
 actual class PreferencesService {
+
+    private val userDefaults = NSUserDefaults.standardUserDefaults
+
     actual fun getString(key: String, default: String?): String? {
-        TODO("Implementar com NSUserDefaults.standardUserDefaults.stringForKey()")
+        return userDefaults.stringForKey(key) ?: default
     }
 
     actual fun putString(key: String, value: String) {
-        TODO("Implementar com NSUserDefaults.standardUserDefaults.setObject()")
+        userDefaults.setObject(value, forKey = key)
+        userDefaults.synchronize()
     }
 
     actual fun getInt(key: String, default: Int): Int {
-        TODO("Implementar com NSUserDefaults.standardUserDefaults.integerForKey()")
+        return if (userDefaults.objectForKey(key) != null) {
+            userDefaults.integerForKey(key).toInt()
+        } else {
+            default
+        }
     }
 
     actual fun putInt(key: String, value: Int) {
-        TODO("Implementar com NSUserDefaults.standardUserDefaults.setInteger()")
+        userDefaults.setInteger(value.toLong(), forKey = key)
+        userDefaults.synchronize()
     }
 
     actual fun getLong(key: String, default: Long): Long {
-        TODO("Implementar com NSUserDefaults.standardUserDefaults.integerForKey() convertido para Long")
+        return if (userDefaults.objectForKey(key) != null) {
+            userDefaults.integerForKey(key)
+        } else {
+            default
+        }
     }
 
     actual fun putLong(key: String, value: Long) {
-        TODO("Implementar com NSUserDefaults.standardUserDefaults.setInteger()")
+        userDefaults.setInteger(value, forKey = key)
+        userDefaults.synchronize()
     }
 
     actual fun getFloat(key: String, default: Float): Float {
-        TODO("Implementar com NSUserDefaults.standardUserDefaults.floatForKey()")
+        return if (userDefaults.objectForKey(key) != null) {
+            userDefaults.floatForKey(key)
+        } else {
+            default
+        }
     }
 
     actual fun putFloat(key: String, value: Float) {
-        TODO("Implementar com NSUserDefaults.standardUserDefaults.setFloat()")
+        userDefaults.setFloat(value, forKey = key)
+        userDefaults.synchronize()
     }
 
     actual fun getBoolean(key: String, default: Boolean): Boolean {
-        TODO("Implementar com NSUserDefaults.standardUserDefaults.boolForKey()")
+        return if (userDefaults.objectForKey(key) != null) {
+            userDefaults.boolForKey(key)
+        } else {
+            default
+        }
     }
 
     actual fun putBoolean(key: String, value: Boolean) {
-        TODO("Implementar com NSUserDefaults.standardUserDefaults.setBool()")
+        userDefaults.setBool(value, forKey = key)
+        userDefaults.synchronize()
     }
 
     actual fun remove(key: String) {
-        TODO("Implementar com NSUserDefaults.standardUserDefaults.removeObjectForKey()")
+        userDefaults.removeObjectForKey(key)
+        userDefaults.synchronize()
     }
 
     actual fun clear() {
-        TODO("Implementar removendo todas as chaves do domínio da app")
+        // Remove todas as chaves do dominio da app
+        val appDomain = platform.Foundation.NSBundle.mainBundle.bundleIdentifier
+        if (appDomain != null) {
+            userDefaults.removePersistentDomainForName(appDomain)
+            userDefaults.synchronize()
+        }
     }
 
     actual fun contains(key: String): Boolean {
-        TODO("Implementar verificando se objectForKey() retorna null")
+        return userDefaults.objectForKey(key) != null
     }
 }

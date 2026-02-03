@@ -1006,7 +1006,6 @@ export const onMvpAwarded = onDocumentUpdated("games/{gameId}", async (event) =>
   try {
     // Buscar nome do jogo para contexto
     const gameName = after.location_name || after.field_name || "a partida";
-    const gameDate = after.date || "recente";
 
     await sendAndSaveNotification(afterMvpId, {
       userId: afterMvpId,
@@ -1223,7 +1222,6 @@ export const onMemberJoined = onDocumentCreated(
 export const onMemberLeft = onDocumentDeleted(
   "groups/{groupId}/members/{memberId}",
   async (event) => {
-    const member = event.data?.data();
     const groupId = event.params.groupId;
     const memberId = event.params.memberId;
 
@@ -1301,9 +1299,6 @@ export const onCashboxTransaction = onDocumentCreated(
       // Buscar dados do grupo
       const groupDoc = await getDb().collection("groups").doc(groupId).get();
       if (!groupDoc.exists) return;
-
-      const group = groupDoc.data();
-      const groupName = group?.name || "o grupo";
 
       // Buscar admins e owners para notificar (exceto quem criou)
       const adminsSnap = await getDb()

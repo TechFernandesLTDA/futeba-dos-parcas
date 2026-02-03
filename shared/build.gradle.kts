@@ -96,7 +96,7 @@ kotlin {
 
 android {
     namespace = "com.futebadosparcas.shared"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
