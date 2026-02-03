@@ -51,18 +51,12 @@ class GetUserBadgesUseCase @Inject constructor(
 
         return try {
             // 1. Buscar badges conquistadas
-            val earnedResult = gamificationRepository.getUserBadges(targetUserId)
-            if (earnedResult.isFailure) {
-                return Result.failure(earnedResult.exceptionOrNull()!!)
-            }
-            val earnedBadges = earnedResult.getOrNull()!!
+            val earnedBadges = gamificationRepository.getUserBadges(targetUserId)
+                .getOrElse { return Result.failure(it) }
 
             // 2. Buscar badges disponíveis
-            val availableResult = gamificationRepository.getAvailableBadges()
-            if (availableResult.isFailure) {
-                return Result.failure(availableResult.exceptionOrNull()!!)
-            }
-            val allBadges = availableResult.getOrNull()!!
+            val allBadges = gamificationRepository.getAvailableBadges()
+                .getOrElse { return Result.failure(it) }
 
             // 3. Filtrar badges não conquistadas
             val earnedIds = earnedBadges.map { it.badgeId }.toSet()
@@ -141,12 +135,10 @@ class GetUserBadgesUseCase @Inject constructor(
 
         AppLogger.d(TAG) { "Verificando badge: $badgeId para $targetUserId" }
 
-        val earnedResult = gamificationRepository.getUserBadges(targetUserId)
-        if (earnedResult.isFailure) {
-            return Result.failure(earnedResult.exceptionOrNull()!!)
-        }
+        val earnedBadges = gamificationRepository.getUserBadges(targetUserId)
+            .getOrElse { return Result.failure(it) }
 
-        val hasBadge = earnedResult.getOrNull()!!.any { it.badgeId == badgeId }
+        val hasBadge = earnedBadges.any { it.badgeId == badgeId }
         return Result.success(hasBadge)
     }
 
@@ -166,21 +158,16 @@ class GetUserBadgesUseCase @Inject constructor(
 
         AppLogger.d(TAG) { "Buscando badges por categoria: $category" }
 
-        val earnedResult = gamificationRepository.getUserBadges(targetUserId)
-        if (earnedResult.isFailure) {
-            return Result.failure(earnedResult.exceptionOrNull()!!)
-        }
+        val earnedBadges = gamificationRepository.getUserBadges(targetUserId)
+            .getOrElse { return Result.failure(it) }
 
         // Buscar todas as badges disponíveis para filtrar por categoria
-        val allBadgesResult = gamificationRepository.getAvailableBadges()
-        if (allBadgesResult.isFailure) {
-            return Result.failure(allBadgesResult.exceptionOrNull()!!)
-        }
+        val allBadges = gamificationRepository.getAvailableBadges()
+            .getOrElse { return Result.failure(it) }
 
-        val allBadges = allBadgesResult.getOrNull()!!
         val badgesInCategory = allBadges.filter { it.category.name == category }.map { it.id }.toSet()
 
-        val filteredBadges = earnedResult.getOrNull()!!.filter {
+        val filteredBadges = earnedBadges.filter {
             it.badgeId in badgesInCategory
         }
 
