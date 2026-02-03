@@ -245,7 +245,7 @@ fun TransferOwnershipDialog(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Continuar")
+                    Text(stringResource(R.string.action_continue))
                 }
             },
             dismissButton = {

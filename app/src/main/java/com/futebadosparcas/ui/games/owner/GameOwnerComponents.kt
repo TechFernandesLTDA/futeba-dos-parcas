@@ -363,7 +363,7 @@ fun PartialPaymentDialog(
                     label = { Text(stringResource(R.string.owner_amount_paid)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
-                    prefix = { Text("R$ ") }
+                    prefix = { Text(stringResource(R.string.currency_prefix) + " ") }
                 )
             }
         },

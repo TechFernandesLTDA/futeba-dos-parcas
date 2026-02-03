@@ -3532,4 +3532,13 @@ subir no ranking!</string>
     <!-- Error Messages -->
     <string name="error_sharing">Erro ao compartilhar</string>
 
+    <!-- Avatar Customizer -->
+    <string name="avatar_no_number">Sem número</string>
+
+    <!-- Theme Settings -->
+    <string name="theme_mode">Modo</string>
+
+    <!-- Shared/Continue -->
+    <string name="action_continue">Continuar</string>
+
 </resources>

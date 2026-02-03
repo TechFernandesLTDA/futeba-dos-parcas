@@ -537,7 +537,7 @@ private fun PartialPaymentDialog(
                     value = amount,
                     onValueChange = { amount = it },
                     label = { Text(stringResource(R.string.amount)) },
-                    prefix = { Text("R$ ") },
+                    prefix = { Text(stringResource(R.string.currency_prefix) + " ") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )

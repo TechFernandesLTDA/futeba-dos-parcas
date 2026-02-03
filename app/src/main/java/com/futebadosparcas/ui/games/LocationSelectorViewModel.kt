@@ -312,7 +312,7 @@ class LocationSelectorViewModel @Inject constructor(
         current.add(0, location)
         // Limitar a MAX_RECENT_LOCATIONS
         if (current.size > MAX_RECENT_LOCATIONS) {
-            current.removeLast()
+            current.removeAt(current.lastIndex)
         }
         _recentLocations.value = current
         saveRecentLocations(current)
@@ -507,6 +507,11 @@ class LocationSelectorViewModel @Inject constructor(
                 _createLocationState.value = CreateLocationState.Error("Erro inesperado")
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        searchJob?.cancel()
     }
 }
 
