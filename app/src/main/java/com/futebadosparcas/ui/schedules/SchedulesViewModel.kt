@@ -16,8 +16,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val TAG = "SchedulesViewModel"
-
 /**
  * ViewModel para gerenciamento de horarios recorrentes.
  *
@@ -29,6 +27,10 @@ class SchedulesViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
     private val authRepository: AuthRepository
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "SchedulesViewModel"
+    }
 
     private val _uiState = MutableStateFlow<SchedulesUiState>(SchedulesUiState.Loading)
     val uiState: StateFlow<SchedulesUiState> = _uiState.asStateFlow()

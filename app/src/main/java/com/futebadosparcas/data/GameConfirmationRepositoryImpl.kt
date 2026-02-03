@@ -16,8 +16,6 @@ import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val TAG = "GameConfirmationRepo"
-
 /**
  * Implementacao Android do GameConfirmationRepository (KMP).
  *
@@ -30,6 +28,10 @@ private const val TAG = "GameConfirmationRepo"
 class GameConfirmationRepositoryImpl @Inject constructor(
     private val dataSource: FirebaseDataSource
 ) : GameConfirmationRepository {
+
+    companion object {
+        private const val TAG = "GameConfirmationRepo"
+    }
 
     override suspend fun getGameConfirmations(gameId: String): Result<List<GameConfirmation>> {
         return dataSource.getGameConfirmations(gameId)
