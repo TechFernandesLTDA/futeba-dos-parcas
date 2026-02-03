@@ -3522,6 +3522,8 @@ subir no ranking!</string>
     <string name="cd_discard">Descartar</string>
     <string name="cd_send">Enviar</string>
     <string name="cd_level_badge_main">Badge de nível</string>
+    <string name="cd_image">Imagem</string>
+    <string name="action_click">Clique</string>
 
     <!-- Error Messages -->
     <string name="error_sharing">Erro ao compartilhar</string>
