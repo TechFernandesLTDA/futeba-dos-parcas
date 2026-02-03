@@ -154,6 +154,7 @@ class ProfileViewModel @Inject constructor(
             .document(userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
+                    android.util.Log.e("ProfileViewModel", "Erro no listener de estatísticas", error)
                     return@addSnapshotListener
                 }
 

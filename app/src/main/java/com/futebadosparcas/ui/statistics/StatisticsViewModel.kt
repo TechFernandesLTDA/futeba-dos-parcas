@@ -6,7 +6,9 @@ import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.toDataModel
+import com.futebadosparcas.util.AppLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,15 +21,22 @@ class StatisticsViewModel @Inject constructor(
     private val userRepository: UserRepository
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "StatisticsViewModel"
+    }
+
     private val _uiState = MutableStateFlow<StatisticsUiState>(StatisticsUiState.Loading)
     val uiState: StateFlow<StatisticsUiState> = _uiState
+
+    private var loadJob: Job? = null
 
     init {
         loadStatistics()
     }
 
     fun loadStatistics() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.value = StatisticsUiState.Loading
 
             try {
@@ -100,8 +109,14 @@ class StatisticsViewModel @Inject constructor(
                 _uiState.value = StatisticsUiState.Success(combined)
 
             } catch (e: Exception) {
+                AppLogger.e(TAG, "Erro ao carregar estatísticas: ${e.message}", e)
                 _uiState.value = StatisticsUiState.Error(e.message ?: "Erro ao carregar estatísticas")
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        loadJob?.cancel()
     }
 }
