@@ -57,11 +57,17 @@ sealed class UiState {
 
 ### Build & Test Commands
 
+**Note:** Commands work on Windows (Git Bash/PowerShell), macOS, and Linux. Use `./gradlew` on Unix-like systems or `gradlew.bat` on Windows CMD.
+
 ```bash
-# Build
+# Build (Android)
 ./gradlew assembleDebug                    # Build debug APK
 ./gradlew installDebug                     # Install on device
 ./gradlew compileDebugKotlin               # Fast compile check (use this often!)
+
+# Build (KMP - iOS Framework) - Requires macOS
+./gradlew :shared:linkDebugFrameworkIosSimulatorArm64  # iOS Simulator (M1/M2 Mac)
+./gradlew :shared:linkDebugFrameworkIosArm64           # iOS Device
 
 # Tests
 ./gradlew :app:testDebugUnitTest           # Unit tests
@@ -71,6 +77,7 @@ sealed class UiState {
 
 # Quality
 ./gradlew lint                             # Lint check
+./gradlew detekt                           # Static analysis (Detekt)
 ./gradlew clean                            # Clean build
 
 # Cloud Functions (in /functions directory)
@@ -121,7 +128,8 @@ firebase deploy --only functions           # Deploy
 - **Kotlin 2.0+** with **Jetpack Compose** (all new screens)
 - **MVVM + Clean Architecture**
 - **Hilt** for DI
-- **Firebase** (Firestore, Auth, Storage, Cloud Functions v2, FCM)
+- **Firebase** (Firestore, Auth, Storage, Cloud Functions v2, FCM, **App Check**)
+- **Custom Claims** for role-based authorization (zero-cost JWT validation)
 - **Room** for local cache
 - **Coroutines & StateFlow** for async
 
@@ -137,15 +145,31 @@ firebase deploy --only functions           # Deploy
 
 ## Architecture
 
+### Module Structure
+
+The project uses a multi-module setup:
+
+- **`:app`** - Main Android application (Jetpack Compose UI, ViewModels, DI)
+- **`:shared`** - Kotlin Multiplatform shared code (business logic, domain models, repository interfaces)
+- **`:composeApp`** - Compose Multiplatform UI (shared UI components for Android/iOS)
+- **`:baselineprofile`** - Baseline profiles for performance optimization
+
+### Architecture Layers
+
 ```
 UI (Compose Screens)
     ↓
 ViewModels (@HiltViewModel + StateFlow<UiState>)
     ↓
-Domain (Use Cases in shared/commonMain)
+Domain (Use Cases)
     ↓
 Data (Repositories → Firebase/Room)
 ```
+
+**Implementation Notes:**
+- ViewModels and UI are in `:app` module (Android-specific)
+- Repository interfaces and domain models can be in `:shared/commonMain` (KMP)
+- Repository implementations split between `:shared/androidMain` (Firebase Android SDK) and `:app` (Hilt-injected implementations)
 
 ### Where to Put New Code
 
@@ -153,13 +177,19 @@ Data (Repositories → Firebase/Room)
 |-----------|----------|
 | New Compose screen | `app/src/main/java/com/futebadosparcas/ui/<feature>/<Feature>Screen.kt` |
 | ViewModel | `app/src/main/java/com/futebadosparcas/ui/<feature>/<Feature>ViewModel.kt` |
-| Repository interface | `shared/commonMain/.../repository/` |
-| Repository impl | `app/src/main/java/com/futebadosparcas/data/repository/` |
+| Repository interface | `shared/src/commonMain/kotlin/...` |
+| Repository impl (Android) | `shared/src/androidMain/kotlin/...` or `app/src/main/java/.../data/repository/` |
+| Repository impl (iOS) | `shared/src/iosMain/kotlin/...` |
 | Use Cases | `app/src/main/java/com/futebadosparcas/domain/usecase/<feature>/` |
 | DI modules | `app/src/main/java/com/futebadosparcas/di/` |
 | Reusable UI components | `app/src/main/java/com/futebadosparcas/ui/components/` |
 | Adaptive UI | `app/src/main/java/com/futebadosparcas/ui/adaptive/` |
 | Cloud Function | `functions/src/` |
+
+**KMP Structure:**
+- `shared/src/commonMain/` - Cross-platform business logic, domain models, repository interfaces
+- `shared/src/androidMain/` - Android-specific implementations (Firebase SDK usage)
+- `shared/src/iosMain/` - iOS-specific implementations (Firebase iOS SDK)
 
 ### Navigation
 
@@ -169,6 +199,77 @@ The app uses a single-activity architecture with Compose Navigation:
 - Navigation graph implemented in `AppNavigation.kt`
 - Each screen receives its ViewModel via Hilt (`hiltViewModel()`)
 - Use `onNavigate: (destination: String) -> Unit` callbacks for navigation
+
+---
+
+## Security & Performance (PERF_001)
+
+### Custom Claims for Authorization
+
+**IMPLEMENTED**: specs/PERF_001_SECURITY_RULES_OPTIMIZATION.md
+
+Firebase Custom Claims armazenam `role` no JWT token, eliminando 40% dos Firestore reads.
+
+**Migration Status**: FASE 1 (Backward Compatible)
+- ✅ Custom Claims setados em `onUserCreated` trigger
+- ✅ Security Rules aceitam AMBOS: `request.auth.token.role` OU `getUserRole()` (Firestore)
+- ⏳ FASE 2: Após 95% migração (2 semanas), remover fallback `getUserRole()`
+
+**Cloud Functions**:
+```typescript
+// Setar role de um usuário (apenas ADMIN)
+const setRole = httpsCallable(functions, 'setUserRole');
+await setRole({ uid: 'user123', role: 'ADMIN' });
+
+// Migração em massa (run once)
+const migrate = httpsCallable(functions, 'migrateAllUsersToCustomClaims');
+await migrate();
+```
+
+**Security Rules (Optimized)**:
+```javascript
+// ANTES (1 Firestore read):
+function isAdmin() {
+  return isAuthenticated() && getUserRole() == 'ADMIN';
+}
+
+// DEPOIS (0 reads):
+function isAdmin() {
+  return request.auth.token.role == 'ADMIN';
+}
+```
+
+**Expected Impact**:
+- Firestore reads: -40% (~20k reads/dia para 1k usuários)
+- Latência: -20ms em operações autorizadas
+- Custo: -$10-15/mês para 10k usuários
+
+### App Check
+
+**STATUS**: Implementado no cliente, permissive mode nas Cloud Functions.
+
+**Cliente (Android)**:
+```kotlin
+// FutebaApplication.kt
+FirebaseApp.initializeApp(this)
+FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+    if (BuildConfig.DEBUG) DebugAppCheckProviderFactory.getInstance()
+    else PlayIntegrityAppCheckProviderFactory.getInstance()
+)
+```
+
+**Cloud Functions**:
+```typescript
+// Callable functions críticas (setUserRole, etc)
+export const setUserRole = onCall({
+    enforceAppCheck: true,  // TODO: Habilitar após 1 semana
+    consumeAppCheckToken: true
+}, async (request) => { ... });
+```
+
+**Rollout Plan**:
+1. ✅ Semana 1: `enforceAppCheck: false` (monitorar métricas)
+2. ⏳ Semana 2: `enforceAppCheck: true` (bloquear apps não-verificados)
 
 ---
 
@@ -255,6 +356,7 @@ SCHEDULED → CONFIRMED → LIVE → FINISHED
 | File | Purpose |
 |------|---------|
 | `index.ts` | Main entry, onUserCreate, onGameFinished, XP processing |
+| `auth/custom-claims.ts` | **NEW:** Role management via Custom Claims (PERF_001) |
 | `league.ts` | recalculateLeagueRating, division changes |
 | `notifications.ts` | Push triggers (game created, MVP, level up, badges) |
 | `reminders.ts` | Game reminders, waitlist cleanup |
@@ -264,6 +366,7 @@ SCHEDULED → CONFIRMED → LIVE → FINISHED
 | `user-management.ts` | User profile operations |
 | `seeding.ts` | Data seeding utilities |
 | `validation/index.ts` | Input validation helpers |
+| `scripts/migrate-custom-claims.ts` | Migration script for Custom Claims (run once) |
 
 ---
 
@@ -293,6 +396,7 @@ For in-depth guidance, see `.claude/rules/`:
 6. **No hardcoded strings** - Use `strings.xml`
 7. **Comments in Portuguese (PT-BR)**
 8. **Verify builds compile** before marking tasks complete
+9. **KMP-first** - Shared business logic goes in `shared/commonMain`, platform-specific code in `androidMain/iosMain`
 
 ---
 
