@@ -22,7 +22,7 @@ import com.futebadosparcas.data.model.Schedule
 import com.futebadosparcas.R
 import java.time.LocalTime
 
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import java.util.Date
 
 private const val TAG = "ComposeScheduleDialogs"
@@ -240,7 +240,7 @@ fun CreateScheduleDialog(
                                     recurrenceType = selectedRecurrenceType,
                                     createdAt = Date()
                                 )
-                                Log.d(TAG, context.getString(R.string.schedules_create_content, newSchedule.name))
+                                AppLogger.d(TAG) { context.getString(R.string.schedules_create_content, newSchedule.name) }
                                 onCreate(newSchedule)
                             }
                         },

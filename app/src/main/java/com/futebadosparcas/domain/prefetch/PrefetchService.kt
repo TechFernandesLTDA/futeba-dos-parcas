@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.prefetch
 
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.StatisticsRepository
@@ -46,11 +46,11 @@ class PrefetchService @Inject constructor(
     fun prefetchNextGame(game: Game) {
         prefetchScope.launch {
             try {
-                Log.d(TAG, "Prefetching next game: ${game.id}")
+                AppLogger.d(TAG) { "Prefetching next game: ${game.id}" }
 
                 // 1. Armazenar jogo em cache compartilhado para acesso rápido
                 sharedCache.putGame(game.id, game, ttlMs = 10 * 60 * 1000) // 10min TTL
-                Log.d(TAG, "Cached game for prefetch: ${game.id}")
+                AppLogger.d(TAG) { "Cached game for prefetch: ${game.id}" }
 
                 // 2. Warm cache com perfis de jogadores
                 // Tipicamente um jogo tem 10-20 confirmações
@@ -62,15 +62,15 @@ class PrefetchService @Inject constructor(
 
                     if (playerIds.isNotEmpty()) {
                         prefetchUsers(playerIds)
-                        Log.d(TAG, "Prefetched ${playerIds.size} players for game ${game.id}")
+                        AppLogger.d(TAG) { "Prefetched ${playerIds.size} players for game ${game.id}" }
                     }
                 } catch (e: Exception) {
-                    Log.d(TAG, "Failed to prefetch game confirmations: ${e.message}")
+                    AppLogger.d(TAG) { "Failed to prefetch game confirmations: ${e.message}" }
                 }
 
             } catch (e: Exception) {
                 // Silent fail - prefetch não deve bloquear UI
-                Log.d(TAG, "Prefetch failed for game ${game.id}: ${e.message}")
+                AppLogger.d(TAG) { "Prefetch failed for game ${game.id}: ${e.message}" }
             }
         }
     }
@@ -82,15 +82,15 @@ class PrefetchService @Inject constructor(
     fun prefetchLiveGameData(gameId: String) {
         prefetchScope.launch {
             try {
-                Log.d(TAG, "Prefetching live game data: $gameId")
+                AppLogger.d(TAG) { "Prefetching live game data: $gameId" }
 
                 // Carregar confirmações do jogo (dados que muda em tempo real)
                 val confirmations = gameRepository.getGameConfirmations(gameId).getOrNull() ?: emptyList()
                 if (confirmations.isNotEmpty()) {
-                    Log.d(TAG, "Prefetched ${confirmations.size} confirmations for game: $gameId")
+                    AppLogger.d(TAG) { "Prefetched ${confirmations.size} confirmations for game: $gameId" }
                 }
             } catch (e: Exception) {
-                Log.d(TAG, "Prefetch live game failed: ${e.message}")
+                AppLogger.d(TAG) { "Prefetch live game failed: ${e.message}" }
             }
         }
     }
@@ -111,11 +111,11 @@ class PrefetchService @Inject constructor(
             val missingUserIds = userIds.filter { it !in cachedUsers.keys }
 
             if (missingUserIds.isEmpty()) {
-                Log.d(TAG, "All users already cached")
+                AppLogger.d(TAG) { "All users already cached" }
                 return
             }
 
-            Log.d(TAG, "Prefetching ${missingUserIds.size} users from Firebase")
+            AppLogger.d(TAG) { "Prefetching ${missingUserIds.size} users from Firebase" }
 
             // Buscar usuários faltantes em batch
             val users = userRepository.getUsersByIds(missingUserIds).getOrNull() ?: return
@@ -126,10 +126,10 @@ class PrefetchService @Inject constructor(
                 ttlMs = 10 * 60 * 1000 // 10min
             )
 
-            Log.d(TAG, "Prefetched ${users.size} users")
+            AppLogger.d(TAG) { "Prefetched ${users.size} users" }
 
         } catch (e: Exception) {
-            Log.d(TAG, "Prefetch users failed: ${e.message}")
+            AppLogger.d(TAG) { "Prefetch users failed: ${e.message}" }
         }
     }
 
@@ -143,10 +143,10 @@ class PrefetchService @Inject constructor(
                 try {
                     val confirmations = gameRepository.getGameConfirmations(gameId).getOrNull() ?: emptyList()
                     if (confirmations.isNotEmpty()) {
-                        Log.d(TAG, "Prefetched ${confirmations.size} confirmations for live game: $gameId")
+                        AppLogger.d(TAG) { "Prefetched ${confirmations.size} confirmations for live game: $gameId" }
                     }
                 } catch (e: Exception) {
-                    Log.d(TAG, "Prefetch live game failed: ${e.message}")
+                    AppLogger.d(TAG) { "Prefetch live game failed: ${e.message}" }
                 }
             }
         }
@@ -164,7 +164,7 @@ class PrefetchService @Inject constructor(
             imageUrls.forEach { url ->
                 try {
                     // O simples acesso ao ImageLoader aquece o cache
-                    Log.d(TAG, "Scheduled prefetch for image: $url")
+                    AppLogger.d(TAG) { "Scheduled prefetch for image: $url" }
                 } catch (e: Exception) {
                     // Silent fail
                 }
@@ -179,9 +179,9 @@ class PrefetchService @Inject constructor(
         prefetchScope.launch {
             try {
                 statisticsRepository.getUserStatistics(userId)
-                Log.d(TAG, "Prefetched user statistics: $userId")
+                AppLogger.d(TAG) { "Prefetched user statistics: $userId" }
             } catch (e: Exception) {
-                Log.d(TAG, "Prefetch user statistics failed: ${e.message}")
+                AppLogger.d(TAG) { "Prefetch user statistics failed: ${e.message}" }
             }
         }
     }

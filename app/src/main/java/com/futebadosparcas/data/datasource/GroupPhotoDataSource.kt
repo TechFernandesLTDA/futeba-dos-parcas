@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.storageMetadata
@@ -93,7 +93,7 @@ class GroupPhotoDataSource @Inject constructor(
      */
     fun uploadGroupPhotoWithProgress(groupId: String, imageUri: Uri): Flow<UploadResult> = callbackFlow {
         try {
-            Log.d(TAG, "Starting group photo upload for group: $groupId")
+            AppLogger.d(TAG) { "Starting group photo upload for group: $groupId" }
 
             // 1. Validar arquivo
             val validationResult = validateImageFile(imageUri)
@@ -107,7 +107,7 @@ class GroupPhotoDataSource @Inject constructor(
             val processedData = processImage(imageUri)
             val thumbnailData = createThumbnail(processedData.bitmap)
 
-            Log.d(TAG, "Processing complete - Main: ${processedData.bytes.size / 1024}KB, Thumb: ${thumbnailData.size / 1024}KB")
+            AppLogger.d(TAG) { "Processing complete - Main: ${processedData.bytes.size / 1024}KB, Thumb: ${thumbnailData.size / 1024}KB" }
 
             // 3. Preparar metadados
             val metadata = createUploadMetadata(
@@ -141,13 +141,13 @@ class GroupPhotoDataSource @Inject constructor(
                         close()
                     }
                 }.addOnFailureListener { e ->
-                    Log.e(TAG, "Failed to get download URL", e)
+                    AppLogger.e(TAG, "Failed to get download URL", e)
                     val errorMessage = parseStorageError(e)
                     trySend(UploadResult.Error(errorMessage.first, errorMessage.second))
                     close()
                 }
             }.addOnFailureListener { e ->
-                Log.e(TAG, "Upload failed", e)
+                AppLogger.e(TAG, "Upload failed", e)
                 val errorMessage = parseStorageError(e)
                 trySend(UploadResult.Error(errorMessage.first, errorMessage.second))
                 close()
@@ -158,7 +158,7 @@ class GroupPhotoDataSource @Inject constructor(
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error in upload flow", e)
+            AppLogger.e(TAG, "Error in upload flow", e)
             trySend(UploadResult.Error(e.message ?: "Erro desconhecido"))
             close()
         }
@@ -174,7 +174,7 @@ class GroupPhotoDataSource @Inject constructor(
     suspend fun uploadGroupPhoto(groupId: String, imageUri: Uri): UploadResult {
         return withContext(Dispatchers.IO) {
             try {
-                Log.d(TAG, "Starting group photo upload for group: $groupId")
+                AppLogger.d(TAG) { "Starting group photo upload for group: $groupId" }
 
                 // 1. Validar arquivo
                 val validationResult = validateImageFile(imageUri)
@@ -185,8 +185,8 @@ class GroupPhotoDataSource @Inject constructor(
                 // 2. Decodificar e processar imagem
                 val processedData = processImage(imageUri)
 
-                Log.d(TAG, "Processing complete - Size: ${processedData.bytes.size / 1024}KB, " +
-                        "Format: ${processedData.format}, ${processedData.bitmap.width}x${processedData.bitmap.height}")
+                AppLogger.d(TAG) { "Processing complete - Size: ${processedData.bytes.size / 1024}KB, " +
+                        "Format: ${processedData.format}, ${processedData.bitmap.width}x${processedData.bitmap.height}" }
 
                 // 3. Preparar metadados
                 val metadata = createUploadMetadata(
@@ -201,7 +201,7 @@ class GroupPhotoDataSource @Inject constructor(
                 val storageRef = storage.reference
                     .child("$GROUPS_PATH/$groupId/$LOGO_NAME")
 
-                Log.d(TAG, "Uploading to: $GROUPS_PATH/$groupId/$LOGO_NAME")
+                AppLogger.d(TAG) { "Uploading to: $GROUPS_PATH/$groupId/$LOGO_NAME" }
 
                 val uploadTask = storageRef.putBytes(processedData.bytes, metadata).await()
                 val downloadUrl = uploadTask.storage.downloadUrl.await().toString()
@@ -213,12 +213,12 @@ class GroupPhotoDataSource @Inject constructor(
                 // 6. Liberar bitmap
                 processedData.bitmap.recycle()
 
-                Log.d(TAG, "Upload successful: $downloadUrl")
+                AppLogger.d(TAG) { "Upload successful: $downloadUrl" }
 
                 UploadResult.Success(downloadUrl, thumbUrl)
 
             } catch (e: Exception) {
-                Log.e(TAG, "Error uploading group photo", e)
+                AppLogger.e(TAG, "Error uploading group photo", e)
 
                 // Mapear erros específicos do Firebase Storage para mensagens amigáveis
                 val errorMessage = e.message ?: ""
@@ -269,7 +269,7 @@ class GroupPhotoDataSource @Inject constructor(
         // Validar tamanho
         val fileSize = getFileSize(uri)
         if (fileSize > MAX_FILE_SIZE_BYTES) {
-            Log.w(TAG, "File too large: ${fileSize / 1024 / 1024}MB (max: $MAX_FILE_SIZE_MB MB)")
+            AppLogger.w(TAG) { "File too large: ${fileSize / 1024 / 1024}MB (max: $MAX_FILE_SIZE_MB MB)" }
             return UploadResult.FileTooLarge
         }
 
@@ -283,7 +283,7 @@ class GroupPhotoDataSource @Inject constructor(
         }
 
         if (!isValidImage) {
-            Log.w(TAG, "Invalid image file (magic bytes mismatch)")
+            AppLogger.w(TAG) { "Invalid image file (magic bytes mismatch)" }
             return UploadResult.InvalidImage
         }
 
@@ -312,7 +312,7 @@ class GroupPhotoDataSource @Inject constructor(
                 header
             } ?: byteArrayOf()
         } catch (e: Exception) {
-            Log.w(TAG, "Error reading magic bytes", e)
+            AppLogger.w(TAG) { "Error reading magic bytes: ${e.message}" }
             byteArrayOf()
         }
     }
@@ -326,7 +326,7 @@ class GroupPhotoDataSource @Inject constructor(
         val originalBitmap = BitmapFactory.decodeStream(inputStream)!!
         inputStream.close()
 
-        Log.d(TAG, "Original: ${originalBitmap.width}x${originalBitmap.height}, ${originalSize / 1024}KB")
+        AppLogger.d(TAG) { "Original: ${originalBitmap.width}x${originalBitmap.height}, ${originalSize / 1024}KB" }
 
         // Redimensionar para tamanho otimizado mantendo aspect ratio (não forçar quadrado)
         val resizedBitmap = resizeToMaxDimension(originalBitmap, GROUP_PHOTO_SIZE)
@@ -336,8 +336,8 @@ class GroupPhotoDataSource @Inject constructor(
         val quality = getAdaptiveQuality(originalSize)
         val compressedBytes = compressImage(resizedBitmap, compressFormat, quality)
 
-        Log.d(TAG, "Compressed: ${resizedBitmap.width}x${resizedBitmap.height}, " +
-                "${compressedBytes.size / 1024}KB (${quality}% quality)")
+        AppLogger.d(TAG) { "Compressed: ${resizedBitmap.width}x${resizedBitmap.height}, " +
+                "${compressedBytes.size / 1024}KB (${quality}% quality)" }
 
         // Reciclar bitmap original para liberar memória
         if (originalBitmap != resizedBitmap) {
@@ -425,7 +425,7 @@ class GroupPhotoDataSource @Inject constructor(
             thumbRef.putBytes(bytes, metadata).await()
             thumbRef.downloadUrl.await().toString()
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to upload thumbnail", e)
+            AppLogger.w(TAG) { "Failed to upload thumbnail: ${e.message}" }
             null
         }
     }
@@ -475,7 +475,7 @@ class GroupPhotoDataSource @Inject constructor(
                 pfd.statSize
             } ?: 0
         } catch (e: Exception) {
-            Log.w(TAG, "Error getting file size", e)
+            AppLogger.w(TAG) { "Error getting file size: ${e.message}" }
             0
         }
     }
@@ -528,7 +528,7 @@ class GroupPhotoDataSource @Inject constructor(
             val storageRef = storage.reference.child("$GROUPS_PATH/$groupId/$LOGO_NAME")
             storageRef.downloadUrl.await().toString()
         } catch (e: Exception) {
-            Log.d(TAG, "No photo found for group: $groupId")
+            AppLogger.d(TAG) { "No photo found for group: $groupId" }
             null
         }
     }
@@ -558,10 +558,10 @@ class GroupPhotoDataSource @Inject constructor(
             try { photoRef.delete().await() } catch (e: Exception) { /* ignore */ }
             try { thumbRef.delete().await() } catch (e: Exception) { /* ignore */ }
 
-            Log.d(TAG, "Group photo deleted for group: $groupId")
+            AppLogger.d(TAG) { "Group photo deleted for group: $groupId" }
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Error deleting group photo", e)
+            AppLogger.e(TAG, "Error deleting group photo", e)
             false
         }
     }

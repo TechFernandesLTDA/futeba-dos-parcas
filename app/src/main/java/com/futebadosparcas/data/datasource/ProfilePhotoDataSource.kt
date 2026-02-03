@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Log
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
@@ -102,7 +101,7 @@ class ProfilePhotoDataSource @Inject constructor(
      */
     fun uploadProfilePhotoWithProgress(userId: String, imageUri: Uri): Flow<UploadResult> = callbackFlow {
         try {
-            Log.d(TAG, "Starting profile photo upload for user: $userId")
+            AppLogger.d(TAG) { "Starting profile photo upload for user: $userId" }
 
             // 1. Validar arquivo
             val validationResult = validateImageFile(imageUri)
@@ -116,7 +115,7 @@ class ProfilePhotoDataSource @Inject constructor(
             val processedData = processImage(imageUri)
             val thumbnailData = createThumbnail(processedData.bitmap)
 
-            Log.d(TAG, "Processing complete - Main: ${processedData.bytes.size}KB, Thumb: ${thumbnailData.size}KB")
+            AppLogger.d(TAG) { "Processing complete - Main: ${processedData.bytes.size}KB, Thumb: ${thumbnailData.size}KB" }
 
             // 3. Preparar metadados
             val metadata = createUploadMetadata(
@@ -154,7 +153,7 @@ class ProfilePhotoDataSource @Inject constructor(
                     close()
                 }
             }.addOnFailureListener { e ->
-                Log.e(TAG, "Upload failed", e)
+                AppLogger.e(TAG, "Upload failed", e)
                 trySend(UploadResult.Error(e.message ?: "Erro no upload"))
                 close()
             }
@@ -164,7 +163,7 @@ class ProfilePhotoDataSource @Inject constructor(
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error in upload flow", e)
+            AppLogger.e(TAG, "Error in upload flow", e)
             trySend(UploadResult.Error(e.message ?: "Erro desconhecido"))
             close()
         }
@@ -176,7 +175,7 @@ class ProfilePhotoDataSource @Inject constructor(
     suspend fun uploadProfilePhoto(userId: String, imageUri: Uri): UploadResult {
         return withContext(Dispatchers.IO) {
             try {
-                Log.d(TAG, "Starting profile photo upload for user: $userId")
+                AppLogger.d(TAG) { "Starting profile photo upload for user: $userId" }
 
                 // 1. Validar arquivo
                 val validationResult = validateImageFile(imageUri)
@@ -187,8 +186,8 @@ class ProfilePhotoDataSource @Inject constructor(
                 // 2. Decodificar e processar imagem
                 val processedData = processImage(imageUri)
 
-                Log.d(TAG, "Processing complete - Size: ${processedData.bytes.size}KB, " +
-                        "Format: ${processedData.format}, ${processedData.bitmap.width}x${processedData.bitmap.height}")
+                AppLogger.d(TAG) { "Processing complete - Size: ${processedData.bytes.size}KB, " +
+                        "Format: ${processedData.format}, ${processedData.bitmap.width}x${processedData.bitmap.height}" }
 
                 // 3. Preparar metadados
                 val metadata = createUploadMetadata(
@@ -203,7 +202,7 @@ class ProfilePhotoDataSource @Inject constructor(
                 val storageRef = storage.reference
                     .child("$PROFILE_PHOTO_PATH/$userId/$PROFILE_PHOTO_NAME")
 
-                Log.d(TAG, "Uploading to: $PROFILE_PHOTO_PATH/$userId/$PROFILE_PHOTO_NAME")
+                AppLogger.d(TAG) { "Uploading to: $PROFILE_PHOTO_PATH/$userId/$PROFILE_PHOTO_NAME" }
 
                 val uploadTask = storageRef.putBytes(processedData.bytes, metadata).await()
                 val downloadUrl = uploadTask.storage.downloadUrl.await().toString()
@@ -212,12 +211,12 @@ class ProfilePhotoDataSource @Inject constructor(
                 val thumbnailData = createThumbnail(processedData.bitmap)
                 uploadThumbnail(userId, thumbnailData)
 
-                Log.d(TAG, "Upload successful: $downloadUrl")
+                AppLogger.d(TAG) { "Upload successful: $downloadUrl" }
 
                 UploadResult.Success(downloadUrl)
 
             } catch (e: Exception) {
-                Log.e(TAG, "Error uploading profile photo", e)
+                AppLogger.e(TAG, "Error uploading profile photo", e)
                 val isRecoverable = when {
                     e.message?.contains("network", ignoreCase = true) == true -> true
                     e.message?.contains("timeout", ignoreCase = true) == true -> true
@@ -241,7 +240,7 @@ class ProfilePhotoDataSource @Inject constructor(
         // Validar tamanho
         val fileSize = getFileSize(uri)
         if (fileSize > MAX_FILE_SIZE_BYTES) {
-            Log.w(TAG, "File too large: ${fileSize / 1024 / 1024}MB (max: $MAX_FILE_SIZE_MB MB)")
+            AppLogger.w(TAG) { "File too large: ${fileSize / 1024 / 1024}MB (max: $MAX_FILE_SIZE_MB MB)" }
             return UploadResult.FileTooLarge
         }
 
@@ -255,7 +254,7 @@ class ProfilePhotoDataSource @Inject constructor(
         }
 
         if (!isValidImage) {
-            Log.w(TAG, "Invalid image file (magic bytes mismatch)")
+            AppLogger.w(TAG) { "Invalid image file (magic bytes mismatch)" }
             return UploadResult.InvalidImage
         }
 
@@ -284,7 +283,7 @@ class ProfilePhotoDataSource @Inject constructor(
                 header
             } ?: byteArrayOf()
         } catch (e: Exception) {
-            Log.w(TAG, "Error reading magic bytes", e)
+            AppLogger.w(TAG) { "Error reading magic bytes: ${e.message}" }
             byteArrayOf()
         }
     }
@@ -300,7 +299,7 @@ class ProfilePhotoDataSource @Inject constructor(
             BitmapFactory.decodeStream(stream)
         } ?: throw IllegalArgumentException("Imagem invalida ou corrompida")
 
-        Log.d(TAG, "Original: ${originalBitmap.width}x${originalBitmap.height}, ${originalSize / 1024}KB")
+        AppLogger.d(TAG) { "Original: ${originalBitmap.width}x${originalBitmap.height}, ${originalSize / 1024}KB" }
 
         // Redimensionar para tamanho otimizado de perfil
         val resizedBitmap = resizeToSquare(originalBitmap, PROFILE_PHOTO_SIZE)
@@ -310,8 +309,8 @@ class ProfilePhotoDataSource @Inject constructor(
         val quality = getAdaptiveQuality(originalSize)
         val compressedBytes = compressImage(resizedBitmap, compressFormat, quality)
 
-        Log.d(TAG, "Compressed: ${resizedBitmap.width}x${resizedBitmap.height}, " +
-                "${compressedBytes.size / 1024}KB (${quality}% quality)")
+        AppLogger.d(TAG) { "Compressed: ${resizedBitmap.width}x${resizedBitmap.height}, " +
+                "${compressedBytes.size / 1024}KB (${quality}% quality)" }
 
         // Reciclar bitmap original para liberar memória
         if (originalBitmap != resizedBitmap) {
@@ -413,7 +412,7 @@ class ProfilePhotoDataSource @Inject constructor(
             thumbRef.putBytes(bytes, metadata).await()
             thumbRef.downloadUrl.await().toString()
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to upload thumbnail", e)
+            AppLogger.w(TAG) { "Failed to upload thumbnail: ${e.message}" }
             null
         }
     }
@@ -463,7 +462,7 @@ class ProfilePhotoDataSource @Inject constructor(
                 pfd.statSize
             } ?: 0
         } catch (e: Exception) {
-            Log.w(TAG, "Error getting file size", e)
+            AppLogger.w(TAG) { "Error getting file size: ${e.message}" }
             0
         }
     }
@@ -485,7 +484,7 @@ class ProfilePhotoDataSource @Inject constructor(
 
                 tempFile.absolutePath
             } catch (e: Exception) {
-                Log.e(TAG, "Error saving temp image", e)
+                AppLogger.e(TAG, "Error saving temp image", e)
                 null
             }
         }
@@ -503,7 +502,7 @@ class ProfilePhotoDataSource @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Error clearing temp images", e)
+            AppLogger.w(TAG) { "Error clearing temp images: ${e.message}" }
         }
     }
 
@@ -515,7 +514,7 @@ class ProfilePhotoDataSource @Inject constructor(
             val storageRef = storage.reference.child("$PROFILE_PHOTO_PATH/$userId/$PROFILE_PHOTO_NAME")
             storageRef.downloadUrl.await().toString()
         } catch (e: Exception) {
-            Log.d(TAG, "No profile photo found for user: $userId")
+            AppLogger.d(TAG) { "No profile photo found for user: $userId" }
             null
         }
     }
@@ -547,10 +546,10 @@ class ProfilePhotoDataSource @Inject constructor(
                 launch { thumbRef.delete().await() }
             }
 
-            Log.d(TAG, "Profile photo deleted for user: $userId")
+            AppLogger.d(TAG) { "Profile photo deleted for user: $userId" }
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Error deleting profile photo", e)
+            AppLogger.e(TAG, "Error deleting profile photo", e)
             false
         }
     }

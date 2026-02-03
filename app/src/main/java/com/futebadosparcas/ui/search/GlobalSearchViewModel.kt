@@ -1,6 +1,6 @@
 package com.futebadosparcas.ui.search
 
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.repository.GameRepository
@@ -190,7 +190,7 @@ class GlobalSearchViewModel @Inject constructor(
                             }
                         }
                     } catch (e: Exception) {
-                        Log.w(TAG, "Erro ao buscar jogos", e)
+                        AppLogger.w(TAG) { "Erro ao buscar jogos: ${e.message}" }
                     }
                     Unit
                 })
@@ -219,7 +219,7 @@ class GlobalSearchViewModel @Inject constructor(
                             }
                         }
                     } catch (e: Exception) {
-                        Log.w(TAG, "Erro ao buscar grupos", e)
+                        AppLogger.w(TAG) { "Erro ao buscar grupos: ${e.message}" }
                     }
                     Unit
                 })
@@ -245,7 +245,7 @@ class GlobalSearchViewModel @Inject constructor(
                             }
                         }
                     } catch (e: Exception) {
-                        Log.w(TAG, "Erro ao buscar jogadores", e)
+                        AppLogger.w(TAG) { "Erro ao buscar jogadores: ${e.message}" }
                     }
                     Unit
                 })
@@ -271,7 +271,7 @@ class GlobalSearchViewModel @Inject constructor(
                             }
                         }
                     } catch (e: Exception) {
-                        Log.w(TAG, "Erro ao buscar locais", e)
+                        AppLogger.w(TAG) { "Erro ao buscar locais: ${e.message}" }
                     }
                     Unit
                 })
@@ -289,7 +289,7 @@ class GlobalSearchViewModel @Inject constructor(
             _uiState.value = GlobalSearchUiState.Success(sortedResults)
 
         } catch (e: Exception) {
-            Log.e(TAG, "Erro na busca", e)
+            AppLogger.e(TAG, "Erro na busca", e)
             _uiState.value = GlobalSearchUiState.Error("Erro ao buscar. Tente novamente.")
         }
     }

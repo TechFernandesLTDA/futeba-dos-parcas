@@ -1,6 +1,6 @@
 package com.futebadosparcas.data.paging
 
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.futebadosparcas.data.model.User
@@ -73,7 +73,7 @@ class UsersPagingSource(
                 try {
                     doc.toObject(User::class.java)?.copy(id = doc.id)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error parsing user document ${doc.id}", e)
+                    AppLogger.e(TAG, "Error parsing user document ${doc.id}", e)
                     null
                 }
             }
@@ -85,7 +85,7 @@ class UsersPagingSource(
                 nextKey = if (users.size < params.loadSize) null else snapshot
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading users page", e)
+            AppLogger.e(TAG, "Error loading users page", e)
             LoadResult.Error(e)
         }
     }
