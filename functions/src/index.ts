@@ -53,7 +53,7 @@ interface LiveGameScore {
     team2Score: number;
 }
 
-interface UserStatistics {
+export interface UserStatistics {
     totalGames: number;
     totalGoals: number;
     totalAssists: number;
@@ -143,7 +143,7 @@ const XP_WORST_PLAYER_PENALTY = -10;
 // LevelTable Logic (Synced with Kotlin LevelTable.kt)
 // Formato: level, name, xpRequired (acumulado)
 // Fonte de verdade: app/src/main/java/com/futebadosparcas/data/model/LevelTable.kt
-const LEVELS = [
+export const LEVELS = [
     { level: 0, name: "Novato", xpRequired: 0 },
     { level: 1, name: "Iniciante", xpRequired: 100 },
     { level: 2, name: "Amador", xpRequired: 350 },
@@ -157,7 +157,7 @@ const LEVELS = [
     { level: 10, name: "Imortal", xpRequired: 52850 }
 ];
 
-function getLevelForXp(xp: number): number {
+export function getLevelForXp(xp: number): number {
     const sorted = [...LEVELS].reverse();
     const found = sorted.find(l => xp >= l.xpRequired);
     return found ? found.level : 0; // NÃ­vel mÃ­nimo Ã© 0 (Novato)
@@ -171,7 +171,7 @@ type MilestoneDef = {
     field: keyof UserStatistics;
 };
 
-const MILESTONES: MilestoneDef[] = [
+export const MILESTONES: MilestoneDef[] = [
     // Jogos
     { name: "GAMES_10", xpReward: 50, threshold: 10, field: "totalGames" },
     { name: "GAMES_25", xpReward: 100, threshold: 25, field: "totalGames" },
@@ -212,7 +212,7 @@ const MILESTONES: MilestoneDef[] = [
     { name: "WINS_100", xpReward: 750, threshold: 100, field: "gamesWon" }
 ];
 
-function checkMilestones(stats: UserStatistics, achieved: string[]): { newMilestones: string[], xp: number } {
+export function checkMilestones(stats: UserStatistics, achieved: string[]): { newMilestones: string[], xp: number } {
     const newM: string[] = [];
     let xp = 0;
 
@@ -809,7 +809,7 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
     }
 });
 
-function getWeekKey(d: Date): string {
+export function getWeekKey(d: Date): string {
     const year = d.getFullYear();
     const firstDayOfYear = new Date(year, 0, 1);
     const pastDaysOfYear = (d.getTime() - firstDayOfYear.getTime()) / 86400000;
@@ -817,7 +817,7 @@ function getWeekKey(d: Date): string {
     return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
 }
 
-function toGameConfirmation(raw: admin.firestore.DocumentData): GameConfirmation {
+export function toGameConfirmation(raw: admin.firestore.DocumentData): GameConfirmation {
     return {
         userId: raw.user_id ?? raw.userId ?? "",
         status: raw.status ?? "CONFIRMED",
@@ -832,7 +832,7 @@ function toGameConfirmation(raw: admin.firestore.DocumentData): GameConfirmation
     };
 }
 
-function toTeam(id: string, raw: admin.firestore.DocumentData): Team {
+export function toTeam(id: string, raw: admin.firestore.DocumentData): Team {
     return {
         id: raw.id ?? id,
         playerIds: (raw.player_ids ?? raw.playerIds ?? []) as string[],
@@ -840,7 +840,7 @@ function toTeam(id: string, raw: admin.firestore.DocumentData): Team {
     };
 }
 
-function toLiveScore(raw?: admin.firestore.DocumentData | null): LiveGameScore | null {
+export function toLiveScore(raw?: admin.firestore.DocumentData | null): LiveGameScore | null {
     if (!raw) return null;
     return {
         gameId: raw.game_id ?? raw.gameId ?? "",
@@ -851,7 +851,7 @@ function toLiveScore(raw?: admin.firestore.DocumentData | null): LiveGameScore |
     };
 }
 
-function getGameDate(game?: Game): Date {
+export function getGameDate(game?: Game): Date {
     if (!game) return new Date();
     if (game.dateTime && typeof game.dateTime.toDate === "function") {
         return game.dateTime.toDate();
