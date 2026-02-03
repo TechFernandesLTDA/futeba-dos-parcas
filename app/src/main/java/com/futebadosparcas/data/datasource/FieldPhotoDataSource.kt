@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.storageMetadata
@@ -103,7 +103,7 @@ class FieldPhotoDataSource @Inject constructor(
         imageUri: Uri
     ): Flow<UploadResult> = callbackFlow {
         try {
-            Log.d(TAG, "Starting field photo upload for location: $locationId, field: $fieldId")
+            AppLogger.d(TAG) { "Starting field photo upload for location: $locationId, field: $fieldId" }
 
             // 1. Validar arquivo
             val validationResult = validateImageFile(imageUri)
@@ -117,7 +117,7 @@ class FieldPhotoDataSource @Inject constructor(
             val processedData = processImage(imageUri)
             val thumbnailData = createThumbnail(processedData.bitmap)
 
-            Log.d(TAG, "Processing complete - Main: ${processedData.bytes.size / 1024}KB, Thumb: ${thumbnailData.size / 1024}KB")
+            AppLogger.d(TAG) { "Processing complete - Main: ${processedData.bytes.size / 1024}KB, Thumb: ${thumbnailData.size / 1024}KB" }
 
             // 3. Preparar metadados
             val metadata = createUploadMetadata(
@@ -155,7 +155,7 @@ class FieldPhotoDataSource @Inject constructor(
                     close()
                 }
             }.addOnFailureListener { e ->
-                Log.e(TAG, "Upload failed", e)
+                AppLogger.e(TAG, "Upload failed", e)
                 trySend(UploadResult.Error(e.message ?: "Erro no upload"))
                 close()
             }
@@ -165,7 +165,7 @@ class FieldPhotoDataSource @Inject constructor(
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Error in upload flow", e)
+            AppLogger.e(TAG, "Error in upload flow", e)
             trySend(UploadResult.Error(e.message ?: "Erro desconhecido"))
             close()
         }
@@ -186,7 +186,7 @@ class FieldPhotoDataSource @Inject constructor(
     ): UploadResult {
         return withContext(Dispatchers.IO) {
             try {
-                Log.d(TAG, "Starting field photo upload for location: $locationId, field: $fieldId")
+                AppLogger.d(TAG) { "Starting field photo upload for location: $locationId, field: $fieldId" }
 
                 // 1. Validar arquivo
                 val validationResult = validateImageFile(imageUri)
@@ -197,8 +197,8 @@ class FieldPhotoDataSource @Inject constructor(
                 // 2. Decodificar e processar imagem
                 val processedData = processImage(imageUri)
 
-                Log.d(TAG, "Processing complete - Size: ${processedData.bytes.size / 1024}KB, " +
-                        "Format: ${processedData.format}, ${processedData.bitmap.width}x${processedData.bitmap.height}")
+                AppLogger.d(TAG) { "Processing complete - Size: ${processedData.bytes.size / 1024}KB, " +
+                        "Format: ${processedData.format}, ${processedData.bitmap.width}x${processedData.bitmap.height}" }
 
                 // 3. Preparar metadados
                 val metadata = createUploadMetadata(
@@ -213,7 +213,7 @@ class FieldPhotoDataSource @Inject constructor(
                 val storagePath = "$LOCATIONS_PATH/$locationId/$FIELDS_FOLDER/$fieldId/$PHOTO_NAME"
                 val storageRef = storage.reference.child(storagePath)
 
-                Log.d(TAG, "Uploading to: $storagePath")
+                AppLogger.d(TAG) { "Uploading to: $storagePath" }
 
                 val uploadTask = storageRef.putBytes(processedData.bytes, metadata).await()
                 val downloadUrl = uploadTask.storage.downloadUrl.await().toString()
@@ -225,12 +225,12 @@ class FieldPhotoDataSource @Inject constructor(
                 // 6. Liberar bitmap
                 processedData.bitmap.recycle()
 
-                Log.d(TAG, "Upload successful: $downloadUrl")
+                AppLogger.d(TAG) { "Upload successful: $downloadUrl" }
 
                 UploadResult.Success(downloadUrl, thumbUrl)
 
             } catch (e: Exception) {
-                Log.e(TAG, "Error uploading field photo", e)
+                AppLogger.e(TAG, "Error uploading field photo", e)
                 val isRecoverable = when {
                     e.message?.contains("network", ignoreCase = true) == true -> true
                     e.message?.contains("timeout", ignoreCase = true) == true -> true
@@ -275,7 +275,7 @@ class FieldPhotoDataSource @Inject constructor(
         // Validar tamanho
         val fileSize = getFileSize(uri)
         if (fileSize > MAX_FILE_SIZE_BYTES) {
-            Log.w(TAG, "File too large: ${fileSize / 1024 / 1024}MB (max: $MAX_FILE_SIZE_MB MB)")
+            AppLogger.w(TAG) { "File too large: ${fileSize / 1024 / 1024}MB (max: $MAX_FILE_SIZE_MB MB)" }
             return UploadResult.FileTooLarge
         }
 
@@ -289,7 +289,7 @@ class FieldPhotoDataSource @Inject constructor(
         }
 
         if (!isValidImage) {
-            Log.w(TAG, "Invalid image file (magic bytes mismatch)")
+            AppLogger.w(TAG) { "Invalid image file (magic bytes mismatch)" }
             return UploadResult.InvalidImage
         }
 
@@ -318,7 +318,7 @@ class FieldPhotoDataSource @Inject constructor(
                 header
             } ?: byteArrayOf()
         } catch (e: Exception) {
-            Log.w(TAG, "Error reading magic bytes", e)
+            AppLogger.w(TAG) { "Error reading magic bytes: ${e.message}" }
             byteArrayOf()
         }
     }
@@ -332,7 +332,7 @@ class FieldPhotoDataSource @Inject constructor(
         val originalBitmap = BitmapFactory.decodeStream(inputStream)!!
         inputStream.close()
 
-        Log.d(TAG, "Original: ${originalBitmap.width}x${originalBitmap.height}, ${originalSize / 1024}KB")
+        AppLogger.d(TAG) { "Original: ${originalBitmap.width}x${originalBitmap.height}, ${originalSize / 1024}KB" }
 
         // Redimensionar mantendo aspect ratio
         val resizedBitmap = resizeToMaxDimensions(
@@ -346,8 +346,8 @@ class FieldPhotoDataSource @Inject constructor(
         val quality = getAdaptiveQuality(originalSize)
         val compressedBytes = compressImage(resizedBitmap, compressFormat, quality)
 
-        Log.d(TAG, "Compressed: ${resizedBitmap.width}x${resizedBitmap.height}, " +
-                "${compressedBytes.size / 1024}KB (${quality}% quality)")
+        AppLogger.d(TAG) { "Compressed: ${resizedBitmap.width}x${resizedBitmap.height}, " +
+                "${compressedBytes.size / 1024}KB (${quality}% quality)" }
 
         // Reciclar bitmap original para liberar memória
         if (originalBitmap != resizedBitmap) {
@@ -443,7 +443,7 @@ class FieldPhotoDataSource @Inject constructor(
             thumbRef.putBytes(bytes, metadata).await()
             thumbRef.downloadUrl.await().toString()
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to upload thumbnail", e)
+            AppLogger.w(TAG) { "Failed to upload thumbnail: ${e.message}" }
             null
         }
     }
@@ -493,7 +493,7 @@ class FieldPhotoDataSource @Inject constructor(
                 pfd.statSize
             } ?: 0
         } catch (e: Exception) {
-            Log.w(TAG, "Error getting file size", e)
+            AppLogger.w(TAG) { "Error getting file size: ${e.message}" }
             0
         }
     }
@@ -507,7 +507,7 @@ class FieldPhotoDataSource @Inject constructor(
             val storageRef = storage.reference.child(storagePath)
             storageRef.downloadUrl.await().toString()
         } catch (e: Exception) {
-            Log.d(TAG, "No photo found for field: $fieldId")
+            AppLogger.d(TAG) { "No photo found for field: $fieldId" }
             null
         }
     }
@@ -541,10 +541,10 @@ class FieldPhotoDataSource @Inject constructor(
             try { photoRef.delete().await() } catch (e: Exception) { /* ignore */ }
             try { thumbRef.delete().await() } catch (e: Exception) { /* ignore */ }
 
-            Log.d(TAG, "Field photo deleted for field: $fieldId")
+            AppLogger.d(TAG) { "Field photo deleted for field: $fieldId" }
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Error deleting field photo", e)
+            AppLogger.e(TAG, "Error deleting field photo", e)
             false
         }
     }

@@ -1,6 +1,6 @@
 package com.futebadosparcas.ui.schedules
 
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Schedule
@@ -57,34 +57,34 @@ class SchedulesViewModel @Inject constructor(
 
         val userId = authRepository.getCurrentUserId()
         if (userId == null) {
-            Log.e(TAG, "loadSchedules: userId e null, usuario nao autenticado")
+            AppLogger.e(TAG, "loadSchedules: userId e null, usuario nao autenticado")
             _uiState.value = SchedulesUiState.Error("Usuario nao autenticado")
             return
         }
 
-        Log.d(TAG, "loadSchedules: Carregando schedules para userId=$userId")
+        AppLogger.d(TAG) { "loadSchedules: Carregando schedules para userId=$userId" }
 
         loadJob = viewModelScope.launch {
             scheduleRepository.getSchedules(userId)
                 .catch { e ->
                     // Tratamento de erro de fluxo: converter para estado de erro
-                    Log.e(TAG, "loadSchedules: Erro no flow - ${e.message}", e)
+                    AppLogger.e(TAG, "loadSchedules: Erro no flow - ${e.message}", e)
                     _uiState.value = SchedulesUiState.Error(e.message ?: "Erro ao carregar recorrencias")
                 }
                 .collect { result ->
                     result.fold(
                         onSuccess = { kmpSchedules ->
-                            Log.d(TAG, "loadSchedules: Sucesso - ${kmpSchedules.size} schedules carregadas")
+                            AppLogger.d(TAG) { "loadSchedules: Sucesso - ${kmpSchedules.size} schedules carregadas" }
                             // Converter KMP Schedule para Android Schedule
                             val androidSchedules = kmpSchedules.toAndroidSchedules()
                             // CMD-08: Log detalhado para debug
                             androidSchedules.forEach { schedule ->
-                                Log.d(TAG, "  - Schedule: ${schedule.name} (${schedule.id}) ownerId=${schedule.ownerId}")
+                                AppLogger.d(TAG) { "  - Schedule: ${schedule.name} (${schedule.id}) ownerId=${schedule.ownerId}" }
                             }
                             _uiState.value = SchedulesUiState.Success(androidSchedules)
                         },
                         onFailure = { error ->
-                            Log.e(TAG, "loadSchedules: Falha - ${error.message}", error)
+                            AppLogger.e(TAG, "loadSchedules: Falha - ${error.message}", error)
                             _uiState.value = SchedulesUiState.Error(error.message ?: "Erro ao carregar recorrencias")
                         }
                     )
@@ -97,7 +97,7 @@ class SchedulesViewModel @Inject constructor(
      * CMD-08: Adicionado para debug de problemas de carga.
      */
     fun refresh() {
-        Log.d(TAG, "refresh: Recarregando schedules...")
+        AppLogger.d(TAG) { "refresh: Recarregando schedules..." }
         _uiState.value = SchedulesUiState.Loading
         loadSchedules()
     }
@@ -107,37 +107,37 @@ class SchedulesViewModel @Inject constructor(
      * CMD-09: Adicionado para suportar criacao via FAB.
      */
     fun createSchedule(schedule: Schedule) {
-        Log.d(TAG, "createSchedule: Criando schedule ${schedule.name}")
+        AppLogger.d(TAG) { "createSchedule: Criando schedule ${schedule.name}" }
         viewModelScope.launch {
             val kmpSchedule = schedule.toKmpSchedule()
             scheduleRepository.createSchedule(kmpSchedule)
                 .onSuccess { scheduleId ->
-                    Log.d(TAG, "createSchedule: Sucesso - ID=$scheduleId")
+                    AppLogger.d(TAG) { "createSchedule: Sucesso - ID=$scheduleId" }
                     // Nao mudamos o estado aqui pois o listener real-time vai atualizar
                 }
                 .onFailure { error ->
-                    Log.e(TAG, "createSchedule: Erro - ${error.message}", error)
+                    AppLogger.e(TAG, "createSchedule: Erro - ${error.message}", error)
                     _uiState.value = SchedulesUiState.Error(error.message ?: "Erro ao criar horario")
                 }
         }
     }
 
     fun deleteSchedule(scheduleId: String) {
-        Log.d(TAG, "deleteSchedule: Excluindo schedule $scheduleId")
+        AppLogger.d(TAG) { "deleteSchedule: Excluindo schedule $scheduleId" }
         viewModelScope.launch {
             scheduleRepository.deleteSchedule(scheduleId).onFailure { error ->
-                Log.e(TAG, "deleteSchedule: Erro - ${error.message}", error)
+                AppLogger.e(TAG, "deleteSchedule: Erro - ${error.message}", error)
                 _uiState.value = SchedulesUiState.Error(error.message ?: "Erro ao excluir")
             }
         }
     }
 
     fun updateSchedule(schedule: Schedule) {
-        Log.d(TAG, "updateSchedule: Atualizando schedule ${schedule.id}")
+        AppLogger.d(TAG) { "updateSchedule: Atualizando schedule ${schedule.id}" }
         viewModelScope.launch {
             val kmpSchedule = schedule.toKmpSchedule()
             scheduleRepository.updateSchedule(kmpSchedule).onFailure { error ->
-                Log.e(TAG, "updateSchedule: Erro - ${error.message}", error)
+                AppLogger.e(TAG, "updateSchedule: Erro - ${error.message}", error)
                 _uiState.value = SchedulesUiState.Error(error.message ?: "Erro ao atualizar")
             }
         }

@@ -1,6 +1,6 @@
 package com.futebadosparcas.util
 
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -45,7 +45,7 @@ class ErrorTracker @Inject constructor(
     fun logError(exception: Throwable, message: String? = null) {
         val fullMessage = message?.let { "$it: ${exception.message}" } ?: exception.message ?: "Unknown error"
 
-        Log.e(TAG, fullMessage, exception)
+        AppLogger.e(TAG, fullMessage)
 
         if (isEnabled) {
             crashlytics.log(fullMessage)
@@ -57,7 +57,7 @@ class ErrorTracker @Inject constructor(
      * Record non-fatal exception
      */
     fun recordException(exception: Throwable) {
-        Log.e(TAG, "Exception: ${exception.message}", exception)
+        AppLogger.e(TAG, "Exception: ${exception.message}")
 
         if (isEnabled) {
             crashlytics.recordException(exception)
@@ -68,7 +68,7 @@ class ErrorTracker @Inject constructor(
      * Log message
      */
     fun log(message: String) {
-        Log.d(TAG, message)
+        AppLogger.d(TAG) { message }
 
         if (isEnabled) {
             crashlytics.log(message)
