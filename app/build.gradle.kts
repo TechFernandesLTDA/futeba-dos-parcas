@@ -240,8 +240,8 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 
     // MockK for Kotlin
-    testImplementation("io.mockk:mockk:1.13.9")
-    androidTestImplementation("io.mockk:mockk-android:1.13.9")
+    testImplementation("io.mockk:mockk:1.14.9")
+    androidTestImplementation("io.mockk:mockk-android:1.14.9")
 
     // Turbine for Flow testing
     testImplementation("app.cash.turbine:turbine:1.0.0")
