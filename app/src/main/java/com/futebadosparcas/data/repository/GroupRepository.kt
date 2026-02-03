@@ -13,15 +13,13 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import android.net.Uri
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
-
-private const val TAG = "GroupRepository"
 
 @Singleton
 class GroupRepository @Inject constructor(
@@ -30,6 +28,10 @@ class GroupRepository @Inject constructor(
     private val storage: FirebaseStorage,
     private val groupPhotoDataSource: GroupPhotoDataSource
 ) {
+    companion object {
+        private const val TAG = "GroupRepository"
+    }
+
     private val groupsCollection = firestore.collection("groups")
     private val usersCollection = firestore.collection("users")
 
@@ -48,23 +50,23 @@ class GroupRepository @Inject constructor(
      */
     suspend fun uploadGroupPhoto(groupId: String, imageUri: Uri): Result<String> {
         return try {
-            Log.d(TAG, "Uploading group photo for group: $groupId")
+            AppLogger.d(TAG) { "Uploading group photo for group: $groupId" }
 
             when (val result = groupPhotoDataSource.uploadGroupPhoto(groupId, imageUri)) {
                 is GroupPhotoDataSource.UploadResult.Success -> {
-                    Log.d(TAG, "Group photo uploaded successfully: ${result.url}")
+                    AppLogger.d(TAG) { "Group photo uploaded successfully: ${result.url}" }
                     Result.success(result.url)
                 }
                 is GroupPhotoDataSource.UploadResult.FileTooLarge -> {
-                    Log.w(TAG, "Group photo too large (max 2MB)")
+                    AppLogger.w(TAG) { "Group photo too large (max 2MB)" }
                     Result.failure(Exception("Imagem muito grande. O tamanho máximo é 2MB."))
                 }
                 is GroupPhotoDataSource.UploadResult.InvalidImage -> {
-                    Log.w(TAG, "Invalid image file")
+                    AppLogger.w(TAG) { "Invalid image file" }
                     Result.failure(Exception("Arquivo inválido. Selecione uma imagem JPEG, PNG ou WebP."))
                 }
                 is GroupPhotoDataSource.UploadResult.Error -> {
-                    Log.e(TAG, "Error uploading group photo: ${result.message}")
+                    AppLogger.e(TAG, "Error uploading group photo: ${result.message}")
                     Result.failure(Exception(result.message))
                 }
                 is GroupPhotoDataSource.UploadResult.Progress -> {
@@ -73,7 +75,7 @@ class GroupRepository @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Exception uploading group photo", e)
+            AppLogger.e(TAG, "Exception uploading group photo", e)
             Result.failure(e)
         }
     }
@@ -98,12 +100,7 @@ class GroupRepository @Inject constructor(
             var photoUrl: String? = null
             if (photoUri != null) {
                 val uploadResult = uploadGroupPhoto(groupId, photoUri)
-                if (uploadResult.isFailure) {
-                    Log.e(TAG, "Falha no upload da foto do grupo", uploadResult.exceptionOrNull())
-                    return Result.failure(uploadResult.exceptionOrNull()
-                        ?: Exception("Erro ao fazer upload da foto"))
-                }
-                photoUrl = uploadResult.getOrNull()
+                photoUrl = uploadResult.getOrElse { return Result.failure(it) }
             }
 
             val group = Group(
@@ -367,10 +364,7 @@ class GroupRepository @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             // Verificar se é admin/owner
-            val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
-            
-            val role = roleResult.getOrNull()
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
             if (role != GroupMemberRole.OWNER && role != GroupMemberRole.ADMIN) {
                 return Result.failure(Exception("Apenas o dono ou administradores podem editar o grupo"))
             }
@@ -378,13 +372,8 @@ class GroupRepository @Inject constructor(
             // Upload da foto se houver
             var photoUrl: String? = null
             if (photoUri != null) {
-                val uploadResult = uploadGroupPhoto(groupId, photoUri)
-                if (uploadResult.isFailure) {
-                    Log.e(TAG, "Falha no upload da foto do grupo", uploadResult.exceptionOrNull())
-                    return Result.failure(uploadResult.exceptionOrNull()
-                        ?: Exception("Erro ao fazer upload da foto"))
-                }
-                photoUrl = uploadResult.getOrNull()
+                photoUrl = uploadGroupPhoto(groupId, photoUri)
+                    .getOrElse { return Result.failure(it) }
             }
 
             // Atualizar grupo
@@ -446,10 +435,8 @@ class GroupRepository @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             // Verificar se é owner
-            val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
-
-            if (roleResult.getOrNull() != GroupMemberRole.OWNER) {
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
+            if (role != GroupMemberRole.OWNER) {
                 return Result.failure(Exception("Apenas o dono pode promover administradores"))
             }
 
@@ -479,10 +466,8 @@ class GroupRepository @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             // Verificar se é owner
-            val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
-
-            if (roleResult.getOrNull() != GroupMemberRole.OWNER) {
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
+            if (role != GroupMemberRole.OWNER) {
                 return Result.failure(Exception("Apenas o dono pode rebaixar administradores"))
             }
 
@@ -512,10 +497,7 @@ class GroupRepository @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             // Verificar permissão
-            val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
-
-            val role = roleResult.getOrNull()
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
             if (role != GroupMemberRole.OWNER && role != GroupMemberRole.ADMIN) {
                 return Result.failure(Exception("Sem permissão para remover membros"))
             }
@@ -592,10 +574,8 @@ class GroupRepository @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             // Verificar se não é owner
-            val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
-
-            if (roleResult.getOrNull() == GroupMemberRole.OWNER) {
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
+            if (role == GroupMemberRole.OWNER) {
                 return Result.failure(Exception("O dono não pode sair do grupo. Transfira a propriedade primeiro."))
             }
 
@@ -631,10 +611,8 @@ class GroupRepository @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             // Verificar se é owner
-            val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
-
-            if (roleResult.getOrNull() != GroupMemberRole.OWNER) {
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
+            if (role != GroupMemberRole.OWNER) {
                 return Result.failure(Exception("Apenas o dono pode arquivar o grupo"))
             }
 
@@ -660,10 +638,8 @@ class GroupRepository @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             // Verificar se é owner
-            val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
-
-            if (roleResult.getOrNull() != GroupMemberRole.OWNER) {
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
+            if (role != GroupMemberRole.OWNER) {
                 return Result.failure(Exception("Apenas o dono pode deletar o grupo"))
             }
 
@@ -701,10 +677,8 @@ class GroupRepository @Inject constructor(
     suspend fun canCreateGames(): Result<Boolean> {
         return try {
             val validGroups = getValidGroupsForGame()
-            if (validGroups.isFailure) {
-                return Result.failure(validGroups.exceptionOrNull()!!)
-            }
-            Result.success(validGroups.getOrDefault(emptyList()).isNotEmpty())
+                .getOrElse { return Result.failure(it) }
+            Result.success(validGroups.isNotEmpty())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -715,12 +689,8 @@ class GroupRepository @Inject constructor(
      */
     suspend fun countMyAdminGroups(): Result<Int> {
         return try {
-            val groups = getMyGroups()
-            if (groups.isFailure) {
-                return Result.failure(groups.exceptionOrNull()!!)
-            }
-            val adminCount = groups.getOrDefault(emptyList())
-                .count { it.isAdmin() }
+            val groups = getMyGroups().getOrElse { return Result.failure(it) }
+            val adminCount = groups.count { it.isAdmin() }
             Result.success(adminCount)
         } catch (e: Exception) {
             Result.failure(e)
@@ -736,10 +706,8 @@ class GroupRepository @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             // Verificar se é owner atual
-            val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
-
-            if (roleResult.getOrNull() != GroupMemberRole.OWNER) {
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
+            if (role != GroupMemberRole.OWNER) {
                 return Result.failure(Exception("Apenas o dono pode transferir a propriedade"))
             }
 
@@ -835,10 +803,8 @@ class GroupRepository @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             // Verificar se é owner
-            val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
-
-            if (roleResult.getOrNull() != GroupMemberRole.OWNER) {
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
+            if (role != GroupMemberRole.OWNER) {
                 return Result.failure(Exception("Apenas o dono pode restaurar o grupo"))
             }
 
@@ -934,10 +900,7 @@ class GroupRepository @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             // Verificar permissão (owner ou admin)
-            val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
-
-            val role = roleResult.getOrNull()
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
             if (role != GroupMemberRole.OWNER && role != GroupMemberRole.ADMIN) {
                 return Result.failure(Exception("Sem permissão para bloquear jogadores"))
             }
@@ -979,10 +942,7 @@ class GroupRepository @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             // Verificar permissão (owner ou admin)
-            val roleResult = getMyRoleInGroup(groupId)
-            if (roleResult.isFailure) return Result.failure(roleResult.exceptionOrNull()!!)
-
-            val role = roleResult.getOrNull()
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
             if (role != GroupMemberRole.OWNER && role != GroupMemberRole.ADMIN) {
                 return Result.failure(Exception("Sem permissão para desbloquear jogadores"))
             }
