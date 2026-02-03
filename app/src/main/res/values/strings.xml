@@ -3523,6 +3523,10 @@ subir no ranking!</string>
     <string name="cd_send">Enviar</string>
     <string name="cd_level_badge_main">Badge de nível</string>
     <string name="cd_image">Imagem</string>
+    <string name="cd_collapse">Contrair</string>
+    <string name="cd_expand">Expandir</string>
+    <string name="cd_pause">Pausar</string>
+    <string name="cd_play">Reproduzir</string>
     <string name="action_click">Clique</string>
 
     <!-- Error Messages -->

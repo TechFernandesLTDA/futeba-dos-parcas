@@ -578,7 +578,7 @@ fun VoiceMessagePlayer(
                     } else {
                         Icons.Default.PlayArrow
                     },
-                    contentDescription = if (playbackState == RecordingState.PLAYING) "Pausar" else "Reproduzir",
+                    contentDescription = if (playbackState == RecordingState.PLAYING) stringResource(R.string.cd_pause) else stringResource(R.string.cd_play),
                     tint = Color.White
                 )
             }
