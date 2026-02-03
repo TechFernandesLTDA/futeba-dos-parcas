@@ -109,8 +109,8 @@ fun SavedFormationsSection(
     showDeleteConfirmation?.let { formation ->
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = null },
-            title = { Text("Excluir formacao?") },
-            text = { Text("Deseja excluir a formacao \"${formation.name}\"?") },
+            title = { Text(stringResource(R.string.delete_formation_title)) },
+            text = { Text(stringResource(R.string.delete_formation_message, formation.name)) },
             confirmButton = {
                 TextButton(
                     onClick = {
