@@ -10,6 +10,7 @@ import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -33,6 +34,8 @@ class BadgesViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<BadgesUiState>(BadgesUiState.Loading)
     val uiState: StateFlow<BadgesUiState> = _uiState
 
+    private var loadJob: Job? = null
+
     init {
         loadBadges()
     }
@@ -41,7 +44,8 @@ class BadgesViewModel @Inject constructor(
      * Carrega badges do usuário com dados completos
      */
     fun loadBadges() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.value = BadgesUiState.Loading
 
             try {
@@ -86,12 +90,16 @@ class BadgesViewModel @Inject constructor(
                     }
                 }
 
-                _uiState.value = BadgesUiState.Success(
-                    allBadges = badgesWithData,
-                    filteredBadges = badgesWithData,
-                    totalUnlocked = badgesWithData.size,
-                    selectedCategory = null
-                )
+                if (badgesWithData.isEmpty()) {
+                    _uiState.value = BadgesUiState.Empty
+                } else {
+                    _uiState.value = BadgesUiState.Success(
+                        allBadges = badgesWithData,
+                        filteredBadges = badgesWithData,
+                        totalUnlocked = badgesWithData.size,
+                        selectedCategory = null
+                    )
+                }
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao carregar badges", e)
                 _uiState.value = BadgesUiState.Error("Erro ao carregar conquistas: ${e.message}")
@@ -123,6 +131,11 @@ class BadgesViewModel @Inject constructor(
     /**
      * Retorna a categoria de uma badge baseado no tipo
      */
+    override fun onCleared() {
+        super.onCleared()
+        loadJob?.cancel()
+    }
+
     private fun getCategoryForBadgeType(type: BadgeType): BadgeCategory {
         return when (type) {
             BadgeType.HAT_TRICK,
@@ -148,6 +161,7 @@ class BadgesViewModel @Inject constructor(
  */
 sealed class BadgesUiState {
     object Loading : BadgesUiState()
+    object Empty : BadgesUiState()
     data class Error(val message: String) : BadgesUiState()
     data class Success(
         val allBadges: List<BadgeWithData>,
