@@ -32,16 +32,16 @@ const REMINDER_2H_MS = 2 * 60 * 60 * 1000;   // 2 horas
 const WINDOW_TOLERANCE_MS = 30 * 60 * 1000; // 30 minutos
 
 // Status de jogos que NÃO devem receber lembretes
-const EXCLUDED_GAME_STATUSES = ["CANCELLED", "FINISHED", "LIVE"];
+export const EXCLUDED_GAME_STATUSES = ["CANCELLED", "FINISHED", "LIVE"];
 
 // Status de confirmação que já está OK (não precisa lembrete)
-const CONFIRMED_STATUSES = ["CONFIRMED"];
+export const CONFIRMED_STATUSES = ["CONFIRMED"];
 
 // ==========================================
 // INTERFACES
 // ==========================================
 
-interface GameForReminder {
+export interface GameForReminder {
     id: string;
     dateTime: admin.firestore.Timestamp | null;
     date: string | null;
@@ -67,7 +67,7 @@ interface ConfirmationForReminder {
 /**
  * Converte data do jogo para Date no timezone America/Sao_Paulo
  */
-function getGameDateTime(game: GameForReminder): Date | null {
+export function getGameDateTime(game: GameForReminder): Date | null {
     // Prioridade 1: Campo dateTime (Timestamp)
     if (game.dateTime && typeof game.dateTime.toDate === "function") {
         return game.dateTime.toDate();
@@ -103,7 +103,7 @@ function getGameDateTime(game: GameForReminder): Date | null {
 /**
  * Formata a data/hora do jogo para exibição na notificação
  */
-function formatGameDateTime(date: Date): string {
+export function formatGameDateTime(date: Date): string {
     const options: Intl.DateTimeFormatOptions = {
         weekday: "short",
         day: "2-digit",
