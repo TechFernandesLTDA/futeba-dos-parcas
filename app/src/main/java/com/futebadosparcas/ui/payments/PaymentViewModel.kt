@@ -8,7 +8,9 @@ import com.futebadosparcas.domain.model.PaymentStatus
 import com.futebadosparcas.domain.model.PaymentType
 import com.futebadosparcas.data.repository.PaymentRepository
 import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.util.AppLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -20,11 +22,18 @@ class PaymentViewModel @Inject constructor(
     private val userRepository: UserRepository
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "PaymentViewModel"
+    }
+
     private val _uiState = MutableStateFlow<PaymentUiState>(PaymentUiState.Idle)
     val uiState: StateFlow<PaymentUiState> = _uiState
 
+    private var paymentJob: Job? = null
+
     fun startPayment(gameId: String, amount: Double) {
-        viewModelScope.launch {
+        paymentJob?.cancel()
+        paymentJob = viewModelScope.launch {
             _uiState.value = PaymentUiState.Loading
 
             val userId = userRepository.getCurrentUserId()
@@ -58,7 +67,8 @@ class PaymentViewModel @Inject constructor(
     }
 
     fun confirmPayment(paymentId: String) {
-        viewModelScope.launch {
+        paymentJob?.cancel()
+        paymentJob = viewModelScope.launch {
             _uiState.value = PaymentUiState.Loading
             paymentRepository.confirmPayment(paymentId).fold(
                 onSuccess = {
@@ -69,6 +79,11 @@ class PaymentViewModel @Inject constructor(
                 }
             )
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        paymentJob?.cancel()
     }
 }
 
