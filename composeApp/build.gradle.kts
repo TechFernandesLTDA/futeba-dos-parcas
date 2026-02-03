@@ -1,6 +1,6 @@
 plugins {
     kotlin("multiplatform")
-    id("com.android.application")
+    id("com.android.library")  // Changed from application - this is a KMP shared module, not standalone app
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.compose")
 }
@@ -62,11 +62,9 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.futebadosparcas.compose"
         minSdk = 24
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        // No applicationId - this is a library module, not a standalone app
+        // versionCode/versionName removed - inherited from main app module
     }
 
     buildTypes {
