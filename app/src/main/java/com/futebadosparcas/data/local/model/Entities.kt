@@ -18,6 +18,21 @@ data class UserEntity(
     val cachedAt: Long = System.currentTimeMillis() // TTL tracking
 )
 
+@Entity(tableName = "groups")
+data class GroupEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val description: String?,
+    val ownerId: String,
+    val ownerName: String,
+    val photoUrl: String?,
+    val memberCount: Int = 0,
+    val status: String = "ACTIVE", // ACTIVE, ARCHIVED
+    val createdAt: Long?,
+    val updatedAt: Long?,
+    val cachedAt: Long = System.currentTimeMillis() // TTL tracking
+)
+
 @Entity(tableName = "games")
 data class GameEntity(
     @PrimaryKey val id: String,

@@ -75,7 +75,7 @@ object ValidationHelper {
     )
 
     /** Pattern para validação de telefone brasileiro */
-    private val PHONE_PATTERN: Pattern = Pattern.compile(
+    @Suppress("unused") private val PHONE_PATTERN: Pattern = Pattern.compile(
         "^\\+?55?\\s?\\(?\\d{2}\\)?\\s?9?\\d{4}[-.\\s]?\\d{4}$"
     )
 
@@ -513,19 +513,39 @@ object ValidationHelper {
             return ValidationResult.invalid("goals", "Gols não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE)
         }
         if (goals > MAX_GOALS_PER_GAME) {
-            return ValidationResult.invalid("goals", "Máximo de $MAX_GOALS_PER_GAME gols por jogo", ValidationErrorCode.OUT_OF_RANGE)
+            return ValidationResult.invalid(
+                "goals",
+                "Máximo de $MAX_GOALS_PER_GAME gols por jogo",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
         }
         if (assists < 0) {
-            return ValidationResult.invalid("assists", "Assistências não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE)
+            return ValidationResult.invalid(
+                "assists",
+                "Assistências não pode ser negativo",
+                ValidationErrorCode.NEGATIVE_VALUE
+            )
         }
         if (assists > MAX_ASSISTS_PER_GAME) {
-            return ValidationResult.invalid("assists", "Máximo de $MAX_ASSISTS_PER_GAME assistências por jogo", ValidationErrorCode.OUT_OF_RANGE)
+            return ValidationResult.invalid(
+                "assists",
+                "Máximo de $MAX_ASSISTS_PER_GAME assistências por jogo",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
         }
         if (saves < 0) {
-            return ValidationResult.invalid("saves", "Defesas não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE)
+            return ValidationResult.invalid(
+                "saves",
+                "Defesas não pode ser negativo",
+                ValidationErrorCode.NEGATIVE_VALUE
+            )
         }
         if (saves > MAX_SAVES_PER_GAME) {
-            return ValidationResult.invalid("saves", "Máximo de $MAX_SAVES_PER_GAME defesas por jogo", ValidationErrorCode.OUT_OF_RANGE)
+            return ValidationResult.invalid(
+                "saves",
+                "Máximo de $MAX_SAVES_PER_GAME defesas por jogo",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
         }
         return ValidationResult.Valid
     }
@@ -538,7 +558,11 @@ object ValidationHelper {
             return ValidationResult.invalid("xp", "XP não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE)
         }
         if (xp > MAX_XP_PER_GAME) {
-            return ValidationResult.invalid("xp", "Máximo de $MAX_XP_PER_GAME XP por jogo", ValidationErrorCode.OUT_OF_RANGE)
+            return ValidationResult.invalid(
+                "xp",
+                "Máximo de $MAX_XP_PER_GAME XP por jogo",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
         }
         return ValidationResult.Valid
     }
@@ -607,5 +631,340 @@ object ValidationHelper {
         validator: (T) -> Boolean
     ): Boolean {
         return items.all { validator(it) }
+    }
+
+    // ==================== VALIDAÇÕES DE JOGO ====================
+
+    /** Mínimo de jogadores para criar um jogo */
+    const val MIN_PLAYERS_PER_GAME = 4
+
+    /** Máximo de jogadores por jogo */
+    const val MAX_PLAYERS_PER_GAME = 30
+
+    /** Máximo de jogadores por time */
+    const val MAX_PLAYERS_PER_TEAM = 15
+
+    /** Duração mínima do jogo em minutos */
+    const val MIN_GAME_DURATION_MINUTES = 15
+
+    /** Duração máxima do jogo em minutos */
+    const val MAX_GAME_DURATION_MINUTES = 240
+
+    /** Máximo de membros por grupo */
+    const val MAX_GROUP_MEMBERS = 100
+
+    /** Valor mínimo de pagamento */
+    const val MIN_PAYMENT_VALUE = 0.01
+
+    /** Valor máximo de pagamento */
+    const val MAX_PAYMENT_VALUE = 10000.0
+
+    /**
+     * Validação 1: Número de jogadores no jogo.
+     * Verifica se a quantidade está entre o mínimo e máximo permitido.
+     */
+    fun validatePlayerCount(
+        count: Int,
+        fieldName: String = "jogadores"
+    ): ValidationResult {
+        if (count < MIN_PLAYERS_PER_GAME) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Mínimo de $MIN_PLAYERS_PER_GAME jogadores para um jogo",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        if (count > MAX_PLAYERS_PER_GAME) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Máximo de $MAX_PLAYERS_PER_GAME jogadores por jogo",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Validação 2: Equilíbrio de times.
+     * Verifica se a diferença entre times é aceitável (máximo 1 jogador).
+     */
+    fun validateTeamBalance(
+        teamASize: Int,
+        teamBSize: Int
+    ): ValidationResult {
+        val diff = kotlin.math.abs(teamASize - teamBSize)
+        if (diff > 1) {
+            return ValidationResult.invalid(
+                "teams",
+                "Times devem ter no máximo 1 jogador de diferença (atual: $diff)",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        if (teamASize <= 0 || teamBSize <= 0) {
+            return ValidationResult.invalid(
+                "teams",
+                "Cada time deve ter pelo menos 1 jogador",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Validação 3: Duração do jogo.
+     * Verifica se a duração está dentro dos limites permitidos.
+     */
+    fun validateGameDuration(
+        durationMinutes: Int,
+        fieldName: String = "duração"
+    ): ValidationResult {
+        if (durationMinutes < MIN_GAME_DURATION_MINUTES) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Duração mínima de $MIN_GAME_DURATION_MINUTES minutos",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        if (durationMinutes > MAX_GAME_DURATION_MINUTES) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Duração máxima de $MAX_GAME_DURATION_MINUTES minutos",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Validação 4: Data do jogo é futura.
+     * Jogos só podem ser agendados para datas futuras.
+     */
+    fun validateGameDate(
+        gameDate: Date?,
+        fieldName: String = "data do jogo"
+    ): ValidationResult {
+        if (gameDate == null) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Data do jogo é obrigatória",
+                ValidationErrorCode.REQUIRED_FIELD
+            )
+        }
+        if (!isFutureDate(gameDate)) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Data do jogo deve ser no futuro",
+                ValidationErrorCode.INVALID_TIMESTAMP
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Validação 5: Valor de pagamento.
+     * Valida valores monetários para caixinha/pagamentos.
+     */
+    fun validatePaymentValue(
+        value: Double?,
+        fieldName: String = "valor"
+    ): ValidationResult {
+        if (value == null) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Valor é obrigatório",
+                ValidationErrorCode.REQUIRED_FIELD
+            )
+        }
+        if (value < MIN_PAYMENT_VALUE) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Valor deve ser maior que R$ ${String.format("%.2f", MIN_PAYMENT_VALUE)}",
+                ValidationErrorCode.NEGATIVE_VALUE
+            )
+        }
+        if (value > MAX_PAYMENT_VALUE) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Valor máximo é R$ ${String.format("%.2f", MAX_PAYMENT_VALUE)}",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Validação 6: Tamanho do grupo.
+     * Verifica se o número de membros não excede o limite.
+     */
+    fun validateGroupSize(
+        memberCount: Int,
+        fieldName: String = "membros"
+    ): ValidationResult {
+        if (memberCount <= 0) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Grupo deve ter pelo menos 1 membro",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        if (memberCount > MAX_GROUP_MEMBERS) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Máximo de $MAX_GROUP_MEMBERS membros por grupo",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Validação 7: ID de documento Firestore.
+     * IDs devem ser strings não-vazias sem caracteres especiais perigosos.
+     */
+    fun isValidDocumentId(id: String?): Boolean {
+        if (id.isNullOrBlank()) return false
+        if (id.length > 128) return false
+        // IDs não devem conter / ou . (reservados pelo Firestore)
+        if (id.contains('/') || id.contains("..")) return false
+        return true
+    }
+
+    /**
+     * Validação 8: Coordenadas geográficas.
+     * Latitude: -90 a 90, Longitude: -180 a 180.
+     */
+    fun validateCoordinates(
+        latitude: Double?,
+        longitude: Double?
+    ): ValidationResult {
+        if (latitude == null || longitude == null) {
+            return ValidationResult.invalid(
+                "coordenadas",
+                "Coordenadas são obrigatórias",
+                ValidationErrorCode.REQUIRED_FIELD
+            )
+        }
+        if (latitude < -90.0 || latitude > 90.0) {
+            return ValidationResult.invalid(
+                "latitude",
+                "Latitude deve estar entre -90 e 90",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        if (longitude < -180.0 || longitude > 180.0) {
+            return ValidationResult.invalid(
+                "longitude",
+                "Longitude deve estar entre -180 e 180",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Validação 9: Score do jogo.
+     * Scores não podem ser negativos e devem ter limites razoáveis.
+     */
+    fun validateGameScore(
+        teamAScore: Int,
+        teamBScore: Int
+    ): ValidationResult {
+        if (teamAScore < 0 || teamBScore < 0) {
+            return ValidationResult.invalid(
+                "placar",
+                "Placar não pode ser negativo",
+                ValidationErrorCode.NEGATIVE_VALUE
+            )
+        }
+        val maxScore = 50 // Limite razoável para pelada
+        if (teamAScore > maxScore || teamBScore > maxScore) {
+            return ValidationResult.invalid(
+                "placar",
+                "Placar máximo é $maxScore gols por time",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Validação 10: URL da foto de perfil.
+     * Verifica se é uma URL válida e de domínio permitido.
+     */
+    fun isValidPhotoUrl(url: String?): Boolean {
+        if (url.isNullOrBlank()) return true // Foto é opcional
+        if (url.length > 2048) return false
+        // Aceitar apenas URLs https ou de Firebase Storage
+        return url.startsWith("https://") ||
+            url.startsWith("gs://")
+    }
+
+    /**
+     * Validação 11: Número de times no jogo.
+     * Para formação de times: mínimo 2, máximo 4.
+     */
+    fun validateTeamCount(
+        teamCount: Int,
+        fieldName: String = "times"
+    ): ValidationResult {
+        if (teamCount < 2) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Mínimo de 2 times",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        if (teamCount > 4) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Máximo de 4 times",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Validação 12: Streak de jogador.
+     * Streak não pode ser negativo e tem limite de sanidade.
+     */
+    fun validateStreak(
+        streak: Int,
+        fieldName: String = "streak"
+    ): ValidationResult {
+        if (streak < 0) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Streak não pode ser negativo",
+                ValidationErrorCode.NEGATIVE_VALUE
+            )
+        }
+        val maxStreak = 365 // Máximo 1 ano seguido
+        if (streak > maxStreak) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Streak máximo é $maxStreak jogos consecutivos",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Validação completa para criação de jogo.
+     * Combina múltiplas validações em uma chamada.
+     */
+    fun validateGameCreation(
+        title: String?,
+        playerCount: Int,
+        gameDate: Date?,
+        durationMinutes: Int
+    ): List<ValidationResult.Invalid> {
+        return ValidationResult.combineAll(
+            validateName(title, "título do jogo", min = 3, max = 100),
+            validatePlayerCount(playerCount),
+            validateGameDate(gameDate),
+            validateGameDuration(durationMinutes)
+        )
     }
 }

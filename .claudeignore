@@ -70,6 +70,23 @@ backend/coverage/
 # Migrations já aplicadas (evitar leitura desnecessária)
 backend/src/migrations/*.js
 
+# Arquivos de análise/auditoria temporários
+*ANALISE*.md
+*AUDIT*.md
+*VERIFICATION*.md
+*REPORT*.md
+*SUMMARY*.md
+*COMPLETE*.md
+
+# Arquivos de documentação muito específicos (ler só quando necessário)
+HISTORICAL_*.md
+PERFIL_*.md
+RELATORIO_*.md
+VALIDACAO_*.md
+RESUMO_*.md
+APP_MIGRATION_AUDIT.md
+LEGACY_CODE_AUDIT.md
+
 # Screenshots e assets pesados (se necessário, pedir para ler especificamente)
 screenshots/
 *.png

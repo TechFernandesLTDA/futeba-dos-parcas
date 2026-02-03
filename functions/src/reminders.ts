@@ -540,7 +540,6 @@ export const processExpiredWaitlistEntries = onSchedule(
                 const data = doc.data();
                 const gameId = data.game_id;
                 const userId = data.user_id;
-                const userName = data.user_name || "Jogador";
 
                 console.log(`[WAITLIST] Processando entrada expirada: ${doc.id} (game: ${gameId}, user: ${userId})`);
 

@@ -515,32 +515,29 @@ class LocationValidationTest {
         }
 
         @Test
-        @DisplayName("CEP invalido com letras nao afeta validacao atual")
-        fun `invalid CEP format with letters does not affect current validation`() {
-            // Given - CEP validation is not implemented in Location.validate() currently
-            // This test documents expected behavior if CEP validation were added
+        @DisplayName("CEP invalido com letras deve gerar erro de validacao")
+        fun `invalid CEP format with letters should produce validation error`() {
+            // Given - CEP validation agora está implementada em Location.validate()
             val location = createValidLocation(cep = "ABCDE-FGH")
 
             // When
             val errors = location.validate()
 
-            // Then - Currently passes since CEP is not validated
-            // If CEP validation is added, this test should be updated
-            assertThat(errors.none { it.field == "cep" }).isTrue()
+            // Then - CEP inválido deve gerar erro
+            assertThat(errors.any { it.field == "cep" }).isTrue()
         }
 
         @Test
-        @DisplayName("CEP com tamanho errado nao afeta validacao atual")
-        fun `CEP with wrong length does not affect current validation`() {
+        @DisplayName("CEP com tamanho errado deve gerar erro de validacao")
+        fun `CEP with wrong length should produce validation error`() {
             // Given
             val location = createValidLocation(cep = "123")
 
             // When
             val errors = location.validate()
 
-            // Then
-            // CEP validation not implemented, documenting current behavior
-            assertThat(errors.none { it.field == "cep" }).isTrue()
+            // Then - CEP com tamanho errado deve gerar erro
+            assertThat(errors.any { it.field == "cep" }).isTrue()
         }
 
         @Test

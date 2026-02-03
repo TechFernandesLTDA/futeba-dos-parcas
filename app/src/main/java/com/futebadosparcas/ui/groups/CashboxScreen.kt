@@ -519,7 +519,7 @@ private fun FilterChips(
             onClick = onFilterAll,
             label = { Text(stringResource(R.string.cashbox_all)) },
             leadingIcon = if (currentFilter == null) {
-                { Icon(Icons.Default.Check, null, Modifier.size(18.dp)) }
+                { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(18.dp)) }
             } else null
         )
 
@@ -528,7 +528,7 @@ private fun FilterChips(
             onClick = onFilterIncome,
             label = { Text(stringResource(R.string.cashbox_income_short)) },
             leadingIcon = if (currentFilter?.type == CashboxEntryType.INCOME) {
-                { Icon(Icons.Default.Check, null, Modifier.size(18.dp)) }
+                { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(18.dp)) }
             } else null
         )
 
@@ -537,7 +537,7 @@ private fun FilterChips(
             onClick = onFilterExpense,
             label = { Text(stringResource(R.string.cashbox_expense_short)) },
             leadingIcon = if (currentFilter?.type == CashboxEntryType.EXPENSE) {
-                { Icon(Icons.Default.Check, null, Modifier.size(18.dp)) }
+                { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(18.dp)) }
             } else null
         )
     }

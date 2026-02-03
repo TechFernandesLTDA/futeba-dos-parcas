@@ -8,7 +8,6 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -89,14 +88,14 @@ fun TeamFormationScreen(
                 title = { Text(stringResource(R.string.team_formation_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
                     val state = uiState
                     if (state is TeamFormationUiState.Ready) {
                         IconButton(onClick = { viewModel.resetDraft() }) {
-                            Icon(Icons.Default.Refresh, stringResource(R.string.reset))
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.reset))
                         }
                     }
                 },
@@ -209,7 +208,7 @@ private fun TeamFormationContent(
                     onClick = { showDraftModeDialog = true },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.PlayArrow, null)
+                    Icon(Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.start_draft))
                 }
@@ -217,7 +216,7 @@ private fun TeamFormationContent(
                 OutlinedButton(
                     onClick = { showSettingsDialog = true }
                 ) {
-                    Icon(Icons.Default.Settings, stringResource(R.string.settings))
+                    Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
                 }
             }
 
@@ -268,7 +267,7 @@ private fun TeamFormationContent(
                     onClick = { showSaveFormationDialog = true },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.Star, null)
+                    Icon(Icons.Default.Star, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.save_formation))
                 }
@@ -277,7 +276,7 @@ private fun TeamFormationContent(
                     onClick = onConfirmTeams,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.Check, null)
+                    Icon(Icons.Default.Check, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.confirm_teams))
                 }
@@ -396,7 +395,7 @@ private fun AvailablePlayersSection(
                 )
 
                 TextButton(onClick = onAddPair) {
-                    Icon(Icons.Default.Link, null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Link, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
                     Text(stringResource(R.string.add_pair))
                 }
@@ -467,7 +466,7 @@ private fun AvailablePlayerChip(player: DraftPlayer, isPaired: Boolean) {
             if (isPaired) {
                 Icon(
                     Icons.Default.Link,
-                    null,
+                    contentDescription = null,
                     modifier = Modifier.size(12.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
@@ -489,7 +488,7 @@ private fun PairChip(pair: PlayerPair, onRemove: () -> Unit) {
         ) {
             Icon(
                 Icons.Default.Link,
-                null,
+                contentDescription = null,
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
@@ -506,7 +505,7 @@ private fun PairChip(pair: PlayerPair, onRemove: () -> Unit) {
             ) {
                 Icon(
                     Icons.Default.Close,
-                    stringResource(R.string.remove),
+                    contentDescription = stringResource(R.string.remove),
                     modifier = Modifier.size(14.dp),
                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
@@ -775,7 +774,7 @@ private fun TeamCard(
                 ) {
                     Icon(
                         if (strength.hasGoalkeeper) Icons.Default.CheckCircle else Icons.Default.Warning,
-                        null,
+                        contentDescription = null,
                         modifier = Modifier.size(16.dp),
                         tint = if (strength.hasGoalkeeper) {
                             MaterialTheme.colorScheme.primary
@@ -811,16 +810,10 @@ private fun DraggablePlayerRow(player: DraftPlayer, teamColor: Color) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .dragAndDropSource {
-                detectTapGestures(
-                    onLongPress = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        startTransfer(
-                            DragAndDropTransferData(
-                                clipData = android.content.ClipData.newPlainText("playerId", player.id)
-                            )
-                        )
-                    }
+            .dragAndDropSource { _ ->
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                DragAndDropTransferData(
+                    clipData = android.content.ClipData.newPlainText("playerId", player.id)
                 )
             },
         verticalAlignment = Alignment.CenterVertically
@@ -850,7 +843,7 @@ private fun DraggablePlayerRow(player: DraftPlayer, teamColor: Color) {
         }
         Icon(
             Icons.Default.DragIndicator,
-            null,
+            contentDescription = null,
             modifier = Modifier.size(20.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -973,7 +966,7 @@ private fun TeamComparisonSection(
             ) {
                 Icon(
                     if (isBalanced) Icons.Default.CheckCircle else Icons.Default.Warning,
-                    null,
+                    contentDescription = null,
                     modifier = Modifier.size(16.dp),
                     tint = if (isBalanced) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                 )
@@ -1027,7 +1020,7 @@ private fun RotationSuggestionsSection(suggestions: List<SwapSuggestion>) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Default.SwapHoriz,
-                    null,
+                    contentDescription = null,
                     tint = MaterialTheme.colorScheme.tertiary
                 )
                 Spacer(Modifier.width(8.dp))
@@ -1232,7 +1225,7 @@ private fun DraftModeSelectionDialog(
                     onClick = onAutoDraft,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(Icons.Default.AutoMode, null)
+                    Icon(Icons.Default.AutoMode, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.auto_draft))
                 }
@@ -1241,7 +1234,7 @@ private fun DraftModeSelectionDialog(
                     onClick = onCaptainPicks,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(Icons.Default.People, null)
+                    Icon(Icons.Default.People, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.captain_picks))
                 }
@@ -1371,7 +1364,7 @@ private fun ColorPickerDialog(
                         if (isSelected) {
                             Icon(
                                 Icons.Default.Check,
-                                null,
+                                contentDescription = null,
                                 tint = ContrastHelper.getContrastingTextColor(Color(color.hexValue)),
                                 modifier = Modifier.size(24.dp)
                             )
@@ -1568,13 +1561,13 @@ private fun SavedFormationsListDialog(
                                     IconButton(onClick = { onLoad(formation.id) }) {
                                         Icon(
                                             Icons.Default.PlayArrow,
-                                            stringResource(R.string.load)
+                                            contentDescription = stringResource(R.string.load)
                                         )
                                     }
                                     IconButton(onClick = { onDelete(formation.id) }) {
                                         Icon(
                                             Icons.Default.Delete,
-                                            stringResource(R.string.delete),
+                                            contentDescription = stringResource(R.string.delete),
                                             tint = MaterialTheme.colorScheme.error
                                         )
                                     }

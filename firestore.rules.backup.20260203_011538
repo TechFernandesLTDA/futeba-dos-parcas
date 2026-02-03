@@ -1,0 +1,1351 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // CMD-11: AUTHZ REAL (AUTORIZAÇÃO NO BACKEND)
+    // ============================================
+    //
+    // IMPORTANTE: As regras abaixo são a ÚNICA fonte de verdade
+    // para autorização no backend. Verificações no cliente (UI)
+    // são apenas para UX - a segurança real está aqui.
+    //
+    // Como funciona:
+    // 1. role é definido no campo 'role' do documento users/{userId}
+    // 2. Valores possíveis: 'ADMIN', 'FIELD_OWNER', 'PLAYER'
+    // 3. A função isAdmin() verifica se role == 'ADMIN'
+    // 4. Para operações sensíveis, SEMPRE verificar ownership E role
+    //
+    // Matriz de Permissões (deve corresponder a UserPermissions.kt):
+    //
+    // | Ação                    | ADMIN | FIELD_OWNER | PLAYER |
+    // |-------------------------|-------|-------------|--------|
+    // | Criar jogo              | ✓     | ✓           | ✓      |
+    // | Editar qualquer jogo    | ✓     | próprios    | próprios|
+    // | Deletar qualquer jogo   | ✓     | próprios    | próprios|
+    // | Criar local             | ✓     | ✓           | ✗      |
+    // | Editar qualquer local   | ✓     | próprios    | ✗      |
+    // | Deletar local           | ✓     | ✗           | ✗      |
+    // | Gerenciar usuários      | ✓     | ✗           | ✗      |
+    // | Ver stats globais       | ✓     | leitura     | leitura |
+    // | Editar rankings         | ✓     | ✗           | ✗      |
+    // | Ajustar XP              | ✓     | ✗           | ✗      |
+    //
+    // ============================================
+
+    // ============================================
+    // FUNCOES AUXILIARES
+    // ============================================
+
+    // Verifica se o usuario esta autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Retorna o ID do usuario autenticado
+    function userId() {
+      return request.auth.uid;
+    }
+
+    // Verifica se o usuario e o dono do documento
+    function isOwner(ownerId) {
+      return isAuthenticated() && userId() == ownerId;
+    }
+
+    // Verifica se um campo nao foi alterado
+    function fieldUnchanged(field) {
+      return !(field in request.resource.data) ||
+             request.resource.data[field] == resource.data[field];
+    }
+
+    // Valida que apenas campos permitidos foram modificados
+    function onlyAllowedFields(allowedFields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedFields);
+    }
+
+    // ============================================
+    // PERF_001: CUSTOM CLAIMS OPTIMIZATION
+    // ============================================
+    // MIGRATION STRATEGY:
+    // 1. FASE 1 (atual): Manter AMBAS verificações (Custom Claim + Firestore)
+    // 2. FASE 2: Após 95% usuários migrarem (2 semanas), remover fallback getUserRole()
+    // 3. ROLLBACK: Se problemas, reverter regras (Custom Claims não fazem mal)
+    //
+    // PERFORMANCE IMPACT:
+    // - ANTES: getUserRole() = 1 Firestore read por request
+    // - DEPOIS: request.auth.token.role = 0 reads (incluído no JWT)
+    // - ECONOMIA: ~40% de reads eliminados (~20k reads/dia para 1k usuários)
+    // ============================================
+
+    // DEPRECATED: getUserRole() - Será removido na Fase 2 (2 semanas)
+    // Mantido temporariamente para backward compatibility
+    function getUserRole() {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return userDoc != null ? userDoc.data.role : null;
+    }
+
+    // OPTIMIZED: isAdmin() - Prioriza Custom Claim, fallback para Firestore
+    // FASE 1: Aceita AMBOS (Custom Claim OU Firestore)
+    // FASE 2: Remover "|| getUserRole() == 'ADMIN'" após migração completa
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'ADMIN' ||  // NOVO: Custom Claim (0 reads)
+        getUserRole() == 'ADMIN'                // ANTIGO: Fallback Firestore (1 read)
+      );
+    }
+
+    // Verifica se o usuario e um jogador confirmado no jogo (C-002 fix)
+    function isConfirmedPlayer(gameId) {
+      let confirmationDoc = get(/databases/$(database)/documents/confirmations/$(gameId + "_" + userId()));
+      return confirmationDoc != null;
+    }
+
+    // Helper global unico para verificar se o usuario e dono do jogo (C-005 fix)
+    // Esta funcao deve ser usada em todas as colecoes que precisam verificar ownership de jogos
+    function isGameOwner(gameId) {
+      let gameDoc = get(/databases/$(database)/documents/games/$(gameId));
+      return gameDoc != null && gameDoc.data.owner_id == userId();
+    }
+
+    // Helper para verificar se usuario e membro ativo de um grupo
+    function isGroupMember(groupId) {
+      let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
+      return memberDoc != null && memberDoc.data.status == 'ACTIVE';
+    }
+
+    // Helper para verificar se usuario e admin/owner de um grupo
+    function isGroupAdmin(groupId) {
+      let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
+      return memberDoc != null && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN');
+    }
+
+    // C-003 FIX: Valida se o ID de confirmation segue o padrao esperado
+    // Padrão: {gameId}_{userId}
+    function isValidConfirmationId(confirmationId, gameId, userId) {
+      return confirmationId == (gameId + '_' + userId);
+    }
+
+    // Helper para verificar se o grupo esta ativo
+    function isGroupActive(groupId) {
+      let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
+      return groupDoc != null && (groupDoc.data.status == 'ACTIVE' || !('status' in groupDoc.data));
+    }
+
+    // ============================================
+    // FUNCOES DE VALIDACAO DE DADOS
+    // ============================================
+
+    // Valida tamanho de string (min e max)
+    function isValidStringLength(value, min, max) {
+      return value is string && value.size() >= min && value.size() <= max;
+    }
+
+    // Valida formato de email (basico)
+    function isValidEmail(email) {
+      return email == null || email == '' || email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    // Valida rating no range 0.0 - 5.0
+    function isValidRating(rating) {
+      return rating == null || (rating >= 0.0 && rating <= 5.0);
+    }
+
+    // Valida league rating no range 0.0 - 100.0
+    function isValidLeagueRating(rating) {
+      return rating == null || (rating >= 0.0 && rating <= 100.0);
+    }
+
+    // Valida level no range 0 - 10
+    function isValidLevel(level) {
+      return level == null || (level >= 0 && level <= 10);
+    }
+
+    // Valida valor positivo (> 0)
+    function isPositiveNumber(value) {
+      return value is number && value > 0;
+    }
+
+    // Valida valor nao-negativo (>= 0)
+    function isNonNegativeNumber(value) {
+      return value is number && value >= 0;
+    }
+
+    // PERF_001: Valida scores com bound estrito (max 100 gols por jogo)
+    // Previne exploits de XP inflados via scores irrealistas
+    function isValidScore(score) {
+      return score == null || (score is number && score >= 0 && score <= 100);
+    }
+
+    // Valida max_players no range 2-50 (#28 - Validação de bounds)
+    function isValidMaxPlayers(value) {
+      return value is number && value >= 2 && value <= 50;
+    }
+
+    // Valida max_goalkeepers no range 0-10 (#28 - Validação de bounds)
+    function isValidMaxGoalkeepers(value) {
+      return value == null || (value is number && value >= 0 && value <= 10);
+    }
+
+    // Valida latitude no range -90 a 90 (#29 - Validação de coordenadas)
+    function isValidLatitude(lat) {
+      return lat == null || (lat is number && lat >= -90.0 && lat <= 90.0);
+    }
+
+    // Valida longitude no range -180 a 180 (#29 - Validação de coordenadas)
+    function isValidLongitude(lng) {
+      return lng == null || (lng is number && lng >= -180.0 && lng <= 180.0);
+    }
+
+    // Valida coordenadas (#29 - Validação de coordenadas)
+    function hasValidCoordinates(data) {
+      return isValidLatitude(data.get('location_lat', null)) &&
+             isValidLongitude(data.get('location_lng', null));
+    }
+
+    // Valida nome (2-100 caracteres)
+    function isValidName(name) {
+      return name is string && name.size() >= 2 && name.size() <= 100;
+    }
+
+    // Valida descricao (max 500 caracteres)
+    function isValidDescription(desc) {
+      return desc == null || desc == '' || (desc is string && desc.size() <= 500);
+    }
+
+    // ============================================
+    // FUNCOES DE RATE LIMITING
+    // ============================================
+    //
+    // ESTRATEGIA DE RATE LIMITING (PERF_001):
+    // Firestore Security Rules tem suporte limitado para rate limiting.
+    // Usamos request.time para:
+    // 1. Registrar timestamp de criacao/update (para auditoria)
+    // 2. Validar que created_at/updated_at correspondem ao request.time
+    //
+    // Para rate limiting real (ex: max 10 requests/minuto), use:
+    // - Cloud Functions com contadores em documentos (/rate_limits/{userId}_{action})
+    // - Firebase App Check para validacao de dispositivo (IMPLEMENTADO - ver PERF_001)
+    // - Quotas no Firebase Console
+    //
+    // FUTURE IMPLEMENTATION (Fase 3 - PERF_001):
+    // - Criar collection /rate_limits com documentos {userId}_{action}
+    // - Cloud Functions atualizam contadores a cada ação
+    // - Security Rules verificam se contador < limite antes de permitir write
+    // - Exemplo: max 10 games criados por hora por usuário
+    //
+    // A funcao abaixo e um placeholder que pode ser usada
+    // em conjunto com documentos de rate limit em Cloud Functions.
+    // ============================================
+
+    // Verifica se o timestamp no documento corresponde ao request.time
+    // Util para garantir que created_at/updated_at sao definidos corretamente
+    function hasValidTimestamp(field) {
+      return request.resource.data[field] == request.time;
+    }
+
+    // PLACEHOLDER: Verifica se um documento de rate limit existe e nao expirou
+    // Uso: armazenar ultimo timestamp de acao em /rate_limits/{userId}_{action}
+    // Cloud Functions devem criar/atualizar esses documentos
+    // PERF_001 - Fase 3: Implementar verificação real
+    function isWithinRateLimit(action, maxPerMinute) {
+      // NOTA: Esta funcao requer um documento de rate limit criado por Cloud Functions
+      // O documento deve ter: last_action_time (timestamp), action_count (number)
+      // Cloud Functions devem resetar action_count a cada minuto
+      //
+      // Por enquanto, sempre retorna true (rate limiting real via Cloud Functions + App Check)
+      return true;
+    }
+
+    // ============================================
+    // COLECAO: users
+    // ============================================
+    match /users/{userId} {
+      // S-001 FIX: Restringir leitura - apenas proprio usuario ou admin pode ver perfil completo
+      // Exceção: usuarios marcados como is_searchable podem ser lidos por qualquer autenticado
+      // PERF_001: fcm_token é SEMPRE privado (não exposto em leitura pública)
+      allow read: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.is_searchable == true);
+
+      // Usuario so pode criar seu proprio perfil (com role padrao PLAYER)
+      // Validações de dados obrigatorias na criacao
+      allow create: if isOwner(userId) &&
+                       request.resource.data.role == 'PLAYER' &&
+                       // Validacao de nome (2-100 chars)
+                       isValidName(request.resource.data.name) &&
+                       // Validacao de email (formato valido)
+                       isValidEmail(request.resource.data.email) &&
+                       // Validacao de ratings (0.0-5.0)
+                       isValidRating(request.resource.data.striker_rating) &&
+                       isValidRating(request.resource.data.mid_rating) &&
+                       isValidRating(request.resource.data.defender_rating) &&
+                       isValidRating(request.resource.data.gk_rating);
+
+      // Usuario pode atualizar seu perfil (campos basicos apenas)
+      // XP/Level/Milestones SAO atualizados via Cloud Functions (Admin SDK) - NAO client-side
+      // SEGURANCA: Removida permissao de FIELD_OWNER editar XP (vulnerabilidade P0-1)
+      //
+      // CMD-05: Regras de atualizacao de perfil
+      // Campos permitidos para edicao pelo usuario:
+      // - name, nickname, photo_url (dados basicos)
+      // - preferred_field_types, preferred_position (preferencias)
+      // - striker_rating, mid_rating, defender_rating, gk_rating (ratings manuais)
+      // - birth_date, gender, height_cm, weight_kg (dados pessoais)
+      // - dominant_foot, primary_position, secondary_position, play_style, experience_years
+      //
+      // Campos protegidos (apenas admin/cloud functions):
+      // - id, created_at, role (identidade e permissões)
+      // - experience_points, level, milestones_achieved (gamificacao)
+      // - fcm_token (gerenciado internamente)
+      // - auto_*_rating, auto_rating_samples (ratings automaticos)
+      allow update: if
+          isAdmin() ||
+          (isOwner(userId) &&
+           // Campos imutaveis (identidade)
+           fieldUnchanged('id') &&
+           fieldUnchanged('created_at') &&
+           fieldUnchanged('role') &&
+           // Campos de gamificacao (apenas cloud functions)
+           fieldUnchanged('experience_points') &&
+           fieldUnchanged('level') &&
+           fieldUnchanged('milestones_achieved') &&
+           // Campos de rating automatico (apenas cloud functions)
+           fieldUnchanged('auto_striker_rating') &&
+           fieldUnchanged('auto_mid_rating') &&
+           fieldUnchanged('auto_defender_rating') &&
+           fieldUnchanged('auto_gk_rating') &&
+           fieldUnchanged('auto_rating_samples') &&
+           fieldUnchanged('auto_rating_updated_at') &&
+           // FCM token e flags internas
+           fieldUnchanged('fcm_token') &&
+           fieldUnchanged('updated_at') &&
+           // Validacao de dados no update
+           isValidName(request.resource.data.name) &&
+           isValidEmail(request.resource.data.email) &&
+           isValidRating(request.resource.data.striker_rating) &&
+           isValidRating(request.resource.data.mid_rating) &&
+           isValidRating(request.resource.data.defender_rating) &&
+           isValidRating(request.resource.data.gk_rating));
+
+      allow delete: if false;
+    }
+
+    // ============================================
+    // COLECAO: statistics
+    // ============================================
+    match /statistics/{statId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // ============================================
+    // COLECAO: games
+    // ============================================
+    match /games/{gameId} {
+      // Qualquer usuario autenticado pode ler jogos (EXCETO soft-deleted)
+      // Admins podem ver soft-deleted para recuperação
+      allow read: if isAuthenticated() &&
+                     (resource.data.deleted_at == null || isAdmin());
+
+      // Qualquer usuario autenticado pode criar jogos
+      // Validacoes na criacao de jogo (#28, #29 - Validações de bounds e coordenadas)
+      // PERF_001: Validação estrita de scores (max 100 gols)
+      allow create: if isAuthenticated() &&
+                       (isAdmin() || request.resource.data.owner_id == userId()) &&
+                       // Validacao de max_players (2-50) - #28
+                       isValidMaxPlayers(request.resource.data.max_players) &&
+                       // Validacao de max_goalkeepers (0-10) - #28
+                       isValidMaxGoalkeepers(request.resource.data.get('max_goalkeepers', null)) &&
+                       // Validacao de scores (0-100) - PERF_001
+                       isValidScore(request.resource.data.team1_score) &&
+                       isValidScore(request.resource.data.team2_score) &&
+                       // Validacao de contadores (>= 0)
+                       isNonNegativeNumber(request.resource.data.players_count) &&
+                       isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
+                       // Validacao de coordenadas (#29)
+                       hasValidCoordinates(request.resource.data);
+
+      // Apenas o dono pode atualizar o jogo
+      // Excecao: contadores (players_count, goalkeepers_count) podem ser
+      // atualizados por qualquer autenticado (via transacao de confirmacao)
+      // Admins têm acesso total
+      // PERF_001: Validação estrita de scores (max 100 gols)
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        // Dono pode fazer qualquer atualizacao (com validacao de dados)
+        (resource.data.owner_id == userId() &&
+         isValidScore(request.resource.data.team1_score) &&
+         isValidScore(request.resource.data.team2_score) &&
+         isNonNegativeNumber(request.resource.data.players_count) &&
+         isNonNegativeNumber(request.resource.data.goalkeepers_count)) ||
+        // Outros usuarios so podem atualizar contadores via transacao
+        (onlyAllowedFields(['players_count', 'goalkeepers_count']) &&
+         isNonNegativeNumber(request.resource.data.players_count) &&
+         isNonNegativeNumber(request.resource.data.goalkeepers_count)) ||
+        // Permitir que jogadores confirmados atualizem o MVP no final da votacao
+        (isConfirmedPlayer(gameId) && onlyAllowedFields(['mvp_id']))
+      );
+
+      // Apenas o dono ou admin pode deletar
+      allow delete: if isAdmin() || isOwner(resource.data.owner_id);
+    }
+
+    // ============================================
+    // COLECAO: schedules
+    // ============================================
+    // CMD-07: Ownership de Horarios
+    // - O campo owner_id define quem criou/gestiona o schedule (usuario)
+    // - location_id vincula o schedule a um local/quadra (referencia)
+    // - group_id vincula o schedule a um grupo (opcional, para jogos recorrentes de grupo)
+    //
+    // Nota: Schedules sao criados/gestionados por USUARIOS, nao por locais ou grupos diretamente.
+    // Um usuario com role FIELD_OWNER pode criar schedules para o local que gerencia.
+    match /schedules/{scheduleId} {
+      // Usuario pode ler suas proprias recorrencias
+      // Admins podem ler todas
+      // Membros de um grupo podem ler schedules do grupo (se group_id definido)
+      allow read: if isAuthenticated() &&
+        (resource.data.owner_id == request.auth.uid ||
+         isAdmin() ||
+         (resource.data.group_id != null && isGroupMember(resource.data.group_id)));
+
+      // Usuario pode criar recorrencias para si mesmo
+      // Admins podem criar para qualquer um
+      // Se tiver group_id, o usuario deve ser membro do grupo
+      allow create: if isAuthenticated() &&
+        (request.resource.data.owner_id == userId() || isAdmin()) &&
+        (request.resource.data.group_id == null ||
+         isGroupMember(request.resource.data.group_id));
+
+      // Usuario pode atualizar suas proprias recorrencias
+      // Admins podem atualizar qualquer uma
+      allow update: if isAuthenticated() &&
+        (resource.data.owner_id == userId() || isAdmin());
+
+      // Usuario pode deletar suas proprias recorrencias
+      // Admins podem deletar qualquer uma
+      allow delete: if isAuthenticated() &&
+        (resource.data.owner_id == userId() || isAdmin());
+    }
+
+    // ============================================
+    // COLECAO: confirmations
+    // ============================================
+    match /confirmations/{confirmationId} {
+      // Qualquer usuario autenticado pode ler confirmacoes
+      allow read: if isAuthenticated();
+
+      // C-003 FIX: Usuario pode criar sua propria confirmacao com validação de ID
+      // ID deve seguir padrao: {gameId}_{userId}
+      // OU o dono do jogo pode criar convites (summon) para outros
+      allow create: if isAuthenticated() &&
+                       ((request.resource.data.user_id == userId() &&
+                         isValidConfirmationId(confirmationId, request.resource.data.game_id, userId())) ||
+                        (isGameOwner(request.resource.data.game_id) &&
+                         // Para summon, o ID não precisa seguir o padrão gameId_userId pois pode ser convite para outro usuário
+                         request.resource.data.game_id != null));
+
+      // Usuario pode atualizar sua propria confirmacao
+      allow update: if isAuthenticated() && (
+        // O dono da confirmação pode atualizar (sem restrição de campos por enquanto, ou restringir se necessário)
+        (resource.data.user_id == userId()) ||
+        // O dono do JOGO pode atualizar qualquer confirmação (necessário para setar MVP/Stats no final)
+        isGameOwner(resource.data.game_id) ||
+        // Jogadores confirmados podem atualizar flags de MVP (para votação)
+        (isConfirmedPlayer(resource.data.game_id) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_mvp', 'is_best_gk', 'is_worst_player']))
+      );
+
+      // Usuario pode deletar sua propria confirmacao
+      // OU dono do jogo / admin pode remover qualquer jogador
+      allow delete: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.user_id == userId() ||
+        isGameOwner(resource.data.game_id)
+      );
+    }
+
+    // ============================================
+    // COLECAO: teams
+    // ============================================
+    match /teams/{teamId} {
+      // Qualquer usuario autenticado pode ler times
+      allow read: if isAuthenticated();
+
+      // Apenas dono do jogo ou admin pode criar/modificar times
+      allow create, update, delete: if isAuthenticated() &&
+                                       (isAdmin() || isGameOwner(request.resource.data.game_id));
+    }
+
+    // ============================================
+    // COLECAO: statistics
+    // ============================================
+
+
+    // ============================================
+    // COLECAO: player_stats (estatisticas por jogo)
+    // ============================================
+    match /player_stats/{statId} {
+      // Qualquer usuario autenticado pode ler
+      allow read: if isAuthenticated();
+
+      // Dono do jogo ou admin pode criar/atualizar estatisticas de jogadores
+      allow create, update: if isAuthenticated() &&
+                               (isAdmin() || isGameOwner(request.resource.data.game_id));
+
+      allow delete: if isAuthenticated() &&
+                       (isAdmin() || isGameOwner(resource.data.game_id));
+    }
+
+    // ============================================
+    // COLECAO: live_games (estado em tempo real)
+    // ============================================
+    match /live_games/{gameId} {
+      allow read: if isAuthenticated();
+
+      // Apenas dono do jogo ou admin pode controlar o jogo ao vivo
+      allow create, update, delete: if isAuthenticated() &&
+                                       (isAdmin() || isGameOwner(gameId));
+
+      // Sub-colecao: eventos do jogo
+      match /events/{eventId} {
+        allow read: if isAuthenticated();
+        allow create, update, delete: if isAuthenticated() &&
+                                         (isAdmin() || isGameOwner(gameId) || isConfirmedPlayer(gameId));
+      }
+    }
+
+    // ============================================
+    // COLECAO: locations
+    // ============================================
+    //
+    // Estrutura do documento:
+    // - name: string (obrigatorio, 2-100 caracteres)
+    // - owner_id: string (obrigatorio, ID do usuario dono)
+    // - managers: array<string> (opcional, IDs de usuarios gerentes)
+    // - rating: number (opcional, 0.0-5.0)
+    // - is_active: boolean (default true)
+    // - is_verified: boolean (default false, apenas admin altera)
+    // - created_at: timestamp
+    // - updated_at: timestamp
+    // - address, city, state, country, lat, lng, etc.
+    //
+    // Matriz de Permissoes:
+    // | Acao     | Publico | Auth  | Owner | Manager | Admin |
+    // |----------|---------|-------|-------|---------|-------|
+    // | Read     | active  | todos | sim   | sim     | sim   |
+    // | Create   | -       | sim*  | -     | -       | sim   |
+    // | Update   | -       | -     | sim** | sim**   | sim   |
+    // | Delete   | -       | -     | -     | -       | sim   |
+    //
+    // * Apenas se owner_id == userId()
+    // ** Campos protegidos: owner_id, created_at, is_verified, is_active (apenas admin)
+    //
+    // ============================================
+    match /locations/{locationId} {
+
+      // ------------------------------------------
+      // HELPER: Verifica se usuario e manager do local
+      // ------------------------------------------
+      function isLocationManager() {
+        return 'managers' in resource.data && userId() in resource.data.managers;
+      }
+
+      // ------------------------------------------
+      // HELPER: Verifica se usuario e owner do local
+      // ------------------------------------------
+      function isLocationOwner() {
+        return resource.data.owner_id == userId();
+      }
+
+      // ------------------------------------------
+      // HELPER: Valida dados do location na criacao/update
+      // ------------------------------------------
+      function hasValidLocationData() {
+        let data = request.resource.data;
+        return
+          // Nome obrigatorio: 2-100 caracteres
+          isValidName(data.name) &&
+          // owner_id obrigatorio e string
+          data.owner_id is string &&
+          data.owner_id.size() > 0 &&
+          // Rating opcional: 0.0-5.0
+          isValidRating(data.get('rating', null)) &&
+          // Validacao de coordenadas (#29)
+          isValidLatitude(data.get('latitude', null)) &&
+          isValidLongitude(data.get('longitude', null));
+      }
+
+      // ------------------------------------------
+      // READ: Leitura de locais
+      // ------------------------------------------
+      // 1. Qualquer pessoa (mesmo nao autenticada) pode ler locais ativos E verificados
+      //    (para exibicao publica, ex: busca de locais)
+      // 2. Usuarios autenticados podem ler QUALQUER local (EXCETO soft-deleted)
+      // 3. Admins podem ver soft-deleted para recuperação
+      allow read: if (
+        // Leitura publica: apenas locais ativos E verificados E não deletados
+        (resource.data.is_active == true &&
+         resource.data.is_verified == true &&
+         resource.data.deleted_at == null) ||
+        // Leitura autenticada: qualquer local não deletado
+        (isAuthenticated() && resource.data.deleted_at == null) ||
+        // Admin: pode ver tudo, incluindo soft-deleted
+        (isAuthenticated() && isAdmin())
+      );
+
+      // ------------------------------------------
+      // CREATE: Criacao de locais
+      // ------------------------------------------
+      // Regras:
+      // 1. Usuario deve estar autenticado
+      // 2. owner_id deve ser o proprio usuario (ninguem pode criar em nome de outro)
+      // 3. Dados devem ser validos (nome 2-100 chars, rating 0-5)
+      // 4. is_verified deve ser false na criacao (apenas admin pode verificar)
+      // 5. is_active deve ser true na criacao
+      // 6. Rate limiting: previne spam de criacao (max 1 por segundo)
+      allow create: if isAuthenticated() &&
+        // Owner deve ser o usuario autenticado
+        request.resource.data.owner_id == userId() &&
+        // Validacao de dados
+        hasValidLocationData() &&
+        // Campos de sistema devem ter valores corretos na criacao
+        request.resource.data.get('is_verified', false) == false &&
+        request.resource.data.get('is_active', true) == true &&
+        // Rate limiting: request.time usado para audit (Cloud Functions aplicam limite real)
+        request.time != null;
+
+      // ------------------------------------------
+      // UPDATE: Atualizacao de locais
+      // ------------------------------------------
+      // Regras:
+      // 1. Admin pode atualizar qualquer campo
+      // 2. Owner pode atualizar campos basicos (nome, endereco, etc.)
+      //    - NAO pode alterar: owner_id, created_at, is_verified
+      //    - NAO pode alterar: is_active (apenas admin pode desativar)
+      // 3. Managers podem atualizar campos basicos (mesmas restricoes do owner)
+      // 4. Validacao de dados em todas as atualizacoes
+      allow update: if isAuthenticated() && (
+        // Admin: acesso total
+        isAdmin() ||
+        // Owner: campos basicos, com validacao
+        (isLocationOwner() &&
+         hasValidLocationData() &&
+         fieldUnchanged('owner_id') &&
+         fieldUnchanged('created_at') &&
+         fieldUnchanged('is_verified') &&
+         fieldUnchanged('is_active')) ||
+        // Manager: mesmas permissoes do owner
+        (isLocationManager() &&
+         hasValidLocationData() &&
+         fieldUnchanged('owner_id') &&
+         fieldUnchanged('created_at') &&
+         fieldUnchanged('is_verified') &&
+         fieldUnchanged('is_active') &&
+         fieldUnchanged('managers'))  // Manager nao pode alterar lista de managers
+      );
+
+      // ------------------------------------------
+      // DELETE: Exclusao de locais
+      // ------------------------------------------
+      // Apenas admin pode excluir locais
+      // Motivo: preservar historico de jogos vinculados
+      // Alternativa para owners: solicitar desativacao (is_active = false) via admin
+      allow delete: if isAuthenticated() && isAdmin();
+
+      // ==========================================
+      // SUB-COLECAO: fields (quadras/campos do local)
+      // ==========================================
+      //
+      // Estrutura do documento:
+      // - name: string (obrigatorio, 2-100 caracteres)
+      // - location_id: string (referencia ao local pai)
+      // - type: string (ex: "SOCIETY", "FUTSAL", "CAMPO")
+      // - capacity: number (capacidade maxima de jogadores)
+      // - price_per_hour: number (preco por hora)
+      // - is_active: boolean
+      // - amenities: array<string> (ex: ["COVERED", "SYNTHETIC_GRASS"])
+      //
+      // Permissoes:
+      // - Read: usuarios autenticados
+      // - Write: owner ou managers do local pai
+      //
+      // ==========================================
+      match /fields/{fieldId} {
+
+        // Helper para verificar ownership do local pai
+        function getParentLocation() {
+          return get(/databases/$(database)/documents/locations/$(locationId));
+        }
+
+        function isParentOwner() {
+          let loc = getParentLocation();
+          return loc != null && loc.data.owner_id == userId();
+        }
+
+        function isParentManager() {
+          let loc = getParentLocation();
+          return loc != null && 'managers' in loc.data && userId() in loc.data.managers;
+        }
+
+        function canManageFields() {
+          return isAdmin() || isParentOwner() || isParentManager();
+        }
+
+        // Valida dados da quadra
+        function hasValidFieldData() {
+          let data = request.resource.data;
+          return
+            isValidName(data.name) &&
+            // location_id deve corresponder ao pai
+            data.location_id == locationId;
+        }
+
+        // Read: usuarios autenticados podem ler quadras
+        allow read: if isAuthenticated();
+
+        // Create: owner ou manager do local pode criar quadras
+        allow create: if isAuthenticated() &&
+          canManageFields() &&
+          hasValidFieldData();
+
+        // Update: owner ou manager do local pode atualizar quadras
+        // Nao pode alterar location_id (quadra nao pode mudar de local)
+        allow update: if isAuthenticated() &&
+          canManageFields() &&
+          hasValidFieldData() &&
+          fieldUnchanged('location_id');
+
+        // Delete: apenas admin pode excluir quadras
+        // Owner/Manager devem desativar (is_active = false) em vez de excluir
+        allow delete: if isAuthenticated() && isAdmin();
+      }
+
+      // ==========================================
+      // SUB-COLECAO: audit_logs (historico de alteracoes)
+      // ==========================================
+      //
+      // Estrutura do documento:
+      // - timestamp: timestamp (quando ocorreu)
+      // - action: string (ex: "CREATE", "UPDATE", "DELETE")
+      // - actor_id: string (quem fez a acao)
+      // - changes: map (campos alterados e valores antigos/novos)
+      // - ip_address: string (opcional, para auditoria)
+      //
+      // Permissoes:
+      // - Read: owner ou managers do local
+      // - Write: APENAS Cloud Functions (via Admin SDK)
+      //   Motivo: logs de auditoria devem ser imutaveis e confiaveis
+      //
+      // ==========================================
+      match /audit_logs/{logId} {
+
+        function canReadAuditLogs() {
+          let loc = get(/databases/$(database)/documents/locations/$(locationId));
+          return loc != null && (
+            loc.data.owner_id == userId() ||
+            ('managers' in loc.data && userId() in loc.data.managers) ||
+            isAdmin()
+          );
+        }
+
+        // Read: owner, managers ou admin podem ler logs de auditoria
+        allow read: if isAuthenticated() && canReadAuditLogs();
+
+        // Write: BLOQUEADO para clientes
+        // Apenas Cloud Functions com Admin SDK podem escrever logs
+        // Isso garante integridade e confiabilidade dos logs
+        allow create, update, delete: if false;
+      }
+
+      // ==========================================
+      // SUB-COLECAO: reviews (avaliacoes do local)
+      // ==========================================
+      //
+      // Estrutura do documento:
+      // - user_id: string (quem avaliou)
+      // - rating: number (1-5)
+      // - comment: string (opcional, max 500 chars)
+      // - created_at: timestamp
+      // - game_id: string (opcional, jogo vinculado)
+      //
+      // Permissoes:
+      // - Read: todos autenticados
+      // - Create: usuarios que jogaram no local
+      // - Update: apenas o autor da review
+      // - Delete: autor ou admin
+      //
+      // ==========================================
+      match /reviews/{reviewId} {
+
+        // Read: usuarios autenticados podem ler reviews
+        allow read: if isAuthenticated();
+
+        // Create: usuario pode criar review para si mesmo
+        // Validacoes:
+        // - user_id deve ser o proprio usuario
+        // - rating deve ser 1-5
+        // - comment max 500 chars
+        allow create: if isAuthenticated() &&
+          request.resource.data.user_id == userId() &&
+          request.resource.data.rating >= 1 &&
+          request.resource.data.rating <= 5 &&
+          isValidDescription(request.resource.data.get('comment', null));
+
+        // Update: apenas o autor pode editar
+        allow update: if isAuthenticated() &&
+          resource.data.user_id == userId() &&
+          fieldUnchanged('user_id') &&
+          fieldUnchanged('created_at') &&
+          request.resource.data.rating >= 1 &&
+          request.resource.data.rating <= 5;
+
+        // Delete: autor ou admin
+        allow delete: if isAuthenticated() &&
+          (resource.data.user_id == userId() || isAdmin());
+      }
+
+      // ==========================================
+      // SUB-COLECAO: availability (horarios disponiveis)
+      // ==========================================
+      //
+      // Estrutura do documento:
+      // - day_of_week: number (0-6, domingo=0)
+      // - start_time: string (HH:mm)
+      // - end_time: string (HH:mm)
+      // - field_id: string (quadra especifica, opcional)
+      // - is_available: boolean
+      //
+      // Permissoes:
+      // - Read: todos autenticados
+      // - Write: owner ou managers
+      //
+      // ==========================================
+      match /availability/{slotId} {
+
+        function canManageAvailability() {
+          let loc = get(/databases/$(database)/documents/locations/$(locationId));
+          return loc != null && (
+            loc.data.owner_id == userId() ||
+            ('managers' in loc.data && userId() in loc.data.managers) ||
+            isAdmin()
+          );
+        }
+
+        // Read: usuarios autenticados
+        allow read: if isAuthenticated();
+
+        // Write: owner, managers ou admin
+        allow create, update, delete: if isAuthenticated() && canManageAvailability();
+      }
+    }
+
+    // ============================================
+    // COLECAO: fields (quadras/campos) - ROOT LEVEL
+    // ============================================
+    //
+    // NOTA: Esta colecao existe para compatibilidade com dados legados.
+    // Para novos campos, prefira usar a subcollection:
+    //   /locations/{locationId}/fields/{fieldId}
+    //
+    // Esta colecao raiz mantem campos que foram criados antes
+    // da implementacao de subcollections.
+    //
+    // Permissoes:
+    // - Read: usuarios autenticados
+    // - Create/Update: owner ou managers do local vinculado
+    // - Delete: apenas admin
+    //
+    // ============================================
+    match /fields/{fieldId} {
+
+      // Helper: verifica se usuario e owner do local vinculado
+      function isLocationOwnerForField(locationId) {
+        let locDoc = get(/databases/$(database)/documents/locations/$(locationId));
+        return locDoc != null && locDoc.data.owner_id == userId();
+      }
+
+      // Helper: verifica se usuario e manager do local vinculado
+      function isLocationManagerForField(locationId) {
+        let locDoc = get(/databases/$(database)/documents/locations/$(locationId));
+        return locDoc != null && 'managers' in locDoc.data && userId() in locDoc.data.managers;
+      }
+
+      // Helper: verifica se pode gerenciar o campo
+      function canManageField(locationId) {
+        return isAdmin() || isLocationOwnerForField(locationId) || isLocationManagerForField(locationId);
+      }
+
+      // Qualquer usuario autenticado pode ler quadras
+      allow read: if isAuthenticated();
+
+      // Dono ou manager do local pode criar quadras
+      // Validacao: location_id obrigatorio
+      allow create: if isAuthenticated() &&
+        canManageField(request.resource.data.location_id) &&
+        request.resource.data.location_id is string &&
+        isValidName(request.resource.data.name);
+
+      // Dono ou manager do local pode atualizar quadras
+      // Restricoes: nao pode alterar location_id ou is_active (admin only)
+      allow update: if isAuthenticated() &&
+        canManageField(resource.data.location_id) &&
+        fieldUnchanged('location_id') &&
+        (isAdmin() || fieldUnchanged('is_active')) &&
+        isValidName(request.resource.data.name);
+
+      // Apenas admin pode excluir quadras
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: groups
+    // ============================================
+    match /groups/{groupId} {
+      // Usuários podem ler grupos públicos ou onde são membros (EXCETO soft-deleted)
+      // Admins podem ver soft-deleted para recuperação
+      allow read: if isAuthenticated() && (
+        resource.data.deleted_at == null || isAdmin()
+      ) && (
+        resource.data.is_public == true ||
+        resource.data.owner_id == userId() ||
+        exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()))
+      );
+
+      // Validacoes na criacao de grupo
+      allow create: if isAuthenticated() &&
+                       request.resource.data.owner_id == userId() &&
+                       // Nome do grupo: 3-50 caracteres
+                       isValidStringLength(request.resource.data.name, 3, 50) &&
+                       // Descricao: max 500 caracteres
+                       isValidDescription(request.resource.data.description);
+
+      // Validacoes no update de grupo
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          (resource.data.owner_id == userId() || isGroupAdmin(groupId)) &&
+          // Validacao de dados no update
+          isValidStringLength(request.resource.data.name, 3, 50) &&
+          isValidDescription(request.resource.data.description)
+        ) ||
+        // Atualizacao de contadores permitida
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['member_count', 'updated_at'])
+      );
+
+      allow delete: if isAuthenticated() && (isAdmin() || resource.data.owner_id == userId());
+
+      // Sub-colecao: members
+      match /members/{memberId} {
+        allow read: if isAuthenticated();
+
+        allow create, update: if isAuthenticated() && (
+           isGroupAdmin(groupId) ||
+           (memberId == userId() && isGroupOwnerById(groupId)) ||
+           (request.resource.data.role == 'OWNER' && request.resource.data.user_id == userId() && !exists(/databases/$(database)/documents/groups/$(groupId))) ||
+           (request.resource.data.role == 'MEMBER' && request.resource.data.user_id == userId())
+        );
+
+        allow delete: if isAuthenticated() && (
+          memberId == userId() ||
+          isGroupAdmin(groupId)
+        );
+
+        function isGroupOwnerById(gId) {
+          let groupDoc = get(/databases/$(database)/documents/groups/$(gId));
+          return groupDoc != null && groupDoc.data.owner_id == userId();
+        }
+      }
+
+      match /cashbox/{entryId} {
+        allow read: if isAuthenticated() && isGroupMember(groupId);
+
+        allow create: if isAuthenticated() &&
+                         isGroupAdmin(groupId) &&
+                         isGroupActive(groupId) &&
+                         request.resource.data.amount > 0 &&
+                         (request.resource.data.type == 'INCOME' || request.resource.data.type == 'EXPENSE');
+
+        // M-001 fix: validacao de timestamp em voided_at
+        allow update: if isAuthenticated() && isGroupAdmin(groupId) &&
+                      isGroupActive(groupId) &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'voided_at', 'voided_by']) &&
+                      request.resource.data.status == 'VOIDED' &&
+                      request.resource.data.voided_by == userId() &&
+                      request.resource.data.voided_at == request.time;
+
+        allow delete: if false;
+      }
+
+      match /cashbox_summary/{docId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isAuthenticated() && isGroupAdmin(groupId);
+      }
+    }
+
+    // ============================================
+    // COLECAO: group_invites
+    // ============================================
+    match /group_invites/{inviteId} {
+      function canManageInvites(gId) {
+        let member = get(/databases/$(database)/documents/groups/$(gId)/members/$(request.auth.uid));
+        return member != null && (member.data.role == 'OWNER' || member.data.role == 'ADMIN');
+      }
+
+      allow read: if isAuthenticated() && (
+        resource.data.invited_user_id == userId() ||
+        resource.data.invited_by_id == userId() ||
+        canManageInvites(resource.data.group_id)
+      );
+
+      allow create: if isAuthenticated() &&
+                       request.resource.data.invited_by_id == userId() &&
+                       canManageInvites(request.resource.data.group_id);
+
+      allow update: if isAuthenticated() && (
+        resource.data.invited_user_id == userId() ||
+        resource.data.invited_by_id == userId()
+      );
+
+      allow delete: if isAuthenticated() && (
+        resource.data.invited_by_id == userId() ||
+        canManageInvites(resource.data.group_id)
+      );
+    }
+
+    // ============================================
+    // COLECAO: game_summons
+    // ============================================
+    match /game_summons/{summonId} {
+      allow read: if isAuthenticated() && (
+        resource.data.user_id == userId() ||
+        resource.data.summoned_by == userId()
+      );
+
+      allow create: if isAuthenticated();
+
+      allow update: if isAuthenticated() && resource.data.user_id == userId();
+
+      allow delete: if isAuthenticated() && (
+        resource.data.summoned_by == userId() ||
+        isAdmin()
+      );
+    }
+
+    // ============================================
+    // COLECAO: notifications
+    // ============================================
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.user_id == userId();
+
+      // C-003 fix: validacao de created_by e user_id
+      allow create: if isAuthenticated() &&
+                       request.resource.data.created_by == userId() &&
+                       request.resource.data.user_id != userId() &&
+                       exists(/databases/$(database)/documents/users/$(request.resource.data.user_id)) &&
+                       request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'title']);
+
+      allow update: if isAuthenticated() &&
+                       resource.data.user_id == userId() &&
+                       onlyAllowedFields(['read', 'read_at']);
+
+      allow delete: if isAuthenticated() && resource.data.user_id == userId();
+    }
+
+    // ============================================
+    // SUB-COLECAO: users/{userId}/groups
+    // ============================================
+    match /users/{userId}/groups/{groupId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create, update, delete: if isAuthenticated() && (
+        request.auth.uid == userId ||
+        isGroupAdmin(groupId)
+      );
+
+      function isGroupAdmin(gId) {
+        let memberDoc = get(/databases/$(database)/documents/groups/$(gId)/members/$(request.auth.uid));
+        return memberDoc != null && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN');
+      }
+    }
+
+    // ============================================
+    // SUB-COLECAO: users/{userId}/upcoming_games
+    // ============================================
+    match /users/{userId}/upcoming_games/{gameId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create, update, delete: if isAuthenticated() && (
+        request.auth.uid == userId ||
+        isGameOwner(gameId)
+      );
+    }
+
+    // ============================================
+    // COLECAO: game_events (eventos de jogos ao vivo)
+    // ============================================
+    match /game_events/{eventId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        isGameOwner(request.resource.data.game_id) ||
+        isConfirmedPlayer(request.resource.data.game_id)
+      );
+
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        isGameOwner(resource.data.game_id) ||
+        isConfirmedPlayer(resource.data.game_id)
+      );
+
+      allow delete: if isAuthenticated() && (
+        isAdmin() ||
+        isGameOwner(resource.data.game_id) ||
+        isConfirmedPlayer(resource.data.game_id)
+      );
+    }
+
+    // ============================================
+    // COLECAO: live_scores (placar ao vivo)
+    // ============================================
+    match /live_scores/{scoreId} {
+      allow read: if isAuthenticated();
+
+      allow create, update: if isAuthenticated() && (
+        isAdmin() ||
+        isGameOwner(scoreId) ||
+        isConfirmedPlayer(scoreId)
+      );
+
+      allow delete: if isAuthenticated() && (
+        isAdmin() ||
+        isGameOwner(scoreId)
+      );
+    }
+
+    // ============================================
+    // COLECAO: live_player_stats (estatisticas ao vivo)
+    // ============================================
+    match /live_player_stats/{statId} {
+      allow read: if isAuthenticated();
+
+      allow create, update: if isAuthenticated() && (
+        isAdmin() ||
+        isGameOwner(request.resource.data.game_id) ||
+        isConfirmedPlayer(request.resource.data.game_id)
+      );
+
+      allow delete: if isAuthenticated() && (
+        isAdmin() ||
+        isGameOwner(resource.data.game_id)
+      );
+    }
+
+    // ============================================
+    // COLECAO: mvp_votes (votacao MVP)
+    // ============================================
+    match /mvp_votes/{voteId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated() && (
+        isConfirmedPlayer(request.resource.data.game_id) &&
+        request.resource.data.voter_id == userId()
+      );
+
+      allow update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: xp_logs (historico de XP)
+    // ============================================
+    match /xp_logs/{logId} {
+      allow read: if isAuthenticated() && resource.data.user_id == userId();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // ============================================
+    // COLECAO: ranking_deltas (incrementos de ranking)
+    // ============================================
+    match /ranking_deltas/{deltaId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        (request.resource.data.keys().hasAll(['game_id']) && isGameOwner(request.resource.data.game_id))
+      );
+
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (resource.data.keys().hasAll(['game_id']) && isGameOwner(resource.data.game_id))
+      );
+    }
+
+    // ============================================
+    // COLECAO: rankings (rankings consolidados)
+    // ============================================
+    match /rankings/{rankingId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: seasons (Controle de Ligas)
+    // ============================================
+    match /seasons/{seasonId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: season_participation (Ligas)
+    // ============================================
+    match /season_participation/{partId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: user_streaks
+    // ============================================
+    match /user_streaks/{streakId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: user_badges
+    // ============================================
+    match /user_badges/{badgeId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: game_requests (FASE 1 - Solicitações de Jogos Publicos)
+    // ============================================
+    match /game_requests/{requestId} {
+      // Qualquer usuario autenticado pode ler suas proprias solicitacoes
+      // Dono do jogo pode ler todas as solicitacoes do seu jogo
+      allow read: if isAuthenticated() &&
+        (resource.data.user_id == userId() || isGameOwner(resource.data.game_id));
+
+      // C-006 fix: Usuario pode criar solicitacao apenas para si mesmo
+      // Validacoes adicionais para prevenir abuso:
+      // 1. user_id deve ser o proprio usuario
+      // 2. status deve ser PENDING
+      // 3. game_id deve existir
+      // 4. Campos obrigatorios devem estar presentes
+      allow create: if isAuthenticated() &&
+        request.resource.data.user_id == userId() &&
+        request.resource.data.status == 'PENDING' &&
+        exists(/databases/$(database)/documents/games/$(request.resource.data.game_id)) &&
+        request.resource.data.keys().hasAll(['user_id', 'game_id', 'status']);
+
+      // Dono do jogo pode aprovar/rejeitar (update status)
+      // Validacao: apenas status, reviewed_at, reviewed_by, rejection_reason podem ser alterados
+      allow update: if isAuthenticated() &&
+        isGameOwner(resource.data.game_id) &&
+        onlyAllowedFields(['status', 'reviewed_at', 'reviewed_by', 'rejection_reason']);
+
+      allow delete: if isAuthenticated() && (
+        resource.data.user_id == userId() ||
+        isGameOwner(resource.data.game_id)
+      );
+    }
+
+    // ============================================
+    // COLECAO: activities (feed de atividades)
+    // ============================================
+    match /activities/{activityId} {
+      // C-004 fix: validacao de visibility e created_by
+      allow read: if isAuthenticated() && (
+        resource.data.visibility == 'PUBLIC' ||
+        resource.data.created_by == userId()
+      );
+
+      allow create: if isAuthenticated() &&
+                       request.resource.data.created_by == userId() &&
+                       (request.resource.data.visibility == 'PUBLIC' || request.resource.data.visibility == 'PRIVATE') &&
+                       request.resource.data.keys().hasAll(['created_by', 'user_id', 'type', 'visibility']);
+
+      allow update, delete: if isAuthenticated() &&
+                               resource.data.created_by == userId() &&
+                               fieldUnchanged('created_by');
+    }
+
+    // ============================================
+    // COLECAO: challenges (desafios semanais)
+    // ============================================
+    match /challenges/{challengeId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: challenge_progress (progresso dos desafios)
+    // ============================================
+    match /challenge_progress/{progressId} {
+      allow read: if isAuthenticated() && resource.data.userId == userId();
+
+      // Usuario pode criar/atualizar seu proprio progresso
+      allow create, update: if isAuthenticated() && request.resource.data.userId == userId();
+
+      // Admin pode gerenciar qualquer progresso
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // APP SETTINGS - Configurações globais do app (XP rates, etc)
+    // CMD-12: Proteção de configurações de gamificação
+    // ============================================
+    match /app_settings/{docId} {
+      // Qualquer usuário autenticado pode ler configurações
+      allow read: if isAuthenticated();
+
+      // Apenas ADMINs podem criar/modificar configurações
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // GAME TEMPLATES - Templates de jogos salvos por usuário
+    // CMD-12: Templates são privados por usuário
+    // ============================================
+    match /users/{userId}/game_templates/{templateId} {
+      // Usuário só pode ler seus próprios templates
+      allow read: if isOwner(userId);
+
+      // Usuário só pode criar/modificar/deletar seus próprios templates
+      allow create, update, delete: if isOwner(userId);
+    }
+
+    // ============================================
+    // SEASON FINAL STANDINGS - Rankings finais de temporadas encerradas
+    // CMD-12: Histórico de rankings é público, edição apenas admin
+    // ============================================
+    match /season_final_standings/{standingId} {
+      // Qualquer usuário autenticado pode ler rankings históricos
+      allow read: if isAuthenticated();
+
+      // Apenas Admin ou Cloud Functions podem criar/modificar
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // BADGES - Definições de badges (metadata)
+    // CMD-12: Badges metadata é público, edição apenas admin
+    // ============================================
+    match /badges/{badgeId} {
+      // Qualquer usuário autenticado pode ler definições de badges
+      allow read: if isAuthenticated();
+
+      // Apenas Admin pode criar/modificar badges
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // REGRA PADRAO: Negar tudo que nao foi explicitamente permitido
+    // ============================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

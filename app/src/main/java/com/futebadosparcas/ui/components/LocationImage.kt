@@ -1,6 +1,7 @@
 package com.futebadosparcas.ui.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -420,7 +421,7 @@ private fun ErrorContent(
             IconButton(onClick = onRetry) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
-                    contentDescription = "Tentar novamente",
+                    contentDescription = stringResource(R.string.cd_retry),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(32.dp)
                 )
@@ -428,7 +429,7 @@ private fun ErrorContent(
         } else {
             Icon(
                 imageVector = Icons.Default.BrokenImage,
-                contentDescription = "Erro ao carregar imagem",
+                contentDescription = stringResource(R.string.cd_image_load_error),
                 tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(32.dp)
             )

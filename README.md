@@ -2,7 +2,7 @@
 
 [![Android CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml)
 [![iOS Build](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml)
-[![Version](https://img.shields.io/badge/version-1.6.0-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
+[![Version](https://img.shields.io/badge/version-1.8.0-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas)
 
@@ -50,6 +50,10 @@
 | Home | Game Detail | Live Game | Profile |
 |------|-------------|-----------|---------|
 | ![Home](screenshots/home.png) | ![Game](screenshots/game.png) | ![Live](screenshots/live.png) | ![Profile](screenshots/profile.png) |
+
+---
+
+> **📘 New to the codebase?** Start with **[CLAUDE.md](CLAUDE.md)** - your comprehensive guide to the project architecture, build commands, coding patterns, and Spec-Driven Development workflow. Perfect for onboarding and AI-assisted development!
 
 ---
 
@@ -145,13 +149,18 @@ futeba-dos-parcas/
 
 ## 📖 Documentation
 
-For developers and contributors, please refer to our detailed documentation:
+For developers and contributors, please refer to our comprehensive documentation:
 
-- **[CLAUDE.md](CLAUDE.md)** - Development guidelines and patterns for Claude Code
+### 🤖 For AI-Assisted Development
+- **[CLAUDE.md](CLAUDE.md)** - **Complete development guide** with build commands, architecture patterns, Spec-Driven Development workflow, common gotchas, and quick references. Optimized for Claude Code and other AI coding assistants.
+- **[.claude/rules/](\.claude\rules)** - Detailed patterns for Compose, Material 3, ViewModels, Firestore, Kotlin style, testing, and security
+- **[.claude/PROJECT_CONTEXT.md](\.claude\PROJECT_CONTEXT.md)** - Consolidated project context for LLMs
+
+### 📚 For Developers
 - **[Tech Stack & Context](docs/TECH_STACK_AND_CONTEXT.md)** - Architecture, libraries, and navigation guide
 - **[Business Rules](docs/BUSINESS_RULES.md)** - XP system, Match Lifecycle, and Ranking logic
 - **[Setup Guide](SETUP_GUIDE.md)** - Complete development environment setup
-- **[Specs](specs/)** - Technical specifications for all features
+- **[Specs](specs/)** - Technical specifications for all features (Spec-Driven Development)
 
 ---
 
@@ -166,7 +175,14 @@ Contribuições são **muito bem-vindas**!
 
 ### Spec-Driven Development (SDD)
 
-Este projeto segue **Spec-Driven Development**. Toda feature ou bugfix DEVE ter uma spec aprovada em `/specs/` antes da implementação. Veja [CLAUDE.md](CLAUDE.md) para detalhes.
+Este projeto segue **Spec-Driven Development** rigorosamente:
+
+- ✅ Toda feature ou bugfix DEVE ter uma spec aprovada em `/specs/` antes da implementação
+- ✅ Fases obrigatórias: `REQUIREMENTS → UX/UI → TECHNICAL DESIGN → TASKS → IMPLEMENTATION → VERIFY`
+- ✅ Templates disponíveis: `_TEMPLATE_FEATURE_MOBILE.md` e `_TEMPLATE_BUGFIX_MOBILE.md`
+- ✅ Decisões técnicas documentadas em `/specs/DECISIONS.md`
+
+**Consulte [CLAUDE.md](CLAUDE.md) para o workflow completo e regras obrigatórias.**
 
 ---
 
@@ -197,7 +213,7 @@ Este projeto está sob a licença MIT - veja [LICENSE](LICENSE) para detalhes.
 
 ## 📊 Status do Projeto
 
-- ✅ **Android:** Produção (v1.6.0 na Play Store)
+- ✅ **Android:** Produção (v1.8.0 na Play Store)
 - 🚧 **iOS:** Em desenvolvimento (FASE 1 completa)
 - ✅ **Backend:** Firebase Cloud Functions v2
 - ✅ **CI/CD:** GitHub Actions

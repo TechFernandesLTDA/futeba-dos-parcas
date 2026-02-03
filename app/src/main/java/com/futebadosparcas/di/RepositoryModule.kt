@@ -299,4 +299,22 @@ object RepositoryModule {
     ): com.futebadosparcas.data.repository.WaitlistRepository {
         return com.futebadosparcas.data.repository.WaitlistRepositoryImpl(firestore)
     }
+
+    /**
+     * Provider para GameRepository (Android layer)
+     * Usado pelo CachedGameRepository como network data source
+     */
+
+    /**
+     * Provider para CachedGameRepository
+     * Camada de cache offline-first com TTL
+     */
+    @Provides
+    @Singleton
+    fun provideCachedGameRepository(
+        gameDao: com.futebadosparcas.data.local.dao.GameDao,
+        gameRepository: com.futebadosparcas.data.repository.GameRepository
+    ): com.futebadosparcas.data.repository.CachedGameRepository {
+        return com.futebadosparcas.data.repository.CachedGameRepository(gameDao, gameRepository)
+    }
 }
