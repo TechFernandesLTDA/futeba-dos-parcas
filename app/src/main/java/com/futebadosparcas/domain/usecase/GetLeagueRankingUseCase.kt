@@ -80,11 +80,7 @@ class GetLeagueRankingUseCase @Inject constructor(
             limit = limit
         )
 
-        if (rankingResult.isFailure) {
-            return Result.failure(rankingResult.exceptionOrNull()!!)
-        }
-
-        val documents = rankingResult.getOrNull()!!
+        val documents = rankingResult.getOrElse { return Result.failure(it) }
 
         // 2. Processar documentos baseado na categoria
         val entries = if (category == RankingCategory.XP) {
@@ -154,11 +150,7 @@ class GetLeagueRankingUseCase @Inject constructor(
             limit = limit
         )
 
-        if (deltasResult.isFailure) {
-            return Result.failure(deltasResult.exceptionOrNull()!!)
-        }
-
-        val documents = deltasResult.getOrNull()!!
+        val documents = deltasResult.getOrElse { return Result.failure(it) }
 
         // 2. Processar deltas e enriquecer com dados de usuário
         val entries = processDeltaRanking(documents, deltaField, period.minGames, currentUserId)
@@ -214,13 +206,13 @@ class GetLeagueRankingUseCase @Inject constructor(
             // Verificar se algum falhou
             val failures = results.filter { it.second.isFailure }
             if (failures.isNotEmpty()) {
-                return@coroutineScope Result.failure(
-                    failures.first().second.exceptionOrNull()!!
-                )
+                val firstFailure = failures.first().second.exceptionOrNull()
+                    ?: Exception("Erro desconhecido ao buscar ranking")
+                return@coroutineScope Result.failure(firstFailure)
             }
 
             val rankingsMap = results.associate { (category, result) ->
-                category to result.getOrNull()!!
+                category to result.getOrThrow()
             }
 
             Result.success(rankingsMap)

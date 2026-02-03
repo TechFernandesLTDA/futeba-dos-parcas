@@ -138,12 +138,10 @@ class RankingViewModel @Inject constructor(
                 }
 
                 // Buscar dados do usuario
-                val userResult = userRepository.getCurrentUser()
-                if (userResult.isFailure) {
+                val user = userRepository.getCurrentUser().getOrElse {
                     _evolutionState.value = EvolutionUiState.Error("Erro ao carregar usuario")
                     return@launch
                 }
-                val user = userResult.getOrNull()!!
 
                 // Buscar estatisticas
                 val statsResult = statisticsRepository.getMyStatistics()

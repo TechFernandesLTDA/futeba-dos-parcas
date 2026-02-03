@@ -97,19 +97,14 @@ class GetLeagueStandingsUseCase @Inject constructor(
             val currentUserId = auth.currentUser?.uid
 
             // 1. Buscar temporada ativa
-            val seasonResult = gamificationRepository.getActiveSeason()
-            if (seasonResult.isFailure) {
-                return Result.failure(seasonResult.exceptionOrNull()!!)
-            }
-            val season = seasonResult.getOrNull()!!
+            val season = gamificationRepository.getActiveSeason()
+                .getOrElse { return Result.failure(it) }
+                ?: return Result.failure(IllegalStateException("Nenhuma temporada ativa"))
 
             // 2. Buscar classificacao da divisao (converter para SharedLeagueDivision)
             val sharedDivision = toSharedDivision(division)
-            val rankingResult = leagueService.getPlayersByDivision(season.id, sharedDivision, limit)
-            if (rankingResult.isFailure) {
-                return Result.failure(rankingResult.exceptionOrNull()!!)
-            }
-            val participations = rankingResult.getOrNull()!!
+            val participations = leagueService.getPlayersByDivision(season.id, sharedDivision, limit)
+                .getOrElse { return Result.failure(it) }
 
             // 3. Buscar dados dos usuários
             val userIds = participations.map { it.userId }
@@ -166,11 +161,9 @@ class GetLeagueStandingsUseCase @Inject constructor(
 
         return try {
             // 1. Buscar temporada ativa
-            val seasonResult = gamificationRepository.getActiveSeason()
-            if (seasonResult.isFailure) {
-                return Result.failure(seasonResult.exceptionOrNull()!!)
-            }
-            val season = seasonResult.getOrNull()!!
+            val season = gamificationRepository.getActiveSeason()
+                .getOrElse { return Result.failure(it) }
+                ?: return Result.failure(IllegalStateException("Nenhuma temporada ativa"))
 
             // 2. Buscar classificação de cada divisão
             val divisions = mutableListOf<DivisionStandings>()
@@ -180,7 +173,7 @@ class GetLeagueStandingsUseCase @Inject constructor(
             for (division in LeagueDivision.values()) {
                 val standingsResult = getDivisionStandings(division, 20)
                 if (standingsResult.isSuccess) {
-                    val standings = standingsResult.getOrNull()!!
+                    val standings = standingsResult.getOrThrow()
                     divisions.add(standings)
 
                     // Verificar se usuário está nesta divisão
@@ -222,18 +215,14 @@ class GetLeagueStandingsUseCase @Inject constructor(
 
         return try {
             // 1. Buscar temporada ativa
-            val seasonResult = gamificationRepository.getActiveSeason()
-            if (seasonResult.isFailure) {
-                return Result.failure(seasonResult.exceptionOrNull()!!)
-            }
-            val season = seasonResult.getOrNull()!!
+            val season = gamificationRepository.getActiveSeason()
+                .getOrElse { return Result.failure(it) }
+                ?: return Result.failure(IllegalStateException("Nenhuma temporada ativa"))
 
             // 2. Buscar participação
-            val participationResult = gamificationRepository.getUserParticipation(currentUserId, season.id)
-            if (participationResult.isFailure) {
-                return Result.success(null) // Usuário não está participando
-            }
-            val domainParticipation = participationResult.getOrNull()!!
+            val domainParticipation = gamificationRepository.getUserParticipation(currentUserId, season.id)
+                .getOrElse { return Result.success(null) } // Usuário não está participando
+                ?: return Result.success(null) // Participação nula
 
             // 3. Buscar dados do usuário
             val userResult = userRepository.getCurrentUser()
