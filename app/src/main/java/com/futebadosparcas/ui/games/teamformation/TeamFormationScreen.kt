@@ -7,6 +7,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropSource
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -810,12 +811,18 @@ private fun DraggablePlayerRow(player: DraftPlayer, teamColor: Color) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .dragAndDropSource { _ ->
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                DragAndDropTransferData(
-                    clipData = android.content.ClipData.newPlainText("playerId", player.id)
+            .dragAndDropSource(block = {
+                detectTapGestures(
+                    onLongPress = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        startTransfer(
+                            DragAndDropTransferData(
+                                clipData = android.content.ClipData.newPlainText("playerId", player.id)
+                            )
+                        )
+                    }
                 )
-            },
+            }),
         verticalAlignment = Alignment.CenterVertically
     ) {
         CachedProfileImage(
