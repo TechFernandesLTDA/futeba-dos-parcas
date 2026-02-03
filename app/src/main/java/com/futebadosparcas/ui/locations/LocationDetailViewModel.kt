@@ -38,8 +38,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
 import javax.inject.Inject
 
-private const val TAG = "LocationDetailViewModel"
-
 @HiltViewModel
 class LocationDetailViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
@@ -48,6 +46,10 @@ class LocationDetailViewModel @Inject constructor(
     private val locationAnalytics: LocationAnalytics,
     private val fieldPhotoDataSource: FieldPhotoDataSource
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "LocationDetailViewModel"
+    }
 
     private val _uiState = MutableStateFlow<LocationDetailUiState>(LocationDetailUiState.Success(AndroidLocation(), emptyList()))
     val uiState: StateFlow<LocationDetailUiState> = _uiState
