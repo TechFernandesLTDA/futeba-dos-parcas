@@ -1,6 +1,6 @@
 package com.futebadosparcas.ui.schedules
 
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -62,14 +62,14 @@ fun SchedulesScreen(
     // CMD-08: Log para debug do estado da UI
     LaunchedEffect(uiState) {
         when (uiState) {
-            is SchedulesUiState.Loading -> Log.d(TAG, "Estado: Loading")
+            is SchedulesUiState.Loading -> AppLogger.d(TAG) { "Estado: Loading" }
             is SchedulesUiState.Success -> {
                 val count = (uiState as SchedulesUiState.Success).schedules.size
-                Log.d(TAG, "Estado: Success com $count schedules")
+                AppLogger.d(TAG) { "Estado: Success com $count schedules" }
             }
             is SchedulesUiState.Error -> {
                 val msg = (uiState as SchedulesUiState.Error).message
-                Log.e(TAG, "Estado: Error - $msg")
+                AppLogger.e(TAG, "Estado: Error - $msg")
             }
         }
     }

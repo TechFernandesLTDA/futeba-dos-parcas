@@ -1,7 +1,7 @@
 package com.futebadosparcas.ui.locations
 
 import android.net.Uri
-import android.util.Log
+import com.futebadosparcas.util.AppLogger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.datasource.FieldPhotoDataSource
@@ -366,25 +366,25 @@ class LocationDetailViewModel @Inject constructor(
             // Upload da foto usando FieldPhotoDataSource (com validação e compressão)
             var photosList = emptyList<String>()
             if (photoUri != null) {
-                Log.d(TAG, "Uploading field photo for new field in location: ${location.id}")
+                AppLogger.d(TAG) { "Uploading field photo for new field in location: ${location.id}" }
 
                 when (val result = fieldPhotoDataSource.uploadFieldPhoto(location.id, tempFieldId, photoUri)) {
                     is FieldPhotoDataSource.UploadResult.Success -> {
-                        Log.d(TAG, "Field photo uploaded successfully: ${result.url}")
+                        AppLogger.d(TAG) { "Field photo uploaded successfully: ${result.url}" }
                         photosList = listOf(result.url)
                     }
                     is FieldPhotoDataSource.UploadResult.FileTooLarge -> {
-                        Log.w(TAG, "Field photo too large")
+                        AppLogger.w(TAG) { "Field photo too large" }
                         _uiState.value = LocationDetailUiState.Error("Imagem muito grande. O tamanho máximo é 3MB.")
                         return@launch
                     }
                     is FieldPhotoDataSource.UploadResult.InvalidImage -> {
-                        Log.w(TAG, "Invalid field photo")
+                        AppLogger.w(TAG) { "Invalid field photo" }
                         _uiState.value = LocationDetailUiState.Error("Arquivo inválido. Selecione uma imagem JPEG, PNG ou WebP.")
                         return@launch
                     }
                     is FieldPhotoDataSource.UploadResult.Error -> {
-                        Log.e(TAG, "Error uploading field photo: ${result.message}")
+                        AppLogger.e(TAG, "Error uploading field photo: ${result.message}")
                         _uiState.value = LocationDetailUiState.Error("Erro ao fazer upload da imagem: ${result.message}")
                         return@launch
                     }
@@ -473,25 +473,25 @@ class LocationDetailViewModel @Inject constructor(
 
             var currentPhotos = field.photos
             if (photoUri != null) {
-                Log.d(TAG, "Uploading field photo for field: $fieldId in location: ${location.id}")
+                AppLogger.d(TAG) { "Uploading field photo for field: $fieldId in location: ${location.id}" }
 
                 when (val result = fieldPhotoDataSource.uploadFieldPhoto(location.id, fieldId, photoUri)) {
                     is FieldPhotoDataSource.UploadResult.Success -> {
-                        Log.d(TAG, "Field photo uploaded successfully: ${result.url}")
+                        AppLogger.d(TAG) { "Field photo uploaded successfully: ${result.url}" }
                         currentPhotos = listOf(result.url)
                     }
                     is FieldPhotoDataSource.UploadResult.FileTooLarge -> {
-                        Log.w(TAG, "Field photo too large")
+                        AppLogger.w(TAG) { "Field photo too large" }
                         _uiState.value = LocationDetailUiState.Error("Imagem muito grande. O tamanho máximo é 3MB.")
                         return@launch
                     }
                     is FieldPhotoDataSource.UploadResult.InvalidImage -> {
-                        Log.w(TAG, "Invalid field photo")
+                        AppLogger.w(TAG) { "Invalid field photo" }
                         _uiState.value = LocationDetailUiState.Error("Arquivo inválido. Selecione uma imagem JPEG, PNG ou WebP.")
                         return@launch
                     }
                     is FieldPhotoDataSource.UploadResult.Error -> {
-                        Log.e(TAG, "Error uploading field photo: ${result.message}")
+                        AppLogger.e(TAG, "Error uploading field photo: ${result.message}")
                         _uiState.value = LocationDetailUiState.Error("Erro ao fazer upload da imagem: ${result.message}")
                         return@launch
                     }
