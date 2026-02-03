@@ -65,15 +65,8 @@ class GetPlayerStatisticsUseCase @Inject constructor(
         val statsResult = firebaseDataSource.getUserStatistics(userId)
 
         // 2. Verificar erros
-        if (userResult.isFailure) {
-            return Result.failure(userResult.exceptionOrNull()!!)
-        }
-        if (statsResult.isFailure) {
-            return Result.failure(statsResult.exceptionOrNull()!!)
-        }
-
-        val user = userResult.getOrNull()!!
-        val statistics = statsResult.getOrNull()!!
+        val user = userResult.getOrElse { return Result.failure(it) }
+        val statistics = statsResult.getOrElse { return Result.failure(it) }
 
         // 3. Calcular progresso de nível
         val nextLevelXp = calculateNextLevelXp(user.level)
@@ -118,18 +111,9 @@ class GetPlayerStatisticsUseCase @Inject constructor(
             // Pode adicionar flow do user aqui se necessário
             statsFlow
         ) { statsResult, _ ->
-            if (statsResult.isFailure) {
-                return@combine statsResult.map { throw IllegalStateException() }
-            }
-
-            val statistics = statsResult.getOrNull()!!
+            val statistics = statsResult.getOrElse { return@combine Result.failure(it) }
             val userResult = firebaseDataSource.getUserById(userId)
-
-            if (userResult.isFailure) {
-                return@combine Result.failure(userResult.exceptionOrNull()!!)
-            }
-
-            val user = userResult.getOrNull()!!
+            val user = userResult.getOrElse { return@combine Result.failure(it) }
             val nextLevelXp = calculateNextLevelXp(user.level)
             val currentLevelXp = calculateCurrentLevelXp(user.level)
             val xpInCurrentLevel = user.experiencePoints - currentLevelXp
@@ -188,15 +172,8 @@ class GetPlayerStatisticsUseCase @Inject constructor(
         val stats1Result = getPlayerStats(userId1)
         val stats2Result = getPlayerStats(userId2)
 
-        if (stats1Result.isFailure) {
-            return Result.failure(stats1Result.exceptionOrNull()!!)
-        }
-        if (stats2Result.isFailure) {
-            return Result.failure(stats2Result.exceptionOrNull()!!)
-        }
-
-        val stats1 = stats1Result.getOrNull()!!
-        val stats2 = stats2Result.getOrNull()!!
+        val stats1 = stats1Result.getOrElse { return Result.failure(it) }
+        val stats2 = stats2Result.getOrElse { return Result.failure(it) }
 
         val comparison = StatsComparison(
             player1 = stats1,

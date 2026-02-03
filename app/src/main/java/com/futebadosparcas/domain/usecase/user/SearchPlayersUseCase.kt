@@ -75,12 +75,8 @@ class SearchPlayersUseCase @Inject constructor(
 
         return try {
             // 1. Buscar usuários com query
-            val usersResult = userRepository.searchUsers(filters.query)
-            if (usersResult.isFailure) {
-                return Result.failure(usersResult.exceptionOrNull()!!)
-            }
-
-            var players = usersResult.getOrNull()!!
+            var players = userRepository.searchUsers(filters.query)
+                .getOrElse { return Result.failure(it) }
 
             // 2. Aplicar filtros
             players = applyFilters(players, filters)
@@ -130,12 +126,8 @@ class SearchPlayersUseCase @Inject constructor(
         AppLogger.d(TAG) { "Buscando top jogadores por rating: $role" }
 
         return try {
-            val usersResult = userRepository.searchUsers("")
-            if (usersResult.isFailure) {
-                return Result.failure(usersResult.exceptionOrNull()!!)
-            }
-
-            val topPlayers = usersResult.getOrNull()!!
+            val topPlayers = userRepository.searchUsers("")
+                .getOrElse { return Result.failure(it) }
                 .filter { it.isProfilePublic }
                 .sortedByDescending { it.getEffectiveRating(role) }
                 .take(limit)
@@ -161,12 +153,8 @@ class SearchPlayersUseCase @Inject constructor(
         AppLogger.d(TAG) { "Buscando jogadores por tipo de campo: $fieldType" }
 
         return try {
-            val usersResult = userRepository.searchUsers("")
-            if (usersResult.isFailure) {
-                return Result.failure(usersResult.exceptionOrNull()!!)
-            }
-
-            val filteredPlayers = usersResult.getOrNull()!!
+            val filteredPlayers = userRepository.searchUsers("")
+                .getOrElse { return Result.failure(it) }
                 .filter { it.isProfilePublic }
                 .filter { it.preferredFieldTypes.contains(fieldType) }
                 .sortedBy { it.name }
