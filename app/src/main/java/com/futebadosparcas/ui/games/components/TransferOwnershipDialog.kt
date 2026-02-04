@@ -54,14 +54,14 @@ fun TransferOwnershipDialog(
             },
             title = {
                 Text(
-                    text = "Confirmar Transferencia",
+                    text = stringResource(R.string.transfer_confirm_title),
                     textAlign = TextAlign.Center
                 )
             },
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Voce esta prestes a transferir este jogo para:",
+                        text = stringResource(R.string.transfer_about_to),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -89,7 +89,7 @@ fun TransferOwnershipDialog(
                         )
                     ) {
                         Text(
-                            text = "Esta acao NAO pode ser desfeita. Voce perdera o controle do jogo.",
+                            text = stringResource(R.string.transfer_irreversible),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             textAlign = TextAlign.Center,
@@ -189,7 +189,7 @@ fun TransferOwnershipDialog(
                         }
                     } else {
                         Text(
-                            text = "Selecione o novo organizador:",
+                            text = stringResource(R.string.transfer_select_organizer),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold
                         )
