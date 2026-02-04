@@ -61,9 +61,9 @@ fun StatisticsScreen(
     viewModel: StatisticsViewModel = hiltViewModel(),
     onNavigateToRanking: () -> Unit,
     onNavigateToEvolution: () -> Unit,
+    modifier: Modifier = Modifier,
     onNavigateToLeague: () -> Unit = {},
-    onPlayerClick: (String) -> Unit = {},
-    modifier: Modifier = Modifier
+    onPlayerClick: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 

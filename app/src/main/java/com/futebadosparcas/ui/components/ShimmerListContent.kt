@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun ShimmerListContent(
-    count: Int = 5,
     modifier: Modifier = Modifier,
+    count: Int = 5,
     contentPadding: PaddingValues = PaddingValues(16.dp),
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(12.dp),
     shimmerContent: @Composable (Brush) -> Unit

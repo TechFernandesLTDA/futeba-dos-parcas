@@ -33,11 +33,11 @@ import com.futebadosparcas.util.LevelBadgeHelper
  */
 @Composable
 fun WelcomeEmptyState(
+    modifier: Modifier = Modifier,
     userName: String = "Jogador",
     userLevel: Int = 0,
     onCreateGame: (() -> Unit)? = null,
-    onJoinGroup: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    onJoinGroup: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier
