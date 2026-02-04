@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.cache
 
 import android.util.LruCache
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
@@ -178,6 +179,6 @@ data class MemoryCacheStats(
 
     override fun toString(): String {
         return "CacheStats(size=$size/$maxSize, hits=$hitCount, misses=$missCount, " +
-                "evictions=$evictionCount, hitRate=${String.format("%.2f%%", hitRate * 100)})"
+                "evictions=$evictionCount, hitRate=${String.format(Locale.getDefault(), "%.2f%%", hitRate * 100)})"
     }
 }

@@ -78,9 +78,9 @@ class FormattingHelper @Inject constructor() {
      */
     fun formatLargeNumber(value: Long): String {
         return when {
-            value >= 1_000_000_000 -> String.format("%.2fB", value / 1_000_000_000.0)
-            value >= 1_000_000 -> String.format("%.2fM", value / 1_000_000.0)
-            value >= 1_000 -> String.format("%.2fK", value / 1_000.0)
+            value >= 1_000_000_000 -> String.format(Locale.getDefault(), "%.2fB", value / 1_000_000_000.0)
+            value >= 1_000_000 -> String.format(Locale.getDefault(), "%.2fM", value / 1_000_000.0)
+            value >= 1_000 -> String.format(Locale.getDefault(), "%.2fK", value / 1_000.0)
             else -> value.toString()
         }
     }
@@ -146,8 +146,8 @@ class FormattingHelper @Inject constructor() {
         val hours = millis / (1000 * 60 * 60)
 
         return when {
-            hours > 0 -> String.format("%02d:%02d:%02d", hours, minutes, seconds)
-            else -> String.format("%02d:%02d", minutes, seconds)
+            hours > 0 -> String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds)
+            else -> String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
         }
     }
 
@@ -222,9 +222,9 @@ class FormattingHelper @Inject constructor() {
      */
     fun formatFileSize(bytes: Long): String {
         return when {
-            bytes >= 1024 * 1024 * 1024 -> String.format("%.2f GB", bytes / (1024.0 * 1024 * 1024))
-            bytes >= 1024 * 1024 -> String.format("%.2f MB", bytes / (1024.0 * 1024))
-            bytes >= 1024 -> String.format("%.2f KB", bytes / 1024.0)
+            bytes >= 1024 * 1024 * 1024 -> String.format(Locale.getDefault(), "%.2f GB", bytes / (1024.0 * 1024 * 1024))
+            bytes >= 1024 * 1024 -> String.format(Locale.getDefault(), "%.2f MB", bytes / (1024.0 * 1024))
+            bytes >= 1024 -> String.format(Locale.getDefault(), "%.2f KB", bytes / 1024.0)
             else -> "$bytes B"
         }
     }
@@ -234,7 +234,7 @@ class FormattingHelper @Inject constructor() {
      */
     fun formatDistance(meters: Int): String {
         return if (meters >= 1000) {
-            String.format("%.1f km", meters / 1000.0)
+            String.format(Locale.getDefault(), "%.1f km", meters / 1000.0)
         } else {
             "$meters m"
         }
