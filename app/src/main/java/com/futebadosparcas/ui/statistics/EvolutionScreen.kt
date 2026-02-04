@@ -52,8 +52,8 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EvolutionScreen(
-    viewModel: RankingViewModel = hiltViewModel(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: RankingViewModel = hiltViewModel()
 ) {
     val evolutionState by viewModel.evolutionState.collectAsStateWithLifecycle()
 

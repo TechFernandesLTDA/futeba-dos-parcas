@@ -689,9 +689,9 @@ fun NoResultsEmptyState(
  */
 @Composable
 fun ErrorEmptyState(
-    message: String = "Algo deu errado",
     onRetry: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    message: String = "Algo deu errado"
 ) {
     IllustratedEmptyState(
         config = EmptyStateConfig(

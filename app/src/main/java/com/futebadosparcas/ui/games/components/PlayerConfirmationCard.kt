@@ -58,14 +58,14 @@ fun PlayerConfirmationCard(
     canManage: Boolean,
     isCurrentUser: Boolean,
     gameDailyPrice: Double,
-    showOrder: Boolean = true,
-    showReliability: Boolean = true,
     onCardClick: () -> Unit,
     onRemovePlayer: () -> Unit,
     onTogglePayment: () -> Unit,
     onMarkPaid: () -> Unit,
     onUpdatePartialPayment: (Double) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showOrder: Boolean = true,
+    showReliability: Boolean = true
 ) {
     var showOptionsMenu by remember { mutableStateOf(false) }
     var showPartialPaymentDialog by remember { mutableStateOf(false) }

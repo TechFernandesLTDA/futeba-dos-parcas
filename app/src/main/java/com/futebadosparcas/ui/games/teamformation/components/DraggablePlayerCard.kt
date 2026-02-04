@@ -50,9 +50,9 @@ import com.futebadosparcas.ui.components.CachedProfileImage
 fun DraggablePlayerCard(
     player: DraftPlayer,
     teamColor: Color?,
+    modifier: Modifier = Modifier,
     isPaired: Boolean = false,
-    pairedPlayerName: String? = null,
-    modifier: Modifier = Modifier
+    pairedPlayerName: String? = null
 ) {
     val haptic = LocalHapticFeedback.current
     var isDragging by remember { mutableStateOf(false) }

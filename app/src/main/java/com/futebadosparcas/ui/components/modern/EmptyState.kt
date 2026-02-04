@@ -29,9 +29,9 @@ fun EmptyState(
     icon: ImageVector,
     title: String,
     message: String,
+    modifier: Modifier = Modifier,
     actionText: String? = null,
-    onAction: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    onAction: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier
@@ -93,8 +93,8 @@ fun EmptyState(
  */
 @Composable
 fun EmptyGamesState(
-    onCreateGame: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCreateGame: (() -> Unit)? = null
 ) {
     EmptyState(
         icon = Icons.Default.SportsFootball,
