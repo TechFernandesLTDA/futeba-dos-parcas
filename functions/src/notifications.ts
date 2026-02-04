@@ -4,9 +4,9 @@
  */
 
 import * as admin from "firebase-admin";
-import { onDocumentCreated, onDocumentUpdated, onDocumentDeleted } from "firebase-functions/v2/firestore";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { onSchedule } from "firebase-functions/v2/scheduler";
+import {onDocumentCreated, onDocumentUpdated, onDocumentDeleted} from "firebase-functions/v2/firestore";
+import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {onSchedule} from "firebase-functions/v2/scheduler";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -120,7 +120,7 @@ async function sendWithRetry(
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       await getFcm().send(message);
-      return { success: true };
+      return {success: true};
     } catch (e: any) {
       const errorCode = e?.code || e?.errorInfo?.code || "unknown";
 
@@ -141,10 +141,10 @@ async function sendWithRetry(
         );
       }
 
-      return { success: false, error: e };
+      return {success: false, error: e};
     }
   }
-  return { success: false };
+  return {success: false};
 }
 
 /**
@@ -205,7 +205,7 @@ async function getUserFcmTokensWithMapping(
         const data = doc.data();
         const token = data?.fcm_token || data?.fcmToken;
         if (token) {
-          mappings.push({ token, userId: doc.id });
+          mappings.push({token, userId: doc.id});
         }
       });
     } catch (e) {
@@ -350,13 +350,13 @@ export async function sendNotificationToUsers(
                 console.log(
                   `Token invalido detectado (${errorCode}) para usuario ${userId}`
                 );
-                invalidTokensToRemove.push({ token: failedToken, userId });
+                invalidTokensToRemove.push({token: failedToken, userId});
               } else if (isTransientError(sendResponse.error)) {
                 // Erro transiente - marcar para retry individual
                 console.log(
                   `Erro transiente (${errorCode}) para usuario ${userId}, agendando retry`
                 );
-                transientFailures.push({ token: failedToken, userId });
+                transientFailures.push({token: failedToken, userId});
               } else {
                 // Outro erro - apenas logar
                 console.error(
@@ -376,7 +376,7 @@ export async function sendNotificationToUsers(
   if (invalidTokensToRemove.length > 0) {
     console.log(`Removendo ${invalidTokensToRemove.length} tokens invalidos...`);
     await Promise.all(
-      invalidTokensToRemove.map(({ token, userId }) =>
+      invalidTokensToRemove.map(({token, userId}) =>
         removeInvalidToken(userId, token)
       )
     );
@@ -388,7 +388,7 @@ export async function sendNotificationToUsers(
       `Tentando retry para ${transientFailures.length} falhas transientes...`
     );
 
-    for (const { token, userId } of transientFailures) {
+    for (const {token, userId} of transientFailures) {
       const retryMessage: admin.messaging.Message = {
         token: token,
         notification: {
@@ -498,9 +498,9 @@ export const onGameCreated = onDocumentCreated("games/{gameId}", async (event) =
 
       if (memberIds.length > 0) {
         const ownerDoc = await getDb().collection("users").doc(ownerId).get();
-        const ownerName = ownerDoc.exists
-          ? (ownerDoc.data()?.name || ownerDoc.data()?.nickname || "Alguem")
-          : "Alguem";
+        const ownerName = ownerDoc.exists ?
+          (ownerDoc.data()?.name || ownerDoc.data()?.nickname || "Alguem") :
+          "Alguem";
 
         await sendNotificationToUsers(memberIds, {
           title: "Novo jogo criado!",
@@ -592,9 +592,9 @@ export const onGameConfirmed = onDocumentCreated(
 
       if (game.owner_id !== userId) {
         const userDoc = await getDb().collection("users").doc(userId).get();
-        const userName = userDoc.exists
-          ? (userDoc.data()?.name || userDoc.data()?.nickname || "Um jogador")
-          : "Um jogador";
+        const userName = userDoc.exists ?
+          (userDoc.data()?.name || userDoc.data()?.nickname || "Um jogador") :
+          "Um jogador";
 
         await sendNotificationToUser(game.owner_id, {
           title: "Nova confirmacao!",
@@ -624,7 +624,7 @@ export const onLevelUp = onDocumentUpdated("users/{userId}", async (event) => {
   if (afterLevel > beforeLevel) {
     const levelNames = [
       "Novato", "Iniciante", "Amador", "Regular", "Experiente",
-      "Habilidoso", "Profissional", "Expert", "Mestre", "Lenda", "Imortal"
+      "Habilidoso", "Profissional", "Expert", "Mestre", "Lenda", "Imortal",
     ];
     const levelName = levelNames[afterLevel] || "Nivel " + afterLevel;
 
@@ -643,7 +643,7 @@ export const sendTestNotification = onCall(async (data: any, context: any) => {
   }
 
   const userId = context.auth.uid;
-  const { title, body, type } = data;
+  const {title, body, type} = data;
 
   if (!title || !body) {
     throw new HttpsError("invalid-argument", "Titulo e corpo sao obrigatorios");
@@ -655,7 +655,7 @@ export const sendTestNotification = onCall(async (data: any, context: any) => {
     type: type || NotificationType.GAME_INVITE,
   });
 
-  return { success, message: success ? "Notificacao enviada!" : "Falha ao enviar" };
+  return {success, message: success ? "Notificacao enviada!" : "Falha ao enviar"};
 });
 
 export const createFakeGameNotifications = onCall(async (data: any, context: any) => {
@@ -664,12 +664,12 @@ export const createFakeGameNotifications = onCall(async (data: any, context: any
   }
 
   const userId = context.auth.uid;
-  const { count = 3 } = data;
+  const {count = 3} = data;
 
   const userDoc = await getDb().collection("users").doc(userId).get();
-  const userName = userDoc.exists
-    ? (userDoc.data()?.name || userDoc.data()?.nickname || "Jogador")
-    : "Jogador";
+  const userName = userDoc.exists ?
+    (userDoc.data()?.name || userDoc.data()?.nickname || "Jogador") :
+    "Jogador";
 
   const fakeGames = [
     {
@@ -801,7 +801,7 @@ export const onBadgeAwarded = onDocumentCreated(
 
       console.log(`[onBadgeAwarded] Notification saved to Firestore for user ${userId}`);
     } catch (error) {
-      console.error(`[onBadgeAwarded] Error processing badge notification:`, error);
+      console.error("[onBadgeAwarded] Error processing badge notification:", error);
     }
   }
 );
@@ -815,24 +815,24 @@ export const onBadgeAwarded = onDocumentCreated(
  * Usado pelo processamento de XP em index.ts.
  */
 export const STREAK_MILESTONES = [
-  { streak: 30, title: "Sequencia Epica!", body: "30 jogos consecutivos! Voce e uma lenda!" },
-  { streak: 10, title: "Sequencia Incrivel!", body: "10 jogos consecutivos! Expert!" },
-  { streak: 7, title: "Sequencia Forte!", body: "7 jogos consecutivos! Profissional!" },
-  { streak: 3, title: "Sequencia Iniciada!", body: "3 jogos consecutivos! Continue assim!" },
+  {streak: 30, title: "Sequencia Epica!", body: "30 jogos consecutivos! Voce e uma lenda!"},
+  {streak: 10, title: "Sequencia Incrivel!", body: "10 jogos consecutivos! Expert!"},
+  {streak: 7, title: "Sequencia Forte!", body: "7 jogos consecutivos! Profissional!"},
+  {streak: 3, title: "Sequencia Iniciada!", body: "3 jogos consecutivos! Continue assim!"},
 ];
 
 /**
  * Envia notificação de streak milestone se o jogador atingiu um marco.
  * @param userId ID do usuário
  * @param currentStreak Streak atual do jogador
- * @returns true se uma notificação foi enviada
+ * @return true se uma notificação foi enviada
  */
 export async function sendStreakNotificationIfMilestone(
   userId: string,
   currentStreak: number
 ): Promise<boolean> {
   // Verificar se atingiu algum milestone exatamente
-  const milestone = STREAK_MILESTONES.find(m => currentStreak === m.streak);
+  const milestone = STREAK_MILESTONES.find((m) => currentStreak === m.streak);
 
   if (!milestone) {
     return false;
@@ -1065,9 +1065,9 @@ export const onDivisionChanged = onDocumentUpdated(
     const divisionName = divisionNames[afterDivision] || afterDivision;
     const emoji = isPromotion ? "🎉" : "📉";
     const title = isPromotion ? "Promoção de Liga!" : "Mudança de Liga";
-    const body = isPromotion
-      ? `${emoji} Parabéns! Você subiu para a divisão ${divisionName}!`
-      : `${emoji} Você desceu para a divisão ${divisionName}. Continue jogando!`;
+    const body = isPromotion ?
+      `${emoji} Parabéns! Você subiu para a divisão ${divisionName}!` :
+      `${emoji} Você desceu para a divisão ${divisionName}. Continue jogando!`;
 
     try {
       await sendAndSaveNotification(userId, {
@@ -1210,7 +1210,7 @@ export const onMemberJoined = onDocumentCreated(
         console.log(`[MEMBER_JOINED] Notificação enviada para ${adminIds.length} admins`);
       }
     } catch (e) {
-      console.error(`[MEMBER_JOINED] Erro ao processar:`, e);
+      console.error("[MEMBER_JOINED] Erro ao processar:", e);
     }
   }
 );
@@ -1266,7 +1266,7 @@ export const onMemberLeft = onDocumentDeleted(
         console.log(`[MEMBER_LEFT] Notificação enviada para ${adminIds.length} admins`);
       }
     } catch (e) {
-      console.error(`[MEMBER_LEFT] Erro ao processar:`, e);
+      console.error("[MEMBER_LEFT] Erro ao processar:", e);
     }
   }
 );
@@ -1316,9 +1316,9 @@ export const onCashboxTransaction = onDocumentCreated(
 
       const isEntry = type === "ENTRY" || type === "INCOME" || type === "RECEITA";
       const emoji = isEntry ? "💰" : "💸";
-      const notificationType = isEntry
-        ? NotificationType.CASHBOX_ENTRY
-        : NotificationType.CASHBOX_EXIT;
+      const notificationType = isEntry ?
+        NotificationType.CASHBOX_ENTRY :
+        NotificationType.CASHBOX_EXIT;
 
       const title = isEntry ? "Entrada no caixa" : "Saída do caixa";
       const body = `${emoji} R$${amount.toFixed(2)} ${isEntry ? "adicionado" : "retirado"} ${
@@ -1338,7 +1338,7 @@ export const onCashboxTransaction = onDocumentCreated(
 
       console.log(`[CASHBOX] Notificação enviada para ${adminIds.length} admins`);
     } catch (e) {
-      console.error(`[CASHBOX] Erro ao processar transação:`, e);
+      console.error("[CASHBOX] Erro ao processar transação:", e);
     }
   }
 );
@@ -1466,7 +1466,7 @@ export const onGameVacancy = onDocumentUpdated(
         }
       }
     } catch (e) {
-      console.error(`[GAME_VACANCY] Erro ao processar vaga:`, e);
+      console.error("[GAME_VACANCY] Erro ao processar vaga:", e);
     }
   }
 );
