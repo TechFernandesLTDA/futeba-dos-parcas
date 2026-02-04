@@ -105,7 +105,7 @@ private fun DayColumn(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val ptBr = Locale("pt", "BR")
+    val ptBr = Locale.forLanguageTag("pt-BR")
     val dayName = dayAvailability.date.dayOfWeek.getDisplayName(TextStyle.SHORT, ptBr)
     val dayNumber = dayAvailability.date.dayOfMonth.toString()
 
@@ -223,7 +223,7 @@ fun DayAvailabilityDetail(
     onTimeSlotSelected: (TimeSlot) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val ptBr = Locale("pt", "BR")
+    val ptBr = Locale.forLanguageTag("pt-BR")
     val formatter = DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM", ptBr)
 
     Card(

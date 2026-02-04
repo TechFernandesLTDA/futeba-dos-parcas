@@ -88,7 +88,7 @@ private fun PaymentBottomSheetContent(
     onError: (String) -> Unit
 ) {
     val currencyFormat = remember {
-        NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
+        NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
     }
 
     Column(

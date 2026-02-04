@@ -82,7 +82,7 @@ fun AutoSaveIndicator(
 ) {
     if (lastSavedAt == null && !isSaving) return
 
-    val dateFormat = SimpleDateFormat("HH:mm", Locale("pt", "BR"))
+    val dateFormat = SimpleDateFormat("HH:mm", Locale.forLanguageTag("pt-BR"))
 
     Row(
         modifier = modifier.padding(horizontal = 16.dp, vertical = 4.dp),

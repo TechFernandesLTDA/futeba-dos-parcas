@@ -50,7 +50,7 @@ fun OwnerStatsScreen(
     onNavigateBack: () -> Unit,
     onGameClick: (String) -> Unit
 ) {
-    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale("pt", "BR")) }
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
 
     Scaffold(
         topBar = {

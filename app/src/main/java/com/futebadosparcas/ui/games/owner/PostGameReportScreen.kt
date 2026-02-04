@@ -66,8 +66,8 @@ fun PostGameReportScreen(
     onShareWhatsApp: () -> Unit
 ) {
     val context = LocalContext.current
-    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale("pt", "BR")) }
-    val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
+    val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.forLanguageTag("pt-BR")) }
 
     val presentPlayers = report.confirmations.filter {
         it.status == ConfirmationStatus.CONFIRMED.name && it.wasPresent
@@ -670,7 +670,7 @@ fun generateAndShareReport(
     asWhatsApp: Boolean = false
 ) {
     // Gerar texto do relatorio
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
+    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
 
     val presentPlayers = report.confirmations.filter {
         it.status == ConfirmationStatus.CONFIRMED.name && it.wasPresent

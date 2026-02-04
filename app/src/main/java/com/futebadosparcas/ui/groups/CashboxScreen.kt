@@ -468,7 +468,7 @@ private fun SummaryCard(summary: CashboxSummary) {
                         )
                     }
                     Text(
-                        text = "+ ${NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(summary.totalIncome)}",
+                        text = "+ ${NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")).format(summary.totalIncome)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
@@ -494,7 +494,7 @@ private fun SummaryCard(summary: CashboxSummary) {
                         )
                     }
                     Text(
-                        text = "- ${NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(summary.totalExpense)}",
+                        text = "- ${NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")).format(summary.totalExpense)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.error
@@ -604,7 +604,7 @@ private fun EntryCard(
     onLongClick: (() -> Unit)?
 ) {
     val isIncome = entry.getTypeEnum() == CashboxEntryType.INCOME
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
+    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
 
     Card(
         modifier = Modifier
@@ -743,7 +743,7 @@ private fun EntryDetailsDialog(
     entry: CashboxEntry,
     onDismiss: () -> Unit
 ) {
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
+    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -818,7 +818,7 @@ private fun TotalsDialog(
     totals: Map<String, Double>,
     onDismiss: () -> Unit
 ) {
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
+    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
 
     AlertDialog(
         onDismissRequest = onDismiss,

@@ -48,7 +48,7 @@ fun GameFinancialDashboardScreen(
     onMarkPartialPayment: (String, Double) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale("pt", "BR")) }
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
 
     // Calculos financeiros
     val confirmedPlayers = confirmations.filter { it.status == ConfirmationStatus.CONFIRMED.name }
