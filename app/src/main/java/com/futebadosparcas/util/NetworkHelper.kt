@@ -5,7 +5,6 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.os.Build
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -56,61 +55,37 @@ class NetworkHelper @Inject constructor(
      * Check if network is available
      */
     fun isNetworkAvailable(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network = connectivityManager.activeNetwork ?: return false
-            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-                    capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-        } else {
-            @Suppress("DEPRECATION")
-            val networkInfo = connectivityManager.activeNetworkInfo
-            networkInfo?.isConnected == true
-        }
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 
     /**
      * Check if connected to WiFi
      */
     fun isWifiConnected(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network = connectivityManager.activeNetwork ?: return false
-            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-        } else {
-            @Suppress("DEPRECATION")
-            val networkInfo = connectivityManager.activeNetworkInfo
-            networkInfo?.type == ConnectivityManager.TYPE_WIFI && networkInfo.isConnected
-        }
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
     }
 
     /**
      * Check if connected to cellular network
      */
     fun isCellularConnected(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network = connectivityManager.activeNetwork ?: return false
-            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-        } else {
-            @Suppress("DEPRECATION")
-            val networkInfo = connectivityManager.activeNetworkInfo
-            networkInfo?.type == ConnectivityManager.TYPE_MOBILE && networkInfo.isConnected
-        }
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
     }
 
     /**
      * Check if connected to ethernet
      */
     fun isEthernetConnected(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network = connectivityManager.activeNetwork ?: return false
-            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-        } else {
-            @Suppress("DEPRECATION")
-            val networkInfo = connectivityManager.activeNetworkInfo
-            networkInfo?.type == ConnectivityManager.TYPE_ETHERNET && networkInfo.isConnected
-        }
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
     }
 
     /**
@@ -205,26 +180,22 @@ class NetworkHelper @Inject constructor(
      * Get network speed (download/upload capabilities)
      */
     fun getNetworkSpeed(): NetworkSpeed {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network = connectivityManager.activeNetwork ?: return NetworkSpeed.UNKNOWN
-            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return NetworkSpeed.UNKNOWN
+        val network = connectivityManager.activeNetwork ?: return NetworkSpeed.UNKNOWN
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return NetworkSpeed.UNKNOWN
 
-            val downKbps = capabilities.linkDownstreamBandwidthKbps
-            val upKbps = capabilities.linkUpstreamBandwidthKbps
+        val downKbps = capabilities.linkDownstreamBandwidthKbps
+        val upKbps = capabilities.linkUpstreamBandwidthKbps
 
-            return NetworkSpeed(
-                downloadKbps = downKbps,
-                uploadKbps = upKbps,
-                quality = when {
-                    downKbps >= 10000 -> NetworkQuality.EXCELLENT // 10+ Mbps
-                    downKbps >= 5000 -> NetworkQuality.GOOD       // 5-10 Mbps
-                    downKbps >= 1000 -> NetworkQuality.FAIR       // 1-5 Mbps
-                    else -> NetworkQuality.POOR                   // < 1 Mbps
-                }
-            )
-        }
-
-        return NetworkSpeed.UNKNOWN
+        return NetworkSpeed(
+            downloadKbps = downKbps,
+            uploadKbps = upKbps,
+            quality = when {
+                downKbps >= 10000 -> NetworkQuality.EXCELLENT // 10+ Mbps
+                downKbps >= 5000 -> NetworkQuality.GOOD       // 5-10 Mbps
+                downKbps >= 1000 -> NetworkQuality.FAIR       // 1-5 Mbps
+                else -> NetworkQuality.POOR                   // < 1 Mbps
+            }
+        )
     }
 
     /**

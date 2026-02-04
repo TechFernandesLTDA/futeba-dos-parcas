@@ -138,7 +138,7 @@ private fun TacticalBoardControls(
 ) {
     // Cor padrão adaptada ao tema (usar onSurface para dark/light mode)
     val defaultColor = MaterialTheme.colorScheme.onSurface.toArgb()
-    var selectedColor by remember { mutableStateOf(defaultColor) }
+    var selectedColor by remember { mutableIntStateOf(defaultColor) }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),

@@ -721,7 +721,7 @@ fun GenerateTeamsDialog(
     onGenerate: (Int, Boolean) -> Unit,
     onClear: () -> Unit
 ) {
-    var selectedTeams by remember { mutableStateOf(2) }
+    var selectedTeams by remember { mutableIntStateOf(2) }
     var balanced by remember { mutableStateOf(true) }
 
     AlertDialog(
