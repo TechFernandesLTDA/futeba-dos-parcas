@@ -42,7 +42,7 @@ fun CreateScheduleDialog(
 ) {
     var name by remember { mutableStateOf("") }
     var time by remember { mutableStateOf("19:00") }
-    var selectedDayOfWeek by remember { mutableStateOf(0) }
+    var selectedDayOfWeek by remember { mutableIntStateOf(0) }
     var selectedRecurrenceType by remember { mutableStateOf(RecurrenceType.weekly) }
     var showTimeError by remember { mutableStateOf(false) }
     var showNameError by remember { mutableStateOf(false) }
@@ -286,7 +286,7 @@ fun EditScheduleDialog(
 ) {
     var name by remember { mutableStateOf(schedule.name) }
     var time by remember { mutableStateOf(schedule.time) }
-    var selectedDayOfWeek by remember { mutableStateOf(schedule.dayOfWeek) }
+    var selectedDayOfWeek by remember { mutableIntStateOf(schedule.dayOfWeek) }
     var selectedRecurrenceType by remember { mutableStateOf(schedule.recurrenceType) }
     var showTimeError by remember { mutableStateOf(false) }
     var showNameError by remember { mutableStateOf(false) }

@@ -74,7 +74,7 @@ object PipHelper {
      * Verifica se a atividade está atualmente em modo PiP
      */
     fun isInPipMode(activity: Activity): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && activity.isInPictureInPictureMode
+        return activity.isInPictureInPictureMode
     }
 
     /**

@@ -91,8 +91,8 @@ fun ProfileScreen(
     }
 
     // Estado para controle de cliques secretos no avatar
-    var avatarClickCount by remember { mutableStateOf(0) }
-    var lastAvatarClickTime by remember { mutableStateOf(0L) }
+    var avatarClickCount by remember { mutableIntStateOf(0) }
+    var lastAvatarClickTime by remember { mutableLongStateOf(0L) }
 
     // Scaffold removido - o padding já é gerenciado pelo MainActivityCompose
     when (val state = uiState) {

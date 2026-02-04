@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
-import android.os.Build
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -39,11 +38,7 @@ class BatteryHelper @Inject constructor(
 ) {
 
     private val batteryManager: BatteryManager? by lazy {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
-        } else {
-            null
-        }
+        context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
     }
 
     /**
@@ -104,11 +99,7 @@ class BatteryHelper @Inject constructor(
 
         val plugged = batteryIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: -1
 
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            plugged == BatteryManager.BATTERY_PLUGGED_WIRELESS
-        } else {
-            false
-        }
+        return plugged == BatteryManager.BATTERY_PLUGGED_WIRELESS
     }
 
     /**
@@ -204,22 +195,14 @@ class BatteryHelper @Inject constructor(
      * Get remaining battery capacity (Android 5.0+)
      */
     fun getRemainingCapacity(): Long {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            batteryManager?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER) ?: -1L
-        } else {
-            -1L
-        }
+        return batteryManager?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER) ?: -1L
     }
 
     /**
      * Get average battery current (Android 5.0+)
      */
     fun getAverageCurrent(): Int {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE) ?: -1
-        } else {
-            -1
-        }
+        return batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE) ?: -1
     }
 }
 
