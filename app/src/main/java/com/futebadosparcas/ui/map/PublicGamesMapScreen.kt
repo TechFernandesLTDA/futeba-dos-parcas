@@ -167,7 +167,7 @@ private fun MapPlaceholder(games: List<MapGameMarker>, selectedGame: MapGameMark
             Text(stringResource(R.string.map_placeholder), style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
-            Text("${games.size} jogos encontrados", style = MaterialTheme.typography.bodyMedium,
+            Text(stringResource(R.string.map_games_found, games.size), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary)
         }
     }
