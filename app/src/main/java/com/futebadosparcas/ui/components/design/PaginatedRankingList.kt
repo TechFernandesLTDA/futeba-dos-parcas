@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.ui.theme.AppDimensions
@@ -50,7 +51,7 @@ fun <T : Any> PaginatedRankingList(
     listState: LazyListState = rememberLazyListState(),
     itemContent: @Composable (item: T, index: Int, isCurrentUser: Boolean) -> Unit
 ) {
-    val currentState by state.collectAsState()
+    val currentState by state.collectAsStateWithLifecycle()
     val isLoadingMore by remember { derivedStateOf { currentState.isLoading } }
     val hasMore by remember { derivedStateOf { currentState.hasMore } }
 

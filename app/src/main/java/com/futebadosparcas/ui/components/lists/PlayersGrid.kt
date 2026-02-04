@@ -363,7 +363,7 @@ fun PlayersGridShimmer(
         columns = GridCells.Fixed(columns),
         contentPadding = PaddingValues(8.dp)
     ) {
-        items(itemCount) {
+        items(itemCount, key = { "shimmer_$it" }) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
