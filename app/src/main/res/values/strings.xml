@@ -3240,6 +3240,19 @@ subir no ranking!</string>
     <string name="status_display_finished">Finalizado</string>
     <string name="status_display_cancelled">Cancelado</string>
 
+    <!-- Map Screen -->
+    <string name="map_games_found">%d jogos encontrados</string>
+
+    <!-- Mass Message Dialog -->
+    <string name="whatsapp">WhatsApp</string>
+    <string name="player_selected_one">1 jogador selecionado</string>
+    <string name="players_selected_many">%d jogadores selecionados</string>
+    <string name="share_message">Compartilhar mensagem</string>
+
+    <!-- Debug Screen -->
+    <string name="debug_location_metrics_title">Location Query Metrics</string>
+    <string name="debug_only_available">Disponível apenas em builds de debug</string>
+
     <!-- Owner Tools Section -->
     <string name="owner_tools_title">Ferramentas do Organizador</string>
 
