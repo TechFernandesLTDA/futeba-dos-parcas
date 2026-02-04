@@ -270,7 +270,7 @@ fun LeagueHeader(
                             unfocusedContainerColor = MaterialTheme.colorScheme.surface
                         ),
                         modifier = Modifier
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                             .fillMaxWidth(),
                         textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
