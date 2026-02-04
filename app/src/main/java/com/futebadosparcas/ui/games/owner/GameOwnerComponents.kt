@@ -395,7 +395,7 @@ fun MassMessageDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    var selectedTemplate by remember { mutableStateOf(0) }
+    var selectedTemplate by remember { mutableIntStateOf(0) }
     var onlyUnpaid by remember { mutableStateOf(false) }
     var customMessage by remember { mutableStateOf("") }
 

@@ -1608,7 +1608,7 @@ private fun DraftSettingsDialog(
     onSave: (DraftSettings) -> Unit
 ) {
     var considerPositions by remember { mutableStateOf(settings.considerPositions) }
-    var goalkeepersPerTeam by remember { mutableStateOf(settings.goalkeepersPerTeam) }
+    var goalkeepersPerTeam by remember { mutableIntStateOf(settings.goalkeepersPerTeam) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
