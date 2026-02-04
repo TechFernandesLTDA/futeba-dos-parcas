@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.CachedAsyncImage
+import java.util.Locale
 
 /**
  * Componentes para comparação social de estatísticas entre jogadores.
@@ -124,7 +125,7 @@ enum class ComparisonCategory(
         "G/J",
         R.drawable.ic_football,
         { it.goalsPerGame },
-        { String.format("%.1f", it.toFloat()) }
+        { String.format(Locale.getDefault(), "%.1f", it.toFloat()) }
     ),
     ASSISTS(
         "Assistências",
@@ -137,7 +138,7 @@ enum class ComparisonCategory(
         "A/J",
         R.drawable.ic_assist,
         { it.assistsPerGame },
-        { String.format("%.1f", it.toFloat()) }
+        { String.format(Locale.getDefault(), "%.1f", it.toFloat()) }
     ),
     SAVES(
         "Defesas",
