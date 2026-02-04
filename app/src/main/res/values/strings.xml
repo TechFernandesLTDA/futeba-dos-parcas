@@ -3226,6 +3226,11 @@ subir no ranking!</string>
     <string name="owner_transfer_warning">Atenção: Você perderá o controle deste jogo. Esta ação não pode ser desfeita.</string>
     <string name="owner_no_players_to_transfer">Nenhum jogador confirmado para transferir</string>
     <string name="owner_confirm_transfer">Transferir</string>
+    <string name="transfer_confirm_title">Confirmar Transferência</string>
+    <string name="transfer_about_to">Você está prestes a transferir este jogo para:</string>
+    <string name="transfer_irreversible">Esta ação NÃO pode ser desfeita. Você perderá o controle do jogo.</string>
+    <string name="transfer_select_organizer">Selecione o novo organizador:</string>
+    <string name="message_preview">Preview:</string>
 
     <!-- Owner Tools Section -->
     <string name="owner_tools_title">Ferramentas do Organizador</string>
