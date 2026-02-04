@@ -150,8 +150,8 @@ fun ShimmerGameCard(
  */
 @Composable
 fun ShimmerGameCardList(
-    count: Int = 3,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    count: Int = 3
 ) {
     Column(
         modifier = modifier
