@@ -1,4 +1,4 @@
-import { auth } from "firebase-functions/v1";
+import {auth} from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 
 const db = admin.firestore();
@@ -17,7 +17,7 @@ export const onUserCreate = auth.user().onCreate(async (user: admin.auth.UserRec
 
   try {
     // Check if user document already exists
-    const existingDoc = await db.collection('users').doc(userId).get();
+    const existingDoc = await db.collection("users").doc(userId).get();
 
     if (existingDoc.exists) {
       console.log(`User ${userId} already exists, skipping creation.`);
@@ -28,8 +28,8 @@ export const onUserCreate = auth.user().onCreate(async (user: admin.auth.UserRec
     const newUserDoc = {
       // Basic fields (from Firebase Auth)
       id: userId,
-      email: user.email || '',
-      name: user.displayName || '',
+      email: user.email || "",
+      name: user.displayName || "",
       photo_url: user.photoURL || null,
 
       // Profile fields (initialize with defaults)
@@ -39,7 +39,7 @@ export const onUserCreate = auth.user().onCreate(async (user: admin.auth.UserRec
       is_profile_public: true,
 
       // Role and gamification (defaults)
-      role: 'PLAYER',
+      role: "PLAYER",
       level: 1,
       experience_points: 0,
       milestones_achieved: [],
@@ -59,7 +59,7 @@ export const onUserCreate = auth.user().onCreate(async (user: admin.auth.UserRec
       auto_rating_updated_at: null,
 
       // Preferences (defaults)
-      preferred_field_types: ['SOCIETY'], // Default to Society
+      preferred_field_types: ["SOCIETY"], // Default to Society
       preferred_position: null,
 
       // Personal information (initialize as null - user will fill)
@@ -79,10 +79,9 @@ export const onUserCreate = auth.user().onCreate(async (user: admin.auth.UserRec
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    await db.collection('users').doc(userId).set(newUserDoc);
+    await db.collection("users").doc(userId).set(newUserDoc);
 
     console.log(`User ${userId} created successfully with all fields initialized.`);
-
   } catch (error) {
     console.error(`Error creating user document for ${userId}:`, error);
     throw error;

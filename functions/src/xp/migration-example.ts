@@ -96,11 +96,11 @@ export function buildXpTransactionData(params: {
     assists: conf.assists * (settings.xp_per_assist || 7),
     saves: conf.saves * (settings.xp_per_save || 8),
     result:
-      result === "WIN"
-        ? settings.xp_win || 20
-        : result === "DRAW"
-        ? settings.xp_draw || 10
-        : 0,
+      result === "WIN" ?
+        settings.xp_win || 20 :
+        result === "DRAW" ?
+          settings.xp_draw || 10 :
+          0,
     mvp: isMvp ? settings.xp_mvp || 30 : 0,
     cleanSheet: cleanSheetXp,
     milestones: milesXp,
@@ -244,11 +244,11 @@ export async function processXpHybrid(
       xp_assists: params.conf.assists * (params.settings.xp_per_assist || 7),
       xp_saves: params.conf.saves * (params.settings.xp_per_save || 8),
       xp_result:
-        params.result === "WIN"
-          ? params.settings.xp_win || 20
-          : params.result === "DRAW"
-          ? params.settings.xp_draw || 10
-          : 0,
+        params.result === "WIN" ?
+          params.settings.xp_win || 20 :
+          params.result === "DRAW" ?
+            params.settings.xp_draw || 10 :
+            0,
       xp_mvp: params.isMvp ? params.settings.xp_mvp || 30 : 0,
       xp_clean_sheet: params.cleanSheetXp,
       xp_milestones: params.milesXp,
@@ -329,7 +329,7 @@ export async function processGameXpBatch(
     }
 
     await batch.commit();
-    console.log(`[XP_BATCH] Batch legado commitado com sucesso`);
+    console.log("[XP_BATCH] Batch legado commitado com sucesso");
   }
 }
 
@@ -352,7 +352,7 @@ export async function backfillTransactionIds(options: {
   dryRun?: boolean;
   batchSize?: number;
 }): Promise<{ updated: number; errors: number }> {
-  const { dryRun = true, batchSize = 500 } = options;
+  const {dryRun = true, batchSize = 500} = options;
 
   console.log(
     `[BACKFILL] Iniciando backfill de transaction_ids (dryRun: ${dryRun})...`
@@ -371,7 +371,7 @@ export async function backfillTransactionIds(options: {
 
     if (logsSnap.empty) {
       console.log("[BACKFILL] Nenhum log sem transaction_id encontrado");
-      return { updated: 0, errors: 0 };
+      return {updated: 0, errors: 0};
     }
 
     console.log(`[BACKFILL] Encontrados ${logsSnap.size} logs para atualizar`);
@@ -386,7 +386,7 @@ export async function backfillTransactionIds(options: {
 
         if (gameId && userId) {
           const transactionId = `game_${gameId}_user_${userId}`;
-          batch.update(doc.ref, { transaction_id: transactionId });
+          batch.update(doc.ref, {transaction_id: transactionId});
           updated++;
         } else {
           console.warn(`[BACKFILL] Log ${doc.id} sem game_id ou user_id`);
@@ -401,7 +401,7 @@ export async function backfillTransactionIds(options: {
       updated = logsSnap.size;
     }
 
-    return { updated, errors };
+    return {updated, errors};
   } catch (error) {
     console.error("[BACKFILL] Erro ao executar backfill:", error);
     throw error;

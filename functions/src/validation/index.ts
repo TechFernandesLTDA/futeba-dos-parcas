@@ -114,7 +114,7 @@ export function validateStringLength(
  */
 export function validateEmail(
   email: string | undefined | null,
-  field: string = "email"
+  field = "email"
 ): ValidationResult {
   if (!email) return null; // Email opcional
 
@@ -169,7 +169,7 @@ export function validateRange(
  */
 export function validateRating(
   rating: number | undefined | null,
-  field: string = "rating"
+  field = "rating"
 ): ValidationResult {
   return validateRange(
     rating,
@@ -184,7 +184,7 @@ export function validateRating(
  */
 export function validateLeagueRating(
   rating: number | undefined | null,
-  field: string = "league_rating"
+  field = "league_rating"
 ): ValidationResult {
   return validateRange(
     rating,
@@ -209,7 +209,7 @@ export function normalizeLeagueRating(rating: number): number {
  */
 export function validateLevel(
   level: number | undefined | null,
-  field: string = "level"
+  field = "level"
 ): ValidationResult {
   return validateRange(
     level,
@@ -492,7 +492,7 @@ export async function updateWithOptimisticLock<T extends { version?: number }>(
       return true;
     });
 
-    return { success: result };
+    return {success: result};
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
