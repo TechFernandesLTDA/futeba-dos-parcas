@@ -26,8 +26,8 @@ fun ConfirmationDialog(
     message: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    confirmText: String = "Confirmar",
-    dismissText: String = "Cancelar",
+    confirmText: String = stringResource(R.string.confirm),
+    dismissText: String = stringResource(R.string.cancel),
     icon: ImageVector? = Icons.Default.Warning
 ) {
     AlertDialog(
@@ -58,12 +58,12 @@ fun DeleteConfirmationDialog(
     onDismiss: () -> Unit
 ) {
     ConfirmationDialog(
-        title = "Excluir $itemName?",
-        message = "Esta ação não pode ser desfeita.",
+        title = stringResource(R.string.delete_item_title, itemName),
+        message = stringResource(R.string.delete_cannot_undo),
         onConfirm = onConfirm,
         onDismiss = onDismiss,
-        confirmText = "Excluir",
-        dismissText = "Cancelar",
+        confirmText = stringResource(R.string.delete),
+        dismissText = stringResource(R.string.cancel),
         icon = Icons.Default.Delete
     )
 }
@@ -76,7 +76,7 @@ fun InfoDialog(
     title: String,
     message: String,
     onDismiss: () -> Unit,
-    buttonText: String = "OK"
+    buttonText: String = stringResource(R.string.ok)
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -99,7 +99,7 @@ fun SuccessDialog(
     title: String,
     message: String,
     onDismiss: () -> Unit,
-    buttonText: String = "OK"
+    buttonText: String = stringResource(R.string.ok)
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -119,7 +119,7 @@ fun SuccessDialog(
  */
 @Composable
 fun ErrorDialog(
-    title: String = "Erro",
+    title: String = stringResource(R.string.error_title),
     message: String,
     onDismiss: () -> Unit,
     onRetry: (() -> Unit)? = null
@@ -155,7 +155,7 @@ fun ErrorDialog(
  */
 @Composable
 fun LoadingDialog(
-    message: String = "Carregando..."
+    message: String = stringResource(R.string.loading)
 ) {
     AlertDialog(
         onDismissRequest = { /* Cannot dismiss */ },
@@ -213,8 +213,8 @@ fun InputDialog(
     initialValue: String = "",
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
-    confirmText: String = "Confirmar",
-    dismissText: String = "Cancelar"
+    confirmText: String = stringResource(R.string.confirm),
+    dismissText: String = stringResource(R.string.cancel)
 ) {
     var text = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(initialValue) }
 
