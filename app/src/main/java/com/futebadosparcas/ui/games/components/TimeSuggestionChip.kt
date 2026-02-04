@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Icon
@@ -69,7 +69,7 @@ fun TimeSuggestionChip(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.TrendingUp,
+                            imageVector = Icons.AutoMirrored.Filled.TrendingUp,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
@@ -130,7 +130,7 @@ fun TimeSuggestionBadge(
         },
         leadingIcon = {
             Icon(
-                imageVector = Icons.Default.TrendingUp,
+                imageVector = Icons.AutoMirrored.Filled.TrendingUp,
                 contentDescription = null,
                 modifier = Modifier.size(16.dp)
             )

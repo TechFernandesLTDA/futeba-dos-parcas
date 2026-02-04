@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -971,7 +972,7 @@ private fun NotificationIcon(
         NotificationType.CASHBOX_EXIT -> Icons.Default.MoneyOff to MaterialTheme.colorScheme.error
         // Gamificacao
         NotificationType.ACHIEVEMENT -> Icons.Default.Star to GamificationColors.Gold
-        NotificationType.LEVEL_UP -> Icons.Default.TrendingUp to GamificationColors.XpGreen
+        NotificationType.LEVEL_UP -> Icons.AutoMirrored.Filled.TrendingUp to GamificationColors.XpGreen
         NotificationType.MVP_RECEIVED -> Icons.Default.EmojiEvents to GamificationColors.Gold
         NotificationType.RANKING_CHANGED -> Icons.Default.Leaderboard to MaterialTheme.colorScheme.tertiary
         // Sistema

@@ -56,7 +56,7 @@ fun LoadingButton(
         }
 
         Text(
-            text = if (isLoading) "Carregando..." else text,
+            text = if (isLoading) stringResource(R.string.loading) else text,
             style = MaterialTheme.typography.labelLarge
         )
     }
@@ -93,7 +93,7 @@ fun LoadingTextButton(
         }
 
         Text(
-            text = if (isLoading) "Carregando..." else text,
+            text = if (isLoading) stringResource(R.string.loading) else text,
             style = MaterialTheme.typography.labelLarge
         )
     }
@@ -132,7 +132,7 @@ fun LoadingFilledTonalButton(
         }
 
         Text(
-            text = if (isLoading) "Carregando..." else text,
+            text = if (isLoading) stringResource(R.string.loading) else text,
             style = MaterialTheme.typography.labelLarge
         )
     }
@@ -171,7 +171,7 @@ fun LoadingOutlinedButton(
         }
 
         Text(
-            text = if (isLoading) "Carregando..." else text,
+            text = if (isLoading) stringResource(R.string.loading) else text,
             style = MaterialTheme.typography.labelLarge
         )
     }

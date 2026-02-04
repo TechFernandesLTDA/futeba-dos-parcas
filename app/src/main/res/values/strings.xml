@@ -122,6 +122,8 @@
     <string name="badge_icon">Ícone da conquista</string>
     <string name="save">Salvar</string>
     <string name="delete">Excluir</string>
+    <string name="delete_item_title">Excluir %1$s?</string>
+    <string name="delete_cannot_undo">Esta ação não pode ser desfeita.</string>
     <string name="edit">Editar</string>
     <string name="search">Buscar</string>
     <string name="no_data">Sem dados</string>
@@ -1269,6 +1271,11 @@ subir no ranking!</string>
     <string name="error_remove_member">Erro ao remover membro</string>
     <string name="error_leave_group">Erro ao sair do grupo</string>
     <string name="error_network">Verifique sua conexão com a internet e tente novamente</string>
+    <string name="error_network_full">Sem conexão com a internet.\nVerifique sua conexão e tente novamente.</string>
+    <string name="error_server">Erro no servidor.\nEstamos trabalhando para resolver.</string>
+    <string name="error_permission">Sem permissão para acessar este recurso.</string>
+    <string name="error_generic_full">Algo deu errado.\nTente novamente mais tarde.</string>
+    <string name="error_oops">Oops!</string>
     <string name="error_user_not_auth">Usuário não autenticado</string>
     <string name="error_user_not_found">Usuário não encontrado</string>
     <string name="error_notifications">Erro ao observar notificações</string>
