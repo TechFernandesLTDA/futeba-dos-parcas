@@ -65,9 +65,9 @@ import java.util.Locale
 fun UpcomingGamesSection(
     games: List<GameWithConfirmations>,
     onGameClick: (gameId: String) -> Unit,
+    modifier: Modifier = Modifier,
     onConfirmClick: (gameId: String) -> Unit = {},
-    onSeeAllClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onSeeAllClick: () -> Unit = {}
 ) {
     if (games.isEmpty()) return
 
@@ -260,8 +260,8 @@ private fun GameConfirmationCard(
     gameWithConfirmations: GameWithConfirmations,
     onGameClick: () -> Unit,
     onConfirmClick: () -> Unit,
-    isPending: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isPending: Boolean = false
 ) {
     val game = gameWithConfirmations.game
     val isUserConfirmed = gameWithConfirmations.isUserConfirmed

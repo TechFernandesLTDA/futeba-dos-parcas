@@ -626,8 +626,8 @@ fun VoiceMessagePlayer(
 @Composable
 fun VoiceWaveform(
     waveformData: List<Float>,
-    progress: Float = 0f,
     modifier: Modifier = Modifier,
+    progress: Float = 0f,
     activeColor: Color = MaterialTheme.colorScheme.primary,
     inactiveColor: Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
 ) {

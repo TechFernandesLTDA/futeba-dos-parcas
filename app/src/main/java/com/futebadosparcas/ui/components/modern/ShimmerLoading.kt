@@ -130,8 +130,8 @@ fun ShimmerGameCard(modifier: Modifier = Modifier) {
  */
 @Composable
 fun ShimmerGamesList(
-    count: Int = 5,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    count: Int = 5
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -215,9 +215,9 @@ fun ShimmerPlayerCard(modifier: Modifier = Modifier) {
  */
 @Composable
 fun ShimmerText(
+    modifier: Modifier = Modifier,
     widthFraction: Float = 0.7f,
-    height: Int = 16,
-    modifier: Modifier = Modifier
+    height: Int = 16
 ) {
     Box(
         modifier = modifier
