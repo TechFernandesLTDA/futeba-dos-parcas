@@ -109,7 +109,7 @@ export async function isTransactionAlreadyProcessed(
  * Se o transaction_id já existir, retorna sucesso sem processar novamente.
  *
  * @param data Dados completos da transação XP
- * @returns Resultado do processamento
+ * @return Resultado do processamento
  */
 export async function processXpIdempotent(
   data: XpTransactionData
@@ -245,7 +245,7 @@ export async function processXpIdempotent(
  * IDEMPOTÊNCIA: Filtra transações já processadas antes do batch
  *
  * @param transactions Lista de transações XP
- * @returns Lista de resultados
+ * @return Lista de resultados
  */
 export async function processXpBatch(
   transactions: XpTransactionData[]
@@ -378,7 +378,7 @@ export async function processXpBatch(
       await batch.commit();
       console.log(`[XP_BATCH] Batch de ${chunk.length} transações commitado`);
     } catch (error: any) {
-      console.error(`[XP_BATCH] Erro ao commitar batch:`, error);
+      console.error("[XP_BATCH] Erro ao commitar batch:", error);
       // Marcar todas as transações do chunk como falhadas
       chunk.forEach((data) => {
         const idx = results.findIndex(
@@ -409,8 +409,8 @@ export async function processXpBatch(
  */
 export async function retryXpOperation<T>(
   operation: () => Promise<T>,
-  maxRetries: number = 3,
-  initialBackoffMs: number = 1000
+  maxRetries = 3,
+  initialBackoffMs = 1000
 ): Promise<T> {
   let lastError: any;
 
