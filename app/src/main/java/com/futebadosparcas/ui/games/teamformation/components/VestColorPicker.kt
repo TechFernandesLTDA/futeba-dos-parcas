@@ -385,9 +385,9 @@ fun TeamColorChip(
 fun TeamColorsPreview(
     team1Color: TeamColor,
     team2Color: TeamColor,
+    modifier: Modifier = Modifier,
     team1Name: String = "Time A",
-    team2Name: String = "Time B",
-    modifier: Modifier = Modifier
+    team2Name: String = "Time B"
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),

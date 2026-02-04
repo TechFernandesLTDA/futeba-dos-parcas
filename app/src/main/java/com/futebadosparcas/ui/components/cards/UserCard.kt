@@ -62,13 +62,13 @@ fun UserCard(
     photoUrl: String?,
     name: String,
     subtitle: String?,
+    modifier: Modifier = Modifier,
     badge: String? = null,
     badgeColor: Color? = null,
     badgeIcon: ImageVector? = null,
     onClick: (() -> Unit)? = null,
     showMenu: Boolean = false,
     menuItems: List<UserCardMenuItem> = emptyList(),
-    modifier: Modifier = Modifier,
     onMenuExpand: ((Boolean) -> Unit)? = null
 ) {
     var showDropdownMenu = false
@@ -224,10 +224,10 @@ fun GroupMemberCard(
     roleColor: Color,
     onClick: () -> Unit,
     canManage: Boolean,
+    modifier: Modifier = Modifier,
     onPromote: (() -> Unit)? = null,
     onDemote: (() -> Unit)? = null,
-    onRemove: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    onRemove: (() -> Unit)? = null
 ) {
     val menuItems = buildList {
         if (onPromote != null) {
@@ -262,9 +262,9 @@ fun GroupMemberCard(
 fun UserCardCompact(
     photoUrl: String?,
     name: String,
-    subtitle: String? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     trailingContent: (@Composable () -> Unit)? = null
 ) {
     Row(
