@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.games.owner
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
+import androidx.core.net.toUri
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
@@ -504,7 +505,7 @@ fun MassMessageDialog(
                             // Abrir WhatsApp com mensagem
                             val message = templateMessages[selectedTemplate]
                             val intent = Intent(Intent.ACTION_VIEW).apply {
-                                data = Uri.parse("https://wa.me/?text=${Uri.encode(message)}")
+                                data = "https://wa.me/?text=${Uri.encode(message)}".toUri()
                             }
                             context.startActivity(intent)
                             onDismiss()

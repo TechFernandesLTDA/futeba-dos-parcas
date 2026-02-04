@@ -1,6 +1,7 @@
 package com.futebadosparcas.util
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import javax.inject.Inject
@@ -162,9 +163,7 @@ class LocationRateLimiter @Inject constructor(
     private fun saveTimestamps(timestamps: List<Long>) {
         try {
             val jsonString = gson.toJson(timestamps)
-            encryptedPrefs.edit()
-                .putString(KEY_CREATION_TIMESTAMPS, jsonString)
-                .apply()
+            encryptedPrefs.edit { putString(KEY_CREATION_TIMESTAMPS, jsonString) }
         } catch (e: Exception) {
             AppLogger.e("LocationRateLimiter", "Erro ao salvar timestamps", e)
         }
@@ -176,9 +175,7 @@ class LocationRateLimiter @Inject constructor(
      * Usado principalmente para testes ou reset administrativo.
      */
     fun clearTimestamps() {
-        encryptedPrefs.edit()
-            .remove(KEY_CREATION_TIMESTAMPS)
-            .apply()
+        encryptedPrefs.edit { remove(KEY_CREATION_TIMESTAMPS) }
         AppLogger.d("LocationRateLimiter") { "Timestamps limpos" }
     }
 

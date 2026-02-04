@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import androidx.core.graphics.scale
 import android.media.ExifInterface
 import android.net.Uri
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -99,7 +100,7 @@ class ImageHelper @Inject constructor(
         val newWidth = (width * ratio).toInt()
         val newHeight = (height * ratio).toInt()
 
-        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+        return bitmap.scale(newWidth, newHeight, true)
     }
 
     /**
@@ -165,8 +166,7 @@ class ImageHelper @Inject constructor(
             val squareBitmap = Bitmap.createBitmap(rotatedBitmap, x, y, size, size)
 
             // Resize to profile size
-            val resizedBitmap = Bitmap.createScaledBitmap(
-                squareBitmap,
+            val resizedBitmap = squareBitmap.scale(
                 PROFILE_PICTURE_SIZE,
                 PROFILE_PICTURE_SIZE,
                 true
