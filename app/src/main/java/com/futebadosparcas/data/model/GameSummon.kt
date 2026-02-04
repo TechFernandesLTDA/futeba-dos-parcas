@@ -176,7 +176,7 @@ data class UpcomingGame(
      * Formata a data para exibição
      */
     fun getFormattedDate(): String {
-        val sdf = java.text.SimpleDateFormat("dd/MM - HH:mm", java.util.Locale("pt", "BR"))
+        val sdf = java.text.SimpleDateFormat("dd/MM - HH:mm", java.util.Locale.forLanguageTag("pt-BR"))
         return sdf.format(dateTime)
     }
 

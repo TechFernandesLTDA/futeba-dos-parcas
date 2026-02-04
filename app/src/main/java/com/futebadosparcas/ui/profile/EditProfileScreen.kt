@@ -482,7 +482,7 @@ private fun BasicInfoSection(
     birthDate: Date?,
     onBirthDateChange: (Date?) -> Unit
 ) {
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
+    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.forLanguageTag("pt-BR")) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

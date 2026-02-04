@@ -98,7 +98,7 @@ fun String.toBrazilianPhoneFormat(): String {
  * Format number as currency (Brazilian Real)
  */
 fun Double.toCurrencyString(): String {
-    return String.format(Locale("pt", "BR"), "R$ %.2f", this)
+    return String.format(Locale.forLanguageTag("pt-BR"), "R$ %.2f", this)
 }
 
 fun Int.toCurrencyString(): String {
@@ -109,14 +109,14 @@ fun Int.toCurrencyString(): String {
  * Format number with thousands separator
  */
 fun Int.toFormattedNumber(): String {
-    return String.format(Locale("pt", "BR"), "%,d", this)
+    return String.format(Locale.forLanguageTag("pt-BR"), "%,d", this)
 }
 
 /**
  * Format percentage
  */
 fun Double.toPercentageString(decimals: Int = 1): String {
-    return String.format(Locale("pt", "BR"), "%.${decimals}f%%", this * 100)
+    return String.format(Locale.forLanguageTag("pt-BR"), "%.${decimals}f%%", this * 100)
 }
 
 // ============================================
@@ -135,8 +135,8 @@ fun Int.toXpGainString(): String {
  */
 fun Int.toCompactString(): String {
     return when {
-        this >= 1_000_000 -> String.format(Locale("pt", "BR"), "%.1fM", this / 1_000_000.0)
-        this >= 1_000 -> String.format(Locale("pt", "BR"), "%.1fK", this / 1_000.0)
+        this >= 1_000_000 -> String.format(Locale.forLanguageTag("pt-BR"), "%.1fM", this / 1_000_000.0)
+        this >= 1_000 -> String.format(Locale.forLanguageTag("pt-BR"), "%.1fK", this / 1_000.0)
         else -> this.toString()
     }
 }

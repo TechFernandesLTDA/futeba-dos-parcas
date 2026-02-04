@@ -78,7 +78,7 @@ class CashboxViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private val monthFormat = SimpleDateFormat("MMMM yyyy", Locale("pt", "BR"))
+    private val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.forLanguageTag("pt-BR"))
 
     private fun observeHistory(groupId: String) {
         cashboxRepository.getHistoryFlow(groupId)

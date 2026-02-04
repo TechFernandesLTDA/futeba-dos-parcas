@@ -31,7 +31,7 @@ import javax.inject.Singleton
 @Singleton
 class FormattingHelper @Inject constructor() {
 
-    private val brazilLocale = Locale("pt", "BR")
+    private val brazilLocale = Locale.forLanguageTag("pt-BR")
 
     /**
      * Format currency in Brazilian Reais

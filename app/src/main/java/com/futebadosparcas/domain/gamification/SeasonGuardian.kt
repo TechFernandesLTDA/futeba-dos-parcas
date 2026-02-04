@@ -34,7 +34,7 @@ class SeasonGuardian @Inject constructor(
             val currentYear = now.get(Calendar.YEAR)
             val currentMonth = now.get(Calendar.MONTH) + 1
             
-            val monthSdf = SimpleDateFormat("MMMM", Locale("pt", "BR"))
+            val monthSdf = SimpleDateFormat("MMMM", Locale.forLanguageTag("pt-BR"))
             val monthName = monthSdf.format(now.time).replaceFirstChar { it.uppercase() }
 
             // 1. Garantir Temporada Mensal

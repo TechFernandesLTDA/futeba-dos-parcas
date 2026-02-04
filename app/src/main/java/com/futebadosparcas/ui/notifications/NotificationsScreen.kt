@@ -1142,7 +1142,7 @@ private fun formatRelativeTime(date: Date): String {
             "${days}d atrás"
         }
         else -> {
-            SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")).format(date)
+            SimpleDateFormat("dd/MM/yyyy", Locale.forLanguageTag("pt-BR")).format(date)
         }
     }
 }

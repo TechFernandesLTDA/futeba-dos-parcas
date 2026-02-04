@@ -158,7 +158,7 @@ data class CashboxEntry(
      * Formata a data para exibição
      */
     fun getFormattedDate(): String {
-        val sdf = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale("pt", "BR"))
+        val sdf = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.forLanguageTag("pt-BR"))
         return sdf.format(createdAt ?: referenceDate)
     }
 

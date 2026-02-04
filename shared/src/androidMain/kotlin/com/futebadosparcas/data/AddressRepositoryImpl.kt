@@ -68,7 +68,7 @@ class AddressRepositoryImpl(
                     return@withContext Result.failure(IllegalArgumentException("Endereco vazio"))
                 }
 
-                val geocoder = android.location.Geocoder(context, Locale("pt", "BR"))
+                val geocoder = android.location.Geocoder(context, Locale.forLanguageTag("pt-BR"))
 
                 // Use Geocoder (Android API)
                 // Note: This needs internet and Google Play Services

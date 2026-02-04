@@ -20,7 +20,7 @@ import java.util.Locale
 object DateFormatters {
 
     // ========== LOCALE PADRAO ==========
-    private val LOCALE_BR = Locale("pt", "BR")
+    private val LOCALE_BR = Locale.forLanguageTag("pt-BR")
 
     // ========== FORMATOS DE EXIBICAO (UI) ==========
 
