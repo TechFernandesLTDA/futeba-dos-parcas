@@ -41,8 +41,8 @@ import com.futebadosparcas.ui.games.CreateGameStep
 fun WizardStepIndicator(
     currentStep: CreateGameStep,
     steps: List<CreateGameStep>,
-    onStepClick: (CreateGameStep) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onStepClick: (CreateGameStep) -> Unit = {}
 ) {
     Row(
         modifier = modifier
@@ -143,10 +143,10 @@ fun WizardNavigationBar(
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
     onFinishClick: () -> Unit,
+    modifier: Modifier = Modifier,
     isLastStep: Boolean = false,
     isFirstStep: Boolean = false,
-    canProceed: Boolean = true,
-    modifier: Modifier = Modifier
+    canProceed: Boolean = true
 ) {
     Row(
         modifier = modifier
@@ -215,8 +215,8 @@ fun WizardContent(
 @Composable
 fun WizardStepHeader(
     title: String,
-    description: String? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    description: String? = null
 ) {
     Column(
         modifier = modifier

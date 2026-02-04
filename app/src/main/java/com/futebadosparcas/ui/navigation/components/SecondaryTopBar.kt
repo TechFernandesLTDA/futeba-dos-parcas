@@ -43,10 +43,10 @@ import androidx.compose.material3.MaterialTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SecondaryTopBar(
-    title: String? = null,
-    titleResId: Int? = null,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
+    title: String? = null,
+    titleResId: Int? = null,
     backgroundColor: Color? = null,
     contentColor: Color? = null
 ) {
@@ -91,11 +91,11 @@ fun SecondaryTopBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SecondaryTopBarScroll(
-    title: String? = null,
-    titleResId: Int? = null,
     onNavigateBack: () -> Unit,
     scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
     modifier: Modifier = Modifier,
+    title: String? = null,
+    titleResId: Int? = null,
     backgroundColor: Color? = null,
     contentColor: Color? = null
 ) {

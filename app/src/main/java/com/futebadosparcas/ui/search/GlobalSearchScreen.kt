@@ -161,8 +161,8 @@ data class SearchHistoryItem(
 fun GlobalSearchScreen(
     onNavigateBack: () -> Unit,
     onResultClick: (SearchResult) -> Unit,
-    onFilterClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onFilterClick: () -> Unit = {}
 ) {
     var query by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf(SearchCategory.ALL) }

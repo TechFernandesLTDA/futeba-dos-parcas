@@ -238,8 +238,8 @@ fun EmptyStateCompact(
  */
 @Composable
 fun EmptyGamesState(
-    onCreateGame: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCreateGame: (() -> Unit)? = null
 ) {
     EmptyState(
         type = EmptyStateType.NoData(
@@ -258,8 +258,8 @@ fun EmptyGamesState(
  */
 @Composable
 fun EmptyPlayersState(
-    onInvitePlayers: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onInvitePlayers: (() -> Unit)? = null
 ) {
     EmptyState(
         type = EmptyStateType.NoData(
