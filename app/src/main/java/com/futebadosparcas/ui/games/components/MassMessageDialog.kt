@@ -113,7 +113,11 @@ fun MassMessageDialog(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "${recipients.size} jogador${if (recipients.size != 1) "es" else ""} selecionado${if (recipients.size != 1) "s" else ""}",
+                            text = if (recipients.size == 1) {
+                                stringResource(R.string.player_selected_one)
+                            } else {
+                                stringResource(R.string.players_selected_many, recipients.size)
+                            },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -228,7 +232,7 @@ fun MassMessageDialog(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("WhatsApp")
+                        Text(stringResource(R.string.whatsapp))
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -241,7 +245,7 @@ fun MassMessageDialog(
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, message)
                             }
-                            context.startActivity(Intent.createChooser(intent, "Compartilhar mensagem"))
+                            context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_message)))
                             onDismiss()
                         },
                         enabled = recipients.isNotEmpty()

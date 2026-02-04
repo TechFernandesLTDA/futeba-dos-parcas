@@ -63,7 +63,7 @@ fun LocationMetricsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Location Query Metrics") },
+                title = { Text(stringResource(R.string.debug_location_metrics_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -144,12 +144,12 @@ private fun DebugOnlyMessage(onBack: () -> Unit) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Disponivel apenas em builds de debug",
+                text = stringResource(R.string.debug_only_available),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Button(onClick = onBack) {
-                Text("Voltar")
+                Text(stringResource(R.string.back))
             }
         }
     }
