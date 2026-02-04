@@ -5,7 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import androidx.core.graphics.scale
-import android.media.ExifInterface
+import androidx.exifinterface.media.ExifInterface
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

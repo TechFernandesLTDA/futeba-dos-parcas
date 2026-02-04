@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:minWidth="180dp"
     android:minHeight="110dp"
     android:targetCellWidth="3"
@@ -14,4 +15,5 @@
     android:description="@string/widget_description"
     android:widgetCategory="home_screen"
     android:resizeMode="horizontal|vertical"
-    android:widgetFeatures="reconfigurable" />
+    android:widgetFeatures="reconfigurable"
+    tools:targetApi="s" />
