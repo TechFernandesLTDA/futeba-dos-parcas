@@ -77,6 +77,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.Locale
 import java.util.UUID
 import kotlin.math.sin
 
@@ -923,7 +924,7 @@ fun VoiceRecorderCard(
 private fun formatDuration(durationMs: Int): String {
     val seconds = (durationMs / 1000) % 60
     val minutes = (durationMs / 1000) / 60
-    return String.format("%d:%02d", minutes, seconds)
+    return String.format(Locale.getDefault(), "%d:%02d", minutes, seconds)
 }
 
 /**

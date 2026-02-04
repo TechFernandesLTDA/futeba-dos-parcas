@@ -54,6 +54,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.Locale
 
 /**
  * Tela avançada de seleção de local com:
@@ -688,7 +689,7 @@ private fun LocationCard(
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(
-                                    text = String.format("%.1f", location.rating),
+                                    text = String.format(Locale.getDefault(), "%.1f", location.rating),
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -919,7 +920,7 @@ private fun LocationDetailBottomSheet(
                                 )
                             }
                             Text(
-                                text = String.format("%.1f", location.rating),
+                                text = String.format(Locale.getDefault(), "%.1f", location.rating),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )
