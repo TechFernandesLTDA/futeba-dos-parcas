@@ -125,19 +125,14 @@ class SoundboardHelper @Inject constructor(
     private val context: Context
 ) {
     private val soundPool: SoundPool by lazy {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_GAME)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-            SoundPool.Builder()
-                .setMaxStreams(5)
-                .setAudioAttributes(audioAttributes)
-                .build()
-        } else {
-            @Suppress("DEPRECATION")
-            SoundPool(5, android.media.AudioManager.STREAM_MUSIC, 0)
-        }
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        SoundPool.Builder()
+            .setMaxStreams(5)
+            .setAudioAttributes(audioAttributes)
+            .build()
     }
 
     private val vibrator: Vibrator by lazy {

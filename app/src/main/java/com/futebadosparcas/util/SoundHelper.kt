@@ -6,7 +6,6 @@ import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.SoundPool
 import android.media.ToneGenerator
-import android.os.Build
 import androidx.annotation.RawRes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -53,19 +52,14 @@ class SoundHelper @Inject constructor(
 
     // SoundPool para sons curtos (< 1 segundo)
     private val soundPool: SoundPool by lazy {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_GAME)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-            SoundPool.Builder()
-                .setMaxStreams(MAX_STREAMS)
-                .setAudioAttributes(audioAttributes)
-                .build()
-        } else {
-            @Suppress("DEPRECATION")
-            SoundPool(MAX_STREAMS, android.media.AudioManager.STREAM_MUSIC, 0)
-        }
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        SoundPool.Builder()
+            .setMaxStreams(MAX_STREAMS)
+            .setAudioAttributes(audioAttributes)
+            .build()
     }
 
     // Cache de IDs de som carregados

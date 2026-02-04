@@ -90,8 +90,8 @@ fun LocationDetailScreen(
     var city by remember { mutableStateOf("") }
     var state by remember { mutableStateOf("") }
     var country by remember { mutableStateOf("Brasil") }
-    var latitude by remember { mutableStateOf(0.0) }
-    var longitude by remember { mutableStateOf(0.0) }
+    var latitude by remember { mutableDoubleStateOf(0.0) }
+    var longitude by remember { mutableDoubleStateOf(0.0) }
     
     // Dialog States
     var showFieldDialog by remember { mutableStateOf(false) }
