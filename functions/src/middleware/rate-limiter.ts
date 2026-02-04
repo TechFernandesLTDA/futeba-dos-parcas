@@ -12,7 +12,7 @@
  */
 
 import * as admin from "firebase-admin";
-import { HttpsError } from "firebase-functions/v2/https";
+import {HttpsError} from "firebase-functions/v2/https";
 
 const db = admin.firestore();
 
@@ -29,22 +29,22 @@ export interface RateLimitConfig {
 // Rate limits por tipo de operação
 export const RATE_LIMITS = {
   // Operações críticas (alta prioridade)
-  GAME_CREATE: { maxRequests: 10, windowMs: 60 * 1000 }, // 10/min
-  GAME_UPDATE: { maxRequests: 20, windowMs: 60 * 1000 }, // 20/min
-  GAME_DELETE: { maxRequests: 5, windowMs: 60 * 1000 }, // 5/min
+  GAME_CREATE: {maxRequests: 10, windowMs: 60 * 1000}, // 10/min
+  GAME_UPDATE: {maxRequests: 20, windowMs: 60 * 1000}, // 20/min
+  GAME_DELETE: {maxRequests: 5, windowMs: 60 * 1000}, // 5/min
 
   // Operações de leitura (média prioridade)
-  GAME_LIST: { maxRequests: 30, windowMs: 60 * 1000 }, // 30/min
-  USER_PROFILE: { maxRequests: 50, windowMs: 60 * 1000 }, // 50/min
+  GAME_LIST: {maxRequests: 30, windowMs: 60 * 1000}, // 30/min
+  USER_PROFILE: {maxRequests: 50, windowMs: 60 * 1000}, // 50/min
 
   // Operações batch (baixa prioridade)
-  BATCH_OPERATION: { maxRequests: 5, windowMs: 60 * 1000 }, // 5/min
+  BATCH_OPERATION: {maxRequests: 5, windowMs: 60 * 1000}, // 5/min
 
   // Notificações
-  SEND_NOTIFICATION: { maxRequests: 20, windowMs: 60 * 1000 }, // 20/min
+  SEND_NOTIFICATION: {maxRequests: 20, windowMs: 60 * 1000}, // 20/min
 
   // Default fallback
-  DEFAULT: { maxRequests: 10, windowMs: 60 * 1000 }, // 10/min
+  DEFAULT: {maxRequests: 10, windowMs: 60 * 1000}, // 10/min
 } as const;
 
 // ==========================================
@@ -56,7 +56,7 @@ export const RATE_LIMITS = {
  *
  * @param userId UID do usuário (Firebase Auth)
  * @param config Configuração do rate limit
- * @returns true se permitido, false se excedeu o limite
+ * @return true se permitido, false se excedeu o limite
  */
 export async function checkRateLimit(
   userId: string,
@@ -100,17 +100,17 @@ export async function checkRateLimit(
           last_updated: admin.firestore.FieldValue.serverTimestamp(),
           expires_at: admin.firestore.Timestamp.fromDate(resetAt),
         },
-        { merge: true }
+        {merge: true}
       );
 
-      return { allowed, remaining, resetAt };
+      return {allowed, remaining, resetAt};
     });
 
     return result;
   } catch (error) {
     console.error(`[RATE_LIMIT] Erro ao verificar rate limit para ${userId}:`, error);
     // Em caso de erro, permitir request (fail-open para disponibilidade)
-    return { allowed: true, remaining: 0, resetAt: new Date(now + config.windowMs) };
+    return {allowed: true, remaining: 0, resetAt: new Date(now + config.windowMs)};
   }
 }
 
@@ -144,7 +144,7 @@ export function withRateLimit<T = any>(
     const userId = request.auth.uid;
 
     // Verificar rate limit
-    const { allowed, remaining, resetAt } = await checkRateLimit(userId, config);
+    const {allowed, remaining, resetAt} = await checkRateLimit(userId, config);
 
     if (!allowed) {
       const resetInSeconds = Math.ceil((resetAt.getTime() - Date.now()) / 1000);
@@ -269,16 +269,16 @@ export async function checkRateLimitByIp(
           last_updated: admin.firestore.FieldValue.serverTimestamp(),
           expires_at: admin.firestore.Timestamp.fromDate(resetAt),
         },
-        { merge: true }
+        {merge: true}
       );
 
-      return { allowed, remaining, resetAt };
+      return {allowed, remaining, resetAt};
     });
 
     return result;
   } catch (error) {
     console.error(`[RATE_LIMIT_IP] Erro ao verificar rate limit para IP ${ipAddress}:`, error);
-    return { allowed: true, remaining: 0, resetAt: new Date(now + config.windowMs) };
+    return {allowed: true, remaining: 0, resetAt: new Date(now + config.windowMs)};
   }
 }
 
@@ -292,7 +292,7 @@ export async function checkRateLimitByIp(
  */
 export async function resetUserRateLimit(
   userId: string,
-  keyPrefix: string = "default"
+  keyPrefix = "default"
 ): Promise<void> {
   const bucketKey = `${keyPrefix}_${userId}`;
   const bucketRef = db.collection("rate_limits").doc(bucketKey);
@@ -311,7 +311,7 @@ export async function resetUserRateLimit(
  */
 export async function getUserRateLimitStats(
   userId: string,
-  keyPrefix: string = "default"
+  keyPrefix = "default"
 ): Promise<{ currentRequests: number; oldestRequest: Date | null }> {
   const bucketKey = `${keyPrefix}_${userId}`;
   const bucketRef = db.collection("rate_limits").doc(bucketKey);
@@ -320,7 +320,7 @@ export async function getUserRateLimitStats(
     const bucketDoc = await bucketRef.get();
 
     if (!bucketDoc.exists) {
-      return { currentRequests: 0, oldestRequest: null };
+      return {currentRequests: 0, oldestRequest: null};
     }
 
     const data = bucketDoc.data();
@@ -332,6 +332,6 @@ export async function getUserRateLimitStats(
     };
   } catch (error) {
     console.error(`[RATE_LIMIT] Erro ao obter stats para ${userId}:`, error);
-    return { currentRequests: 0, oldestRequest: null };
+    return {currentRequests: 0, oldestRequest: null};
   }
 }
