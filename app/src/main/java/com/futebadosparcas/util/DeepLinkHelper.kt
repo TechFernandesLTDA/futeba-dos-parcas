@@ -2,6 +2,7 @@ package com.futebadosparcas.util
 
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -117,19 +118,19 @@ class DeepLinkHelper @Inject constructor() {
      * Create deep link Uri
      */
     fun createGameLink(gameId: String): Uri {
-        return Uri.parse("$SCHEME://$PATH_GAME/$gameId")
+        return "$SCHEME://$PATH_GAME/$gameId".toUri()
     }
 
     fun createGroupLink(groupId: String): Uri {
-        return Uri.parse("$SCHEME://$PATH_GROUP/$groupId")
+        return "$SCHEME://$PATH_GROUP/$groupId".toUri()
     }
 
     fun createProfileLink(userId: String): Uri {
-        return Uri.parse("$SCHEME://$PATH_PROFILE/$userId")
+        return "$SCHEME://$PATH_PROFILE/$userId".toUri()
     }
 
     fun createInviteLink(inviteCode: String): Uri {
-        return Uri.parse("$SCHEME://$PATH_INVITE/$inviteCode")
+        return "$SCHEME://$PATH_INVITE/$inviteCode".toUri()
     }
 
     /**

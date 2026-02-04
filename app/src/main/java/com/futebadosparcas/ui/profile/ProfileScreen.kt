@@ -42,8 +42,8 @@ import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 import com.futebadosparcas.util.LevelHelper
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
+import androidx.core.net.toUri
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import java.util.Locale
@@ -1080,7 +1080,7 @@ private fun FeedbackSection() {
                     )
 
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = Uri.parse("mailto:")
+                        data = "mailto:".toUri()
                         putExtra(Intent.EXTRA_EMAIL, arrayOf("techfernandesltda@gmail.com"))
                         putExtra(Intent.EXTRA_SUBJECT, subject)
                         putExtra(Intent.EXTRA_TEXT, body)

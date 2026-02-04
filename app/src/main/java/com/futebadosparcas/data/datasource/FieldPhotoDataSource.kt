@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
@@ -259,8 +261,8 @@ class FieldPhotoDataSource @Inject constructor(
         filePath: String
     ): UploadResult {
         val uri = when {
-            filePath.startsWith("content://") -> Uri.parse(filePath)
-            filePath.startsWith("file://") -> Uri.parse(filePath)
+            filePath.startsWith("content://") -> filePath.toUri()
+            filePath.startsWith("file://") -> filePath.toUri()
             else -> Uri.fromFile(File(filePath))
         }
         return uploadFieldPhoto(locationId, fieldId, uri)
@@ -379,7 +381,7 @@ class FieldPhotoDataSource @Inject constructor(
         val newWidth = (width * ratio).toInt()
         val newHeight = (height * ratio).toInt()
 
-        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+        return bitmap.scale(newWidth, newHeight, true)
     }
 
     /**
@@ -415,7 +417,7 @@ class FieldPhotoDataSource @Inject constructor(
         val newWidth = (bitmap.width * ratio).toInt()
         val newHeight = (bitmap.height * ratio).toInt()
 
-        val thumbBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+        val thumbBitmap = bitmap.scale(newWidth, newHeight, true)
         val stream = ByteArrayOutputStream()
         thumbBitmap.compress(Bitmap.CompressFormat.JPEG, MEDIUM_QUALITY, stream)
         thumbBitmap.recycle()
