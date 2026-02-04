@@ -44,20 +44,20 @@ fun ErrorState(
     errorType: ErrorType = ErrorType.GENERIC,
     message: String? = null,
     onRetry: (() -> Unit)? = null,
-    actionText: String = "Tentar Novamente",
+    actionText: String = stringResource(R.string.retry),
     modifier: Modifier = Modifier
 ) {
     val (icon, defaultMessage) = when (errorType) {
         ErrorType.NETWORK -> Icons.Default.WifiOff to
-            "Sem conexão com a internet.\nVerifique sua conexão e tente novamente."
+            stringResource(R.string.error_network_full)
         ErrorType.TIMEOUT -> Icons.Default.CloudOff to
-            "A solicitação demorou muito.\nTente novamente em alguns instantes."
+            stringResource(R.string.error_timeout)
         ErrorType.SERVER -> Icons.Default.Error to
-            "Erro no servidor.\nEstamos trabalhando para resolver."
+            stringResource(R.string.error_server)
         ErrorType.PERMISSION -> Icons.Default.Warning to
-            "Sem permissão para acessar este recurso."
+            stringResource(R.string.error_permission)
         ErrorType.GENERIC -> Icons.Default.Error to
-            "Algo deu errado.\nTente novamente mais tarde."
+            stringResource(R.string.error_generic_full)
     }
 
     Column(
@@ -79,7 +79,7 @@ fun ErrorState(
 
         // Título
         Text(
-            text = "Oops!",
+            text = stringResource(R.string.error_oops),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -158,7 +158,7 @@ fun CompactErrorState(
 
                 TextButton(onClick = onRetry) {
                     Text(
-                        text = "Tentar Novamente",
+                        text = stringResource(R.string.retry),
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                 }
