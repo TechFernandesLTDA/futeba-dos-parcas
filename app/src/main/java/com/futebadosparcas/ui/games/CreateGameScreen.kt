@@ -78,7 +78,7 @@ fun CreateGameScreen(
     var price by remember { mutableStateOf("") }
     var maxPlayers by remember { mutableStateOf("14") }
     var recurrenceEnabled by remember { mutableStateOf(false) }
-    var recurrenceType by remember { mutableStateOf("Semanal") }
+    var recurrenceType by remember { mutableStateOf("weekly") }
 
     // Estados de erro
     var ownerNameError by remember { mutableStateOf<String?>(null) }
@@ -110,10 +110,8 @@ fun CreateGameScreen(
             maxPlayers = game.maxPlayers.toString()
             recurrenceEnabled = game.recurrence != "none" && game.recurrence.isNotEmpty()
             recurrenceType = when (game.recurrence) {
-                "weekly" -> "Semanal"
-                "biweekly" -> "Quinzenal"
-                "monthly" -> "Mensal"
-                else -> "Semanal"
+                "weekly", "biweekly", "monthly" -> game.recurrence
+                else -> "weekly"
             }
         }
     }
@@ -228,19 +226,13 @@ fun CreateGameScreen(
                 }
 
                 if (!hasError) {
-                    val recurrenceMap = mapOf(
-                        "Semanal" to "weekly",
-                        "Quinzenal" to "biweekly",
-                        "Mensal" to "monthly"
-                    )
-
                     viewModel.saveGame(
                         gameId = gameId,
                         ownerName = ownerName.trim(),
                         price = priceValue ?: 0.0,
                         maxPlayers = maxPlayersValue ?: 14,
                         recurrence = if (recurrenceEnabled) {
-                            recurrenceMap[recurrenceType] ?: "none"
+                            recurrenceType
                         } else {
                             "none"
                         }
@@ -639,14 +631,19 @@ private fun CreateGameContent(
                         )
 
                         var expandedRecurrence by remember { mutableStateOf(false) }
-                        val recurrenceOptions = listOf("Semanal", "Quinzenal", "Mensal")
+                        val recurrenceOptions = listOf("weekly", "biweekly", "monthly")
+                        val recurrenceDisplayNames = mapOf(
+                            "weekly" to stringResource(R.string.game_schedule_frequency_weekly),
+                            "biweekly" to stringResource(R.string.game_schedule_frequency_biweekly),
+                            "monthly" to stringResource(R.string.game_schedule_frequency_monthly)
+                        )
 
                         ExposedDropdownMenuBox(
                             expanded = expandedRecurrence,
                             onExpandedChange = { expandedRecurrence = it }
                         ) {
                             OutlinedTextField(
-                                value = recurrenceType,
+                                value = recurrenceDisplayNames[recurrenceType] ?: recurrenceType,
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text(stringResource(R.string.create_game_hint_frequency)) },
@@ -662,7 +659,7 @@ private fun CreateGameContent(
                             ) {
                                 recurrenceOptions.forEach { option ->
                                     DropdownMenuItem(
-                                        text = { Text(option) },
+                                        text = { Text(recurrenceDisplayNames[option] ?: option) },
                                         onClick = {
                                             onRecurrenceTypeChange(option)
                                             expandedRecurrence = false

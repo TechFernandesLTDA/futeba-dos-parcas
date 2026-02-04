@@ -484,13 +484,14 @@ private fun getStatusColor(status: String) = when (status.uppercase()) {
 /**
  * Traduz o status do jogo para texto legível
  */
+@Composable
 private fun getStatusText(status: String): String = when (status.uppercase()) {
-    "OPEN" -> "Aberto"
-    "CONFIRMED" -> "Confirmado"
-    "SCHEDULED" -> "Agendado"
-    "LIVE" -> "Ao Vivo"
-    "FINISHED" -> "Finalizado"
-    "CANCELLED" -> "Cancelado"
+    "OPEN" -> stringResource(R.string.status_display_open)
+    "CONFIRMED" -> stringResource(R.string.status_display_confirmed)
+    "SCHEDULED" -> stringResource(R.string.status_display_scheduled)
+    "LIVE" -> stringResource(R.string.status_display_live)
+    "FINISHED" -> stringResource(R.string.status_display_finished)
+    "CANCELLED" -> stringResource(R.string.status_display_cancelled)
     else -> status
 }
 
