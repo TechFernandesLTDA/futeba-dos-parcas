@@ -134,7 +134,7 @@ dependencies {
 
     // Core Android
     implementation("androidx.core:core-ktx:1.17.0")
-    implementation("androidx.exifinterface:exifinterface:1.4.1")
+    implementation("androidx.exifinterface:exifinterface:1.4.2")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
@@ -148,7 +148,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material3:material3-window-size-class")
-    implementation("androidx.compose.material3:material3-adaptive-navigation-suite:1.4.0-alpha02")
+    implementation("androidx.compose.material3:material3-adaptive-navigation-suite:1.4.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.activity:activity-compose:1.12.3")
@@ -167,8 +167,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7") // Para collectAsStateWithLifecycle
-    implementation("androidx.navigation:navigation-fragment-ktx:2.8.5")
-    implementation("androidx.navigation:navigation-ui-ktx:2.8.5")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.9.7")
+    implementation("androidx.navigation:navigation-ui-ktx:2.9.7")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.viewpager2:viewpager2:1.1.0")
 
@@ -178,8 +178,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
     // Dependency Injection - Hilt
-    implementation("com.google.dagger:hilt-android:2.56.2")
-    ksp("com.google.dagger:hilt-compiler:2.56.2")
+    implementation("com.google.dagger:hilt-android:2.59")
+    ksp("com.google.dagger:hilt-compiler:2.59")
 
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     // Firebase - usando BoM para gerenciar versoes
@@ -198,7 +198,7 @@ dependencies {
     // Credentials para Google Sign-In
     implementation("androidx.credentials:credentials:1.3.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
 
     // Image Loading
     implementation("io.coil-kt:coil:2.7.0")
@@ -262,10 +262,10 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     // Hilt Testing
-    testImplementation("com.google.dagger:hilt-android-testing:2.56.2")
-    kspTest("com.google.dagger:hilt-compiler:2.56.2")
-    androidTestImplementation("com.google.dagger:hilt-android-testing:2.56.2")
-    kspAndroidTest("com.google.dagger:hilt-compiler:2.56.2")
+    testImplementation("com.google.dagger:hilt-android-testing:2.59")
+    kspTest("com.google.dagger:hilt-compiler:2.59")
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.59")
+    kspAndroidTest("com.google.dagger:hilt-compiler:2.59")
 
     // Arch Core Testing (for InstantTaskExecutorRule)
     testImplementation("androidx.arch.core:core-testing:2.2.0")
@@ -280,7 +280,7 @@ dependencies {
     androidTestImplementation("androidx.room:room-testing:$roomVersion")
 
     // Paging 3 - For efficient large list loading
-    val pagingVersion = "3.3.5"
+    val pagingVersion = "3.4.0"
     implementation("androidx.paging:paging-runtime-ktx:$pagingVersion")
     implementation("androidx.paging:paging-compose:$pagingVersion")
     testImplementation("androidx.paging:paging-common-ktx:$pagingVersion")
