@@ -488,7 +488,7 @@ fun PlayerCardContent(
 
             // Timestamp
             Text(
-                text = stringResource(R.string.players_generated_on, SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale("pt", "BR")).format(Date())),
+                text = stringResource(R.string.players_generated_on, SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale.forLanguageTag("pt-BR")).format(Date())),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )

@@ -50,7 +50,7 @@ fun GameFinancialSummary(
     onMarkPartialPayment: (String, Double) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale("pt", "BR")) }
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
 
     // Calculos financeiros
     val confirmedPlayers = confirmations.filter { it.status == ConfirmationStatus.CONFIRMED.name }
@@ -269,7 +269,7 @@ private fun PlayerPaymentRow(
     onTogglePaid: (Boolean) -> Unit,
     onMarkPartial: () -> Unit
 ) {
-    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale("pt", "BR")) }
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
     val isPaid = player.paymentStatus == PaymentStatus.PAID.name
     val isPartial = player.hasPartialPayment()
 
@@ -339,7 +339,7 @@ fun PartialPaymentDialog(
     onConfirm: (Double) -> Unit
 ) {
     var amount by remember { mutableStateOf(if (currentAmount > 0) currentAmount.toString() else "") }
-    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale("pt", "BR")) }
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
 
     AlertDialog(
         onDismissRequest = onDismiss,

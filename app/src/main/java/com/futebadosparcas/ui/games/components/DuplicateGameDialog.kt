@@ -103,7 +103,7 @@ private fun RecentGameItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val ptBr = Locale("pt", "BR")
+    val ptBr = Locale.forLanguageTag("pt-BR")
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", ptBr)
     val formattedDate = try {
         LocalDate.parse(game.date, DateTimeFormatter.ISO_LOCAL_DATE)

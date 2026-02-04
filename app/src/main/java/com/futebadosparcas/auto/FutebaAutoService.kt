@@ -36,7 +36,7 @@ data class AutoGameData(
     val latitude: Double,
     val longitude: Double
 ) {
-    private val dateFormat = SimpleDateFormat("dd/MM HH:mm", Locale("pt", "BR"))
+    private val dateFormat = SimpleDateFormat("dd/MM HH:mm", Locale.forLanguageTag("pt-BR"))
 
     fun getFormattedDateTime(): String = dateFormat.format(date)
 }

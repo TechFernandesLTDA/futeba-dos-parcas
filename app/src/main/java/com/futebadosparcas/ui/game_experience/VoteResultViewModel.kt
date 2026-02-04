@@ -71,7 +71,7 @@ class VoteResultViewModel @Inject constructor(
 
                 // 5. Construir gameInfo
                 val gameInfo = game?.let {
-                    val dateFormat = SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale("pt", "BR"))
+                    val dateFormat = SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale.forLanguageTag("pt-BR"))
                     GameResultInfo(
                         date = it.date,
                         location = "${it.fieldName} - ${it.locationName}",

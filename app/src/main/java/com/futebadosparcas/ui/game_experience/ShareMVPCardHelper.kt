@@ -195,7 +195,7 @@ object ShareMVPCardHelper {
         isDarkMode: Boolean,
         photoBitmaps: Map<String, Bitmap?>
     ): Bitmap {
-        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.forLanguageTag("pt-BR"))
 
         // Cores baseadas no tema
         val bgColor = if (isDarkMode) DARK_BG else LIGHT_BG

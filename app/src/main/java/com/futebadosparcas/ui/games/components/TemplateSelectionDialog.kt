@@ -119,7 +119,7 @@ private fun TemplateItem(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
+    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
 
     Card(
         modifier = modifier
