@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.preferences
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -293,12 +294,12 @@ private fun ThemeButton(
                 MaterialTheme.colorScheme.onSurface
             }
         ),
-        border = ButtonDefaults.outlinedButtonBorder.copy(
+        border = BorderStroke(
             width = if (isSelected) 2.dp else 1.dp,
-            brush = if (isSelected) {
-                androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary)
+            color = if (isSelected) {
+                MaterialTheme.colorScheme.primary
             } else {
-                androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline)
+                MaterialTheme.colorScheme.outline
             }
         )
     ) {

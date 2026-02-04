@@ -626,7 +626,7 @@ private fun PhysicalInfoSection(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                 shape = RoundedCornerShape(12.dp)
             )
             ExposedDropdownMenu(
@@ -689,7 +689,7 @@ private fun PhysicalInfoSection(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = footExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                 shape = RoundedCornerShape(12.dp)
             )
             ExposedDropdownMenu(
@@ -811,7 +811,7 @@ private fun PositionSection(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = primaryExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                 shape = RoundedCornerShape(12.dp)
             )
             ExposedDropdownMenu(
@@ -843,7 +843,7 @@ private fun PositionSection(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = secondaryExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                 shape = RoundedCornerShape(12.dp)
             )
             ExposedDropdownMenu(
@@ -875,7 +875,7 @@ private fun PositionSection(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = playStyleExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                 shape = RoundedCornerShape(12.dp)
             )
             ExposedDropdownMenu(
