@@ -64,7 +64,7 @@ class DataConverter @Inject constructor() {
     fun formatDate(date: Date?, pattern: String = "dd/MM/yyyy HH:mm"): String {
         if (date == null) return ""
         return try {
-            SimpleDateFormat(pattern, Locale("pt", "BR")).format(date)
+            SimpleDateFormat(pattern, Locale.forLanguageTag("pt-BR")).format(date)
         } catch (e: Exception) {
             ""
         }
@@ -76,7 +76,7 @@ class DataConverter @Inject constructor() {
     fun parseDate(dateString: String?, pattern: String = "dd/MM/yyyy HH:mm"): Date? {
         if (dateString.isNullOrBlank()) return null
         return try {
-            SimpleDateFormat(pattern, Locale("pt", "BR")).parse(dateString)
+            SimpleDateFormat(pattern, Locale.forLanguageTag("pt-BR")).parse(dateString)
         } catch (e: Exception) {
             null
         }

@@ -150,7 +150,7 @@ class NextGameWidget : AppWidgetProvider() {
         // Formata a data
         val formattedDate = try {
             val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-            val outputFormat = SimpleDateFormat("EEE, dd/MM", Locale("pt", "BR"))
+            val outputFormat = SimpleDateFormat("EEE, dd/MM", Locale.forLanguageTag("pt-BR"))
             val date = inputFormat.parse(game.date)
             date?.let { outputFormat.format(it) } ?: game.date
         } catch (e: Exception) {

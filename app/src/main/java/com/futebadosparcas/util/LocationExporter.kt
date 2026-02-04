@@ -288,7 +288,7 @@ class LocationExporter @Inject constructor(
      * Formata data para exibição.
      */
     private fun formatDate(timestamp: Long): String {
-        return SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale("pt", "BR")).format(Date(timestamp))
+        return SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.forLanguageTag("pt-BR")).format(Date(timestamp))
     }
 
     /**

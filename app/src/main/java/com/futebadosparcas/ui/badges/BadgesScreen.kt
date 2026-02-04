@@ -629,7 +629,7 @@ private fun BadgeDetailDialog(
 
                 // Data de desbloqueio
                 userBadge.unlockedAt?.let { date ->
-                    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+                    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.forLanguageTag("pt-BR"))
                     Text(
                         text = stringResource(R.string.badge_unlocked_at, dateFormat.format(date)),
                         style = MaterialTheme.typography.bodySmall,

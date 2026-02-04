@@ -108,7 +108,7 @@ private fun BlockedPlayerCard(
     player: BlockedPlayer,
     onUnblock: () -> Unit
 ) {
-    val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
+    val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.forLanguageTag("pt-BR")) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),

@@ -21,9 +21,9 @@ import java.util.Locale
 // Date Formatting
 // ============================================
 
-private val DATE_FORMAT_PT_BR = SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
-private val TIME_FORMAT_PT_BR = SimpleDateFormat("HH:mm", Locale("pt", "BR"))
-private val DATETIME_FORMAT_PT_BR = SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale("pt", "BR"))
+private val DATE_FORMAT_PT_BR = SimpleDateFormat("dd/MM/yyyy", Locale.forLanguageTag("pt-BR"))
+private val TIME_FORMAT_PT_BR = SimpleDateFormat("HH:mm", Locale.forLanguageTag("pt-BR"))
+private val DATETIME_FORMAT_PT_BR = SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale.forLanguageTag("pt-BR"))
 
 /**
  * Format Date to Brazilian format: 21/01/2025
@@ -66,9 +66,9 @@ fun Date.toRelativeTime(): String {
 // LocalDateTime Extensions
 // ============================================
 
-private val DATETIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale("pt", "BR"))
-private val DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale("pt", "BR"))
-private val TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm", Locale("pt", "BR"))
+private val DATETIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.forLanguageTag("pt-BR"))
+private val DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.forLanguageTag("pt-BR"))
+private val TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm", Locale.forLanguageTag("pt-BR"))
 
 fun LocalDateTime.toFormattedString(): String {
     return this.format(DATETIME_FORMATTER)
