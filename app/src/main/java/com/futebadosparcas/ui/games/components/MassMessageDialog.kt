@@ -178,7 +178,7 @@ fun MassMessageDialog(
 
                 // Preview da mensagem
                 Text(
-                    text = "Preview:",
+                    text = stringResource(R.string.message_preview),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
