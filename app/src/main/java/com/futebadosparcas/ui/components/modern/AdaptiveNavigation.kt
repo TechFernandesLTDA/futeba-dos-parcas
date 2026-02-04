@@ -73,7 +73,7 @@ fun AdaptiveNavigationScaffold(
  * Exemplo de uso com destinos padrão do app
  */
 @Composable
-fun AppDestinations() = listOf(
+fun appDestinations() = listOf(
     NavDestination(
         route = "home",
         label = "Início",

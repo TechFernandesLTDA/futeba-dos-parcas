@@ -2,6 +2,7 @@ package com.futebadosparcas.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -67,7 +68,7 @@ class PreferencesManager @Inject constructor(
         try {
             // 1. Limpa o arquivo de preferências corrompido
             val prefsFile = context.getSharedPreferences(ENCRYPTED_PREFS_NAME, Context.MODE_PRIVATE)
-            prefsFile.edit().clear().commit()
+            prefsFile.edit(commit = true) { clear() }
             
             // 2. Tenta recriar com nova chave
             return EncryptedSharedPreferences.create(
@@ -99,9 +100,7 @@ class PreferencesManager @Inject constructor(
     private var cachedTimeFormat: String? = null
 
     fun setFirstLaunch(isFirst: Boolean) {
-        sharedPreferences.edit()
-            .putBoolean(KEY_FIRST_LAUNCH, isFirst)
-            .apply()
+        sharedPreferences.edit { putBoolean(KEY_FIRST_LAUNCH, isFirst) }
     }
 
     fun isFirstLaunch(): Boolean {
@@ -112,9 +111,7 @@ class PreferencesManager @Inject constructor(
      * Marca se o onboarding de permissões foi concluído
      */
     fun setPermissionOnboardingCompleted(completed: Boolean) {
-        sharedPreferences.edit()
-            .putBoolean(KEY_PERMISSION_ONBOARDING_COMPLETED, completed)
-            .apply()
+        sharedPreferences.edit { putBoolean(KEY_PERMISSION_ONBOARDING_COMPLETED, completed) }
     }
 
     /**
@@ -125,9 +122,7 @@ class PreferencesManager @Inject constructor(
     }
 
     fun setNotificationsEnabled(enabled: Boolean) {
-        sharedPreferences.edit()
-            .putBoolean(KEY_NOTIFICATIONS_ENABLED, enabled)
-            .apply()
+        sharedPreferences.edit { putBoolean(KEY_NOTIFICATIONS_ENABLED, enabled) }
     }
 
     fun areNotificationsEnabled(): Boolean {
@@ -135,9 +130,7 @@ class PreferencesManager @Inject constructor(
     }
 
     fun setPreferredFieldType(fieldType: String) {
-        sharedPreferences.edit()
-            .putString(KEY_PREFERRED_FIELD_TYPE, fieldType)
-            .apply()
+        sharedPreferences.edit { putString(KEY_PREFERRED_FIELD_TYPE, fieldType) }
     }
 
     fun getPreferredFieldType(): String? {
@@ -146,9 +139,7 @@ class PreferencesManager @Inject constructor(
 
     fun setThemePreference(theme: String) {
         cachedTheme = theme
-        sharedPreferences.edit()
-            .putString(KEY_THEME_PREFERENCE, theme)
-            .apply()
+        sharedPreferences.edit { putString(KEY_THEME_PREFERENCE, theme) }
     }
 
     /**
@@ -170,9 +161,7 @@ class PreferencesManager @Inject constructor(
      */
     fun setTimeFormatPreference(format: String) {
         cachedTimeFormat = format
-        sharedPreferences.edit()
-            .putString(KEY_TIME_FORMAT_PREFERENCE, format)
-            .apply()
+        sharedPreferences.edit { putString(KEY_TIME_FORMAT_PREFERENCE, format) }
     }
 
     /**
@@ -227,9 +216,7 @@ class PreferencesManager @Inject constructor(
      * Salva o timestamp do último login bem-sucedido (encriptado)
      */
     fun setLastLoginTime(timestamp: Long = System.currentTimeMillis()) {
-        encryptedPreferences.edit()
-            .putLong(KEY_LAST_LOGIN_TIME, timestamp)
-            .apply()
+        encryptedPreferences.edit { putLong(KEY_LAST_LOGIN_TIME, timestamp) }
     }
 
     /**
@@ -245,13 +232,9 @@ class PreferencesManager @Inject constructor(
      */
     fun setFcmToken(token: String?) {
         if (token != null) {
-            encryptedPreferences.edit()
-                .putString(KEY_FCM_TOKEN, token)
-                .apply()
+            encryptedPreferences.edit { putString(KEY_FCM_TOKEN, token) }
         } else {
-            encryptedPreferences.edit()
-                .remove(KEY_FCM_TOKEN)
-                .apply()
+            encryptedPreferences.edit { remove(KEY_FCM_TOKEN) }
         }
     }
 
@@ -276,8 +259,8 @@ class PreferencesManager @Inject constructor(
     fun clearAll() {
         cachedTheme = null
         cachedTimeFormat = null
-        sharedPreferences.edit().clear().apply()
-        encryptedPreferences.edit().clear().apply()
+        sharedPreferences.edit { clear() }
+        encryptedPreferences.edit { clear() }
     }
 
     // ==================== LOCAIS FAVORITOS ====================
@@ -286,9 +269,7 @@ class PreferencesManager @Inject constructor(
      * Salva os IDs dos locais favoritos do usuário.
      */
     fun setFavoriteLocations(locationIds: Set<String>) {
-        sharedPreferences.edit()
-            .putStringSet(KEY_FAVORITE_LOCATIONS, locationIds)
-            .apply()
+        sharedPreferences.edit { putStringSet(KEY_FAVORITE_LOCATIONS, locationIds) }
     }
 
     /**
@@ -305,9 +286,7 @@ class PreferencesManager @Inject constructor(
      * Armazenados como string separada por vírgula para manter ordem.
      */
     fun setRecentLocationIds(locationIds: List<String>) {
-        sharedPreferences.edit()
-            .putString(KEY_RECENT_LOCATIONS, locationIds.joinToString(","))
-            .apply()
+        sharedPreferences.edit { putString(KEY_RECENT_LOCATIONS, locationIds.joinToString(",")) }
     }
 
     /**

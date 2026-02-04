@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import androidx.core.graphics.scale
 import android.media.ExifInterface
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
@@ -259,7 +260,7 @@ object ImageCompressor {
         val newWidth = (width * scaleFactor).toInt()
         val newHeight = (height * scaleFactor).toInt()
 
-        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+        return bitmap.scale(newWidth, newHeight, true)
     }
 
     /**

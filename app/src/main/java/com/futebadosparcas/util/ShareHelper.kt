@@ -2,8 +2,8 @@ package com.futebadosparcas.util
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
@@ -297,7 +297,7 @@ class ShareHelper @Inject constructor(
         body: String
     ) {
         val intent = Intent(Intent.ACTION_SENDTO).apply {
-            data = Uri.parse("mailto:")
+            data = "mailto:".toUri()
             putExtra(Intent.EXTRA_EMAIL, to)
             putExtra(Intent.EXTRA_SUBJECT, subject)
             putExtra(Intent.EXTRA_TEXT, body)
