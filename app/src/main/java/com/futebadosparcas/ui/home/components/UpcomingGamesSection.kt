@@ -468,7 +468,7 @@ private fun formatGameDateTime(date: Date?): String {
             // Esta semana - mostrar dia da semana + hora
             val dayFormat = SimpleDateFormat("EEE", Locale.getDefault())
             val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-            "${dayFormat.format(date).capitalize(Locale.getDefault())} às ${timeFormat.format(date)}"
+            "${dayFormat.format(date).replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} às ${timeFormat.format(date)}"
         }
         else -> {
             // Outra data - mostrar dd/MM HH:mm

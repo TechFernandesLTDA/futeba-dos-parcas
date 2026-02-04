@@ -492,7 +492,7 @@ private fun CreateGameContent(
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                     colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
                 )
 
@@ -653,7 +653,7 @@ private fun CreateGameContent(
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedRecurrence) },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                             )
 
                             ExposedDropdownMenu(
