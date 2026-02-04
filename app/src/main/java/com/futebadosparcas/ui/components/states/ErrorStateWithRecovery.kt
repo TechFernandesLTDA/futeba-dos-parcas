@@ -54,13 +54,13 @@ import com.futebadosparcas.util.RecoveryAction
 fun ErrorStateWithRecovery(
     errorType: LocationError,
     recoveryAction: RecoveryAction,
+    modifier: Modifier = Modifier,
     message: String? = null,
     onRetry: () -> Unit = {},
     onCheckInternet: () -> Unit = {},
     onLogin: () -> Unit = {},
     onGoBack: () -> Unit = {},
-    onFixFields: (List<String>) -> Unit = {},
-    modifier: Modifier = Modifier
+    onFixFields: (List<String>) -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -151,13 +151,13 @@ fun ErrorStateWithRecovery(
 fun ErrorStateWithRecoveryCompact(
     errorType: LocationError,
     recoveryAction: RecoveryAction,
+    modifier: Modifier = Modifier,
     message: String? = null,
     onRetry: () -> Unit = {},
     onCheckInternet: () -> Unit = {},
     onLogin: () -> Unit = {},
     onGoBack: () -> Unit = {},
-    onFixFields: (List<String>) -> Unit = {},
-    modifier: Modifier = Modifier
+    onFixFields: (List<String>) -> Unit = {}
 ) {
     val context = LocalContext.current
     val icon = getErrorIcon(errorType)

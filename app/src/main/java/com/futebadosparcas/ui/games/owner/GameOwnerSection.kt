@@ -41,8 +41,8 @@ fun GameOwnerSection(
     onShowPostGameReport: () -> Unit,
     onShowOwnerStats: () -> Unit,
     onShowTransferOwnership: () -> Unit,
-    onShowCheckinSettings: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onShowCheckinSettings: () -> Unit = {}
 ) {
     // Apenas dono ou co-organizador pode ver
     if (!isOwner && !isCoOrganizer) return

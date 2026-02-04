@@ -183,9 +183,9 @@ fun TimeoutErrorState(
  */
 @Composable
 fun PermissionDeniedErrorState(
+    modifier: Modifier = Modifier,
     message: String = "Você não tem permissão para acessar este conteúdo",
-    onRetry: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    onRetry: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier

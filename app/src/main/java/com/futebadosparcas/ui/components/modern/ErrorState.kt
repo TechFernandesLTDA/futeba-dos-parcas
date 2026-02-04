@@ -41,11 +41,11 @@ enum class ErrorType {
  */
 @Composable
 fun ErrorState(
+    modifier: Modifier = Modifier,
     errorType: ErrorType = ErrorType.GENERIC,
     message: String? = null,
     onRetry: (() -> Unit)? = null,
-    actionText: String = stringResource(R.string.retry),
-    modifier: Modifier = Modifier
+    actionText: String = stringResource(R.string.retry)
 ) {
     val (icon, defaultMessage) = when (errorType) {
         ErrorType.NETWORK -> Icons.Default.WifiOff to
@@ -120,8 +120,8 @@ fun ErrorState(
 @Composable
 fun CompactErrorState(
     message: String,
-    onRetry: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onRetry: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier
@@ -174,8 +174,8 @@ fun CompactErrorState(
 fun ErrorSnackbar(
     message: String,
     onDismiss: () -> Unit,
-    onRetry: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onRetry: (() -> Unit)? = null
 ) {
     Snackbar(
         modifier = modifier,

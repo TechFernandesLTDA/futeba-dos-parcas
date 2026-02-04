@@ -54,8 +54,8 @@ fun CepLookupField(
     onLookup: (String) -> Unit,
     addressResult: AddressLookupResult?,
     onAddressAccepted: (AddressLookupResult) -> Unit,
-    isLoading: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false
 ) {
     var formattedCep by remember { mutableStateOf(cep) }
 
