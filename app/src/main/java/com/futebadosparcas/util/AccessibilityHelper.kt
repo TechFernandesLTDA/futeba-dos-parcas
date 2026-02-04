@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -125,7 +126,7 @@ class AccessibilityHelper @Inject constructor(
      * Build content description for player rating
      */
     fun buildPlayerRatingDescription(rating: Double): String {
-        val ratingText = String.format("%.1f", rating)
+        val ratingText = String.format(Locale.getDefault(), "%.1f", rating)
         return "Avaliação do jogador: $ratingText estrelas de 5"
     }
 

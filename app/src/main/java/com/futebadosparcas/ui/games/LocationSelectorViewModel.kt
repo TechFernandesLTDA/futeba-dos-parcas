@@ -30,6 +30,7 @@ import java.text.Normalizer
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.*
 
@@ -526,7 +527,7 @@ data class LocationWithDistance(
             if (it < 1.0) {
                 "${(it * 1000).toInt()} m"
             } else {
-                String.format("%.1f km", it)
+                String.format(Locale.getDefault(), "%.1f km", it)
             }
         } ?: ""
     }

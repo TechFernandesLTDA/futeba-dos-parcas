@@ -149,8 +149,8 @@ fun rememberPercentage(current: Long, total: Long): Int {
 fun rememberFormattedNumber(number: Long): String {
     return remember(number) {
         when {
-            number >= 1_000_000 -> String.format("%.1fM", number / 1_000_000.0)
-            number >= 1_000 -> String.format("%.1fK", number / 1_000.0)
+            number >= 1_000_000 -> String.format(Locale.getDefault(), "%.1fM", number / 1_000_000.0)
+            number >= 1_000 -> String.format(Locale.getDefault(), "%.1fK", number / 1_000.0)
             else -> number.toString()
         }
     }
