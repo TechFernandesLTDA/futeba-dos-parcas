@@ -9,6 +9,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.core.net.toUri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -711,7 +712,7 @@ fun generateAndShareReport(
 
     val intent = if (asWhatsApp) {
         Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse("https://wa.me/?text=${Uri.encode(reportText)}")
+            data = "https://wa.me/?text=${Uri.encode(reportText)}".toUri()
         }
     } else {
         Intent(Intent.ACTION_SEND).apply {

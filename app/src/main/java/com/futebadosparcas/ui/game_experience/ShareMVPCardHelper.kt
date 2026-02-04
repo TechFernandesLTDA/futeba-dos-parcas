@@ -14,6 +14,9 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
+import androidx.core.graphics.toColorInt
 import coil.imageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
@@ -44,25 +47,25 @@ object ShareMVPCardHelper {
     private const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.futebadosparcas"
 
     // Cores do tema escuro
-    private val DARK_BG = AndroidColor.parseColor("#1A1A2E")
-    private val DARK_SURFACE = AndroidColor.parseColor("#2D2D44")
-    private val DARK_TEXT_PRIMARY = AndroidColor.parseColor("#FFFFFF")
-    private val DARK_TEXT_SECONDARY = AndroidColor.parseColor("#8888AA")
+    private val DARK_BG = "#1A1A2E".toColorInt()
+    private val DARK_SURFACE = "#2D2D44".toColorInt()
+    private val DARK_TEXT_PRIMARY = "#FFFFFF".toColorInt()
+    private val DARK_TEXT_SECONDARY = "#8888AA".toColorInt()
 
     // Cores do tema claro
-    private val LIGHT_BG = AndroidColor.parseColor("#FFFFFF")
-    private val LIGHT_SURFACE = AndroidColor.parseColor("#F5F5F5")
-    private val LIGHT_TEXT_PRIMARY = AndroidColor.parseColor("#1A1A2E")
-    private val LIGHT_TEXT_SECONDARY = AndroidColor.parseColor("#666688")
+    private val LIGHT_BG = "#FFFFFF".toColorInt()
+    private val LIGHT_SURFACE = "#F5F5F5".toColorInt()
+    private val LIGHT_TEXT_PRIMARY = "#1A1A2E".toColorInt()
+    private val LIGHT_TEXT_SECONDARY = "#666688".toColorInt()
 
     // Cores fixas (usadas em ambos temas)
-    private val GOLD_COLOR = AndroidColor.parseColor("#FFD700")
-    private val SILVER_COLOR = AndroidColor.parseColor("#E0E0E0")
-    private val BRONZE_COLOR = AndroidColor.parseColor("#CD7F32")
-    private val GREEN_COLOR = AndroidColor.parseColor("#58CC02")
-    private val MVP_COLOR = AndroidColor.parseColor("#FFD700")
-    private val GK_COLOR = AndroidColor.parseColor("#4CAF50")
-    private val WORST_COLOR = AndroidColor.parseColor("#FF5722")
+    private val GOLD_COLOR = "#FFD700".toColorInt()
+    private val SILVER_COLOR = "#E0E0E0".toColorInt()
+    private val BRONZE_COLOR = "#CD7F32".toColorInt()
+    private val GREEN_COLOR = "#58CC02".toColorInt()
+    private val MVP_COLOR = "#FFD700".toColorInt()
+    private val GK_COLOR = "#4CAF50".toColorInt()
+    private val WORST_COLOR = "#FF5722".toColorInt()
 
     /**
      * Gera e compartilha o card de resultado da votação.
@@ -210,7 +213,7 @@ object ShareMVPCardHelper {
             VoteCategory.CUSTOM -> GREEN_COLOR
         }
 
-        val bitmap = Bitmap.createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(CARD_WIDTH, CARD_HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
         val paint = Paint().apply {
@@ -417,7 +420,7 @@ object ShareMVPCardHelper {
      * Desenha uma imagem circular no canvas.
      */
     private fun drawCircularBitmap(canvas: Canvas, bitmap: Bitmap, centerX: Float, centerY: Float, radius: Float) {
-        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, (radius * 2).toInt(), (radius * 2).toInt(), true)
+        val scaledBitmap = bitmap.scale((radius * 2).toInt(), (radius * 2).toInt(), true)
 
         val paint = Paint().apply {
             isAntiAlias = true

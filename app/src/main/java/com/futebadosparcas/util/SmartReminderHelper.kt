@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.edit
 import com.futebadosparcas.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.DayOfWeek
@@ -515,7 +516,7 @@ class SmartReminderHelper @Inject constructor(
     }
 
     private fun savePreferredDays(days: List<DayOfWeek>) {
-        prefs.edit().putString(KEY_PREFERRED_DAYS, days.joinToString(",") { it.name }).apply()
+        prefs.edit { putString(KEY_PREFERRED_DAYS, days.joinToString(",") { it.name }) }
     }
 
     private fun getPreferredTimeSlots(): Map<Int, Int> {
@@ -540,7 +541,7 @@ class SmartReminderHelper @Inject constructor(
 
     private fun savePreferredTimes(times: Map<Int, Int>) {
         val timesString = times.entries.joinToString(",") { "${it.key}:${it.value}" }
-        prefs.edit().putString(KEY_PREFERRED_TIMES, timesString).apply()
+        prefs.edit { putString(KEY_PREFERRED_TIMES, timesString) }
     }
 
     private fun getTopTimeSlots(): List<TimeSlot> {
@@ -563,7 +564,7 @@ class SmartReminderHelper @Inject constructor(
     }
 
     private fun saveLastGameDate(date: LocalDateTime) {
-        prefs.edit().putString(KEY_LAST_GAME_DATE, date.toString()).apply()
+        prefs.edit { putString(KEY_LAST_GAME_DATE, date.toString()) }
     }
 
     private fun getCurrentStreak(): Int {
@@ -571,7 +572,7 @@ class SmartReminderHelper @Inject constructor(
     }
 
     private fun saveCurrentStreak(streak: Int) {
-        prefs.edit().putInt(KEY_CURRENT_STREAK, streak).apply()
+        prefs.edit { putInt(KEY_CURRENT_STREAK, streak) }
     }
 
     private fun calculateAverageGamesPerWeek(): Float {

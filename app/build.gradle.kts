@@ -280,9 +280,9 @@ dependencies {
 
     // Paging 3 - For efficient large list loading
     val pagingVersion = "3.3.5"
-    implementation("androidx.paging:paging-runtime:$pagingVersion")
+    implementation("androidx.paging:paging-runtime-ktx:$pagingVersion")
     implementation("androidx.paging:paging-compose:$pagingVersion")
-    testImplementation("androidx.paging:paging-common:$pagingVersion")
+    testImplementation("androidx.paging:paging-common-ktx:$pagingVersion")
 
     // WorkManager (for background cache cleanup)
     implementation("androidx.work:work-runtime-ktx:2.11.1")

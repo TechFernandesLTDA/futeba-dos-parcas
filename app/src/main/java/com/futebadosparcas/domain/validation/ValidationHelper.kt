@@ -1,6 +1,7 @@
 package com.futebadosparcas.domain.validation
 
 import java.util.Date
+import java.util.Locale
 import java.util.regex.Pattern
 
 /**
@@ -778,14 +779,14 @@ object ValidationHelper {
         if (value < MIN_PAYMENT_VALUE) {
             return ValidationResult.invalid(
                 fieldName,
-                "Valor deve ser maior que R$ ${String.format("%.2f", MIN_PAYMENT_VALUE)}",
+                "Valor deve ser maior que R$ ${String.format(Locale.getDefault(), "%.2f", MIN_PAYMENT_VALUE)}",
                 ValidationErrorCode.NEGATIVE_VALUE
             )
         }
         if (value > MAX_PAYMENT_VALUE) {
             return ValidationResult.invalid(
                 fieldName,
-                "Valor máximo é R$ ${String.format("%.2f", MAX_PAYMENT_VALUE)}",
+                "Valor máximo é R$ ${String.format(Locale.getDefault(), "%.2f", MAX_PAYMENT_VALUE)}",
                 ValidationErrorCode.OUT_OF_RANGE
             )
         }

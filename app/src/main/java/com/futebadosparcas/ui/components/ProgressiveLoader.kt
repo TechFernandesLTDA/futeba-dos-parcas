@@ -274,7 +274,7 @@ private fun DefaultErrorContent(error: String) {
  * Detecta eventos de scroll para carregamento progressivo.
  */
 @Composable
-fun rememberScrollLoadTrigger(
+fun ScrollLoadTrigger(
     listState: LazyListState,
     prefetchDistance: Int = 5,
     onLoadMore: () -> Unit

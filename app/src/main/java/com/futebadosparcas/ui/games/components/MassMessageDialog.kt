@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.games.components
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
+import androidx.core.net.toUri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -216,7 +217,7 @@ fun MassMessageDialog(
                         onClick = {
                             val message = templateMessages[selectedTemplate]
                             val intent = Intent(Intent.ACTION_VIEW).apply {
-                                data = Uri.parse("https://wa.me/?text=${Uri.encode(message)}")
+                                data = "https://wa.me/?text=${Uri.encode(message)}".toUri()
                             }
                             context.startActivity(intent)
                             onDismiss()
