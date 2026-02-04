@@ -32,11 +32,11 @@ import com.futebadosparcas.R
 fun ExpressiveHubHeader(
     user: com.futebadosparcas.domain.model.User,
     summary: GamificationSummary,
-    statistics: com.futebadosparcas.data.model.UserStatistics? = null,
     onProfileClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    statistics: com.futebadosparcas.data.model.UserStatistics? = null,
     hapticManager: HapticManager? = null,
-    onLevelClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onLevelClick: () -> Unit = {}
 ) {
     val windowSizeClass = rememberWindowSizeClass()
     val spacing = rememberAdaptiveSpacing()

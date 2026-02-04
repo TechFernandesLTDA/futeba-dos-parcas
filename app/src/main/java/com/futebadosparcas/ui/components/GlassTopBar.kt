@@ -212,9 +212,9 @@ fun GlassTopBarWithBack(
 @Composable
 fun CollapsingGlassTopBar(
     title: String,
-    expandedTitle: String = title,
     scrollProgress: Float,  // 0 = expandido, 1 = colapsado
     modifier: Modifier = Modifier,
+    expandedTitle: String = title,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     glassConfig: GlassConfig = LightGlassConfig,

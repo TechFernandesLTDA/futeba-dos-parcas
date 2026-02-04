@@ -68,9 +68,9 @@ import java.util.*
  */
 @Composable
 fun BadgesScreen(
+    modifier: Modifier = Modifier,
     viewModel: BadgesViewModel = hiltViewModel(),
-    onBackClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    onBackClick: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 

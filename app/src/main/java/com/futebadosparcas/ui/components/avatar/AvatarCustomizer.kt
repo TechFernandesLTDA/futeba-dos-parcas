@@ -208,8 +208,8 @@ enum class AvatarFrame(
 @Composable
 fun CustomAvatar(
     config: AvatarConfig,
-    size: Dp = 80.dp,
     modifier: Modifier = Modifier,
+    size: Dp = 80.dp,
     showBadge: Boolean = true,
     showFrame: Boolean = true
 ) {

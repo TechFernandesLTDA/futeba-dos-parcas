@@ -29,10 +29,10 @@ import com.futebadosparcas.ui.theme.AppDimensions
 fun EmptyStateDesign(
     icon: ImageVector,
     title: String,
+    modifier: Modifier = Modifier,
     description: String? = null,
     actionLabel: String? = null,
-    onAction: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    onAction: (() -> Unit)? = null
 ) {
     val iconTint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
 
