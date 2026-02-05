@@ -6,9 +6,15 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,7 +30,11 @@ class AuthRepository @Inject constructor(
 
     private val usersCollection = firestore.collection("users")
 
-    val authStateFlow: Flow<FirebaseUser?> = callbackFlow {
+    // Escopo singleton para manter o stateIn ativo durante ciclo da app
+    private val authScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    // Flow raw para listeners de autenticação
+    private val rawAuthStateFlow: Flow<FirebaseUser?> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { auth ->
             val user = auth.currentUser
             trySend(user)
@@ -37,6 +47,20 @@ class AuthRepository @Inject constructor(
         auth.addAuthStateListener(listener)
         awaitClose { auth.removeAuthStateListener(listener) }
     }
+
+    /**
+     * Estado de autenticação compartilhado com stateIn().
+     * Benefícios:
+     * - Evita reexecução de listeners ao subscrever múltiplas vezes
+     * - Mantém último valor sem subscrição ativa
+     * - WhileSubscribed(5000) permite resubscription automática eficiente
+     */
+    val authStateFlow: StateFlow<FirebaseUser?> = rawAuthStateFlow
+        .stateIn(
+            scope = authScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = auth.currentUser
+        )
 
     fun isLoggedIn(): Boolean = auth.currentUser != null
 
