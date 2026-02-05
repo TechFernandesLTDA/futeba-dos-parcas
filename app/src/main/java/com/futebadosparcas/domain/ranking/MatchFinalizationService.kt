@@ -7,7 +7,9 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -324,18 +326,21 @@ class MatchFinalizationService @Inject constructor(
         val hasBestGoal = playerStatsSnapshot.documents.firstOrNull()
             ?.getBoolean("best_goal") ?: false
 
-        // 5. Calcular XP (agora incluindo isWorstPlayer)
-        val xpResult = XPCalculator.calculateFromConfirmation(
-            confirmation = confirmation,
-            teamWon = playerTeamResult == GameResult.WIN,
-            teamDrew = playerTeamResult == GameResult.DRAW,
-            opponentsGoals = goalsConceded,
-            isMvp = isMvp,
-            isWorstPlayer = isWorstPlayer,
-            hasBestGoal = hasBestGoal,
-            currentStreak = currentStreak,
-            settings = settings
-        )
+        // 5. Calcular XP em Dispatchers.Default (operação CPU-intensiva)
+        // PERF_001 P2 #22: Cálculos não devem executar em thread de I/O ou Main
+        val xpResult = withContext(Dispatchers.Default) {
+            XPCalculator.calculateFromConfirmation(
+                confirmation = confirmation,
+                teamWon = playerTeamResult == GameResult.WIN,
+                teamDrew = playerTeamResult == GameResult.DRAW,
+                opponentsGoals = goalsConceded,
+                isMvp = isMvp,
+                isWorstPlayer = isWorstPlayer,
+                hasBestGoal = hasBestGoal,
+                currentStreak = currentStreak,
+                settings = settings
+            )
+        }
 
         // 6. Buscar dados atuais do usuario
         val userDoc = usersCollection.document(userId).get().await()

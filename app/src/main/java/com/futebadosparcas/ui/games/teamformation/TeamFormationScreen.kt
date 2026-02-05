@@ -1401,8 +1401,15 @@ private fun PairSelectionDialog(
     var player1Id by remember { mutableStateOf<String?>(null) }
     var player2Id by remember { mutableStateOf<String?>(null) }
 
-    val pairedPlayerIds = existingPairs.flatMap { listOf(it.player1Id, it.player2Id) }.toSet()
-    val availablePlayers = players.filter { it.id !in pairedPlayerIds }
+    // ✅ OTIMIZAÇÃO P2#9: Usar derivedStateOf para evitar recálculos desnecessários
+    // Só recompõe se a lista de jogadores disponíveis mudar
+    val pairedPlayerIds = remember { derivedStateOf {
+        existingPairs.flatMap { listOf(it.player1Id, it.player2Id) }.toSet()
+    } }.value
+
+    val availablePlayers = remember { derivedStateOf {
+        players.filter { it.id !in pairedPlayerIds }
+    } }.value
 
     AlertDialog(
         onDismissRequest = onDismiss,

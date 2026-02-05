@@ -117,6 +117,8 @@ fun GroupDetailScreen(
     // Confirmation Dialogs using shared components
     val group = (uiState as? GroupDetailUiState.Success)?.group
     val members = (uiState as? GroupDetailUiState.Success)?.members ?: emptyList()
+    // ✅ OTIMIZAÇÃO: derivedStateOf para membros elegíveis (evita recálculos desnecessários)
+    val eligibleMembersForTransfer = remember { derivedStateOf { members.filter { it.getRoleEnum() != GroupMemberRole.OWNER } } }.value
 
     if (showEditDialog && group != null) {
         EditGroupDialog(
@@ -182,8 +184,7 @@ fun GroupDetailScreen(
                 onEditClick = { showEditDialog = true },
                 onTransferOwnershipClick = {
                      // Verifica se há membros elegíveis (não-owner) para transferência
-                     val eligibleMembers = members.filter { it.getRoleEnum() != GroupMemberRole.OWNER }
-                     if (eligibleMembers.isNotEmpty()) {
+                     if (eligibleMembersForTransfer.isNotEmpty()) {
                          showTransferOwnershipDialog = true
                      }
                 },

@@ -21,8 +21,9 @@ class SettingsRepositoryImpl @Inject constructor(
     private val settingsCollection = firestore.collection("app_settings")
     private val gamificationDoc = settingsCollection.document("gamification")
 
-    override suspend fun getGamificationSettings(): Result<GamificationSettings> = withContext(Dispatchers.Default) {
+    override suspend fun getGamificationSettings(): Result<GamificationSettings> = withContext(Dispatchers.IO) {
         try {
+            // PERF_001 P2: Firestore I/O deve usar Dispatchers.IO, não Default
             val snapshot = gamificationDoc.get().await()
             val settings = snapshot.toObject(GamificationSettings::class.java) ?: GamificationSettings()
             Result.success(settings)
@@ -32,8 +33,9 @@ class SettingsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateGamificationSettings(settings: GamificationSettings): Result<Unit> = withContext(Dispatchers.Default) {
+    override suspend fun updateGamificationSettings(settings: GamificationSettings): Result<Unit> = withContext(Dispatchers.IO) {
         try {
+            // PERF_001 P2: Firestore I/O deve usar Dispatchers.IO, não Default
             gamificationDoc.set(settings).await()
             Result.success(Unit)
         } catch (e: Exception) {

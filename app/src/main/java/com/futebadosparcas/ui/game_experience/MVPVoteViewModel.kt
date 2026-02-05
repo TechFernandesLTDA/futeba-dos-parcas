@@ -10,9 +10,11 @@ import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.MatchFinalizationService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -166,12 +168,15 @@ class MVPVoteViewModel @Inject constructor(
         viewModelScope.launch {
             val currentState = _uiState.value
             _uiState.value = MVPVoteUiState.Loading(currentState.isOwner)
-            
+
             gameExperienceRepository.concludeVoting(gameId)
                 .onSuccess {
-                    // Process XP and Stats
-                    matchFinalizationService.processGame(gameId)
-                    
+                    // PERF_001 P2 #22: Processar XP em IO thread (não Main)
+                    // Evita bloqueio da UI durante cálculo intensivo
+                    withContext(Dispatchers.IO) {
+                        matchFinalizationService.processGame(gameId)
+                    }
+
                     _uiState.value = MVPVoteUiState.Finished(currentState.isOwner)
                 }
                 .onFailure {

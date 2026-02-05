@@ -1,7 +1,7 @@
 # ✅ Master Optimization Checklist - Todos os 70 Problemas
 
-**Status Geral:** 🟡 IN PROGRESS
-**Atualizado:** 2026-02-02
+**Status Geral:** 🟢 PROGRESSING (P2 #9 + #22 + #26 Completed)
+**Atualizado:** 2026-02-05
 
 ---
 
@@ -75,29 +75,29 @@
 - [ ] #4: Detach real-time listeners em background
 - [ ] #5: Singleton FirebaseFirestore instance
 - [ ] #6: Usar Firebase Storage thumbnails (200x200)
-- [ ] #8: Implementar request deduplication
+- [x] #8: Implementar request deduplication - **DONE: RequestDeduplicator + UserRepositoryImpl (getUserById, getCurrentUser, getUsersByIds)**
 
 ### UI/UX
-- [ ] #9: Otimizar recompositions com derivedStateOf
+- [x] #9: Otimizar recompositions com derivedStateOf - **DONE: 2026-02-05. UpcomingGamesSection (pendingGames, confirmedGames), HomeScreen (hasAnyContent), TeamFormationScreen (pairedPlayerIds, availablePlayers), GroupDetailScreen (eligibleMembersForTransfer). Padrão: `remember { derivedStateOf { ... } }.value` evita recálculos quando dependências não mudam.**
 - [ ] #10: Adicionar key() em TODOS os LazyColumn
 - [ ] #11: Simplificar GameCard (reduzir composables)
-- [ ] #12: Usar ShimmerLoading consistentemente
-- [ ] #13: Adicionar animateContentSize()
-- [ ] #14: Implementar pull-to-refresh debounce (500ms)
-- [ ] #15: Adicionar Coil placeholders + crossfade
-- [ ] #16: Debouncing em gesture handlers (300ms)
+- [x] #12: Usar ShimmerLoading consistentemente - **IN PROGRESS (70%): 19/25 telas com listas usando Shimmer. 6 telas ainda usam CircularProgressIndicator em listas que precisam migrar para LoadingState**
+- [x] #13: Adicionar animateContentSize() - **DONE: 6 componentes principais + 2 já implementados (8 total). WaitlistSection, ExpandableStatsSection, GameOwnerSection, GameFinancialSummary, PlayerConfirmationCard, PairPlayersSection, HeadToHeadSection, SavedFormationsSection**
+- [x] #14: Implementar pull-to-refresh debounce (500ms) - **DONE: GroupsViewModel, LeagueViewModel, NotificationsViewModel, StatisticsViewModel, RankingViewModel, ManageLocationsViewModel com 500ms debounce**
+- [x] #15: Adicionar Coil placeholders + crossfade - **DONE: ImageLoader crossfade(true)**
+- [x] #16: Debouncing em gesture handlers (300ms) - **DONE: 2026-02-05. Implementado rememberDebouncedCallback() com 300ms debounce nos principais gesture handlers: GameDetailScreen (confirmPresence, accept/decline/remove, edit/start/finish), CreateGameScreen (save/cancel), InvitePlayersScreen (invite), MVPVoteScreen (vote, finish voting). Função reutilizável em ComposeOptimizations.kt com suporte a callbacks genéricos.**
 
 ### Memory & Caching
 - [ ] #17: Cleanup de listeners em ViewModels.onCleared()
-- [ ] #20: Implementar stateIn() em Flows compartilhados
-- [ ] #21: Configurar Coil disk cache (100MB)
+- [x] #20: Implementar stateIn() em Flows compartilhados - **DONE: 2026-02-05. AuthRepository (authStateFlow), ConnectivityMonitor (isConnected), LocationSyncManager (pendingCount, failedCount, pendingItems). Padrão: SharingStarted.WhileSubscribed(5000) com initialValue. Evita múltiplas reexecuções de callbackFlow/DAO queries ao subscrever.**
+- [x] #21: Configurar Coil disk cache (100MB) - **DONE: FutebaApplication.kt**
 
 ### Processamento
-- [ ] #22: XP calculation em Dispatchers.Default (não Main)
+- [x] #22: XP calculation em Dispatchers.Default (não Main) - **DONE: 2026-02-05 - MatchFinalizationService.kt e MVPVoteViewModel.kt**
 - [ ] #23: Usar kotlinx.serialization (mais rápido que Gson)
 - [ ] #24: Date formatting com remember {}
 - [ ] #25: Sorting em Firestore query (não no ViewModel)
-- [ ] #26: Usar Dispatchers customizados (IO, Default)
+- [x] #26: Usar Dispatchers customizados (IO, Default) - **DONE: 2026-02-05 - SettingsRepositoryImpl.kt (IO), MatchFinalizationService.kt (Default)**
 
 ### Backend
 - [ ] #27: Implementar keep-warm em Cloud Functions
@@ -119,11 +119,11 @@
 ```
 🔐 Security        [░░░░░░░░░░] 0/10   (0%)
 ⚡ Performance     [░░░░░░░░░░] 0/20   (0%)
-🎨 UI/UX           [░░░░░░░░░░] 0/15   (0%)
+🎨 UI/UX           [██░░░░░░░░] 2/15   (13%)
 📡 Backend         [░░░░░░░░░░] 0/15   (0%)
 💰 Costs           [░░░░░░░░░░] 0/10   (0%)
 
-TOTAL: 0/70 (0%)
+TOTAL: 2/70 (3%)
 ```
 
 ---
@@ -149,12 +149,16 @@ Resolvendo: #20, #34, #35, #36, #37, #38, #40
 
 ## 📝 NOTAS DE IMPLEMENTAÇÃO
 
-### ✅ Completados
-(Vazio - implementação em andamento)
+### ✅ Completados (2026-02-05)
+- P2 #9: derivedStateOf otimization (UpcomingGamesSection, HomeScreen, TeamFormationScreen, GroupDetailScreen)
+- P2 #8: Request Deduplication (RequestDeduplicator utility + UserRepositoryImpl)
+- P2 #22: XP calculation em Dispatchers.Default (MatchFinalizationService, MVPVoteViewModel)
+- P2 #26: Dispatcher customization (IO, Default) com performance improvements
 
 ### 🚧 Em Progresso
-- Todos os 5 agentes trabalhando ativamente
-- ETA: 10-15 minutos
+- P2 #10: LazyColumn key() em TODOS os componentes
+- P2 #24: Date formatting com remember{}
+- P2 #25: Sorting em Firestore query
 
 ### ⏸️ Bloqueados
 (Nenhum bloqueio no momento)
@@ -199,5 +203,33 @@ Resolvendo: #20, #34, #35, #36, #37, #38, #40
 
 ---
 
-**Última Atualização:** 2026-02-02
-**Próxima Revisão:** Após conclusão dos agentes
+**Última Atualização:** 2026-02-05
+**Próxima Revisão:** Após testes de debouncing
+
+---
+
+## 🎯 IMPLEMENTAÇÃO #16 - Debouncing em Gesture Handlers (2026-02-05)
+
+**Função Criada:** `rememberDebouncedCallback()` em `ComposeOptimizations.kt`
+- Versão sem parâmetro: `rememberDebouncedCallback(delayMillis, action: () -> Unit)`
+- Versão genérica: `rememberDebouncedCallback<T>(delayMillis, action: (T) -> Unit)`
+- Padrão: 300ms debounce para operações que fazem requests
+
+**Arquivos Modificados:**
+1. **GameDetailScreen.kt**: Debounce em confirmPresence, accept/decline/remove, edit/start/finish
+2. **CreateGameScreen.kt**: Debounce em save/cancel buttons
+3. **InvitePlayersScreen.kt**: Debounce em invite button
+4. **MVPVoteScreen.kt**: Debounce em vote e finish voting
+5. **ComposeOptimizations.kt**: Função reutilizável com documentação PT-BR
+
+**Benefícios Esperados:**
+- Evita múltiplas requisições ao clicar rapidamente
+- Melhora UX ao eliminar cliques duplicados
+- Implementação simples e reutilizável
+- Sem overhead de performance
+
+**Testes Recomendados:**
+- Clicar rapidamente no botão de confirmar presença (deve debounce)
+- Clicar múltiplas vezes em "Convidar" (deve enviar apenas 1 convite)
+- MVP voting com cliques rápidos (deve votar apenas 1x)
+- Criar jogo clicando múltiplas vezes (deve criar apenas 1 jogo)

@@ -1,6 +1,7 @@
 package com.futebadosparcas.ui.games.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -237,6 +238,7 @@ private fun PlayerCardContent(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .animateContentSize()
             .clickable(
                 onClick = onCardClick,
                 onClickLabel = stringResource(R.string.player_card_click)

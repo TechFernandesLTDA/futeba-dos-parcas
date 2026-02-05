@@ -99,6 +99,14 @@ class LeagueViewModel @Inject constructor(
      * Seleciona uma season diferente e recarrega os dados
      */
     fun selectSeason(season: AndroidSeason) {
+        // Debounce de 500ms para evitar múltiplos refreshes rápidos durante pull-to-refresh
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastRefreshTime < REFRESH_DEBOUNCE_MS) {
+            // Refresh ainda em cooldown, ignora chamada
+            return
+        }
+
+        lastRefreshTime = currentTime
         _selectedSeason.value = season
         loadLeagueData()
     }
@@ -126,7 +134,11 @@ class LeagueViewModel @Inject constructor(
     companion object {
         private const val TAG = "LeagueViewModel"
         private const val MAX_CACHE_SIZE = 200
+        private const val REFRESH_DEBOUNCE_MS = 500L
     }
+
+    // Debounce para pull-to-refresh (500ms para evitar múltiplos refreshes rápidos)
+    private var lastRefreshTime: Long = 0
 
     /**
      * Carrega dados da liga em tempo real
