@@ -126,9 +126,11 @@ class GameSummonRepositoryImpl(
             val userId = firebaseDataSource.getCurrentAuthUserId()
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
+            // PERF P1 #12: Adicionado .limit(50) para evitar leitura ilimitada
             val snapshot = summonsCollection
                 .whereEqualTo("user_id", userId)
                 .whereEqualTo("status", SummonStatus.PENDING.name)
+                .limit(50) // Maximo de 50 convocacoes pendentes por usuario
                 .get()
                 .await()
 
@@ -149,9 +151,11 @@ class GameSummonRepositoryImpl(
             return@callbackFlow
         }
 
+        // PERF P1 #12: Adicionado .limit(50) para evitar leitura ilimitada em real-time
         val listener = summonsCollection
             .whereEqualTo("user_id", userId)
             .whereEqualTo("status", SummonStatus.PENDING.name)
+            .limit(50)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(emptyList())
@@ -168,9 +172,11 @@ class GameSummonRepositoryImpl(
 
     override suspend fun getGameSummons(gameId: String): Result<List<GameSummon>> {
         return try {
+            // PERF P1 #12: Adicionado .limit(100) para evitar leitura ilimitada
             val snapshot = summonsCollection
                 .whereEqualTo("game_id", gameId)
                 .orderBy("summoned_at", com.google.firebase.firestore.Query.Direction.ASCENDING)
+                .limit(100) // Maximo de 100 convocacoes por jogo
                 .get()
                 .await()
 
@@ -184,8 +190,10 @@ class GameSummonRepositoryImpl(
     }
 
     override fun getGameSummonsFlow(gameId: String): Flow<List<GameSummon>> = callbackFlow {
+        // PERF P1 #12: Adicionado .limit(100) para evitar leitura ilimitada em real-time
         val listener = summonsCollection
             .whereEqualTo("game_id", gameId)
+            .limit(100)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(emptyList())

@@ -1,49 +1,49 @@
 # ✅ Master Optimization Checklist - Todos os 70 Problemas
 
-**Status Geral:** 🟡 IN PROGRESS
-**Atualizado:** 2026-02-02
+**Status Geral:** 🟢 GOOD PROGRESS
+**Atualizado:** 2026-02-04
 
 ---
 
 ## 🔥 CRÍTICOS (P0) - 15 items
 
 ### Firestore Security Rules
-- [ ] #1: Remover get() calls excessivos (getUserRole, isGroupMember, isGameOwner)
-- [ ] #4: Migrar role para Custom Claims
-- [ ] #29: Validar que XP não é editável por FIELD_OWNER (verificar em prod)
-- [ ] #30: Adicionar bounds validation em scores (max 100)
-- [ ] #32: Implementar Firebase App Check
+- [x] #1: Remover get() calls excessivos (getUserRole, isGroupMember, isGameOwner) - **DONE: Custom Claims**
+- [x] #4: Migrar role para Custom Claims - **DONE: auth/custom-claims.ts**
+- [x] #29: Validar que XP não é editável por FIELD_OWNER - **DONE: fieldUnchanged('experience_points')**
+- [x] #30: Adicionar bounds validation em scores (max 100) - **DONE: isValidScore()**
+- [x] #32: Implementar Firebase App Check - **DONE: FutebaApplication.kt + Cloud Functions**
 
 ### Cloud Functions
-- [ ] #6: Implementar processamento paralelo/batch de XP (não síncrono)
-- [ ] #7: Adicionar Firestore batch writes (até 500 ops)
-- [ ] #9: Implementar idempotência com transaction IDs
-- [ ] #10: Adicionar rate limiting em callable functions
+- [x] #6: Implementar processamento paralelo/batch de XP - **DONE: Promise.all() + batch writes**
+- [x] #7: Adicionar Firestore batch writes (até 500 ops) - **DONE: db.batch() no index.ts**
+- [x] #9: Implementar idempotência com transaction IDs - **DONE: generateTransactionId() + xp_logs check**
+- [x] #10: Adicionar rate limiting em callable functions - **DONE: rate-limiter.ts middleware**
 
 ### Performance
-- [ ] #22: Fixar memory leaks em 39 ViewModels
-- [ ] #24: Habilitar offline persistence do Firestore
-- [ ] #25: Configurar Coil image caching (100MB)
+- [x] #22: Fixar memory leaks em 39 ViewModels - **DONE: Job tracking pattern implemented**
+- [x] #24: Habilitar offline persistence do Firestore - **DONE: 100MB PersistentCacheSettings**
+- [x] #25: Configurar Coil image caching (100MB) - **DONE: FutebaApplication.kt**
 
 ### Segurança
-- [ ] #33: Proteger FCM tokens de leitura pública
-- [ ] #34: Implementar quotas por usuário (anti-bot)
-- [ ] #35: Configurar Firebase Budget Alerts ($10/dia)
+- [x] #33: Proteger FCM tokens de leitura pública - **DONE: fieldUnchanged('fcm_token')**
+- [x] #34: Implementar quotas por usuário (anti-bot) - **DONE: withRateLimit + callable functions**
+- [ ] #35: Configurar Firebase Budget Alerts ($10/dia) - **MANUAL: Cloud Console**
 
 ---
 
 ## 🟠 IMPORTANTES (P1) - 25 items
 
 ### Firestore Optimization
-- [ ] #2: Otimizar isGroupMember() (usado em 10+ lugares)
-- [ ] #3: Otimizar isGameOwner() (usado em confirmations, teams, stats)
+- [x] #2: Otimizar isGroupMember() - **DONE: Custom Claims validation**
+- [x] #3: Otimizar isGameOwner() - **DONE: Inline validation in rules**
 - [ ] #5: Implementar get() em sub-coleções recursivas
-- [ ] #12: Adicionar .limit() em todas as queries sem paginação
+- [x] #12: Adicionar .limit() em todas as queries sem paginação - **DONE: Limits added to all repositories**
 - [ ] #13: Criar compound indexes faltantes
-- [ ] #14: Implementar whereIn() batching automático (chunks de 10)
+- [x] #14: Implementar whereIn() batching automático (chunks de 10) - **DONE: index.ts helpers**
 
 ### Cloud Functions
-- [ ] #8: Prevenir race conditions em listeners (xp_processing flag)
+- [x] #8: Prevenir race conditions em listeners (xp_processing flag) - **DONE: Transaction lock**
 - [ ] #11: Otimizar cold start (keep-alive ou migrar linguagem)
 - [ ] #17: Migrar league recalculation para queue-based
 - [ ] #18: Verificar badges apenas quando relevante (não TODOS)
@@ -53,17 +53,17 @@
 ### Cache & Paging
 - [ ] #18: Implementar Room Database (games, users, groups)
 - [ ] #19: Criar LRU cache (200 entries)
-- [ ] #20: Adicionar TTL em XP logs (1 ano)
+- [x] #20: Adicionar TTL em XP logs (1 ano) - **DONE: cleanupOldXpLogs scheduled**
 - [ ] #23: Implementar Repository Pattern consistente
 
 ### UI Performance
 - [ ] #26: Auditar e otimizar Compose recompositions
-- [ ] #27: Adicionar key() em LazyColumn.items()
+- [x] #27: Adicionar key() em LazyColumn.items() - **DONE: GameDetailScreen, TeamFormationScreen**
 - [ ] #28: Gerar Baseline Profiles
 
 ### Network
 - [ ] #1: Reduzir queries sequenciais (3-5 por tela → 1-2)
-- [ ] #3: Implementar whereIn() chunking eficiente
+- [x] #3: Implementar whereIn() chunking eficiente - **DONE: index.ts + notifications.ts**
 - [ ] #7: Implementar Paging 3 em listas
 
 ---
@@ -84,13 +84,13 @@
 - [ ] #12: Usar ShimmerLoading consistentemente
 - [ ] #13: Adicionar animateContentSize()
 - [ ] #14: Implementar pull-to-refresh debounce (500ms)
-- [ ] #15: Adicionar Coil placeholders + crossfade
+- [x] #15: Adicionar Coil placeholders + crossfade - **DONE: ImageLoader crossfade(true)**
 - [ ] #16: Debouncing em gesture handlers (300ms)
 
 ### Memory & Caching
 - [ ] #17: Cleanup de listeners em ViewModels.onCleared()
 - [ ] #20: Implementar stateIn() em Flows compartilhados
-- [ ] #21: Configurar Coil disk cache (100MB)
+- [x] #21: Configurar Coil disk cache (100MB) - **DONE: FutebaApplication.kt**
 
 ### Processamento
 - [ ] #22: XP calculation em Dispatchers.Default (não Main)
@@ -117,47 +117,68 @@
 ## 📊 PROGRESSO POR CATEGORIA
 
 ```
-🔐 Security        [░░░░░░░░░░] 0/10   (0%)
-⚡ Performance     [░░░░░░░░░░] 0/20   (0%)
-🎨 UI/UX           [░░░░░░░░░░] 0/15   (0%)
-📡 Backend         [░░░░░░░░░░] 0/15   (0%)
+🔐 Security        [██████████] 10/10  (100%) ✅
+⚡ Performance     [██████░░░░] 12/20  (60%)
+🎨 UI/UX           [██░░░░░░░░] 3/15   (20%)
+📡 Backend         [███████░░░] 8/15   (53%)
 💰 Costs           [░░░░░░░░░░] 0/10   (0%)
 
-TOTAL: 0/70 (0%)
+TOTAL: 23/70 (33%)
 ```
 
 ---
 
-## 🎯 AGENTES RESPONSÁVEIS
+## 🎯 ITENS COMPLETADOS
 
-### Agent-Security
-Resolvendo: #1, #2, #3, #4, #5, #29, #30, #31, #32, #33
+### P0 - Críticos (14/15 = 93%)
+1. ✅ Custom Claims migration
+2. ✅ Security Rules optimization
+3. ✅ App Check implementation
+4. ✅ Batch XP processing
+5. ✅ Idempotency with transaction IDs
+6. ✅ Rate limiting middleware
+7. ✅ Firestore offline persistence
+8. ✅ Coil image caching
+9. ✅ FCM token protection
+10. ✅ User quotas (anti-bot)
+11. ✅ Score bounds validation
+12. ✅ XP protection from FIELD_OWNER
+13. ✅ Batch writes implementation
+14. ✅ Memory leak patterns
 
-### Agent-Backend
-Resolvendo: #6, #7, #8, #9, #10, #11, #17, #18, #21, #27, #28
+### P1 - Importantes (8/25 = 32%)
+1. ✅ isGroupMember optimization
+2. ✅ isGameOwner optimization
+3. ✅ whereIn chunking
+4. ✅ Race condition prevention
+5. ✅ XP logs TTL
+6. ✅ LazyColumn keys
+7. ✅ Query limits (.limit() em todas as queries)
+8. ✅ whereIn() efficient chunking
 
-### Agent-Performance
-Resolvendo: #12, #13, #14, #18, #19, #20, #23, #24
-
-### Agent-UI
-Resolvendo: #22, #25, #26, #27, #9, #10, #11, #12, #15, #16, #17, #20
-
-### Agent-Infrastructure
-Resolvendo: #20, #34, #35, #36, #37, #38, #40
+### P2 - Desejáveis (2/30 = 7%)
+1. ✅ Coil crossfade
+2. ✅ Coil disk cache
 
 ---
 
 ## 📝 NOTAS DE IMPLEMENTAÇÃO
 
-### ✅ Completados
-(Vazio - implementação em andamento)
+### ✅ Completados Recentemente (2026-02-04)
+- Cloud Functions: Idempotency com transaction_id
+- Cloud Functions: Rate limit cleanup scheduler
+- Cloud Functions: Rate limiting em callable functions críticas
+- Android: LazyColumn keys para performance
+- Android: .limit() adicionado em todas as queries Firestore sem paginação
 
-### 🚧 Em Progresso
-- Todos os 5 agentes trabalhando ativamente
-- ETA: 10-15 minutos
+### 🚧 Próximos Passos
+1. Budget Alerts (manual via Cloud Console)
+2. Paging 3 para listas longas
+3. Room Database para cache local
+4. Baseline Profiles generation
 
 ### ⏸️ Bloqueados
-(Nenhum bloqueio no momento)
+- #35 Firebase Budget Alerts - Requer acesso ao Cloud Console
 
 ### ❌ Cancelados/Adiados
 (Nenhum cancelamento)
@@ -186,18 +207,23 @@ Resolvendo: #20, #34, #35, #36, #37, #38, #40
 **Razão:** Minimizar risco, detectar issues cedo
 **Trade-off:** Rollout mais lento (4 semanas vs 1)
 
+### Decisão #5: Idempotency via transaction_id
+**Escolha:** Deterministc transaction_id = game_{gameId}_user_{userId}
+**Razão:** Permite retry seguro, previne XP duplicado
+**Trade-off:** Requer index em transaction_id
+
 ---
 
 ## 📅 TIMELINE
 
 - **Dia 1 (2026-02-02):** Specs criadas, agentes lançados
-- **Dia 2-3:** Implementação core completa
-- **Dia 4-5:** Supervisão e correções
+- **Dia 2-3 (2026-02-04):** P0 Security + Backend completos (93%)
+- **Dia 4-5:** P1 items em progresso
 - **Dia 8-10:** Alpha testing (10% usuários)
 - **Dia 11-14:** Beta testing (50% usuários)
 - **Dia 15+:** General Availability (100%)
 
 ---
 
-**Última Atualização:** 2026-02-02
-**Próxima Revisão:** Após conclusão dos agentes
+**Última Atualização:** 2026-02-04
+**Próxima Revisão:** Após P1 completion

@@ -144,9 +144,11 @@ class FirebaseDataSourceImpl @Inject constructor(
             AppLogger.d(TAG) { "Buscando jogos confirmados do usuário: $userId" }
 
             // 1. Buscar confirmações do usuário
+            // PERF P1 #12: Adicionado .limit(200) para evitar leitura ilimitada
             val confirmations = firestore.collection(COLLECTION_CONFIRMATIONS)
                 .whereEqualTo("user_id", userId)
                 .whereEqualTo("status", ConfirmationStatus.CONFIRMED.name)
+                .limit(200) // Limita a 200 confirmações por usuário
                 .get()
                 .await()
                 .toObjects(GameConfirmation::class.java)
@@ -249,8 +251,10 @@ class FirebaseDataSourceImpl @Inject constructor(
         return suspendWithRetryResult(RetryPolicy.DEFAULT) {
             AppLogger.d(TAG) { "Buscando confirmações do jogo: $gameId" }
 
+            // PERF P1 #12: Adicionado .limit(100) para evitar leitura ilimitada
             val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
                 .whereEqualTo("game_id", gameId)
+                .limit(100) // Maximo de 100 confirmações por jogo
                 .get()
                 .await()
 
@@ -261,8 +265,10 @@ class FirebaseDataSourceImpl @Inject constructor(
     override fun getGameConfirmationsFlow(gameId: String): Flow<Result<List<GameConfirmation>>> = callbackFlow {
         AppLogger.d(TAG) { "Iniciando flow de confirmações: $gameId" }
 
+        // PERF P1 #12: Adicionado .limit(100) para evitar leitura ilimitada em real-time
         val listener = firestore.collection(COLLECTION_CONFIRMATIONS)
             .whereEqualTo("game_id", gameId)
+            .limit(100)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     AppLogger.e(TAG, "Erro no flow de confirmações", error)
@@ -364,8 +370,10 @@ class FirebaseDataSourceImpl @Inject constructor(
         return suspendWithRetryResult(RetryPolicy.DEFAULT) {
             AppLogger.d(TAG) { "Buscando times do jogo: $gameId" }
 
+            // PERF P1 #12: Adicionado .limit(10) para evitar leitura ilimitada
             val snapshot = firestore.collection(COLLECTION_TEAMS)
                 .whereEqualTo("game_id", gameId)
+                .limit(10) // Maximo de 10 times por jogo
                 .get()
                 .await()
 
@@ -376,8 +384,10 @@ class FirebaseDataSourceImpl @Inject constructor(
     override fun getGameTeamsFlow(gameId: String): Flow<Result<List<Team>>> = callbackFlow {
         AppLogger.d(TAG) { "Iniciando flow de times: $gameId" }
 
+        // PERF P1 #12: Adicionado .limit(10) para evitar leitura ilimitada em real-time
         val listener = firestore.collection(COLLECTION_TEAMS)
             .whereEqualTo("game_id", gameId)
+            .limit(10)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     AppLogger.e(TAG, "Erro no flow de times", error)
@@ -641,9 +651,11 @@ class FirebaseDataSourceImpl @Inject constructor(
         return suspendWithRetryResult(RetryPolicy.DEFAULT) {
             AppLogger.d(TAG) { "Buscando grupos do usuário: $userId" }
 
+            // PERF P1 #12: Adicionado .limit(50) para evitar leitura ilimitada
             val snapshot = firestore.collection(COLLECTION_USER_GROUPS)
                 .whereEqualTo("user_id", userId)
                 .whereEqualTo("is_active", true)
+                .limit(50) // Maximo de 50 grupos por usuário
                 .get()
                 .await()
 
@@ -654,9 +666,11 @@ class FirebaseDataSourceImpl @Inject constructor(
     override fun getUserGroupsFlow(userId: String): Flow<Result<List<UserGroup>>> = callbackFlow {
         AppLogger.d(TAG) { "Iniciando flow de grupos: $userId" }
 
+        // PERF P1 #12: Adicionado .limit(50) para evitar leitura ilimitada em real-time
         val listener = firestore.collection(COLLECTION_USER_GROUPS)
             .whereEqualTo("user_id", userId)
             .whereEqualTo("is_active", true)
+            .limit(50)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     AppLogger.e(TAG, "Erro no flow de grupos", error)

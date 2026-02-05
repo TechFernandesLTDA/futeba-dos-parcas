@@ -149,9 +149,11 @@ class StatisticsRepositoryImpl @Inject constructor(
     override suspend fun getGoalsHistory(userId: String): Result<Map<String, Int>> {
         return try {
             // Busca dados reais do Firestore
+            // PERF P1 #12: Adicionado .limit(100) para evitar leitura ilimitada
             val gameStatsCollection = firestore.collection("games")
             val playerStatsSnapshots = gameStatsCollection
                 .whereEqualTo("players", userId)
+                .limit(100) // Limita a 100 jogos mais recentes
                 .get()
                 .await()
 

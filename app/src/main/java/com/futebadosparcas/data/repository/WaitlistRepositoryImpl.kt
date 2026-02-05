@@ -315,9 +315,11 @@ class WaitlistRepositoryImpl @Inject constructor(
         return try {
             val now = Date()
 
+            // PERF P1 #12: Adicionado .limit(100) para evitar leitura ilimitada em collectionGroup
             val snapshot = firestore.collectionGroup(SUBCOLLECTION_WAITLIST)
                 .whereEqualTo("status", WaitlistStatus.NOTIFIED.name)
                 .whereLessThan("response_deadline", now)
+                .limit(100) // Processa até 100 entradas expiradas por vez
                 .get()
                 .await()
 

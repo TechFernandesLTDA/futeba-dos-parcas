@@ -266,10 +266,12 @@ class GroupRepository @Inject constructor(
      */
     suspend fun getGroupMembers(groupId: String): Result<List<GroupMember>> {
         return try {
+            // PERF P1 #12: Adicionado .limit(200) como safeguard
             val snapshot = groupsCollection.document(groupId)
                 .collection("members")
                 .whereEqualTo("status", GroupMemberStatus.ACTIVE.name)
                 .orderBy("joined_at", Query.Direction.ASCENDING)
+                .limit(200) // Grupos de futebol raramente excedem 200 membros
                 .get()
                 .await()
 
@@ -284,10 +286,12 @@ class GroupRepository @Inject constructor(
      * Observa membros de um grupo em tempo real
      */
     fun getGroupMembersFlow(groupId: String): Flow<List<GroupMember>> = callbackFlow {
+        // PERF P1 #12: Adicionado .limit(200) como safeguard em real-time listener
         val listener = groupsCollection.document(groupId)
             .collection("members")
             .whereEqualTo("status", GroupMemberStatus.ACTIVE.name)
             .orderBy("joined_at", Query.Direction.ASCENDING)
+            .limit(200)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(emptyList())

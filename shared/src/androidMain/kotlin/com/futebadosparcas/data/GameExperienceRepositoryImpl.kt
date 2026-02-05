@@ -109,9 +109,11 @@ class GameExperienceRepositoryImpl(
 
     override suspend fun hasUserVoted(gameId: String, userId: String): Result<Boolean> {
         return try {
+            // PERF P1 #12: Adicionado .limit(1) para otimizacao - apenas verifica existencia
             val snapshot = votesCollection
                 .whereEqualTo("game_id", gameId)
                 .whereEqualTo("voter_id", userId)
+                .limit(1) // Apenas verifica se existe pelo menos 1 voto
                 .get()
                 .await()
             Result.success(!snapshot.isEmpty)
@@ -123,8 +125,10 @@ class GameExperienceRepositoryImpl(
 
     override suspend fun getGameVotes(gameId: String): Result<List<MVPVote>> {
         return try {
+            // PERF P1 #12: Adicionado .limit(500) para evitar leitura ilimitada
             val snapshot = votesCollection
                 .whereEqualTo("game_id", gameId)
+                .limit(500) // Maximo de 500 votos por jogo
                 .get()
                 .await()
 
@@ -139,8 +143,10 @@ class GameExperienceRepositoryImpl(
     }
 
     override fun getGameVotesFlow(gameId: String): Flow<List<MVPVote>> = callbackFlow {
+        // PERF P1 #12: Adicionado .limit(500) para evitar leitura ilimitada em real-time
         val listener = votesCollection
             .whereEqualTo("game_id", gameId)
+            .limit(500)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     PlatformLogger.e(TAG, "Erro ao ouvir votos", error)
@@ -164,13 +170,15 @@ class GameExperienceRepositoryImpl(
             val gameRef = gamesCollection.document(gameId)
             val gameSnapshot = gameRef.get().await()
 
+            // PERF P1 #12: Adicionado .limit() para evitar leitura ilimitada
             val confirmationsSnapshot = confirmationsCollection
                 .whereEqualTo("game_id", gameId)
                 .whereEqualTo("status", "CONFIRMED")
+                .limit(100) // Maximo de 100 confirmacoes por jogo
                 .get()
                 .await()
 
-            val votesSnapshot = votesCollection.whereEqualTo("game_id", gameId).get().await()
+            val votesSnapshot = votesCollection.whereEqualTo("game_id", gameId).limit(500).get().await()
 
             val votes = votesSnapshot.documents.mapNotNull { doc ->
                 docToMVPVote(doc.id, doc.data)
@@ -255,9 +263,11 @@ class GameExperienceRepositoryImpl(
 
     override suspend fun checkAllVoted(gameId: String): Result<Boolean> {
         return try {
+            // PERF P1 #12: Adicionado .limit() para evitar leitura ilimitada
             val confirmationsSnapshot = confirmationsCollection
                 .whereEqualTo("game_id", gameId)
                 .whereEqualTo("status", "CONFIRMED")
+                .limit(100)
                 .get()
                 .await()
             val confirmedCount = confirmationsSnapshot.size()
@@ -266,6 +276,7 @@ class GameExperienceRepositoryImpl(
 
             val votesSnapshot = votesCollection
                 .whereEqualTo("game_id", gameId)
+                .limit(500)
                 .get()
                 .await()
 

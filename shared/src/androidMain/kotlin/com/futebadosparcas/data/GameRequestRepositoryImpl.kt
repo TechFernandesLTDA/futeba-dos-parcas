@@ -76,10 +76,12 @@ class GameRequestRepositoryImpl(
 
     override suspend fun getPendingRequests(gameId: String): Result<List<GameJoinRequest>> {
         return try {
+            // PERF P1 #12: Adicionado .limit(100) para evitar leitura ilimitada
             val snapshot = firestore.collection(COLLECTION_GAME_REQUESTS)
                 .whereEqualTo("game_id", gameId)
                 .whereEqualTo("status", RequestStatus.PENDING.name)
                 .orderBy("requested_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .limit(100) // Maximo de 100 solicitacoes pendentes por jogo
                 .get()
                 .await()
 
@@ -93,10 +95,12 @@ class GameRequestRepositoryImpl(
     }
 
     override fun getPendingRequestsFlow(gameId: String): Flow<List<GameJoinRequest>> = callbackFlow {
+        // PERF P1 #12: Adicionado .limit(100) para evitar leitura ilimitada em real-time
         val listener = firestore.collection(COLLECTION_GAME_REQUESTS)
             .whereEqualTo("game_id", gameId)
             .whereEqualTo("status", RequestStatus.PENDING.name)
             .orderBy("requested_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(100)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     return@addSnapshotListener
@@ -113,9 +117,11 @@ class GameRequestRepositoryImpl(
 
     override suspend fun getAllRequests(gameId: String): Result<List<GameJoinRequest>> {
         return try {
+            // PERF P1 #12: Adicionado .limit(200) para evitar leitura ilimitada
             val snapshot = firestore.collection(COLLECTION_GAME_REQUESTS)
                 .whereEqualTo("game_id", gameId)
                 .orderBy("requested_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .limit(200) // Maximo de 200 solicitacoes por jogo (incluindo historico)
                 .get()
                 .await()
 

@@ -147,9 +147,11 @@ class InviteRepositoryImpl @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             val now = Date()
+            // PERF P1 #12: Adicionado .limit(50) para evitar leitura ilimitada
             val snapshot = invitesCollection
                 .whereEqualTo("invited_user_id", userId)
                 .whereEqualTo("status", InviteStatus.PENDING.name)
+                .limit(50) // Limita a 50 convites pendentes
                 .get()
                 .await()
 
@@ -171,9 +173,11 @@ class InviteRepositoryImpl @Inject constructor(
             return@callbackFlow
         }
 
+        // PERF P1 #12: Adicionado .limit(50) para evitar leitura ilimitada em real-time
         val listener = invitesCollection
             .whereEqualTo("invited_user_id", userId)
             .whereEqualTo("status", InviteStatus.PENDING.name)
+            .limit(50)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
                     close(e)
