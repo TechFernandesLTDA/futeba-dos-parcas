@@ -16,6 +16,7 @@ import * as admin from "firebase-admin";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import {FieldValue} from "firebase-admin/firestore";
+import {checkRateLimit, RATE_LIMITS} from "../middleware/rate-limiter";
 
 const db = admin.firestore();
 
@@ -67,6 +68,21 @@ export const setUserRole = onCall<SetUserRoleRequest>(
       throw new HttpsError(
         "unauthenticated",
         "User must be authenticated to set roles"
+      );
+    }
+
+    // ==========================================
+    // 1.5 RATE LIMITING (#34 Anti-bot)
+    // ==========================================
+    const rateLimitResult = await checkRateLimit(request.auth.uid, {
+      ...RATE_LIMITS.BATCH_OPERATION,
+      keyPrefix: "setUserRole",
+    });
+
+    if (!rateLimitResult.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        `Rate limit exceeded. Try again in ${Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000)} seconds.`
       );
     }
 
@@ -238,6 +254,20 @@ export const migrateAllUsersToCustomClaims = onCall(
     // Verificar permissão de admin
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Authentication required");
+    }
+
+    // Rate limiting para operação pesada (#34 Anti-bot)
+    const rateLimitResult = await checkRateLimit(request.auth.uid, {
+      maxRequests: 1, // Apenas 1 execução por hora
+      windowMs: 60 * 60 * 1000, // 1 hora
+      keyPrefix: "migration",
+    });
+
+    if (!rateLimitResult.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Migration already running or recently completed. Try again later."
+      );
     }
 
     const callerDoc = await db.collection("users").doc(request.auth.uid).get();

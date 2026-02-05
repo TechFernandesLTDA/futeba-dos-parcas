@@ -7,6 +7,7 @@ import {
   RELEGATION_GAMES_REQUIRED,
 } from "./league";
 import {sendStreakNotificationIfMilestone} from "./notifications";
+import {generateTransactionId} from "./xp/processing";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -488,6 +489,36 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
         fetchAllStreaks(userIds),
       ]);
 
+      // IDEMPOTENCY (#9): Check which transaction IDs are already processed
+      // Batch fetch to avoid individual queries per user
+      const alreadyProcessedIds = new Set<string>();
+      const transactionIdsToCheck = userIds.map((uid) => generateTransactionId(gameId, uid));
+
+      // Firestore whereIn limit is 10, so chunk the check
+      const idChunks: string[][] = [];
+      for (let i = 0; i < transactionIdsToCheck.length; i += 10) {
+        idChunks.push(transactionIdsToCheck.slice(i, i + 10));
+      }
+
+      const existingLogsSnaps = await Promise.all(
+        idChunks.map((chunk) =>
+          db.collection("xp_logs")
+            .where("transaction_id", "in", chunk)
+            .get()
+        )
+      );
+
+      for (const snap of existingLogsSnaps) {
+        for (const doc of snap.docs) {
+          const txId = doc.data().transaction_id;
+          if (txId) alreadyProcessedIds.add(txId);
+        }
+      }
+
+      if (alreadyProcessedIds.size > 0) {
+        console.log(`[IDEMPOTENCY] Found ${alreadyProcessedIds.size} already processed transactions for game ${gameId}`);
+      }
+
       // 4. Process Each Player (NO Firestore calls in loop - data already loaded)
       const batch = db.batch();
       const now = admin.firestore.FieldValue.serverTimestamp();
@@ -499,6 +530,14 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
 
       for (const conf of confirmations) {
         const uid = conf.userId;
+
+        // IDEMPOTENCY (#9): Skip if this user's XP for this game was already processed
+        const txIdForUser = generateTransactionId(gameId, uid);
+        if (alreadyProcessedIds.has(txIdForUser)) {
+          console.log(`[IDEMPOTENCY] Skipping user ${uid} - already processed (txId: ${txIdForUser})`);
+          continue;
+        }
+
         const team = teams.find((t) => t.playerIds.includes(uid));
         const result = team ? (teamResults[team.id] || "DRAW") : "DRAW";
 
@@ -632,9 +671,11 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
         // 3. Update Confirmation
         batch.update(db.collection("confirmations").doc(`${gameId}_${uid}`), {xp_earned: xp});
 
-        // 4. Create Log
+        // 4. Create Log with transaction_id for idempotency (#9)
+        const transactionId = generateTransactionId(gameId, uid);
         const logRef = db.collection("xp_logs").doc();
-        const log: XpLog = {
+        const log: XpLog & { transaction_id: string } = {
+          transaction_id: transactionId, // IDEMPOTENCY KEY - permite retry seguro
           user_id: uid,
           game_id: gameId,
           xp_earned: xp,

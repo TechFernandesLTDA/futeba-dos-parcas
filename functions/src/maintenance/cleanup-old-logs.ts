@@ -1,5 +1,6 @@
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {cleanupExpiredRateLimits} from "../middleware/rate-limiter";
 
 const db = admin.firestore();
 
@@ -262,6 +263,46 @@ export const cleanupOldNotifications = functions.scheduler.onSchedule({
       timestamp: now,
       error: String(error),
       deleted_before_error: totalDeleted,
+    });
+
+    throw error;
+  }
+});
+
+/**
+ * Cleanup de rate limit buckets expirados (a cada hora)
+ *
+ * Remove buckets que já expiraram para manter a collection limpa
+ * e evitar custos desnecessários de armazenamento.
+ *
+ * #10 #34: Anti-bot / Rate limiting cleanup
+ */
+export const cleanupRateLimits = functions.scheduler.onSchedule({
+  schedule: "0 * * * *", // A cada hora (minuto 0)
+  timeZone: "America/Sao_Paulo",
+  region: "southamerica-east1",
+  memory: "256MiB",
+  timeoutSeconds: 120,
+}, async (event) => {
+  console.log("[CLEANUP] Starting rate limits cleanup...");
+
+  try {
+    const deleted = await cleanupExpiredRateLimits();
+    console.log(`[CLEANUP] Rate limits cleanup complete. Deleted: ${deleted}`);
+
+    // Log metrics
+    await db.collection("metrics").add({
+      type: "rate_limits_cleanup",
+      timestamp: admin.firestore.Timestamp.now(),
+      deleted_count: deleted,
+    });
+  } catch (error) {
+    console.error("[CLEANUP] Error during rate limits cleanup:", error);
+
+    await db.collection("metrics").add({
+      type: "rate_limits_cleanup_error",
+      timestamp: admin.firestore.Timestamp.now(),
+      error: String(error),
     });
 
     throw error;
