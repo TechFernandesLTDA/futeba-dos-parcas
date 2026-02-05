@@ -1027,7 +1027,9 @@ export const recalculateLeagueRating = onDocumentUpdated(
       });
 
       // Calcular League Rating usando a nova funÃ§Ã£o importada
-      const leagueRating = leagueRatingCalc(recentGames);
+      // PERF_001: Lazy load league module para otimizar cold start
+      const leagueModule = await getLeagueCalculations();
+      const leagueRating = leagueModule.calculateLeagueRating(recentGames);
 
       // Buscar estado atual de promoÃ§Ã£o/rebaixamento
       const currentDivision = after.division || "BRONZE";
@@ -1036,7 +1038,7 @@ export const recalculateLeagueRating = onDocumentUpdated(
       const currentProtectionGames = after.protection_games || 0;
 
       // Calcular novo estado com lÃ³gica de promoÃ§Ã£o/rebaixamento
-      const newLeagueState = calculateLeaguePromotion(
+      const newLeagueState = leagueModule.calculateLeaguePromotion(
         {
           division: currentDivision,
           promotionProgress: currentPromotionProgress,
@@ -1056,7 +1058,7 @@ export const recalculateLeagueRating = onDocumentUpdated(
         recent_games: recentGames,
       });
 
-      console.log(`[LEAGUE] Rating: ${leagueRating.toFixed(1)} | Div: ${newLeagueState.division} | Promo: ${newLeagueState.promotionProgress}/${PROMOTION_GAMES_REQUIRED} | Releg: ${newLeagueState.relegationProgress}/${RELEGATION_GAMES_REQUIRED} | Protect: ${newLeagueState.protectionGames}`);
+      console.log(`[LEAGUE] Rating: ${leagueRating.toFixed(1)} | Div: ${newLeagueState.division} | Promo: ${newLeagueState.promotionProgress}/${leagueModule.PROMOTION_GAMES_REQUIRED} | Releg: ${newLeagueState.relegationProgress}/${leagueModule.RELEGATION_GAMES_REQUIRED} | Protect: ${newLeagueState.protectionGames}`);
     } catch (e) {
       console.error(`Erro ao recalcular rating para ${partId}:`, e);
     }
