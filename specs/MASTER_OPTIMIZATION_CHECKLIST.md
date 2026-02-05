@@ -75,7 +75,7 @@
 - [ ] #4: Detach real-time listeners em background
 - [ ] #5: Singleton FirebaseFirestore instance
 - [ ] #6: Usar Firebase Storage thumbnails (200x200)
-- [ ] #8: Implementar request deduplication
+- [x] #8: Implementar request deduplication - **DONE: RequestDeduplicator + UserRepositoryImpl (getUserById, getCurrentUser, getUsersByIds)**
 
 ### UI/UX
 - [ ] #9: Otimizar recompositions com derivedStateOf
@@ -149,12 +149,12 @@ Resolvendo: #20, #34, #35, #36, #37, #38, #40
 
 ## 📝 NOTAS DE IMPLEMENTAÇÃO
 
-### ✅ Completados
-(Vazio - implementação em andamento)
+### ✅ Completados (2026-02-05)
+- P2 #8: Request Deduplication (RequestDeduplicator utility + UserRepositoryImpl)
 
 ### 🚧 Em Progresso
-- Todos os 5 agentes trabalhando ativamente
-- ETA: 10-15 minutos
+- P2: Próximas otimizações de latência
+- Planejando implementação em GameRepository
 
 ### ⏸️ Bloqueados
 (Nenhum bloqueio no momento)
