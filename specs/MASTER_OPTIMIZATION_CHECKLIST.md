@@ -36,12 +36,12 @@
 ## 🟠 IMPORTANTES (P1) - 25 items
 
 ### Firestore Optimization
-- [ ] #2: Otimizar isGroupMember() (usado em 10+ lugares)
-- [ ] #3: Otimizar isGameOwner() (usado em confirmations, teams, stats)
+- [x] #2: Otimizar isGroupMember() (usado em 10+ lugares) - **ANALYZED: 2026-02-05. Decision: SKIP - Complex implementation with minimal gains. Já otimizado com exists() + resource.data. Ver: .claude/P1_02_ISGROUP_MEMBER_OPTIMIZATION.md**
+- [x] #3: Otimizar isGameOwner() (usado em confirmations, teams, stats) - **VERIFIED: 2026-02-05. Status: Already optimal (1 read/call, mínimo necessário). Ver: .claude/P1_03_ISGAMEOWNER_OPTIMIZATION.md**
 - [x] #5: Implementar get() em sub-coleções recursivas - **DONE: 2026-02-05. Helper functions adicionadas em firestore.rules (isGroupAdminLocal, isGroupMemberLocal, canModifyGameEvent, etc). Reduz 2-3 reads redundantes por operação. Ver: specs/OPTIMIZATION_SUMMARY_PERF001_P1_5.md**
-- [ ] #12: Adicionar .limit() em todas as queries sem paginação
-- [ ] #13: Criar compound indexes faltantes
-- [ ] #14: Implementar whereIn() batching automático (chunks de 10)
+- [x] #12: Adicionar .limit() em todas as queries sem paginação - **DONE: 2026-02-05. 13 queries corrigidas em 5 arquivos (GameExperienceRepositoryImpl, InviteRepositoryImpl, GameSummonRepositoryImpl, GameRequestRepositoryImpl). Limites realistas: 50-100 items. Ver: specs/P1_12_LIMIT_QUERIES_AUDIT_REPORT.md**
+- [x] #13: Criar compound indexes faltantes - **DONE: 2026-02-05. 2 indexes novos adicionados (live_player_stats, live_scores). Total 49 indexes em firestore.indexes.json. Ver: specs/P1_13_COMPOUND_INDEXES_ANALYSIS.md**
+- [x] #14: Implementar whereIn() batching automático (chunks de 10) - **VERIFIED: 2026-02-05. Status: Já implementado em UserRepositoryImpl + GameQueryRepositoryImpl. Nenhuma query quebra limite de 10. Ver: specs/P1_14_WHEREIN_BATCHING_ANALYSIS.md**
 
 ### Cloud Functions
 - [ ] #8: Prevenir race conditions em listeners (xp_processing flag)
