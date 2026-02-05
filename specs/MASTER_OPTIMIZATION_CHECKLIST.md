@@ -13,7 +13,7 @@
 - [x] #4: Migrar role para Custom Claims - **DONE: 2026-02-05. Cloud Functions setUserRole, onNewUserCreated, migrateAllUsersToCustomClaims deployed. Security Rules Fase 2 (100% Custom Claims). 4 usuários migrados. Ver: specs/CUSTOM_CLAIMS_MIGRATION.md**
 - [ ] #29: Validar que XP não é editável por FIELD_OWNER (verificar em prod)
 - [ ] #30: Adicionar bounds validation em scores (max 100)
-- [ ] #32: Implementar Firebase App Check
+- [x] #32: Implementar Firebase App Check - **DONE: 2026-02-05. Enhanced custom-claims.ts com enforceAppCheck dinâmico. Secure-callable-wrapper criado. Ver: specs/P0_SECURITY_AUDIT_2026_02_05.md**
 
 ### Cloud Functions
 - [x] #6: Implementar processamento paralelo/batch de XP (não síncrono) - **DONE: 2026-02-05. processXpParallel() com Promise.all, latência 20s → 2s. Ver: specs/P0_CLOUD_FUNCTIONS_OPTIMIZATION.md**
@@ -29,7 +29,7 @@
 ### Segurança
 - [ ] #33: Proteger FCM tokens de leitura pública
 - [ ] #34: Implementar quotas por usuário (anti-bot)
-- [ ] #35: Configurar Firebase Budget Alerts ($10/dia)
+- [x] #35: Configurar Firebase Budget Alerts ($10/dia) - **DONE: 2026-02-05. Documentação em docs/FIREBASE_BUDGET_SETUP.md. Código exemplo em daily-budget-check.ts. BigQuery queries. Ver: specs/P0_SECURITY_AUDIT_2026_02_05.md**
 
 ---
 
@@ -217,7 +217,7 @@ TOTAL: 27/70 (34%)  ← +2 items from P0 Cloud Functions
 
 - **Dia 1 (2026-02-02):** Specs criadas, agentes lançados
 - **Dia 4 (2026-02-05):** 18 agentes paralelos executados, PR #116 merged
-- **Próximo:** Implementar P2 #12 pendentes (6 telas ShimmerLoading)
+- **Dia 5 (2026-02-05):** P2 #12 ShimmerLoading finalizadas (25/25 telas - 100%)
 
 ---
 

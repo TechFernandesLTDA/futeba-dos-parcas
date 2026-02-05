@@ -7,7 +7,7 @@ let leagueCalcs: any = null;
 
 async function getLeagueCalculations() {
   if (!leagueCalcImported) {
-    leagueCalcs = await import("./league");
+    leagueCalcs = await import("./league.js");
     leagueCalcImported = true;
   }
   return leagueCalcs;
@@ -18,7 +18,7 @@ let notificationModule: any = null;
 
 async function getNotifications() {
   if (!notificationImported) {
-    notificationModule = await import("./notifications");
+    notificationModule = await import("./notifications.js");
     notificationImported = true;
   }
   return notificationModule;
