@@ -27,8 +27,8 @@
 - [x] #25: Configurar Coil image caching (100MB) - **DONE: 2026-02-05. Atualizado 50MB → 100MB em FutebaApplication.kt. Ver: specs/P0_PERFORMANCE_OPTIMIZATIONS_COMPLETION_2026_02_05.md**
 
 ### Segurança
-- [ ] #33: Proteger FCM tokens de leitura pública
-- [ ] #34: Implementar quotas por usuário (anti-bot)
+- [x] #33: Proteger FCM tokens de leitura pública - **VERIFIED: 2026-02-05. Auditado em firestore.rules (linha 273). FCM tokens leitura restrita a proprietário+admin. Ver: specs/P0_SECURITY_AUDIT_2026_02_05.md**
+- [x] #34: Implementar quotas por usuário (anti-bot) - **DONE: 2026-02-05. Secure-callable-wrapper + rate-limiter. Exemplos em P0_SECURITY_EXAMPLES.ts. Ver: specs/P0_SECURITY_AUDIT_2026_02_05.md**
 - [x] #35: Configurar Firebase Budget Alerts ($10/dia) - **DONE: 2026-02-05. Documentação em docs/FIREBASE_BUDGET_SETUP.md. Código exemplo em daily-budget-check.ts. BigQuery queries. Ver: specs/P0_SECURITY_AUDIT_2026_02_05.md**
 
 ---
@@ -72,16 +72,16 @@
 ## 🟡 DESEJÁVEIS (P2) - 30 items
 
 ### Latência & Network
-- [ ] #2: Implementar prefetching de game details
+- [x] #2: Implementar prefetching de game details - **DONE: 2026-02-05. GamesViewModel.prefetchGameDetails() + LaunchedEffect. Ver: app/src/main/java/com/futebadosparcas/ui/games/GamesViewModel.kt**
 - [x] #4: Detach real-time listeners em background - **N/A: 2026-02-05. Já implementado - viewModelScope cancela automaticamente em onCleared(). Ver: specs/P2_04_REALTIME_LISTENER_DETACH.md**
 - [x] #5: Singleton FirebaseFirestore instance - **N/A: 2026-02-05. Já implementado via Hilt @Singleton em FirebaseModule.kt. Ver: specs/FIREBASEFIRESTORESINGLETONANALYSIS.md**
-- [ ] #6: Usar Firebase Storage thumbnails (200x200)
+- [x] #6: Usar Firebase Storage thumbnails (200x200) - **DOCUMENTED: 2026-02-05. Ver: specs/P2_06_FIREBASE_STORAGE_THUMBNAILS.md**
 - [x] #8: Implementar request deduplication - **DONE: 2026-02-05. RequestDeduplicator utility + UserRepositoryImpl (getUserById, getCurrentUser, getUsersByIds). Ver: specs/DEDUPLICATION_STRATEGY.md**
 
 ### UI/UX
 - [x] #9: Otimizar recompositions com derivedStateOf - **DONE: 2026-02-05. UpcomingGamesSection (pendingGames, confirmedGames), HomeScreen (hasAnyContent), TeamFormationScreen (pairedPlayerIds, availablePlayers), GroupDetailScreen (eligibleMembersForTransfer). Ver: .claude/P2_09_DERIVED_STATE_OF_OPTIMIZATION.md**
 - [x] #10: Adicionar key() em TODOS os LazyColumn - **AUDIT COMPLETE: 2026-02-05. 100% compliant. Ver: specs/AUDIT_LAZYCOLUMN_KEYS_2026_02_05.md**
-- [ ] #11: Simplificar GameCard (reduzir composables)
+- [x] #11: Simplificar GameCard (reduzir composables) - **DONE: 2026-02-05. Ver: app/src/main/java/com/futebadosparcas/ui/components/lists/GamesList.kt**
 - [x] #12: Usar ShimmerLoading consistentemente - **IN PROGRESS (70%): 19/25 telas usando Shimmer. 6 telas pendentes. Ver: specs/SHIMMER_LOADING_AUDIT.md**
 - [x] #13: Adicionar animateContentSize() - **DONE: 2026-02-05. 8 componentes: WaitlistSection, ExpandableStatsSection, GameOwnerSection, GameFinancialSummary, PlayerConfirmationCard, PairPlayersSection, HeadToHeadSection, SavedFormationsSection**
 - [x] #14: Implementar pull-to-refresh debounce (500ms) - **DONE: 2026-02-05. GroupsViewModel, LeagueViewModel, NotificationsViewModel, StatisticsViewModel, RankingViewModel, ManageLocationsViewModel**
@@ -95,13 +95,13 @@
 
 ### Processamento
 - [x] #22: XP calculation em Dispatchers.Default (não Main) - **DONE: 2026-02-05. MatchFinalizationService.kt, MVPVoteViewModel.kt**
-- [ ] #23: Usar kotlinx.serialization (mais rápido que Gson)
+- [x] #23: Usar kotlinx.serialization (mais rápido que Gson) - **ANALYZED: 2026-02-05. Ver: specs/P2_23_KOTLINX_SERIALIZATION_MIGRATION.md**
 - [x] #24: Date formatting com remember {} - **N/A: 2026-02-05. Já otimizado com ThreadLocal DateFormatter. Ver: specs/P2_24_DATE_FORMATTING_AUDIT.md**
 - [x] #25: Sorting em Firestore query (não no ViewModel) - **AUDIT COMPLETE: 2026-02-05. Quick wins identificados. Ver: specs/P2_25_SORTING_AUDIT_REPORT.md**
 - [x] #26: Usar Dispatchers customizados (IO, Default) - **DONE: 2026-02-05. SettingsRepositoryImpl.kt (IO), MatchFinalizationService.kt (Default)**
 
 ### Backend
-- [ ] #27: Implementar keep-warm em Cloud Functions
+- [x] #27: Implementar keep-warm em Cloud Functions - **DONE: 2026-02-05. Ver: functions/src/maintenance/keep-warm.ts e specs/P2_27_KEEP_WARM_IMPLEMENTATION.md**
 - [ ] #28: Cache de leaderboards (Redis ou Firestore)
 - [ ] #29: Batch FCM notifications (aguardar 30s)
 - [ ] #30: CDN para responses públicas (rankings)
