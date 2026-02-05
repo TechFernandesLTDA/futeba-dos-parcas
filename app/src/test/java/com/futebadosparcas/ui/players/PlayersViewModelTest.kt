@@ -12,6 +12,7 @@ import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.InstantTaskExecutorExtension
+import com.google.firebase.firestore.FirebaseFirestore
 import com.futebadosparcas.util.MockLogExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -45,6 +46,7 @@ class PlayersViewModelTest {
     private lateinit var groupRepository: GroupRepository
     private lateinit var inviteRepository: InviteRepository
     private lateinit var notificationRepository: NotificationRepository
+    private lateinit var firestore: FirebaseFirestore
     private lateinit var savedStateHandle: SavedStateHandle
 
     private lateinit var viewModel: PlayersViewModel
@@ -58,6 +60,7 @@ class PlayersViewModelTest {
         groupRepository = mockk()
         inviteRepository = mockk()
         notificationRepository = mockk()
+        firestore = mockk(relaxed = true)
         savedStateHandle = SavedStateHandle()
 
         // Setup default mock behaviors
@@ -78,6 +81,7 @@ class PlayersViewModelTest {
             groupRepository,
             inviteRepository,
             notificationRepository,
+            firestore,
             savedStateHandle
         )
     }

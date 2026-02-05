@@ -3,19 +3,28 @@ package com.futebadosparcas.ui.games
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.data.paging.GamesPagingSource
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.util.AppLogger
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,11 +34,12 @@ data class GameWithConfirmations(
     val isUserConfirmed: Boolean = false
 )
 
-@OptIn(kotlinx.coroutines.FlowPreview::class)
+@OptIn(kotlinx.coroutines.FlowPreview::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class GamesViewModel @Inject constructor(
     private val gameRepository: GameRepository,
     private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
+    private val firestore: FirebaseFirestore,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -38,6 +48,43 @@ class GamesViewModel @Inject constructor(
 
     private val _unreadCount = MutableStateFlow(0)
     val unreadCount: StateFlow<Int> = _unreadCount
+
+    // Paging 3: Trigger para recriar o Pager quando o groupId muda
+    private val _pagingGroupId = MutableStateFlow<String?>(null)
+
+    /**
+     * Paging 3 - Flow de jogos históricos paginados.
+     *
+     * Ideal para MY_GAMES (jogos passados) onde a lista pode ser grande.
+     * Para jogos ativos (ALL, OPEN), usa-se o Flow real-time.
+     *
+     * Benefícios:
+     * - Carrega apenas 30 jogos por vez
+     * - Scroll infinito automático
+     * - Funciona bem com histórico extenso
+     *
+     * @see P1 #7: Paging 3 ViewModel integration
+     */
+    val pagedGames: Flow<PagingData<Game>> = _pagingGroupId
+        .flatMapLatest { groupId ->
+            Pager(
+                config = PagingConfig(
+                    pageSize = PAGING_PAGE_SIZE,
+                    enablePlaceholders = false,
+                    prefetchDistance = PAGING_PREFETCH_DISTANCE,
+                    initialLoadSize = PAGING_INITIAL_LOAD_SIZE
+                ),
+                pagingSourceFactory = {
+                    GamesPagingSource(
+                        firestore = firestore,
+                        groupId = groupId,
+                        includeFinished = true,
+                        pageSize = PAGING_PAGE_SIZE
+                    )
+                }
+            ).flow
+        }
+        .cachedIn(viewModelScope)
 
     // SavedState para persistir filtro atual
     var currentFilter: GameFilterType
@@ -239,11 +286,24 @@ class GamesViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Atualiza o groupId para filtrar jogos paginados.
+     * Passar null para carregar todos os jogos.
+     */
+    fun setGroupIdForPaging(groupId: String?) {
+        _pagingGroupId.value = groupId
+    }
+
     companion object {
         private const val TAG = "GamesViewModel"
         private const val DEBOUNCE_MILLIS = 300L
         private const val KEY_CURRENT_FILTER = "current_filter"
         private const val CACHE_VALIDITY_MILLIS = 60_000L // 1 minuto
+
+        // Paging 3 configuration
+        private const val PAGING_PAGE_SIZE = 30
+        private const val PAGING_PREFETCH_DISTANCE = 10
+        private const val PAGING_INITIAL_LOAD_SIZE = 60
     }
 }
 

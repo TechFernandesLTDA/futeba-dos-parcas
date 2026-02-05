@@ -8,6 +8,7 @@ import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.util.InstantTaskExecutorExtension
+import com.google.firebase.firestore.FirebaseFirestore
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -36,11 +37,12 @@ class GamesViewModelTest {
 
     private lateinit var gameRepository: GameRepository
     private lateinit var notificationRepository: NotificationRepository
+    private lateinit var firestore: FirebaseFirestore
     private lateinit var savedStateHandle: SavedStateHandle
     private lateinit var viewModel: GamesViewModel
 
     private fun createViewModel(): GamesViewModel {
-        return GamesViewModel(gameRepository, notificationRepository, savedStateHandle)
+        return GamesViewModel(gameRepository, notificationRepository, firestore, savedStateHandle)
     }
 
     @BeforeEach
@@ -49,6 +51,7 @@ class GamesViewModelTest {
 
         gameRepository = mockk()
         notificationRepository = mockk()
+        firestore = mockk(relaxed = true)
         savedStateHandle = SavedStateHandle()
 
         // Setup default mock behaviors

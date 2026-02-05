@@ -3,16 +3,24 @@ package com.futebadosparcas.ui.players
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import com.futebadosparcas.data.paging.UsersPagingSource
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -20,10 +28,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class PlayersViewModel @Inject constructor(
     private val userRepository: UserRepository,
@@ -31,6 +40,7 @@ class PlayersViewModel @Inject constructor(
     private val groupRepository: com.futebadosparcas.data.repository.GroupRepository,
     private val inviteRepository: com.futebadosparcas.domain.repository.InviteRepository,
     private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
+    private val firestore: FirebaseFirestore,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -39,6 +49,50 @@ class PlayersViewModel @Inject constructor(
 
     private val _unreadCount = MutableStateFlow(0)
     val unreadCount: StateFlow<Int> = _unreadCount
+
+    // Paging 3: Trigger para recriar o Pager quando o groupId muda
+    private val _pagingGroupId = MutableStateFlow<String?>(null)
+
+    /**
+     * Paging 3 - Flow de jogadores paginados.
+     *
+     * Benefícios:
+     * - Carrega apenas 20 usuários por vez (menos memória)
+     * - Scroll infinito automático
+     * - Retry automático em erros de rede
+     *
+     * Uso na UI:
+     * ```kotlin
+     * val players = viewModel.pagedPlayers.collectAsLazyPagingItems()
+     * LazyColumn {
+     *     items(players) { user ->
+     *         PlayerCard(user)
+     *     }
+     * }
+     * ```
+     *
+     * @see P1 #7: Paging 3 ViewModel integration
+     */
+    val pagedPlayers: Flow<PagingData<com.futebadosparcas.data.model.User>> = _pagingGroupId
+        .flatMapLatest { groupId ->
+            Pager(
+                config = PagingConfig(
+                    pageSize = PAGING_PAGE_SIZE,
+                    enablePlaceholders = false,
+                    prefetchDistance = PAGING_PREFETCH_DISTANCE,
+                    initialLoadSize = PAGING_INITIAL_LOAD_SIZE
+                ),
+                pagingSourceFactory = {
+                    UsersPagingSource(
+                        firestore = firestore,
+                        groupId = groupId,
+                        orderBy = "name",
+                        pageSize = PAGING_PAGE_SIZE
+                    )
+                }
+            ).flow
+        }
+        .cachedIn(viewModelScope)
 
     // Estatísticas do jogador selecionado para o PlayerCard
     private val _selectedPlayerStats = MutableStateFlow<com.futebadosparcas.data.model.UserStatistics?>(null)
@@ -389,12 +443,25 @@ class PlayersViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Atualiza o groupId para filtrar jogadores paginados.
+     * Passar null para carregar todos os jogadores.
+     */
+    fun setGroupIdForPaging(groupId: String?) {
+        _pagingGroupId.value = groupId
+    }
+
     companion object {
         private const val TAG = "PlayersViewModel"
         private const val DEBOUNCE_MILLIS = 300L
         private const val KEY_CURRENT_QUERY = "current_query"
         private const val KEY_CURRENT_FIELD_TYPE = "current_field_type"
         private const val KEY_CURRENT_SORT_OPTION = "current_sort_option"
+
+        // Paging 3 configuration
+        private const val PAGING_PAGE_SIZE = 20
+        private const val PAGING_PREFETCH_DISTANCE = 5
+        private const val PAGING_INITIAL_LOAD_SIZE = 40
     }
 }
 
