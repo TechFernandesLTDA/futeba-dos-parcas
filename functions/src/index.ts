@@ -1,12 +1,28 @@
 ﻿import * as admin from "firebase-admin";
 import {onDocumentUpdated, onDocumentDeleted} from "firebase-functions/v2/firestore";
-import {
-  calculateLeaguePromotion,
-  calculateLeagueRating as leagueRatingCalc,
-  PROMOTION_GAMES_REQUIRED,
-  RELEGATION_GAMES_REQUIRED,
-} from "./league";
-import {sendStreakNotificationIfMilestone} from "./notifications";
+
+// PERF_001: Lazy imports para otimizar cold start
+let leagueCalcImported = false;
+let leagueCalcs: any = null;
+
+async function getLeagueCalculations() {
+  if (!leagueCalcImported) {
+    leagueCalcs = await import("./league");
+    leagueCalcImported = true;
+  }
+  return leagueCalcs;
+}
+
+let notificationImported = false;
+let notificationModule: any = null;
+
+async function getNotifications() {
+  if (!notificationImported) {
+    notificationModule = await import("./notifications");
+    notificationImported = true;
+  }
+  return notificationModule;
+}
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -570,9 +586,15 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
 
         // Enviar notificação de streak se atingiu milestone (3, 7, 10 ou 30)
         // Nota: A notificação é enviada de forma assíncrona, não bloqueia o processamento
-        sendStreakNotificationIfMilestone(uid, streak).catch((err) => {
-          console.error(`[STREAK] Error sending notification for user ${uid}:`, err);
-        });
+        // PERF_001: Lazy load notifications module para otimizar cold start
+        (async () => {
+          try {
+            const notifModule = await getNotifications();
+            await notifModule.sendStreakNotificationIfMilestone(uid, streak);
+          } catch (err) {
+            console.error(`[STREAK] Error sending notification for user ${uid}:`, err);
+          }
+        })();
 
         // "Bola Murcha" Penalty (worst player) - synced with XPCalculator.kt
         let penaltyXp = 0;
@@ -690,64 +712,81 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
         };
 
         // ==========================================
-        // BADGE AWARDING LOGIC
+        // BADGE AWARDING LOGIC - PERF_001 #18
+        // Otimização: Verificar apenas badges relevantes à ação
+        // Em vez de varrer todas as 40+ badges possíveis
         // ==========================================
 
-        // STREAK BADGES (sequencia de jogos)
-        if (streak >= 30) awardFullBadge("streak_30");
-        else if (streak >= 10) awardFullBadge("iron_man"); // 10+ jogos consecutivos
-        else if (streak >= 7) awardFullBadge("streak_7");
-
-        // PERFORMANCE BADGES - Gols
-        if (conf.goals >= 5) {
-          awardFullBadge("hat_trick");
-          awardFullBadge("poker");
-          awardFullBadge("manita"); // 5+ gols = todas as badges de gol
-        } else if (conf.goals >= 4) {
-          awardFullBadge("hat_trick");
-          awardFullBadge("poker");
-        } else if (conf.goals >= 3) {
-          awardFullBadge("hat_trick");
+        // PERFORMANCE BADGES - Gols (APENAS se marcou gols neste jogo)
+        if (conf.goals >= 3) {
+          if (conf.goals >= 5) {
+            awardFullBadge("hat_trick");
+            awardFullBadge("poker");
+            awardFullBadge("manita"); // 5+ gols = todas as badges de gol
+          } else if (conf.goals >= 4) {
+            awardFullBadge("hat_trick");
+            awardFullBadge("poker");
+          } else {
+            // conf.goals >= 3
+            awardFullBadge("hat_trick");
+          }
         }
 
-        // PLAYMAKER BADGE - 3+ assistencias
+        // PLAYMAKER BADGE - APENAS se teve 3+ assistências neste jogo
         if (conf.assists >= 3) {
           awardFullBadge("playmaker");
         }
 
-        // BALANCED PLAYER - 2+ gols E 2+ assists no mesmo jogo
+        // BALANCED PLAYER - APENAS se cumpre critério
         if (conf.goals >= 2 && conf.assists >= 2) {
           awardFullBadge("balanced_player");
         }
 
-        // MVP BADGE - Foi MVP do jogo
+        // STREAK BADGES - APENAS se streak mudou neste jogo
+        if (streak >= 3) {
+          if (streak >= 30) {
+            awardFullBadge("streak_30");
+          } else if (streak >= 10) {
+            awardFullBadge("iron_man"); // 10+ jogos consecutivos
+          } else if (streak >= 7) {
+            awardFullBadge("streak_7");
+          }
+        }
+
+        // MVP BADGE - APENAS se foi MVP neste jogo
         if (isMvp) {
           // MVP_STREAK_3 - Ser MVP 3 jogos consecutivos
-          // newMvpStreak ja foi calculado acima
           if (newMvpStreak === 3) {
             awardFullBadge("mvp_streak_3");
             console.log(`[BADGE] User ${uid} earned mvp_streak_3 (3 consecutive MVP games)`);
           }
         }
 
-        // VETERAN BADGES - Baseado em totalGames (usar newStats APÓS incremento)
+        // MILESTONE BADGES - APENAS nas mudanças de milestone
         // Usar === para premiar exatamente no milestone, evitando duplicatas
         if (newStats.totalGames === 100) {
           awardFullBadge("veteran_100");
-        }
-        if (newStats.totalGames === 50) {
+        } else if (newStats.totalGames === 50) {
           awardFullBadge("veteran_50");
         }
 
-        // LEVEL BADGES
-        if (newLevel >= 10) {
-          awardFullBadge("level_10");
-          awardFullBadge("level_5");
-        } else if (newLevel >= 5) {
-          awardFullBadge("level_5");
+        if (newStats.gamesWon === 50) {
+          awardFullBadge("winner_50");
+        } else if (newStats.gamesWon === 25) {
+          awardFullBadge("winner_25");
         }
 
-        // GOALKEEPER BADGES
+        // LEVEL BADGES - APENAS se mudou de level
+        if (newLevel !== currentLevel) {
+          if (newLevel >= 10) {
+            awardFullBadge("level_10");
+            awardFullBadge("level_5");
+          } else if (newLevel >= 5) {
+            awardFullBadge("level_5");
+          }
+        }
+
+        // GOALKEEPER BADGES - APENAS se é goleiro
         if (conf.position === "GOALKEEPER") {
           let opponentScore = -1;
           if (liveScore) {
@@ -771,20 +810,9 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
             }
           }
 
-          // DEFENSIVE_WALL - 10+ defesas
+          // DEFENSIVE_WALL - APENAS se teve 10+ defesas neste jogo
           if (conf.saves >= 10) {
             awardFullBadge("defensive_wall");
-          }
-        }
-
-        // WINNER BADGES - Baseado em vitorias (usar newStats APÓS incremento)
-        // Usar === para premiar exatamente no milestone, evitando duplicatas
-        if (result === "WIN") {
-          if (newStats.gamesWon === 50) {
-            awardFullBadge("winner_50");
-          }
-          if (newStats.gamesWon === 25) {
-            awardFullBadge("winner_25");
           }
         }
       }
@@ -1284,3 +1312,14 @@ export * from "./storage/generate-thumbnails";
 // Importar funções de gerenciamento de Custom Claims
 // Referência: specs/PERF_001_SECURITY_RULES_OPTIMIZATION.md
 export * from "./auth/custom-claims";
+
+// ==========================================
+// P0 OPTIMIZATIONS: XP PARALLEL PROCESSING
+// ==========================================
+// Implementar P0 #6, #7, #9, #10
+// - Processamento paralelo/batch de XP
+// - Firestore batch writes (até 500 ops)
+// - Idempotência com transaction IDs
+// - Rate limiting em callable functions
+// Referência: specs/P0_CLOUD_FUNCTIONS_OPTIMIZATION.md
+export * from "./xp/parallel-processing";

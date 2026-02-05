@@ -22,6 +22,8 @@ import com.futebadosparcas.data.model.Schedule
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.components.states.LoadingState
+import com.futebadosparcas.ui.components.states.LoadingItemType
 
 private const val TAG = "SchedulesScreen"
 
@@ -77,9 +79,7 @@ fun SchedulesScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         when (uiState) {
             is SchedulesUiState.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                LoadingState(shimmerCount = 8, itemType = LoadingItemType.LIST_ITEM)
             }
 
             is SchedulesUiState.Success -> {
