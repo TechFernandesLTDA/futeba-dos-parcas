@@ -68,6 +68,12 @@ class GroupsViewModel @Inject constructor(
     // Cache dos grupos para filtragem
     private var allGroups: List<UserGroup> = emptyList()
 
+    // Debounce para pull-to-refresh (500ms para evitar múltiplos refreshes rápidos)
+    private var lastRefreshTime: Long = 0
+    private companion object {
+        private const val REFRESH_DEBOUNCE_MS = 500L
+    }
+
     init {
         loadMyGroups()
     }
@@ -96,6 +102,15 @@ class GroupsViewModel @Inject constructor(
     }
 
     fun refreshGroups() {
+        // Debounce de 500ms para evitar múltiplos refreshes rápidos durante pull-to-refresh
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastRefreshTime < REFRESH_DEBOUNCE_MS) {
+            // Refresh ainda em cooldown, ignora chamada
+            _isRefreshing.value = false
+            return
+        }
+
+        lastRefreshTime = currentTime
         _isRefreshing.value = true
         // Cancela e reinicia o listener para forçar nova busca
         groupsFlowJob?.cancel()

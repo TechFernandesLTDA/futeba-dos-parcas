@@ -215,6 +215,18 @@ private fun HomeSuccessContent(
     }
     val streak = remember(state.streak?.hashCode()) { state.streak }
 
+    // ✅ OTIMIZAÇÃO P2#9: Usar derivedStateOf para evitar recálculos desnecessários
+    // Cálculo é feito antes da LazyColumn para evitar invalidação prematura
+    val hasAnyContent = remember { derivedStateOf {
+        games.isNotEmpty() ||
+            activities.isNotEmpty() ||
+            publicGames.isNotEmpty() ||
+            challenges.isNotEmpty() ||
+            statistics != null ||
+            recentBadges.isNotEmpty() ||
+            streak != null
+    } }.value
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize(),
@@ -244,18 +256,6 @@ private fun HomeSuccessContent(
                 StreakWidget(streak = streak)
             }
         }
-
-        // Verificar se há conteudo para exibir na tela principal.
-        // Inclui: jogos, atividades, jogos publicos, desafios, estatisticas, badges e streak.
-        // Se nenhum conteudo existir, exibe WelcomeEmptyState para usuarios novos
-        // ou que ainda nao participaram de jogos, evitando tela em branco.
-        val hasAnyContent = games.isNotEmpty() ||
-            state.activities.isNotEmpty() ||
-            state.publicGames.isNotEmpty() ||
-            state.challenges.isNotEmpty() ||
-            statistics != null ||
-            state.recentBadges.isNotEmpty() ||
-            streak != null
 
         // Exibir estado vazio amigavel quando nao ha conteudo
         if (!hasAnyContent) {

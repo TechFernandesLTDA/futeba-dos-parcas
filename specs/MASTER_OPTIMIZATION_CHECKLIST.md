@@ -1,6 +1,6 @@
 # ✅ Master Optimization Checklist - Todos os 70 Problemas
 
-**Status Geral:** 🟢 PROGRESSING (P2 #22 + #26 Completed)
+**Status Geral:** 🟢 PROGRESSING (P2 #9 + #22 + #26 Completed)
 **Atualizado:** 2026-02-05
 
 ---
@@ -78,7 +78,7 @@
 - [x] #8: Implementar request deduplication - **DONE: RequestDeduplicator + UserRepositoryImpl (getUserById, getCurrentUser, getUsersByIds)**
 
 ### UI/UX
-- [ ] #9: Otimizar recompositions com derivedStateOf
+- [x] #9: Otimizar recompositions com derivedStateOf - **DONE: 2026-02-05. UpcomingGamesSection (pendingGames, confirmedGames), HomeScreen (hasAnyContent), TeamFormationScreen (pairedPlayerIds, availablePlayers), GroupDetailScreen (eligibleMembersForTransfer). Padrão: `remember { derivedStateOf { ... } }.value` evita recálculos quando dependências não mudam.**
 - [ ] #10: Adicionar key() em TODOS os LazyColumn
 - [ ] #11: Simplificar GameCard (reduzir composables)
 - [x] #12: Usar ShimmerLoading consistentemente - **IN PROGRESS (70%): 19/25 telas com listas usando Shimmer. 6 telas ainda usam CircularProgressIndicator em listas que precisam migrar para LoadingState**
@@ -150,11 +150,15 @@ Resolvendo: #20, #34, #35, #36, #37, #38, #40
 ## 📝 NOTAS DE IMPLEMENTAÇÃO
 
 ### ✅ Completados (2026-02-05)
+- P2 #9: derivedStateOf otimization (UpcomingGamesSection, HomeScreen, TeamFormationScreen, GroupDetailScreen)
 - P2 #8: Request Deduplication (RequestDeduplicator utility + UserRepositoryImpl)
+- P2 #22: XP calculation em Dispatchers.Default (MatchFinalizationService, MVPVoteViewModel)
+- P2 #26: Dispatcher customization (IO, Default) com performance improvements
 
 ### 🚧 Em Progresso
-- P2: Próximas otimizações de latência
-- Planejando implementação em GameRepository
+- P2 #10: LazyColumn key() em TODOS os componentes
+- P2 #24: Date formatting com remember{}
+- P2 #25: Sorting em Firestore query
 
 ### ⏸️ Bloqueados
 (Nenhum bloqueio no momento)

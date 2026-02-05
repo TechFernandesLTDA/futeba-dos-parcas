@@ -33,6 +33,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,15 +73,20 @@ fun UpcomingGamesSection(
 ) {
     if (games.isEmpty()) return
 
-    // Separar jogos por status de confirmação
-    val pendingGames = games.filter {
-        val gameStatus = it.game.getStatusEnum()
-        !it.isUserConfirmed && gameStatus == com.futebadosparcas.data.model.GameStatus.SCHEDULED
-    }
-    val confirmedGames = games.filter {
-        val gameStatus = it.game.getStatusEnum()
-        it.isUserConfirmed || gameStatus == com.futebadosparcas.data.model.GameStatus.CONFIRMED
-    }
+    // ✅ OTIMIZAÇÃO P2#9: Usar derivedStateOf para evitar recálculos desnecessários
+    // Só recompõe se o resultado da filtragem mudar, não a cada render
+    val pendingGames = remember { derivedStateOf {
+        games.filter {
+            val gameStatus = it.game.getStatusEnum()
+            !it.isUserConfirmed && gameStatus == com.futebadosparcas.data.model.GameStatus.SCHEDULED
+        }
+    } }.value
+    val confirmedGames = remember { derivedStateOf {
+        games.filter {
+            val gameStatus = it.game.getStatusEnum()
+            it.isUserConfirmed || gameStatus == com.futebadosparcas.data.model.GameStatus.CONFIRMED
+        }
+    } }.value
 
     Column(modifier = modifier) {
         // Seção "Para Confirmar" - Prioridade máxima

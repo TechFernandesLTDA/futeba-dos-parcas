@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.games.owner
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.core.net.toUri
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -75,7 +76,8 @@ fun GameFinancialSummary(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .animateContentSize(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
