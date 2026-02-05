@@ -298,6 +298,16 @@ export const setUserRole = onCall({
 ### Strings
 - **ALWAYS** use `strings.xml` - no hardcoded strings
 
+### Loading States (ShimmerLoading)
+- **FOR LISTS** (LazyColumn/LazyRow): Use `LoadingState()` with shimmer effect
+  ```kotlin
+  is UiState.Loading -> LoadingState(shimmerCount = 8, itemType = LoadingItemType.CARD)
+  ```
+- **FOR ACTIONS** (Buttons, Dialogs): Use `CircularProgressIndicator()` (small, in-place)
+- **NEVER** use `CircularProgressIndicator` for full-screen list loading - breaks perceived performance
+- Available types: `CARD`, `GAME_CARD`, `PLAYER_CARD`, `RANKING_ITEM`, `LIST_ITEM`, `LOCATION_CARD`
+- See: `app/src/main/java/com/futebadosparcas/ui/components/states/LoadingState.kt`
+
 ---
 
 ## XP System Quick Reference
