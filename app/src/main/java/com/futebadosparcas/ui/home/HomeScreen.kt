@@ -41,6 +41,8 @@ import com.futebadosparcas.domain.model.WeeklyChallenge
 import com.futebadosparcas.domain.model.UserChallengeProgress
 import com.futebadosparcas.domain.model.UserBadge
 import com.futebadosparcas.ui.components.*
+import com.futebadosparcas.ui.components.modern.ErrorState
+import com.futebadosparcas.ui.components.modern.ErrorType
 import com.futebadosparcas.ui.home.components.*
 import com.futebadosparcas.util.HapticManager
 
@@ -378,37 +380,32 @@ private fun HomeLoadingState() {
 }
 
 /**
- * Estado de erro
+ * Estado de erro usando componente moderno com ilustração
  */
 @Composable
 private fun HomeErrorState(
     message: String,
     onRetry: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = stringResource(R.string.error_default),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onErrorContainer,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        Button(onClick = onRetry) {
-            Text(stringResource(R.string.action_retry))
-        }
+    // Detecta tipo de erro pela mensagem para exibir ícone apropriado
+    val errorType = when {
+        message.contains("conexão", ignoreCase = true) ||
+            message.contains("network", ignoreCase = true) ||
+            message.contains("internet", ignoreCase = true) -> ErrorType.NETWORK
+        message.contains("timeout", ignoreCase = true) ||
+            message.contains("tempo", ignoreCase = true) -> ErrorType.TIMEOUT
+        message.contains("servidor", ignoreCase = true) ||
+            message.contains("server", ignoreCase = true) -> ErrorType.SERVER
+        message.contains("permissão", ignoreCase = true) ||
+            message.contains("permission", ignoreCase = true) -> ErrorType.PERMISSION
+        else -> ErrorType.GENERIC
     }
+
+    ErrorState(
+        errorType = errorType,
+        message = message,
+        onRetry = onRetry,
+        actionText = stringResource(R.string.action_retry)
+    )
 }
 

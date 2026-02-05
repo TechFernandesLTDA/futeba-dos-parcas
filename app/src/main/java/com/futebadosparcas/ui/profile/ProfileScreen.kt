@@ -38,6 +38,8 @@ import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.ui.components.modern.ErrorState as ModernErrorState
+import com.futebadosparcas.ui.components.modern.ErrorType
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 import com.futebadosparcas.util.LevelHelper
@@ -1297,44 +1299,33 @@ private fun DeveloperMenuCard(onClick: () -> Unit) {
 }
 
 /**
- * Estado de erro
+ * Estado de erro usando componente moderno com ilustração
  */
 @Composable
 private fun ErrorState(
     message: String,
     onRetry: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Error,
-            contentDescription = stringResource(R.string.cd_profile_error),
-            modifier = Modifier.size(56.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onRetry) {
-            Icon(
-                imageVector = Icons.Default.Refresh,
-                contentDescription = stringResource(R.string.retry),
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.retry))
-        }
+    // Detecta tipo de erro pela mensagem para exibir ícone apropriado
+    val errorType = when {
+        message.contains("conexão", ignoreCase = true) ||
+            message.contains("network", ignoreCase = true) ||
+            message.contains("internet", ignoreCase = true) -> ErrorType.NETWORK
+        message.contains("timeout", ignoreCase = true) ||
+            message.contains("tempo", ignoreCase = true) -> ErrorType.TIMEOUT
+        message.contains("servidor", ignoreCase = true) ||
+            message.contains("server", ignoreCase = true) -> ErrorType.SERVER
+        message.contains("permissão", ignoreCase = true) ||
+            message.contains("permission", ignoreCase = true) -> ErrorType.PERMISSION
+        else -> ErrorType.GENERIC
     }
+
+    ModernErrorState(
+        errorType = errorType,
+        message = message,
+        onRetry = onRetry,
+        actionText = stringResource(R.string.retry)
+    )
 }
 
 /**

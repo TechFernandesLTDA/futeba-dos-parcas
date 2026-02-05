@@ -33,6 +33,8 @@ import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.ui.components.FutebaTopBar
 import com.futebadosparcas.ui.components.ShimmerGameCard
+import com.futebadosparcas.ui.components.modern.ErrorState
+import com.futebadosparcas.ui.components.modern.ErrorType
 import com.futebadosparcas.ui.theme.GamificationColors
 
 /**
@@ -412,49 +414,33 @@ private fun GamesEmptyState(
 }
 
 /**
- * Estado de erro
+ * Estado de erro usando componente moderno com ilustração
  */
 @Composable
 private fun GamesErrorState(
     message: String,
     onRetry: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = Icons.Default.ErrorOutline,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = stringResource(R.string.error),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.error
-        )
-
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(vertical = 16.dp),
-            textAlign = TextAlign.Center
-        )
-
-        Button(onClick = onRetry) {
-            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry), modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.retry))
-        }
+    // Detecta tipo de erro pela mensagem para exibir ícone apropriado
+    val errorType = when {
+        message.contains("conexão", ignoreCase = true) ||
+            message.contains("network", ignoreCase = true) ||
+            message.contains("internet", ignoreCase = true) -> ErrorType.NETWORK
+        message.contains("timeout", ignoreCase = true) ||
+            message.contains("tempo", ignoreCase = true) -> ErrorType.TIMEOUT
+        message.contains("servidor", ignoreCase = true) ||
+            message.contains("server", ignoreCase = true) -> ErrorType.SERVER
+        message.contains("permissão", ignoreCase = true) ||
+            message.contains("permission", ignoreCase = true) -> ErrorType.PERMISSION
+        else -> ErrorType.GENERIC
     }
+
+    ErrorState(
+        errorType = errorType,
+        message = message,
+        onRetry = onRetry,
+        actionText = stringResource(R.string.retry)
+    )
 }
 
 /**
