@@ -1278,7 +1278,7 @@ private fun CaptainSelectionDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(vertical = 8.dp)
                 ) {
-                    items(players) { player ->
+                    items(players, key = { it.id }) { player ->
                         val isSelected = captain1Id == player.id
                         val isDisabled = captain2Id == player.id
 
@@ -1302,7 +1302,7 @@ private fun CaptainSelectionDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(vertical = 8.dp)
                 ) {
-                    items(players) { player ->
+                    items(players, key = { it.id }) { player ->
                         val isSelected = captain2Id == player.id
                         val isDisabled = captain1Id == player.id
 

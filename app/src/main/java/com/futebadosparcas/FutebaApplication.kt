@@ -58,20 +58,24 @@ class FutebaApplication : Application(), Configuration.Provider {
         }
 
         // Configure Coil for optimal image loading performance
+        // PERF_001: Aumentado cache de 50MB para 100MB para melhor performance
         val imageLoader = ImageLoader.Builder(this)
             .memoryCache {
                 MemoryCache.Builder(this)
                     .maxSizePercent(0.25) // 25% da memória disponível
+                    .weakReferencesEnabled(true) // Permite GC sob pressão de memória
                     .build()
             }
             .diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("image_cache"))
-                    .maxSizeBytes(50 * 1024 * 1024) // 50MB
+                    .maxSizeBytes(100 * 1024 * 1024) // 100MB - otimizado para avatares e fotos
                     .build()
             }
             .crossfade(true) // Transições suaves
             .respectCacheHeaders(false) // Não respeitar headers de cache do servidor
+            .allowHardware(true) // Hardware bitmaps para melhor performance
+            .allowRgb565(true) // Formato RGB565 para economia de memória em imagens opacas
             .build()
 
         Coil.setImageLoader(imageLoader)

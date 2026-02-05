@@ -384,7 +384,7 @@ fun GameDetailContent(
                         modifier = Modifier.padding(16.dp)
                     )
                 }
-                items(state.teams) { team ->
+                items(state.teams, key = { it.id }) { team ->
                     TeamCard(
                         team = team,
                         players = state.confirmations.filter { it.userId in team.playerIds },
@@ -410,7 +410,7 @@ fun GameDetailContent(
                 }
             }
 
-            items(state.confirmations) { confirmation ->
+            items(state.confirmations, key = { it.userId }) { confirmation ->
                 ConfirmationCard(
                     confirmation = confirmation,
                     isOwner = state.canManageGame,
