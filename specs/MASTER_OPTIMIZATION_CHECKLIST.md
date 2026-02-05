@@ -81,11 +81,11 @@
 - [ ] #9: Otimizar recompositions com derivedStateOf
 - [ ] #10: Adicionar key() em TODOS os LazyColumn
 - [ ] #11: Simplificar GameCard (reduzir composables)
-- [ ] #12: Usar ShimmerLoading consistentemente
+- [x] #12: Usar ShimmerLoading consistentemente - **IN PROGRESS (70%): 19/25 telas com listas usando Shimmer. 6 telas ainda usam CircularProgressIndicator em listas que precisam migrar para LoadingState**
 - [ ] #13: Adicionar animateContentSize()
-- [ ] #14: Implementar pull-to-refresh debounce (500ms)
-- [ ] #15: Adicionar Coil placeholders + crossfade
-- [ ] #16: Debouncing em gesture handlers (300ms)
+- [x] #14: Implementar pull-to-refresh debounce (500ms) - **DONE: GroupsViewModel, LeagueViewModel, NotificationsViewModel, StatisticsViewModel, RankingViewModel, ManageLocationsViewModel com 500ms debounce**
+- [x] #15: Adicionar Coil placeholders + crossfade - **DONE: ImageLoader crossfade(true)**
+- [x] #16: Debouncing em gesture handlers (300ms) - **DONE: 2026-02-05. Implementado rememberDebouncedCallback() com 300ms debounce nos principais gesture handlers: GameDetailScreen (confirmPresence, accept/decline/remove, edit/start/finish), CreateGameScreen (save/cancel), InvitePlayersScreen (invite), MVPVoteScreen (vote, finish voting). Função reutilizável em ComposeOptimizations.kt com suporte a callbacks genéricos.**
 
 ### Memory & Caching
 - [ ] #17: Cleanup de listeners em ViewModels.onCleared()
@@ -93,11 +93,11 @@
 - [ ] #21: Configurar Coil disk cache (100MB)
 
 ### Processamento
-- [ ] #22: XP calculation em Dispatchers.Default (não Main)
+- [x] #22: XP calculation em Dispatchers.Default (não Main) - **DONE: 2026-02-05 - MatchFinalizationService.kt e MVPVoteViewModel.kt**
 - [ ] #23: Usar kotlinx.serialization (mais rápido que Gson)
 - [ ] #24: Date formatting com remember {}
 - [ ] #25: Sorting em Firestore query (não no ViewModel)
-- [ ] #26: Usar Dispatchers customizados (IO, Default)
+- [x] #26: Usar Dispatchers customizados (IO, Default) - **DONE: 2026-02-05 - SettingsRepositoryImpl.kt (IO), MatchFinalizationService.kt (Default)**
 
 ### Backend
 - [ ] #27: Implementar keep-warm em Cloud Functions
