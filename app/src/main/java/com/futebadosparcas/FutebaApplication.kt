@@ -67,7 +67,7 @@ class FutebaApplication : Application(), Configuration.Provider {
             .diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("image_cache"))
-                    .maxSizeBytes(50 * 1024 * 1024) // 50MB
+                    .maxSizeBytes(100 * 1024 * 1024) // 100MB (P0 #25 optimization)
                     .build()
             }
             .crossfade(true) // Transições suaves

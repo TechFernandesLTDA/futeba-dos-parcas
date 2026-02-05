@@ -168,9 +168,11 @@ class GameSummonRepositoryImpl(
 
     override suspend fun getGameSummons(gameId: String): Result<List<GameSummon>> {
         return try {
+            // P1 #12: Adicionar .limit() - máximo 100 convocações por jogo
             val snapshot = summonsCollection
                 .whereEqualTo("game_id", gameId)
                 .orderBy("summoned_at", com.google.firebase.firestore.Query.Direction.ASCENDING)
+                .limit(100)
                 .get()
                 .await()
 
@@ -184,8 +186,10 @@ class GameSummonRepositoryImpl(
     }
 
     override fun getGameSummonsFlow(gameId: String): Flow<List<GameSummon>> = callbackFlow {
+        // P1 #12: Adicionar .limit() para real-time listener
         val listener = summonsCollection
             .whereEqualTo("game_id", gameId)
+            .limit(100)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(emptyList())

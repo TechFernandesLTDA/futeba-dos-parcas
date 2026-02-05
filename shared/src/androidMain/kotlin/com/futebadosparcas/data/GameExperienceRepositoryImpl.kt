@@ -123,8 +123,11 @@ class GameExperienceRepositoryImpl(
 
     override suspend fun getGameVotes(gameId: String): Result<List<MVPVote>> {
         return try {
+            // P1 #12: Adicionar .limit() para evitar fetchar todos os votos
+            // Max 100 votos por jogo (limite realista para segurança)
             val snapshot = votesCollection
                 .whereEqualTo("game_id", gameId)
+                .limit(100)
                 .get()
                 .await()
 
@@ -170,7 +173,8 @@ class GameExperienceRepositoryImpl(
                 .get()
                 .await()
 
-            val votesSnapshot = votesCollection.whereEqualTo("game_id", gameId).get().await()
+            // P1 #12: Adicionar .limit() para prevenir leitura excessiva
+            val votesSnapshot = votesCollection.whereEqualTo("game_id", gameId).limit(100).get().await()
 
             val votes = votesSnapshot.documents.mapNotNull { doc ->
                 docToMVPVote(doc.id, doc.data)
@@ -264,8 +268,10 @@ class GameExperienceRepositoryImpl(
 
             if (confirmedCount == 0) return Result.success(false)
 
+            // P1 #12: Adicionar .limit() para prevenção de leitura excessiva
             val votesSnapshot = votesCollection
                 .whereEqualTo("game_id", gameId)
+                .limit(100)
                 .get()
                 .await()
 

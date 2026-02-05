@@ -68,10 +68,12 @@ class InviteRepositoryImpl @Inject constructor(
             }
 
             // Verificar se já existe convite pendente
+            // P1 #12: Adicionar .limit() para evitar fetchar convites excessivos
             val existingInvite = invitesCollection
                 .whereEqualTo("group_id", groupId)
                 .whereEqualTo("invited_user_id", invitedUserId)
                 .whereEqualTo("status", InviteStatus.PENDING.name)
+                .limit(1)
                 .get()
                 .await()
 
@@ -147,9 +149,11 @@ class InviteRepositoryImpl @Inject constructor(
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
             val now = Date()
+            // P1 #12: Adicionar .limit() - máximo 50 convites pendentes por usuário
             val snapshot = invitesCollection
                 .whereEqualTo("invited_user_id", userId)
                 .whereEqualTo("status", InviteStatus.PENDING.name)
+                .limit(50)
                 .get()
                 .await()
 
@@ -171,9 +175,11 @@ class InviteRepositoryImpl @Inject constructor(
             return@callbackFlow
         }
 
+        // P1 #12: Adicionar .limit() para real-time listener
         val listener = invitesCollection
             .whereEqualTo("invited_user_id", userId)
             .whereEqualTo("status", InviteStatus.PENDING.name)
+            .limit(50)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
                     close(e)
@@ -198,9 +204,11 @@ class InviteRepositoryImpl @Inject constructor(
     override suspend fun getGroupPendingInvites(groupId: String): Result<List<KmpGroupInvite>> {
         return try {
             val now = Date()
+            // P1 #12: Adicionar .limit() - máximo 100 convites pendentes por grupo
             val snapshot = invitesCollection
                 .whereEqualTo("group_id", groupId)
                 .whereEqualTo("status", InviteStatus.PENDING.name)
+                .limit(100)
                 .get()
                 .await()
 
@@ -434,9 +442,11 @@ class InviteRepositoryImpl @Inject constructor(
 
             val now = Date()
 
+            // P1 #12: Adicionar .limit() para evitar leitura excessiva de contagem
             val snapshot = invitesCollection
                 .whereEqualTo("invited_user_id", userId)
                 .whereEqualTo("status", InviteStatus.PENDING.name)
+                .limit(50)
                 .get()
                 .await()
 

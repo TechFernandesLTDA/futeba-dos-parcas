@@ -50,6 +50,8 @@ import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.data.model.LocationReview
 import com.futebadosparcas.ui.components.CachedFieldImage
+import com.futebadosparcas.ui.components.states.LoadingState
+import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import java.time.LocalDate
@@ -274,12 +276,7 @@ fun LocationSelectorScreen(
                     // Conteúdo principal
                     when (uiState) {
                         is LocationSelectorUiState.Loading -> {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
+                            LoadingState(shimmerCount = 8, itemType = LoadingItemType.LOCATION_CARD)
                         }
 
                         is LocationSelectorUiState.Error -> {

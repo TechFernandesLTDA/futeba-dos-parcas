@@ -1305,6 +1305,7 @@ export * from "./user-management";
 // Infrastructure & Monitoring
 export * from "./maintenance/cleanup-old-logs";
 export * from "./maintenance/soft-delete";
+export * from "./maintenance/keep-warm";
 export * from "./monitoring/collect-metrics";
 export * from "./storage/generate-thumbnails";
 

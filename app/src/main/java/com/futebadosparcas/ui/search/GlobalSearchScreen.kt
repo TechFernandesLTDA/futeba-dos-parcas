@@ -533,12 +533,7 @@ private fun RecentSearchItem(
 
 @Composable
 private fun LoadingSearchContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
+    LoadingState(shimmerCount = 8, itemType = LoadingItemType.CARD)
 }
 
 @Composable
