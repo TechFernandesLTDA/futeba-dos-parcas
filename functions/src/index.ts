@@ -1277,6 +1277,7 @@ export * from "./maintenance/cleanup-old-logs";
 export * from "./maintenance/soft-delete";
 export * from "./monitoring/collect-metrics";
 export * from "./storage/generate-thumbnails";
+export * from "./keep-warm";
 
 // ==========================================
 // PERF_001: CUSTOM CLAIMS & SECURITY

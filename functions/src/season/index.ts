@@ -6,8 +6,21 @@ const db = admin.firestore();
 /**
  * Scheduled job to check for season end and perform closing operations.
  * Runs every day at 03:00 AM.
+ *
+ * Timeout: 540s (9 min) para processar seasons com muitos participantes.
+ * Memory: 512MiB para operações de batch em massa.
+ *
+ * @see specs/MASTER_OPTIMIZATION_CHECKLIST.md - P1 #21
  */
-export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
+export const checkSeasonEnd = onSchedule(
+  {
+    schedule: "every day 03:00",
+    timeZone: "America/Sao_Paulo",
+    timeoutSeconds: 540, // 9 minutos (máximo para scheduled)
+    memory: "512MiB",
+    retryCount: 3,
+  },
+  async (event) => {
   console.log("Checking for seasons to close...");
 
   const now = new Date();
@@ -122,7 +135,8 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
 
   await commitBatch();
   console.log(`Closed ${snapshot.size} seasons.`);
-});
+  }
+);
 
 function getMonthName(monthIndex: number): string {
   const months = [

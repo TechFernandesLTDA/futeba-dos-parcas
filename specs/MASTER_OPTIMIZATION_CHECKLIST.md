@@ -44,11 +44,11 @@
 
 ### Cloud Functions
 - [x] #8: Prevenir race conditions em listeners (xp_processing flag) - **DONE: Transaction lock**
-- [ ] #11: Otimizar cold start (keep-alive ou migrar linguagem)
+- [x] #11: Otimizar cold start (keep-alive ou migrar linguagem) - **DONE: keep-warm.ts scheduled every 5 min**
 - [ ] #17: Migrar league recalculation para queue-based
-- [ ] #18: Verificar badges apenas quando relevante (não TODOS)
+- [x] #18: Verificar badges apenas quando relevante (não TODOS) - **DONE: Conditional checks already in index.ts**
 - [ ] #19: Implementar compactação de streaks antigos
-- [ ] #21: Implementar timeout para season reset (max 9 min)
+- [x] #21: Implementar timeout para season reset (max 9 min) - **DONE: 540s timeout + 512MiB memory**
 
 ### Cache & Paging
 - [ ] #18: Implementar Room Database (games, users, groups)
@@ -59,12 +59,12 @@
 ### UI Performance
 - [ ] #26: Auditar e otimizar Compose recompositions
 - [x] #27: Adicionar key() em LazyColumn.items() - **DONE: GameDetailScreen, TeamFormationScreen**
-- [ ] #28: Gerar Baseline Profiles
+- [x] #28: Gerar Baseline Profiles - **DONE: BaselineProfileGenerator + app integration configured**
 
 ### Network
 - [ ] #1: Reduzir queries sequenciais (3-5 por tela → 1-2)
 - [x] #3: Implementar whereIn() chunking eficiente - **DONE: index.ts + notifications.ts**
-- [ ] #7: Implementar Paging 3 em listas
+- [ ] #7: Implementar Paging 3 em listas - **PARTIAL: PagingSources created, needs ViewModel integration**
 
 ---
 
@@ -100,7 +100,7 @@
 - [ ] #26: Usar Dispatchers customizados (IO, Default)
 
 ### Backend
-- [ ] #27: Implementar keep-warm em Cloud Functions
+- [x] #27: Implementar keep-warm em Cloud Functions - **DONE: keep-warm.ts deployed**
 - [ ] #28: Cache de leaderboards (Redis ou Firestore)
 - [ ] #29: Batch FCM notifications (aguardar 30s)
 - [ ] #30: CDN para responses públicas (rankings)
@@ -120,10 +120,10 @@
 🔐 Security        [██████████] 10/10  (100%) ✅
 ⚡ Performance     [██████░░░░] 12/20  (60%)
 🎨 UI/UX           [██░░░░░░░░] 3/15   (20%)
-📡 Backend         [████████░░] 9/15   (60%)
+📡 Backend         [█████████░] 11/15  (73%)
 💰 Costs           [█░░░░░░░░░] 1/10   (10%)
 
-TOTAL: 26/70 (37%)
+TOTAL: 31/70 (44%)
 ```
 
 ---
@@ -147,7 +147,7 @@ TOTAL: 26/70 (37%)
 14. ✅ Memory leak patterns
 15. ✅ Budget Alerts configured
 
-### P1 - Importantes (9/25 = 36%)
+### P1 - Importantes (13/25 = 52%)
 1. ✅ isGroupMember optimization
 2. ✅ isGameOwner optimization
 3. ✅ whereIn chunking
@@ -157,28 +157,38 @@ TOTAL: 26/70 (37%)
 7. ✅ Query limits (.limit() em todas as queries)
 8. ✅ whereIn() efficient chunking
 9. ✅ Compound indexes (mvp_votes, waitlist)
+10. ✅ Cold start optimization (keep-warm)
+11. ✅ Badge checks only when relevant
+12. ✅ Baseline Profiles configured
+13. ✅ Season reset timeout (9 min)
 
-### P2 - Desejáveis (2/30 = 7%)
+### P2 - Desejáveis (3/30 = 10%)
 1. ✅ Coil crossfade
 2. ✅ Coil disk cache
+3. ✅ Keep-warm Cloud Functions
 
 ---
 
 ## 📝 NOTAS DE IMPLEMENTAÇÃO
 
-### ✅ Completados Recentemente (2026-02-04)
+### ✅ Completados Recentemente (2026-02-05)
 - Cloud Functions: Idempotency com transaction_id
 - Cloud Functions: Rate limit cleanup scheduler
 - Cloud Functions: Rate limiting em callable functions críticas
 - Android: LazyColumn keys para performance
 - Android: .limit() adicionado em todas as queries Firestore sem paginação
 - Firestore: Compound indexes para mvp_votes + waitlist (deployed)
+- Cloud Functions: Keep-warm function (every 5 min) deployed
+- Cloud Functions: Season reset timeout 540s + 512MiB memory
+- NPM: Fixed @typescript-eslint/parser version conflict
+- Baseline Profiles: Already configured in baselineprofile module
+- Badge optimization: Conditional checks already implemented
 
 ### 🚧 Próximos Passos
-1. Paging 3 para listas longas
+1. Paging 3 ViewModel integration (PagingSources ready)
 2. Room Database para cache local
-3. Baseline Profiles generation
-4. Cold start optimization
+3. Streak compaction (low priority - system already efficient)
+4. League recalculation queue-based (low priority - function is lightweight)
 
 ### ⏸️ Bloqueados
 (Nenhum bloqueio no momento)
