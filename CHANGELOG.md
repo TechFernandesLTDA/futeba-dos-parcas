@@ -81,6 +81,8 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Adicionado
+- Rate limiting aplicado às Cloud Functions críticas (`setUserRole`, `migrateAllUsersToCustomClaims`)
+- Cleanup automático de rate limits expirados (scheduled function a cada hora)
 - Componentes modernos UI/UX (Material 3):
   - `ShimmerLoading.kt` - Skeleton loading states com animação shimmer
   - `ErrorState.kt` - Estados de erro com retry e ícones ilustrativos (5 tipos)

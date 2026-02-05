@@ -16,6 +16,7 @@ import * as admin from "firebase-admin";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import {FieldValue} from "firebase-admin/firestore";
+import {checkRateLimit, RATE_LIMITS} from "../middleware/rate-limiter";
 
 const db = admin.firestore();
 
@@ -69,6 +70,31 @@ export const setUserRole = onCall<SetUserRoleRequest>(
         "User must be authenticated to set roles"
       );
     }
+
+    // ==========================================
+    // 1.5 RATE LIMIT CHECK (PERF_001)
+    // ==========================================
+    const rateLimitConfig = {
+      ...RATE_LIMITS.BATCH_OPERATION, // 5/min - operação sensível
+      keyPrefix: "set_user_role",
+    };
+    const {allowed, remaining, resetAt} = await checkRateLimit(
+      request.auth.uid,
+      rateLimitConfig
+    );
+
+    if (!allowed) {
+      const resetInSeconds = Math.ceil((resetAt.getTime() - Date.now()) / 1000);
+      console.warn(
+        `[RATE_LIMIT] Admin ${request.auth.uid} exceeded setUserRole limit. Reset in ${resetInSeconds}s`
+      );
+      throw new HttpsError(
+        "resource-exhausted",
+        `Rate limit exceeded. Try again in ${resetInSeconds} seconds.`,
+        {retryAfter: resetInSeconds}
+      );
+    }
+    console.log(`[RATE_LIMIT] setUserRole: ${remaining}/5 requests remaining for ${request.auth.uid}`);
 
     // ==========================================
     // 2. AUTHORIZATION CHECK
@@ -238,6 +264,24 @@ export const migrateAllUsersToCustomClaims = onCall(
     // Verificar permissão de admin
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Authentication required");
+    }
+
+    // ==========================================
+    // RATE LIMIT CHECK (operação muito pesada - 1/hora)
+    // ==========================================
+    const rateLimitConfig = {
+      maxRequests: 1,
+      windowMs: 60 * 60 * 1000, // 1 hora
+      keyPrefix: "migrate_claims",
+    };
+    const {allowed, resetAt} = await checkRateLimit(request.auth.uid, rateLimitConfig);
+
+    if (!allowed) {
+      const resetInMinutes = Math.ceil((resetAt.getTime() - Date.now()) / 60000);
+      throw new HttpsError(
+        "resource-exhausted",
+        `Migration can only run once per hour. Try again in ${resetInMinutes} minutes.`
+      );
     }
 
     const callerDoc = await db.collection("users").doc(request.auth.uid).get();

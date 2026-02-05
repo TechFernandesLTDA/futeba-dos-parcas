@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Regra #1: NUNCA implementar sem SPEC aprovada
 
 - Toda feature ou bugfix DEVE ter uma spec em `/specs/` **antes** de escrever código
-- Copie o template apropriado: `_TEMPLATE_FEATURE_MOBILE.md` ou `_TEMPLATE_BUGFIX_MOBILE.md`
+- Copie o template apropriado: `_TEMPLATE_FEATURE_MOBILE.md`, `_TEMPLATE_BUGFIX_MOBILE.md`, ou `_TEMPLATE_SCREEN_UI.md`
 - Status da spec deve ser `APPROVED` antes de iniciar implementação
 
 ### Regra #2: Fases obrigatórias
@@ -59,6 +59,8 @@ sealed class UiState {
 
 **Note:** Commands work on Windows (Git Bash/PowerShell), macOS, and Linux. Use `./gradlew` on Unix-like systems or `gradlew.bat` on Windows CMD.
 
+**Windows Note:** Tests use JUnit 5 (Jupiter) and are configured to run with `workingDir = C:/TEMP` to avoid path encoding issues with special characters (ç, etc.).
+
 ```bash
 # Build (Android)
 ./gradlew assembleDebug                    # Build debug APK
@@ -98,7 +100,7 @@ firebase deploy --only functions           # Deploy
 | Theme/Colors | `app/src/main/java/com/futebadosparcas/ui/theme/Theme.kt` |
 | Firestore rules | `firestore.rules` |
 | Cloud Functions | `functions/src/index.ts` (main entry) |
-| Spec templates | `specs/_TEMPLATE_*.md` |
+| Spec templates | `specs/_TEMPLATE_*.md` (Feature, Bugfix, Screen UI) |
 | Modern UI components | `app/.../ui/components/modern/` (ShimmerLoading, ErrorState, etc.) |
 | Shared KMP module | `shared/commonMain/` (cross-platform domain logic) |
 | Project context (LLM) | `.claude/PROJECT_CONTEXT.md` (contexto consolidado para AIs) |
@@ -135,10 +137,10 @@ firebase deploy --only functions           # Deploy
 
 ### Version
 
-- **Current**: 1.8.0 (versionCode: 21)
-- **SDK**: minSdk 24, targetSdk 35, JDK 17
+- **Current**: 1.9.0 (versionCode: 22)
+- **SDK**: minSdk 24, targetSdk 35, compileSdk 36, JDK 17
 - **Kotlin**: 2.2.10
-- **Compose BOM**: 2025.06.00
+- **Compose BOM**: 2024.09.00
 - **Material 3**: Latest (adaptive navigation, pull-to-refresh)
 
 ---

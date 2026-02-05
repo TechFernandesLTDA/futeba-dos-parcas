@@ -267,3 +267,58 @@ export const cleanupOldNotifications = functions.scheduler.onSchedule({
     throw error;
   }
 });
+
+/**
+ * Cleanup de rate limits expirados (a cada hora)
+ *
+ * Remove buckets de rate limiting que já expiraram
+ * para evitar crescimento infinito da collection
+ */
+export const cleanupRateLimits = functions.scheduler.onSchedule({
+  schedule: "0 * * * *", // A cada hora
+  timeZone: "America/Sao_Paulo",
+  region: "southamerica-east1",
+  memory: "256MiB",
+  timeoutSeconds: 120,
+}, async (event) => {
+  console.log("[CLEANUP] Starting rate_limits cleanup");
+
+  const now = admin.firestore.Timestamp.now();
+
+  let totalDeleted = 0;
+
+  try {
+    // Buscar buckets expirados
+    const query = db.collection("rate_limits")
+      .where("expires_at", "<", now)
+      .limit(500);
+
+    const snapshot = await query.get();
+
+    if (snapshot.empty) {
+      console.log("[CLEANUP] No expired rate limits found");
+      return;
+    }
+
+    // Delete em batch
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+    totalDeleted = snapshot.size;
+
+    console.log(`[CLEANUP] Deleted ${totalDeleted} expired rate limit buckets`);
+
+    // Log metrics
+    await db.collection("metrics").add({
+      type: "rate_limits_cleanup",
+      timestamp: now,
+      deleted_count: totalDeleted,
+    });
+  } catch (error) {
+    console.error("[CLEANUP] Error during rate_limits cleanup:", error);
+    throw error;
+  }
+});

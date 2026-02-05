@@ -1,7 +1,7 @@
 # 📋 Futeba dos Parças - Contexto Consolidado do Projeto
 
-> **Última Atualização:** 2026-02-01
-> **Versão:** 1.8.0 (Build 21)
+> **Última Atualização:** 2026-02-04
+> **Versão:** 1.9.0 (Build 22)
 > **Propósito:** Contexto otimizado para Claude Code e outros LLMs
 
 ---
@@ -17,7 +17,7 @@
 - **Linguagem:** Kotlin 2.2.10 (KMP ~95% código compartilhado)
 
 ### Status Atual
-- ✅ Android: **PRODUÇÃO** (Play Store v1.8.0)
+- ✅ Android: **PRODUÇÃO** (Play Store v1.9.0)
 - 🚧 iOS: **FASE 1 COMPLETA** (aguardando Mac para FASE 2)
 - ✅ Backend: Firebase Functions v2 (TypeScript)
 - ✅ CI/CD: GitHub Actions (Android CI, iOS Build, CodeQL, Dependabot)

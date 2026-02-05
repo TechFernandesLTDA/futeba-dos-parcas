@@ -18,7 +18,7 @@
 - [ ] #6: Implementar processamento paralelo/batch de XP (não síncrono)
 - [ ] #7: Adicionar Firestore batch writes (até 500 ops)
 - [ ] #9: Implementar idempotência com transaction IDs
-- [ ] #10: Adicionar rate limiting em callable functions
+- [x] #10: Adicionar rate limiting em callable functions ✅ (2026-02-04)
 
 ### Performance
 - [ ] #22: Fixar memory leaks em 39 ViewModels

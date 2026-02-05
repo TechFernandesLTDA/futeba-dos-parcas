@@ -104,4 +104,54 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ---
 
+### [2026-02-04] Rate Limiting aplicado às Cloud Functions críticas
+
+**Contexto:** O Master Optimization Checklist (#10) identificou que rate limiting estava implementado mas não aplicado às Cloud Functions callable.
+
+**Alternativas consideradas:**
+1. **Não aplicar rate limiting** - Vulnerável a abuso e custos inesperados
+2. **Rate limiting no cliente** - Facilmente contornável
+3. **Rate limiting server-side** - Seguro, distribuído via Firestore
+
+**Decisão:** Aplicar rate limiting server-side usando middleware `withRateLimit` às funções:
+- `setUserRole`: 5 requisições/minuto (operação sensível)
+- `migrateAllUsersToCustomClaims`: 1 requisição/hora (operação pesada)
+
+**Justificativa:**
+- Protege contra abuso de API
+- Limites razoáveis para uso normal
+- Armazenamento distribuído em Firestore
+- Cleanup automático a cada hora
+
+**Consequências:**
+- (+) Proteção contra DDoS/abuso
+- (+) Custos previsíveis
+- (+) Métricas de uso disponíveis
+- (-) Pequeno overhead por requisição (~20ms)
+
+**Relacionado:** `functions/src/middleware/rate-limiter.ts`, `functions/src/auth/custom-claims.ts`
+
+---
+
+### [2026-02-04] Configuração de Firebase Budget Alerts - PENDENTE
+
+**Contexto:** O Master Optimization Checklist (#35) identificou que budget alerts não estão configurados.
+
+**Status:** AÇÃO MANUAL NECESSÁRIA
+
+**Recomendação:** Configurar no Google Cloud Console:
+1. Acesse https://console.cloud.google.com/billing
+2. Selecione o projeto Futeba dos Parças
+3. Vá em "Budgets & alerts"
+4. Configure alertas para:
+   - $10/dia (warning)
+   - $50/dia (critical)
+   - $100/mês (review)
+
+**Justificativa:** Sem budget alerts, picos de uso (bugs, abuso) podem gerar custos inesperados.
+
+**Relacionado:** `specs/MASTER_OPTIMIZATION_CHECKLIST.md` (#35)
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->
