@@ -51,6 +51,8 @@ import com.futebadosparcas.ui.components.AppTopBar
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.components.states.LoadingState
+import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.util.ContrastHelper
 
 /**
@@ -111,7 +113,7 @@ fun TeamFormationScreen(
         ) {
             when (val state = uiState) {
                 is TeamFormationUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    LoadingState(shimmerCount = 12, itemType = LoadingItemType.PLAYER_CARD)
                 }
                 is TeamFormationUiState.Error -> {
                     EmptyState(

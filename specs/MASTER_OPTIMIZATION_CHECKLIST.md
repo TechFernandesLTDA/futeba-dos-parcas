@@ -10,7 +10,7 @@
 
 ### Firestore Security Rules
 - [ ] #1: Remover get() calls excessivos (getUserRole, isGroupMember, isGameOwner)
-- [ ] #4: Migrar role para Custom Claims
+- [x] #4: Migrar role para Custom Claims - **DONE: 2026-02-05. Cloud Functions setUserRole, onNewUserCreated, migrateAllUsersToCustomClaims deployed. Security Rules Fase 2 (100% Custom Claims). 4 usuários migrados. Ver: specs/CUSTOM_CLAIMS_MIGRATION.md**
 - [ ] #29: Validar que XP não é editável por FIELD_OWNER (verificar em prod)
 - [ ] #30: Adicionar bounds validation em scores (max 100)
 - [ ] #32: Implementar Firebase App Check

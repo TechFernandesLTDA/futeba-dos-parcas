@@ -63,8 +63,14 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedFields);
     }
 
+    // PERF_001 P0 #1: Verifica se usuario pode editar XP
+    // Bloqueia FIELD_OWNER de editar experiencePoints (apenas Cloud Functions via Admin SDK)
+    function canEditExperiencePoints() {
+      return isAdmin();
+    }
+
     // ============================================
-    // PERF_001: CUSTOM CLAIMS - FASE 2 COMPLETA
+    // PERF_001: CUSTOM CLAIMS - FASE 2 COMPLETA + P0 OTIMIZACOES
     // ============================================
     // HISTORICO:
     // - FASE 1: Dual-source (Custom Claim + Firestore fallback)
@@ -80,6 +86,17 @@ service cloud.firestore {
     // - ANTES: getUserRole() = 1 Firestore read por request
     // - DEPOIS: request.auth.token.role = 0 reads (incluido no JWT)
     // - ECONOMIA: ~40% de reads eliminados
+    //
+    // PERF_001 P0 #1: Funcoes com get() ainda necessarias
+    // - isGameOwner(): get(games/{gameId}) - necessario pois owner_id nao esta em Custom Claims
+    // - isConfirmedPlayer(): get(confirmations/{gameId}_{userId}) - valida participacao ativa
+    // - isGroupMember(): get(groups/{groupId}/members/{userId}) - valida participacao em grupo
+    // - isGroupAdmin(): get(groups/{groupId}/members/{userId}) - valida admin de grupo
+    // - isGroupActive(): get(groups/{groupId}) - valida grupo ativo
+    //
+    // Estrategia: Manter get() apenas onde impossivel desnormalizar em Custom Claims.
+    // Alternativa futura: Denormalizar owner_id em confirmations/teams para evitar get(games).
+    // Tracker: specs/PERF_001_GET_OPTIMIZATION_ROADMAP.md
     //
     // ROLLBACK: Se necessario, restaurar getUserRole() fallback
     // do commit anterior (git log para encontrar)
@@ -282,7 +299,8 @@ service cloud.firestore {
 
       // Usuario pode atualizar seu perfil (campos basicos apenas)
       // XP/Level/Milestones SAO atualizados via Cloud Functions (Admin SDK) - NAO client-side
-      // SEGURANCA: Removida permissao de FIELD_OWNER editar XP (vulnerabilidade P0-1)
+      // SEGURANCA P0 #29: Bloqueado para TODOS - apenas Cloud Functions pode editar experiencePoints
+      // Validacao: fieldUnchanged('experience_points') garante que nenhum user (nem FIELD_OWNER) pode alterar
       //
       // CMD-05: Regras de atualizacao de perfil
       // Campos permitidos para edicao pelo usuario:
@@ -294,7 +312,7 @@ service cloud.firestore {
       //
       // Campos protegidos (apenas admin/cloud functions):
       // - id, created_at, role (identidade e permissões)
-      // - experience_points, level, milestones_achieved (gamificacao)
+      // - experience_points, level, milestones_achieved (gamificacao) [P0 #29]
       // - fcm_token (gerenciado internamente)
       // - auto_*_rating, auto_rating_samples (ratings automaticos)
       allow update: if
@@ -304,7 +322,8 @@ service cloud.firestore {
            fieldUnchanged('id') &&
            fieldUnchanged('created_at') &&
            fieldUnchanged('role') &&
-           // Campos de gamificacao (apenas cloud functions)
+           // PERF_001 P0 #29: Campos de gamificacao NUNCA podem ser editados por users
+           // Garante que XP so é alterado por Cloud Functions (Admin SDK)
            fieldUnchanged('experience_points') &&
            fieldUnchanged('level') &&
            fieldUnchanged('milestones_achieved') &&
@@ -349,14 +368,14 @@ service cloud.firestore {
 
       // Qualquer usuario autenticado pode criar jogos
       // Validacoes na criacao de jogo (#28, #29 - Validações de bounds e coordenadas)
-      // PERF_001: Validação estrita de scores (max 100 gols)
+      // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
       allow create: if isAuthenticated() &&
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
                        // Validacao de max_players (2-50) - #28
                        isValidMaxPlayers(request.resource.data.max_players) &&
                        // Validacao de max_goalkeepers (0-10) - #28
                        isValidMaxGoalkeepers(request.resource.data.get('max_goalkeepers', null)) &&
-                       // Validacao de scores (0-100) - PERF_001
+                       // PERF_001 P0 #30: Validacao de scores (0-100) - Previne exploits de XP inflados
                        isValidScore(request.resource.data.team1_score) &&
                        isValidScore(request.resource.data.team2_score) &&
                        // Validacao de contadores (>= 0)
@@ -369,11 +388,12 @@ service cloud.firestore {
       // Excecao: contadores (players_count, goalkeepers_count) podem ser
       // atualizados por qualquer autenticado (via transacao de confirmacao)
       // Admins têm acesso total
-      // PERF_001: Validação estrita de scores (max 100 gols)
+      // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
       allow update: if isAuthenticated() && (
         isAdmin() ||
         // Dono pode fazer qualquer atualizacao (com validacao de dados)
         (resource.data.owner_id == userId() &&
+         // P0 #30: Validacao estrita de scores - Previne exploits de XP
          isValidScore(request.resource.data.team1_score) &&
          isValidScore(request.resource.data.team2_score) &&
          isNonNegativeNumber(request.resource.data.players_count) &&
@@ -490,8 +510,13 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // Dono do jogo ou admin pode criar/atualizar estatisticas de jogadores
+      // PERF_001 P0 #30: Validacao estrita de scores (goals, assists - max 100)
       allow create, update: if isAuthenticated() &&
-                               (isAdmin() || isGameOwner(request.resource.data.game_id));
+                               (isAdmin() || isGameOwner(request.resource.data.game_id)) &&
+                               // Valida goals (se presente) <= 100
+                               isValidScore(request.resource.data.get('goals', null)) &&
+                               // Valida assists (se presente) - mesmo limite para consistencia
+                               isValidScore(request.resource.data.get('assists', null));
 
       allow delete: if isAuthenticated() &&
                        (isAdmin() || isGameOwner(resource.data.game_id));
