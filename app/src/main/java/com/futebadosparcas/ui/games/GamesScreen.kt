@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -93,6 +94,7 @@ fun GamesScreen(
                     GamesSuccessContent(
                         games = state.games,
                         onGameClick = onGameClick,
+                        viewModel = viewModel,
                         onFilterChange = { filterType ->
                             viewModel.loadGames(filterType)
                         }
@@ -124,9 +126,17 @@ fun GamesScreen(
 private fun GamesSuccessContent(
     games: List<GameWithConfirmations>,
     onGameClick: (gameId: String) -> Unit,
-    onFilterChange: (GameFilterType) -> Unit
+    onFilterChange: (GameFilterType) -> Unit,
+    viewModel: GamesViewModel
 ) {
     var selectedFilter by remember { mutableStateOf(GameFilterType.ALL) }
+
+    // Prefetch detalhes dos primeiros 5 jogos quando a lista é carregada
+    LaunchedEffect(games) {
+        if (games.isNotEmpty()) {
+            viewModel.prefetchGameDetails(games)
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize()

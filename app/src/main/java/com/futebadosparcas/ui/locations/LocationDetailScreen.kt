@@ -41,6 +41,8 @@ import com.futebadosparcas.ui.components.FieldImage
 import com.futebadosparcas.ui.components.LocationHeaderImage
 import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.input.CepVisualTransformation
+import com.futebadosparcas.ui.components.states.LoadingState
+import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.ui.navigation.components.SecondaryTopBar
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -211,11 +213,9 @@ fun LocationDetailScreen(
             }
         }
     ) { paddingValues ->
-        
+
         if (uiState is LocationDetailUiState.Loading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            LoadingState(shimmerCount = 4, itemType = LoadingItemType.LOCATION_CARD)
         } else {
             Column(
                 modifier = Modifier

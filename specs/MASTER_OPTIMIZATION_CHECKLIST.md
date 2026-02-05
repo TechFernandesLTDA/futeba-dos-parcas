@@ -22,9 +22,9 @@
 - [x] #10: Adicionar rate limiting em callable functions - **DONE: 2026-02-05. checkRateLimit() middleware, 5 calls/min por usuário. Ver: specs/P0_CLOUD_FUNCTIONS_OPTIMIZATION.md**
 
 ### Performance
-- [ ] #22: Fixar memory leaks em 39 ViewModels
-- [ ] #24: Habilitar offline persistence do Firestore
-- [ ] #25: Configurar Coil image caching (100MB)
+- [x] #22: Fixar memory leaks em 39 ViewModels - **DONE: 2026-02-05. Audit 100% compliant - todos ViewModels com Job tracking têm onCleared(). 23/23 com Jobs, 16/16 safe. Ver: specs/P0_22_VIEWMODEL_MEMORY_LEAK_AUDIT_2026_02_05.md**
+- [x] #24: Habilitar offline persistence do Firestore - **VERIFIED: 2026-02-05. Já implementado com 100MB PersistentCacheSettings em FirebaseModule.kt. Nenhuma mudança necessária.**
+- [x] #25: Configurar Coil image caching (100MB) - **DONE: 2026-02-05. Atualizado 50MB → 100MB em FutebaApplication.kt. Ver: specs/P0_PERFORMANCE_OPTIMIZATIONS_COMPLETION_2026_02_05.md**
 
 ### Segurança
 - [ ] #33: Proteger FCM tokens de leitura pública
@@ -52,9 +52,9 @@
 - [ ] #21: Implementar timeout para season reset (max 9 min)
 
 ### Cache & Paging
-- [ ] #18: Implementar Room Database (games, users, groups)
-- [ ] #19: Criar LRU cache (200 entries)
-- [ ] #20: Adicionar TTL em XP logs (1 ano)
+- [x] #18: Implementar Room Database (games, users, groups) - **DONE: 2026-02-05. AppDatabase v4 com 4 entities (Game, User, Group, LocationSync). Migrations completas. Ver: specs/P1_CACHE_PAGING_IMPLEMENTATION_REPORT.md**
+- [x] #19: Criar LRU cache (200 entries) - **DONE: 2026-02-05. MemoryCache.kt com android.util.LruCache, TTL configurável, thread-safe. Ver: specs/P1_CACHE_PAGING_IMPLEMENTATION_REPORT.md**
+- [x] #20: Adicionar TTL em XP logs (1 ano) - **DONE: 2026-02-05. Cloud Function cleanupOldXpLogs agendada semanalmente (dom 03:00 BRT). Também cleanup para activities (90d) e notifications (30d). Ver: specs/P1_CACHE_PAGING_IMPLEMENTATION_REPORT.md**
 - [x] #23: Implementar Repository Pattern consistente - **AUDIT COMPLETE: 2026-02-05. 95% consistente. 19/20 repositórios seguem o padrão. Ver: specs/P1_23_REPOSITORY_PATTERN_COMPLETION.md**
 
 ### UI Performance
@@ -65,7 +65,7 @@
 ### Network
 - [ ] #1: Reduzir queries sequenciais (3-5 por tela → 1-2)
 - [ ] #3: Implementar whereIn() chunking eficiente
-- [ ] #7: Implementar Paging 3 em listas
+- [x] #7: Implementar Paging 3 em listas - **CORE DONE: 2026-02-05. 3 PagingSource implementados (Games, Users, CachedGames). Recomendações: SearchPagingSource, ActivityPagingSource. Ver: specs/P1_CACHE_PAGING_IMPLEMENTATION_REPORT.md**
 
 ---
 
@@ -119,12 +119,12 @@
 
 ```
 🔐 Security        [░░░░░░░░░░] 0/10   (0%)
-⚡ Performance     [████░░░░░░] 8/20   (40%)
+⚡ Performance     [██████░░░░] 11/20   (40%)
 🎨 UI/UX           [████████░░] 12/15  (80%)
 📡 Backend         [██░░░░░░░░] 4/15   (27%)  ← +2 items (P0 #6,7,9,10)
 💰 Costs           [░░░░░░░░░░] 0/10   (0%)
 
-TOTAL: 24/70 (34%)  ← +2 items from P0 Cloud Functions
+TOTAL: 27/70 (34%)  ← +2 items from P0 Cloud Functions
 ```
 
 ---
