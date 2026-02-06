@@ -78,9 +78,9 @@ export interface SecureCallableOptions {
 export function secureCallable<TRequest = any, TResponse = any>(
   options: SecureCallableOptions,
   handler: (request: CallableRequest<TRequest>) => Promise<TResponse>
-): (request: CallableRequest<TRequest>) => Promise<TResponse> {
-  // Aplicar defaults
-  const config: Required<SecureCallableOptions> = {
+) {
+  // Aplicar defaults (manter tipos opcionais para evitar problemas com undefined)
+  const config = {
     appCheck: options.appCheck ?? (process.env.NODE_ENV === "production"),
     rateLimit: options.rateLimit,
     requireAuth: options.requireAuth ?? true,

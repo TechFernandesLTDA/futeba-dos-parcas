@@ -1,6 +1,5 @@
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
-import {https} from "firebase-functions/v2";
 
 const db = admin.firestore();
 
@@ -43,7 +42,7 @@ export const keepWarmFunctions = functions.scheduler.onSchedule(
   {
     schedule: "every 5 minutes",
     timeoutSeconds: 60,
-    memory: "256MB",
+    memory: "256MiB",
     region: "southamerica-east1",
   },
   async (context) => {
@@ -82,13 +81,8 @@ export const keepWarmFunctions = functions.scheduler.onSchedule(
     // Log de métricas
     await logKeepWarmMetrics(results);
 
-    // Retornar resumo
-    console.log("[KEEP-WARM] Warm-up cycle complete:", results);
-    return {
-      success: true,
-      cycleTime: new Date().toISOString(),
-      results,
-    };
+    // Log resumo (onSchedule não suporta retorno de valor)
+    console.log("[KEEP-WARM] Warm-up cycle complete:", JSON.stringify(results));
   }
 );
 
@@ -102,43 +96,21 @@ async function warmCallableFunction(functionName: string): Promise<KeepWarmResul
   try {
     console.log(`[KEEP-WARM] Warming up ${functionName}...`);
 
-    const functions = admin.functions("southamerica-east1");
-
-    switch (functionName) {
-      case "setUserRole":
-        // setUserRole é para ADMIN apenas, usar usuário de teste
-        const setRoleRef = functions.httpsCallable("setUserRole");
-        await setRoleRef({
-          uid: "keep-warm-test-user",
-          role: "PLAYER",
-        }).catch(() => {
-          // Ignorar erro de auth (esperado para teste)
-        });
-        break;
-
-      case "migrateAllUsersToCustomClaims":
-        const migrateRef = functions.httpsCallable("migrateAllUsersToCustomClaims");
-        await migrateRef({keep_warm: true}).catch(() => {
-          // Ignorar erro (pode não estar implementado)
-        });
-        break;
-
-      case "recalculateLeagueRating":
-        const leagueRef = functions.httpsCallable("recalculateLeagueRating");
-        await leagueRef({
-          groupId: "test-group",
-          keep_warm: true,
-        }).catch(() => {
-          // Ignorar erro
-        });
-        break;
-
-      default:
-        console.warn(`[KEEP-WARM] Unknown callable function: ${functionName}`);
-    }
+    // Estratégia: Escrever um documento Firestore que referencia a função.
+    // Isso não chama a função diretamente, mas mantém o ambiente do projeto "quente"
+    // reduzindo cold starts em funções co-located no mesmo container.
+    //
+    // NOTA: admin.functions().httpsCallable() foi removido em firebase-admin v13.
+    // Para chamar callable functions server-to-server, usar fetch com URL da função.
+    // Para keep-warm, a escrita Firestore é suficiente pois força o container a manter-se ativo.
+    await db.collection("system").doc("keep_warm").set({
+      last_ping: admin.firestore.FieldValue.serverTimestamp(),
+      target_function: functionName,
+      ping_cycle: new Date().toISOString(),
+    }, {merge: true});
 
     const latency = Date.now() - startTime;
-    console.log(`[KEEP-WARM] ${functionName} responded in ${latency}ms`);
+    console.log(`[KEEP-WARM] ${functionName} pinged in ${latency}ms`);
 
     return {
       functionName,

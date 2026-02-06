@@ -71,7 +71,19 @@ data class Group(
     // Configurações de votação MVP (Issues #51-60)
     @get:PropertyName("voting_settings")
     @set:PropertyName("voting_settings")
-    var votingSettings: VotingSettings? = null
+    var votingSettings: VotingSettings? = null,
+
+    // === SOFT DELETE (P2 #40) ===
+
+    // Timestamp de quando o grupo foi soft-deletado (null = ativo)
+    @get:PropertyName("deleted_at")
+    @set:PropertyName("deleted_at")
+    var deletedAt: Date? = null,
+
+    // ID do usuario que realizou o soft delete
+    @get:PropertyName("deleted_by")
+    @set:PropertyName("deleted_by")
+    var deletedBy: String? = null
 ) {
     constructor() : this(id = "")
 
@@ -88,10 +100,36 @@ data class Group(
     }
 
     @Exclude
-    fun isActive(): Boolean = getStatusEnum() == GroupStatus.ACTIVE
+    fun isActive(): Boolean = getStatusEnum() == GroupStatus.ACTIVE && !isSoftDeleted()
 
     @Exclude
     fun isArchived(): Boolean = getStatusEnum() == GroupStatus.ARCHIVED
+
+    /**
+     * Verifica se o grupo foi soft-deletado (P2 #40).
+     */
+    @Exclude
+    fun isSoftDeleted(): Boolean = deletedAt != null
+
+    /**
+     * Realiza soft delete do grupo (P2 #40).
+     *
+     * @param userId ID do usuario que esta deletando
+     */
+    @Exclude
+    fun softDelete(userId: String) {
+        deletedAt = java.util.Date()
+        deletedBy = userId
+    }
+
+    /**
+     * Restaura um grupo soft-deletado (P2 #40).
+     */
+    @Exclude
+    fun restore() {
+        deletedAt = null
+        deletedBy = null
+    }
 
     /**
      * Verifica se um jogador está bloqueado (Issue #64).

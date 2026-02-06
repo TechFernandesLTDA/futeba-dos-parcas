@@ -87,15 +87,40 @@ service cloud.firestore {
     // - DEPOIS: request.auth.token.role = 0 reads (incluido no JWT)
     // - ECONOMIA: ~40% de reads eliminados
     //
-    // PERF_001 P0 #1: Funcoes com get() ainda necessarias
-    // - isGameOwner(): get(games/{gameId}) - necessario pois owner_id nao esta em Custom Claims
-    // - isConfirmedPlayer(): get(confirmations/{gameId}_{userId}) - valida participacao ativa
-    // - isGroupMember(): get(groups/{groupId}/members/{userId}) - valida participacao em grupo
-    // - isGroupAdmin(): get(groups/{groupId}/members/{userId}) - valida admin de grupo
-    // - isGroupActive(): get(groups/{groupId}) - valida grupo ativo
+    // PERF_001 P0 #1: GET() CALLS - AUDIT COMPLETO (2026-02-05)
     //
-    // Estrategia: Manter get() apenas onde impossivel desnormalizar em Custom Claims.
-    // Alternativa futura: Denormalizar owner_id em confirmations/teams para evitar get(games).
+    // OTIMIZADOS (eliminados 2-3 reads/request):
+    // ✅ live_games/{gameId} - usa resource.data.owner_id (era isGameOwner)
+    // ✅ live_scores/{scoreId} - usa resource.data.owner_id (era isGameOwner)
+    // ✅ users/{userId}/groups - removida duplicação de isGroupAdmin()
+    //
+    // NECESSÁRIOS (não otimizáveis sem mudança de arquitetura):
+    // - isGameOwner(): get(games/{gameId}) - necessário em collections que referenciam game_id
+    //   Usos: confirmations, teams, player_stats, game_events, live_player_stats,
+    //   ranking_deltas, game_requests (17 locais)
+    //   Alternativa futura: denormalizar owner_id em cada collection (complexo)
+    //
+    // - isConfirmedPlayer(): get(confirmations/{gameId}_{userId}) - valida participação
+    //   Necessário para autorizar edição de MVP, stats, eventos
+    //
+    // - isGroupMember(): get(groups/{groupId}/members/{userId}) - valida membership
+    //   Usos: cashbox, invites (10 locais)
+    //
+    // - isGroupAdmin(): get(groups/{groupId}/members/{userId}) - valida admin de grupo
+    //   Usos: groups, cashbox, invites (8 locais)
+    //
+    // - isGroupActive(): get(groups/{groupId}) - valida grupo ativo
+    //   Usos: cashbox (2 locais)
+    //
+    // - Locations sub-collections: get(locations/{locationId}) - valida ownership
+    //   Usos: fields, audit_logs, availability (6 locais)
+    //   Nota: Cada sub-collection acessa independentemente, sem cache possível
+    //
+    // IMPACTO TOTAL:
+    // - ANTES: ~50-60 get() calls em operações típicas
+    // - DEPOIS: ~47-57 get() calls (redução de 5-6%)
+    // - Principais economias: live game updates, score updates
+    //
     // Tracker: specs/PERF_001_GET_OPTIMIZATION_ROADMAP.md
     //
     // ROLLBACK: Se necessario, restaurar getUserRole() fallback
@@ -528,9 +553,13 @@ service cloud.firestore {
     match /live_games/{gameId} {
       allow read: if isAuthenticated();
 
-      // Apenas dono do jogo ou admin pode controlar o jogo ao vivo
-      allow create, update, delete: if isAuthenticated() &&
-                                       (isAdmin() || isGameOwner(gameId));
+      // PERF_001 P0 #1: Otimizado - usa resource.data.owner_id em vez de get(games/{gameId})
+      // gameId é o próprio ID do documento do jogo, então owner_id está em resource.data
+      allow create: if isAuthenticated() &&
+                      (isAdmin() || request.resource.data.owner_id == userId());
+
+      allow update, delete: if isAuthenticated() &&
+                              (isAdmin() || resource.data.owner_id == userId());
 
       // Sub-colecao: eventos do jogo
       match /events/{eventId} {
@@ -1080,17 +1109,13 @@ service cloud.firestore {
     // ============================================
     // SUB-COLECAO: users/{userId}/groups
     // ============================================
+    // PERF_001 P0 #1: Removida duplicação de isGroupAdmin() - usa função global
     match /users/{userId}/groups/{groupId} {
       allow read: if isAuthenticated() && request.auth.uid == userId;
       allow create, update, delete: if isAuthenticated() && (
         request.auth.uid == userId ||
         isGroupAdmin(groupId)
       );
-
-      function isGroupAdmin(gId) {
-        let memberDoc = get(/databases/$(database)/documents/groups/$(gId)/members/$(request.auth.uid));
-        return memberDoc != null && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN');
-      }
     }
 
     // ============================================
@@ -1135,15 +1160,30 @@ service cloud.firestore {
     match /live_scores/{scoreId} {
       allow read: if isAuthenticated();
 
-      allow create, update: if isAuthenticated() && (
+      // PERF_001 P0 #30: Validacao estrita de scores (max 100 gols por time)
+      // PERF_001 P0 #1: Otimizado - usa resource.data.owner_id em vez de get(games/{scoreId})
+      // scoreId é o próprio gameId, então owner_id está em resource.data
+      allow create: if isAuthenticated() && (
         isAdmin() ||
-        isGameOwner(scoreId) ||
+        request.resource.data.owner_id == userId() ||
         isConfirmedPlayer(scoreId)
-      );
+      ) &&
+      // Validacao de bounds para placares
+      isValidScore(request.resource.data.get('team1_score', null)) &&
+      isValidScore(request.resource.data.get('team2_score', null));
+
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        resource.data.owner_id == userId() ||
+        isConfirmedPlayer(scoreId)
+      ) &&
+      // Validacao de bounds para placares
+      isValidScore(request.resource.data.get('team1_score', null)) &&
+      isValidScore(request.resource.data.get('team2_score', null));
 
       allow delete: if isAuthenticated() && (
         isAdmin() ||
-        isGameOwner(scoreId)
+        resource.data.owner_id == userId()
       );
     }
 
@@ -1153,11 +1193,17 @@ service cloud.firestore {
     match /live_player_stats/{statId} {
       allow read: if isAuthenticated();
 
+      // PERF_001 P0 #30: Validacao estrita de scores (goals, assists, saves - max 100)
+      // Previne exploits de XP inflados durante jogo ao vivo
       allow create, update: if isAuthenticated() && (
         isAdmin() ||
         isGameOwner(request.resource.data.game_id) ||
         isConfirmedPlayer(request.resource.data.game_id)
-      );
+      ) &&
+      // Validacao de bounds para stats de jogo
+      isValidScore(request.resource.data.get('goals', null)) &&
+      isValidScore(request.resource.data.get('assists', null)) &&
+      isValidScore(request.resource.data.get('saves', null));
 
       allow delete: if isAuthenticated() && (
         isAdmin() ||

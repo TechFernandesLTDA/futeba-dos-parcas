@@ -17,6 +17,7 @@
   "exclude": [
     "src/**/*.example.ts",
     "src/**/*.test.ts",
+    "src/examples/**",
     "node_modules"
   ]
 }

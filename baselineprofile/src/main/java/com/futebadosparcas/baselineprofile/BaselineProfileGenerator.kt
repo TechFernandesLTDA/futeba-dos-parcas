@@ -131,8 +131,61 @@ class BaselineProfileGenerator {
                 Thread.sleep(300)
 
                 device.findObject(By.desc("Home"))?.click()
+                device.waitForIdle()
+                Thread.sleep(300)
             } catch (e: Exception) {
                 // Continua se navegação falhar
+            }
+
+            // Fluxo: Home -> Criar Jogo (pre-compila tela de criacao)
+            try {
+                val createGameFab = device.findObject(By.res(PACKAGE_NAME, "create_game_fab"))
+                    ?: device.findObject(By.desc("Criar Jogo"))
+                if (createGameFab != null) {
+                    createGameFab.click()
+                    device.waitForIdle()
+                    Thread.sleep(1000)
+
+                    // Scroll na tela de criacao para compilar formulario completo
+                    device.swipe(
+                        device.displayWidth / 2,
+                        device.displayHeight * 3 / 4,
+                        device.displayWidth / 2,
+                        device.displayHeight / 4,
+                        20
+                    )
+                    device.waitForIdle()
+                    Thread.sleep(300)
+
+                    device.pressBack()
+                    device.waitForIdle()
+                }
+            } catch (e: Exception) {
+                // Continua se não conseguir acessar Create Game
+            }
+
+            // Fluxo: Home -> Grupos (pre-compila tela de grupos)
+            try {
+                device.findObject(By.desc("Grupos"))?.click()
+                    ?: device.findObject(By.text("Grupos"))?.click()
+                device.waitForIdle()
+                Thread.sleep(500)
+
+                // Scroll na lista de grupos
+                device.swipe(
+                    device.displayWidth / 2,
+                    device.displayHeight * 3 / 4,
+                    device.displayWidth / 2,
+                    device.displayHeight / 4,
+                    20
+                )
+                device.waitForIdle()
+                Thread.sleep(300)
+
+                device.pressBack()
+                device.waitForIdle()
+            } catch (e: Exception) {
+                // Continua se não conseguir acessar Grupos
             }
         }
     }

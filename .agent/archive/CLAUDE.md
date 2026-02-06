@@ -1,13 +1,13 @@
 # CLAUDE.md
 
-Instruções para Claude Sonnet 4.5 ao trabalhar neste repositório.
+Instruções para Claude Sonnet 4.6 ao trabalhar neste repositório.
 
-## 🤖 Claude Sonnet 4.5 - Desenvolvimento Diário
+## 🤖 Claude Sonnet 4.6 - Desenvolvimento Diário
 
-**Claude Sonnet 4.5 é o modelo balanceado** - Use para desenvolvimento diário e implementação de features.
+**Claude Sonnet 4.6 é o modelo balanceado** - Use para desenvolvimento diário e implementação de features.
 
 ```yaml
-sonnet-4.5:
+sonnet-4.6:
   uso: "Desenvolvimento diário, implementação de features, debugging"
   contexto: "200K tokens"
   velocidade: "Rápida"
@@ -24,8 +24,8 @@ sonnet-4.5:
     ✅ "Testes unitários"
 
   quando_NÃO_usar:
-    ❌ "Decisões arquiteturais críticas (use Opus 4.5)"
-    ❌ "Design de sistemas complexos (use Opus 4.5)"
+    ❌ "Decisões arquiteturais críticas (use Opus 4.6)"
+    ❌ "Design de sistemas complexos (use Opus 4.6)"
     ❌ "Análise visual (use Gemini 3 Pro)"
     ❌ "Tarefas triviais (use Gemini Flash)"
 ```
@@ -50,8 +50,8 @@ prioridade_atual: "Completar gamificação (30% → 100%)"
 próxima_tarefa: "Criar LeagueViewModel.kt"
 
 time_de_modelos:
-  você: "Sonnet 4.5 - Desenvolvimento diário"
-  arquiteto: "Opus 4.5 - Decisões críticas"
+  você: "Sonnet 4.6 - Desenvolvimento diário"
+  arquiteto: "Opus 4.6 - Decisões críticas"
   visual: "Gemini 3 Pro - Análise multimodal"
   rápido: "Gemini 3 Flash - Tarefas triviais"
 ```
@@ -451,7 +451,7 @@ developer_tools: 100% ✅
 - ✅ AuthRepository (completo)
 - ✅ Layout fragment_league.xml (completo)
 
-**Responsável**: Sonnet 4.5 (você!)
+**Responsável**: Sonnet 4.6 (você!)
 
 **Ver código completo**: `.agent/GEMINI_CONTEXT.md` (linhas 350-420)
 
@@ -508,7 +508,7 @@ developer_tools: 100% ✅
 4. **StateFlow, não LiveData** - Padrão do projeto
 5. **Evite over-engineering** - Implemente apenas o necessário
 6. **Use Write para XML** - Edit falha em layouts complexos
-7. **Escale para Opus** - Decisões arquiteturais críticas → Opus 4.5
+7. **Escale para Opus** - Decisões arquiteturais críticas → Opus 4.6
 
 ---
 
@@ -536,13 +536,13 @@ Regras obrigatórias? → .agentrules
 ## 📚 Documentação de Referência
 
 ```yaml
-você_está_aqui: "CLAUDE.md (Sonnet 4.5)"
+você_está_aqui: "CLAUDE.md (Sonnet 4.6)"
 regras_universais: ".agentrules"
 navegação_completa: ".agent/QUICK_REFERENCE.md"
 status_detalhado: ".agent/PROJECT_STATE.md"
 seleção_modelos: ".agent/MODEL_SELECTION.md"
 
-arquitetura_crítica: "OPUS.md (Opus 4.5)"
+arquitetura_crítica: "OPUS.md (Opus 4.6)"
 análise_visual: "GEMINI.md (Gemini 3 Pro)"
 firebase: ".agent/FIREBASE_MODERNIZATION.md"
 features_pendentes: "IMPLEMENTACAO.md"
@@ -574,14 +574,14 @@ setup: "README.md"
    - Teste manualmente
 
 5. **Se encontrar decisão complexa**:
-   - Pare e escale para Opus 4.5
+   - Pare e escale para Opus 4.6
    - Exemplo: "Qual arquitetura usar para pagamentos?"
 
 ---
 
 ## 🛠️ Quando Escalar para Outros Modelos
 
-### Escale para Opus 4.5:
+### Escale para Opus 4.6:
 
 ```
 ✅ "Preciso decidir qual gateway de pagamento usar"
@@ -664,7 +664,7 @@ setup: "README.md"
 ---
 
 **Última atualização**: 27/12/2024
-**Claude Version**: Sonnet 4.5
+**Claude Version**: Sonnet 4.6
 **Context Window**: 200K tokens
 **Uso recomendado**: Desenvolvimento diário e implementação de features
 **Custo**: Médio (20% do Opus) - Use com confiança

@@ -7,8 +7,8 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
@@ -65,7 +65,7 @@ class LoginActivityCompose : AppCompatActivity() {
 
         setContent {
             FutebaTheme {
-                val uiState by viewModel.loginState.collectAsState()
+                val uiState by viewModel.loginState.collectAsStateWithLifecycle()
 
                 LoginScreen(
                     uiState = uiState,

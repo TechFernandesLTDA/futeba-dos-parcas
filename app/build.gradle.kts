@@ -12,6 +12,7 @@ plugins {
     id("com.google.firebase.firebase-perf")
     id("org.jetbrains.kotlin.plugin.compose")
     id("kotlin-parcelize")
+    kotlin("plugin.serialization")
     id("androidx.baselineprofile")
 }
 
@@ -128,6 +129,9 @@ android {
 dependencies {
     // Shared KMP Module
     implementation(project(":shared"))
+
+    // kotlinx.serialization (migração gradual de Gson)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     // Core Library Desugaring
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")

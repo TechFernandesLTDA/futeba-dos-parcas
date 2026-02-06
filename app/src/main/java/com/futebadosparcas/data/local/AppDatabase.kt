@@ -19,9 +19,13 @@ import com.futebadosparcas.data.local.model.UserEntity
         GameEntity::class,
         UserEntity::class,
         LocationSyncEntity::class,
-        GroupEntity::class
+        GroupEntity::class,
+        SearchHistoryEntity::class,
+        PopularSearchEntity::class
     ],
-    version = 4,
+    version = 5,
+    // TODO: Habilitar exportSchema = true e configurar room.schemaLocation no build.gradle.kts
+    // para rastrear migracoes automaticamente
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -30,6 +34,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun locationSyncDao(): LocationSyncDao
     abstract fun groupDao(): GroupDao
+    abstract fun searchHistoryDao(): SearchHistoryDao
 
     companion object {
         // Migracao v1 -> v2: Adiciona coluna cachedAt para TTL
@@ -90,6 +95,48 @@ abstract class AppDatabase : RoomDatabase() {
 
                 // Indice para busca por ownerId
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_groups_ownerId ON groups(ownerId)")
+            }
+        }
+
+        // Migracao v4 -> v5: Adiciona tabelas search_history e popular_searches,
+        // e indices para queries frequentes em games e users
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Tabela search_history para historico de buscas
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS search_history (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        query TEXT NOT NULL,
+                        category TEXT NOT NULL,
+                        timestamp INTEGER NOT NULL,
+                        resultCount INTEGER NOT NULL DEFAULT 0
+                    )
+                """.trimIndent())
+
+                // Tabela popular_searches para cache de buscas populares
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS popular_searches (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        term TEXT NOT NULL,
+                        searchCount INTEGER NOT NULL,
+                        lastUpdated INTEGER NOT NULL
+                    )
+                """.trimIndent())
+
+                // Indice para busca por timestamp (ordenacao recente)
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_search_history_timestamp ON search_history(timestamp)")
+
+                // Indice para busca por categoria
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_search_history_category ON search_history(category)")
+
+                // Indices de performance para games (queries com WHERE status e ORDER BY)
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_games_status ON games(status)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_games_cachedAt ON games(cachedAt)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_games_dateTime ON games(dateTime)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_games_ownerId ON games(ownerId)")
+
+                // Indice de performance para users (TTL cleanup)
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_users_cachedAt ON users(cachedAt)")
             }
         }
     }

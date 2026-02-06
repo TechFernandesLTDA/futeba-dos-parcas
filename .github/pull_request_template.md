@@ -1,43 +1,43 @@
-# 📝 Descrição
+## Descricao
+<!-- O que essa PR faz? Qual problema resolve? -->
 
-<!-- Descreva suas mudanças aqui -->
+## Tipo de Mudanca
 
-## 🔧 Tipo de Mudança
+- [ ] Nova feature
+- [ ] Bugfix
+- [ ] Refatoracao
+- [ ] Performance
+- [ ] Documentacao
+- [ ] CI/CD
 
-<!-- Marque o tipo com [x] -->
+## Spec Relacionada
+<!-- Link para spec em /specs/ (obrigatorio para features e bugfixes) -->
 
-- [ ] 🐛 Bug fix (correção de bug)
-- [ ] ✨ Nova feature (nova funcionalidade)
-- [ ] 💄 UI/UX (mudanças visuais)
-- [ ] ♻️ Refactor (reestruturação sem mudar comportamento)
-- [ ] 📝 Documentação
-- [ ] 🎨 Style (formatação, lint)
-- [ ] ⚡ Performance
-- [ ] ✅ Testes
-- [ ] 🔧 Configuração/Build
+specs/
 
-## 📱 Plataforma
+## Checklist
 
-- [ ] Android
-- [ ] iOS
-- [ ] Web
-- [ ] Backend
-- [ ] Shared (KMP)
+### Codigo
+- [ ] Codigo compila sem erros (`./gradlew compileDebugKotlin`)
+- [ ] Testes passam (`./gradlew :app:testDebugUnitTest`)
+- [ ] Lint passa (`./gradlew lint`)
+- [ ] Detekt passa (`./gradlew detekt`)
+- [ ] Sem `!!` operator desnecessario
 
-## ✅ Checklist
-
-- [ ] Código compila sem erros (`./gradlew build`)
-- [ ] Testes unitários passam (`./gradlew test`)
-- [ ] Lint passa (`./gradlew lint` ou equivalente)
-- [ ] Testado manualmente em device/simulador
+### UI/UX (se aplicavel)
 - [ ] Strings em `strings.xml` (sem hardcode)
-- [ ] Documentação atualizada (se necessário)
-- [ ] Seguiu padrões do projeto (MVVM, Clean Arch, etc)
-- [ ] Commits seguem [Conventional Commits](https://www.conventionalcommits.org/)
+- [ ] Cores do `MaterialTheme.colorScheme` (sem hardcode)
+- [ ] `contentDescription` em icones interativos
+- [ ] Touch targets >= 48dp
+- [ ] Testado em tema claro e escuro
 
-## 📸 Screenshots/Videos
+### Padroes do Projeto
+- [ ] Comentarios em portugues (PT-BR)
+- [ ] StateFlow para estados de UI (Loading, Success, Error, Empty)
+- [ ] Jobs cancelados antes de iniciar novos
+- [ ] `.catch {}` em Flow collections
 
-<!-- Se houver mudanças visuais, adicione screenshots -->
+## Screenshots (se UI)
 
 **Antes:**
 
@@ -45,27 +45,12 @@
 **Depois:**
 
 
-## 🧪 Como Testar
-
-<!-- Passos para testar suas mudanças -->
+## Testes
+<!-- Como testar esta mudanca? Passos detalhados. -->
 
 1.
 2.
 3.
 
-## 🔗 Issue Relacionada
-
-Closes #<!-- número da issue -->
-
-## ⚠️ Breaking Changes
-
-<!-- Há mudanças que quebram compatibilidade? -->
-
-- [ ] Sim, esta PR introduz breaking changes
-- [ ] Não
-
-<!-- Se sim, descreva o impacto e migration path -->
-
-## 📋 Notas Adicionais
-
-<!-- Informações relevantes para os reviewers -->
+## Notas Adicionais
+<!-- Informacoes relevantes para os reviewers -->

@@ -168,7 +168,8 @@ class GameDetailViewModel @Inject constructor(
                         canLogEvents = canLogEvents,
                         userMessage = currentMessage,
                         currentUserId = currentUserId,
-                        hasVoted = hasVoted
+                        hasVoted = hasVoted,
+                        isSoftDeleted = game.isSoftDeleted() // P2 #40
                     )
                 }
             } catch (e: Exception) {
@@ -313,9 +314,9 @@ class GameDetailViewModel @Inject constructor(
                         }
                     }
 
-                    // Update MVP if selected
-                    if (mvpId != null) {
-                         val updatedGame = state.game.copy(mvpId = mvpId)
+                    // Atualizar MVP se selecionado
+                    mvpId?.let { id ->
+                         val updatedGame = state.game.copy(mvpId = id)
                          gameRepository.updateGame(updatedGame)
                     }
 
@@ -565,16 +566,45 @@ class GameDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Soft delete: marca o jogo como deletado sem excluir dados (P2 #40).
+     * Permite restauracao posterior por admins.
+     */
     fun deleteGame(gameId: String) {
         viewModelScope.launch {
-            val result = gameRepository.deleteGame(gameId)
+            val result = gameRepository.softDeleteGame(gameId)
             if (result.isSuccess) {
                 _uiState.value = GameDetailUiState.GameDeleted
             } else {
-                val currentState = _uiState.value as? GameDetailUiState.Success
-                if (currentState != null) {
+                (_uiState.value as? GameDetailUiState.Success)?.let { currentState ->
                     _uiState.value = currentState.copy(userMessage = "Erro ao cancelar jogo")
                 }
+            }
+        }
+    }
+
+    /**
+     * Restaura um jogo soft-deletado (P2 #40).
+     * Disponivel apenas para admins/owners.
+     */
+    fun restoreGame(gameId: String) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+
+            if (!currentState.canManageGame && !currentState.isAdmin) {
+                _uiState.value = currentState.copy(userMessage = "Sem permissao para restaurar jogo")
+                return@launch
+            }
+
+            val result = gameRepository.restoreGame(gameId)
+            if (result.isSuccess) {
+                _uiState.value = currentState.copy(userMessage = "Jogo restaurado com sucesso")
+                // Recarregar detalhes do jogo
+                loadGameDetails(gameId)
+            } else {
+                _uiState.value = currentState.copy(
+                    userMessage = "Erro ao restaurar jogo: ${result.exceptionOrNull()?.message}"
+                )
             }
         }
     }
@@ -808,7 +838,7 @@ class GameDetailViewModel @Inject constructor(
             result.fold(
                 onSuccess = {
                     _uiState.value = currentState.copy(
-                        userMessage = "Marcado como 'A caminho'" + (etaMinutes?.let { " (ETA: $it min)" } ?: "")
+                        userMessage = "Marcado como 'A caminho'${etaMinutes?.let { " (ETA: $it min)" }.orEmpty()}"
                     )
                 },
                 onFailure = { e ->
@@ -969,8 +999,7 @@ class GameDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val result = gameRepository.updatePartialPayment(gameId, userId, amount)
             if (result.isFailure) {
-                val currentState = _uiState.value as? GameDetailUiState.Success
-                if (currentState != null) {
+                (_uiState.value as? GameDetailUiState.Success)?.let { currentState ->
                     _uiState.value = currentState.copy(
                         userMessage = "Erro ao atualizar pagamento: ${result.exceptionOrNull()?.message}"
                     )
@@ -1063,8 +1092,7 @@ class GameDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val result = groupRepository.blockPlayer(groupId, userId, userName, reason, authRepository.getCurrentUserId() ?: "")
             if (result.isFailure) {
-                val currentState = _uiState.value as? GameDetailUiState.Success
-                if (currentState != null) {
+                (_uiState.value as? GameDetailUiState.Success)?.let { currentState ->
                     _uiState.value = currentState.copy(
                         userMessage = "Erro ao bloquear jogador: ${result.exceptionOrNull()?.message}"
                     )
@@ -1081,8 +1109,7 @@ class GameDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val result = groupRepository.unblockPlayer(groupId, userId)
             if (result.isFailure) {
-                val currentState = _uiState.value as? GameDetailUiState.Success
-                if (currentState != null) {
+                (_uiState.value as? GameDetailUiState.Success)?.let { currentState ->
                     _uiState.value = currentState.copy(
                         userMessage = "Erro ao desbloquear jogador: ${result.exceptionOrNull()?.message}"
                     )
@@ -1188,7 +1215,8 @@ sealed class GameDetailUiState {
         val userMessage: String? = null,
         val currentUserId: String? = null,
         val hasVoted: Boolean? = null,
-        val schedulingEvent: SchedulingEvent? = null
+        val schedulingEvent: SchedulingEvent? = null,
+        val isSoftDeleted: Boolean = false // P2 #40: Indica se o jogo foi soft-deletado
     ) : GameDetailUiState()
     data class Error(val message: String) : GameDetailUiState()
 }

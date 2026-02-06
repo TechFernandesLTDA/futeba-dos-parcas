@@ -159,4 +159,22 @@ interface GameRepository {
      * Atualiza pagamento parcial de um jogador.
      */
     suspend fun updatePartialPayment(gameId: String, userId: String, amount: Double): Result<Unit>
+
+    // === SOFT DELETE (P2 #40) ===
+
+    /**
+     * Realiza soft delete de um jogo (marca deleted_at e deleted_by em vez de excluir).
+     *
+     * @param gameId ID do jogo a ser soft-deletado
+     * @return Result<Unit>
+     */
+    suspend fun softDeleteGame(gameId: String): Result<Unit>
+
+    /**
+     * Restaura um jogo soft-deletado (limpa deleted_at e deleted_by).
+     *
+     * @param gameId ID do jogo a ser restaurado
+     * @return Result<Unit>
+     */
+    suspend fun restoreGame(gameId: String): Result<Unit>
 }

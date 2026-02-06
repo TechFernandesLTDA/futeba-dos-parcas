@@ -241,7 +241,7 @@ fun LocationSelectorScreen(
                 floatingActionButton = {
                     ExtendedFloatingActionButton(
                         onClick = { viewModel.showCreateLocationDialog() },
-                        icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                        icon = { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_location)) },
                         text = { Text(stringResource(R.string.location_selector_create_new)) },
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -435,7 +435,7 @@ private fun SortDropdownMenu(
             onClick = { onSortSelected(LocationSortMode.NAME) },
             leadingIcon = {
                 if (currentSort == LocationSortMode.NAME) {
-                    Icon(Icons.Default.Check, contentDescription = null)
+                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected))
                 }
             }
         )
@@ -445,7 +445,7 @@ private fun SortDropdownMenu(
             enabled = hasUserLocation,
             leadingIcon = {
                 if (currentSort == LocationSortMode.DISTANCE) {
-                    Icon(Icons.Default.Check, contentDescription = null)
+                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected))
                 }
             }
         )
@@ -454,7 +454,7 @@ private fun SortDropdownMenu(
             onClick = { onSortSelected(LocationSortMode.RATING) },
             leadingIcon = {
                 if (currentSort == LocationSortMode.RATING) {
-                    Icon(Icons.Default.Check, contentDescription = null)
+                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected))
                 }
             }
         )
@@ -463,7 +463,7 @@ private fun SortDropdownMenu(
             onClick = { onSortSelected(LocationSortMode.FAVORITES_FIRST) },
             leadingIcon = {
                 if (currentSort == LocationSortMode.FAVORITES_FIRST) {
-                    Icon(Icons.Default.Check, contentDescription = null)
+                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected))
                 }
             }
         )
@@ -932,7 +932,7 @@ private fun LocationDetailBottomSheet(
                 IconButton(onClick = onFavoriteToggle) {
                     Icon(
                         imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = null,
+                        contentDescription = if (isFavorite) stringResource(R.string.cd_unfavorite) else stringResource(R.string.cd_favorite),
                         tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

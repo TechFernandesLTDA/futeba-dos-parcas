@@ -630,7 +630,8 @@ class GroupRepository @Inject constructor(
     }
 
     /**
-     * Deleta o grupo (soft delete - apenas owner)
+     * Deleta o grupo (soft delete - apenas owner).
+     * Atualiza status para DELETED e marca deleted_at/deleted_by (P2 #40).
      */
     suspend fun deleteGroup(groupId: String): Result<Unit> {
         return try {
@@ -643,10 +644,12 @@ class GroupRepository @Inject constructor(
                 return Result.failure(Exception("Apenas o dono pode deletar o grupo"))
             }
 
-            // Soft delete do grupo
+            // Soft delete do grupo com campos deleted_at e deleted_by (P2 #40)
             val updates = mapOf(
                 "status" to GroupStatus.DELETED.name,
-                "updated_at" to FieldValue.serverTimestamp()
+                "updated_at" to FieldValue.serverTimestamp(),
+                "deleted_at" to FieldValue.serverTimestamp(),
+                "deleted_by" to userId
             )
             groupsCollection.document(groupId).update(updates).await()
 
@@ -665,8 +668,78 @@ class GroupRepository @Inject constructor(
             }
             batch.commit().await()
 
+            AppLogger.i(TAG) { "Grupo $groupId soft-deletado por $userId" }
             Result.success(Unit)
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Realiza soft delete de um grupo (P2 #40).
+     * Marca deleted_at e deleted_by sem alterar o status.
+     *
+     * @param groupId ID do grupo a ser soft-deletado
+     * @return Result<Unit>
+     */
+    suspend fun softDeleteGroup(groupId: String): Result<Unit> {
+        return try {
+            val userId = auth.currentUser?.uid
+                ?: return Result.failure(Exception("Usuário não autenticado"))
+
+            // Verificar se é owner ou admin
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
+            if (role != GroupMemberRole.OWNER) {
+                return Result.failure(Exception("Apenas o dono pode deletar o grupo"))
+            }
+
+            val updates = mapOf(
+                "deleted_at" to FieldValue.serverTimestamp(),
+                "deleted_by" to userId,
+                "status" to GroupStatus.DELETED.name,
+                "updated_at" to FieldValue.serverTimestamp()
+            )
+            groupsCollection.document(groupId).update(updates).await()
+
+            AppLogger.i(TAG) { "Grupo $groupId soft-deletado por $userId" }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao soft-deletar grupo $groupId", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Restaura um grupo soft-deletado ou arquivado (P2 #40).
+     * Limpa deleted_at e deleted_by (se existirem) e restaura o status para ACTIVE.
+     * Funciona tanto para grupos soft-deletados quanto arquivados.
+     *
+     * @param groupId ID do grupo a ser restaurado
+     * @return Result<Unit>
+     */
+    suspend fun restoreGroup(groupId: String): Result<Unit> {
+        return try {
+            val userId = auth.currentUser?.uid
+                ?: return Result.failure(Exception("Usuário não autenticado"))
+
+            // Verificar se é owner
+            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
+            if (role != GroupMemberRole.OWNER) {
+                return Result.failure(Exception("Apenas o dono pode restaurar o grupo"))
+            }
+
+            val updates = mapOf<String, Any>(
+                "deleted_at" to FieldValue.delete(),
+                "deleted_by" to FieldValue.delete(),
+                "status" to GroupStatus.ACTIVE.name,
+                "updated_at" to FieldValue.serverTimestamp()
+            )
+            groupsCollection.document(groupId).update(updates).await()
+
+            AppLogger.i(TAG) { "Grupo $groupId restaurado com sucesso" }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao restaurar grupo $groupId", e)
             Result.failure(e)
         }
     }
@@ -794,32 +867,9 @@ class GroupRepository @Inject constructor(
         awaitClose { listener.remove() }
     }
 
-    /**
-     * Restaura um grupo arquivado
-     */
-    suspend fun restoreGroup(groupId: String): Result<Unit> {
-        return try {
-            val userId = auth.currentUser?.uid
-                ?: return Result.failure(Exception("Usuário não autenticado"))
-
-            // Verificar se é owner
-            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
-            if (role != GroupMemberRole.OWNER) {
-                return Result.failure(Exception("Apenas o dono pode restaurar o grupo"))
-            }
-
-            // Restaurar grupo
-            val updates = mapOf(
-                "status" to GroupStatus.ACTIVE.name,
-                "updated_at" to FieldValue.serverTimestamp()
-            )
-            groupsCollection.document(groupId).update(updates).await()
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+    // REMOVIDO: método duplicado restoreGroup (arquivado).
+    // A versão principal em restoreGroup (linha ~719) já trata tanto
+    // soft-delete (limpa deleted_at/deleted_by) quanto arquivamento (seta ACTIVE).
 
     /**
      * Sincroniza o member_count de um grupo específico em todos os UserGroups

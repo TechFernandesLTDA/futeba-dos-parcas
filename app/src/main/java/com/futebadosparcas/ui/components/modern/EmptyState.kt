@@ -10,8 +10,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 
 /**
  * Empty state moderno com ilustração, mensagem e CTA
@@ -98,9 +100,9 @@ fun EmptyGamesState(
 ) {
     EmptyState(
         icon = Icons.Default.SportsFootball,
-        title = "Nenhum jogo agendado",
-        message = "Crie o primeiro jogo e convoque seus amigos para uma pelada!",
-        actionText = if (onCreateGame != null) "Criar Jogo" else null,
+        title = stringResource(R.string.empty_state_no_games_title_generic),
+        message = stringResource(R.string.empty_state_no_games_desc_generic),
+        actionText = if (onCreateGame != null) stringResource(R.string.empty_state_no_games_action) else null,
         onAction = onCreateGame,
         modifier = modifier
     )
@@ -115,8 +117,8 @@ fun EmptyConfirmationsState(
 ) {
     EmptyState(
         icon = Icons.Default.PeopleAlt,
-        title = "Nenhuma confirmação ainda",
-        message = "Aguardando os jogadores confirmarem presença.",
+        title = stringResource(R.string.empty_state_no_games_title_generic),
+        message = stringResource(R.string.empty_state_no_games_desc_generic),
         modifier = modifier
     )
 }
@@ -130,8 +132,8 @@ fun EmptyStatisticsState(
 ) {
     EmptyState(
         icon = Icons.Default.BarChart,
-        title = "Sem estatísticas",
-        message = "Participe de jogos para ver suas estatísticas aqui!",
+        title = stringResource(R.string.empty_state_no_statistics_title),
+        message = stringResource(R.string.empty_state_no_statistics_desc),
         modifier = modifier
     )
 }
@@ -145,8 +147,8 @@ fun EmptyBadgesState(
 ) {
     EmptyState(
         icon = Icons.Default.EmojiEvents,
-        title = "Nenhuma conquista ainda",
-        message = "Jogue mais partidas para desbloquear badges e conquistas!",
+        title = stringResource(R.string.empty_state_no_games_title_generic),
+        message = stringResource(R.string.empty_state_no_games_desc_generic),
         modifier = modifier
     )
 }
@@ -159,11 +161,114 @@ fun EmptyNotificationsState(
     modifier: Modifier = Modifier
 ) {
     EmptyState(
-        icon = Icons.Default.Notifications,
-        title = "Nenhuma notificação",
-        message = "Você está em dia! Nenhuma novidade por enquanto.",
+        icon = Icons.Default.NotificationsNone,
+        title = stringResource(R.string.empty_state_no_notifications_title),
+        message = stringResource(R.string.empty_state_no_notifications_desc),
         modifier = modifier
     )
+}
+
+/**
+ * Empty state pré-configurado para ranking
+ */
+@Composable
+fun EmptyRankingState(
+    modifier: Modifier = Modifier
+) {
+    EmptyState(
+        icon = Icons.Default.Leaderboard,
+        title = stringResource(R.string.empty_state_no_ranking_title),
+        message = stringResource(R.string.empty_state_no_ranking_desc),
+        modifier = modifier
+    )
+}
+
+/**
+ * Empty state pré-configurado para grupos
+ */
+@Composable
+fun EmptyGroupsState(
+    modifier: Modifier = Modifier,
+    onCreateGroup: (() -> Unit)? = null,
+    onJoinGroup: (() -> Unit)? = null
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Groups,
+            contentDescription = null,
+            modifier = Modifier.size(120.dp),
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = stringResource(R.string.empty_state_no_groups_title),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = stringResource(R.string.empty_state_no_groups_desc),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(0.8f)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (onCreateGroup != null) {
+            FilledTonalButton(
+                onClick = onCreateGroup,
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.empty_state_no_groups_action),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+
+        if (onJoinGroup != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = onJoinGroup,
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.GroupAdd,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.empty_state_no_groups_join_action),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+    }
 }
 
 /**
@@ -176,8 +281,8 @@ fun EmptySearchState(
 ) {
     EmptyState(
         icon = Icons.Default.SearchOff,
-        title = "Nenhum resultado",
-        message = "Não encontramos nada para \"$searchQuery\".\nTente buscar com outros termos.",
+        title = stringResource(R.string.empty_state_no_games_title_generic),
+        message = stringResource(R.string.empty_state_no_games_desc_generic),
         modifier = modifier
     )
 }

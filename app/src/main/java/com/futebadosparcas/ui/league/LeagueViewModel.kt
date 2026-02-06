@@ -54,7 +54,8 @@ class LeagueViewModel @Inject constructor(
     }
 
     private fun observeUnreadCount() {
-        viewModelScope.launch {
+        unreadCountJob?.cancel()
+        unreadCountJob = viewModelScope.launch {
             notificationRepository.getUnreadCountFlow()
                 .catch { e ->
                     // Tratamento de erro: zerar contador em caso de falha
@@ -130,6 +131,7 @@ class LeagueViewModel @Inject constructor(
      */
     private var leagueDataJob: Job? = null
     private var userFetchJob: Job? = null
+    private var unreadCountJob: Job? = null
 
     companion object {
         private const val TAG = "LeagueViewModel"
@@ -310,7 +312,8 @@ class LeagueViewModel @Inject constructor(
         // Previne memory leaks, conexões abertas e leituras desnecessárias do Firestore
         leagueDataJob?.cancel()
         userFetchJob?.cancel()
-        AppLogger.d(TAG) { "✅ LeagueViewModel destruído - todas as queries canceladas" }
+        unreadCountJob?.cancel()
+        AppLogger.d(TAG) { "LeagueViewModel destruido - todas as queries canceladas" }
     }
 }
 

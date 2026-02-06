@@ -74,7 +74,8 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun observeConnectivity() {
-        viewModelScope.launch {
+        connectivityJob?.cancel()
+        connectivityJob = viewModelScope.launch {
             connectivityMonitor.isConnected
                 .catch { e ->
                     // Tratamento de erro: assumir online em caso de falha
@@ -88,7 +89,8 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun observeUnreadCount() {
-        viewModelScope.launch {
+        unreadCountJob?.cancel()
+        unreadCountJob = viewModelScope.launch {
             notificationRepository.getUnreadCountFlow()
                 .catch { e ->
                     // Tratamento de erro: zerar contador em caso de falha
@@ -101,6 +103,9 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    // Jobs para controle de ciclo de vida dos Flows
+    private var connectivityJob: Job? = null
+    private var unreadCountJob: Job? = null
     private var loadJob: Job? = null
     private var retryCount = 0
 
@@ -228,13 +233,27 @@ class HomeViewModel @Inject constructor(
 
                     _loadingState.value = LoadingState.LoadingProgress(60, 100, "Carregando atividades...")
 
-                    val activitiesPhase2: List<Activity> = withTimeout(TIMEOUT_MILLIS) {
-                        activityRepository.getRecentActivities(10) // Reduzido de 20 → 10
-                    }.getOrDefault(emptyList())
+                    // OTIMIZAÇÃO: Activities e Statistics em paralelo
+                    val activitiesDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                activityRepository.getRecentActivities(10)
+                            }
+                        }
+                    }
+                    val statisticsDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                statisticsRepository.getUserStatistics(user.id)
+                            }
+                        }
+                    }
 
-                    val statisticsPhase2: com.futebadosparcas.data.model.UserStatistics? = withTimeout(TIMEOUT_MILLIS) {
-                        statisticsRepository.getUserStatistics(user.id)
-                    }.getOrNull()
+                    val activitiesPhase2: List<Activity> = activitiesDeferred.await()
+                        .getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
+
+                    val statisticsPhase2: com.futebadosparcas.data.model.UserStatistics? = statisticsDeferred.await()
+                        .getOrNull()?.getOrNull()
 
                     _loadingState.value = LoadingState.LoadingProgress(70, 100, "Atualizando tela...")
 
@@ -253,37 +272,76 @@ class HomeViewModel @Inject constructor(
 
                     _loadingState.value = LoadingState.LoadingProgress(80, 100, "Carregando mais...")
 
-                    val publicGamesPhase3: List<Game> = withTimeout(TIMEOUT_MILLIS) {
-                        gameRepository.getPublicGames(5) // Reduzido de 10 → 5
-                    }.getOrDefault(emptyList())
+                    // OTIMIZAÇÃO: Todas as queries da FASE 3 em paralelo com async/awaitAll
+                    val publicGamesDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                gameRepository.getPublicGames(5)
+                            }
+                        }
+                    }
 
-                    val streakPhase3: com.futebadosparcas.domain.model.UserStreak? = withTimeout(TIMEOUT_MILLIS) {
-                        gamificationRepository.getUserStreak(user.id)
-                    }.getOrNull()
+                    val streakDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                gamificationRepository.getUserStreak(user.id)
+                            }
+                        }
+                    }
 
-                    val allChallenges: List<WeeklyChallenge> = withTimeout(TIMEOUT_MILLIS) {
-                        gamificationRepository.getActiveChallenges()
-                    }.getOrDefault(emptyList())
+                    val challengesDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                gamificationRepository.getActiveChallenges()
+                            }
+                        }
+                    }
 
-                    val userBadges: List<UserBadge> = withTimeout(TIMEOUT_MILLIS) {
-                        gamificationRepository.getRecentBadges(user.id, limit = 5)
-                    }.getOrDefault(emptyList())
+                    val badgesDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                gamificationRepository.getRecentBadges(user.id, limit = 5)
+                            }
+                        }
+                    }
 
-                    // Fetch challenge progress
+                    val seasonDeferred = async {
+                        runCatching {
+                            withTimeout(TIMEOUT_MILLIS) {
+                                gamificationRepository.getActiveSeason()
+                            }
+                        }
+                    }
+
+                    // Aguardar todas as queries paralelas
+                    val publicGamesPhase3: List<Game> = publicGamesDeferred.await()
+                        .getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
+
+                    val streakPhase3: com.futebadosparcas.domain.model.UserStreak? = streakDeferred.await()
+                        .getOrNull()?.getOrNull()
+
+                    val allChallenges: List<WeeklyChallenge> = challengesDeferred.await()
+                        .getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
+
+                    val userBadges: List<UserBadge> = badgesDeferred.await()
+                        .getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
+
+                    // Buscar progresso dos desafios (depende de allChallenges)
                     val challengeIds = allChallenges.map { it.id }
-                    val progressList: List<UserChallengeProgress> = withTimeout(TIMEOUT_MILLIS) {
-                        gamificationRepository.getChallengesProgress(user.id, challengeIds)
-                    }.getOrDefault(emptyList())
+                    val progressList: List<UserChallengeProgress> = if (challengeIds.isNotEmpty()) {
+                        withTimeout(TIMEOUT_MILLIS) {
+                            gamificationRepository.getChallengesProgress(user.id, challengeIds)
+                        }.getOrDefault(emptyList())
+                    } else {
+                        emptyList()
+                    }
                     val progressMap = progressList.associateBy { it.challengeId }
                     val challengesWithProgress = allChallenges.map { it to progressMap[it.id] }
 
-                    // Fetch league division
+                    // Buscar divisao da liga (depende de season)
                     var leagueDivisionPhase3 = LeagueDivision.BRONZE
                     try {
-                        val seasonResult = withTimeout(TIMEOUT_MILLIS) {
-                            gamificationRepository.getActiveSeason()
-                        }
-                        seasonResult.getOrNull()?.let { season ->
+                        seasonDeferred.await().getOrNull()?.getOrNull()?.let { season ->
                             val participationResult = withTimeout(TIMEOUT_MILLIS) {
                                 gamificationRepository.getUserParticipation(user.id, season.id)
                             }
@@ -364,6 +422,8 @@ class HomeViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        connectivityJob?.cancel()
+        unreadCountJob?.cancel()
         loadJob?.cancel()
     }
 
