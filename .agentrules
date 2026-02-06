@@ -503,7 +503,7 @@ Você deve delegar tarefas especializadas para os workers corretos usando `run_c
 
 ### 1. 🎨 Especialista em UI/UX & Refino Visual
 
-- **Modelos**: Claude Code (Sonnet 4.5 / Opus)
+- **Modelos**: Claude Code (Sonnet 4.6 / Opus)
 - **Comando**: `claude -p "instrução"` (Modo Direto)
 - **Quando usar**:
   - Criação e correção de Layouts XML (XML Perfect)
@@ -572,9 +572,9 @@ Você deve delegar tarefas especializadas para os workers corretos usando `run_c
 ### Workflow Recomendado
 
 ```
-1. Decisão Arquitetural (Opus 4.5)
+1. Decisão Arquitetural (Opus 4.6)
    ↓
-2. Implementação (Sonnet 4.5)
+2. Implementação (Sonnet 4.6)
    ↓
 3. Validação Visual (Gemini 3 Pro)
    ↓

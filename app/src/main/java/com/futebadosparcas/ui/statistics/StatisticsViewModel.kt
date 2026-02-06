@@ -40,14 +40,13 @@ class StatisticsViewModel @Inject constructor(
             _uiState.value = StatisticsUiState.Loading
 
             try {
+                // OTIMIZAÇÃO: Todas as queries independentes em paralelo
                 val myStatsDeferred = async { statisticsRepository.getMyStatistics() }
                 val topScorersDeferred = async { statisticsRepository.getTopScorers(5) }
                 val topGoalkeepersDeferred = async { statisticsRepository.getTopGoalkeepers(5) }
                 val bestPlayersDeferred = async { statisticsRepository.getBestPlayers(5) }
-                // Use default if repository doesn't have the method yet (to be safe) or add it
-                // Assuming I will update interface next
-                val goalsHistoryResult = statisticsRepository.getGoalsHistory(myStatsDeferred.await().getOrNull()?.id ?: "")
 
+                // Aguardar todos os resultados paralelos
                 val myStatsResult = myStatsDeferred.await()
                 val topScorersResult = topScorersDeferred.await()
                 val topGoalkeepersResult = topGoalkeepersDeferred.await()
@@ -57,10 +56,20 @@ class StatisticsViewModel @Inject constructor(
                 val topScorers = topScorersResult.getOrThrow()
                 val topGoalkeepers = topGoalkeepersResult.getOrThrow()
                 val bestPlayers = bestPlayersResult.getOrThrow()
-                val goalsHistory = goalsHistoryResult.getOrNull() ?: emptyMap()
 
+                // Queries dependentes em paralelo: goalsHistory depende de myStats.id,
+                // userMap depende de topScorers/topGoalkeepers/bestPlayers
                 val allUserIds = (topScorers.map { it.id } + topGoalkeepers.map { it.id } + bestPlayers.map { it.id }).distinct()
-                val userMap = userRepository.getUsersByIds(allUserIds).getOrNull()?.associateBy { it.id } ?: emptyMap()
+
+                val goalsHistoryDeferred = async {
+                    statisticsRepository.getGoalsHistory(myStats.id ?: "")
+                }
+                val userMapDeferred = async {
+                    userRepository.getUsersByIds(allUserIds)
+                }
+
+                val goalsHistory = goalsHistoryDeferred.await().getOrNull() ?: emptyMap()
+                val userMap = userMapDeferred.await().getOrNull()?.associateBy { it.id } ?: emptyMap()
 
                 val combined = CombinedStatistics(
                     myStats = myStats.toDataModel(myStats.userId),

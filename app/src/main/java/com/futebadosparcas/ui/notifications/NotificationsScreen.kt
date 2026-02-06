@@ -252,9 +252,9 @@ fun NotificationsScreen(
                         is NotificationsUiState.Empty -> {
                             EmptyState(
                                 type = EmptyStateType.NoData(
-                                    title = emptyTitle,
-                                    description = emptyDescription,
-                                    icon = Icons.Default.Notifications
+                                    title = stringResource(R.string.empty_state_no_notifications_title),
+                                    description = stringResource(R.string.empty_state_no_notifications_desc),
+                                    icon = Icons.Default.NotificationsNone
                                 )
                             )
                         }

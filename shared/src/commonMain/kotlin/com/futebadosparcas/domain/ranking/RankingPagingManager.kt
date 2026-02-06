@@ -342,7 +342,7 @@ class RankingPagingManager(
             validEntries = validEntries,
             expiredEntries = expiredEntries,
             maxCapacity = MAX_CACHE_SIZE,
-            hitRate = if (cache.size > 0) validEntries.toFloat() / cache.size else 0f
+            hitRate = if (cache.isNotEmpty()) validEntries.toFloat() / cache.size else 0f
         )
     }
 

@@ -73,7 +73,7 @@ class RankingRepositoryImpl(
             )
 
             if (results.isFailure) {
-                return Result.failure(results.exceptionOrNull()!!)
+                return Result.failure(results.exceptionOrNull() ?: Exception("Erro ao buscar ranking"))
             }
 
             val rankingData = results.getOrNull() ?: emptyList()
@@ -147,7 +147,7 @@ class RankingRepositoryImpl(
             )
 
             if (results.isFailure) {
-                return Result.failure(results.exceptionOrNull()!!)
+                return Result.failure(results.exceptionOrNull() ?: Exception("Erro ao buscar ranking por periodo"))
             }
 
             val deltas = results.getOrNull() ?: emptyList()
@@ -188,7 +188,7 @@ class RankingRepositoryImpl(
             }
 
             if (ranking.isFailure) {
-                return Result.failure(ranking.exceptionOrNull()!!)
+                return Result.failure(ranking.exceptionOrNull() ?: Exception("Erro ao buscar posição no ranking"))
             }
 
             val position = ranking.getOrNull()?.indexOfFirst { it.userId == userId }
@@ -228,7 +228,7 @@ class RankingRepositoryImpl(
             // Buscar logs de XP no período
             val logsResult = firebaseDataSource.getUserXpLogs(userId, 500)
             if (logsResult.isFailure) {
-                return Result.failure(logsResult.exceptionOrNull()!!)
+                return Result.failure(logsResult.exceptionOrNull() ?: Exception("Erro ao buscar logs de XP"))
             }
 
             val logs = logsResult.getOrNull()
@@ -248,7 +248,7 @@ class RankingRepositoryImpl(
             // Buscar usuário atual para XP total
             val userResult = firebaseDataSource.getUserById(userId)
             if (userResult.isFailure) {
-                return Result.failure(userResult.exceptionOrNull()!!)
+                return Result.failure(userResult.exceptionOrNull() ?: Exception("Erro ao buscar dados do usuário"))
             }
 
             val user = userResult.getOrNull()
@@ -317,7 +317,7 @@ class RankingRepositoryImpl(
             // Buscar estatísticas dos usuários
             val statsResult = firebaseDataSource.getUsersStatistics(userIds)
             if (statsResult.isFailure) {
-                return Result.failure(statsResult.exceptionOrNull()!!)
+                return Result.failure(statsResult.exceptionOrNull() ?: Exception("Erro ao buscar estatísticas"))
             }
 
             val statsMap = statsResult.getOrNull() ?: emptyMap()

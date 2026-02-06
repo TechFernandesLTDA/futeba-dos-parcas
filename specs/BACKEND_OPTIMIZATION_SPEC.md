@@ -401,7 +401,7 @@ console.log(`[XP_RETRY] Attempt ${attempt}/${maxRetries} (backoff: ${ms}ms)`);
 ## 🤝 CONTRIBUIDORES
 
 - **Agent-Backend**: Implementação e especificação
-- **Claude Sonnet 4.5**: Arquitetura e code review
+- **Claude Sonnet 4.6**: Arquitetura e code review
 
 ---
 

@@ -35,9 +35,9 @@ class GameTeamRepositoryImpl(
                 .await()
 
             val confirmationsResult = confirmationRepository.getGameConfirmations(gameId)
-            if (confirmationsResult.isFailure) return Result.failure(confirmationsResult.exceptionOrNull()!!)
+            if (confirmationsResult.isFailure) return Result.failure(confirmationsResult.exceptionOrNull() ?: Exception("Erro ao buscar confirmações"))
 
-            val allPlayers = confirmationsResult.getOrNull()!!
+            val allPlayers = confirmationsResult.getOrNull() ?: emptyList()
 
             // Prepare Teams containers
             val teamPlayerLists = List(numberOfTeams) { mutableListOf<String>() }

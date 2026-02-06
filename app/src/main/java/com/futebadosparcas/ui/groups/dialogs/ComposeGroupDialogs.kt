@@ -112,7 +112,7 @@ fun EditGroupDialog(
                 Column {
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_camera)) },
-                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = null) },
+                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = stringResource(R.string.cd_take_photo)) },
                         modifier = Modifier.clickable {
                             try {
                                 val file = File.createTempFile("group_photo_edit_", ".jpg", context.cacheDir)
@@ -132,7 +132,7 @@ fun EditGroupDialog(
                     )
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_gallery)) },
-                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = null) },
+                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(R.string.cd_photo_gallery)) },
                         modifier = Modifier.clickable {
                             pickImageLauncher.launch("image/*")
                             showPhotoOptions = false
@@ -188,7 +188,7 @@ fun EditGroupDialog(
                 TextButton(onClick = { showPhotoOptions = true }) {
                     Icon(
                         if (selectedPhotoUri != null) Icons.Default.Edit else Icons.Default.Add,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.cd_edit),
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(Modifier.width(4.dp))
@@ -268,7 +268,7 @@ fun EditGroupDialog(
                     ) {
                         Icon(
                             Icons.Default.Save,
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.cd_save),
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(4.dp))
@@ -304,14 +304,14 @@ fun TransferOwnershipDialog(
                     selectedMember?.let { onMemberSelected(it) }
                     showConfirmation = false
                 }) {
-                    Icon(Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.SwapHoriz, contentDescription = stringResource(R.string.cd_transfer_ownership), modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
                     Text(stringResource(R.string.dialog_transfer))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirmation = false }) {
-                    Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close), modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
                     Text(stringResource(R.string.action_cancel))
                 }
@@ -366,7 +366,7 @@ fun TransferOwnershipDialog(
 
                 Row(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close), modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
                         Text(stringResource(R.string.cancel))
                     }
@@ -415,7 +415,7 @@ fun AddCashboxEntryDialog(
                 Column {
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_camera)) },
-                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = null) },
+                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = stringResource(R.string.cd_take_photo)) },
                         modifier = Modifier.clickable {
                             try {
                                 val file = File.createTempFile("receipt_", ".jpg", context.cacheDir)
@@ -431,7 +431,7 @@ fun AddCashboxEntryDialog(
                     )
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_gallery)) },
-                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = null) },
+                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(R.string.cd_choose_photo)) },
                         modifier = Modifier.clickable {
                             pickImageLauncher.launch("image/*")
                             showPhotoOptions = false
@@ -523,7 +523,7 @@ fun AddCashboxEntryDialog(
                             modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
                                 .background(MaterialTheme.colorScheme.surface.copy(alpha=0.7f), CircleShape)
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete_receipt), tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 } else {
@@ -531,7 +531,7 @@ fun AddCashboxEntryDialog(
                         onClick = { showPhotoOptions = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(Icons.Default.Image, contentDescription = null)
+                        Icon(Icons.Default.Image, contentDescription = stringResource(R.string.cd_add_receipt_image))
                         Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.cashbox_add_receipt))
                     }
@@ -559,14 +559,14 @@ fun AddCashboxEntryDialog(
                 enabled = amount.isNotBlank() && selectedCategory != null &&
                     amount.replace(",", ".").toDoubleOrNull()?.let { it > 0 } ?: false
             ) {
-                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Save, contentDescription = stringResource(R.string.cd_save), modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
                 Text(stringResource(R.string.action_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close), modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
                 Text(stringResource(R.string.action_cancel))
             }

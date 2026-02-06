@@ -86,8 +86,9 @@ fun RankingScreen(
                 state.rankings.isEmpty() -> {
                     EmptyState(
                         type = EmptyStateType.NoData(
-                            title = stringResource(R.string.no_ranking_data),
-                            description = stringResource(R.string.no_ranking_description)
+                            title = stringResource(R.string.empty_state_no_ranking_title),
+                            description = stringResource(R.string.empty_state_no_ranking_desc),
+                            icon = Icons.Default.Leaderboard
                         ),
                         modifier = Modifier.align(Alignment.Center)
                     )

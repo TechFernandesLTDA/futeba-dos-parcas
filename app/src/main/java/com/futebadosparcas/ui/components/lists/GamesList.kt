@@ -125,11 +125,13 @@ fun GameCard(
     modifier: Modifier = Modifier
 ) {
     // Calcular cor de vagas apenas quando necessário
-    val vacancyColor = remember(game.playersCount, game.maxPlayers) {
+    val errorColor = MaterialTheme.colorScheme.error
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val vacancyColor = remember(game.playersCount, game.maxPlayers, errorColor, primaryColor) {
         when {
-            game.playersCount >= game.maxPlayers -> MaterialTheme.colorScheme.error
+            game.playersCount >= game.maxPlayers -> errorColor
             game.playersCount >= game.maxPlayers * 0.8 -> com.futebadosparcas.ui.theme.GameStatusColors.Warning
-            else -> MaterialTheme.colorScheme.primary
+            else -> primaryColor
         }
     }
 

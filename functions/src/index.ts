@@ -1326,3 +1326,22 @@ export * from "./auth/custom-claims";
 // - Rate limiting em callable functions
 // Referência: specs/P0_CLOUD_FUNCTIONS_OPTIMIZATION.md
 export * from "./xp/parallel-processing";
+
+// ==========================================
+// P2 #39: MVP VOTING RACE CONDITION FIX
+// ==========================================
+// Votação atômica usando Firestore transactions
+// - submitMvpVote: Submissão de voto com proteção contra duplicatas
+// - concludeMvpVoting: Tallying atômico e atualização de resultados
+// Referência: specs/P2_39_MVP_VOTING_RACE_CONDITION_FIX.md
+export * from "./voting/mvp-voting";
+
+// ==========================================
+// P2 #29: BATCH FCM NOTIFICATIONS
+// ==========================================
+// Sistema de notificações em batch para reduzir chamadas FCM
+// - processNotificationBatch: Scheduler que processa fila a cada minuto
+// - enqueueNotificationCallable: Callable para enfileirar notificações
+// - cleanupNotificationQueue: Limpeza de fila processada
+// Referência: specs/MASTER_OPTIMIZATION_CHECKLIST.md - P2 #29
+export * from "./notifications/batch-sender";

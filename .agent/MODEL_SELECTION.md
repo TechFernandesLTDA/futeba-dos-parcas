@@ -7,7 +7,7 @@ Este arquivo ajuda a escolher o modelo AI correto para cada tipo de tarefa no pr
 ### Claude (Anthropic)
 
 ```yaml
-opus-4.5:
+opus-4.6:
   contexto: "200K tokens"
   velocidade: "Lenta"
   custo: "Muito alto ($$$$$)"
@@ -19,7 +19,7 @@ opus-4.5:
     - Refatorações arquiteturais
     - Análise de trade-offs
 
-sonnet-4.5:
+sonnet-4.6:
   contexto: "200K tokens"
   velocidade: "Rápida"
   custo: "Médio ($$)"
@@ -77,19 +77,19 @@ gemini-3-flash:
 
 | Tarefa | Modelo Recomendado | Alternativa |
 |--------|-------------------|-------------|
-| **Decisão Arquitetural** | Opus 4.5 | - |
-| **Design de Sistema** | Opus 4.5 | Gemini 3 Pro High |
-| **Security Audit** | Opus 4.5 | - |
-| **Implementar Feature** | Sonnet 4.5 | Gemini 3 Pro |
-| **Debugging** | Sonnet 4.5 | Gemini 3 Pro |
-| **Code Review (< 500 linhas)** | Sonnet 4.5 | - |
-| **Code Review (> 500 linhas)** | Opus 4.5 | - |
+| **Decisão Arquitetural** | Opus 4.6 | - |
+| **Design de Sistema** | Opus 4.6 | Gemini 3 Pro High |
+| **Security Audit** | Opus 4.6 | - |
+| **Implementar Feature** | Sonnet 4.6 | Gemini 3 Pro |
+| **Debugging** | Sonnet 4.6 | Gemini 3 Pro |
+| **Code Review (< 500 linhas)** | Sonnet 4.6 | - |
+| **Code Review (> 500 linhas)** | Opus 4.6 | - |
 | **Análise Visual** | Gemini 3 Pro | Gemini 3 Pro High |
-| **Correção Simples** | Gemini 3 Flash | Sonnet 4.5 |
+| **Correção Simples** | Gemini 3 Flash | Sonnet 4.6 |
 | **Consulta Rápida** | Gemini 3 Flash | - |
-| **Testes Unitários** | Sonnet 4.5 | Gemini 3 Pro |
-| **Refatoração (< 300 linhas)** | Sonnet 4.5 | - |
-| **Refatoração (> 300 linhas)** | Opus 4.5 | - |
+| **Testes Unitários** | Sonnet 4.6 | Gemini 3 Pro |
+| **Refatoração (< 300 linhas)** | Sonnet 4.6 | - |
+| **Refatoração (> 300 linhas)** | Opus 4.6 | - |
 
 ---
 
@@ -99,7 +99,7 @@ gemini-3-flash:
 ┌─── Preciso fazer uma tarefa
 │
 ├─── É uma decisão arquitetural crítica?
-│    ├─── Sim → Opus 4.5
+│    ├─── Sim → Opus 4.6
 │    └─── Não → Continue
 │
 ├─── Envolve análise visual (screenshot, diagrama)?
@@ -111,8 +111,8 @@ gemini-3-flash:
 │    └─── Não → Continue
 │
 ├─── É implementação/debugging/code review normal?
-│    ├─── Sim → Sonnet 4.5
-│    └─── Não → Opus 4.5
+│    ├─── Sim → Sonnet 4.6
+│    └─── Não → Opus 4.6
 ```
 
 ---
@@ -123,18 +123,18 @@ gemini-3-flash:
 
 | Tarefa | Modelo | Razão |
 |--------|--------|-------|
-| Criar LeagueViewModel | Sonnet 4.5 | Feature implementation simples |
-| Criar BadgesViewModel | Sonnet 4.5 | Feature implementation simples |
-| Completar LeagueFragment | Sonnet 4.5 | UI + lógica padrão |
-| **Arquitetar auto-award badges** | **Opus 4.5** | Decisão crítica (race conditions, consistência) |
-| Implementar auto-award (após design) | Sonnet 4.5 | Implementação após Opus definir arquitetura |
+| Criar LeagueViewModel | Sonnet 4.6 | Feature implementation simples |
+| Criar BadgesViewModel | Sonnet 4.6 | Feature implementation simples |
+| Completar LeagueFragment | Sonnet 4.6 | UI + lógica padrão |
+| **Arquitetar auto-award badges** | **Opus 4.6** | Decisão crítica (race conditions, consistência) |
+| Implementar auto-award (após design) | Sonnet 4.6 | Implementação após Opus definir arquitetura |
 | Analisar UI de badges | Gemini 3 Pro | Screenshots + feedback visual |
 
 **Workflow:**
-1. Opus 4.5: Design arquitetura auto-award (ADR)
-2. Sonnet 4.5: Implementar LeagueViewModel, BadgesViewModel
-3. Sonnet 4.5: Completar LeagueFragment
-4. Sonnet 4.5: Implementar auto-award (seguindo design do Opus)
+1. Opus 4.6: Design arquitetura auto-award (ADR)
+2. Sonnet 4.6: Implementar LeagueViewModel, BadgesViewModel
+3. Sonnet 4.6: Completar LeagueFragment
+4. Sonnet 4.6: Implementar auto-award (seguindo design do Opus)
 5. Gemini 3 Pro: Revisar UI com screenshots
 
 ---
@@ -143,18 +143,18 @@ gemini-3-flash:
 
 | Tarefa | Modelo | Razão |
 |--------|--------|-------|
-| **Escolher gateway (Asaas/MP/PagSeguro)** | **Opus 4.5** | Decisão arquitetural crítica |
-| **Definir arquitetura (Firebase/Backend)** | **Opus 4.5** | Decisão arquitetural crítica |
-| **Modelo de dados Firestore** | **Opus 4.5** | Decisão crítica (segurança PCI) |
-| Criar PaymentRepository | Sonnet 4.5 | Implementação após design |
-| Criar PaymentViewModel | Sonnet 4.5 | Implementação padrão |
-| Criar UI de pagamento | Sonnet 4.5 | UI padrão |
+| **Escolher gateway (Asaas/MP/PagSeguro)** | **Opus 4.6** | Decisão arquitetural crítica |
+| **Definir arquitetura (Firebase/Backend)** | **Opus 4.6** | Decisão arquitetural crítica |
+| **Modelo de dados Firestore** | **Opus 4.6** | Decisão crítica (segurança PCI) |
+| Criar PaymentRepository | Sonnet 4.6 | Implementação após design |
+| Criar PaymentViewModel | Sonnet 4.6 | Implementação padrão |
+| Criar UI de pagamento | Sonnet 4.6 | UI padrão |
 | Analisar UI de QR Code | Gemini 3 Pro | Screenshot + validação visual |
 
 **Workflow:**
-1. Opus 4.5: ADR completo (gateway + arquitetura + modelo dados)
-2. Sonnet 4.5: Implementar PaymentRepository
-3. Sonnet 4.5: Implementar PaymentViewModel + UI
+1. Opus 4.6: ADR completo (gateway + arquitetura + modelo dados)
+2. Sonnet 4.6: Implementar PaymentRepository
+3. Sonnet 4.6: Implementar PaymentViewModel + UI
 4. Gemini 3 Pro: Validar UI com screenshots
 
 ---
@@ -163,10 +163,10 @@ gemini-3-flash:
 
 | Tarefa | Modelo | Razão |
 |--------|--------|-------|
-| Adicionar edição de jogos | Sonnet 4.5 | Feature simples |
-| Implementar cancelamento | Sonnet 4.5 | Feature simples |
-| Notificações FCM confirmações | Sonnet 4.5 | Integração padrão |
-| Melhorar algoritmo balanceamento | Opus 4.5 | Lógica complexa (fairness) |
+| Adicionar edição de jogos | Sonnet 4.6 | Feature simples |
+| Implementar cancelamento | Sonnet 4.6 | Feature simples |
+| Notificações FCM confirmações | Sonnet 4.6 | Integração padrão |
+| Melhorar algoritmo balanceamento | Opus 4.6 | Lógica complexa (fairness) |
 | Corrigir typo em UI | Gemini 3 Flash | Trivial |
 
 ---
@@ -175,10 +175,10 @@ gemini-3-flash:
 
 | Tarefa | Modelo | Razão |
 |--------|--------|-------|
-| **Audit firestore.rules** | **Opus 4.5** | Security crítico |
-| Otimizar queries Firestore | Opus 4.5 | Performance crítico |
-| Adicionar índices compostos | Sonnet 4.5 | Implementação após análise |
-| Revisar validação de inputs | Opus 4.5 | Security crítico |
+| **Audit firestore.rules** | **Opus 4.6** | Security crítico |
+| Otimizar queries Firestore | Opus 4.6 | Performance crítico |
+| Adicionar índices compostos | Sonnet 4.6 | Implementação após análise |
+| Revisar validação de inputs | Opus 4.6 | Security crítico |
 
 ---
 
@@ -186,7 +186,7 @@ gemini-3-flash:
 
 ### Cenário: Completar Gamificação (30% → 100%)
 
-**Opção 1: Tudo com Opus 4.5**
+**Opção 1: Tudo com Opus 4.6**
 ```
 - Arquitetura auto-award: 20K tokens ($$$$$)
 - LeagueViewModel: 10K tokens ($$$$$)
@@ -224,7 +224,7 @@ Total: ~65K tokens | Custo: ~$2-4 USD (economia de 60-80%)
 
 ## 🚦 Quando Escalar/Desescalar
 
-### 🔺 Escale para Opus 4.5 quando:
+### 🔺 Escale para Opus 4.6 quando:
 
 1. **Decisão afeta arquitetura do app**
    - Exemplo: Escolher gateway de pagamento
@@ -245,7 +245,7 @@ Total: ~65K tokens | Custo: ~$2-4 USD (economia de 60-80%)
 5. **Você não tem certeza**
    - Se em dúvida entre abordagens, peça Opus para analisar
 
-### 🔻 Desescale para Sonnet 4.5 quando:
+### 🔻 Desescale para Sonnet 4.6 quando:
 
 1. **Implementação de decisão já tomada**
    - Opus decidiu arquitetura → Sonnet implementa
@@ -272,13 +272,13 @@ Total: ~65K tokens | Custo: ~$2-4 USD (economia de 60-80%)
 ### Estratégia 1: Opus para Design, Sonnet para Build
 
 ```
-1. Use Opus 4.5 para:
+1. Use Opus 4.6 para:
    - ADR (Architecture Decision Record)
    - Definir interfaces
    - Definir modelo de dados
    - Identificar riscos
 
-2. Use Sonnet 4.5 para:
+2. Use Sonnet 4.6 para:
    - Implementar as decisões
    - Escrever código
    - Testes unitários
@@ -318,7 +318,7 @@ Economia: ~20-30% (Opus foca em decisão, não pesquisa)
 
 ## 📋 Checklists de Decisão
 
-### Antes de usar Opus 4.5, pergunte:
+### Antes de usar Opus 4.6, pergunte:
 
 - [ ] Esta decisão afeta a arquitetura do app?
 - [ ] Existem múltiplas soluções válidas (trade-offs)?
@@ -326,9 +326,9 @@ Economia: ~20-30% (Opus foca em decisão, não pesquisa)
 - [ ] A decisão é irreversível ou muito custosa para mudar?
 - [ ] Preciso de análise profunda de código (>500 linhas)?
 
-**Se 2+ respostas "sim"** → Use Opus 4.5
+**Se 2+ respostas "sim"** → Use Opus 4.6
 
-### Antes de usar Sonnet 4.5, pergunte:
+### Antes de usar Sonnet 4.6, pergunte:
 
 - [ ] A tarefa está bem definida?
 - [ ] Existe padrão/template a seguir?
@@ -336,7 +336,7 @@ Economia: ~20-30% (Opus foca em decisão, não pesquisa)
 - [ ] Não envolve análise visual?
 - [ ] Não é trivial demais?
 
-**Se 3+ respostas "sim"** → Use Sonnet 4.5
+**Se 3+ respostas "sim"** → Use Sonnet 4.6
 
 ### Antes de usar Gemini 3 Pro, pergunte:
 
@@ -380,12 +380,12 @@ Economia: ~20-30% (Opus foca em decisão, não pesquisa)
 ```
 Complexidade vs Custo vs Velocidade
 
-Opus 4.5
+Opus 4.6
 ██████████ Complexidade: Máxima
 ██████████ Custo: Muito Alto
 ████░░░░░░ Velocidade: Lenta
 
-Sonnet 4.5
+Sonnet 4.6
 ████████░░ Complexidade: Alta
 ████░░░░░░ Custo: Médio
 ████████░░ Velocidade: Rápida
@@ -407,15 +407,15 @@ Gemini 3 Flash
 
 | Tarefa | Modelo Recomendado | Prioridade |
 |--------|-------------------|-----------|
-| Criar LeagueViewModel.kt | Sonnet 4.5 | URGENTE |
-| Criar BadgesViewModel.kt | Sonnet 4.5 | URGENTE |
-| Completar LeagueFragment.kt | Sonnet 4.5 | URGENTE |
-| **Arquitetar auto-award badges** | **Opus 4.5** | **CRÍTICO** |
-| Implementar auto-award | Sonnet 4.5 | Alta |
-| **Design arquitetura pagamentos** | **Opus 4.5** | **CRÍTICO** |
-| Implementar PaymentRepository | Sonnet 4.5 | Alta |
-| **Security audit firestore.rules** | **Opus 4.5** | **CRÍTICO** |
-| Otimizar queries Firestore | Opus 4.5 | Média |
+| Criar LeagueViewModel.kt | Sonnet 4.6 | URGENTE |
+| Criar BadgesViewModel.kt | Sonnet 4.6 | URGENTE |
+| Completar LeagueFragment.kt | Sonnet 4.6 | URGENTE |
+| **Arquitetar auto-award badges** | **Opus 4.6** | **CRÍTICO** |
+| Implementar auto-award | Sonnet 4.6 | Alta |
+| **Design arquitetura pagamentos** | **Opus 4.6** | **CRÍTICO** |
+| Implementar PaymentRepository | Sonnet 4.6 | Alta |
+| **Security audit firestore.rules** | **Opus 4.6** | **CRÍTICO** |
+| Otimizar queries Firestore | Opus 4.6 | Média |
 | Validar UI com screenshots | Gemini 3 Pro | Baixa |
 
 ---

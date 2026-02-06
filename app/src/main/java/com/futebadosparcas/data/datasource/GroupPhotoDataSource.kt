@@ -453,7 +453,7 @@ class GroupPhotoDataSource @Inject constructor(
             setCustomMetadata("width", width.toString())
             setCustomMetadata("height", height.toString())
             setCustomMetadata("format", format)
-            setCustomMetadata("compression_ratio", ((1 - compressedSize.toFloat() / originalSize) * 100).toInt().toString() + "%")
+            setCustomMetadata("compression_ratio", "${((1 - compressedSize.toFloat() / originalSize) * 100).toInt()}%")
         }
     }
 

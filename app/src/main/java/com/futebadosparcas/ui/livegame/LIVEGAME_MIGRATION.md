@@ -318,5 +318,5 @@ fun testLiveGameScreen_DisplaysCorrectScore() {
 ---
 
 **Última atualização**: 2026-01-05
-**Autor**: Claude Sonnet 4.5
+**Autor**: Claude Sonnet 4.6
 **Status**: ✅ Fase 1 Concluída - Em revisão

@@ -449,6 +449,47 @@ class GameRepositoryImpl @Inject constructor(
         }
     }
 
+    // === SOFT DELETE (P2 #40) ===
+
+    override suspend fun softDeleteGame(gameId: String): Result<Unit> {
+        return try {
+            val uid = auth.currentUser?.uid
+                ?: return Result.failure(Exception("Usuario nao autenticado"))
+
+            val updates = mapOf(
+                "deleted_at" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                "deleted_by" to uid,
+                "updated_at" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+            )
+
+            gamesCollection.document(gameId).update(updates).await()
+
+            AppLogger.i(TAG) { "Jogo $gameId soft-deletado por $uid" }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao soft-deletar jogo $gameId", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun restoreGame(gameId: String): Result<Unit> {
+        return try {
+            val updates = mapOf(
+                "deleted_at" to com.google.firebase.firestore.FieldValue.delete(),
+                "deleted_by" to com.google.firebase.firestore.FieldValue.delete(),
+                "updated_at" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+            )
+
+            gamesCollection.document(gameId).update(updates).await()
+
+            AppLogger.i(TAG) { "Jogo $gameId restaurado com sucesso" }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao restaurar jogo $gameId", e)
+            Result.failure(e)
+        }
+    }
+
     override suspend fun updatePartialPayment(
         gameId: String,
         userId: String,

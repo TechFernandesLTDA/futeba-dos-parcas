@@ -37,7 +37,7 @@ class GameEventsRepositoryImpl(
             assistedByName = event.assistedByName,
             minute = event.minute
         )
-        return if (result.isSuccess) Result.success(Unit) else Result.failure(result.exceptionOrNull()!!)
+        return if (result.isSuccess) Result.success(Unit) else Result.failure(result.exceptionOrNull() ?: Exception("Erro desconhecido ao enviar evento"))
     }
 
     override suspend fun deleteGameEvent(gameId: String, eventId: String): Result<Unit> {

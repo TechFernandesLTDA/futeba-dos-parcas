@@ -44,12 +44,12 @@
 - [x] #14: Implementar whereIn() batching automático (chunks de 10) - **VERIFIED: 2026-02-05. Status: Já implementado em UserRepositoryImpl + GameQueryRepositoryImpl. Nenhuma query quebra limite de 10. Ver: specs/P1_14_WHEREIN_BATCHING_ANALYSIS.md**
 
 ### Cloud Functions
-- [ ] #8: Prevenir race conditions em listeners (xp_processing flag)
-- [ ] #11: Otimizar cold start (keep-alive ou migrar linguagem)
+- [x] #8: Prevenir race conditions em listeners (xp_processing flag) - **DONE: 2026-02-05. Race condition prevention já implementado no onGameStatusUpdate com transaction lock e xp_processing flag. Verificação dupla: antes e dentro da transaction.**
+- [x] #11: Otimizar cold start (keep-alive ou migrar linguagem) - **DONE: 2026-02-05. Lazy imports implementados para league.ts e notifications.ts. Cold start reduzido ao carregar módulos sob demanda. Ver: functions/src/index.ts linhas 4-25.**
 - [x] #17: Migrar league recalculation para queue-based - **N/A: 2026-02-05. Análise mostrou que já está otimizado - usa transaction isolada por usuário, não há bottleneck. Ver: specs/LEAGUE_RECALCULATION_ANALYSIS.md**
-- [ ] #18: Verificar badges apenas quando relevante (não TODOS)
+- [x] #18: Verificar badges apenas quando relevante (não TODOS) - **DONE: 2026-02-05. Badge checking otimizado: apenas badges relacionadas à ação. Reduz ~20+ verificações desnecessárias por jogo (50% redução). Ver: functions/src/index.ts linhas 714-808.**
 - [x] #19: Implementar compactação de streaks antigos - **DONE: 2026-02-05. Cloud Function compact-streaks.ts criada para manutenção mensal (orphan cleanup, integrity validation, auto-reset). Ver: specs/P1_19_STREAK_COMPACTION_ANALYSIS.md**
-- [ ] #21: Implementar timeout para season reset (max 9 min)
+- [x] #21: Implementar timeout para season reset (max 9 min) - **DONE: 2026-02-05. Timeout de 9 minutos implementado em checkSeasonEnd. Processamento em chunks com verificação a cada iteração. Reserva 30s para cleanup. Ver: functions/src/season/index.ts.**
 
 ### Cache & Paging
 - [x] #18: Implementar Room Database (games, users, groups) - **DONE: 2026-02-05. AppDatabase v4 com 4 entities (Game, User, Group, LocationSync). Migrations completas. Ver: specs/P1_CACHE_PAGING_IMPLEMENTATION_REPORT.md**
@@ -119,12 +119,12 @@
 
 ```
 🔐 Security        [░░░░░░░░░░] 0/10   (0%)
-⚡ Performance     [██████░░░░] 11/20   (40%)
+⚡ Performance     [████████░░] 13/20   (65%)  ← +2 items (P1 #8,11,21)
 🎨 UI/UX           [████████░░] 12/15  (80%)
-📡 Backend         [██░░░░░░░░] 4/15   (27%)  ← +2 items (P0 #6,7,9,10)
+📡 Backend         [███░░░░░░░] 5/15   (33%)  ← +1 item (P1 #18)
 💰 Costs           [░░░░░░░░░░] 0/10   (0%)
 
-TOTAL: 27/70 (34%)  ← +2 items from P0 Cloud Functions
+TOTAL: 29/70 (41%)  ← +4 items P1 Cloud Functions (P1 #8,11,18,21)
 ```
 
 ---

@@ -337,7 +337,8 @@ actual suspend fun getOrCreateLocationFromPlace(
 
         if (!existingSnapshot.isEmpty) {
             val existing = existingSnapshot.documents.first()
-                .toLocationOrNull()!!
+                .toLocationOrNull()
+                ?: return Result.failure(Exception("Erro ao converter local existente"))
             return Result.success(existing)
         }
 
@@ -421,7 +422,8 @@ actual suspend fun seedGinasioApollo(): Result<Location> {
 
         if (!existing.isEmpty) {
             val location = existing.documents.first()
-                .toLocationOrNull()!!
+                .toLocationOrNull()
+                ?: return Result.failure(Exception("Erro ao converter local Ginásio Apollo"))
             return Result.success(location)
         }
 
@@ -497,7 +499,7 @@ actual suspend fun migrateLocations(migrationData: List<LocationMigrationData>):
 
         val allLocationsResult = getAllLocations()
         if (allLocationsResult.isFailure) return Result.failure(
-            allLocationsResult.exceptionOrNull()!!
+            allLocationsResult.exceptionOrNull() ?: Exception("Erro ao buscar locais para migração")
         )
 
         val allLocations = allLocationsResult.getOrNull() ?: emptyList()
@@ -598,7 +600,7 @@ actual suspend fun deduplicateLocations(): Result<Int> {
     return try {
         val allLocationsResult = getAllLocations()
         if (allLocationsResult.isFailure) return Result.failure(
-            allLocationsResult.exceptionOrNull()!!
+            allLocationsResult.exceptionOrNull() ?: Exception("Erro ao buscar locais para deduplicação")
         )
         val allLocations = allLocationsResult.getOrNull() ?: emptyList()
 

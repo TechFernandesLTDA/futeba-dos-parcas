@@ -1,10 +1,17 @@
 package com.futebadosparcas.domain.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * Posicao do jogador em campo.
  */
+@Serializable
 enum class PlayerPosition(val displayName: String) {
+    @SerialName("LINE")
     LINE("Linha"),
+
+    @SerialName("GOALKEEPER")
     GOALKEEPER("Goleiro");
 
     companion object {

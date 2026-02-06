@@ -28,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.futebadosparcas.ui.components.AnimatedStateContainer
+import com.futebadosparcas.ui.components.StateType
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.PlayerCardShareHelper
@@ -110,60 +112,73 @@ fun HomeScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            when (uiState) {
-                is HomeUiState.Loading -> {
-                    HomeLoadingState()
-                }
-                is HomeUiState.Success -> {
-                    val state = uiState as HomeUiState.Success
-                    HomeSuccessContent(
-                        state = state,
-                        isOnline = isOnline,
-                        unreadCount = unreadCount,
-                        viewModel = viewModel,
-                        hapticManager = hapticManager,
-                        onGameClick = onGameClick,
-                        onConfirmGame = onConfirmGame,
-                        onShowPlayerCard = { showPlayerCard = true },
-                        onSettingsClick = onSettingsClick,
-                        onNotificationsClick = onNotificationsClick,
-                        onGroupsClick = onGroupsClick,
-                        onMapClick = onMapClick,
-                        onLevelJourneyClick = onLevelJourneyClick,
-                        onCreateGameClick = onCreateGameClick,
-                        onJoinGroupClick = onJoinGroupClick,
-                        onSeeAllGamesClick = onSeeAllGamesClick
-                    )
-
-                    // PlayerCard BottomSheet
-                    if (showPlayerCard) {
-                        ModalBottomSheet(
-                            onDismissRequest = { showPlayerCard = false },
-                            sheetState = sheetState,
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ) {
-                            PlayerCardContent(
-                                user = state.user,
-                                stats = state.statistics,
-                                onClose = { showPlayerCard = false },
-                                onShare = {
-                                    PlayerCardShareHelper.shareAsImage(
-                                        context = context,
-                                        user = state.user,
-                                        stats = state.statistics,
-                                        generatedBy = state.user.getDisplayName()
-                                    )
-                                },
-                                modifier = Modifier.padding(bottom = 32.dp)
-                            )
-                        }
+            // Transições animadas entre estados (fade + slide)
+            AnimatedStateContainer(
+                targetState = uiState,
+                stateMapper = { state ->
+                    when (state) {
+                        is HomeUiState.Loading -> StateType.LOADING
+                        is HomeUiState.Success -> StateType.SUCCESS
+                        is HomeUiState.Error -> StateType.ERROR
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+                label = "homeStateTransition"
+            ) { currentState ->
+                when (currentState) {
+                    is HomeUiState.Loading -> {
+                        HomeLoadingState()
+                    }
+                    is HomeUiState.Success -> {
+                        HomeSuccessContent(
+                            state = currentState,
+                            isOnline = isOnline,
+                            unreadCount = unreadCount,
+                            viewModel = viewModel,
+                            hapticManager = hapticManager,
+                            onGameClick = onGameClick,
+                            onConfirmGame = onConfirmGame,
+                            onShowPlayerCard = { showPlayerCard = true },
+                            onSettingsClick = onSettingsClick,
+                            onNotificationsClick = onNotificationsClick,
+                            onGroupsClick = onGroupsClick,
+                            onMapClick = onMapClick,
+                            onLevelJourneyClick = onLevelJourneyClick,
+                            onCreateGameClick = onCreateGameClick,
+                            onJoinGroupClick = onJoinGroupClick,
+                            onSeeAllGamesClick = onSeeAllGamesClick
+                        )
+                    }
+                    is HomeUiState.Error -> {
+                        HomeErrorState(
+                            message = currentState.message,
+                            onRetry = { viewModel.loadHomeData(forceRetry = true) }
+                        )
                     }
                 }
-                is HomeUiState.Error -> {
-                    val state = uiState as HomeUiState.Error
-                    HomeErrorState(
-                        message = state.message,
-                        onRetry = { viewModel.loadHomeData(forceRetry = true) }
+            }
+
+            // PlayerCard BottomSheet (outside AnimatedStateContainer)
+            if (showPlayerCard && uiState is HomeUiState.Success) {
+                val successState = uiState as HomeUiState.Success
+                ModalBottomSheet(
+                    onDismissRequest = { showPlayerCard = false },
+                    sheetState = sheetState,
+                    containerColor = MaterialTheme.colorScheme.surface
+                ) {
+                    PlayerCardContent(
+                        user = successState.user,
+                        stats = successState.statistics,
+                        onClose = { showPlayerCard = false },
+                        onShare = {
+                            PlayerCardShareHelper.shareAsImage(
+                                context = context,
+                                user = successState.user,
+                                stats = successState.statistics,
+                                generatedBy = successState.user.getDisplayName()
+                            )
+                        },
+                        modifier = Modifier.padding(bottom = 32.dp)
                     )
                 }
             }

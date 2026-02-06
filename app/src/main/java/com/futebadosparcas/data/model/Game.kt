@@ -240,7 +240,19 @@ data class Game(
     // Raio maximo (em metros) para fazer check-in - Issue #36
     @get:PropertyName("checkin_radius_meters")
     @set:PropertyName("checkin_radius_meters")
-    var checkinRadiusMeters: Int = 100
+    var checkinRadiusMeters: Int = 100,
+
+    // === SOFT DELETE (P2 #40) ===
+
+    // Timestamp de quando o jogo foi soft-deletado (null = ativo)
+    @get:PropertyName("deleted_at")
+    @set:PropertyName("deleted_at")
+    var deletedAt: Date? = null,
+
+    // ID do usuario que realizou o soft delete
+    @get:PropertyName("deleted_by")
+    @set:PropertyName("deleted_by")
+    var deletedBy: String? = null
 ) : Identifiable {
     // Bloco de inicializacao para normalizar valores e garantir integridade
     init {
@@ -500,6 +512,34 @@ data class Game(
      */
     @Exclude
     fun isFull(): Boolean = playersCount >= maxPlayers
+
+    /**
+     * Verifica se o jogo foi soft-deletado (P2 #40).
+     */
+    @Exclude
+    fun isSoftDeleted(): Boolean = deletedAt != null
+
+    /**
+     * Realiza soft delete do jogo (P2 #40).
+     *
+     * @param userId ID do usuario que esta deletando
+     */
+    @Exclude
+    fun softDelete(userId: String) {
+        deletedAt = Date()
+        deletedBy = userId
+        updatedAt = Date()
+    }
+
+    /**
+     * Restaura um jogo soft-deletado (P2 #40).
+     */
+    @Exclude
+    fun restore() {
+        deletedAt = null
+        deletedBy = null
+        updatedAt = Date()
+    }
 
     /**
      * Cancela o jogo com motivo e autor (#2, #3 - Campos de cancelamento).
