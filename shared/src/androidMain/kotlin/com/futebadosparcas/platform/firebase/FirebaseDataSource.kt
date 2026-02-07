@@ -161,7 +161,7 @@ actual class FirebaseDataSource(
     actual suspend fun getGamesByGroup(groupId: String, limit: Int): Result<List<Game>> {
         return try {
             val snapshot = firestore.collection(COLLECTION_GAMES)
-                .whereEqualTo("groupId", groupId)
+                .whereEqualTo("group_id", groupId)
                 .orderBy("dateTime", Query.Direction.DESCENDING)
                 .limit(limit.toLong())
                 .get()
@@ -1066,8 +1066,8 @@ actual class FirebaseDataSource(
     actual suspend fun getUserXpLogs(userId: String, limit: Int): Result<List<XpLog>> {
         return try {
             val snapshot = firestore.collection(COLLECTION_XP_LOGS)
-                .whereEqualTo("userId", userId)
-                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .whereEqualTo("user_id", userId)
+                .orderBy("created_at", Query.Direction.DESCENDING)
                 .limit(limit.toLong())
                 .get()
                 .await()
