@@ -95,16 +95,23 @@ android {
 
         unitTests.all {
             it.useJUnitPlatform()
+            it.maxHeapSize = "2g"
             // Fix encoding issues for paths with special characters (ç, etc.)
             it.jvmArgs(
+                "-Xmx2g",
                 "-Dfile.encoding=UTF-8",
                 "-Dsun.jnu.encoding=UTF-8",
                 "-Dconsole.encoding=UTF-8",
                 "-Dstdout.encoding=UTF-8",
                 "-Dstderr.encoding=UTF-8"
             )
-            // Set working directory to temp to avoid path issues
-            it.workingDir = file("C:/TEMP")
+            // Set working directory to temp to avoid path issues with special chars on Windows
+            if (System.getProperty("os.name").lowercase().contains("win")) {
+                val tempDir = file("C:/TEMP")
+                if (tempDir.exists()) {
+                    it.workingDir = tempDir
+                }
+            }
         }
     }
 
