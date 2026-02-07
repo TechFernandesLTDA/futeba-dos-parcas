@@ -33,7 +33,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(InstantTaskExecutorExtension::class, MockLogExtension::class)
 class MVPVoteViewModelTest {
 
-    private val testDispatcher = StandardTestDispatcher()
+    private val testDispatcher = UnconfinedTestDispatcher()
 
     private lateinit var gameRepository: GameRepository
     private lateinit var gameExperienceRepository: GameExperienceRepository
@@ -271,12 +271,19 @@ class MVPVoteViewModelTest {
     fun `finalizeVoting_succeeds_showsFinished`() = runTest {
         // Given - Dado votacao pode ser finalizada
         coEvery { gameExperienceRepository.concludeVoting("game-1") } returns Result.success(Unit)
-        // matchFinalizationService.processGame retorna GameProcessingResult (relaxed mock retorna default)
+        coEvery { matchFinalizationService.processGame("game-1") } returns GameProcessingResult(
+            gameId = "game-1",
+            success = true,
+            playersProcessed = emptyList()
+        )
 
         viewModel = createViewModel()
 
         // When - Quando finalizar
         viewModel.finalizeVoting("game-1")
+        // withContext(Dispatchers.IO) no ViewModel despacha processGame para pool real de IO.
+        // Aguardar IO thread completar antes de avançar o test dispatcher.
+        Thread.sleep(100)
         advanceUntilIdle()
 
         // Then - Estado deve ser Finished
@@ -298,7 +305,8 @@ class MVPVoteViewModelTest {
         // Then - Estado deve ser Error
         val state = viewModel.uiState.value
         assertTrue(state is MVPVoteUiState.Error)
-        assertTrue((state as MVPVoteUiState.Error).message.contains("concluir votacao"))
+        // A mensagem real usa "votação" com acento
+        assertTrue((state as MVPVoteUiState.Error).message.contains("concluir vota"))
     }
 
     @Test
@@ -309,7 +317,7 @@ class MVPVoteViewModelTest {
         coEvery { gameExperienceRepository.submitVote(any()) } returns Result.success(Unit)
         coEvery { gameExperienceRepository.checkAllVoted("game-1") } returns Result.success(true)
         coEvery { gameExperienceRepository.concludeVoting("game-1") } returns Result.success(Unit)
-        coEvery { matchFinalizationService.processGame("game-1") } returns GameProcessingResult(
+        coEvery { matchFinalizationService.processGame(any()) } returns GameProcessingResult(
             gameId = "game-1",
             success = true,
             playersProcessed = emptyList()
@@ -337,6 +345,11 @@ class MVPVoteViewModelTest {
             viewModel.submitVote("game-1", "player-3", stateAfterSecond.currentCategory)
             advanceUntilIdle()
         }
+
+        // withContext(Dispatchers.IO) no finalizeVoting (auto-finalize) despacha para pool real de IO.
+        // Aguardar IO thread completar antes de avançar o test dispatcher.
+        Thread.sleep(200)
+        advanceUntilIdle()
 
         // Then - Deve chegar em Finished (automaticamente ou apos todos votarem)
         // O comportamento exato depende se BEST_GOALKEEPER foi pulado

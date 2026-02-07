@@ -147,7 +147,7 @@ class GameDetailViewModelTest {
         // Then - Estado deve ser Error
         val state = viewModel.uiState.value
         assertTrue(state is GameDetailUiState.Error)
-        assertEquals("ID do jogo invalido", (state as GameDetailUiState.Error).message)
+        assertEquals("ID do jogo inválido", (state as GameDetailUiState.Error).message)
     }
 
     @Test
@@ -229,7 +229,8 @@ class GameDetailViewModelTest {
         viewModel.loadGameDetails("game-1")
         advanceUntilIdle()
 
-        coEvery { gameRepository.deleteGame("game-1") } returns Result.success(Unit)
+        // deleteGame() agora chama softDeleteGame() internamente (P2 #40)
+        coEvery { gameRepository.softDeleteGame("game-1") } returns Result.success(Unit)
 
         // When - Quando deletar jogo
         viewModel.deleteGame("game-1")
@@ -250,7 +251,8 @@ class GameDetailViewModelTest {
         viewModel.loadGameDetails("game-1")
         advanceUntilIdle()
 
-        coEvery { gameRepository.deleteGame("game-1") } returns Result.failure(Exception("Erro ao cancelar"))
+        // deleteGame() agora chama softDeleteGame() internamente (P2 #40)
+        coEvery { gameRepository.softDeleteGame("game-1") } returns Result.failure(Exception("Erro ao cancelar"))
 
         // When - Quando tentar deletar
         viewModel.deleteGame("game-1")

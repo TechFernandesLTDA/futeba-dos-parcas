@@ -122,9 +122,16 @@ class HomeViewModelTest {
 
     @Test
     @DisplayName("Estado inicial deve ser Loading")
-    fun `initial state should be Loading`() = runTest {
-        // Then - Estado inicial deve ser Loading
-        assertTrue(viewModel.uiState.value is HomeUiState.Loading)
+    fun `initial state should be Loading`() {
+        // Given - ViewModel criado no setup com StandardTestDispatcher (coroutines nao executam automaticamente)
+        // Criar novo ViewModel para garantir que estado inicial e verificado imediatamente
+        val freshViewModel = createViewModel()
+
+        // Then - Estado inicial deve ser Loading (antes de advanceUntilIdle)
+        assertTrue(
+            freshViewModel.uiState.value is HomeUiState.Loading,
+            "Estado esperado: Loading, obtido: ${freshViewModel.uiState.value::class.simpleName}"
+        )
     }
 
     @Test

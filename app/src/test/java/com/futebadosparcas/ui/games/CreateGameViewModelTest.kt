@@ -100,6 +100,9 @@ class CreateGameViewModelTest {
 
         // Recent games vazio
         coEvery { gameRepository.getAllGames() } returns Result.success(emptyList())
+
+        // Time conflict check (evita ClassCastException em relaxed mock de Result)
+        coEvery { gameRepository.checkTimeConflict(any(), any(), any(), any(), any()) } returns Result.success(emptyList())
     }
 
     @AfterEach

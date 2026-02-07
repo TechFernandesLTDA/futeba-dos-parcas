@@ -202,7 +202,8 @@ class GroupDetailViewModelTest {
         // Then - actionState deve ser Error de permissao
         val actionState = viewModel.actionState.value
         assertTrue(actionState is GroupActionState.Error)
-        assertTrue((actionState as GroupActionState.Error).message.contains("permissao"))
+        // A mensagem real usa "permissão" com acento
+        assertTrue((actionState as GroupActionState.Error).message.contains("permiss"))
     }
 
     @Test
