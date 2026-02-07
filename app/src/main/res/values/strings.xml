@@ -3725,4 +3725,51 @@ subir no ranking!</string>
     <string name="cd_recent_location">Local recente</string>
     <string name="cd_location_photo_named">Foto do local %s</string>
 
+    <!-- EmptyState - Telas adicionais -->
+    <string name="empty_state_no_cashbox_title">Caixa vazia</string>
+    <string name="empty_state_no_cashbox_desc">Nenhuma transação registrada ainda. Adicione receitas e despesas para controlar o financeiro do grupo.</string>
+    <string name="empty_state_no_cashbox_action">Adicionar Transação</string>
+    <string name="empty_state_no_badges_title">Nenhuma conquista</string>
+    <string name="empty_state_no_badges_desc">Jogue partidas e complete desafios para desbloquear conquistas!</string>
+    <string name="empty_state_no_schedules_title">Nenhum horário</string>
+    <string name="empty_state_no_schedules_desc">Nenhum jogo agendado para os próximos dias. Fique ligado!</string>
+    <string name="empty_state_no_members_title">Nenhum membro</string>
+    <string name="empty_state_no_members_desc">Convide jogadores para participar do grupo.</string>
+    <string name="empty_state_no_members_action">Convidar</string>
+    <string name="empty_state_no_activities_title">Sem atividade recente</string>
+    <string name="empty_state_no_activities_desc">Aqui você verá as atividades recentes do grupo.</string>
+    <string name="empty_state_no_xp_logs_title">Sem histórico de XP</string>
+    <string name="empty_state_no_xp_logs_desc">Seu histórico de experiência aparecerá aqui após suas primeiras partidas.</string>
+
+    <!-- UiStateScaffold / Transições de estado -->
+    <string name="state_loading">Carregando…</string>
+    <string name="state_refreshing">Atualizando…</string>
+    <string name="state_retry">Tentar novamente</string>
+    <string name="state_error_title">Algo deu errado</string>
+    <string name="state_error_generic">Ocorreu um erro inesperado. Por favor, tente novamente.</string>
+
+    <!-- Haptic Feedback (acessibilidade) -->
+    <string name="cd_haptic_success">Ação realizada com sucesso</string>
+    <string name="cd_haptic_error">Erro na ação</string>
+
+    <!-- UX Team 8 - Acessibilidade: contentDescription e strings (2026-02-06) -->
+
+    <!-- PipLiveGame - Indicador ao vivo -->
+    <string name="pip_live_indicator">Ao vivo</string>
+
+    <!-- CreateGameScreen - Ícones de campos de formulário -->
+    <string name="cd_select_date">Selecionar data</string>
+    <string name="cd_select_start_time">Selecionar horário de início</string>
+    <string name="cd_select_end_time">Selecionar horário de término</string>
+    <string name="cd_error_warning">Aviso de erro</string>
+
+    <!-- ProfileScreen - Estatísticas (substituir hardcoded) -->
+    <string name="admin_no_locations">Nenhum local cadastrado</string>
+    <string name="admin_one_location">1 local cadastrado</string>
+    <string name="admin_locations_count">%d locais cadastrados</string>
+
+    <!-- LiveEventsScreen - Ícone de tipo de evento -->
+    <string name="cd_event_type_icon">Ícone do tipo de evento</string>
+    <string name="cd_event_minute">Minuto do evento</string>
+
 </resources>

@@ -21,6 +21,8 @@
 
 import * as admin from "firebase-admin";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
+// SECURITY: Rate limiter para prevenir abuso de votacao
+import {checkRateLimit} from "../middleware/rate-limiter";
 
 const getDb = () => admin.firestore();
 
@@ -78,6 +80,9 @@ export const submitMvpVote = onCall<SubmitVoteRequest>(
   {
     region: "southamerica-east1",
     memory: "256MiB",
+    // SECURITY: App Check - garante que apenas apps verificados podem votar
+    enforceAppCheck: process.env.FIREBASE_CONFIG ? true : false,
+    consumeAppCheckToken: true,
   },
   async (request) => {
     // ==========================================
@@ -88,16 +93,35 @@ export const submitMvpVote = onCall<SubmitVoteRequest>(
     }
 
     const voterId = request.auth.uid;
+
+    // ==========================================
+    // 1.5. RATE LIMITING (20 votos/min por usuário)
+    // ==========================================
+    const {allowed, remaining, resetAt} = await checkRateLimit(voterId, {
+      maxRequests: 20,
+      windowMs: 60 * 1000,
+      keyPrefix: "mvp_vote",
+    });
+
+    if (!allowed) {
+      const resetInSeconds = Math.ceil((resetAt.getTime() - Date.now()) / 1000);
+      throw new HttpsError(
+        "resource-exhausted",
+        `Rate limit excedido. Tente novamente em ${resetInSeconds} segundos.`,
+        {retryAfter: resetInSeconds, limit: 20, remaining}
+      );
+    }
+
     const {gameId, votedPlayerId, category} = request.data;
 
     // ==========================================
     // 2. VALIDAÇÃO DE ENTRADA
     // ==========================================
-    if (!gameId || typeof gameId !== "string") {
-      throw new HttpsError("invalid-argument", "gameId é obrigatório");
+    if (!gameId || typeof gameId !== "string" || gameId.length > 128) {
+      throw new HttpsError("invalid-argument", "gameId é obrigatório e deve ser uma string válida");
     }
-    if (!votedPlayerId || typeof votedPlayerId !== "string") {
-      throw new HttpsError("invalid-argument", "votedPlayerId é obrigatório");
+    if (!votedPlayerId || typeof votedPlayerId !== "string" || votedPlayerId.length > 128) {
+      throw new HttpsError("invalid-argument", "votedPlayerId é obrigatório e deve ser uma string válida");
     }
     if (!category || !VALID_VOTE_CATEGORIES.includes(category)) {
       throw new HttpsError(
@@ -111,6 +135,14 @@ export const submitMvpVote = onCall<SubmitVoteRequest>(
       throw new HttpsError(
         "invalid-argument",
         "Não é permitido votar em si mesmo"
+      );
+    }
+
+    // SECURITY: Sanitizar inputs - previne injection de dados no Firestore
+    if (gameId.includes("/") || votedPlayerId.includes("/")) {
+      throw new HttpsError(
+        "invalid-argument",
+        "IDs não podem conter caracteres especiais"
       );
     }
 
@@ -269,6 +301,9 @@ export const concludeMvpVoting = onCall<ConcludeVotingRequest>(
   {
     region: "southamerica-east1",
     memory: "512MiB",
+    // SECURITY: App Check - garante que apenas apps verificados podem concluir votacao
+    enforceAppCheck: process.env.FIREBASE_CONFIG ? true : false,
+    consumeAppCheckToken: true,
   },
   async (request) => {
     // ==========================================
@@ -279,10 +314,34 @@ export const concludeMvpVoting = onCall<ConcludeVotingRequest>(
     }
 
     const userId = request.auth.uid;
+
+    // ==========================================
+    // 1.5. RATE LIMITING (5 conclusões/min por usuário)
+    // ==========================================
+    const {allowed: rlAllowed, resetAt: rlResetAt} = await checkRateLimit(userId, {
+      maxRequests: 5,
+      windowMs: 60 * 1000,
+      keyPrefix: "mvp_conclude",
+    });
+
+    if (!rlAllowed) {
+      const resetInSec = Math.ceil((rlResetAt.getTime() - Date.now()) / 1000);
+      throw new HttpsError(
+        "resource-exhausted",
+        `Rate limit excedido. Tente novamente em ${resetInSec} segundos.`,
+        {retryAfter: resetInSec, limit: 5}
+      );
+    }
+
     const {gameId} = request.data;
 
-    if (!gameId || typeof gameId !== "string") {
-      throw new HttpsError("invalid-argument", "gameId é obrigatório");
+    if (!gameId || typeof gameId !== "string" || gameId.length > 128) {
+      throw new HttpsError("invalid-argument", "gameId é obrigatório e deve ser uma string válida");
+    }
+
+    // SECURITY: Sanitizar gameId - previne path traversal no Firestore
+    if (gameId.includes("/")) {
+      throw new HttpsError("invalid-argument", "gameId contém caracteres inválidos");
     }
 
     const db = getDb();

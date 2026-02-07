@@ -1014,10 +1014,13 @@ service cloud.firestore {
       match /cashbox/{entryId} {
         allow read: if isAuthenticated() && isGroupMember(groupId);
 
+        // SECURITY: Validacao de bounds no amount (max R$ 100.000)
+        // Previne entradas absurdas que poderiam indicar exploit ou erro
         allow create: if isAuthenticated() &&
                          isGroupAdmin(groupId) &&
                          isGroupActive(groupId) &&
                          request.resource.data.amount > 0 &&
+                         request.resource.data.amount <= 100000 &&
                          (request.resource.data.type == 'INCOME' || request.resource.data.type == 'EXPENSE');
 
         // M-001 fix: validacao de timestamp em voided_at
@@ -1070,15 +1073,30 @@ service cloud.firestore {
     // ============================================
     // COLECAO: game_summons
     // ============================================
+    // SECURITY: Endurecido create - exige campos obrigatorios e que summoned_by == caller
+    // Previne que usuarios criem convocacoes falsas em nome de outros
     match /game_summons/{summonId} {
       allow read: if isAuthenticated() && (
         resource.data.user_id == userId() ||
-        resource.data.summoned_by == userId()
+        resource.data.summoned_by == userId() ||
+        isAdmin()
       );
 
-      allow create: if isAuthenticated();
+      // SECURITY: Validacao estrita na criacao de convocacao
+      // 1. summoned_by deve ser o usuario autenticado (ninguem convoca em nome de outro)
+      // 2. user_id (destinatario) deve ser diferente do remetente
+      // 3. game_id deve existir
+      // 4. Campos obrigatorios devem estar presentes
+      allow create: if isAuthenticated() &&
+        request.resource.data.summoned_by == userId() &&
+        request.resource.data.user_id != userId() &&
+        request.resource.data.keys().hasAll(['user_id', 'game_id', 'summoned_by']) &&
+        exists(/databases/$(database)/documents/games/$(request.resource.data.game_id));
 
-      allow update: if isAuthenticated() && resource.data.user_id == userId();
+      allow update: if isAuthenticated() && (
+        resource.data.user_id == userId() ||
+        isAdmin()
+      );
 
       allow delete: if isAuthenticated() && (
         resource.data.summoned_by == userId() ||
@@ -1132,20 +1150,34 @@ service cloud.firestore {
     // ============================================
     // COLECAO: game_events (eventos de jogos ao vivo)
     // ============================================
+    // SECURITY: Validacao de tipo de evento e campos obrigatorios
+    // Previne criacao de eventos com tipos invalidos ou dados fabricados
     match /game_events/{eventId} {
       allow read: if isAuthenticated();
 
+      // SECURITY: Validacao na criacao de eventos
+      // 1. game_id obrigatorio
+      // 2. type deve ser um dos tipos validos
+      // 3. Campos de score (se presentes) devem ter bounds
       allow create: if isAuthenticated() && (
         isAdmin() ||
         isGameOwner(request.resource.data.game_id) ||
         isConfirmedPlayer(request.resource.data.game_id)
-      );
+      ) &&
+      // game_id obrigatorio
+      request.resource.data.game_id is string &&
+      request.resource.data.game_id.size() > 0 &&
+      // type obrigatorio e deve ser valido
+      request.resource.data.type is string &&
+      request.resource.data.type in ['GOAL', 'ASSIST', 'SAVE', 'YELLOW_CARD', 'RED_CARD', 'SUBSTITUTION', 'FOUL', 'PENALTY', 'OWN_GOAL', 'GAME_START', 'GAME_END', 'HALF_TIME', 'TIMEOUT', 'OTHER'];
 
       allow update: if isAuthenticated() && (
         isAdmin() ||
         isGameOwner(resource.data.game_id) ||
         isConfirmedPlayer(resource.data.game_id)
-      );
+      ) &&
+      // Nao pode alterar game_id (previne mover evento entre jogos)
+      fieldUnchanged('game_id');
 
       allow delete: if isAuthenticated() && (
         isAdmin() ||
@@ -1172,11 +1204,13 @@ service cloud.firestore {
       isValidScore(request.resource.data.get('team1_score', null)) &&
       isValidScore(request.resource.data.get('team2_score', null));
 
+      // SECURITY: No update, owner_id nao pode ser alterado (previne transferencia de ownership)
       allow update: if isAuthenticated() && (
         isAdmin() ||
         resource.data.owner_id == userId() ||
         isConfirmedPlayer(scoreId)
       ) &&
+      fieldUnchanged('owner_id') &&
       // Validacao de bounds para placares
       isValidScore(request.resource.data.get('team1_score', null)) &&
       isValidScore(request.resource.data.get('team2_score', null));
@@ -1195,11 +1229,26 @@ service cloud.firestore {
 
       // PERF_001 P0 #30: Validacao estrita de scores (goals, assists, saves - max 100)
       // Previne exploits de XP inflados durante jogo ao vivo
-      allow create, update: if isAuthenticated() && (
+      // SECURITY: Separado create/update para validar fieldUnchanged('game_id') no update
+      allow create: if isAuthenticated() && (
         isAdmin() ||
         isGameOwner(request.resource.data.game_id) ||
         isConfirmedPlayer(request.resource.data.game_id)
       ) &&
+      // game_id obrigatorio
+      request.resource.data.game_id is string &&
+      // Validacao de bounds para stats de jogo
+      isValidScore(request.resource.data.get('goals', null)) &&
+      isValidScore(request.resource.data.get('assists', null)) &&
+      isValidScore(request.resource.data.get('saves', null));
+
+      // SECURITY: No update, game_id nao pode ser alterado (previne mover stats entre jogos)
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        isGameOwner(request.resource.data.game_id) ||
+        isConfirmedPlayer(request.resource.data.game_id)
+      ) &&
+      fieldUnchanged('game_id') &&
       // Validacao de bounds para stats de jogo
       isValidScore(request.resource.data.get('goals', null)) &&
       isValidScore(request.resource.data.get('assists', null)) &&
@@ -1355,14 +1404,20 @@ service cloud.firestore {
     // ============================================
     // COLECAO: challenge_progress (progresso dos desafios)
     // ============================================
+    // SECURITY FIX: Corrigido regras duplicadas de create/update que causavam
+    // comportamento ambiguo. Agora usa OR logico em uma unica regra.
     match /challenge_progress/{progressId} {
-      allow read: if isAuthenticated() && resource.data.userId == userId();
+      allow read: if isAuthenticated() && (
+        resource.data.userId == userId() || isAdmin()
+      );
 
-      // Usuario pode criar/atualizar seu proprio progresso
-      allow create, update: if isAuthenticated() && request.resource.data.userId == userId();
+      // Usuario pode criar/atualizar seu proprio progresso OU admin pode gerenciar qualquer
+      allow create, update: if isAuthenticated() && (
+        request.resource.data.userId == userId() || isAdmin()
+      );
 
-      // Admin pode gerenciar qualquer progresso
-      allow create, update, delete: if isAdmin();
+      // Apenas admin pode deletar progresso
+      allow delete: if isAdmin();
     }
 
     // ============================================
@@ -1411,6 +1466,47 @@ service cloud.firestore {
 
       // Apenas Admin pode criar/modificar badges
       allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // COLECAO: rate_limits (controle de rate limiting - Cloud Functions)
+    // ============================================
+    // SECURITY: Gerenciado EXCLUSIVAMENTE por Cloud Functions via Admin SDK.
+    // Clientes NAO devem ler nem escrever nesta colecao.
+    // Previne que usuarios manipulem seus proprios rate limits.
+    match /rate_limits/{bucketId} {
+      allow read, write: if false;
+    }
+
+    // ============================================
+    // COLECAO: audit_logs (logs de auditoria - ROOT LEVEL)
+    // ============================================
+    // SECURITY: Logs de auditoria sao IMUTAVEIS e criados APENAS por Cloud Functions.
+    // Admins podem ler para investigacao de incidentes.
+    // Nenhum cliente pode criar, editar ou deletar logs.
+    match /audit_logs/{logId} {
+      allow read: if isAuthenticated() && isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // ============================================
+    // COLECAO: notification_queue (fila de notificacoes FCM em batch)
+    // ============================================
+    // SECURITY: Gerenciado EXCLUSIVAMENTE por Cloud Functions.
+    // Clientes NAO devem ler nem escrever nesta colecao.
+    // Previne spam de notificacoes e manipulacao de fila.
+    match /notification_queue/{notifId} {
+      allow read, write: if false;
+    }
+
+    // ============================================
+    // COLECAO: metrics (metricas de performance e monitoramento)
+    // ============================================
+    // SECURITY: Escrito APENAS por Cloud Functions para telemetria.
+    // Admins podem ler para analise de performance.
+    match /metrics/{metricId} {
+      allow read: if isAuthenticated() && isAdmin();
+      allow create, update, delete: if false;
     }
 
     // ============================================

@@ -288,6 +288,138 @@ fun EmptySearchState(
 }
 
 /**
+ * Empty state pré-configurado para caixa do grupo (cashbox)
+ */
+@Composable
+fun EmptyCashboxState(
+    modifier: Modifier = Modifier,
+    onAddTransaction: (() -> Unit)? = null
+) {
+    EmptyState(
+        icon = Icons.Default.AccountBalanceWallet,
+        title = stringResource(R.string.empty_state_no_cashbox_title),
+        message = stringResource(R.string.empty_state_no_cashbox_desc),
+        actionText = if (onAddTransaction != null) stringResource(R.string.empty_state_no_cashbox_action) else null,
+        onAction = onAddTransaction,
+        modifier = modifier
+    )
+}
+
+/**
+ * Empty state pré-configurado para badges/conquistas
+ */
+@Composable
+fun EmptyBadgesFullState(
+    modifier: Modifier = Modifier
+) {
+    EmptyState(
+        icon = Icons.Default.EmojiEvents,
+        title = stringResource(R.string.empty_state_no_badges_title),
+        message = stringResource(R.string.empty_state_no_badges_desc),
+        modifier = modifier
+    )
+}
+
+/**
+ * Empty state pré-configurado para agendamentos
+ */
+@Composable
+fun EmptySchedulesState(
+    modifier: Modifier = Modifier
+) {
+    EmptyState(
+        icon = Icons.Default.CalendarMonth,
+        title = stringResource(R.string.empty_state_no_schedules_title),
+        message = stringResource(R.string.empty_state_no_schedules_desc),
+        modifier = modifier
+    )
+}
+
+/**
+ * Empty state pré-configurado para membros do grupo
+ */
+@Composable
+fun EmptyMembersState(
+    modifier: Modifier = Modifier,
+    onInvite: (() -> Unit)? = null
+) {
+    EmptyState(
+        icon = Icons.Default.PersonAdd,
+        title = stringResource(R.string.empty_state_no_members_title),
+        message = stringResource(R.string.empty_state_no_members_desc),
+        actionText = if (onInvite != null) stringResource(R.string.empty_state_no_members_action) else null,
+        onAction = onInvite,
+        modifier = modifier
+    )
+}
+
+/**
+ * Empty state pré-configurado para feed de atividades
+ */
+@Composable
+fun EmptyActivitiesState(
+    modifier: Modifier = Modifier
+) {
+    EmptyState(
+        icon = Icons.Default.Timeline,
+        title = stringResource(R.string.empty_state_no_activities_title),
+        message = stringResource(R.string.empty_state_no_activities_desc),
+        modifier = modifier
+    )
+}
+
+/**
+ * Empty state pré-configurado para histórico de XP
+ */
+@Composable
+fun EmptyXpLogsState(
+    modifier: Modifier = Modifier
+) {
+    EmptyState(
+        icon = Icons.Default.TrendingUp,
+        title = stringResource(R.string.empty_state_no_xp_logs_title),
+        message = stringResource(R.string.empty_state_no_xp_logs_desc),
+        modifier = modifier
+    )
+}
+
+/**
+ * Empty state pré-configurado para locais/campos
+ */
+@Composable
+fun EmptyLocationsState(
+    modifier: Modifier = Modifier,
+    onAddLocation: (() -> Unit)? = null
+) {
+    EmptyState(
+        icon = Icons.Default.LocationOn,
+        title = stringResource(R.string.empty_state_no_locations_title),
+        message = stringResource(R.string.empty_state_no_locations_desc),
+        actionText = if (onAddLocation != null) stringResource(R.string.empty_state_no_locations_action) else null,
+        onAction = onAddLocation,
+        modifier = modifier
+    )
+}
+
+/**
+ * Empty state pré-configurado para jogadores
+ */
+@Composable
+fun EmptyPlayersState(
+    modifier: Modifier = Modifier,
+    onInvite: (() -> Unit)? = null
+) {
+    EmptyState(
+        icon = Icons.Default.People,
+        title = stringResource(R.string.empty_state_no_players_title),
+        message = stringResource(R.string.empty_state_no_players_desc),
+        actionText = if (onInvite != null) stringResource(R.string.empty_state_invite_players) else null,
+        onAction = onInvite,
+        modifier = modifier
+    )
+}
+
+/**
  * Variante compacta para empty state em cards/seções
  */
 @Composable

@@ -71,6 +71,9 @@ kotlin {
                 implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
                 implementation("com.google.firebase:firebase-storage-ktx:20.2.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+
+                // AndroidX Security Crypto (para SecureStorage)
+                implementation("androidx.security:security-crypto:1.1.0-alpha06")
             }
         }
 
@@ -95,7 +98,7 @@ kotlin {
     }
 }
 
-android {
+extensions.configure<com.android.build.api.dsl.LibraryExtension>("android") {
     namespace = "com.futebadosparcas.shared"
     compileSdk = 36
 

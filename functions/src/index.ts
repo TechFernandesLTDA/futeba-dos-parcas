@@ -860,22 +860,43 @@ export function toGameConfirmation(raw: admin.firestore.DocumentData): GameConfi
   };
 }
 
+/** Limite máximo de placar por time (P0 #30: Score bounds validation) */
+const MAX_SCORE = 100;
+
+/** Normaliza placar para o range válido [0, MAX_SCORE] */
+function clampScore(score: number): number {
+  return Math.max(0, Math.min(MAX_SCORE, Math.round(score)));
+}
+
 export function toTeam(id: string, raw: admin.firestore.DocumentData): Team {
+  const rawScore = Number(raw.score ?? 0);
   return {
     id: raw.id ?? id,
     playerIds: (raw.player_ids ?? raw.playerIds ?? []) as string[],
-    score: Number(raw.score ?? 0),
+    score: clampScore(rawScore),
   };
 }
 
 export function toLiveScore(raw?: admin.firestore.DocumentData | null): LiveGameScore | null {
   if (!raw) return null;
+  const rawTeam1Score = Number(raw.team1_score ?? raw.team1Score ?? 0);
+  const rawTeam2Score = Number(raw.team2_score ?? raw.team2Score ?? 0);
+
+  // P0 #30: Logar placares fora dos limites para investigação
+  if (rawTeam1Score > MAX_SCORE || rawTeam2Score > MAX_SCORE) {
+    console.warn(
+      `[SCORE_BOUNDS] Placar fora dos limites detectado: ` +
+      `T1=${rawTeam1Score}, T2=${rawTeam2Score} (max=${MAX_SCORE}). ` +
+      `Valores serão normalizados.`
+    );
+  }
+
   return {
     gameId: raw.game_id ?? raw.gameId ?? "",
     team1Id: raw.team1_id ?? raw.team1Id ?? "",
     team2Id: raw.team2_id ?? raw.team2Id ?? "",
-    team1Score: Number(raw.team1_score ?? raw.team1Score ?? 0),
-    team2Score: Number(raw.team2_score ?? raw.team2Score ?? 0),
+    team1Score: clampScore(rawTeam1Score),
+    team2Score: clampScore(rawTeam2Score),
   };
 }
 
@@ -1345,3 +1366,21 @@ export * from "./voting/mvp-voting";
 // - cleanupNotificationQueue: Limpeza de fila processada
 // Referência: specs/MASTER_OPTIMIZATION_CHECKLIST.md - P2 #29
 export * from "./notifications/batch-sender";
+
+// ==========================================
+// PHASE 3: MONITORING, ALERTING & CACHE
+// ==========================================
+// - systemHealthCheck: Health check a cada 15 min com auto-recovery
+// - cleanupDeadLetterQueue: Limpeza semanal de DLQ resolvidas
+// - cleanupExpiredRateLimits: Limpeza horária de rate limit buckets
+// - cleanupOldAlerts: Limpeza semanal de alertas antigos
+// Referência: specs/BACKEND_OPTIMIZATION_SPEC.md - PHASE 3
+export * from "./monitoring/alerting";
+
+// ==========================================
+// P2 #28: LEADERBOARD CACHE SERVER-SIDE
+// ==========================================
+// Cache de leaderboard no Firestore com TTL de 5 min
+// - getLeaderboardCached: Callable com cache hit/miss
+// Referência: specs/INFRASTRUCTURE_RECOMMENDATIONS.md - P2 #28
+export * from "./cache/leaderboard-cache";

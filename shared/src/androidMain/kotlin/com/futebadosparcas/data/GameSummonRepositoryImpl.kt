@@ -5,7 +5,7 @@ import com.futebadosparcas.domain.model.GameSummon
 import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.domain.model.SummonStatus
 import com.futebadosparcas.domain.model.UpcomingGame
-import com.futebadosparcas.domain.model.generateGameSummonId
+import com.futebadosparcas.domain.model.gameSummonId
 import com.futebadosparcas.domain.repository.GameSummonRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import kotlinx.coroutines.channels.awaitClose
@@ -72,7 +72,7 @@ class GameSummonRepositoryImpl(
 
             members.forEach { member ->
                 // Criar convocação
-                val summonId = generateGameSummonId(gameId, member.userId)
+                val summonId = gameSummonId(gameId, member.userId)
                 val summonRef = summonsCollection.document(summonId)
 
                 val summonData = mapOf(
@@ -209,7 +209,7 @@ class GameSummonRepositoryImpl(
             val userId = firebaseDataSource.getCurrentAuthUserId()
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            val summonId = generateGameSummonId(gameId, userId)
+            val summonId = gameSummonId(gameId, userId)
             val summonDoc = summonsCollection.document(summonId).get().await()
 
             if (!summonDoc.exists()) {
@@ -297,7 +297,7 @@ class GameSummonRepositoryImpl(
             val userId = firebaseDataSource.getCurrentAuthUserId()
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            val summonId = generateGameSummonId(gameId, userId)
+            val summonId = gameSummonId(gameId, userId)
             val summonDoc = summonsCollection.document(summonId).get().await()
 
             if (!summonDoc.exists()) {
@@ -387,7 +387,7 @@ class GameSummonRepositoryImpl(
             val userId = firebaseDataSource.getCurrentAuthUserId()
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            val summonId = generateGameSummonId(gameId, userId)
+            val summonId = gameSummonId(gameId, userId)
 
             // Buscar convocação para saber a posição
             val summonDoc = summonsCollection.document(summonId).get().await()
@@ -436,7 +436,7 @@ class GameSummonRepositoryImpl(
             val userId = firebaseDataSource.getCurrentAuthUserId()
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            val summonId = generateGameSummonId(gameId, userId)
+            val summonId = gameSummonId(gameId, userId)
             val doc = summonsCollection.document(summonId).get().await()
 
             Result.success(doc.exists())
@@ -450,7 +450,7 @@ class GameSummonRepositoryImpl(
             val userId = firebaseDataSource.getCurrentAuthUserId()
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            val summonId = generateGameSummonId(gameId, userId)
+            val summonId = gameSummonId(gameId, userId)
             val doc = summonsCollection.document(summonId).get().await()
 
             if (doc.exists()) {

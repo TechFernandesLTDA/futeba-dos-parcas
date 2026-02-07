@@ -16,6 +16,23 @@ class StatisticsRepositoryImpl @Inject constructor(
 ) : IStatisticsRepository, StatisticsRepository {
     private val statisticsCollection = firestore.collection("statistics")
 
+    // Cache in-memory para top queries (TTL de 2 minutos)
+    private data class CachedResult<T>(val data: T, val timestamp: Long)
+    private var topScorersCache: CachedResult<List<UserStatistics>>? = null
+    private var topGoalkeepersCache: CachedResult<List<UserStatistics>>? = null
+    private var bestPlayersCache: CachedResult<List<UserStatistics>>? = null
+
+    companion object {
+        private const val CACHE_TTL_MS = 120_000L // 2 minutos
+    }
+
+    private fun <T> getCached(cache: CachedResult<T>?): T? {
+        if (cache != null && (System.currentTimeMillis() - cache.timestamp) < CACHE_TTL_MS) {
+            return cache.data
+        }
+        return null
+    }
+
     override suspend fun getMyStatistics(): Result<UserStatistics> {
         return try {
             val uid = auth.currentUser?.uid
@@ -99,6 +116,8 @@ class StatisticsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getTopScorers(limit: Int): Result<List<UserStatistics>> {
+        getCached(topScorersCache)?.let { return Result.success(it) }
+
         return try {
             val snapshot = statisticsCollection
                 .orderBy("totalGoals", com.google.firebase.firestore.Query.Direction.DESCENDING)
@@ -107,6 +126,7 @@ class StatisticsRepositoryImpl @Inject constructor(
                 .await()
 
             val stats = snapshot.documents.mapNotNull { it.toObject(UserStatistics::class.java) }
+            topScorersCache = CachedResult(stats, System.currentTimeMillis())
             Result.success(stats)
         } catch (e: Exception) {
             AppLogger.e("StatisticsRepo", "Erro ao buscar top scorers", e)
@@ -115,6 +135,8 @@ class StatisticsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getTopGoalkeepers(limit: Int): Result<List<UserStatistics>> {
+        getCached(topGoalkeepersCache)?.let { return Result.success(it) }
+
         return try {
             val snapshot = statisticsCollection
                 .orderBy("totalSaves", com.google.firebase.firestore.Query.Direction.DESCENDING)
@@ -123,6 +145,7 @@ class StatisticsRepositoryImpl @Inject constructor(
                 .await()
 
             val stats = snapshot.documents.mapNotNull { it.toObject(UserStatistics::class.java) }
+            topGoalkeepersCache = CachedResult(stats, System.currentTimeMillis())
             Result.success(stats)
         } catch (e: Exception) {
             AppLogger.e("StatisticsRepo", "Erro ao buscar top goalkeepers", e)
@@ -131,6 +154,8 @@ class StatisticsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getBestPlayers(limit: Int): Result<List<UserStatistics>> {
+        getCached(bestPlayersCache)?.let { return Result.success(it) }
+
         return try {
             val snapshot = statisticsCollection
                 .orderBy("bestPlayerCount", com.google.firebase.firestore.Query.Direction.DESCENDING)
@@ -139,6 +164,7 @@ class StatisticsRepositoryImpl @Inject constructor(
                 .await()
 
             val stats = snapshot.documents.mapNotNull { it.toObject(UserStatistics::class.java) }
+            bestPlayersCache = CachedResult(stats, System.currentTimeMillis())
             Result.success(stats)
         } catch (e: Exception) {
             AppLogger.e("StatisticsRepo", "Erro ao buscar best players", e)
@@ -148,10 +174,11 @@ class StatisticsRepositoryImpl @Inject constructor(
 
     override suspend fun getGoalsHistory(userId: String): Result<Map<String, Int>> {
         return try {
-            // Busca dados reais do Firestore
+            // P1 #12: Busca dados reais do Firestore (limit 200 - historico de 6 meses)
             val gameStatsCollection = firestore.collection("games")
             val playerStatsSnapshots = gameStatsCollection
-                .whereEqualTo("players", userId)
+                .whereArrayContains("players", userId)
+                .limit(200)
                 .get()
                 .await()
 

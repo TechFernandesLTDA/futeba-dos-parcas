@@ -70,7 +70,7 @@ object MatchEventColors {
     fun goalColor() = MaterialTheme.colorScheme.onSurface
 
     @Composable
-    fun yellowCardColor() = Color(0xFFFDD835)  // Material Yellow A700 - bom contraste
+    fun yellowCardColor() = Color(0xFFFDD835)  // Material Yellow A700 - cor fixa de cartão amarelo (gamificação)
 
     @Composable
     fun redCardColor() = MaterialTheme.colorScheme.error
@@ -384,7 +384,7 @@ fun GameDetailContent(
                         modifier = Modifier.padding(16.dp)
                     )
                 }
-                items(state.teams) { team ->
+                items(state.teams, key = { it.id }) { team ->
                     TeamCard(
                         team = team,
                         players = state.confirmations.filter { it.userId in team.playerIds },
@@ -410,7 +410,7 @@ fun GameDetailContent(
                 }
             }
 
-            items(state.confirmations) { confirmation ->
+            items(state.confirmations, key = { it.userId }) { confirmation ->
                 ConfirmationCard(
                     confirmation = confirmation,
                     isOwner = state.canManageGame,
@@ -614,12 +614,9 @@ fun TeamCard(
                 Text(stringResource(R.string.goals_count, team.score), style = MaterialTheme.typography.titleMedium)
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            // 🔧 OTIMIZADO: Use LazyColumn instead of forEach for proper Compose list rendering
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(
-                    items = players,
-                    key = { it.userId }  // ✅ Each player has unique key for efficient recomposition
-                ) { player ->
+            // Usa Column + forEach para evitar LazyColumn aninhado dentro de LazyColumn
+            Column(modifier = Modifier.fillMaxWidth()) {
+                players.forEach { player ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

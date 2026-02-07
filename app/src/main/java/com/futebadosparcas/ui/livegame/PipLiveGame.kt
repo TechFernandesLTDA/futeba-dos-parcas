@@ -34,8 +34,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.R
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -286,7 +287,7 @@ fun LiveIndicator(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(4.dp))
-            .background(Color(0xFFD32F2F))
+            .background(MaterialTheme.colorScheme.error)
             .padding(horizontal = 6.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -294,12 +295,12 @@ fun LiveIndicator(
             modifier = Modifier
                 .size(6.dp)
                 .clip(CircleShape)
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.onError)
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
-            text = "AO VIVO",
-            color = Color.White,
+            text = stringResource(R.string.pip_live_indicator),
+            color = MaterialTheme.colorScheme.onError,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold
         )

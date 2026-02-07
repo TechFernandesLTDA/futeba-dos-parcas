@@ -1,0 +1,83 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:EditGameUseCase.kt$EditGameUseCase$(params.date != null &amp;&amp; params.date != currentGame.date) || (params.time != null &amp;&amp; params.time != currentGame.time) || (params.endTime != null &amp;&amp; params.endTime != currentGame.endTime) || (params.locationId != null &amp;&amp; params.locationId != currentGame.locationId)</ID>
+    <ID>ComplexCondition:MainActivityCompose.kt$MainActivityCompose$currentUserId != null &amp;&amp; (profileData.name.isNotBlank() || profileData.nickname != null || profileData.preferredPosition != null || profileData.preferredFieldTypes.isNotEmpty())</ID>
+    <ID>CyclomaticComplexMethod:CreateGameViewModel.kt$CreateGameViewModel$fun saveGame( gameId: String?, ownerName: String, price: Double, maxPlayers: Int, recurrence: String )</ID>
+    <ID>CyclomaticComplexMethod:GameDetailViewModel.kt$GameDetailViewModel$private fun scheduleNextGame(sourceGame: Game)</ID>
+    <ID>CyclomaticComplexMethod:GameQueryRepositoryImpl.kt$GameQueryRepositoryImpl$override fun getLiveAndUpcomingGamesFlow(): Flow&lt;Result&lt;List&lt;GameWithConfirmations&gt;&gt;&gt;</ID>
+    <ID>CyclomaticComplexMethod:LiveGameRepository.kt$LiveGameRepository$suspend fun deleteGameEvent(gameId: String, eventId: String): Result&lt;Unit&gt;</ID>
+    <ID>EnumNaming:Schedule.kt$RecurrenceType$biweekly</ID>
+    <ID>EnumNaming:Schedule.kt$RecurrenceType$monthly</ID>
+    <ID>EnumNaming:Schedule.kt$RecurrenceType$weekly</ID>
+    <ID>ExplicitGarbageCollectionCall:MemoryHelper.kt$MemoryHelper$gc()</ID>
+    <ID>ForEachOnRange:TeamFormationScreen.kt$0..2</ID>
+    <ID>LargeClass:GameQueryRepositoryImpl.kt$GameQueryRepositoryImpl : KmpGameQueryRepository</ID>
+    <ID>LongMethod:CreateGameViewModel.kt$CreateGameViewModel$fun saveGame( gameId: String?, ownerName: String, price: Double, maxPlayers: Int, recurrence: String )</ID>
+    <ID>LongMethod:GameDetailViewModel.kt$GameDetailViewModel$private fun scheduleNextGame(sourceGame: Game)</ID>
+    <ID>LongMethod:GameQueryRepositoryImpl.kt$GameQueryRepositoryImpl$override fun getLiveAndUpcomingGamesFlow(): Flow&lt;Result&lt;List&lt;GameWithConfirmations&gt;&gt;&gt;</ID>
+    <ID>LongMethod:GlobalSearchViewModel.kt$GlobalSearchViewModel$private suspend fun performSearch(query: String)</ID>
+    <ID>LongMethod:HomeViewModel.kt$HomeViewModel$fun loadHomeData(forceRetry: Boolean = false)</ID>
+    <ID>LongMethod:MatchFinalizationService.kt$MatchFinalizationService$private suspend fun processPlayer( gameId: String, game: Game, confirmation: GameConfirmation, teams: List&lt;Team&gt;, teamResults: Map&lt;String, GameResult&gt;, liveScore: LiveGameScore?, activeSeason: Season?, settings: com.futebadosparcas.domain.model.GamificationSettings, batch: com.google.firebase.firestore.WriteBatch ): PlayerProcessingResult</ID>
+    <ID>LongMethod:ShareablePlayerCard.kt$PlayerCardShareHelper$private fun createPlayerCardBitmap( context: Context, user: User, stats: UserStatistics?, generatedBy: String, isDarkMode: Boolean, photoBitmap: Bitmap? ): Bitmap</ID>
+    <ID>LongParameterList:LocationDetailViewModel.kt$LocationDetailViewModel$( name: String, address: String, phone: String?, openingTime: String, closingTime: String, minDuration: Int, region: String, neighborhood: String, description: String, amenities: List&lt;String&gt;, isActive: Boolean, instagram: String, cep: String, street: String, number: String, complement: String, city: String, state: String, country: String, selectedOwnerId: String? = null )</ID>
+    <ID>LongParameterList:LocationEditTracker.kt$LocationEditTracker$( oldName: String, oldAddress: String, oldPhone: String?, oldOpeningTime: String, oldClosingTime: String, oldMinDuration: Int, oldRegion: String, oldNeighborhood: String, oldDescription: String, oldAmenities: List&lt;String&gt;, oldIsActive: Boolean, oldInstagram: String?, oldCep: String, oldStreet: String, oldNumber: String, oldComplement: String, oldCity: String, oldState: String, oldCountry: String, oldOwnerId: String, newName: String, newAddress: String, newPhone: String?, newOpeningTime: String, newClosingTime: String, newMinDuration: Int, newRegion: String, newNeighborhood: String, newDescription: String, newAmenities: List&lt;String&gt;, newIsActive: Boolean, newInstagram: String, newCep: String, newStreet: String, newNumber: String, newComplement: String, newCity: String, newState: String, newCountry: String, newOwnerId: String? )</ID>
+    <ID>LongParameterList:ProfileViewModel.kt$ProfileViewModel$( name: String, nickname: String?, preferredFieldTypes: List&lt;FieldType&gt;, photoUri: Uri?, strikerRating: Double, midRating: Double, defenderRating: Double, gkRating: Double, birthDate: java.util.Date?, gender: String?, heightCm: Int?, weightKg: Int?, dominantFoot: String?, primaryPosition: String?, secondaryPosition: String?, playStyle: String?, experienceYears: Int? )</ID>
+    <ID>LongParameterList:ProfileViewModel.kt$ProfileViewModel$( private val userRepository: UserRepository, private val authRepository: AuthRepository, private val gameRepository: GameRepository, private val liveGameRepository: LiveGameRepository, private val gamificationRepository: GamificationRepository, private val statisticsRepository: StatisticsRepository, private val locationRepository: LocationRepository, private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository, private val preferencesManager: com.futebadosparcas.util.PreferencesManager, private val profilePhotoDataSource: ProfilePhotoDataSource, private val firestore: FirebaseFirestore, private val auth: FirebaseAuth )</ID>
+    <ID>LongParameterList:ShareMVPCardHelper.kt$ShareMVPCardHelper$( canvas: Canvas, paint: Paint, result: MVPVoteResult, photo: Bitmap?, centerX: Float, yPos: Float, photoRadius: Float, positionColor: Int, textPrimary: Int, textSecondary: Int, positionLabel: String, isWinner: Boolean )</ID>
+    <ID>LoopWithTooManyJumpStatements:MatchManagementDataSource.kt$MatchManagementDataSource$for</ID>
+    <ID>MaxLineLength:LevelJourneyScreen.kt$XpSourceItem(stringResource(R.string.level_journey_xp_hattrick_title), stringResource(R.string.level_journey_xp_hattrick_value), stringResource(R.string.level_journey_xp_hattrick_desc))</ID>
+    <ID>MaxLineLength:LevelJourneyScreen.kt$XpSourceItem(stringResource(R.string.level_journey_xp_presence_title), stringResource(R.string.level_journey_xp_presence_value), stringResource(R.string.level_journey_xp_presence_desc))</ID>
+    <ID>MaxLineLength:MainActivityCompose.kt$MainActivityCompose$if</ID>
+    <ID>MaxLineLength:PlayersScreen.kt$contentDescription = if (isComparisonMode) stringResource(R.string.players_content_description_cancel_compare) else stringResource(R.string.players_content_description_compare)</ID>
+    <ID>NestedBlockDepth:StatisticsRepositoryImpl.kt$StatisticsRepositoryImpl$override suspend fun getGoalsHistory(userId: String): Result&lt;Map&lt;String, Int&gt;&gt;</ID>
+    <ID>NewLineAtEndOfFile:FakeStatisticsRepository.kt$com.futebadosparcas.data.repository.FakeStatisticsRepository.kt</ID>
+    <ID>NewLineAtEndOfFile:GameRepository.kt$com.futebadosparcas.data.repository.GameRepository.kt</ID>
+    <ID>NewLineAtEndOfFile:PreferencesViewModel.kt$com.futebadosparcas.ui.preferences.PreferencesViewModel.kt</ID>
+    <ID>NewLineAtEndOfFile:StatisticsRepositoryImpl.kt$com.futebadosparcas.data.repository.StatisticsRepositoryImpl.kt</ID>
+    <ID>NewLineAtEndOfFile:StatisticsScreenState.kt$com.futebadosparcas.ui.statistics.StatisticsScreenState.kt</ID>
+    <ID>NewLineAtEndOfFile:StatisticsViewModel.kt$com.futebadosparcas.ui.statistics.StatisticsViewModel.kt</ID>
+    <ID>PrintStackTrace:ShareCardHelper.kt$ShareCardHelper$e</ID>
+    <ID>PrintStackTrace:TacticalBoardView.kt$TacticalBoardView$e</ID>
+    <ID>ReturnCount:ConfirmPresenceUseCase.kt$ConfirmPresenceUseCase$suspend fun execute( gameId: String, position: String = PlayerPosition.FIELD.name, isCasualPlayer: Boolean = false ): Result&lt;GameConfirmation&gt;</ID>
+    <ID>ReturnCount:CreateGameViewModel.kt$CreateGameViewModel$fun saveGame( gameId: String?, ownerName: String, price: Double, maxPlayers: Int, recurrence: String )</ID>
+    <ID>ReturnCount:GameConfirmationRepositoryImpl.kt$GameConfirmationRepositoryImpl$override suspend fun confirmPresence( gameId: String, position: String, isCasual: Boolean ): Result&lt;GameConfirmation&gt;</ID>
+    <ID>SafeCast:ValidationHelper.kt$ValidationHelper$if (result is ValidationResult.Invalid) result else null</ID>
+    <ID>ThrowsCount:MatchManagementDataSource.kt$MatchManagementDataSource$suspend fun confirmPlayer( gameId: String, userId: String, userName: String, userPhoto: String?, position: String, isCasual: Boolean ): GameConfirmation</ID>
+    <ID>TooManyFunctions:CreateGameViewModel.kt$CreateGameViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:FirebaseDataSource.kt$FirebaseDataSource</ID>
+    <ID>TooManyFunctions:GameDetailViewModel.kt$GameDetailViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:GameRepository.kt$GameRepository</ID>
+    <ID>TooManyFunctions:LocationSyncDao.kt$LocationSyncDao</ID>
+    <ID>TooManyFunctions:ModelMappers.kt$com.futebadosparcas.util.ModelMappers.kt</ID>
+    <ID>TooManyFunctions:RepositoryModule.kt$RepositoryModule</ID>
+    <ID>TooManyFunctions:ValidationHelper.kt$ValidationHelper</ID>
+    <ID>UseCheckOrError:FieldPhotoDataSource.kt$FieldPhotoDataSource$throw IllegalStateException("Não foi possível abrir a imagem")</ID>
+    <ID>UseCheckOrError:FieldPhotoDataSource.kt$FieldPhotoDataSource$throw IllegalStateException("Não foi possível decodificar a imagem")</ID>
+    <ID>UseCheckOrError:FirebaseDataSourceImpl.kt$FirebaseDataSourceImpl$throw IllegalStateException("Erro ao converter grupo")</ID>
+    <ID>UseCheckOrError:FirebaseDataSourceImpl.kt$FirebaseDataSourceImpl$throw IllegalStateException("Erro ao converter jogo: $gameId")</ID>
+    <ID>UseCheckOrError:FirebaseDataSourceImpl.kt$FirebaseDataSourceImpl$throw IllegalStateException("Erro ao converter usuário")</ID>
+    <ID>UseCheckOrError:GetDivisionPlayersUseCase.kt$GetDivisionPlayersUseCase$throw IllegalStateException("Nenhuma temporada ativa encontrada")</ID>
+    <ID>UseCheckOrError:GetSeasonRankingUseCase.kt$GetSeasonRankingUseCase$throw IllegalStateException("Nenhuma temporada ativa encontrada")</ID>
+    <ID>UseCheckOrError:GetUserProfileUseCase.kt$GetUserProfileUseCase$throw IllegalStateException("Usuário não encontrado: $userId")</ID>
+    <ID>UseCheckOrError:GetUserSeasonParticipationUseCase.kt$GetUserSeasonParticipationUseCase$throw IllegalStateException("Nenhuma temporada ativa encontrada")</ID>
+    <ID>UseCheckOrError:GetUserSeasonParticipationUseCase.kt$GetUserSeasonParticipationUseCase$throw IllegalStateException("Usuário não autenticado")</ID>
+    <ID>UseCheckOrError:GroupPhotoDataSource.kt$GroupPhotoDataSource$throw IllegalStateException("Não foi possível abrir a imagem")</ID>
+    <ID>UseCheckOrError:GroupPhotoDataSource.kt$GroupPhotoDataSource$throw IllegalStateException("Não foi possível decodificar a imagem")</ID>
+    <ID>UseCheckOrError:RetryPolicy.kt$throw lastException ?: IllegalStateException("Retry failed without exception")</ID>
+    <ID>UseCheckOrError:SmartImageCache.kt$ImageCacheManager$throw IllegalStateException( "ImageCacheManager not initialized. Call initialize() first." )</ID>
+    <ID>UseCheckOrError:UpdateProfileUseCase.kt$UpdateProfileUseCase$throw IllegalStateException("Erro ao recuperar usuário atualizado")</ID>
+    <ID>UseCheckOrError:UpdateProfileUseCase.kt$UpdateProfileUseCase$throw IllegalStateException("Usuário não encontrado: ${params.userId}")</ID>
+    <ID>VariableNaming:AnimationHelper.kt$AnimationHelper$/** * Default animation duration */ val DEFAULT_DURATION = 300L</ID>
+    <ID>VariableNaming:AnimationHelper.kt$AnimationHelper$val LONG_DURATION = 500L</ID>
+    <ID>VariableNaming:AnimationHelper.kt$AnimationHelper$val SHORT_DURATION = 150L</ID>
+    <ID>VariableNaming:GroupDetailViewModel.kt$GroupDetailViewModel$private val CACHE_TTL_MS = 5 * 60 * 1000L</ID>
+    <ID>WildcardImport:GetNearbyLocationsUseCase.kt$import kotlin.math.*</ID>
+    <ID>WildcardImport:HomeScreen.kt$import com.futebadosparcas.ui.home.components.*</ID>
+    <ID>WildcardImport:LocationSelectorViewModel.kt$import kotlin.math.*</ID>
+    <ID>WildcardImport:LocationsMapScreen.kt$import com.google.maps.android.compose.*</ID>
+    <ID>WildcardImport:TacticalBoardView.kt$import android.graphics.*</ID>
+    <ID>WildcardImport:WorkManagerHelper.kt$import androidx.work.*</ID>
+  </CurrentIssues>
+</SmellBaseline>

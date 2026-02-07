@@ -61,6 +61,9 @@ export const VALIDATION_CONSTANTS = {
   MAX_SAVES_PER_GAME: 30,
   MAX_XP_PER_GAME: 500,
 
+  // Limites de placar (P0 #30 - Score bounds validation)
+  MAX_SCORE: 100,
+
   // Limites de jogo
   MIN_PLAYERS_FOR_XP: 6,
   MIN_TEAMS: 2,
@@ -263,6 +266,47 @@ export function validateNonNegative(
   }
 
   return null;
+}
+
+// ============================================
+// VALIDAÇÕES DE PLACAR (P0 #30)
+// ============================================
+
+/**
+ * Valida se um placar está dentro dos limites aceitáveis (0-100).
+ * P0 #30: Score bounds validation para prevenir dados inconsistentes.
+ */
+export function validateScore(
+  score: number | undefined | null,
+  field = "score"
+): ValidationResult {
+  if (score === undefined || score === null) return null;
+
+  if (score < 0) {
+    return {
+      field,
+      message: "Placar não pode ser negativo",
+      code: ValidationErrorCode.NEGATIVE_VALUE,
+    };
+  }
+
+  if (score > VALIDATION_CONSTANTS.MAX_SCORE) {
+    return {
+      field,
+      message: `Placar máximo é ${VALIDATION_CONSTANTS.MAX_SCORE}`,
+      code: ValidationErrorCode.ANTI_CHEAT_VIOLATION,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Normaliza placar para o range válido (0-100).
+ * Garante que placares inválidos sejam corrigidos silenciosamente.
+ */
+export function clampScore(score: number): number {
+  return Math.max(0, Math.min(VALIDATION_CONSTANTS.MAX_SCORE, Math.round(score)));
 }
 
 // ============================================
