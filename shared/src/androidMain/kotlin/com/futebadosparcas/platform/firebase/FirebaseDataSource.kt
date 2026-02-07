@@ -175,8 +175,11 @@ actual class FirebaseDataSource(
 
     actual suspend fun getPublicGames(limit: Int): Result<List<Game>> {
         return try {
+            val now = com.google.firebase.Timestamp.now()
             val snapshot = firestore.collection(COLLECTION_GAMES)
-                .whereEqualTo("visibility", "PUBLIC")
+                .whereIn("visibility", listOf("PUBLIC_OPEN", "PUBLIC_CLOSED"))
+                .whereGreaterThanOrEqualTo("dateTime", now)
+                .orderBy("dateTime", Query.Direction.ASCENDING)
                 .limit(limit.toLong())
                 .get()
                 .await()

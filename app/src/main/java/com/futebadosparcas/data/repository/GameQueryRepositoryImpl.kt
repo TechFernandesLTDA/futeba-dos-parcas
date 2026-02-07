@@ -1321,6 +1321,10 @@ class GameQueryRepositoryImpl @Inject constructor(
 
     override suspend fun getPublicGames(limit: Int): Result<List<Game>> {
         return try {
+            val now = System.currentTimeMillis()
+            // Buscar mais que o limit pois filtramos jogos passados client-side
+            val fetchLimit = (limit * 3).coerceAtLeast(15).toLong()
+
             val snapshot = gamesCollection
                 .whereIn("visibility", listOf(
                     com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED.name,
@@ -1331,15 +1335,22 @@ class GameQueryRepositoryImpl @Inject constructor(
                     GameStatus.CONFIRMED.name
                 ))
                 .orderBy("dateTime", Query.Direction.ASCENDING)
-                .limit(limit.toLong())
+                .limit(fetchLimit)
                 .get()
                 .await()
 
             val androidGames = snapshot.documents.mapNotNull { doc ->
                 doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
-            }.filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
+            }
+                .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
+                .filter { game ->
+                    // Mostrar apenas jogos futuros (dateTime >= agora)
+                    val gameDateTime = game.dateTime?.time ?: 0L
+                    gameDateTime >= now
+                }
+                .take(limit)
 
-            AppLogger.d(TAG) { "Encontrados ${androidGames.size} jogos públicos" }
+            AppLogger.d(TAG) { "Encontrados ${androidGames.size} jogos públicos futuros" }
             Result.success(androidGames.toKmpGames())
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos públicos", e)
@@ -1348,6 +1359,9 @@ class GameQueryRepositoryImpl @Inject constructor(
     }
 
     override fun getPublicGamesFlow(limit: Int): Flow<List<Game>> = callbackFlow {
+        // Buscar mais que o limit pois filtramos jogos passados client-side
+        val fetchLimit = (limit * 3).coerceAtLeast(15).toLong()
+
         val listener = gamesCollection
             .whereIn("visibility", listOf(
                 com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED.name,
@@ -1358,16 +1372,24 @@ class GameQueryRepositoryImpl @Inject constructor(
                 GameStatus.CONFIRMED.name
             ))
             .orderBy("dateTime", Query.Direction.ASCENDING)
-            .limit(limit.toLong())
+            .limit(fetchLimit)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     AppLogger.e(TAG, "Erro no listener de jogos públicos", error)
                     return@addSnapshotListener
                 }
 
+                val now = System.currentTimeMillis()
                 val androidGames = (snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
-                } ?: emptyList()).filterNotSoftDeleted() // P2 #40
+                } ?: emptyList())
+                    .filterNotSoftDeleted() // P2 #40
+                    .filter { game ->
+                        // Mostrar apenas jogos futuros (dateTime >= agora)
+                        val gameDateTime = game.dateTime?.time ?: 0L
+                        gameDateTime >= now
+                    }
+                    .take(limit)
 
                 trySend(androidGames.toKmpGames())
             }
