@@ -399,7 +399,7 @@ fun VoiceRecordButton(
             .clip(CircleShape)
             .background(
                 when (recordingState) {
-                    RecordingState.RECORDING -> Color.Red
+                    RecordingState.RECORDING -> MaterialTheme.colorScheme.error
                     else -> MaterialTheme.colorScheme.primary
                 }
             )
@@ -458,13 +458,13 @@ fun VoiceRecordButton(
                     Icon(
                         imageVector = Icons.Default.Mic,
                         contentDescription = stringResource(R.string.cd_recording),
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onError,
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
                         text = formatDuration(recordingDurationMs),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onError
                     )
                 }
             }
@@ -472,7 +472,7 @@ fun VoiceRecordButton(
                 Icon(
                     imageVector = Icons.Default.Mic,
                     contentDescription = stringResource(R.string.cd_record_voice),
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -580,7 +580,7 @@ fun VoiceMessagePlayer(
                         Icons.Default.PlayArrow
                     },
                     contentDescription = if (playbackState == RecordingState.PLAYING) stringResource(R.string.cd_pause) else stringResource(R.string.cd_play),
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
 
@@ -661,7 +661,7 @@ fun VoiceWaveform(
 fun RecordingWaveform(
     isRecording: Boolean,
     modifier: Modifier = Modifier,
-    color: Color = Color.Red
+    color: Color = MaterialTheme.colorScheme.error
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "waveform")
 
@@ -777,7 +777,7 @@ fun VoiceRecorderCard(
                         Icon(
                             imageVector = Icons.Default.Mic,
                             contentDescription = stringResource(R.string.cd_record),
-                            tint = Color.White,
+                            tint = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(32.dp)
                         )
                     }
@@ -789,7 +789,7 @@ fun VoiceRecorderCard(
                         text = formatDuration(durationMs),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Red
+                        color = MaterialTheme.colorScheme.error
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -841,12 +841,12 @@ fun VoiceRecorderCard(
                             modifier = Modifier
                                 .size(64.dp)
                                 .clip(CircleShape)
-                                .background(Color.Red)
+                                .background(MaterialTheme.colorScheme.error)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(24.dp)
-                                    .background(Color.White, RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.onError, RoundedCornerShape(4.dp))
                             )
                         }
                     }
@@ -903,7 +903,7 @@ fun VoiceRecorderCard(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.Send,
                                     contentDescription = stringResource(R.string.cd_send),
-                                    tint = Color.White
+                                    tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
                         }

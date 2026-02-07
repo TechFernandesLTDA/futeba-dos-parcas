@@ -42,7 +42,7 @@ fun ErrorState(
     message: String,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
-    retryButtonText: String = "Tentar Novamente",
+    retryButtonText: String = stringResource(R.string.retry),
     icon: ImageVector = Icons.Default.Error
 ) {
     Column(
@@ -104,7 +104,7 @@ fun ErrorStateCompact(
     message: String,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
-    retryButtonText: String = "Tentar Novamente"
+    retryButtonText: String = stringResource(R.string.retry)
 ) {
     Column(
         modifier = modifier
@@ -155,7 +155,7 @@ fun NoConnectionErrorState(
     modifier: Modifier = Modifier
 ) {
     ErrorState(
-        message = "Verifique sua conexão com a internet e tente novamente",
+        message = stringResource(R.string.empty_state_no_connection_desc),
         onRetry = onRetry,
         modifier = modifier,
         icon = Icons.Default.WifiOff
@@ -171,7 +171,7 @@ fun TimeoutErrorState(
     modifier: Modifier = Modifier
 ) {
     ErrorState(
-        message = "A operação demorou muito tempo. Por favor, tente novamente.",
+        message = stringResource(R.string.error_timeout),
         onRetry = onRetry,
         modifier = modifier,
         icon = Icons.Default.HourglassEmpty
@@ -184,7 +184,7 @@ fun TimeoutErrorState(
 @Composable
 fun PermissionDeniedErrorState(
     modifier: Modifier = Modifier,
-    message: String = "Você não tem permissão para acessar este conteúdo",
+    message: String = stringResource(R.string.error_permission),
     onRetry: (() -> Unit)? = null
 ) {
     Column(

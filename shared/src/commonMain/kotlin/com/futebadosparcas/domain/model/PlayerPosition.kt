@@ -6,12 +6,11 @@ import kotlinx.serialization.Serializable
 /**
  * Posicao do jogador em campo.
  */
-@Serializable
+// NOTA: PlayerPosition nao usa @Serializable para evitar bug do
+// compilador Kotlin 2.2.x com enums + companion object.
+// Serializado como String nos modelos que o referenciam.
 enum class PlayerPosition(val displayName: String) {
-    @SerialName("LINE")
     LINE("Linha"),
-
-    @SerialName("GOALKEEPER")
     GOALKEEPER("Goleiro");
 
     companion object {

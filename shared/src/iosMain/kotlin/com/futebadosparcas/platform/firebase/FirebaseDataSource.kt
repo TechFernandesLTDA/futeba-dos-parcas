@@ -5,8 +5,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.tasks.await
 import platform.Foundation.*
 import platform.darwin.NSObject
 
@@ -354,10 +352,6 @@ actual class FirebaseDataSource actual constructor() {
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
-
-    actual suspend fun updateFcmToken(userId: String, token: String): Result<Unit> {
-        TODO("Implementar com Firebase iOS SDK - updateData(fcm_token, token)")
     }
 
     // ========== GROUPS ==========
@@ -894,6 +888,19 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    actual suspend fun getLocationsPaginated(
+        pageSize: Int,
+        cursor: String?,
+        sortBy: LocationSortField
+    ): Result<PaginatedResult<Location>> {
+        return try {
+            val result = IosFirebaseBridge.getLocationsPaginated(pageSize, cursor, sortBy)
+            Result.success(result)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     actual suspend fun deleteLocation(locationId: String): Result<Unit> {
         return try {
             IosFirebaseBridge.deleteLocation(locationId)
@@ -1021,6 +1028,15 @@ actual class FirebaseDataSource actual constructor() {
     actual suspend fun deduplicateLocations(): Result<Int> {
         return try {
             val count = IosFirebaseBridge.deduplicateLocations()
+            Result.success(count)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun deleteLocationWithFields(locationId: String): Result<Int> {
+        return try {
+            val count = IosFirebaseBridge.deleteLocationWithFields(locationId)
             Result.success(count)
         } catch (e: Exception) {
             Result.failure(e)
@@ -1572,6 +1588,29 @@ actual class FirebaseDataSource actual constructor() {
             Result.failure(e)
         }
     }
+
+    // ========== LOCATION AUDIT LOGS ==========
+
+    actual suspend fun logLocationAudit(log: LocationAuditLog): Result<Unit> {
+        return try {
+            IosFirebaseBridge.logLocationAudit(log)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun getLocationAuditLogs(
+        locationId: String,
+        limit: Int
+    ): Result<List<LocationAuditLog>> {
+        return try {
+            val logs = IosFirebaseBridge.getLocationAuditLogs(locationId, limit)
+            Result.success(logs)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
 /**
@@ -1810,6 +1849,26 @@ object IosFirebaseBridge {
     fun seedGinasioApollo(): Location { throw Exception("Not implemented") }
     fun migrateLocations(migrationData: List<LocationMigrationData>): Int = 0
     fun deduplicateLocations(): Int = 0
+    fun deleteLocationWithFields(locationId: String): Int = 0
+
+    fun getLocationsPaginated(
+        pageSize: Int,
+        cursor: String?,
+        sortBy: LocationSortField
+    ): PaginatedResult<Location> {
+        // TODO: Implementar com Firebase iOS SDK
+        return PaginatedResult(
+            items = emptyList(),
+            nextCursor = null,
+            hasMore = false,
+            totalCount = null
+        )
+    }
+
+    // ========== LOCATION AUDIT LOGS ==========
+
+    fun logLocationAudit(log: LocationAuditLog) {}
+    fun getLocationAuditLogs(locationId: String, limit: Int): List<LocationAuditLog> = emptyList()
 
     // ========== FIELDS ==========
 

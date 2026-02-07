@@ -504,7 +504,7 @@ private fun PairChip(pair: PlayerPair, onRemove: () -> Unit) {
             Spacer(Modifier.width(8.dp))
             IconButton(
                 onClick = onRemove,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(48.dp)
             ) {
                 Icon(
                     Icons.Default.Close,
@@ -1084,7 +1084,7 @@ private fun SavedFormationsSection(
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(formations.take(3)) { formation ->
+            items(formations.take(3), key = { it.id }) { formation ->
                 SavedFormationCard(
                     formation = formation,
                     onLoad = { onLoad(formation.id) }
@@ -1280,7 +1280,7 @@ private fun CaptainSelectionDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(vertical = 8.dp)
                 ) {
-                    items(players) { player ->
+                    items(players, key = { it.id }) { player ->
                         val isSelected = captain1Id == player.id
                         val isDisabled = captain2Id == player.id
 
@@ -1304,7 +1304,7 @@ private fun CaptainSelectionDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(vertical = 8.dp)
                 ) {
-                    items(players) { player ->
+                    items(players, key = { it.id }) { player ->
                         val isSelected = captain2Id == player.id
                         val isDisabled = captain1Id == player.id
 
@@ -1434,7 +1434,7 @@ private fun PairSelectionDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(vertical = 8.dp)
                 ) {
-                    items(availablePlayers) { player ->
+                    items(availablePlayers, key = { it.id }) { player ->
                         val isSelected = player1Id == player.id
                         val isDisabled = player2Id == player.id
 
@@ -1455,7 +1455,7 @@ private fun PairSelectionDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(vertical = 8.dp)
                 ) {
-                    items(availablePlayers) { player ->
+                    items(availablePlayers, key = { it.id }) { player ->
                         val isSelected = player2Id == player.id
                         val isDisabled = player1Id == player.id
 
@@ -1555,7 +1555,7 @@ private fun SavedFormationsListDialog(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.heightIn(max = 300.dp)
                     ) {
-                        items(formations) { formation ->
+                        items(formations, key = { it.id }) { formation ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,

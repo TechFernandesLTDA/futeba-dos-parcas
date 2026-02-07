@@ -915,7 +915,7 @@ private fun NotificationCard(
                     // Indicador de não lida / botão toggle
                     IconButton(
                         onClick = onToggleRead,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         if (!notification.read) {
                             Box(

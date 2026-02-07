@@ -3,7 +3,7 @@ package com.futebadosparcas.data
 import com.futebadosparcas.domain.repository.AddressRepository
 import com.futebadosparcas.domain.repository.AddressLookupResult
 import com.futebadosparcas.domain.repository.LatLngResult
-import com.futebadosparcas.network.ViaCepClient
+import com.futebadosparcas.data.network.ViaCepClient
 import com.futebadosparcas.platform.logging.PlatformLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -28,7 +28,7 @@ class AddressRepositoryImpl(
     private val viaCepClient = ViaCepClient()
 
     override suspend fun getAddressByCep(cep: String): Result<AddressLookupResult> {
-        return withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.Default) {
             try {
                 PlatformLogger.d(TAG, "Buscando endereco para CEP: $cep")
 
@@ -54,7 +54,7 @@ class AddressRepositoryImpl(
     }
 
     override suspend fun getGeocode(fullAddress: String): Result<LatLngResult> {
-        return withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.Default) {
             try {
                 PlatformLogger.d(TAG, "Fazendo geocoding para: $fullAddress")
 

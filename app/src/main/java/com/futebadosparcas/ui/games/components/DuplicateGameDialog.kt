@@ -76,7 +76,7 @@ fun DuplicateGameDialog(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(recentGames) { game ->
+                    items(recentGames, key = { it.id }) { game ->
                         RecentGameItem(
                             game = game,
                             onClick = {

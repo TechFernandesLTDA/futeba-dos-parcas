@@ -49,60 +49,8 @@ data class GameJoinRequest(
     fun isRejected(): Boolean = getStatusEnum() == RequestStatus.REJECTED
 }
 
-/**
- * Status da convocacao.
- */
-@Serializable
-enum class SummonStatus {
-    @SerialName("PENDING")
-    PENDING,
-
-    @SerialName("CONFIRMED")
-    CONFIRMED,
-
-    @SerialName("DECLINED")
-    DECLINED,
-
-    @SerialName("CANCELLED")
-    CANCELLED
-}
-
-/**
- * Representa uma convocacao de jogador para um jogo especifico.
- * Colecao: game_summons
- * ID do documento: {gameId}_{userId}
- */
-@Serializable
-data class GameSummon(
-    val id: String = "",
-    @SerialName("game_id") val gameId: String = "",
-    @SerialName("group_id") val groupId: String = "",
-    @SerialName("user_id") val userId: String = "",
-    @SerialName("user_name") val userName: String = "",
-    @SerialName("user_photo") val userPhoto: String? = null,
-    val status: String = SummonStatus.PENDING.name,
-    val position: String? = null,
-    @SerialName("summoned_by") val summonedBy: String = "",
-    @SerialName("summoned_by_name") val summonedByName: String = "",
-    @SerialName("summoned_at") val summonedAt: Long? = null,
-    @SerialName("responded_at") val respondedAt: Long? = null
-) {
-    fun getStatusEnum(): SummonStatus = try {
-        SummonStatus.valueOf(status)
-    } catch (e: Exception) {
-        SummonStatus.PENDING
-    }
-
-    fun isPending(): Boolean = getStatusEnum() == SummonStatus.PENDING
-    fun isConfirmed(): Boolean = getStatusEnum() == SummonStatus.CONFIRMED
-    fun isDeclined(): Boolean = getStatusEnum() == SummonStatus.DECLINED
-    fun canRespond(): Boolean = isPending()
-}
-
-/** Gera o ID do documento no formato {gameId}_{userId} */
-fun generateGameSummonId(gameId: String, userId: String): String {
-    return "${gameId}_${userId}"
-}
+// NOTA: SummonStatus e GameSummon foram movidos para GameSummon.kt
+// para evitar declaracao duplicada no mesmo pacote.
 
 /**
  * Representa um jogo na agenda do usuario (proximas 2 semanas).

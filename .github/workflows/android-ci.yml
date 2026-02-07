@@ -2,9 +2,22 @@ name: Android CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'specs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/BRANCH_STRATEGY.md'
+      - 'functions/**'
   pull_request:
-    branches: [ master ]
+    branches: [ master, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'specs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - 'functions/**'
   workflow_dispatch:
 
 # Cancela execucoes anteriores do mesmo branch/PR
@@ -17,6 +30,9 @@ env:
   JAVA_DISTRIBUTION: 'temurin'
 
 jobs:
+  # ============================================================
+  # Job de setup reutilizavel - prepara o ambiente Android
+  # ============================================================
   lint:
     name: Lint Check
     runs-on: ubuntu-latest
@@ -122,8 +138,16 @@ jobs:
           }
           GSEOF
 
+      # Detekt usa baseline (detekt-baseline.xml) para ignorar violacoes pre-existentes
       - name: Run Detekt
         run: ./gradlew detekt --no-daemon
+
+      - name: Upload Detekt SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: app/build/reports/detekt/detekt.sarif
+        continue-on-error: true
 
       - name: Upload Detekt Report
         if: always()
@@ -194,6 +218,15 @@ jobs:
             app/build/test-results/
           retention-days: 14
 
+      # Publicar resultados dos testes como check no PR
+      - name: Publish Test Results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: app/build/test-results/**/*.xml
+          check_name: "Unit Test Results"
+        continue-on-error: true
+
   build:
     name: Build Debug APK
     runs-on: ubuntu-latest
@@ -250,3 +283,10 @@ jobs:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+
+      # Tamanho do APK como comentario no PR
+      - name: Report APK Size
+        if: github.event_name == 'pull_request'
+        run: |
+          APK_SIZE=$(du -h app/build/outputs/apk/debug/app-debug.apk | cut -f1)
+          echo "### APK Size: $APK_SIZE" >> $GITHUB_STEP_SUMMARY

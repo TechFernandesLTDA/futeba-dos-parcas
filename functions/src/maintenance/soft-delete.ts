@@ -27,6 +27,7 @@ import {
   softDeleteGroupCascade,
   cleanupSoftDeleted,
 } from "../utils/soft-delete-helper.js";
+import {checkRateLimit} from "../middleware/rate-limiter.js";
 
 const db = admin.firestore();
 
@@ -50,6 +51,19 @@ export const softDeleteGame = functions.https.onCall({
 
   if (!userId) {
     throw new functions.https.HttpsError("unauthenticated", "Usuário não autenticado");
+  }
+
+  // Rate Limiting: 5 deleções/min por usuário
+  const {allowed: rlAllowed, resetAt: rlResetAt} = await checkRateLimit(userId, {
+    maxRequests: 5,
+    windowMs: 60 * 1000,
+    keyPrefix: "soft_delete_game",
+  });
+  if (!rlAllowed) {
+    throw new functions.https.HttpsError(
+      "resource-exhausted",
+      `Rate limit excedido. Tente novamente após ${new Date(rlResetAt).toISOString()}`
+    );
   }
 
   if (!gameId) {
@@ -134,6 +148,19 @@ export const softDeleteGroup = functions.https.onCall({
 
   if (!userId) {
     throw new functions.https.HttpsError("unauthenticated", "Usuário não autenticado");
+  }
+
+  // Rate Limiting: 3 deleções de grupo/min por usuário
+  const {allowed: rlAllowed, resetAt: rlResetAt} = await checkRateLimit(userId, {
+    maxRequests: 3,
+    windowMs: 60 * 1000,
+    keyPrefix: "soft_delete_group",
+  });
+  if (!rlAllowed) {
+    throw new functions.https.HttpsError(
+      "resource-exhausted",
+      `Rate limit excedido. Tente novamente após ${new Date(rlResetAt).toISOString()}`
+    );
   }
 
   if (!groupId) {
@@ -226,6 +253,19 @@ export const restoreDeletedGame = functions.https.onCall({
     throw new functions.https.HttpsError("unauthenticated", "Usuário não autenticado");
   }
 
+  // Rate Limiting: 5 restaurações de jogo/min por usuário
+  const rlRestoreGame = await checkRateLimit(userId, {
+    maxRequests: 5,
+    windowMs: 60 * 1000,
+    keyPrefix: "restore_game",
+  });
+  if (!rlRestoreGame.allowed) {
+    throw new functions.https.HttpsError(
+      "resource-exhausted",
+      `Rate limit excedido. Tente novamente após ${new Date(rlRestoreGame.resetAt).toISOString()}`
+    );
+  }
+
   if (!gameId) {
     throw new functions.https.HttpsError("invalid-argument", "gameId é obrigatório");
   }
@@ -296,6 +336,19 @@ export const restoreDeletedGroup = functions.https.onCall({
 
   if (!userId) {
     throw new functions.https.HttpsError("unauthenticated", "Usuário não autenticado");
+  }
+
+  // Rate Limiting: 3 restaurações de grupo/min por usuário
+  const rlRestoreGroup = await checkRateLimit(userId, {
+    maxRequests: 3,
+    windowMs: 60 * 1000,
+    keyPrefix: "restore_group",
+  });
+  if (!rlRestoreGroup.allowed) {
+    throw new functions.https.HttpsError(
+      "resource-exhausted",
+      `Rate limit excedido. Tente novamente após ${new Date(rlRestoreGroup.resetAt).toISOString()}`
+    );
   }
 
   if (!groupId) {

@@ -219,7 +219,7 @@ private fun FormationCard(
                 // Botao excluir
                 IconButton(
                     onClick = onDelete,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -419,7 +419,7 @@ fun LoadedFormationChip(
             Spacer(Modifier.width(8.dp))
             IconButton(
                 onClick = onClear,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(48.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,

@@ -555,10 +555,26 @@ export const enqueueNotificationCallable = onCall(
   {
     region: "southamerica-east1",
     memory: "256MiB",
+    // SECURITY: App Check para prevenir chamadas de apps nao-verificados
+    enforceAppCheck: process.env.FIREBASE_CONFIG ? true : false,
+    consumeAppCheckToken: true,
   },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Usuário não autenticado");
+    }
+
+    // SECURITY: Verificar role do usuario - apenas ADMIN pode enfileirar notificacoes
+    // manuais. Notificacoes automaticas sao criadas via Cloud Functions server-side.
+    const callerRole = request.auth.token?.role;
+    if (callerRole !== "ADMIN") {
+      console.warn(
+        `[SECURITY] User ${request.auth.uid} (role: ${callerRole}) tentou enfileirar notificacao manual`
+      );
+      throw new HttpsError(
+        "permission-denied",
+        "Apenas administradores podem enviar notificações manuais"
+      );
     }
 
     const {userIds, title, body, type, data, priority} = request.data;
@@ -571,6 +587,17 @@ export const enqueueNotificationCallable = onCall(
       throw new HttpsError("invalid-argument", "title, body e type são obrigatórios");
     }
 
+    // SECURITY: Validacao de tamanho de strings para prevenir payload excessivo
+    if (typeof title !== "string" || title.length > 200) {
+      throw new HttpsError("invalid-argument", "title deve ter no máximo 200 caracteres");
+    }
+    if (typeof body !== "string" || body.length > 1000) {
+      throw new HttpsError("invalid-argument", "body deve ter no máximo 1000 caracteres");
+    }
+    if (typeof type !== "string" || type.length > 50) {
+      throw new HttpsError("invalid-argument", "type deve ter no máximo 50 caracteres");
+    }
+
     // Limitar a 500 destinatários por chamada
     if (userIds.length > 500) {
       throw new HttpsError(
@@ -578,6 +605,17 @@ export const enqueueNotificationCallable = onCall(
         "Máximo de 500 destinatários por chamada"
       );
     }
+
+    // SECURITY: Validar que todos os userIds sao strings
+    for (const id of userIds) {
+      if (typeof id !== "string" || id.length === 0 || id.length > 128) {
+        throw new HttpsError("invalid-argument", "Todos os userIds devem ser strings válidas");
+      }
+    }
+
+    console.log(
+      `[BATCH_FCM] Admin ${request.auth.uid} enfileirando notificacao para ${userIds.length} usuarios`
+    );
 
     const queueId = await enqueueNotification({
       userIds,

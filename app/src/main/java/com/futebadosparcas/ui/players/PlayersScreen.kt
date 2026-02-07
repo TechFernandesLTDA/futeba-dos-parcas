@@ -664,7 +664,7 @@ private fun PlayerCard(
                 if (!isComparisonMode) {
                     IconButton(
                         onClick = onInviteClick,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.PersonAdd,

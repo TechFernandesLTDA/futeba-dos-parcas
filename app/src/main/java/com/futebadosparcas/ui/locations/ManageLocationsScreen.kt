@@ -427,7 +427,7 @@ private fun LocationCard(
                 ) {
                     IconButton(
                         onClick = onLocationClick,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             Icons.Default.Edit,
@@ -439,7 +439,7 @@ private fun LocationCard(
 
                     IconButton(
                         onClick = onDeleteLocation,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             Icons.Default.Delete,
@@ -532,7 +532,7 @@ private fun FieldRow(
 
         IconButton(
             onClick = onDelete,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(48.dp)
         ) {
             Icon(
                 Icons.Default.Close,

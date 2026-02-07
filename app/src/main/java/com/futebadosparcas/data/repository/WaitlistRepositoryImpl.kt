@@ -44,13 +44,14 @@ class WaitlistRepositoryImpl @Inject constructor(
         position: String
     ): Result<GameWaitlist> {
         return try {
-            // Verificar se ja esta na lista
+            // P1 #12: Verificar se ja esta na lista (limit 1 - basta saber se existe)
             val existing = waitlistCollection(gameId)
                 .whereEqualTo("user_id", userId)
                 .whereIn("status", listOf(
                     WaitlistStatus.WAITING.name,
                     WaitlistStatus.NOTIFIED.name
                 ))
+                .limit(1)
                 .get()
                 .await()
 
@@ -60,12 +61,13 @@ class WaitlistRepositoryImpl @Inject constructor(
                 )
             }
 
-            // Calcular posicao na fila
+            // P1 #12: Calcular posicao na fila (limit 50 - maximo realista)
             val currentCount = waitlistCollection(gameId)
                 .whereIn("status", listOf(
                     WaitlistStatus.WAITING.name,
                     WaitlistStatus.NOTIFIED.name
                 ))
+                .limit(50)
                 .get()
                 .await()
                 .size()
@@ -95,8 +97,10 @@ class WaitlistRepositoryImpl @Inject constructor(
 
     override suspend fun removeFromWaitlist(gameId: String, userId: String): Result<Unit> {
         return try {
+            // P1 #12: Limit para seguranca (usuario deve ter no max 1-2 entradas)
             val docs = waitlistCollection(gameId)
                 .whereEqualTo("user_id", userId)
+                .limit(10)
                 .get()
                 .await()
 
@@ -123,12 +127,14 @@ class WaitlistRepositoryImpl @Inject constructor(
 
     override suspend fun getWaitlist(gameId: String): Result<List<GameWaitlist>> {
         return try {
+            // P1 #12: Limit 50 - maximo realista de jogadores na fila
             val snapshot = waitlistCollection(gameId)
                 .whereIn("status", listOf(
                     WaitlistStatus.WAITING.name,
                     WaitlistStatus.NOTIFIED.name
                 ))
                 .orderBy("queue_position", Query.Direction.ASCENDING)
+                .limit(50)
                 .get()
                 .await()
 
@@ -144,12 +150,14 @@ class WaitlistRepositoryImpl @Inject constructor(
     }
 
     override fun getWaitlistFlow(gameId: String): Flow<Result<List<GameWaitlist>>> = callbackFlow {
+        // P1 #12: Limit 50 no listener real-time
         val listener = waitlistCollection(gameId)
             .whereIn("status", listOf(
                 WaitlistStatus.WAITING.name,
                 WaitlistStatus.NOTIFIED.name
             ))
             .orderBy("queue_position", Query.Direction.ASCENDING)
+            .limit(50)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(Result.failure(error))
@@ -168,12 +176,14 @@ class WaitlistRepositoryImpl @Inject constructor(
 
     override suspend fun getWaitlistPosition(gameId: String, userId: String): Result<Int?> {
         return try {
+            // P1 #12: Limit 1 - basta a primeira entrada do usuario
             val docs = waitlistCollection(gameId)
                 .whereEqualTo("user_id", userId)
                 .whereIn("status", listOf(
                     WaitlistStatus.WAITING.name,
                     WaitlistStatus.NOTIFIED.name
                 ))
+                .limit(1)
                 .get()
                 .await()
 
@@ -189,12 +199,14 @@ class WaitlistRepositoryImpl @Inject constructor(
 
     override suspend fun isInWaitlist(gameId: String, userId: String): Result<Boolean> {
         return try {
+            // P1 #12: Limit 1 - basta saber se existe
             val docs = waitlistCollection(gameId)
                 .whereEqualTo("user_id", userId)
                 .whereIn("status", listOf(
                     WaitlistStatus.WAITING.name,
                     WaitlistStatus.NOTIFIED.name
                 ))
+                .limit(1)
                 .get()
                 .await()
 
@@ -290,8 +302,10 @@ class WaitlistRepositoryImpl @Inject constructor(
         status: WaitlistStatus
     ): Result<Unit> {
         return try {
+            // P1 #12: Limit 5 - usuario deve ter poucas entradas
             val docs = waitlistCollection(gameId)
                 .whereEqualTo("user_id", userId)
+                .limit(5)
                 .get()
                 .await()
 
@@ -315,9 +329,11 @@ class WaitlistRepositoryImpl @Inject constructor(
         return try {
             val now = Date()
 
+            // P1 #12: Limit 100 - protecao contra query bomb em collectionGroup
             val snapshot = firestore.collectionGroup(SUBCOLLECTION_WAITLIST)
                 .whereEqualTo("status", WaitlistStatus.NOTIFIED.name)
                 .whereLessThan("response_deadline", now)
+                .limit(100)
                 .get()
                 .await()
 
@@ -368,11 +384,13 @@ class WaitlistRepositoryImpl @Inject constructor(
 
     override suspend fun getWaitlistCount(gameId: String): Result<Int> {
         return try {
+            // P1 #12: Limit 50 - contagem limitada ao maximo realista
             val snapshot = waitlistCollection(gameId)
                 .whereIn("status", listOf(
                     WaitlistStatus.WAITING.name,
                     WaitlistStatus.NOTIFIED.name
                 ))
+                .limit(50)
                 .get()
                 .await()
 
@@ -388,12 +406,14 @@ class WaitlistRepositoryImpl @Inject constructor(
      */
     private suspend fun reorderQueue(gameId: String) {
         try {
+            // P1 #12: Limit 50 - maximo realista de jogadores na fila
             val snapshot = waitlistCollection(gameId)
                 .whereIn("status", listOf(
                     WaitlistStatus.WAITING.name,
                     WaitlistStatus.NOTIFIED.name
                 ))
                 .orderBy("added_at", Query.Direction.ASCENDING)
+                .limit(50)
                 .get()
                 .await()
 

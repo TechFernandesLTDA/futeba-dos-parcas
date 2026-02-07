@@ -23,6 +23,7 @@ class StatisticsViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "StatisticsViewModel"
+        private const val CACHE_DURATION_MS = 120_000L // 2 minutos de cache
     }
 
     private val _uiState = MutableStateFlow<StatisticsUiState>(StatisticsUiState.Loading)
@@ -30,11 +31,29 @@ class StatisticsViewModel @Inject constructor(
 
     private var loadJob: Job? = null
 
+    // P2 #28: Cache in-memory para evitar queries repetidas ao navegar de volta
+    private var cachedState: StatisticsUiState.Success? = null
+    private var lastLoadTime: Long = 0
+
     init {
         loadStatistics()
     }
 
-    fun loadStatistics() {
+    /**
+     * Carrega estatisticas com cache in-memory.
+     * Se dados recentes (<2min) estiverem em cache, usa-os diretamente.
+     *
+     * @param forceRefresh Se true, ignora o cache e busca dados frescos.
+     */
+    fun loadStatistics(forceRefresh: Boolean = false) {
+        // Verificar cache antes de buscar do servidor
+        val now = System.currentTimeMillis()
+        if (!forceRefresh && cachedState != null && (now - lastLoadTime) < CACHE_DURATION_MS) {
+            AppLogger.d(TAG) { "Cache HIT para estatisticas (age=${now - lastLoadTime}ms)" }
+            _uiState.value = cachedState!!
+            return
+        }
+
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             _uiState.value = StatisticsUiState.Loading
@@ -115,7 +134,13 @@ class StatisticsViewModel @Inject constructor(
                     goalEvolution = goalsHistory
                 )
 
-                _uiState.value = StatisticsUiState.Success(combined)
+                val successState = StatisticsUiState.Success(combined)
+                _uiState.value = successState
+
+                // P2 #28: Salvar no cache
+                cachedState = successState
+                lastLoadTime = System.currentTimeMillis()
+                AppLogger.d(TAG) { "Cache PUT para estatisticas" }
 
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao carregar estatísticas: ${e.message}", e)
