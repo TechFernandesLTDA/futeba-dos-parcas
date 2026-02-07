@@ -1,13 +1,13 @@
 # OPUS.md
 
-Instruções para Claude Opus 4.5 ao trabalhar neste repositório.
+Instruções para Claude Opus 4.6 ao trabalhar neste repositório.
 
-## 🎯 Quando Usar Claude Opus 4.5
+## 🎯 Quando Usar Claude Opus 4.6
 
-**Claude Opus 4.5 é o modelo mais avançado da Anthropic** - Use com sabedoria devido ao custo elevado.
+**Claude Opus 4.6 é o modelo mais avançado da Anthropic** - Use com sabedoria devido ao custo elevado.
 
 ```yaml
-opus-4.5:
+opus-4.6:
   capacidades:
     - "Raciocínio arquitetural profundo"
     - "Análise de trade-offs complexos"
@@ -36,7 +36,7 @@ opus-4.5:
     ❌ "Desenvolvimento diário"
 ```
 
-**Regra de ouro**: Se Sonnet 4.5 consegue fazer, use Sonnet. Reserve Opus para decisões críticas.
+**Regra de ouro**: Se Sonnet 4.6 consegue fazer, use Sonnet. Reserve Opus para decisões críticas.
 
 ---
 
@@ -57,8 +57,8 @@ prioridades_opus:
   4_performance: "Otimização de queries Firestore"
 
 modelos_do_time:
-  decisões_arquiteturais: "Claude Opus 4.5 (você)"
-  desenvolvimento_diário: "Claude Sonnet 4.5"
+  decisões_arquiteturais: "Claude Opus 4.6 (você)"
+  desenvolvimento_diário: "Claude Sonnet 4.6"
   tarefas_rápidas: "Gemini 3 Flash"
   análise_visual: "Gemini 3 Pro (multimodal)"
 
@@ -105,7 +105,7 @@ navegação: "Navigation Component 2.8.5 + SafeArgs"
 
 ---
 
-## 🎯 Tarefas Específicas para Opus 4.5
+## 🎯 Tarefas Específicas para Opus 4.6
 
 ### 1. Design de Arquitetura de Pagamentos (PRIORITÁRIO)
 
@@ -456,7 +456,7 @@ métricas_performance:
 - Modelo de dados Firestore
 - Tratamento de webhooks
 
-**Responsável**: Opus 4.5
+**Responsável**: Opus 4.6
 
 ---
 
@@ -477,7 +477,7 @@ métricas_performance:
 - Quando migrar (se sim)?
 - O que migrar primeiro?
 
-**Responsável**: Opus 4.5
+**Responsável**: Opus 4.6
 
 ---
 
@@ -492,7 +492,7 @@ métricas_performance:
 - Mockito vs MockK?
 - Estratégia de CI/CD
 
-**Responsável**: Opus 4.5
+**Responsável**: Opus 4.6
 
 ---
 
@@ -509,7 +509,7 @@ padrões_firebase: ".agent/FIREBASE_MODERNIZATION.md"
 features_pendentes: "IMPLEMENTACAO.md"
 setup: "README.md"
 
-desenvolvimento_diário: "CLAUDE.md (Sonnet 4.5)"
+desenvolvimento_diário: "CLAUDE.md (Sonnet 4.6)"
 análise_visual: "GEMINI.md (Gemini 3 Pro)"
 ```
 
@@ -547,7 +547,7 @@ análise_visual: "GEMINI.md (Gemini 3 Pro)"
 
 ## ⚠️ Avisos Críticos
 
-1. **Custo**: Opus 4.5 é 5x mais caro que Sonnet - use com sabedoria
+1. **Custo**: Opus 4.6 é 5x mais caro que Sonnet - use com sabedoria
 2. **Decisões > Implementação**: Opus para pensar, Sonnet para executar
 3. **Documente tudo**: Decisões de Opus devem ser documentadas (ADRs)
 4. **Valide suposições**: Sempre questione e valide antes de decidir
@@ -557,7 +557,7 @@ análise_visual: "GEMINI.md (Gemini 3 Pro)"
 
 ## 🎓 Quando Delegar para Outros Modelos
 
-**Delegue para Sonnet 4.5:**
+**Delegue para Sonnet 4.6:**
 - Implementação de código após decisão arquitetural
 - Desenvolvimento de features bem definidas
 - Bug fixes
@@ -597,7 +597,7 @@ não_iniciadas_DECISÃO_OPUS:
 
 ---
 
-## 🚀 Próximas Tarefas para Opus 4.5
+## 🚀 Próximas Tarefas para Opus 4.6
 
 ### Prioridade 1: Design de Pagamentos PIX
 - Analisar gateways (Asaas, Mercado Pago, PagSeguro)
@@ -621,7 +621,7 @@ não_iniciadas_DECISÃO_OPUS:
 ---
 
 **Última atualização**: 27/12/2024
-**Claude Version**: Opus 4.5
+**Claude Version**: Opus 4.6
 **Context Window**: 200K tokens
 **Uso recomendado**: Decisões arquiteturais e análises profundas
 **Custo**: Muito alto - reserve para tarefas críticas

@@ -15,8 +15,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
-import java.time.*
-import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import com.futebadosparcas.domain.repository.ScheduleRepository
 import com.futebadosparcas.util.toAndroidSchedule
@@ -168,7 +166,8 @@ class GameDetailViewModel @Inject constructor(
                         canLogEvents = canLogEvents,
                         userMessage = currentMessage,
                         currentUserId = currentUserId,
-                        hasVoted = hasVoted
+                        hasVoted = hasVoted,
+                        isSoftDeleted = game.isSoftDeleted() // P2 #40
                     )
                 }
             } catch (e: Exception) {
@@ -313,9 +312,9 @@ class GameDetailViewModel @Inject constructor(
                         }
                     }
 
-                    // Update MVP if selected
-                    if (mvpId != null) {
-                         val updatedGame = state.game.copy(mvpId = mvpId)
+                    // Atualizar MVP se selecionado
+                    mvpId?.let { id ->
+                         val updatedGame = state.game.copy(mvpId = id)
                          gameRepository.updateGame(updatedGame)
                     }
 
@@ -329,10 +328,13 @@ class GameDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Agenda o próximo jogo recorrente automaticamente após finalização.
+     * Delega para métodos auxiliares para manter complexidade baixa.
+     */
     private fun scheduleNextGame(sourceGame: Game) {
-        // Prevent scheduling if already finished or should not repeat
         if (sourceGame.status == GameStatus.FINISHED.name) return
-        
+
         val recurrenceRaw = sourceGame.recurrence.lowercase()
         if (recurrenceRaw == "none" || recurrenceRaw == "não se repete" || recurrenceRaw.isEmpty()) {
             return
@@ -340,183 +342,251 @@ class GameDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                // 0. Check for Schedule template
-                var currentScheduleId = sourceGame.scheduleId
-                var scheduleTemplate: Schedule? = null
-                
-                if (currentScheduleId.isNotEmpty()) {
-                    val existingScheduleResult = scheduleRepository.getScheduleById(currentScheduleId)
-                    if (existingScheduleResult.isFailure) {
-                        AppLogger.i(TAG) { "Agendamento automatico cancelado: O template de recorrencia foi excluido pelo usuario." }
-                        return@launch
-                    }
-                    scheduleTemplate = existingScheduleResult.getOrNull()?.toAndroidSchedule()
-                } else {
-                    // Create a template if it doesn't exist but game is recurring
-                    val newSchedule = Schedule(
-                        ownerId = sourceGame.ownerId,
-                        ownerName = sourceGame.ownerName,
-                        name = "Jogo de ${sourceGame.ownerName} - ${sourceGame.locationName}",
-                        locationId = sourceGame.locationId,
-                        locationName = sourceGame.locationName,
-                        locationAddress = sourceGame.locationAddress,
-                        locationLat = sourceGame.locationLat,
-                        locationLng = sourceGame.locationLng,
-                        fieldId = sourceGame.fieldId,
-                        fieldName = sourceGame.fieldName,
-                        fieldType = sourceGame.gameType,
-                        time = sourceGame.time,
-                        duration = 60, // Default
-                        recurrenceType = when {
-                            recurrenceRaw.contains("semanal") || recurrenceRaw == "weekly" -> RecurrenceType.weekly
-                            recurrenceRaw.contains("quinzenal") || recurrenceRaw == "biweekly" -> RecurrenceType.biweekly
-                            recurrenceRaw.contains("mensal") || recurrenceRaw == "monthly" -> RecurrenceType.monthly
-                            else -> RecurrenceType.weekly
-                        },
-                        dayOfWeek = try {
-                            val dateFormatter = java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
-                            val date = java.time.LocalDate.parse(sourceGame.date, dateFormatter)
-                            val isoDay = date.dayOfWeek.value
-                            if (isoDay == 7) 0 else isoDay
-                        } catch (e: Exception) { 0 }
-                    )
+                // 0. Resolver ou criar template de recorrência
+                val templateResult = resolveScheduleTemplate(sourceGame, recurrenceRaw)
+                    ?: return@launch
+                val (currentScheduleId, scheduleTemplate) = templateResult
 
-                    val kmpSchedule = newSchedule.toKmpSchedule()
-                    val result = scheduleRepository.createSchedule(kmpSchedule)
-                    result.onSuccess { id ->
-                        currentScheduleId = id
-                        scheduleTemplate = newSchedule.copy(id = id)
-                        // Update current game for chain continuity
-                        gameRepository.updateGame(sourceGame.copy(scheduleId = id))
-                    }
-                }
-
-                // 1. Parse current date
+                // 1. Calcular próxima data
                 val dateFormatter = java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
-                val currentDate = try {
-                    java.time.LocalDate.parse(sourceGame.date, dateFormatter)
-                } catch (e: Exception) {
-                    AppLogger.e(TAG, "Data do jogo inválida: ${sourceGame.date}")
-                    return@launch
-                }
-                
-                // 2. Determine next date
-                val nextDate = when {
-                    recurrenceRaw.contains("semanal") || recurrenceRaw == "weekly" -> currentDate.plusWeeks(1)
-                    recurrenceRaw.contains("quinzenal") || recurrenceRaw == "biweekly" -> currentDate.plusWeeks(2)
-                    recurrenceRaw.contains("mensal") || recurrenceRaw == "monthly" -> {
-                        val dayOfWeek = currentDate.dayOfWeek
-                        val alignedWeek = (currentDate.dayOfMonth - 1) / 7 + 1 
-                        val targetMonth = currentDate.plusMonths(1)
-                        
-                        var candidate = targetMonth.with(TemporalAdjusters.dayOfWeekInMonth(alignedWeek, dayOfWeek))
-                        
-                        // If month doesn't have Nth weekday (overflowed into month after next), use last in target month
-                        if (candidate.month != targetMonth.month) {
-                             candidate = targetMonth.with(TemporalAdjusters.lastInMonth(dayOfWeek))
-                        }
-                        candidate
-                    }
-                    else -> {
-                        AppLogger.w(TAG) { "Recurrência desconhecida ignorada: $recurrenceRaw" }
-                        null
-                    }
-                }
-
-                if (nextDate == null) return@launch
-
+                val currentDate = parseGameDate(sourceGame.date, dateFormatter) ?: return@launch
+                val nextDate = calculateNextDate(currentDate, recurrenceRaw) ?: return@launch
                 val nextDateStr = nextDate.format(dateFormatter)
 
-                // 3. Calculate dateTime (java.util.Date) for proper Firestore sorting
-                val nextDateTime: java.util.Date? = try {
-                    val timeFormatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
-                    val localTime = java.time.LocalTime.parse(sourceGame.time, timeFormatter)
-                    val localDateTime = nextDate.atTime(localTime)
-                    val instant = localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant()
-                    java.util.Date.from(instant)
-                } catch (e: Exception) {
-                    AppLogger.e(TAG, "Falha ao calcular dateTime para o próximo jogo, usando fallback nulo", e)
-                    null
-                }
+                // 2. Calcular dateTime para ordenação no Firestore
+                val nextDateTime = calculateNextDateTime(nextDate, sourceGame.time)
 
-                // 4. Robust conflict check (Handles overlaps)
-                val conflictsResult = gameRepository.checkTimeConflict(
-                    fieldId = sourceGame.fieldId,
-                    date = nextDateStr,
-                    startTime = sourceGame.time,
-                    endTime = sourceGame.endTime
-                )
-                
-                val conflicts = conflictsResult.getOrNull() ?: emptyList()
-                if (conflicts.isNotEmpty()) {
-                    AppLogger.w(TAG) { "Cancelando agendamento automático: Conflito com ${conflicts.size} jogo(s) na quadra em $nextDateStr." }
-                    return@launch
-                }
+                // 3. Verificar conflitos de horário
+                if (hasTimeConflict(sourceGame, nextDateStr)) return@launch
 
-                // 5. Build new Game object
-                // Use values from template if available, otherwise fallback to sourceGame values
-                val template = scheduleTemplate
-                val nextGame = sourceGame.copy(
-                    id = "",
-                    scheduleId = currentScheduleId,
-                    date = nextDateStr,
-                    time = template?.time ?: sourceGame.time,
-                    // endTime is not explicitly in Schedule, we could keep same duration
-                    endTime = if (template != null && template.time != sourceGame.time) {
-                        try {
-                           val t = java.time.LocalTime.parse(template.time)
-                           t.plusMinutes(template.duration.toLong()).toString()
-                        } catch(e: Exception) { sourceGame.endTime }
-                    } else sourceGame.endTime,
-                    locationId = template?.locationId ?: sourceGame.locationId,
-                    locationName = template?.locationName ?: sourceGame.locationName,
-                    locationAddress = template?.locationAddress ?: sourceGame.locationAddress,
-                    locationLat = template?.locationLat ?: sourceGame.locationLat,
-                    locationLng = template?.locationLng ?: sourceGame.locationLng,
-                    fieldId = template?.fieldId ?: sourceGame.fieldId,
-                    fieldName = template?.fieldName ?: sourceGame.fieldName,
-                    gameType = template?.fieldType ?: sourceGame.gameType,
-                    status = GameStatus.SCHEDULED.name,
-                    playersCount = 0,
-                    goalkeepersCount = 0,
-                    players = emptyList(),
-                    team1Score = 0,
-                    team2Score = 0,
-                    mvpId = null,
-                    dateTimeRaw = nextDateTime,
-                    createdAt = null,
-                    xpProcessed = false,
-                    xpProcessedAt = null,
-                    groupId = template?.groupId ?: sourceGame.groupId,
-                    groupName = template?.groupName ?: sourceGame.groupName
-                )
-                nextGame.id = "" // Backup reset
-
-                val result = gameRepository.createGame(nextGame)
-                if (result.isSuccess) {
-                    val savedGame = result.getOrNull() ?: return@launch
-                    // Summon group members if available
-                    if (savedGame.groupId != null) {
-                        summonGroupMembers(savedGame)
-                    }
-                    
-                    AppLogger.d(TAG) { "Próximo jogo recorrente agendado: $nextDateStr às ${sourceGame.time}" }
-                    (_uiState.value as? GameDetailUiState.Success)?.let { currentState ->
-                         _uiState.value = currentState.copy(schedulingEvent = SchedulingEvent.Success(nextDateStr))
-                    }
-                } else {
-                    val errorMsg = result.exceptionOrNull()?.message ?: "Erro desconhecido"
-                    AppLogger.e(TAG, "Falha ao criar agendamento recorrente: $errorMsg")
-                    (_uiState.value as? GameDetailUiState.Success)?.let { currentState ->
-                        _uiState.value = currentState.copy(schedulingEvent = SchedulingEvent.Error(errorMsg))
-                    }
-                }
+                // 4. Construir e salvar próximo jogo
+                val nextGame = buildNextGame(sourceGame, currentScheduleId, nextDateStr, nextDateTime, scheduleTemplate)
+                saveAndNotifyNextGame(nextGame, nextDateStr, sourceGame.time)
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro na engine de agendamento", e)
                 val state = _uiState.value
                 if (state is GameDetailUiState.Success) {
                     _uiState.value = state.copy(schedulingEvent = SchedulingEvent.Error(e.message ?: "Falha interna"))
                 }
+            }
+        }
+    }
+
+    /**
+     * Resolve template de recorrência existente ou cria um novo.
+     * @return Pair(scheduleId, template) ou null se cancelado.
+     */
+    private suspend fun resolveScheduleTemplate(
+        sourceGame: Game,
+        recurrenceRaw: String
+    ): Pair<String, Schedule?>? {
+        var currentScheduleId = sourceGame.scheduleId
+        var scheduleTemplate: Schedule? = null
+
+        if (currentScheduleId.isNotEmpty()) {
+            val existingScheduleResult = scheduleRepository.getScheduleById(currentScheduleId)
+            if (existingScheduleResult.isFailure) {
+                AppLogger.i(TAG) { "Agendamento automatico cancelado: O template de recorrencia foi excluido pelo usuario." }
+                return null
+            }
+            scheduleTemplate = existingScheduleResult.getOrNull()?.toAndroidSchedule()
+        } else {
+            val newSchedule = buildScheduleFromGame(sourceGame, recurrenceRaw)
+            val kmpSchedule = newSchedule.toKmpSchedule()
+            val result = scheduleRepository.createSchedule(kmpSchedule)
+            result.onSuccess { id ->
+                currentScheduleId = id
+                scheduleTemplate = newSchedule.copy(id = id)
+                gameRepository.updateGame(sourceGame.copy(scheduleId = id))
+            }
+        }
+
+        return Pair(currentScheduleId, scheduleTemplate)
+    }
+
+    /**
+     * Constrói um Schedule a partir dos dados de um Game existente.
+     */
+    private fun buildScheduleFromGame(sourceGame: Game, recurrenceRaw: String): Schedule {
+        return Schedule(
+            ownerId = sourceGame.ownerId,
+            ownerName = sourceGame.ownerName,
+            name = "Jogo de ${sourceGame.ownerName} - ${sourceGame.locationName}",
+            locationId = sourceGame.locationId,
+            locationName = sourceGame.locationName,
+            locationAddress = sourceGame.locationAddress,
+            locationLat = sourceGame.locationLat,
+            locationLng = sourceGame.locationLng,
+            fieldId = sourceGame.fieldId,
+            fieldName = sourceGame.fieldName,
+            fieldType = sourceGame.gameType,
+            time = sourceGame.time,
+            duration = 60,
+            recurrenceType = parseRecurrenceType(recurrenceRaw),
+            dayOfWeek = try {
+                val dateFormatter = java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
+                val date = java.time.LocalDate.parse(sourceGame.date, dateFormatter)
+                val isoDay = date.dayOfWeek.value
+                if (isoDay == 7) 0 else isoDay
+            } catch (e: Exception) { 0 }
+        )
+    }
+
+    /**
+     * Converte string de recorrência para enum RecurrenceType.
+     */
+    private fun parseRecurrenceType(recurrenceRaw: String): RecurrenceType {
+        return when {
+            recurrenceRaw.contains("semanal") || recurrenceRaw == "weekly" -> RecurrenceType.weekly
+            recurrenceRaw.contains("quinzenal") || recurrenceRaw == "biweekly" -> RecurrenceType.biweekly
+            recurrenceRaw.contains("mensal") || recurrenceRaw == "monthly" -> RecurrenceType.monthly
+            else -> RecurrenceType.weekly
+        }
+    }
+
+    /**
+     * Faz parse seguro da data do jogo.
+     */
+    private fun parseGameDate(
+        dateStr: String,
+        formatter: java.time.format.DateTimeFormatter
+    ): java.time.LocalDate? {
+        return try {
+            java.time.LocalDate.parse(dateStr, formatter)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Data do jogo inválida: $dateStr")
+            null
+        }
+    }
+
+    /**
+     * Calcula a próxima data baseado na recorrência.
+     */
+    private fun calculateNextDate(
+        currentDate: java.time.LocalDate,
+        recurrenceRaw: String
+    ): java.time.LocalDate? {
+        return when {
+            recurrenceRaw.contains("semanal") || recurrenceRaw == "weekly" -> currentDate.plusWeeks(1)
+            recurrenceRaw.contains("quinzenal") || recurrenceRaw == "biweekly" -> currentDate.plusWeeks(2)
+            recurrenceRaw.contains("mensal") || recurrenceRaw == "monthly" -> {
+                val dayOfWeek = currentDate.dayOfWeek
+                val alignedWeek = (currentDate.dayOfMonth - 1) / 7 + 1
+                val targetMonth = currentDate.plusMonths(1)
+                var candidate = targetMonth.with(TemporalAdjusters.dayOfWeekInMonth(alignedWeek, dayOfWeek))
+                if (candidate.month != targetMonth.month) {
+                    candidate = targetMonth.with(TemporalAdjusters.lastInMonth(dayOfWeek))
+                }
+                candidate
+            }
+            else -> {
+                AppLogger.w(TAG) { "Recurrência desconhecida ignorada: $recurrenceRaw" }
+                null
+            }
+        }
+    }
+
+    /**
+     * Calcula o java.util.Date para o próximo jogo (usado para ordenação no Firestore).
+     */
+    private fun calculateNextDateTime(nextDate: java.time.LocalDate, time: String): java.util.Date? {
+        return try {
+            val timeFormatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+            val localTime = java.time.LocalTime.parse(time, timeFormatter)
+            val localDateTime = nextDate.atTime(localTime)
+            val instant = localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant()
+            java.util.Date.from(instant)
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Falha ao calcular dateTime para o próximo jogo, usando fallback nulo", e)
+            null
+        }
+    }
+
+    /**
+     * Verifica se há conflito de horário na quadra para a data.
+     */
+    private suspend fun hasTimeConflict(sourceGame: Game, nextDateStr: String): Boolean {
+        val conflictsResult = gameRepository.checkTimeConflict(
+            fieldId = sourceGame.fieldId,
+            date = nextDateStr,
+            startTime = sourceGame.time,
+            endTime = sourceGame.endTime
+        )
+        val conflicts = conflictsResult.getOrNull() ?: emptyList()
+        if (conflicts.isNotEmpty()) {
+            AppLogger.w(TAG) { "Cancelando agendamento automático: Conflito com ${conflicts.size} jogo(s) na quadra em $nextDateStr." }
+            return true
+        }
+        return false
+    }
+
+    /**
+     * Constrói o objeto Game para o próximo jogo recorrente.
+     */
+    private fun buildNextGame(
+        sourceGame: Game,
+        scheduleId: String,
+        nextDateStr: String,
+        nextDateTime: java.util.Date?,
+        template: Schedule?
+    ): Game {
+        val nextGame = sourceGame.copy(
+            id = "",
+            scheduleId = scheduleId,
+            date = nextDateStr,
+            time = template?.time ?: sourceGame.time,
+            endTime = if (template != null && template.time != sourceGame.time) {
+                try {
+                    val t = java.time.LocalTime.parse(template.time)
+                    t.plusMinutes(template.duration.toLong()).toString()
+                } catch (e: Exception) { sourceGame.endTime }
+            } else sourceGame.endTime,
+            locationId = template?.locationId ?: sourceGame.locationId,
+            locationName = template?.locationName ?: sourceGame.locationName,
+            locationAddress = template?.locationAddress ?: sourceGame.locationAddress,
+            locationLat = template?.locationLat ?: sourceGame.locationLat,
+            locationLng = template?.locationLng ?: sourceGame.locationLng,
+            fieldId = template?.fieldId ?: sourceGame.fieldId,
+            fieldName = template?.fieldName ?: sourceGame.fieldName,
+            gameType = template?.fieldType ?: sourceGame.gameType,
+            status = GameStatus.SCHEDULED.name,
+            playersCount = 0,
+            goalkeepersCount = 0,
+            players = emptyList(),
+            team1Score = 0,
+            team2Score = 0,
+            mvpId = null,
+            dateTimeRaw = nextDateTime,
+            createdAt = null,
+            xpProcessed = false,
+            xpProcessedAt = null,
+            groupId = template?.groupId ?: sourceGame.groupId,
+            groupName = template?.groupName ?: sourceGame.groupName
+        )
+        nextGame.id = "" // Reset de segurança
+        return nextGame
+    }
+
+    /**
+     * Salva o próximo jogo, convoca membros do grupo e notifica via UI.
+     */
+    private suspend fun saveAndNotifyNextGame(nextGame: Game, nextDateStr: String, time: String) {
+        val result = gameRepository.createGame(nextGame)
+        if (result.isSuccess) {
+            val savedGame = result.getOrNull() ?: return
+            if (savedGame.groupId != null) {
+                summonGroupMembers(savedGame)
+            }
+
+            AppLogger.d(TAG) { "Próximo jogo recorrente agendado: $nextDateStr às $time" }
+            (_uiState.value as? GameDetailUiState.Success)?.let { currentState ->
+                _uiState.value = currentState.copy(schedulingEvent = SchedulingEvent.Success(nextDateStr))
+            }
+        } else {
+            val errorMsg = result.exceptionOrNull()?.message ?: "Erro desconhecido"
+            AppLogger.e(TAG, "Falha ao criar agendamento recorrente: $errorMsg")
+            (_uiState.value as? GameDetailUiState.Success)?.let { currentState ->
+                _uiState.value = currentState.copy(schedulingEvent = SchedulingEvent.Error(errorMsg))
             }
         }
     }
@@ -565,16 +635,45 @@ class GameDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Soft delete: marca o jogo como deletado sem excluir dados (P2 #40).
+     * Permite restauracao posterior por admins.
+     */
     fun deleteGame(gameId: String) {
         viewModelScope.launch {
-            val result = gameRepository.deleteGame(gameId)
+            val result = gameRepository.softDeleteGame(gameId)
             if (result.isSuccess) {
                 _uiState.value = GameDetailUiState.GameDeleted
             } else {
-                val currentState = _uiState.value as? GameDetailUiState.Success
-                if (currentState != null) {
+                (_uiState.value as? GameDetailUiState.Success)?.let { currentState ->
                     _uiState.value = currentState.copy(userMessage = "Erro ao cancelar jogo")
                 }
+            }
+        }
+    }
+
+    /**
+     * Restaura um jogo soft-deletado (P2 #40).
+     * Disponivel apenas para admins/owners.
+     */
+    fun restoreGame(gameId: String) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
+
+            if (!currentState.canManageGame && !currentState.isAdmin) {
+                _uiState.value = currentState.copy(userMessage = "Sem permissao para restaurar jogo")
+                return@launch
+            }
+
+            val result = gameRepository.restoreGame(gameId)
+            if (result.isSuccess) {
+                _uiState.value = currentState.copy(userMessage = "Jogo restaurado com sucesso")
+                // Recarregar detalhes do jogo
+                loadGameDetails(gameId)
+            } else {
+                _uiState.value = currentState.copy(
+                    userMessage = "Erro ao restaurar jogo: ${result.exceptionOrNull()?.message}"
+                )
             }
         }
     }
@@ -808,7 +907,7 @@ class GameDetailViewModel @Inject constructor(
             result.fold(
                 onSuccess = {
                     _uiState.value = currentState.copy(
-                        userMessage = "Marcado como 'A caminho'" + (etaMinutes?.let { " (ETA: $it min)" } ?: "")
+                        userMessage = "Marcado como 'A caminho'${etaMinutes?.let { " (ETA: $it min)" }.orEmpty()}"
                     )
                 },
                 onFailure = { e ->
@@ -969,8 +1068,7 @@ class GameDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val result = gameRepository.updatePartialPayment(gameId, userId, amount)
             if (result.isFailure) {
-                val currentState = _uiState.value as? GameDetailUiState.Success
-                if (currentState != null) {
+                (_uiState.value as? GameDetailUiState.Success)?.let { currentState ->
                     _uiState.value = currentState.copy(
                         userMessage = "Erro ao atualizar pagamento: ${result.exceptionOrNull()?.message}"
                     )
@@ -1063,8 +1161,7 @@ class GameDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val result = groupRepository.blockPlayer(groupId, userId, userName, reason, authRepository.getCurrentUserId() ?: "")
             if (result.isFailure) {
-                val currentState = _uiState.value as? GameDetailUiState.Success
-                if (currentState != null) {
+                (_uiState.value as? GameDetailUiState.Success)?.let { currentState ->
                     _uiState.value = currentState.copy(
                         userMessage = "Erro ao bloquear jogador: ${result.exceptionOrNull()?.message}"
                     )
@@ -1081,8 +1178,7 @@ class GameDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val result = groupRepository.unblockPlayer(groupId, userId)
             if (result.isFailure) {
-                val currentState = _uiState.value as? GameDetailUiState.Success
-                if (currentState != null) {
+                (_uiState.value as? GameDetailUiState.Success)?.let { currentState ->
                     _uiState.value = currentState.copy(
                         userMessage = "Erro ao desbloquear jogador: ${result.exceptionOrNull()?.message}"
                     )
@@ -1188,7 +1284,8 @@ sealed class GameDetailUiState {
         val userMessage: String? = null,
         val currentUserId: String? = null,
         val hasVoted: Boolean? = null,
-        val schedulingEvent: SchedulingEvent? = null
+        val schedulingEvent: SchedulingEvent? = null,
+        val isSoftDeleted: Boolean = false // P2 #40: Indica se o jogo foi soft-deletado
     ) : GameDetailUiState()
     data class Error(val message: String) : GameDetailUiState()
 }

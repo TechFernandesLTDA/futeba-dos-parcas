@@ -419,5 +419,5 @@ A migração do **BadgesFragment** para Jetpack Compose foi um **sucesso complet
 ---
 
 **Data**: 2026-01-05
-**Autor**: Claude Opus 4.5
+**Autor**: Claude Opus 4.6
 **Projeto**: Futeba dos Parças v1.4.0

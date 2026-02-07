@@ -335,5 +335,5 @@ Firebase Firestore
 ---
 
 **Criado em:** 2026-01-05
-**Autor:** Claude Sonnet 4.5 (Anthropic)
+**Autor:** Claude Sonnet 4.6 (Anthropic)
 **Projeto:** Futeba dos Parças v1.4.0

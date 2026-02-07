@@ -5,7 +5,7 @@ import com.futebadosparcas.domain.model.GameSummon
 import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.domain.model.SummonStatus
 import com.futebadosparcas.domain.model.UpcomingGame
-import com.futebadosparcas.domain.model.generateGameSummonId
+import com.futebadosparcas.domain.model.gameSummonId
 import com.futebadosparcas.domain.repository.GameSummonRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import kotlinx.coroutines.channels.awaitClose
@@ -72,7 +72,7 @@ class GameSummonRepositoryImpl(
 
             members.forEach { member ->
                 // Criar convocação
-                val summonId = generateGameSummonId(gameId, member.userId)
+                val summonId = gameSummonId(gameId, member.userId)
                 val summonRef = summonsCollection.document(summonId)
 
                 val summonData = mapOf(
@@ -168,9 +168,11 @@ class GameSummonRepositoryImpl(
 
     override suspend fun getGameSummons(gameId: String): Result<List<GameSummon>> {
         return try {
+            // P1 #12: Adicionar .limit() - máximo 100 convocações por jogo
             val snapshot = summonsCollection
                 .whereEqualTo("game_id", gameId)
                 .orderBy("summoned_at", com.google.firebase.firestore.Query.Direction.ASCENDING)
+                .limit(100)
                 .get()
                 .await()
 
@@ -184,8 +186,10 @@ class GameSummonRepositoryImpl(
     }
 
     override fun getGameSummonsFlow(gameId: String): Flow<List<GameSummon>> = callbackFlow {
+        // P1 #12: Adicionar .limit() para real-time listener
         val listener = summonsCollection
             .whereEqualTo("game_id", gameId)
+            .limit(100)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(emptyList())
@@ -205,7 +209,7 @@ class GameSummonRepositoryImpl(
             val userId = firebaseDataSource.getCurrentAuthUserId()
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            val summonId = generateGameSummonId(gameId, userId)
+            val summonId = gameSummonId(gameId, userId)
             val summonDoc = summonsCollection.document(summonId).get().await()
 
             if (!summonDoc.exists()) {
@@ -293,7 +297,7 @@ class GameSummonRepositoryImpl(
             val userId = firebaseDataSource.getCurrentAuthUserId()
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            val summonId = generateGameSummonId(gameId, userId)
+            val summonId = gameSummonId(gameId, userId)
             val summonDoc = summonsCollection.document(summonId).get().await()
 
             if (!summonDoc.exists()) {
@@ -383,7 +387,7 @@ class GameSummonRepositoryImpl(
             val userId = firebaseDataSource.getCurrentAuthUserId()
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            val summonId = generateGameSummonId(gameId, userId)
+            val summonId = gameSummonId(gameId, userId)
 
             // Buscar convocação para saber a posição
             val summonDoc = summonsCollection.document(summonId).get().await()
@@ -432,7 +436,7 @@ class GameSummonRepositoryImpl(
             val userId = firebaseDataSource.getCurrentAuthUserId()
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            val summonId = generateGameSummonId(gameId, userId)
+            val summonId = gameSummonId(gameId, userId)
             val doc = summonsCollection.document(summonId).get().await()
 
             Result.success(doc.exists())
@@ -446,7 +450,7 @@ class GameSummonRepositoryImpl(
             val userId = firebaseDataSource.getCurrentAuthUserId()
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            val summonId = generateGameSummonId(gameId, userId)
+            val summonId = gameSummonId(gameId, userId)
             val doc = summonsCollection.document(summonId).get().await()
 
             if (doc.exists()) {

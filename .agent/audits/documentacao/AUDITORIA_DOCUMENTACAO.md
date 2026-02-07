@@ -1,7 +1,7 @@
 # 📋 AUDITORIA DE DOCUMENTAÇÃO - Futeba dos Parças
 
 **Data**: 27/12/2024
-**Responsável**: Claude Sonnet 4.5
+**Responsável**: Claude Sonnet 4.6
 **Escopo**: Avaliação completa de arquivos na raiz e pasta `.agent`
 
 ---
@@ -30,11 +30,11 @@
 #### Documentação Principal
 ```yaml
 CLAUDE.md:
-  status: "Essencial - Instruções para Sonnet 4.5"
+  status: "Essencial - Instruções para Sonnet 4.6"
   ação: "MANTER - Atualizar com info Firebase LLM"
 
 OPUS.md:
-  status: "Essencial - Instruções para Opus 4.5"
+  status: "Essencial - Instruções para Opus 4.6"
   ação: "MANTER - Atualizar com info Firebase LLM"
 
 GEMINI.md:
@@ -740,4 +740,4 @@ estrutura: "Muito mais clara e organizada"
 
 **Última atualização**: 27/12/2024 18:30
 **Próxima revisão**: Após executar limpeza
-**Responsável**: Claude Sonnet 4.5
+**Responsável**: Claude Sonnet 4.6

@@ -9,6 +9,7 @@ kotlin {
     // Android target
     androidTarget {
         compilations.all {
+            @Suppress("DEPRECATION")
             kotlinOptions {
                 jvmTarget = "17"
             }
@@ -40,14 +41,14 @@ kotlin {
                 implementation("app.cash.sqldelight:runtime:2.0.1")
                 implementation("app.cash.sqldelight:coroutines-extensions:2.0.1")
 
-                // Coroutines
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+                // Coroutines (alinhado com app module 1.9.0)
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 
-                // Serialization
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+                // Serialization (alinhado com Kotlin 2.2.x)
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
                 // DateTime
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
             }
         }
 
@@ -69,7 +70,10 @@ kotlin {
                 implementation("com.google.firebase:firebase-firestore-ktx:24.10.0")
                 implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
                 implementation("com.google.firebase:firebase-storage-ktx:20.2.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+
+                // AndroidX Security Crypto (para SecureStorage)
+                implementation("androidx.security:security-crypto:1.1.0-alpha06")
             }
         }
 
@@ -94,7 +98,7 @@ kotlin {
     }
 }
 
-android {
+extensions.configure<com.android.build.api.dsl.LibraryExtension>("android") {
     namespace = "com.futebadosparcas.shared"
     compileSdk = 36
 

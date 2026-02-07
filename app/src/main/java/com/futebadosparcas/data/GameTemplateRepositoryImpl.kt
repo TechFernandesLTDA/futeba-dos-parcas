@@ -48,9 +48,11 @@ class GameTemplateRepositoryImpl @Inject constructor(
 
     override suspend fun getUserTemplates(userId: String): Result<List<GameTemplate>> = withContext(Dispatchers.Default) {
         try {
+            // P1 #12: Limit 50 - maximo realista de templates por usuario
             val snapshot = firestore.collection("users")
                 .document(userId)
                 .collection("game_templates")
+                .limit(50)
                 .get()
                 .await()
 

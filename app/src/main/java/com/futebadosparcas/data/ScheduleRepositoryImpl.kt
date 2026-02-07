@@ -27,9 +27,11 @@ class ScheduleRepositoryImpl @Inject constructor(
     private val schedulesCollection = firestore.collection("schedules")
 
     override fun getSchedules(ownerId: String): Flow<Result<List<KmpSchedule>>> = callbackFlow {
+        // P1 #12: Limit 50 - maximo realista de horarios por dono
         val subscription = schedulesCollection
             .whereEqualTo("owner_id", ownerId)
             .orderBy("created_at", Query.Direction.DESCENDING)
+            .limit(50)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     AppLogger.e("ScheduleRepo", "Error loading schedules for owner: $ownerId", error)

@@ -3,6 +3,7 @@ package com.futebadosparcas.data.local
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
@@ -19,7 +20,13 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Entidade de histórico de busca.
  */
-@Entity(tableName = "search_history")
+@Entity(
+    tableName = "search_history",
+    indices = [
+        Index(value = ["timestamp"], name = "index_search_history_timestamp"),
+        Index(value = ["category"], name = "index_search_history_category")
+    ]
+)
 data class SearchHistoryEntity(
     @PrimaryKey
     val id: String,

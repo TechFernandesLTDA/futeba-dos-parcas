@@ -6,6 +6,9 @@ const db = admin.firestore();
 /**
  * Scheduled job to check for season end and perform closing operations.
  * Runs every day at 03:00 AM.
+ *
+ * PERF_001 #21: Implementa timeout de 9 minutos para evitar timeout das Cloud Functions
+ * (limite total é 9min 59s para Cloud Functions escaladas)
  */
 export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
   console.log("Checking for seasons to close...");
@@ -26,6 +29,26 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
     return;
   }
 
+  // PERF_001 #21: Timeout management (9 minutos = 540 segundos)
+  const TIMEOUT_MS = 9 * 60 * 1000; // 9 minutos
+  const startTime = Date.now();
+
+  const hasTimeRemaining = () => {
+    const elapsedMs = Date.now() - startTime;
+    const remainingMs = TIMEOUT_MS - elapsedMs;
+    const remainingSeconds = Math.floor(remainingMs / 1000);
+
+    // Reservar 30 segundos para cleanup final
+    const minReservedMs = 30 * 1000;
+    const isTimeLeft = remainingMs > minReservedMs;
+
+    if (!isTimeLeft) {
+      console.warn(`[TIMEOUT] Processamento de season parado: apenas ${remainingSeconds}s restantes. Continuando na próxima execução.`);
+    }
+
+    return isTimeLeft;
+  };
+
   let batch = db.batch();
   let operationCount = 0;
   const BATCH_LIMIT = 500;
@@ -39,7 +62,17 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
     }
   };
 
+  let processedCount = 0;
+  let skippedCount = 0;
+
   for (const doc of snapshot.docs) {
+    // PERF_001 #21: Verificar timeout a cada iteração
+    if (!hasTimeRemaining()) {
+      skippedCount = snapshot.docs.length - processedCount;
+      console.log(`[TIMEOUT] Parando processamento. Processados: ${processedCount}, Pulados: ${skippedCount}. Continuarão na próxima execução.`);
+      break;
+    }
+
     const seasonId = doc.id;
     const seasonData = doc.data();
     console.log(`Closing season: ${seasonId} (${seasonData.name})`);
@@ -52,39 +85,57 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
     operationCount++;
     if (operationCount >= BATCH_LIMIT) await commitBatch();
 
-    // 2. Snapshot Final Standings
+    // 2. Snapshot Final Standings (PERF: Chunked para evitar timeout em grandes seasons)
     const participationsSnap = await db.collection("season_participation")
       .where("season_id", "==", seasonId)
       .get();
 
     if (!participationsSnap.empty) {
-      for (const partDoc of participationsSnap.docs) {
-        const p = partDoc.data();
+      // Processar em chunks se necessário
+      const CHUNK_SIZE = 100; // Processar 100 participações por vez para evitar timeout
 
-        // Create Final Standing Record
-        const standingRef = db.collection("season_final_standings").doc();
-        batch.set(standingRef, {
-          season_id: seasonId,
-          user_id: p.user_id,
-          final_division: p.division,
-          final_rating: p.league_rating || 0,
-          points: p.points,
-          wins: p.wins,
-          draws: p.draws,
-          losses: p.losses,
-          frozen_at: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        operationCount++;
-        if (operationCount >= BATCH_LIMIT) await commitBatch();
+      for (let i = 0; i < participationsSnap.docs.length; i += CHUNK_SIZE) {
+        if (!hasTimeRemaining()) {
+          console.log(`[TIMEOUT] Parando processamento de participações para season ${seasonId}`);
+          break;
+        }
 
-        // Optional: Create "History" badge if winner?
+        const chunk = participationsSnap.docs.slice(i, i + CHUNK_SIZE);
+
+        for (const partDoc of chunk) {
+          const p = partDoc.data();
+
+          // Create Final Standing Record
+          const standingRef = db.collection("season_final_standings").doc();
+          batch.set(standingRef, {
+            season_id: seasonId,
+            user_id: p.user_id,
+            final_division: p.division,
+            final_rating: p.league_rating || 0,
+            points: p.points,
+            wins: p.wins,
+            draws: p.draws,
+            losses: p.losses,
+            frozen_at: admin.firestore.FieldValue.serverTimestamp(),
+          });
+          operationCount++;
+          if (operationCount >= BATCH_LIMIT) {
+            await commitBatch();
+            // Verificar tempo após commit
+            if (!hasTimeRemaining()) {
+              console.log(`[TIMEOUT] Timeout após batch commit.`);
+              break;
+            }
+          }
+        }
+
+        if (!hasTimeRemaining()) break;
       }
     }
 
     // 3. Create Next Season (Auto-Renewal for Monthly)
-    if (seasonId.startsWith("monthly")) {
+    if (seasonId.startsWith("monthly") && hasTimeRemaining()) {
       try {
-        // ... (existing logic for next season calculation)
         const endDate = new Date(seasonData.end_date);
         const nextStartDate = new Date(endDate);
         nextStartDate.setDate(nextStartDate.getDate() + 1);
@@ -111,17 +162,31 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
           });
           console.log(`Scheduled creation of next season: ${nextId}`);
           operationCount++;
-          if (operationCount >= BATCH_LIMIT) await commitBatch();
+          if (operationCount >= BATCH_LIMIT) {
+            await commitBatch();
+          }
         }
       } catch (e) {
         console.error("Error calculating next season", e);
-        throw e; // Re-throw para permitir retry do Cloud Functions
+        // Não fazer throw aqui, continuar com próximas seasons
+        // A próxima execução tentará novamente
       }
     }
+
+    processedCount++;
   }
 
+  // Commit final batch
   await commitBatch();
-  console.log(`Closed ${snapshot.size} seasons.`);
+
+  const totalProcessed = processedCount;
+  const totalSkipped = snapshot.docs.length - totalProcessed;
+
+  console.log(`Season closing complete: Processed ${totalProcessed}/${snapshot.docs.length}, Skipped: ${totalSkipped}`);
+
+  if (totalSkipped > 0) {
+    console.log(`[INFO] ${totalSkipped} seasons will be processed in the next scheduled run.`);
+  }
 });
 
 function getMonthName(monthIndex: number): string {

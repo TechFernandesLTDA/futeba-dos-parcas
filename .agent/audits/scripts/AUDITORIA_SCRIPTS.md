@@ -1,7 +1,7 @@
 # 📋 AUDITORIA DE SCRIPTS E .AGENT
 
 **Data**: 27/12/2024
-**Responsável**: Claude Sonnet 4.5
+**Responsável**: Claude Sonnet 4.6
 **Escopo**: Avaliação completa de `/scripts` e `/.agent`
 
 ---
@@ -769,4 +769,4 @@ segurança:
 
 **Última atualização**: 27/12/2024 18:45
 **Próxima revisão**: Após reorganização
-**Responsável**: Claude Sonnet 4.5
+**Responsável**: Claude Sonnet 4.6

@@ -92,8 +92,8 @@ firebase deploy --only functions           # Deploy
 | Purpose | Location |
 |---------|----------|
 | App entry point | `app/src/main/java/com/futebadosparcas/ui/main/MainActivityCompose.kt` |
-| Navigation graph | `app/src/main/java/com/futebadosparcas/ui/navigation/AppNavigation.kt` |
-| Nav destinations | `app/src/main/java/com/futebadosparcas/ui/navigation/NavDestinations.kt` |
+| Navigation graph | `app/src/main/java/com/futebadosparcas/ui/navigation/AppNavGraph.kt` |
+| Nav destinations | `app/src/main/java/com/futebadosparcas/ui/navigation/NavDestinations.kt` + `routes/AppRoutes.kt` |
 | Hilt DI setup | `app/src/main/java/com/futebadosparcas/di/` (FirebaseModule, RepositoryModule, etc.) |
 | Theme/Colors | `app/src/main/java/com/futebadosparcas/ui/theme/Theme.kt` |
 | Firestore rules | `firestore.rules` |
@@ -135,10 +135,10 @@ firebase deploy --only functions           # Deploy
 
 ### Version
 
-- **Current**: 1.8.0 (versionCode: 21)
-- **SDK**: minSdk 24, targetSdk 35, JDK 17
+- **Current**: 1.9.0 (versionCode: 22)
+- **SDK**: compileSdk 36, minSdk 24, targetSdk 35, JDK 17
 - **Kotlin**: 2.2.10
-- **Compose BOM**: 2025.06.00
+- **Compose BOM**: 2024.09.00
 - **Material 3**: Latest (adaptive navigation, pull-to-refresh)
 
 ---
@@ -194,9 +194,9 @@ Data (Repositories → Firebase/Room)
 ### Navigation
 
 The app uses a single-activity architecture with Compose Navigation:
-- `MainActivityCompose.kt` hosts `AppNavigation`
-- Routes defined as sealed classes in `NavDestinations.kt`
-- Navigation graph implemented in `AppNavigation.kt`
+- `MainActivityCompose.kt` hosts the nav graph
+- **Route definitions**: `NavDestinations.kt` (sealed class, core routes) + `routes/AppRoutes.kt` (extended metadata: `isRootDestination`, `showsTopBar`, `titleResId`)
+- **Nav graph**: `AppNavGraph.kt` (NOT `AppNavigation.kt`)
 - Each screen receives its ViewModel via Hilt (`hiltViewModel()`)
 - Use `onNavigate: (destination: String) -> Unit` callbacks for navigation
 
@@ -363,20 +363,115 @@ SCHEDULED → CONFIRMED → LIVE → FINISHED
 
 ### Cloud Functions (`functions/src/`)
 
+**Core (root-level):**
+
 | File | Purpose |
 |------|---------|
 | `index.ts` | Main entry, onUserCreate, onGameFinished, XP processing |
-| `auth/custom-claims.ts` | **NEW:** Role management via Custom Claims (PERF_001) |
 | `league.ts` | recalculateLeagueRating, division changes |
 | `notifications.ts` | Push triggers (game created, MVP, level up, badges) |
 | `reminders.ts` | Game reminders, waitlist cleanup |
 | `activities.ts` | Activity feed processing |
-| `badges/badge-helper.ts` | Badge unlock logic |
-| `season/index.ts` | Season management, monthly resets |
 | `user-management.ts` | User profile operations |
 | `seeding.ts` | Data seeding utilities |
-| `validation/index.ts` | Input validation helpers |
-| `scripts/migrate-custom-claims.ts` | Migration script for Custom Claims (run once) |
+
+**Modular directories:**
+
+| Directory | Files | Purpose |
+|-----------|-------|---------|
+| `auth/` | `custom-claims.ts` | Role management via Custom Claims (PERF_001) |
+| `badges/` | `badge-helper.ts` | Badge unlock logic |
+| `cache/` | `leaderboard-cache.ts` | Server-side leaderboard caching |
+| `maintenance/` | `cleanup-old-logs.ts`, `compact-streaks.ts`, `keep-warm.ts`, `soft-delete.ts` | Scheduled maintenance tasks |
+| `middleware/` | `rate-limiter.ts`, `secure-callable-wrapper.ts` | Security middleware (rate limiting, App Check) |
+| `monitoring/` | `alerting.ts`, `collect-metrics.ts` | Alerting and metrics collection |
+| `notifications/` | `batch-sender.ts` | Batch notification delivery |
+| `season/` | `index.ts` | Season management, monthly resets |
+| `storage/` | `generate-thumbnails.ts` | Image thumbnail generation |
+| `utils/` | `retry-with-backoff.ts`, `soft-delete-helper.ts` | Shared utilities |
+| `validation/` | `index.ts` | Input validation helpers |
+| `voting/` | `mvp-voting.ts` | MVP/Bola Murcha voting logic |
+| `xp/` | `processing.ts`, `parallel-processing.ts`, `migration-example.ts` | XP calculation and batch processing |
+| `scripts/` | `migrate-custom-claims.ts` | One-time migration scripts |
+
+---
+
+## CI/CD Workflows (`.github/workflows/`)
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `android-ci.yml` | Push/PR | Build, lint, detekt, unit tests |
+| `pr-check.yml` | PR | Quick PR validation |
+| `functions-ci.yml` | Push/PR | Cloud Functions build + lint |
+| `deploy-beta.yml` | Manual/Tag | Firebase App Distribution beta deploy |
+| `deploy-production.yml` | Release | Google Play production deploy |
+| `release.yml` | Tag | Create GitHub release |
+| `version-bump.yml` | Manual | Bump version via script |
+| `ios-build.yml` | Push/PR | KMP iOS framework build (macOS runner) |
+| `codeql.yml` | Schedule/PR | Security vulnerability scanning |
+| `claude.yml` | Issue/PR | Claude Code AI assistance |
+| `claude-code-review.yml` | PR | Automated code review via Claude |
+| `pr-review-to-issues.yml` | PR review | Convert PR review comments to issues |
+| `issue-automation.yml` | Issue events | Auto-label and triage issues |
+| `sync-labels.yml` | Manual | Sync GitHub labels from config |
+
+---
+
+## Opus 4.6 Optimization
+
+This project is optimized for Claude Opus 4.6 (released Feb 5, 2026).
+
+### Key Opus 4.6 Capabilities Used
+
+| Feature | How This Project Uses It |
+|---------|--------------------------|
+| **1M token context** (beta) | Entire codebase (`:app` + `:shared` + `functions/`) fits in context for cross-layer analysis |
+| **128K output tokens** | Full-file generation for large screens, complete Cloud Function rewrites |
+| **Adaptive thinking** | Default `high` effort for implementation; use `max` for security rule audits |
+| **Context compaction** | Long sessions auto-summarize; CLAUDE.md + `.claude/rules/` survive compaction |
+| **Agent teams** | Parallel work on Compose + Cloud Functions + Security Rules (see below) |
+
+### Agent Teams (Research Preview)
+
+Teammates load CLAUDE.md and `.claude/rules/` automatically. Each teammate is a full Claude Code instance with its own context window.
+
+**Enable:**
+```json
+// .claude/settings.local.json
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  }
+}
+```
+
+**Best tasks for agent teams in this project:**
+
+| Team Pattern | Teammates | Use When |
+|-------------|-----------|----------|
+| **Cross-layer feature** | Frontend (Compose) + Backend (Functions) + Security (Rules) | New feature touching all layers (e.g., new game type) |
+| **KMP parallel** | `:shared/commonMain` + `:shared/androidMain` + `:shared/iosMain` | Adding shared domain models or repository interfaces |
+| **Security audit** | Firestore rules + Cloud Functions middleware + Client validation | Pre-release security review |
+| **Performance review** | Compose recompositions + Firestore queries + Cloud Functions | Performance optimization sprints |
+| **Competing hypotheses** | 3-5 investigators testing different theories | Debugging hard-to-reproduce bugs |
+
+**Example prompt for cross-layer feature:**
+```
+Create an agent team for the new "Game Templates" feature:
+- Teammate 1 (Compose): Build UI screens at ui/templates/
+- Teammate 2 (Functions): Build Cloud Functions at functions/src/templates/
+- Teammate 3 (Rules): Update firestore.rules for templates collection
+Require plan approval before implementation. Use Sonnet for each teammate.
+```
+
+**Project-specific guidance:**
+- Each teammate auto-loads `.claude/rules/` for domain patterns
+- **NEVER** let two teammates edit the same Screen/ViewModel pair simultaneously
+- Use **delegate mode** (Shift+Tab) when orchestrating 3+ module changes - prevents lead from implementing directly
+- Use Shift+Up/Down to select and message individual teammates
+- Keep 5-6 tasks per teammate for optimal throughput
+- Start with research/review teams before attempting parallel implementation
+- See `.claude/rules/agent-teams.md` for detailed team patterns
 
 ---
 
@@ -393,6 +488,7 @@ For in-depth guidance, see `.claude/rules/`:
 | `kotlin-style.md` | Naming, null safety, coroutines |
 | `testing.md` | Test structure, mocking, commands |
 | `security.md` | Secrets, encryption, Firestore rules |
+| `agent-teams.md` | Agent team patterns, file ownership, prompts |
 
 ---
 

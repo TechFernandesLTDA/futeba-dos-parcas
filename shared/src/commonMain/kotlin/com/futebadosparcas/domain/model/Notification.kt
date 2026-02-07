@@ -58,7 +58,7 @@ data class AppNotification(
      * Verifica se a notificação está expirada.
      */
     fun isExpired(): Boolean {
-        return expiresAt != null && expiresAt!! < Clock.System.now().toEpochMilliseconds()
+        return expiresAt != null && expiresAt < Clock.System.now().toEpochMilliseconds()
     }
 
     companion object {

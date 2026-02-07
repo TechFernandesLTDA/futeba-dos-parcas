@@ -5,39 +5,70 @@ on:
     tags:
       - 'v*.*.*'
 
+# Cancela execucoes anteriores
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-release:
     name: Build Release
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Grant execute permission
         run: chmod +x gradlew
 
+      - name: Create local.properties
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      - name: Create google-services.json placeholder
+        run: |
+          mkdir -p app
+          cat > app/google-services.json << 'GSEOF'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "placeholder",
+              "storage_bucket": "placeholder.appspot.com"
+            },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+                "android_client_info": { "package_name": "com.futebadosparcas" }
+              },
+              "api_key": [{ "current_key": "placeholder" }]
+            }]
+          }
+          GSEOF
+
       - name: Build Release AAB
-        run: ./gradlew bundleRelease
+        run: ./gradlew bundleRelease --no-daemon
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload AAB
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
           path: app/build/outputs/bundle/release/app-release.aab
 
       - name: Upload APK
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
           path: app/build/outputs/apk/release/app-release.apk
@@ -49,18 +80,18 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Download AAB
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           name: app-release-aab
           path: ./
 
       - name: Download APK
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           name: app-release-apk
           path: ./
@@ -68,7 +99,7 @@ jobs:
       - name: Generate Changelog
         id: changelog
         run: |
-          # Pegar commits desde última tag
+          # Pegar commits desde ultima tag
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -z "$PREVIOUS_TAG" ]; then
             CHANGELOG=$(git log --pretty=format:"- %s" --no-merges)
@@ -83,16 +114,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body: |
-            ## 🚀 Release ${{ github.ref_name }}
+            ## Release ${{ github.ref_name }}
 
-            ### 📝 Changelog
+            ### Changelog
             ${{ steps.changelog.outputs.changelog }}
 
-            ### 📦 Arquivos
+            ### Arquivos
             - **app-release.aab** - Para upload na Play Store
-            - **app-release.apk** - Para instalação direta
+            - **app-release.apk** - Para instalacao direta
 
-            ### 📱 Download
+            ### Download
             [Google Play Store](https://play.google.com/store/apps/details?id=com.futebadosparcas)
           files: |
             app-release.aab

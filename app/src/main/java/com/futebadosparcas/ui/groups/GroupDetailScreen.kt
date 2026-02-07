@@ -25,6 +25,8 @@ import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.components.AnimatedStateContainer
+import com.futebadosparcas.ui.components.StateType
 import com.futebadosparcas.data.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
@@ -203,34 +205,49 @@ fun GroupDetailScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            when (val state = uiState) {
-                is GroupDetailUiState.Loading -> LoadingState(
-                    shimmerCount = 6,
-                    itemType = LoadingItemType.LIST_ITEM
-                )
-                is GroupDetailUiState.Success -> GroupDetailContent(
-                    group = state.group,
-                    members = state.members,
-                    myRole = state.myRole,
-                    onRefresh = { viewModel.loadGroup(groupId) },
-                    onInviteClick = onNavigateToInvite,
-                    onCashboxClick = onNavigateToCashbox,
-                    onCreateGameClick = onNavigateToCreateGame,
-                    onMemberClick = onMemberClick,
-                    onPromoteMember = { viewModel.promoteMember(it) },
-                    onDemoteMember = { viewModel.demoteMember(it) },
-                    onRemoveMember = { viewModel.removeMember(it) }
-                )
-                is GroupDetailUiState.Error -> EmptyState(
-                    type = EmptyStateType.Error(
-                        title = stringResource(R.string.error),
-                        description = state.message,
-                        actionLabel = stringResource(R.string.retry),
-                        onRetry = { viewModel.loadGroup(groupId) }
+            // Transições animadas entre estados (fade + slide)
+            AnimatedStateContainer(
+                targetState = uiState,
+                stateMapper = { state ->
+                    when (state) {
+                        is GroupDetailUiState.Loading -> StateType.LOADING
+                        is GroupDetailUiState.Success -> StateType.SUCCESS
+                        is GroupDetailUiState.Error -> StateType.ERROR
+                        is GroupDetailUiState.LeftGroup -> StateType.SUCCESS
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+                label = "groupDetailStateTransition"
+            ) { currentState ->
+                when (currentState) {
+                    is GroupDetailUiState.Loading -> LoadingState(
+                        shimmerCount = 6,
+                        itemType = LoadingItemType.LIST_ITEM
                     )
-                )
-                is GroupDetailUiState.LeftGroup -> {
-                    // O LaunchedEffect acima já navegou de volta
+                    is GroupDetailUiState.Success -> GroupDetailContent(
+                        group = currentState.group,
+                        members = currentState.members,
+                        myRole = currentState.myRole,
+                        onRefresh = { viewModel.loadGroup(groupId) },
+                        onInviteClick = onNavigateToInvite,
+                        onCashboxClick = onNavigateToCashbox,
+                        onCreateGameClick = onNavigateToCreateGame,
+                        onMemberClick = onMemberClick,
+                        onPromoteMember = { viewModel.promoteMember(it) },
+                        onDemoteMember = { viewModel.demoteMember(it) },
+                        onRemoveMember = { viewModel.removeMember(it) }
+                    )
+                    is GroupDetailUiState.Error -> EmptyState(
+                        type = EmptyStateType.Error(
+                            title = stringResource(R.string.error),
+                            description = currentState.message,
+                            actionLabel = stringResource(R.string.retry),
+                            onRetry = { viewModel.loadGroup(groupId) }
+                        )
+                    )
+                    is GroupDetailUiState.LeftGroup -> {
+                        // O LaunchedEffect acima já navegou de volta
+                    }
                 }
             }
 
@@ -319,7 +336,7 @@ private fun GroupDetailTopBar(
                             onInviteClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.PersonAdd, contentDescription = null)
+                            Icon(Icons.Default.PersonAdd, contentDescription = stringResource(R.string.cd_invite_player))
                         }
                     )
                 }
@@ -332,7 +349,7 @@ private fun GroupDetailTopBar(
                         onCashboxClick()
                     },
                     leadingIcon = {
-                        Icon(Icons.Default.AccountBalanceWallet, contentDescription = null)
+                        Icon(Icons.Default.AccountBalanceWallet, contentDescription = stringResource(R.string.cd_cashbox))
                     }
                 )
 
@@ -345,7 +362,7 @@ private fun GroupDetailTopBar(
                             onCreateGameClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Add, contentDescription = null)
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_game))
                         }
                     )
                 }
@@ -361,7 +378,7 @@ private fun GroupDetailTopBar(
                             onEditClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Edit, contentDescription = null)
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_edit_group))
                         }
                     )
                 }
@@ -375,7 +392,7 @@ private fun GroupDetailTopBar(
                             onTransferOwnershipClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.SwapHoriz, contentDescription = null)
+                            Icon(Icons.Default.SwapHoriz, contentDescription = stringResource(R.string.cd_transfer_ownership))
                         }
                     )
                 }
@@ -389,7 +406,7 @@ private fun GroupDetailTopBar(
                             onLeaveGroupClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = stringResource(R.string.cd_leave_group))
                         }
                     )
                 }
@@ -403,7 +420,7 @@ private fun GroupDetailTopBar(
                             onArchiveGroupClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Archive, contentDescription = null)
+                            Icon(Icons.Default.Archive, contentDescription = stringResource(R.string.cd_archive_group))
                         }
                     )
                 }
@@ -417,7 +434,7 @@ private fun GroupDetailTopBar(
                             onDeleteGroupClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Delete, contentDescription = null)
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete_group))
                         },
                         colors = MenuDefaults.itemColors(
                             textColor = MaterialTheme.colorScheme.error

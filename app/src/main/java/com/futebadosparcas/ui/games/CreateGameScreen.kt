@@ -380,7 +380,7 @@ private fun CreateGameContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Warning,
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.cd_error_warning),
                             tint = MaterialTheme.colorScheme.error
                         )
                         Text(
@@ -524,7 +524,7 @@ private fun CreateGameContent(
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.DateRange,
-                    contentDescription = null
+                    contentDescription = stringResource(R.string.cd_select_date)
                 )
             },
             modifier = Modifier
@@ -551,7 +551,7 @@ private fun CreateGameContent(
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Schedule,
-                        contentDescription = null
+                        contentDescription = stringResource(R.string.cd_select_start_time)
                     )
                 },
                 modifier = Modifier
@@ -574,7 +574,7 @@ private fun CreateGameContent(
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Schedule,
-                        contentDescription = null
+                        contentDescription = stringResource(R.string.cd_select_end_time)
                     )
                 },
                 modifier = Modifier

@@ -125,7 +125,7 @@ private fun GameEventCard(
             ) {
                 Icon(
                     imageVector = getEventIcon(event.eventType),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.cd_event_type_icon),
                     modifier = Modifier
                         .size(40.dp)
                         .padding(8.dp),

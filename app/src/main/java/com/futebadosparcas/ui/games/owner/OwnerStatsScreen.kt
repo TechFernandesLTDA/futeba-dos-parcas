@@ -24,6 +24,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.model.GameStatus
+import com.futebadosparcas.ui.components.states.LoadingState
+import com.futebadosparcas.ui.components.states.LoadingItemType
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -68,14 +70,7 @@ fun OwnerStatsScreen(
         }
     ) { paddingValues ->
         if (isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            LoadingState(shimmerCount = 6, itemType = LoadingItemType.CARD)
         } else {
             LazyColumn(
                 modifier = Modifier

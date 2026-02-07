@@ -13,9 +13,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.futebadosparcas.domain.model.AppThemeConfig
 import com.futebadosparcas.domain.model.ThemeMode
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.ui.theme.ThemeViewModel
 import androidx.compose.ui.platform.LocalInspectionMode
 
@@ -43,7 +43,7 @@ fun FutebaTheme(
     } else {
         // Em runtime, usa o ViewModel injetado
         val viewModel: ThemeViewModel = hiltViewModel()
-        val state by viewModel.themeConfig.collectAsState()
+        val state by viewModel.themeConfig.collectAsStateWithLifecycle()
         state
     }
 
