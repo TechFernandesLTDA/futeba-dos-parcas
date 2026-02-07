@@ -41,6 +41,8 @@ import com.futebadosparcas.ui.components.FieldImage
 import com.futebadosparcas.ui.components.LocationHeaderImage
 import com.futebadosparcas.ui.components.design.AppTopBar
 import com.futebadosparcas.ui.components.input.CepVisualTransformation
+import com.futebadosparcas.ui.components.states.LoadingState
+import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.ui.navigation.components.SecondaryTopBar
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -170,7 +172,7 @@ fun LocationDetailScreen(
                 title = { Text(stringResource(R.string.location_detail_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
                 actions = {
@@ -195,7 +197,7 @@ fun LocationDetailScreen(
                             )
                         }
                     }) {
-                        Icon(Icons.Default.Save, contentDescription = null)
+                        Icon(Icons.Default.Save, contentDescription = stringResource(R.string.cd_save))
                     }
                 }
             )
@@ -211,11 +213,9 @@ fun LocationDetailScreen(
             }
         }
     ) { paddingValues ->
-        
+
         if (uiState is LocationDetailUiState.Loading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            LoadingState(shimmerCount = 4, itemType = LoadingItemType.LOCATION_CARD)
         } else {
             Column(
                 modifier = Modifier
@@ -246,7 +246,7 @@ fun LocationDetailScreen(
                             enabled = false,
                             trailingIcon = {
                                 IconButton(onClick = { ownerDropdownExpanded = true }) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, Modifier.rotate(270f))
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_dropdown), Modifier.rotate(270f))
                                 }
                             },
                             modifier = Modifier
@@ -367,7 +367,7 @@ fun LocationDetailScreen(
                         visualTransformation = CepVisualTransformation.Instance
                     )
                     Button(onClick = { viewModel.searchCep(cep) }) {
-                        Icon(Icons.Default.Search, contentDescription = null)
+                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search_cep))
                         Text(stringResource(R.string.search))
                     }
                 }
@@ -436,7 +436,7 @@ fun LocationDetailScreen(
                             onClick = { viewModel.updateCoordinates("$street, $number - $city") },
                             modifier = Modifier.align(Alignment.End)
                         ) {
-                            Icon(Icons.Default.Refresh, contentDescription = null)
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cd_update_coordinates))
                             Spacer(Modifier.width(4.dp))
                             Text(stringResource(R.string.location_detail_update_coords))
                         }
@@ -539,7 +539,7 @@ fun FieldDialog(
                         readOnly = true,
                         trailingIcon = {
                              IconButton(onClick = { expanded = true }) {
-                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, Modifier.rotate(270f))
+                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_dropdown), Modifier.rotate(270f))
                              }
                         },
                         modifier = Modifier.fillMaxWidth()

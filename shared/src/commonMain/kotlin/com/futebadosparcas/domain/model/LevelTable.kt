@@ -62,31 +62,31 @@ object LevelTable {
      */
     private val defaultLevels = listOf(
         // FASE 1: Iniciante (0-10) - ~1,5 anos jogando 1x/sem
-        LevelDefinition(0, 0L, "Novato", levelPhrases[0]!!),
-        LevelDefinition(1, 100L, "Iniciante", levelPhrases[1]!!),
-        LevelDefinition(2, 350L, "Amador", levelPhrases[2]!!),
-        LevelDefinition(3, 850L, "Regular", levelPhrases[3]!!),
-        LevelDefinition(4, 1850L, "Experiente", levelPhrases[4]!!),
-        LevelDefinition(5, 3850L, "Habilidoso", levelPhrases[5]!!),
-        LevelDefinition(6, 7350L, "Profissional", levelPhrases[6]!!),
-        LevelDefinition(7, 12850L, "Expert", levelPhrases[7]!!),
-        LevelDefinition(8, 20850L, "Mestre", levelPhrases[8]!!),
-        LevelDefinition(9, 32850L, "Lenda", levelPhrases[9]!!),
-        LevelDefinition(10, 52850L, "Imortal", levelPhrases[10]!!),
+        LevelDefinition(0, 0L, "Novato", levelPhrases.getValue(0)),
+        LevelDefinition(1, 100L, "Iniciante", levelPhrases.getValue(1)),
+        LevelDefinition(2, 350L, "Amador", levelPhrases.getValue(2)),
+        LevelDefinition(3, 850L, "Regular", levelPhrases.getValue(3)),
+        LevelDefinition(4, 1850L, "Experiente", levelPhrases.getValue(4)),
+        LevelDefinition(5, 3850L, "Habilidoso", levelPhrases.getValue(5)),
+        LevelDefinition(6, 7350L, "Profissional", levelPhrases.getValue(6)),
+        LevelDefinition(7, 12850L, "Expert", levelPhrases.getValue(7)),
+        LevelDefinition(8, 20850L, "Mestre", levelPhrases.getValue(8)),
+        LevelDefinition(9, 32850L, "Lenda", levelPhrases.getValue(9)),
+        LevelDefinition(10, 52850L, "Imortal", levelPhrases.getValue(10)),
 
         // FASE 2: Lendas do Futebol (11-20) - ~1,5 anos adicionais
         // Níveis 11-20 usam o mesmo badge do Imortal (nível 10)
         // Nomes em ordem crescente de fama, culminando com Pelé
-        LevelDefinition(11, 75000L, "Garrincha", levelPhrases[11]!!),
-        LevelDefinition(12, 100000L, "Zico", levelPhrases[12]!!),
-        LevelDefinition(13, 128000L, "Cruyff", levelPhrases[13]!!),
-        LevelDefinition(14, 160000L, "Beckham", levelPhrases[14]!!),
-        LevelDefinition(15, 198000L, "Ronaldinho", levelPhrases[15]!!),
-        LevelDefinition(16, 242000L, "Ronaldo Fenômeno", levelPhrases[16]!!),
-        LevelDefinition(17, 295000L, "Messi", levelPhrases[17]!!),
-        LevelDefinition(18, 360000L, "Cristiano Ronaldo", levelPhrases[18]!!),
-        LevelDefinition(19, 440000L, "Diego Maradona", levelPhrases[19]!!),
-        LevelDefinition(20, 528500L, "Pelé", levelPhrases[20]!!)
+        LevelDefinition(11, 75000L, "Garrincha", levelPhrases.getValue(11)),
+        LevelDefinition(12, 100000L, "Zico", levelPhrases.getValue(12)),
+        LevelDefinition(13, 128000L, "Cruyff", levelPhrases.getValue(13)),
+        LevelDefinition(14, 160000L, "Beckham", levelPhrases.getValue(14)),
+        LevelDefinition(15, 198000L, "Ronaldinho", levelPhrases.getValue(15)),
+        LevelDefinition(16, 242000L, "Ronaldo Fenômeno", levelPhrases.getValue(16)),
+        LevelDefinition(17, 295000L, "Messi", levelPhrases.getValue(17)),
+        LevelDefinition(18, 360000L, "Cristiano Ronaldo", levelPhrases.getValue(18)),
+        LevelDefinition(19, 440000L, "Diego Maradona", levelPhrases.getValue(19)),
+        LevelDefinition(20, 528500L, "Pelé", levelPhrases.getValue(20))
     )
 
     /**

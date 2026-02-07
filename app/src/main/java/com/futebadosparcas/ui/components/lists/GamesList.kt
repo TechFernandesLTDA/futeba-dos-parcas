@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.runtime.remember
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.data.model.Game
@@ -115,6 +116,7 @@ fun GamesList(
 
 /**
  * Card de jogo com design premium e gamificado.
+ * Otimizado para performance: consolidados Rows, remember para cálculos, extração de badges.
  */
 @Composable
 fun GameCard(
@@ -122,6 +124,17 @@ fun GameCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Calcular cor de vagas apenas quando necessário
+    val errorColor = MaterialTheme.colorScheme.error
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val vacancyColor = remember(game.playersCount, game.maxPlayers, errorColor, primaryColor) {
+        when {
+            game.playersCount >= game.maxPlayers -> errorColor
+            game.playersCount >= game.maxPlayers * 0.8 -> com.futebadosparcas.ui.theme.GameStatusColors.Warning
+            else -> primaryColor
+        }
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -138,136 +151,163 @@ fun GameCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Header: Data e Status
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Data e horário
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.CalendarToday,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${game.date} - ${game.time}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Status badge
-                GameStatusBadge(status = game.getStatusEnum())
-            }
+            // Header: Data e Status (consolidado em uma Row)
+            GameCardHeader(game)
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Local
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Place,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = game.locationName.ifEmpty { "Local não definido" },
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            // Endereço
-            if (game.locationAddress.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = game.locationAddress,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(start = 24.dp)
-                )
-            }
+            // Local e Endereço (consolidado)
+            GameCardLocation(game)
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Footer: Vagas e Preço
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Vagas
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.People,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    val vacancyColor = when {
-                        game.playersCount >= game.maxPlayers -> MaterialTheme.colorScheme.error
-                        game.playersCount >= game.maxPlayers * 0.8 -> com.futebadosparcas.ui.theme.GameStatusColors.Warning
-                        else -> MaterialTheme.colorScheme.primary
-                    }
-
-                    Text(
-                        text = "${game.playersCount}/${game.maxPlayers} jogadores",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = vacancyColor,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                // Preço
-                if (game.dailyPrice > 0) {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Text(
-                            text = "R$ %.2f".format(game.dailyPrice),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-            }
+            // Footer: Vagas e Preço (consolidado)
+            GameCardFooter(game, vacancyColor)
 
             // Grupo (se houver)
             if (!game.groupName.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Group,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.tertiary
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = game.groupName.orEmpty(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                GameCardGroupBadge(game.groupName.orEmpty())
             }
         }
+    }
+}
+
+/**
+ * Header do card: data/hora e status badge.
+ * Consolidado em uma Row para menos composables aninhados.
+ */
+@Composable
+private fun GameCardHeader(game: Game) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Data e horário (sem Row aninhado, direto)
+        Icon(
+            imageVector = Icons.Default.CalendarToday,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = "${game.date} - ${game.time}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+
+        // Status badge
+        GameStatusBadge(status = game.getStatusEnum())
+    }
+}
+
+/**
+ * Local e endereço do card.
+ */
+@Composable
+private fun GameCardLocation(game: Game) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Place,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = game.locationName.ifEmpty { "Local não definido" },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        // Endereço (indentado)
+        if (game.locationAddress.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = game.locationAddress,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(start = 24.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Footer do card: vagas e preço (consolidado).
+ */
+@Composable
+private fun GameCardFooter(game: Game, vacancyColor: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Vagas (sem Row aninhado)
+        Icon(
+            imageVector = Icons.Default.People,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = "${game.playersCount}/${game.maxPlayers} jogadores",
+            style = MaterialTheme.typography.bodySmall,
+            color = vacancyColor,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+
+        // Preço
+        if (game.dailyPrice > 0) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Text(
+                    text = "R$ %.2f".format(game.dailyPrice),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Badge do grupo (extras no footer).
+ */
+@Composable
+private fun GameCardGroupBadge(groupName: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = Icons.Default.Group,
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.tertiary
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = groupName,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.tertiary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

@@ -28,16 +28,17 @@ class GameTeamRepositoryImpl(
         balanceTeams: Boolean
     ): Result<List<Team>> {
         return try {
-            // Fetch existing teams to delete in the same batch
+            // P1 #12: Limit 10 - maximo realista de times por jogo
             val existingTeamsSnapshot = teamsCollection
                 .whereEqualTo("game_id", gameId)
+                .limit(10)
                 .get()
                 .await()
 
             val confirmationsResult = confirmationRepository.getGameConfirmations(gameId)
-            if (confirmationsResult.isFailure) return Result.failure(confirmationsResult.exceptionOrNull()!!)
+            if (confirmationsResult.isFailure) return Result.failure(confirmationsResult.exceptionOrNull() ?: Exception("Erro ao buscar confirmações"))
 
-            val allPlayers = confirmationsResult.getOrNull()!!
+            val allPlayers = confirmationsResult.getOrNull() ?: emptyList()
 
             // Prepare Teams containers
             val teamPlayerLists = List(numberOfTeams) { mutableListOf<String>() }
@@ -110,8 +111,10 @@ class GameTeamRepositoryImpl(
 
     override suspend fun getGameTeams(gameId: String): Result<List<Team>> {
         return try {
+            // P1 #12: Limit 10 - maximo realista de times por jogo
             val snapshot = teamsCollection
                 .whereEqualTo("game_id", gameId)
+                .limit(10)
                 .get()
                 .await()
 
@@ -125,8 +128,10 @@ class GameTeamRepositoryImpl(
     }
 
     override fun getGameTeamsFlow(gameId: String): Flow<Result<List<Team>>> = callbackFlow {
+        // P1 #12: Limit 10 no listener real-time
         val subscription = teamsCollection
             .whereEqualTo("game_id", gameId)
+            .limit(10)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
                     trySend(Result.failure(e))
@@ -143,8 +148,10 @@ class GameTeamRepositoryImpl(
 
     override suspend fun clearGameTeams(gameId: String): Result<Unit> {
         return try {
+            // P1 #12: Limit 10 - maximo realista para delete de times
             val snapshot = teamsCollection
                 .whereEqualTo("game_id", gameId)
+                .limit(10)
                 .get()
                 .await()
 

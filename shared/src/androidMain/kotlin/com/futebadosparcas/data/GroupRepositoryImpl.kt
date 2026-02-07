@@ -242,7 +242,8 @@ class GroupRepositoryImpl(
                 return Result.failure(userResult.exceptionOrNull() ?: Exception("Falha ao obter dados do usuario"))
             }
 
-            val user = userResult.getOrNull()!!
+            val user = userResult.getOrNull()
+                ?: return Result.failure(Exception("Dados do usuário não encontrados"))
             firebaseDataSource.joinGroupByInviteCode(inviteCode, userId, user.name, user.photoUrl)
         } catch (e: Exception) {
             PlatformLogger.e(TAG, "Erro ao entrar com código", e)

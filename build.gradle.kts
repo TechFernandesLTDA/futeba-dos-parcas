@@ -24,6 +24,8 @@ allprojects {
 
     detekt {
         config.setFrom(files("$rootDir/detekt.yml"))
+        // Baseline com violações pré-existentes - novas violações ainda falham o build
+        baseline = file("$projectDir/detekt-baseline.xml")
         buildUponDefaultConfig = true
         allRules = false
     }

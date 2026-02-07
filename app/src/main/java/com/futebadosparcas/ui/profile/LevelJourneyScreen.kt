@@ -670,7 +670,7 @@ private fun LevelJourneyItemContent(
                 // Mostrar XP necessário
                 Text(
                     text = if (isUnlocked) {
-                        "stringResource(R.string.level_journey_unlocked)"
+                        stringResource(R.string.level_journey_unlocked)
                     } else {
                         "$xpRequired XP"
                     },

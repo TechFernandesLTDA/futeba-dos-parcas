@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,6 +30,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
+import com.futebadosparcas.ui.components.AnimatedStateContainer
+import com.futebadosparcas.ui.components.StateType
 import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.ui.components.FutebaTopBar
@@ -84,33 +87,47 @@ fun GamesScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            when (uiState) {
-                is GamesUiState.Loading -> {
-                    GamesLoadingState()
-                }
-                is GamesUiState.Success -> {
-                    val state = uiState as GamesUiState.Success
-                    GamesSuccessContent(
-                        games = state.games,
-                        onGameClick = onGameClick,
-                        onFilterChange = { filterType ->
-                            viewModel.loadGames(filterType)
-                        }
-                    )
-                }
-                is GamesUiState.Empty -> {
-                    GamesEmptyState(
-                        onCreateGameClick = onCreateGameClick
-                    )
-                }
-                is GamesUiState.Error -> {
-                    val state = uiState as GamesUiState.Error
-                    GamesErrorState(
-                        message = state.message,
-                        onRetry = {
-                            viewModel.loadGames()
-                        }
-                    )
+            // Transições animadas entre estados (fade + slide)
+            AnimatedStateContainer(
+                targetState = uiState,
+                stateMapper = { state ->
+                    when (state) {
+                        is GamesUiState.Loading -> StateType.LOADING
+                        is GamesUiState.Success -> StateType.SUCCESS
+                        is GamesUiState.Empty -> StateType.EMPTY
+                        is GamesUiState.Error -> StateType.ERROR
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+                label = "gamesStateTransition"
+            ) { currentState ->
+                when (currentState) {
+                    is GamesUiState.Loading -> {
+                        GamesLoadingState()
+                    }
+                    is GamesUiState.Success -> {
+                        GamesSuccessContent(
+                            games = currentState.games,
+                            onGameClick = onGameClick,
+                            viewModel = viewModel,
+                            onFilterChange = { filterType ->
+                                viewModel.loadGames(filterType)
+                            }
+                        )
+                    }
+                    is GamesUiState.Empty -> {
+                        GamesEmptyState(
+                            onCreateGameClick = onCreateGameClick
+                        )
+                    }
+                    is GamesUiState.Error -> {
+                        GamesErrorState(
+                            message = currentState.message,
+                            onRetry = {
+                                viewModel.loadGames()
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -124,9 +141,17 @@ fun GamesScreen(
 private fun GamesSuccessContent(
     games: List<GameWithConfirmations>,
     onGameClick: (gameId: String) -> Unit,
-    onFilterChange: (GameFilterType) -> Unit
+    onFilterChange: (GameFilterType) -> Unit,
+    viewModel: GamesViewModel
 ) {
     var selectedFilter by remember { mutableStateOf(GameFilterType.ALL) }
+
+    // Prefetch detalhes dos primeiros 5 jogos quando a lista é carregada
+    LaunchedEffect(games) {
+        if (games.isNotEmpty()) {
+            viewModel.prefetchGameDetails(games)
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -368,7 +393,7 @@ private fun GamesLoadingState() {
 }
 
 /**
- * Estado vazio
+ * Estado vazio - Nenhum jogo agendado com CTA para criar jogo
  */
 @Composable
 private fun GamesEmptyState(
@@ -377,36 +402,47 @@ private fun GamesEmptyState(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.EventNote,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+            modifier = Modifier.size(96.dp),
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(R.string.no_games),
+            text = stringResource(R.string.empty_state_no_games_title_generic),
             style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
         )
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = stringResource(R.string.no_games_description),
-            style = MaterialTheme.typography.bodyMedium,
+            text = stringResource(R.string.empty_state_no_games_desc_generic),
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(vertical = 16.dp)
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .padding(bottom = 24.dp)
         )
 
-        Button(onClick = onCreateGameClick) {
+        FilledTonalButton(
+            onClick = onCreateGameClick,
+            modifier = Modifier
+                .fillMaxWidth(0.6f)
+                .height(48.dp)
+        ) {
             Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_game), modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.create_game))
+            Text(stringResource(R.string.empty_state_no_games_action))
         }
     }
 }

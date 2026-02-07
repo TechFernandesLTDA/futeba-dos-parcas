@@ -358,17 +358,17 @@ private fun CashboxTopBar(
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.cashbox_all)) },
                         onClick = onFilterAll,
-                        leadingIcon = { Icon(Icons.Default.FilterList, contentDescription = null) }
+                        leadingIcon = { Icon(Icons.Default.FilterList, contentDescription = stringResource(R.string.cd_filter_all)) }
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.cashbox_income_short)) },
                         onClick = onFilterIncome,
-                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null) }
+                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = stringResource(R.string.cd_filter_income)) }
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.cashbox_expense_short)) },
                         onClick = onFilterExpense,
-                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingDown, contentDescription = null) }
+                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingDown, contentDescription = stringResource(R.string.cd_filter_expense)) }
                     )
                 }
             }
@@ -391,12 +391,12 @@ private fun CashboxTopBar(
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.cashbox_totals_by_category)) },
                         onClick = onReportByCategory,
-                        leadingIcon = { Icon(Icons.Default.Category, contentDescription = null) }
+                        leadingIcon = { Icon(Icons.Default.Category, contentDescription = stringResource(R.string.cd_report_by_category)) }
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.cashbox_totals_by_player)) },
                         onClick = onReportByPlayer,
-                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) }
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = stringResource(R.string.cd_report_by_player)) }
                     )
                 }
             }
@@ -523,7 +523,7 @@ private fun FilterChips(
             onClick = onFilterAll,
             label = { Text(stringResource(R.string.cashbox_all)) },
             leadingIcon = if (currentFilter == null) {
-                { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(18.dp)) }
+                { Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected), Modifier.size(18.dp)) }
             } else null
         )
 
@@ -532,7 +532,7 @@ private fun FilterChips(
             onClick = onFilterIncome,
             label = { Text(stringResource(R.string.cashbox_income_short)) },
             leadingIcon = if (currentFilter?.type == CashboxEntryType.INCOME) {
-                { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(18.dp)) }
+                { Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected), Modifier.size(18.dp)) }
             } else null
         )
 
@@ -541,7 +541,7 @@ private fun FilterChips(
             onClick = onFilterExpense,
             label = { Text(stringResource(R.string.cashbox_expense_short)) },
             leadingIcon = if (currentFilter?.type == CashboxEntryType.EXPENSE) {
-                { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(18.dp)) }
+                { Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected), Modifier.size(18.dp)) }
             } else null
         )
     }

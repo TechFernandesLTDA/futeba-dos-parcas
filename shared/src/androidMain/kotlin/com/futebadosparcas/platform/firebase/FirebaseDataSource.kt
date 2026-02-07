@@ -944,7 +944,8 @@ actual class FirebaseDataSource(
             } else {
                 android.util.Log.d("FirebaseDataSource", "User document DOES NOT EXIST - creating new user")
                 // Criar usuario automaticamente se nao existir
-                val firebaseUser = auth.currentUser!!
+                val firebaseUser = auth.currentUser
+                    ?: return Result.failure(Exception("Usuário não autenticado"))
                 val newUser = User(
                     id = uid,
                     email = firebaseUser.email ?: "",
@@ -2508,7 +2509,7 @@ actual class FirebaseDataSource(
                 if (uploadResult.isSuccess) {
                     entry.copy(receiptUrl = uploadResult.getOrNull())
                 } else {
-                    return Result.failure(uploadResult.exceptionOrNull()!!)
+                    return Result.failure(uploadResult.exceptionOrNull() ?: Exception("Erro ao fazer upload do comprovante"))
                 }
             } else {
                 entry
@@ -3415,7 +3416,7 @@ actual class FirebaseDataSource(
             val now = System.currentTimeMillis()
             val notifications = snapshot.documents
                 .mapNotNull { it.toAppNotificationOrNull() }
-                .filter { it.requiresResponse() && (it.expiresAt == null || it.expiresAt!! > now) }
+                .filter { it.requiresResponse() && (it.expiresAt == null || it.expiresAt > now) }
 
             Result.success(notifications)
         } catch (e: Exception) {
@@ -4167,7 +4168,8 @@ actual class FirebaseDataSource(
 
             if (!existingSnapshot.isEmpty) {
                 val existing = existingSnapshot.documents.first()
-                    .toLocationOrNull()!!
+                    .toLocationOrNull()
+                    ?: return Result.failure(Exception("Erro ao converter local existente"))
                 return Result.success(existing)
             }
 
@@ -4251,7 +4253,8 @@ actual class FirebaseDataSource(
                 .await()
 
             if (!existing.isEmpty) {
-                val location = existing.documents.first().toLocationOrNull()!!
+                val location = existing.documents.first().toLocationOrNull()
+                    ?: return Result.failure(Exception("Erro ao converter local Ginásio Apollo"))
                 return Result.success(location)
             }
 
@@ -4324,7 +4327,7 @@ actual class FirebaseDataSource(
                 ?: return Result.failure(Exception("Usuário não autenticado para migração"))
 
             val allLocationsResult = getAllLocations()
-            if (allLocationsResult.isFailure) return Result.failure(allLocationsResult.exceptionOrNull()!!)
+            if (allLocationsResult.isFailure) return Result.failure(allLocationsResult.exceptionOrNull() ?: Exception("Erro ao buscar locais para migração"))
 
             val allLocations = allLocationsResult.getOrNull() ?: emptyList()
             var processedCount = 0
@@ -4415,7 +4418,7 @@ actual class FirebaseDataSource(
     actual suspend fun deduplicateLocations(): Result<Int> {
         return try {
             val allLocationsResult = getAllLocations()
-            if (allLocationsResult.isFailure) return Result.failure(allLocationsResult.exceptionOrNull()!!)
+            if (allLocationsResult.isFailure) return Result.failure(allLocationsResult.exceptionOrNull() ?: Exception("Erro ao buscar locais para deduplicação"))
             val allLocations = allLocationsResult.getOrNull() ?: emptyList()
 
             fun String.normalize(): String {

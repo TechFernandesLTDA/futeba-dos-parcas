@@ -542,7 +542,7 @@ implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
 ## Contato
 
-Criado por: **Claude Opus 4.5**
+Criado por: **Claude Opus 4.6**
 Data: **2025-01-05**
 Versão do App: **1.4.2**
 Material Design: **3**

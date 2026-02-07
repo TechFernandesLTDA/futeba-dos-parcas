@@ -91,7 +91,7 @@ fun ManageLocationsScreen(
                 title = { Text(stringResource(R.string.manage_locations)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
                 actions = {
@@ -117,7 +117,7 @@ fun ManageLocationsScreen(
                                     showSeedDialog = true
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Upload, contentDescription = null)
+                                    Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.cd_upload))
                                 }
                             )
 
@@ -128,7 +128,7 @@ fun ManageLocationsScreen(
                                     showDeduplicateDialog = true
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.DeleteSweep, contentDescription = null)
+                                    Icon(Icons.Default.DeleteSweep, contentDescription = stringResource(R.string.cd_remove_duplicates))
                                 }
                             )
                         }
@@ -427,7 +427,7 @@ private fun LocationCard(
                 ) {
                     IconButton(
                         onClick = onLocationClick,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             Icons.Default.Edit,
@@ -439,7 +439,7 @@ private fun LocationCard(
 
                     IconButton(
                         onClick = onDeleteLocation,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             Icons.Default.Delete,
@@ -532,7 +532,7 @@ private fun FieldRow(
 
         IconButton(
             onClick = onDelete,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(48.dp)
         ) {
             Icon(
                 Icons.Default.Close,
@@ -584,7 +584,7 @@ private fun ManageLocationsEmptyState(
             onClick = onCreateClick,
             modifier = Modifier.padding(top = 16.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_location), modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.add_location))
         }

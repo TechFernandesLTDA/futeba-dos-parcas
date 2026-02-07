@@ -3,6 +3,7 @@ package com.futebadosparcas.di
 import android.content.Context
 import androidx.room.Room
 import com.futebadosparcas.data.local.AppDatabase
+import com.futebadosparcas.data.local.SearchHistoryDao
 import com.futebadosparcas.data.local.dao.GameDao
 import com.futebadosparcas.data.local.dao.LocationSyncDao
 import com.futebadosparcas.data.local.dao.UserDao
@@ -28,7 +29,8 @@ object DatabaseModule {
             .addMigrations(
                 AppDatabase.MIGRATION_1_2,
                 AppDatabase.MIGRATION_2_3,
-                AppDatabase.MIGRATION_3_4
+                AppDatabase.MIGRATION_3_4,
+                AppDatabase.MIGRATION_4_5
             )
             .fallbackToDestructiveMigration() // Fallback para versoes muito antigas
             .build()
@@ -52,5 +54,10 @@ object DatabaseModule {
     @Provides
     fun provideGroupDao(database: AppDatabase): com.futebadosparcas.data.local.dao.GroupDao {
         return database.groupDao()
+    }
+
+    @Provides
+    fun provideSearchHistoryDao(database: AppDatabase): SearchHistoryDao {
+        return database.searchHistoryDao()
     }
 }

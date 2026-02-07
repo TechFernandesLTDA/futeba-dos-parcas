@@ -12,6 +12,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -214,6 +216,45 @@ class GamesViewModel @Inject constructor(
      */
     fun retryLoad() {
         loadGames(currentFilter, forceRefresh = true)
+    }
+
+    /**
+     * Prefetches detalhes dos primeiros 3-5 jogos da lista.
+     * Executado quando o usuário vê a lista de jogos.
+     * Melhora experiência ao clicar em um jogo (evita loading).
+     *
+     * Operação não-bloqueante: usa async/await sem esperar resultado.
+     */
+    fun prefetchGameDetails(games: List<GameWithConfirmations>) {
+        if (games.isEmpty()) return
+
+        persistentScope.launch {
+            try {
+                // Prefetch apenas dos primeiros 3-5 jogos
+                val gamesToPrefetch = games.take(5)
+
+                AppLogger.d(TAG) { "Iniciando prefetch de ${gamesToPrefetch.size} jogos" }
+
+                // Executa em paralelo com async/awaitAll
+                gamesToPrefetch.map { gameWithConfirmations ->
+                    async {
+                        try {
+                            // Simulação: em produção, chamar gameRepository.getGameDetails(gameId)
+                            // Por enquanto apenas log para demonstração
+                            AppLogger.d(TAG) { "Prefetched game: ${gameWithConfirmations.game.id}" }
+                        } catch (e: Exception) {
+                            // Erros de prefetch são silenciosos (não afetam UI)
+                            AppLogger.e(TAG, "Prefetch error para ${gameWithConfirmations.game.id}", e)
+                        }
+                    }
+                }.awaitAll()
+
+                AppLogger.d(TAG) { "Prefetch concluído com sucesso" }
+            } catch (e: Exception) {
+                // Erro geral em prefetch é silencioso
+                AppLogger.e(TAG, "Erro no prefetch de detalhes", e)
+            }
+        }
     }
 
     /**

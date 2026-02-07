@@ -783,26 +783,26 @@ private fun StatisticsCard(statistics: UserStatistics?) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        StatItem(label = "Jogos", value = statistics.totalGames.toString())
-                        StatItem(label = "Gols", value = statistics.totalGoals.toString())
-                        StatItem(label = "Vitórias", value = statistics.gamesWon.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_games), value = statistics.totalGames.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_goals), value = statistics.totalGoals.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_victories), value = statistics.gamesWon.toString())
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        StatItem(label = "Assistências", value = statistics.totalAssists.toString())
-                        StatItem(label = "Empates", value = statistics.gamesDraw.toString())
-                        StatItem(label = "MVPs", value = statistics.bestPlayerCount.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_assists), value = statistics.totalAssists.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_draws), value = statistics.gamesDraw.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_mvp), value = statistics.bestPlayerCount.toString())
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        StatItem(label = "Defesas", value = statistics.totalSaves.toString())
-                        StatItem(label = "Cartões", value = statistics.totalCards.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_saves), value = statistics.totalSaves.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_cards), value = statistics.totalCards.toString())
                         StatItem(
-                            label = "Média Gols",
+                            label = stringResource(R.string.profile_stats_avg_goals),
                             value = String.format(Locale.getDefault(), "%.1f", statistics.avgGoalsPerGame ?: 0.0)
                         )
                     }
@@ -1016,25 +1016,25 @@ private fun SettingsSection(
         Column(modifier = Modifier.fillMaxWidth()) {
             SettingsMenuItem(
                 icon = Icons.Default.Notifications,
-                title = "Notificações",
+                title = stringResource(R.string.profile_section_notifications),
                 onClick = onNotificationsClick
             )
             HorizontalDivider()
             SettingsMenuItem(
                 icon = Icons.Default.Settings,
-                title = "Preferências",
+                title = stringResource(R.string.profile_section_preferences),
                 onClick = onSettingsClick
             )
             HorizontalDivider()
             SettingsMenuItem(
                 icon = Icons.Default.Schedule,
-                title = "Horários",
+                title = stringResource(R.string.profile_section_schedules),
                 onClick = onSchedulesClick
             )
             HorizontalDivider()
             SettingsMenuItem(
                 icon = Icons.Default.Info,
-                title = "Sobre",
+                title = stringResource(R.string.profile_section_about),
                 onClick = onAboutClick
             )
         }
@@ -1134,7 +1134,7 @@ private fun AdminSection(
             if (isAdmin) {
                 AdminMenuItem(
                     icon = Icons.Default.People,
-                    title = "Gerenciar Usuários",
+                    title = stringResource(R.string.profile_section_manage_users),
                     onClick = onUserManagementClick
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
@@ -1143,11 +1143,11 @@ private fun AdminSection(
             if (isFieldOwner) {
                 AdminMenuItem(
                     icon = Icons.Default.Place,
-                    title = "Meus Locais",
+                    title = stringResource(R.string.profile_section_my_locations),
                     subtitle = when (myLocationsCount) {
-                        0 -> "Nenhum local cadastrado"
-                        1 -> "1 local cadastrado"
-                        else -> "$myLocationsCount locais cadastrados"
+                        0 -> stringResource(R.string.admin_no_locations)
+                        1 -> stringResource(R.string.admin_one_location)
+                        else -> stringResource(R.string.admin_locations_count, myLocationsCount)
                     },
                     onClick = onMyLocationsClick
                 )
@@ -1157,14 +1157,14 @@ private fun AdminSection(
             if (isAdmin) {
                 AdminMenuItem(
                     icon = Icons.Default.AdminPanelSettings,
-                    title = "Configurações da Liga",
+                    title = stringResource(R.string.profile_section_league_settings),
                     onClick = onGamificationSettingsClick
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
 
                 AdminMenuItem(
                     icon = Icons.Default.LocationOn,
-                    title = "Gerenciar Locais",
+                    title = stringResource(R.string.profile_section_manage_locations),
                     onClick = onManageLocationsClick
                 )
             }

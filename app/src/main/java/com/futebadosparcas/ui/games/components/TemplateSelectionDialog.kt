@@ -90,7 +90,7 @@ fun TemplateSelectionDialog(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(templates) { template ->
+                    items(templates, key = { it.id }) { template ->
                         TemplateItem(
                             template = template,
                             onClick = {

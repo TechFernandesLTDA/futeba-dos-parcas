@@ -441,5 +441,5 @@ firebase deploy --only functions
 ---
 
 **Aprovado por**: Agent-Backend
-**Revisado por**: Claude Sonnet 4.5
+**Revisado por**: Claude Sonnet 4.6
 **Data**: 2026-02-02

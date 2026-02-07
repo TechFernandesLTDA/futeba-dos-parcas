@@ -68,6 +68,19 @@ class GameQueryRepositoryImpl @Inject constructor(
         private const val TAG = "GameQueryRepository"
     }
 
+    // === SOFT DELETE (P2 #40) ===
+    // Filtra jogos soft-deletados no lado cliente.
+    // Firestore nao suporta query eficiente para campos nulos,
+    // entao filtramos apos deserializar os documentos.
+
+    /**
+     * Filtra jogos que foram soft-deletados (deleted_at != null).
+     * Usado em todas as queries de listagem para garantir que jogos
+     * soft-deletados nao aparecam na UI.
+     */
+    private fun List<AndroidGame>.filterNotSoftDeleted(): List<AndroidGame> =
+        filter { !it.isSoftDeleted() }
+
     // ========== Permissões (delegado ao PermissionManager) ==========
 
     /**
@@ -228,6 +241,7 @@ class GameQueryRepositoryImpl @Inject constructor(
 
             val allAndroidGames = allSnapshots.flatMap { it.documents }
                 .mapNotNull { doc -> doc.toObject(AndroidGame::class.java)?.apply { id = doc.id } }
+                .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
                 .deduplicateSortAndLimit(
                     idSelector = { it.id },
                     sortSelector = { it.dateTime },
@@ -289,6 +303,7 @@ class GameQueryRepositoryImpl @Inject constructor(
 
             val allAndroidGames = allSnapshots.flatMap { it.documents }
                 .mapNotNull { doc -> doc.toObject(AndroidGame::class.java)?.apply { id = doc.id } }
+                .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
                 .deduplicateSortAndLimit(
                     idSelector = { it.id },
                     sortSelector = { it.dateTime },
@@ -346,8 +361,9 @@ class GameQueryRepositoryImpl @Inject constructor(
                 val publicGames = publicGamesDeferred.await()
                 val ownerGames = ownerGamesDeferred?.await() ?: emptyList()
 
-                // Combinar e deduplicar
+                // Combinar, filtrar soft-deleted e deduplicar
                 val allGames = (publicGames + ownerGames)
+                    .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
                     .distinctBy { it.id }
                     .sortedBy { it.dateTime }
                     .take(50)
@@ -408,8 +424,9 @@ class GameQueryRepositoryImpl @Inject constructor(
                 val publicGames = publicGamesDeferred.await()
                 val ownerGames = ownerGamesDeferred?.await() ?: emptyList()
 
-                // Combinar e deduplicar
+                // Combinar, filtrar soft-deleted e deduplicar
                 val allGames = (publicGames + ownerGames)
+                    .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
                     .distinctBy { it.id }
                     .sortedByDescending { it.dateTime }
                     .take(50)
@@ -486,8 +503,9 @@ class GameQueryRepositoryImpl @Inject constructor(
 
         // FIX: Combina jogos públicos + jogos do owner
         return combine(publicGamesFlow, ownerGamesFlow, userConfFlow) { publicGames, ownerGames, userConfs ->
-            // Merge e deduplica
+            // Merge, filtrar soft-deleted e deduplica
             val allGames = (publicGames + ownerGames)
+                .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
                 .distinctBy { it.id }
                 .sortedByDescending { it.dateTime }
                 .take(50)
@@ -531,9 +549,10 @@ class GameQueryRepositoryImpl @Inject constructor(
                     }
                 }
 
-                // Filtra apenas jogos futuros e ordena por data
+                // P2 #40: Filtra soft-deletados, apenas jogos futuros e ordena por data
                 val now = java.util.Date()
                 androidGamesList
+                    .filterNotSoftDeleted()
                     .filter { val dt = it.dateTime; dt != null && dt > now }
                     .sortedBy { it.dateTime }
             }
@@ -700,13 +719,10 @@ class GameQueryRepositoryImpl @Inject constructor(
     override fun getLiveAndUpcomingGamesFlow(): Flow<Result<List<GameWithConfirmations>>> {
         val uid = auth.currentUser?.uid ?: ""
 
-        // Flow principal combinando Publicos + Privados + Jogos do Owner (ou TODOS para admin)
         return channelFlow {
-            // ADMIN SUPPORT: Verificar se usuário é admin
             val isAdmin = isCurrentUserAdmin()
 
-            // 1. Obter grupos do usuário (para filtro de GROUP_ONLY)
-            // Monitora mudanças nos grupos para atualizar a lista de jogos se entrar/sair de grupos
+            // Monitora mudanças nos grupos para atualizar a lista de jogos
             val userGroupsFlow = if (uid.isNotEmpty() && !isAdmin) groupRepository.getMyGroupsFlow() else flowOf(emptyList())
 
             userGroupsFlow.collect { userGroups ->
@@ -714,146 +730,20 @@ class GameQueryRepositoryImpl @Inject constructor(
                     .filter { it.isNotEmpty() }
                     .take(10)
 
-                // 2. Definir Queries
                 val now = java.util.Calendar.getInstance().apply {
-                    add(java.util.Calendar.HOUR_OF_DAY, -4) // Include recent live games
+                    add(java.util.Calendar.HOUR_OF_DAY, -4) // Incluir jogos live recentes
                 }.time
 
-                // ADMIN: Query para TODOS os jogos (sem filtro de visibilidade)
-                val adminQuery = if (isAdmin) {
-                    gamesCollection
-                        .whereGreaterThan("dateTime", now)
-                        .orderBy("dateTime", Query.Direction.ASCENDING)
-                        .limit(50)
-                } else null
-
-                // Query A: Jogos Públicos (não-admin)
-                val publicQuery = if (!isAdmin) {
-                    gamesCollection
-                        .whereIn("visibility", listOf(
-                            com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN.name,
-                            com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED.name
-                        ))
-                        .whereGreaterThan("dateTime", now)
-                        .orderBy("dateTime", Query.Direction.ASCENDING)
-                        .limit(30)
-                } else null
-
-                // Query B: Jogos do Grupo (não-admin, se houver grupos)
-                val groupQuery = if (!isAdmin && userGroupIds.isNotEmpty()) {
-                    gamesCollection
-                        .whereEqualTo("visibility", com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY.name)
-                        .whereIn("group_id", userGroupIds)
-                        .whereGreaterThan("dateTime", now)
-                        .orderBy("dateTime", Query.Direction.ASCENDING)
-                        .limit(30)
-                } else null
-
-                // Query C: Jogos onde o usuário é OWNER (não-admin)
-                val ownerQuery = if (!isAdmin && uid.isNotEmpty()) {
-                    gamesCollection
-                        .whereEqualTo("owner_id", uid)
-                        .whereGreaterThan("dateTime", now)
-                        .orderBy("dateTime", Query.Direction.ASCENDING)
-                        .limit(30)
-                } else null
-
-                // 3. Listeners
-
-                // ADMIN: Flow para TODOS os jogos
-                val adminGamesFlow = if (adminQuery != null) {
-                    callbackFlow {
-                        val sub = adminQuery.addSnapshotListener { snap, e ->
-                            if (e != null) {
-                                AppLogger.e(TAG, "getLiveAndUpcomingGamesFlow: Erro na Query de Admin", e)
-                                trySend(emptyList())
-                                return@addSnapshotListener
-                            }
-                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
-                            AppLogger.d(TAG) { "Admin: recebidos ${androidGames.size} jogos em tempo real" }
-                            trySend(androidGames)
-                        }
-                        awaitClose { sub.remove() }
-                    }
-                } else {
-                    flowOf(emptyList())
-                }
-
-                val publicFlow = if (publicQuery != null) {
-                    callbackFlow {
-                        val sub = publicQuery.addSnapshotListener { snap, e ->
-                            if (e != null) {
-                                AppLogger.e(TAG, "getLiveAndUpcomingGamesFlow: Erro na Query Publica", e)
-                                trySend(emptyList())
-                                return@addSnapshotListener
-                            }
-
-                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
-                            trySend(androidGames)
-                        }
-                        awaitClose { sub.remove() }
-                    }
-                } else {
-                    flowOf(emptyList())
-                }
-
-                val groupGamesFlow = if (groupQuery != null) {
-                    callbackFlow {
-                        val sub = groupQuery.addSnapshotListener { snap, e ->
-                            if (e != null) {
-                                AppLogger.e(TAG, "getLiveAndUpcomingGamesFlow: Erro na Query de Grupo", e)
-                                trySend(emptyList())
-                                return@addSnapshotListener
-                            }
-                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
-                            trySend(androidGames)
-                        }
-                        awaitClose { sub.remove() }
-                    }
-                } else {
-                    flowOf(emptyList())
-                }
-
-                // Flow para jogos do owner (FIX)
-                val ownerGamesFlow = if (ownerQuery != null) {
-                    callbackFlow {
-                        val sub = ownerQuery.addSnapshotListener { snap, e ->
-                            if (e != null) {
-                                AppLogger.e(TAG, "getLiveAndUpcomingGamesFlow: Erro na Query de Owner", e)
-                                trySend(emptyList())
-                                return@addSnapshotListener
-                            }
-                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
-                            trySend(androidGames)
-                        }
-                        awaitClose { sub.remove() }
-                    }
-                } else {
-                    flowOf(emptyList())
-                }
-
-                // 4. User Confirmations (para UI state)
+                // Definir queries e criar flows de snapshot
+                val adminGamesFlow = buildAdminGamesFlow(isAdmin, now)
+                val publicFlow = buildPublicGamesFlow(isAdmin, now)
+                val groupGamesFlow = buildGroupGamesFlow(isAdmin, userGroupIds, now)
+                val ownerGamesFlow = buildOwnerGamesFlow(isAdmin, uid, now)
                 val userConfFlow = confirmationRepository.getUserConfirmationsFlow(uid)
 
-                // 5. Combine everything (FIX: inclui adminGamesFlow para admins)
+                // Combinar todas as fontes de dados
                 combine(adminGamesFlow, publicFlow, groupGamesFlow, ownerGamesFlow, userConfFlow) { adminGames, publicGames, groupGames, ownerGames, userConfs ->
-                    // Se admin, usar apenas adminGames; caso contrário, merge das outras fontes
-                    val allAndroidGames = if (adminGames.isNotEmpty()) {
-                        // Admin: usa todos os jogos sem merge
-                        adminGames
-                            .filter { it.status == GameStatus.SCHEDULED.name || it.status == GameStatus.CONFIRMED.name || it.status == GameStatus.LIVE.name }
-                            .sortedBy { it.dateTime }
-                            .take(50)
-                    } else {
-                        // Não-admin: merge das fontes filtradas
-                        publicGames
-                            .mergeAndDeduplicate(groupGames) { it.id }
-                            .mergeAndDeduplicate(ownerGames) { it.id }
-                            .filter { it.status == GameStatus.SCHEDULED.name || it.status == GameStatus.CONFIRMED.name || it.status == GameStatus.LIVE.name }
-                            .sortedBy { it.dateTime }
-                            .take(20)
-                    }
-
+                    val allAndroidGames = mergeAndFilterGames(adminGames, publicGames, groupGames, ownerGames)
                     val result = allAndroidGames.map { androidGame ->
                         GameWithConfirmations(
                             game = androidGame.toKmpGame(),
@@ -866,6 +756,121 @@ class GameQueryRepositoryImpl @Inject constructor(
                     send(it)
                 }
             }
+        }
+    }
+
+    /**
+     * Cria Flow de snapshot para jogos de admin (todos os jogos futuros).
+     */
+    private fun buildAdminGamesFlow(isAdmin: Boolean, now: java.util.Date): Flow<List<AndroidGame>> {
+        if (!isAdmin) return flowOf(emptyList())
+        val query = gamesCollection
+            .whereGreaterThan("dateTime", now)
+            .orderBy("dateTime", Query.Direction.ASCENDING)
+            .limit(50)
+        return createSnapshotFlow(query, "Admin")
+    }
+
+    /**
+     * Cria Flow de snapshot para jogos públicos.
+     */
+    private fun buildPublicGamesFlow(isAdmin: Boolean, now: java.util.Date): Flow<List<AndroidGame>> {
+        if (isAdmin) return flowOf(emptyList())
+        val query = gamesCollection
+            .whereIn("visibility", listOf(
+                com.futebadosparcas.data.model.GameVisibility.PUBLIC_OPEN.name,
+                com.futebadosparcas.data.model.GameVisibility.PUBLIC_CLOSED.name
+            ))
+            .whereGreaterThan("dateTime", now)
+            .orderBy("dateTime", Query.Direction.ASCENDING)
+            .limit(30)
+        return createSnapshotFlow(query, "Publica")
+    }
+
+    /**
+     * Cria Flow de snapshot para jogos do grupo.
+     */
+    private fun buildGroupGamesFlow(
+        isAdmin: Boolean,
+        userGroupIds: List<String>,
+        now: java.util.Date
+    ): Flow<List<AndroidGame>> {
+        if (isAdmin || userGroupIds.isEmpty()) return flowOf(emptyList())
+        val query = gamesCollection
+            .whereEqualTo("visibility", com.futebadosparcas.data.model.GameVisibility.GROUP_ONLY.name)
+            .whereIn("group_id", userGroupIds)
+            .whereGreaterThan("dateTime", now)
+            .orderBy("dateTime", Query.Direction.ASCENDING)
+            .limit(30)
+        return createSnapshotFlow(query, "Grupo")
+    }
+
+    /**
+     * Cria Flow de snapshot para jogos do owner.
+     */
+    private fun buildOwnerGamesFlow(isAdmin: Boolean, uid: String, now: java.util.Date): Flow<List<AndroidGame>> {
+        if (isAdmin || uid.isEmpty()) return flowOf(emptyList())
+        val query = gamesCollection
+            .whereEqualTo("owner_id", uid)
+            .whereGreaterThan("dateTime", now)
+            .orderBy("dateTime", Query.Direction.ASCENDING)
+            .limit(30)
+        return createSnapshotFlow(query, "Owner")
+    }
+
+    /**
+     * Cria um Flow genérico de snapshot listener para uma query Firestore.
+     * Reduz duplicação de código entre os diferentes flows de jogos.
+     */
+    private fun createSnapshotFlow(query: Query, label: String): Flow<List<AndroidGame>> = callbackFlow {
+        val sub = query.addSnapshotListener { snap, e ->
+            if (e != null) {
+                AppLogger.e(TAG, "getLiveAndUpcomingGamesFlow: Erro na Query de $label", e)
+                trySend(emptyList())
+                return@addSnapshotListener
+            }
+            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach {
+                it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id
+            } ?: emptyList()
+            trySend(androidGames)
+        }
+        awaitClose { sub.remove() }
+    }
+
+    /**
+     * Filtra status válidos (SCHEDULED, CONFIRMED, LIVE) para jogos futuros/live.
+     */
+    private val validUpcomingStatuses = setOf(
+        GameStatus.SCHEDULED.name,
+        GameStatus.CONFIRMED.name,
+        GameStatus.LIVE.name
+    )
+
+    /**
+     * Combina e filtra jogos de todas as fontes (admin vs não-admin).
+     */
+    private fun mergeAndFilterGames(
+        adminGames: List<AndroidGame>,
+        publicGames: List<AndroidGame>,
+        groupGames: List<AndroidGame>,
+        ownerGames: List<AndroidGame>
+    ): List<AndroidGame> {
+        return if (adminGames.isNotEmpty()) {
+            // Admin: usa todos os jogos sem merge
+            adminGames
+                .filterNotSoftDeleted()
+                .filter { it.status in validUpcomingStatuses }
+                .sortedBy { it.dateTime }
+                .take(50)
+        } else {
+            // Não-admin: merge das fontes filtradas
+            publicGames
+                .mergeAndDeduplicate(groupGames) { it.id }
+                .mergeAndDeduplicate(ownerGames) { it.id }
+                .filterNotSoftDeleted()
+                .filter { it.status in validUpcomingStatuses }
+                .sortedBy { it.dateTime }
+                .take(20)
         }
     }
 
@@ -889,9 +894,9 @@ class GameQueryRepositoryImpl @Inject constructor(
                             trySend(Result.failure<List<GameWithConfirmations>>(e))
                             return@addSnapshotListener
                         }
-                        val androidGames = snap?.documents?.mapNotNull { doc ->
+                        val androidGames = (snap?.documents?.mapNotNull { doc ->
                             doc.toObject(AndroidGame::class.java)?.also { it.id = doc.id }
-                        } ?: emptyList()
+                        } ?: emptyList()).filterNotSoftDeleted() // P2 #40
 
                         val result = androidGames.map { androidGame ->
                             GameWithConfirmations(
@@ -987,8 +992,9 @@ class GameQueryRepositoryImpl @Inject constructor(
                 // FIX: Usuários normais só veem jogos que PARTICIPARAM ou são DONOS
                 // Admin já foi tratado acima e retorna todos os jogos
                 combine(publicFlow, groupGamesFlow, ownerGamesFlow, userConfFlow) { publicGames, groupGames, ownerGames, userConfs ->
-                    // Primeiro, junta todos os jogos candidatos e remove duplicatas
+                    // Primeiro, junta todos os jogos candidatos, filtra soft-deleted e remove duplicatas
                     val allCandidateGames = (publicGames + groupGames + ownerGames)
+                        .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
                         .distinctBy { it.id }
                         .filter { it.status == GameStatus.FINISHED.name || it.status == GameStatus.CANCELLED.name }
 
@@ -1119,8 +1125,9 @@ class GameQueryRepositoryImpl @Inject constructor(
             // Buscar confirmacoes do usuario ANTES de filtrar
             val userConfirmations = confirmationRepository.getUserConfirmationIds(uid)
 
-            // Combinar e deduplicar
+            // Combinar, filtrar soft-deleted e deduplicar
             val allCandidateGames = (publicGames + groupGames + ownerGames)
+                .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
                 .distinctBy { it.id }
 
             // FIX: Filtrar para mostrar APENAS jogos onde usuário:
@@ -1197,7 +1204,7 @@ class GameQueryRepositoryImpl @Inject constructor(
 
             val androidGames = snapshot.documents.mapNotNull { doc ->
                 doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
-            }
+            }.filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
 
             val hasMore = androidGames.size > pageSize
             val gamesPage = androidGames.take(pageSize)
@@ -1281,11 +1288,12 @@ class GameQueryRepositoryImpl @Inject constructor(
                             }
                         }
 
-                        // 3. Combinar e deduplicar
+                        // 3. Combinar, filtrar soft-deleted e deduplicar
                         val ownedGames = ownedGamesDeferred.await()
                         val confirmedGames = confirmedGamesDeferred.await()
 
                         (ownedGames + confirmedGames)
+                            .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
                             .distinctBy { it.id }
                             .sortedByDescending { it.dateTime }
                     }
@@ -1329,7 +1337,7 @@ class GameQueryRepositoryImpl @Inject constructor(
 
             val androidGames = snapshot.documents.mapNotNull { doc ->
                 doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
-            }
+            }.filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
 
             AppLogger.d(TAG) { "Encontrados ${androidGames.size} jogos públicos" }
             Result.success(androidGames.toKmpGames())
@@ -1357,9 +1365,9 @@ class GameQueryRepositoryImpl @Inject constructor(
                     return@addSnapshotListener
                 }
 
-                val androidGames = snapshot?.documents?.mapNotNull { doc ->
+                val androidGames = (snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
-                } ?: emptyList()
+                } ?: emptyList()).filterNotSoftDeleted() // P2 #40
 
                 trySend(androidGames.toKmpGames())
             }
@@ -1418,8 +1426,8 @@ class GameQueryRepositoryImpl @Inject constructor(
                 doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
             }
 
-            AppLogger.d(TAG) { "Encontrados ${androidGames.size} jogos abertos para solicitações" }
-            Result.success(androidGames.toKmpGames())
+            AppLogger.d(TAG) { "Encontrados ${androidGames.size} jogos abertos para solicitacoes" }
+            Result.success(androidGames.filterNotSoftDeleted().toKmpGames()) // P2 #40
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos abertos", e)
             Result.failure(e)
@@ -1493,6 +1501,7 @@ class GameQueryRepositoryImpl @Inject constructor(
                 .await()
 
             val androidGames = snapshot.toObjects(AndroidGame::class.java)
+                .filterNotSoftDeleted() // P2 #40: Excluir jogos soft-deletados
             Result.success(androidGames.toKmpGames())
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos por quadra e data", e)

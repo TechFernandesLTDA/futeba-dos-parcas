@@ -386,6 +386,24 @@ class FakeGameRepository @Inject constructor() : GameRepository {
         return Result.success(Unit)
     }
 
+    // === SOFT DELETE (P2 #40) ===
+
+    override suspend fun softDeleteGame(gameId: String): Result<Unit> {
+        games.find { it.id == gameId }?.let {
+            val index = games.indexOf(it)
+            games[index] = it.copy(deletedAt = java.util.Date(), deletedBy = "mock_user_id")
+        }
+        return Result.success(Unit)
+    }
+
+    override suspend fun restoreGame(gameId: String): Result<Unit> {
+        games.find { it.id == gameId }?.let {
+            val index = games.indexOf(it)
+            games[index] = it.copy(deletedAt = null, deletedBy = null)
+        }
+        return Result.success(Unit)
+    }
+
     private fun timeToMinutes(time: String): Int {
         return try {
             val parts = time.split(":")

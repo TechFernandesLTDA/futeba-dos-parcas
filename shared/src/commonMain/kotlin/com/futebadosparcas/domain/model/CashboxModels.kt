@@ -134,7 +134,7 @@ data class CashboxEntry(
      */
     fun getCategoryDisplayName(): String {
         return if (getCategoryEnum() == CashboxCategory.OTHER && !customCategory.isNullOrEmpty()) {
-            customCategory!!
+            customCategory
         } else {
             getCategoryEnum().displayName
         }

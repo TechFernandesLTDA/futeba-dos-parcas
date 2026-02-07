@@ -53,11 +53,11 @@ interface UserClaims {
  */
 export const setUserRole = onCall<SetUserRoleRequest>(
   {
-    // IMPORTANT: App Check enforcement garante que apenas apps verificados podem chamar
-    // Por enquanto, não enforçamos para permitir testing
-    // TODO: Habilitar após 1 semana em produção
-    // enforceAppCheck: true,
-    consumeAppCheckToken: false,
+    // P0 #32: Firebase App Check - Garante que apenas apps verificados podem chamar
+    // PRODUCTION: enforceAppCheck: true (bloqueia apps não-verificados)
+    // DEBUG: enforceAppCheck: false (permite testar via Firebase CLI)
+    enforceAppCheck: process.env.FIREBASE_CONFIG ? true : false,
+    consumeAppCheckToken: true,
   },
   async (request) => {
     // ==========================================

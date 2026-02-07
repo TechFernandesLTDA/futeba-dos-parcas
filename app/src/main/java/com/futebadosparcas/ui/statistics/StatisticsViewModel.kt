@@ -23,6 +23,7 @@ class StatisticsViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "StatisticsViewModel"
+        private const val CACHE_DURATION_MS = 120_000L // 2 minutos de cache
     }
 
     private val _uiState = MutableStateFlow<StatisticsUiState>(StatisticsUiState.Loading)
@@ -30,24 +31,41 @@ class StatisticsViewModel @Inject constructor(
 
     private var loadJob: Job? = null
 
+    // P2 #28: Cache in-memory para evitar queries repetidas ao navegar de volta
+    private var cachedState: StatisticsUiState.Success? = null
+    private var lastLoadTime: Long = 0
+
     init {
         loadStatistics()
     }
 
-    fun loadStatistics() {
+    /**
+     * Carrega estatisticas com cache in-memory.
+     * Se dados recentes (<2min) estiverem em cache, usa-os diretamente.
+     *
+     * @param forceRefresh Se true, ignora o cache e busca dados frescos.
+     */
+    fun loadStatistics(forceRefresh: Boolean = false) {
+        // Verificar cache antes de buscar do servidor
+        val now = System.currentTimeMillis()
+        if (!forceRefresh && cachedState != null && (now - lastLoadTime) < CACHE_DURATION_MS) {
+            AppLogger.d(TAG) { "Cache HIT para estatisticas (age=${now - lastLoadTime}ms)" }
+            _uiState.value = cachedState!!
+            return
+        }
+
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             _uiState.value = StatisticsUiState.Loading
 
             try {
+                // OTIMIZAÇÃO: Todas as queries independentes em paralelo
                 val myStatsDeferred = async { statisticsRepository.getMyStatistics() }
                 val topScorersDeferred = async { statisticsRepository.getTopScorers(5) }
                 val topGoalkeepersDeferred = async { statisticsRepository.getTopGoalkeepers(5) }
                 val bestPlayersDeferred = async { statisticsRepository.getBestPlayers(5) }
-                // Use default if repository doesn't have the method yet (to be safe) or add it
-                // Assuming I will update interface next
-                val goalsHistoryResult = statisticsRepository.getGoalsHistory(myStatsDeferred.await().getOrNull()?.id ?: "")
 
+                // Aguardar todos os resultados paralelos
                 val myStatsResult = myStatsDeferred.await()
                 val topScorersResult = topScorersDeferred.await()
                 val topGoalkeepersResult = topGoalkeepersDeferred.await()
@@ -57,10 +75,20 @@ class StatisticsViewModel @Inject constructor(
                 val topScorers = topScorersResult.getOrThrow()
                 val topGoalkeepers = topGoalkeepersResult.getOrThrow()
                 val bestPlayers = bestPlayersResult.getOrThrow()
-                val goalsHistory = goalsHistoryResult.getOrNull() ?: emptyMap()
 
+                // Queries dependentes em paralelo: goalsHistory depende de myStats.id,
+                // userMap depende de topScorers/topGoalkeepers/bestPlayers
                 val allUserIds = (topScorers.map { it.id } + topGoalkeepers.map { it.id } + bestPlayers.map { it.id }).distinct()
-                val userMap = userRepository.getUsersByIds(allUserIds).getOrNull()?.associateBy { it.id } ?: emptyMap()
+
+                val goalsHistoryDeferred = async {
+                    statisticsRepository.getGoalsHistory(myStats.id ?: "")
+                }
+                val userMapDeferred = async {
+                    userRepository.getUsersByIds(allUserIds)
+                }
+
+                val goalsHistory = goalsHistoryDeferred.await().getOrNull() ?: emptyMap()
+                val userMap = userMapDeferred.await().getOrNull()?.associateBy { it.id } ?: emptyMap()
 
                 val combined = CombinedStatistics(
                     myStats = myStats.toDataModel(myStats.userId),
@@ -106,7 +134,13 @@ class StatisticsViewModel @Inject constructor(
                     goalEvolution = goalsHistory
                 )
 
-                _uiState.value = StatisticsUiState.Success(combined)
+                val successState = StatisticsUiState.Success(combined)
+                _uiState.value = successState
+
+                // P2 #28: Salvar no cache
+                cachedState = successState
+                lastLoadTime = System.currentTimeMillis()
+                AppLogger.d(TAG) { "Cache PUT para estatisticas" }
 
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao carregar estatísticas: ${e.message}", e)

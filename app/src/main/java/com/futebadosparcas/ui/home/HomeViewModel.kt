@@ -20,6 +20,7 @@ import com.futebadosparcas.domain.prefetch.PrefetchService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -74,7 +75,8 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun observeConnectivity() {
-        viewModelScope.launch {
+        connectivityJob?.cancel()
+        connectivityJob = viewModelScope.launch {
             connectivityMonitor.isConnected
                 .catch { e ->
                     // Tratamento de erro: assumir online em caso de falha
@@ -88,7 +90,8 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun observeUnreadCount() {
-        viewModelScope.launch {
+        unreadCountJob?.cancel()
+        unreadCountJob = viewModelScope.launch {
             notificationRepository.getUnreadCountFlow()
                 .catch { e ->
                     // Tratamento de erro: zerar contador em caso de falha
@@ -101,6 +104,9 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    // Jobs para controle de ciclo de vida dos Flows
+    private var connectivityJob: Job? = null
+    private var unreadCountJob: Job? = null
     private var loadJob: Job? = null
     private var retryCount = 0
 
@@ -108,16 +114,8 @@ class HomeViewModel @Inject constructor(
      * Carrega dados da home com PROGRESSIVE LOADING em 3 fases:
      *
      * FASE 1 (300-500ms - CRÍTICO): User + 3 upcoming games → RENDERIZAR IMEDIATAMENTE
-     * - Carrega dados críticos para UI
-     * - Prefetch preditivo: próximo jogo (90% dos casos Home→GameDetail)
-     *
      * FASE 2 (+200-300ms - SECUNDÁRIO): Activities (10) + Statistics → STREAM IN
-     * - Dados menos críticos
-     * - Atualiza UI com novos dados
-     *
      * FASE 3 (+300ms - TERCIÁRIO): Public games (5), challenges, badges → LAZY LOAD
-     * - Dados opcionais
-     * - Completa UI
      *
      * Impacto: Home cold load 2500ms → 800ms (68% mais rápido)
      */
@@ -128,7 +126,7 @@ class HomeViewModel @Inject constructor(
             cachedSuccessState = null
         }
 
-        // Usar cache se disponível e recente (< 30s)
+        // Usar cache se disponível e recente
         val currentTime = System.currentTimeMillis()
         val cached = cachedSuccessState
         if (!forceRetry && cached != null && (currentTime - lastLoadTime) < CACHE_DURATION_MS) {
@@ -144,197 +142,244 @@ class HomeViewModel @Inject constructor(
 
             try {
                 supervisorScope {
-                    // ==========================================
-                    // FASE 1 (300-500ms): RENDERIZAR IMEDIATAMENTE
-                    // ==========================================
-                    _loadingState.value = LoadingState.LoadingProgress(10, 100, "Carregando perfil...")
+                    // FASE 1: Dados críticos (user + jogos)
+                    var currentState = executePhase1()
 
-                    // Requisição crítica - deve SEMPRE completar
-                    val userResult = withTimeout(TIMEOUT_MILLIS) {
-                        userRepository.getCurrentUser()
-                    }
+                    // FASE 2: Dados secundários (activities + stats)
+                    currentState = executePhase2(currentState)
 
-                    if (userResult.isFailure) {
-                        throw userResult.exceptionOrNull() ?: Exception("Erro ao carregar usuário")
-                    }
-
-                    val user = userResult.getOrThrow()
-
-                    // Requisições paralelas com timeout e supervisorScope
-                    // OTIMIZAÇÃO: Usar query otimizada que filtra no Firestore (40% menos reads)
-                    val gamesDeferred = async {
-                        runCatching {
-                            withTimeout(TIMEOUT_MILLIS) {
-                                // Buscar apenas jogos futuros/live (query otimizada com índice composto)
-                                gameRepository.getLiveAndUpcomingGamesFlow().first()
-                            }
-                        }
-                    }
-
-                    _loadingState.value = LoadingState.LoadingProgress(30, 100, "Carregando jogos...")
-
-                    // Await games para FASE 1
-                    val gamesResult = gamesDeferred.await()
-                    val games = gamesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
-
-                    _loadingState.value = LoadingState.LoadingProgress(50, 100, "Processando...")
-
-                    // Calculate Gamification Summary
-                    val (progressXp, neededXp) = com.futebadosparcas.data.model.LevelTable.getXpProgress(user.experiencePoints)
-                    val isMaxLevel = user.level >= 10
-
-                    val percent = if (isMaxLevel) 100 else {
-                        if (neededXp > 0L) (progressXp * 100L / neededXp).toInt() else 100
-                    }
-
-                    val summary = GamificationSummary(
-                        level = user.level,
-                        levelName = com.futebadosparcas.data.model.LevelTable.getLevelName(user.level),
-                        nextLevelXp = neededXp - progressXp,
-                        nextLevelName = if (isMaxLevel) "" else com.futebadosparcas.data.model.LevelTable.getLevelName(user.level + 1),
-                        progressPercent = percent,
-                        isMaxLevel = isMaxLevel,
-                        division = LeagueDivision.BRONZE // Será atualizado em FASE 3
-                    )
-
-                    // RENDERIZAR FASE 1 - Estado parcial mas usável
-                    var currentState = HomeUiState.Success(
-                        user = user,
-                        games = games,
-                        gamificationSummary = summary,
-                        statistics = null,
-                        activities = emptyList(),
-                        publicGames = emptyList(),
-                        streak = null,
-                        challenges = emptyList(),
-                        recentBadges = emptyList(),
-                        isGridView = isGridView
-                    )
-                    _uiState.value = currentState
-                    cachedSuccessState = currentState
-                    lastLoadTime = System.currentTimeMillis()
-
-                    // PREFETCH PREDITIVO (non-blocking)
-                    if (games.isNotEmpty()) {
-                        // Converter GameWithConfirmations para Game para o prefetch
-                        val firstGame = games.first()
-                        prefetchService.prefetchNextGame(firstGame.game)
-                    }
-
-                    // ==========================================
-                    // FASE 2 (+200-300ms): STREAM IN (Activities + Stats)
-                    // ==========================================
-                    delay(250) // Pequeno delay para não saturar renderer
-
-                    _loadingState.value = LoadingState.LoadingProgress(60, 100, "Carregando atividades...")
-
-                    val activitiesPhase2: List<Activity> = withTimeout(TIMEOUT_MILLIS) {
-                        activityRepository.getRecentActivities(10) // Reduzido de 20 → 10
-                    }.getOrDefault(emptyList())
-
-                    val statisticsPhase2: com.futebadosparcas.data.model.UserStatistics? = withTimeout(TIMEOUT_MILLIS) {
-                        statisticsRepository.getUserStatistics(user.id)
-                    }.getOrNull()
-
-                    _loadingState.value = LoadingState.LoadingProgress(70, 100, "Atualizando tela...")
-
-                    // ATUALIZAR FASE 2 - Stream in activities + stats
-                    currentState = currentState.copy(
-                        activities = activitiesPhase2,
-                        statistics = statisticsPhase2
-                    )
-                    _uiState.value = currentState
-                    cachedSuccessState = currentState
-
-                    // ==========================================
-                    // FASE 3 (+300ms): LAZY LOAD (Games + Challenges + Badges)
-                    // ==========================================
-                    delay(300) // Outro delay
-
-                    _loadingState.value = LoadingState.LoadingProgress(80, 100, "Carregando mais...")
-
-                    val publicGamesPhase3: List<Game> = withTimeout(TIMEOUT_MILLIS) {
-                        gameRepository.getPublicGames(5) // Reduzido de 10 → 5
-                    }.getOrDefault(emptyList())
-
-                    val streakPhase3: com.futebadosparcas.domain.model.UserStreak? = withTimeout(TIMEOUT_MILLIS) {
-                        gamificationRepository.getUserStreak(user.id)
-                    }.getOrNull()
-
-                    val allChallenges: List<WeeklyChallenge> = withTimeout(TIMEOUT_MILLIS) {
-                        gamificationRepository.getActiveChallenges()
-                    }.getOrDefault(emptyList())
-
-                    val userBadges: List<UserBadge> = withTimeout(TIMEOUT_MILLIS) {
-                        gamificationRepository.getRecentBadges(user.id, limit = 5)
-                    }.getOrDefault(emptyList())
-
-                    // Fetch challenge progress
-                    val challengeIds = allChallenges.map { it.id }
-                    val progressList: List<UserChallengeProgress> = withTimeout(TIMEOUT_MILLIS) {
-                        gamificationRepository.getChallengesProgress(user.id, challengeIds)
-                    }.getOrDefault(emptyList())
-                    val progressMap = progressList.associateBy { it.challengeId }
-                    val challengesWithProgress = allChallenges.map { it to progressMap[it.id] }
-
-                    // Fetch league division
-                    var leagueDivisionPhase3 = LeagueDivision.BRONZE
-                    try {
-                        val seasonResult = withTimeout(TIMEOUT_MILLIS) {
-                            gamificationRepository.getActiveSeason()
-                        }
-                        seasonResult.getOrNull()?.let { season ->
-                            val participationResult = withTimeout(TIMEOUT_MILLIS) {
-                                gamificationRepository.getUserParticipation(user.id, season.id)
-                            }
-                            participationResult.getOrNull()?.let { participation ->
-                                leagueDivisionPhase3 = participation.getDivisionEnum()
-                            }
-                        }
-                    } catch (e: Exception) {
-                        AppLogger.d(TAG) { "Erro ao carregar dados da liga: ${e.message}" }
-                    }
-
-                    _loadingState.value = LoadingState.LoadingProgress(95, 100, "Finalizando...")
-
-                    // ATUALIZAR FASE 3 - Completo
-                    currentState = currentState.copy(
-                        publicGames = publicGamesPhase3,
-                        streak = streakPhase3,
-                        challenges = challengesWithProgress,
-                        recentBadges = userBadges,
-                        gamificationSummary = summary.copy(division = leagueDivisionPhase3)
-                    )
-                    _uiState.value = currentState
-                    cachedSuccessState = currentState
+                    // FASE 3: Dados terciários (challenges, badges, liga)
+                    currentState = executePhase3(currentState)
 
                     _loadingState.value = LoadingState.Success
                     retryCount = 0
                 }
             } catch (e: Exception) {
-                AppLogger.e(TAG, "Erro ao carregar dados da home", e)
-
-                // Retry automático com exponential backoff
-                if (retryCount < MAX_RETRY_COUNT) {
-                    retryCount++
-                    val delayMs = calculateBackoffDelay(retryCount)
-
-                    _loadingState.value = LoadingState.Loading("Tentando novamente... (${retryCount}/${MAX_RETRY_COUNT})")
-                    AppLogger.d(TAG) { "Retry $retryCount após ${delayMs}ms" }
-
-                    delay(delayMs)
-                    loadHomeData()
-                } else {
-                    val errorMessage = when (e) {
-                        is kotlinx.coroutines.TimeoutCancellationException -> "Tempo limite excedido. Verifique sua conexão."
-                        else -> e.message ?: "Erro ao carregar dados"
-                    }
-
-                    _loadingState.value = LoadingState.Error(errorMessage, retryable = true)
-                    _uiState.value = HomeUiState.Error(errorMessage)
-                    retryCount = 0
-                }
+                handleLoadError(e)
             }
+        }
+    }
+
+    /**
+     * FASE 1: Carrega user + jogos futuros/live e renderiza imediatamente.
+     * Inclui prefetch preditivo do próximo jogo.
+     */
+    private suspend fun executePhase1(): HomeUiState.Success {
+        _loadingState.value = LoadingState.LoadingProgress(10, 100, "Carregando perfil...")
+
+        // Requisição crítica - deve SEMPRE completar
+        val userResult = withTimeout(TIMEOUT_MILLIS) {
+            userRepository.getCurrentUser()
+        }
+        if (userResult.isFailure) {
+            throw userResult.exceptionOrNull() ?: Exception("Erro ao carregar usuário")
+        }
+        val user = userResult.getOrThrow()
+
+        // Buscar jogos futuros/live (query otimizada com índice composto)
+        val gamesResult = runCatching {
+            withTimeout(TIMEOUT_MILLIS) {
+                gameRepository.getLiveAndUpcomingGamesFlow().first()
+            }
+        }
+
+        _loadingState.value = LoadingState.LoadingProgress(30, 100, "Carregando jogos...")
+        val games = gamesResult.getOrNull()?.getOrDefault(emptyList()) ?: emptyList()
+
+        _loadingState.value = LoadingState.LoadingProgress(50, 100, "Processando...")
+
+        val summary = buildGamificationSummary(user)
+
+        // Renderizar FASE 1 - Estado parcial mas usável
+        val currentState = HomeUiState.Success(
+            user = user,
+            games = games,
+            gamificationSummary = summary,
+            statistics = null,
+            activities = emptyList(),
+            publicGames = emptyList(),
+            streak = null,
+            challenges = emptyList(),
+            recentBadges = emptyList(),
+            isGridView = isGridView
+        )
+        _uiState.value = currentState
+        cachedSuccessState = currentState
+        lastLoadTime = System.currentTimeMillis()
+
+        // Prefetch preditivo (non-blocking) - 90% dos casos Home→GameDetail
+        if (games.isNotEmpty()) {
+            prefetchService.prefetchNextGame(games.first().game)
+        }
+
+        return currentState
+    }
+
+    /**
+     * FASE 2: Carrega activities e statistics em paralelo, atualiza UI.
+     */
+    private suspend fun executePhase2(previousState: HomeUiState.Success): HomeUiState.Success {
+        delay(250) // Pequeno delay para não saturar renderer
+        _loadingState.value = LoadingState.LoadingProgress(60, 100, "Carregando atividades...")
+
+        val user = previousState.user
+
+        // Activities e Statistics em paralelo
+        val activitiesResult = coroutineScope {
+            val activitiesDeferred = async {
+                runCatching { withTimeout(TIMEOUT_MILLIS) { activityRepository.getRecentActivities(10) } }
+            }
+            val statisticsDeferred = async {
+                runCatching { withTimeout(TIMEOUT_MILLIS) { statisticsRepository.getUserStatistics(user.id) } }
+            }
+
+            Pair(
+                activitiesDeferred.await().getOrNull()?.getOrDefault(emptyList<Activity>()) ?: emptyList(),
+                statisticsDeferred.await().getOrNull()?.getOrNull()
+            )
+        }
+
+        _loadingState.value = LoadingState.LoadingProgress(70, 100, "Atualizando tela...")
+
+        val currentState = previousState.copy(
+            activities = activitiesResult.first,
+            statistics = activitiesResult.second
+        )
+        _uiState.value = currentState
+        cachedSuccessState = currentState
+        return currentState
+    }
+
+    /**
+     * FASE 3: Carrega jogos públicos, challenges, badges e dados da liga.
+     */
+    private suspend fun executePhase3(previousState: HomeUiState.Success): HomeUiState.Success {
+        delay(300) // Outro delay para não saturar renderer
+        _loadingState.value = LoadingState.LoadingProgress(80, 100, "Carregando mais...")
+
+        val user = previousState.user
+        val summary = previousState.gamificationSummary
+
+        // Todas as queries da FASE 3 em paralelo
+        val phase3Data = coroutineScope {
+            val publicGamesDeferred = async { gameRepository.getPublicGames(5) }
+            val streakDeferred = async { gamificationRepository.getUserStreak(user.id) }
+            val challengesDeferred = async { gamificationRepository.getActiveChallenges() }
+            val badgesDeferred = async { gamificationRepository.getRecentBadges(user.id, limit = 5) }
+            val seasonDeferred = async { gamificationRepository.getActiveSeason() }
+
+            Phase3Data(
+                publicGames = runCatching { publicGamesDeferred.await() }.getOrNull()?.getOrDefault(emptyList()) ?: emptyList(),
+                streak = runCatching { streakDeferred.await() }.getOrNull()?.getOrNull(),
+                challenges = runCatching { challengesDeferred.await() }.getOrNull()?.getOrDefault(emptyList()) ?: emptyList(),
+                badges = runCatching { badgesDeferred.await() }.getOrNull()?.getOrDefault(emptyList()) ?: emptyList(),
+                seasonResult = runCatching { seasonDeferred.await() }.getOrNull()?.getOrDefault(null)
+            )
+        }
+
+        // Buscar progresso dos desafios (depende de challenges)
+        val challengesWithProgress = buildChallengesWithProgress(user.id, phase3Data.challenges)
+
+        // Buscar divisao da liga (depende de season)
+        val leagueDivision = resolveLeagueDivision(user.id, phase3Data.seasonResult)
+
+        _loadingState.value = LoadingState.LoadingProgress(95, 100, "Finalizando...")
+
+        val currentState = previousState.copy(
+            publicGames = phase3Data.publicGames,
+            streak = phase3Data.streak,
+            challenges = challengesWithProgress,
+            recentBadges = phase3Data.badges,
+            gamificationSummary = summary.copy(division = leagueDivision)
+        )
+        _uiState.value = currentState
+        cachedSuccessState = currentState
+        return currentState
+    }
+
+    /**
+     * Constrói o resumo de gamificação a partir dos dados do usuário.
+     */
+    private fun buildGamificationSummary(user: com.futebadosparcas.domain.model.User): GamificationSummary {
+        val (progressXp, neededXp) = com.futebadosparcas.data.model.LevelTable.getXpProgress(user.experiencePoints)
+        val isMaxLevel = user.level >= 10
+        val percent = if (isMaxLevel) 100 else {
+            if (neededXp > 0L) (progressXp * 100L / neededXp).toInt() else 100
+        }
+
+        return GamificationSummary(
+            level = user.level,
+            levelName = com.futebadosparcas.data.model.LevelTable.getLevelName(user.level),
+            nextLevelXp = neededXp - progressXp,
+            nextLevelName = if (isMaxLevel) "" else com.futebadosparcas.data.model.LevelTable.getLevelName(user.level + 1),
+            progressPercent = percent,
+            isMaxLevel = isMaxLevel,
+            division = LeagueDivision.BRONZE // Será atualizado em FASE 3
+        )
+    }
+
+    /**
+     * Constrói a lista de challenges com progresso do usuário.
+     */
+    private suspend fun buildChallengesWithProgress(
+        userId: String,
+        allChallenges: List<WeeklyChallenge>
+    ): List<Pair<WeeklyChallenge, UserChallengeProgress?>> {
+        val challengeIds = allChallenges.map { it.id }
+        val progressList: List<UserChallengeProgress> = if (challengeIds.isNotEmpty()) {
+            withTimeout(TIMEOUT_MILLIS) {
+                gamificationRepository.getChallengesProgress(userId, challengeIds)
+            }.getOrDefault(emptyList())
+        } else {
+            emptyList()
+        }
+        val progressMap = progressList.associateBy { it.challengeId }
+        return allChallenges.map { it to progressMap[it.id] }
+    }
+
+    /**
+     * Resolve a divisão da liga do usuário a partir da season ativa.
+     */
+    private suspend fun resolveLeagueDivision(
+        userId: String,
+        season: com.futebadosparcas.domain.model.Season?
+    ): LeagueDivision {
+        if (season == null) return LeagueDivision.BRONZE
+        return try {
+            val participationResult = withTimeout(TIMEOUT_MILLIS) {
+                gamificationRepository.getUserParticipation(userId, season.id)
+            }
+            participationResult.getOrNull()?.getDivisionEnum() ?: LeagueDivision.BRONZE
+        } catch (e: Exception) {
+            AppLogger.d(TAG) { "Erro ao carregar dados da liga: ${e.message}" }
+            LeagueDivision.BRONZE
+        }
+    }
+
+    /**
+     * Trata erros do carregamento com retry automático e exponential backoff.
+     */
+    private suspend fun handleLoadError(e: Exception) {
+        AppLogger.e(TAG, "Erro ao carregar dados da home", e)
+
+        if (retryCount < MAX_RETRY_COUNT) {
+            retryCount++
+            val delayMs = calculateBackoffDelay(retryCount)
+
+            _loadingState.value = LoadingState.Loading("Tentando novamente... (${retryCount}/${MAX_RETRY_COUNT})")
+            AppLogger.d(TAG) { "Retry $retryCount após ${delayMs}ms" }
+
+            delay(delayMs)
+            loadHomeData()
+        } else {
+            val errorMessage = when (e) {
+                is kotlinx.coroutines.TimeoutCancellationException -> "Tempo limite excedido. Verifique sua conexão."
+                else -> e.message ?: "Erro ao carregar dados"
+            }
+
+            _loadingState.value = LoadingState.Error(errorMessage, retryable = true)
+            _uiState.value = HomeUiState.Error(errorMessage)
+            retryCount = 0
         }
     }
 
@@ -364,6 +409,8 @@ class HomeViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        connectivityJob?.cancel()
+        unreadCountJob?.cancel()
         loadJob?.cancel()
     }
 
@@ -412,3 +459,15 @@ sealed class LoadingState {
     object Success : LoadingState()
     data class Error(val message: String, val retryable: Boolean = true) : LoadingState()
 }
+
+/**
+ * Dados intermediários da FASE 3 do carregamento da Home.
+ * Agrupa resultados de queries paralelas antes do processamento.
+ */
+private data class Phase3Data(
+    val publicGames: List<Game>,
+    val streak: com.futebadosparcas.domain.model.UserStreak?,
+    val challenges: List<WeeklyChallenge>,
+    val badges: List<UserBadge>,
+    val seasonResult: com.futebadosparcas.domain.model.Season?
+)

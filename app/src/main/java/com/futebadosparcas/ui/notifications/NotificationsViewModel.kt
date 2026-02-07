@@ -12,6 +12,7 @@ import com.futebadosparcas.util.toAndroidAppNotifications
 import com.futebadosparcas.util.toAndroidNotificationType
 import com.futebadosparcas.util.toKmpNotificationType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -36,13 +37,17 @@ class NotificationsViewModel @Inject constructor(
     private val _actionState = MutableStateFlow<NotificationActionState>(NotificationActionState.Idle)
     val actionState: StateFlow<NotificationActionState> = _actionState
 
+    private var notificationsJob: Job? = null
+    private var unreadCountJob: Job? = null
+
     init {
         observeNotifications()
         observeUnreadCount()
     }
 
     private fun observeNotifications() {
-        notificationRepository.getMyNotificationsFlow()
+        notificationsJob?.cancel()
+        notificationsJob = notificationRepository.getMyNotificationsFlow()
             .onEach { kmpNotifications ->
                 val androidNotifications = kmpNotifications.toAndroidAppNotifications()
                 val sortedNotifications = sortNotifications(androidNotifications)
@@ -61,7 +66,8 @@ class NotificationsViewModel @Inject constructor(
     }
 
     private fun observeUnreadCount() {
-        notificationRepository.getUnreadCountFlow()
+        unreadCountJob?.cancel()
+        unreadCountJob = notificationRepository.getUnreadCountFlow()
             .onEach { count ->
                 _unreadCount.value = count
             }
@@ -70,6 +76,12 @@ class NotificationsViewModel @Inject constructor(
                 AppLogger.w("NotificationsVM") { "Erro ao observar unread count: ${e.message}" }
             }
             .launchIn(viewModelScope)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        notificationsJob?.cancel()
+        unreadCountJob?.cancel()
     }
 
     fun loadNotifications() {

@@ -1,12 +1,18 @@
 package com.futebadosparcas.data.local.model
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.model.User
 import java.util.Date
 
-@Entity(tableName = "users")
+@Entity(
+    tableName = "users",
+    indices = [
+        Index(value = ["cachedAt"], name = "index_users_cachedAt")
+    ]
+)
 data class UserEntity(
     @PrimaryKey val id: String,
     val email: String,
@@ -18,7 +24,13 @@ data class UserEntity(
     val cachedAt: Long = System.currentTimeMillis() // TTL tracking
 )
 
-@Entity(tableName = "groups")
+@Entity(
+    tableName = "groups",
+    indices = [
+        Index(value = ["status"], name = "index_groups_status"),
+        Index(value = ["ownerId"], name = "index_groups_ownerId")
+    ]
+)
 data class GroupEntity(
     @PrimaryKey val id: String,
     val name: String,
@@ -33,7 +45,15 @@ data class GroupEntity(
     val cachedAt: Long = System.currentTimeMillis() // TTL tracking
 )
 
-@Entity(tableName = "games")
+@Entity(
+    tableName = "games",
+    indices = [
+        Index(value = ["status"], name = "index_games_status"),
+        Index(value = ["cachedAt"], name = "index_games_cachedAt"),
+        Index(value = ["dateTime"], name = "index_games_dateTime"),
+        Index(value = ["ownerId"], name = "index_games_ownerId")
+    ]
+)
 data class GameEntity(
     @PrimaryKey val id: String,
     val scheduleId: String,
