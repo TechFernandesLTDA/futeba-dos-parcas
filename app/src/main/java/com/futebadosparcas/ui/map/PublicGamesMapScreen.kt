@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -224,7 +225,7 @@ private fun MapGameCard(game: MapGameMarker, isSelected: Boolean, onClick: () ->
                     color = if (game.price > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary)
                 if (game.hasVacancies) {
                     Spacer(Modifier.height(4.dp))
-                    Button(onClick = onJoinClick, Modifier.height(32.dp)) {
+                    Button(onClick = onJoinClick, Modifier.defaultMinSize(minHeight = 48.dp)) {
                         Text(stringResource(R.string.join), style = MaterialTheme.typography.labelSmall)
                     }
                 }

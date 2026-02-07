@@ -1752,6 +1752,8 @@ subir no ranking!</string>
     <string name="badges_rarity_epico">ÉPICO</string>
     <string name="badges_rarity_lendario">LENDÁRIO</string>
     <string name="badges_all">Todas</string>
+    <string name="badges_empty_message">Jogue partidas para desbloquear conquistas e badges!</string>
+    <string name="badges_empty_title">Nenhuma conquista ainda</string>
     <string name="badges_error_title">Erro ao carregar conquistas</string>
 
     <!-- Home Components -->
@@ -1839,6 +1841,9 @@ subir no ranking!</string>
     <string name="location_map_title">Mapa de Locais</string>
     <string name="location_detail">Detalhes do Local</string>
     <string name="field_owner_dashboard">Painel do Dono de Quadra</string>
+    <string name="field_owner_empty_action">Adicionar Local</string>
+    <string name="field_owner_empty_description">Adicione seu primeiro local para começar a gerenciar suas quadras e reservas</string>
+    <string name="field_owner_empty_title">Nenhum local cadastrado</string>
 
     <!-- Navigation Strings -->
     <string name="theme_settings">Configurações de Tema</string>

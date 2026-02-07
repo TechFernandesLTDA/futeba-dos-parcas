@@ -218,17 +218,17 @@ private fun HomeSuccessContent(
 
     // ✅ OTIMIZAÇÃO: Usar remember para estabilizar estados e evitar recomposições desnecessárias
     // Cada campo é memoizado com sua própria key para granularidade fina
-    val games = remember(state.games.hashCode()) { state.games }
-    val activities = remember(state.activities.hashCode()) { state.activities }
-    val publicGames = remember(state.publicGames.hashCode()) { state.publicGames }
-    val challenges = remember(state.challenges.hashCode()) { state.challenges }
-    val recentBadges = remember(state.recentBadges.hashCode()) { state.recentBadges }
-    val user = remember(state.user.id, state.user.experiencePoints) { state.user }
-    val statistics = remember(state.statistics?.hashCode()) { state.statistics }
-    val gamificationSummary = remember(state.gamificationSummary.level, state.gamificationSummary.progressPercent) {
+    val games = remember(state.games) { state.games }
+    val activities = remember(state.activities) { state.activities }
+    val publicGames = remember(state.publicGames) { state.publicGames }
+    val challenges = remember(state.challenges) { state.challenges }
+    val recentBadges = remember(state.recentBadges) { state.recentBadges }
+    val user = remember(state.user) { state.user }
+    val statistics = remember(state.statistics) { state.statistics }
+    val gamificationSummary = remember(state.gamificationSummary) {
         state.gamificationSummary
     }
-    val streak = remember(state.streak?.hashCode()) { state.streak }
+    val streak = remember(state.streak) { state.streak }
 
     // ✅ OTIMIZAÇÃO P2#9: Usar derivedStateOf para evitar recálculos desnecessários
     // Cálculo é feito antes da LazyColumn para evitar invalidação prematura

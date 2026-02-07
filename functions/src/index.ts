@@ -484,7 +484,8 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
             const data = doc.data();
             const userId = data.user_id;
             if (userId) {
-              result.set(userId, data.currentStreak || 0);
+              // Suportar ambos os formatos: camelCase e snake_case
+              result.set(userId, data.currentStreak || data.current_streak || 0);
             }
           }
         }
@@ -505,13 +506,30 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
       ]);
 
       // 4. Process Each Player (NO Firestore calls in loop - data already loaded)
-      const batch = db.batch();
+      // Limite seguro abaixo do máximo de 500 operações por batch do Firestore
+      const XP_BATCH_LIMIT = 450;
+      let currentBatch = db.batch();
+      let currentBatchOps = 0;
+      const batchCommits: Promise<admin.firestore.WriteResult[]>[] = [];
       const now = admin.firestore.FieldValue.serverTimestamp();
+
+      // Helper: Verifica se precisa criar novo batch antes de adicionar ops
+      const ensureBatchCapacity = (opsNeeded: number) => {
+        if (currentBatchOps + opsNeeded > XP_BATCH_LIMIT) {
+          batchCommits.push(currentBatch.commit());
+          console.log(`[XP_BATCH] Comitting batch with ${currentBatchOps} ops, starting new batch`);
+          currentBatch = db.batch();
+          currentBatchOps = 0;
+        }
+      };
 
       // Date keys for Rankings
       const d = getGameDate(gameDoc);
       const monthKey = d.toISOString().substring(0, 7); // yyyy-MM
       const weekKey = getWeekKey(d);
+
+      // Coletar promises de notificações de streak para await posterior
+      const streakNotificationPromises: Promise<void>[] = [];
 
       for (const conf of confirmations) {
         const uid = conf.userId;
@@ -585,16 +603,18 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
         xp += streakXp;
 
         // Enviar notificação de streak se atingiu milestone (3, 7, 10 ou 30)
-        // Nota: A notificação é enviada de forma assíncrona, não bloqueia o processamento
         // PERF_001: Lazy load notifications module para otimizar cold start
-        (async () => {
-          try {
-            const notifModule = await getNotifications();
-            await notifModule.sendStreakNotificationIfMilestone(uid, streak);
-          } catch (err) {
-            console.error(`[STREAK] Error sending notification for user ${uid}:`, err);
-          }
-        })();
+        // As promises são coletadas e aguardadas após o loop para não perder notificações
+        streakNotificationPromises.push(
+          (async () => {
+            try {
+              const notifModule = await getNotifications();
+              await notifModule.sendStreakNotificationIfMilestone(uid, streak);
+            } catch (err) {
+              console.error(`[STREAK] Error sending notification for user ${uid}:`, err);
+            }
+          })()
+        );
 
         // "Bola Murcha" Penalty (worst player) - synced with XPCalculator.kt
         let penaltyXp = 0;
@@ -637,6 +657,10 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
         const newLevel = getLevelForXp(finalXp);
 
         // Writes
+        // Estimar operações: user(1) + stats(1) + confirmation(1) + log(1) + ranking(2) + season(0-1) + badges(0-N)
+        // Mínimo ~6 ops por jogador, garantir espaço antes de iniciar
+        ensureBatchCapacity(10); // Reserva conservadora por jogador
+
         // 1. Update User
         const userUpdate: any = {
           experience_points: finalXp,
@@ -646,13 +670,16 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
         if (newMilestones.length > 0) {
           userUpdate.milestones_achieved = admin.firestore.FieldValue.arrayUnion(...newMilestones);
         }
-        batch.update(db.collection("users").doc(uid), userUpdate);
+        currentBatch.update(db.collection("users").doc(uid), userUpdate);
+        currentBatchOps++;
 
         // 2. Update Stats
-        batch.set(db.collection("statistics").doc(uid), newStats, {merge: true});
+        currentBatch.set(db.collection("statistics").doc(uid), newStats, {merge: true});
+        currentBatchOps++;
 
         // 3. Update Confirmation
-        batch.update(db.collection("confirmations").doc(`${gameId}_${uid}`), {xp_earned: xp});
+        currentBatch.update(db.collection("confirmations").doc(`${gameId}_${uid}`), {xp_earned: xp});
+        currentBatchOps++;
 
         // 4. Create Log
         const logRef = db.collection("xp_logs").doc();
@@ -684,31 +711,37 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
           milestones_unlocked: newMilestones,
           created_at: now,
         };
-        batch.set(logRef, log);
+        currentBatch.set(logRef, log);
+        currentBatchOps++;
 
-        // 5. Update Ranking Deltas
-        updateRankingDeltas(batch, uid, conf, result, xp, isMvp, weekKey, monthKey);
+        // 5. Update Ranking Deltas (2 ops: week + month)
+        ensureBatchCapacity(2);
+        updateRankingDeltas(currentBatch, uid, conf, result, xp, isMvp, weekKey, monthKey);
+        currentBatchOps += 2;
 
-        // 6. Update Season (if active)
-        // 6. Update Season (if active)
+        // 6. Update Season (if active) (1 op)
         if (activeSeason) {
-          updateSeasonParticipation(batch, uid, activeSeason, result, conf, isMvp);
+          ensureBatchCapacity(1);
+          updateSeasonParticipation(currentBatch, uid, activeSeason, result, conf, isMvp);
+          currentBatchOps++;
         }
 
         // 7. Award Badges (Cloud Integrity)
         // Award Badges
 
         const awardFullBadge = (badgeId: string) => {
+          ensureBatchCapacity(1);
           const docId = `${uid}_${badgeId}`;
           const badgeRef = db.collection("user_badges").doc(docId);
 
-          batch.set(badgeRef, {
+          currentBatch.set(badgeRef, {
             user_id: uid,
             badge_id: badgeId,
             unlocked_at: admin.firestore.FieldValue.serverTimestamp(),
             last_earned_at: admin.firestore.FieldValue.serverTimestamp(),
             count: admin.firestore.FieldValue.increment(1),
           }, {merge: true});
+          currentBatchOps++;
         };
 
         // ==========================================
@@ -817,15 +850,27 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
         }
       }
 
+      // Aguardar todas as notificações de streak antes de finalizar
+      if (streakNotificationPromises.length > 0) {
+        await Promise.all(streakNotificationPromises);
+        console.log(`[STREAK] ${streakNotificationPromises.length} streak notification(s) processed`);
+      }
+
       // Mark Game Processed
-      batch.update(event.data.after.ref, {
+      ensureBatchCapacity(1);
+      currentBatch.update(event.data.after.ref, {
         xp_processed: true,
         xp_processing: false,
         xp_processed_at: now,
       });
+      currentBatchOps++;
 
-      await batch.commit();
-      console.log(`Game ${gameId} processing complete.`);
+      // Commit último batch pendente
+      batchCommits.push(currentBatch.commit());
+
+      // Aguardar todos os batches
+      await Promise.all(batchCommits);
+      console.log(`Game ${gameId} processing complete (${batchCommits.length} batch(es) committed).`);
     } catch (error) {
       console.error(`Game ${gameId} processing failed.`, error);
       await event.data.after.ref.update({
@@ -1097,56 +1142,46 @@ export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) =
   const gameId = event.params.gameId;
   console.log(`[CASCADE DELETE] Starting cascade deletion for game ${gameId}`);
 
+  // Limite seguro abaixo do máximo de 500 operações por batch do Firestore
+  const BATCH_LIMIT = 450;
+
   try {
-    const batch = db.batch();
-    let totalDeleted = 0;
+    // Coletar todas as referências de documentos a deletar
+    const allRefs: admin.firestore.DocumentReference[] = [];
 
     // 1. Delete confirmations
     const confirmationsSnap = await db.collection("confirmations")
       .where("game_id", "==", gameId)
       .get();
-    confirmationsSnap.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-      totalDeleted++;
-    });
+    confirmationsSnap.docs.forEach((doc) => allRefs.push(doc.ref));
     console.log(`[CASCADE DELETE] Found ${confirmationsSnap.size} confirmations to delete`);
 
     // 2. Delete teams
     const teamsSnap = await db.collection("teams")
       .where("game_id", "==", gameId)
       .get();
-    teamsSnap.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-      totalDeleted++;
-    });
+    teamsSnap.docs.forEach((doc) => allRefs.push(doc.ref));
     console.log(`[CASCADE DELETE] Found ${teamsSnap.size} teams to delete`);
 
     // 3. Delete game_events (live match events)
     const eventsSnap = await db.collection("game_events")
       .where("game_id", "==", gameId)
       .get();
-    eventsSnap.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-      totalDeleted++;
-    });
+    eventsSnap.docs.forEach((doc) => allRefs.push(doc.ref));
     console.log(`[CASCADE DELETE] Found ${eventsSnap.size} game_events to delete`);
 
     // 4. Delete mvp_votes
     const votesSnap = await db.collection("mvp_votes")
       .where("game_id", "==", gameId)
       .get();
-    votesSnap.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-      totalDeleted++;
-    });
+    votesSnap.docs.forEach((doc) => allRefs.push(doc.ref));
     console.log(`[CASCADE DELETE] Found ${votesSnap.size} mvp_votes to delete`);
 
     // 5. Delete live_scores (document with gameId as ID)
     const liveScoreRef = db.collection("live_scores").doc(gameId);
     const liveScoreDoc = await liveScoreRef.get();
     if (liveScoreDoc.exists) {
-      batch.delete(liveScoreRef);
-      totalDeleted++;
+      allRefs.push(liveScoreRef);
       console.log("[CASCADE DELETE] Found live_score to delete");
     }
 
@@ -1154,15 +1189,19 @@ export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) =
     const xpLogsSnap = await db.collection("xp_logs")
       .where("game_id", "==", gameId)
       .get();
-    xpLogsSnap.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-      totalDeleted++;
-    });
+    xpLogsSnap.docs.forEach((doc) => allRefs.push(doc.ref));
     console.log(`[CASCADE DELETE] Found ${xpLogsSnap.size} xp_logs to delete`);
 
-    // Commit all deletions
+    // Commit em chunks de BATCH_LIMIT para não exceder o limite de 500 ops do Firestore
+    const totalDeleted = allRefs.length;
     if (totalDeleted > 0) {
-      await batch.commit();
+      for (let i = 0; i < allRefs.length; i += BATCH_LIMIT) {
+        const chunk = allRefs.slice(i, i + BATCH_LIMIT);
+        const batch = db.batch();
+        chunk.forEach((ref) => batch.delete(ref));
+        await batch.commit();
+        console.log(`[CASCADE DELETE] Committed batch ${Math.floor(i / BATCH_LIMIT) + 1} (${chunk.length} ops)`);
+      }
       console.log(`[CASCADE DELETE] Successfully deleted ${totalDeleted} related documents for game ${gameId}`);
     } else {
       console.log(`[CASCADE DELETE] No related documents found for game ${gameId}`);
@@ -1181,85 +1220,89 @@ export const onGroupDeleted = onDocumentDeleted("groups/{groupId}", async (event
   const groupId = event.params.groupId;
   console.log(`[CASCADE DELETE] Starting cascade deletion for group ${groupId}`);
 
+  // Limite seguro abaixo do máximo de 500 operações por batch do Firestore
+  const BATCH_LIMIT = 450;
+
+  // Interface para agrupar operações de delete e update separadamente
+  interface BatchOp {
+    type: "delete" | "update";
+    ref: admin.firestore.DocumentReference;
+    data?: Record<string, any>;
+  }
+
   try {
-    // Nota: Batch limit é 500 operações. Para grupos grandes,
-    // pode ser necessário dividir em múltiplos batches.
-    const batch = db.batch();
-    let totalDeleted = 0;
+    const allOps: BatchOp[] = [];
 
     // 1. Delete all members (subcollection)
     const membersSnap = await db.collection("groups").doc(groupId)
       .collection("members").get();
-    membersSnap.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-      totalDeleted++;
-    });
+    membersSnap.docs.forEach((doc) => allOps.push({type: "delete", ref: doc.ref}));
     console.log(`[CASCADE DELETE] Found ${membersSnap.size} members to delete`);
 
     // 2. Delete cashbox entries (subcollection)
     const cashboxSnap = await db.collection("groups").doc(groupId)
       .collection("cashbox").get();
-    cashboxSnap.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-      totalDeleted++;
-    });
+    cashboxSnap.docs.forEach((doc) => allOps.push({type: "delete", ref: doc.ref}));
     console.log(`[CASCADE DELETE] Found ${cashboxSnap.size} cashbox entries to delete`);
 
     // 3. Delete cashbox_summary (subcollection)
     const summarySnap = await db.collection("groups").doc(groupId)
       .collection("cashbox_summary").get();
-    summarySnap.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-      totalDeleted++;
-    });
+    summarySnap.docs.forEach((doc) => allOps.push({type: "delete", ref: doc.ref}));
 
     // 4. Delete group invites related to this group
     const invitesSnap = await db.collection("group_invites")
       .where("group_id", "==", groupId)
       .get();
-    invitesSnap.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-      totalDeleted++;
-    });
+    invitesSnap.docs.forEach((doc) => allOps.push({type: "delete", ref: doc.ref}));
     console.log(`[CASCADE DELETE] Found ${invitesSnap.size} invites to delete`);
 
     // 5. Delete schedules related to this group
     const schedulesSnap = await db.collection("schedules")
       .where("group_id", "==", groupId)
       .get();
-    schedulesSnap.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-      totalDeleted++;
-    });
+    schedulesSnap.docs.forEach((doc) => allOps.push({type: "delete", ref: doc.ref}));
     console.log(`[CASCADE DELETE] Found ${schedulesSnap.size} schedules to delete`);
 
     // 6. Update users who had this group in their groups subcollection
     const usersWithGroup = await db.collectionGroup("groups")
       .where(admin.firestore.FieldPath.documentId(), "==", groupId)
       .get();
-    usersWithGroup.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-      totalDeleted++;
-    });
+    usersWithGroup.docs.forEach((doc) => allOps.push({type: "delete", ref: doc.ref}));
     console.log(`[CASCADE DELETE] Found ${usersWithGroup.size} user group references to delete`);
 
     // 7. Mark games from this group as orphaned (don't delete - preserve history)
     const gamesSnap = await db.collection("games")
       .where("group_id", "==", groupId)
       .get();
-    gamesSnap.docs.forEach((doc) => {
-      batch.update(doc.ref, {
+    gamesSnap.docs.forEach((doc) => allOps.push({
+      type: "update",
+      ref: doc.ref,
+      data: {
         group_id: null,
         group_deleted: true,
         group_deleted_at: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    });
+      },
+    }));
     console.log(`[CASCADE DELETE] Marked ${gamesSnap.size} games as orphaned`);
 
-    // Commit all deletions
-    if (totalDeleted > 0) {
-      await batch.commit();
-      console.log(`[CASCADE DELETE] Successfully deleted ${totalDeleted} related documents for group ${groupId}`);
+    // Commit em chunks de BATCH_LIMIT para não exceder o limite de 500 ops do Firestore
+    const totalOps = allOps.length;
+    if (totalOps > 0) {
+      for (let i = 0; i < allOps.length; i += BATCH_LIMIT) {
+        const chunk = allOps.slice(i, i + BATCH_LIMIT);
+        const batch = db.batch();
+        chunk.forEach((op) => {
+          if (op.type === "delete") {
+            batch.delete(op.ref);
+          } else if (op.type === "update" && op.data) {
+            batch.update(op.ref, op.data);
+          }
+        });
+        await batch.commit();
+        console.log(`[CASCADE DELETE] Committed batch ${Math.floor(i / BATCH_LIMIT) + 1} (${chunk.length} ops)`);
+      }
+      console.log(`[CASCADE DELETE] Successfully processed ${totalOps} operations for group ${groupId}`);
     } else {
       console.log(`[CASCADE DELETE] No related documents found for group ${groupId}`);
     }

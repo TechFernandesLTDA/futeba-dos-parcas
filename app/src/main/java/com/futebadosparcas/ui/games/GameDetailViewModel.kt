@@ -73,6 +73,9 @@ class GameDetailViewModel @Inject constructor(
         gameDetailsJob = viewModelScope.launch {
             _uiState.value = GameDetailUiState.Loading
 
+            // Carregar lista de espera uma vez, fora do collect (Issue #32)
+            loadWaitlist(id)
+
             try {
                 combine(
                     gameRepository.getGameDetailsFlow(id),
@@ -126,9 +129,6 @@ class GameDetailViewModel @Inject constructor(
 
                     // Verificar deadline de confirmacao (Issue #31)
                     updateConfirmationDeadlineState(game)
-
-                    // Carregar lista de espera (Issue #32)
-                    loadWaitlist(id)
 
                     val currentMessage = (_uiState.value as? GameDetailUiState.Success)?.userMessage
 

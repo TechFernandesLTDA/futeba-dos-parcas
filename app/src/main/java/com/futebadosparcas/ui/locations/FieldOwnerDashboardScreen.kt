@@ -262,10 +262,10 @@ private fun EmptyLocationsState(
 ) {
     EmptyState(
         type = com.futebadosparcas.ui.components.EmptyStateType.NoData(
-            title = "Nenhum local cadastrado",
-            description = "Adicione seu primeiro local para começar a gerenciar suas quadras e reservas",
+            title = stringResource(R.string.field_owner_empty_title),
+            description = stringResource(R.string.field_owner_empty_description),
             icon = Icons.Default.Stadium,
-            actionLabel = "Adicionar Local",
+            actionLabel = stringResource(R.string.field_owner_empty_action),
             onAction = onAddLocation
         )
     )

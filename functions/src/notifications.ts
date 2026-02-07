@@ -637,13 +637,13 @@ export const onLevelUp = onDocumentUpdated("users/{userId}", async (event) => {
   }
 });
 
-export const sendTestNotification = onCall(async (data: any, context: any) => {
-  if (!context.auth) {
+export const sendTestNotification = onCall(async (request) => {
+  if (!request.auth) {
     throw new HttpsError("unauthenticated", "Usuario nao autenticado");
   }
 
-  const userId = context.auth.uid;
-  const {title, body, type} = data;
+  const userId = request.auth.uid;
+  const {title, body, type} = request.data;
 
   if (!title || !body) {
     throw new HttpsError("invalid-argument", "Titulo e corpo sao obrigatorios");
@@ -658,13 +658,13 @@ export const sendTestNotification = onCall(async (data: any, context: any) => {
   return {success, message: success ? "Notificacao enviada!" : "Falha ao enviar"};
 });
 
-export const createFakeGameNotifications = onCall(async (data: any, context: any) => {
-  if (!context.auth) {
+export const createFakeGameNotifications = onCall(async (request) => {
+  if (!request.auth) {
     throw new HttpsError("unauthenticated", "Usuario nao autenticado");
   }
 
-  const userId = context.auth.uid;
-  const {count = 3} = data;
+  const userId = request.auth.uid;
+  const {count = 3} = request.data;
 
   const userDoc = await getDb().collection("users").doc(userId).get();
   const userName = userDoc.exists ?
@@ -1049,14 +1049,31 @@ export const onDivisionChanged = onDocumentUpdated(
     console.log(`[RANKING_CHANGED] User ${userId}: ${beforeDivision} -> ${afterDivision}`);
 
     // Determinar se foi promoção ou rebaixamento
-    const divisionOrder = ["BRONZE", "SILVER", "GOLD", "DIAMOND"];
-    const beforeIndex = divisionOrder.indexOf(beforeDivision || "BRONZE");
-    const afterIndex = divisionOrder.indexOf(afterDivision);
+    // Suportar ambas as convenções: inglês (legado) e português (league.ts)
+    // league.ts usa: BRONZE, PRATA, OURO, DIAMANTE
+    // Dados legados podem conter: BRONZE, SILVER, GOLD, DIAMOND
+    const divisionOrderMap: Record<string, number> = {
+      // Nomes em português (padrão em league.ts)
+      BRONZE: 0,
+      PRATA: 1,
+      OURO: 2,
+      DIAMANTE: 3,
+      // Nomes em inglês (legado, para compatibilidade)
+      SILVER: 1,
+      GOLD: 2,
+      DIAMOND: 3,
+    };
+    const beforeIndex = divisionOrderMap[beforeDivision || "BRONZE"] ?? 0;
+    const afterIndex = divisionOrderMap[afterDivision] ?? 0;
     const isPromotion = afterIndex > beforeIndex;
 
-    // Mapear nomes das divisões em português
+    // Mapear nomes das divisões em português para exibição
     const divisionNames: Record<string, string> = {
       BRONZE: "Bronze",
+      PRATA: "Prata",
+      OURO: "Ouro",
+      DIAMANTE: "Diamante",
+      // Legado (inglês)
       SILVER: "Prata",
       GOLD: "Ouro",
       DIAMOND: "Diamante",

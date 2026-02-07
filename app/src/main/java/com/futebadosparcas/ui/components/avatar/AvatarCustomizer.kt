@@ -247,7 +247,7 @@ fun CustomAvatar(
                     .size(size * 0.35f)
                     .clip(CircleShape)
                     .background(config.badge.color)
-                    .border(2.dp, Color.White, CircleShape),
+                    .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
