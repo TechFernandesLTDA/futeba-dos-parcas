@@ -98,8 +98,8 @@ fun BadgesScreen(
                 is BadgesUiState.Empty -> {
                     com.futebadosparcas.ui.components.modern.EmptyState(
                         icon = Icons.Default.EmojiEvents,
-                        title = "Nenhuma conquista ainda",
-                        message = "Jogue partidas para desbloquear conquistas e badges!"
+                        title = stringResource(R.string.badges_empty_title),
+                        message = stringResource(R.string.badges_empty_message)
                     )
                 }
                 is BadgesUiState.Success -> {

@@ -109,7 +109,7 @@ data class User(
     // Nível/XP do jogador para gamificação
     @get:PropertyName("level")
     @set:PropertyName("level")
-    var level: Int = 1,
+    var level: Int = 0,
 
     @get:PropertyName("experience_points")
     @set:PropertyName("experience_points")

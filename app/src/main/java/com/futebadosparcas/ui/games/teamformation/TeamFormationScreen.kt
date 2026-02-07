@@ -1147,8 +1147,12 @@ private fun SavedFormationCard(
 
 @Composable
 private fun DraftRevealOverlay(reveal: DraftRevealAnimation) {
+    // Animação real: começa em 0 e anima até 1 ao entrar na composição
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+
     val scale by animateFloatAsState(
-        targetValue = 1f,
+        targetValue = if (visible) 1f else 0f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessLow
@@ -1157,7 +1161,7 @@ private fun DraftRevealOverlay(reveal: DraftRevealAnimation) {
     )
 
     val alpha by animateFloatAsState(
-        targetValue = 1f,
+        targetValue = if (visible) 1f else 0f,
         animationSpec = tween(durationMillis = 300),
         label = "alpha"
     )
@@ -1165,7 +1169,7 @@ private fun DraftRevealOverlay(reveal: DraftRevealAnimation) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.7f)),
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.7f)),
         contentAlignment = Alignment.Center
     ) {
         Card(

@@ -49,11 +49,15 @@ fun ProfileSetupScreen(
     var futsalSelected by remember { mutableStateOf(false) }
     var campoSelected by remember { mutableStateOf(false) }
 
+    val goalkeeperLabel = stringResource(R.string.profile_position_goalkeeper)
+    val defenderLabel = stringResource(R.string.profile_position_defender)
+    val midfielderLabel = stringResource(R.string.profile_position_midfielder)
+    val attackerLabel = stringResource(R.string.profile_position_attacker)
     val positions = listOf(
-        "Goleiro" to "goalkeeper",
-        "Defensor" to "defender",
-        "Meio-Campo" to "midfielder",
-        "Atacante" to "striker"
+        goalkeeperLabel to "goalkeeper",
+        defenderLabel to "defender",
+        midfielderLabel to "midfielder",
+        attackerLabel to "striker"
     )
 
     Surface(

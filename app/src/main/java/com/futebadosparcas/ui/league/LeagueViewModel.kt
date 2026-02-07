@@ -114,12 +114,9 @@ class LeagueViewModel @Inject constructor(
 
     /**
      * Carrega dados da liga
+     * Usa ConcurrentHashMap para thread-safety (acesso de Main e IO threads)
      */
-    private val _userCache = object : LinkedHashMap<String, User>(MAX_CACHE_SIZE, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, User>?): Boolean {
-            return size > MAX_CACHE_SIZE
-        }
-    }
+    private val _userCache = java.util.concurrent.ConcurrentHashMap<String, User>()
 
     /**
      * ✅ OTIMIZAÇÃO #5: Cancelamento de Queries Stale
@@ -285,6 +282,11 @@ class LeagueViewModel @Inject constructor(
 
         // Aguardar todos os chunks em paralelo
         deferredChunks.awaitAll()
+
+        // Evitar crescimento ilimitado do cache (ConcurrentHashMap não tem removeEldestEntry)
+        if (_userCache.size > MAX_CACHE_SIZE) {
+            _userCache.keys.take(_userCache.size - MAX_CACHE_SIZE).forEach { _userCache.remove(it) }
+        }
 
         AppLogger.d(TAG) { "fetchMissingUsers concluído. Cache tem ${_userCache.size} usuários" }
     }

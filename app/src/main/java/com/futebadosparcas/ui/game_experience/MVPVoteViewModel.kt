@@ -11,6 +11,7 @@ import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.MatchFinalizationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -28,10 +29,15 @@ class MVPVoteViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<MVPVoteUiState>(MVPVoteUiState.Loading())
     val uiState: StateFlow<MVPVoteUiState> = _uiState
 
+    private var loadJob: Job? = null
+    private var voteJob: Job? = null
+    private var finalizeJob: Job? = null
+
     private var allConfirmations: List<GameConfirmation> = emptyList()
 
     fun loadCandidates(gameId: String) {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             // Keep loading but maybe we don't know owner yet. Default false.
             _uiState.value = MVPVoteUiState.Loading(isOwner = false)
             
@@ -121,7 +127,8 @@ class MVPVoteViewModel @Inject constructor(
         
         if (currentState !is MVPVoteUiState.Voting) return
 
-        viewModelScope.launch {
+        voteJob?.cancel()
+        voteJob = viewModelScope.launch {
              val currentUser = userRepository.getCurrentUserId() ?: return@launch
              
              val vote = MVPVote(
@@ -165,7 +172,8 @@ class MVPVoteViewModel @Inject constructor(
     }
 
     fun finalizeVoting(gameId: String) {
-        viewModelScope.launch {
+        finalizeJob?.cancel()
+        finalizeJob = viewModelScope.launch {
             val currentState = _uiState.value
             _uiState.value = MVPVoteUiState.Loading(currentState.isOwner)
 
@@ -183,6 +191,12 @@ class MVPVoteViewModel @Inject constructor(
                     _uiState.value = MVPVoteUiState.Error("Erro ao concluir votação: ${it.message}", currentState.isOwner)
                 }
         }
+    }
+    override fun onCleared() {
+        super.onCleared()
+        loadJob?.cancel()
+        voteJob?.cancel()
+        finalizeJob?.cancel()
     }
 }
 

@@ -138,9 +138,10 @@ service cloud.firestore {
     }
 
     // Verifica se o usuario e um jogador confirmado no jogo (C-002 fix)
+    // Bug fix: Verifica status == 'CONFIRMED' alem de existencia do documento
     function isConfirmedPlayer(gameId) {
       let confirmationDoc = get(/databases/$(database)/documents/confirmations/$(gameId + "_" + userId()));
-      return confirmationDoc != null;
+      return confirmationDoc != null && confirmationDoc.data.status == 'CONFIRMED';
     }
 
     // Helper global unico para verificar se o usuario e dono do jogo (C-005 fix)
@@ -306,7 +307,8 @@ service cloud.firestore {
       // S-001 FIX: Restringir leitura - apenas proprio usuario ou admin pode ver perfil completo
       // Exceção: usuarios marcados como is_searchable podem ser lidos por qualquer autenticado
       // PERF_001: fcm_token é SEMPRE privado (não exposto em leitura pública)
-      allow read: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.is_searchable == true);
+      // Bug fix: Usuarios soft-deleted nao devem ser encontraveis via busca
+      allow read: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.is_searchable == true && (!('deleted_at' in resource.data) || resource.data.deleted_at == null));
 
       // Usuario so pode criar seu proprio perfil (com role padrao PLAYER)
       // Validações de dados obrigatorias na criacao
@@ -359,8 +361,8 @@ service cloud.firestore {
            fieldUnchanged('auto_gk_rating') &&
            fieldUnchanged('auto_rating_samples') &&
            fieldUnchanged('auto_rating_updated_at') &&
-           // FCM token e flags internas
-           fieldUnchanged('fcm_token') &&
+           // Bug fix: fcm_token PODE ser atualizado pelo proprio usuario (necessario para push notifications)
+           // Apenas updated_at e protegido (gerenciado por Cloud Functions)
            fieldUnchanged('updated_at') &&
            // Validacao de dados no update
            isValidName(request.resource.data.name) &&
@@ -388,8 +390,9 @@ service cloud.firestore {
     match /games/{gameId} {
       // Qualquer usuario autenticado pode ler jogos (EXCETO soft-deleted)
       // Admins podem ver soft-deleted para recuperação
+      // Bug fix: deleted_at pode nao existir no documento (undefined != null em Firestore rules)
       allow read: if isAuthenticated() &&
-                     (resource.data.deleted_at == null || isAdmin());
+                     (!('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin());
 
       // Qualquer usuario autenticado pode criar jogos
       // Validacoes na criacao de jogo (#28, #29 - Validações de bounds e coordenadas)
@@ -424,11 +427,16 @@ service cloud.firestore {
          isNonNegativeNumber(request.resource.data.players_count) &&
          isNonNegativeNumber(request.resource.data.goalkeepers_count)) ||
         // Outros usuarios so podem atualizar contadores via transacao
+        // Bug fix: Restrito a membros do grupo ou participantes confirmados do jogo
         (onlyAllowedFields(['players_count', 'goalkeepers_count']) &&
          isNonNegativeNumber(request.resource.data.players_count) &&
-         isNonNegativeNumber(request.resource.data.goalkeepers_count)) ||
-        // Permitir que jogadores confirmados atualizem o MVP no final da votacao
-        (isConfirmedPlayer(gameId) && onlyAllowedFields(['mvp_id']))
+         isNonNegativeNumber(request.resource.data.goalkeepers_count) &&
+         (isConfirmedPlayer(gameId) ||
+          ('group_id' in resource.data && resource.data.group_id != null && isGroupMember(resource.data.group_id)))) ||
+        // Bug fix: Apenas dono do jogo ou admin pode definir MVP, e jogo deve estar FINISHED
+        ((resource.data.owner_id == userId() || isAdmin()) &&
+         resource.data.status == 'FINISHED' &&
+         onlyAllowedFields(['mvp_id']))
       );
 
       // Apenas o dono ou admin pode deletar
@@ -637,13 +645,14 @@ service cloud.firestore {
       //    (para exibicao publica, ex: busca de locais)
       // 2. Usuarios autenticados podem ler QUALQUER local (EXCETO soft-deleted)
       // 3. Admins podem ver soft-deleted para recuperação
+      // Bug fix: deleted_at pode nao existir no documento (undefined != null em Firestore rules)
       allow read: if (
         // Leitura publica: apenas locais ativos E verificados E não deletados
         (resource.data.is_active == true &&
          resource.data.is_verified == true &&
-         resource.data.deleted_at == null) ||
+         (!('deleted_at' in resource.data) || resource.data.deleted_at == null)) ||
         // Leitura autenticada: qualquer local não deletado
-        (isAuthenticated() && resource.data.deleted_at == null) ||
+        (isAuthenticated() && (!('deleted_at' in resource.data) || resource.data.deleted_at == null)) ||
         // Admin: pode ver tudo, incluindo soft-deleted
         (isAuthenticated() && isAdmin())
       );
@@ -958,8 +967,9 @@ service cloud.firestore {
     match /groups/{groupId} {
       // Usuários podem ler grupos públicos ou onde são membros (EXCETO soft-deleted)
       // Admins podem ver soft-deleted para recuperação
+      // Bug fix: deleted_at pode nao existir no documento (undefined != null em Firestore rules)
       allow read: if isAuthenticated() && (
-        resource.data.deleted_at == null || isAdmin()
+        !('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin()
       ) && (
         resource.data.is_public == true ||
         resource.data.owner_id == userId() ||

@@ -64,9 +64,10 @@ class BadgesViewModel @Inject constructor(
     fun loadBadges(forceRefresh: Boolean = false) {
         // Verificar cache antes de buscar do servidor
         val now = System.currentTimeMillis()
-        if (!forceRefresh && cachedState != null && (now - lastLoadTime) < CACHE_DURATION_MS) {
+        val cached = cachedState
+        if (!forceRefresh && cached != null && (now - lastLoadTime) < CACHE_DURATION_MS) {
             AppLogger.d(TAG) { "Cache HIT para badges (age=${now - lastLoadTime}ms)" }
-            _uiState.value = cachedState!!
+            _uiState.value = cached
             return
         }
 

@@ -44,7 +44,7 @@ class GamesViewModel @Inject constructor(
     // SavedState para persistir filtro atual
     var currentFilter: GameFilterType
         get() = savedStateHandle.get<String>(KEY_CURRENT_FILTER)?.let {
-            GameFilterType.valueOf(it)
+            runCatching { GameFilterType.valueOf(it) }.getOrDefault(GameFilterType.ALL)
         } ?: GameFilterType.ALL
         set(value) = savedStateHandle.set(KEY_CURRENT_FILTER, value.name)
 

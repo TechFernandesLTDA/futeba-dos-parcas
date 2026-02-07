@@ -580,38 +580,41 @@ private fun GroupHeader(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Member count chip
-                AssistChip(
-                    onClick = { },
-                    label = {
-                        val memberCountText = when (group.memberCount) {
-                            1 -> stringResource(R.string.member_count_one, group.memberCount)
-                            else -> stringResource(R.string.member_count_many, group.memberCount)
-                        }
-                        Text(memberCountText)
-                    },
-                    leadingIcon = {
+                // Member count chip (informacional, sem click)
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tonalElevation = 0.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Group,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                    }
-                )
-
-                // My role chip
-                AssistChip(
-                    onClick = { },
-                    label = {
-                        val roleText = when (myRole) {
-                            GroupMemberRole.OWNER -> stringResource(R.string.role_owner)
-                            GroupMemberRole.ADMIN -> stringResource(R.string.role_admin)
-                            GroupMemberRole.MEMBER -> stringResource(R.string.role_member)
-                            null -> stringResource(R.string.role_visitor)
+                        val memberCountText = when (group.memberCount) {
+                            1 -> stringResource(R.string.member_count_one, group.memberCount)
+                            else -> stringResource(R.string.member_count_many, group.memberCount)
                         }
-                        Text(roleText)
-                    },
-                    leadingIcon = {
+                        Text(memberCountText, style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+
+                // My role chip (informacional, sem click)
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tonalElevation = 0.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         val roleIcon = when (myRole) {
                             GroupMemberRole.OWNER -> Icons.Default.Star
                             GroupMemberRole.ADMIN -> Icons.Default.Shield
@@ -622,8 +625,15 @@ private fun GroupHeader(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
+                        val roleText = when (myRole) {
+                            GroupMemberRole.OWNER -> stringResource(R.string.role_owner)
+                            GroupMemberRole.ADMIN -> stringResource(R.string.role_admin)
+                            GroupMemberRole.MEMBER -> stringResource(R.string.role_member)
+                            null -> stringResource(R.string.role_visitor)
+                        }
+                        Text(roleText, style = MaterialTheme.typography.labelMedium)
                     }
-                )
+                }
             }
         }
     }
@@ -722,27 +732,30 @@ private fun EnhancedGroupHeader(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Member count chip
-                AssistChip(
-                    onClick = { },
-                    label = {
+                // Member count chip (informacional, sem click)
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tonalElevation = 0.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Group,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                         val memberCountText = when (membersCount) {
                             1 -> stringResource(R.string.groups_member_count_one, membersCount)
                             else -> stringResource(R.string.groups_member_count_many, membersCount)
                         }
-                        Text(memberCountText)
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Group,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    },
-                    colors = AssistChipDefaults.assistChipColors(
-                        leadingIconContentColor = MaterialTheme.colorScheme.primary
-                    )
-                )
+                        Text(memberCountText, style = MaterialTheme.typography.labelMedium)
+                    }
+                }
 
                 // My role chip com badge (CMD-30 #14)
                 RoleBadgeChip(myRole = myRole)

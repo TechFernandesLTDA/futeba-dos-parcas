@@ -40,7 +40,10 @@ export const generateActivityOnGameFinish = onDocumentUpdated("games/{gameId}", 
       if (liveScoreDoc.exists) {
         const score = liveScoreDoc.data();
         if (score) {
-          description = `Placar Final: Time A ${score.team1Score} x ${score.team2Score} Time B`;
+          // Suportar ambos os formatos: snake_case (Firestore) e camelCase (legado)
+          const t1Score = score.team1_score ?? score.team1Score ?? 0;
+          const t2Score = score.team2_score ?? score.team2Score ?? 0;
+          description = `Placar Final: Time A ${t1Score} x ${t2Score} Time B`;
         }
       }
 

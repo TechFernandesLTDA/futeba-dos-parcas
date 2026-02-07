@@ -756,13 +756,14 @@ data class GameConfirmation(
     @set:PropertyName("player_attendance_rate")
     var playerAttendanceRate: Double? = null
 ) {
-    // Validações anti-cheat no momento da criação/atualização
+    // Sanitização defensiva: corrigir valores negativos de dados corrompidos do Firestore
+    // em vez de crashar com require() que derruba o app inteiro
     init {
-        require(goals >= 0) { "Goals cannot be negative" }
-        require(assists >= 0) { "Assists cannot be negative" }
-        require(saves >= 0) { "Saves cannot be negative" }
-        require(yellowCards >= 0) { "Yellow cards cannot be negative" }
-        require(redCards >= 0) { "Red cards cannot be negative" }
+        goals = goals.coerceAtLeast(0)
+        assists = assists.coerceAtLeast(0)
+        saves = saves.coerceAtLeast(0)
+        yellowCards = yellowCards.coerceAtLeast(0)
+        redCards = redCards.coerceAtLeast(0)
     }
 
     constructor() : this(id = "")

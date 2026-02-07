@@ -151,8 +151,8 @@ actual class FirebaseDataSource(
                 games.addAll(snapshot.documents.mapNotNull { it.toGameOrNull() })
             }
 
-            // 4. Ordenar por data
-            Result.success(games.sortedBy { it.createdAt })
+            // 4. Ordenar por data do jogo (não pela data de criação)
+            Result.success(games.sortedBy { "${it.date} ${it.time}" })
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -230,7 +230,7 @@ actual class FirebaseDataSource(
     actual suspend fun getGameConfirmations(gameId: String): Result<List<GameConfirmation>> {
         return try {
             val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
-                .whereEqualTo("gameId", gameId)
+                .whereEqualTo("game_id", gameId)
                 .get()
                 .await()
 
@@ -242,7 +242,7 @@ actual class FirebaseDataSource(
 
     actual fun getGameConfirmationsFlow(gameId: String): Flow<Result<List<GameConfirmation>>> = callbackFlow {
         val listener = firestore.collection(COLLECTION_CONFIRMATIONS)
-            .whereEqualTo("gameId", gameId)
+            .whereEqualTo("game_id", gameId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(Result.failure(error))
@@ -265,20 +265,34 @@ actual class FirebaseDataSource(
         isCasualPlayer: Boolean
     ): Result<GameConfirmation> {
         return try {
+            // Usar ID determinístico {gameId}_{userId} para consistência com security rules e demais métodos
+            val docId = "${gameId}_${userId}"
+            val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document(docId)
+
+            val confirmationData = mapOf(
+                "id" to docId,
+                "game_id" to gameId,
+                "user_id" to userId,
+                "user_name" to userName,
+                "user_photo" to (userPhoto ?: ""),
+                "position" to position,
+                "status" to "CONFIRMED",
+                "is_casual_player" to isCasualPlayer,
+                "created_at" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+            )
+            docRef.set(confirmationData).await()
+
             val confirmation = GameConfirmation(
-                id = "",
+                id = docId,
                 gameId = gameId,
                 userId = userId,
                 userName = userName,
                 userPhoto = userPhoto,
                 position = position,
+                status = "CONFIRMED",
                 isCasualPlayer = isCasualPlayer
             )
-
-            val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document()
-            val confirmationWithId = confirmation.copy(id = docRef.id)
-            docRef.set(confirmationWithId).await()
-            Result.success(confirmationWithId)
+            Result.success(confirmation)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -286,13 +300,20 @@ actual class FirebaseDataSource(
 
     actual suspend fun cancelConfirmation(gameId: String, userId: String): Result<Unit> {
         return try {
-            val query = firestore.collection(COLLECTION_CONFIRMATIONS)
-                .whereEqualTo("gameId", gameId)
-                .whereEqualTo("userId", userId)
-                .get()
-                .await()
-
-            query.documents.forEach { it.reference.delete().await() }
+            // Tentar deletar pelo ID determinístico primeiro
+            val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document("${gameId}_${userId}")
+            val doc = docRef.get().await()
+            if (doc.exists()) {
+                docRef.delete().await()
+            } else {
+                // Fallback: buscar por query com snake_case
+                val query = firestore.collection(COLLECTION_CONFIRMATIONS)
+                    .whereEqualTo("game_id", gameId)
+                    .whereEqualTo("user_id", userId)
+                    .get()
+                    .await()
+                query.documents.forEach { it.reference.delete().await() }
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -325,17 +346,24 @@ actual class FirebaseDataSource(
 
     actual suspend fun removePlayerFromGame(gameId: String, userId: String): Result<Unit> {
         return try {
-            val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
-                .whereEqualTo("gameId", gameId)
-                .whereEqualTo("userId", userId)
-                .get()
-                .await()
-
-            val batch = firestore.batch()
-            snapshot.documents.forEach { doc ->
-                batch.delete(doc.reference)
+            // Tentar deletar pelo ID determinístico primeiro
+            val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document("${gameId}_${userId}")
+            val doc = docRef.get().await()
+            if (doc.exists()) {
+                docRef.delete().await()
+            } else {
+                // Fallback: buscar por query com snake_case
+                val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
+                    .whereEqualTo("game_id", gameId)
+                    .whereEqualTo("user_id", userId)
+                    .get()
+                    .await()
+                val batch = firestore.batch()
+                snapshot.documents.forEach { d ->
+                    batch.delete(d.reference)
+                }
+                batch.commit().await()
             }
-            batch.commit().await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -381,34 +409,55 @@ actual class FirebaseDataSource(
         position: String
     ): Result<GameConfirmation> {
         return try {
-            // Buscar confirmacao existente com status PENDING
-            val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
-                .whereEqualTo("gameId", gameId)
-                .whereEqualTo("userId", userId)
-                .get()
-                .await()
+            // Buscar confirmacao existente com status PENDING pelo ID determinístico
+            val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document("${gameId}_${userId}")
+            val doc = docRef.get().await()
 
-            if (snapshot.isEmpty) {
-                return Result.failure(Exception("Convite não encontrado"))
+            if (!doc.exists()) {
+                // Fallback: buscar por query
+                val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
+                    .whereEqualTo("game_id", gameId)
+                    .whereEqualTo("user_id", userId)
+                    .get()
+                    .await()
+
+                if (snapshot.isEmpty) {
+                    return Result.failure(Exception("Convite não encontrado"))
+                }
+
+                val fallbackDoc = snapshot.documents[0]
+                val updates = mapOf("status" to "CONFIRMED", "position" to position)
+                fallbackDoc.reference.update(updates).await()
+
+                val confirmation = GameConfirmation(
+                    id = fallbackDoc.id,
+                    gameId = gameId,
+                    userId = userId,
+                    userName = fallbackDoc.getString("user_name") ?: fallbackDoc.getString("userName") ?: "",
+                    userPhoto = fallbackDoc.getString("user_photo") ?: fallbackDoc.getString("userPhoto"),
+                    position = position,
+                    status = "CONFIRMED",
+                    isCasualPlayer = fallbackDoc.getBoolean("is_casual_player") ?: fallbackDoc.getBoolean("isCasualPlayer") ?: false
+                )
+                return Result.success(confirmation)
             }
 
-            val doc = snapshot.documents[0]
             val updates = mapOf(
                 "status" to "CONFIRMED",
                 "position" to position
             )
-            doc.reference.update(updates).await()
+            docRef.update(updates).await()
 
-            // Construir confirmacao atualizada manualmente
+            // Construir confirmacao atualizada
             val confirmation = GameConfirmation(
                 id = doc.id,
                 gameId = gameId,
                 userId = userId,
-                userName = doc.getString("userName") ?: "",
-                userPhoto = doc.getString("userPhoto"),
+                userName = doc.getString("user_name") ?: doc.getString("userName") ?: "",
+                userPhoto = doc.getString("user_photo") ?: doc.getString("userPhoto"),
                 position = position,
                 status = "CONFIRMED",
-                isCasualPlayer = doc.getBoolean("isCasualPlayer") ?: false
+                isCasualPlayer = doc.getBoolean("is_casual_player") ?: doc.getBoolean("isCasualPlayer") ?: false
             )
 
             Result.success(confirmation)
@@ -423,21 +472,29 @@ actual class FirebaseDataSource(
         status: String
     ): Result<Unit> {
         return try {
-            val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
-                .whereEqualTo("gameId", gameId)
-                .whereEqualTo("userId", userId)
-                .get()
-                .await()
+            // Tentar pelo ID determinístico primeiro
+            val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document("${gameId}_${userId}")
+            val doc = docRef.get().await()
+            if (doc.exists()) {
+                docRef.update("status", status).await()
+            } else {
+                // Fallback: buscar por query com snake_case
+                val snapshot = firestore.collection(COLLECTION_CONFIRMATIONS)
+                    .whereEqualTo("game_id", gameId)
+                    .whereEqualTo("user_id", userId)
+                    .get()
+                    .await()
 
-            if (snapshot.isEmpty) {
-                return Result.failure(Exception("Confirmação não encontrada"))
-            }
+                if (snapshot.isEmpty) {
+                    return Result.failure(Exception("Confirmação não encontrada"))
+                }
 
-            val batch = firestore.batch()
-            snapshot.documents.forEach { doc ->
-                batch.update(doc.reference, "status", status)
+                val batch = firestore.batch()
+                snapshot.documents.forEach { d ->
+                    batch.update(d.reference, "status", status)
+                }
+                batch.commit().await()
             }
-            batch.commit().await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -1195,6 +1252,7 @@ actual class FirebaseDataSource(
                 "game_id" to gameId,
                 "team1_score" to 0,
                 "team2_score" to 0,
+                "owner_id" to (auth.currentUser?.uid ?: ""),
                 "started_at" to com.google.firebase.firestore.FieldValue.serverTimestamp()
             )
             firestore.collection("live_scores")
@@ -1711,15 +1769,18 @@ actual class FirebaseDataSource(
 
     actual suspend fun clearAllLiveGameData(): Result<Unit> {
         return try {
+            // Buscar documentos de cada coleção
             val scoresSnapshot = firestore.collection("live_scores").limit(500).get().await()
             val eventsSnapshot = firestore.collection("game_events").limit(500).get().await()
             val liveStatsSnapshot = firestore.collection("live_player_stats").limit(500).get().await()
 
-            firestore.runBatch {
-                scoresSnapshot.documents.forEach { doc -> it.delete(doc.reference) }
-                eventsSnapshot.documents.forEach { doc -> it.delete(doc.reference) }
-                liveStatsSnapshot.documents.forEach { doc -> it.delete(doc.reference) }
-            }.await()
+            // Juntar todos os docs e processar em chunks de 450 (limite do batch é 500)
+            val allDocs = scoresSnapshot.documents + eventsSnapshot.documents + liveStatsSnapshot.documents
+            allDocs.chunked(450).forEach { chunk ->
+                firestore.runBatch { batch ->
+                    chunk.forEach { doc -> batch.delete(doc.reference) }
+                }.await()
+            }
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -2139,10 +2200,21 @@ actual class FirebaseDataSource(
 
     actual suspend fun generateGroupInviteCode(groupId: String): Result<String> {
         return try {
-            // Gerar código aleatório de 6 caracteres
-            val code = (1..6)
-                .map { ('A'..'Z').random() }
-                .joinToString("")
+            // Gerar código aleatório de 8 caracteres (A-Z + 0-9) para reduzir colisões
+            val chars = ('A'..'Z') + ('0'..'9')
+            var code: String
+            var attempts = 0
+
+            // Verificar unicidade do código (até 5 tentativas)
+            do {
+                code = (1..8).map { chars.random() }.joinToString("")
+                val existing = firestore.collection(COLLECTION_GROUPS)
+                    .whereEqualTo("invite_code", code)
+                    .limit(1)
+                    .get()
+                    .await()
+                attempts++
+            } while (!existing.isEmpty && attempts < 5)
 
             val updates = mapOf(
                 "invite_code" to code,
@@ -2764,8 +2836,8 @@ actual class FirebaseDataSource(
                 .document(groupId)
                 .collection(SUBCOLLECTION_CASHBOX)
                 .whereEqualTo("status", CashboxAppStatus.ACTIVE.name)
-                .whereGreaterThanOrEqualTo("reference_date", startDate.toString())
-                .whereLessThan("reference_date", endDate.toString())
+                .whereGreaterThanOrEqualTo("reference_date", com.google.firebase.Timestamp(startDate))
+                .whereLessThan("reference_date", com.google.firebase.Timestamp(endDate))
                 .orderBy("reference_date", Query.Direction.DESCENDING)
                 .get()
                 .await()

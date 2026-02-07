@@ -213,7 +213,7 @@ private fun ProfileContent(
 ) {
     // Estabilizar valores que não mudam durante scroll - CRÍTICO para scroll suave
     // Usa user.id como chave única para evitar recálculos durante scroll
-    val stableUser = remember(user.id, user.experiencePoints, user.level) { user }
+    val stableUser = remember(user) { user }
     // Usa tamanho da lista + primeiro item como chave (mais leve que map)
     val stableBadges = remember(badges.size, badges.firstOrNull()?.badgeId) { badges }
     val stableStatistics = remember(statistics?.totalGames) { statistics }
@@ -233,12 +233,16 @@ private fun ProfileContent(
     }
 
     // Ratings calculados uma vez, SEM animação
+    val attackerLabel = stringResource(R.string.profile_position_attacker)
+    val midfielderLabel = stringResource(R.string.profile_position_midfielder)
+    val defenderLabel = stringResource(R.string.profile_position_defender)
+    val goalkeeperLabel = stringResource(R.string.profile_position_goalkeeper)
     val ratings = remember(stableUser.id) {
         listOf(
-            RatingData("Atacante", stableUser.getEffectiveRating(PlayerRatingRole.STRIKER), Icons.Default.SportsSoccer),
-            RatingData("Meio-Campo", stableUser.getEffectiveRating(PlayerRatingRole.MID), Icons.AutoMirrored.Filled.DirectionsRun),
-            RatingData("Defensor", stableUser.getEffectiveRating(PlayerRatingRole.DEFENDER), Icons.Default.Shield),
-            RatingData("Goleiro", stableUser.getEffectiveRating(PlayerRatingRole.GOALKEEPER), Icons.Default.SportsKabaddi)
+            RatingData(attackerLabel, stableUser.getEffectiveRating(PlayerRatingRole.STRIKER), Icons.Default.SportsSoccer),
+            RatingData(midfielderLabel, stableUser.getEffectiveRating(PlayerRatingRole.MID), Icons.AutoMirrored.Filled.DirectionsRun),
+            RatingData(defenderLabel, stableUser.getEffectiveRating(PlayerRatingRole.DEFENDER), Icons.Default.Shield),
+            RatingData(goalkeeperLabel, stableUser.getEffectiveRating(PlayerRatingRole.GOALKEEPER), Icons.Default.SportsKabaddi)
         )
     }
 
@@ -446,25 +450,30 @@ private fun ProfileHeader(
             // Role Badge
             if (user.isAdmin() || user.isFieldOwner()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                AssistChip(
-                    onClick = { },
-                    label = {
-                        Text(
-                            text = when {
-                                user.isAdmin() -> stringResource(R.string.profile_role_admin)
-                                user.isFieldOwner() -> stringResource(R.string.profile_role_organizer)
-                                else -> ""
-                            }
-                        )
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = if (user.isAdmin()) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.secondary
                     },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = if (user.isAdmin()) {
-                            MaterialTheme.colorScheme.error
+                    tonalElevation = 0.dp
+                ) {
+                    Text(
+                        text = when {
+                            user.isAdmin() -> stringResource(R.string.profile_role_admin)
+                            user.isFieldOwner() -> stringResource(R.string.profile_role_organizer)
+                            else -> ""
+                        },
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (user.isAdmin()) {
+                            MaterialTheme.colorScheme.onError
                         } else {
-                            MaterialTheme.colorScheme.secondary
+                            MaterialTheme.colorScheme.onSecondary
                         }
                     )
-                )
+                }
             }
         }
     }

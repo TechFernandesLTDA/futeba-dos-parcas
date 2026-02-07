@@ -257,18 +257,30 @@ export async function processXpBatch(
   console.log(`[XP_BATCH] Processando ${transactions.length} transações...`);
 
   // FASE 1: Filtrar transações já processadas (verificação em lote)
+  // Firestore whereIn suporta no máximo 10 itens, então dividimos em chunks
   const transactionIds = transactions.map((t) =>
     generateTransactionId(t.gameId, t.userId)
   );
 
-  const existingLogsSnap = await db
-    .collection("xp_logs")
-    .where("transaction_id", "in", transactionIds.slice(0, 10)) // Firestore limit: 10
-    .get();
+  const processedIds = new Set<string>();
+  const idChunks: string[][] = [];
+  for (let i = 0; i < transactionIds.length; i += 10) {
+    idChunks.push(transactionIds.slice(i, i + 10));
+  }
 
-  const processedIds = new Set(
-    existingLogsSnap.docs.map((doc) => doc.data().transaction_id)
+  const existingLogsSnaps = await Promise.all(
+    idChunks.map((chunk) =>
+      db.collection("xp_logs")
+        .where("transaction_id", "in", chunk)
+        .get()
+    )
   );
+
+  for (const snap of existingLogsSnaps) {
+    for (const doc of snap.docs) {
+      processedIds.add(doc.data().transaction_id);
+    }
+  }
 
   const toProcess = transactions.filter(
     (t) => !processedIds.has(generateTransactionId(t.gameId, t.userId))

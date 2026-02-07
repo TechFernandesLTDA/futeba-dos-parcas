@@ -173,7 +173,7 @@ class ProfileViewModel @Inject constructor(
                             maybeUpdateAutoRatings(currentState.user, updatedStats)
                         }
                     } catch (e: Exception) {
-                        // Ignorar erros de parsing
+                        android.util.Log.w("ProfileViewModel", "Erro ao parsear estatisticas: ${e.message}")
                     }
                 }
             }

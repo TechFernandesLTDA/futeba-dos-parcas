@@ -88,10 +88,14 @@ export function getGameDateTime(game: GameForReminder): Date | null {
       // Nota: Em produção, considerar usar biblioteca como date-fns-tz
       const utcDate = new Date(Date.UTC(year, month - 1, day, hour || 20, minute || 0, 0));
 
-      // Ajuste para America/Sao_Paulo (UTC-3)
-      // Firestore armazena em UTC, então precisamos considerar que a hora informada
-      // é a hora local (America/Sao_Paulo)
-      utcDate.setHours(utcDate.getHours() + 3);
+      // LIMITAÇÃO: Offset fixo para America/Sao_Paulo (UTC-3).
+      // Não leva em conta horário de verão (que foi abolido no Brasil em 2019,
+      // mas se fosse reintroduzido, este valor precisaria ser dinâmico).
+      // Para suporte completo de timezone, considerar usar date-fns-tz ou luxon.
+      const BRAZIL_UTC_OFFSET = -3;
+      // A hora informada pelo usuário é hora local (BRT). Para converter para UTC,
+      // subtraímos o offset (que é negativo, então somamos o valor absoluto).
+      utcDate.setHours(utcDate.getHours() - BRAZIL_UTC_OFFSET);
 
       return utcDate;
     }

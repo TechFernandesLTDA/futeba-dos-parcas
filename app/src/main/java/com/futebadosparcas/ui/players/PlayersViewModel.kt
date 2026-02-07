@@ -56,13 +56,13 @@ class PlayersViewModel @Inject constructor(
 
     var currentFieldType: FieldType?
         get() = savedStateHandle.get<String>(KEY_CURRENT_FIELD_TYPE)?.let {
-            FieldType.valueOf(it)
+            runCatching { FieldType.valueOf(it) }.getOrNull()
         }
         set(value) = savedStateHandle.set(KEY_CURRENT_FIELD_TYPE, value?.name)
 
     var currentSortOption: SortOption
         get() = savedStateHandle.get<String>(KEY_CURRENT_SORT_OPTION)?.let {
-            SortOption.valueOf(it)
+            runCatching { SortOption.valueOf(it) }.getOrDefault(SortOption.NAME)
         } ?: SortOption.NAME
         set(value) = savedStateHandle.set(KEY_CURRENT_SORT_OPTION, value.name)
 

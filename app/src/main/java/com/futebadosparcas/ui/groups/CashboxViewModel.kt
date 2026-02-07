@@ -16,6 +16,7 @@ import com.futebadosparcas.util.toAndroidCashboxSummary
 import com.futebadosparcas.util.toKmpCashboxEntry
 import com.futebadosparcas.util.toKmpCashboxFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -49,6 +50,8 @@ class CashboxViewModel @Inject constructor(
     val currentFilter: StateFlow<CashboxFilter?> = _currentFilter
 
     private var currentGroupId: String? = null
+    private var summaryJob: Job? = null
+    private var historyJob: Job? = null
 
     fun loadCashbox(groupId: String) {
         currentGroupId = groupId
@@ -65,7 +68,8 @@ class CashboxViewModel @Inject constructor(
     }
 
     private fun observeSummary(groupId: String) {
-        cashboxRepository.getSummaryFlow(groupId)
+        summaryJob?.cancel()
+        summaryJob = cashboxRepository.getSummaryFlow(groupId)
             .onEach { summary ->
                 val androidSummary = summary.toAndroidCashboxSummary()
                 _summaryState.value = CashboxSummaryState.Success(androidSummary)
@@ -81,7 +85,8 @@ class CashboxViewModel @Inject constructor(
     private val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.forLanguageTag("pt-BR"))
 
     private fun observeHistory(groupId: String) {
-        cashboxRepository.getHistoryFlow(groupId)
+        historyJob?.cancel()
+        historyJob = cashboxRepository.getHistoryFlow(groupId)
             .onEach { entries ->
                 val androidEntries = entries.toAndroidCashboxEntries()
                 _historyState.value = if (androidEntries.isEmpty()) {
@@ -102,7 +107,7 @@ class CashboxViewModel @Inject constructor(
     private fun groupEntriesByMonth(entries: List<AndroidCashboxEntry>): List<CashboxListItem> {
         val result = mutableListOf<CashboxListItem>()
         val grouped = entries.groupBy { entry ->
-            val date = entry.createdAt ?: entry.referenceDate
+            val date = entry.createdAt ?: entry.referenceDate ?: Date()
             val cal = java.util.Calendar.getInstance()
             cal.time = date
             cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
@@ -395,6 +400,12 @@ class CashboxViewModel @Inject constructor(
 
     fun resetActionState() {
         _actionState.value = CashboxActionState.Idle
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        summaryJob?.cancel()
+        historyJob?.cancel()
     }
 }
 
