@@ -52,8 +52,9 @@ captures/
 .externalNativeBuild
 .cxx/
 
-# Google Services (Uncomment and insert auth info)
-# google-services.json
+# Google Services - NUNCA commitar credenciais reais!
+google-services.json
+app/google-services.json
 
 # Firebase Service Account Keys - NEVER COMMIT THESE!
 **/serviceAccountKey.json
