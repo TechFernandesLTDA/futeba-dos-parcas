@@ -342,7 +342,7 @@ private fun IntroSlide(data: WeeklyRecapData) {
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Seu Resumo",
+                    text = stringResource(R.string.recap_your_summary),
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White.copy(alpha = 0.8f)
                 )
@@ -350,7 +350,7 @@ private fun IntroSlide(data: WeeklyRecapData) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Semana ${data.weekNumber}",
+                    text = stringResource(R.string.recap_week_number, data.weekNumber),
                     style = MaterialTheme.typography.displayLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -376,7 +376,7 @@ private fun IntroSlide(data: WeeklyRecapData) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Vamos ver como você jogou!",
+                    text = stringResource(R.string.recap_lets_see),
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White.copy(alpha = 0.9f)
                 )
@@ -411,7 +411,7 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Você jogou",
+            text = stringResource(R.string.recap_you_played),
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White.copy(alpha = 0.8f)
         )
@@ -428,7 +428,7 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
         )
 
         Text(
-            text = if (data.gamesPlayed == 1) "pelada" else "peladas",
+            text = stringResource(if (data.gamesPlayed == 1) R.string.recap_pelada_singular else R.string.recap_pelada_plural),
             style = MaterialTheme.typography.headlineMedium,
             color = Color.White
         )
@@ -452,7 +452,7 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
                     color = Color.White
                 )
                 Text(
-                    text = "minutos em campo",
+                    text = stringResource(R.string.recap_minutes_on_field),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White.copy(alpha = 0.8f)
                 )
@@ -480,7 +480,7 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Sua Performance",
+            text = stringResource(R.string.recap_your_performance),
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White.copy(alpha = 0.8f)
         )
@@ -543,7 +543,7 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
                     color = Color.White
                 )
                 Text(
-                    text = "Win Rate",
+                    text = stringResource(R.string.recap_win_rate),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.8f)
                 )
@@ -572,13 +572,13 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
                 )
                 Column {
                     Text(
-                        text = "+${data.xpEarned} XP",
+                        text = stringResource(R.string.recap_xp_earned_format, data.xpEarned),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
-                        text = "ganhos esta semana",
+                        text = stringResource(R.string.recap_xp_earned_this_week),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.8f)
                     )
@@ -638,7 +638,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Vida Social",
+            text = stringResource(R.string.recap_social_life),
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White.copy(alpha = 0.8f)
         )
@@ -659,7 +659,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Seu parceiro de pelada",
+                        text = stringResource(R.string.recap_your_pelada_partner),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.7f)
                     )
@@ -692,7 +692,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
                     )
 
                     Text(
-                        text = "${data.topPartnerGames} jogos juntos",
+                        text = stringResource(R.string.recap_games_together, data.topPartnerGames),
                         style = MaterialTheme.typography.bodyMedium,
                         color = RecapColors.AccentGold
                     )
@@ -726,7 +726,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Local favorito",
+                            text = stringResource(R.string.recap_favorite_location),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.7f)
                         )
@@ -760,7 +760,7 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Conquistas",
+            text = stringResource(R.string.recap_achievements),
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White.copy(alpha = 0.8f)
         )
@@ -789,13 +789,13 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Sequência de ${data.streakDays} dias",
+                            text = stringResource(R.string.recap_streak_days, data.streakDays),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = "Continue assim!",
+                            text = stringResource(R.string.recap_keep_going),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.8f)
                         )
@@ -828,13 +828,13 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "${data.mvpCount}x MVP",
+                            text = stringResource(R.string.recap_mvp_count, data.mvpCount),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = "Craque da pelada!",
+                            text = stringResource(R.string.recap_mvp_star),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.8f)
                         )
@@ -853,7 +853,7 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
                     containerColor = if (isUp) {
                         RecapColors.AccentGreen.copy(alpha = 0.3f)
                     } else {
-                        Color.Red.copy(alpha = 0.3f)
+                        MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
                     }
                 ),
                 shape = RoundedCornerShape(20.dp),
@@ -873,16 +873,16 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = if (isUp) {
-                                "Subiu ${data.rankingChange} posições"
+                                stringResource(R.string.recap_ranked_up, data.rankingChange)
                             } else {
-                                "Desceu ${-data.rankingChange} posições"
+                                stringResource(R.string.recap_ranked_down, -data.rankingChange)
                             },
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = "no ranking do grupo",
+                            text = stringResource(R.string.recap_in_group_ranking),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.8f)
                         )
@@ -936,7 +936,7 @@ private fun FunFactsSlide(data: WeeklyRecapData) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Curiosidades",
+            text = stringResource(R.string.recap_curiosities),
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White.copy(alpha = 0.8f)
         )
@@ -1025,7 +1025,7 @@ private fun SummarySlide(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Semana ${data.weekNumber} foi demais!",
+            text = stringResource(R.string.recap_week_was_great, data.weekNumber),
             style = MaterialTheme.typography.titleLarge,
             color = Color.White.copy(alpha = 0.9f)
         )
@@ -1048,7 +1048,7 @@ private fun SummarySlide(
                 SummaryRow("Gols", "${data.goals}")
                 SummaryRow("Assistências", "${data.assists}")
                 SummaryRow("XP Ganho", "+${data.xpEarned}")
-                SummaryRow("Win Rate", "${(data.winRate * 100).toInt()}%")
+                SummaryRow(stringResource(R.string.recap_win_rate), "${(data.winRate * 100).toInt()}%")
             }
         }
 
@@ -1073,7 +1073,7 @@ private fun SummarySlide(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Compartilhar Resumo",
+                text = stringResource(R.string.recap_share_summary),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

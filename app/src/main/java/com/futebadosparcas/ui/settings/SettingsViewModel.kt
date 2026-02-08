@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.GamificationSettings
 import com.futebadosparcas.domain.repository.SettingsRepository
+import com.futebadosparcas.util.AppLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,28 +25,54 @@ class SettingsViewModel @Inject constructor(
     private val repository: SettingsRepository
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "SettingsViewModel"
+    }
+
     private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
-    val uiState = _uiState.asStateFlow()
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    // Job tracking para cancelamento adequado
+    private var loadJob: Job? = null
+    private var saveJob: Job? = null
 
     init {
         loadSettings()
     }
 
     fun loadSettings() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.value = SettingsUiState.Loading
-            repository.getGamificationSettings()
-                .onSuccess { _uiState.value = SettingsUiState.Success(it) }
-                .onFailure { _uiState.value = SettingsUiState.Error(it.message ?: "Erro desconhecido") }
+            try {
+                repository.getGamificationSettings()
+                    .onSuccess { _uiState.value = SettingsUiState.Success(it) }
+                    .onFailure {
+                        AppLogger.e(TAG, "Erro ao carregar configurações", it)
+                        _uiState.value = SettingsUiState.Error(it.message ?: "Erro desconhecido")
+                    }
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Erro inesperado ao carregar configurações", e)
+                _uiState.value = SettingsUiState.Error(e.message ?: "Erro inesperado")
+            }
         }
     }
 
     fun saveSettings(settings: GamificationSettings) {
-        viewModelScope.launch {
+        saveJob?.cancel()
+        saveJob = viewModelScope.launch {
             _uiState.value = SettingsUiState.Loading
-            repository.updateGamificationSettings(settings)
-                .onSuccess { _uiState.value = SettingsUiState.Saved }
-                .onFailure { _uiState.value = SettingsUiState.Error(it.message ?: "Erro ao salvar") }
+            try {
+                repository.updateGamificationSettings(settings)
+                    .onSuccess { _uiState.value = SettingsUiState.Saved }
+                    .onFailure {
+                        AppLogger.e(TAG, "Erro ao salvar configurações", it)
+                        _uiState.value = SettingsUiState.Error(it.message ?: "Erro ao salvar")
+                    }
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Erro inesperado ao salvar configurações", e)
+                _uiState.value = SettingsUiState.Error(e.message ?: "Erro inesperado")
+            }
         }
     }
 
@@ -51,5 +80,11 @@ class SettingsViewModel @Inject constructor(
         if (_uiState.value is SettingsUiState.Saved) {
             loadSettings()
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        loadJob?.cancel()
+        saveJob?.cancel()
     }
 }

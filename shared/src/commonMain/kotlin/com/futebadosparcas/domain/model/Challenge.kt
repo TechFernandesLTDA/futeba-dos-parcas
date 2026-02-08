@@ -48,7 +48,12 @@ data class WeeklyChallenge(
     val isActive: Boolean = true,
     @SerialName("schedule_id")
     val scheduleId: String? = null
-)
+) {
+    init {
+        require(targetValue >= 0) { "targetValue nao pode ser negativo: $targetValue" }
+        require(xpReward >= 0) { "xpReward nao pode ser negativo: $xpReward" }
+    }
+}
 
 /**
  * Progresso de um usuário em um desafio semanal.

@@ -5,11 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.domain.repository.LocationRepository
+import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidFields
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidLocations
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,8 +31,16 @@ class ManageLocationsViewModel @Inject constructor(
     val uiState: StateFlow<ManageLocationsUiState> = _uiState.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
-    
+
     private var allLocations: List<LocationWithFieldsData> = emptyList()
+
+    // Job tracking para cancelamento e controle de ciclo de vida
+    private var loadJob: Job? = null
+    private var deleteJob: Job? = null
+
+    companion object {
+        private const val TAG = "ManageLocationsVM"
+    }
 
     init {
         loadAllLocations()
@@ -89,37 +99,47 @@ class ManageLocationsViewModel @Inject constructor(
     }
 
     fun loadAllLocations() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.value = ManageLocationsUiState.Loading
-            
-            // Buscar todos os locais (sem filtro de owner)
-            val locationsResult = locationRepository.getAllLocations()
-            
-            locationsResult.fold(
-                onSuccess = { kmpLocations ->
-                    // Paralelizar a busca de quadras para ganho de performance (resolve N+1)
-                    val locationsWithFields = kmpLocations.map { kmpLocation ->
-                        async {
-                            val fieldsResult = locationRepository.getFieldsByLocation(kmpLocation.id)
-                            val fields = fieldsResult.getOrNull()?.map { it.toAndroidField() } ?: emptyList()
-                            LocationWithFieldsData(kmpLocation.toAndroidLocation(), fields)
-                        }
-                    }.awaitAll()
 
-                    allLocations = locationsWithFields
-                    filterLocations()
-                },
-                onFailure = { error ->
-                    _uiState.value = ManageLocationsUiState.Error(
-                        error.message ?: "Erro ao carregar locais"
-                    )
-                }
-            )
+            try {
+                // Buscar todos os locais (sem filtro de owner)
+                val locationsResult = locationRepository.getAllLocations()
+
+                locationsResult.fold(
+                    onSuccess = { kmpLocations ->
+                        // Paralelizar a busca de quadras para ganho de performance (resolve N+1)
+                        val locationsWithFields = kmpLocations.map { kmpLocation ->
+                            async {
+                                val fieldsResult = locationRepository.getFieldsByLocation(kmpLocation.id)
+                                val fields = fieldsResult.getOrNull()?.map { it.toAndroidField() } ?: emptyList()
+                                LocationWithFieldsData(kmpLocation.toAndroidLocation(), fields)
+                            }
+                        }.awaitAll()
+
+                        allLocations = locationsWithFields
+                        filterLocations()
+                    },
+                    onFailure = { error ->
+                        AppLogger.e(TAG, "Erro ao carregar locais", error)
+                        _uiState.value = ManageLocationsUiState.Error(
+                            error.message ?: "Erro ao carregar locais"
+                        )
+                    }
+                )
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Erro inesperado ao carregar locais", e)
+                _uiState.value = ManageLocationsUiState.Error(
+                    e.message ?: "Erro inesperado"
+                )
+            }
         }
     }
 
     fun deleteLocation(locationId: String) {
-        viewModelScope.launch {
+        deleteJob?.cancel()
+        deleteJob = viewModelScope.launch {
             _uiState.value = ManageLocationsUiState.Loading
             
             // Primeiro deletar todas as quadras do local
@@ -159,6 +179,12 @@ class ManageLocationsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        loadJob?.cancel()
+        deleteJob?.cancel()
     }
 }
 

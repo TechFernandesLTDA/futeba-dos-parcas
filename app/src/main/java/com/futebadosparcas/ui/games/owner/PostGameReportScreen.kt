@@ -36,6 +36,8 @@ import androidx.core.content.FileProvider
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.*
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.util.ContrastHelper
 import java.io.File
 import java.io.FileOutputStream
 import java.text.NumberFormat
@@ -333,7 +335,7 @@ private fun MvpCard(player: GameConfirmation) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFFD700).copy(alpha = 0.2f)
+            containerColor = GamificationColors.Gold.copy(alpha = 0.2f)
         )
     ) {
         Row(
@@ -345,7 +347,7 @@ private fun MvpCard(player: GameConfirmation) {
             Icon(
                 imageVector = Icons.Filled.Star,
                 contentDescription = null,
-                tint = Color(0xFFFFD700),
+                tint = GamificationColors.Gold,
                 modifier = Modifier.size(32.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))

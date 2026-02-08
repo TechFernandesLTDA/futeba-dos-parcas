@@ -18,7 +18,28 @@ data class Season(
     @SerialName("closed_at") val closedAt: Long? = null,
     @SerialName("total_participants") val totalParticipants: Int = 0,
     @SerialName("total_games") val totalGames: Int = 0
-)
+) {
+    init {
+        require(totalParticipants >= 0) { "totalParticipants nao pode ser negativo: $totalParticipants" }
+        require(totalGames >= 0) { "totalGames nao pode ser negativo: $totalGames" }
+        // endDate >= startDate somente quando ambos foram definidos (> 0)
+        if (startDate > 0 && endDate > 0) {
+            require(endDate >= startDate) {
+                "endDate ($endDate) deve ser >= startDate ($startDate)"
+            }
+        }
+    }
+
+    /**
+     * Retorna a duracao da temporada em dias.
+     * Retorna 0 se as datas nao estiverem definidas.
+     */
+    fun getDurationDays(): Long {
+        if (startDate <= 0 || endDate <= 0) return 0
+        val diffMs = endDate - startDate
+        return diffMs / (24 * 60 * 60 * 1000L)
+    }
+}
 
 /**
  * Participacao de um usuario em uma temporada.
@@ -46,30 +67,30 @@ data class SeasonParticipation(
     @SerialName("xp_earned") val xpEarned: Long = 0,
     @SerialName("created_at") val createdAt: Long? = null,
     @SerialName("updated_at") val updatedAt: Long? = null
-) {
+) : HasGameStats {
+    // Implementacao de HasGameStats - permite usar extension functions compartilhadas
+    override val statGamesPlayed: Int get() = gamesPlayed
+    override val statGoals: Int get() = goals
+    override val statAssists: Int get() = assists
+    override val statWins: Int get() = wins
+
     fun getDivisionEnum(): LeagueDivision = LeagueDivision.fromString(division)
 
     /**
      * Calcula a taxa de vitoria.
+     * @deprecated Use a extension function winRate() de HasGameStats
      */
-    fun getWinRate(): Float {
-        if (gamesPlayed == 0) return 0f
-        return wins.toFloat() / gamesPlayed.toFloat()
-    }
+    fun getWinRate(): Float = winRate()
 
     /**
      * Calcula media de gols por jogo.
+     * @deprecated Use a extension function goalsPerGame() de HasGameStats
      */
-    fun getGoalsPerGame(): Float {
-        if (gamesPlayed == 0) return 0f
-        return goals.toFloat() / gamesPlayed.toFloat()
-    }
+    fun getGoalsPerGame(): Float = goalsPerGame()
 
     /**
      * Calcula media de assistencias por jogo.
+     * @deprecated Use a extension function assistsPerGame() de HasGameStats
      */
-    fun getAssistsPerGame(): Float {
-        if (gamesPlayed == 0) return 0f
-        return assists.toFloat() / gamesPlayed.toFloat()
-    }
+    fun getAssistsPerGame(): Float = assistsPerGame()
 }

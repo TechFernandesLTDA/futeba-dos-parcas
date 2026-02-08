@@ -6,6 +6,7 @@ import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.InstantTaskExecutorExtension
+import com.futebadosparcas.util.MockLogExtension
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("StatisticsViewModel Tests")
-@ExtendWith(InstantTaskExecutorExtension::class)
+@ExtendWith(InstantTaskExecutorExtension::class, MockLogExtension::class)
 class StatisticsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()

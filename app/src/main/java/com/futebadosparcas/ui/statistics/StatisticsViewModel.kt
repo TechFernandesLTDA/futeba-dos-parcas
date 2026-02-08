@@ -91,8 +91,15 @@ class StatisticsViewModel @Inject constructor(
                 val goalsHistory = goalsHistoryDeferred.await().getOrNull() ?: emptyMap()
                 val userMap = userMapDeferred.await().getOrNull()?.associateBy { it.id } ?: emptyMap()
 
+                // Se o usuario nao tem jogos, emitir estado Empty
+                val dataMyStats = myStats.toDataModel(myStats.userId)
+                if (dataMyStats.totalGames <= 0 && topScorers.isEmpty() && bestPlayers.isEmpty()) {
+                    _uiState.value = StatisticsUiState.Empty
+                    return@launch
+                }
+
                 val combined = CombinedStatistics(
-                    myStats = myStats.toDataModel(myStats.userId),
+                    myStats = dataMyStats,
                     topScorers = topScorers.mapIndexed { index, stats ->
                         PlayerRankingItem(
                             rank = index + 1,

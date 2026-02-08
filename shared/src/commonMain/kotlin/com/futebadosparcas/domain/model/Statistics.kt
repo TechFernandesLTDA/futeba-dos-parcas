@@ -26,43 +26,57 @@ data class Statistics(
     @SerialName("red_cards") val redCards: Int = 0,
     @SerialName("last_game_date") val lastGameDate: Long? = null,
     @SerialName("updated_at") val updatedAt: Long? = null
-) {
+) : HasGameStats {
+    // Implementacao de HasGameStats - permite usar extension functions compartilhadas
+    override val statGamesPlayed: Int get() = totalGames
+    override val statGoals: Int get() = totalGoals
+    override val statAssists: Int get() = totalAssists
+    override val statWins: Int get() = totalWins
+
+    init {
+        require(totalGames >= 0) { "totalGames nao pode ser negativo: $totalGames" }
+        require(totalGoals >= 0) { "totalGoals nao pode ser negativo: $totalGoals" }
+        require(totalAssists >= 0) { "totalAssists nao pode ser negativo: $totalAssists" }
+        require(totalSaves >= 0) { "totalSaves nao pode ser negativo: $totalSaves" }
+        require(totalWins >= 0) { "totalWins nao pode ser negativo: $totalWins" }
+        require(totalDraws >= 0) { "totalDraws nao pode ser negativo: $totalDraws" }
+        require(totalLosses >= 0) { "totalLosses nao pode ser negativo: $totalLosses" }
+        require(mvpCount >= 0) { "mvpCount nao pode ser negativo: $mvpCount" }
+        require(currentStreak >= 0) { "currentStreak nao pode ser negativo: $currentStreak" }
+        require(bestStreak >= 0) { "bestStreak nao pode ser negativo: $bestStreak" }
+        require(yellowCards >= 0) { "yellowCards nao pode ser negativo: $yellowCards" }
+        require(redCards >= 0) { "redCards nao pode ser negativo: $redCards" }
+    }
+
     /**
      * Calcula a taxa de vitoria.
+     * @deprecated Use a extension function winRate() de HasGameStats
      */
-    fun getWinRate(): Float {
-        if (totalGames == 0) return 0f
-        return totalWins.toFloat() / totalGames.toFloat()
-    }
+    fun getWinRate(): Float = winRate()
 
     /**
      * Calcula media de gols por jogo.
+     * @deprecated Use a extension function goalsPerGame() de HasGameStats
      */
-    fun getGoalsPerGame(): Float {
-        if (totalGames == 0) return 0f
-        return totalGoals.toFloat() / totalGames.toFloat()
-    }
+    fun getGoalsPerGame(): Float = goalsPerGame()
 
     /**
      * Calcula media de assistencias por jogo.
+     * @deprecated Use a extension function assistsPerGame() de HasGameStats
      */
-    fun getAssistsPerGame(): Float {
-        if (totalGames == 0) return 0f
-        return totalAssists.toFloat() / totalGames.toFloat()
-    }
+    fun getAssistsPerGame(): Float = assistsPerGame()
 
     /**
      * Calcula participacao em gols (gols + assistencias).
+     * @deprecated Use a extension function goalParticipation() de HasGameStats
      */
-    fun getGoalParticipation(): Int = totalGoals + totalAssists
+    fun getGoalParticipation(): Int = goalParticipation()
 
     /**
      * Calcula media de participacao em gols por jogo.
+     * @deprecated Use a extension function goalParticipationPerGame() de HasGameStats
      */
-    fun getGoalParticipationPerGame(): Float {
-        if (totalGames == 0) return 0f
-        return getGoalParticipation().toFloat() / totalGames.toFloat()
-    }
+    fun getGoalParticipationPerGame(): Float = goalParticipationPerGame()
 }
 
 /**
@@ -98,5 +112,26 @@ data class XpLog(
     @SerialName("milestones_unlocked") val milestonesUnlocked: List<String> = emptyList(),
     @SerialName("created_at") val createdAt: Long? = null
 ) {
+    init {
+        require(levelBefore >= 1) { "levelBefore deve ser >= 1: $levelBefore" }
+        require(levelAfter >= 1) { "levelAfter deve ser >= 1: $levelAfter" }
+        require(goals >= 0) { "goals nao pode ser negativo: $goals" }
+        require(assists >= 0) { "assists nao pode ser negativo: $assists" }
+        require(saves >= 0) { "saves nao pode ser negativo: $saves" }
+    }
+
     fun didLevelUp(): Boolean = levelAfter > levelBefore
+
+    /**
+     * Retorna o GameResult correspondente ao campo gameResult string.
+     * Util para evitar comparacoes manuais de string.
+     */
+    fun getGameResultEnum(): GameResult? {
+        return when (gameResult.uppercase()) {
+            "WIN" -> GameResult.WIN
+            "DRAW" -> GameResult.DRAW
+            "LOSS" -> GameResult.LOSS
+            else -> null
+        }
+    }
 }

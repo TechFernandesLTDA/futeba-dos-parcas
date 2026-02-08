@@ -126,6 +126,18 @@ data class Game(
     @SerialName("group_id") val groupId: String? = null,
     @SerialName("group_name") val groupName: String? = null
 ) {
+    init {
+        require(maxPlayers >= 0) { "maxPlayers nao pode ser negativo: $maxPlayers" }
+        require(maxGoalkeepers >= 0) { "maxGoalkeepers nao pode ser negativo: $maxGoalkeepers" }
+        require(playersCount >= 0) { "playersCount nao pode ser negativo: $playersCount" }
+        require(goalkeepersCount >= 0) { "goalkeepersCount nao pode ser negativo: $goalkeepersCount" }
+        require(dailyPrice >= 0.0) { "dailyPrice nao pode ser negativo: $dailyPrice" }
+        require(totalCost >= 0.0) { "totalCost nao pode ser negativo: $totalCost" }
+        require(numberOfTeams >= 1) { "numberOfTeams deve ser >= 1: $numberOfTeams" }
+        require(team1Score >= 0) { "team1Score nao pode ser negativo: $team1Score" }
+        require(team2Score >= 0) { "team2Score nao pode ser negativo: $team2Score" }
+    }
+
     fun getStatusEnum(): GameStatus = try {
         GameStatus.valueOf(status)
     } catch (e: Exception) {
@@ -173,6 +185,15 @@ data class GameConfirmation(
     @SerialName("is_worst_player") val isWorstPlayer: Boolean = false,
     @SerialName("confirmed_at") val confirmedAt: Long? = null
 ) {
+    init {
+        require(goals >= 0) { "goals nao pode ser negativo: $goals" }
+        require(assists >= 0) { "assists nao pode ser negativo: $assists" }
+        require(saves >= 0) { "saves nao pode ser negativo: $saves" }
+        require(yellowCards >= 0) { "yellowCards nao pode ser negativo: $yellowCards" }
+        require(redCards >= 0) { "redCards nao pode ser negativo: $redCards" }
+        require(xpEarned >= 0) { "xpEarned nao pode ser negativo: $xpEarned" }
+    }
+
     fun getDisplayName(): String = nickname?.takeIf { it.isNotBlank() } ?: userName
 
     fun getStatusEnum(): ConfirmationStatus = try {

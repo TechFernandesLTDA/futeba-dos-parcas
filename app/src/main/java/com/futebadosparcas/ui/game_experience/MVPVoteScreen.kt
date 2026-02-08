@@ -333,10 +333,10 @@ private fun FinishedContent(
         verticalArrangement = Arrangement.Center
     ) {
         if (showAnimation) {
-            // Success Icon with animation
+            // Ícone de sucesso com animação
             Icon(
                 imageVector = Icons.Default.CheckCircle,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.cd_success_check),
                 modifier = Modifier.size(120.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -352,7 +352,7 @@ private fun FinishedContent(
         } else {
             Icon(
                 imageVector = Icons.Default.CheckCircle,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.cd_success_check),
                 modifier = Modifier.size(80.dp),
                 tint = MaterialTheme.colorScheme.primary
             )

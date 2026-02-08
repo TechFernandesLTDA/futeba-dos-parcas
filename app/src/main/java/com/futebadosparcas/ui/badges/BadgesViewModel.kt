@@ -14,6 +14,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -143,29 +144,32 @@ class BadgesViewModel @Inject constructor(
 
         val results = mutableMapOf<String, Badge>()
 
-        // Firestore whereIn limitado a 10 itens - batch em chunks paralelos
-        val deferredChunks = badgeIds.chunked(10).map { chunk ->
-            viewModelScope.async {
-                try {
-                    val snapshot = firestore.collection("badges")
-                        .whereIn(FieldPath.documentId(), chunk)
-                        .get()
-                        .await()
+        // Usar coroutineScope para structured concurrency
+        // (garante que children sao cancelados se o caller for cancelado)
+        coroutineScope {
+            val deferredChunks = badgeIds.chunked(10).map { chunk ->
+                async {
+                    try {
+                        val snapshot = firestore.collection("badges")
+                            .whereIn(FieldPath.documentId(), chunk)
+                            .get()
+                            .await()
 
-                    snapshot.documents.mapNotNull { doc ->
-                        val badge = doc.toObject(Badge::class.java)
-                        if (badge != null) doc.id to badge else null
+                        snapshot.documents.mapNotNull { doc ->
+                            val badge = doc.toObject(Badge::class.java)
+                            if (badge != null) doc.id to badge else null
+                        }
+                    } catch (e: Exception) {
+                        AppLogger.e(TAG, "Erro ao buscar batch de badges", e)
+                        emptyList()
                     }
-                } catch (e: Exception) {
-                    AppLogger.e(TAG, "Erro ao buscar batch de badges", e)
-                    emptyList()
                 }
             }
-        }
 
-        // Aguardar todos os chunks em paralelo
-        deferredChunks.awaitAll().forEach { pairs ->
-            pairs.forEach { (id, badge) -> results[id] = badge }
+            // Aguardar todos os chunks em paralelo
+            deferredChunks.awaitAll().forEach { pairs ->
+                pairs.forEach { (id, badge) -> results[id] = badge }
+            }
         }
 
         return results

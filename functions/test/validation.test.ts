@@ -22,6 +22,8 @@ import {
   combineValidationResults,
   hasValidationErrors,
   formatValidationErrors,
+  validateScore,
+  clampScore,
 } from "../src/validation";
 
 describe("Validation Module", () => {
@@ -486,6 +488,84 @@ describe("Validation Module", () => {
       ];
       const formatted = formatValidationErrors(errors);
       expect(formatted).toContain(";");
+    });
+  });
+
+  // ==========================================
+  // SCORE VALIDATIONS (P0 #30)
+  // ==========================================
+
+  describe("validateScore", () => {
+    test("returns null for null score (optional)", () => {
+      expect(validateScore(null)).toBeNull();
+    });
+
+    test("returns null for undefined score (optional)", () => {
+      expect(validateScore(undefined)).toBeNull();
+    });
+
+    test("returns null for valid score", () => {
+      expect(validateScore(3)).toBeNull();
+    });
+
+    test("returns error for negative score", () => {
+      const result = validateScore(-1);
+      expect(result).not.toBeNull();
+      expect(result!.code).toBe(ValidationErrorCode.NEGATIVE_VALUE);
+    });
+
+    test("returns error for score above MAX_SCORE", () => {
+      const result = validateScore(101);
+      expect(result).not.toBeNull();
+      expect(result!.code).toBe(ValidationErrorCode.ANTI_CHEAT_VIOLATION);
+    });
+
+    test("boundary: 0 is valid", () => {
+      expect(validateScore(0)).toBeNull();
+    });
+
+    test("boundary: MAX_SCORE (100) is valid", () => {
+      expect(validateScore(100)).toBeNull();
+    });
+
+    test("uses custom field name", () => {
+      const result = validateScore(-1, "team1_score");
+      expect(result!.field).toBe("team1_score");
+    });
+
+    test("uses default field name 'score'", () => {
+      const result = validateScore(-1);
+      expect(result!.field).toBe("score");
+    });
+  });
+
+  describe("clampScore", () => {
+    test("clamps negative to 0", () => {
+      expect(clampScore(-5)).toBe(0);
+    });
+
+    test("clamps above MAX_SCORE to 100", () => {
+      expect(clampScore(150)).toBe(100);
+    });
+
+    test("keeps valid score unchanged", () => {
+      expect(clampScore(42)).toBe(42);
+    });
+
+    test("rounds decimal scores", () => {
+      expect(clampScore(3.7)).toBe(4);
+    });
+
+    test("rounds down when below .5", () => {
+      expect(clampScore(3.2)).toBe(3);
+    });
+
+    test("boundary: 0 stays 0", () => {
+      expect(clampScore(0)).toBe(0);
+    });
+
+    test("boundary: 100 stays 100", () => {
+      expect(clampScore(100)).toBe(100);
     });
   });
 

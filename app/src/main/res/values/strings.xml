@@ -1600,14 +1600,14 @@ subir no ranking!</string>
     <!-- Login ViewModel -->
     <string name="login_viewmodel_signin_called">onGoogleSignInSuccess chamado</string>
     <string name="login_viewmodel_calling_repo">Chamando authRepository.getCurrentUser()</string>
-    <string name="login_viewmodel_success">getCurrentUser SUCCESS - User: %s (%s)</string>
+    <string name="login_viewmodel_success">getCurrentUser SUCCESS - User: %1$s (%2$s)</string>
     <string name="login_viewmodel_failure">getCurrentUser FAILURE: %s</string>
     <string name="login_viewmodel_error_login">Erro ao fazer login</string>
 
     <!-- League/Ranking Screen Additional Strings -->
     <string name="league_players_count">%d jogadores</string>
     <string name="league_points_format">%s pts</string>
-    <string name="league_wins_goals_format">%dV • %dG</string>
+    <string name="league_wins_goals_format">%1$dV • %2$dG</string>
     <string name="stat_mvp_times">vezes</string>
 
     <!-- Locations Screen Strings -->
@@ -1789,7 +1789,7 @@ subir no ranking!</string>
     <string name="location_detail_region">Região (Zonal)</string>
     <string name="location_detail_state">UF</string>
     <string name="location_detail_geolocation">Geolocalização</string>
-    <string name="location_detail_coordinates">Lat: %s / Lng: %s</string>
+    <string name="location_detail_coordinates">Lat: %1$s / Lng: %2$s</string>
     <string name="location_detail_update_coords">Atualizar Coordenadas</string>
     <string name="location_detail_amenities">Comodidades</string>
     <string name="location_detail_fields">Quadras</string>
@@ -1813,7 +1813,7 @@ subir no ranking!</string>
     <string name="location_detail_parking">Estacionamento</string>
     <string name="location_detail_wifi">Wi-Fi</string>
     <string name="location_detail_bleachers">Arquibancada</string>
-    <string name="location_detail_field_display">%s - R$ %s/h</string>
+    <string name="location_detail_field_display">%1$s - R$ %2$s/h</string>
     <string name="location_detail_toast_saved">Local salvo com sucesso</string>
     <string name="location_detail_toast_error">Erro ao salvar local</string>
 
@@ -2076,7 +2076,7 @@ subir no ranking!</string>
     <string name="post_game_rumoa">PROXIMO NÍVEL</string>
     <string name="post_game_level_up">SUBIU DE NÍVEL!</string>
     <string name="post_game_level">Nível %d</string>
-    <string name="post_game_level_to">Nível %d - %s</string>
+    <string name="post_game_level_to">Nível %1$d - %2$s</string>
     <string name="post_game_current_level">Nível %d</string>
     <string name="post_game_progress">%d%% para o próximo nível</string>
     <string name="post_game_conquistas">Conquistas Desbloqueadas!</string>
@@ -2153,6 +2153,8 @@ subir no ranking!</string>
     <string name="statistics_goal_evolution">Evolução de Gols</string>
     <string name="statistics_no_data">Sem dados</string>
     <string name="statistics_avatar">Avatar</string>
+    <string name="statistics_empty_title">Nenhuma estatística</string>
+    <string name="statistics_empty_description">Jogue sua primeira partida para ver suas estatísticas!</string>
 
     <!-- More Schedules missing strings -->
     <string name="schedules_create_schedule">Criar Agendamento</string>
@@ -2625,7 +2627,7 @@ subir no ranking!</string>
     <!-- ExpressiveHubHeader -->
     <string name="hub_welcome_back">Bem-vindo de volta,</string>
     <string name="hub_level_short">Nv. %d</string>
-    <string name="hub_level_full">Nível %d - %s</string>
+    <string name="hub_level_full">Nível %1$d - %2$s</string>
     <string name="hub_stat_games">Jogos</string>
     <string name="hub_stat_goals">Gols</string>
     <string name="hub_stat_assists">Assist.</string>
@@ -2648,7 +2650,7 @@ subir no ranking!</string>
     <string name="upcoming_games_today">Hoje às %s</string>
     <string name="upcoming_games_tomorrow">Amanhã às %s</string>
     <string name="upcoming_games_date_not_set">Data não definida</string>
-    <string name="upcoming_games_goalkeepers">%d/%d goleiros</string>
+    <string name="upcoming_games_goalkeepers">%1$d/%2$d goleiros</string>
     <string name="upcoming_location_unknown">Local não informado</string>
 
     <!-- ==================== LEVEL JOURNEY SCREEN (i18n audit) ==================== -->
@@ -3138,7 +3140,7 @@ subir no ranking!</string>
     <string name="owner_template_pix">Chave Pix</string>
     <string name="owner_template_confirmed_msg">Salve, galera! O jogo de %1$s às %2$s está confirmado! Local: %3$s. Bora jogar!</string>
     <string name="owner_template_reminder_msg">Lembrete: Nosso jogo é dia %1$s às %2$s. Não esqueçam!</string>
-    <string name="owner_template_pix_msg">Chave Pix para pagamento: %1$s\nValor: R$ %.2f\nFaça o Pix e confirme aqui!</string>
+    <string name="owner_template_pix_msg">Chave Pix para pagamento: %1$s\nValor: R$ %2$.2f\nFaça o Pix e confirme aqui!</string>
     <string name="owner_only_unpaid">Enviar apenas para quem ainda não pagou</string>
     <string name="owner_send_message">Enviar</string>
 
@@ -3776,5 +3778,77 @@ subir no ranking!</string>
     <!-- LiveEventsScreen - Ícone de tipo de evento -->
     <string name="cd_event_type_icon">Ícone do tipo de evento</string>
     <string name="cd_event_minute">Minuto do evento</string>
+
+    <!-- UX Compose Improvements (2026-02-08) -->
+
+    <!-- WeeklyRecapScreen -->
+    <string name="recap_your_summary">Seu Resumo</string>
+    <string name="recap_week_number">Semana %d</string>
+    <string name="recap_lets_see">Vamos ver como você jogou!</string>
+    <string name="recap_you_played">Você jogou</string>
+    <string name="recap_pelada_singular">pelada</string>
+    <string name="recap_pelada_plural">peladas</string>
+    <string name="recap_minutes_on_field">minutos em campo</string>
+    <string name="recap_your_performance">Sua Performance</string>
+    <string name="recap_win_rate">Win Rate</string>
+    <string name="recap_xp_earned_format">+%d XP</string>
+    <string name="recap_xp_earned_this_week">ganhos esta semana</string>
+    <string name="recap_social_life">Vida Social</string>
+    <string name="recap_your_pelada_partner">Seu parceiro de pelada</string>
+    <string name="recap_games_together">%d jogos juntos</string>
+    <string name="recap_favorite_location">Local favorito</string>
+    <string name="recap_achievements">Conquistas</string>
+    <string name="recap_streak_days">Sequência de %d dias</string>
+    <string name="recap_keep_going">Continue assim!</string>
+    <string name="recap_mvp_count">%dx MVP</string>
+    <string name="recap_mvp_star">Craque da pelada!</string>
+    <string name="recap_ranked_up">Subiu %d posições</string>
+    <string name="recap_ranked_down">Desceu %d posições</string>
+    <string name="recap_in_group_ranking">no ranking do grupo</string>
+    <string name="recap_curiosities">Curiosidades</string>
+    <string name="recap_week_was_great">Semana %d foi demais!</string>
+    <string name="recap_share_summary">Compartilhar Resumo</string>
+    <string name="recap_see_you_next">Nos vemos na próxima pelada!</string>
+
+    <!-- LocationMetricsScreen -->
+    <string name="debug_no_metrics">Nenhuma métrica registrada</string>
+    <string name="debug_run_operations">Execute operações de Location para coletar métricas</string>
+    <string name="debug_summary_title">Resumo Geral</string>
+    <string name="debug_total_queries">Total Queries</string>
+    <string name="debug_errors">Erros</string>
+    <string name="debug_avg_overall">Média Geral</string>
+    <string name="debug_legend_good">Bom (&lt;500ms)</string>
+    <string name="debug_legend_slow">Lento (500–2s)</string>
+    <string name="debug_legend_critical">Crítico (&gt;2s)</string>
+
+    <!-- GroupsScreen -->
+    <string name="groups_clear_search">Limpar Busca</string>
+
+    <!-- GlobalSearchScreen -->
+    <string name="search_advanced_filters_hint">Filtros avançados disponíveis via AdvancedFiltersBottomSheet</string>
+
+    <!-- contentDescription para ícones interativos -->
+    <string name="cd_start_draft">Iniciar draft</string>
+    <string name="cd_save_formation">Salvar formação</string>
+    <string name="cd_confirm_teams_icon">Confirmar times</string>
+    <string name="cd_success_check">Ação concluída com sucesso</string>
+
+    <!-- LiveGameScreen - Hardcoded strings fix -->
+    <string name="live_game_team_default_1">Time 1</string>
+    <string name="live_game_team_default_2">Time 2</string>
+
+    <!-- PostGameReportScreen - Hardcoded strings fix -->
+    <string name="report_player_goals">%1$d gols</string>
+    <string name="report_share_title">Compartilhar Relatório</string>
+
+    <!-- VoteResultScreen - Hardcoded strings fix -->
+    <string name="vote_result_votes_count">%1$d votos</string>
+    <string name="vote_result_default_team_a">Time A</string>
+    <string name="vote_result_default_team_b">Time B</string>
+
+    <!-- TacticalBoardScreen - contentDescription fix -->
+    <string name="cd_color_red">Cor do Time Vermelho</string>
+    <string name="cd_color_blue">Cor do Time Azul</string>
+    <string name="cd_color_default">Cor padrão</string>
 
 </resources>

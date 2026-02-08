@@ -112,7 +112,10 @@ class HomeViewModelTest {
         coEvery { gamificationRepository.getUserParticipation(any(), any()) } returns Result.success(createTestParticipation())
         coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
 
-        viewModel = createViewModel()
+        // NAO criar viewModel aqui - init block executa coroutines imediatamente
+        // Cada teste deve chamar createViewModel() quando necessario para controlar
+        // o momento da inicializacao. Isso garante que testes de estado inicial
+        // possam verificar o estado Loading antes de advanceUntilIdle().
     }
 
     @AfterEach
@@ -191,7 +194,8 @@ class HomeViewModelTest {
         coEvery { gamificationRepository.getUserParticipation(testUser.id, testSeason.id) } returns Result.success(testParticipation)
         coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
 
-        // When - Quando carregar dados
+        // When - Quando criar ViewModel e carregar dados
+        viewModel = createViewModel()
         viewModel.loadHomeData(forceRetry = true)
         advanceUntilIdle()
 
@@ -213,7 +217,8 @@ class HomeViewModelTest {
         coEvery { userRepository.getCurrentUser() } returns Result.failure(exception)
         coEvery { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(emptyList()))
 
-        // When - Quando carregar dados
+        // When - Quando criar ViewModel e carregar dados
+        viewModel = createViewModel()
         viewModel.loadHomeData(forceRetry = true)
         advanceUntilIdle()
 
@@ -239,6 +244,7 @@ class HomeViewModelTest {
         coEvery { gamificationRepository.getUserParticipation(any(), any()) } returns Result.success(createTestParticipation())
         coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
 
+        viewModel = createViewModel()
         viewModel.loadHomeData(forceRetry = true)
         advanceUntilIdle()
 
@@ -262,6 +268,7 @@ class HomeViewModelTest {
     fun `getCurrentUserId should return current user id`() {
         // Given - Dado usuário logado
         every { userRepository.getCurrentUserId() } returns "user456"
+        viewModel = createViewModel()
 
         // When - Quando obter ID do usuário
         val userId = viewModel.getCurrentUserId()
@@ -287,7 +294,8 @@ class HomeViewModelTest {
         coEvery { gamificationRepository.getUserParticipation(any(), any()) } returns Result.success(createTestParticipation())
         coEvery { gamificationRepository.getChallengesProgress(any(), any()) } returns Result.success(emptyList())
 
-        // When - Quando chamar loadHomeData duas vezes rapidamente
+        // When - Quando criar ViewModel e chamar loadHomeData duas vezes rapidamente
+        viewModel = createViewModel()
         viewModel.loadHomeData(forceRetry = true)
         viewModel.loadHomeData(forceRetry = true)
         advanceUntilIdle()
