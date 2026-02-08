@@ -35,7 +35,10 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -850,9 +853,10 @@ private fun DraggablePlayerRow(player: DraftPlayer, teamColor: Color) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+        // Melhoria de acessibilidade: contentDescription para indicador de arrastar
         Icon(
             Icons.Default.DragIndicator,
-            contentDescription = null,
+            contentDescription = stringResource(R.string.cd_drag_to_move, player.name),
             modifier = Modifier.size(20.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -1350,6 +1354,8 @@ private fun ColorPickerDialog(
     onDismiss: () -> Unit,
     onSelectColor: (TeamColor) -> Unit
 ) {
+    val selectedLabel = stringResource(R.string.selected)
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.select_vest_color)) },
@@ -1359,6 +1365,9 @@ private fun ColorPickerDialog(
             ) {
                 items(TeamColor.entries.toTypedArray()) { color ->
                     val isSelected = color == currentColor
+                    // Melhoria de acessibilidade: semantics para TalkBack no seletor de cores
+                    val colorDescription = color.displayName +
+                        if (isSelected) " ($selectedLabel)" else ""
                     Box(
                         modifier = Modifier
                             .size(48.dp)
@@ -1373,13 +1382,16 @@ private fun ColorPickerDialog(
                                 },
                                 shape = CircleShape
                             )
-                            .clickable { onSelectColor(color) },
+                            .clickable { onSelectColor(color) }
+                            .semantics {
+                                contentDescription = colorDescription
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         if (isSelected) {
                             Icon(
                                 Icons.Default.Check,
-                                contentDescription = null,
+                                contentDescription = selectedLabel,
                                 tint = ContrastHelper.getContrastingTextColor(Color(color.hexValue)),
                                 modifier = Modifier.size(24.dp)
                             )

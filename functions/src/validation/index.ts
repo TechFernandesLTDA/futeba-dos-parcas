@@ -134,11 +134,68 @@ export function validateEmail(
 }
 
 /**
- * Sanitiza texto removendo tags HTML.
+ * Sanitiza texto removendo tags HTML e vetores comuns de XSS.
+ *
+ * Proteções aplicadas:
+ * 1. Remove todas as tags HTML (incluindo atributos com event handlers)
+ * 2. Remove entidades HTML que podem ser usadas para bypass (&lt;, &#60;, etc.)
+ * 3. Remove caracteres de controle Unicode (zero-width, RTL override, etc.)
+ * 4. Remove protocolos perigosos (javascript:, data:, vbscript:)
+ * 5. Normaliza whitespace excessivo
  */
 export function sanitizeText(text: string | undefined | null): string {
   if (!text) return "";
-  return text.replace(/<[^>]*>|&[a-zA-Z]+;/gi, "").trim();
+
+  let sanitized = text;
+
+  // 1. Remover todas as tags HTML (incluindo self-closing e com atributos)
+  sanitized = sanitized.replace(/<[^>]*>/gi, "");
+
+  // 2. Remover entidades HTML numéricas e nomeadas (previne bypass via encoding)
+  sanitized = sanitized.replace(/&(?:#x?[0-9a-fA-F]+|[a-zA-Z]+);/gi, " ");
+
+  // 3. Remover caracteres de controle Unicode perigosos
+  // Zero-width chars, RTL/LTR override, BOM, etc.
+  // eslint-disable-next-line no-control-regex
+  sanitized = sanitized.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u200B-\u200F\u2028-\u202F\uFEFF\uFFF9-\uFFFF]/g, "");
+
+  // 4. Remover protocolos perigosos (javascript:, data:, vbscript:)
+  sanitized = sanitized.replace(/(?:javascript|data|vbscript)\s*:/gi, "");
+
+  // 5. Normalizar whitespace excessivo (tabs, newlines multiplos, espacos duplos)
+  sanitized = sanitized.replace(/\s+/g, " ");
+
+  return sanitized.trim();
+}
+
+/**
+ * Sanitiza E valida um campo de texto em uma única operação.
+ * Combina sanitização XSS + validação de tamanho.
+ *
+ * @param text - Texto a ser sanitizado e validado
+ * @param field - Nome do campo (para mensagem de erro)
+ * @param maxLength - Tamanho máximo permitido (default: 500)
+ * @returns Objeto com texto sanitizado e possível erro de validação
+ */
+export function sanitizeAndValidateText(
+  text: string | undefined | null,
+  field: string,
+  maxLength: number = VALIDATION_CONSTANTS.DESCRIPTION_MAX_LENGTH
+): { sanitized: string; error: ValidationResult } {
+  const sanitized = sanitizeText(text);
+
+  if (sanitized.length > maxLength) {
+    return {
+      sanitized,
+      error: {
+        field,
+        message: `${field} excede o tamanho máximo de ${maxLength} caracteres após sanitização`,
+        code: ValidationErrorCode.INVALID_LENGTH,
+      },
+    };
+  }
+
+  return {sanitized, error: null};
 }
 
 // ============================================

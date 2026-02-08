@@ -1516,9 +1516,11 @@ class GameQueryRepositoryImpl @Inject constructor(
 
     override suspend fun getGamesByFieldAndDate(fieldId: String, date: String): Result<List<Game>> {
         return try {
+            // Limite de 50 jogos por campo/data para evitar leituras excessivas
             val snapshot = gamesCollection
                 .whereEqualTo("field_id", fieldId)
                 .whereEqualTo("date", date)
+                .limit(50)
                 .get()
                 .await()
 

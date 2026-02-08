@@ -100,7 +100,59 @@ export function secureCallable<TRequest = any, TResponse = any>(
 
       try {
         // ==========================================
-        // 1. AUTHENTICATION CHECK
+        // 1. APP CHECK VALIDATION (PERF_001 Enhanced)
+        // ==========================================
+        // Validação explícita do token App Check além do enforceAppCheck
+        // do onCall. Isso adiciona logging e proteção contra bypass.
+
+        if (config.appCheck) {
+          const appCheckToken = request.app;
+
+          if (!appCheckToken) {
+            console.warn(
+              `[SECURE_CALLABLE] ${requestId}: Request SEM App Check token. ` +
+              `IP: ${(request.rawRequest?.ip as string) || "unknown"}, ` +
+              `Auth UID: ${request.auth?.uid || "anonymous"}`
+            );
+
+            await logAudit({
+              requestId,
+              type: "APP_CHECK_MISSING",
+              userId: request.auth?.uid,
+              ip: (request.rawRequest?.ip as string) || "unknown",
+              status: "BLOCKED",
+            });
+
+            throw new HttpsError(
+              "failed-precondition",
+              "App Check verification failed. Please update your app."
+            );
+          }
+
+          // Token consumido (alreadyConsumed indica possível replay attack)
+          if (appCheckToken.alreadyConsumed) {
+            console.warn(
+              `[SECURE_CALLABLE] ${requestId}: App Check token REPLAY detectado. ` +
+              `UID: ${request.auth?.uid || "anonymous"}`
+            );
+
+            await logAudit({
+              requestId,
+              type: "APP_CHECK_REPLAY",
+              userId: request.auth?.uid,
+              ip: (request.rawRequest?.ip as string) || "unknown",
+              status: "BLOCKED",
+            });
+
+            throw new HttpsError(
+              "failed-precondition",
+              "App Check token already consumed. Possible replay attack."
+            );
+          }
+        }
+
+        // ==========================================
+        // 2. AUTHENTICATION CHECK
         // ==========================================
 
         if (config.requireAuth && !request.auth) {
@@ -113,7 +165,7 @@ export function secureCallable<TRequest = any, TResponse = any>(
         const userId = request.auth?.uid;
 
         // ==========================================
-        // 2. AUTHORIZATION CHECK (Role-based)
+        // 3. AUTHORIZATION CHECK (Role-based)
         // ==========================================
 
         if (config.requiredRole && userId) {
@@ -145,7 +197,7 @@ export function secureCallable<TRequest = any, TResponse = any>(
         }
 
         // ==========================================
-        // 3. RATE LIMITING CHECK (P0 #34)
+        // 4. RATE LIMITING CHECK (P0 #34)
         // ==========================================
 
         if (config.rateLimit && userId) {
@@ -184,7 +236,7 @@ export function secureCallable<TRequest = any, TResponse = any>(
         }
 
         // ==========================================
-        // 4. EXECUTE HANDLER
+        // 5. EXECUTE HANDLER
         // ==========================================
 
         console.log(`[SECURE_CALLABLE] ${requestId}: Starting handler execution for user ${userId}`);
@@ -192,7 +244,7 @@ export function secureCallable<TRequest = any, TResponse = any>(
         const result = await handler(request);
 
         // ==========================================
-        // 5. AUDIT LOGGING (Success)
+        // 6. AUDIT LOGGING (Success)
         // ==========================================
 
         if (config.enableAuditLog) {
@@ -216,7 +268,7 @@ export function secureCallable<TRequest = any, TResponse = any>(
         return result;
       } catch (error) {
         // ==========================================
-        // 6. ERROR HANDLING & AUDIT LOGGING (Failure)
+        // 7. ERROR HANDLING & AUDIT LOGGING (Failure)
         // ==========================================
 
         const duration = Date.now() - startTime;

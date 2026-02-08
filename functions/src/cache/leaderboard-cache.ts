@@ -30,11 +30,21 @@ const getDb = () => admin.firestore();
 /** TTL do cache em milissegundos (5 minutos) */
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
+/** TTL curto para cache durante horário de pico (2 minutos) */
+const CACHE_TTL_PEAK_MS = 2 * 60 * 1000;
+
 /** Coleção para armazenar cache de rankings */
 const CACHE_COLLECTION = "cache_leaderboard";
 
 /** Número máximo de jogadores no leaderboard */
 const DEFAULT_LEADERBOARD_LIMIT = 100;
+
+/** Limite absoluto para evitar queries muito caras */
+const ABSOLUTE_MAX_LIMIT = 500;
+
+/** Horários de pico (20h-23h BRT) onde cache é mais curto */
+const PEAK_HOURS_START = 20;
+const PEAK_HOURS_END = 23;
 
 // ==========================================
 // INTERFACES
@@ -114,7 +124,7 @@ export const getLeaderboardCached = onCall<GetLeaderboardRequest>(
       throw new HttpsError("invalid-argument", "seasonId é obrigatório");
     }
 
-    const resultLimit = Math.min(limit || DEFAULT_LEADERBOARD_LIMIT, 200);
+    const resultLimit = Math.min(limit || DEFAULT_LEADERBOARD_LIMIT, ABSOLUTE_MAX_LIMIT);
     const db = getDb();
 
     // ==========================================

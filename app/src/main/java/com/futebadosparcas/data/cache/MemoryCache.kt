@@ -37,17 +37,26 @@ import kotlin.time.Duration.Companion.minutes
 class MemoryCache @Inject constructor() {
 
     companion object {
-        // Cache size: 20% of available memory (in KB)
-        private val MAX_CACHE_SIZE = (Runtime.getRuntime().maxMemory() / 1024 / 5).toInt()
+        /** Fração da memória disponível usada para cache (1/5 = 20%) */
+        private const val MEMORY_FRACTION = 5
 
-        // Default TTL: 5 minutes
+        /** Cache size: 20% da memória disponível (em KB) */
+        private val MAX_CACHE_SIZE = (Runtime.getRuntime().maxMemory() / 1024 / MEMORY_FRACTION).toInt()
+
+        /** TTL padrão para entradas de cache */
         private val DEFAULT_TTL = 5.minutes
+
+        /** Overhead base por entrada para estimativa de tamanho */
+        private const val ENTRY_BASE_OVERHEAD = 1
+
+        /** Divisor para estimativa de tamanho proporcional ao key */
+        private const val KEY_SIZE_DIVISOR = 100
     }
 
     private val cache = object : LruCache<String, CacheEntry<Any>>(MAX_CACHE_SIZE) {
         override fun sizeOf(key: String, value: CacheEntry<Any>): Int {
-            // Rough size estimation: object overhead + string length
-            return 1 + key.length / 100
+            // Estimativa aproximada: overhead do objeto + tamanho proporcional à chave
+            return ENTRY_BASE_OVERHEAD + key.length / KEY_SIZE_DIVISOR
         }
     }
 

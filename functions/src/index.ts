@@ -339,8 +339,59 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
 
       const confirmations = confirmationsSnap.docs.map((d) => toGameConfirmation(d.data()));
 
-      // VALIDAÃ‡Ã•ES ANTI-CHEAT (SERVER-SIDE)
-      for (const conf of confirmations) {
+      // ==========================================
+      // VALIDAÇÃO DE CAMPOS OBRIGATÓRIOS DO JOGO
+      // ==========================================
+      // Verificar integridade do documento do jogo antes de processar XP.
+      // Previne processamento com dados incompletos ou corrompidos.
+      const gameData = gameSnap.data() as Game | undefined;
+      if (!gameData) {
+        console.error(`[VALIDATION] Game ${gameId}: Documento do jogo não encontrado. Abortando XP.`);
+        await event.data.after.ref.update({
+          xp_processed: true,
+          xp_processing: false,
+          xp_processing_error: "Game document not found during XP processing",
+        });
+        return;
+      }
+
+      // Validar campos obrigatórios do jogo
+      if (!gameData.owner_id || typeof gameData.owner_id !== "string") {
+        console.error(`[VALIDATION] Game ${gameId}: owner_id ausente ou inválido.`);
+        await event.data.after.ref.update({
+          xp_processed: true,
+          xp_processing: false,
+          xp_processing_error: "Missing or invalid owner_id",
+        });
+        return;
+      }
+
+      if (gameData.status !== "FINISHED") {
+        console.error(`[VALIDATION] Game ${gameId}: Status inesperado '${gameData.status}' (esperado FINISHED).`);
+        await event.data.after.ref.update({
+          xp_processing: false,
+          xp_processing_error: `Unexpected status: ${gameData.status}`,
+        });
+        return;
+      }
+
+      // Validar que confirmações possuem userId válido
+      const invalidConfirmations = confirmations.filter(
+        (c) => !c.userId || typeof c.userId !== "string" || c.userId.trim() === ""
+      );
+      if (invalidConfirmations.length > 0) {
+        console.error(
+          `[VALIDATION] Game ${gameId}: ${invalidConfirmations.length} confirmações com userId inválido. ` +
+          `Removendo da lista de processamento.`
+        );
+      }
+      // Filtrar apenas confirmações válidas para processamento
+      const validConfirmations = confirmations.filter(
+        (c) => c.userId && typeof c.userId === "string" && c.userId.trim() !== ""
+      );
+
+      // VALIDAÇÕES ANTI-CHEAT (SERVER-SIDE)
+      for (const conf of validConfirmations) {
         if (conf.goals < 0 || conf.goals > MAX_GOALS_PER_GAME) {
           throw new Error(`[ANTI-CHEAT] Invalid goals count for user ${conf.userId}: ${conf.goals} (max: ${MAX_GOALS_PER_GAME})`);
         }

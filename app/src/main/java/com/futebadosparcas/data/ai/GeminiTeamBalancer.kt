@@ -5,6 +5,7 @@ import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.data.model.Team
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ai.AiTeamBalancer
+import com.futebadosparcas.util.AppLogger
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.ceil
@@ -13,6 +14,16 @@ import kotlin.math.ceil
 class GeminiTeamBalancer @Inject constructor(
     private val userRepository: UserRepository
 ) : AiTeamBalancer {
+
+    companion object {
+        private const val TAG = "GeminiTeamBalancer"
+
+        /** Peso do rating na fórmula de score (rating * RATING_WEIGHT + level) */
+        private const val RATING_WEIGHT = 10
+
+        /** Rating padrão para jogadores sem avaliação */
+        private const val DEFAULT_RATING = 3.0
+    }
 
     override suspend fun balanceTeams(
         gameId: String,
@@ -44,11 +55,11 @@ class GeminiTeamBalancer @Inject constructor(
                     }
                 } else 0.0
                 
-                // Fallback to default rating 3.0 if 0
-                val effectiveRating = if (rating > 0) rating else 3.0
+                // Fallback para rating padrão se não avaliado
+                val effectiveRating = if (rating > 0) rating else DEFAULT_RATING
                 val level = user?.level ?: 1
-                
-                val score = (effectiveRating * 10) + level
+
+                val score = (effectiveRating * RATING_WEIGHT) + level
                 Pair(confirmation, score)
             }.sortedByDescending { it.second } // Sort strongest first
 
@@ -96,6 +107,7 @@ class GeminiTeamBalancer @Inject constructor(
 
             Result.success(teams)
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao balancear times para gameId=$gameId", e)
             Result.failure(e)
         }
     }

@@ -4,6 +4,7 @@ import com.futebadosparcas.data.model.*
 import com.futebadosparcas.domain.model.GroupInvite as KmpGroupInvite
 import com.futebadosparcas.domain.model.InviteStatus as KmpInviteStatus
 import com.futebadosparcas.domain.repository.InviteRepository
+import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toKmpGroupInvite
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -26,6 +27,10 @@ class InviteRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore
 ) : InviteRepository {
+
+    companion object {
+        private const val TAG = "InviteRepository"
+    }
 
     private val groupsCollection = firestore.collection("groups")
     private val invitesCollection = firestore.collection("group_invites")
@@ -139,6 +144,7 @@ class InviteRepositoryImpl @Inject constructor(
 
             Result.success(androidInvite.toKmpGroupInvite())
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao enviar convite para grupo", e)
             Result.failure(e)
         }
     }
