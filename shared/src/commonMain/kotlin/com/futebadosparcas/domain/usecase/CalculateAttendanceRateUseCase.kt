@@ -14,6 +14,22 @@ import com.futebadosparcas.domain.model.ReliabilityLevel
  */
 object CalculateAttendanceRateUseCase {
 
+    // Fatores de penalidade
+    /** Reducao por cancelamento de ultima hora (< 2h antes): 5% cada */
+    const val LAST_MINUTE_CANCELLATION_PENALTY = 0.05
+
+    /** Reducao por no-show (confirmou e nao apareceu): 10% cada */
+    const val NO_SHOW_PENALTY = 0.10
+
+    /** Taxa minima para ser considerado confiavel */
+    const val RELIABLE_THRESHOLD = 0.75
+
+    /** Taxa padrao quando nao ha historico */
+    const val DEFAULT_RATE_NO_HISTORY = 1.0
+
+    /** Horas antes do jogo que definem cancelamento de ultima hora */
+    const val LAST_MINUTE_HOURS_THRESHOLD = 2.0
+
     /**
      * Resultado do calculo de presenca com detalhamento.
      */
@@ -24,15 +40,21 @@ object CalculateAttendanceRateUseCase {
         val isReliable: Boolean,
         val penaltyApplied: Boolean,
         val adjustedRate: Double
-    )
+    ) {
+        /**
+         * Retorna a taxa ajustada como porcentagem formatada (ex: "85%").
+         */
+        fun getFormattedRate(): String = "${attendancePercentage}%"
+    }
 
     /**
      * Calcula a taxa de presenca ajustada considerando cancelamentos de ultima hora.
      *
      * Formula:
      *   baseRate = attended / confirmed
-     *   penalty = lastMinuteCancellations * LAST_MINUTE_PENALTY * penaltyFactor
-     *   adjustedRate = max(0.0, baseRate - penalty)
+     *   penalty = lastMinuteCancellations * LAST_MINUTE_CANCELLATION_PENALTY
+     *   noShowPenalty = totalNoShows * NO_SHOW_PENALTY
+     *   adjustedRate = max(0.0, baseRate - penalty - noShowPenalty)
      *
      * @param totalConfirmed Total de jogos confirmados
      * @param totalAttended Total de jogos que compareceu
@@ -48,23 +70,27 @@ object CalculateAttendanceRateUseCase {
         lastMinuteCancellations: Int = 0,
         totalNoShows: Int = 0
     ): AttendanceResult {
+        // Validar inputs negativos
+        val safeConfirmed = totalConfirmed.coerceAtLeast(0)
+        val safeAttended = totalAttended.coerceAtLeast(0)
+        val safeLastMinute = lastMinuteCancellations.coerceAtLeast(0)
+        val safeNoShows = totalNoShows.coerceAtLeast(0)
+
         // Taxa base: presencas / confirmacoes
-        val baseRate = if (totalConfirmed > 0) {
-            totalAttended.toDouble() / totalConfirmed.toDouble()
+        val baseRate = if (safeConfirmed > 0) {
+            safeAttended.toDouble() / safeConfirmed.toDouble()
         } else {
-            1.0 // Sem historico = 100%
+            DEFAULT_RATE_NO_HISTORY
         }
 
         // Penalidade por cancelamentos de ultima hora
-        // Cada cancelamento de ultima hora reduz 5% da taxa
-        val penaltyFactor = 0.05
-        val penalty = lastMinuteCancellations * penaltyFactor
+        val penalty = safeLastMinute * LAST_MINUTE_CANCELLATION_PENALTY
         val penaltyApplied = penalty > 0.0
 
-        // Penalidade por no-shows (mais grave: 10% cada)
-        val noShowPenalty = totalNoShows * 0.10
+        // Penalidade por no-shows (mais grave)
+        val noShowPenalty = safeNoShows * NO_SHOW_PENALTY
 
-        // Taxa ajustada (nunca abaixo de 0)
+        // Taxa ajustada (nunca abaixo de 0, nunca acima de 1)
         val adjustedRate = (baseRate - penalty - noShowPenalty).coerceIn(0.0, 1.0)
 
         val reliabilityLevel = ReliabilityLevel.fromAttendanceRate(adjustedRate)
@@ -73,7 +99,7 @@ object CalculateAttendanceRateUseCase {
             attendanceRate = baseRate,
             reliabilityLevel = reliabilityLevel,
             attendancePercentage = (adjustedRate * 100).toInt(),
-            isReliable = adjustedRate >= 0.75,
+            isReliable = adjustedRate >= RELIABLE_THRESHOLD,
             penaltyApplied = penaltyApplied || noShowPenalty > 0,
             adjustedRate = adjustedRate
         )

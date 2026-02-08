@@ -69,6 +69,10 @@ data class Payment(
     val notes: String? = null,
     val createdAt: Long? = null
 ) {
+    init {
+        require(amount >= 0.0) { "amount nao pode ser negativo: $amount" }
+    }
+
     /**
      * Verifica se o pagamento está atrasado.
      * NOTA: Como PaymentStatus em Game.kt não tem OVERDUE/CANCELLED,
@@ -169,6 +173,11 @@ data class Crowdfunding(
     val imageUrl: String? = null,
     val createdAt: Long? = null
 ) {
+    init {
+        require(targetAmount >= 0.0) { "targetAmount nao pode ser negativo: $targetAmount" }
+        require(currentAmount >= 0.0) { "currentAmount nao pode ser negativo: $currentAmount" }
+    }
+
     /**
      * Calcula o percentual de progresso da meta (0-100).
      */
@@ -208,4 +217,8 @@ data class CrowdfundingContribution(
     val message: String? = null,
     val receiptUrl: String? = null,
     val contributedAt: Long? = null
-)
+) {
+    init {
+        require(amount >= 0.0) { "amount nao pode ser negativo: $amount" }
+    }
+}

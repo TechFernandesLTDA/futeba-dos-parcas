@@ -684,13 +684,13 @@ private fun AddEventBottomSheet(
                 FilterChip(
                     selected = selectedTeam.id == team1.id,
                     onClick = { selectedTeam = team1 },
-                    label = { Text(team1.name.ifEmpty { "Time 1" }) },
+                    label = { Text(team1.name.ifEmpty { stringResource(R.string.live_game_team_default_1) }) },
                     modifier = Modifier.weight(1f)
                 )
                 FilterChip(
                     selected = selectedTeam.id == team2.id,
                     onClick = { selectedTeam = team2 },
-                    label = { Text(team2.name.ifEmpty { "Time 2" }) },
+                    label = { Text(team2.name.ifEmpty { stringResource(R.string.live_game_team_default_2) }) },
                     modifier = Modifier.weight(1f)
                 )
             }

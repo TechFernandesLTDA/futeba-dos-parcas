@@ -335,9 +335,22 @@ class LiveGameViewModelTest {
         viewModel.loadGame("game-1")
         advanceUntilIdle()
 
-        // When/Then - ViewModel deve ser coletado pelo GC sem crashar
-        // onCleared() e protected, entao verificamos que o ViewModel nao crasha
-        // ao ser descartado (simulado pelo cancelamento do scope)
+        // Verificar que estado e Success antes de onCleared
+        val stateBefore = viewModel.uiState.value
+        assertTrue(
+            stateBefore is LiveGameUiState.Success,
+            "Estado antes de onCleared deve ser Success, obtido: ${stateBefore::class.simpleName}"
+        )
+
+        // When - Invocar onCleared via reflexao (metodo protected)
+        val onClearedMethod = viewModel::class.java.getDeclaredMethod("onCleared")
+        onClearedMethod.isAccessible = true
+        onClearedMethod.invoke(viewModel)
+        advanceUntilIdle()
+
+        // Then - Estado nao deve ser null apos onCleared (ViewModel nao crasha)
+        val stateAfter = viewModel.uiState.value
+        assertNotNull(stateAfter, "Estado apos onCleared nao deve ser null")
     }
 
     @Test

@@ -109,6 +109,15 @@ private fun StatisticsContent(
                     onPlayerClick = onPlayerClick
                 )
             }
+            is StatisticsUiState.Empty -> {
+                EmptyState(
+                    type = EmptyStateType.NoData(
+                        title = stringResource(R.string.statistics_empty_title),
+                        description = stringResource(R.string.statistics_empty_description),
+                        icon = Icons.Default.BarChart
+                    )
+                )
+            }
             is StatisticsUiState.Error -> {
                 EmptyState(
                     type = EmptyStateType.Error(

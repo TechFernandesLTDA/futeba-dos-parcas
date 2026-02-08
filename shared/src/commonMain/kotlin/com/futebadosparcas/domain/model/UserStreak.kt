@@ -25,6 +25,14 @@ data class UserStreak(
     @SerialName("streak_started_at")
     val streakStartedAt: String? = null // Formato: "yyyy-MM-dd"
 ) {
+    init {
+        require(currentStreak >= 0) { "currentStreak nao pode ser negativo: $currentStreak" }
+        require(longestStreak >= 0) { "longestStreak nao pode ser negativo: $longestStreak" }
+        require(longestStreak >= currentStreak) {
+            "longestStreak ($longestStreak) deve ser >= currentStreak ($currentStreak)"
+        }
+    }
+
     /**
      * Verifica se o streak está ativo (jogou nos últimos 2 dias).
      */

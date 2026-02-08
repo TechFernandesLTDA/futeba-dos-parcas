@@ -13,6 +13,8 @@
  * Proteção: 5 jogos de imunidade após promoção/rebaixamento
  */
 
+import {logger} from "firebase-functions/v2";
+
 export const PROMOTION_GAMES_REQUIRED = 3;
 export const RELEGATION_GAMES_REQUIRED = 3;
 export const PROTECTION_GAMES = 5;
@@ -82,7 +84,7 @@ export function calculateLeaguePromotion(
 
   // Se estiver protegido, decrementar e não alterar progressos
   if (protectionGames > 0) {
-    console.log(`[LEAGUE] Proteção ativa: ${protectionGames} jogos restantes`);
+    logger.info(`[LEAGUE] Proteção ativa: ${protectionGames} jogos restantes`);
     return {
       division,
       promotionProgress: 0,
@@ -98,7 +100,7 @@ export function calculateLeaguePromotion(
 
     if (promotionProgress >= PROMOTION_GAMES_REQUIRED) {
       const newDivision = getNextDivision(division);
-      console.log(`[LEAGUE] PROMOÇÃO: ${division} -> ${newDivision} (Rating: ${newRating.toFixed(1)})`);
+      logger.info(`[LEAGUE] PROMOÇÃO: ${division} -> ${newDivision} (Rating: ${newRating.toFixed(1)})`);
       return {
         division: newDivision,
         promotionProgress: 0,
@@ -106,7 +108,7 @@ export function calculateLeaguePromotion(
         protectionGames: PROTECTION_GAMES,
       };
     }
-    console.log(`[LEAGUE] Progresso promoção: ${promotionProgress}/${PROMOTION_GAMES_REQUIRED} (Rating: ${newRating.toFixed(1)} >= ${nextThreshold})`);
+    logger.info(`[LEAGUE] Progresso promoção: ${promotionProgress}/${PROMOTION_GAMES_REQUIRED} (Rating: ${newRating.toFixed(1)} >= ${nextThreshold})`);
   }
   // Verificar Rebaixamento
   else if (newRating < prevThreshold && division !== "BRONZE") {
@@ -115,7 +117,7 @@ export function calculateLeaguePromotion(
 
     if (relegationProgress >= RELEGATION_GAMES_REQUIRED) {
       const newDivision = getPreviousDivision(division);
-      console.log(`[LEAGUE] REBAIXAMENTO: ${division} -> ${newDivision} (Rating: ${newRating.toFixed(1)})`);
+      logger.info(`[LEAGUE] REBAIXAMENTO: ${division} -> ${newDivision} (Rating: ${newRating.toFixed(1)})`);
       return {
         division: newDivision,
         promotionProgress: 0,
@@ -123,7 +125,7 @@ export function calculateLeaguePromotion(
         protectionGames: PROTECTION_GAMES,
       };
     }
-    console.log(`[LEAGUE] Progresso rebaixamento: ${relegationProgress}/${RELEGATION_GAMES_REQUIRED} (Rating: ${newRating.toFixed(1)} < ${prevThreshold})`);
+    logger.info(`[LEAGUE] Progresso rebaixamento: ${relegationProgress}/${RELEGATION_GAMES_REQUIRED} (Rating: ${newRating.toFixed(1)} < ${prevThreshold})`);
   }
   // Status quo - resetar progressos se saiu da zona
   else {

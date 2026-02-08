@@ -38,11 +38,55 @@ data class Group(
     @SerialName("default_location_name") val defaultLocationName: String? = null,
     @SerialName("default_day_of_week") val defaultDayOfWeek: Int? = null,
     @SerialName("default_time") val defaultTime: String? = null,
-    @SerialName("default_max_players") val defaultMaxPlayers: Int = 14,
+    @SerialName("default_max_players") val defaultMaxPlayers: Int = DEFAULT_MAX_PLAYERS,
     @SerialName("default_price") val defaultPrice: Double = 0.0,
     @SerialName("created_at") val createdAt: Long? = null,
     @SerialName("updated_at") val updatedAt: Long? = null
-)
+) {
+    /**
+     * Verifica se o grupo tem configuracoes padrao de jogo preenchidas.
+     * Util para habilitar "criacao rapida" de jogos.
+     */
+    fun hasDefaultGameConfig(): Boolean =
+        defaultLocationId != null && defaultTime != null && defaultDayOfWeek != null
+
+    /**
+     * Verifica se o grupo tem foto.
+     */
+    fun hasPhoto(): Boolean = !photoUrl.isNullOrBlank()
+
+    /**
+     * Verifica se o grupo tem chave Pix configurada.
+     */
+    fun hasPixKey(): Boolean = !pixKey.isNullOrBlank()
+
+    /**
+     * Verifica se o usuario e o dono do grupo.
+     */
+    fun isOwner(userId: String): Boolean = ownerId == userId
+
+    /**
+     * Verifica se o grupo tem codigo de convite ativo.
+     */
+    fun hasInviteCode(): Boolean = !inviteCode.isNullOrBlank()
+
+    companion object {
+        /** Colecao Firestore */
+        const val COLLECTION = "groups"
+
+        /** Subcolecao de membros */
+        const val MEMBERS_SUBCOLLECTION = "members"
+
+        // Limites de validacao
+        const val MIN_NAME_LENGTH = 3
+        const val MAX_NAME_LENGTH = 50
+        const val MAX_DESCRIPTION_LENGTH = 200
+        const val DEFAULT_MAX_PLAYERS = 14
+        const val MIN_MAX_PLAYERS = 4
+        const val MAX_MAX_PLAYERS = 40
+        const val MAX_PRICE = 500.0
+    }
+}
 
 /**
  * Membro de um grupo.

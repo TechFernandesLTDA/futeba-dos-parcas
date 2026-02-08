@@ -129,7 +129,11 @@ class MVPVoteViewModel @Inject constructor(
 
         voteJob?.cancel()
         voteJob = viewModelScope.launch {
-             val currentUser = userRepository.getCurrentUserId() ?: return@launch
+             val currentUser = userRepository.getCurrentUserId()
+             if (currentUser == null) {
+                 _uiState.value = MVPVoteUiState.Error("Usuario nao autenticado", isOwner)
+                 return@launch
+             }
              
              val vote = MVPVote(
                  gameId = gameId,
@@ -179,11 +183,8 @@ class MVPVoteViewModel @Inject constructor(
 
             gameExperienceRepository.concludeVoting(gameId)
                 .onSuccess {
-                    // PERF_001 P2 #22: Processar XP em IO thread (não Main)
-                    // Evita bloqueio da UI durante cálculo intensivo
-                    withContext(Dispatchers.IO) {
-                        matchFinalizationService.processGame(gameId)
-                    }
+                    // Processar XP após conclusão da votação
+                    matchFinalizationService.processGame(gameId)
 
                     _uiState.value = MVPVoteUiState.Finished(currentState.isOwner)
                 }

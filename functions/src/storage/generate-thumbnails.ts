@@ -1,4 +1,5 @@
 import * as functions from "firebase-functions/v2";
+import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {Storage} from "@google-cloud/storage";
 import * as path from "path";
@@ -8,6 +9,23 @@ import sharp from "sharp";
 
 const storage = new Storage();
 const db = admin.firestore();
+
+/**
+ * Tamanho máximo permitido para upload de imagem (10 MB).
+ * Imagens maiores são rejeitadas para evitar abuso de memória e storage.
+ */
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+/**
+ * Tipos MIME de imagem aceitos para thumbnail.
+ * Rejeitar formatos não-imagem que passaram pela validação de contentType.
+ */
+const ACCEPTED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
 
 /**
  * Gera thumbnails para imagens de perfil de usuários
@@ -30,28 +48,44 @@ export const generateProfileThumbnail = functions.storage.onObjectFinalized({
   const filePath = object.name;
   const contentType = object.contentType;
 
-  console.log(`[THUMBNAIL] Processing file: ${filePath}`);
+  logger.info(`[THUMBNAIL] Processing file: ${filePath}`);
 
   // Validações
   if (!filePath) {
-    console.log("[THUMBNAIL] No file path, skipping");
+    logger.info("[THUMBNAIL] No file path, skipping");
     return;
   }
 
   if (!contentType || !contentType.startsWith("image/")) {
-    console.log(`[THUMBNAIL] Not an image (${contentType}), skipping`);
+    logger.info(`[THUMBNAIL] Not an image (${contentType}), skipping`);
     return;
   }
 
   // Evitar loop infinito - não processar thumbnails
   if (filePath.includes("/thumbnails/") || filePath.includes("_thumb")) {
-    console.log("[THUMBNAIL] Already a thumbnail, skipping");
+    logger.info("[THUMBNAIL] Already a thumbnail, skipping");
     return;
   }
 
   // Apenas processar profile_photos
   if (!filePath.startsWith("profile_photos/")) {
-    console.log("[THUMBNAIL] Not a profile photo, skipping");
+    logger.info("[THUMBNAIL] Not a profile photo, skipping");
+    return;
+  }
+
+  // Validar tipo MIME aceito
+  if (!ACCEPTED_IMAGE_TYPES.includes(contentType)) {
+    logger.warn(`[THUMBNAIL] Unsupported image type: ${contentType}. Accepted: ${ACCEPTED_IMAGE_TYPES.join(", ")}`);
+    return;
+  }
+
+  // Validar tamanho do arquivo (previne abuso de memória)
+  const fileSize = parseInt(String(object.size || "0"), 10);
+  if (fileSize > MAX_IMAGE_SIZE_BYTES) {
+    logger.error(
+      `[THUMBNAIL] File too large: ${(fileSize / 1024 / 1024).toFixed(2)} MB ` +
+      `(max: ${MAX_IMAGE_SIZE_BYTES / 1024 / 1024} MB). Skipping: ${filePath}`
+    );
     return;
   }
 
@@ -69,7 +103,7 @@ export const generateProfileThumbnail = functions.storage.onObjectFinalized({
 
   try {
     // Download original
-    console.log(`[THUMBNAIL] Downloading ${filePath} to ${tempFilePath}`);
+    logger.info(`[THUMBNAIL] Downloading ${filePath} to ${tempFilePath}`);
     await bucket.file(filePath).download({destination: tempFilePath});
 
     // Generate thumbnail (200x200, cover mode, quality 80%)
@@ -83,7 +117,7 @@ export const generateProfileThumbnail = functions.storage.onObjectFinalized({
       .toFile(tempThumbPath);
 
     // Upload thumbnail
-    console.log(`[THUMBNAIL] Uploading to ${thumbFilePath}`);
+    logger.info(`[THUMBNAIL] Uploading to ${thumbFilePath}`);
     await bucket.upload(tempThumbPath, {
       destination: thumbFilePath,
       metadata: {
@@ -109,7 +143,7 @@ export const generateProfileThumbnail = functions.storage.onObjectFinalized({
         photo_thumbnail_updated_at: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      console.log(`[THUMBNAIL] Updated user ${userId} with thumbnail URL`);
+      logger.info(`[THUMBNAIL] Updated user ${userId} with thumbnail URL`);
     }
 
     // Cleanup temp files
@@ -125,11 +159,11 @@ export const generateProfileThumbnail = functions.storage.onObjectFinalized({
       user_id: userIdMatch ? userIdMatch[1] : null,
     });
 
-    console.log(`[THUMBNAIL] Successfully generated thumbnail for ${filePath}`);
+    logger.info(`[THUMBNAIL] Successfully generated thumbnail for ${filePath}`);
 
     return {success: true, thumbnailPath: thumbFilePath};
   } catch (error) {
-    console.error(`[THUMBNAIL] Error generating thumbnail for ${filePath}:`, error);
+    logger.error(`[THUMBNAIL] Error generating thumbnail for ${filePath}:`, error);
 
     // Cleanup temp files on error
     try {
@@ -171,6 +205,21 @@ export const generateGroupThumbnail = functions.storage.onObjectFinalized({
 
   // Apenas processar group_photos
   if (!filePath.startsWith("group_photos/")) {
+    return;
+  }
+
+  // Validar tipo MIME aceito
+  if (!ACCEPTED_IMAGE_TYPES.includes(contentType || "")) {
+    logger.warn(`[THUMBNAIL] Unsupported group image type: ${contentType}`);
+    return;
+  }
+
+  // Validar tamanho do arquivo (previne abuso de memória)
+  const fileSize = parseInt(String(object.size || "0"), 10);
+  if (fileSize > MAX_IMAGE_SIZE_BYTES) {
+    logger.error(
+      `[THUMBNAIL] Group file too large: ${(fileSize / 1024 / 1024).toFixed(2)} MB. Skipping: ${filePath}`
+    );
     return;
   }
 
@@ -217,7 +266,7 @@ export const generateGroupThumbnail = functions.storage.onObjectFinalized({
         photo_thumbnail_updated_at: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      console.log(`[THUMBNAIL] Updated group ${groupId} with thumbnail URL`);
+      logger.info(`[THUMBNAIL] Updated group ${groupId} with thumbnail URL`);
     }
 
     await fs.unlink(tempFilePath);
@@ -231,11 +280,11 @@ export const generateGroupThumbnail = functions.storage.onObjectFinalized({
       group_id: groupIdMatch ? groupIdMatch[1] : null,
     });
 
-    console.log(`[THUMBNAIL] Successfully generated group thumbnail for ${filePath}`);
+    logger.info(`[THUMBNAIL] Successfully generated group thumbnail for ${filePath}`);
 
     return {success: true, thumbnailPath: thumbFilePath};
   } catch (error) {
-    console.error(`[THUMBNAIL] Error generating group thumbnail for ${filePath}:`, error);
+    logger.error(`[THUMBNAIL] Error generating group thumbnail for ${filePath}:`, error);
 
     try {
       await fs.unlink(tempFilePath).catch(() => { });

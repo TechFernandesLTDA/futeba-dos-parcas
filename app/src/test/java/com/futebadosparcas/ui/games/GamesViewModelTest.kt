@@ -8,6 +8,7 @@ import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.util.InstantTaskExecutorExtension
+import com.futebadosparcas.util.MockLogExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -29,7 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("GamesViewModel Tests")
-@ExtendWith(InstantTaskExecutorExtension::class)
+@ExtendWith(InstantTaskExecutorExtension::class, MockLogExtension::class)
 class GamesViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
@@ -304,6 +305,61 @@ class GamesViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state is GamesUiState.Success)
         // Flow emite sequencialmente, então o último valor prevalece
+    }
+
+    @Test
+    @DisplayName("Deve transicionar de Loading para Success ao carregar jogos")
+    fun `loadGames should transition from Loading to Success`() = runTest {
+        // Given - Dado jogos disponíveis
+        val games = listOf(
+            createGameWithConfirmation("1", GameStatus.SCHEDULED, 10),
+            createGameWithConfirmation("2", GameStatus.LIVE, 14)
+        )
+        every { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.success(games))
+
+        // When - Quando criar ViewModel
+        viewModel = createViewModel()
+
+        // Then - Estado inicial deve ser Loading (antes de advanceUntilIdle)
+        assertTrue(
+            viewModel.uiState.value is GamesUiState.Loading,
+            "Estado inicial esperado: Loading, obtido: ${viewModel.uiState.value::class.simpleName}"
+        )
+
+        // When - Quando o dispatcher avanca
+        viewModel.loadGames(GameFilterType.ALL)
+        advanceUntilIdle()
+
+        // Then - Estado final deve ser Success
+        val state = viewModel.uiState.value
+        assertTrue(
+            state is GamesUiState.Success,
+            "Estado final esperado: Success, obtido: ${state::class.simpleName}"
+        )
+        assertEquals(2, (state as GamesUiState.Success).games.size)
+    }
+
+    @Test
+    @DisplayName("Deve transicionar de Loading para Error quando repositório falhar")
+    fun `loadGames should transition from Loading to Error`() = runTest {
+        // Given - Dado erro no repositório
+        val exception = Exception("Falha de rede")
+        every { gameRepository.getLiveAndUpcomingGamesFlow() } returns flowOf(Result.failure(exception))
+
+        // When - Quando criar ViewModel (estado inicial Loading)
+        viewModel = createViewModel()
+        assertTrue(viewModel.uiState.value is GamesUiState.Loading)
+
+        // When - Quando o dispatcher avanca com erro
+        viewModel.loadGames(GameFilterType.ALL)
+        advanceUntilIdle()
+
+        // Then - Estado final deve ser Error
+        val state = viewModel.uiState.value
+        assertTrue(
+            state is GamesUiState.Error,
+            "Estado final esperado: Error, obtido: ${state::class.simpleName}"
+        )
     }
 
     // Helper functions para criar dados de teste

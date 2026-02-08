@@ -307,7 +307,7 @@ fun PlayersScreen(
                                 context = context,
                                 user = player,
                                 stats = selectedPlayerStats,
-                                generatedBy = "Futeba dos Parças"
+                                generatedBy = context.getString(R.string.app_name)
                             )
                         },
                         modifier = Modifier.padding(bottom = 32.dp)

@@ -8,6 +8,8 @@ import com.futebadosparcas.data.model.GroupStatus
 import com.futebadosparcas.domain.model.BadgeDefinition
 import com.futebadosparcas.domain.model.BadgeCategory
 import com.futebadosparcas.domain.model.BadgeRarity
+import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.domain.model.User as SharedUser
 import java.util.Date
 
 /**
@@ -148,6 +150,51 @@ object TestDataFactory {
             rarity = rarity,
             requiredValue = requiredValue
         )
+    }
+
+    // ============================================
+    // SharedUser (Domain) Factory
+    // ============================================
+
+    /**
+     * Cria um SharedUser (domain.model.User) para testes.
+     * Usado em ViewModels que dependem do modelo de dominio compartilhado (KMP).
+     */
+    fun createSharedUser(
+        id: String = "test-user-id",
+        name: String = "Test User",
+        email: String = "test@example.com",
+        photoUrl: String = "",
+        nickname: String? = null,
+        level: Int = 5,
+        experiencePoints: Long = 1000L,
+        isProfilePublic: Boolean = true,
+        preferredFieldTypes: List<FieldType> = emptyList(),
+        createdAt: Long = System.currentTimeMillis()
+    ): SharedUser {
+        return SharedUser(
+            id = id,
+            name = name,
+            email = email,
+            photoUrl = photoUrl,
+            nickname = nickname,
+            level = level,
+            experiencePoints = experiencePoints,
+            isProfilePublic = isProfilePublic,
+            preferredFieldTypes = preferredFieldTypes,
+            createdAt = createdAt
+        )
+    }
+
+    fun createSharedUserList(count: Int = 5): List<SharedUser> {
+        return (1..count).map { i ->
+            createSharedUser(
+                id = "user-$i",
+                name = "User $i",
+                email = "user$i@example.com",
+                experiencePoints = i * 200L
+            )
+        }
     }
 
     // ============================================

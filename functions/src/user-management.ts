@@ -1,27 +1,43 @@
 import {auth} from "firebase-functions/v1";
 import * as admin from "firebase-admin";
+import {logger} from "firebase-functions/v2";
 
-const db = admin.firestore();
+// Lazy initialization para evitar erro de initializeApp
+const getDb = () => admin.firestore();
 
 /**
  * Cloud Function: onUserCreate
  *
  * Trigger: Firebase Auth onCreate
  * Purpose: Initialize user document in Firestore with all required fields
+ * and set default Custom Claims (role: PLAYER) for JWT-based authorization.
  *
  * This ensures all profile fields exist from user creation, preventing
  * update failures when users try to edit their profiles.
+ *
+ * @remarks
+ * - Idempotente: verifica se documento já existe antes de criar
+ * - Custom Claims: define role PLAYER no JWT token (PERF_001)
+ * - Campos: inicializa TODOS os campos do perfil com defaults
+ *
+ * @see specs/PERF_001_SECURITY_RULES_OPTIMIZATION.md
  */
 export const onUserCreate = auth.user().onCreate(async (user: admin.auth.UserRecord) => {
   const userId = user.uid;
+  const db = getDb();
 
   try {
-    // Check if user document already exists
+    // Idempotência: verificar se documento já existe
     const existingDoc = await db.collection("users").doc(userId).get();
 
     if (existingDoc.exists) {
-      console.log(`User ${userId} already exists, skipping creation.`);
+      logger.info(`[USER_MGMT] User ${userId} already exists, skipping creation.`);
       return;
+    }
+
+    // Validar dados mínimos do Firebase Auth
+    if (!user.email && !user.phoneNumber) {
+      logger.warn(`[USER_MGMT] User ${userId} created without email or phone. Proceeding with defaults.`);
     }
 
     // Initialize user document with all required fields
@@ -81,9 +97,19 @@ export const onUserCreate = auth.user().onCreate(async (user: admin.auth.UserRec
 
     await db.collection("users").doc(userId).set(newUserDoc);
 
-    console.log(`User ${userId} created successfully with all fields initialized.`);
+    // PERF_001: Setar Custom Claim padrão para o JWT token
+    // Permite que Security Rules usem request.auth.token.role
+    try {
+      await admin.auth().setCustomUserClaims(userId, {role: "PLAYER"});
+      logger.info(`[USER_MGMT] Custom Claims set for user ${userId}: role=PLAYER`);
+    } catch (claimsError) {
+      // Non-critical: o onNewUserCreated em custom-claims.ts também tenta setar
+      logger.warn(`[USER_MGMT] Failed to set Custom Claims for ${userId} (will be retried by onNewUserCreated):`, claimsError);
+    }
+
+    logger.info(`[USER_MGMT] User ${userId} created successfully with all fields initialized.`);
   } catch (error) {
-    console.error(`Error creating user document for ${userId}:`, error);
+    logger.error(`[USER_MGMT] Error creating user document for ${userId}:`, error);
     throw error;
   }
 });

@@ -38,7 +38,9 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(InstantTaskExecutorExtension::class, MockLogExtension::class)
 class PlayersViewModelTest {
 
-    private val testDispatcher = UnconfinedTestDispatcher()
+    // Usar StandardTestDispatcher permite controlar avanco do tempo (advanceTimeBy)
+    // para pular o debounce de 300ms no ViewModel
+    private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var userRepository: UserRepository
     private lateinit var statisticsRepository: IStatisticsRepository
@@ -93,7 +95,6 @@ class PlayersViewModelTest {
     }
 
     @Test
-    @Disabled("Debounce de 300ms no ViewModel não é controlável pelo test dispatcher - requer refatoração arquitetural")
     @DisplayName("Deve carregar jogadores com sucesso")
     fun `loadPlayers should load successfully`() = runTest {
         // Given
@@ -105,6 +106,7 @@ class PlayersViewModelTest {
 
         // When
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // Then
@@ -114,7 +116,6 @@ class PlayersViewModelTest {
     }
 
     @Test
-    @Disabled("Debounce de 300ms no ViewModel não é controlável pelo test dispatcher")
     @DisplayName("Deve retornar Empty quando não há jogadores")
     fun `loadPlayers should return Empty when no players`() = runTest {
         // Given
@@ -122,6 +123,7 @@ class PlayersViewModelTest {
 
         // When
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // Then
@@ -129,15 +131,16 @@ class PlayersViewModelTest {
     }
 
     @Test
-    @Disabled("Debounce de 300ms no ViewModel não é controlável pelo test dispatcher")
     @DisplayName("Deve retornar Error quando repositório falhar")
     fun `loadPlayers should return Error when repository fails`() = runTest {
         // Given
         val exception = Exception("Erro ao carregar jogadores")
+        coEvery { userRepository.getAllUsers() } returns Result.failure(exception)
         coEvery { userRepository.searchUsers(any()) } returns Result.failure(exception)
 
         // When
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // Then
@@ -154,10 +157,12 @@ class PlayersViewModelTest {
         coEvery { userRepository.searchUsers("João", limit = 100) } returns Result.success(players)
 
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // When
         viewModel.searchPlayers("João")
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // Then
@@ -167,7 +172,6 @@ class PlayersViewModelTest {
     }
 
     @Test
-    @Disabled("Debounce de 300ms no ViewModel não é controlável pelo test dispatcher")
     @DisplayName("Deve filtrar apenas jogadores com perfil público")
     fun `loadPlayers should filter only public profiles`() = runTest {
         // Given
@@ -180,6 +184,7 @@ class PlayersViewModelTest {
 
         // When
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // Then
@@ -190,7 +195,6 @@ class PlayersViewModelTest {
     }
 
     @Test
-    @Disabled("Debounce de 300ms no ViewModel não é controlável pelo test dispatcher")
     @DisplayName("Deve filtrar por tipo de campo")
     fun `setFieldTypeFilter should filter players by field type`() = runTest {
         // Given
@@ -202,6 +206,7 @@ class PlayersViewModelTest {
         coEvery { userRepository.getAllUsers() } returns Result.success(players)
 
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // When
@@ -215,7 +220,6 @@ class PlayersViewModelTest {
     }
 
     @Test
-    @Disabled("Debounce de 300ms no ViewModel não é controlável pelo test dispatcher")
     @DisplayName("Deve ordenar jogadores por nome")
     fun `setSortOption NAME should sort by name`() = runTest {
         // Given
@@ -227,6 +231,7 @@ class PlayersViewModelTest {
         coEvery { userRepository.getAllUsers() } returns Result.success(players)
 
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // When
@@ -240,7 +245,6 @@ class PlayersViewModelTest {
     }
 
     @Test
-    @Disabled("Debounce de 300ms no ViewModel não é controlável pelo test dispatcher")
     @DisplayName("Deve limpar filtros corretamente")
     fun `clearFilters should reset all filters`() = runTest {
         // Given
@@ -251,6 +255,7 @@ class PlayersViewModelTest {
         coEvery { userRepository.getAllUsers() } returns Result.success(players)
 
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         viewModel.setFieldTypeFilter(FieldType.SOCIETY)
@@ -273,6 +278,7 @@ class PlayersViewModelTest {
         // Given
         coEvery { userRepository.getAllUsers() } returns Result.success(emptyList())
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // When
@@ -295,6 +301,7 @@ class PlayersViewModelTest {
 
         // When
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // Then
@@ -317,6 +324,7 @@ class PlayersViewModelTest {
         coEvery { userRepository.getAllUsers() } returns Result.success(emptyList())
 
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // When
@@ -339,6 +347,7 @@ class PlayersViewModelTest {
         // Given
         coEvery { userRepository.getAllUsers() } returns Result.success(emptyList())
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // When
@@ -398,6 +407,7 @@ class PlayersViewModelTest {
         )
 
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // When
@@ -469,7 +479,6 @@ class PlayersViewModelTest {
     }
 
     @Test
-    @Disabled("Debounce de 300ms no ViewModel não é controlável pelo test dispatcher")
     @DisplayName("Deve cancelar job anterior ao buscar novamente")
     fun `searchPlayers should cancel previous job`() = runTest {
         // Given
@@ -479,11 +488,13 @@ class PlayersViewModelTest {
         coEvery { userRepository.searchUsers("João", limit = 100) } returns Result.success(players2)
 
         viewModel = createViewModel()
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // When - Buscar rapidamente duas vezes
         viewModel.searchPlayers("Jo")
         viewModel.searchPlayers("João")
+        advanceTimeBy(350) // Pular debounce de 300ms
         advanceUntilIdle()
 
         // Then - Deve completar sem erros

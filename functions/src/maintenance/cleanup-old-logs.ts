@@ -1,7 +1,28 @@
 import * as functions from "firebase-functions/v2";
+import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 
 const db = admin.firestore();
+
+// Timeout seguro: 8 minutos (deixa 1 minuto de margem para o limite de 9 min)
+const SAFE_TIMEOUT_MS = 8 * 60 * 1000;
+
+/**
+ * Verifica se ainda há tempo restante antes do timeout da Cloud Function.
+ *
+ * @param startTime - Timestamp de início da execução (Date.now())
+ * @param safeTimeoutMs - Timeout seguro em milissegundos
+ * @returns true se ainda há tempo, false se deve parar
+ */
+function hasTimeRemaining(startTime: number, safeTimeoutMs: number = SAFE_TIMEOUT_MS): boolean {
+  const elapsed = Date.now() - startTime;
+  const remaining = safeTimeoutMs - elapsed;
+  if (remaining <= 0) {
+    logger.warn(`[CLEANUP_TIMEOUT] Tempo esgotado: ${elapsed}ms decorridos. Parando para evitar timeout.`);
+    return false;
+  }
+  return true;
+}
 
 /**
  * TTL Cleanup - Deleta xp_logs com mais de 1 ano
@@ -12,6 +33,11 @@ const db = admin.firestore();
  * - Reduz custos de armazenamento Firestore
  * - Mantém apenas logs recentes para análise
  * - Logs são mantidos por 1 ano para conformidade
+ *
+ * Proteção contra timeout:
+ * - Verifica tempo restante antes de cada batch
+ * - Para graciosamente se restam menos de 1 minuto
+ * - Continuará na próxima execução semanal
  */
 export const cleanupOldXpLogs = functions.scheduler.onSchedule({
   schedule: "0 3 * * 0", // Todo domingo às 03:00 UTC
@@ -20,14 +46,15 @@ export const cleanupOldXpLogs = functions.scheduler.onSchedule({
   memory: "512MiB",
   timeoutSeconds: 540, // 9 minutos
 }, async (event) => {
-  console.log("[CLEANUP] Starting xp_logs cleanup (TTL: 1 year)");
+  const startTime = Date.now();
+  logger.info("[CLEANUP] Starting xp_logs cleanup (TTL: 1 year)");
 
   const now = admin.firestore.Timestamp.now();
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
   const cutoffDate = admin.firestore.Timestamp.fromDate(oneYearAgo);
 
-  console.log(`[CLEANUP] Cutoff date: ${cutoffDate.toDate().toISOString()}`);
+  logger.info(`[CLEANUP] Cutoff date: ${cutoffDate.toDate().toISOString()}`);
 
   let totalDeleted = 0;
   let batchCount = 0;
@@ -43,6 +70,13 @@ export const cleanupOldXpLogs = functions.scheduler.onSchedule({
     let hasMore = true;
 
     while (hasMore) {
+      // Verificar timeout antes de cada batch
+      if (!hasTimeRemaining(startTime)) {
+        logger.warn(`[CLEANUP] Parando xp_logs cleanup por timeout. Deletados: ${totalDeleted}. Continuará na próxima execução.`);
+        hasMore = false;
+        break;
+      }
+
       const snapshot = await query.get();
 
       if (snapshot.empty) {
@@ -60,7 +94,7 @@ export const cleanupOldXpLogs = functions.scheduler.onSchedule({
       totalDeleted += snapshot.size;
       batchCount++;
 
-      console.log(`[CLEANUP] Deleted batch ${batchCount} (${snapshot.size} docs)`);
+      logger.info(`[CLEANUP] Deleted batch ${batchCount} (${snapshot.size} docs)`);
 
       // If we got less than 500, we're done
       if (snapshot.size < 500) {
@@ -69,7 +103,7 @@ export const cleanupOldXpLogs = functions.scheduler.onSchedule({
 
       // Safety: stop after 100 batches (50k docs) in one run
       if (batchCount >= 100) {
-        console.warn("[CLEANUP] Reached 100 batches limit, stopping. Schedule will retry next week.");
+        logger.warn("[CLEANUP] Reached 100 batches limit, stopping. Schedule will retry next week.");
         hasMore = false;
       }
     }
@@ -83,12 +117,12 @@ export const cleanupOldXpLogs = functions.scheduler.onSchedule({
       cutoff_date: cutoffDate,
     });
 
-    console.log(`[CLEANUP] Completed. Total deleted: ${totalDeleted} xp_logs in ${batchCount} batches`);
+    logger.info(`[CLEANUP] Completed. Total deleted: ${totalDeleted} xp_logs in ${batchCount} batches`);
 
     // Log resultado (scheduled functions não devem retornar valores)
-    console.log(`[CLEANUP] Result: { success: true, deleted: ${totalDeleted}, batches: ${batchCount} }`);
+    logger.info(`[CLEANUP] Result: { success: true, deleted: ${totalDeleted}, batches: ${batchCount} }`);
   } catch (error) {
-    console.error("[CLEANUP] Error during xp_logs cleanup:", error);
+    logger.error("[CLEANUP] Error during xp_logs cleanup:", error);
 
     // Log error for monitoring
     await db.collection("metrics").add({
@@ -105,7 +139,8 @@ export const cleanupOldXpLogs = functions.scheduler.onSchedule({
 /**
  * Cleanup de atividades antigas (90 dias)
  *
- * Feed de atividades não precisa manter histórico infinito
+ * Feed de atividades não precisa manter histórico infinito.
+ * Inclui proteção contra timeout (para graciosamente).
  */
 export const cleanupOldActivities = functions.scheduler.onSchedule({
   schedule: "0 4 * * 0", // Todo domingo às 04:00 UTC
@@ -114,7 +149,8 @@ export const cleanupOldActivities = functions.scheduler.onSchedule({
   memory: "512MiB",
   timeoutSeconds: 540,
 }, async (event) => {
-  console.log("[CLEANUP] Starting activities cleanup (TTL: 90 days)");
+  const startTime = Date.now();
+  logger.info("[CLEANUP] Starting activities cleanup (TTL: 90 days)");
 
   const now = admin.firestore.Timestamp.now();
   const ninetyDaysAgo = new Date();
@@ -133,6 +169,13 @@ export const cleanupOldActivities = functions.scheduler.onSchedule({
     let hasMore = true;
 
     while (hasMore) {
+      // Verificar timeout antes de cada batch
+      if (!hasTimeRemaining(startTime)) {
+        logger.warn(`[CLEANUP] Parando activities cleanup por timeout. Deletados: ${totalDeleted}.`);
+        hasMore = false;
+        break;
+      }
+
       const snapshot = await query.get();
 
       if (snapshot.empty) {
@@ -149,14 +192,14 @@ export const cleanupOldActivities = functions.scheduler.onSchedule({
       totalDeleted += snapshot.size;
       batchCount++;
 
-      console.log(`[CLEANUP] Deleted batch ${batchCount} (${snapshot.size} activities)`);
+      logger.info(`[CLEANUP] Deleted batch ${batchCount} (${snapshot.size} activities)`);
 
       if (snapshot.size < 500) {
         hasMore = false;
       }
 
       if (batchCount >= 100) {
-        console.warn("[CLEANUP] Reached batch limit, stopping.");
+        logger.warn("[CLEANUP] Reached batch limit, stopping.");
         hasMore = false;
       }
     }
@@ -169,9 +212,9 @@ export const cleanupOldActivities = functions.scheduler.onSchedule({
       cutoff_date: cutoffDate,
     });
 
-    console.log(`[CLEANUP] Completed. Total deleted: ${totalDeleted} activities in ${batchCount} batches`);
+    logger.info(`[CLEANUP] Completed. Total deleted: ${totalDeleted} activities in ${batchCount} batches`);
   } catch (error) {
-    console.error("[CLEANUP] Error during activities cleanup:", error);
+    logger.error("[CLEANUP] Error during activities cleanup:", error);
 
     await db.collection("metrics").add({
       type: "activities_cleanup_error",
@@ -187,7 +230,8 @@ export const cleanupOldActivities = functions.scheduler.onSchedule({
 /**
  * Cleanup de notificações antigas (30 dias)
  *
- * Notificações lidas e antigas podem ser removidas
+ * Notificações lidas e antigas podem ser removidas.
+ * Inclui proteção contra timeout (para graciosamente).
  */
 export const cleanupOldNotifications = functions.scheduler.onSchedule({
   schedule: "0 5 * * 0", // Todo domingo às 05:00 UTC
@@ -196,7 +240,8 @@ export const cleanupOldNotifications = functions.scheduler.onSchedule({
   memory: "512MiB",
   timeoutSeconds: 540,
 }, async (event) => {
-  console.log("[CLEANUP] Starting notifications cleanup (TTL: 30 days, read only)");
+  const startTime = Date.now();
+  logger.info("[CLEANUP] Starting notifications cleanup (TTL: 30 days, read only)");
 
   const now = admin.firestore.Timestamp.now();
   const thirtyDaysAgo = new Date();
@@ -217,6 +262,13 @@ export const cleanupOldNotifications = functions.scheduler.onSchedule({
     let hasMore = true;
 
     while (hasMore) {
+      // Verificar timeout antes de cada batch
+      if (!hasTimeRemaining(startTime)) {
+        logger.warn(`[CLEANUP] Parando notifications cleanup por timeout. Deletados: ${totalDeleted}.`);
+        hasMore = false;
+        break;
+      }
+
       const snapshot = await query.get();
 
       if (snapshot.empty) {
@@ -233,14 +285,14 @@ export const cleanupOldNotifications = functions.scheduler.onSchedule({
       totalDeleted += snapshot.size;
       batchCount++;
 
-      console.log(`[CLEANUP] Deleted batch ${batchCount} (${snapshot.size} notifications)`);
+      logger.info(`[CLEANUP] Deleted batch ${batchCount} (${snapshot.size} notifications)`);
 
       if (snapshot.size < 500) {
         hasMore = false;
       }
 
       if (batchCount >= 100) {
-        console.warn("[CLEANUP] Reached batch limit, stopping.");
+        logger.warn("[CLEANUP] Reached batch limit, stopping.");
         hasMore = false;
       }
     }
@@ -253,9 +305,9 @@ export const cleanupOldNotifications = functions.scheduler.onSchedule({
       cutoff_date: cutoffDate,
     });
 
-    console.log(`[CLEANUP] Completed. Total deleted: ${totalDeleted} notifications in ${batchCount} batches`);
+    logger.info(`[CLEANUP] Completed. Total deleted: ${totalDeleted} notifications in ${batchCount} batches`);
   } catch (error) {
-    console.error("[CLEANUP] Error during notifications cleanup:", error);
+    logger.error("[CLEANUP] Error during notifications cleanup:", error);
 
     await db.collection("metrics").add({
       type: "notifications_cleanup_error",

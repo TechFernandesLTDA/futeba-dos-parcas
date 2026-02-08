@@ -15,6 +15,7 @@
 import * as admin from "firebase-admin";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {onDocumentCreated} from "firebase-functions/v2/firestore";
+import {logger} from "firebase-functions/v2";
 import {FieldValue} from "firebase-admin/firestore";
 
 const db = admin.firestore();
@@ -83,7 +84,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
       const callerData = callerDoc.data();
 
       if (!callerData || callerData.role !== "ADMIN") {
-        console.warn(`[SECURITY] User ${request.auth.uid} (role: ${callerRole || callerData?.role || "NONE"}) attempted to change role of ${request.data.uid}`);
+        logger.warn(`[CUSTOM_CLAIMS][SECURITY] User ${request.auth.uid} (role: ${callerRole || callerData?.role || "NONE"}) attempted to change role of ${request.data.uid}`);
         throw new HttpsError(
           "permission-denied",
           "Only administrators can change user roles"
@@ -123,9 +124,9 @@ export const setUserRole = onCall<SetUserRoleRequest>(
     // ==========================================
     try {
       await admin.auth().setCustomUserClaims(uid, {role});
-      console.log(`[CUSTOM_CLAIMS] Set role=${role} for user ${uid} by admin ${request.auth.uid}`);
+      logger.info(`[CUSTOM_CLAIMS] Set role=${role} for user ${uid} by admin ${request.auth.uid}`);
     } catch (error) {
-      console.error(`[CUSTOM_CLAIMS] Error setting claims for ${uid}:`, error);
+      logger.error(`[CUSTOM_CLAIMS] Error setting claims for ${uid}:`, error);
       throw new HttpsError(
         "internal",
         "Failed to set custom claims. Please try again."
@@ -141,9 +142,9 @@ export const setUserRole = onCall<SetUserRoleRequest>(
         claims_updated_at: FieldValue.serverTimestamp(),
         claims_updated_by: request.auth.uid,
       });
-      console.log(`[CUSTOM_CLAIMS] Synced role to Firestore for user ${uid}`);
+      logger.info(`[CUSTOM_CLAIMS] Synced role to Firestore for user ${uid}`);
     } catch (error) {
-      console.error(`[CUSTOM_CLAIMS] Error syncing to Firestore for ${uid}:`, error);
+      logger.error(`[CUSTOM_CLAIMS] Error syncing to Firestore for ${uid}:`, error);
       // Non-critical error - Custom Claim já foi setado
       // Continue para não bloquear a operação
     }
@@ -162,7 +163,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
         ip_address: request.rawRequest?.ip || null,
       });
     } catch (error) {
-      console.error("[AUDIT] Error creating audit log:", error);
+      logger.error("[CUSTOM_CLAIMS][AUDIT] Error creating audit log:", error);
       // Non-critical - continuar
     }
 
@@ -191,11 +192,11 @@ export const onNewUserCreated = onDocumentCreated("users/{userId}", async (event
   const userData = event.data?.data();
 
   if (!userData) {
-    console.error(`[USER_CREATED] No user data for ${userId}`);
+    logger.error(`[CUSTOM_CLAIMS] No user data for ${userId}`);
     return;
   }
 
-  console.log(`[USER_CREATED] Setting default role for user ${userId}`);
+  logger.info(`[CUSTOM_CLAIMS] Setting default role for user ${userId}`);
 
   try {
     // Pegar role do documento (ou default PLAYER)
@@ -206,9 +207,9 @@ export const onNewUserCreated = onDocumentCreated("users/{userId}", async (event
       role: role,
     });
 
-    console.log(`[USER_CREATED] Successfully set role=${role} for ${userId}`);
+    logger.info(`[CUSTOM_CLAIMS] Successfully set role=${role} for ${userId}`);
   } catch (error) {
-    console.error(`[USER_CREATED] Error setting claims for ${userId}:`, error);
+    logger.error(`[CUSTOM_CLAIMS] Error setting claims for ${userId}:`, error);
     // Não throw - o usuário ainda pode usar o app, o role está no Firestore
   }
 });
@@ -245,7 +246,31 @@ export const migrateAllUsersToCustomClaims = onCall(
       throw new HttpsError("permission-denied", "Admin access required");
     }
 
-    console.log(`[MIGRATION] Starting Custom Claims migration by ${request.auth.uid}`);
+    // Rate limiting: Apenas uma migração por hora para evitar abuso
+    const RATE_LIMIT_MS = 60 * 60 * 1000; // 1 hora
+    const lockRef = db.collection("system_locks").doc("claims_migration");
+    const lockDoc = await lockRef.get();
+
+    if (lockDoc.exists) {
+      const lastRun = lockDoc.data()?.last_run_at?.toDate?.();
+      if (lastRun && (Date.now() - lastRun.getTime()) < RATE_LIMIT_MS) {
+        const minutesRemaining = Math.ceil((RATE_LIMIT_MS - (Date.now() - lastRun.getTime())) / 60000);
+        logger.warn(`[MIGRATION] Rate limited: migration already ran at ${lastRun.toISOString()}. Try again in ${minutesRemaining} minutes.`);
+        throw new HttpsError(
+          "resource-exhausted",
+          `Migration already ran recently. Try again in ${minutesRemaining} minutes.`
+        );
+      }
+    }
+
+    // Registrar lock antes de iniciar
+    await lockRef.set({
+      last_run_at: FieldValue.serverTimestamp(),
+      started_by: request.auth.uid,
+      status: "running",
+    });
+
+    logger.info(`[MIGRATION] Starting Custom Claims migration by ${request.auth.uid}`);
 
     try {
       // Buscar todos os usuários do Firestore (em chunks de 500)
@@ -279,10 +304,10 @@ export const migrateAllUsersToCustomClaims = onCall(
                 processed++;
 
                 if (processed % 100 === 0) {
-                  console.log(`[MIGRATION] Processed ${processed} users...`);
+                  logger.info(`[MIGRATION] Processed ${processed} users...`);
                 }
               } catch (err) {
-                console.error(`[MIGRATION] Error for user ${doc.id}:`, err);
+                logger.error(`[MIGRATION] Error for user ${doc.id}:`, err);
                 errors++;
               }
             })
@@ -292,7 +317,15 @@ export const migrateAllUsersToCustomClaims = onCall(
         lastDoc = snapshot.docs[snapshot.docs.length - 1];
       }
 
-      console.log(`[MIGRATION] Complete: ${processed} users migrated, ${errors} errors`);
+      // Atualizar lock com status final
+      await lockRef.update({
+        status: "completed",
+        completed_at: FieldValue.serverTimestamp(),
+        processed_count: processed,
+        error_count: errors,
+      });
+
+      logger.info(`[MIGRATION] Complete: ${processed} users migrated, ${errors} errors`);
 
       return {
         success: true,
@@ -301,7 +334,16 @@ export const migrateAllUsersToCustomClaims = onCall(
         message: `Migration complete. ${processed} users updated.`,
       };
     } catch (error) {
-      console.error("[MIGRATION] Fatal error:", error);
+      // Atualizar lock com status de erro
+      try {
+        await lockRef.update({
+          status: "failed",
+          failed_at: FieldValue.serverTimestamp(),
+          error: String(error),
+        });
+      } catch { /* ignore lock update failure */ }
+
+      logger.error("[MIGRATION] Fatal error:", error);
       throw new HttpsError("internal", "Migration failed");
     }
   }

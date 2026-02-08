@@ -491,7 +491,7 @@ private fun EmptySearchGroupsState(
     EmptyState(
         type = EmptyStateType.NoResults(
             description = stringResource(R.string.fragment_groups_text_5),
-            actionLabel = "Limpar Busca",
+            actionLabel = stringResource(R.string.groups_clear_search),
             onAction = onClearSearch
         )
     )

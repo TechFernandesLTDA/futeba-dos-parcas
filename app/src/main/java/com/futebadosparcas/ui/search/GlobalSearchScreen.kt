@@ -413,7 +413,7 @@ private fun AdvancedFiltersSection(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Filtros avançados disponíveis via AdvancedFiltersBottomSheet",
+                text = stringResource(R.string.search_advanced_filters_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -449,7 +449,9 @@ private fun InitialSearchContent(
                         text = stringResource(R.string.clear_all),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable { onClearHistory() }
+                        modifier = Modifier
+                            .clickable { onClearHistory() }
+                            .padding(8.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))

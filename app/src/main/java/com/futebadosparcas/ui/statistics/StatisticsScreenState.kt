@@ -19,6 +19,7 @@ data class CombinedStatistics(
 
 sealed class StatisticsUiState {
     object Loading : StatisticsUiState()
+    object Empty : StatisticsUiState()
     data class Success(val statistics: CombinedStatistics) : StatisticsUiState()
     data class Error(val message: String) : StatisticsUiState()
 }
@@ -35,7 +36,11 @@ data class RankingUiState(
     val selectedPeriod: RankingPeriod = RankingPeriod.ALL_TIME,
     val myPosition: Int = 0,
     val error: String? = null
-)
+) {
+    /** Indica se o ranking foi carregado mas esta vazio (sem dados para exibir). */
+    val isEmpty: Boolean
+        get() = !isLoading && error == null && rankings.isEmpty()
+}
 
 /**
  * Dados de evolucao do jogador.

@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import {onSchedule} from "firebase-functions/v2/scheduler";
+import {logger} from "firebase-functions/v2";
 
 const db = admin.firestore();
 
@@ -11,7 +12,7 @@ const db = admin.firestore();
  * (limite total é 9min 59s para Cloud Functions escaladas)
  */
 export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
-  console.log("Checking for seasons to close...");
+  logger.info("[SEASON] Checking for seasons to close...");
 
   const now = new Date();
   // Find active seasons that have passed their end date
@@ -25,7 +26,7 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
     .get();
 
   if (snapshot.empty) {
-    console.log("No seasons to close.");
+    logger.info("[SEASON] No seasons to close.");
     return;
   }
 
@@ -43,7 +44,7 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
     const isTimeLeft = remainingMs > minReservedMs;
 
     if (!isTimeLeft) {
-      console.warn(`[TIMEOUT] Processamento de season parado: apenas ${remainingSeconds}s restantes. Continuando na próxima execução.`);
+      logger.warn(`[SEASON][TIMEOUT] Processamento de season parado: apenas ${remainingSeconds}s restantes. Continuando na próxima execução.`);
     }
 
     return isTimeLeft;
@@ -56,7 +57,7 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
   const commitBatch = async () => {
     if (operationCount > 0) {
       await batch.commit();
-      console.log(`Committed batch of ${operationCount} operations.`);
+      logger.info(`[SEASON] Committed batch of ${operationCount} operations.`);
       batch = db.batch();
       operationCount = 0;
     }
@@ -69,13 +70,13 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
     // PERF_001 #21: Verificar timeout a cada iteração
     if (!hasTimeRemaining()) {
       skippedCount = snapshot.docs.length - processedCount;
-      console.log(`[TIMEOUT] Parando processamento. Processados: ${processedCount}, Pulados: ${skippedCount}. Continuarão na próxima execução.`);
+      logger.warn(`[SEASON][TIMEOUT] Parando processamento. Processados: ${processedCount}, Pulados: ${skippedCount}. Continuarão na próxima execução.`);
       break;
     }
 
     const seasonId = doc.id;
     const seasonData = doc.data();
-    console.log(`Closing season: ${seasonId} (${seasonData.name})`);
+    logger.info(`[SEASON] Closing season: ${seasonId} (${seasonData.name})`);
 
     // 1. Mark Season as Inactive
     batch.update(doc.ref, {
@@ -96,7 +97,7 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
 
       for (let i = 0; i < participationsSnap.docs.length; i += CHUNK_SIZE) {
         if (!hasTimeRemaining()) {
-          console.log(`[TIMEOUT] Parando processamento de participações para season ${seasonId}`);
+          logger.warn(`[SEASON][TIMEOUT] Parando processamento de participações para season ${seasonId}`);
           break;
         }
 
@@ -123,7 +124,7 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
             await commitBatch();
             // Verificar tempo após commit
             if (!hasTimeRemaining()) {
-              console.log(`[TIMEOUT] Timeout após batch commit.`);
+              logger.warn(`[SEASON][TIMEOUT] Timeout após batch commit.`);
               break;
             }
           }
@@ -160,14 +161,14 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
             created_at: admin.firestore.FieldValue.serverTimestamp(),
             type: "MONTHLY",
           });
-          console.log(`Scheduled creation of next season: ${nextId}`);
+          logger.info(`[SEASON] Scheduled creation of next season: ${nextId}`);
           operationCount++;
           if (operationCount >= BATCH_LIMIT) {
             await commitBatch();
           }
         }
       } catch (e) {
-        console.error("Error calculating next season", e);
+        logger.error("[SEASON] Error calculating next season", e);
         // Não fazer throw aqui, continuar com próximas seasons
         // A próxima execução tentará novamente
       }
@@ -182,10 +183,10 @@ export const checkSeasonEnd = onSchedule("every day 03:00", async (event) => {
   const totalProcessed = processedCount;
   const totalSkipped = snapshot.docs.length - totalProcessed;
 
-  console.log(`Season closing complete: Processed ${totalProcessed}/${snapshot.docs.length}, Skipped: ${totalSkipped}`);
+  logger.info(`[SEASON] Season closing complete: Processed ${totalProcessed}/${snapshot.docs.length}, Skipped: ${totalSkipped}`);
 
   if (totalSkipped > 0) {
-    console.log(`[INFO] ${totalSkipped} seasons will be processed in the next scheduled run.`);
+    logger.info(`[SEASON] ${totalSkipped} seasons will be processed in the next scheduled run.`);
   }
 });
 

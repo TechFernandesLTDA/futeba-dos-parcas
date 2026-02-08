@@ -9,12 +9,32 @@ package com.futebadosparcas.domain.usecase
  */
 object ValidateGameDataUseCase {
 
+    // Limites de validacao centralizados
+    const val MIN_PLAYERS = 4
+    const val MAX_PLAYERS = 40
+    const val MIN_TEAMS = 2
+    const val MAX_TEAMS = 4
+    const val MIN_GOALKEEPERS = 0
+    const val MAX_DAILY_PRICE = 500.0
+    const val DEFAULT_GOALKEEPERS = 3
+    const val DEFAULT_TEAMS = 2
+
+    /** Regex para formato de horario HH:mm */
+    private val TIME_FORMAT_REGEX = Regex("^([01]?\\d|2[0-3]):[0-5]\\d$")
+
     /** Resultado de validacao com multiplos erros possiveis */
     data class GameValidationResult(
         val errors: List<String> = emptyList()
     ) {
         val isValid: Boolean get() = errors.isEmpty()
         val firstError: String? get() = errors.firstOrNull()
+
+        /**
+         * Combina com outro resultado de validacao.
+         */
+        operator fun plus(other: GameValidationResult): GameValidationResult {
+            return GameValidationResult(errors + other.errors)
+        }
     }
 
     /**
@@ -33,8 +53,8 @@ object ValidateGameDataUseCase {
         date: String,
         time: String,
         maxPlayers: Int,
-        maxGoalkeepers: Int = 3,
-        numberOfTeams: Int = 2,
+        maxGoalkeepers: Int = DEFAULT_GOALKEEPERS,
+        numberOfTeams: Int = DEFAULT_TEAMS,
         dailyPrice: Double = 0.0,
         locationName: String = ""
     ): GameValidationResult {
@@ -53,15 +73,15 @@ object ValidateGameDataUseCase {
         }
 
         // Validar jogadores
-        if (maxPlayers < 4) {
-            errors.add("Numero minimo de jogadores e 4")
+        if (maxPlayers < MIN_PLAYERS) {
+            errors.add("Numero minimo de jogadores e $MIN_PLAYERS")
         }
-        if (maxPlayers > 40) {
-            errors.add("Numero maximo de jogadores e 40")
+        if (maxPlayers > MAX_PLAYERS) {
+            errors.add("Numero maximo de jogadores e $MAX_PLAYERS")
         }
 
         // Validar goleiros
-        if (maxGoalkeepers < 0) {
+        if (maxGoalkeepers < MIN_GOALKEEPERS) {
             errors.add("Numero de goleiros nao pode ser negativo")
         }
         if (maxGoalkeepers > maxPlayers / 2) {
@@ -69,19 +89,19 @@ object ValidateGameDataUseCase {
         }
 
         // Validar times
-        if (numberOfTeams < 2) {
-            errors.add("Numero minimo de times e 2")
+        if (numberOfTeams < MIN_TEAMS) {
+            errors.add("Numero minimo de times e $MIN_TEAMS")
         }
-        if (numberOfTeams > 4) {
-            errors.add("Numero maximo de times e 4")
+        if (numberOfTeams > MAX_TEAMS) {
+            errors.add("Numero maximo de times e $MAX_TEAMS")
         }
 
         // Validar preco
         if (dailyPrice < 0) {
             errors.add("Preco nao pode ser negativo")
         }
-        if (dailyPrice > 500.0) {
-            errors.add("Preco maximo e R$ 500,00")
+        if (dailyPrice > MAX_DAILY_PRICE) {
+            errors.add("Preco maximo e R$ ${MAX_DAILY_PRICE.toInt()},00")
         }
 
         return GameValidationResult(errors)
@@ -105,8 +125,8 @@ object ValidateGameDataUseCase {
      */
     fun validateMaxPlayers(maxPlayers: Int): ValidationResult {
         return when {
-            maxPlayers < 4 -> ValidationResult.Error("Minimo 4 jogadores")
-            maxPlayers > 40 -> ValidationResult.Error("Maximo 40 jogadores")
+            maxPlayers < MIN_PLAYERS -> ValidationResult.Error("Minimo $MIN_PLAYERS jogadores")
+            maxPlayers > MAX_PLAYERS -> ValidationResult.Error("Maximo $MAX_PLAYERS jogadores")
             else -> ValidationResult.Success(maxPlayers.toString())
         }
     }
@@ -117,7 +137,7 @@ object ValidateGameDataUseCase {
     fun validateDailyPrice(price: Double): ValidationResult {
         return when {
             price < 0 -> ValidationResult.Error("Preco nao pode ser negativo")
-            price > 500.0 -> ValidationResult.Error("Preco maximo e R$ 500,00")
+            price > MAX_DAILY_PRICE -> ValidationResult.Error("Preco maximo e R$ ${MAX_DAILY_PRICE.toInt()},00")
             else -> ValidationResult.Success(price.toString())
         }
     }
@@ -126,7 +146,6 @@ object ValidateGameDataUseCase {
      * Verifica se o formato de horario e valido (HH:mm).
      */
     private fun isValidTimeFormat(time: String): Boolean {
-        val regex = Regex("^([01]?\\d|2[0-3]):[0-5]\\d$")
-        return time.matches(regex)
+        return time.matches(TIME_FORMAT_REGEX)
     }
 }

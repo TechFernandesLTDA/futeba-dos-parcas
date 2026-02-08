@@ -74,6 +74,8 @@ class PlayersViewModel @Inject constructor(
 
     private var searchJob: Job? = null
     private var unreadCountJob: Job? = null
+    private var playerStatsJob: Job? = null
+    private var comparisonJob: Job? = null
 
     init {
         // Sempre carregar jogadores ao inicializar
@@ -105,18 +107,25 @@ class PlayersViewModel @Inject constructor(
 
     /**
      * Carrega estatísticas de um jogador específico para exibir no PlayerCard.
+     * Cancela job anterior para evitar coleções concorrentes ao trocar de jogador.
      */
     fun loadPlayerStats(userId: String) {
-        viewModelScope.launch {
+        playerStatsJob?.cancel()
+        playerStatsJob = viewModelScope.launch {
             _selectedPlayerStats.value = null // Limpar anterior
-            statisticsRepository.getUserStatistics(userId)
-                .onSuccess { stats ->
-                    _selectedPlayerStats.value = stats
-                }
-                .onFailure { e ->
-                    AppLogger.w(TAG) { "Erro ao carregar estatísticas do jogador $userId: ${e.message}" }
-                    _selectedPlayerStats.value = null
-                }
+            try {
+                statisticsRepository.getUserStatistics(userId)
+                    .onSuccess { stats ->
+                        _selectedPlayerStats.value = stats
+                    }
+                    .onFailure { e ->
+                        AppLogger.w(TAG) { "Erro ao carregar estatísticas do jogador $userId: ${e.message}" }
+                        _selectedPlayerStats.value = null
+                    }
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Erro inesperado ao carregar estatísticas", e)
+                _selectedPlayerStats.value = null
+            }
         }
     }
 
@@ -150,6 +159,8 @@ class PlayersViewModel @Inject constructor(
         super.onCleared()
         searchJob?.cancel()
         unreadCountJob?.cancel()
+        playerStatsJob?.cancel()
+        comparisonJob?.cancel()
     }
 
     /**
@@ -166,11 +177,10 @@ class PlayersViewModel @Inject constructor(
     /**
      * Implementação interna de carregamento de jogadores
      * Chamada pelo Flow com debounce
-     * Usa Dispatchers.IO para não bloquear Main Thread
      */
     private fun loadPlayersInternal(query: String) {
         searchJob?.cancel()
-        searchJob = viewModelScope.launch(Dispatchers.IO) {
+        searchJob = viewModelScope.launch {
             try {
                 _uiState.value = PlayersUiState.Loading
 
@@ -245,9 +255,11 @@ class PlayersViewModel @Inject constructor(
      * Carrega dados de comparação entre dois jogadores
      * - Busca estatísticas em paralelo para melhor performance
      * - Tratamento de erro gracioso com fallback
+     * - Cancela comparação anterior para evitar race conditions
      */
     fun loadComparisonData(user1: User, user2: User) {
-        viewModelScope.launch {
+        comparisonJob?.cancel()
+        comparisonJob = viewModelScope.launch {
             try {
                 _comparisonState.value = ComparisonUiState.Loading
 

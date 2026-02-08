@@ -211,7 +211,7 @@ private fun TeamFormationContent(
                     onClick = { showDraftModeDialog = true },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null)
+                    Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.cd_start_draft))
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.start_draft))
                 }
@@ -270,7 +270,7 @@ private fun TeamFormationContent(
                     onClick = { showSaveFormationDialog = true },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.Star, contentDescription = null)
+                    Icon(Icons.Default.Star, contentDescription = stringResource(R.string.cd_save_formation))
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.save_formation))
                 }
@@ -279,7 +279,7 @@ private fun TeamFormationContent(
                     onClick = onConfirmTeams,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = null)
+                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_confirm_teams_icon))
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.confirm_teams))
                 }

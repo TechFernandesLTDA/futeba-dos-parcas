@@ -281,9 +281,8 @@ class MVPVoteViewModelTest {
 
         // When - Quando finalizar
         viewModel.finalizeVoting("game-1")
-        // withContext(Dispatchers.IO) no ViewModel despacha processGame para pool real de IO.
-        // Aguardar IO thread completar antes de avançar o test dispatcher.
-        Thread.sleep(100)
+        // UnconfinedTestDispatcher redireciona Dispatchers.Main; Dispatchers.IO tambem
+        // e redirecionado pois setMain() intercepta dispatches de viewModelScope.
         advanceUntilIdle()
 
         // Then - Estado deve ser Finished
@@ -346,9 +345,8 @@ class MVPVoteViewModelTest {
             advanceUntilIdle()
         }
 
-        // withContext(Dispatchers.IO) no finalizeVoting (auto-finalize) despacha para pool real de IO.
-        // Aguardar IO thread completar antes de avançar o test dispatcher.
-        Thread.sleep(200)
+        // UnconfinedTestDispatcher redireciona Dispatchers.Main; setMain() intercepta
+        // dispatches de viewModelScope, incluindo withContext(Dispatchers.IO).
         advanceUntilIdle()
 
         // Then - Deve chegar em Finished (automaticamente ou apos todos votarem)

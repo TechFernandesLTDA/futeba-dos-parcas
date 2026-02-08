@@ -172,12 +172,12 @@ private fun EmptyMetricsMessage(modifier: Modifier = Modifier) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Nenhuma metrica registrada",
+                text = stringResource(R.string.debug_no_metrics),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Execute operacoes de Location para coletar metricas",
+                text = stringResource(R.string.debug_run_operations),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -256,7 +256,7 @@ private fun SummaryCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Resumo Geral",
+                text = stringResource(R.string.debug_summary_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -267,18 +267,18 @@ private fun SummaryCard(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 SummaryItem(
-                    label = "Total Queries",
+                    label = stringResource(R.string.debug_total_queries),
                     value = totalQueries.toString(),
                     icon = Icons.Default.Storage
                 )
                 SummaryItem(
-                    label = "Erros",
+                    label = stringResource(R.string.debug_errors),
                     value = totalErrors.toString(),
                     icon = Icons.Default.Error,
                     isError = totalErrors > 0
                 )
                 SummaryItem(
-                    label = "Media Geral",
+                    label = stringResource(R.string.debug_avg_overall),
                     value = "${overallAvgMs}ms",
                     icon = Icons.Default.Speed
                 )
@@ -344,15 +344,15 @@ private fun LegendCard() {
         ) {
             LegendItem(
                 color = Color(0xFF4CAF50),
-                label = "Bom (<500ms)"
+                label = stringResource(R.string.debug_legend_good)
             )
             LegendItem(
                 color = Color(0xFFFF9800),
-                label = "Lento (500-2s)"
+                label = stringResource(R.string.debug_legend_slow)
             )
             LegendItem(
                 color = Color(0xFFF44336),
-                label = "Critico (>2s)"
+                label = stringResource(R.string.debug_legend_critical)
             )
         }
     }

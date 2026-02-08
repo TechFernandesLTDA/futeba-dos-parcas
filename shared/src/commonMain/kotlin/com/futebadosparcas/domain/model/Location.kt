@@ -163,7 +163,11 @@ data class LocationReview(
     val rating: Float = 0f,
     val comment: String = "",
     @SerialName("created_at") val createdAt: Long? = null
-)
+) {
+    init {
+        require(rating in 0f..5f) { "rating deve estar entre 0 e 5: $rating" }
+    }
+}
 
 /**
  * Dados para migração/criação de locais

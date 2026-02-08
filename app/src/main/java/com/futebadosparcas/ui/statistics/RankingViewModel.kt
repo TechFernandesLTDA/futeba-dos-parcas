@@ -134,6 +134,10 @@ class RankingViewModel @Inject constructor(
                     )
                 }
 
+                if (rankings.isEmpty()) {
+                    AppLogger.d(TAG) { "Ranking vazio para categoria=${category.name}, periodo=${period.name}" }
+                }
+
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao carregar ranking: ${e.message}", e)
                 _rankingState.update {

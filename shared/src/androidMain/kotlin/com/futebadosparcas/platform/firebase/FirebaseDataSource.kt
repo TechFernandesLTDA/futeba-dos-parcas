@@ -2441,26 +2441,32 @@ actual class FirebaseDataSource(
 
     actual suspend fun executeBatch(operations: List<BatchOperation>): Result<Unit> {
         return try {
-            val batch = firestore.batch()
+            // Limite do Firestore: 500 operações por batch. Usar chunks de 450 com margem.
+            val chunks = operations.chunked(450)
 
-            operations.forEach { operation ->
-                when (operation) {
-                    is BatchOperation.Set -> {
-                        val ref = firestore.collection(operation.collection).document(operation.documentId)
-                        batch.set(ref, operation.data)
-                    }
-                    is BatchOperation.Update -> {
-                        val ref = firestore.collection(operation.collection).document(operation.documentId)
-                        batch.update(ref, operation.updates)
-                    }
-                    is BatchOperation.Delete -> {
-                        val ref = firestore.collection(operation.collection).document(operation.documentId)
-                        batch.delete(ref)
+            chunks.forEach { chunk ->
+                val batch = firestore.batch()
+
+                chunk.forEach { operation ->
+                    when (operation) {
+                        is BatchOperation.Set -> {
+                            val ref = firestore.collection(operation.collection).document(operation.documentId)
+                            batch.set(ref, operation.data)
+                        }
+                        is BatchOperation.Update -> {
+                            val ref = firestore.collection(operation.collection).document(operation.documentId)
+                            batch.update(ref, operation.updates)
+                        }
+                        is BatchOperation.Delete -> {
+                            val ref = firestore.collection(operation.collection).document(operation.documentId)
+                            batch.delete(ref)
+                        }
                     }
                 }
+
+                batch.commit().await()
             }
 
-            batch.commit().await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -3314,14 +3320,18 @@ actual class FirebaseDataSource(
                 return Result.success(Unit)
             }
 
-            val batch = firestore.batch()
-            snapshot.documents.forEach { doc ->
-                batch.update(doc.reference, mapOf(
-                    "read" to true,
-                    "read_at" to com.google.firebase.firestore.FieldValue.serverTimestamp()
-                ))
+            // Limite do Firestore: 500 operações por batch. Usar chunks de 450.
+            val chunks = snapshot.documents.chunked(450)
+            chunks.forEach { chunk ->
+                val batch = firestore.batch()
+                chunk.forEach { doc ->
+                    batch.update(doc.reference, mapOf(
+                        "read" to true,
+                        "read_at" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+                    ))
+                }
+                batch.commit().await()
             }
-            batch.commit().await()
 
             Result.success(Unit)
         } catch (e: Exception) {
