@@ -139,6 +139,36 @@ data class CashboxEntry(
             getCategoryEnum().displayName
         }
     }
+
+    /**
+     * Verifica se a entrada foi anulada/estornada.
+     */
+    fun isVoided(): Boolean = try {
+        CashboxAppStatus.valueOf(status) == CashboxAppStatus.VOIDED
+    } catch (_: Exception) {
+        false
+    }
+
+    /**
+     * Verifica se a entrada esta ativa.
+     */
+    fun isActive(): Boolean = !isVoided()
+
+    /**
+     * Retorna o valor com sinal correto (positivo para receita, negativo para despesa).
+     */
+    fun getSignedAmount(): Double = if (isIncome()) amount else -amount
+
+    companion object {
+        /** Colecao Firestore (subcoleção de groups) */
+        const val COLLECTION = "cashbox"
+
+        /** Valor minimo permitido para uma entrada */
+        const val MIN_AMOUNT = 0.01
+
+        /** Valor maximo permitido para uma entrada */
+        const val MAX_AMOUNT = 100_000.00
+    }
 }
 
 /**

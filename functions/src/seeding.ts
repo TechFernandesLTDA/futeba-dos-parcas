@@ -1,6 +1,6 @@
-
 import * as admin from "firebase-admin";
 import {onRequest} from "firebase-functions/v2/https";
+import {logger} from "firebase-functions/v2";
 
 // 2. Constants
 const START_DATE = new Date("2025-10-01T10:00:00"); // Start of Oct 2025
@@ -38,18 +38,30 @@ function getGameDates(start: Date, end: Date): Date[] {
   return dates;
 }
 
+/**
+ * HTTP endpoint para popular o banco de dados com dados de teste.
+ *
+ * SEGURANCA:
+ * - Apenas disponível em ambiente de desenvolvimento (ENVIRONMENT=development)
+ * - Requer query param `secret` com valor correto
+ * - Bloqueado em produção para prevenir ataques DoS
+ *
+ * @remarks
+ * Cria jogos simulados para 4 usuários em datas variadas,
+ * incluindo cenários para Clean Sheets (PAREDAO) e Hat Tricks.
+ */
 export const seedDatabase = onRequest(async (request, response) => {
   // SECURITY FIX (CVE-4): Disable seeding in production to prevent DoS attacks
   const environment = process.env.ENVIRONMENT || "production";
   if (environment !== "development") {
-    console.error(`[SECURITY] Seeding blocked: Not in development environment (${environment})`);
+    logger.error(`[SEEDING][SECURITY] Seeding blocked: Not in development environment (${environment})`);
     response.status(403).send("Seeding is disabled in this environment");
     return;
   }
 
   // Development-only: Basic secret protection
   if (request.query.secret !== "antigravity_seed") {
-    console.warn("[SECURITY] Seeding blocked: Invalid secret");
+    logger.warn("[SEEDING][SECURITY] Seeding blocked: Invalid secret");
     response.status(403).send("Unauthorized");
     return;
   }
@@ -63,39 +75,60 @@ export const seedDatabase = onRequest(async (request, response) => {
       response.send(result);
     }
   } catch (e) {
-    console.error(e);
-    response.status(500).send(`Error: ${e}`);
+    logger.error("[SEEDING] Fatal error during seeding:", e);
+    response.status(500).send(`Error: ${e instanceof Error ? e.message : String(e)}`);
   }
 });
 
+/**
+ * Lógica principal de seeding. Separada do handler HTTP para facilitar testes.
+ *
+ * Fluxo:
+ * 1. Busca 4 usuários existentes
+ * 2. Remove jogos de seed anteriores (cleanup)
+ * 3. Cria jogos como SCHEDULED com times, confirmações e live_scores
+ * 4. Atualiza para FINISHED para disparar processamento de XP
+ *
+ * @returns Mensagem de sucesso ou erro descritivo
+ */
 export const seedLogic = async () => {
   const db = admin.firestore();
 
-  console.log("Fetching users...");
+  logger.info("[SEEDING] Fetching users...");
   const usersSnap = await db.collection("users").limit(4).get();
   if (usersSnap.empty || usersSnap.size < 4) {
-    console.error("Not enough users found (need 4). Found: " + usersSnap.size);
+    logger.error(`[SEEDING] Not enough users found (need 4). Found: ${usersSnap.size}`);
     return `Not enough users found. Found ${usersSnap.size}, need 4.`;
   }
 
   const users = usersSnap.docs.map((d) => ({id: d.id, name: d.data().name || "Unknown"}));
-  console.log(`Found users: ${users.map((u) => u.name).join(", ")}`);
+  logger.info(`[SEEDING] Found users: ${users.map((u) => u.name).join(", ")}`);
 
   // 0. Cleanup old seeded games
-  console.log("Cleaning up old seeded games...");
+  logger.info("[SEEDING] Cleaning up old seeded games...");
   const oldGamesSnap = await db.collection("games").where("name", "==", GAME_NAME).get();
+  let cleanupErrors = 0;
   for (const doc of oldGamesSnap.docs) {
-    const batch = db.batch();
-    const gid = doc.id;
-    batch.delete(doc.ref);
-    batch.delete(db.collection("live_scores").doc(gid));
-    // Delete teams and confirmations would need queries, ignoring for now as they are many,
-    // but let's at least delete the game and live_score.
-    await batch.commit();
+    try {
+      const cleanupBatch = db.batch();
+      const gid = doc.id;
+      cleanupBatch.delete(doc.ref);
+      cleanupBatch.delete(db.collection("live_scores").doc(gid));
+      // Delete teams and confirmations would need queries, ignoring for now as they are many,
+      // but let's at least delete the game and live_score.
+      await cleanupBatch.commit();
+    } catch (cleanupErr) {
+      cleanupErrors++;
+      logger.warn(`[SEEDING] Error cleaning up game ${doc.id}:`, cleanupErr);
+      // Continuar com próximos jogos - não bloquear o seeding
+    }
+  }
+  if (cleanupErrors > 0) {
+    logger.warn(`[SEEDING] ${cleanupErrors} errors during cleanup (non-fatal)`);
   }
 
   const gameDates = getGameDates(START_DATE, END_DATE);
-  console.log(`Generating ${gameDates.length} games...`);
+  logger.info(`[SEEDING] Generating ${gameDates.length} games...`);
 
   const createdGameIds: string[] = [];
   const gameDetailsMap = new Map<string, { score1: number, score2: number, mvpId: string }>();
@@ -176,11 +209,12 @@ export const seedLogic = async () => {
   }
   if (opCount > 0) await batch.commit();
 
-  console.log("Games created as SCHEDULED. Now updating to FINISHED to trigger Cloud Function...");
+  logger.info("[SEEDING] Games created as SCHEDULED. Now updating to FINISHED to trigger Cloud Function...");
   // Wait a bit for Firestore to propagate
   await new Promise((r) => setTimeout(r, 2000));
 
   // 2. Update to FINISHED
+  let updateErrors = 0;
   batch = db.batch();
   opCount = 0;
   for (const gameId of createdGameIds) {
@@ -199,14 +233,30 @@ export const seedLogic = async () => {
       opCount++;
     }
 
-
     if (opCount >= 450) {
-      await batch.commit();
+      try {
+        await batch.commit();
+      } catch (batchErr) {
+        updateErrors++;
+        logger.error(`[SEEDING] Error committing FINISHED batch:`, batchErr);
+      }
       batch = db.batch(); opCount = 0;
       await new Promise((r) => setTimeout(r, 500)); // Small delay between batches
     }
   }
-  if (opCount > 0) await batch.commit();
+  if (opCount > 0) {
+    try {
+      await batch.commit();
+    } catch (batchErr) {
+      updateErrors++;
+      logger.error(`[SEEDING] Error committing final FINISHED batch:`, batchErr);
+    }
+  }
 
-  return `Success! Seeded ${createdGameIds.length} games and triggered processing.`;
+  const resultMsg = updateErrors > 0
+    ? `Seeded ${createdGameIds.length} games with ${updateErrors} batch errors during status update.`
+    : `Success! Seeded ${createdGameIds.length} games and triggered processing.`;
+
+  logger.info(`[SEEDING] ${resultMsg}`);
+  return resultMsg;
 };

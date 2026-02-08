@@ -73,61 +73,86 @@ class CheckMilestonesUseCase {
      * @return Informacoes do milestone ou null se nao encontrado
      */
     fun getMilestoneInfo(milestoneId: String): MilestoneInfo? {
-        // Mapeamento de milestones conhecidos
-        return when (milestoneId) {
-            "first_goal" -> MilestoneInfo(
-                id = "first_goal",
+        return KNOWN_MILESTONES[milestoneId]
+    }
+
+    companion object {
+        // IDs de milestones conhecidos (evita strings magicas)
+        const val MILESTONE_FIRST_GOAL = "first_goal"
+        const val MILESTONE_HAT_TRICK = "hat_trick"
+        const val MILESTONE_CLEAN_SHEET = "clean_sheet"
+        const val MILESTONE_PLAYMAKER = "playmaker"
+        const val MILESTONE_CENTURION = "centurion"
+        const val MILESTONE_GOLDEN_BOOT = "golden_boot"
+        const val MILESTONE_VETERAN = "veteran"
+
+        /**
+         * Mapa centralizado de definicoes de milestones conhecidos.
+         * Evita duplicacao da logica de criacao no getMilestoneInfo.
+         */
+        val KNOWN_MILESTONES: Map<String, MilestoneInfo> = mapOf(
+            MILESTONE_FIRST_GOAL to MilestoneInfo(
+                id = MILESTONE_FIRST_GOAL,
                 name = "Primeiro Gol",
                 description = "Marque seu primeiro gol",
                 xpReward = 50
-            )
-            "hat_trick" -> MilestoneInfo(
-                id = "hat_trick",
+            ),
+            MILESTONE_HAT_TRICK to MilestoneInfo(
+                id = MILESTONE_HAT_TRICK,
                 name = "Hat-trick",
                 description = "Marque 3 gols em uma partida",
                 xpReward = 100
-            )
-            "clean_sheet" -> MilestoneInfo(
-                id = "clean_sheet",
+            ),
+            MILESTONE_CLEAN_SHEET to MilestoneInfo(
+                id = MILESTONE_CLEAN_SHEET,
                 name = "Muralha",
                 description = "Nao sofra gols em uma partida como goleiro",
                 xpReward = 75
-            )
-            "playmaker" -> MilestoneInfo(
-                id = "playmaker",
+            ),
+            MILESTONE_PLAYMAKER to MilestoneInfo(
+                id = MILESTONE_PLAYMAKER,
                 name = "Armador",
                 description = "De 3 ou mais assistencias em uma partida",
                 xpReward = 80
-            )
-            "centurion" -> MilestoneInfo(
-                id = "centurion",
+            ),
+            MILESTONE_CENTURION to MilestoneInfo(
+                id = MILESTONE_CENTURION,
                 name = "Centurion",
                 description = "Participe de 100 jogos",
                 xpReward = 500
-            )
-            "golden_boot" -> MilestoneInfo(
-                id = "golden_boot",
+            ),
+            MILESTONE_GOLDEN_BOOT to MilestoneInfo(
+                id = MILESTONE_GOLDEN_BOOT,
                 name = "Artilheiro",
                 description = "Marque 50 gols",
                 xpReward = 300
-            )
-            "veteran" -> MilestoneInfo(
-                id = "veteran",
+            ),
+            MILESTONE_VETERAN to MilestoneInfo(
+                id = MILESTONE_VETERAN,
                 name = "Veterano",
                 description = "Participe de 500 jogos",
                 xpReward = 1000
             )
-            else -> null
-        }
+        )
     }
 }
 
 /**
  * Informacoes sobre um milestone.
+ *
+ * @property id Identificador unico do milestone
+ * @property name Nome para exibicao
+ * @property description Descricao do criterio para desbloquear
+ * @property xpReward Bonus de XP ao desbloquear o milestone
  */
 data class MilestoneInfo(
     val id: String,
     val name: String,
     val description: String,
     val xpReward: Int
-)
+) {
+    /**
+     * Retorna texto formatado do premio de XP (ex: "+500 XP").
+     */
+    fun getFormattedReward(): String = "+$xpReward XP"
+}

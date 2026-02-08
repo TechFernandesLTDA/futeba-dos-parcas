@@ -1,11 +1,9 @@
 import * as admin from "firebase-admin";
 import {onDocumentUpdated} from "firebase-functions/v2/firestore";
+import {logger} from "firebase-functions/v2";
 
-// Initialize app if not already initialized (might be shared but standard pattern is usually safe)
-if (admin.apps.length === 0) {
-  admin.initializeApp();
-}
-const db = admin.firestore();
+// Lazy initialization - admin.initializeApp() é chamado em index.ts
+const getDb = () => admin.firestore();
 
 export const generateActivityOnGameFinish = onDocumentUpdated("games/{gameId}", async (event) => {
   if (!event.data) return;
@@ -20,19 +18,19 @@ export const generateActivityOnGameFinish = onDocumentUpdated("games/{gameId}", 
     // Alternatively, check if activity exists.
     // We will store a flag on the game document to avoid duplicates
     if (after.activity_generated) {
-      console.log(`Activity for game ${gameId} already generated.`);
+      logger.info(`Activity for game ${gameId} already generated.`);
       return;
     }
 
-    console.log(`Generating activity for Game ${gameId}...`);
+    logger.info(`Generating activity for Game ${gameId}...`);
 
     try {
       // Fetch additional details for the activity
-      const liveScoreDoc = await db.collection("live_scores").doc(gameId).get();
+      const liveScoreDoc = await getDb().collection("live_scores").doc(gameId).get();
       let description = "Jogo finalizado! Confira os resultados e estatísticas.";
 
       // Fetch User details for the activity author (Game Owner)
-      const userDoc = await db.collection("users").doc(after.owner_id).get();
+      const userDoc = await getDb().collection("users").doc(after.owner_id).get();
       const userData = userDoc.data();
       const userName = userData ? userData.name : "Alguém";
       const userPhoto = userData ? userData.photoUrl : null;
@@ -75,6 +73,7 @@ export const generateActivityOnGameFinish = onDocumentUpdated("games/{gameId}", 
         },
       };
 
+      const db = getDb();
       const batch = db.batch();
       const activityRef = db.collection("activities").doc();
 
@@ -82,9 +81,9 @@ export const generateActivityOnGameFinish = onDocumentUpdated("games/{gameId}", 
       batch.update(event.data.after.ref, {activity_generated: true});
 
       await batch.commit();
-      console.log(`Activity generated handling for ${gameId} complete.`);
+      logger.info(`Activity generated handling for ${gameId} complete.`);
     } catch (error) {
-      console.error("Error generating activity for game:", error);
+      logger.error("Error generating activity for game:", error);
     }
   }
 });

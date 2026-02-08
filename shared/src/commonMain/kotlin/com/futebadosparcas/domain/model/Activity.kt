@@ -33,7 +33,33 @@ data class Activity(
     val createdAt: Long? = null,
     val visibility: ActivityVisibility = ActivityVisibility.PUBLIC
 ) {
+    /**
+     * Verifica se a atividade tem referencia valida para navegacao.
+     */
+    fun hasValidReference(): Boolean = !referenceId.isNullOrBlank() && !referenceType.isNullOrBlank()
+
     companion object {
+        // Colecao Firestore
+        const val COLLECTION = "activities"
+
+        // Tipos de referencia (evita strings magicas)
+        const val REF_TYPE_GAME = "game"
+        const val REF_TYPE_BADGE = "badge"
+        const val REF_TYPE_MILESTONE = "milestone"
+        const val REF_TYPE_LEVEL = "level"
+        const val REF_TYPE_STREAK = "streak"
+        const val REF_TYPE_CHALLENGE = "challenge"
+
+        // Chaves de metadata (evita strings magicas)
+        const val META_BADGE_NAME = "badge_name"
+        const val META_BADGE_DESCRIPTION = "badge_description"
+        const val META_MILESTONE_NAME = "milestone_name"
+        const val META_LEVEL = "level"
+        const val META_LEVEL_NAME = "level_name"
+        const val META_STREAK_COUNT = "streak_count"
+        const val META_CHALLENGE_NAME = "challenge_name"
+        const val META_GAME_NAME = "game_name"
+        const val META_GOAL_COUNT = "goal_count"
         /**
          * Cria atividade de jogo finalizado.
          */
@@ -53,7 +79,7 @@ data class Activity(
                 title = "Jogo finalizado",
                 description = "Participou do jogo $gameName${score?.let { " - Resultado: $it" } ?: ""}",
                 referenceId = gameId,
-                referenceType = "game",
+                referenceType = REF_TYPE_GAME,
                 createdAt = Clock.System.now().toEpochMilliseconds(),
                 visibility = ActivityVisibility.PUBLIC
             )
@@ -78,8 +104,8 @@ data class Activity(
                 title = "Nova conquista",
                 description = "Desbloqueou o badge: $badgeName",
                 referenceId = badgeId,
-                referenceType = "badge",
-                metadata = mapOf("badge_name" to badgeName, "badge_description" to badgeDescription),
+                referenceType = REF_TYPE_BADGE,
+                metadata = mapOf(META_BADGE_NAME to badgeName, META_BADGE_DESCRIPTION to badgeDescription),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
                 visibility = ActivityVisibility.PUBLIC
             )
@@ -103,8 +129,8 @@ data class Activity(
                 title = "Marco alcancado",
                 description = "Completou o desafio: $milestoneName",
                 referenceId = milestoneId,
-                referenceType = "milestone",
-                metadata = mapOf("milestone_name" to milestoneName),
+                referenceType = REF_TYPE_MILESTONE,
+                metadata = mapOf(META_MILESTONE_NAME to milestoneName),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
                 visibility = ActivityVisibility.PUBLIC
             )
@@ -128,8 +154,8 @@ data class Activity(
                 title = "Subiu de nivel!",
                 description = "Alcançou o nivel $newLevel - $levelName",
                 referenceId = newLevel.toString(),
-                referenceType = "level",
-                metadata = mapOf("level" to newLevel.toString(), "level_name" to levelName),
+                referenceType = REF_TYPE_LEVEL,
+                metadata = mapOf(META_LEVEL to newLevel.toString(), META_LEVEL_NAME to levelName),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
                 visibility = ActivityVisibility.PUBLIC
             )
@@ -152,8 +178,8 @@ data class Activity(
                 title = "Sequencia impressionante!",
                 description = "Alcançou uma sequencia de $streakCount jogos",
                 referenceId = streakCount.toString(),
-                referenceType = "streak",
-                metadata = mapOf("streak_count" to streakCount.toString()),
+                referenceType = REF_TYPE_STREAK,
+                metadata = mapOf(META_STREAK_COUNT to streakCount.toString()),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
                 visibility = ActivityVisibility.PUBLIC
             )
@@ -177,8 +203,8 @@ data class Activity(
                 title = "Desafio completado",
                 description = "Completou o desafio semanal: $challengeName",
                 referenceId = challengeId,
-                referenceType = "challenge",
-                metadata = mapOf("challenge_name" to challengeName),
+                referenceType = REF_TYPE_CHALLENGE,
+                metadata = mapOf(META_CHALLENGE_NAME to challengeName),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
                 visibility = ActivityVisibility.PUBLIC
             )
@@ -202,8 +228,8 @@ data class Activity(
                 title = "Melhor em campo!",
                 description = "Foi o MVP do jogo $gameName",
                 referenceId = gameId,
-                referenceType = "game",
-                metadata = mapOf("game_name" to gameName),
+                referenceType = REF_TYPE_GAME,
+                metadata = mapOf(META_GAME_NAME to gameName),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
                 visibility = ActivityVisibility.PUBLIC
             )
@@ -228,8 +254,8 @@ data class Activity(
                 title = "Hat-trick!",
                 description = "Marcou $goalCount gols no jogo $gameName",
                 referenceId = gameId,
-                referenceType = "game",
-                metadata = mapOf("goal_count" to goalCount.toString(), "game_name" to gameName),
+                referenceType = REF_TYPE_GAME,
+                metadata = mapOf(META_GOAL_COUNT to goalCount.toString(), META_GAME_NAME to gameName),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
                 visibility = ActivityVisibility.PUBLIC
             )
@@ -253,8 +279,8 @@ data class Activity(
                 title = "Bola murcha!",
                 description = "Não sofreu gols no jogo $gameName",
                 referenceId = gameId,
-                referenceType = "game",
-                metadata = mapOf("game_name" to gameName),
+                referenceType = REF_TYPE_GAME,
+                metadata = mapOf(META_GAME_NAME to gameName),
                 createdAt = Clock.System.now().toEpochMilliseconds(),
                 visibility = ActivityVisibility.PUBLIC
             )

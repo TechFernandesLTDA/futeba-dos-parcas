@@ -477,12 +477,27 @@ export async function sendAndSaveNotification(
 // CLOUD FUNCTIONS TRIGGERS
 // ==========================================
 
+/**
+ * Trigger: Quando um novo jogo é criado.
+ * Envia notificação de convite para todos os membros do grupo.
+ *
+ * IDEMPOTÊNCIA: Marca o documento do jogo com `notification_sent: true`
+ * para evitar envio duplicado caso o trigger execute mais de uma vez
+ * (Firestore triggers podem ser disparados mais de 1 vez - at-least-once).
+ */
 export const onGameCreated = onDocumentCreated("games/{gameId}", async (event) => {
   const game = event.data?.data();
   if (!game) return;
 
   const gameId = event.params.gameId;
   const ownerId = game.owner_id;
+
+  // Idempotência: verificar se notificação já foi enviada
+  // (Cloud Functions triggers são at-least-once, podem disparar mais de 1 vez)
+  if (game.invite_notification_sent === true) {
+    console.log(`[GAME_CREATED] Notification for game ${gameId} already sent, skipping (idempotent).`);
+    return;
+  }
 
   if (game.group_id) {
     try {
@@ -510,6 +525,11 @@ export const onGameCreated = onDocumentCreated("games/{gameId}", async (event) =
             gameId: gameId,
             action: "game_detail/" + gameId,
           },
+        });
+
+        // Marcar como enviado para idempotência
+        await getDb().collection("games").doc(gameId).update({
+          invite_notification_sent: true,
         });
       }
     } catch (e) {
@@ -637,34 +657,65 @@ export const onLevelUp = onDocumentUpdated("users/{userId}", async (event) => {
   }
 });
 
+/**
+ * Envia uma notificação de teste para o próprio usuário autenticado.
+ *
+ * @param title - Título da notificação (obrigatório, max 200 chars)
+ * @param body - Corpo da notificação (obrigatório, max 500 chars)
+ * @param type - Tipo da notificação (opcional, default: GAME_INVITE)
+ * @returns {success: boolean, message: string}
+ */
 export const sendTestNotification = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Usuario nao autenticado");
   }
 
   const userId = request.auth.uid;
-  const {title, body, type} = request.data;
+  const {title, body, type} = request.data || {};
 
-  if (!title || !body) {
-    throw new HttpsError("invalid-argument", "Titulo e corpo sao obrigatorios");
+  // Validação de entrada robusta
+  if (!title || typeof title !== "string") {
+    throw new HttpsError("invalid-argument", "Titulo e obrigatorio e deve ser uma string");
+  }
+  if (!body || typeof body !== "string") {
+    throw new HttpsError("invalid-argument", "Corpo e obrigatorio e deve ser uma string");
+  }
+  if (title.length > 200) {
+    throw new HttpsError("invalid-argument", "Titulo nao pode exceder 200 caracteres");
+  }
+  if (body.length > 500) {
+    throw new HttpsError("invalid-argument", "Corpo nao pode exceder 500 caracteres");
+  }
+  if (type && !Object.values(NotificationType).includes(type)) {
+    throw new HttpsError("invalid-argument", `Tipo invalido. Valores aceitos: ${Object.values(NotificationType).join(", ")}`);
   }
 
   const success = await sendNotificationToUser(userId, {
-    title,
-    body,
+    title: title.trim(),
+    body: body.trim(),
     type: type || NotificationType.GAME_INVITE,
   });
 
   return {success, message: success ? "Notificacao enviada!" : "Falha ao enviar"};
 });
 
+/**
+ * Cria notificações fake para testes de UI.
+ * Apenas para desenvolvimento/debug.
+ *
+ * @param count - Número de notificações a criar (1-5, default: 3)
+ * @returns {success: boolean, created: number, notifications: Array}
+ */
 export const createFakeGameNotifications = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Usuario nao autenticado");
   }
 
   const userId = request.auth.uid;
-  const {count = 3} = request.data;
+  const rawCount = request.data?.count;
+
+  // Validação de entrada: count deve ser um número entre 1 e 5
+  const count = typeof rawCount === "number" ? Math.max(1, Math.min(5, Math.round(rawCount))) : 3;
 
   const userDoc = await getDb().collection("users").doc(userId).get();
   const userName = userDoc.exists ?

@@ -5,20 +5,29 @@ import kotlinx.serialization.Serializable
 
 /**
  * Categorias de votacao para jogo.
+ *
+ * @property displayName Nome para exibicao ao usuario
+ * @property emoji Emoji representativo da categoria
  */
 @Serializable
-enum class VoteCategory {
+enum class VoteCategory(val displayName: String, val emoji: String) {
     @SerialName("MVP")
-    MVP,        // Craque da Partida
+    MVP("Craque da Partida", "\u2B50"),        // Craque da Partida
 
     @SerialName("WORST")
-    WORST,      // Bola Murcha
+    WORST("Bola Murcha", "\uD83E\uDEE3"),      // Bola Murcha
 
     @SerialName("BEST_GOALKEEPER")
-    BEST_GOALKEEPER,  // Melhor Goleiro
+    BEST_GOALKEEPER("Melhor Goleiro", "\uD83E\uDDE4"),  // Melhor Goleiro
 
     @SerialName("CUSTOM")
-    CUSTOM  // Categoria personalizada
+    CUSTOM("Personalizado", "\uD83C\uDFC6");  // Categoria personalizada
+
+    companion object {
+        fun fromString(value: String?): VoteCategory {
+            return entries.find { it.name == value } ?: MVP
+        }
+    }
 }
 
 /**
@@ -34,7 +43,18 @@ data class MVPVote(
     @SerialName("voted_player_id") val votedPlayerId: String = "",
     val category: VoteCategory = VoteCategory.MVP,
     @SerialName("voted_at") val votedAt: Long? = null
-)
+) {
+    companion object {
+        /** Colecao Firestore */
+        const val COLLECTION = "mvp_votes"
+
+        /**
+         * Gera o ID do documento no formato {gameId}_{voterId}_{category}.
+         */
+        fun generateId(gameId: String, voterId: String, category: VoteCategory): String =
+            "${gameId}_${voterId}_${category.name}"
+    }
+}
 
 /**
  * Resultado da votacao para exibicao.
@@ -46,7 +66,17 @@ data class MVPVoteResult(
     val playerPhoto: String? = null,
     val voteCount: Int = 0,
     val percentage: Double = 0.0
-)
+) {
+    /**
+     * Verifica se o jogador tem foto.
+     */
+    fun hasPhoto(): Boolean = !playerPhoto.isNullOrBlank()
+
+    /**
+     * Retorna a porcentagem formatada como inteiro (ex: "75%").
+     */
+    fun getFormattedPercentage(): String = "${percentage.toInt()}%"
+}
 
 /**
  * Placar ao vivo de um jogo (legado - ver LiveScore em LiveGame.kt para a versao KMP).
