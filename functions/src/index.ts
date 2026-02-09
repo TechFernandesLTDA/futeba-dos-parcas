@@ -922,6 +922,16 @@ export const onGameStatusUpdate = onDocumentUpdated("games/{gameId}", async (eve
       // Aguardar todos os batches
       await Promise.all(batchCommits);
       console.log(`Game ${gameId} processing complete (${batchCommits.length} batch(es) committed).`);
+
+      // Após XP processado com sucesso, consolidar geração de atividade
+      try {
+        const {generateGameFinishedActivityDirect} = await import("./activities.js");
+        await generateGameFinishedActivityDirect(gameId, after, db);
+      } catch (e) {
+        console.error(`[CONSOLIDATED] Erro ao gerar atividade para game ${gameId}:`, e);
+      }
+
+      // MVP notification é gerenciada pelo trigger separado (requer detecção de mudança de mvp_id)
     } catch (error) {
       console.error(`Game ${gameId} processing failed.`, error);
       await event.data.after.ref.update({
@@ -1203,6 +1213,7 @@ export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) =
     // 1. Delete confirmations
     const confirmationsSnap = await db.collection("confirmations")
       .where("game_id", "==", gameId)
+      .limit(2000)
       .get();
     confirmationsSnap.docs.forEach((doc) => allRefs.push(doc.ref));
     console.log(`[CASCADE DELETE] Found ${confirmationsSnap.size} confirmations to delete`);
@@ -1210,6 +1221,7 @@ export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) =
     // 2. Delete teams
     const teamsSnap = await db.collection("teams")
       .where("game_id", "==", gameId)
+      .limit(2000)
       .get();
     teamsSnap.docs.forEach((doc) => allRefs.push(doc.ref));
     console.log(`[CASCADE DELETE] Found ${teamsSnap.size} teams to delete`);
@@ -1217,6 +1229,7 @@ export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) =
     // 3. Delete game_events (live match events)
     const eventsSnap = await db.collection("game_events")
       .where("game_id", "==", gameId)
+      .limit(2000)
       .get();
     eventsSnap.docs.forEach((doc) => allRefs.push(doc.ref));
     console.log(`[CASCADE DELETE] Found ${eventsSnap.size} game_events to delete`);
@@ -1224,6 +1237,7 @@ export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) =
     // 4. Delete mvp_votes
     const votesSnap = await db.collection("mvp_votes")
       .where("game_id", "==", gameId)
+      .limit(2000)
       .get();
     votesSnap.docs.forEach((doc) => allRefs.push(doc.ref));
     console.log(`[CASCADE DELETE] Found ${votesSnap.size} mvp_votes to delete`);
@@ -1239,6 +1253,7 @@ export const onGameDeleted = onDocumentDeleted("games/{gameId}", async (event) =
     // 6. Delete xp_logs related to this game
     const xpLogsSnap = await db.collection("xp_logs")
       .where("game_id", "==", gameId)
+      .limit(2000)
       .get();
     xpLogsSnap.docs.forEach((doc) => allRefs.push(doc.ref));
     console.log(`[CASCADE DELETE] Found ${xpLogsSnap.size} xp_logs to delete`);

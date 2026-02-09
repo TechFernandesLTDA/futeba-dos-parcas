@@ -17,6 +17,7 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
 import {FieldValue} from "firebase-admin/firestore";
+import {checkRateLimit} from "../middleware/rate-limiter";
 
 const db = admin.firestore();
 
@@ -57,7 +58,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
     // P0 #32: Firebase App Check - Garante que apenas apps verificados podem chamar
     // PRODUCTION: enforceAppCheck: true (bloqueia apps não-verificados)
     // DEBUG: enforceAppCheck: false (permite testar via Firebase CLI)
-    enforceAppCheck: process.env.FIREBASE_CONFIG ? true : false,
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
   },
   async (request) => {
@@ -69,6 +70,17 @@ export const setUserRole = onCall<SetUserRoleRequest>(
         "unauthenticated",
         "User must be authenticated to set roles"
       );
+    }
+
+    // ==========================================
+    // 1.5. RATE LIMITING - Máximo 5 chamadas por minuto
+    // ==========================================
+    const rateLimitResult = await checkRateLimit(
+      request.auth.uid,
+      {maxRequests: 5, windowMs: 60000, keyPrefix: "setRole"}
+    );
+    if (!rateLimitResult.allowed) {
+      throw new HttpsError("resource-exhausted", "Rate limit excedido. Tente novamente em breve.");
     }
 
     // ==========================================
@@ -239,6 +251,15 @@ export const migrateAllUsersToCustomClaims = onCall(
     // Verificar permissão de admin
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Authentication required");
+    }
+
+    // Rate limiting global - Máximo 1 chamada a cada 5 minutos
+    const migrateRateLimitResult = await checkRateLimit(
+      request.auth.uid,
+      {maxRequests: 1, windowMs: 300000, keyPrefix: "migrate"}
+    );
+    if (!migrateRateLimitResult.allowed) {
+      throw new HttpsError("resource-exhausted", "Migração já executada recentemente. Tente novamente em breve.");
     }
 
     const callerDoc = await db.collection("users").doc(request.auth.uid).get();

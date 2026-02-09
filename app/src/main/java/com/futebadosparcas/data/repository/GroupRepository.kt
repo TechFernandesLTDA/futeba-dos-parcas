@@ -14,7 +14,9 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import android.net.Uri
 import com.futebadosparcas.util.AppLogger
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
@@ -389,36 +391,46 @@ class GroupRepository @Inject constructor(
             groupsCollection.document(groupId).update(updates).await()
 
             // Atualizar referência em todos os membros (denormalização)
-            // Buscar todos os membros ativos para atualizar o UserGroup deles
-            // FIX: Usar paginação ou batches para evitar estouro de memória/limite
-            val membersSnapshot = groupsCollection.document(groupId)
-                .collection("members")
-                .get()
-                .await()
+            // Usa paginação com .limit() para evitar estouro de memória em grupos grandes
+            val membersCollection = groupsCollection.document(groupId).collection("members")
+            val pageSize = 500L
+            var lastDoc: com.google.firebase.firestore.DocumentSnapshot? = null
 
-            val totalMembers = membersSnapshot.size()
-            val batchSize = 400 // Margem de segurança (limite é 500)
-            
-            // Processar em lotes
-            for (i in 0 until totalMembers step batchSize) {
-                val batch = firestore.batch()
-                val chunk = membersSnapshot.documents.drop(i).take(batchSize)
-                
-                chunk.forEach { memberDoc ->
-                    val memberId = memberDoc.getString("user_id") ?: return@forEach
-                    val userGroupRef = usersCollection.document(memberId)
-                        .collection("groups").document(groupId)
-                    
-                    val groupUpdates = mutableMapOf<String, Any>(
-                        "group_name" to name
-                    )
-                    if (photoUrl != null) {
-                        groupUpdates["group_photo"] = photoUrl
-                    }
-                    batch.update(userGroupRef, groupUpdates)
+            do {
+                var query = membersCollection.limit(pageSize)
+                if (lastDoc != null) {
+                    query = query.startAfter(lastDoc)
                 }
-                batch.commit().await()
-            }
+
+                val membersSnapshot = query.get().await()
+                if (membersSnapshot.isEmpty) break
+
+                // Processar em batches de 400 operações
+                val batchSize = 400
+                val docs = membersSnapshot.documents
+
+                for (i in docs.indices step batchSize) {
+                    val batch = firestore.batch()
+                    val chunk = docs.subList(i, minOf(i + batchSize, docs.size))
+
+                    chunk.forEach { memberDoc ->
+                        val memberId = memberDoc.getString("user_id") ?: return@forEach
+                        val userGroupRef = usersCollection.document(memberId)
+                            .collection("groups").document(groupId)
+
+                        val groupUpdates = mutableMapOf<String, Any>(
+                            "group_name" to name
+                        )
+                        if (photoUrl != null) {
+                            groupUpdates["group_photo"] = photoUrl
+                        }
+                        batch.update(userGroupRef, groupUpdates)
+                    }
+                    batch.commit().await()
+                }
+
+                lastDoc = docs.lastOrNull()
+            } while (membersSnapshot.size() >= pageSize.toInt())
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -515,49 +527,26 @@ class GroupRepository @Inject constructor(
                 return Result.failure(Exception("Administrador não pode remover outro administrador"))
             }
 
-            // Buscar membros ativos para atualizar member_count em todos
-            val activeMembers = groupsCollection.document(groupId)
-                .collection("members")
-                .whereEqualTo("status", GroupMemberStatus.ACTIVE.name)
-                .get()
-                .await()
-
-            val remainingMemberIds = activeMembers.documents
-                .mapNotNull { it.getString("user_id") }
-                .filter { it != memberId }
-
-            val newMemberCount = remainingMemberIds.size
-
-            // Remover membro e atualizar contagem em todos os UserGroups
-            // FIX: Usar chunks para evitar falhar em grupos grandes
+            // Usar FieldValue.increment(-1) atômico em vez de full recount
+            // Economiza N reads + evita race condition em remoções simultâneas
             firestore.runTransaction { transaction ->
                 val memberRef = groupsCollection.document(groupId)
                     .collection("members").document(memberId)
                 transaction.update(memberRef, "status", GroupMemberStatus.REMOVED.name)
 
+                // Decremento atômico no grupo principal
                 val groupRef = groupsCollection.document(groupId)
-                transaction.update(groupRef, "member_count", newMemberCount)
+                transaction.update(groupRef, "member_count", FieldValue.increment(-1))
 
                 // Remover referência do membro removido
                 val userGroupRef = usersCollection.document(memberId)
                     .collection("groups").document(groupId)
                 transaction.delete(userGroupRef)
             }.await()
-            
-            // Atualizar member_count nos membros restantes (fora da transação principal para evitar limite)
-            // Isso pode gerar inconsistência temporária, mas evita crash.
-            val batchSize = 400
-            for (i in 0 until remainingMemberIds.size step batchSize) {
-                val batch = firestore.batch()
-                val chunk = remainingMemberIds.drop(i).take(batchSize)
-                
-                chunk.forEach { remainingMemberId ->
-                    val remainingUserGroupRef = usersCollection.document(remainingMemberId)
-                        .collection("groups").document(groupId)
-                    batch.update(remainingUserGroupRef, "member_count", newMemberCount)
-                }
-                batch.commit().await()
-            }
+
+            // Nota: member_count nos UserGroups dos outros membros ficará
+            // temporariamente desatualizado. syncGroupMemberCount() corrige
+            // quando necessário (abordagem eventual consistency).
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -653,20 +642,38 @@ class GroupRepository @Inject constructor(
             )
             groupsCollection.document(groupId).update(updates).await()
 
-            // Remover referências de todos os membros
-            val members = groupsCollection.document(groupId)
-                .collection("members")
-                .get()
-                .await()
+            // Remover referências de todos os membros com paginação
+            // Evita carregar todos na memória de uma vez em grupos grandes
+            val membersCol = groupsCollection.document(groupId).collection("members")
+            val deletePageSize = 500L
+            var lastMemberDoc: com.google.firebase.firestore.DocumentSnapshot? = null
 
-            val batch = firestore.batch()
-            members.documents.forEach { memberDoc ->
-                val memberId = memberDoc.getString("user_id") ?: return@forEach
-                val userGroupRef = usersCollection.document(memberId)
-                    .collection("groups").document(groupId)
-                batch.delete(userGroupRef)
-            }
-            batch.commit().await()
+            do {
+                var memberQuery = membersCol.limit(deletePageSize)
+                if (lastMemberDoc != null) {
+                    memberQuery = memberQuery.startAfter(lastMemberDoc)
+                }
+
+                val membersPage = memberQuery.get().await()
+                if (membersPage.isEmpty) break
+
+                // Processar em batches de 400
+                val docs = membersPage.documents
+                for (i in docs.indices step 400) {
+                    val batch = firestore.batch()
+                    val chunk = docs.subList(i, minOf(i + 400, docs.size))
+
+                    chunk.forEach { memberDoc ->
+                        val memberId = memberDoc.getString("user_id") ?: return@forEach
+                        val userGroupRef = usersCollection.document(memberId)
+                            .collection("groups").document(groupId)
+                        batch.delete(userGroupRef)
+                    }
+                    batch.commit().await()
+                }
+
+                lastMemberDoc = docs.lastOrNull()
+            } while (membersPage.size() >= deletePageSize.toInt())
 
             AppLogger.i(TAG) { "Grupo $groupId soft-deletado por $userId" }
             Result.success(Unit)
@@ -877,31 +884,44 @@ class GroupRepository @Inject constructor(
      */
     suspend fun syncGroupMemberCount(groupId: String): Result<Unit> {
         return try {
-            // Contar membros ativos
-            val activeMembers = groupsCollection.document(groupId)
+            // Contar membros ativos com paginação para evitar estouro de memória
+            val membersCol = groupsCollection.document(groupId)
                 .collection("members")
                 .whereEqualTo("status", GroupMemberStatus.ACTIVE.name)
-                .get()
-                .await()
+            val allMemberIds = mutableListOf<String>()
+            var lastDoc: com.google.firebase.firestore.DocumentSnapshot? = null
 
-            val memberIds = activeMembers.documents.mapNotNull { it.getString("user_id") }
-            val correctMemberCount = memberIds.size
+            do {
+                var query = membersCol.limit(500)
+                if (lastDoc != null) {
+                    query = query.startAfter(lastDoc)
+                }
+                val snapshot = query.get().await()
+                if (snapshot.isEmpty) break
 
-            // Atualizar grupo principal e todos os UserGroups
-            val batch = firestore.batch()
+                snapshot.documents.mapNotNullTo(allMemberIds) { it.getString("user_id") }
+                lastDoc = snapshot.documents.lastOrNull()
+            } while (snapshot.size() >= 500)
+
+            val correctMemberCount = allMemberIds.size
 
             // Atualizar grupo principal
-            val groupRef = groupsCollection.document(groupId)
-            batch.update(groupRef, "member_count", correctMemberCount)
+            groupsCollection.document(groupId)
+                .update("member_count", correctMemberCount)
+                .await()
 
-            // Atualizar em cada membro
-            memberIds.forEach { memberId ->
-                val userGroupRef = usersCollection.document(memberId)
-                    .collection("groups").document(groupId)
-                batch.update(userGroupRef, "member_count", correctMemberCount)
+            // Atualizar UserGroups em batches de 400
+            for (i in allMemberIds.indices step 400) {
+                val batch = firestore.batch()
+                val chunk = allMemberIds.subList(i, minOf(i + 400, allMemberIds.size))
+
+                chunk.forEach { memberId ->
+                    val userGroupRef = usersCollection.document(memberId)
+                        .collection("groups").document(groupId)
+                    batch.update(userGroupRef, "member_count", correctMemberCount)
+                }
+                batch.commit().await()
             }
-
-            batch.commit().await()
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -923,10 +943,18 @@ class GroupRepository @Inject constructor(
                 .get()
                 .await()
 
-            // Sincronizar cada grupo
-            userGroups.documents.forEach { doc ->
-                val groupId = doc.getString("group_id") ?: doc.id
-                syncGroupMemberCount(groupId)
+            // Sincronizar grupos em paralelo (em vez de sequencial)
+            coroutineScope {
+                userGroups.documents.map { doc ->
+                    val groupId = doc.getString("group_id") ?: doc.id
+                    async {
+                        try {
+                            syncGroupMemberCount(groupId)
+                        } catch (e: Exception) {
+                            AppLogger.w(TAG) { "Erro ao sincronizar member_count do grupo $groupId: ${e.message}" }
+                        }
+                    }
+                }.forEach { it.await() }
             }
 
             Result.success(Unit)

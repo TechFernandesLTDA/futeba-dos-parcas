@@ -46,8 +46,9 @@ const QUEUE_COLLECTION = "notification_queue";
 /** Número máximo de retentativas antes de marcar como FAILED permanente */
 const MAX_RETRY_COUNT = 3;
 
-/** Delay entre chunks de multicast para evitar throttling do FCM (ms) */
-const CHUNK_SEND_DELAY_MS = 100;
+/** Delay entre chunks de multicast para evitar throttling do FCM (ms) - reservado para uso futuro */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const CHUNK_SEND_DELAY_MS = 100;
 
 // ==========================================
 // INTERFACES
@@ -562,7 +563,7 @@ export const enqueueNotificationCallable = onCall(
     region: "southamerica-east1",
     memory: "256MiB",
     // SECURITY: App Check para prevenir chamadas de apps nao-verificados
-    enforceAppCheck: process.env.FIREBASE_CONFIG ? true : false,
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
   },
   async (request) => {

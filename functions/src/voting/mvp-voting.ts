@@ -81,7 +81,7 @@ export const submitMvpVote = onCall<SubmitVoteRequest>(
     region: "southamerica-east1",
     memory: "256MiB",
     // SECURITY: App Check - garante que apenas apps verificados podem votar
-    enforceAppCheck: process.env.FIREBASE_CONFIG ? true : false,
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
   },
   async (request) => {
@@ -302,7 +302,7 @@ export const concludeMvpVoting = onCall<ConcludeVotingRequest>(
     region: "southamerica-east1",
     memory: "512MiB",
     // SECURITY: App Check - garante que apenas apps verificados podem concluir votacao
-    enforceAppCheck: process.env.FIREBASE_CONFIG ? true : false,
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
   },
   async (request) => {

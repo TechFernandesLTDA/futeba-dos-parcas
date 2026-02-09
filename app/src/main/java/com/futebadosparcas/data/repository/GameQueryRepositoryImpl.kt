@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.local.dao.GameDao
+import com.futebadosparcas.data.util.BatchOperationHelper
 import com.futebadosparcas.data.local.model.toDomain
 import com.futebadosparcas.data.local.model.toEntity
 import com.futebadosparcas.data.model.Game as AndroidGame
@@ -1272,15 +1273,14 @@ class GameQueryRepositoryImpl @Inject constructor(
                                 if (gameIds.isEmpty()) {
                                     emptyList()
                                 } else {
-                                    val chunks = gameIds.chunked(10)
-                                    val allConfirmedGames = mutableListOf<AndroidGame>()
-                                    chunks.forEach { chunk ->
-                                        val g = gamesCollection.whereIn(FieldPath.documentId(), chunk).get().await()
-                                        allConfirmedGames.addAll(g.documents.mapNotNull { doc ->
+                                    // Busca paralela em chunks de 10 (limite do whereIn)
+                                    BatchOperationHelper.parallelWhereIn(
+                                        collection = gamesCollection,
+                                        ids = gameIds,
+                                        mapper = { doc ->
                                             doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
-                                        })
-                                    }
-                                    allConfirmedGames
+                                        }
+                                    )
                                 }
                             } catch (e: Exception) {
                                 AppLogger.e(TAG, "Erro ao buscar jogos confirmados", e)

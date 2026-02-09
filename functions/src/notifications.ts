@@ -1036,6 +1036,38 @@ export const cleanupExpiredInvites = onSchedule("every 24 hours", async (event) 
  * Trigger quando um jogador é eleito MVP após a votação.
  * Escuta mudanças no campo mvp_id do jogo FINISHED.
  */
+/**
+ * Envia notificação de MVP diretamente (chamado externamente ou pelo trigger).
+ *
+ * @param gameId - ID do jogo
+ * @param gameData - Dados do jogo (já carregados)
+ */
+export async function notifyMvpAwardedDirect(
+  gameId: string,
+  gameData: any
+): Promise<void> {
+  const mvpId = gameData.mvp_id || gameData.mvpId;
+  if (!mvpId) return;
+
+  // Só notifica se o jogo está FINISHED
+  if (gameData.status !== "FINISHED") return;
+
+  console.log(`[MVP_AWARDED_DIRECT] MVP definido no jogo ${gameId}: ${mvpId}`);
+
+  const gameName = gameData.location_name || gameData.field_name || "a partida";
+
+  await sendAndSaveNotification(mvpId, {
+    userId: mvpId,
+    title: "🏆 Você foi eleito MVP!",
+    body: `Parabéns! Você foi escolhido o Craque da Partida em ${gameName}`,
+    type: NotificationType.MVP_RECEIVED,
+    gameId: gameId,
+    action: "game_detail/" + gameId,
+  });
+
+  console.log(`[MVP_AWARDED_DIRECT] Notificação enviada para ${mvpId}`);
+}
+
 export const onMvpAwarded = onDocumentUpdated("games/{gameId}", async (event) => {
   const before = event.data?.before.data();
   const after = event.data?.after.data();
@@ -1052,22 +1084,8 @@ export const onMvpAwarded = onDocumentUpdated("games/{gameId}", async (event) =>
   // Só notifica se o jogo está FINISHED
   if (after.status !== "FINISHED") return;
 
-  console.log(`[MVP_AWARDED] MVP definido no jogo ${gameId}: ${afterMvpId}`);
-
   try {
-    // Buscar nome do jogo para contexto
-    const gameName = after.location_name || after.field_name || "a partida";
-
-    await sendAndSaveNotification(afterMvpId, {
-      userId: afterMvpId,
-      title: "🏆 Você foi eleito MVP!",
-      body: `Parabéns! Você foi escolhido o Craque da Partida em ${gameName}`,
-      type: NotificationType.MVP_RECEIVED,
-      gameId: gameId,
-      action: "game_detail/" + gameId,
-    });
-
-    console.log(`[MVP_AWARDED] Notificação enviada para ${afterMvpId}`);
+    await notifyMvpAwardedDirect(gameId, after);
   } catch (e) {
     console.error(`[MVP_AWARDED] Erro ao notificar MVP ${afterMvpId}:`, e);
   }

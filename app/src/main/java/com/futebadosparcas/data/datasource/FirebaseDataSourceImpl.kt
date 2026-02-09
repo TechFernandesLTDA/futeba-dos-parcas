@@ -1,6 +1,7 @@
 package com.futebadosparcas.data.datasource
 
 import com.futebadosparcas.data.model.*
+import com.futebadosparcas.data.util.BatchOperationHelper
 import com.futebadosparcas.domain.util.RetryPolicy
 import com.futebadosparcas.domain.util.suspendWithRetryResult
 import com.futebadosparcas.util.AppLogger
@@ -157,15 +158,12 @@ class FirebaseDataSourceImpl @Inject constructor(
                 return@suspendWithRetryResult emptyList()
             }
 
-            // 3. Buscar jogos em chunks (whereIn limit = 10)
-            val games = mutableListOf<Game>()
-            gameIds.chunked(10).forEach { chunk ->
-                val snapshot = firestore.collection(COLLECTION_GAMES)
-                    .whereIn(com.google.firebase.firestore.FieldPath.documentId(), chunk)
-                    .get()
-                    .await()
-                games.addAll(snapshot.toObjects(Game::class.java))
-            }
+            // 3. Buscar jogos em paralelo (chunks de 10, limite do whereIn)
+            val games = BatchOperationHelper.parallelWhereIn(
+                collection = firestore.collection(COLLECTION_GAMES),
+                ids = gameIds,
+                mapper = { doc -> doc.toObject(Game::class.java) }
+            )
 
             AppLogger.d(TAG) { "Encontrados ${games.size} jogos confirmados" }
             games.sortedBy { it.dateTime }
@@ -573,17 +571,12 @@ class FirebaseDataSourceImpl @Inject constructor(
                 return@suspendWithRetryResult emptyList()
             }
 
-            // whereIn aceita max 10 valores
-            val users = mutableListOf<User>()
-            userIds.chunked(10).forEach { chunk ->
-                val snapshot = firestore.collection(COLLECTION_USERS)
-                    .whereIn(com.google.firebase.firestore.FieldPath.documentId(), chunk)
-                    .get()
-                    .await()
-                users.addAll(snapshot.toObjects(User::class.java))
-            }
-
-            users
+            // Busca paralela em chunks de 10 (limite do whereIn)
+            BatchOperationHelper.parallelWhereIn(
+                collection = firestore.collection(COLLECTION_USERS),
+                ids = userIds,
+                mapper = { doc -> doc.toObject(User::class.java) }
+            )
         }
     }
 

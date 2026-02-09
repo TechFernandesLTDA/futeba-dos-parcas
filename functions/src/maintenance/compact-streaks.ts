@@ -80,8 +80,8 @@ export const maintainStreaksData = onSchedule(
     console.log("[STREAK_MAINTENANCE] Iniciando manutenção de streaks...");
 
     try {
-      // FASE 1: Coleta de métricas
-      const allStreaksSnap = await db.collection("user_streaks").get();
+      // FASE 1: Coleta de métricas (limitado a 1000 para evitar scan completo)
+      const allStreaksSnap = await db.collection("user_streaks").limit(1000).get();
       console.log(`[STREAK_MAINTENANCE] Total de streaks encontrados: ${allStreaksSnap.size}`);
 
       // Métricas
@@ -92,6 +92,23 @@ export const maintainStreaksData = onSchedule(
       let invalidDocuments = 0;
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      // FASE 1.5: Pre-fetch de todos os usuários em batch (corrige N+1)
+      const allUserIds = allStreaksSnap.docs
+        .map((doc) => doc.data().user_id)
+        .filter((id): id is string => !!id);
+
+      const uniqueUserIds = [...new Set(allUserIds)];
+      const existingUserIds = new Set<string>();
+
+      for (let i = 0; i < uniqueUserIds.length; i += 10) {
+        const chunk = uniqueUserIds.slice(i, i + 10);
+        const snap = await db.collection("users")
+          .where(admin.firestore.FieldPath.documentId(), "in", chunk)
+          .get();
+        snap.docs.forEach((d) => existingUserIds.add(d.id));
+      }
+      console.log(`[STREAK_MAINTENANCE] Usuários existentes: ${existingUserIds.size}/${uniqueUserIds.length}`);
 
       const batch = db.batch();
       let batchOps = 0;
@@ -110,9 +127,8 @@ export const maintainStreaksData = onSchedule(
           continue;
         }
 
-        // 2.2: Verificar se usuário ainda existe
-        const userDoc = await db.collection("users").doc(userId).get();
-        if (!userDoc.exists) {
+        // 2.2: Verificar se usuário ainda existe (usa Set pré-carregado, sem query individual)
+        if (!existingUserIds.has(userId)) {
           console.log(`[STREAK_MAINTENANCE] Usuário ${userId} deletado, removendo streak`);
           batch.delete(streakDoc.ref);
           batchOps++;
