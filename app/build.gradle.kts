@@ -241,7 +241,7 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
 
     // Splash Screen
-    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.core:core-splashscreen:1.2.0")
 
     // Testing - JUnit 5 (Jupiter)
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
