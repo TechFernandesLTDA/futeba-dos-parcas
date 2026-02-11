@@ -5,6 +5,82 @@ import {logger} from "firebase-functions/v2";
 // Lazy initialization - admin.initializeApp() é chamado em index.ts
 const getDb = () => admin.firestore();
 
+/**
+ * Gera atividade de jogo finalizado diretamente (chamado pelo consolidador em index.ts).
+ * Aceita dados do jogo já carregados para evitar leituras duplicadas.
+ *
+ * @param gameId - ID do jogo
+ * @param gameData - Dados do jogo (já carregados)
+ * @param db - Instância do Firestore
+ */
+export async function generateGameFinishedActivityDirect(
+  gameId: string,
+  gameData: any,
+  db: admin.firestore.Firestore
+): Promise<void> {
+  // Idempotência: verificar se atividade já foi gerada
+  if (gameData.activity_generated) {
+    logger.info(`[ACTIVITY_DIRECT] Atividade para game ${gameId} já gerada.`);
+    return;
+  }
+
+  logger.info(`[ACTIVITY_DIRECT] Gerando atividade para game ${gameId}...`);
+
+  // Buscar detalhes adicionais para a atividade
+  const liveScoreDoc = await db.collection("live_scores").doc(gameId).get();
+  let description = "Jogo finalizado! Confira os resultados e estatísticas.";
+
+  // Buscar dados do dono do jogo para a atividade
+  const userDoc = await db.collection("users").doc(gameData.owner_id).get();
+  const userData = userDoc.data();
+  const userName = userData ? userData.name : "Alguém";
+  const userPhoto = userData ? userData.photoUrl : null;
+
+  if (liveScoreDoc.exists) {
+    const score = liveScoreDoc.data();
+    if (score) {
+      // Suportar ambos os formatos: snake_case (Firestore) e camelCase (legado)
+      const t1Score = score.team1_score ?? score.team1Score ?? 0;
+      const t2Score = score.team2_score ?? score.team2Score ?? 0;
+      description = `Placar Final: Time A ${t1Score} x ${t2Score} Time B`;
+    }
+  }
+
+  // Determinar visibilidade baseada na visibilidade do jogo
+  let visibility = "PUBLIC";
+  if (gameData.visibility === "GROUP_ONLY" || gameData.visibility === "PRIVATE") {
+    visibility = "FRIENDS";
+  } else if (gameData.is_public === false) {
+    visibility = "FRIENDS";
+  }
+
+  const activity = {
+    type: "GAME_FINISHED",
+    title: gameData.name || "Futebol dos Parças",
+    description: description,
+    created_at: admin.firestore.FieldValue.serverTimestamp(),
+    reference_id: gameId,
+    reference_type: "GAME",
+    user_id: gameData.owner_id,
+    user_name: userName,
+    user_photo: userPhoto,
+    visibility: visibility,
+    metadata: {
+      location: gameData.locationName || "",
+      game_id: gameId,
+    },
+  };
+
+  const batch = db.batch();
+  const activityRef = db.collection("activities").doc();
+
+  batch.set(activityRef, activity);
+  batch.update(db.collection("games").doc(gameId), {activity_generated: true});
+
+  await batch.commit();
+  logger.info(`[ACTIVITY_DIRECT] Atividade gerada para ${gameId}.`);
+}
+
 export const generateActivityOnGameFinish = onDocumentUpdated("games/{gameId}", async (event) => {
   if (!event.data) return;
 
@@ -14,74 +90,14 @@ export const generateActivityOnGameFinish = onDocumentUpdated("games/{gameId}", 
 
   // Trigger only when status changes to FINISHED
   if (before.status !== "FINISHED" && after.status === "FINISHED") {
-    // Idempotency check: check if we already marked this game as activity generated
-    // Alternatively, check if activity exists.
-    // We will store a flag on the game document to avoid duplicates
+    // Idempotência: verificar se atividade já foi gerada
     if (after.activity_generated) {
       logger.info(`Activity for game ${gameId} already generated.`);
       return;
     }
 
-    logger.info(`Generating activity for Game ${gameId}...`);
-
     try {
-      // Fetch additional details for the activity
-      const liveScoreDoc = await getDb().collection("live_scores").doc(gameId).get();
-      let description = "Jogo finalizado! Confira os resultados e estatísticas.";
-
-      // Fetch User details for the activity author (Game Owner)
-      const userDoc = await getDb().collection("users").doc(after.owner_id).get();
-      const userData = userDoc.data();
-      const userName = userData ? userData.name : "Alguém";
-      const userPhoto = userData ? userData.photoUrl : null;
-
-      if (liveScoreDoc.exists) {
-        const score = liveScoreDoc.data();
-        if (score) {
-          // Suportar ambos os formatos: snake_case (Firestore) e camelCase (legado)
-          const t1Score = score.team1_score ?? score.team1Score ?? 0;
-          const t2Score = score.team2_score ?? score.team2Score ?? 0;
-          description = `Placar Final: Time A ${t1Score} x ${t2Score} Time B`;
-        }
-      }
-
-      // Determine visibility based on game visibility
-      // Map GAME VISIBILITY to ACTIVITY VISIBILITY
-      // PUBLIC_OPEN / PUBLIC_CLOSED -> PUBLIC
-      // PRIVATE -> FRIENDS_ONLY (or just PRIVATE/FRIENDS)
-      let visibility = "PUBLIC";
-      if (after.visibility === "GROUP_ONLY" || after.visibility === "PRIVATE") {
-        visibility = "FRIENDS";
-      } else if (after.is_public === false) {
-        visibility = "FRIENDS";
-      }
-
-      const activity = {
-        type: "GAME_FINISHED",
-        title: after.name || "Futebol dos Parças",
-        description: description,
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
-        reference_id: gameId,
-        reference_type: "GAME",
-        user_id: after.owner_id,
-        user_name: userName,
-        user_photo: userPhoto,
-        visibility: visibility,
-        metadata: {
-          location: after.locationName || "",
-          game_id: gameId,
-        },
-      };
-
-      const db = getDb();
-      const batch = db.batch();
-      const activityRef = db.collection("activities").doc();
-
-      batch.set(activityRef, activity);
-      batch.update(event.data.after.ref, {activity_generated: true});
-
-      await batch.commit();
-      logger.info(`Activity generated handling for ${gameId} complete.`);
+      await generateGameFinishedActivityDirect(gameId, after, getDb());
     } catch (error) {
       logger.error("Error generating activity for game:", error);
     }

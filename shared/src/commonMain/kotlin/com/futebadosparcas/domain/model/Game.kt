@@ -153,6 +153,55 @@ data class Game(
     fun isLive(): Boolean = getStatusEnum() == GameStatus.LIVE
     fun isFinished(): Boolean = getStatusEnum() == GameStatus.FINISHED
     fun isScheduled(): Boolean = getStatusEnum() == GameStatus.SCHEDULED
+    fun isCancelled(): Boolean = getStatusEnum() == GameStatus.CANCELLED
+    fun isConfirmed(): Boolean = getStatusEnum() == GameStatus.CONFIRMED
+
+    /**
+     * Verifica se o jogo esta aberto para confirmacoes.
+     * Retorna true se estiver agendado e nao lotado.
+     */
+    fun isOpenForConfirmations(): Boolean =
+        isScheduled() && playersCount < maxPlayers
+
+    /**
+     * Retorna o total de gols marcados na partida.
+     */
+    fun totalGoals(): Int = team1Score + team2Score
+
+    /**
+     * Retorna o placar formatado para exibicao. Ex: "3 x 1"
+     */
+    fun formattedScore(): String = "$team1Score x $team2Score"
+
+    override fun toString(): String =
+        "Game(id='$id', status=$status, $team1Name $team1Score x $team2Score $team2Name, " +
+            "players=$playersCount/$maxPlayers, group=$groupName)"
+
+    companion object {
+        /** Colecao Firestore */
+        const val COLLECTION = "games"
+
+        // Limites de jogadores
+        const val MIN_PLAYERS = 4
+        const val MAX_PLAYERS = 40
+        const val DEFAULT_MAX_PLAYERS = 14
+
+        // Limites de goleiros
+        const val MIN_GOALKEEPERS = 0
+        const val MAX_GOALKEEPERS = 6
+        const val DEFAULT_MAX_GOALKEEPERS = 3
+
+        // Limites de times
+        const val MIN_TEAMS = 1
+        const val MAX_TEAMS = 8
+        const val DEFAULT_TEAMS = 2
+
+        // Limites de placar (protecao contra dados invalidos)
+        const val MAX_SCORE_PER_TEAM = 99
+
+        // Limites de preco
+        const val MAX_DAILY_PRICE = 500.0
+    }
 }
 
 /**

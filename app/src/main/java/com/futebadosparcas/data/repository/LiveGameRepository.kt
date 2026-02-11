@@ -397,8 +397,10 @@ class LiveGameRepository @Inject constructor(
      */
     suspend fun getFinalStats(gameId: String): Result<List<LivePlayerStats>> {
         return try {
+            // Limite de 100 jogadores por jogo para evitar leituras excessivas
             val snapshot = liveStatsCollection
                 .whereEqualTo("game_id", gameId)
+                .limit(100)
                 .get()
                 .await()
 

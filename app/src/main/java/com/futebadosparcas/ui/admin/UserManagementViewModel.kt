@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -20,12 +21,18 @@ class UserManagementViewModel @Inject constructor(
 
     private var allUsers: List<User> = emptyList()
 
+    // Rastrear jobs para cancelamento adequado
+    private var loadJob: Job? = null
+    private var updateRoleJob: Job? = null
+
     init {
         loadUsers()
     }
 
     fun loadUsers() {
-        viewModelScope.launch {
+        // Cancelar carregamento anterior para evitar race conditions
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.value = UserManagementUiState.Loading
             userRepository.getAllUsers().fold(
                 onSuccess = { users ->
@@ -45,12 +52,17 @@ class UserManagementViewModel @Inject constructor(
 
     fun searchUsers(query: String) {
         if (query.isBlank()) {
-            _uiState.value = UserManagementUiState.Success(allUsers)
+            _uiState.value = if (allUsers.isEmpty()) {
+                UserManagementUiState.Empty
+            } else {
+                UserManagementUiState.Success(allUsers)
+            }
             return
         }
+        val lowerQuery = query.lowercase().trim()
         val filtered = allUsers.filter {
-            it.name.contains(query, ignoreCase = true) ||
-            it.email.contains(query, ignoreCase = true)
+            it.name.lowercase().contains(lowerQuery) ||
+            it.email.lowercase().contains(lowerQuery)
         }
         _uiState.value = if (filtered.isEmpty()) {
             UserManagementUiState.Empty
@@ -60,16 +72,31 @@ class UserManagementViewModel @Inject constructor(
     }
 
     fun updateUserRole(user: User, newRole: String) {
-        viewModelScope.launch {
+        // Validar role antes de enviar para o backend
+        val validRoles = setOf("ADMIN", "PLAYER", "MODERATOR")
+        if (newRole !in validRoles) {
+            _uiState.value = UserManagementUiState.Error("Role inválida: $newRole")
+            return
+        }
+
+        // Cancelar atualização anterior para evitar race conditions
+        updateRoleJob?.cancel()
+        updateRoleJob = viewModelScope.launch {
             userRepository.updateUserRole(user.id, newRole).fold(
                 onSuccess = {
-                    loadUsers() // Reload to reflect changes
+                    loadUsers() // Recarregar para refletir mudanças
                 },
                 onFailure = { error ->
                     _uiState.value = UserManagementUiState.Error(error.message ?: "Erro ao atualizar permissão")
                 }
             )
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        loadJob?.cancel()
+        updateRoleJob?.cancel()
     }
 }
 

@@ -13,7 +13,6 @@ import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -22,7 +21,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -216,10 +214,15 @@ class LeagueViewModel @Inject constructor(
         }
     }
 
-    private suspend fun fetchMissingUsers(userIds: List<String>) = withContext(Dispatchers.IO) {
+    /**
+     * Busca usuários faltantes no cache via Firestore.
+     * Nota: Dispatchers.IO removido - repositórios e Firestore SDK já fazem
+     * o dispatch para threads de IO internamente.
+     */
+    private suspend fun fetchMissingUsers(userIds: List<String>) {
         if (userIds.isEmpty()) {
             AppLogger.d(TAG) { "fetchMissingUsers: lista vazia" }
-            return@withContext
+            return
         }
 
         AppLogger.d(TAG) { "fetchMissingUsers: buscando ${userIds.size} usuários" }
@@ -228,7 +231,7 @@ class LeagueViewModel @Inject constructor(
         val missing = userIds.filter { !_userCache.containsKey(it) }
         if (missing.isEmpty()) {
             AppLogger.d(TAG) { "Todos os usuários já estão no cache" }
-            return@withContext
+            return
         }
 
         AppLogger.d(TAG) { "Faltando ${missing.size} usuários no cache" }
@@ -237,51 +240,53 @@ class LeagueViewModel @Inject constructor(
         val chunks = missing.chunked(10)
 
         // PERF FIX: Paralelizar queries em chunks (200-300ms → 50-100ms)
-        val deferredChunks = chunks.map { chunk ->
-            async {
-                try {
-                    AppLogger.d(TAG) { "Buscando chunk de ${chunk.size} usuários" }
+        kotlinx.coroutines.coroutineScope {
+            val deferredChunks = chunks.map { chunk ->
+                async {
+                    try {
+                        AppLogger.d(TAG) { "Buscando chunk de ${chunk.size} usuários" }
 
-                    val snapshot = firestore.collection("users")
-                        .whereIn(com.google.firebase.firestore.FieldPath.documentId(), chunk)
-                        .get()
-                        .await()
+                        val snapshot = firestore.collection("users")
+                            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), chunk)
+                            .get()
+                            .await()
 
-                    AppLogger.d(TAG) { "Recebido ${snapshot.documents.size} documentos" }
+                        AppLogger.d(TAG) { "Recebido ${snapshot.documents.size} documentos" }
 
-                    snapshot.documents.forEach { doc ->
-                        val user = doc.toObject(User::class.java)
-                        if (user != null) {
-                            _userCache[doc.id] = user
-                            AppLogger.d(TAG) { "User adicionado ao cache: ${doc.id}" }
-                        } else {
-                            AppLogger.w(TAG) { "Falha ao desserializar user: ${doc.id}" }
-                        }
-                    }
-                } catch (e: Exception) {
-                    AppLogger.e(TAG, "Erro ao buscar users batch", e)
-
-                    // Fallback: tentar buscar individualmente
-                    chunk.forEach { userId ->
-                        try {
-                            val doc = firestore.collection("users").document(userId).get().await()
-                            if (doc.exists()) {
-                                val user = doc.toObject(User::class.java)
-                                if (user != null) {
-                                    _userCache[userId] = user
-                                    AppLogger.d(TAG) { "User buscado individualmente: $userId" }
-                                }
+                        snapshot.documents.forEach { doc ->
+                            val user = doc.toObject(User::class.java)
+                            if (user != null) {
+                                _userCache[doc.id] = user
+                                AppLogger.d(TAG) { "User adicionado ao cache: ${doc.id}" }
+                            } else {
+                                AppLogger.w(TAG) { "Falha ao desserializar user: ${doc.id}" }
                             }
-                        } catch (e2: Exception) {
-                            AppLogger.e(TAG, "Erro ao buscar user $userId", e2)
+                        }
+                    } catch (e: Exception) {
+                        AppLogger.e(TAG, "Erro ao buscar users batch", e)
+
+                        // Fallback: tentar buscar individualmente
+                        chunk.forEach { userId ->
+                            try {
+                                val doc = firestore.collection("users").document(userId).get().await()
+                                if (doc.exists()) {
+                                    val user = doc.toObject(User::class.java)
+                                    if (user != null) {
+                                        _userCache[userId] = user
+                                        AppLogger.d(TAG) { "User buscado individualmente: $userId" }
+                                    }
+                                }
+                            } catch (e2: Exception) {
+                                AppLogger.e(TAG, "Erro ao buscar user $userId", e2)
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Aguardar todos os chunks em paralelo
-        deferredChunks.awaitAll()
+            // Aguardar todos os chunks em paralelo
+            deferredChunks.awaitAll()
+        }
 
         // Evitar crescimento ilimitado do cache (ConcurrentHashMap não tem removeEldestEntry)
         if (_userCache.size > MAX_CACHE_SIZE) {

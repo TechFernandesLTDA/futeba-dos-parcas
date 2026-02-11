@@ -141,6 +141,7 @@ class CachedGamesPagingSource(
             try {
                 doc.toObject(Game::class.java)?.copy(id = doc.id)
             } catch (e: Exception) {
+                AppLogger.w(TAG) { "Erro ao converter documento do cache: ${doc.id}" }
                 null
             }
         }

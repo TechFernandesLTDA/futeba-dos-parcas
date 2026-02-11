@@ -3727,6 +3727,8 @@ subir no ranking!</string>
     <string name="cd_export_csv">Exportar CSV</string>
     <string name="cd_export_json">Exportar JSON</string>
     <string name="cd_confirm_vote">Confirmar voto</string>
+    <string name="cd_drag_to_move">Arraste para mover %1$s</string>
+    <string name="selected">Selecionado</string>
     <string name="cd_undo">Desfazer</string>
     <string name="cd_map_view">Ver no mapa</string>
     <string name="cd_recent_location">Local recente</string>

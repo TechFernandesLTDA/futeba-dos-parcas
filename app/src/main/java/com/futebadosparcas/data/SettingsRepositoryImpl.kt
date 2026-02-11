@@ -2,6 +2,7 @@ package com.futebadosparcas.data
 
 import com.futebadosparcas.domain.model.GamificationSettings
 import com.futebadosparcas.domain.repository.SettingsRepository
+import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
@@ -18,6 +19,10 @@ class SettingsRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : SettingsRepository {
 
+    companion object {
+        private const val TAG = "SettingsRepository"
+    }
+
     private val settingsCollection = firestore.collection("app_settings")
     private val gamificationDoc = settingsCollection.document("gamification")
 
@@ -28,7 +33,8 @@ class SettingsRepositoryImpl @Inject constructor(
             val settings = snapshot.toObject(GamificationSettings::class.java) ?: GamificationSettings()
             Result.success(settings)
         } catch (e: Exception) {
-            // Retorna configuracoes default se falhar
+            // Retorna configurações default se falhar (graceful degradation)
+            AppLogger.w(TAG) { "Erro ao carregar configurações de gamificação, usando defaults: ${e.message}" }
             Result.success(GamificationSettings())
         }
     }
@@ -39,6 +45,7 @@ class SettingsRepositoryImpl @Inject constructor(
             gamificationDoc.set(settings).await()
             Result.success(Unit)
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Erro ao atualizar configurações de gamificação", e)
             Result.failure(e)
         }
     }

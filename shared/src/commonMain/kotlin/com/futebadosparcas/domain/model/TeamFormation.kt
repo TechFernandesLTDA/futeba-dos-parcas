@@ -71,7 +71,28 @@ data class DraftSettings(
     @SerialName("captain1_id") val captain1Id: String? = null,
     @SerialName("captain2_id") val captain2Id: String? = null,
     @SerialName("pick_timer_seconds") val pickTimerSeconds: Int = 30
-)
+) {
+    init {
+        require(numberOfTeams in MIN_TEAMS..MAX_TEAMS) {
+            "numberOfTeams deve estar entre $MIN_TEAMS e $MAX_TEAMS: $numberOfTeams"
+        }
+        require(goalkeepersPerTeam >= 0) {
+            "goalkeepersPerTeam nao pode ser negativo: $goalkeepersPerTeam"
+        }
+        require(pickTimerSeconds in MIN_PICK_TIMER..MAX_PICK_TIMER) {
+            "pickTimerSeconds deve estar entre $MIN_PICK_TIMER e $MAX_PICK_TIMER: $pickTimerSeconds"
+        }
+    }
+
+    companion object {
+        const val MIN_TEAMS = 2
+        const val MAX_TEAMS = 8
+        const val DEFAULT_TEAMS = 2
+        const val MIN_PICK_TIMER = 10
+        const val MAX_PICK_TIMER = 120
+        const val DEFAULT_PICK_TIMER = 30
+    }
+}
 
 /**
  * Forca/Overall de um time calculado.
@@ -104,6 +125,12 @@ data class TeamStrength(
     fun isBalancedWith(other: TeamStrength): Boolean {
         return getDifferencePercent(other) < 5f
     }
+
+    override fun toString(): String =
+        "TeamStrength($teamName: OVR=${"%.1f".format(overallRating)}, " +
+            "ATK=${"%.1f".format(attackRating)}, DEF=${"%.1f".format(defenseRating)}, " +
+            "MID=${"%.1f".format(midfieldRating)}, GK=${"%.1f".format(goalkeeperRating)}, " +
+            "players=$playerCount, hasGK=$hasGoalkeeper)"
 }
 
 /**

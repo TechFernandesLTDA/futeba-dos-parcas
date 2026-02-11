@@ -43,6 +43,13 @@ const MAX_QUEUE_BATCH_SIZE = 200;
 /** Nome da coleção da fila de notificações */
 const QUEUE_COLLECTION = "notification_queue";
 
+/** Número máximo de retentativas antes de marcar como FAILED permanente */
+const MAX_RETRY_COUNT = 3;
+
+/** Delay entre chunks de multicast para evitar throttling do FCM (ms) - reservado para uso futuro */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const CHUNK_SEND_DELAY_MS = 100;
+
 // ==========================================
 // INTERFACES
 // ==========================================
@@ -556,7 +563,7 @@ export const enqueueNotificationCallable = onCall(
     region: "southamerica-east1",
     memory: "256MiB",
     // SECURITY: App Check para prevenir chamadas de apps nao-verificados
-    enforceAppCheck: process.env.FIREBASE_CONFIG ? true : false,
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
   },
   async (request) => {
@@ -697,11 +704,20 @@ export const cleanupNotificationQueue = onSchedule(
       if (!staleSnap.empty) {
         const staleBatch = db.batch();
         staleSnap.docs.forEach((doc) => {
-          // Resetar para PENDING para reprocessamento
-          staleBatch.update(doc.ref, {
-            status: "PENDING",
-            retry_count: admin.firestore.FieldValue.increment(1),
-          });
+          // Verificar se excedeu máximo de retries antes de resetar
+          const retryCount = doc.data().retry_count || 0;
+          if (retryCount >= MAX_RETRY_COUNT) {
+            // Marcar como FAILED permanente após muitas tentativas
+            staleBatch.update(doc.ref, {
+              status: "FAILED",
+              failure_reason: `Excedeu ${MAX_RETRY_COUNT} tentativas de reprocessamento`,
+            });
+          } else {
+            staleBatch.update(doc.ref, {
+              status: "PENDING",
+              retry_count: admin.firestore.FieldValue.increment(1),
+            });
+          }
         });
 
         await staleBatch.commit();

@@ -20,6 +20,7 @@
 
 import * as admin from "firebase-admin";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {checkRateLimit} from "../middleware/rate-limiter";
 
 const getDb = () => admin.firestore();
 
@@ -30,11 +31,24 @@ const getDb = () => admin.firestore();
 /** TTL do cache em milissegundos (5 minutos) */
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
+/** TTL curto para cache durante horário de pico (2 minutos) - reservado para uso futuro */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const CACHE_TTL_PEAK_MS = 2 * 60 * 1000;
+
 /** Coleção para armazenar cache de rankings */
 const CACHE_COLLECTION = "cache_leaderboard";
 
 /** Número máximo de jogadores no leaderboard */
 const DEFAULT_LEADERBOARD_LIMIT = 100;
+
+/** Limite absoluto para evitar queries muito caras */
+const ABSOLUTE_MAX_LIMIT = 500;
+
+/** Horários de pico (20h-23h BRT) onde cache é mais curto - reservado para uso futuro */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const PEAK_HOURS_START = 20;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const PEAK_HOURS_END = 23;
 
 // ==========================================
 // INTERFACES
@@ -108,13 +122,22 @@ export const getLeaderboardCached = onCall<GetLeaderboardRequest>(
       throw new HttpsError("unauthenticated", "Usuário não autenticado");
     }
 
+    // Rate limiting - Máximo 30 chamadas por minuto por usuário
+    const leaderboardRateLimitResult = await checkRateLimit(
+      request.auth.uid,
+      {maxRequests: 30, windowMs: 60000, keyPrefix: "leaderboard"}
+    );
+    if (!leaderboardRateLimitResult.allowed) {
+      throw new HttpsError("resource-exhausted", "Rate limit excedido. Tente novamente em breve.");
+    }
+
     const {seasonId, limit, forceRefresh} = request.data;
 
     if (!seasonId || typeof seasonId !== "string") {
       throw new HttpsError("invalid-argument", "seasonId é obrigatório");
     }
 
-    const resultLimit = Math.min(limit || DEFAULT_LEADERBOARD_LIMIT, 200);
+    const resultLimit = Math.min(limit || DEFAULT_LEADERBOARD_LIMIT, ABSOLUTE_MAX_LIMIT);
     const db = getDb();
 
     // ==========================================
@@ -203,20 +226,21 @@ export const getLeaderboardCached = onCall<GetLeaderboardRequest>(
 
     const cacheDocId = `${seasonId}_${resultLimit}`;
 
-    // Salvar cache de forma assíncrona (não bloqueia resposta)
-    db.collection(CACHE_COLLECTION)
-      .doc(cacheDocId)
-      .set({
-        season_id: seasonId,
-        rankings,
-        cached_at: now,
-        expires_at: expiresAt,
-        count: rankings.length,
-        limit: resultLimit,
-      })
-      .catch((error) => {
-        console.error("[LEADERBOARD_CACHE] Erro ao salvar cache:", error);
-      });
+    // Salvar cache de forma síncrona (garante persistência antes de retornar)
+    try {
+      await db.collection(CACHE_COLLECTION)
+        .doc(cacheDocId)
+        .set({
+          season_id: seasonId,
+          rankings,
+          cached_at: now,
+          expires_at: expiresAt,
+          count: rankings.length,
+          limit: resultLimit,
+        });
+    } catch (error) {
+      console.error("[LEADERBOARD_CACHE] Erro ao salvar cache:", error);
+    }
 
     const queryDuration = Date.now() - startTime;
     console.log(

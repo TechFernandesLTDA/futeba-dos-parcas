@@ -5,11 +5,32 @@
  * - Idempotência via transaction_id
  * - Retry seguro sem duplicação
  * - Atomicidade via Firestore transactions
+ * - Validação rigorosa de dados antes do processamento
  */
 
 import * as admin from "firebase-admin";
+import {logger} from "firebase-functions/v2";
 
 const db = admin.firestore();
+
+// ==========================================
+// CONSTANTES DE VALIDAÇÃO
+// ==========================================
+
+/** XP máximo que um jogador pode ganhar em um único jogo */
+const MAX_XP_PER_GAME = 500;
+
+/** XP mínimo possível (penalidades podem ser negativas, mas com limite) */
+const MIN_XP_PER_GAME = -100;
+
+/** Nível máximo permitido no sistema */
+const MAX_LEVEL = 999;
+
+/** Máximo de gols/assistências/defesas plausíveis por jogo */
+const MAX_STATS_PER_GAME = 50;
+
+/** Máximo de milestones desbloqueadas por jogo */
+const MAX_MILESTONES_PER_GAME = 10;
 
 // ==========================================
 // INTERFACES
@@ -59,6 +80,156 @@ export interface XpMetadata {
 }
 
 // ==========================================
+// VALIDAÇÃO DE DADOS XP
+// ==========================================
+
+/**
+ * Valida se um número é finito e não é NaN.
+ * Retorna 0 se o valor for inválido, para sanitização segura.
+ */
+function sanitizeNumber(value: any, fieldName: string): number {
+  if (value === undefined || value === null) {
+    logger.warn(`[XP_VALIDATION] Campo ${fieldName} é null/undefined, usando 0`);
+    return 0;
+  }
+  const num = Number(value);
+  if (!Number.isFinite(num)) {
+    logger.warn(`[XP_VALIDATION] Campo ${fieldName} é inválido (${value}), usando 0`);
+    return 0;
+  }
+  return num;
+}
+
+/**
+ * Valida se um valor de estatística (gols, assists, saves) é plausível.
+ * Rejeita valores negativos ou excessivamente altos.
+ */
+function validateStatValue(value: number, fieldName: string, max: number = MAX_STATS_PER_GAME): number {
+  const sanitized = sanitizeNumber(value, fieldName);
+  if (sanitized < 0) {
+    logger.warn(`[XP_VALIDATION] ${fieldName} negativo (${sanitized}), corrigindo para 0`);
+    return 0;
+  }
+  if (sanitized > max) {
+    logger.warn(`[XP_VALIDATION] ${fieldName} excede máximo plausível (${sanitized} > ${max}), limitando`);
+    return max;
+  }
+  return Math.floor(sanitized);
+}
+
+/**
+ * Valida e sanitiza todos os dados de uma transação XP antes do processamento.
+ *
+ * VALIDAÇÕES:
+ * - IDs não vazios e do tipo string
+ * - xpEarned dentro de limites razoáveis e não NaN
+ * - xpBefore/xpAfter não negativos e não NaN
+ * - Levels não negativos e dentro do limite máximo
+ * - Breakdown sem valores NaN ou negativos onde não permitido
+ * - Metadata com estatísticas plausíveis
+ *
+ * @throws Error se dados críticos forem inválidos (IDs ausentes)
+ * @returns Dados sanitizados com valores corrigidos
+ */
+export function validateAndSanitizeXpData(data: XpTransactionData): XpTransactionData {
+  // Validação de IDs (crítico - não tem como recuperar)
+  if (!data.gameId || typeof data.gameId !== "string" || data.gameId.trim().length === 0) {
+    throw new Error("gameId é obrigatório e deve ser uma string não vazia");
+  }
+  if (!data.userId || typeof data.userId !== "string" || data.userId.trim().length === 0) {
+    throw new Error("userId é obrigatório e deve ser uma string não vazia");
+  }
+
+  // Sanitizar e validar campos numéricos de XP
+  const xpEarned = sanitizeNumber(data.xpEarned, "xpEarned");
+  if (xpEarned > MAX_XP_PER_GAME) {
+    logger.warn(
+      `[XP_VALIDATION] xpEarned excessivo (${xpEarned}) para user ${data.userId} no jogo ${data.gameId}. Limitando a ${MAX_XP_PER_GAME}`
+    );
+  }
+  if (xpEarned < MIN_XP_PER_GAME) {
+    logger.warn(
+      `[XP_VALIDATION] xpEarned muito negativo (${xpEarned}) para user ${data.userId}. Limitando a ${MIN_XP_PER_GAME}`
+    );
+  }
+  const clampedXpEarned = Math.max(MIN_XP_PER_GAME, Math.min(MAX_XP_PER_GAME, xpEarned));
+
+  const xpBefore = Math.max(0, sanitizeNumber(data.xpBefore, "xpBefore"));
+  const xpAfter = Math.max(0, sanitizeNumber(data.xpAfter, "xpAfter"));
+
+  // Validar consistência: xpAfter deve ser xpBefore + xpEarned (com tolerância de 1 para arredondamento)
+  const expectedXpAfter = xpBefore + clampedXpEarned;
+  if (Math.abs(xpAfter - expectedXpAfter) > 1) {
+    logger.warn(
+      `[XP_VALIDATION] Inconsistência de XP: before=${xpBefore} + earned=${clampedXpEarned} != after=${xpAfter}. ` +
+      `Recalculando xpAfter para ${Math.max(0, expectedXpAfter)}`
+    );
+  }
+  const correctedXpAfter = Math.max(0, expectedXpAfter);
+
+  // Validar levels
+  const levelBefore = Math.max(0, Math.min(MAX_LEVEL, Math.floor(sanitizeNumber(data.levelBefore, "levelBefore"))));
+  const levelAfter = Math.max(0, Math.min(MAX_LEVEL, Math.floor(sanitizeNumber(data.levelAfter, "levelAfter"))));
+
+  // Sanitizar breakdown (XP por categoria)
+  const breakdown: XpBreakdown = {
+    participation: sanitizeNumber(data.breakdown?.participation, "breakdown.participation"),
+    goals: sanitizeNumber(data.breakdown?.goals, "breakdown.goals"),
+    assists: sanitizeNumber(data.breakdown?.assists, "breakdown.assists"),
+    saves: sanitizeNumber(data.breakdown?.saves, "breakdown.saves"),
+    result: sanitizeNumber(data.breakdown?.result, "breakdown.result"),
+    mvp: sanitizeNumber(data.breakdown?.mvp, "breakdown.mvp"),
+    cleanSheet: sanitizeNumber(data.breakdown?.cleanSheet, "breakdown.cleanSheet"),
+    milestones: sanitizeNumber(data.breakdown?.milestones, "breakdown.milestones"),
+    streak: sanitizeNumber(data.breakdown?.streak, "breakdown.streak"),
+    penalty: sanitizeNumber(data.breakdown?.penalty, "breakdown.penalty"),
+  };
+
+  // Validar que a soma do breakdown é coerente com xpEarned (tolerância de 5 para arredondamentos)
+  const breakdownSum = Object.values(breakdown).reduce((sum, val) => sum + val, 0);
+  if (Math.abs(breakdownSum - clampedXpEarned) > 5) {
+    logger.warn(
+      `[XP_VALIDATION] Soma do breakdown (${breakdownSum}) difere do xpEarned (${clampedXpEarned}). Verificar cálculos.`
+    );
+  }
+
+  // Sanitizar metadata
+  const metadata: XpMetadata = {
+    goals: validateStatValue(data.metadata?.goals, "metadata.goals"),
+    assists: validateStatValue(data.metadata?.assists, "metadata.assists"),
+    saves: validateStatValue(data.metadata?.saves, "metadata.saves"),
+    wasMvp: Boolean(data.metadata?.wasMvp),
+    wasCleanSheet: Boolean(data.metadata?.wasCleanSheet),
+    wasWorstPlayer: Boolean(data.metadata?.wasWorstPlayer),
+    gameResult: ["WIN", "DRAW", "LOSS"].includes(data.metadata?.gameResult)
+      ? data.metadata.gameResult
+      : "DRAW",
+    milestonesUnlocked: Array.isArray(data.metadata?.milestonesUnlocked)
+      ? data.metadata.milestonesUnlocked
+        .filter((m: any) => typeof m === "string" && m.length > 0)
+        .slice(0, MAX_MILESTONES_PER_GAME)
+      : [],
+  };
+
+  logger.info(
+    `[XP_VALIDATION] Dados validados para user ${data.userId} no jogo ${data.gameId}: ` +
+    `XP=${clampedXpEarned}, level=${levelBefore}->${levelAfter}`
+  );
+
+  return {
+    gameId: data.gameId.trim(),
+    userId: data.userId.trim(),
+    xpEarned: clampedXpEarned,
+    xpBefore,
+    xpAfter: correctedXpAfter,
+    levelBefore,
+    levelAfter,
+    breakdown,
+    metadata,
+  };
+}
+
+// ==========================================
 // GERAÇÃO DE TRANSACTION ID
 // ==========================================
 
@@ -92,7 +263,7 @@ export async function isTransactionAlreadyProcessed(
 
     return !existingLog.empty;
   } catch (error) {
-    console.error(`[XP_IDEMPOTENCY] Erro ao verificar transação ${transactionId}:`, error);
+    logger.error(`[XP_IDEMPOTENCY] Erro ao verificar transação ${transactionId}:`, error);
     // Em caso de erro, assumir que NÃO foi processado (fail-safe)
     return false;
   }
@@ -114,13 +285,32 @@ export async function isTransactionAlreadyProcessed(
 export async function processXpIdempotent(
   data: XpTransactionData
 ): Promise<XpProcessingResult> {
+  // FASE 0: Validação e sanitização de dados (previne NaN, negativos, inconsistências)
+  let validatedData: XpTransactionData;
+  try {
+    validatedData = validateAndSanitizeXpData(data);
+  } catch (validationError: any) {
+    logger.error(
+      `[XP_IDEMPOTENCY] Dados inválidos recusados: ${validationError.message}`,
+      {gameId: data.gameId, userId: data.userId}
+    );
+    return {
+      success: false,
+      transactionId: `invalid_${data.gameId || "unknown"}_${data.userId || "unknown"}`,
+      alreadyProcessed: false,
+      error: `Validação falhou: ${validationError.message}`,
+    };
+  }
+
+  // Usar dados validados daqui em diante
+  data = validatedData;
   const transactionId = generateTransactionId(data.gameId, data.userId);
 
   // FASE 1: Verificação de idempotência (ANTES de qualquer escrita)
   const alreadyProcessed = await isTransactionAlreadyProcessed(transactionId);
 
   if (alreadyProcessed) {
-    console.log(
+    logger.info(
       `[XP_IDEMPOTENCY] Transação ${transactionId} já processada. Pulando.`
     );
     return {
@@ -140,7 +330,7 @@ export async function processXpIdempotent(
       );
 
       if (!existingCheck.empty) {
-        console.log(
+        logger.info(
           `[XP_IDEMPOTENCY] Transação ${transactionId} já processada (race condition detectada). Abortando.`
         );
         // Transaction será abortada, mas retornaremos sucesso
@@ -209,7 +399,7 @@ export async function processXpIdempotent(
         processed_at: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      console.log(
+      logger.info(
         `[XP_IDEMPOTENCY] Transação ${transactionId} processada com sucesso: +${data.xpEarned} XP`
       );
     });
@@ -220,7 +410,7 @@ export async function processXpIdempotent(
       alreadyProcessed: false,
     };
   } catch (error: any) {
-    console.error(
+    logger.error(
       `[XP_IDEMPOTENCY] Erro ao processar transação ${transactionId}:`,
       error
     );
@@ -248,13 +438,44 @@ export async function processXpIdempotent(
  * @return Lista de resultados
  */
 export async function processXpBatch(
-  transactions: XpTransactionData[]
+  inputTransactions: XpTransactionData[]
 ): Promise<XpProcessingResult[]> {
+  let transactions = [...inputTransactions];
   if (transactions.length === 0) {
     return [];
   }
 
-  console.log(`[XP_BATCH] Processando ${transactions.length} transações...`);
+  logger.info(`[XP_BATCH] Processando ${transactions.length} transações...`);
+
+  // FASE 0: Validar e sanitizar todas as transações antes de processar
+  const validatedTransactions: XpTransactionData[] = [];
+  const validationFailures: XpProcessingResult[] = [];
+
+  for (const txn of transactions) {
+    try {
+      validatedTransactions.push(validateAndSanitizeXpData(txn));
+    } catch (validationError: any) {
+      logger.error(
+        `[XP_BATCH] Transação rejeitada na validação: ${validationError.message}`,
+        {gameId: txn.gameId, userId: txn.userId}
+      );
+      validationFailures.push({
+        success: false,
+        transactionId: `invalid_${txn.gameId || "unknown"}_${txn.userId || "unknown"}`,
+        alreadyProcessed: false,
+        error: `Validação falhou: ${validationError.message}`,
+      });
+    }
+  }
+
+  if (validationFailures.length > 0) {
+    logger.warn(
+      `[XP_BATCH] ${validationFailures.length}/${transactions.length} transações rejeitadas na validação`
+    );
+  }
+
+  // Substituir transactions pelas validadas
+  transactions = validatedTransactions;
 
   // FASE 1: Filtrar transações já processadas (verificação em lote)
   // Firestore whereIn suporta no máximo 10 itens, então dividimos em chunks
@@ -404,11 +625,12 @@ export async function processXpBatch(
     }
   }
 
-  console.log(
-    `[XP_BATCH] Processamento completo: ${results.filter((r) => r.success).length}/${transactions.length} sucesso`
+  logger.info(
+    `[XP_BATCH] Processamento completo: ${results.filter((r) => r.success).length}/${inputTransactions.length} sucesso` +
+    (validationFailures.length > 0 ? `, ${validationFailures.length} rejeitados na validação` : "")
   );
 
-  return results;
+  return [...validationFailures, ...results];
 }
 
 // ==========================================

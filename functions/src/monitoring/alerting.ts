@@ -70,6 +70,12 @@ const THRESHOLDS = {
   INVALID_FCM_TOKENS_PER_DAY: 100,
   /** Número máximo de jogos pendentes de XP processing (> 1h) */
   STALE_XP_PROCESSING_MAX: 3,
+  /** Latência máxima de health check em ms antes de alertar */
+  HEALTH_CHECK_MAX_DURATION_MS: 10_000,
+  /** Número máximo de alertas não-acknowledged antes de escalar */
+  UNACKNOWLEDGED_ALERTS_MAX: 20,
+  /** Tempo máximo (em horas) que um alerta pode ficar sem acknowledge */
+  ALERT_ACKNOWLEDGE_DEADLINE_HOURS: 48,
 };
 
 // ==========================================
@@ -345,6 +351,47 @@ export const systemHealthCheck = functions.scheduler.onSchedule({
         alerts.map((a) => a.type).join(", ")
       }`
     );
+  }
+
+  // CHECK 6: Latência do próprio health check (meta-monitoramento)
+  if (durationMs > THRESHOLDS.HEALTH_CHECK_MAX_DURATION_MS) {
+    alerts.push({
+      type: "SLOW_HEALTH_CHECK",
+      severity: "WARNING",
+      title: "Health check lento detectado",
+      message: `Health check levou ${durationMs}ms (limite: ${THRESHOLDS.HEALTH_CHECK_MAX_DURATION_MS}ms). Possível degradação no Firestore.`,
+      metadata: {durationMs, thresholdMs: THRESHOLDS.HEALTH_CHECK_MAX_DURATION_MS},
+    });
+  }
+
+  // CHECK 7: Alertas não-acknowledged acumulados
+  try {
+    const unackedSnap = await db.collection("alerts")
+      .where("acknowledged", "==", false)
+      .count()
+      .get();
+
+    const unackedCount = unackedSnap.data().count;
+    checks["unacknowledged_alerts"] = {
+      status: unackedCount < THRESHOLDS.UNACKNOWLEDGED_ALERTS_MAX ? "OK" : "WARNING",
+      message: `${unackedCount} alertas não reconhecidos`,
+      value: unackedCount,
+    };
+
+    if (unackedCount >= THRESHOLDS.UNACKNOWLEDGED_ALERTS_MAX) {
+      alerts.push({
+        type: "ALERT_OVERFLOW",
+        severity: "CRITICAL",
+        title: "Alertas acumulando sem acknowledge",
+        message: `${unackedCount} alertas pendentes. Possível falta de monitoramento ativo.`,
+        metadata: {count: unackedCount},
+      });
+    }
+  } catch (error) {
+    checks["unacknowledged_alerts"] = {
+      status: "ERROR",
+      message: `Erro ao verificar: ${error}`,
+    };
   }
 
   console.log(

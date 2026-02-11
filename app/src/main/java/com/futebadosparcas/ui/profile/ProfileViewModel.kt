@@ -51,6 +51,12 @@ class ProfileViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "ProfileViewModel"
+
+        /** Diferença mínima de rating para acionar atualização automática */
+        private const val AUTO_RATING_DELTA_THRESHOLD = 0.3
+
+        /** Mínimo de amostras adicionais antes de reavaliação */
+        private const val AUTO_RATING_MIN_SAMPLE_INCREMENT = 3
     }
 
     private val _uiEvents = kotlinx.coroutines.channels.Channel<ProfileUiEvent>()
@@ -173,7 +179,7 @@ class ProfileViewModel @Inject constructor(
                             maybeUpdateAutoRatings(currentState.user, updatedStats)
                         }
                     } catch (e: Exception) {
-                        android.util.Log.w("ProfileViewModel", "Erro ao parsear estatisticas: ${e.message}")
+                        AppLogger.w(TAG) { "Erro ao parsear estatísticas: ${e.message}" }
                     }
                 }
             }
@@ -371,7 +377,7 @@ class ProfileViewModel @Inject constructor(
 
     private fun shouldUpdateAutoRatings(user: User, auto: AutoRatings): Boolean {
         if (auto.sampleSize <= 0) return false
-        if (auto.sampleSize >= user.autoRatingSamples + 3) return true
+        if (auto.sampleSize >= user.autoRatingSamples + AUTO_RATING_MIN_SAMPLE_INCREMENT) return true
 
         val delta = maxOf(
             abs(user.autoStrikerRating - auto.striker),
@@ -379,7 +385,7 @@ class ProfileViewModel @Inject constructor(
             abs(user.autoDefenderRating - auto.defender),
             abs(user.autoGkRating - auto.gk)
         )
-        return delta >= 0.3
+        return delta >= AUTO_RATING_DELTA_THRESHOLD
     }
 
     private fun updateUserStateWithAutoRatings(auto: AutoRatings) {
