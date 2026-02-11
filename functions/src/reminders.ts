@@ -1,40 +1,53 @@
 /**
  * SISTEMA DE LEMBRETES DE JOGOS
- * Futeba dos Parças
+ * Futeba dos Parcas
  *
- * Notifica jogadores que ainda não confirmaram presença:
+ * Notifica jogadores que ainda nao confirmaram
+ * presenca:
  * - 24 horas antes do jogo
  * - 2 horas antes do jogo
  *
  * Recursos:
- * - Anti-spam: não envia o mesmo lembrete duas vezes
+ * - Anti-spam: nao envia o mesmo lembrete 2x
  * - Ignora jogos cancelados ou finalizados
  * - Timezone: America/Sao_Paulo
  */
 
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
-import {sendNotificationToUser, NotificationType, saveNotificationToFirestore} from "./notifications";
+import {
+  sendNotificationToUser,
+  NotificationType,
+  saveNotificationToFirestore,
+} from "./notifications";
 
-// Lazy initialization para evitar erro de initializeApp
+// Lazy initialization para evitar erro
+// de initializeApp
 const getDb = () => admin.firestore();
 
 // ==========================================
 // CONSTANTES
 // ==========================================
 
-// Janelas de tempo para lembretes (em milissegundos)
-const REMINDER_24H_MS = 24 * 60 * 60 * 1000; // 24 horas
-const REMINDER_2H_MS = 2 * 60 * 60 * 1000; // 2 horas
+// Janelas de tempo para lembretes (ms)
+const REMINDER_24H_MS = 24 * 60 * 60 * 1000;
+const REMINDER_2H_MS = 2 * 60 * 60 * 1000;
 
-// Tolerância para a janela de busca (em minutos)
-// Rodando a cada hora, precisamos de uma janela de 30 min antes/depois
-const WINDOW_TOLERANCE_MS = 30 * 60 * 1000; // 30 minutos
+// Tolerancia para a janela de busca (min)
+// Rodando a cada hora, precisamos de uma
+// janela de 30 min antes/depois
+const WINDOW_TOLERANCE_MS = 30 * 60 * 1000;
 
-// Status de jogos que NÃO devem receber lembretes
-export const EXCLUDED_GAME_STATUSES = ["CANCELLED", "FINISHED", "LIVE"];
+// Status de jogos que NAO devem receber
+// lembretes
+export const EXCLUDED_GAME_STATUSES = [
+  "CANCELLED",
+  "FINISHED",
+  "LIVE",
+];
 
-// Status de confirmação que já está OK (não precisa lembrete)
+// Status de confirmacao que ja esta OK
+// (nao precisa lembrete)
 export const CONFIRMED_STATUSES = ["CONFIRMED"];
 
 // ==========================================
@@ -42,60 +55,92 @@ export const CONFIRMED_STATUSES = ["CONFIRMED"];
 // ==========================================
 
 export interface GameForReminder {
-    id: string;
-    dateTime: admin.firestore.Timestamp | null;
-    date: string | null;
-    time: string | null;
-    status: string;
-    group_id: string | null;
-    location_name?: string;
+  id: string;
+  dateTime: admin.firestore.Timestamp | null;
+  date: string | null;
+  time: string | null;
+  status: string;
+  group_id: string | null;
+  location_name?: string;
 }
 
 interface ConfirmationForReminder {
-    id: string;
-    user_id: string;
-    game_id: string;
-    status: string;
-    reminder_24h_sent?: boolean;
-    reminder_2h_sent?: boolean;
+  id: string;
+  user_id: string;
+  game_id: string;
+  status: string;
+  reminder_24h_sent?: boolean;
+  reminder_2h_sent?: boolean;
 }
 
 // ==========================================
-// FUNÇÕES AUXILIARES
+// FUNCOES AUXILIARES
 // ==========================================
 
 /**
- * Converte data do jogo para Date no timezone America/Sao_Paulo
+ * Converte data do jogo para Date no
+ * timezone America/Sao_Paulo.
+ *
+ * @param {GameForReminder} game - Jogo.
+ * @return {Date | null} Data convertida.
  */
-export function getGameDateTime(game: GameForReminder): Date | null {
+export function getGameDateTime(
+  game: GameForReminder
+): Date | null {
   // Prioridade 1: Campo dateTime (Timestamp)
-  if (game.dateTime && typeof game.dateTime.toDate === "function") {
+  if (
+    game.dateTime &&
+    typeof game.dateTime.toDate === "function"
+  ) {
     return game.dateTime.toDate();
   }
 
   // Prioridade 2: Campos date + time separados
   if (game.date) {
     const dateStr = game.date;
-    const timeStr = game.time || "20:00"; // Default 20:00 se não houver hora
+    // Default 20:00 se nao houver hora
+    const timeStr = game.time || "20:00";
 
     // Formato esperado: "2026-01-20" + "18:00"
-    const [year, month, day] = dateStr.split("-").map(Number);
-    const [hour, minute] = timeStr.split(":").map(Number);
+    const [year, month, day] =
+      dateStr.split("-").map(Number);
+    const [hour, minute] =
+      timeStr.split(":").map(Number);
 
     if (year && month && day) {
-      // Criar data no timezone local (servidor Firebase geralmente está em UTC)
-      // Para America/Sao_Paulo, precisamos ajustar manualmente
-      // Nota: Em produção, considerar usar biblioteca como date-fns-tz
-      const utcDate = new Date(Date.UTC(year, month - 1, day, hour || 20, minute || 0, 0));
+      // Criar data no timezone local
+      // (servidor Firebase geralmente em UTC)
+      // Para America/Sao_Paulo, precisamos
+      // ajustar manualmente
+      // Nota: Em producao, considerar usar
+      // biblioteca como date-fns-tz
+      const utcDate = new Date(
+        Date.UTC(
+          year,
+          month - 1,
+          day,
+          hour || 20,
+          minute || 0,
+          0
+        )
+      );
 
-      // LIMITAÇÃO: Offset fixo para America/Sao_Paulo (UTC-3).
-      // Não leva em conta horário de verão (que foi abolido no Brasil em 2019,
-      // mas se fosse reintroduzido, este valor precisaria ser dinâmico).
-      // Para suporte completo de timezone, considerar usar date-fns-tz ou luxon.
+      // LIMITACAO: Offset fixo para
+      // America/Sao_Paulo (UTC-3).
+      // Nao leva em conta horario de verao
+      // (que foi abolido no Brasil em 2019,
+      // mas se fosse reintroduzido, este valor
+      // precisaria ser dinamico).
+      // Para suporte completo de timezone,
+      // considerar usar date-fns-tz ou luxon.
       const BRAZIL_UTC_OFFSET = -3;
-      // A hora informada pelo usuário é hora local (BRT). Para converter para UTC,
-      // subtraímos o offset (que é negativo, então somamos o valor absoluto).
-      utcDate.setHours(utcDate.getHours() - BRAZIL_UTC_OFFSET);
+      // A hora informada pelo usuario e hora
+      // local (BRT). Para converter para UTC,
+      // subtraimos o offset (que e negativo,
+      // entao somamos o valor absoluto).
+      utcDate.setHours(
+        utcDate.getHours() - BRAZIL_UTC_OFFSET
+      );
 
       return utcDate;
     }
@@ -105,9 +150,15 @@ export function getGameDateTime(game: GameForReminder): Date | null {
 }
 
 /**
- * Formata a data/hora do jogo para exibição na notificação
+ * Formata a data/hora do jogo para exibicao
+ * na notificacao.
+ *
+ * @param {Date} date - Data do jogo.
+ * @return {string} Data formatada.
  */
-export function formatGameDateTime(date: Date): string {
+export function formatGameDateTime(
+  date: Date
+): string {
   const options: Intl.DateTimeFormatOptions = {
     weekday: "short",
     day: "2-digit",
@@ -125,30 +176,68 @@ export function formatGameDateTime(date: Date): string {
 }
 
 /**
- * Busca jogos que estão na janela de lembrete
- * @param hoursBeforeGame - Horas antes do jogo (24 ou 2)
+ * Busca jogos que estao na janela de lembrete.
+ *
+ * @param {number} hoursBeforeGame - Horas antes
+ *   do jogo (24 ou 2).
+ * @return {Promise<GameForReminder[]>} Jogos
+ *   na janela.
  */
-async function fetchGamesInReminderWindow(hoursBeforeGame: number): Promise<GameForReminder[]> {
+async function fetchGamesInReminderWindow(
+  hoursBeforeGame: number
+): Promise<GameForReminder[]> {
   const now = new Date();
-  const reminderTimeMs = hoursBeforeGame === 24 ? REMINDER_24H_MS : REMINDER_2H_MS;
+  const reminderTimeMs =
+    hoursBeforeGame === 24 ?
+      REMINDER_24H_MS :
+      REMINDER_2H_MS;
 
   // Calcular janela de busca
-  // Se o jogo é às 20:00 e queremos lembrar 24h antes,
-  // buscamos jogos onde: (gameTime - 24h) está próximo de "agora"
-  // Ou seja: gameTime está próximo de (agora + 24h)
-  const targetTime = new Date(now.getTime() + reminderTimeMs);
-  const windowStart = new Date(targetTime.getTime() - WINDOW_TOLERANCE_MS);
-  const windowEnd = new Date(targetTime.getTime() + WINDOW_TOLERANCE_MS);
+  // Se o jogo e as 20:00 e queremos lembrar
+  // 24h antes, buscamos jogos onde:
+  // (gameTime - 24h) esta proximo de "agora"
+  // Ou seja: gameTime esta proximo
+  // de (agora + 24h)
+  const targetTime = new Date(
+    now.getTime() + reminderTimeMs
+  );
+  const windowStart = new Date(
+    targetTime.getTime() - WINDOW_TOLERANCE_MS
+  );
+  const windowEnd = new Date(
+    targetTime.getTime() + WINDOW_TOLERANCE_MS
+  );
 
-  console.log(`[REMINDERS] Buscando jogos na janela de ${hoursBeforeGame}h:`);
-  console.log(`  - Agora: ${now.toISOString()}`);
-  console.log(`  - Janela: ${windowStart.toISOString()} até ${windowEnd.toISOString()}`);
+  const hoursLabel = hoursBeforeGame;
+  console.log(
+    "[REMINDERS] Buscando jogos na " +
+    `janela de ${hoursLabel}h:`
+  );
+  console.log(
+    `  - Agora: ${now.toISOString()}`
+  );
+  console.log(
+    "  - Janela: " +
+    `${windowStart.toISOString()} ate ` +
+    `${windowEnd.toISOString()}`
+  );
 
-  // Query: jogos com dateTime na janela e status não excluído
-  // Nota: Firestore não suporta NOT IN, então filtramos depois
-  const gamesSnap = await getDb().collection("games")
-    .where("dateTime", ">=", admin.firestore.Timestamp.fromDate(windowStart))
-    .where("dateTime", "<=", admin.firestore.Timestamp.fromDate(windowEnd))
+  // Query: jogos com dateTime na janela e
+  // status nao excluido
+  // Nota: Firestore nao suporta NOT IN,
+  // entao filtramos depois
+  const startTs =
+    admin.firestore.Timestamp.fromDate(
+      windowStart
+    );
+  const endTs =
+    admin.firestore.Timestamp.fromDate(
+      windowEnd
+    );
+  const gamesSnap = await getDb()
+    .collection("games")
+    .where("dateTime", ">=", startTs)
+    .where("dateTime", "<=", endTs)
     .get();
 
   const games: GameForReminder[] = [];
@@ -157,9 +246,14 @@ async function fetchGamesInReminderWindow(hoursBeforeGame: number): Promise<Game
     const data = doc.data();
     const status = data.status || "SCHEDULED";
 
-    // Filtrar status excluídos
-    if (EXCLUDED_GAME_STATUSES.includes(status)) {
-      console.log(`  - Jogo ${doc.id} ignorado (status: ${status})`);
+    // Filtrar status excluidos
+    if (
+      EXCLUDED_GAME_STATUSES.includes(status)
+    ) {
+      console.log(
+        `  - Jogo ${doc.id} ignorado` +
+        ` (status: ${status})`
+      );
       continue;
     }
 
@@ -170,26 +264,43 @@ async function fetchGamesInReminderWindow(hoursBeforeGame: number): Promise<Game
       time: data.time || null,
       status: status,
       group_id: data.group_id || null,
-      location_name: data.location_name || data.locationName || null,
+      location_name:
+        data.location_name ||
+        data.locationName ||
+        null,
     });
   }
 
-  console.log(`[REMINDERS] Encontrados ${games.length} jogos elegíveis para lembrete de ${hoursBeforeGame}h`);
+  console.log(
+    `[REMINDERS] Encontrados ${games.length}` +
+    " jogos elegiveis para lembrete" +
+    ` de ${hoursLabel}h`
+  );
   return games;
 }
 
 /**
- * Busca confirmações de um jogo que NÃO estão confirmadas
- * e que ainda não receberam o lembrete específico
+ * Busca confirmacoes de um jogo que NAO estao
+ * confirmadas e que ainda nao receberam o
+ * lembrete especifico.
+ *
+ * @param {string} gameId - ID do jogo.
+ * @param {string} reminderType - Tipo (24h/2h).
+ * @return {Promise<ConfirmationForReminder[]>}
+ *   Confirmacoes pendentes.
  */
 async function fetchPendingConfirmations(
   gameId: string,
   reminderType: "24h" | "2h"
 ): Promise<ConfirmationForReminder[]> {
-  const reminderField = reminderType === "24h" ? "reminder_24h_sent" : "reminder_2h_sent";
+  const reminderField =
+    reminderType === "24h" ?
+      "reminder_24h_sent" :
+      "reminder_2h_sent";
 
-  // Buscar todas as confirmações do jogo
-  const confirmationsSnap = await getDb().collection("confirmations")
+  // Buscar todas as confirmacoes do jogo
+  const confirmationsSnap = await getDb()
+    .collection("confirmations")
     .where("game_id", "==", gameId)
     .get();
 
@@ -200,14 +311,17 @@ async function fetchPendingConfirmations(
     const userId = data.user_id || data.userId;
     const status = data.status || "PENDING";
 
-    // Pular se já confirmou
+    // Pular se ja confirmou
     if (CONFIRMED_STATUSES.includes(status)) {
       continue;
     }
 
-    // Pular se lembrete já foi enviado
+    // Pular se lembrete ja foi enviado
     if (data[reminderField] === true) {
-      console.log(`  - User ${userId} já recebeu lembrete ${reminderType}`);
+      console.log(
+        `  - User ${userId} ja recebeu` +
+        ` lembrete ${reminderType}`
+      );
       continue;
     }
 
@@ -216,8 +330,10 @@ async function fetchPendingConfirmations(
       user_id: userId,
       game_id: gameId,
       status: status,
-      reminder_24h_sent: data.reminder_24h_sent || false,
-      reminder_2h_sent: data.reminder_2h_sent || false,
+      reminder_24h_sent:
+        data.reminder_24h_sent || false,
+      reminder_2h_sent:
+        data.reminder_2h_sent || false,
     });
   }
 
@@ -225,8 +341,15 @@ async function fetchPendingConfirmations(
 }
 
 /**
- * Busca membros do grupo que NÃO têm confirmação no jogo
- * (Para jogos de grupo, queremos notificar todos os membros)
+ * Busca membros do grupo que NAO tem
+ * confirmacao no jogo. Para jogos de grupo,
+ * queremos notificar todos os membros.
+ *
+ * @param {string} gameId - ID do jogo.
+ * @param {string} groupId - ID do grupo.
+ * @param {string} reminderType - Tipo (24h/2h).
+ * @return {Promise<string[]>} IDs dos membros
+ *   sem confirmacao.
  */
 async function fetchGroupMembersWithoutConfirmation(
   gameId: string,
@@ -234,45 +357,69 @@ async function fetchGroupMembersWithoutConfirmation(
   reminderType: "24h" | "2h"
 ): Promise<string[]> {
   // Buscar membros do grupo
-  const membersSnap = await getDb().collection("groups")
+  const membersSnap = await getDb()
+    .collection("groups")
     .doc(groupId)
     .collection("members")
-    .where("role", "in", ["MEMBER", "ADMIN", "OWNER"])
+    .where(
+      "role",
+      "in",
+      ["MEMBER", "ADMIN", "OWNER"]
+    )
     .get();
 
-  const memberIds = membersSnap.docs.map((doc) => doc.id);
+  const memberIds = membersSnap.docs.map(
+    (doc) => doc.id
+  );
 
-  // Buscar confirmações existentes para o jogo
-  const confirmationsSnap = await getDb().collection("confirmations")
+  // Buscar confirmacoes existentes para o jogo
+  const confirmationsSnap = await getDb()
+    .collection("confirmations")
     .where("game_id", "==", gameId)
     .get();
 
-  const usersWithConfirmation = new Set<string>();
-  const usersAlreadyNotified = new Set<string>();
+  const usersWithConfirmation =
+    new Set<string>();
+  const usersAlreadyNotified =
+    new Set<string>();
 
   for (const doc of confirmationsSnap.docs) {
     const data = doc.data();
     const userId = data.user_id || data.userId;
     usersWithConfirmation.add(userId);
 
-    // Verificar se já recebeu o lembrete (via campo na confirmação)
-    const reminderField = reminderType === "24h" ? "reminder_24h_sent" : "reminder_2h_sent";
+    // Verificar se ja recebeu o lembrete
+    // (via campo na confirmacao)
+    const reminderField =
+      reminderType === "24h" ?
+        "reminder_24h_sent" :
+        "reminder_2h_sent";
     if (data[reminderField] === true) {
       usersAlreadyNotified.add(userId);
     }
   }
 
-  // Retornar membros que não têm confirmação
-  // Para estes, precisamos criar um documento temporário ou enviar diretamente
-  const membersWithoutConfirmation = memberIds.filter((id) =>
-    !usersWithConfirmation.has(id) && !usersAlreadyNotified.has(id)
-  );
+  // Retornar membros que nao tem confirmacao
+  // Para estes, precisamos criar um documento
+  // temporario ou enviar diretamente
+  const membersWithoutConfirmation =
+    memberIds.filter(
+      (id) =>
+        !usersWithConfirmation.has(id) &&
+        !usersAlreadyNotified.has(id)
+    );
 
   return membersWithoutConfirmation;
 }
 
 /**
- * Envia lembrete para um usuário
+ * Envia lembrete para um usuario.
+ *
+ * @param {string} userId - ID do usuario.
+ * @param {GameForReminder} game - Dados do jogo.
+ * @param {string} reminderType - Tipo (24h/2h).
+ * @return {Promise<boolean>} Se enviou com
+ *   sucesso.
  */
 async function sendReminder(
   userId: string,
@@ -280,21 +427,31 @@ async function sendReminder(
   reminderType: "24h" | "2h"
 ): Promise<boolean> {
   const gameDateTime = getGameDateTime(game);
-  const formattedDate = gameDateTime ? formatGameDateTime(gameDateTime) : "em breve";
-  const locationInfo = game.location_name ? ` em ${game.location_name}` : "";
+  const formattedDate = gameDateTime ?
+    formatGameDateTime(gameDateTime) :
+    "em breve";
+  const locationInfo = game.location_name ?
+    ` em ${game.location_name}` :
+    "";
 
   const title = reminderType === "24h" ?
-    "Jogo amanhã! Confirme sua presença" :
-    "Jogo em 2 horas! Não esqueça de confirmar";
+    "Jogo amanha! Confirme sua presenca" :
+    "Jogo em 2 horas! Nao esqueca";
 
   const body = reminderType === "24h" ?
-    `O jogo${locationInfo} acontecerá ${formattedDate}. Confirme sua presença!` :
-    `O jogo${locationInfo} começa em 2 horas (${formattedDate}). Confirme agora!`;
+    `O jogo${locationInfo} acontecera ` +
+    `${formattedDate}. Confirme!` :
+    `O jogo${locationInfo} comeca em ` +
+    `2 horas (${formattedDate}). Confirme!`;
 
-  console.log(`[REMINDERS] Enviando lembrete ${reminderType} para user ${userId}, jogo ${game.id}`);
+  console.log(
+    "[REMINDERS] Enviando lembrete " +
+    `${reminderType} para user ${userId}, ` +
+    `jogo ${game.id}`
+  );
 
   try {
-    // Salvar notificação no Firestore
+    // Salvar notificacao no Firestore
     await saveNotificationToFirestore(userId, {
       userId,
       title,
@@ -306,109 +463,196 @@ async function sendReminder(
     });
 
     // Enviar push notification
-    const sent = await sendNotificationToUser(userId, {
-      title,
-      body,
-      type: NotificationType.GAME_REMINDER,
-      data: {
-        gameId: game.id,
-        reminderType: reminderType,
-        action: `game_detail/${game.id}`,
-      },
-    });
+    const sent = await sendNotificationToUser(
+      userId,
+      {
+        title,
+        body,
+        type: NotificationType.GAME_REMINDER,
+        data: {
+          gameId: game.id,
+          reminderType: reminderType,
+          action: `game_detail/${game.id}`,
+        },
+      }
+    );
 
     return sent;
   } catch (e) {
-    console.error(`[REMINDERS] Erro ao enviar lembrete para ${userId}:`, e);
+    console.error(
+      "[REMINDERS] Erro ao enviar " +
+      `lembrete para ${userId}:`,
+      e
+    );
     return false;
   }
 }
 
 /**
- * Marca o lembrete como enviado na confirmação
+ * Marca o lembrete como enviado na confirmacao.
+ *
+ * @param {string} gameId - ID do jogo.
+ * @param {string} userId - ID do usuario.
+ * @param {string} reminderType - Tipo (24h/2h).
+ * @return {Promise<void>} Void.
  */
 async function markReminderSent(
   gameId: string,
   userId: string,
   reminderType: "24h" | "2h"
 ): Promise<void> {
-  const confirmationId = `${gameId}_${userId}`;
-  const reminderField = reminderType === "24h" ? "reminder_24h_sent" : "reminder_2h_sent";
+  const confirmationId =
+    `${gameId}_${userId}`;
+  const reminderField =
+    reminderType === "24h" ?
+      "reminder_24h_sent" :
+      "reminder_2h_sent";
 
   try {
-    const confirmationRef = getDb().collection("confirmations").doc(confirmationId);
-    const confirmationDoc = await confirmationRef.get();
+    const confirmationRef = getDb()
+      .collection("confirmations")
+      .doc(confirmationId);
+    const confirmationDoc =
+      await confirmationRef.get();
 
     if (confirmationDoc.exists) {
       // Atualizar documento existente
+      const tsField =
+        `${reminderField}_at`;
       await confirmationRef.update({
         [reminderField]: true,
-        [`${reminderField}_at`]: admin.firestore.FieldValue.serverTimestamp(),
+        [tsField]:
+          admin.firestore.FieldValue
+            .serverTimestamp(),
       });
     } else {
-      // Criar documento com status PENDING para rastrear o lembrete
+      // Criar documento com status PENDING
+      // para rastrear o lembrete
+      const tsField =
+        `${reminderField}_at`;
+      const serverTs =
+        admin.firestore.FieldValue
+          .serverTimestamp();
       await confirmationRef.set({
         game_id: gameId,
         user_id: userId,
         status: "PENDING",
         [reminderField]: true,
-        [`${reminderField}_at`]: admin.firestore.FieldValue.serverTimestamp(),
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        [tsField]: serverTs,
+        created_at: serverTs,
       });
     }
   } catch (e) {
-    console.error(`[REMINDERS] Erro ao marcar lembrete ${reminderType} para ${userId}:`, e);
+    console.error(
+      "[REMINDERS] Erro ao marcar " +
+      `lembrete ${reminderType} ` +
+      `para ${userId}:`,
+      e
+    );
   }
 }
 
 /**
- * Processa lembretes para um tipo específico (24h ou 2h)
+ * Processa lembretes para um tipo especifico
+ * (24h ou 2h).
+ *
+ * @param {string} reminderType - Tipo (24h/2h).
+ * @return {Promise<number>} Total de lembretes
+ *   enviados.
  */
-async function processReminders(reminderType: "24h" | "2h"): Promise<number> {
-  const hoursBeforeGame = reminderType === "24h" ? 24 : 2;
+async function processReminders(
+  reminderType: "24h" | "2h"
+): Promise<number> {
+  const hoursBeforeGame =
+    reminderType === "24h" ? 24 : 2;
   let totalSent = 0;
 
-  console.log(`\n[REMINDERS] ========== Processando lembretes de ${reminderType} ==========`);
+  console.log(
+    "\n[REMINDERS] ==========" +
+    " Processando lembretes de " +
+    `${reminderType} ==========`
+  );
 
   // Buscar jogos na janela de lembrete
-  const games = await fetchGamesInReminderWindow(hoursBeforeGame);
+  const games =
+    await fetchGamesInReminderWindow(
+      hoursBeforeGame
+    );
 
   for (const game of games) {
-    console.log(`\n[REMINDERS] Processando jogo ${game.id} (status: ${game.status})`);
+    console.log(
+      "\n[REMINDERS] Processando jogo " +
+      `${game.id} (status: ${game.status})`
+    );
 
-    // Buscar confirmações pendentes (não confirmadas e não notificadas)
-    const pendingConfirmations = await fetchPendingConfirmations(game.id, reminderType);
-    console.log(`  - ${pendingConfirmations.length} confirmações pendentes`);
+    // Buscar confirmacoes pendentes
+    // (nao confirmadas e nao notificadas)
+    const pendingConfirmations =
+      await fetchPendingConfirmations(
+        game.id,
+        reminderType
+      );
+    const pendingCount =
+      pendingConfirmations.length;
+    console.log(
+      `  - ${pendingCount}` +
+      " confirmacoes pendentes"
+    );
 
-    // Processar confirmações existentes
+    // Processar confirmacoes existentes
     for (const conf of pendingConfirmations) {
-      const sent = await sendReminder(conf.user_id, game, reminderType);
+      const sent = await sendReminder(
+        conf.user_id,
+        game,
+        reminderType
+      );
       if (sent) {
-        await markReminderSent(game.id, conf.user_id, reminderType);
+        await markReminderSent(
+          game.id,
+          conf.user_id,
+          reminderType
+        );
         totalSent++;
       }
     }
 
-    // Para jogos de grupo, também notificar membros sem confirmação
+    // Para jogos de grupo, tambem notificar
+    // membros sem confirmacao
     if (game.group_id) {
-      const membersWithoutConfirmation = await fetchGroupMembersWithoutConfirmation(
-        game.id,
-        game.group_id,
-        reminderType
+      const membersNoConf =
+        await fetchGroupMembersWithoutConfirmation(
+          game.id,
+          game.group_id,
+          reminderType
+        );
+      const membersCount = membersNoConf.length;
+      console.log(
+        `  - ${membersCount} membros do` +
+        " grupo sem confirmacao"
       );
-      console.log(`  - ${membersWithoutConfirmation.length} membros do grupo sem confirmação`);
 
-      for (const memberId of membersWithoutConfirmation) {
-        const sent = await sendReminder(memberId, game, reminderType);
+      for (const memberId of membersNoConf) {
+        const sent = await sendReminder(
+          memberId,
+          game,
+          reminderType
+        );
         if (sent) {
-          await markReminderSent(game.id, memberId, reminderType);
+          await markReminderSent(
+            game.id,
+            memberId,
+            reminderType
+          );
           totalSent++;
         }
       }
     }
   }
 
-  console.log(`[REMINDERS] Total de lembretes ${reminderType} enviados: ${totalSent}`);
+  console.log(
+    "[REMINDERS] Total de lembretes " +
+    `${reminderType} enviados: ${totalSent}`
+  );
   return totalSent;
 }
 
@@ -417,16 +661,19 @@ async function processReminders(reminderType: "24h" | "2h"): Promise<number> {
 // ==========================================
 
 /**
- * Função agendada que roda a cada hora para verificar jogos próximos
- * e enviar lembretes para jogadores que não confirmaram presença.
+ * Funcao agendada que roda a cada hora para
+ * verificar jogos proximos e enviar lembretes
+ * para jogadores que nao confirmaram presenca.
  *
  * Janelas de lembrete:
  * - 24 horas antes do jogo
  * - 2 horas antes do jogo
  *
  * Anti-spam:
- * - Cada tipo de lembrete só é enviado uma vez por usuário/jogo
- * - Marcado via campos reminder_24h_sent e reminder_2h_sent na confirmação
+ * - Cada tipo de lembrete so e enviado uma
+ *   vez por usuario/jogo
+ * - Marcado via campos reminder_24h_sent e
+ *   reminder_2h_sent na confirmacao
  */
 export const checkGameReminders = onSchedule(
   {
@@ -435,67 +682,119 @@ export const checkGameReminders = onSchedule(
     retryCount: 3,
     memory: "256MiB",
   },
-  async (event) => {
-    console.log("\n========================================");
-    console.log("[REMINDERS] Iniciando verificação de lembretes de jogos");
-    console.log(`[REMINDERS] Timestamp: ${new Date().toISOString()}`);
-    console.log("========================================\n");
+  async () => {
+    console.log(
+      "\n========================================"
+    );
+    console.log(
+      "[REMINDERS] Iniciando verificacao" +
+      " de lembretes de jogos"
+    );
+    const ts = new Date().toISOString();
+    console.log(
+      `[REMINDERS] Timestamp: ${ts}`
+    );
+    console.log(
+      "========================================\n"
+    );
 
     try {
       // Processar lembretes de 24h
-      const sent24h = await processReminders("24h");
+      const sent24h =
+        await processReminders("24h");
 
       // Processar lembretes de 2h
-      const sent2h = await processReminders("2h");
+      const sent2h =
+        await processReminders("2h");
 
       const total = sent24h + sent2h;
-      console.log("\n========================================");
-      console.log(`[REMINDERS] Concluído! Total enviados: ${total}`);
-      console.log(`  - Lembretes 24h: ${sent24h}`);
-      console.log(`  - Lembretes 2h: ${sent2h}`);
-      console.log("========================================\n");
+      console.log(
+        "\n========================================"
+      );
+      console.log(
+        "[REMINDERS] Concluido! " +
+        `Total enviados: ${total}`
+      );
+      console.log(
+        `  - Lembretes 24h: ${sent24h}`
+      );
+      console.log(
+        `  - Lembretes 2h: ${sent2h}`
+      );
+      console.log(
+        "========================================\n"
+      );
     } catch (error) {
-      console.error("[REMINDERS] Erro fatal ao processar lembretes:", error);
-      throw error; // Re-throw para acionar retry
+      console.error(
+        "[REMINDERS] Erro fatal ao " +
+        "processar lembretes:",
+        error
+      );
+      // Re-throw para acionar retry
+      throw error;
     }
   }
 );
 
 /**
- * Função manual para testar o sistema de lembretes
- * Pode ser chamada via console do Firebase ou Cloud Functions Shell
+ * Funcao manual para testar o sistema de
+ * lembretes. Pode ser chamada via console do
+ * Firebase ou Cloud Functions Shell.
  */
 export const testGameReminders = onSchedule(
   {
-    schedule: "0 0 1 1 *", // Nunca executa automaticamente (1 de janeiro à meia-noite)
+    // Nunca executa automaticamente
+    // (1 de janeiro a meia-noite)
+    schedule: "0 0 1 1 *",
     timeZone: "America/Sao_Paulo",
   },
-  async (event) => {
-    console.log("[REMINDERS TEST] Executando teste manual de lembretes...");
+  async () => {
+    console.log(
+      "[REMINDERS TEST] Executando teste" +
+      " manual de lembretes..."
+    );
 
-    // Simular verificação com logs detalhados
+    // Simular verificacao com logs detalhados
     const now = new Date();
-    console.log(`[REMINDERS TEST] Hora atual: ${now.toISOString()}`);
+    console.log(
+      "[REMINDERS TEST] Hora atual: " +
+      `${now.toISOString()}`
+    );
 
-    // Buscar próximos jogos para debug
-    const upcomingGamesSnap = await getDb().collection("games")
-      .where("status", "in", ["SCHEDULED", "CONFIRMED"])
+    // Buscar proximos jogos para debug
+    const upcomingGamesSnap = await getDb()
+      .collection("games")
+      .where(
+        "status",
+        "in",
+        ["SCHEDULED", "CONFIRMED"]
+      )
       .orderBy("dateTime", "asc")
       .limit(10)
       .get();
 
-    console.log(`[REMINDERS TEST] Próximos ${upcomingGamesSnap.size} jogos:`);
+    const count = upcomingGamesSnap.size;
+    console.log(
+      "[REMINDERS TEST] Proximos " +
+      `${count} jogos:`
+    );
     for (const doc of upcomingGamesSnap.docs) {
       const data = doc.data();
-      const dateTime = data.dateTime?.toDate?.() || "N/A";
-      console.log(`  - ${doc.id}: ${data.status} @ ${dateTime}`);
+      const dateTime =
+        data.dateTime?.toDate?.() || "N/A";
+      console.log(
+        `  - ${doc.id}: ${data.status}` +
+        ` @ ${dateTime}`
+      );
     }
 
     // Executar processamento real
     await processReminders("24h");
     await processReminders("2h");
 
-    console.log("[REMINDERS TEST] Teste concluído!");
+    console.log(
+      "[REMINDERS TEST] Teste concluido!"
+    );
   }
 );
 
@@ -504,123 +803,239 @@ export const testGameReminders = onSchedule(
 // ==========================================
 
 /**
- * Função agendada que roda a cada 5 minutos para processar
- * entradas expiradas na lista de espera.
+ * Funcao agendada que roda a cada 5 minutos
+ * para processar entradas expiradas na lista
+ * de espera.
  *
- * Quando um jogador é notificado sobre uma vaga, ele tem 30 minutos
- * para responder. Se não responder, a entrada expira e o próximo
- * jogador na fila é notificado.
+ * Quando um jogador e notificado sobre uma
+ * vaga, ele tem 30 minutos para responder.
+ * Se nao responder, a entrada expira e o
+ * proximo jogador na fila e notificado.
  *
- * Issue #: Waitlist auto-promotion
+ * Issue: Waitlist auto-promotion
  */
-export const processExpiredWaitlistEntries = onSchedule(
-  {
-    schedule: "every 5 minutes",
-    timeZone: "America/Sao_Paulo",
-    retryCount: 3,
-    memory: "256MiB",
-  },
-  async (event) => {
-    console.log("\n========================================");
-    console.log("[WAITLIST] Processando entradas expiradas da lista de espera");
-    console.log(`[WAITLIST] Timestamp: ${new Date().toISOString()}`);
-    console.log("========================================\n");
+export const processExpiredWaitlistEntries =
+  onSchedule(
+    {
+      schedule: "every 5 minutes",
+      timeZone: "America/Sao_Paulo",
+      retryCount: 3,
+      memory: "256MiB",
+    },
+    async () => {
+      console.log(
+        "\n====================================" +
+        "===="
+      );
+      console.log(
+        "[WAITLIST] Processando entradas" +
+        " expiradas da lista de espera"
+      );
+      const ts = new Date().toISOString();
+      console.log(
+        `[WAITLIST] Timestamp: ${ts}`
+      );
+      console.log(
+        "====================================" +
+        "====\n"
+      );
 
-    try {
-      const now = new Date();
-      let expiredCount = 0;
-      let promotedCount = 0;
+      try {
+        const now = new Date();
+        let expiredCount = 0;
+        let promotedCount = 0;
 
-      // Buscar todas as entradas de waitlist com status NOTIFIED
-      // onde response_deadline já passou
-      const waitlistQuery = await getDb().collectionGroup("waitlist")
-        .where("status", "==", "NOTIFIED")
-        .where("response_deadline", "<=", admin.firestore.Timestamp.fromDate(now))
-        .get();
+        // Buscar todas as entradas de waitlist
+        // com status NOTIFIED onde
+        // response_deadline ja passou
+        const nowTs =
+          admin.firestore.Timestamp.fromDate(
+            now
+          );
+        const waitlistQuery = await getDb()
+          .collectionGroup("waitlist")
+          .where("status", "==", "NOTIFIED")
+          .where(
+            "response_deadline",
+            "<=",
+            nowTs
+          )
+          .get();
 
-      console.log(`[WAITLIST] Encontradas ${waitlistQuery.size} entradas expiradas`);
+        const wlSize = waitlistQuery.size;
+        console.log(
+          "[WAITLIST] Encontradas " +
+          `${wlSize} entradas expiradas`
+        );
 
-      for (const doc of waitlistQuery.docs) {
-        const data = doc.data();
-        const gameId = data.game_id;
-        const userId = data.user_id;
+        for (
+          const doc of waitlistQuery.docs
+        ) {
+          const data = doc.data();
+          const gameId = data.game_id;
+          const userId = data.user_id;
 
-        console.log(`[WAITLIST] Processando entrada expirada: ${doc.id} (game: ${gameId}, user: ${userId})`);
+          console.log(
+            "[WAITLIST] Processando " +
+            `entrada expirada: ${doc.id}` +
+            ` (game: ${gameId},` +
+            ` user: ${userId})`
+          );
 
-        try {
-          // 1. Marcar entrada como EXPIRED
-          await doc.ref.update({
-            status: "EXPIRED",
-            expired_at: admin.firestore.FieldValue.serverTimestamp(),
-          });
-          expiredCount++;
-
-          // 2. Buscar próximo na fila com status WAITING
-          const nextInLineQuery = await getDb()
-            .collection("games")
-            .doc(gameId)
-            .collection("waitlist")
-            .where("status", "==", "WAITING")
-            .orderBy("added_at", "asc")
-            .limit(1)
-            .get();
-
-          if (!nextInLineQuery.empty) {
-            const nextEntry = nextInLineQuery.docs[0];
-            const nextData = nextEntry.data();
-            const nextUserId = nextData.user_id;
-            const nextUserName = nextData.user_name || "Jogador";
-
-            // 3. Calcular novo deadline (30 minutos)
-            const newDeadline = new Date(now.getTime() + 30 * 60 * 1000);
-
-            // 4. Atualizar status para NOTIFIED
-            await nextEntry.ref.update({
-              status: "NOTIFIED",
-              notified_at: admin.firestore.FieldValue.serverTimestamp(),
-              response_deadline: admin.firestore.Timestamp.fromDate(newDeadline),
+          try {
+            // 1. Marcar entrada como EXPIRED
+            const serverTs =
+              admin.firestore.FieldValue
+                .serverTimestamp();
+            await doc.ref.update({
+              status: "EXPIRED",
+              expired_at: serverTs,
             });
+            expiredCount++;
 
-            // 5. Enviar notificação
-            await sendNotificationToUser(nextUserId, {
-              title: "Vaga Disponível!",
-              body: "Uma vaga abriu para o jogo. Você tem 30 minutos para confirmar!",
-              type: NotificationType.GAME_SUMMON,
-              data: {
-                gameId: gameId,
-                action: `game_detail/${gameId}`,
-                urgency: "high",
-              },
-            });
+            // 2. Buscar proximo na fila
+            // com status WAITING
+            const nextQuery = await getDb()
+              .collection("games")
+              .doc(gameId)
+              .collection("waitlist")
+              .where(
+                "status",
+                "==",
+                "WAITING"
+              )
+              .orderBy("added_at", "asc")
+              .limit(1)
+              .get();
 
-            // 6. Salvar notificação no Firestore
-            await saveNotificationToFirestore(nextUserId, {
-              userId: nextUserId,
-              title: "Vaga Disponível!",
-              body: "Uma vaga abriu! Confirme sua presença em até 30 minutos.",
-              type: NotificationType.GAME_SUMMON,
-              gameId: gameId,
-              action: `game_detail/${gameId}`,
-            });
+            if (!nextQuery.empty) {
+              const nextEntry =
+                nextQuery.docs[0];
+              const nextData =
+                nextEntry.data();
+              const nextUserId =
+                nextData.user_id;
+              const nextUserName =
+                nextData.user_name ||
+                "Jogador";
 
-            promotedCount++;
-            console.log(`[WAITLIST] Próximo jogador notificado: ${nextUserId} (${nextUserName})`);
-          } else {
-            console.log(`[WAITLIST] Nenhum jogador na fila para o jogo ${gameId}`);
+              // 3. Calcular novo deadline
+              // (30 minutos)
+              const deadlineMs =
+                now.getTime() +
+                30 * 60 * 1000;
+              const newDeadline =
+                new Date(deadlineMs);
+
+              // 4. Atualizar status
+              // para NOTIFIED
+              const deadlineTs =
+                admin.firestore.Timestamp
+                  .fromDate(newDeadline);
+              const notifTs =
+                admin.firestore.FieldValue
+                  .serverTimestamp();
+              await nextEntry.ref.update({
+                status: "NOTIFIED",
+                notified_at: notifTs,
+                response_deadline: deadlineTs,
+              });
+
+              // 5. Enviar notificacao
+              const action =
+                `game_detail/${gameId}`;
+              await sendNotificationToUser(
+                nextUserId,
+                {
+                  title:
+                    "Vaga Disponivel!",
+                  body:
+                    "Uma vaga abriu para " +
+                    "o jogo. Voce tem 30 " +
+                    "minutos para confirmar!",
+                  type:
+                    NotificationType
+                      .GAME_SUMMON,
+                  data: {
+                    gameId: gameId,
+                    action: action,
+                    urgency: "high",
+                  },
+                }
+              );
+
+              // 6. Salvar notificacao
+              // no Firestore
+              await saveNotificationToFirestore(
+                nextUserId,
+                {
+                  userId: nextUserId,
+                  title:
+                    "Vaga Disponivel!",
+                  body:
+                    "Uma vaga abriu! " +
+                    "Confirme sua " +
+                    "presenca em ate " +
+                    "30 minutos.",
+                  type:
+                    NotificationType
+                      .GAME_SUMMON,
+                  gameId: gameId,
+                  action: action,
+                }
+              );
+
+              promotedCount++;
+              console.log(
+                "[WAITLIST] Proximo " +
+                "jogador notificado: " +
+                `${nextUserId}` +
+                ` (${nextUserName})`
+              );
+            } else {
+              console.log(
+                "[WAITLIST] Nenhum " +
+                "jogador na fila para " +
+                `o jogo ${gameId}`
+              );
+            }
+          } catch (entryError) {
+            console.error(
+              "[WAITLIST] Erro ao " +
+              "processar entrada " +
+              `${doc.id}:`,
+              entryError
+            );
           }
-        } catch (entryError) {
-          console.error(`[WAITLIST] Erro ao processar entrada ${doc.id}:`, entryError);
         }
-      }
 
-      console.log("\n========================================");
-      console.log("[WAITLIST] Processamento concluído!");
-      console.log(`  - Entradas expiradas: ${expiredCount}`);
-      console.log(`  - Próximos notificados: ${promotedCount}`);
-      console.log("========================================\n");
-    } catch (error) {
-      console.error("[WAITLIST] Erro fatal ao processar lista de espera:", error);
-      throw error; // Re-throw para acionar retry
+        console.log(
+          "\n====================================" +
+          "===="
+        );
+        console.log(
+          "[WAITLIST] Processamento concluido!"
+        );
+        console.log(
+          "  - Entradas expiradas: " +
+          `${expiredCount}`
+        );
+        console.log(
+          "  - Proximos notificados: " +
+          `${promotedCount}`
+        );
+        console.log(
+          "====================================" +
+          "====\n"
+        );
+      } catch (error) {
+        console.error(
+          "[WAITLIST] Erro fatal ao " +
+          "processar lista de espera:",
+          error
+        );
+        // Re-throw para acionar retry
+        throw error;
+      }
     }
-  }
-);
+  );

@@ -1,23 +1,26 @@
 /**
- * RETRY COM EXPONENTIAL BACKOFF - Utilitário Genérico
+ * RETRY COM EXPONENTIAL BACKOFF - Utilitário
  *
- * Fornece retry automático com backoff exponencial para qualquer operação async.
- * Diferencia erros transientes (retry) de erros permanentes (fail-fast).
+ * Fornece retry automático com backoff exponencial
+ * para qualquer operação async.
+ * Diferencia erros transientes (retry) de erros
+ * permanentes (fail-fast).
  *
  * FEATURES:
- * - Exponential backoff com jitter (evita thundering herd)
- * - Classificação automática de erros transientes vs permanentes
- * - Dead letter queue para falhas permanentes (log em Firestore)
+ * - Exponential backoff com jitter
+ * - Classificação automática de erros
+ * - Dead letter queue para falhas permanentes
  * - Configurável por operação
- * - Logging estruturado para observabilidade
+ * - Logging estruturado
  *
  * USO:
  * ```typescript
- * import { retryWithBackoff } from "../utils/retry-with-backoff";
+ * import {retryWithBackoff} from
+ *   "../utils/retry-with-backoff";
  *
  * const result = await retryWithBackoff(
  *   () => firestoreOperation(),
- *   { maxRetries: 3, operationName: "updateUser" }
+ *   {maxRetries: 3, operationName: "updateUser"}
  * );
  * ```
  *
@@ -34,24 +37,26 @@ const getDb = () => admin.firestore();
 
 /** Configuração do retry */
 export interface RetryConfig {
-  /** Número máximo de tentativas (incluindo a primeira). Padrão: 3 */
+  /** Número máximo de tentativas. Padrão: 3 */
   maxRetries?: number;
-  /** Backoff inicial em milissegundos. Padrão: 1000 */
+  /** Backoff inicial em ms. Padrão: 1000 */
   initialBackoffMs?: number;
-  /** Backoff máximo em milissegundos. Padrão: 30000 */
+  /** Backoff máximo em ms. Padrão: 30000 */
   maxBackoffMs?: number;
   /** Multiplicador do backoff. Padrão: 2 */
   backoffMultiplier?: number;
-  /** Adicionar jitter aleatório ao backoff. Padrão: true */
+  /** Adicionar jitter ao backoff. Padrão: true */
   jitter?: boolean;
-  /** Nome da operação (para logs). Padrão: "operation" */
+  /** Nome da operação (para logs) */
   operationName?: string;
-  /** Enviar para dead letter queue em caso de falha permanente. Padrão: false */
+  /** Enviar para DLQ em falha. Padrão: false */
   enableDeadLetterQueue?: boolean;
-  /** Contexto adicional para logs/dead letter queue */
-  context?: Record<string, any>;
-  /** Função personalizada para verificar se o erro é transiente */
-  isTransientError?: (error: any) => boolean;
+  /** Contexto adicional para logs/DLQ */
+  context?: Record<string, unknown>;
+  /** Função para verificar se erro é transiente */
+  isTransientError?: (
+    error: Record<string, unknown> | Error
+  ) => boolean;
 }
 
 /** Resultado do retry */
@@ -71,7 +76,7 @@ export interface DeadLetterEntry {
   error_code?: string;
   attempts: number;
   total_duration_ms: number;
-  context: Record<string, any>;
+  context: Record<string, unknown>;
   created_at: admin.firestore.FieldValue;
   status: "PENDING" | "RESOLVED" | "IGNORED";
   resolved_at?: admin.firestore.FieldValue;
@@ -103,33 +108,47 @@ const DEFAULT_CONFIG: Required<RetryConfig> = {
 // ==========================================
 
 /**
- * Verifica se um erro é transiente (retry seguro) ou permanente (fail-fast).
+ * Verifica se um erro é transiente (retry seguro)
+ * ou permanente (fail-fast).
  *
  * Erros transientes (retry):
  * - ABORTED (code 10): Contenção Firestore
- * - UNAVAILABLE (code 14): Serviço indisponível temporariamente
+ * - UNAVAILABLE (code 14): Serviço indisponível
  * - DEADLINE_EXCEEDED: Timeout de operação
- * - RESOURCE_EXHAUSTED: Quota excedida temporariamente
- * - Network errors: ECONNRESET, ETIMEDOUT, ECONNREFUSED
+ * - RESOURCE_EXHAUSTED: Quota excedida
+ * - Network errors: ECONNRESET, ETIMEDOUT, etc.
  *
  * Erros permanentes (fail-fast):
- * - INVALID_ARGUMENT: Dados inválidos (não adianta retentar)
+ * - INVALID_ARGUMENT: Dados inválidos
  * - PERMISSION_DENIED: Sem permissão
  * - NOT_FOUND: Documento não existe
  * - ALREADY_EXISTS: Documento já existe
  * - UNAUTHENTICATED: Não autenticado
+ *
+ * @param {Record<string, unknown> | Error} error -
+ *   O erro a ser classificado
+ * @return {boolean} true se erro é transiente
  */
-export function defaultIsTransientError(error: any): boolean {
+export function defaultIsTransientError(
+  error: Record<string, unknown> | Error
+): boolean {
   // Códigos gRPC transientes
   const transientGrpcCodes = [
     10, // ABORTED
     14, // UNAVAILABLE
-    4,  // DEADLINE_EXCEEDED
-    8,  // RESOURCE_EXHAUSTED
+    4, // DEADLINE_EXCEEDED
+    8, // RESOURCE_EXHAUSTED
   ];
 
-  if (error.code && typeof error.code === "number") {
-    return transientGrpcCodes.includes(error.code);
+  const errorRecord =
+    error as Record<string, unknown>;
+  if (
+    errorRecord.code &&
+    typeof errorRecord.code === "number"
+  ) {
+    return transientGrpcCodes.includes(
+      errorRecord.code as number
+    );
   }
 
   // Mensagens de erro transientes
@@ -146,7 +165,9 @@ export function defaultIsTransientError(error: any): boolean {
     "RESOURCE_EXHAUSTED",
   ];
 
-  const errorMessage = (error.message || "").toLowerCase();
+  const errorMessage = (
+    (errorRecord.message as string) || ""
+  ).toLowerCase();
 
   return transientMessages.some((msg) =>
     errorMessage.includes(msg.toLowerCase())
@@ -158,25 +179,19 @@ export function defaultIsTransientError(error: any): boolean {
 // ==========================================
 
 /**
- * Executa uma operação com retry e exponential backoff.
+ * Executa uma operação com retry e exponential
+ * backoff.
  *
  * ESTRATÉGIA:
  * 1. Executar operação
  * 2. Se sucesso: retornar resultado
- * 3. Se erro transiente: aguardar backoff e retentar
+ * 3. Se erro transiente: aguardar backoff e retry
  * 4. Se erro permanente: falhar imediatamente
- * 5. Se max retries atingido: falhar e opcionalmente enviar para DLQ
+ * 5. Se max retries: falhar e opcionalmente DLQ
  *
- * BACKOFF:
- * - Tentativa 1: imediato
- * - Tentativa 2: 1s (+ jitter)
- * - Tentativa 3: 2s (+ jitter)
- * - Tentativa 4: 4s (+ jitter)
- * - ...
- *
- * @param operation Função async para executar
- * @param config Configuração do retry
- * @returns Resultado com metadata do retry
+ * @param {Function} operation - Função async
+ * @param {RetryConfig} config - Configuração
+ * @return {Promise<RetryResult<T>>} Resultado
  */
 export async function retryWithBackoff<T>(
   operation: () => Promise<T>,
@@ -184,16 +199,23 @@ export async function retryWithBackoff<T>(
 ): Promise<RetryResult<T>> {
   const cfg = {...DEFAULT_CONFIG, ...config};
   const startTime = Date.now();
-  let lastError: any;
+  let lastError: Record<string, unknown> | Error |
+    undefined;
 
-  for (let attempt = 1; attempt <= cfg.maxRetries; attempt++) {
+  for (
+    let attempt = 1;
+    attempt <= cfg.maxRetries;
+    attempt++
+  ) {
     try {
       const result = await operation();
 
       // Log de sucesso (se houve retries)
       if (attempt > 1) {
         console.log(
-          `[RETRY] ${cfg.operationName}: Sucesso na tentativa ${attempt}/${cfg.maxRetries} ` +
+          `[RETRY] ${cfg.operationName}: ` +
+          "Sucesso na tentativa " +
+          `${attempt}/${cfg.maxRetries} ` +
           `(${Date.now() - startTime}ms total)`
         );
       }
@@ -205,56 +227,88 @@ export async function retryWithBackoff<T>(
         totalDurationMs: Date.now() - startTime,
         sentToDeadLetterQueue: false,
       };
-    } catch (error: any) {
-      lastError = error;
+    } catch (error: unknown) {
+      const typedError =
+        error as Record<string, unknown>;
+      lastError = typedError;
 
       // Verificar se o erro é transiente
-      const isTransient = cfg.isTransientError!(error);
+      const isTransient =
+        cfg.isTransientError!(typedError);
 
       if (!isTransient) {
         // Erro permanente: falhar imediatamente
+        const errMsg =
+          (typedError.message as string) ||
+          String(error);
         console.error(
-          `[RETRY] ${cfg.operationName}: Erro permanente na tentativa ${attempt}. ` +
-          `Não retentando. Erro: ${error.message || error}`
+          `[RETRY] ${cfg.operationName}: ` +
+          "Erro permanente na tentativa " +
+          `${attempt}. Não retentando. ` +
+          `Erro: ${errMsg}`
         );
 
-        const dlqSent = cfg.enableDeadLetterQueue
-          ? await sendToDeadLetterQueue(cfg, error, attempt, Date.now() - startTime)
-          : false;
+        const dlqSent = cfg.enableDeadLetterQueue ?
+          await sendToDeadLetterQueue(
+            cfg,
+            typedError,
+            attempt,
+            Date.now() - startTime
+          ) :
+          false;
 
         return {
           success: false,
-          error: error.message || "Erro permanente",
+          error:
+            (typedError.message as string) ||
+            "Erro permanente",
           attempts: attempt,
-          totalDurationMs: Date.now() - startTime,
+          totalDurationMs:
+            Date.now() - startTime,
           sentToDeadLetterQueue: dlqSent,
         };
       }
 
-      // Se é a última tentativa, não fazer backoff
+      // Se é a última tentativa, não backoff
       if (attempt === cfg.maxRetries) {
+        const errMsg =
+          (typedError.message as string) ||
+          String(error);
         console.error(
-          `[RETRY] ${cfg.operationName}: Max retries (${cfg.maxRetries}) atingido. ` +
-          `Último erro: ${error.message || error}`
+          `[RETRY] ${cfg.operationName}: ` +
+          "Max retries " +
+          `(${cfg.maxRetries}) atingido. ` +
+          `Último erro: ${errMsg}`
         );
         break;
       }
 
       // Calcular backoff exponencial com jitter
       const baseBackoff = Math.min(
-        cfg.initialBackoffMs * Math.pow(cfg.backoffMultiplier, attempt - 1),
+        cfg.initialBackoffMs *
+          Math.pow(
+            cfg.backoffMultiplier,
+            attempt - 1
+          ),
         cfg.maxBackoffMs
       );
 
-      const jitterMs = cfg.jitter
-        ? Math.random() * baseBackoff * 0.3 // 0-30% de jitter
-        : 0;
+      const jitterMs = cfg.jitter ?
+        Math.random() * baseBackoff * 0.3 :
+        0;
 
-      const backoffMs = Math.round(baseBackoff + jitterMs);
+      const backoffMs = Math.round(
+        baseBackoff + jitterMs
+      );
 
+      const errCode =
+        (typedError.code as string) ||
+        (typedError.message as string);
       console.log(
-        `[RETRY] ${cfg.operationName}: Tentativa ${attempt}/${cfg.maxRetries} falhou ` +
-        `(erro transiente: ${error.code || error.message}). ` +
+        `[RETRY] ${cfg.operationName}: ` +
+        `Tentativa ${attempt}/` +
+        `${cfg.maxRetries} falhou ` +
+        `(erro transiente: ${errCode}). ` +
         `Retry em ${backoffMs}ms...`
       );
 
@@ -263,13 +317,23 @@ export async function retryWithBackoff<T>(
   }
 
   // Todas as tentativas falharam
-  const dlqSent = cfg.enableDeadLetterQueue
-    ? await sendToDeadLetterQueue(cfg, lastError, cfg.maxRetries, Date.now() - startTime)
-    : false;
+  const dlqSent = cfg.enableDeadLetterQueue ?
+    await sendToDeadLetterQueue(
+      cfg,
+      lastError as Record<string, unknown>,
+      cfg.maxRetries,
+      Date.now() - startTime
+    ) :
+    false;
+
+  const lastErrRecord =
+    lastError as Record<string, unknown> | undefined;
 
   return {
     success: false,
-    error: lastError?.message || "Max retries excedido",
+    error:
+      (lastErrRecord?.message as string) ||
+      "Max retries excedido",
     attempts: cfg.maxRetries,
     totalDurationMs: Date.now() - startTime,
     sentToDeadLetterQueue: dlqSent,
@@ -281,20 +345,23 @@ export async function retryWithBackoff<T>(
 // ==========================================
 
 /**
- * Envia uma operação falhada para a dead letter queue.
+ * Envia uma operação falhada para a dead letter
+ * queue.
  *
- * A DLQ armazena operações que falharam permanentemente para
- * análise e resolução manual.
+ * A DLQ armazena operações que falharam
+ * permanentemente para análise e resolução manual.
  *
- * @param config Configuração da operação
- * @param error Erro que causou a falha
- * @param attempts Número de tentativas
- * @param durationMs Duração total
- * @returns true se enviado com sucesso
+ * @param {Required<RetryConfig>} config -
+ *   Configuração da operação
+ * @param {Record<string, unknown>} error -
+ *   Erro que causou a falha
+ * @param {number} attempts - Número de tentativas
+ * @param {number} durationMs - Duração total
+ * @return {Promise<boolean>} true se enviado
  */
 async function sendToDeadLetterQueue(
   config: Required<RetryConfig>,
-  error: any,
+  error: Record<string, unknown>,
   attempts: number,
   durationMs: number
 ): Promise<boolean> {
@@ -302,26 +369,37 @@ async function sendToDeadLetterQueue(
     const db = getDb();
     const entry: DeadLetterEntry = {
       operation_name: config.operationName,
-      error_message: error?.message || String(error),
-      error_code: error?.code?.toString(),
+      error_message:
+        (error?.message as string) || String(error),
+      error_code:
+        error?.code?.toString(),
       attempts,
       total_duration_ms: durationMs,
       context: config.context,
-      created_at: admin.firestore.FieldValue.serverTimestamp(),
+      created_at:
+        admin.firestore.FieldValue
+          .serverTimestamp(),
       status: "PENDING",
     };
 
-    await db.collection(DEAD_LETTER_COLLECTION).add(entry);
+    await db
+      .collection(DEAD_LETTER_COLLECTION)
+      .add(entry);
 
     console.log(
-      `[DLQ] Operação "${config.operationName}" enviada para dead letter queue ` +
-      `(${attempts} tentativas, ${durationMs}ms)`
+      "[DLQ] Operação " +
+      `"${config.operationName}" enviada ` +
+      "para dead letter queue " +
+      `(${attempts} tentativas, ` +
+      `${durationMs}ms)`
     );
 
     return true;
   } catch (dlqError) {
     console.error(
-      `[DLQ] Erro ao enviar para dead letter queue:`, dlqError
+      "[DLQ] Erro ao enviar para " +
+      "dead letter queue:",
+      dlqError
     );
     return false;
   }
@@ -330,8 +408,9 @@ async function sendToDeadLetterQueue(
 /**
  * Busca itens pendentes na dead letter queue.
  *
- * @param limit Número máximo de itens. Padrão: 50
- * @returns Array de documentos da DLQ
+ * @param {number} limit - Número máximo de itens
+ * @return {Promise<Array<DeadLetterEntry>>}
+ *   Array de documentos da DLQ
  */
 export async function getDeadLetterQueueItems(
   limit = 50
@@ -351,16 +430,20 @@ export async function getDeadLetterQueueItems(
       ...doc.data() as DeadLetterEntry,
     }));
   } catch (error) {
-    console.error("[DLQ] Erro ao buscar itens:", error);
+    console.error(
+      "[DLQ] Erro ao buscar itens:",
+      error
+    );
     return [];
   }
 }
 
 /**
- * Marca um item da dead letter queue como resolvido.
+ * Marca um item da DLQ como resolvido.
  *
- * @param docId ID do documento na DLQ
- * @param resolvedBy UID do usuário que resolveu
+ * @param {string} docId - ID do documento na DLQ
+ * @param {string} resolvedBy - UID do usuário
+ * @return {Promise<void>}
  */
 export async function resolveDeadLetterItem(
   docId: string,
@@ -368,36 +451,52 @@ export async function resolveDeadLetterItem(
 ): Promise<void> {
   const db = getDb();
 
-  await db.collection(DEAD_LETTER_COLLECTION).doc(docId).update({
-    status: "RESOLVED",
-    resolved_at: admin.firestore.FieldValue.serverTimestamp(),
-    resolved_by: resolvedBy,
-  });
+  await db
+    .collection(DEAD_LETTER_COLLECTION)
+    .doc(docId)
+    .update({
+      status: "RESOLVED",
+      resolved_at:
+        admin.firestore.FieldValue
+          .serverTimestamp(),
+      resolved_by: resolvedBy,
+    });
 
-  console.log(`[DLQ] Item ${docId} marcado como resolvido por ${resolvedBy}`);
+  console.log(
+    `[DLQ] Item ${docId} marcado como ` +
+    `resolvido por ${resolvedBy}`
+  );
 }
 
 // ==========================================
 // UTILITÁRIOS
 // ==========================================
 
-/** Sleep helper */
+/**
+ * Sleep helper.
+ *
+ * @param {number} ms - Milissegundos para esperar
+ * @return {Promise<void>}
+ */
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(
+    (resolve) => setTimeout(resolve, ms)
+  );
 }
 
 /**
- * Wrapper conveniente para operações Firestore com retry.
+ * Wrapper conveniente para operações Firestore
+ * com retry.
  *
  * Pré-configurado para erros comuns do Firestore:
  * - Contenção (ABORTED)
  * - Timeout (DEADLINE_EXCEEDED)
  * - Serviço indisponível (UNAVAILABLE)
  *
- * @param operation Operação Firestore async
- * @param operationName Nome para logs
- * @param enableDLQ Habilitar dead letter queue
- * @returns Resultado da operação
+ * @param {Function} operation - Operação async
+ * @param {string} operationName - Nome para logs
+ * @param {boolean} enableDLQ - Habilitar DLQ
+ * @return {Promise<T>} Resultado da operação
  */
 export async function retryFirestoreOperation<T>(
   operation: () => Promise<T>,
@@ -413,7 +512,9 @@ export async function retryFirestoreOperation<T>(
 
   if (!result.success) {
     throw new Error(
-      `Operação "${operationName}" falhou após ${result.attempts} tentativas: ${result.error}`
+      `Operação "${operationName}" falhou ` +
+      `após ${result.attempts} tentativas: ` +
+      result.error
     );
   }
 

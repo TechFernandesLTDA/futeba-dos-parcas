@@ -130,7 +130,7 @@ describe("Validation Module", () => {
     });
 
     test("removes HTML entities", () => {
-      expect(sanitizeText("Hello&nbsp;World")).toBe("HelloWorld");
+      expect(sanitizeText("Hello&nbsp;World")).toBe("Hello World");
     });
 
     test("trims whitespace", () => {

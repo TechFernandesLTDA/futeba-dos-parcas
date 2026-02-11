@@ -8,9 +8,12 @@
  * - Ouro: LR 50-69
  * - Diamante: LR 70-100
  *
- * Promoção: LR >= limite superior por 3 jogos consecutivos
- * Rebaixamento: LR < limite inferior por 3 jogos consecutivos
- * Proteção: 5 jogos de imunidade após promoção/rebaixamento
+ * Promocao: LR >= limite superior por 3 jogos
+ * consecutivos.
+ * Rebaixamento: LR < limite inferior por 3 jogos
+ * consecutivos.
+ * Protecao: 5 jogos de imunidade apos
+ * promocao/rebaixamento.
  */
 
 import {logger} from "firebase-functions/v2";
@@ -20,13 +23,21 @@ export const RELEGATION_GAMES_REQUIRED = 3;
 export const PROTECTION_GAMES = 5;
 
 export interface LeagueState {
-    division: string;
-    promotionProgress: number;
-    relegationProgress: number;
-    protectionGames: number;
+  division: string;
+  promotionProgress: number;
+  relegationProgress: number;
+  protectionGames: number;
 }
 
-export function getNextDivisionThreshold(division: string): number {
+/**
+ * Retorna o threshold da proxima divisao.
+ *
+ * @param {string} division - Divisao atual.
+ * @return {number} Threshold para promocao.
+ */
+export function getNextDivisionThreshold(
+  division: string
+): number {
   switch (division) {
   case "BRONZE": return 30;
   case "PRATA": return 50;
@@ -36,7 +47,15 @@ export function getNextDivisionThreshold(division: string): number {
   }
 }
 
-export function getPreviousDivisionThreshold(division: string): number {
+/**
+ * Retorna o threshold da divisao anterior.
+ *
+ * @param {string} division - Divisao atual.
+ * @return {number} Threshold para rebaixamento.
+ */
+export function getPreviousDivisionThreshold(
+  division: string
+): number {
   switch (division) {
   case "BRONZE": return 0;
   case "PRATA": return 30;
@@ -46,7 +65,15 @@ export function getPreviousDivisionThreshold(division: string): number {
   }
 }
 
-export function getNextDivision(current: string): string {
+/**
+ * Retorna a proxima divisao acima da atual.
+ *
+ * @param {string} current - Divisao atual.
+ * @return {string} Proxima divisao.
+ */
+export function getNextDivision(
+  current: string
+): string {
   switch (current) {
   case "BRONZE": return "PRATA";
   case "PRATA": return "OURO";
@@ -56,7 +83,15 @@ export function getNextDivision(current: string): string {
   }
 }
 
-export function getPreviousDivision(current: string): string {
+/**
+ * Retorna a divisao abaixo da atual.
+ *
+ * @param {string} current - Divisao atual.
+ * @return {string} Divisao anterior.
+ */
+export function getPreviousDivision(
+  current: string
+): string {
   switch (current) {
   case "BRONZE": return "BRONZE";
   case "PRATA": return "BRONZE";
@@ -67,24 +102,43 @@ export function getPreviousDivision(current: string): string {
 }
 
 /**
- * Calcula o novo estado da liga baseado no rating atual.
- * Implementa a lógica de promoção/rebaixamento com:
- * - 3 jogos consecutivos acima do threshold para promoção
- * - 3 jogos consecutivos abaixo do threshold para rebaixamento
- * - 5 jogos de proteção após mudança de divisão
+ * Calcula o novo estado da liga baseado no
+ * rating atual. Implementa a logica de
+ * promocao/rebaixamento com:
+ * - 3 jogos consecutivos acima do threshold
+ *   para promocao
+ * - 3 jogos consecutivos abaixo do threshold
+ *   para rebaixamento
+ * - 5 jogos de protecao apos mudanca de divisao
+ *
+ * @param {LeagueState} currentState - Estado atual.
+ * @param {number} newRating - Novo rating.
+ * @return {LeagueState} Novo estado da liga.
  */
 export function calculateLeaguePromotion(
   currentState: LeagueState,
   newRating: number
 ): LeagueState {
-  let {division, promotionProgress, relegationProgress, protectionGames} = currentState;
+  let {
+    division,
+    promotionProgress,
+    relegationProgress,
+    protectionGames,
+  } = currentState;
 
-  const nextThreshold = getNextDivisionThreshold(division);
-  const prevThreshold = getPreviousDivisionThreshold(division);
+  const nextThreshold =
+    getNextDivisionThreshold(division);
+  const prevThreshold =
+    getPreviousDivisionThreshold(division);
 
-  // Se estiver protegido, decrementar e não alterar progressos
+  // Se estiver protegido, decrementar
+  // e nao alterar progressos
   if (protectionGames > 0) {
-    logger.info(`[LEAGUE] Proteção ativa: ${protectionGames} jogos restantes`);
+    const remaining = protectionGames;
+    logger.info(
+      `[LEAGUE] Protecao ativa: ${remaining}` +
+      " jogos restantes"
+    );
     return {
       division,
       promotionProgress: 0,
@@ -93,14 +147,25 @@ export function calculateLeaguePromotion(
     };
   }
 
-  // Verificar Promoção
-  if (newRating >= nextThreshold && division !== "DIAMANTE") {
+  // Verificar Promocao
+  if (
+    newRating >= nextThreshold &&
+    division !== "DIAMANTE"
+  ) {
     promotionProgress++;
     relegationProgress = 0;
 
-    if (promotionProgress >= PROMOTION_GAMES_REQUIRED) {
-      const newDivision = getNextDivision(division);
-      logger.info(`[LEAGUE] PROMOÇÃO: ${division} -> ${newDivision} (Rating: ${newRating.toFixed(1)})`);
+    if (
+      promotionProgress >= PROMOTION_GAMES_REQUIRED
+    ) {
+      const newDivision =
+        getNextDivision(division);
+      const ratingStr = newRating.toFixed(1);
+      logger.info(
+        "[LEAGUE] PROMOCAO: " +
+        `${division} -> ${newDivision}` +
+        ` (Rating: ${ratingStr})`
+      );
       return {
         division: newDivision,
         promotionProgress: 0,
@@ -108,16 +173,33 @@ export function calculateLeaguePromotion(
         protectionGames: PROTECTION_GAMES,
       };
     }
-    logger.info(`[LEAGUE] Progresso promoção: ${promotionProgress}/${PROMOTION_GAMES_REQUIRED} (Rating: ${newRating.toFixed(1)} >= ${nextThreshold})`);
-  }
-  // Verificar Rebaixamento
-  else if (newRating < prevThreshold && division !== "BRONZE") {
+    const required = PROMOTION_GAMES_REQUIRED;
+    const ratingStr = newRating.toFixed(1);
+    logger.info(
+      "[LEAGUE] Progresso promocao: " +
+      `${promotionProgress}/${required}` +
+      ` (Rating: ${ratingStr}` +
+      ` >= ${nextThreshold})`
+    );
+  } else if (
+    // Verificar Rebaixamento
+    newRating < prevThreshold &&
+    division !== "BRONZE"
+  ) {
     relegationProgress++;
     promotionProgress = 0;
 
-    if (relegationProgress >= RELEGATION_GAMES_REQUIRED) {
-      const newDivision = getPreviousDivision(division);
-      logger.info(`[LEAGUE] REBAIXAMENTO: ${division} -> ${newDivision} (Rating: ${newRating.toFixed(1)})`);
+    if (
+      relegationProgress >= RELEGATION_GAMES_REQUIRED
+    ) {
+      const newDivision =
+        getPreviousDivision(division);
+      const ratingStr = newRating.toFixed(1);
+      logger.info(
+        "[LEAGUE] REBAIXAMENTO: " +
+        `${division} -> ${newDivision}` +
+        ` (Rating: ${ratingStr})`
+      );
       return {
         division: newDivision,
         promotionProgress: 0,
@@ -125,12 +207,23 @@ export function calculateLeaguePromotion(
         protectionGames: PROTECTION_GAMES,
       };
     }
-    logger.info(`[LEAGUE] Progresso rebaixamento: ${relegationProgress}/${RELEGATION_GAMES_REQUIRED} (Rating: ${newRating.toFixed(1)} < ${prevThreshold})`);
-  }
-  // Status quo - resetar progressos se saiu da zona
-  else {
-    if (newRating < nextThreshold) promotionProgress = 0;
-    if (newRating >= prevThreshold) relegationProgress = 0;
+    const required = RELEGATION_GAMES_REQUIRED;
+    const ratingStr = newRating.toFixed(1);
+    logger.info(
+      "[LEAGUE] Progresso rebaixamento: " +
+      `${relegationProgress}/${required}` +
+      ` (Rating: ${ratingStr}` +
+      ` < ${prevThreshold})`
+    );
+  } else {
+    // Status quo - resetar progressos
+    // se saiu da zona
+    if (newRating < nextThreshold) {
+      promotionProgress = 0;
+    }
+    if (newRating >= prevThreshold) {
+      relegationProgress = 0;
+    }
   }
 
   return {
@@ -141,42 +234,87 @@ export function calculateLeaguePromotion(
   };
 }
 
+/** Dados de um jogo recente para calculo. */
+interface RecentGame {
+  xp_earned?: number;
+  won?: boolean;
+  goal_diff?: number;
+  was_mvp?: boolean;
+}
+
 /**
- * Calcula o League Rating baseado nos últimos jogos.
- * Fórmula: 40% PPJ + 30% WR + 20% GD + 10% MVP
+ * Calcula o League Rating baseado nos ultimos
+ * jogos.
+ * Formula: 40% PPJ + 30% WR + 20% GD + 10% MVP
  *
- * O resultado é sempre bound entre 0.0 e 100.0 para garantir integridade.
+ * O resultado e sempre bound entre 0.0 e 100.0
+ * para garantir integridade.
+ *
+ * @param {RecentGame[]} recentGames - Jogos recentes.
+ * @return {number} Rating calculado (0-100).
  */
-export function calculateLeagueRating(recentGames: any[]): number {
-  if (!recentGames || recentGames.length === 0) return 0;
+export function calculateLeagueRating(
+  recentGames: RecentGame[]
+): number {
+  if (!recentGames || recentGames.length === 0) {
+    return 0;
+  }
 
   const gamesCount = recentGames.length;
 
-  // PPJ - Pontos (XP) por Jogo (max 500 = 100 pontos)
-  const avgXp = recentGames.reduce((sum, g) => sum + (g.xp_earned || 0), 0) / gamesCount;
-  const ppjScore = Math.min(avgXp / 500.0, 1.0) * 100;
+  // PPJ - Pontos (XP) por Jogo
+  // (max 500 = 100 pontos)
+  const totalXp = recentGames.reduce(
+    (sum, g) => sum + (g.xp_earned || 0), 0
+  );
+  const avgXp = totalXp / gamesCount;
+  const ppjScore =
+    Math.min(avgXp / 500.0, 1.0) * 100;
 
   // WR - Win Rate (100% = 100 pontos)
-  const winRate = (recentGames.filter((g) => g.won).length / gamesCount) * 100;
+  const wins = recentGames.filter(
+    (g) => g.won
+  ).length;
+  const winRate = (wins / gamesCount) * 100;
 
-  // GD - Goal Difference médio (+3 = 100, -3 = 0)
-  const avgGD = recentGames.reduce((sum, g) => sum + (g.goal_diff || 0), 0) / gamesCount;
-  const gdScore = Math.max(0, Math.min(1, (avgGD + 3) / 6.0)) * 100;
+  // GD - Goal Difference medio
+  // (+3 = 100, -3 = 0)
+  const totalGD = recentGames.reduce(
+    (sum, g) => sum + (g.goal_diff || 0), 0
+  );
+  const avgGD = totalGD / gamesCount;
+  const gdNorm = (avgGD + 3) / 6.0;
+  const gdScore =
+    Math.max(0, Math.min(1, gdNorm)) * 100;
 
   // MVP Rate (50% = 100 pontos, cap)
-  const mvpRate = recentGames.filter((g) => g.was_mvp).length / gamesCount;
-  const mvpScore = Math.min(mvpRate / 0.5, 1.0) * 100;
+  const mvpCount = recentGames.filter(
+    (g) => g.was_mvp
+  ).length;
+  const mvpRate = mvpCount / gamesCount;
+  const mvpScore =
+    Math.min(mvpRate / 0.5, 1.0) * 100;
 
   // Calcular e garantir bounds (0.0 - 100.0)
-  const rating = (ppjScore * 0.4) + (winRate * 0.3) + (gdScore * 0.2) + (mvpScore * 0.1);
+  const rating =
+    (ppjScore * 0.4) +
+    (winRate * 0.3) +
+    (gdScore * 0.2) +
+    (mvpScore * 0.1);
   return Math.max(0, Math.min(100, rating));
 }
 
 /**
- * Retorna a divisão baseada apenas no rating (sem lógica de promoção/rebaixamento).
- * Usado como fallback ou para sugestão visual.
+ * Retorna a divisao baseada apenas no rating
+ * (sem logica de promocao/rebaixamento).
+ * Usado como fallback ou para sugestao visual.
+ *
+ * @param {number} rating - Rating do jogador.
+ * @return {string} Nome da divisao.
  */
-export function getDivisionForRating(rating: number): string {
+export function getDivisionForRating(
+  rating: number
+): string {
   if (rating >= 70) return "DIAMANTE";
   if (rating >= 50) return "OURO";
   if (rating >= 30) return "PRATA";

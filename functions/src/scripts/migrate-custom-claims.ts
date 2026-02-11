@@ -41,7 +41,12 @@ interface MigrationStats {
 }
 
 /**
- * Migra um batch de usuários para Custom Claims
+ * Migra um batch de usuários para Custom Claims.
+ *
+ * @param {Array} docs - Documentos dos usuários
+ * @param {MigrationStats} stats - Estatísticas
+ *   acumuladas da migração
+ * @return {Promise<void>}
  */
 async function migrateBatch(
   docs: admin.firestore.QueryDocumentSnapshot[],
@@ -63,7 +68,10 @@ async function migrateBatch(
           const currentClaims = userRecord.customClaims || {};
 
           if (currentClaims.role === role) {
-            console.log(`[SKIP] User ${uid} already has role=${role} in Custom Claims`);
+            console.log(
+              `[SKIP] User ${uid} already ` +
+              `has role=${role} in Custom Claims`
+            );
             stats.skipped++;
             return;
           }
@@ -74,22 +82,34 @@ async function migrateBatch(
 
           // Log progresso a cada 100 usuários
           if (stats.processed % 100 === 0) {
-            console.log(`[PROGRESS] ${stats.processed}/${stats.totalUsers} users migrated...`);
+            console.log(
+              "[PROGRESS] " +
+              `${stats.processed}/` +
+              `${stats.totalUsers} ` +
+              "users migrated..."
+            );
           }
 
           // Atualizar timestamp de migração no Firestore (opcional)
           await db.collection("users").doc(uid).update({
             claims_migrated_at: admin.firestore.FieldValue.serverTimestamp(),
           });
-        } catch (err: any) {
-          console.error(`[ERROR] Failed to migrate user ${uid}:`, err.message);
+        } catch (err: unknown) {
+          const errMsg =
+            err instanceof Error ?
+              err.message : String(err);
+          console.error(
+            "[ERROR] Failed to migrate " +
+            `user ${uid}:`,
+            errMsg
+          );
           stats.errors++;
 
           // Registrar erro em collection de auditoria
           await db.collection("migration_errors").add({
             type: "CUSTOM_CLAIMS_MIGRATION",
             user_id: uid,
-            error: err.message,
+            error: errMsg,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
           }).catch(() => {
             // Ignore error logging errors
@@ -123,6 +143,7 @@ export async function runMigration(): Promise<MigrationStats> {
     // Processar em chunks de 500 (limite do Firestore)
     let lastDoc: admin.firestore.QueryDocumentSnapshot | null = null;
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       let query = db.collection("users").limit(500);
 
@@ -134,7 +155,10 @@ export async function runMigration(): Promise<MigrationStats> {
 
       if (snapshot.empty) break;
 
-      console.log(`[MIGRATION] Processing batch of ${snapshot.docs.length} users...`);
+      console.log(
+        "[MIGRATION] Processing batch of " +
+        `${snapshot.docs.length} users...`
+      );
 
       await migrateBatch(snapshot.docs, stats);
 
@@ -157,8 +181,10 @@ export async function runMigration(): Promise<MigrationStats> {
     });
 
     return stats;
-  } catch (error: any) {
-    console.error("[MIGRATION] ❌ Fatal error:", error);
+  } catch (error: unknown) {
+    console.error(
+      "[MIGRATION] Fatal error:", error
+    );
     throw error;
   }
 }
@@ -181,7 +207,8 @@ export async function checkMigrationStatus(): Promise<{
     .get();
   const migratedUsers = migratedSnapshot.data().count;
 
-  const percentComplete = totalUsers > 0 ? (migratedUsers / totalUsers) * 100 : 0;
+  const percentComplete = totalUsers > 0 ?
+    (migratedUsers / totalUsers) * 100 : 0;
 
   return {
     totalUsers,

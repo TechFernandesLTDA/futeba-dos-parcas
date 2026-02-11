@@ -1,37 +1,44 @@
 /**
  * Badge awarding logic extracted for testability.
- * Funcoes puras que determinam quais badges devem ser concedidas.
+ * Funcoes puras que determinam quais badges
+ * devem ser concedidas.
  */
 
 export interface ConfirmationData {
-    goals: number;
-    assists: number;
-    saves: number;
-    position: string;
-    isMvp?: boolean;
-    isWorstPlayer?: boolean;
+  goals: number;
+  assists: number;
+  saves: number;
+  position: string;
+  isMvp?: boolean;
+  isWorstPlayer?: boolean;
 }
 
 export interface PlayerStats {
-    totalGames: number;
-    gamesWon: number;
-    currentMvpStreak: number;
+  totalGames: number;
+  gamesWon: number;
+  currentMvpStreak: number;
 }
 
 export interface BadgeContext {
-    confirmation: ConfirmationData;
-    newStats: PlayerStats;
-    streak: number;
-    newMvpStreak: number;
-    newLevel: number;
-    result: "WIN" | "DRAW" | "LOSS";
-    opponentScore?: number;
+  confirmation: ConfirmationData;
+  newStats: PlayerStats;
+  streak: number;
+  newMvpStreak: number;
+  newLevel: number;
+  result: "WIN" | "DRAW" | "LOSS";
+  opponentScore?: number;
 }
 
 /**
- * Determina quais badges de streak devem ser concedidas.
+ * Determina quais badges de streak devem
+ * ser concedidas.
+ *
+ * @param {number} streak - Streak atual do jogador.
+ * @return {string[]} Lista de badges de streak.
  */
-export function getStreakBadges(streak: number): string[] {
+export function getStreakBadges(
+  streak: number
+): string[] {
   const badges: string[] = [];
   if (streak >= 30) badges.push("streak_30");
   else if (streak >= 10) badges.push("iron_man");
@@ -40,9 +47,15 @@ export function getStreakBadges(streak: number): string[] {
 }
 
 /**
- * Determina quais badges de gols devem ser concedidas.
+ * Determina quais badges de gols devem
+ * ser concedidas.
+ *
+ * @param {number} goals - Gols marcados no jogo.
+ * @return {string[]} Lista de badges de gols.
  */
-export function getGoalsBadges(goals: number): string[] {
+export function getGoalsBadges(
+  goals: number
+): string[] {
   const badges: string[] = [];
   if (goals >= 5) {
     badges.push("hat_trick", "poker", "manita");
@@ -55,9 +68,15 @@ export function getGoalsBadges(goals: number): string[] {
 }
 
 /**
- * Determina quais badges de assistencias devem ser concedidas.
+ * Determina quais badges de assistencias
+ * devem ser concedidas.
+ *
+ * @param {number} assists - Assistencias no jogo.
+ * @return {string[]} Lista de badges de assist.
  */
-export function getAssistsBadges(assists: number): string[] {
+export function getAssistsBadges(
+  assists: number
+): string[] {
   const badges: string[] = [];
   if (assists >= 3) {
     badges.push("playmaker");
@@ -66,16 +85,33 @@ export function getAssistsBadges(assists: number): string[] {
 }
 
 /**
- * Determina se o jogador merece a badge balanced_player.
+ * Determina se o jogador merece a badge
+ * balanced_player.
+ *
+ * @param {number} goals - Gols marcados.
+ * @param {number} assists - Assistencias feitas.
+ * @return {string[]} Lista com badge ou vazia.
  */
-export function getBalancedPlayerBadge(goals: number, assists: number): string[] {
-  return (goals >= 2 && assists >= 2) ? ["balanced_player"] : [];
+export function getBalancedPlayerBadge(
+  goals: number,
+  assists: number
+): string[] {
+  return (goals >= 2 && assists >= 2) ?
+    ["balanced_player"] : [];
 }
 
 /**
- * Determina quais badges de MVP devem ser concedidas.
+ * Determina quais badges de MVP devem
+ * ser concedidas.
+ *
+ * @param {boolean} isMvp - Se o jogador e MVP.
+ * @param {number} newMvpStreak - Streak de MVP.
+ * @return {string[]} Lista de badges de MVP.
  */
-export function getMvpBadges(isMvp: boolean, newMvpStreak: number): string[] {
+export function getMvpBadges(
+  isMvp: boolean,
+  newMvpStreak: number
+): string[] {
   const badges: string[] = [];
   if (isMvp && newMvpStreak === 3) {
     badges.push("mvp_streak_3");
@@ -84,9 +120,15 @@ export function getMvpBadges(isMvp: boolean, newMvpStreak: number): string[] {
 }
 
 /**
- * Determina quais badges de veterano devem ser concedidas.
+ * Determina quais badges de veterano devem
+ * ser concedidas.
+ *
+ * @param {number} totalGames - Total de jogos.
+ * @return {string[]} Lista de badges veterano.
  */
-export function getVeteranBadges(totalGames: number): string[] {
+export function getVeteranBadges(
+  totalGames: number
+): string[] {
   const badges: string[] = [];
   if (totalGames === 100) badges.push("veteran_100");
   if (totalGames === 50) badges.push("veteran_50");
@@ -94,9 +136,15 @@ export function getVeteranBadges(totalGames: number): string[] {
 }
 
 /**
- * Determina quais badges de nivel devem ser concedidas.
+ * Determina quais badges de nivel devem
+ * ser concedidas.
+ *
+ * @param {number} level - Nivel atual do jogador.
+ * @return {string[]} Lista de badges de nivel.
  */
-export function getLevelBadges(level: number): string[] {
+export function getLevelBadges(
+  level: number
+): string[] {
   const badges: string[] = [];
   if (level >= 10) {
     badges.push("level_10", "level_5");
@@ -107,7 +155,13 @@ export function getLevelBadges(level: number): string[] {
 }
 
 /**
- * Determina quais badges de goleiro devem ser concedidas.
+ * Determina quais badges de goleiro devem
+ * ser concedidas.
+ *
+ * @param {string} position - Posicao do jogador.
+ * @param {number} saves - Defesas feitas.
+ * @param {number} opponentScore - Gols do adversario.
+ * @return {string[]} Lista de badges de goleiro.
  */
 export function getGoalkeeperBadges(
   position: string,
@@ -137,9 +191,17 @@ export function getGoalkeeperBadges(
 }
 
 /**
- * Determina quais badges de vitoria devem ser concedidas.
+ * Determina quais badges de vitoria devem
+ * ser concedidas.
+ *
+ * @param {string} result - Resultado do jogo.
+ * @param {number} gamesWon - Total de vitorias.
+ * @return {string[]} Lista de badges de vitoria.
  */
-export function getWinnerBadges(result: string, gamesWon: number): string[] {
+export function getWinnerBadges(
+  result: string,
+  gamesWon: number
+): string[] {
   const badges: string[] = [];
 
   if (result === "WIN") {
@@ -152,6 +214,10 @@ export function getWinnerBadges(result: string, gamesWon: number): string[] {
 
 /**
  * Calcula novo MVP streak baseado no resultado.
+ *
+ * @param {number} currentStreak - Streak atual.
+ * @param {boolean} isMvp - Se foi MVP no jogo.
+ * @return {number} Novo valor do streak.
  */
 export function calculateMvpStreak(
   currentStreak: number,
@@ -161,21 +227,59 @@ export function calculateMvpStreak(
 }
 
 /**
- * Coleta todas as badges que devem ser concedidas para um contexto.
+ * Coleta todas as badges que devem ser
+ * concedidas para um contexto.
+ *
+ * @param {BadgeContext} context - Contexto do jogo.
+ * @return {string[]} Lista de todas as badges.
  */
-export function getAllBadgesToAward(context: BadgeContext): string[] {
-  const {confirmation, newStats, streak, newMvpStreak, newLevel, result, opponentScore} = context;
+export function getAllBadgesToAward(
+  context: BadgeContext
+): string[] {
+  const {
+    confirmation,
+    newStats,
+    streak,
+    newMvpStreak,
+    newLevel,
+    result,
+    opponentScore,
+  } = context;
   const badges: string[] = [];
 
   badges.push(...getStreakBadges(streak));
-  badges.push(...getGoalsBadges(confirmation.goals));
-  badges.push(...getAssistsBadges(confirmation.assists));
-  badges.push(...getBalancedPlayerBadge(confirmation.goals, confirmation.assists));
-  badges.push(...getMvpBadges(confirmation.isMvp || false, newMvpStreak));
-  badges.push(...getVeteranBadges(newStats.totalGames));
+  badges.push(
+    ...getGoalsBadges(confirmation.goals)
+  );
+  badges.push(
+    ...getAssistsBadges(confirmation.assists)
+  );
+  badges.push(
+    ...getBalancedPlayerBadge(
+      confirmation.goals,
+      confirmation.assists
+    )
+  );
+  badges.push(
+    ...getMvpBadges(
+      confirmation.isMvp || false,
+      newMvpStreak
+    )
+  );
+  badges.push(
+    ...getVeteranBadges(newStats.totalGames)
+  );
   badges.push(...getLevelBadges(newLevel));
-  badges.push(...getGoalkeeperBadges(confirmation.position, confirmation.saves, opponentScore));
-  badges.push(...getWinnerBadges(result, newStats.gamesWon));
+  badges.push(
+    ...getGoalkeeperBadges(
+      confirmation.position,
+      confirmation.saves,
+      opponentScore
+    )
+  );
+  badges.push(
+    ...getWinnerBadges(result, newStats.gamesWon)
+  );
 
   return badges;
 }
