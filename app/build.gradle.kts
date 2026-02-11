@@ -235,7 +235,7 @@ dependencies {
     // implementation("com.jakewharton.threetenabp:threetenabp:1.4.7") // Migrated to java.time
 
     // Security - Encrypted SharedPreferences
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("androidx.security:security-crypto:1.1.0")
     
     // Biometric Authentication
     implementation("androidx.biometric:biometric:1.1.0")

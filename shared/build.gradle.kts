@@ -73,7 +73,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
                 // AndroidX Security Crypto (para SecureStorage)
-                implementation("androidx.security:security-crypto:1.1.0-alpha06")
+                implementation("androidx.security:security-crypto:1.1.0")
             }
         }
 
