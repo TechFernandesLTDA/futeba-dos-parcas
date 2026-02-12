@@ -177,33 +177,40 @@ export function sanitizeText(
 
   let sanitized = text;
 
-  // 1. Remover todas as tags HTML
-  sanitized = sanitized.replace(
-    /<[^>]*>/gi,
-    ""
-  );
+  // Aplica sanitização em loop para prevenir
+  // bypass via payloads aninhados (ex: <scr<script>ipt>)
+  let previous = "";
+  while (previous !== sanitized) {
+    previous = sanitized;
 
-  // 2. Remover entidades HTML numéricas/nomeadas
-  sanitized = sanitized.replace(
-    /&(?:#x?[0-9a-fA-F]+|[a-zA-Z]+);/gi,
-    " "
-  );
+    // 1. Remover todas as tags HTML
+    sanitized = sanitized.replace(
+      /<[^>]*>/gi,
+      ""
+    );
 
-  // 3. Remover caracteres de controle Unicode
-  // Zero-width chars, RTL/LTR override, BOM, etc.
-  // Regex de caracteres de controle Unicode
-  /* eslint-disable no-control-regex, max-len */
-  sanitized = sanitized.replace(
-    /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u200B-\u200F\u2028-\u202F\uFEFF\uFFF9-\uFFFF]/g,
-    ""
-  );
-  /* eslint-enable no-control-regex, max-len */
+    // 2. Remover entidades HTML numéricas/nomeadas
+    sanitized = sanitized.replace(
+      /&(?:#x?[0-9a-fA-F]+|[a-zA-Z]+);/gi,
+      " "
+    );
 
-  // 4. Remover protocolos perigosos
-  sanitized = sanitized.replace(
-    /(?:javascript|data|vbscript)\s*:/gi,
-    ""
-  );
+    // 3. Remover caracteres de controle Unicode
+    // Zero-width chars, RTL/LTR override, BOM
+    // Regex de caracteres de controle Unicode
+    /* eslint-disable no-control-regex, max-len */
+    sanitized = sanitized.replace(
+      /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u200B-\u200F\u2028-\u202F\uFEFF\uFFF9-\uFFFF]/g,
+      ""
+    );
+    /* eslint-enable no-control-regex, max-len */
+
+    // 4. Remover protocolos perigosos
+    sanitized = sanitized.replace(
+      /(?:javascript|data|vbscript)\s*:/gi,
+      ""
+    );
+  }
 
   // 5. Normalizar whitespace excessivo
   sanitized = sanitized.replace(/\s+/g, " ");
