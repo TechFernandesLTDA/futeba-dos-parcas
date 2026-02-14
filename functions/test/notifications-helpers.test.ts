@@ -3,6 +3,24 @@
  * Testa funcoes puras (sem dependencia do Firebase)
  */
 
+jest.mock("../src/middleware/rate-limiter", () => ({
+  checkRateLimit: jest.fn().mockResolvedValue({
+    allowed: true,
+    remaining: 10,
+    resetAt: new Date(Date.now() + 60000),
+  }),
+  RATE_LIMITS: {
+    SEND_NOTIFICATION: {
+      maxRequests: 20,
+      windowMs: 60000,
+    },
+    DEFAULT: {
+      maxRequests: 10,
+      windowMs: 60000,
+    },
+  },
+}));
+
 import { NotificationType, STREAK_MILESTONES } from "../src/notifications";
 
 describe("Notifications Helpers", () => {

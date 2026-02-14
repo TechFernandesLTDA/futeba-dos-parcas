@@ -33,6 +33,9 @@ import {
 } from "firebase-functions/v2/https";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {
+  sanitizeText,
+} from "../validation/index";
+import {
   FIRESTORE_WHERE_IN_LIMIT,
 } from "../constants";
 
@@ -186,6 +189,23 @@ export const getLeaderboardCached =
         );
       }
 
+      // Sanitizar e validar seasonId
+      const safeSeasonId =
+        sanitizeText(seasonId);
+      if (safeSeasonId.length > 100) {
+        throw new HttpsError(
+          "invalid-argument",
+          "seasonId excede 100 caracteres"
+        );
+      }
+      if (/[/\\.]/.test(safeSeasonId)) {
+        throw new HttpsError(
+          "invalid-argument",
+          "seasonId contém caracteres " +
+          "inválidos"
+        );
+      }
+
       const resultLimit = Math.min(
         limit || DEFAULT_LEADERBOARD_LIMIT,
         ABSOLUTE_MAX_LIMIT
@@ -198,7 +218,7 @@ export const getLeaderboardCached =
       if (!forceRefresh) {
         const cached =
           await getCachedLeaderboard(
-            seasonId,
+            safeSeasonId,
             resultLimit
           );
         if (cached) {
@@ -208,7 +228,7 @@ export const getLeaderboardCached =
           console.log(
             "[LEADERBOARD_CACHE] " +
             "Cache HIT para season " +
-            `${seasonId} ` +
+            `${safeSeasonId} ` +
             `(${cached.rankings.length} ` +
             `entradas, age: ${cacheAge}ms)`
           );
@@ -231,7 +251,7 @@ export const getLeaderboardCached =
       console.log(
         "[LEADERBOARD_CACHE] " +
         "Cache MISS para season " +
-        `${seasonId}. ` +
+        `${safeSeasonId}. ` +
         "Buscando do Firestore..."
       );
 
@@ -240,7 +260,7 @@ export const getLeaderboardCached =
       // Query principal de ranking
       const rankingSnap = await db
         .collection("season_participation")
-        .where("season_id", "==", seasonId)
+        .where("season_id", "==", safeSeasonId)
         .orderBy("points", "desc")
         .limit(resultLimit)
         .get();
@@ -306,7 +326,7 @@ export const getLeaderboardCached =
         );
 
       const cacheDocId =
-        `${seasonId}_${resultLimit}`;
+        `${safeSeasonId}_${resultLimit}`;
 
       // Salvar cache de forma síncrona
       // (garante persistência antes de retornar)
@@ -315,7 +335,7 @@ export const getLeaderboardCached =
           .collection(CACHE_COLLECTION)
           .doc(cacheDocId)
           .set({
-            season_id: seasonId,
+            season_id: safeSeasonId,
             rankings,
             cached_at: now,
             expires_at: expiresAt,

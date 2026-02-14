@@ -37,6 +37,13 @@ import {
   FIRESTORE_WHERE_IN_LIMIT,
   FIRESTORE_PAGINATION_LIMIT,
 } from "../constants";
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+} from "../middleware/rate-limiter";
+import {
+  sanitizeText,
+} from "../validation/index";
 
 const getDb = () => admin.firestore();
 const getFcm = () => admin.messaging();
@@ -776,6 +783,22 @@ export const enqueueNotificationCallable = onCall(
       );
     }
 
+    // Rate limiting
+    const batchRlResult = await checkRateLimit(
+      request.auth.uid,
+      {
+        ...RATE_LIMITS.BATCH_OPERATION,
+        keyPrefix: "enqueue_notif",
+      }
+    );
+    if (!batchRlResult.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Rate limit excedido. " +
+        "Tente novamente em breve."
+      );
+    }
+
     const {
       userIds,
       title,
@@ -860,6 +883,10 @@ export const enqueueNotificationCallable = onCall(
       }
     }
 
+    // Sanitizar inputs contra XSS
+    const safeTitle = sanitizeText(title);
+    const safeBody = sanitizeText(body);
+
     console.log(
       `[BATCH_FCM] Admin ${request.auth.uid}` +
       " enfileirando notificacao para" +
@@ -868,8 +895,8 @@ export const enqueueNotificationCallable = onCall(
 
     const queueId = await enqueueNotification({
       userIds,
-      title,
-      body,
+      title: safeTitle,
+      body: safeBody,
       type,
       data: data || {},
       priority: priority || "NORMAL",

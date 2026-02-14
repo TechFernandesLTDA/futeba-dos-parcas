@@ -14,6 +14,13 @@ import {onSchedule} from "firebase-functions/v2/scheduler";
 import {
   FIRESTORE_WHERE_IN_LIMIT,
 } from "./constants";
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+} from "./middleware/rate-limiter";
+import {
+  sanitizeText,
+} from "./validation/index";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -1026,6 +1033,23 @@ export const sendTestNotification = onCall(
     }
 
     const userId = request.auth.uid;
+
+    // Rate limiting
+    const rlResult = await checkRateLimit(
+      userId,
+      {
+        ...RATE_LIMITS.SEND_NOTIFICATION,
+        keyPrefix: "send_test_notif",
+      }
+    );
+    if (!rlResult.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Rate limit excedido. " +
+        "Tente novamente em breve."
+      );
+    }
+
     const {title, body, type} =
       request.data || {};
 
@@ -1067,11 +1091,15 @@ export const sendTestNotification = onCall(
       );
     }
 
+    // Sanitizar inputs contra XSS
+    const safeTitle = sanitizeText(title);
+    const safeBody = sanitizeText(body);
+
     const success = await sendNotificationToUser(
       userId,
       {
-        title: title.trim(),
-        body: body.trim(),
+        title: safeTitle,
+        body: safeBody,
         type: type || NotificationType.GAME_INVITE,
       }
     );
@@ -1111,6 +1139,23 @@ export const createFakeGameNotifications = onCall(
     }
 
     const userId = request.auth.uid;
+
+    // Rate limiting
+    const fakeRlResult = await checkRateLimit(
+      userId,
+      {
+        ...RATE_LIMITS.DEFAULT,
+        keyPrefix: "fake_game_notif",
+      }
+    );
+    if (!fakeRlResult.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Rate limit excedido. " +
+        "Tente novamente em breve."
+      );
+    }
+
     const rawCount = request.data?.count;
 
     // Validação: count entre 1 e 5

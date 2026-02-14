@@ -1,6 +1,10 @@
 import * as admin from "firebase-admin";
 import {onRequest} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
+import {
+  checkRateLimitByIp,
+} from "./middleware/rate-limiter";
+import {sanitizeText} from "./validation/index";
 
 // 2. Constants
 const START_DATE = new Date(
@@ -81,6 +85,25 @@ function getGameDates(
  */
 export const seedDatabase = onRequest(
   async (request, response) => {
+    // Rate limit por IP (3/min)
+    const clientIp =
+      request.ip || request.headers["x-forwarded-for"] as string || "unknown"; // eslint-disable-line max-len
+    const ipRlResult = await checkRateLimitByIp(
+      clientIp,
+      {
+        maxRequests: 3,
+        windowMs: 60 * 1000,
+        keyPrefix: "seed_db",
+      }
+    );
+    if (!ipRlResult.allowed) {
+      response.status(429).send(
+        "Rate limit excedido." +
+        " Tente novamente em breve."
+      );
+      return;
+    }
+
     // SECURITY FIX (CVE-4): Disable seeding
     // in production to prevent DoS attacks
     const environment =
@@ -98,7 +121,10 @@ export const seedDatabase = onRequest(
     }
 
     // Development-only: Basic secret protection
-    const secret = request.query.secret;
+    // Sanitizar param (defense-in-depth)
+    const rawSecret =
+      request.query.secret as string || "";
+    const secret = sanitizeText(rawSecret);
     if (secret !== "antigravity_seed") {
       logger.warn(
         "[SEEDING][SECURITY] Seeding " +
