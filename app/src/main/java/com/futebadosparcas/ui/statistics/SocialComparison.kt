@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -43,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -323,7 +325,7 @@ fun PlayerVsPlayerCard(
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(ComparisonCategory.entries) { category ->
+                items(ComparisonCategory.entries, key = { it.name }) { category ->
                     FilterChip(
                         selected = category == selectedCategory,
                         onClick = { onCategoryChange(category) },
@@ -436,7 +438,7 @@ fun ComparisonLeaderboard(
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(sortedPlayers.withIndex().toList()) { (index, player) ->
+            itemsIndexed(sortedPlayers, key = { _, player -> player.id }) { index, player ->
                 LeaderboardItem(
                     position = index + 1,
                     player = player,
@@ -527,7 +529,7 @@ private fun LeaderboardItem(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "Nível ${player.level}",
+                text = stringResource(R.string.social_level, player.level),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

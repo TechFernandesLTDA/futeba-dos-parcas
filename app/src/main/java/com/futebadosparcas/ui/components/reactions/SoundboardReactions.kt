@@ -52,6 +52,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import com.futebadosparcas.R
 import kotlinx.coroutines.delay
@@ -254,7 +255,7 @@ fun QuickReactionsBar(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(reactions) { reaction ->
+        items(reactions, key = { it.name }) { reaction ->
             QuickReactionButton(
                 reaction = reaction,
                 onClick = {
@@ -343,7 +344,7 @@ fun SoundboardPanel(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Reações",
+                text = stringResource(R.string.reactions_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -353,7 +354,7 @@ fun SoundboardPanel(
 
             // Categoria: Positivas
             Text(
-                text = "Positivas",
+                text = stringResource(R.string.reactions_positive),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -386,7 +387,7 @@ fun SoundboardPanel(
 
             // Categoria: Divertidas
             Text(
-                text = "Divertidas",
+                text = stringResource(R.string.reactions_funny),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -419,7 +420,7 @@ fun SoundboardPanel(
 
             // Categoria: Especiais
             Text(
-                text = "Especiais",
+                text = stringResource(R.string.reactions_special),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -570,11 +571,12 @@ fun ReactionCounter(
     counts: List<ReactionCount>,
     modifier: Modifier = Modifier
 ) {
+    val activeCounts = remember(counts) { counts.filter { it.count > 0 } }
     LazyRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(counts.filter { it.count > 0 }) { count ->
+        items(activeCounts, key = { it.type.name }) { count ->
             ReactionCountChip(count)
         }
     }

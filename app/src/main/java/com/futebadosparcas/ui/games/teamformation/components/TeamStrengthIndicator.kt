@@ -543,7 +543,7 @@ fun PositionDistributionCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Distribuicao de Posicoes",
+                text = stringResource(R.string.team_strength_position_distribution),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )

@@ -40,19 +40,14 @@ export async function generateGameFinishedActivityDirect(
     `para game ${gameId}...`
   );
 
-  // Buscar detalhes adicionais para a atividade
-  const liveScoreDoc = await db
-    .collection("live_scores")
-    .doc(gameId)
-    .get();
+  // Buscar detalhes adicionais em paralelo
+  const [liveScoreDoc, userDoc] = await Promise.all([
+    db.collection("live_scores").doc(gameId).get(),
+    db.collection("users").doc(gameData.owner_id).get(),
+  ]);
   let description =
     "Jogo finalizado! Confira os resultados e estatísticas.";
 
-  // Buscar dados do dono do jogo para a atividade
-  const userDoc = await db
-    .collection("users")
-    .doc(gameData.owner_id)
-    .get();
   const userData = userDoc.data();
   const userName = userData ? userData.name : "Alguém";
   const userPhoto = userData ? userData.photoUrl : null;

@@ -102,7 +102,7 @@ fun HeadToHeadSection(
                 Spacer(Modifier.height(16.dp))
 
                 Text(
-                    text = "Ultimos ${headToHead.lastMatches.size} Jogos",
+                    text = stringResource(R.string.head_to_head_last_matches, headToHead.lastMatches.size),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -333,7 +333,7 @@ private fun NoHistoryCard(modifier: Modifier = Modifier) {
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = "Sem historico",
+                text = stringResource(R.string.head_to_head_no_history),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

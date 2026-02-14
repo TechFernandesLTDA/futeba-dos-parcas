@@ -457,7 +457,7 @@ private fun InitialSearchContent(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            items(recentSearches) { item ->
+            items(recentSearches, key = { it }) { item ->
                 RecentSearchItem(
                     item = item,
                     onClick = { onRecentSearchClick(item) }
@@ -485,7 +485,7 @@ private fun InitialSearchContent(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        items(popularSearches) { searchTerm ->
+        items(popularSearches, key = { it }) { searchTerm ->
             ListItem(
                 headlineContent = {
                     Text(text = searchTerm, style = MaterialTheme.typography.bodyLarge)
