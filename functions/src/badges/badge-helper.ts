@@ -51,8 +51,9 @@ export function getStreakBadges(
     badges.push("streak_30");
   } else if (streak >= BADGE_STREAK_THRESHOLDS.IRON_MAN) {
     badges.push("iron_man");
+  } else if (streak >= 7) {
+    badges.push("streak_7");
   }
-  else if (streak >= 7) badges.push("streak_7");
   return badges;
 }
 
@@ -154,6 +155,8 @@ export function getVeteranBadges(
  * ser concedidas.
  *
  * @param {number} level - Nivel atual do jogador.
+ * @param {number} currentLevel - Nivel anterior
+ *   (para detectar mudanca).
  * @return {string[]} Lista de badges de nivel.
  */
 export function getLevelBadges(
