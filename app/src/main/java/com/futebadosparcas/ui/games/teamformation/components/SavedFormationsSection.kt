@@ -312,7 +312,7 @@ fun SaveFormationDialog(
         text = {
             Column {
                 Text(
-                    text = "Dê um nome para lembrar desta formação:",
+                    text = stringResource(R.string.formation_name_prompt),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -336,7 +336,7 @@ fun SaveFormationDialog(
 
                 // Sugestoes
                 Text(
-                    text = "Sugestões:",
+                    text = stringResource(R.string.formation_suggestions),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -353,7 +353,7 @@ fun SaveFormationDialog(
                         "Amigos",
                         "Familia"
                     )
-                    items(suggestions) { suggestion ->
+                    items(suggestions, key = { it }) { suggestion ->
                         SuggestionChip(
                             onClick = { formationName = suggestion },
                             label = { Text(suggestion) }
@@ -521,7 +521,7 @@ fun FormationDetailCard(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Vezes usado",
+                            text = stringResource(R.string.formation_times_used_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -534,7 +534,7 @@ fun FormationDetailCard(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Jogadores",
+                            text = stringResource(R.string.formation_players_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

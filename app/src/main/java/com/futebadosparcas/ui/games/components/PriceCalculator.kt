@@ -56,7 +56,7 @@ fun PricePerPlayerCalculator(
     modifier: Modifier = Modifier
 ) {
     val pricePerPlayer = if (maxPlayers > 0) totalPrice / maxPlayers else 0.0
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
 
     AnimatedVisibility(
         visible = totalPrice > 0 && maxPlayers > 0,
@@ -133,7 +133,7 @@ fun PricePerPlayerBadge(
 ) {
     if (pricePerPlayer == null || pricePerPlayer <= 0) return
 
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
 
     Box(
         modifier = modifier
@@ -163,7 +163,7 @@ fun PricePerPlayerCalculatorWithOverride(
     onManualPriceChange: (Double?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
+    val currencyFormat = remember { NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR")) }
     var manualPriceText by remember { mutableStateOf("") }
 
     // Calcular preco automatico para exibicao

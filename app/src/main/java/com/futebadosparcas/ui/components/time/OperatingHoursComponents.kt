@@ -346,6 +346,8 @@ fun OpenStatusIndicator(
 /**
  * Verifica se o local esta atualmente aberto.
  */
+private val TIME_FORMATTER = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+
 private fun isLocationCurrentlyOpen(
     openingTime: String,
     closingTime: String,
@@ -360,8 +362,8 @@ private fun isLocationCurrentlyOpen(
         // Verifica se hoje e dia de operacao
         if (todayOurFormat !in operatingDays) return false
 
-        val opening = java.time.LocalTime.parse(openingTime, java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
-        val closing = java.time.LocalTime.parse(closingTime, java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+        val opening = java.time.LocalTime.parse(openingTime, TIME_FORMATTER)
+        val closing = java.time.LocalTime.parse(closingTime, TIME_FORMATTER)
 
         // Verifica se horario atual esta dentro do range
         now.isAfter(opening) && now.isBefore(closing)

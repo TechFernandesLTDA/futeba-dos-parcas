@@ -189,16 +189,12 @@ private fun SetupSystemBars(isDark: Boolean) {
     val view = LocalView.current
     val window = (view.context as? androidx.activity.ComponentActivity)?.window
 
-    LaunchedEffect(isDark) {
+    val surfaceColor = MaterialTheme.colorScheme.surface
+
+    LaunchedEffect(isDark, surfaceColor) {
         window?.let {
             it.statusBarColor = Color.Transparent.toArgb()
-
-            val navBarColor = if (isDark) {
-                Color(0xFF0F1114).copy(alpha = 0.9f).toArgb()
-            } else {
-                Color(0xFFFFFFFF).copy(alpha = 0.95f).toArgb()
-            }
-            it.navigationBarColor = navBarColor
+            it.navigationBarColor = surfaceColor.toArgb()
 
             WindowInsetsControllerCompat(window, view).apply {
                 isAppearanceLightStatusBars = !isDark

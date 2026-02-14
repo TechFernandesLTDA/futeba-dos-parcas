@@ -86,6 +86,15 @@ jest.mock("firebase-functions/v2/firestore", () => ({
   }),
 }));
 
+// Mock rate-limiter para permitir todas as requests nos testes
+jest.mock("../src/middleware/rate-limiter", () => ({
+  checkRateLimit: jest.fn().mockResolvedValue({
+    allowed: true,
+    remaining: 10,
+    resetAt: new Date(Date.now() + 60000),
+  }),
+}));
+
 describe("Custom Claims - setUserRole", () => {
   beforeEach(() => {
     jest.clearAllMocks();

@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -43,6 +44,7 @@ import com.futebadosparcas.R
 data class GlassConfig(
     val blurRadius: Dp = 20.dp,
     val backgroundColor: Color = Color.White,
+    val contentColor: Color = Color.Black,
     val backgroundAlpha: Float = 0.7f,
     val borderAlpha: Float = 0.3f,
     val shadowElevation: Dp = 4.dp,
@@ -54,6 +56,7 @@ data class GlassConfig(
  */
 val DarkGlassConfig = GlassConfig(
     backgroundColor = Color.Black,
+    contentColor = Color.White,
     backgroundAlpha = 0.6f,
     borderAlpha = 0.2f
 )
@@ -63,9 +66,18 @@ val DarkGlassConfig = GlassConfig(
  */
 val LightGlassConfig = GlassConfig(
     backgroundColor = Color.White,
+    contentColor = Color.Black,
     backgroundAlpha = 0.8f,
     borderAlpha = 0.3f
 )
+
+/**
+ * Retorna a configuração glass adequada ao tema atual.
+ */
+@Composable
+fun rememberGlassConfig(): GlassConfig {
+    return if (isSystemInDarkTheme()) DarkGlassConfig else LightGlassConfig
+}
 
 // ==================== Main Composable ====================
 
@@ -124,11 +136,8 @@ fun GlassTopBar(
                 .fillMaxWidth()
                 .height(1.dp)
                 .background(
-                    color = if (glassConfig.backgroundColor == Color.White) {
-                        Color.Black.copy(alpha = glassConfig.borderAlpha * 0.5f)
-                    } else {
-                        Color.White.copy(alpha = glassConfig.borderAlpha * 0.5f)
-                    }
+                    color = glassConfig.contentColor
+                        .copy(alpha = glassConfig.borderAlpha * 0.5f)
                 )
         )
 
@@ -149,11 +158,7 @@ fun GlassTopBar(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
-                color = if (glassConfig.backgroundColor == Color.White) {
-                    Color.Black.copy(alpha = 0.9f)
-                } else {
-                    Color.White.copy(alpha = 0.9f)
-                },
+                color = glassConfig.contentColor.copy(alpha = 0.9f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
@@ -190,11 +195,7 @@ fun GlassTopBarWithBack(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.back),
-                    tint = if (glassConfig.backgroundColor == Color.White) {
-                        Color.Black.copy(alpha = 0.9f)
-                    } else {
-                        Color.White.copy(alpha = 0.9f)
-                    }
+                    tint = glassConfig.contentColor.copy(alpha = 0.9f)
                 )
             }
         },
@@ -244,11 +245,8 @@ fun CollapsingGlassTopBar(
             Text(
                 text = expandedTitle,
                 style = MaterialTheme.typography.headlineLarge,
-                color = if (glassConfig.backgroundColor == Color.White) {
-                    Color.Black.copy(alpha = (1f - scrollProgress) * 0.9f)
-                } else {
-                    Color.White.copy(alpha = (1f - scrollProgress) * 0.9f)
-                },
+                color = glassConfig.contentColor
+                    .copy(alpha = (1f - scrollProgress) * 0.9f),
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(16.dp)
@@ -271,11 +269,8 @@ fun CollapsingGlassTopBar(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
-                color = if (glassConfig.backgroundColor == Color.White) {
-                    Color.Black.copy(alpha = scrollProgress * 0.9f)
-                } else {
-                    Color.White.copy(alpha = scrollProgress * 0.9f)
-                },
+                color = glassConfig.contentColor
+                    .copy(alpha = scrollProgress * 0.9f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier

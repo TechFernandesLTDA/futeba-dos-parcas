@@ -34,8 +34,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import com.futebadosparcas.R
 import androidx.compose.ui.unit.dp
 import kotlin.math.sin
 
@@ -427,7 +429,7 @@ fun StreakCard(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Próximo: ${nextLevel.displayName}",
+                    text = stringResource(R.string.streak_next_level, nextLevel.displayName),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -468,7 +470,7 @@ fun StreakCard(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "Recorde:",
+                text = stringResource(R.string.streak_record),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -532,7 +534,7 @@ fun StreakLevelUpAnimation(
             )
 
             Text(
-                text = "Sequência desbloqueada!",
+                text = stringResource(R.string.streak_unlocked),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

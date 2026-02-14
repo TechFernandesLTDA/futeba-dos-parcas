@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -82,7 +83,7 @@ fun AutoSaveIndicator(
 ) {
     if (lastSavedAt == null && !isSaving) return
 
-    val dateFormat = SimpleDateFormat("HH:mm", Locale.forLanguageTag("pt-BR"))
+    val dateFormat = remember { SimpleDateFormat("HH:mm", Locale.forLanguageTag("pt-BR")) }
 
     Row(
         modifier = modifier.padding(horizontal = 16.dp, vertical = 4.dp),

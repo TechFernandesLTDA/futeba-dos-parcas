@@ -235,17 +235,17 @@ fun PlayerLeagueCard(
             val hasExplicitStatus = protectionGames > 0 || promotionProgress > 0 || relegationProgress > 0
             if (protectionGames > 0) {
                 StatusBadge(
-                    text = "Protegido",
+                    text = stringResource(R.string.evolution_protected),
                     color = MaterialTheme.colorScheme.primary
                 )
             } else if (promotionProgress > 0) {
                 StatusBadge(
-                    text = "Subindo ($promotionProgress/3)",
+                    text = stringResource(R.string.evolution_promoting, promotionProgress),
                     color = MaterialTheme.colorScheme.primary
                 )
             } else if (relegationProgress > 0) {
                 StatusBadge(
-                    text = "Risco ($relegationProgress/3)",
+                    text = stringResource(R.string.evolution_relegating, relegationProgress),
                     color = MaterialTheme.colorScheme.error
                 )
             }

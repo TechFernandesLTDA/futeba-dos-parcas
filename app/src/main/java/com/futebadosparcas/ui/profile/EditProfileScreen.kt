@@ -190,25 +190,8 @@ fun EditProfileScreen(
                     onSaveClick = { formData ->
                         isSaving = true
                         viewModel.updateProfile(
-                            name = formData.name,
-                            nickname = formData.nickname,
-                            preferredFieldTypes = formData.preferredFieldTypes.map {
-                                com.futebadosparcas.data.model.FieldType.valueOf(it.name)
-                            },
-                            photoUri = selectedImageUri,
-                            strikerRating = formData.strikerRating,
-                            midRating = formData.midRating,
-                            defenderRating = formData.defenderRating,
-                            gkRating = formData.gkRating,
-                            birthDate = formData.birthDate,
-                            gender = formData.gender,
-                            heightCm = formData.heightCm,
-                            weightKg = formData.weightKg,
-                            dominantFoot = formData.dominantFoot,
-                            primaryPosition = formData.primaryPosition,
-                            secondaryPosition = formData.secondaryPosition,
-                            playStyle = formData.playStyle,
-                            experienceYears = formData.experienceYears
+                            formData = formData,
+                            photoUri = selectedImageUri
                         )
                     },
                     modifier = Modifier.padding(paddingValues)

@@ -168,7 +168,7 @@ private fun EmptyPairsPlaceholder() {
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Nenhum par configurado",
+                text = stringResource(R.string.pair_players_none),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
@@ -346,7 +346,7 @@ private fun AddPairDialog(
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(players) { player ->
+                    items(players, key = { it.id }) { player ->
                         val isSelected = player.id == player1?.id
                         val isDisabled = player.id == player2?.id
 
@@ -376,7 +376,7 @@ private fun AddPairDialog(
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(players) { player ->
+                    items(players, key = { it.id }) { player ->
                         val isSelected = player.id == player2?.id
                         val isDisabled = player.id == player1?.id
 

@@ -2,22 +2,23 @@
  * UTILITÁRIO REUTILIZÁVEL DE SOFT DELETE - P2 #40
  *
  * Padrão de soft-delete para documentos Firestore.
- * Em vez de deletar fisicamente, marca com `deleted_at` e `deleted_by`.
+ * Em vez de deletar fisicamente, marca com
+ * `deleted_at` e `deleted_by`.
  *
  * BENEFÍCIOS:
  * - Reversível (pode restaurar)
  * - Auditável (registra quem/quando deletou)
- * - Compliance-friendly (LGPD/GDPR soft-delete period)
+ * - Compliance-friendly (LGPD/GDPR)
  * - Integridade referencial mantida
  *
  * CAMPOS ADICIONADOS AO DOCUMENTO:
- * - deleted_at: Timestamp (null = ativo, non-null = deletado)
- * - deleted_by: string (UID do usuário que deletou)
+ * - deleted_at: Timestamp (null=ativo)
+ * - deleted_by: string (UID do usuário)
  * - deleted_reason: string (motivo opcional)
- * - status: "DELETED" (opcional, depende da coleção)
+ * - status: "DELETED" (opcional)
  *
  * CLEANUP AUTOMÁTICO:
- * - Documentos soft-deleted são permanentemente removidos após 30 dias
+ * - Documentos soft-deleted são removidos após 30d
  * - Funções agendadas em maintenance/soft-delete.ts
  *
  * @see specs/P2_40_SOFT_DELETE_PATTERN.md
@@ -56,21 +57,21 @@ export interface RestoreResult {
 export interface SoftDeleteOptions {
   /** Motivo da deleção (opcional) */
   reason?: string;
-  /** Alterar o campo status para "DELETED" (padrão: true) */
+  /** Alterar status para "DELETED" (padrão: true) */
   setStatusDeleted?: boolean;
-  /** Campos adicionais para atualizar no soft-delete */
-  additionalFields?: Record<string, any>;
+  /** Campos adicionais para atualizar */
+  additionalFields?: Record<string, unknown>;
 }
 
 /** Opções para restauração */
 export interface RestoreOptions {
-  /** Status para restaurar (padrão: depende da coleção) */
+  /** Status para restaurar */
   restoreStatus?: string;
-  /** Campos adicionais para atualizar na restauração */
-  additionalFields?: Record<string, any>;
+  /** Campos adicionais para atualizar */
+  additionalFields?: Record<string, unknown>;
 }
 
-/** Resultado de cleanup de documentos soft-deleted */
+/** Resultado de cleanup de docs soft-deleted */
 export interface CleanupResult {
   collection: string;
   totalDeleted: number;
@@ -86,17 +87,18 @@ export interface CleanupResult {
 /**
  * Marca um documento como soft-deleted.
  *
- * Não remove fisicamente o documento, apenas adiciona campos:
+ * Não remove fisicamente o documento, apenas
+ * adiciona campos:
  * - deleted_at: timestamp atual
  * - deleted_by: UID do usuário
  * - deleted_reason: motivo (opcional)
- * - status: "DELETED" (se setStatusDeleted = true)
+ * - status: "DELETED" (se setStatusDeleted=true)
  *
- * @param collection - Nome da coleção Firestore
- * @param docId - ID do documento
- * @param deletedBy - UID do usuário que está deletando
- * @param options - Opções adicionais
- * @returns Resultado da operação
+ * @param {string} collection - Nome da coleção
+ * @param {string} docId - ID do documento
+ * @param {string} deletedBy - UID do usuário
+ * @param {SoftDeleteOptions} options - Opções
+ * @return {Promise<SoftDeleteResult>} Resultado
  */
 export async function softDelete(
   collection: string,
@@ -108,7 +110,9 @@ export async function softDelete(
   const now = new Date();
 
   try {
-    const docRef = db.collection(collection).doc(docId);
+    const docRef = db
+      .collection(collection)
+      .doc(docId);
     const docSnap = await docRef.get();
 
     if (!docSnap.exists) {
@@ -118,7 +122,9 @@ export async function softDelete(
         collection,
         deletedAt: now,
         deletedBy,
-        error: `Documento ${docId} não encontrado na coleção ${collection}`,
+        error:
+          `Documento ${docId} não encontrado ` +
+          `na coleção ${collection}`,
       };
     }
 
@@ -126,21 +132,32 @@ export async function softDelete(
 
     // Verificar se já está deletado (idempotência)
     if (docData?.deleted_at) {
-      console.log(`[SOFT_DELETE] Documento ${collection}/${docId} já está soft-deleted`);
+      console.log(
+        "[SOFT_DELETE] Documento " +
+        `${collection}/${docId} ` +
+        "já está soft-deleted"
+      );
       return {
         success: true,
         docId,
         collection,
-        deletedAt: docData.deleted_at.toDate ? docData.deleted_at.toDate() : now,
-        deletedBy: docData.deleted_by || deletedBy,
+        deletedAt: docData.deleted_at.toDate ?
+          docData.deleted_at.toDate() :
+          now,
+        deletedBy:
+          docData.deleted_by || deletedBy,
       };
     }
 
     // Montar campos de atualização
-    const updateFields: Record<string, any> = {
-      deleted_at: admin.firestore.FieldValue.serverTimestamp(),
+    const updateFields: Record<string, unknown> = {
+      deleted_at:
+        admin.firestore.FieldValue
+          .serverTimestamp(),
       deleted_by: deletedBy,
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at:
+        admin.firestore.FieldValue
+          .serverTimestamp(),
       ...options.additionalFields,
     };
 
@@ -155,8 +172,12 @@ export async function softDelete(
     await docRef.update(updateFields);
 
     console.log(
-      `[SOFT_DELETE] Documento ${collection}/${docId} soft-deleted por ${deletedBy}` +
-      (options.reason ? ` (motivo: ${options.reason})` : "")
+      "[SOFT_DELETE] Documento " +
+      `${collection}/${docId} ` +
+      `soft-deleted por ${deletedBy}` +
+      (options.reason ?
+        ` (motivo: ${options.reason})` :
+        "")
     );
 
     return {
@@ -166,15 +187,23 @@ export async function softDelete(
       deletedAt: now,
       deletedBy,
     };
-  } catch (error: any) {
-    console.error(`[SOFT_DELETE] Erro ao soft-delete ${collection}/${docId}:`, error);
+  } catch (error: unknown) {
+    const typedError =
+      error as Record<string, unknown>;
+    console.error(
+      "[SOFT_DELETE] Erro ao soft-delete " +
+      `${collection}/${docId}:`,
+      error
+    );
     return {
       success: false,
       docId,
       collection,
       deletedAt: now,
       deletedBy,
-      error: error.message || "Erro desconhecido",
+      error:
+        (typedError.message as string) ||
+        "Erro desconhecido",
     };
   }
 }
@@ -182,13 +211,14 @@ export async function softDelete(
 /**
  * Restaura um documento soft-deleted.
  *
- * Remove os campos de deleção e opcionalmente restaura o status original.
+ * Remove os campos de deleção e opcionalmente
+ * restaura o status original.
  *
- * @param collection - Nome da coleção Firestore
- * @param docId - ID do documento
- * @param restoredBy - UID do usuário que está restaurando
- * @param options - Opções adicionais
- * @returns Resultado da operação
+ * @param {string} collection - Nome da coleção
+ * @param {string} docId - ID do documento
+ * @param {string} restoredBy - UID do usuário
+ * @param {RestoreOptions} options - Opções
+ * @return {Promise<RestoreResult>} Resultado
  */
 export async function restoreSoftDeleted(
   collection: string,
@@ -200,7 +230,9 @@ export async function restoreSoftDeleted(
   const now = new Date();
 
   try {
-    const docRef = db.collection(collection).doc(docId);
+    const docRef = db
+      .collection(collection)
+      .doc(docId);
     const docSnap = await docRef.get();
 
     if (!docSnap.exists) {
@@ -210,7 +242,9 @@ export async function restoreSoftDeleted(
         collection,
         restoredAt: now,
         restoredBy,
-        error: `Documento ${docId} não encontrado na coleção ${collection}`,
+        error:
+          `Documento ${docId} não encontrado ` +
+          `na coleção ${collection}`,
       };
     }
 
@@ -224,30 +258,42 @@ export async function restoreSoftDeleted(
         collection,
         restoredAt: now,
         restoredBy,
-        error: `Documento ${collection}/${docId} não está soft-deleted`,
+        error:
+          `Documento ${collection}/${docId} ` +
+          "não está soft-deleted",
       };
     }
 
-    // Montar campos de atualização (remover campos de deleção)
-    const updateFields: Record<string, any> = {
-      deleted_at: admin.firestore.FieldValue.delete(),
-      deleted_by: admin.firestore.FieldValue.delete(),
-      deleted_reason: admin.firestore.FieldValue.delete(),
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
-      restored_at: admin.firestore.FieldValue.serverTimestamp(),
+    // Montar campos de atualização
+    const updateFields: Record<string, unknown> = {
+      deleted_at:
+        admin.firestore.FieldValue.delete(),
+      deleted_by:
+        admin.firestore.FieldValue.delete(),
+      deleted_reason:
+        admin.firestore.FieldValue.delete(),
+      updated_at:
+        admin.firestore.FieldValue
+          .serverTimestamp(),
+      restored_at:
+        admin.firestore.FieldValue
+          .serverTimestamp(),
       restored_by: restoredBy,
       ...options.additionalFields,
     };
 
     // Restaurar status se especificado
     if (options.restoreStatus) {
-      updateFields.status = options.restoreStatus;
+      updateFields.status =
+        options.restoreStatus;
     }
 
     await docRef.update(updateFields);
 
     console.log(
-      `[SOFT_DELETE] Documento ${collection}/${docId} restaurado por ${restoredBy}`
+      "[SOFT_DELETE] Documento " +
+      `${collection}/${docId} ` +
+      `restaurado por ${restoredBy}`
     );
 
     return {
@@ -257,15 +303,23 @@ export async function restoreSoftDeleted(
       restoredAt: now,
       restoredBy,
     };
-  } catch (error: any) {
-    console.error(`[SOFT_DELETE] Erro ao restaurar ${collection}/${docId}:`, error);
+  } catch (error: unknown) {
+    const typedError =
+      error as Record<string, unknown>;
+    console.error(
+      "[SOFT_DELETE] Erro ao restaurar " +
+      `${collection}/${docId}:`,
+      error
+    );
     return {
       success: false,
       docId,
       collection,
       restoredAt: now,
       restoredBy,
-      error: error.message || "Erro desconhecido",
+      error:
+        (typedError.message as string) ||
+        "Erro desconhecido",
     };
   }
 }
@@ -273,9 +327,9 @@ export async function restoreSoftDeleted(
 /**
  * Verifica se um documento está soft-deleted.
  *
- * @param collection - Nome da coleção Firestore
- * @param docId - ID do documento
- * @returns true se o documento está soft-deleted
+ * @param {string} collection - Nome da coleção
+ * @param {string} docId - ID do documento
+ * @return {Promise<boolean>} true se soft-deleted
  */
 export async function isSoftDeleted(
   collection: string,
@@ -284,28 +338,34 @@ export async function isSoftDeleted(
   const db = getDb();
 
   try {
-    const docSnap = await db.collection(collection).doc(docId).get();
+    const docSnap = await db
+      .collection(collection)
+      .doc(docId)
+      .get();
     if (!docSnap.exists) return false;
 
     const data = docSnap.data();
     return data?.deleted_at != null;
   } catch (error) {
-    console.error(`[SOFT_DELETE] Erro ao verificar ${collection}/${docId}:`, error);
+    console.error(
+      "[SOFT_DELETE] Erro ao verificar " +
+      `${collection}/${docId}:`,
+      error
+    );
     return false;
   }
 }
 
 /**
- * Cleanup genérico de documentos soft-deleted antigos.
+ * Cleanup genérico de documentos soft-deleted
+ * antigos. Remove permanentemente documentos que
+ * foram soft-deleted há mais de `retentionDays`.
  *
- * Remove permanentemente documentos que foram soft-deleted
- * há mais de `retentionDays` dias.
- *
- * @param collection - Nome da coleção Firestore
- * @param retentionDays - Dias de retenção antes de deletar permanentemente (padrão: 30)
- * @param maxBatches - Número máximo de batches para processar (padrão: 10)
- * @param batchSize - Tamanho de cada batch (padrão: 100)
- * @returns Resultado do cleanup
+ * @param {string} collection - Nome da coleção
+ * @param {number} retentionDays - Dias de retenção
+ * @param {number} maxBatches - Máx batches
+ * @param {number} batchSize - Tamanho do batch
+ * @return {Promise<CleanupResult>} Resultado
  */
 export async function cleanupSoftDeleted(
   collection: string,
@@ -317,8 +377,11 @@ export async function cleanupSoftDeleted(
   const startTime = Date.now();
 
   const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
-  const cutoffTimestamp = admin.firestore.Timestamp.fromDate(cutoffDate);
+  cutoffDate.setDate(
+    cutoffDate.getDate() - retentionDays
+  );
+  const cutoffTimestamp =
+    admin.firestore.Timestamp.fromDate(cutoffDate);
 
   let totalDeleted = 0;
   let batchCount = 0;
@@ -351,7 +414,10 @@ export async function cleanupSoftDeleted(
       batchCount++;
 
       console.log(
-        `[SOFT_DELETE_CLEANUP] Batch ${batchCount}: ${snapshot.size} documentos removidos de ${collection}`
+        "[SOFT_DELETE_CLEANUP] Batch " +
+        `${batchCount}: ${snapshot.size} ` +
+        "documentos removidos de " +
+        `${collection}`
       );
 
       if (snapshot.size < batchSize) {
@@ -362,8 +428,11 @@ export async function cleanupSoftDeleted(
     const durationMs = Date.now() - startTime;
 
     console.log(
-      `[SOFT_DELETE_CLEANUP] ${collection}: ${totalDeleted} documentos permanentemente removidos ` +
-      `em ${batchCount} batches (${durationMs}ms)`
+      "[SOFT_DELETE_CLEANUP] " +
+      `${collection}: ${totalDeleted} ` +
+      "documentos permanentemente removidos " +
+      `em ${batchCount} batches ` +
+      `(${durationMs}ms)`
     );
 
     return {
@@ -373,8 +442,12 @@ export async function cleanupSoftDeleted(
       cutoffDate,
       durationMs,
     };
-  } catch (error: any) {
-    console.error(`[SOFT_DELETE_CLEANUP] Erro em ${collection}:`, error);
+  } catch (error: unknown) {
+    console.error(
+      "[SOFT_DELETE_CLEANUP] Erro em " +
+      `${collection}:`,
+      error
+    );
     return {
       collection,
       totalDeleted,
@@ -386,47 +459,65 @@ export async function cleanupSoftDeleted(
 }
 
 /**
- * Soft-delete em cascata para um grupo e seus jogos associados.
+ * Soft-delete em cascata para um grupo e seus
+ * jogos associados.
  *
- * Marca o grupo e todos os jogos ativos do grupo como soft-deleted.
- * Usa batch write para atomicidade.
+ * Marca o grupo e todos os jogos ativos do grupo
+ * como soft-deleted. Usa batch write para
+ * atomicidade.
  *
- * @param groupId - ID do grupo
- * @param deletedBy - UID do usuário
- * @param reason - Motivo da deleção
- * @returns Resultado com contagem de documentos afetados
+ * @param {string} groupId - ID do grupo
+ * @param {string} deletedBy - UID do usuário
+ * @param {string} reason - Motivo da deleção
+ * @return {Promise<object>} Resultado com contagem
  */
 export async function softDeleteGroupCascade(
   groupId: string,
   deletedBy: string,
   reason = ""
-): Promise<{groupDeleted: boolean; gamesDeleted: number; error?: string}> {
+): Promise<{
+  groupDeleted: boolean;
+  gamesDeleted: number;
+  error?: string;
+}> {
   const db = getDb();
 
   try {
     const batch = db.batch();
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const now =
+      admin.firestore.FieldValue.serverTimestamp();
 
     // 1. Soft-delete do grupo
-    const groupRef = db.collection("groups").doc(groupId);
+    const groupRef = db
+      .collection("groups")
+      .doc(groupId);
     const groupSnap = await groupRef.get();
 
     if (!groupSnap.exists) {
-      return {groupDeleted: false, gamesDeleted: 0, error: "Grupo não encontrado"};
+      return {
+        groupDeleted: false,
+        gamesDeleted: 0,
+        error: "Grupo não encontrado",
+      };
     }
 
     if (groupSnap.data()?.deleted_at) {
-      return {groupDeleted: false, gamesDeleted: 0, error: "Grupo já deletado"};
+      return {
+        groupDeleted: false,
+        gamesDeleted: 0,
+        error: "Grupo já deletado",
+      };
     }
 
     batch.update(groupRef, {
       deleted_at: now,
       deleted_by: deletedBy,
-      deleted_reason: reason || "Grupo deletado pelo proprietário",
+      deleted_reason:
+        reason || "Grupo deletado pelo proprietário",
       updated_at: now,
     });
 
-    // 2. Soft-delete dos jogos do grupo (apenas ativos, status != DELETED)
+    // 2. Soft-delete dos jogos do grupo
     const gamesSnap = await db
       .collection("games")
       .where("group_id", "==", groupId)
@@ -443,7 +534,8 @@ export async function softDeleteGroupCascade(
       batch.update(gameDoc.ref, {
         deleted_at: now,
         deleted_by: deletedBy,
-        deleted_reason: `Grupo deletado: ${reason}`,
+        deleted_reason:
+          `Grupo deletado: ${reason}`,
         status: "DELETED",
         updated_at: now,
       });
@@ -454,16 +546,26 @@ export async function softDeleteGroupCascade(
     await batch.commit();
 
     console.log(
-      `[SOFT_DELETE_CASCADE] Grupo ${groupId}: 1 grupo + ${gamesDeleted} jogos soft-deleted`
+      "[SOFT_DELETE_CASCADE] Grupo " +
+      `${groupId}: 1 grupo + ` +
+      `${gamesDeleted} jogos soft-deleted`
     );
 
     return {groupDeleted: true, gamesDeleted};
-  } catch (error: any) {
-    console.error(`[SOFT_DELETE_CASCADE] Erro para grupo ${groupId}:`, error);
+  } catch (error: unknown) {
+    const typedError =
+      error as Record<string, unknown>;
+    console.error(
+      "[SOFT_DELETE_CASCADE] Erro para grupo " +
+      `${groupId}:`,
+      error
+    );
     return {
       groupDeleted: false,
       gamesDeleted: 0,
-      error: error.message || "Erro desconhecido",
+      error:
+        (typedError.message as string) ||
+        "Erro desconhecido",
     };
   }
 }

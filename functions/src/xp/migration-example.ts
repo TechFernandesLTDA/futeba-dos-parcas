@@ -22,6 +22,27 @@ import {
 
 const db = admin.firestore();
 
+/** Configurações de XP do grupo (legado) */
+interface XpSettings {
+  xp_presence?: number;
+  xp_per_goal?: number;
+  xp_per_assist?: number;
+  xp_per_save?: number;
+  xp_win?: number;
+  xp_draw?: number;
+  xp_mvp?: number;
+  [key: string]: number | undefined;
+}
+
+/** Confirmação/stats de um jogador (legado) */
+interface PlayerConf {
+  goals: number;
+  assists: number;
+  saves: number;
+  is_worst_player?: boolean;
+  [key: string]: number | boolean | undefined;
+}
+
 // ==========================================
 // FEATURE FLAG
 // ==========================================
@@ -51,8 +72,12 @@ export async function isIdempotentXpEnabled(): Promise<boolean> {
 // ==========================================
 
 /**
- * Converte dados do formato antigo para o novo formato de XpTransactionData.
- * Usado para manter compatibilidade durante migração.
+ * Converte dados do formato antigo para o novo
+ * formato de XpTransactionData. Usado para manter
+ * compatibilidade durante migração.
+ *
+ * @param {object} params - Dados do formato legado
+ * @return {XpTransactionData} Dados convertidos
  */
 export function buildXpTransactionData(params: {
   gameId: string;
@@ -61,8 +86,8 @@ export function buildXpTransactionData(params: {
   finalXp: number;
   currentLevel: number;
   newLevel: number;
-  settings: any;
-  conf: any;
+  settings: XpSettings;
+  conf: PlayerConf;
   result: string;
   isMvp: boolean;
   cleanSheetXp: number;
@@ -141,13 +166,19 @@ export function buildXpTransactionData(params: {
 // ==========================================
 
 /**
- * Processa XP de um jogador usando sistema antigo OU novo baseado em feature flag.
+ * Processa XP de um jogador usando sistema
+ * antigo OU novo baseado em feature flag.
  * Permite rollout gradual sem downtime.
+ *
+ * @param {object} params - Parâmetros de XP
+ * @param {admin.firestore.WriteBatch}
+ *   legacyBatch - Batch legado (opcional)
+ * @return {Promise<void>}
  *
  * EXEMPLO DE USO NO index.ts:
  * ```typescript
  * // Substituir:
- * // batch.update(db.collection("users").doc(uid), userUpdate);
+ * // batch.update(userRef, userUpdate);
  * // batch.set(logRef, log);
  *
  * // Por:
@@ -168,8 +199,8 @@ export async function processXpHybrid(
     finalXp: number;
     currentLevel: number;
     newLevel: number;
-    settings: any;
-    conf: any;
+    settings: XpSettings;
+    conf: PlayerConf;
     result: string;
     isMvp: boolean;
     cleanSheetXp: number;
@@ -185,7 +216,10 @@ export async function processXpHybrid(
   if (useNewSystem) {
     // NOVO SISTEMA: Processamento idempotente
     console.log(
-      `[XP_HYBRID] Usando sistema IDEMPOTENTE para ${params.userId} em ${params.gameId}`
+      "[XP_HYBRID] Usando sistema " +
+      "IDEMPOTENTE para " +
+      `${params.userId} em ` +
+      `${params.gameId}`
     );
 
     const txData = buildXpTransactionData(params);
@@ -205,7 +239,9 @@ export async function processXpHybrid(
   } else {
     // SISTEMA ANTIGO: Usar batch fornecido
     console.log(
-      `[XP_HYBRID] Usando sistema LEGADO para ${params.userId} em ${params.gameId}`
+      "[XP_HYBRID] Usando sistema LEGADO " +
+      `para ${params.userId} em ` +
+      `${params.gameId}`
     );
 
     if (!legacyBatch) {
@@ -216,7 +252,7 @@ export async function processXpHybrid(
 
     // Processar usando código antigo (batch writes)
     const userRef = db.collection("users").doc(params.userId);
-    const userUpdate: any = {
+    const userUpdate: Record<string, unknown> = {
       experience_points: params.finalXp,
       level: params.newLevel,
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
@@ -274,7 +310,12 @@ export async function processXpHybrid(
 // ==========================================
 
 /**
- * Processa múltiplos jogadores em batch com suporte a ambos sistemas.
+ * Processa múltiplos jogadores em batch
+ * com suporte a ambos sistemas.
+ *
+ * @param {Array} players - Lista de jogadores
+ *   para processar XP
+ * @return {Promise<void>}
  */
 export async function processGameXpBatch(
   players: Array<{
@@ -284,8 +325,8 @@ export async function processGameXpBatch(
     finalXp: number;
     currentLevel: number;
     newLevel: number;
-    settings: any;
-    conf: any;
+    settings: XpSettings;
+    conf: PlayerConf;
     result: string;
     isMvp: boolean;
     cleanSheetXp: number;
@@ -299,7 +340,11 @@ export async function processGameXpBatch(
 
   if (useNewSystem) {
     // NOVO SISTEMA: Batch idempotente
-    console.log(`[XP_BATCH] Processando ${players.length} jogadores com sistema IDEMPOTENTE`);
+    console.log(
+      "[XP_BATCH] Processando " +
+      `${players.length} jogadores ` +
+      "com sistema IDEMPOTENTE"
+    );
 
     const transactions = players.map((p) => buildXpTransactionData(p));
     const results = await processXpBatch(transactions);
@@ -316,11 +361,17 @@ export async function processGameXpBatch(
 
     const skipped = results.filter((r) => r.alreadyProcessed).length;
     console.log(
-      `[XP_BATCH] Concluído: ${results.length - skipped} processados, ${skipped} já existiam`
+      "[XP_BATCH] Concluído: " +
+      `${results.length - skipped} ` +
+      `processados, ${skipped} já existiam`
     );
   } else {
     // SISTEMA ANTIGO: Batch writes tradicionais
-    console.log(`[XP_BATCH] Processando ${players.length} jogadores com sistema LEGADO`);
+    console.log(
+      "[XP_BATCH] Processando " +
+      `${players.length} jogadores ` +
+      "com sistema LEGADO"
+    );
 
     const batch = db.batch();
 
@@ -338,24 +389,33 @@ export async function processGameXpBatch(
 // ==========================================
 
 /**
- * Script para adicionar transaction_id em xp_logs existentes.
- * Executar ANTES de ativar feature flag.
+ * Script para adicionar transaction_id
+ * em xp_logs existentes. Executar ANTES
+ * de ativar feature flag.
+ *
+ * @param {object} options - Opções de execução
+ * @return {Promise<object>} Contagem de
+ *   atualizados e erros
  *
  * COMO USAR:
  * ```bash
- * # No Firebase Console > Cloud Functions > Shell
- * backfillTransactionIds({ dryRun: true }) // Preview
- * backfillTransactionIds({ dryRun: false }) // Executar
+ * # No Firebase Console > Shell
+ * backfillTransactionIds({ dryRun: true })
+ * backfillTransactionIds({ dryRun: false })
  * ```
  */
-export async function backfillTransactionIds(options: {
-  dryRun?: boolean;
-  batchSize?: number;
-}): Promise<{ updated: number; errors: number }> {
+export async function backfillTransactionIds(
+  options: {
+    dryRun?: boolean;
+    batchSize?: number;
+  }
+): Promise<{updated: number; errors: number}> {
   const {dryRun = true, batchSize = 500} = options;
 
   console.log(
-    `[BACKFILL] Iniciando backfill de transaction_ids (dryRun: ${dryRun})...`
+    "[BACKFILL] Iniciando backfill de " +
+    "transaction_ids " +
+    `(dryRun: ${dryRun})...`
   );
 
   let updated = 0;
@@ -370,11 +430,17 @@ export async function backfillTransactionIds(options: {
       .get();
 
     if (logsSnap.empty) {
-      console.log("[BACKFILL] Nenhum log sem transaction_id encontrado");
+      console.log(
+        "[BACKFILL] Nenhum log sem " +
+        "transaction_id encontrado"
+      );
       return {updated: 0, errors: 0};
     }
 
-    console.log(`[BACKFILL] Encontrados ${logsSnap.size} logs para atualizar`);
+    console.log(
+      "[BACKFILL] Encontrados " +
+      `${logsSnap.size} logs para atualizar`
+    );
 
     if (!dryRun) {
       const batch = db.batch();
@@ -389,7 +455,11 @@ export async function backfillTransactionIds(options: {
           batch.update(doc.ref, {transaction_id: transactionId});
           updated++;
         } else {
-          console.warn(`[BACKFILL] Log ${doc.id} sem game_id ou user_id`);
+          console.warn(
+            "[BACKFILL] Log " +
+            `${doc.id} sem game_id ` +
+            "ou user_id"
+          );
           errors++;
         }
       });
@@ -397,7 +467,11 @@ export async function backfillTransactionIds(options: {
       await batch.commit();
       console.log(`[BACKFILL] Batch commitado: ${updated} atualizados`);
     } else {
-      console.log(`[BACKFILL] DRY RUN: ${logsSnap.size} logs seriam atualizados`);
+      console.log(
+        "[BACKFILL] DRY RUN: " +
+        `${logsSnap.size} logs ` +
+        "seriam atualizados"
+      );
       updated = logsSnap.size;
     }
 

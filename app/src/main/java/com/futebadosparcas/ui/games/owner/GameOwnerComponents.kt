@@ -781,7 +781,7 @@ fun TransferOwnershipDialog(
                     LazyColumn(
                         modifier = Modifier.heightIn(max = 300.dp)
                     ) {
-                        items(eligiblePlayers) { player ->
+                        items(eligiblePlayers, key = { it.userId }) { player ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()

@@ -352,6 +352,20 @@ class WaitlistRepositoryImpl @Inject constructor(
         return try {
             val expiredResult = getExpiredEntries()
             val expired = expiredResult.getOrNull() ?: emptyList()
+            if (expired.isEmpty()) return Result.success(0)
+
+            // Buscar todos os games unicos em batch (evita N+1)
+            val gameIds = expired.map { it.gameId }.distinct()
+            val gamesMap = gameIds.chunked(10).flatMap { chunk ->
+                firestore.collection(COLLECTION_GAMES)
+                    .whereIn(
+                        com.google.firebase.firestore.FieldPath.documentId(),
+                        chunk
+                    )
+                    .get()
+                    .await()
+                    .documents
+            }.associateBy { it.id }
 
             var promotedCount = 0
 
@@ -359,13 +373,9 @@ class WaitlistRepositoryImpl @Inject constructor(
                 // Marcar como expirado
                 updateWaitlistStatus(entry.gameId, entry.userId, WaitlistStatus.EXPIRED)
 
-                // Notificar proximo
-                val game = firestore.collection(COLLECTION_GAMES)
-                    .document(entry.gameId)
-                    .get()
-                    .await()
-
-                val autoPromoteMinutes = game.getLong("waitlist_auto_promote_minutes")?.toInt() ?: 30
+                // Notificar proximo (usa cache do batch)
+                val autoPromoteMinutes = gamesMap[entry.gameId]
+                    ?.getLong("waitlist_auto_promote_minutes")?.toInt() ?: 30
                 val nextResult = notifyNextInLine(entry.gameId, autoPromoteMinutes)
 
                 if (nextResult.isSuccess && nextResult.getOrNull() != null) {
@@ -417,11 +427,14 @@ class WaitlistRepositoryImpl @Inject constructor(
                 .get()
                 .await()
 
+            // Batch write para atualizar posicoes atomicamente
+            val batch = firestore.batch()
             var position = 1
             for (doc in snapshot.documents) {
-                doc.reference.update("queue_position", position).await()
+                batch.update(doc.reference, "queue_position", position)
                 position++
             }
+            batch.commit().await()
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao reordenar fila", e)
         }

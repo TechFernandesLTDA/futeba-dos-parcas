@@ -486,7 +486,7 @@ private fun RankingItem(
 
                     if (player.average > 0) {
                         Text(
-                            text = "Média: ${String.format("%.2f", player.average)}",
+                            text = stringResource(R.string.ranking_average, String.format("%.2f", player.average)),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -335,7 +335,7 @@ private fun NotificationFilterChips(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
-        items(NotificationFilter.entries) { filter ->
+        items(NotificationFilter.entries, key = { it.name }) { filter ->
             FilterChip(
                 selected = selectedFilter == filter,
                 onClick = { onFilterSelected(filter) },

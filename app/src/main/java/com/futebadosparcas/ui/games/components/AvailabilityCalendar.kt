@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -223,8 +224,8 @@ fun DayAvailabilityDetail(
     onTimeSlotSelected: (TimeSlot) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val ptBr = Locale.forLanguageTag("pt-BR")
-    val formatter = DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM", ptBr)
+    val ptBr = remember { Locale.forLanguageTag("pt-BR") }
+    val formatter = remember { DateTimeFormatter.ofPattern("EEEE, dd 'de' MMMM", ptBr) }
 
     Card(
         modifier = modifier.fillMaxWidth(),

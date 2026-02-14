@@ -112,7 +112,7 @@ fun ColorPickerSection(
             Text(title, style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(16.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(presets) { color ->
+                items(presets, key = { it.toArgb() }) { color ->
                     val isSelected = selectedColor == color.toArgb()
                     Box(
                         modifier = Modifier

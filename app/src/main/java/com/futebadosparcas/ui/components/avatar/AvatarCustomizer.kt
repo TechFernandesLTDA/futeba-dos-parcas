@@ -634,7 +634,7 @@ private fun FaceCustomizer(
 ) {
     Column {
         Text(
-            text = "Tom de Pele",
+            text = stringResource(R.string.avatar_skin_tone),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -658,7 +658,7 @@ private fun FaceCustomizer(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Expressão",
+            text = stringResource(R.string.avatar_expression),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -689,7 +689,7 @@ private fun HairCustomizer(
 ) {
     Column {
         Text(
-            text = "Estilo",
+            text = stringResource(R.string.avatar_style),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -713,7 +713,7 @@ private fun HairCustomizer(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Cor do Cabelo",
+            text = stringResource(R.string.avatar_hair_color),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -747,7 +747,7 @@ private fun AccessoriesCustomizer(
 ) {
     Column {
         Text(
-            text = "Óculos",
+            text = stringResource(R.string.avatar_glasses),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -771,7 +771,7 @@ private fun AccessoriesCustomizer(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Barba/Bigode",
+            text = stringResource(R.string.avatar_facial_hair),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -816,7 +816,7 @@ private fun ShirtCustomizer(
 
     Column {
         Text(
-            text = "Cor da Camisa",
+            text = stringResource(R.string.avatar_shirt_color),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -840,7 +840,7 @@ private fun ShirtCustomizer(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Número",
+            text = stringResource(R.string.avatar_number),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -879,7 +879,7 @@ private fun FrameCustomizer(
 ) {
     Column {
         Text(
-            text = "Moldura",
+            text = stringResource(R.string.avatar_frame),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -908,7 +908,7 @@ private fun FrameCustomizer(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Badge",
+            text = stringResource(R.string.avatar_badge),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -922,7 +922,7 @@ private fun FrameCustomizer(
             // Opção sem badge
             EmojiOption(
                 emoji = "❌",
-                label = "Nenhum",
+                label = stringResource(R.string.avatar_none),
                 isSelected = config.badge == null,
                 onClick = { onConfigChange(config.copy(badge = null)) }
             )
@@ -1056,6 +1056,7 @@ private fun FrameOption(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            val outlineColor = MaterialTheme.colorScheme.outline
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -1066,7 +1067,7 @@ private fun FrameOption(
                         } else if (frame.colors.isNotEmpty()) {
                             Brush.linearGradient(listOf(frame.colors.first(), frame.colors.first()))
                         } else {
-                            Brush.linearGradient(listOf(Color.Gray, Color.Gray))
+                            Brush.linearGradient(listOf(outlineColor, outlineColor))
                         }
                     ),
                 contentAlignment = Alignment.Center
@@ -1075,7 +1076,7 @@ private fun FrameOption(
                     Icon(
                         imageVector = Icons.Default.Lock,
                         contentDescription = stringResource(R.string.cd_locked),
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -1125,7 +1126,7 @@ private fun BadgeOption(
                     Icon(
                         imageVector = Icons.Default.Lock,
                         contentDescription = stringResource(R.string.cd_locked),
-                        tint = Color.Black.copy(alpha = 0.5f),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         modifier = Modifier.size(16.dp)
                     )
                 }

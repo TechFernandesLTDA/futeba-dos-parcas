@@ -744,7 +744,7 @@ fun VoiceRecorderCard(
             when (state) {
                 RecordingState.IDLE -> {
                     Text(
-                        text = "Toque para gravar",
+                        text = stringResource(R.string.voice_tap_to_record),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

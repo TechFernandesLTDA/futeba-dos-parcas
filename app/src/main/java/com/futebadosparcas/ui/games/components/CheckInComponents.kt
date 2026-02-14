@@ -181,7 +181,7 @@ fun PlayerCheckInCard(
             } else {
                 Spacer(modifier = Modifier.height(4.dp))
                 userConfirmation.checkedInAt?.let { date ->
-                    val timeFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.forLanguageTag("pt-BR"))
+                    val timeFormat = remember { java.text.SimpleDateFormat("HH:mm", java.util.Locale.forLanguageTag("pt-BR")) }
                     Text(
                         text = stringResource(R.string.checkin_done_at, timeFormat.format(date)),
                         style = MaterialTheme.typography.bodySmall,

@@ -314,7 +314,7 @@ private fun PricePerPlayerCard(
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "Dividido entre $totalPlayers jogadores",
+                        text = stringResource(R.string.financial_split_among, totalPlayers),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -431,7 +431,7 @@ private fun PlayerPaymentCard(
                 when {
                     isPaid -> {
                         Text(
-                            text = "Pago: ${currencyFormat.format(pricePerPlayer)}",
+                            text = stringResource(R.string.financial_paid, currencyFormat.format(pricePerPlayer)),
                             style = MaterialTheme.typography.bodySmall,
                             color = BrandColors.WhatsApp
                         )
@@ -446,14 +446,14 @@ private fun PlayerPaymentCard(
                             color = MaterialTheme.colorScheme.tertiary
                         )
                         Text(
-                            text = "Falta: ${currencyFormat.format(remainingAmount)}",
+                            text = stringResource(R.string.financial_remaining, currencyFormat.format(remainingAmount)),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error
                         )
                     }
                     else -> {
                         Text(
-                            text = "Deve: ${currencyFormat.format(pricePerPlayer)}",
+                            text = stringResource(R.string.financial_owes, currencyFormat.format(pricePerPlayer)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )

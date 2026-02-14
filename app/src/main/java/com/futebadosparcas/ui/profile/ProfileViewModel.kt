@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.datasource.ProfilePhotoDataSource
 import com.futebadosparcas.data.model.AutoRatings
-import com.futebadosparcas.data.model.FieldType
 import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.data.model.PerformanceRatingCalculator
 import com.futebadosparcas.data.repository.GameRepository
@@ -186,23 +185,8 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun updateProfile(
-        name: String,
-        nickname: String?,
-        preferredFieldTypes: List<FieldType>,
-        photoUri: Uri?,
-        strikerRating: Double,
-        midRating: Double,
-        defenderRating: Double,
-        gkRating: Double,
-        birthDate: java.util.Date?,
-        gender: String?,
-        heightCm: Int?,
-        weightKg: Int?,
-        dominantFoot: String?,
-        primaryPosition: String?,
-        secondaryPosition: String?,
-        playStyle: String?,
-        experienceYears: Int?
+        formData: ProfileFormData,
+        photoUri: Uri?
     ) {
         viewModelScope.launch {
             val currentState = _uiState.value
@@ -250,30 +234,24 @@ class ProfileViewModel @Inject constructor(
 
                 // Criar usuário atualizado
                 val updatedUser = currentUser.copy(
-                    name = name,
-                    nickname = nickname,
+                    name = formData.name,
+                    nickname = formData.nickname,
                     photoUrl = photoUrl,
-                    strikerRating = strikerRating,
-                    midRating = midRating,
-                    defenderRating = defenderRating,
-                    gkRating = gkRating,
-                    preferredPosition = primaryPosition,
-                    primaryPosition = primaryPosition,
-                    secondaryPosition = secondaryPosition,
-                    playStyle = playStyle,
-                    experienceYears = experienceYears,
-                    birthDate = birthDate?.time,
-                    gender = gender,
-                    heightCm = heightCm,
-                    weightKg = weightKg,
-                    dominantFoot = dominantFoot,
-                    preferredFieldTypes = preferredFieldTypes.map {
-                        try {
-                            com.futebadosparcas.domain.model.FieldType.valueOf(it.name)
-                        } catch (e: Exception) {
-                            com.futebadosparcas.domain.model.FieldType.SOCIETY
-                        }
-                    }
+                    strikerRating = formData.strikerRating,
+                    midRating = formData.midRating,
+                    defenderRating = formData.defenderRating,
+                    gkRating = formData.gkRating,
+                    preferredPosition = formData.primaryPosition,
+                    primaryPosition = formData.primaryPosition,
+                    secondaryPosition = formData.secondaryPosition,
+                    playStyle = formData.playStyle,
+                    experienceYears = formData.experienceYears,
+                    birthDate = formData.birthDate?.time,
+                    gender = formData.gender,
+                    heightCm = formData.heightCm,
+                    weightKg = formData.weightKg,
+                    dominantFoot = formData.dominantFoot,
+                    preferredFieldTypes = formData.preferredFieldTypes
                 )
 
                 // Atualizar no repositório

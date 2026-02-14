@@ -193,7 +193,7 @@ private fun LocationDashboardCard(
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = "Verificado",
+                                    text = stringResource(R.string.field_owner_verified),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Medium

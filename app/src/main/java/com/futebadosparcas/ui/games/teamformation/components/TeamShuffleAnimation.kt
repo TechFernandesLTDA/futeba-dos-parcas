@@ -118,7 +118,7 @@ private fun ShufflingCards(
     ) {
         // Titulo
         Text(
-            text = "Embaralhando...",
+            text = stringResource(R.string.team_shuffle_shuffling),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = Color.White
@@ -360,7 +360,7 @@ private fun ShuffleCompleteMessage() {
         Spacer(Modifier.height(16.dp))
 
         Text(
-            text = "Times Definidos!",
+            text = stringResource(R.string.team_shuffle_done),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = Color.White
