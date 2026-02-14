@@ -3,6 +3,13 @@ import {
   onDocumentUpdated,
   onDocumentDeleted,
 } from "firebase-functions/v2/firestore";
+import {
+  FIRESTORE_WHERE_IN_LIMIT,
+  FIRESTORE_BATCH_SAFE_LIMIT,
+} from "./constants";
+import {
+  getAllBadgesToAward,
+} from "./badges/badge-helper";
 
 // PERF_001: Lazy imports para otimizar cold start
 let leagueCalcImported = false;
@@ -362,6 +369,275 @@ export function checkMilestones(
 }
 
 // ==========================================
+// EXTRACTED HELPERS (from onGameStatusUpdate)
+// ==========================================
+
+/**
+ * Determina o resultado de cada time no jogo.
+ * @param {Team[]} teams Times participantes.
+ * @param {LiveGameScore | null} liveScore
+ *   Placar ao vivo.
+ * @return {Record<string, string>} Mapa de
+ *   resultados por time.
+ */
+function determineGameResults(
+  teams: Team[],
+  liveScore: LiveGameScore | null
+): Record<string, "WIN" | "LOSS" | "DRAW"> {
+  const results: Record<
+    string, "WIN" | "LOSS" | "DRAW"
+  > = {};
+  if (teams.length < 2) return results;
+
+  const t1 = teams.find(
+    (t) => t.id === (
+      liveScore ?
+        liveScore.team1Id :
+        teams[0].id
+    )
+  );
+  const t2 = teams.find(
+    (t) => t.id === (
+      liveScore ?
+        liveScore.team2Id :
+        teams[1].id
+    )
+  );
+
+  let s1 = t1 ? t1.score : 0;
+  let s2 = t2 ? t2.score : 0;
+  if (liveScore) {
+    s1 = liveScore.team1Score;
+    s2 = liveScore.team2Score;
+  }
+
+  if (t1 && t2) {
+    if (s1 > s2) {
+      results[t1.id] = "WIN";
+      results[t2.id] = "LOSS";
+    } else if (s2 > s1) {
+      results[t1.id] = "LOSS";
+      results[t2.id] = "WIN";
+    } else {
+      results[t1.id] = "DRAW";
+      results[t2.id] = "DRAW";
+    }
+  }
+  return results;
+}
+
+/**
+ * Calcula o placar do adversário para um time.
+ * Retorna -1 se não for possível determinar.
+ * @param {Team | undefined} team Time do jogador.
+ * @param {LiveGameScore | null} liveScore
+ *   Placar ao vivo.
+ * @param {Team[]} teams Todos os times.
+ * @return {number} Placar do adversário ou -1.
+ */
+function getOpponentScore(
+  team: Team | undefined,
+  liveScore: LiveGameScore | null,
+  teams: Team[]
+): number {
+  if (liveScore) {
+    if (
+      team &&
+      team.id === liveScore.team1Id
+    ) {
+      return liveScore.team2Score;
+    } else if (
+      team &&
+      team.id === liveScore.team2Id
+    ) {
+      return liveScore.team1Score;
+    }
+  } else if (
+    teams.length >= 2 && team
+  ) {
+    const opponent = teams.find(
+      (t) => t.id !== team.id
+    );
+    if (opponent) {
+      return opponent.score;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Busca todos os usuários por IDs em chunks
+ * de FIRESTORE_WHERE_IN_LIMIT.
+ * @param {string[]} ids IDs dos usuários.
+ * @return {Promise<Map>} Mapa de dados.
+ */
+async function fetchAllUsers(
+  ids: string[]
+): Promise<
+  Map<
+    string,
+    admin.firestore.DocumentData
+  >
+> {
+  const result = new Map<
+    string,
+    admin.firestore.DocumentData
+  >();
+  const chunks: string[][] = [];
+  for (
+    let i = 0;
+    i < ids.length;
+    i += FIRESTORE_WHERE_IN_LIMIT
+  ) {
+    chunks.push(ids.slice(
+      i, i + FIRESTORE_WHERE_IN_LIMIT
+    ));
+  }
+  const snaps = await Promise.all(
+    chunks.map((chunk) =>
+      db.collection("users")
+        .where(
+          admin.firestore
+            .FieldPath.documentId(),
+          "in",
+          chunk
+        )
+        .get()
+    )
+  );
+  for (const snap of snaps) {
+    for (const doc of snap.docs) {
+      result.set(
+        doc.id,
+        doc.data() || {}
+      );
+    }
+  }
+  return result;
+}
+
+/**
+ * Busca todas as estatísticas por IDs em
+ * chunks de FIRESTORE_WHERE_IN_LIMIT.
+ * @param {string[]} ids IDs dos usuários.
+ * @return {Promise<Map>} Mapa de estatísticas.
+ */
+async function fetchAllStats(
+  ids: string[]
+): Promise<Map<string, UserStatistics>> {
+  const defaultStats: UserStatistics = {
+    totalGames: 0,
+    totalGoals: 0,
+    totalAssists: 0,
+    totalSaves: 0,
+    totalYellowCards: 0,
+    totalRedCards: 0,
+    gamesWon: 0,
+    gamesLost: 0,
+    gamesDraw: 0,
+    bestPlayerCount: 0,
+    worstPlayerCount: 0,
+    currentMvpStreak: 0,
+  };
+  const result =
+    new Map<string, UserStatistics>();
+  const chunks: string[][] = [];
+  for (
+    let i = 0;
+    i < ids.length;
+    i += FIRESTORE_WHERE_IN_LIMIT
+  ) {
+    chunks.push(ids.slice(
+      i, i + FIRESTORE_WHERE_IN_LIMIT
+    ));
+  }
+  const snaps = await Promise.all(
+    chunks.map((chunk) =>
+      db.collection("statistics")
+        .where(
+          admin.firestore
+            .FieldPath.documentId(),
+          "in",
+          chunk
+        )
+        .get()
+    )
+  );
+  for (const snap of snaps) {
+    for (const doc of snap.docs) {
+      result.set(
+        doc.id,
+        (doc.data() || {
+          ...defaultStats,
+        }) as UserStatistics
+      );
+    }
+  }
+  // Preencher faltantes com defaults
+  for (const id of ids) {
+    if (!result.has(id)) {
+      result.set(id, {...defaultStats});
+    }
+  }
+  return result;
+}
+
+/**
+ * Busca todos os streaks por IDs em chunks
+ * de FIRESTORE_WHERE_IN_LIMIT.
+ * @param {string[]} ids IDs dos usuários.
+ * @return {Promise<Map>} Mapa de streaks.
+ */
+async function fetchAllStreaks(
+  ids: string[]
+): Promise<Map<string, number>> {
+  const result =
+    new Map<string, number>();
+  const chunks: string[][] = [];
+  for (
+    let i = 0;
+    i < ids.length;
+    i += FIRESTORE_WHERE_IN_LIMIT
+  ) {
+    chunks.push(ids.slice(
+      i, i + FIRESTORE_WHERE_IN_LIMIT
+    ));
+  }
+  const snaps = await Promise.all(
+    chunks.map((chunk) =>
+      db.collection("user_streaks")
+        .where(
+          "user_id", "in", chunk
+        )
+        .get()
+    )
+  );
+  for (const snap of snaps) {
+    for (const doc of snap.docs) {
+      const data = doc.data();
+      const userId = data.user_id;
+      if (userId) {
+        // Suportar ambos os formatos:
+        // camelCase e snake_case
+        result.set(
+          userId,
+          data.currentStreak ||
+            data.current_streak ||
+            0
+        );
+      }
+    }
+  }
+  // Preencher faltantes com 0
+  for (const id of ids) {
+    if (!result.has(id)) {
+      result.set(id, 0);
+    }
+  }
+  return result;
+}
+
+// ==========================================
 // CLOUD FUNCTION: onGameStatusUpdate
 // ==========================================
 //
@@ -701,211 +977,13 @@ export const onGameStatusUpdate = onDocumentUpdated(
         }
 
         // 2. Determine Results
-        const teamResults: Record<
-          string, "WIN" | "LOSS" | "DRAW"
-        > = {};
-        if (teams.length >= 2) {
-          const t1 = teams.find(
-            (t) => t.id === (
-              liveScore ?
-                liveScore.team1Id :
-                teams[0].id
-            )
-          );
-          const t2 = teams.find(
-            (t) => t.id === (
-              liveScore ?
-                liveScore.team2Id :
-                teams[1].id
-            )
-          );
-
-          let s1 = t1 ? t1.score : 0;
-          let s2 = t2 ? t2.score : 0;
-          if (liveScore) {
-            s1 = liveScore.team1Score;
-            s2 = liveScore.team2Score;
-          }
-
-          if (t1 && t2) {
-            if (s1 > s2) {
-              teamResults[t1.id] = "WIN";
-              teamResults[t2.id] = "LOSS";
-            } else if (s2 > s1) {
-              teamResults[t1.id] = "LOSS";
-              teamResults[t2.id] = "WIN";
-            } else {
-              teamResults[t1.id] = "DRAW";
-              teamResults[t2.id] = "DRAW";
-            }
-          }
-        }
+        const teamResults =
+          determineGameResults(teams, liveScore);
 
         // 3. Pre-fetch ALL player data in parallel
         // (PERF: reduces 60+ sequential ops to ~3)
         const userIds = confirmations
           .map((c) => c.userId);
-
-        // Helper: batch fetch users (limit 10)
-        const fetchAllUsers = async (
-          ids: string[]
-        ): Promise<
-          Map<
-            string,
-            admin.firestore.DocumentData
-          >
-        > => {
-          const result = new Map<
-            string,
-            admin.firestore.DocumentData
-          >();
-          const chunks: string[][] = [];
-          for (
-            let i = 0;
-            i < ids.length;
-            i += 10
-          ) {
-            chunks.push(ids.slice(i, i + 10));
-          }
-          const snaps = await Promise.all(
-            chunks.map((chunk) =>
-              db.collection("users")
-                .where(
-                  admin.firestore
-                    .FieldPath.documentId(),
-                  "in",
-                  chunk
-                )
-                .get()
-            )
-          );
-          for (const snap of snaps) {
-            for (const doc of snap.docs) {
-              result.set(
-                doc.id,
-                doc.data() || {}
-              );
-            }
-          }
-          return result;
-        };
-
-        // Helper: batch fetch statistics (limit 10)
-        const fetchAllStats = async (
-          ids: string[]
-        ): Promise<Map<string, UserStatistics>> => {
-          const result =
-            new Map<string, UserStatistics>();
-          const chunks: string[][] = [];
-          for (
-            let i = 0;
-            i < ids.length;
-            i += 10
-          ) {
-            chunks.push(ids.slice(i, i + 10));
-          }
-          const snaps = await Promise.all(
-            chunks.map((chunk) =>
-              db.collection("statistics")
-                .where(
-                  admin.firestore
-                    .FieldPath.documentId(),
-                  "in",
-                  chunk
-                )
-                .get()
-            )
-          );
-          for (const snap of snaps) {
-            for (const doc of snap.docs) {
-              result.set(
-                doc.id,
-                (doc.data() || {
-                  totalGames: 0,
-                  totalGoals: 0,
-                  totalAssists: 0,
-                  totalSaves: 0,
-                  totalYellowCards: 0,
-                  totalRedCards: 0,
-                  gamesWon: 0,
-                  gamesLost: 0,
-                  gamesDraw: 0,
-                  bestPlayerCount: 0,
-                  worstPlayerCount: 0,
-                  currentMvpStreak: 0,
-                }) as UserStatistics
-              );
-            }
-          }
-          // Fill in missing stats with defaults
-          for (const id of ids) {
-            if (!result.has(id)) {
-              result.set(id, {
-                totalGames: 0,
-                totalGoals: 0,
-                totalAssists: 0,
-                totalSaves: 0,
-                totalYellowCards: 0,
-                totalRedCards: 0,
-                gamesWon: 0,
-                gamesLost: 0,
-                gamesDraw: 0,
-                bestPlayerCount: 0,
-                worstPlayerCount: 0,
-                currentMvpStreak: 0,
-              });
-            }
-          }
-          return result;
-        };
-
-        // Helper: batch fetch streaks (limit 10)
-        const fetchAllStreaks = async (
-          ids: string[]
-        ): Promise<Map<string, number>> => {
-          const result =
-            new Map<string, number>();
-          const chunks: string[][] = [];
-          for (
-            let i = 0;
-            i < ids.length;
-            i += 10
-          ) {
-            chunks.push(ids.slice(i, i + 10));
-          }
-          const snaps = await Promise.all(
-            chunks.map((chunk) =>
-              db.collection("user_streaks")
-                .where(
-                  "user_id", "in", chunk
-                )
-                .get()
-            )
-          );
-          for (const snap of snaps) {
-            for (const doc of snap.docs) {
-              const data = doc.data();
-              const userId = data.user_id;
-              if (userId) {
-                // Suportar ambos os formatos:
-                // camelCase e snake_case
-                result.set(
-                  userId,
-                  data.currentStreak ||
-                    data.current_streak ||
-                    0
-                );
-              }
-            }
-          }
-          // Fill in missing streaks with 0
-          for (const id of ids) {
-            if (!result.has(id)) {
-              result.set(id, 0);
-            }
-          }
-          return result;
-        };
 
         // Fetch all data in PARALLEL - key opt!
         const [
@@ -921,9 +999,8 @@ export const onGameStatusUpdate = onDocumentUpdated(
         // 4. Process Each Player
         // (NO Firestore calls in loop -
         // data already loaded)
-        // Limite seguro abaixo do máximo de
-        // 500 operações por batch do Firestore
-        const XP_BATCH_LIMIT = 450;
+        const XP_BATCH_LIMIT =
+          FIRESTORE_BATCH_SAFE_LIMIT;
         let currentBatch = db.batch();
         let currentBatchOps = 0;
         const batchCommits: Promise<
@@ -1054,36 +1131,14 @@ export const onGameStatusUpdate = onDocumentUpdated(
           // MVP XP (now validated)
           if (isMvp) xp += settings.xp_mvp;
 
-          // Clean Sheet XP (NOVO: bonus para
-          // goleiros que não sofrem gols)
+          // Clean Sheet XP (bonus para goleiros
+          // que não sofrem gols)
           let cleanSheetXp = 0;
           if (conf.position === "GOALKEEPER") {
-            let opponentScoreForXp = -1;
-            if (liveScore) {
-              if (
-                team &&
-                team.id === liveScore.team1Id
-              ) {
-                opponentScoreForXp =
-                  liveScore.team2Score;
-              } else if (
-                team &&
-                team.id === liveScore.team2Id
-              ) {
-                opponentScoreForXp =
-                  liveScore.team1Score;
-              }
-            } else if (
-              teams.length >= 2 && team
-            ) {
-              const opponent = teams.find(
-                (t) => t.id !== team.id
+            const opponentScoreForXp =
+              getOpponentScore(
+                team, liveScore, teams
               );
-              if (opponent) {
-                opponentScoreForXp =
-                  opponent.score;
-              }
-            }
             if (opponentScoreForXp === 0) {
               cleanSheetXp =
                 settings.xp_clean_sheet;
@@ -1340,180 +1395,63 @@ export const onGameStatusUpdate = onDocumentUpdated(
             currentBatchOps++;
           }
 
-          // 7. Award Badges (Cloud Integrity)
-          // Award Badges
+          // 7. Award Badges (badge-helper.ts)
+          const opScore = getOpponentScore(
+            team, liveScore, teams
+          );
+          const badgesToAward =
+            getAllBadgesToAward({
+              confirmation: {
+                goals: conf.goals,
+                assists: conf.assists,
+                saves: conf.saves,
+                position: conf.position,
+                isMvp,
+                isWorstPlayer,
+              },
+              newStats: {
+                totalGames:
+                  newStats.totalGames,
+                gamesWon:
+                  newStats.gamesWon,
+                currentMvpStreak:
+                  newStats.currentMvpStreak,
+              },
+              streak,
+              newMvpStreak,
+              newLevel,
+              currentLevel,
+              result:
+                result as
+                  "WIN" | "DRAW" | "LOSS",
+              opponentScore:
+                opScore >= 0 ?
+                  opScore : undefined,
+            });
 
-          const awardFullBadge = (
-            badgeId: string
-          ) => {
+          for (
+            const badge of badgesToAward
+          ) {
             ensureBatchCapacity(1);
-            const docId = `${uid}_${badgeId}`;
+            const docId =
+              `${uid}_${badge}`;
             const badgeRef = db
               .collection("user_badges")
               .doc(docId);
 
             currentBatch.set(badgeRef, {
               user_id: uid,
-              badge_id: badgeId,
+              badge_id: badge,
               unlocked_at: admin.firestore
-                .FieldValue.serverTimestamp(),
+                .FieldValue
+                .serverTimestamp(),
               last_earned_at: admin.firestore
-                .FieldValue.serverTimestamp(),
+                .FieldValue
+                .serverTimestamp(),
               count: admin.firestore
                 .FieldValue.increment(1),
             }, {merge: true});
             currentBatchOps++;
-          };
-
-          // ==================================
-          // BADGE AWARDING LOGIC - PERF_001 #18
-          // Otimização: Verificar apenas badges
-          // relevantes à ação
-          // Em vez de varrer todas as 40+
-          // badges possíveis
-          // ==================================
-
-          // PERFORMANCE BADGES - Gols
-          // (APENAS se marcou gols neste jogo)
-          if (conf.goals >= 3) {
-            if (conf.goals >= 5) {
-              awardFullBadge("hat_trick");
-              awardFullBadge("poker");
-              // 5+ gols = todas badges de gol
-              awardFullBadge("manita");
-            } else if (conf.goals >= 4) {
-              awardFullBadge("hat_trick");
-              awardFullBadge("poker");
-            } else {
-              // conf.goals >= 3
-              awardFullBadge("hat_trick");
-            }
-          }
-
-          // PLAYMAKER BADGE - APENAS se teve
-          // 3+ assistências neste jogo
-          if (conf.assists >= 3) {
-            awardFullBadge("playmaker");
-          }
-
-          // BALANCED PLAYER - APENAS se cumpre
-          // critério
-          if (
-            conf.goals >= 2 &&
-            conf.assists >= 2
-          ) {
-            awardFullBadge("balanced_player");
-          }
-
-          // STREAK BADGES - APENAS se streak
-          // mudou neste jogo
-          if (streak >= 3) {
-            if (streak >= 30) {
-              awardFullBadge("streak_30");
-            } else if (streak >= 10) {
-              // 10+ jogos consecutivos
-              awardFullBadge("iron_man");
-            } else if (streak >= 7) {
-              awardFullBadge("streak_7");
-            }
-          }
-
-          // MVP BADGE - APENAS se foi MVP
-          if (isMvp) {
-            // MVP_STREAK_3 - Ser MVP 3 jogos
-            // consecutivos
-            if (newMvpStreak === 3) {
-              awardFullBadge("mvp_streak_3");
-              console.log(
-                `[BADGE] User ${uid} earned ` +
-                "mvp_streak_3 (3 consecutive " +
-                "MVP games)"
-              );
-            }
-          }
-
-          // MILESTONE BADGES - APENAS nas
-          // mudanças de milestone
-          // Usar === para premiar exatamente
-          // no milestone, evitando duplicatas
-          if (newStats.totalGames === 100) {
-            awardFullBadge("veteran_100");
-          } else if (
-            newStats.totalGames === 50
-          ) {
-            awardFullBadge("veteran_50");
-          }
-
-          if (newStats.gamesWon === 50) {
-            awardFullBadge("winner_50");
-          } else if (
-            newStats.gamesWon === 25
-          ) {
-            awardFullBadge("winner_25");
-          }
-
-          // LEVEL BADGES - APENAS se mudou de
-          // level
-          if (newLevel !== currentLevel) {
-            if (newLevel >= 10) {
-              awardFullBadge("level_10");
-              awardFullBadge("level_5");
-            } else if (newLevel >= 5) {
-              awardFullBadge("level_5");
-            }
-          }
-
-          // GOALKEEPER BADGES - APENAS se é
-          // goleiro
-          if (conf.position === "GOALKEEPER") {
-            let opponentScore = -1;
-            if (liveScore) {
-              if (
-                team &&
-                team.id === liveScore.team1Id
-              ) {
-                opponentScore =
-                  liveScore.team2Score;
-              } else if (
-                team &&
-                team.id === liveScore.team2Id
-              ) {
-                opponentScore =
-                  liveScore.team1Score;
-              }
-            } else {
-              // Fallback to team scores if
-              // live score missing (legacy)
-              if (
-                teams.length >= 2 && team
-              ) {
-                const opponent = teams.find(
-                  (t) => t.id !== team.id
-                );
-                if (opponent) {
-                  opponentScore =
-                    opponent.score;
-                }
-              }
-            }
-
-            // CLEAN_SHEET - Goleiro sem
-            // sofrer gols
-            if (opponentScore === 0) {
-              awardFullBadge("clean_sheet");
-
-              // PAREDAO - Clean sheet COM 5+
-              // defesas (mais dificil)
-              if (conf.saves >= 5) {
-                awardFullBadge("paredao");
-              }
-            }
-
-            // DEFENSIVE_WALL - APENAS se teve
-            // 10+ defesas neste jogo
-            if (conf.saves >= 10) {
-              awardFullBadge("defensive_wall");
-            }
           }
         }
 
@@ -2107,9 +2045,7 @@ export const onGameDeleted = onDocumentDeleted(
       `deletion for game ${gameId}`
     );
 
-    // Limite seguro abaixo do máximo de
-    // 500 operações por batch do Firestore
-    const BATCH_LIMIT = 450;
+    const BATCH_LIMIT = FIRESTORE_BATCH_SAFE_LIMIT;
 
     try {
       // Coletar todas as referências de
@@ -2272,9 +2208,7 @@ export const onGroupDeleted = onDocumentDeleted(
       `deletion for group ${groupId}`
     );
 
-    // Limite seguro abaixo do máximo de
-    // 500 operações por batch do Firestore
-    const BATCH_LIMIT = 450;
+    const BATCH_LIMIT = FIRESTORE_BATCH_SAFE_LIMIT;
 
     // Interface para agrupar operações de
     // delete e update separadamente

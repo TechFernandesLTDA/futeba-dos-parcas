@@ -32,6 +32,11 @@ import {
   onCall,
   HttpsError,
 } from "firebase-functions/v2/https";
+import {
+  FCM_MULTICAST_LIMIT,
+  FIRESTORE_WHERE_IN_LIMIT,
+  FIRESTORE_PAGINATION_LIMIT,
+} from "../constants";
 
 const getDb = () => admin.firestore();
 const getFcm = () => admin.messaging();
@@ -42,9 +47,9 @@ const getFcm = () => admin.messaging();
 
 /**
  * Tamanho máximo de tokens por chamada
- * multicast (limite FCM).
+ * multicast (limite FCM) - de constants.ts.
  */
-const MAX_MULTICAST_TOKENS = 500;
+const MAX_MULTICAST_TOKENS = FCM_MULTICAST_LIMIT;
 
 /**
  * Tamanho máximo do batch de documentos
@@ -564,8 +569,8 @@ async function fetchTokensInBatch(
 
   // Chunks de 10 (limite do whereIn)
   const chunks: string[][] = [];
-  for (let i = 0; i < userIds.length; i += 10) {
-    chunks.push(userIds.slice(i, i + 10));
+  for (let i = 0; i < userIds.length; i += FIRESTORE_WHERE_IN_LIMIT) { // eslint-disable-line max-len
+    chunks.push(userIds.slice(i, i + FIRESTORE_WHERE_IN_LIMIT));
   }
 
   // Buscar em paralelo
@@ -920,7 +925,7 @@ export const cleanupNotificationQueue =
             ["SENT", "FAILED"]
           )
           .where("createdAt", "<", cutoffDate)
-          .limit(500);
+          .limit(FIRESTORE_PAGINATION_LIMIT);
 
         const snapshot = await query.get();
 

@@ -80,9 +80,13 @@ sealed class UiState {
 ./gradlew detekt                           # Static analysis (Detekt)
 ./gradlew clean                            # Clean build
 
-# Cloud Functions (in /functions directory)
+# Cloud Functions (in /functions directory, Node 20)
 cd functions && npm install                # Install deps
 npm run build                              # Compile TypeScript
+npm run lint                               # ESLint (same as CI)
+npx jest --no-coverage                     # All tests (398 tests, 12 suites)
+npx jest path/to/file.test.ts              # Single test file
+npx jest --testNamePattern="test name"     # Single test by name
 firebase emulators:start                   # Local testing
 firebase deploy --only functions           # Deploy
 ```
@@ -153,6 +157,7 @@ The project uses a multi-module setup:
 - **`:shared`** - Kotlin Multiplatform shared code (business logic, domain models, repository interfaces)
 - **`:composeApp`** - Compose Multiplatform UI (shared UI components for Android/iOS)
 - **`:baselineprofile`** - Baseline profiles for performance optimization
+- **`backend/`** - REST API + WebSocket server (Express.js + TypeORM + PostgreSQL) - separate from Cloud Functions
 
 ### Architecture Layers
 

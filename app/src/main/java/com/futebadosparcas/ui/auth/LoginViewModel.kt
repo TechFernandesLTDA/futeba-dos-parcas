@@ -6,6 +6,7 @@ import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.futebadosparcas.util.AppLogger
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -25,11 +26,14 @@ class LoginViewModel @Inject constructor(
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
     val loginState: StateFlow<LoginState> = _loginState
 
+    private var loginJob: Job? = null
+
     /**
      * Verifica se ha um usuario logado e carrega seus dados.
      */
     fun checkExistingUser() {
-        viewModelScope.launch {
+        loginJob?.cancel()
+        loginJob = viewModelScope.launch {
             if (authRepository.isLoggedIn()) {
                 val result = authRepository.getCurrentUser()
                 result.fold(
@@ -49,7 +53,8 @@ class LoginViewModel @Inject constructor(
      * Recupera os dados do usuario do repositorio.
      */
     fun onGoogleSignInSuccess() {
-        viewModelScope.launch {
+        loginJob?.cancel()
+        loginJob = viewModelScope.launch {
             AppLogger.d(TAG) { "=== onGoogleSignInSuccess called ===" }
             _loginState.value = LoginState.Loading
 

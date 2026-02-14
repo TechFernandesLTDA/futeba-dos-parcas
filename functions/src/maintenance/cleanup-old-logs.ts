@@ -1,6 +1,9 @@
 import * as functions from "firebase-functions/v2";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {
+  FIRESTORE_PAGINATION_LIMIT,
+} from "../constants";
 
 const db = admin.firestore();
 
@@ -79,11 +82,10 @@ export const cleanupOldXpLogs =
 
     try {
       // Query logs older than 1 year
-      // Limit to 500 per batch (Firestore batch limit)
       const query = db.collection("xp_logs")
         .where("created_at", "<", cutoffDate)
         .orderBy("created_at")
-        .limit(500);
+        .limit(FIRESTORE_PAGINATION_LIMIT);
 
       let hasMore = true;
 
@@ -215,7 +217,7 @@ export const cleanupOldActivities =
       const query = db.collection("activities")
         .where("created_at", "<", cutoffDate)
         .orderBy("created_at")
-        .limit(500);
+        .limit(FIRESTORE_PAGINATION_LIMIT);
 
       let hasMore = true;
 
@@ -336,7 +338,7 @@ export const cleanupOldNotifications =
         .where("read", "==", true)
         .where("created_at", "<", cutoffDate)
         .orderBy("created_at")
-        .limit(500);
+        .limit(FIRESTORE_PAGINATION_LIMIT);
 
       let hasMore = true;
 

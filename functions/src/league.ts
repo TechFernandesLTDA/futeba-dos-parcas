@@ -17,6 +17,7 @@
  */
 
 import {logger} from "firebase-functions/v2";
+import {LEAGUE_THRESHOLDS} from "./constants";
 
 export const PROMOTION_GAMES_REQUIRED = 3;
 export const RELEGATION_GAMES_REQUIRED = 3;
@@ -39,11 +40,11 @@ export function getNextDivisionThreshold(
   division: string
 ): number {
   switch (division) {
-  case "BRONZE": return 30;
-  case "PRATA": return 50;
-  case "OURO": return 70;
-  case "DIAMANTE": return 100;
-  default: return 100;
+  case "BRONZE": return LEAGUE_THRESHOLDS.BRONZE_MAX;
+  case "PRATA": return LEAGUE_THRESHOLDS.PRATA_MAX;
+  case "OURO": return LEAGUE_THRESHOLDS.OURO_MAX;
+  case "DIAMANTE": return LEAGUE_THRESHOLDS.DIAMANTE_MAX;
+  default: return LEAGUE_THRESHOLDS.DIAMANTE_MAX;
   }
 }
 
@@ -58,9 +59,9 @@ export function getPreviousDivisionThreshold(
 ): number {
   switch (division) {
   case "BRONZE": return 0;
-  case "PRATA": return 30;
-  case "OURO": return 50;
-  case "DIAMANTE": return 70;
+  case "PRATA": return LEAGUE_THRESHOLDS.BRONZE_MAX;
+  case "OURO": return LEAGUE_THRESHOLDS.PRATA_MAX;
+  case "DIAMANTE": return LEAGUE_THRESHOLDS.OURO_MAX;
   default: return 0;
   }
 }

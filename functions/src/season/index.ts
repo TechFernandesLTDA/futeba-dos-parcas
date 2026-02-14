@@ -1,6 +1,9 @@
 import * as admin from "firebase-admin";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
+import {
+  FIRESTORE_BATCH_LIMIT,
+} from "../constants";
 
 const db = admin.firestore();
 
@@ -67,7 +70,7 @@ export const checkSeasonEnd = onSchedule(
 
     let batch = db.batch();
     let operationCount = 0;
-    const BATCH_LIMIT = 500;
+    const BATCH_LIMIT = FIRESTORE_BATCH_LIMIT;
 
     const commitBatch = async () => {
       if (operationCount > 0) {

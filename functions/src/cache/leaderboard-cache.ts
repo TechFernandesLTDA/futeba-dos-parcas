@@ -32,6 +32,9 @@ import {
   HttpsError,
 } from "firebase-functions/v2/https";
 import {checkRateLimit} from "../middleware/rate-limiter";
+import {
+  FIRESTORE_WHERE_IN_LIMIT,
+} from "../constants";
 
 const getDb = () => admin.firestore();
 
@@ -424,9 +427,11 @@ async function fetchUsersInBatch(
   for (
     let i = 0;
     i < userIds.length;
-    i += 10
+    i += FIRESTORE_WHERE_IN_LIMIT
   ) {
-    chunks.push(userIds.slice(i, i + 10));
+    chunks.push(
+      userIds.slice(i, i + FIRESTORE_WHERE_IN_LIMIT)
+    );
   }
 
   const results = await Promise.all(

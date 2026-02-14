@@ -63,6 +63,9 @@
 
 import * as admin from "firebase-admin";
 import {onSchedule} from "firebase-functions/v2/scheduler";
+import {
+  FIRESTORE_BATCH_SAFE_LIMIT,
+} from "../constants";
 
 const db = admin.firestore();
 
@@ -266,7 +269,7 @@ export const maintainStreaksData = onSchedule(
         }
 
         // Commit batch se atingir limite
-        if (batchOps >= 450) {
+        if (batchOps >= FIRESTORE_BATCH_SAFE_LIMIT) {
           await batch.commit();
           console.log(
             "[STREAK_MAINTENANCE] " +

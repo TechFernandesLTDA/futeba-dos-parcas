@@ -35,6 +35,9 @@ import {
 import {
   checkRateLimit,
 } from "../middleware/rate-limiter";
+import {
+  MVP_VOTE_WINDOW_HOURS,
+} from "../constants";
 
 const getDb = () => admin.firestore();
 
@@ -42,8 +45,8 @@ const getDb = () => admin.firestore();
 // CONSTANTES
 // ==========================================
 
-/** Janela de votação: 24 horas após o fim */
-const VOTE_WINDOW_HOURS = 24;
+/** Janela de votação (importada de constants.ts) */
+const VOTE_WINDOW_HOURS = MVP_VOTE_WINDOW_HOURS;
 
 /** Categorias de votação permitidas */
 const VALID_VOTE_CATEGORIES = [

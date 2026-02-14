@@ -3,6 +3,12 @@
  * Funcoes puras que determinam quais badges
  * devem ser concedidas.
  */
+import {
+  BADGE_STREAK_THRESHOLDS,
+  BADGE_VETERAN_THRESHOLDS,
+  BADGE_WINNER_THRESHOLDS,
+  BADGE_DEFENSIVE_WALL_SAVES,
+} from "../constants";
 
 export interface ConfirmationData {
   goals: number;
@@ -25,6 +31,7 @@ export interface BadgeContext {
   streak: number;
   newMvpStreak: number;
   newLevel: number;
+  currentLevel?: number;
   result: "WIN" | "DRAW" | "LOSS";
   opponentScore?: number;
 }
@@ -40,8 +47,11 @@ export function getStreakBadges(
   streak: number
 ): string[] {
   const badges: string[] = [];
-  if (streak >= 30) badges.push("streak_30");
-  else if (streak >= 10) badges.push("iron_man");
+  if (streak >= BADGE_STREAK_THRESHOLDS.STREAK_30) {
+    badges.push("streak_30");
+  } else if (streak >= BADGE_STREAK_THRESHOLDS.IRON_MAN) {
+    badges.push("iron_man");
+  }
   else if (streak >= 7) badges.push("streak_7");
   return badges;
 }
@@ -130,8 +140,12 @@ export function getVeteranBadges(
   totalGames: number
 ): string[] {
   const badges: string[] = [];
-  if (totalGames === 100) badges.push("veteran_100");
-  if (totalGames === 50) badges.push("veteran_50");
+  if (totalGames === BADGE_VETERAN_THRESHOLDS.VETERAN_100) {
+    badges.push("veteran_100");
+  }
+  if (totalGames === BADGE_VETERAN_THRESHOLDS.VETERAN_50) {
+    badges.push("veteran_50");
+  }
   return badges;
 }
 
@@ -143,8 +157,16 @@ export function getVeteranBadges(
  * @return {string[]} Lista de badges de nivel.
  */
 export function getLevelBadges(
-  level: number
+  level: number,
+  currentLevel?: number
 ): string[] {
+  // Só premiar se o nível mudou
+  if (
+    currentLevel !== undefined &&
+    level === currentLevel
+  ) {
+    return [];
+  }
   const badges: string[] = [];
   if (level >= 10) {
     badges.push("level_10", "level_5");
@@ -182,8 +204,8 @@ export function getGoalkeeperBadges(
     }
   }
 
-  // DEFENSIVE_WALL - 10+ defesas
-  if (saves >= 10) {
+  // DEFENSIVE_WALL - defesas >= threshold
+  if (saves >= BADGE_DEFENSIVE_WALL_SAVES) {
     badges.push("defensive_wall");
   }
 
@@ -205,8 +227,12 @@ export function getWinnerBadges(
   const badges: string[] = [];
 
   if (result === "WIN") {
-    if (gamesWon === 50) badges.push("winner_50");
-    if (gamesWon === 25) badges.push("winner_25");
+    if (gamesWon === BADGE_WINNER_THRESHOLDS.WINNER_50) {
+      badges.push("winner_50");
+    }
+    if (gamesWon === BADGE_WINNER_THRESHOLDS.WINNER_25) {
+      badges.push("winner_25");
+    }
   }
 
   return badges;
@@ -269,7 +295,9 @@ export function getAllBadgesToAward(
   badges.push(
     ...getVeteranBadges(newStats.totalGames)
   );
-  badges.push(...getLevelBadges(newLevel));
+  badges.push(
+    ...getLevelBadges(newLevel, context.currentLevel)
+  );
   badges.push(
     ...getGoalkeeperBadges(
       confirmation.position,

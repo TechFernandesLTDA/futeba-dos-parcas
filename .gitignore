@@ -87,6 +87,9 @@ ehthumbs.db
 # Claude Code local settings
 .claude/settings.local.json
 
+# Claude Code skills (third-party, installed locally)
+.claude/skills/
+
 # Temporary build logs
 build_*.txt
 compile_*.txt

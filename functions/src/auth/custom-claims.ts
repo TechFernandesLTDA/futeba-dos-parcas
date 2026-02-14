@@ -28,6 +28,10 @@ import {
 import {logger} from "firebase-functions/v2";
 import {FieldValue} from "firebase-admin/firestore";
 import {checkRateLimit} from "../middleware/rate-limiter";
+import {
+  FIRESTORE_PAGINATION_LIMIT,
+  MAX_CONCURRENT_OPS,
+} from "../constants";
 
 const db = admin.firestore();
 
@@ -479,7 +483,7 @@ export const migrateAllUsersToCustomClaims = onCall(
       while (hasMore) {
         let query = db
           .collection("users")
-          .limit(500);
+          .limit(FIRESTORE_PAGINATION_LIMIT);
 
         if (lastDoc) {
           query = query.startAfter(lastDoc);
@@ -497,9 +501,11 @@ export const migrateAllUsersToCustomClaims = onCall(
         for (
           let i = 0;
           i < chunk.length;
-          i += 10
+          i += MAX_CONCURRENT_OPS
         ) {
-          const batch = chunk.slice(i, i + 10);
+          const batch = chunk.slice(
+            i, i + MAX_CONCURRENT_OPS
+          );
 
           await Promise.all(
             batch.map(async (doc) => {

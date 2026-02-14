@@ -11,6 +11,9 @@ import {
 } from "firebase-functions/v2/firestore";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {onSchedule} from "firebase-functions/v2/scheduler";
+import {
+  FIRESTORE_WHERE_IN_LIMIT,
+} from "./constants";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -296,8 +299,8 @@ async function getUserFcmTokensWithMapping(
   const mappings: TokenUserMapping[] = [];
   const chunks: string[][] = [];
 
-  for (let i = 0; i < userIds.length; i += 10) {
-    chunks.push(userIds.slice(i, i + 10));
+  for (let i = 0; i < userIds.length; i += FIRESTORE_WHERE_IN_LIMIT) { // eslint-disable-line max-len
+    chunks.push(userIds.slice(i, i + FIRESTORE_WHERE_IN_LIMIT));
   }
 
   for (const chunk of chunks) {
