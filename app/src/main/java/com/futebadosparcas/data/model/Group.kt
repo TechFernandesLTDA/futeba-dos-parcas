@@ -1,5 +1,8 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationErrorCode
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
@@ -130,6 +133,76 @@ data class Group(
         deletedAt = null
         deletedBy = null
     }
+
+    // ==================== VALIDAÇÃO ====================
+
+    /**
+     * Valida todos os campos do grupo antes de salvar.
+     *
+     * @return Lista de erros de validação (vazia se tudo válido)
+     */
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+
+        // Nome obrigatório (2-100 chars)
+        val nameResult = ValidationHelper.validateName(name, "name")
+        if (nameResult is ValidationResult.Invalid) errors.add(nameResult)
+
+        // Descrição (máx 500 chars)
+        val descResult = ValidationHelper.validateLength(description, "description", 0, ValidationHelper.DESCRIPTION_MAX_LENGTH)
+        if (descResult is ValidationResult.Invalid) errors.add(descResult)
+
+        // Owner ID obrigatório
+        val ownerResult = ValidationHelper.validateRequiredId(ownerId, "owner_id")
+        if (ownerResult is ValidationResult.Invalid) errors.add(ownerResult)
+
+        // Member count não-negativo
+        if (memberCount < 0) errors.add(ValidationResult.Invalid(
+            "member_count", "Contagem de membros não pode ser negativa", ValidationErrorCode.NEGATIVE_VALUE))
+
+        // Status deve ser válido
+        val statusResult = ValidationHelper.validateEnumValue<GroupStatus>(status, "status", required = true)
+        if (statusResult is ValidationResult.Invalid) errors.add(statusResult)
+
+        // Photo URL válida
+        val photoResult = ValidationHelper.validateUrl(photoUrl, "photo_url")
+        if (photoResult is ValidationResult.Invalid) errors.add(photoResult)
+
+        // Regras (máx 2000 chars)
+        val rulesResult = ValidationHelper.validateLength(rules, "rules", 0, ValidationHelper.RULES_MAX_LENGTH)
+        if (rulesResult is ValidationResult.Invalid) errors.add(rulesResult)
+
+        // Limite de jogadores bloqueados
+        if (blockedPlayers.size > ValidationHelper.MAX_BLOCKED_PLAYERS) {
+            errors.add(ValidationResult.Invalid(
+                "blocked_players",
+                "Máximo de ${ValidationHelper.MAX_BLOCKED_PLAYERS} jogadores bloqueados",
+                ValidationErrorCode.OUT_OF_RANGE
+            ))
+        }
+
+        // Timestamps
+        val tsResult = ValidationHelper.validateTimestampOrder(createdAt, updatedAt)
+        if (tsResult is ValidationResult.Invalid) errors.add(tsResult)
+
+        // Member count vs limite
+        if (memberCount > ValidationHelper.MAX_GROUP_MEMBERS) {
+            errors.add(ValidationResult.Invalid(
+                "member_count",
+                "Máximo de ${ValidationHelper.MAX_GROUP_MEMBERS} membros por grupo",
+                ValidationErrorCode.OUT_OF_RANGE
+            ))
+        }
+
+        return errors
+    }
+
+    /**
+     * Verifica se o grupo é válido para salvar.
+     */
+    @Exclude
+    fun isValid(): Boolean = validate().isEmpty()
 
     /**
      * Verifica se um jogador está bloqueado (Issue #64).
@@ -262,6 +335,24 @@ data class GroupMember(
 
     @Exclude
     fun canEditGroup(): Boolean = isAdmin() && isActive()
+
+    // ==================== VALIDAÇÃO ====================
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+
+        val userIdResult = ValidationHelper.validateRequiredId(userId, "user_id")
+        if (userIdResult is ValidationResult.Invalid) errors.add(userIdResult)
+
+        val roleResult = ValidationHelper.validateEnumValue<GroupMemberRole>(role, "role", required = true)
+        if (roleResult is ValidationResult.Invalid) errors.add(roleResult)
+
+        val statusResult = ValidationHelper.validateEnumValue<GroupMemberStatus>(status, "status", required = true)
+        if (statusResult is ValidationResult.Invalid) errors.add(statusResult)
+
+        return errors
+    }
 }
 
 /**

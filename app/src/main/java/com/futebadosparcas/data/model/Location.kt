@@ -3,6 +3,7 @@ package com.futebadosparcas.data.model
 import com.futebadosparcas.domain.validation.ValidationHelper
 import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
 import com.google.firebase.firestore.Exclude
@@ -12,6 +13,7 @@ import java.util.Date
  * Representa um local/estabelecimento onde jogos podem ser realizados.
  * Ex: "Ginásio de Esportes Apollo"
  */
+@IgnoreExtraProperties
 data class Location(
     @DocumentId
     val id: String = "",
@@ -174,6 +176,24 @@ data class Location(
             if (lng < -180.0 || lng > 180.0) {
                 errors.add(ValidationResult.Invalid("longitude", "Longitude deve estar entre -180 e 180"))
             }
+        }
+
+        // Validação de endereço (se preenchido, tamanho máximo)
+        val addressResult = ValidationHelper.validateLength(address, "address", 0, ValidationHelper.DESCRIPTION_MAX_LENGTH)
+        if (addressResult is ValidationResult.Invalid) errors.add(addressResult)
+
+        // Validação de cidade (se preenchido, tamanho máximo)
+        val cityResult = ValidationHelper.validateLength(city, "city", 0, ValidationHelper.NAME_MAX_LENGTH)
+        if (cityResult is ValidationResult.Invalid) errors.add(cityResult)
+
+        // Validação de dias de funcionamento (1-7 representando seg-dom)
+        if (operatingDays.any { it < 1 || it > 7 }) {
+            errors.add(ValidationResult.Invalid("operating_days", "Dias de funcionamento devem estar entre 1 (seg) e 7 (dom)"))
+        }
+
+        // Validação de fieldCount não-negativo
+        if (fieldCount < 0) {
+            errors.add(ValidationResult.Invalid("field_count", "Contagem de quadras não pode ser negativa"))
         }
 
         return errors

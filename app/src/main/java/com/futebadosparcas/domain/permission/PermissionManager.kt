@@ -1,6 +1,5 @@
 package com.futebadosparcas.domain.permission
 
-import com.futebadosparcas.data.model.User
 import com.futebadosparcas.data.model.UserRole
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
@@ -59,9 +58,10 @@ class PermissionManager @Inject constructor(
 
         return try {
             val userDoc = firestore.collection("users").document(uid).get().await()
-            val user = userDoc.toObject(User::class.java)
-            // O campo role no User é String, converter para UserRole
-            val role = UserRole.fromString(user?.role)
+            // Extrai apenas o campo 'role' sem deserializar o User inteiro
+            // Evita crash por incompatibilidade de tipos (ex: birth_date Long vs Date)
+            val roleStr = userDoc.getString("role")
+            val role = UserRole.fromString(roleStr)
 
             // Atualizar cache
             cachedUid = uid

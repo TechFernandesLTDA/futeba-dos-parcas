@@ -1,5 +1,8 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationErrorCode
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
@@ -87,6 +90,25 @@ data class PlayerAttendance(
 
     @Exclude
     fun hasLowReliability(): Boolean = attendanceRate < 0.50
+
+    // ==================== VALIDAÇÃO ====================
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val uResult = ValidationHelper.validateRequiredId(userId, "user_id")
+        if (uResult is ValidationResult.Invalid) errors.add(uResult)
+        if (totalConfirmed < 0) errors.add(ValidationResult.Invalid("total_confirmed", "Confirmados não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (totalAttended < 0) errors.add(ValidationResult.Invalid("total_attended", "Presentes não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (totalCancelled < 0) errors.add(ValidationResult.Invalid("total_cancelled", "Cancelados não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (totalAttended > totalConfirmed && totalConfirmed >= 0) {
+            errors.add(ValidationResult.Invalid("total_attended", "Presentes ($totalAttended) não pode exceder confirmados ($totalConfirmed)", ValidationErrorCode.LOGICAL_INCONSISTENCY))
+        }
+        if (attendanceRate < 0.0 || attendanceRate > 1.0) {
+            errors.add(ValidationResult.Invalid("attendance_rate", "Taxa de presença deve estar entre 0.0 e 1.0", ValidationErrorCode.OUT_OF_RANGE))
+        }
+        return errors
+    }
 
     /**
      * Recalcula a taxa de presenca com base nos dados atuais.

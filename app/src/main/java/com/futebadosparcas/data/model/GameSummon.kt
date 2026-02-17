@@ -1,6 +1,10 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationErrorCode
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
@@ -78,6 +82,26 @@ data class GameSummon(
     fun isDeclined(): Boolean = getStatusEnum() == SummonStatus.DECLINED
 
     fun canRespond(): Boolean = isPending()
+
+    // ==================== VALIDAÇÃO ====================
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val gResult = ValidationHelper.validateRequiredId(gameId, "game_id")
+        if (gResult is ValidationResult.Invalid) errors.add(gResult)
+        val uResult = ValidationHelper.validateRequiredId(userId, "user_id")
+        if (uResult is ValidationResult.Invalid) errors.add(uResult)
+        val sResult = ValidationHelper.validateEnumValue<SummonStatus>(status, "status", required = true)
+        if (sResult is ValidationResult.Invalid) errors.add(sResult)
+        val sbResult = ValidationHelper.validateRequiredId(summonedBy, "summoned_by")
+        if (sbResult is ValidationResult.Invalid) errors.add(sbResult)
+        // Se respondido, deve ter respondedAt
+        if (!isPending() && respondedAt == null && getStatusEnum() != SummonStatus.CANCELLED) {
+            errors.add(ValidationResult.Invalid("responded_at", "Convocação respondida deve ter data de resposta", ValidationErrorCode.LOGICAL_INCONSISTENCY))
+        }
+        return errors
+    }
 
     companion object {
         /**

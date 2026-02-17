@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -71,28 +72,29 @@ class AuthRepository @Inject constructor(
     suspend fun getCurrentUser(): Result<User> {
         AppLogger.d(TAG) { "=== getCurrentUser() START ===" }
         return try {
-            // Enhanced retry logic for Google Sign-In reliability
-            // Firebase Auth may take time to sync after credential validation
-            var uid: String? = null
-            var retries = 0
-            val maxRetries = 10 // Increased from 5
-            val baseDelay = 300L // Increased from 200ms
+            // Retry em IO para não bloquear a Main thread e causar frame drops
+            val uid = withContext(Dispatchers.IO) {
+                var result: String? = null
+                var retries = 0
+                val maxRetries = 5
+                val baseDelay = 200L
 
-            AppLogger.d(TAG) { "Starting retry loop (max $maxRetries attempts)" }
-            while (uid == null && retries < maxRetries) {
-                uid = auth.currentUser?.uid
-                AppLogger.d(TAG) { "Retry $retries: uid exists = ${uid != null}" }
-                if (uid == null) {
-                    // Exponential backoff: 300ms, 600ms, 900ms, 1200ms, etc.
-                    val delay = baseDelay * (retries + 1)
-                    AppLogger.d(TAG) { "Waiting ${delay}ms before next retry" }
-                    kotlinx.coroutines.delay(delay)
-                    retries++
+                AppLogger.d(TAG) { "Starting retry loop (max $maxRetries attempts)" }
+                while (result == null && retries < maxRetries) {
+                    result = auth.currentUser?.uid
+                    AppLogger.d(TAG) { "Retry $retries: uid exists = ${result != null}" }
+                    if (result == null) {
+                        val delay = baseDelay * (retries + 1)
+                        AppLogger.d(TAG) { "Waiting ${delay}ms before next retry" }
+                        kotlinx.coroutines.delay(delay)
+                        retries++
+                    }
                 }
+                result
             }
 
             if (uid == null) {
-                AppLogger.e(TAG, "FAILED: No UID after $retries retries")
+                AppLogger.e(TAG, "FAILED: No UID after retries")
                 return Result.failure(Exception("Usuario nao autenticado"))
             }
 

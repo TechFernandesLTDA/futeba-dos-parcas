@@ -968,4 +968,252 @@ object ValidationHelper {
             validateGameDuration(durationMinutes)
         )
     }
+
+    // ==================== VALIDAÇÕES ADICIONAIS ====================
+
+    /** Tamanho máximo para URLs */
+    const val URL_MAX_LENGTH = 2048
+
+    /** Tamanho máximo para regras de grupo */
+    const val RULES_MAX_LENGTH = 2000
+
+    /** Limite de co-organizadores por jogo */
+    const val MAX_CO_ORGANIZERS = 5
+
+    /** Máximo de jogadores bloqueados por grupo */
+    const val MAX_BLOCKED_PLAYERS = 50
+
+    /** Tamanho máximo para comentários de review */
+    const val REVIEW_COMMENT_MAX_LENGTH = 1000
+
+    /** Rating máximo para reviews (inteiro 0-5) */
+    const val REVIEW_RATING_MAX = 5.0f
+
+    /** Máximo de experiência em anos */
+    const val MAX_EXPERIENCE_YEARS = 80
+
+    /** Altura mínima em cm */
+    const val MIN_HEIGHT_CM = 100
+
+    /** Altura máxima em cm */
+    const val MAX_HEIGHT_CM = 250
+
+    /** Peso mínimo em kg */
+    const val MIN_WEIGHT_KG = 30
+
+    /** Peso máximo em kg */
+    const val MAX_WEIGHT_KG = 200
+
+    /** Player card rating mínimo */
+    const val CARD_RATING_MIN = 0
+
+    /** Player card rating máximo */
+    const val CARD_RATING_MAX = 100
+
+    /**
+     * Valida URL com resultado detalhado.
+     */
+    fun validateUrl(
+        url: String?,
+        fieldName: String = "url",
+        required: Boolean = false
+    ): ValidationResult {
+        if (url.isNullOrBlank()) {
+            return if (required) {
+                ValidationResult.invalid(
+                    fieldName,
+                    "$fieldName é obrigatório",
+                    ValidationErrorCode.REQUIRED_FIELD
+                )
+            } else {
+                ValidationResult.Valid
+            }
+        }
+
+        if (url.length > URL_MAX_LENGTH) {
+            return ValidationResult.invalid(
+                fieldName,
+                "URL excede o tamanho máximo de $URL_MAX_LENGTH caracteres",
+                ValidationErrorCode.INVALID_URL
+            )
+        }
+
+        if (!url.startsWith("https://") && !url.startsWith("gs://")) {
+            return ValidationResult.invalid(
+                fieldName,
+                "URL deve começar com https:// ou gs://",
+                ValidationErrorCode.INVALID_URL
+            )
+        }
+
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Valida telefone com resultado detalhado.
+     */
+    fun validatePhone(
+        phone: String?,
+        fieldName: String = "phone",
+        required: Boolean = false
+    ): ValidationResult {
+        if (phone.isNullOrBlank()) {
+            return if (required) {
+                ValidationResult.invalid(
+                    fieldName,
+                    "Telefone é obrigatório",
+                    ValidationErrorCode.REQUIRED_FIELD
+                )
+            } else {
+                ValidationResult.Valid
+            }
+        }
+
+        if (!isValidPhone(phone)) {
+            return ValidationResult.invalid(
+                fieldName,
+                "Formato de telefone inválido",
+                ValidationErrorCode.INVALID_PHONE
+            )
+        }
+
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Valida que um valor está dentro de um range (Double).
+     */
+    fun validateRange(
+        value: Double?,
+        fieldName: String,
+        min: Double,
+        max: Double,
+        required: Boolean = false
+    ): ValidationResult {
+        if (value == null) {
+            return if (required) {
+                ValidationResult.invalid(
+                    fieldName,
+                    "$fieldName é obrigatório",
+                    ValidationErrorCode.REQUIRED_FIELD
+                )
+            } else {
+                ValidationResult.Valid
+            }
+        }
+        if (value < min || value > max) {
+            return ValidationResult.invalid(
+                fieldName,
+                "$fieldName deve estar entre $min e $max",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Valida que um valor inteiro está dentro de um range.
+     */
+    fun validateIntRange(
+        value: Int?,
+        fieldName: String,
+        min: Int,
+        max: Int,
+        required: Boolean = false
+    ): ValidationResult {
+        if (value == null) {
+            return if (required) {
+                ValidationResult.invalid(
+                    fieldName,
+                    "$fieldName é obrigatório",
+                    ValidationErrorCode.REQUIRED_FIELD
+                )
+            } else {
+                ValidationResult.Valid
+            }
+        }
+        if (value < min || value > max) {
+            return ValidationResult.invalid(
+                fieldName,
+                "$fieldName deve estar entre $min e $max",
+                ValidationErrorCode.OUT_OF_RANGE
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Valida que um ID de documento não é vazio.
+     */
+    fun validateRequiredId(
+        id: String?,
+        fieldName: String
+    ): ValidationResult {
+        if (id.isNullOrBlank()) {
+            return ValidationResult.invalid(
+                fieldName,
+                "$fieldName é obrigatório",
+                ValidationErrorCode.REQUIRED_FIELD
+            )
+        }
+        if (!isValidDocumentId(id)) {
+            return ValidationResult.invalid(
+                fieldName,
+                "$fieldName contém formato inválido",
+                ValidationErrorCode.INVALID_FORMAT
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Valida que um enum string é válido.
+     */
+    inline fun <reified T : Enum<T>> validateEnumValue(
+        value: String?,
+        fieldName: String,
+        required: Boolean = false
+    ): ValidationResult {
+        if (value.isNullOrBlank()) {
+            return if (required) {
+                ValidationResult.invalid(
+                    fieldName,
+                    "$fieldName é obrigatório",
+                    ValidationErrorCode.REQUIRED_FIELD
+                )
+            } else {
+                ValidationResult.Valid
+            }
+        }
+
+        return try {
+            enumValueOf<T>(value)
+            ValidationResult.Valid
+        } catch (e: IllegalArgumentException) {
+            ValidationResult.invalid(
+                fieldName,
+                "$fieldName contém valor inválido: $value",
+                ValidationErrorCode.INVALID_STATUS
+            )
+        }
+    }
+
+    /**
+     * Valida consistência lógica entre dois valores (a <= b).
+     */
+    fun validateLessOrEqual(
+        lesser: Int,
+        greater: Int,
+        lesserName: String,
+        greaterName: String
+    ): ValidationResult {
+        if (lesser > greater) {
+            return ValidationResult.invalid(
+                lesserName,
+                "$lesserName ($lesser) não pode ser maior que $greaterName ($greater)",
+                ValidationErrorCode.LOGICAL_INCONSISTENCY
+            )
+        }
+        return ValidationResult.Valid
+    }
 }

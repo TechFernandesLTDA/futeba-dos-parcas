@@ -1,5 +1,7 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
@@ -155,6 +157,41 @@ data class AppNotification(
             NotificationType.SYSTEM -> com.futebadosparcas.R.drawable.ic_notifications
             NotificationType.GENERAL -> com.futebadosparcas.R.drawable.ic_notifications
         }
+    }
+
+    // ==================== VALIDAÇÃO ====================
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+
+        val userIdResult = ValidationHelper.validateRequiredId(userId, "user_id")
+        if (userIdResult is ValidationResult.Invalid) errors.add(userIdResult)
+
+        val typeResult = ValidationHelper.validateEnumValue<NotificationType>(type, "type", required = true)
+        if (typeResult is ValidationResult.Invalid) errors.add(typeResult)
+
+        val titleResult = ValidationHelper.validateLength(title, "title", 1, ValidationHelper.NAME_MAX_LENGTH, required = true)
+        if (titleResult is ValidationResult.Invalid) errors.add(titleResult)
+
+        val msgResult = ValidationHelper.validateLength(message, "message", 0, ValidationHelper.DESCRIPTION_MAX_LENGTH)
+        if (msgResult is ValidationResult.Invalid) errors.add(msgResult)
+
+        actionType?.let {
+            val actionResult = ValidationHelper.validateEnumValue<NotificationAction>(it, "action_type")
+            if (actionResult is ValidationResult.Invalid) errors.add(actionResult)
+        }
+
+        // Se lida, read_at deve existir
+        if (read && readAt == null) {
+            errors.add(ValidationResult.Invalid(
+                "read_at",
+                "Notificação marcada como lida deve ter read_at",
+                com.futebadosparcas.domain.validation.ValidationErrorCode.LOGICAL_INCONSISTENCY
+            ))
+        }
+
+        return errors
     }
 
     companion object {

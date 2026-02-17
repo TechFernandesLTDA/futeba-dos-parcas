@@ -381,6 +381,80 @@ data class User(
             errors.add(timestampResult)
         }
 
+        // Validação de nickname (opcional, mas se preenchido deve ter formato válido)
+        nickname?.let {
+            val nicknameResult = ValidationHelper.validateName(it, "nickname", min = 2, max = 50, required = false)
+            if (nicknameResult is ValidationResult.Invalid) {
+                errors.add(nicknameResult)
+            }
+        }
+
+        // Validação de telefone (opcional)
+        val phoneResult = ValidationHelper.validatePhone(phone, "phone")
+        if (phoneResult is ValidationResult.Invalid) {
+            errors.add(phoneResult)
+        }
+
+        // Validação de foto (URL válida)
+        val photoResult = ValidationHelper.validateUrl(photoUrl, "photo_url")
+        if (photoResult is ValidationResult.Invalid) {
+            errors.add(photoResult)
+        }
+
+        // Validação de data de nascimento (não pode ser no futuro)
+        birthDate?.let {
+            if (ValidationHelper.isFutureDate(it)) {
+                errors.add(ValidationResult.Invalid(
+                    "birth_date",
+                    "Data de nascimento não pode ser no futuro",
+                    com.futebadosparcas.domain.validation.ValidationErrorCode.INVALID_TIMESTAMP
+                ))
+            }
+        }
+
+        // Validação de altura (100-250 cm)
+        heightCm?.let {
+            val heightResult = ValidationHelper.validateIntRange(
+                it, "height_cm",
+                ValidationHelper.MIN_HEIGHT_CM, ValidationHelper.MAX_HEIGHT_CM
+            )
+            if (heightResult is ValidationResult.Invalid) {
+                errors.add(heightResult)
+            }
+        }
+
+        // Validação de peso (30-200 kg)
+        weightKg?.let {
+            val weightResult = ValidationHelper.validateIntRange(
+                it, "weight_kg",
+                ValidationHelper.MIN_WEIGHT_KG, ValidationHelper.MAX_WEIGHT_KG
+            )
+            if (weightResult is ValidationResult.Invalid) {
+                errors.add(weightResult)
+            }
+        }
+
+        // Validação de anos de experiência (0-80)
+        experienceYears?.let {
+            val expResult = ValidationHelper.validateIntRange(
+                it, "experience_years", 0, ValidationHelper.MAX_EXPERIENCE_YEARS
+            )
+            if (expResult is ValidationResult.Invalid) {
+                errors.add(expResult)
+            }
+        }
+
+        // Validação de posição preferida (enum válido)
+        preferredPosition?.let {
+            if (it != "GOALKEEPER" && it != "LINE_PLAYER") {
+                errors.add(ValidationResult.Invalid(
+                    "preferred_position",
+                    "Posição preferida inválida: $it",
+                    com.futebadosparcas.domain.validation.ValidationErrorCode.INVALID_STATUS
+                ))
+            }
+        }
+
         return errors
     }
 

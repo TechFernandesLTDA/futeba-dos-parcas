@@ -1,6 +1,9 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
@@ -90,6 +93,30 @@ data class GroupInvite(
      * Verifica se o convite ainda pode ser respondido
      */
     fun canRespond(): Boolean = isPending() && !hasExpired()
+
+    // ==================== VALIDAÇÃO ====================
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val gResult = ValidationHelper.validateRequiredId(groupId, "group_id")
+        if (gResult is ValidationResult.Invalid) errors.add(gResult)
+        val uResult = ValidationHelper.validateRequiredId(invitedUserId, "invited_user_id")
+        if (uResult is ValidationResult.Invalid) errors.add(uResult)
+        val iResult = ValidationHelper.validateRequiredId(invitedById, "invited_by_id")
+        if (iResult is ValidationResult.Invalid) errors.add(iResult)
+        val sResult = ValidationHelper.validateEnumValue<InviteStatus>(status, "status", required = true)
+        if (sResult is ValidationResult.Invalid) errors.add(sResult)
+        // Se respondido (aceito/recusado), deve ter respondedAt
+        if ((isAccepted() || isDeclined()) && respondedAt == null) {
+            errors.add(ValidationResult.Invalid(
+                "responded_at",
+                "Convite respondido deve ter data de resposta",
+                com.futebadosparcas.domain.validation.ValidationErrorCode.LOGICAL_INCONSISTENCY
+            ))
+        }
+        return errors
+    }
 
     companion object {
         // Tempo de expiração em milissegundos (48 horas)

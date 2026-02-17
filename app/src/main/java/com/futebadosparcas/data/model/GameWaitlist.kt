@@ -1,5 +1,8 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationErrorCode
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
@@ -115,6 +118,21 @@ data class GameWaitlist(
 
     @Exclude
     fun hasBeenNotified(): Boolean = notifiedAt != null
+
+    // ==================== VALIDAÇÃO ====================
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val gResult = ValidationHelper.validateRequiredId(gameId, "game_id")
+        if (gResult is ValidationResult.Invalid) errors.add(gResult)
+        val uResult = ValidationHelper.validateRequiredId(userId, "user_id")
+        if (uResult is ValidationResult.Invalid) errors.add(uResult)
+        if (queuePosition < 0) errors.add(ValidationResult.Invalid("queue_position", "Posição na fila não pode ser negativa", ValidationErrorCode.NEGATIVE_VALUE))
+        val sResult = ValidationHelper.validateEnumValue<WaitlistStatus>(status, "status", required = true)
+        if (sResult is ValidationResult.Invalid) errors.add(sResult)
+        return errors
+    }
 
     companion object {
         // Tempo padrao para responder a vaga: 30 minutos

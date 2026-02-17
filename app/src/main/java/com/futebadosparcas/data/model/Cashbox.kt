@@ -110,6 +110,18 @@ data class CashboxEntry(
             errors.add(ValidationResult.Invalid("created_by_id", "Responsável é obrigatório"))
         }
 
+        // Validação de tipo válido
+        val typeResult = ValidationHelper.validateEnumValue<CashboxEntryType>(type, "type", required = true)
+        if (typeResult is ValidationResult.Invalid) errors.add(typeResult)
+
+        // Validação de categoria válida
+        val catResult = ValidationHelper.validateEnumValue<CashboxCategory>(category, "category", required = true)
+        if (catResult is ValidationResult.Invalid) errors.add(catResult)
+
+        // Validação de URL do comprovante
+        val receiptResult = ValidationHelper.validateUrl(receiptUrl, "receipt_url")
+        if (receiptResult is ValidationResult.Invalid) errors.add(receiptResult)
+
         return errors
     }
 
