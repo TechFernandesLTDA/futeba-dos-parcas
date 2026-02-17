@@ -74,7 +74,7 @@ fun CaptainPicksPanel(
 
             // Jogadores disponiveis
             Text(
-                text = "Escolha um jogador",
+                text = stringResource(R.string.captain_pick_choose_player),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -101,7 +101,7 @@ fun CaptainPicksPanel(
             Spacer(Modifier.height(12.dp))
 
             Text(
-                text = "Toque em um jogador para adicioná-lo ao seu time",
+                text = stringResource(R.string.captain_pick_tap_to_add),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -311,7 +311,7 @@ fun CaptainSelectionDialog(
             Column {
                 // Instrucoes
                 Text(
-                    text = "Os capitães escolherão os jogadores alternadamente",
+                    text = stringResource(R.string.captain_pick_alternating),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -354,7 +354,7 @@ fun CaptainSelectionDialog(
 
                 // Lista de jogadores
                 Text(
-                    text = "Selecione ${stringResource(if (currentSelection == 1) R.string.captain_1 else R.string.captain_2)}:",
+                    text = stringResource(R.string.captain_pick_select_captain, stringResource(if (currentSelection == 1) R.string.captain_1 else R.string.captain_2)),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -364,7 +364,7 @@ fun CaptainSelectionDialog(
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(players) { player ->
+                    items(players, key = { it.id }) { player ->
                         val isAlreadySelected = player.id == captain1?.id || player.id == captain2?.id
 
                         CaptainCandidateChip(

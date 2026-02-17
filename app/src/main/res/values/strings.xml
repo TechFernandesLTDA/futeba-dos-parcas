@@ -3597,9 +3597,7 @@ subir no ranking!</string>
     <string name="streak_label_inferno">Inferno</string>
     <string name="streak_label_legendary">Lendário</string>
     <string name="streak_games_count">%d jogos</string>
-    <string name="streak_next_level">Próximo: %s</string>
     <string name="streak_games_remaining">%d jogos restantes</string>
-    <string name="streak_record">Recorde:</string>
     <string name="streak_level_unlocked">Sequência desbloqueada!</string>
     <string name="cd_streak_flame">Chama de sequência: %d jogos</string>
 
@@ -3810,7 +3808,6 @@ subir no ranking!</string>
     <string name="recap_curiosities">Curiosidades</string>
     <string name="recap_week_was_great">Semana %d foi demais!</string>
     <string name="recap_share_summary">Compartilhar Resumo</string>
-    <string name="recap_see_you_next">Nos vemos na próxima pelada!</string>
 
     <!-- LocationMetricsScreen -->
     <string name="debug_no_metrics">Nenhuma métrica registrada</string>
@@ -3852,5 +3849,95 @@ subir no ranking!</string>
     <string name="cd_color_red">Cor do Time Vermelho</string>
     <string name="cd_color_blue">Cor do Time Azul</string>
     <string name="cd_color_default">Cor padrão</string>
+
+    <!-- AvatarCustomizer -->
+    <string name="avatar_skin_tone">Tom de Pele</string>
+    <string name="avatar_expression">Expressão</string>
+    <string name="avatar_style">Estilo</string>
+    <string name="avatar_hair_color">Cor do Cabelo</string>
+    <string name="avatar_glasses">Óculos</string>
+    <string name="avatar_facial_hair">Barba/Bigode</string>
+    <string name="avatar_shirt_color">Cor da Camisa</string>
+    <string name="avatar_number">Número</string>
+    <string name="avatar_frame">Moldura</string>
+    <string name="avatar_badge">Badge</string>
+    <string name="avatar_none">Nenhum</string>
+
+    <!-- PhotoGallery -->
+    <string name="photo_gallery_no_photos">Sem fotos</string>
+    <string name="photo_gallery_view_all">Ver todas</string>
+    <string name="photo_gallery_count_label">%1$d fotos</string>
+
+    <!-- TeamShuffleAnimation -->
+    <string name="team_shuffle_shuffling">Embaralhando…</string>
+    <string name="team_shuffle_done">Times Definidos!</string>
+
+    <!-- CaptainPicksMode -->
+    <string name="captain_pick_choose_player">Escolha um jogador</string>
+    <string name="captain_pick_tap_to_add">Toque em um jogador para adicioná-lo ao seu time</string>
+    <string name="captain_pick_alternating">Os capitães escolherão os jogadores alternadamente</string>
+    <string name="captain_pick_select_captain">Selecione %1$s:</string>
+
+    <!-- SavedFormationsSection -->
+    <string name="formation_name_prompt">Dê um nome para lembrar desta formação:</string>
+    <string name="formation_times_used">Vezes usado</string>
+    <string name="formation_times_used_label">Vezes usado</string>
+    <string name="formation_players_label">Jogadores</string>
+
+    <!-- SoundboardReactions -->
+    <string name="reactions_title">Reações</string>
+    <string name="reactions_positive">Positivas</string>
+    <string name="reactions_funny">Divertidas</string>
+    <string name="reactions_special">Especiais</string>
+
+    <!-- StreakFlame -->
+    <string name="streak_next_level">Próximo: %1$s</string>
+    <string name="streak_record">Recorde:</string>
+    <string name="streak_unlocked">Sequência desbloqueada!</string>
+
+    <!-- HeadToHeadSection -->
+    <string name="head_to_head_last_matches">Últimos %1$d Jogos</string>
+    <string name="head_to_head_no_history">Sem histórico</string>
+
+    <!-- TeamStrengthIndicator -->
+    <string name="team_strength_position_distribution">Distribuição de Posições</string>
+
+    <!-- PairPlayersSection -->
+    <string name="pair_players_none">Nenhum par configurado</string>
+
+    <!-- PlayerEvolutionCard -->
+    <string name="evolution_protected">Protegido</string>
+    <string name="evolution_promoting">Subindo (%1$d/3)</string>
+    <string name="evolution_relegating">Risco (%1$d/3)</string>
+
+    <!-- SocialComparison -->
+    <string name="social_level">Nível %1$d</string>
+
+    <!-- RankingList -->
+    <string name="ranking_division">Divisão %1$s</string>
+
+    <!-- RankingScreen -->
+    <string name="ranking_average">Média: %1$s</string>
+
+    <!-- GameFinancialDashboard -->
+    <string name="financial_split_among">Dividido entre %1$d jogadores</string>
+    <string name="financial_paid">Pago: %1$s</string>
+    <string name="financial_remaining">Falta: %1$s</string>
+    <string name="financial_owes">Deve: %1$s</string>
+
+    <!-- FieldOwnerDashboardScreen -->
+    <string name="field_owner_verified">Verificado</string>
+
+    <!-- WeeklyRecapScreen -->
+    <string name="recap_personal_bests">Recordes Pessoais Batidos 🏆</string>
+    <string name="recap_thats_it">É isso! 🎉</string>
+    <string name="recap_see_you_next">Nos vemos na próxima pelada! ⚽</string>
+    <string name="recap_summary_games">Jogos</string>
+    <string name="recap_summary_goals">Gols</string>
+    <string name="recap_summary_assists">Assistências</string>
+    <string name="recap_summary_xp">XP Ganho</string>
+
+    <!-- VoiceMessageRecorder -->
+    <string name="voice_tap_to_record">Toque para gravar</string>
 
 </resources>

@@ -494,12 +494,12 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
         ) {
             StatBox(
                 value = "${data.goals}",
-                label = "Gols",
+                label = stringResource(R.string.recap_summary_goals),
                 icon = R.drawable.ic_football
             )
             StatBox(
                 value = "${data.assists}",
-                label = "Assistências",
+                label = stringResource(R.string.recap_summary_assists),
                 icon = R.drawable.ic_assist
             )
         }
@@ -896,7 +896,7 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Recordes Pessoais Batidos 🏆",
+                text = stringResource(R.string.recap_personal_bests),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -1016,7 +1016,7 @@ private fun SummarySlide(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "É isso! 🎉",
+            text = stringResource(R.string.recap_thats_it),
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
             color = Color.White
@@ -1044,10 +1044,10 @@ private fun SummarySlide(
                 modifier = Modifier.padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                SummaryRow("Jogos", "${data.gamesPlayed}")
-                SummaryRow("Gols", "${data.goals}")
-                SummaryRow("Assistências", "${data.assists}")
-                SummaryRow("XP Ganho", "+${data.xpEarned}")
+                SummaryRow(stringResource(R.string.recap_summary_games), "${data.gamesPlayed}")
+                SummaryRow(stringResource(R.string.recap_summary_goals), "${data.goals}")
+                SummaryRow(stringResource(R.string.recap_summary_assists), "${data.assists}")
+                SummaryRow(stringResource(R.string.recap_summary_xp), "+${data.xpEarned}")
                 SummaryRow(stringResource(R.string.recap_win_rate), "${(data.winRate * 100).toInt()}%")
             }
         }
@@ -1082,7 +1082,7 @@ private fun SummarySlide(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Nos vemos na próxima pelada! ⚽",
+            text = stringResource(R.string.recap_see_you_next),
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White.copy(alpha = 0.7f)
         )

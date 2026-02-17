@@ -4,9 +4,23 @@
  */
 
 import * as admin from "firebase-admin";
-import {onDocumentCreated, onDocumentUpdated, onDocumentDeleted} from "firebase-functions/v2/firestore";
+import {
+  onDocumentCreated,
+  onDocumentUpdated,
+  onDocumentDeleted,
+} from "firebase-functions/v2/firestore";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {onSchedule} from "firebase-functions/v2/scheduler";
+import {
+  FIRESTORE_WHERE_IN_LIMIT,
+} from "./constants";
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+} from "./middleware/rate-limiter";
+import {
+  sanitizeText,
+} from "./validation/index";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -19,13 +33,16 @@ const getFcm = () => admin.messaging();
 const MAX_RETRY_ATTEMPTS = 3;
 const INITIAL_BACKOFF_MS = 1000;
 
-// Tempo de expiração de convites de grupo (48 horas em milissegundos)
+// Tempo de expiração de convites de grupo (48h em ms)
 const INVITE_EXPIRATION_MS = 48 * 60 * 60 * 1000;
 
 // ==========================================
 // TIPOS DE NOTIFICAÇÃO
 // ==========================================
 
+/**
+ * Enum de tipos de notificação suportados.
+ */
 export enum NotificationType {
   GAME_INVITE = "GAME_INVITE",
   GAME_CONFIRMED = "GAME_CONFIRMED",
@@ -71,111 +88,205 @@ interface NotificationPayload {
   action?: string;
 }
 
+/**
+ * Interface para erros FCM com código e mensagem.
+ */
+interface FcmError {
+  code?: string;
+  errorInfo?: { code?: string };
+  message?: string;
+}
+
 // ==========================================
 // FUNÇÕES AUXILIARES
 // ==========================================
 
 /**
- * Verifica se um erro FCM é transiente e pode ser retentado
+ * Verifica se um erro FCM é transiente e pode
+ * ser retentado.
+ *
+ * @param {FcmError} error - Erro FCM a verificar
+ * @return {boolean} true se o erro é transiente
  */
-function isTransientError(error: any): boolean {
-  const code = error?.code || error?.errorInfo?.code || "";
+function isTransientError(error: FcmError): boolean {
+  const code =
+    error?.code || error?.errorInfo?.code || "";
   return (
     code === "messaging/server-unavailable" ||
     code === "messaging/internal-error" ||
     code === "messaging/unknown-error" ||
     // Erros de rede também são transientes
-    error?.message?.includes("ECONNRESET") ||
-    error?.message?.includes("ETIMEDOUT") ||
-    error?.message?.includes("socket hang up")
+    (error?.message?.includes("ECONNRESET") ?? false) ||
+    (error?.message?.includes("ETIMEDOUT") ?? false) ||
+    (error?.message?.includes("socket hang up") ?? false)
   );
 }
 
 /**
- * Verifica se um erro FCM indica token inválido que deve ser removido
+ * Verifica se um erro FCM indica token inválido
+ * que deve ser removido.
+ *
+ * @param {FcmError} error - Erro FCM a verificar
+ * @return {boolean} true se o token é inválido
  */
-function isInvalidTokenError(error: any): boolean {
-  const code = error?.code || error?.errorInfo?.code || "";
+function isInvalidTokenError(error: FcmError): boolean {
+  const code =
+    error?.code || error?.errorInfo?.code || "";
   return (
-    code === "messaging/registration-token-not-registered" ||
+    code ===
+      "messaging/registration-token-not-registered" ||
     code === "messaging/invalid-registration-token" ||
     code === "messaging/invalid-argument"
   );
 }
 
 /**
- * Aguarda um tempo especificado (para backoff)
+ * Aguarda um tempo especificado (para backoff).
+ *
+ * @param {number} ms - Milissegundos para aguardar
+ * @return {Promise<void>} Promise resolvida após o delay
  */
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) =>
+    setTimeout(resolve, ms)
+  );
 }
 
 /**
- * Envia uma mensagem FCM com retry e exponential backoff para erros transientes
+ * Resultado de envio FCM com retry.
+ */
+interface SendRetryResult {
+  success: boolean;
+  error?: FcmError;
+}
+
+/**
+ * Envia uma mensagem FCM com retry e exponential
+ * backoff para erros transientes.
+ *
+ * @param {admin.messaging.Message} message - Mensagem
+ * @param {number} maxRetries - Máx tentativas
+ * @return {Promise<SendRetryResult>} Resultado do envio
  */
 async function sendWithRetry(
   message: admin.messaging.Message,
   maxRetries: number = MAX_RETRY_ATTEMPTS
-): Promise<{ success: boolean; error?: any }> {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+): Promise<SendRetryResult> {
+  for (
+    let attempt = 1;
+    attempt <= maxRetries;
+    attempt++
+  ) {
     try {
       await getFcm().send(message);
       return {success: true};
-    } catch (e: any) {
-      const errorCode = e?.code || e?.errorInfo?.code || "unknown";
+    } catch (e: unknown) {
+      const fcmErr = e as FcmError;
+      const errorCode =
+        fcmErr?.code ||
+        fcmErr?.errorInfo?.code ||
+        "unknown";
 
-      if (isTransientError(e) && attempt < maxRetries) {
-        const backoffMs = Math.pow(2, attempt - 1) * INITIAL_BACKOFF_MS;
+      if (
+        isTransientError(fcmErr) &&
+        attempt < maxRetries
+      ) {
+        const backoffMs =
+          Math.pow(2, attempt - 1) *
+          INITIAL_BACKOFF_MS;
         console.log(
-          `FCM retry ${attempt}/${maxRetries} apos erro transiente (${errorCode}). ` +
-          `Aguardando ${backoffMs}ms...`
+          `FCM retry ${attempt}/${maxRetries}` +
+          ` apos erro transiente (${errorCode}).` +
+          ` Aguardando ${backoffMs}ms...`
         );
         await sleep(backoffMs);
         continue;
       }
 
-      // Erro não transiente ou esgotaram as tentativas
-      if (attempt === maxRetries && isTransientError(e)) {
+      // Erro não transiente ou esgotaram tentativas
+      if (
+        attempt === maxRetries &&
+        isTransientError(fcmErr)
+      ) {
         console.error(
-          `FCM falhou apos ${maxRetries} tentativas (${errorCode}): ${e.message}`
+          `FCM falhou apos ${maxRetries}` +
+          ` tentativas (${errorCode}):` +
+          ` ${fcmErr.message}`
         );
       }
 
-      return {success: false, error: e};
+      return {success: false, error: fcmErr};
     }
   }
   return {success: false};
 }
 
 /**
- * Remove token FCM inválido do usuário no Firestore
+ * Remove token FCM inválido do usuário no Firestore.
+ *
+ * @param {string} userId - ID do usuário
+ * @param {string} _token - Token FCM inválido
+ * @return {Promise<void>} Resolução após remoção
  */
-async function removeInvalidToken(userId: string, token: string): Promise<void> {
+async function removeInvalidToken(
+  userId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _token: string
+): Promise<void> {
   try {
-    console.log(`Removendo token invalido do usuario ${userId}`);
-    await getDb().collection("users").doc(userId).update({
-      fcm_token: admin.firestore.FieldValue.delete(),
-    });
+    console.log(
+      `Removendo token invalido do usuario ${userId}`
+    );
+    await getDb()
+      .collection("users")
+      .doc(userId)
+      .update({
+        fcm_token: admin.firestore.FieldValue.delete(),
+      });
   } catch (e) {
-    console.error(`Erro ao remover token invalido do usuario ${userId}:`, e);
+    console.error(
+      "Erro ao remover token invalido" +
+      ` do usuario ${userId}:`,
+      e
+    );
   }
 }
 
-async function getUserFcmToken(userId: string): Promise<string | null> {
+/**
+ * Busca o token FCM de um usuário.
+ *
+ * @param {string} userId - ID do usuário
+ * @return {Promise<string | null>} Token ou null
+ */
+async function getUserFcmToken(
+  userId: string
+): Promise<string | null> {
   try {
-    const userDoc = await getDb().collection("users").doc(userId).get();
+    const userDoc = await getDb()
+      .collection("users")
+      .doc(userId)
+      .get();
     if (!userDoc.exists) return null;
 
     const userData = userDoc.data();
-    return userData?.fcm_token || userData?.fcmToken || null;
+    return (
+      userData?.fcm_token ||
+      userData?.fcmToken ||
+      null
+    );
   } catch (e) {
-    console.error("Erro ao buscar token FCM do usuario " + userId + ":", e);
+    console.error(
+      "Erro ao buscar token FCM do usuario " +
+      userId + ":",
+      e
+    );
     return null;
   }
 }
 
 /**
- * Interface para mapear tokens FCM aos seus respectivos usuários
+ * Interface para mapear tokens FCM aos seus
+ * respectivos usuários.
  */
 interface TokenUserMapping {
   token: string;
@@ -183,7 +294,11 @@ interface TokenUserMapping {
 }
 
 /**
- * Busca tokens FCM de múltiplos usuários com mapeamento token->userId
+ * Busca tokens FCM de múltiplos usuários com
+ * mapeamento token->userId.
+ *
+ * @param {string[]} userIds - IDs dos usuários
+ * @return {Promise<TokenUserMapping[]>} Mapeamentos
  */
 async function getUserFcmTokensWithMapping(
   userIds: string[]
@@ -191,38 +306,58 @@ async function getUserFcmTokensWithMapping(
   const mappings: TokenUserMapping[] = [];
   const chunks: string[][] = [];
 
-  for (let i = 0; i < userIds.length; i += 10) {
-    chunks.push(userIds.slice(i, i + 10));
+  for (let i = 0; i < userIds.length; i += FIRESTORE_WHERE_IN_LIMIT) { // eslint-disable-line max-len
+    chunks.push(userIds.slice(i, i + FIRESTORE_WHERE_IN_LIMIT));
   }
 
   for (const chunk of chunks) {
     try {
-      const snapshot = await getDb().collection("users")
-        .where(admin.firestore.FieldPath.documentId(), "in", chunk)
+      const snapshot = await getDb()
+        .collection("users")
+        .where(
+          admin.firestore.FieldPath.documentId(),
+          "in",
+          chunk
+        )
         .get();
 
-      snapshot.docs.forEach((doc: any) => {
-        const data = doc.data();
-        const token = data?.fcm_token || data?.fcmToken;
-        if (token) {
-          mappings.push({token, userId: doc.id});
+      snapshot.docs.forEach(
+        (doc: admin.firestore.QueryDocumentSnapshot) => {
+          const data = doc.data();
+          const token =
+            data?.fcm_token || data?.fcmToken;
+          if (token) {
+            mappings.push({token, userId: doc.id});
+          }
         }
-      });
+      );
     } catch (e) {
-      console.error("Erro ao buscar tokens em lote:", e);
+      console.error(
+        "Erro ao buscar tokens em lote:",
+        e
+      );
     }
   }
 
   return mappings;
 }
 
+/**
+ * Envia notificação FCM para um único usuário.
+ *
+ * @param {string} userId - ID do usuário
+ * @param {FcmNotification} notification - Dados
+ * @return {Promise<boolean>} true se enviou
+ */
 export async function sendNotificationToUser(
   userId: string,
   notification: FcmNotification
 ): Promise<boolean> {
   const token = await getUserFcmToken(userId);
   if (!token) {
-    console.log("Usuario " + userId + " nao tem token FCM");
+    console.log(
+      "Usuario " + userId + " nao tem token FCM"
+    );
     return false;
   }
 
@@ -242,7 +377,9 @@ export async function sendNotificationToUser(
       notification: {
         channelId: notification.type,
         sound: "default",
-        clickAction: notification.data?.action || "FLUTTER_NOTIFICATION_CLICK",
+        clickAction:
+          notification.data?.action ||
+          "FLUTTER_NOTIFICATION_CLICK",
       },
     },
     apns: {
@@ -263,118 +400,180 @@ export async function sendNotificationToUser(
   const result = await sendWithRetry(message);
 
   if (result.success) {
-    console.log(`Notificacao enviada para ${userId}`);
+    console.log(
+      `Notificacao enviada para ${userId}`
+    );
     return true;
   }
 
   // Tratar erros de token inválido
-  if (result.error && isInvalidTokenError(result.error)) {
-    console.log(`Token invalido para ${userId}, limpando...`);
+  if (
+    result.error &&
+    isInvalidTokenError(result.error)
+  ) {
+    console.log(
+      `Token invalido para ${userId}, limpando...`
+    );
     await removeInvalidToken(userId, token);
   } else if (result.error) {
-    console.error(`Erro ao enviar notificacao para ${userId}:`, result.error);
+    console.error(
+      `Erro ao enviar notificacao para ${userId}:`,
+      result.error
+    );
   }
 
   return false;
 }
 
+/**
+ * Envia notificação FCM para múltiplos usuários.
+ *
+ * @param {string[]} userIds - IDs dos usuários
+ * @param {FcmNotification} notification - Dados
+ * @return {Promise<number>} Quantidade enviada
+ */
 export async function sendNotificationToUsers(
   userIds: string[],
   notification: FcmNotification
 ): Promise<number> {
   if (userIds.length === 0) return 0;
 
-  // Buscar tokens com mapeamento para identificar usuários com tokens inválidos
-  const tokenMappings = await getUserFcmTokensWithMapping(userIds);
+  // Buscar tokens com mapeamento
+  const tokenMappings =
+    await getUserFcmTokensWithMapping(userIds);
   if (tokenMappings.length === 0) {
     console.log("Nenhum token FCM encontrado");
     return 0;
   }
 
-  // Criar mapa de token -> userId para limpeza de tokens inválidos
+  // Criar mapa de token -> userId
   const tokenToUserMap = new Map<string, string>();
-  tokenMappings.forEach((m) => tokenToUserMap.set(m.token, m.userId));
+  tokenMappings.forEach((m) =>
+    tokenToUserMap.set(m.token, m.userId)
+  );
 
   const tokens = tokenMappings.map((m) => m.token);
 
-  // Dividir em chunks de 500 (limite do FCM para multicast)
+  // Dividir em chunks de 500 (limite do FCM)
   const chunks: string[][] = [];
   for (let i = 0; i < tokens.length; i += 500) {
     chunks.push(tokens.slice(i, i + 500));
   }
 
   let totalSuccess = 0;
-  const invalidTokensToRemove: { token: string; userId: string }[] = [];
-  const transientFailures: { token: string; userId: string }[] = [];
+  const invalidTokensToRemove: {
+    token: string;
+    userId: string;
+  }[] = [];
+  const transientFailures: {
+    token: string;
+    userId: string;
+  }[] = [];
 
   for (const chunk of chunks) {
     try {
-      const message: admin.messaging.MulticastMessage = {
-        tokens: chunk,
-        notification: {
-          title: notification.title,
-          body: notification.body,
-          imageUrl: notification.imageUrl,
-        },
-        data: {
-          type: notification.type,
-          ...notification.data,
-        },
-        android: {
-          priority: "high",
+      const message:
+        admin.messaging.MulticastMessage = {
+          tokens: chunk,
           notification: {
-            channelId: notification.type,
-            sound: "default",
+            title: notification.title,
+            body: notification.body,
+            imageUrl: notification.imageUrl,
           },
-        },
-      };
+          data: {
+            type: notification.type,
+            ...notification.data,
+          },
+          android: {
+            priority: "high",
+            notification: {
+              channelId: notification.type,
+              sound: "default",
+            },
+          },
+        };
 
-      const response = await getFcm().sendEachForMulticast(message);
+      const response =
+        await getFcm().sendEachForMulticast(message);
       totalSuccess += response.successCount;
 
       // Processar falhas individuais
       if (response.failureCount > 0) {
         console.log(
-          `Multicast: ${response.successCount} sucesso, ${response.failureCount} falhas`
+          `Multicast: ${response.successCount}` +
+          ` sucesso, ${response.failureCount}` +
+          " falhas"
         );
 
-        response.responses.forEach((sendResponse, index) => {
-          if (!sendResponse.success && sendResponse.error) {
-            const failedToken = chunk[index];
-            const userId = tokenToUserMap.get(failedToken);
-            const errorCode = sendResponse.error.code || "unknown";
+        response.responses.forEach(
+          (sendResponse, index) => {
+            if (
+              !sendResponse.success &&
+              sendResponse.error
+            ) {
+              const failedToken = chunk[index];
+              const uid =
+                tokenToUserMap.get(failedToken);
+              const errorCode =
+                sendResponse.error.code || "unknown";
 
-            if (userId) {
-              if (isInvalidTokenError(sendResponse.error)) {
-                // Token inválido - marcar para remoção
-                console.log(
-                  `Token invalido detectado (${errorCode}) para usuario ${userId}`
-                );
-                invalidTokensToRemove.push({token: failedToken, userId});
-              } else if (isTransientError(sendResponse.error)) {
-                // Erro transiente - marcar para retry individual
-                console.log(
-                  `Erro transiente (${errorCode}) para usuario ${userId}, agendando retry`
-                );
-                transientFailures.push({token: failedToken, userId});
-              } else {
-                // Outro erro - apenas logar
-                console.error(
-                  `Falha ao enviar para usuario ${userId}: ${errorCode} - ${sendResponse.error.message}`
-                );
+              if (uid) {
+                if (
+                  isInvalidTokenError(
+                    sendResponse.error
+                  )
+                ) {
+                  console.log(
+                    "Token invalido detectado" +
+                    ` (${errorCode})` +
+                    ` para usuario ${uid}`
+                  );
+                  invalidTokensToRemove.push({
+                    token: failedToken,
+                    userId: uid,
+                  });
+                } else if (
+                  isTransientError(
+                    sendResponse.error
+                  )
+                ) {
+                  console.log(
+                    "Erro transiente" +
+                    ` (${errorCode})` +
+                    ` para usuario ${uid},` +
+                    " agendando retry"
+                  );
+                  transientFailures.push({
+                    token: failedToken,
+                    userId: uid,
+                  });
+                } else {
+                  console.error(
+                    "Falha ao enviar para" +
+                    ` usuario ${uid}:` +
+                    ` ${errorCode} -` +
+                    ` ${sendResponse.error.message}`
+                  );
+                }
               }
             }
           }
-        });
+        );
       }
     } catch (e) {
-      console.error("Erro ao enviar multicast:", e);
+      console.error(
+        "Erro ao enviar multicast:",
+        e
+      );
     }
   }
 
   // Limpar tokens inválidos em paralelo
   if (invalidTokensToRemove.length > 0) {
-    console.log(`Removendo ${invalidTokensToRemove.length} tokens invalidos...`);
+    console.log(
+      `Removendo ${invalidTokensToRemove.length}` +
+      " tokens invalidos..."
+    );
     await Promise.all(
       invalidTokensToRemove.map(({token, userId}) =>
         removeInvalidToken(userId, token)
@@ -382,10 +581,12 @@ export async function sendNotificationToUsers(
     );
   }
 
-  // Retry para falhas transientes com exponential backoff
+  // Retry para falhas transientes
   if (transientFailures.length > 0) {
     console.log(
-      `Tentando retry para ${transientFailures.length} falhas transientes...`
+      "Tentando retry para" +
+      ` ${transientFailures.length}` +
+      " falhas transientes..."
     );
 
     for (const {token, userId} of transientFailures) {
@@ -409,32 +610,55 @@ export async function sendNotificationToUsers(
         },
       };
 
-      const result = await sendWithRetry(retryMessage);
+      const result =
+        await sendWithRetry(retryMessage);
 
       if (result.success) {
-        console.log(`Retry bem-sucedido para usuario ${userId}`);
+        console.log(
+          "Retry bem-sucedido para" +
+          ` usuario ${userId}`
+        );
         totalSuccess++;
-      } else if (result.error && isInvalidTokenError(result.error)) {
-        // Token se tornou inválido durante retry
-        console.log(`Token invalido detectado no retry para usuario ${userId}`);
+      } else if (
+        result.error &&
+        isInvalidTokenError(result.error)
+      ) {
+        console.log(
+          "Token invalido detectado no" +
+          ` retry para usuario ${userId}`
+        );
         await removeInvalidToken(userId, token);
       } else {
         console.error(
-          `Retry falhou para usuario ${userId}: ${result.error?.message || "erro desconhecido"}`
+          `Retry falhou para usuario ${userId}:` +
+          ` ${result.error?.message ||
+            "erro desconhecido"}`
         );
       }
     }
   }
 
-  console.log(`Total de notificacoes enviadas com sucesso: ${totalSuccess}`);
+  console.log(
+    "Total de notificacoes enviadas com" +
+    ` sucesso: ${totalSuccess}`
+  );
   return totalSuccess;
 }
 
+/**
+ * Salva notificação no Firestore para histórico.
+ *
+ * @param {string} userId - ID do usuário
+ * @param {NotificationPayload} payload - Dados
+ * @return {Promise<string>} ID da notificação
+ */
 export async function saveNotificationToFirestore(
   userId: string,
   payload: NotificationPayload
 ): Promise<string> {
-  const notificationRef = getDb().collection("notifications").doc();
+  const notificationRef = getDb()
+    .collection("notifications")
+    .doc();
 
   await notificationRef.set({
     id: notificationRef.id,
@@ -448,12 +672,20 @@ export async function saveNotificationToFirestore(
     sender_name: payload.senderName || null,
     action: payload.action || null,
     read: false,
-    created_at: admin.firestore.FieldValue.serverTimestamp(),
+    created_at:
+      admin.firestore.FieldValue.serverTimestamp(),
   });
 
   return notificationRef.id;
 }
 
+/**
+ * Envia e salva notificação para um usuário.
+ *
+ * @param {string} userId - ID do usuário
+ * @param {NotificationPayload} payload - Dados
+ * @return {Promise<boolean>} true se enviou
+ */
 export async function sendAndSaveNotification(
   userId: string,
   payload: NotificationPayload
@@ -479,317 +711,552 @@ export async function sendAndSaveNotification(
 
 /**
  * Trigger: Quando um novo jogo é criado.
- * Envia notificação de convite para todos os membros do grupo.
+ * Envia notificação de convite para todos os
+ * membros do grupo.
  *
- * IDEMPOTÊNCIA: Marca o documento do jogo com `notification_sent: true`
- * para evitar envio duplicado caso o trigger execute mais de uma vez
- * (Firestore triggers podem ser disparados mais de 1 vez - at-least-once).
+ * IDEMPOTÊNCIA: Marca o documento do jogo com
+ * notification_sent para evitar envio duplicado.
  */
-export const onGameCreated = onDocumentCreated("games/{gameId}", async (event) => {
-  const game = event.data?.data();
-  if (!game) return;
+export const onGameCreated = onDocumentCreated(
+  "games/{gameId}",
+  async (event) => {
+    const game = event.data?.data();
+    if (!game) return;
 
-  const gameId = event.params.gameId;
-  const ownerId = game.owner_id;
+    const gameId = event.params.gameId;
+    const ownerId = game.owner_id;
 
-  // Idempotência: verificar se notificação já foi enviada
-  // (Cloud Functions triggers são at-least-once, podem disparar mais de 1 vez)
-  if (game.invite_notification_sent === true) {
-    console.log(`[GAME_CREATED] Notification for game ${gameId} already sent, skipping (idempotent).`);
-    return;
-  }
+    // Idempotência: verificar se já foi enviada
+    if (game.invite_notification_sent === true) {
+      console.log(
+        "[GAME_CREATED] Notification for" +
+        ` game ${gameId} already sent,` +
+        " skipping (idempotent)."
+      );
+      return;
+    }
 
-  if (game.group_id) {
-    try {
-      const membersSnap = await getDb().collection("groups")
-        .doc(game.group_id)
-        .collection("members")
-        .where("role", "in", ["MEMBER", "ADMIN", "OWNER"])
-        .get();
+    if (game.group_id) {
+      try {
+        const membersSnap = await getDb()
+          .collection("groups")
+          .doc(game.group_id)
+          .collection("members")
+          .where(
+            "role",
+            "in",
+            ["MEMBER", "ADMIN", "OWNER"]
+          )
+          .get();
 
-      const memberIds = membersSnap.docs
-        .map((doc: any) => doc.id)
-        .filter((id: string) => id !== ownerId);
+        type DocSnap =
+          admin.firestore.QueryDocumentSnapshot;
+        const memberIds = membersSnap.docs
+          .map((doc: DocSnap) => doc.id)
+          .filter(
+            (id: string) => id !== ownerId
+          );
 
-      if (memberIds.length > 0) {
-        const ownerDoc = await getDb().collection("users").doc(ownerId).get();
-        const ownerName = ownerDoc.exists ?
-          (ownerDoc.data()?.name || ownerDoc.data()?.nickname || "Alguem") :
-          "Alguem";
+        if (memberIds.length > 0) {
+          const ownerDoc = await getDb()
+            .collection("users")
+            .doc(ownerId)
+            .get();
+          const ownerName = ownerDoc.exists ?
+            (ownerDoc.data()?.name ||
+              ownerDoc.data()?.nickname ||
+              "Alguem") :
+            "Alguem";
 
-        await sendNotificationToUsers(memberIds, {
-          title: "Novo jogo criado!",
-          body: ownerName + " criou um novo jogo. Confirme sua presenca!",
-          type: NotificationType.GAME_INVITE,
-          data: {
-            gameId: gameId,
-            action: "game_detail/" + gameId,
-          },
-        });
+          await sendNotificationToUsers(
+            memberIds,
+            {
+              title: "Novo jogo criado!",
+              body: ownerName +
+                " criou um novo jogo." +
+                " Confirme sua presenca!",
+              type: NotificationType.GAME_INVITE,
+              data: {
+                gameId: gameId,
+                action: "game_detail/" + gameId,
+              },
+            }
+          );
 
-        // Marcar como enviado para idempotência
-        await getDb().collection("games").doc(gameId).update({
-          invite_notification_sent: true,
-        });
+          // Marcar como enviado para idempotência
+          await getDb()
+            .collection("games")
+            .doc(gameId)
+            .update({
+              invite_notification_sent: true,
+            });
+        }
+      } catch (e) {
+        console.error(
+          "Erro ao notificar membros do grupo:",
+          e
+        );
       }
-    } catch (e) {
-      console.error("Erro ao notificar membros do grupo:", e);
     }
   }
-});
+);
 
-export const onGameUpdatedNotification = onDocumentUpdated("games/{gameId}", async (event) => {
-  const before = event.data?.before.data();
-  const after = event.data?.after.data();
-  if (!before || !after) return;
+/**
+ * Trigger: Quando um jogo é atualizado.
+ * Notifica sobre cancelamento ou mudança de
+ * detalhes.
+ */
+export const onGameUpdatedNotification =
+  onDocumentUpdated(
+    "games/{gameId}",
+    async (event) => {
+      const before = event.data?.before.data();
+      const after = event.data?.after.data();
+      if (!before || !after) return;
 
-  const gameId = event.params.gameId;
+      const gameId = event.params.gameId;
 
-  if (before.status !== "CANCELLED" && after.status === "CANCELLED") {
-    try {
-      const confirmationsSnap = await getDb().collection("confirmations")
-        .where("game_id", "==", gameId)
-        .where("status", "==", "CONFIRMED")
-        .get();
+      if (
+        before.status !== "CANCELLED" &&
+        after.status === "CANCELLED"
+      ) {
+        try {
+          const confirmationsSnap = await getDb()
+            .collection("confirmations")
+            .where("game_id", "==", gameId)
+            .where("status", "==", "CONFIRMED")
+            .get();
 
-      const userIds = confirmationsSnap.docs.map((doc: any) => doc.data().user_id || doc.data().userId);
+          type DocSnap =
+            admin.firestore.QueryDocumentSnapshot;
+          const userIds =
+            confirmationsSnap.docs.map(
+              (doc: DocSnap) => {
+                const d = doc.data();
+                return d.user_id || d.userId;
+              }
+            );
 
-      if (userIds.length > 0) {
-        await sendNotificationToUsers(userIds, {
-          title: "Jogo cancelado",
-          body: "O jogo foi cancelado pelo organizador.",
-          type: NotificationType.GAME_CANCELLED,
-          data: {
-            gameId: gameId,
-          },
-        });
+          if (userIds.length > 0) {
+            await sendNotificationToUsers(
+              userIds,
+              {
+                title: "Jogo cancelado",
+                body: "O jogo foi cancelado" +
+                  " pelo organizador.",
+                type:
+                  NotificationType.GAME_CANCELLED,
+                data: {
+                  gameId: gameId,
+                },
+              }
+            );
+          }
+        } catch (e) {
+          console.error(
+            "Erro ao notificar cancelamento:",
+            e
+          );
+        }
       }
-    } catch (e) {
-      console.error("Erro ao notificar cancelamento:", e);
-    }
-  }
 
-  if (before.date !== after.date || before.location_id !== after.location_id) {
-    try {
-      const confirmationsSnap = await getDb().collection("confirmations")
-        .where("game_id", "==", gameId)
-        .where("status", "==", "CONFIRMED")
-        .get();
+      if (
+        before.date !== after.date ||
+        before.location_id !== after.location_id
+      ) {
+        try {
+          const confirmationsSnap = await getDb()
+            .collection("confirmations")
+            .where("game_id", "==", gameId)
+            .where("status", "==", "CONFIRMED")
+            .get();
 
-      const userIds = confirmationsSnap.docs.map((doc: any) => doc.data().user_id || doc.data().userId);
+          type DocSnap =
+            admin.firestore.QueryDocumentSnapshot;
+          const userIds =
+            confirmationsSnap.docs.map(
+              (doc: DocSnap) => {
+                const d = doc.data();
+                return d.user_id || d.userId;
+              }
+            );
 
-      if (userIds.length > 0) {
-        await sendNotificationToUsers(userIds, {
-          title: "Jogo atualizado",
-          body: "Os detalhes do jogo mudaram. Confira no app.",
-          type: NotificationType.GAME_UPDATED,
-          data: {
-            gameId: gameId,
-          },
-        });
+          if (userIds.length > 0) {
+            await sendNotificationToUsers(
+              userIds,
+              {
+                title: "Jogo atualizado",
+                body: "Os detalhes do jogo" +
+                  " mudaram. Confira no app.",
+                type:
+                  NotificationType.GAME_UPDATED,
+                data: {
+                  gameId: gameId,
+                },
+              }
+            );
+          }
+        } catch (e) {
+          console.error(
+            "Erro ao notificar atualizacao:",
+            e
+          );
+        }
       }
-    } catch (e) {
-      console.error("Erro ao notificar atualizacao:", e);
     }
-  }
-});
+  );
 
+/**
+ * Trigger: Quando uma confirmação é criada.
+ * Notifica o dono do jogo sobre nova confirmação.
+ */
 export const onGameConfirmed = onDocumentCreated(
   "confirmations/{confirmationId}",
   async (event) => {
     const confirmation = event.data?.data();
-    if (!confirmation || confirmation.status !== "CONFIRMED") return;
+    if (
+      !confirmation ||
+      confirmation.status !== "CONFIRMED"
+    ) {
+      return;
+    }
 
-    const gameId = confirmation.game_id || confirmation.gameId;
-    const userId = confirmation.user_id || confirmation.userId;
+    const gameId =
+      confirmation.game_id || confirmation.gameId;
+    const userId =
+      confirmation.user_id || confirmation.userId;
 
     try {
-      const gameDoc = await getDb().collection("games").doc(gameId).get();
+      const gameDoc = await getDb()
+        .collection("games")
+        .doc(gameId)
+        .get();
       if (!gameDoc.exists) return;
 
       const game = gameDoc.data();
       if (!game) return;
 
       if (game.owner_id !== userId) {
-        const userDoc = await getDb().collection("users").doc(userId).get();
+        const userDoc = await getDb()
+          .collection("users")
+          .doc(userId)
+          .get();
         const userName = userDoc.exists ?
-          (userDoc.data()?.name || userDoc.data()?.nickname || "Um jogador") :
+          (userDoc.data()?.name ||
+            userDoc.data()?.nickname ||
+            "Um jogador") :
           "Um jogador";
 
-        await sendNotificationToUser(game.owner_id, {
-          title: "Nova confirmacao!",
-          body: userName + " confirmou presenca no jogo.",
-          type: NotificationType.GAME_CONFIRMED,
-          data: {
-            gameId: gameId,
-          },
-        });
+        await sendNotificationToUser(
+          game.owner_id,
+          {
+            title: "Nova confirmacao!",
+            body: userName +
+              " confirmou presenca no jogo.",
+            type:
+              NotificationType.GAME_CONFIRMED,
+            data: {
+              gameId: gameId,
+            },
+          }
+        );
       }
     } catch (e) {
-      console.error("Erro ao notificar confirmacao:", e);
+      console.error(
+        "Erro ao notificar confirmacao:",
+        e
+      );
     }
   }
 );
 
-export const onLevelUp = onDocumentUpdated("users/{userId}", async (event) => {
-  const before = event.data?.before.data();
-  const after = event.data?.after.data();
-  if (!before || !after) return;
+/**
+ * Trigger: Quando o nível de um usuário muda.
+ * Envia notificação de level up.
+ */
+export const onLevelUp = onDocumentUpdated(
+  "users/{userId}",
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
 
-  const userId = event.params.userId;
+    const userId = event.params.userId;
 
-  const beforeLevel = before.level || 0;
-  const afterLevel = after.level || 0;
+    const beforeLevel = before.level || 0;
+    const afterLevel = after.level || 0;
 
-  if (afterLevel > beforeLevel) {
-    const levelNames = [
-      "Novato", "Iniciante", "Amador", "Regular", "Experiente",
-      "Habilidoso", "Profissional", "Expert", "Mestre", "Lenda", "Imortal",
-    ];
-    const levelName = levelNames[afterLevel] || "Nivel " + afterLevel;
+    if (afterLevel > beforeLevel) {
+      const levelNames = [
+        "Novato", "Iniciante", "Amador",
+        "Regular", "Experiente", "Habilidoso",
+        "Profissional", "Expert", "Mestre",
+        "Lenda", "Imortal",
+      ];
+      const levelName =
+        levelNames[afterLevel] ||
+        "Nivel " + afterLevel;
 
-    await sendNotificationToUser(userId, {
-      title: "Subiu de nivel!",
-      body: "Parabens! Voce agora e " + levelName + "!",
-      type: NotificationType.LEVEL_UP,
-      imageUrl: "https://firebasestorage.googleapis.com/v0/b/futeba-dos-parcas.appspot.com/o/badges%2Flevel_up.png?alt=media",
-    });
+      const imgBase =
+        "https://firebasestorage.googleapis.com";
+      const imgPath =
+        "/v0/b/futeba-dos-parcas.appspot.com" +
+        "/o/badges%2Flevel_up.png?alt=media";
+
+      await sendNotificationToUser(userId, {
+        title: "Subiu de nivel!",
+        body: "Parabens! Voce agora e " +
+          levelName + "!",
+        type: NotificationType.LEVEL_UP,
+        imageUrl: imgBase + imgPath,
+      });
+    }
   }
-});
+);
 
 /**
- * Envia uma notificação de teste para o próprio usuário autenticado.
+ * Envia uma notificação de teste para o próprio
+ * usuário autenticado.
  *
- * @param title - Título da notificação (obrigatório, max 200 chars)
- * @param body - Corpo da notificação (obrigatório, max 500 chars)
- * @param type - Tipo da notificação (opcional, default: GAME_INVITE)
- * @returns {success: boolean, message: string}
+ * @param {string} request.data.title - Título
+ * @param {string} request.data.body - Corpo
+ * @param {string} request.data.type - Tipo
+ * @return {object} Resultado do envio
  */
-export const sendTestNotification = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Usuario nao autenticado");
-  }
+export const sendTestNotification = onCall(
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Usuario nao autenticado"
+      );
+    }
 
-  const userId = request.auth.uid;
-  const {title, body, type} = request.data || {};
+    const userId = request.auth.uid;
 
-  // Validação de entrada robusta
-  if (!title || typeof title !== "string") {
-    throw new HttpsError("invalid-argument", "Titulo e obrigatorio e deve ser uma string");
-  }
-  if (!body || typeof body !== "string") {
-    throw new HttpsError("invalid-argument", "Corpo e obrigatorio e deve ser uma string");
-  }
-  if (title.length > 200) {
-    throw new HttpsError("invalid-argument", "Titulo nao pode exceder 200 caracteres");
-  }
-  if (body.length > 500) {
-    throw new HttpsError("invalid-argument", "Corpo nao pode exceder 500 caracteres");
-  }
-  if (type && !Object.values(NotificationType).includes(type)) {
-    throw new HttpsError("invalid-argument", `Tipo invalido. Valores aceitos: ${Object.values(NotificationType).join(", ")}`);
-  }
+    // Rate limiting
+    const rlResult = await checkRateLimit(
+      userId,
+      {
+        ...RATE_LIMITS.SEND_NOTIFICATION,
+        keyPrefix: "send_test_notif",
+      }
+    );
+    if (!rlResult.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Rate limit excedido. " +
+        "Tente novamente em breve."
+      );
+    }
 
-  const success = await sendNotificationToUser(userId, {
-    title: title.trim(),
-    body: body.trim(),
-    type: type || NotificationType.GAME_INVITE,
-  });
+    const {title, body, type} =
+      request.data || {};
 
-  return {success, message: success ? "Notificacao enviada!" : "Falha ao enviar"};
-});
+    // Validação de entrada robusta
+    if (!title || typeof title !== "string") {
+      throw new HttpsError(
+        "invalid-argument",
+        "Titulo e obrigatorio e deve ser string"
+      );
+    }
+    if (!body || typeof body !== "string") {
+      throw new HttpsError(
+        "invalid-argument",
+        "Corpo e obrigatorio e deve ser string"
+      );
+    }
+    if (title.length > 200) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Titulo nao pode exceder 200 caracteres"
+      );
+    }
+    if (body.length > 500) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Corpo nao pode exceder 500 caracteres"
+      );
+    }
+    if (
+      type &&
+      !Object.values(NotificationType)
+        .includes(type)
+    ) {
+      const vals =
+        Object.values(NotificationType).join(", ");
+      throw new HttpsError(
+        "invalid-argument",
+        `Tipo invalido. Valores aceitos: ${vals}`
+      );
+    }
+
+    // Sanitizar inputs contra XSS
+    const safeTitle = sanitizeText(title);
+    const safeBody = sanitizeText(body);
+
+    const success = await sendNotificationToUser(
+      userId,
+      {
+        title: safeTitle,
+        body: safeBody,
+        type: type || NotificationType.GAME_INVITE,
+      }
+    );
+
+    return {
+      success,
+      message: success ?
+        "Notificacao enviada!" :
+        "Falha ao enviar",
+    };
+  }
+);
+
+/**
+ * Resultado de notificação fake criada.
+ */
+interface FakeNotificationResult {
+  id: string;
+  title: string;
+  body: string;
+}
 
 /**
  * Cria notificações fake para testes de UI.
  * Apenas para desenvolvimento/debug.
  *
- * @param count - Número de notificações a criar (1-5, default: 3)
- * @returns {success: boolean, created: number, notifications: Array}
+ * @param {number} request.data.count - Quantidade
+ * @return {object} Resultado com notificações criadas
  */
-export const createFakeGameNotifications = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Usuario nao autenticado");
-  }
+export const createFakeGameNotifications = onCall(
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Usuario nao autenticado"
+      );
+    }
 
-  const userId = request.auth.uid;
-  const rawCount = request.data?.count;
+    const userId = request.auth.uid;
 
-  // Validação de entrada: count deve ser um número entre 1 e 5
-  const count = typeof rawCount === "number" ? Math.max(1, Math.min(5, Math.round(rawCount))) : 3;
-
-  const userDoc = await getDb().collection("users").doc(userId).get();
-  const userName = userDoc.exists ?
-    (userDoc.data()?.name || userDoc.data()?.nickname || "Jogador") :
-    "Jogador";
-
-  const fakeGames = [
-    {
-      title: "Pelada de Sexta!",
-      body: userName + ", voce foi convidado para a pelada de sexta as 18h!",
-      time: "Sexta, 18:00",
-      location: "Campo do Clube",
-    },
-    {
-      title: "Futebol no Sabado",
-      body: "Vem jogar " + userName + "! Sabado as 10h no campo society.",
-      time: "Sabado, 10:00",
-      location: "Society Center",
-    },
-    {
-      title: "Domingo de Bola",
-      body: "Domingo tem jogo! " + userName + ", confirma ai?",
-      time: "Domingo, 09:00",
-      location: "Quadra do Parque",
-    },
-    {
-      title: "Pelada Noturna",
-      body: "Hoje a noite " + userName + "! 20h na quadra iluminada.",
-      time: "Hoje, 20:00",
-      location: "Quadra Iluminada",
-    },
-    {
-      title: "Campeonato Interno",
-      body: "Seu grupo esta organizando um campeonato. Participe!",
-      time: "Proximo sabado",
-      location: "Centro Esportivo",
-    },
-  ];
-
-  const created: any[] = [];
-
-  for (let i = 0; i < Math.min(count, fakeGames.length); i++) {
-    const game = fakeGames[i];
-    const notificationId = await saveNotificationToFirestore(userId, {
+    // Rate limiting
+    const fakeRlResult = await checkRateLimit(
       userId,
-      title: game.title,
-      body: game.body,
-      type: NotificationType.GAME_INVITE,
-      action: "game_detail/fake",
-      senderId: "system",
-      senderName: "Sistema",
-    });
+      {
+        ...RATE_LIMITS.DEFAULT,
+        keyPrefix: "fake_game_notif",
+      }
+    );
+    if (!fakeRlResult.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Rate limit excedido. " +
+        "Tente novamente em breve."
+      );
+    }
 
-    created.push({
-      id: notificationId,
-      title: game.title,
-      body: game.body,
-    });
+    const rawCount = request.data?.count;
+
+    // Validação: count entre 1 e 5
+    const count =
+      typeof rawCount === "number" ?
+        Math.max(
+          1,
+          Math.min(5, Math.round(rawCount))
+        ) :
+        3;
+
+    const userDoc = await getDb()
+      .collection("users")
+      .doc(userId)
+      .get();
+    const userName = userDoc.exists ?
+      (userDoc.data()?.name ||
+        userDoc.data()?.nickname ||
+        "Jogador") :
+      "Jogador";
+
+    const fakeGames = [
+      {
+        title: "Pelada de Sexta!",
+        body: userName +
+          ", voce foi convidado para" +
+          " a pelada de sexta as 18h!",
+        time: "Sexta, 18:00",
+        location: "Campo do Clube",
+      },
+      {
+        title: "Futebol no Sabado",
+        body: "Vem jogar " + userName +
+          "! Sabado as 10h no campo society.",
+        time: "Sabado, 10:00",
+        location: "Society Center",
+      },
+      {
+        title: "Domingo de Bola",
+        body: "Domingo tem jogo! " + userName +
+          ", confirma ai?",
+        time: "Domingo, 09:00",
+        location: "Quadra do Parque",
+      },
+      {
+        title: "Pelada Noturna",
+        body: "Hoje a noite " + userName +
+          "! 20h na quadra iluminada.",
+        time: "Hoje, 20:00",
+        location: "Quadra Iluminada",
+      },
+      {
+        title: "Campeonato Interno",
+        body: "Seu grupo esta organizando" +
+          " um campeonato. Participe!",
+        time: "Proximo sabado",
+        location: "Centro Esportivo",
+      },
+    ];
+
+    const created: FakeNotificationResult[] = [];
+
+    for (
+      let i = 0;
+      i < Math.min(count, fakeGames.length);
+      i++
+    ) {
+      const game = fakeGames[i];
+      const notificationId =
+        await saveNotificationToFirestore(userId, {
+          userId,
+          title: game.title,
+          body: game.body,
+          type: NotificationType.GAME_INVITE,
+          action: "game_detail/fake",
+          senderId: "system",
+          senderName: "Sistema",
+        });
+
+      created.push({
+        id: notificationId,
+        title: game.title,
+        body: game.body,
+      });
+    }
+
+    if (created.length > 0) {
+      await sendNotificationToUser(userId, {
+        title: created[0].title,
+        body: created[0].body,
+        type: NotificationType.GAME_INVITE,
+      });
+    }
+
+    return {
+      success: true,
+      created: created.length,
+      notifications: created,
+    };
   }
-
-  if (created.length > 0) {
-    await sendNotificationToUser(userId, {
-      title: created[0].title,
-      body: created[0].body,
-      type: NotificationType.GAME_INVITE,
-    });
-  }
-
-  return {
-    success: true,
-    created: created.length,
-    notifications: created,
-  };
-});
+);
 
 // ==========================================
 // BADGE NOTIFICATION TRIGGER
@@ -804,7 +1271,9 @@ export const onBadgeAwarded = onDocumentCreated(
   async (event) => {
     const userBadge = event.data?.data();
     if (!userBadge) {
-      console.log("[onBadgeAwarded] No data in event, skipping");
+      console.log(
+        "[onBadgeAwarded] No data, skipping"
+      );
       return;
     }
 
@@ -813,35 +1282,55 @@ export const onBadgeAwarded = onDocumentCreated(
     const badgeId = userBadge.badge_id;
 
     if (!userId || !badgeId) {
-      console.error("[onBadgeAwarded] Missing user_id or badge_id in document", badgeDocId);
+      console.error(
+        "[onBadgeAwarded] Missing user_id" +
+        ` or badge_id in document ${badgeDocId}`
+      );
       return;
     }
 
-    console.log(`[onBadgeAwarded] Badge ${badgeId} awarded to user ${userId}`);
+    console.log(
+      `[onBadgeAwarded] Badge ${badgeId}` +
+      ` awarded to user ${userId}`
+    );
 
     try {
       // Buscar dados da badge para nome e icone
-      const badgeDoc = await getDb().collection("badges").doc(badgeId).get();
-      const badge = badgeDoc.exists ? badgeDoc.data() : null;
+      const badgeDoc = await getDb()
+        .collection("badges")
+        .doc(badgeId)
+        .get();
+      const badge = badgeDoc.exists ?
+        badgeDoc.data() :
+        null;
 
-      const badgeName = badge?.name || badge?.title || badgeId;
-      const badgeIconUrl = badge?.icon_url || badge?.iconUrl || null;
+      const badgeName =
+        badge?.name || badge?.title || badgeId;
+      const badgeIconUrl =
+        badge?.icon_url ||
+        badge?.iconUrl ||
+        null;
 
       // Enviar notificação push
-      const notificationSent = await sendNotificationToUser(userId, {
-        title: "Conquista Desbloqueada!",
-        body: `Voce desbloqueou: ${badgeName}!`,
-        type: NotificationType.ACHIEVEMENT,
-        imageUrl: badgeIconUrl || undefined,
-        data: {
-          action: "badges",
-          badgeId: badgeId,
-        },
-      });
+      const notificationSent =
+        await sendNotificationToUser(userId, {
+          title: "Conquista Desbloqueada!",
+          body:
+            `Voce desbloqueou: ${badgeName}!`,
+          type: NotificationType.ACHIEVEMENT,
+          imageUrl: badgeIconUrl || undefined,
+          data: {
+            action: "badges",
+            badgeId: badgeId,
+          },
+        });
 
-      console.log(`[onBadgeAwarded] Push notification sent: ${notificationSent}`);
+      console.log(
+        "[onBadgeAwarded] Push notification" +
+        ` sent: ${notificationSent}`
+      );
 
-      // Salvar notificação no Firestore para histórico
+      // Salvar notificação no Firestore
       await saveNotificationToFirestore(userId, {
         userId,
         title: "Conquista Desbloqueada!",
@@ -850,9 +1339,16 @@ export const onBadgeAwarded = onDocumentCreated(
         action: "badges",
       });
 
-      console.log(`[onBadgeAwarded] Notification saved to Firestore for user ${userId}`);
+      console.log(
+        "[onBadgeAwarded] Notification saved" +
+        ` to Firestore for user ${userId}`
+      );
     } catch (error) {
-      console.error("[onBadgeAwarded] Error processing badge notification:", error);
+      console.error(
+        "[onBadgeAwarded] Error processing" +
+        " badge notification:",
+        error
+      );
     }
   }
 );
@@ -866,42 +1362,70 @@ export const onBadgeAwarded = onDocumentCreated(
  * Usado pelo processamento de XP em index.ts.
  */
 export const STREAK_MILESTONES = [
-  {streak: 30, title: "Sequencia Epica!", body: "30 jogos consecutivos! Voce e uma lenda!"},
-  {streak: 10, title: "Sequencia Incrivel!", body: "10 jogos consecutivos! Expert!"},
-  {streak: 7, title: "Sequencia Forte!", body: "7 jogos consecutivos! Profissional!"},
-  {streak: 3, title: "Sequencia Iniciada!", body: "3 jogos consecutivos! Continue assim!"},
+  {
+    streak: 30,
+    title: "Sequencia Epica!",
+    body: "30 jogos consecutivos!" +
+      " Voce e uma lenda!",
+  },
+  {
+    streak: 10,
+    title: "Sequencia Incrivel!",
+    body: "10 jogos consecutivos! Expert!",
+  },
+  {
+    streak: 7,
+    title: "Sequencia Forte!",
+    body: "7 jogos consecutivos! Profissional!",
+  },
+  {
+    streak: 3,
+    title: "Sequencia Iniciada!",
+    body: "3 jogos consecutivos!" +
+      " Continue assim!",
+  },
 ];
 
 /**
- * Envia notificação de streak milestone se o jogador atingiu um marco.
- * @param userId ID do usuário
- * @param currentStreak Streak atual do jogador
- * @return true se uma notificação foi enviada
+ * Envia notificação de streak milestone se o
+ * jogador atingiu um marco.
+ *
+ * @param {string} userId - ID do usuário
+ * @param {number} currentStreak - Streak atual
+ * @return {Promise<boolean>} true se enviou
  */
 export async function sendStreakNotificationIfMilestone(
   userId: string,
   currentStreak: number
 ): Promise<boolean> {
-  // Verificar se atingiu algum milestone exatamente
-  const milestone = STREAK_MILESTONES.find((m) => currentStreak === m.streak);
+  // Verificar se atingiu algum milestone
+  const milestone = STREAK_MILESTONES.find(
+    (m) => currentStreak === m.streak
+  );
 
   if (!milestone) {
     return false;
   }
 
-  console.log(`[STREAK] User ${userId} reached streak milestone: ${currentStreak} games`);
+  console.log(
+    `[STREAK] User ${userId} reached streak` +
+    ` milestone: ${currentStreak} games`
+  );
 
   try {
     // Enviar notificação push
-    const sent = await sendNotificationToUser(userId, {
-      title: milestone.title,
-      body: milestone.body,
-      type: NotificationType.ACHIEVEMENT,
-      data: {
-        action: "achievements",
-        streak: String(currentStreak),
-      },
-    });
+    const sent = await sendNotificationToUser(
+      userId,
+      {
+        title: milestone.title,
+        body: milestone.body,
+        type: NotificationType.ACHIEVEMENT,
+        data: {
+          action: "achievements",
+          streak: String(currentStreak),
+        },
+      }
+    );
 
     // Salvar no Firestore
     await saveNotificationToFirestore(userId, {
@@ -912,10 +1436,17 @@ export async function sendStreakNotificationIfMilestone(
       action: "achievements",
     });
 
-    console.log(`[STREAK] Notification sent to ${userId}: ${milestone.title}`);
+    console.log(
+      `[STREAK] Notification sent to ${userId}:` +
+      ` ${milestone.title}`
+    );
     return sent;
   } catch (error) {
-    console.error(`[STREAK] Error sending streak notification to ${userId}:`, error);
+    console.error(
+      "[STREAK] Error sending streak" +
+      ` notification to ${userId}:`,
+      error
+    );
     return false;
   }
 }
@@ -925,315 +1456,493 @@ export async function sendStreakNotificationIfMilestone(
 // ==========================================
 
 /**
- * Trigger que envia notificação push FCM quando um convite de grupo é criado.
- * Escuta a coleção group_invites e envia push para o usuário convidado.
+ * Trigger que envia notificação push FCM quando
+ * um convite de grupo é criado.
  */
-export const onGroupInviteCreated = onDocumentCreated(
-  "group_invites/{inviteId}",
-  async (event) => {
-    const invite = event.data?.data();
-    if (!invite) return;
+export const onGroupInviteCreated =
+  onDocumentCreated(
+    "group_invites/{inviteId}",
+    async (event) => {
+      const invite = event.data?.data();
+      if (!invite) return;
 
-    const inviteId = event.params.inviteId;
-    const invitedUserId = invite.invited_user_id || invite.invitedUserId;
-    const groupId = invite.group_id || invite.groupId;
-    const groupName = invite.group_name || invite.groupName || "um grupo";
-    const invitedByName = invite.invited_by_name || invite.invitedByName || "Alguem";
+      const inviteId = event.params.inviteId;
+      const invitedUserId =
+        invite.invited_user_id ||
+        invite.invitedUserId;
+      const groupId =
+        invite.group_id || invite.groupId;
+      const groupName =
+        invite.group_name ||
+        invite.groupName ||
+        "um grupo";
+      const invitedByName =
+        invite.invited_by_name ||
+        invite.invitedByName ||
+        "Alguem";
 
-    // Validar campos obrigatórios
-    if (!invitedUserId) {
-      console.error(`[GROUP_INVITE] Convite ${inviteId} sem invited_user_id`);
-      return;
+      // Validar campos obrigatórios
+      if (!invitedUserId) {
+        console.error(
+          "[GROUP_INVITE] Convite" +
+          ` ${inviteId} sem invited_user_id`
+        );
+        return;
+      }
+
+      if (!groupId) {
+        console.error(
+          "[GROUP_INVITE] Convite" +
+          ` ${inviteId} sem group_id`
+        );
+        return;
+      }
+
+      console.log(
+        "[GROUP_INVITE] Enviando notificacao" +
+        ` para ${invitedUserId} - Convite` +
+        ` para ${groupName}` +
+        ` por ${invitedByName}`
+      );
+
+      try {
+        const senderId =
+          invite.invited_by_id ||
+          invite.invitedById ||
+          null;
+
+        await sendAndSaveNotification(
+          invitedUserId,
+          {
+            userId: invitedUserId,
+            title: "Convite para grupo",
+            body: `${invitedByName} convidou` +
+              ` voce para ${groupName}`,
+            type: NotificationType.GROUP_INVITE,
+            groupId: groupId,
+            senderId: senderId,
+            senderName: invitedByName,
+            action:
+              "group_invite/" + inviteId,
+          }
+        );
+
+        console.log(
+          "[GROUP_INVITE] Notificacao enviada" +
+          ` com sucesso para ${invitedUserId}`
+        );
+      } catch (e) {
+        console.error(
+          "[GROUP_INVITE] Erro ao enviar" +
+          ` notificacao para ${invitedUserId}:`,
+          e
+        );
+      }
     }
+  );
 
-    if (!groupId) {
-      console.error(`[GROUP_INVITE] Convite ${inviteId} sem group_id`);
-      return;
-    }
-
-    console.log(`[GROUP_INVITE] Enviando notificacao para ${invitedUserId} - Convite para ${groupName} por ${invitedByName}`);
+/**
+ * Função agendada para limpar convites expirados
+ * (mais de 48 horas). Executa diariamente para
+ * marcar convites pendentes antigos como EXPIRED.
+ */
+export const cleanupExpiredInvites = onSchedule(
+  "every 24 hours",
+  async () => {
+    console.log(
+      "[CLEANUP] Iniciando limpeza de" +
+      " convites expirados..."
+    );
 
     try {
-      // Salvar notificação no Firestore e enviar push FCM
-      await sendAndSaveNotification(invitedUserId, {
-        userId: invitedUserId,
-        title: "Convite para grupo",
-        body: `${invitedByName} convidou voce para ${groupName}`,
-        type: NotificationType.GROUP_INVITE,
-        groupId: groupId,
-        senderId: invite.invited_by_id || invite.invitedById || null,
-        senderName: invitedByName,
-        action: "group_invite/" + inviteId,
-      });
+      // Calcular timestamp de expiração (48h)
+      const expirationTime = new Date(
+        Date.now() - INVITE_EXPIRATION_MS
+      );
 
-      console.log(`[GROUP_INVITE] Notificacao enviada com sucesso para ${invitedUserId}`);
+      // Buscar convites pendentes antigos
+      const expiredInvitesSnap = await getDb()
+        .collection("group_invites")
+        .where("status", "==", "PENDING")
+        .where(
+          "created_at",
+          "<",
+          expirationTime
+        )
+        .get();
+
+      if (expiredInvitesSnap.empty) {
+        console.log(
+          "[CLEANUP] Nenhum convite" +
+          " expirado encontrado"
+        );
+        return;
+      }
+
+      console.log(
+        "[CLEANUP] Encontrados " +
+        `${expiredInvitesSnap.size}` +
+        " convites expirados"
+      );
+
+      // Atualizar em batch (máximo de 500)
+      type QDocSnap =
+        admin.firestore.QueryDocumentSnapshot;
+      const chunks: QDocSnap[][] = [];
+      const docs = expiredInvitesSnap.docs;
+
+      for (
+        let i = 0;
+        i < docs.length;
+        i += 500
+      ) {
+        chunks.push(docs.slice(i, i + 500));
+      }
+
+      let totalUpdated = 0;
+
+      for (const chunk of chunks) {
+        const batch = getDb().batch();
+
+        for (const doc of chunk) {
+          batch.update(doc.ref, {
+            status: "EXPIRED",
+            expired_at:
+              admin.firestore.FieldValue
+                .serverTimestamp(),
+          });
+        }
+
+        await batch.commit();
+        totalUpdated += chunk.length;
+      }
+
+      console.log(
+        `[CLEANUP] ${totalUpdated}` +
+        " convites marcados como EXPIRED"
+      );
     } catch (e) {
-      console.error(`[GROUP_INVITE] Erro ao enviar notificacao para ${invitedUserId}:`, e);
+      console.error(
+        "[CLEANUP] Erro ao limpar" +
+        " convites expirados:",
+        e
+      );
+      throw e;
     }
   }
 );
-
-/**
- * Função agendada para limpar convites expirados (mais de 48 horas).
- * Executa diariamente para marcar convites pendentes antigos como EXPIRED.
- */
-export const cleanupExpiredInvites = onSchedule("every 24 hours", async (event) => {
-  console.log("[CLEANUP] Iniciando limpeza de convites expirados...");
-
-  try {
-    // Calcular timestamp de expiração (48 horas atrás)
-    const expirationTime = new Date(Date.now() - INVITE_EXPIRATION_MS);
-
-    // Buscar convites pendentes criados há mais de 48 horas
-    const expiredInvitesSnap = await getDb().collection("group_invites")
-      .where("status", "==", "PENDING")
-      .where("created_at", "<", expirationTime)
-      .get();
-
-    if (expiredInvitesSnap.empty) {
-      console.log("[CLEANUP] Nenhum convite expirado encontrado");
-      return;
-    }
-
-    console.log(`[CLEANUP] Encontrados ${expiredInvitesSnap.size} convites expirados`);
-
-    // Atualizar em batch (máximo de 500 operações por batch)
-    const chunks: admin.firestore.QueryDocumentSnapshot[][] = [];
-    const docs = expiredInvitesSnap.docs;
-
-    for (let i = 0; i < docs.length; i += 500) {
-      chunks.push(docs.slice(i, i + 500));
-    }
-
-    let totalUpdated = 0;
-
-    for (const chunk of chunks) {
-      const batch = getDb().batch();
-
-      for (const doc of chunk) {
-        batch.update(doc.ref, {
-          status: "EXPIRED",
-          expired_at: admin.firestore.FieldValue.serverTimestamp(),
-        });
-      }
-
-      await batch.commit();
-      totalUpdated += chunk.length;
-    }
-
-    console.log(`[CLEANUP] ${totalUpdated} convites marcados como EXPIRED`);
-  } catch (e) {
-    console.error("[CLEANUP] Erro ao limpar convites expirados:", e);
-    throw e; // Re-throw para que o Cloud Functions tente novamente
-  }
-});
 
 // ==========================================
 // MVP RECEIVED NOTIFICATION (#Gap4)
 // ==========================================
 
 /**
- * Trigger quando um jogador é eleito MVP após a votação.
- * Escuta mudanças no campo mvp_id do jogo FINISHED.
- */
-/**
- * Envia notificação de MVP diretamente (chamado externamente ou pelo trigger).
+ * Envia notificação de MVP diretamente (chamado
+ * externamente ou pelo trigger).
  *
- * @param gameId - ID do jogo
- * @param gameData - Dados do jogo (já carregados)
+ * @param {string} gameId - ID do jogo
+ * @param {Record<string, unknown>} gameData -
+ *   Dados do jogo (já carregados)
+ * @return {Promise<void>} Resolução após envio
  */
 export async function notifyMvpAwardedDirect(
   gameId: string,
-  gameData: any
+  gameData: Record<string, unknown>
 ): Promise<void> {
-  const mvpId = gameData.mvp_id || gameData.mvpId;
+  const mvpId =
+    (gameData.mvp_id || gameData.mvpId) as
+      string | undefined;
   if (!mvpId) return;
 
   // Só notifica se o jogo está FINISHED
   if (gameData.status !== "FINISHED") return;
 
-  console.log(`[MVP_AWARDED_DIRECT] MVP definido no jogo ${gameId}: ${mvpId}`);
+  console.log(
+    "[MVP_AWARDED_DIRECT] MVP definido" +
+    ` no jogo ${gameId}: ${mvpId}`
+  );
 
-  const gameName = gameData.location_name || gameData.field_name || "a partida";
+  const gameName =
+    (gameData.location_name as string) ||
+    (gameData.field_name as string) ||
+    "a partida";
 
   await sendAndSaveNotification(mvpId, {
     userId: mvpId,
-    title: "🏆 Você foi eleito MVP!",
-    body: `Parabéns! Você foi escolhido o Craque da Partida em ${gameName}`,
+    title: "Voce foi eleito MVP!",
+    body: "Parabens! Voce foi escolhido" +
+      ` o Craque da Partida em ${gameName}`,
     type: NotificationType.MVP_RECEIVED,
     gameId: gameId,
     action: "game_detail/" + gameId,
   });
 
-  console.log(`[MVP_AWARDED_DIRECT] Notificação enviada para ${mvpId}`);
+  console.log(
+    "[MVP_AWARDED_DIRECT] Notificacao" +
+    ` enviada para ${mvpId}`
+  );
 }
 
-export const onMvpAwarded = onDocumentUpdated("games/{gameId}", async (event) => {
-  const before = event.data?.before.data();
-  const after = event.data?.after.data();
-  if (!before || !after) return;
-
-  const gameId = event.params.gameId;
-
-  // Verificar se MVP foi definido (antes era null/undefined, agora tem valor)
-  const beforeMvpId = before.mvp_id || before.mvpId;
-  const afterMvpId = after.mvp_id || after.mvpId;
-
-  if (!afterMvpId || beforeMvpId === afterMvpId) return;
-
-  // Só notifica se o jogo está FINISHED
-  if (after.status !== "FINISHED") return;
-
-  try {
-    await notifyMvpAwardedDirect(gameId, after);
-  } catch (e) {
-    console.error(`[MVP_AWARDED] Erro ao notificar MVP ${afterMvpId}:`, e);
-  }
-});
-
-// ==========================================
-// RANKING/DIVISION CHANGED NOTIFICATION (#Gap4)
-// ==========================================
-
 /**
- * Trigger quando a divisão de um jogador muda (promoção ou rebaixamento).
- * Escuta mudanças na coleção season_participation.
+ * Trigger quando um jogador é eleito MVP.
+ * Escuta mudanças no campo mvp_id do jogo
+ * FINISHED.
  */
-export const onDivisionChanged = onDocumentUpdated(
-  "season_participation/{partId}",
+export const onMvpAwarded = onDocumentUpdated(
+  "games/{gameId}",
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
     if (!before || !after) return;
 
-    const userId = after.user_id || after.userId;
-    if (!userId) return;
+    const gameId = event.params.gameId;
 
-    const beforeDivision = before.division;
-    const afterDivision = after.division;
+    // Verificar se MVP foi definido
+    const beforeMvpId =
+      before.mvp_id || before.mvpId;
+    const afterMvpId =
+      after.mvp_id || after.mvpId;
 
-    // Só notifica se a divisão realmente mudou
-    if (!afterDivision || beforeDivision === afterDivision) return;
-
-    console.log(`[RANKING_CHANGED] User ${userId}: ${beforeDivision} -> ${afterDivision}`);
-
-    // Determinar se foi promoção ou rebaixamento
-    // Suportar ambas as convenções: inglês (legado) e português (league.ts)
-    // league.ts usa: BRONZE, PRATA, OURO, DIAMANTE
-    // Dados legados podem conter: BRONZE, SILVER, GOLD, DIAMOND
-    const divisionOrderMap: Record<string, number> = {
-      // Nomes em português (padrão em league.ts)
-      BRONZE: 0,
-      PRATA: 1,
-      OURO: 2,
-      DIAMANTE: 3,
-      // Nomes em inglês (legado, para compatibilidade)
-      SILVER: 1,
-      GOLD: 2,
-      DIAMOND: 3,
-    };
-    const beforeIndex = divisionOrderMap[beforeDivision || "BRONZE"] ?? 0;
-    const afterIndex = divisionOrderMap[afterDivision] ?? 0;
-    const isPromotion = afterIndex > beforeIndex;
-
-    // Mapear nomes das divisões em português para exibição
-    const divisionNames: Record<string, string> = {
-      BRONZE: "Bronze",
-      PRATA: "Prata",
-      OURO: "Ouro",
-      DIAMANTE: "Diamante",
-      // Legado (inglês)
-      SILVER: "Prata",
-      GOLD: "Ouro",
-      DIAMOND: "Diamante",
-    };
-
-    const divisionName = divisionNames[afterDivision] || afterDivision;
-    const emoji = isPromotion ? "🎉" : "📉";
-    const title = isPromotion ? "Promoção de Liga!" : "Mudança de Liga";
-    const body = isPromotion ?
-      `${emoji} Parabéns! Você subiu para a divisão ${divisionName}!` :
-      `${emoji} Você desceu para a divisão ${divisionName}. Continue jogando!`;
-
-    try {
-      await sendAndSaveNotification(userId, {
-        userId,
-        title,
-        body,
-        type: NotificationType.RANKING_CHANGED,
-        action: "profile",
-      });
-
-      console.log(`[RANKING_CHANGED] Notificação enviada para ${userId}`);
-    } catch (e) {
-      console.error(`[RANKING_CHANGED] Erro ao notificar ${userId}:`, e);
-    }
-  }
-);
-
-// ==========================================
-// GROUP INVITE RESPONSE NOTIFICATIONS (#Gap4)
-// ==========================================
-
-/**
- * Trigger quando um convite de grupo é aceito ou recusado.
- * Notifica quem enviou o convite sobre a resposta.
- */
-export const onGroupInviteResponse = onDocumentUpdated(
-  "group_invites/{inviteId}",
-  async (event) => {
-    const before = event.data?.before.data();
-    const after = event.data?.after.data();
-    if (!before || !after) return;
-
-    const inviteId = event.params.inviteId;
-    const beforeStatus = before.status;
-    const afterStatus = after.status;
-
-    // Só notifica se mudou de PENDING para ACCEPTED ou DECLINED
-    if (beforeStatus !== "PENDING") return;
-    if (afterStatus !== "ACCEPTED" && afterStatus !== "DECLINED") return;
-
-    const invitedById = after.invited_by_id || after.invitedById;
-    const invitedUserName = after.invited_user_name || after.invitedUserName || "Um jogador";
-    const groupName = after.group_name || after.groupName || "seu grupo";
-
-    if (!invitedById) {
-      console.log(`[GROUP_INVITE_RESPONSE] Convite ${inviteId} sem invited_by_id`);
+    if (
+      !afterMvpId ||
+      beforeMvpId === afterMvpId
+    ) {
       return;
     }
 
-    console.log(`[GROUP_INVITE_RESPONSE] Convite ${inviteId}: ${beforeStatus} -> ${afterStatus}`);
+    // Só notifica se o jogo está FINISHED
+    if (after.status !== "FINISHED") return;
 
     try {
-      if (afterStatus === "ACCEPTED") {
-        await sendAndSaveNotification(invitedById, {
-          userId: invitedById,
-          title: "Convite aceito!",
-          body: `${invitedUserName} aceitou seu convite para ${groupName}`,
-          type: NotificationType.GROUP_INVITE_ACCEPTED,
-          groupId: after.group_id || after.groupId,
-          action: "group_detail/" + (after.group_id || after.groupId),
-        });
-      } else {
-        await sendAndSaveNotification(invitedById, {
-          userId: invitedById,
-          title: "Convite recusado",
-          body: `${invitedUserName} recusou seu convite para ${groupName}`,
-          type: NotificationType.GROUP_INVITE_DECLINED,
-          groupId: after.group_id || after.groupId,
-        });
-      }
-
-      console.log(`[GROUP_INVITE_RESPONSE] Notificação enviada para ${invitedById}`);
+      await notifyMvpAwardedDirect(
+        gameId,
+        after as Record<string, unknown>
+      );
     } catch (e) {
-      console.error(`[GROUP_INVITE_RESPONSE] Erro ao notificar ${invitedById}:`, e);
+      console.error(
+        "[MVP_AWARDED] Erro ao notificar" +
+        ` MVP ${afterMvpId}:`,
+        e
+      );
     }
   }
 );
 
 // ==========================================
-// MEMBER JOINED/LEFT GROUP NOTIFICATIONS (#Gap4)
+// RANKING/DIVISION CHANGED NOTIFICATION
+// ==========================================
+
+/**
+ * Trigger quando a divisão de um jogador muda
+ * (promoção ou rebaixamento).
+ */
+export const onDivisionChanged =
+  onDocumentUpdated(
+    "season_participation/{partId}",
+    async (event) => {
+      const before = event.data?.before.data();
+      const after = event.data?.after.data();
+      if (!before || !after) return;
+
+      const userId =
+        after.user_id || after.userId;
+      if (!userId) return;
+
+      const beforeDivision = before.division;
+      const afterDivision = after.division;
+
+      // Só notifica se a divisão mudou
+      if (
+        !afterDivision ||
+        beforeDivision === afterDivision
+      ) {
+        return;
+      }
+
+      console.log(
+        `[RANKING_CHANGED] User ${userId}:` +
+        ` ${beforeDivision} -> ${afterDivision}`
+      );
+
+      // Determinar promoção ou rebaixamento
+      const divisionOrderMap:
+        Record<string, number> = {
+          // Nomes em português (padrão league.ts)
+          BRONZE: 0,
+          PRATA: 1,
+          OURO: 2,
+          DIAMANTE: 3,
+          // Nomes em inglês (legado)
+          SILVER: 1,
+          GOLD: 2,
+          DIAMOND: 3,
+        };
+      const beforeIndex =
+        divisionOrderMap[
+          beforeDivision || "BRONZE"
+        ] ?? 0;
+      const afterIndex =
+        divisionOrderMap[afterDivision] ?? 0;
+      const isPromotion =
+        afterIndex > beforeIndex;
+
+      // Mapear nomes para exibição
+      const divisionNames:
+        Record<string, string> = {
+          BRONZE: "Bronze",
+          PRATA: "Prata",
+          OURO: "Ouro",
+          DIAMANTE: "Diamante",
+          SILVER: "Prata",
+          GOLD: "Ouro",
+          DIAMOND: "Diamante",
+        };
+
+      const divisionName =
+        divisionNames[afterDivision] ||
+        afterDivision;
+      const title = isPromotion ?
+        "Promocao de Liga!" :
+        "Mudanca de Liga";
+      const body = isPromotion ?
+        "Parabens! Voce subiu para" +
+          ` a divisao ${divisionName}!` :
+        "Voce desceu para" +
+          ` a divisao ${divisionName}.` +
+          " Continue jogando!";
+
+      try {
+        await sendAndSaveNotification(userId, {
+          userId,
+          title,
+          body,
+          type:
+            NotificationType.RANKING_CHANGED,
+          action: "profile",
+        });
+
+        console.log(
+          "[RANKING_CHANGED] Notificacao" +
+          ` enviada para ${userId}`
+        );
+      } catch (e) {
+        console.error(
+          "[RANKING_CHANGED] Erro ao" +
+          ` notificar ${userId}:`,
+          e
+        );
+      }
+    }
+  );
+
+// ==========================================
+// GROUP INVITE RESPONSE NOTIFICATIONS
+// ==========================================
+
+/**
+ * Trigger quando um convite de grupo é aceito ou
+ * recusado. Notifica quem enviou o convite.
+ */
+export const onGroupInviteResponse =
+  onDocumentUpdated(
+    "group_invites/{inviteId}",
+    async (event) => {
+      const before = event.data?.before.data();
+      const after = event.data?.after.data();
+      if (!before || !after) return;
+
+      const inviteId = event.params.inviteId;
+      const beforeStatus = before.status;
+      const afterStatus = after.status;
+
+      // Só notifica se mudou de PENDING
+      if (beforeStatus !== "PENDING") return;
+      if (
+        afterStatus !== "ACCEPTED" &&
+        afterStatus !== "DECLINED"
+      ) {
+        return;
+      }
+
+      const invitedById =
+        after.invited_by_id || after.invitedById;
+      const invitedUserName =
+        after.invited_user_name ||
+        after.invitedUserName ||
+        "Um jogador";
+      const groupName =
+        after.group_name ||
+        after.groupName ||
+        "seu grupo";
+
+      if (!invitedById) {
+        console.log(
+          "[GROUP_INVITE_RESPONSE] Convite" +
+          ` ${inviteId} sem invited_by_id`
+        );
+        return;
+      }
+
+      console.log(
+        "[GROUP_INVITE_RESPONSE] Convite" +
+        ` ${inviteId}: ${beforeStatus}` +
+        ` -> ${afterStatus}`
+      );
+
+      try {
+        if (afterStatus === "ACCEPTED") {
+          const grpId =
+            after.group_id || after.groupId;
+          await sendAndSaveNotification(
+            invitedById,
+            {
+              userId: invitedById,
+              title: "Convite aceito!",
+              body: `${invitedUserName}` +
+                " aceitou seu convite" +
+                ` para ${groupName}`,
+              type: NotificationType
+                .GROUP_INVITE_ACCEPTED,
+              groupId: grpId,
+              action:
+                "group_detail/" + grpId,
+            }
+          );
+        } else {
+          await sendAndSaveNotification(
+            invitedById,
+            {
+              userId: invitedById,
+              title: "Convite recusado",
+              body: `${invitedUserName}` +
+                " recusou seu convite" +
+                ` para ${groupName}`,
+              type: NotificationType
+                .GROUP_INVITE_DECLINED,
+              groupId:
+                after.group_id ||
+                after.groupId,
+            }
+          );
+        }
+
+        console.log(
+          "[GROUP_INVITE_RESPONSE]" +
+          " Notificacao enviada" +
+          ` para ${invitedById}`
+        );
+      } catch (e) {
+        console.error(
+          "[GROUP_INVITE_RESPONSE] Erro ao" +
+          ` notificar ${invitedById}:`,
+          e
+        );
+      }
+    }
+  );
+
+// ==========================================
+// MEMBER JOINED/LEFT GROUP NOTIFICATIONS
 // ==========================================
 
 /**
@@ -1249,54 +1958,91 @@ export const onMemberJoined = onDocumentCreated(
     const groupId = event.params.groupId;
     const memberId = event.params.memberId;
 
-    // Não notifica se é o owner (criador do grupo)
+    // Não notifica se é o owner
     const role = member.role || member.memberRole;
     if (role === "OWNER") return;
 
-    console.log(`[MEMBER_JOINED] Member ${memberId} joined group ${groupId}`);
+    console.log(
+      `[MEMBER_JOINED] Member ${memberId}` +
+      ` joined group ${groupId}`
+    );
 
     try {
       // Buscar dados do grupo e do novo membro
-      const [groupDoc, memberUserDoc] = await Promise.all([
-        getDb().collection("groups").doc(groupId).get(),
-        getDb().collection("users").doc(memberId).get(),
-      ]);
+      const [groupDoc, memberUserDoc] =
+        await Promise.all([
+          getDb()
+            .collection("groups")
+            .doc(groupId)
+            .get(),
+          getDb()
+            .collection("users")
+            .doc(memberId)
+            .get(),
+        ]);
 
       if (!groupDoc.exists) return;
 
       const group = groupDoc.data();
-      const memberUser = memberUserDoc.exists ? memberUserDoc.data() : null;
-      const memberName = memberUser?.name || memberUser?.nickname || "Um jogador";
-      const groupName = group?.name || "o grupo";
+      const memberUser = memberUserDoc.exists ?
+        memberUserDoc.data() :
+        null;
+      const memberName =
+        memberUser?.name ||
+        memberUser?.nickname ||
+        "Um jogador";
+      const groupName =
+        group?.name || "o grupo";
 
-      // Buscar admins e owners para notificar
+      // Buscar admins e owners
       const adminsSnap = await getDb()
         .collection("groups")
         .doc(groupId)
         .collection("members")
-        .where("role", "in", ["ADMIN", "OWNER"])
+        .where(
+          "role",
+          "in",
+          ["ADMIN", "OWNER"]
+        )
         .get();
 
+      type DocSnap =
+        admin.firestore.QueryDocumentSnapshot;
       const adminIds = adminsSnap.docs
-        .map((doc: any) => doc.id)
-        .filter((id: string) => id !== memberId);
+        .map((doc: DocSnap) => doc.id)
+        .filter(
+          (id: string) => id !== memberId
+        );
 
       if (adminIds.length > 0) {
-        await sendNotificationToUsers(adminIds, {
-          title: "Novo membro!",
-          body: `${memberName} entrou em ${groupName}`,
-          type: NotificationType.MEMBER_JOINED,
-          data: {
-            groupId: groupId,
-            memberId: memberId,
-            action: "group_detail/" + groupId,
-          },
-        });
+        await sendNotificationToUsers(
+          adminIds,
+          {
+            title: "Novo membro!",
+            body: `${memberName}` +
+              ` entrou em ${groupName}`,
+            type:
+              NotificationType.MEMBER_JOINED,
+            data: {
+              groupId: groupId,
+              memberId: memberId,
+              action:
+                "group_detail/" + groupId,
+            },
+          }
+        );
 
-        console.log(`[MEMBER_JOINED] Notificação enviada para ${adminIds.length} admins`);
+        console.log(
+          "[MEMBER_JOINED] Notificacao" +
+          " enviada para " +
+          `${adminIds.length} admins`
+        );
       }
     } catch (e) {
-      console.error("[MEMBER_JOINED] Erro ao processar:", e);
+      console.error(
+        "[MEMBER_JOINED] Erro ao processar:",
+        e
+      );
     }
   }
 );
@@ -1311,48 +2057,85 @@ export const onMemberLeft = onDocumentDeleted(
     const groupId = event.params.groupId;
     const memberId = event.params.memberId;
 
-    console.log(`[MEMBER_LEFT] Member ${memberId} left group ${groupId}`);
+    console.log(
+      `[MEMBER_LEFT] Member ${memberId}` +
+      ` left group ${groupId}`
+    );
 
     try {
-      // Buscar dados do grupo e do membro que saiu
-      const [groupDoc, memberUserDoc] = await Promise.all([
-        getDb().collection("groups").doc(groupId).get(),
-        getDb().collection("users").doc(memberId).get(),
-      ]);
+      // Buscar dados do grupo e do membro
+      const [groupDoc, memberUserDoc] =
+        await Promise.all([
+          getDb()
+            .collection("groups")
+            .doc(groupId)
+            .get(),
+          getDb()
+            .collection("users")
+            .doc(memberId)
+            .get(),
+        ]);
 
       if (!groupDoc.exists) return;
 
       const group = groupDoc.data();
-      const memberUser = memberUserDoc.exists ? memberUserDoc.data() : null;
-      const memberName = memberUser?.name || memberUser?.nickname || "Um jogador";
-      const groupName = group?.name || "o grupo";
+      const memberUser = memberUserDoc.exists ?
+        memberUserDoc.data() :
+        null;
+      const memberName =
+        memberUser?.name ||
+        memberUser?.nickname ||
+        "Um jogador";
+      const groupName =
+        group?.name || "o grupo";
 
-      // Buscar admins e owners para notificar
+      // Buscar admins e owners
       const adminsSnap = await getDb()
         .collection("groups")
         .doc(groupId)
         .collection("members")
-        .where("role", "in", ["ADMIN", "OWNER"])
+        .where(
+          "role",
+          "in",
+          ["ADMIN", "OWNER"]
+        )
         .get();
 
-      const adminIds = adminsSnap.docs.map((doc: any) => doc.id);
+      type DocSnap =
+        admin.firestore.QueryDocumentSnapshot;
+      const adminIds = adminsSnap.docs.map(
+        (doc: DocSnap) => doc.id
+      );
 
       if (adminIds.length > 0) {
-        await sendNotificationToUsers(adminIds, {
-          title: "Membro saiu",
-          body: `${memberName} saiu de ${groupName}`,
-          type: NotificationType.MEMBER_LEFT,
-          data: {
-            groupId: groupId,
-            memberId: memberId,
-            action: "group_detail/" + groupId,
-          },
-        });
+        await sendNotificationToUsers(
+          adminIds,
+          {
+            title: "Membro saiu",
+            body: `${memberName}` +
+              ` saiu de ${groupName}`,
+            type:
+              NotificationType.MEMBER_LEFT,
+            data: {
+              groupId: groupId,
+              memberId: memberId,
+              action:
+                "group_detail/" + groupId,
+            },
+          }
+        );
 
-        console.log(`[MEMBER_LEFT] Notificação enviada para ${adminIds.length} admins`);
+        console.log(
+          "[MEMBER_LEFT] Notificacao" +
+          " enviada para " +
+          `${adminIds.length} admins`
+        );
       }
     } catch (e) {
-      console.error("[MEMBER_LEFT] Erro ao processar:", e);
+      console.error(
+        "[MEMBER_LEFT] Erro ao processar:",
+        e
+      );
     }
   }
 );
@@ -1365,77 +2148,120 @@ export const onMemberLeft = onDocumentDeleted(
  * Trigger quando uma transação de caixa é criada.
  * Notifica admins do grupo sobre entradas e saídas.
  */
-export const onCashboxTransaction = onDocumentCreated(
-  "groups/{groupId}/cashbox/{transactionId}",
-  async (event) => {
-    const transaction = event.data?.data();
-    if (!transaction) return;
+export const onCashboxTransaction =
+  onDocumentCreated(
+    "groups/{groupId}/cashbox/{transactionId}",
+    async (event) => {
+      const transaction = event.data?.data();
+      if (!transaction) return;
 
-    const groupId = event.params.groupId;
-    const transactionId = event.params.transactionId;
+      const groupId = event.params.groupId;
+      const transactionId =
+        event.params.transactionId;
 
-    const type = transaction.type || transaction.transactionType;
-    const amount = transaction.amount || 0;
-    const description = transaction.description || "";
-    const createdById = transaction.created_by_id || transaction.createdById;
+      const txType =
+        transaction.type ||
+        transaction.transactionType;
+      const amount = transaction.amount || 0;
+      const description =
+        transaction.description || "";
+      const createdById =
+        transaction.created_by_id ||
+        transaction.createdById;
 
-    console.log(`[CASHBOX] Transaction ${transactionId} in group ${groupId}: ${type} R$${amount}`);
+      console.log(
+        `[CASHBOX] Transaction ${transactionId}` +
+        ` in group ${groupId}:` +
+        ` ${txType} R$${amount}`
+      );
 
-    try {
-      // Buscar dados do grupo
-      const groupDoc = await getDb().collection("groups").doc(groupId).get();
-      if (!groupDoc.exists) return;
+      try {
+        // Buscar dados do grupo
+        const groupDoc = await getDb()
+          .collection("groups")
+          .doc(groupId)
+          .get();
+        if (!groupDoc.exists) return;
 
-      // Buscar admins e owners para notificar (exceto quem criou)
-      const adminsSnap = await getDb()
-        .collection("groups")
-        .doc(groupId)
-        .collection("members")
-        .where("role", "in", ["ADMIN", "OWNER"])
-        .get();
+        // Buscar admins e owners
+        const adminsSnap = await getDb()
+          .collection("groups")
+          .doc(groupId)
+          .collection("members")
+          .where(
+            "role",
+            "in",
+            ["ADMIN", "OWNER"]
+          )
+          .get();
 
-      const adminIds = adminsSnap.docs
-        .map((doc: any) => doc.id)
-        .filter((id: string) => id !== createdById);
+        type DocSnap =
+          admin.firestore.QueryDocumentSnapshot;
+        const adminIds = adminsSnap.docs
+          .map((doc: DocSnap) => doc.id)
+          .filter(
+            (id: string) => id !== createdById
+          );
 
-      if (adminIds.length === 0) return;
+        if (adminIds.length === 0) return;
 
-      const isEntry = type === "ENTRY" || type === "INCOME" || type === "RECEITA";
-      const emoji = isEntry ? "💰" : "💸";
-      const notificationType = isEntry ?
-        NotificationType.CASHBOX_ENTRY :
-        NotificationType.CASHBOX_EXIT;
+        const isEntry =
+          txType === "ENTRY" ||
+          txType === "INCOME" ||
+          txType === "RECEITA";
+        const notificationType = isEntry ?
+          NotificationType.CASHBOX_ENTRY :
+          NotificationType.CASHBOX_EXIT;
 
-      const title = isEntry ? "Entrada no caixa" : "Saída do caixa";
-      const body = `${emoji} R$${amount.toFixed(2)} ${isEntry ? "adicionado" : "retirado"} ${
-        description ? `- ${description}` : ""
-      }`;
+        const title = isEntry ?
+          "Entrada no caixa" :
+          "Saida do caixa";
+        const amountStr = amount.toFixed(2);
+        const verb = isEntry ?
+          "adicionado" :
+          "retirado";
+        const descPart = description ?
+          ` - ${description}` :
+          "";
+        const body =
+          `R$${amountStr} ${verb}${descPart}`;
 
-      await sendNotificationToUsers(adminIds, {
-        title,
-        body,
-        type: notificationType,
-        data: {
-          groupId: groupId,
-          transactionId: transactionId,
-          action: "group_cashbox/" + groupId,
-        },
-      });
+        await sendNotificationToUsers(
+          adminIds,
+          {
+            title,
+            body,
+            type: notificationType,
+            data: {
+              groupId: groupId,
+              transactionId: transactionId,
+              action:
+                "group_cashbox/" + groupId,
+            },
+          }
+        );
 
-      console.log(`[CASHBOX] Notificação enviada para ${adminIds.length} admins`);
-    } catch (e) {
-      console.error("[CASHBOX] Erro ao processar transação:", e);
+        console.log(
+          "[CASHBOX] Notificacao enviada" +
+          ` para ${adminIds.length} admins`
+        );
+      } catch (e) {
+        console.error(
+          "[CASHBOX] Erro ao processar" +
+          " transacao:",
+          e
+        );
+      }
     }
-  }
-);
+  );
 
 // ==========================================
 // GAME VACANCY NOTIFICATION (#Gap4)
 // ==========================================
 
 /**
- * Trigger quando um jogador cancela presença e abre vaga.
- * Notifica waitlist e membros do grupo sobre a vaga disponível.
+ * Trigger quando um jogador cancela presença e
+ * abre vaga. Notifica waitlist e membros do grupo.
  */
 export const onGameVacancy = onDocumentUpdated(
   "confirmations/{confirmationId}",
@@ -1444,32 +2270,58 @@ export const onGameVacancy = onDocumentUpdated(
     const after = event.data?.after.data();
     if (!before || !after) return;
 
-    const confirmationId = event.params.confirmationId;
+    const confirmationId =
+      event.params.confirmationId;
     const beforeStatus = before.status;
     const afterStatus = after.status;
 
-    // Só notifica se era CONFIRMED e virou CANCELLED
-    if (beforeStatus !== "CONFIRMED" || afterStatus !== "CANCELLED") return;
+    // Só notifica se era CONFIRMED -> CANCELLED
+    if (
+      beforeStatus !== "CONFIRMED" ||
+      afterStatus !== "CANCELLED"
+    ) {
+      return;
+    }
 
-    const gameId = after.game_id || after.gameId;
+    const gameId =
+      after.game_id || after.gameId;
     if (!gameId) return;
 
-    console.log(`[GAME_VACANCY] Vaga aberta no jogo ${gameId} (confirmação ${confirmationId})`);
+    console.log(
+      "[GAME_VACANCY] Vaga aberta no" +
+      ` jogo ${gameId}` +
+      ` (confirmacao ${confirmationId})`
+    );
 
     try {
       // Buscar dados do jogo
-      const gameDoc = await getDb().collection("games").doc(gameId).get();
+      const gameDoc = await getDb()
+        .collection("games")
+        .doc(gameId)
+        .get();
       if (!gameDoc.exists) return;
 
       const game = gameDoc.data();
       if (!game) return;
 
-      // Só notifica se o jogo ainda está aberto (SCHEDULED ou CONFIRMED)
-      if (game.status !== "SCHEDULED" && game.status !== "CONFIRMED") return;
+      // Só notifica se jogo ainda aberto
+      if (
+        game.status !== "SCHEDULED" &&
+        game.status !== "CONFIRMED"
+      ) {
+        return;
+      }
 
-      const maxPlayers = game.max_players || game.maxPlayers || 14;
-      const groupId = game.group_id || game.groupId;
-      const gameName = game.location_name || game.field_name || "o jogo";
+      const maxPlayers =
+        game.max_players ||
+        game.maxPlayers ||
+        14;
+      const groupId =
+        game.group_id || game.groupId;
+      const gameName =
+        game.location_name ||
+        game.field_name ||
+        "o jogo";
       const gameDate = game.date || "";
 
       // Contar confirmações atuais
@@ -1479,14 +2331,14 @@ export const onGameVacancy = onDocumentUpdated(
         .where("status", "==", "CONFIRMED")
         .get();
 
-      const currentPlayers = confirmationsSnap.size;
+      const currentPlayers =
+        confirmationsSnap.size;
 
-      // Se ainda não estava cheio, não notifica
-      // (a vaga é relevante apenas quando estava lotado)
+      // Se não estava cheio, não notifica
       if (currentPlayers >= maxPlayers - 1) {
-        // Estava lotado, agora tem vaga - notificar!
+        // Estava lotado, agora tem vaga
 
-        // 1. Primeiro notificar a waitlist
+        // 1. Notificar a waitlist
         const waitlistSnap = await getDb()
           .collection("waitlist")
           .where("game_id", "==", gameId)
@@ -1495,64 +2347,108 @@ export const onGameVacancy = onDocumentUpdated(
           .limit(5)
           .get();
 
-        const waitlistUserIds = waitlistSnap.docs.map((doc: any) => {
-          const data = doc.data();
-          return data.user_id || data.userId;
-        });
+        type DocSnap =
+          admin.firestore.QueryDocumentSnapshot;
+        const waitlistUserIds =
+          waitlistSnap.docs.map(
+            (doc: DocSnap) => {
+              const data = doc.data();
+              return data.user_id || data.userId;
+            }
+          );
 
         if (waitlistUserIds.length > 0) {
-          await sendNotificationToUsers(waitlistUserIds, {
-            title: "Vaga disponível! ⚽",
-            body: `Abriu uma vaga em ${gameName}. Corra para confirmar!`,
-            type: NotificationType.GAME_VACANCY,
-            data: {
-              gameId: gameId,
-              action: "game_detail/" + gameId,
-            },
-          });
+          await sendNotificationToUsers(
+            waitlistUserIds,
+            {
+              title: "Vaga disponivel!",
+              body: "Abriu uma vaga em" +
+                ` ${gameName}. Corra` +
+                " para confirmar!",
+              type:
+                NotificationType.GAME_VACANCY,
+              data: {
+                gameId: gameId,
+                action:
+                  "game_detail/" + gameId,
+              },
+            }
+          );
 
-          console.log(`[GAME_VACANCY] Notificação enviada para ${waitlistUserIds.length} na waitlist`);
+          console.log(
+            "[GAME_VACANCY] Notificacao" +
+            " enviada para" +
+            ` ${waitlistUserIds.length}` +
+            " na waitlist"
+          );
         }
 
-        // 2. Se não há waitlist ou poucos na espera, notificar grupo também
-        if (groupId && waitlistUserIds.length < 3) {
-          // Buscar membros do grupo que não estão confirmados
+        // 2. Se poucos na espera, notificar grupo
+        if (
+          groupId &&
+          waitlistUserIds.length < 3
+        ) {
           const membersSnap = await getDb()
             .collection("groups")
             .doc(groupId)
             .collection("members")
             .get();
 
-          const confirmedUserIds = confirmationsSnap.docs.map((doc: any) => {
-            const data = doc.data();
-            return data.user_id || data.userId;
-          });
+          const confirmedUserIds =
+            confirmationsSnap.docs.map(
+              (doc: DocSnap) => {
+                const data = doc.data();
+                return (
+                  data.user_id || data.userId
+                );
+              }
+            );
 
           const memberIds = membersSnap.docs
-            .map((doc: any) => doc.id)
+            .map((doc: DocSnap) => doc.id)
             .filter(
               (id: string) =>
-                !confirmedUserIds.includes(id) && !waitlistUserIds.includes(id)
+                !confirmedUserIds
+                  .includes(id) &&
+                !waitlistUserIds
+                  .includes(id)
             )
-            .slice(0, 20); // Limitar a 20 para não spam
+            .slice(0, 20);
 
           if (memberIds.length > 0) {
-            await sendNotificationToUsers(memberIds, {
-              title: "Vaga disponível! ⚽",
-              body: `Abriu uma vaga em ${gameName} (${gameDate}). Confirme sua presença!`,
-              type: NotificationType.GAME_VACANCY,
-              data: {
-                gameId: gameId,
-                action: "game_detail/" + gameId,
-              },
-            });
+            await sendNotificationToUsers(
+              memberIds,
+              {
+                title: "Vaga disponivel!",
+                body: "Abriu uma vaga em" +
+                  ` ${gameName}` +
+                  ` (${gameDate}).` +
+                  " Confirme sua presenca!",
+                type:
+                  NotificationType.GAME_VACANCY,
+                data: {
+                  gameId: gameId,
+                  action:
+                    "game_detail/" + gameId,
+                },
+              }
+            );
 
-            console.log(`[GAME_VACANCY] Notificação enviada para ${memberIds.length} membros do grupo`);
+            console.log(
+              "[GAME_VACANCY] Notificacao" +
+              " enviada para" +
+              ` ${memberIds.length}` +
+              " membros do grupo"
+            );
           }
         }
       }
     } catch (e) {
-      console.error("[GAME_VACANCY] Erro ao processar vaga:", e);
+      console.error(
+        "[GAME_VACANCY] Erro ao" +
+        " processar vaga:",
+        e
+      );
     }
   }
 );

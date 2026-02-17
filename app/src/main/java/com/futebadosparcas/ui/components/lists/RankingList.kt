@@ -19,8 +19,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
 import coil.compose.AsyncImage
 import com.futebadosparcas.data.model.LeagueDivision
 import com.futebadosparcas.data.model.RankingEntryV2
@@ -171,7 +173,7 @@ fun DivisionHeader(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Divisão ${division.displayName}",
+                    text = stringResource(R.string.ranking_division, division.displayName),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = divisionColor

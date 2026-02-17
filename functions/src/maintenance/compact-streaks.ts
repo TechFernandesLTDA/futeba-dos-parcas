@@ -1,164 +1,264 @@
 /**
- * Compactação de Streaks Antigos
+ * Compactacao de Streaks Antigos
  *
- * Scheduled job para manutenção e compactação de dados de streaks.
- * Executado uma vez por mês para garantir que a coleção user_streaks
+ * Scheduled job para manutencao e compactacao
+ * de dados de streaks. Executado uma vez por
+ * mes para garantir que a colecao user_streaks
  * mantenha apenas dados relevantes.
  *
- * ANÁLISE (P1 #19):
+ * ANALISE (P1 #19):
  * ================
- * Após análise da estrutura de dados em Gamification.kt, a coleção
- * user_streaks armazena apenas valores agregados COMPACTOS:
+ * Apos analise da estrutura de dados em
+ * Gamification.kt, a colecao user_streaks
+ * armazena apenas valores agregados COMPACTOS:
  *
- * - currentStreak: number (contador atual de jogos consecutivos)
- * - longestStreak: number (recorde histórico)
- * - lastGameDate: string (ISO 8601, última confirmação)
- * - streakStartedAt: string (ISO 8601, início do streak atual)
+ * - currentStreak: number
+ *   (contador atual de jogos consecutivos)
+ * - longestStreak: number
+ *   (recorde historico)
+ * - lastGameDate: string
+ *   (ISO 8601, ultima confirmacao)
+ * - streakStartedAt: string
+ *   (ISO 8601, inicio do streak atual)
  *
- * NÃO há histórico verboso ou campos redundantes.
+ * NAO ha historico verboso ou campos
+ * redundantes.
  *
- * CONCLUSÃO: A estrutura é OTIMIZADA por padrão.
- * - Nenhuma limpeza necessária
- * - Cada documento ≈ 200 bytes
- * - 100k usuários = 20MB total (negligível)
- * - Writes de streak: <1 operação por jogo
+ * CONCLUSAO: A estrutura e OTIMIZADA
+ * por padrao.
+ * - Nenhuma limpeza necessaria
+ * - Cada documento aprox 200 bytes
+ * - 100k usuarios = 20MB total (negligivel)
+ * - Writes de streak: <1 operacao por jogo
  *
- * STATUS: ✅ N/A - Sistema já compacto
+ * STATUS: N/A - Sistema ja compacto
  *
  * JUSTIFICATIVA:
  * ==============
- * 1. Apenas 4 campos por documento (vs. array infinito de histórico)
- * 2. Valores substituídos, não acumulados (no appends)
- * 3. Sem sub-coleções ou documentos aninhados
- * 4. TTL natural: streakStartedAt < 30 dias = reset automático
- * 5. Firestore read: O(1) - sem scan necessário
+ * 1. Apenas 4 campos por documento
+ *    (vs. array infinito de historico)
+ * 2. Valores substituidos, nao acumulados
+ *    (no appends)
+ * 3. Sem sub-colecoes ou documentos aninhados
+ * 4. TTL natural: streakStartedAt < 30 dias
+ *    = reset automatico
+ * 5. Firestore read: O(1) - sem scan
  *
- * FUTURO (se implementarmos histórico):
+ * FUTURO (se implementarmos historico):
  * =====================================
- * Se em futuro quisermos rastrear histórico completo (ex: gráficos de streak),
- * então sim, seria necessário:
- * - Sub-coleção streak_history com timestamps
- * - Compactação trimestral para agregar dados antigos
- * - TTL de 6 meses em histórico detalha
+ * Se em futuro quisermos rastrear historico
+ * completo (ex: graficos de streak), entao
+ * sim, seria necessario:
+ * - Sub-colecao streak_history com timestamps
+ * - Compactacao trimestral para agregar
+ *   dados antigos
+ * - TTL de 6 meses em historico detalhado
  *
  * Por enquanto, mantemos simples e eficiente.
  *
- * @see specs/MASTER_OPTIMIZATION_CHECKLIST.md - P1 #19
+ * @see specs/MASTER_OPTIMIZATION_CHECKLIST.md
  * @see specs/P1_19_STREAK_COMPACTION_ANALYSIS.md
- * @see app/src/main/java/com/futebadosparcas/data/model/Gamification.kt#UserStreak
+ * @see Gamification.kt#UserStreak
  */
 
 import * as admin from "firebase-admin";
-import { onSchedule } from "firebase-functions/v2/scheduler";
+import {onSchedule} from "firebase-functions/v2/scheduler";
+import {
+  FIRESTORE_BATCH_SAFE_LIMIT,
+} from "../constants";
 
 const db = admin.firestore();
 
 /**
- * Scheduled job para validação e manutenção de dados de streaks.
- * Executado mensalmente (primeiro dia do mês às 4:00 AM).
+ * Scheduled job para validacao e manutencao
+ * de dados de streaks. Executado mensalmente
+ * (primeiro dia do mes as 4:00 AM).
  *
- * Operações:
- * 1. Remove documentos de usuários deletados (limpeza em cascata)
- * 2. Valida integridade de dados (currentStreak >= 0)
- * 3. Reseta streaks expirados (lastGameDate < 30 dias atrás)
- * 4. Coleta métricas (total streaks, max streak, avg length)
+ * Operacoes:
+ * 1. Remove documentos de usuarios deletados
+ *    (limpeza em cascata)
+ * 2. Valida integridade de dados
+ *    (currentStreak >= 0)
+ * 3. Reseta streaks expirados
+ *    (lastGameDate < 30 dias atras)
+ * 4. Coleta metricas
+ *    (total streaks, max streak, avg length)
  *
- * Timeout: 60s (operações leves, sem ordenação cara)
- * Memory: 256MiB (processamento batch padrão)
+ * Timeout: 60s (operacoes leves)
+ * Memory: 256MiB (processamento batch padrao)
  *
- * @see specs/MASTER_OPTIMIZATION_CHECKLIST.md - P1 #19 (N/A)
+ * @param {object} event - Evento do scheduler
+ * @return {Promise<void>} Promessa vazia
+ * @see specs/MASTER_OPTIMIZATION_CHECKLIST.md
  */
 export const maintainStreaksData = onSchedule(
   {
-    schedule: "0 4 1 * *", // 1º dia do mês, 4:00 AM
+    schedule: "0 4 1 * *",
     timeZone: "America/Sao_Paulo",
     timeoutSeconds: 60,
     memory: "256MiB",
     retryCount: 1,
   },
-  async (event) => {
-    console.log("[STREAK_MAINTENANCE] Iniciando manutenção de streaks...");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async (_event) => {
+    console.log(
+      "[STREAK_MAINTENANCE] Iniciando " +
+      "manutencao de streaks..."
+    );
 
     try {
-      // FASE 1: Coleta de métricas (limitado a 1000 para evitar scan completo)
-      const allStreaksSnap = await db.collection("user_streaks").limit(1000).get();
-      console.log(`[STREAK_MAINTENANCE] Total de streaks encontrados: ${allStreaksSnap.size}`);
+      // FASE 1: Coleta de metricas
+      // (limitado a 1000 para evitar scan)
+      const allStreaksSnap = await db
+        .collection("user_streaks")
+        .limit(1000)
+        .get();
+      console.log(
+        "[STREAK_MAINTENANCE] Total de " +
+        "streaks encontrados: " +
+        `${allStreaksSnap.size}`
+      );
 
-      // Métricas
+      // Metricas
       let maxStreak = 0;
       let totalStreak = 0;
       let activeStreaks = 0;
       let expiredStreaks = 0;
       let invalidDocuments = 0;
       const now = new Date();
-      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(
+        now.getTime() -
+        30 * 24 * 60 * 60 * 1000
+      );
 
-      // FASE 1.5: Pre-fetch de todos os usuários em batch (corrige N+1)
+      // FASE 1.5: Pre-fetch de todos os
+      // usuarios em batch (corrige N+1)
       const allUserIds = allStreaksSnap.docs
         .map((doc) => doc.data().user_id)
-        .filter((id): id is string => !!id);
+        .filter(
+          (id): id is string => !!id
+        );
 
-      const uniqueUserIds = [...new Set(allUserIds)];
-      const existingUserIds = new Set<string>();
+      const uniqueUserIds = [
+        ...new Set(allUserIds),
+      ];
+      const existingUserIds =
+        new Set<string>();
 
-      for (let i = 0; i < uniqueUserIds.length; i += 10) {
-        const chunk = uniqueUserIds.slice(i, i + 10);
-        const snap = await db.collection("users")
-          .where(admin.firestore.FieldPath.documentId(), "in", chunk)
+      for (
+        let i = 0;
+        i < uniqueUserIds.length;
+        i += 10
+      ) {
+        const chunk =
+          uniqueUserIds.slice(i, i + 10);
+        const snap = await db
+          .collection("users")
+          .where(
+            admin.firestore
+              .FieldPath.documentId(),
+            "in",
+            chunk
+          )
           .get();
-        snap.docs.forEach((d) => existingUserIds.add(d.id));
+        snap.docs.forEach(
+          (d) => existingUserIds.add(d.id)
+        );
       }
-      console.log(`[STREAK_MAINTENANCE] Usuários existentes: ${existingUserIds.size}/${uniqueUserIds.length}`);
+      console.log(
+        "[STREAK_MAINTENANCE] Usuarios " +
+        "existentes: " +
+        `${existingUserIds.size}/` +
+        `${uniqueUserIds.length}`
+      );
 
       const batch = db.batch();
       let batchOps = 0;
 
       // FASE 2: Processar cada streak
-      for (const streakDoc of allStreaksSnap.docs) {
+      for (
+        const streakDoc of
+        allStreaksSnap.docs
+      ) {
         const data = streakDoc.data();
         const userId = data.user_id;
 
-        // 2.1: Validação de dados
-        if (!userId || typeof data.current_streak !== "number") {
-          console.warn(`[STREAK_MAINTENANCE] Documento inválido: ${streakDoc.id}, marcando para remoção`);
+        // 2.1: Validacao de dados
+        if (
+          !userId ||
+          typeof data.current_streak !==
+          "number"
+        ) {
+          console.warn(
+            "[STREAK_MAINTENANCE] " +
+            "Documento invalido: " +
+            `${streakDoc.id}, ` +
+            "marcando para remocao"
+          );
           batch.delete(streakDoc.ref);
           invalidDocuments++;
           batchOps++;
           continue;
         }
 
-        // 2.2: Verificar se usuário ainda existe (usa Set pré-carregado, sem query individual)
+        // 2.2: Verificar se usuario existe
+        // (usa Set pre-carregado)
         if (!existingUserIds.has(userId)) {
-          console.log(`[STREAK_MAINTENANCE] Usuário ${userId} deletado, removendo streak`);
+          console.log(
+            "[STREAK_MAINTENANCE] " +
+            `Usuario ${userId} deletado, ` +
+            "removendo streak"
+          );
           batch.delete(streakDoc.ref);
           batchOps++;
           continue;
         }
 
-        // 2.3: Verificar expiração (streak quebrado > 30 dias)
+        // 2.3: Verificar expiracao
+        // (streak quebrado > 30 dias)
         let lastGameDate: Date | null = null;
         if (data.last_game_date) {
           try {
-            lastGameDate = new Date(data.last_game_date);
+            lastGameDate =
+              new Date(data.last_game_date);
           } catch {
-            console.warn(`[STREAK_MAINTENANCE] Data inválida para ${userId}: ${data.last_game_date}`);
+            console.warn(
+              "[STREAK_MAINTENANCE] " +
+              "Data invalida para " +
+              `${userId}: ` +
+              `${data.last_game_date}`
+            );
           }
         }
 
-        if (lastGameDate && lastGameDate < thirtyDaysAgo && data.current_streak > 0) {
-          console.log(`[STREAK_MAINTENANCE] Streak expirado para ${userId}. Resetando: ${data.current_streak} → 0`);
+        if (
+          lastGameDate &&
+          lastGameDate < thirtyDaysAgo &&
+          data.current_streak > 0
+        ) {
+          console.log(
+            "[STREAK_MAINTENANCE] " +
+            "Streak expirado para " +
+            `${userId}. Resetando: ` +
+            `${data.current_streak} -> 0`
+          );
           batch.update(streakDoc.ref, {
             current_streak: 0,
             last_game_date: null,
             streak_started_at: null,
-            reset_reason: "Inatividade 30+ dias",
-            reset_at: admin.firestore.FieldValue.serverTimestamp(),
+            reset_reason:
+              "Inatividade 30+ dias",
+            reset_at:
+              admin.firestore.FieldValue
+                .serverTimestamp(),
           });
           expiredStreaks++;
           batchOps++;
         } else {
-          // 2.4: Coletar métricas (apenas streaks válidos e ativos)
-          const currentStreak = data.current_streak || 0;
+          // 2.4: Coletar metricas
+          // (apenas streaks validos/ativos)
+          const currentStreak =
+            data.current_streak || 0;
           totalStreak += currentStreak;
           if (currentStreak > 0) {
             activeStreaks++;
@@ -169,9 +269,13 @@ export const maintainStreaksData = onSchedule(
         }
 
         // Commit batch se atingir limite
-        if (batchOps >= 450) {
+        if (batchOps >= FIRESTORE_BATCH_SAFE_LIMIT) {
           await batch.commit();
-          console.log(`[STREAK_MAINTENANCE] Batch de ${batchOps} operações commitado`);
+          console.log(
+            "[STREAK_MAINTENANCE] " +
+            `Batch de ${batchOps} ` +
+            "operacoes commitado"
+          );
           batchOps = 0;
         }
       }
@@ -179,40 +283,89 @@ export const maintainStreaksData = onSchedule(
       // FASE 3: Commit final
       if (batchOps > 0) {
         await batch.commit();
-        console.log(`[STREAK_MAINTENANCE] Batch final de ${batchOps} operações commitado`);
+        console.log(
+          "[STREAK_MAINTENANCE] Batch " +
+          `final de ${batchOps} ` +
+          "operacoes commitado"
+        );
       }
 
-      // FASE 4: Log de métricas
-      const avgStreak = activeStreaks > 0 ? (totalStreak / activeStreaks).toFixed(2) : 0;
-      console.log(`[STREAK_MAINTENANCE] ✅ Manutenção concluída:`);
-      console.log(`  - Streaks ativos: ${activeStreaks}`);
-      console.log(`  - Streaks expirados (reset): ${expiredStreaks}`);
-      console.log(`  - Documentos inválidos (removidos): ${invalidDocuments}`);
-      console.log(`  - Maior streak: ${maxStreak}`);
-      console.log(`  - Média de streak ativo: ${avgStreak}`);
+      // FASE 4: Log de metricas
+      const avgStreak =
+        activeStreaks > 0 ?
+          (totalStreak / activeStreaks)
+            .toFixed(2) :
+          0;
+      console.log(
+        "[STREAK_MAINTENANCE] " +
+        "Manutencao concluida:"
+      );
+      console.log(
+        "  - Streaks ativos: " +
+        `${activeStreaks}`
+      );
+      console.log(
+        "  - Streaks expirados (reset): " +
+        `${expiredStreaks}`
+      );
+      console.log(
+        "  - Documentos invalidos " +
+        "(removidos): " +
+        `${invalidDocuments}`
+      );
+      console.log(
+        `  - Maior streak: ${maxStreak}`
+      );
+      console.log(
+        "  - Media de streak ativo: " +
+        `${avgStreak}`
+      );
 
-      // FASE 5: Registrar no Firestore para monitoramento
-      await db.collection("maintenance_logs").doc(`streaks_${new Date().toISOString().split("T")[0]}`).set({
-        operation: "maintain_streaks",
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        total_streaks: allStreaksSnap.size,
-        active_streaks: activeStreaks,
-        expired_streaks: expiredStreaks,
-        invalid_documents: invalidDocuments,
-        max_streak: maxStreak,
-        avg_active_streak: parseFloat(String(avgStreak)),
-        status: "SUCCESS",
-      });
+      // FASE 5: Registrar no Firestore
+      const dateKey = new Date()
+        .toISOString()
+        .split("T")[0];
+      await db
+        .collection("maintenance_logs")
+        .doc(`streaks_${dateKey}`)
+        .set({
+          operation: "maintain_streaks",
+          timestamp:
+            admin.firestore.FieldValue
+              .serverTimestamp(),
+          total_streaks:
+            allStreaksSnap.size,
+          active_streaks: activeStreaks,
+          expired_streaks: expiredStreaks,
+          invalid_documents:
+            invalidDocuments,
+          max_streak: maxStreak,
+          avg_active_streak:
+            parseFloat(String(avgStreak)),
+          status: "SUCCESS",
+        });
     } catch (error) {
-      console.error("[STREAK_MAINTENANCE] ❌ Erro durante manutenção:", error);
+      console.error(
+        "[STREAK_MAINTENANCE] Erro " +
+        "durante manutencao:",
+        error
+      );
 
       // Registrar falha
-      await db.collection("maintenance_logs").doc(`streaks_${new Date().toISOString().split("T")[0]}`).set({
-        operation: "maintain_streaks",
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        status: "ERROR",
-        error: String(error),
-      });
+      const dateKey = new Date()
+        .toISOString()
+        .split("T")[0];
+      await db
+        .collection("maintenance_logs")
+        .doc(`streaks_${dateKey}`)
+        .set({
+          operation: "maintain_streaks",
+          timestamp:
+            admin.firestore.FieldValue
+              .serverTimestamp(),
+          status: "ERROR",
+          error: String(error),
+        });
 
       throw error;
     }
@@ -220,58 +373,64 @@ export const maintainStreaksData = onSchedule(
 );
 
 /**
- * Análise Detalhada - Estrutura de UserStreak
+ * Analise Detalhada - Estrutura de UserStreak
  *
- * DOCUMENTO ATUAL (user_streaks/{userId}):
+ * DOCUMENTO ATUAL (user_streaks/userId):
  * ========================================
  * {
- *   "user_id": "abc123",                          // 6 bytes
- *   "current_streak": 7,                          // 8 bytes
- *   "longest_streak": 42,                         // 8 bytes
- *   "last_game_date": "2026-02-05",               // 10 bytes (ISO 8601)
- *   "streak_started_at": "2026-01-30T10:30:00Z"  // 24 bytes (ISO 8601)
+ *   "user_id": "abc123",
+ *   "current_streak": 7,
+ *   "longest_streak": 42,
+ *   "last_game_date": "2026-02-05",
+ *   "streak_started_at":
+ *       "2026-01-30T10:30:00Z"
  * }
  * TOTAL PER DOCUMENT: ~56 bytes
  *
- * 100k usuários = 5.6 MB total (negligível)
- * 1M usuários = 56 MB total (ainda aceitável)
+ * 100k usuarios = 5.6 MB (negligivel)
+ * 1M usuarios = 56 MB (ainda aceitavel)
  *
  *
- * CENÁRIOS ALTERNATIVOS CONSIDERADOS:
+ * CENARIOS ALTERNATIVOS CONSIDERADOS:
  * ===================================
  *
- * 1. HISTÓRICO COMPLETO (SEM COMPACTAÇÃO):
- *    Sub-collection streak_history com 100+ eventos
- *    ❌ Problema: 100k users * 100 eventos = 10M Firestore reads/leitura
- *    ❌ Custo: 100 reads por usuário para visualizar histórico
- *    ❌ Espaço: ~500MB para 100k usuários
+ * 1. HISTORICO COMPLETO (SEM COMPACTACAO):
+ *    Sub-collection streak_history
+ *    com 100+ eventos
+ *    Problema: 100k users * 100 eventos
+ *    = 10M Firestore reads/leitura
+ *    Custo: 100 reads por usuario
+ *    Espaco: ~500MB para 100k usuarios
  *
- * 2. COMPACTAÇÃO TRIMESTRAL:
- *    Agrupar dados antigos (>90 dias) por período
- *    ❌ Benefício mínimo (economia <10%)
- *    ❌ Complexidade: Requer pipeline de transformação
+ * 2. COMPACTACAO TRIMESTRAL:
+ *    Agrupar dados antigos (>90 dias)
+ *    Beneficio minimo (economia <10%)
+ *    Complexidade: Requer pipeline
  *
- * 3. TTL AUTOMÁTICO (RECOMENDADO PARA FUTURO):
- *    Se Firestore tiver TTL nativo (Firebase Forecast):
- *    ✅ Deletar automaticamente após N dias
- *    ✅ Sem código de manutenção
+ * 3. TTL AUTOMATICO (FUTURO):
+ *    Se Firestore tiver TTL nativo:
+ *    Deletar automaticamente apos N dias
+ *    Sem codigo de manutencao
  *
  *
- * DECISÃO FINAL: N/A - ALREADY OPTIMIZED
+ * DECISAO FINAL: N/A - ALREADY OPTIMIZED
  * =======================================
- * ✅ Estrutura atual é otimizada
- * ✅ Nenhuma redundância
- * ✅ Sem histórico verboso
- * ✅ Custo de armazenamento negligível
- * ✅ Read/write performance: O(1)
+ * Estrutura atual e otimizada
+ * Nenhuma redundancia
+ * Sem historico verboso
+ * Custo de armazenamento negligivel
+ * Read/write performance: O(1)
  *
  *
- * MONITORAMENTO (esta função):
+ * MONITORAMENTO (esta funcao):
  * ============================
  * Mensal apenas para:
- * - Validar integridade (currentStreak >= 0)
- * - Remover documentos órfãos (usuários deletados)
- * - Reseta automaticamente após 30 dias inativo
- * - Coletar métricas para análise
+ * - Validar integridade
+ *   (currentStreak >= 0)
+ * - Remover documentos orfaos
+ *   (usuarios deletados)
+ * - Reseta automaticamente apos
+ *   30 dias inativo
+ * - Coletar metricas para analise
  *
  */

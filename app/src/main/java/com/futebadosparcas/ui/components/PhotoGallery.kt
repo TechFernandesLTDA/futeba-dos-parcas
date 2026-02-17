@@ -74,7 +74,7 @@ fun PhotoGalleryPreview(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Sem fotos",
+                    text = stringResource(R.string.photo_gallery_no_photos),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -144,7 +144,7 @@ fun PhotoGalleryPreview(
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = "Ver todas",
+                                text = stringResource(R.string.photo_gallery_view_all),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
@@ -157,7 +157,7 @@ fun PhotoGalleryPreview(
         // Contador de fotos
         if (photos.size > 1) {
             Text(
-                text = "${photos.size} fotos",
+                text = stringResource(R.string.photo_gallery_count_label, photos.size),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)

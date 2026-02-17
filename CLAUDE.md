@@ -80,11 +80,19 @@ sealed class UiState {
 ./gradlew detekt                           # Static analysis (Detekt)
 ./gradlew clean                            # Clean build
 
-# Cloud Functions (in /functions directory)
+# Cloud Functions (in /functions directory, Node 20)
 cd functions && npm install                # Install deps
 npm run build                              # Compile TypeScript
+npm run lint                               # ESLint (same as CI)
+npx jest --no-coverage                     # All tests (398 tests, 12 suites)
+npx jest path/to/file.test.ts              # Single test file
+npx jest --testNamePattern="test name"     # Single test by name
 firebase emulators:start                   # Local testing
 firebase deploy --only functions           # Deploy
+
+# NOTE: New test files that use callable functions need:
+# jest.mock("../src/middleware/rate-limiter")
+# See functions/test/ for 12 existing test suites
 ```
 
 ### Key Files
@@ -98,7 +106,9 @@ firebase deploy --only functions           # Deploy
 | Theme/Colors | `app/src/main/java/com/futebadosparcas/ui/theme/Theme.kt` |
 | Firestore rules | `firestore.rules` |
 | Cloud Functions | `functions/src/index.ts` (main entry) |
-| Spec templates | `specs/_TEMPLATE_*.md` |
+| Spec templates | `specs/_TEMPLATE_FEATURE_MOBILE.md`, `_TEMPLATE_BUGFIX_MOBILE.md`, `_TEMPLATE_SCREEN_UI.md` |
+| Mobile DoD checklist | `specs/_CHECKLIST_MOBILE_DOD.md` |
+| Decision log | `specs/DECISIONS.md` |
 | Modern UI components | `app/.../ui/components/modern/` (ShimmerLoading, ErrorState, etc.) |
 | Shared KMP module | `shared/commonMain/` (cross-platform domain logic) |
 | Project context (LLM) | `.claude/PROJECT_CONTEXT.md` (contexto consolidado para AIs) |
@@ -135,10 +145,11 @@ firebase deploy --only functions           # Deploy
 
 ### Version
 
-- **Current**: 1.9.0 (versionCode: 22)
+- **Current**: 1.10.5 (versionCode: 28)
 - **SDK**: compileSdk 36, minSdk 24, targetSdk 35, JDK 17
 - **Kotlin**: 2.2.10
 - **Compose BOM**: 2024.09.00
+- **Compose Multiplatform**: 1.7.3
 - **Material 3**: Latest (adaptive navigation, pull-to-refresh)
 
 ---
@@ -153,6 +164,7 @@ The project uses a multi-module setup:
 - **`:shared`** - Kotlin Multiplatform shared code (business logic, domain models, repository interfaces)
 - **`:composeApp`** - Compose Multiplatform UI (shared UI components for Android/iOS)
 - **`:baselineprofile`** - Baseline profiles for performance optimization
+- **`backend/`** - REST API + WebSocket server (Express.js + TypeORM + PostgreSQL) - separate from Cloud Functions
 
 ### Architecture Layers
 
@@ -368,6 +380,7 @@ SCHEDULED → CONFIRMED → LIVE → FINISHED
 | File | Purpose |
 |------|---------|
 | `index.ts` | Main entry, onUserCreate, onGameFinished, XP processing |
+| `constants.ts` | Shared constants (XP values, limits, config) |
 | `league.ts` | recalculateLeagueRating, division changes |
 | `notifications.ts` | Push triggers (game created, MVP, level up, badges) |
 | `reminders.ts` | Game reminders, waitlist cleanup |
@@ -392,11 +405,26 @@ SCHEDULED → CONFIRMED → LIVE → FINISHED
 | `validation/` | `index.ts` | Input validation helpers |
 | `voting/` | `mvp-voting.ts` | MVP/Bola Murcha voting logic |
 | `xp/` | `processing.ts`, `parallel-processing.ts`, `migration-example.ts` | XP calculation and batch processing |
+| `examples/` | `P0_SECURITY_EXAMPLES.ts` | Security pattern examples/reference |
 | `scripts/` | `migrate-custom-claims.ts` | One-time migration scripts |
 
 ---
 
-## CI/CD Workflows (`.github/workflows/`)
+## GitHub Status
+
+**Repo**: `TechFernandesLTDA/futeba-dos-parcas`
+**Issues abertas**: 0
+**PRs abertos**: Dependabot (deps bumps) + feature branches
+**Branches remotos**: ~64
+
+### CI Known Behaviors
+
+- **KMP Framework build**: Sempre falha em Linux runners (requer macOS) - **ignorar**
+- **Notify Build Status**: Depende do KMP Framework - falha em cascata - **ignorar**
+- **CodeQL**: Pode falhar por timeout em PRs grandes - re-run manual resolve
+- **Build iOS App**: `skipping` em PRs que não tocam `:shared` - esperado
+
+### CI/CD Workflows (`.github/workflows/`)
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
@@ -508,21 +536,27 @@ For in-depth guidance, see `.claude/rules/`:
 
 ## Scripts
 
-Located in `/scripts/`. Run with: `node scripts/<script_name>.js`
+Located in `/scripts/` (~70 scripts). Run with: `node scripts/<script_name>.js`
+
+**Key scripts (most commonly used):**
 
 | Script | Purpose |
 |--------|---------|
+| `bump-version.js` | Version bumping for releases |
 | `migrate_firestore.js` | Firestore data migration utilities |
 | `reset_firestore.js` | Reset Firestore collections (dev only) |
 | `automate_seasons.js` | Season management automation |
-| `bump-version.js` | Version bumping for releases |
 | `analyze_firebase_data.js` | Analyze Firebase data patterns |
-| `add_id_field_to_users.js` | Migration: add missing user IDs |
+| `promote_to_admin.js` | Promote user to ADMIN role |
+| `run-migration-custom-claims.js` | Run Custom Claims migration |
+| `verify-custom-claims.js` | Verify Custom Claims migration status |
 
 **Quality audits** (bash scripts):
 - `audit-hardcoded-strings.sh` - Find hardcoded strings in code
 - `audit-content-descriptions.sh` - Check accessibility compliance
 - `audit-unused-resources.sh` - Detect unused Android resources
+- `audit-code-complexity.sh` - Analyze code complexity
+- `validate_all.sh` / `validate-optimizations.sh` - Run full validation suite
 
 ---
 

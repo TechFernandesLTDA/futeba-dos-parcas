@@ -257,7 +257,7 @@ describe("Rate Limiter - withRateLimit", () => {
     const wrapped = withRateLimit(config, handler);
 
     await expect(
-      wrapped({ auth: null, data: {} })
+      wrapped({ auth: undefined, data: {} } as any)
     ).rejects.toThrow("não autenticado");
   });
 
@@ -278,9 +278,9 @@ describe("Rate Limiter - withRateLimit", () => {
     const wrapped = withRateLimit(config, handler);
 
     const result = await wrapped({
-      auth: { uid: "user1" },
+      auth: { uid: "user1" } as any,
       data: {},
-    });
+    } as any);
 
     expect(handler).toHaveBeenCalled();
     expect(result).toEqual({ success: true });
@@ -306,7 +306,7 @@ describe("Rate Limiter - withRateLimit", () => {
     const wrapped = withRateLimit(config, handler);
 
     await expect(
-      wrapped({ auth: { uid: "user1" }, data: {} })
+      wrapped({ auth: { uid: "user1" } as any, data: {} } as any)
     ).rejects.toThrow("Rate limit excedido");
 
     expect(handler).not.toHaveBeenCalled();

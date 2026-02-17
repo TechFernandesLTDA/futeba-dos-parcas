@@ -342,7 +342,7 @@ fun TransferOwnershipDialog(
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(candidates) { member ->
+                        items(candidates, key = { it.id }) { member ->
                             ListItem(
                                 headlineContent = { Text(member.getDisplayName()) },
                                 leadingContent = {

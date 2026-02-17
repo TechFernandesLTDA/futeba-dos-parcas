@@ -205,7 +205,7 @@ private fun BlockPlayerDialog(
                     LazyColumn(
                         modifier = Modifier.heightIn(max = 200.dp)
                     ) {
-                        items(availablePlayers) { player ->
+                        items(availablePlayers, key = { it.userId }) { player ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()

@@ -13,7 +13,6 @@
 import {
   retryWithBackoff,
   defaultIsTransientError,
-  RetryConfig,
 } from "../src/utils/retry-with-backoff";
 
 // Mock do firebase-admin para evitar inicializacao real
