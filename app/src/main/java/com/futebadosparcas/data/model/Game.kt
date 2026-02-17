@@ -451,6 +451,31 @@ data class Game(
             errors.add(ValidationResult.Invalid("checkin_radius_meters", "Raio de check-in deve ser entre 10 e 1000 metros"))
         }
 
+        // Validação de formato de data (dd/MM/yyyy)
+        if (date.isNotBlank() && !date.matches(Regex("^\\d{2}/\\d{2}/\\d{4}$"))) {
+            errors.add(ValidationResult.Invalid("date", "Data deve estar no formato dd/MM/yyyy"))
+        }
+
+        // Validação de formato de hora (HH:mm)
+        if (time.isNotBlank() && !time.matches(Regex("^\\d{2}:\\d{2}$"))) {
+            errors.add(ValidationResult.Invalid("time", "Hora deve estar no formato HH:mm"))
+        }
+
+        // Validação de nomes de time (não vazio)
+        val teamNameResult1 = ValidationHelper.validateLength(team1Name, "team1_name", 1, ValidationHelper.NAME_MAX_LENGTH)
+        if (teamNameResult1 is ValidationResult.Invalid) errors.add(teamNameResult1)
+        val teamNameResult2 = ValidationHelper.validateLength(team2Name, "team2_name", 1, ValidationHelper.NAME_MAX_LENGTH)
+        if (teamNameResult2 is ValidationResult.Invalid) errors.add(teamNameResult2)
+
+        // Validação de regras do jogo (tamanho máximo)
+        val rulesResult = ValidationHelper.validateLength(rules, "rules", 0, ValidationHelper.RULES_MAX_LENGTH)
+        if (rulesResult is ValidationResult.Invalid) errors.add(rulesResult)
+
+        // Validação de co-organizadores (limite máximo)
+        if (coOrganizers.size > ValidationHelper.MAX_CO_ORGANIZERS) {
+            errors.add(ValidationResult.Invalid("co_organizers", "Máximo de ${ValidationHelper.MAX_CO_ORGANIZERS} co-organizadores"))
+        }
+
         return errors
     }
 

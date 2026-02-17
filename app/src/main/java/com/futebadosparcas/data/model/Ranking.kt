@@ -1,6 +1,11 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationErrorCode
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
+import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
@@ -11,6 +16,7 @@ import java.util.Date
  * Registro de XP ganho por um jogador em uma partida.
  * Usado para auditoria e historico de evolucao.
  */
+@IgnoreExtraProperties
 data class XpLog(
     @DocumentId
     val id: String = "",
@@ -82,6 +88,26 @@ data class XpLog(
 
     val leveledUp: Boolean
         get() = levelAfter > levelBefore
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val uResult = ValidationHelper.validateRequiredId(userId, "user_id")
+        if (uResult is ValidationResult.Invalid) errors.add(uResult)
+        val gResult = ValidationHelper.validateRequiredId(gameId, "game_id")
+        if (gResult is ValidationResult.Invalid) errors.add(gResult)
+        if (xpEarned < 0) errors.add(ValidationResult.Invalid("xp_earned", "XP ganho não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (xpBefore < 0) errors.add(ValidationResult.Invalid("xp_before", "XP anterior não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (xpAfter < 0) errors.add(ValidationResult.Invalid("xp_after", "XP posterior não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (xpAfter < xpBefore && xpEarned >= 0) {
+            errors.add(ValidationResult.Invalid("xp_after", "XP posterior não pode ser menor que anterior quando XP ganho é positivo", ValidationErrorCode.LOGICAL_INCONSISTENCY))
+        }
+        val lvlBeforeResult = ValidationHelper.validateLevel(levelBefore, "level_before")
+        if (lvlBeforeResult is ValidationResult.Invalid) errors.add(lvlBeforeResult)
+        val lvlAfterResult = ValidationHelper.validateLevel(levelAfter, "level_after")
+        if (lvlAfterResult is ValidationResult.Invalid) errors.add(lvlAfterResult)
+        return errors
+    }
 
     /**
      * Descricao resumida do XP ganho para exibicao.
@@ -238,6 +264,7 @@ data class RecentGameData(
 /**
  * Participacao em temporada com dados de liga.
  */
+@IgnoreExtraProperties
 data class SeasonParticipationV2(
     @DocumentId
     val id: String = "",
@@ -295,6 +322,23 @@ data class SeasonParticipationV2(
 
     val winRate: Double
         get() = if (gamesPlayed > 0) (wins.toDouble() / gamesPlayed) * 100 else 0.0
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val uResult = ValidationHelper.validateRequiredId(userId, "user_id")
+        if (uResult is ValidationResult.Invalid) errors.add(uResult)
+        val sResult = ValidationHelper.validateRequiredId(seasonId, "season_id")
+        if (sResult is ValidationResult.Invalid) errors.add(sResult)
+        val lrResult = ValidationHelper.validateLeagueRating(leagueRating, "league_rating")
+        if (lrResult is ValidationResult.Invalid) errors.add(lrResult)
+        if (gamesPlayed < 0) errors.add(ValidationResult.Invalid("games_played", "Jogos não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (wins < 0) errors.add(ValidationResult.Invalid("wins", "Vitórias não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (wins + draws + losses > gamesPlayed && gamesPlayed >= 0) {
+            errors.add(ValidationResult.Invalid("games_played", "Soma de resultados excede total de jogos", ValidationErrorCode.LOGICAL_INCONSISTENCY))
+        }
+        return errors
+    }
 }
 
 // ========== LEAGUE RATING CALCULATOR ==========

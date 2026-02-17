@@ -4,6 +4,7 @@ import com.futebadosparcas.domain.validation.ValidationHelper
 import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.Exclude
+import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
@@ -18,6 +19,7 @@ enum class PaymentMethod {
     PIX, CASH, CARD, TRANSFER
 }
 
+@IgnoreExtraProperties
 data class Payment(
     @DocumentId
     val id: String = "",
@@ -99,6 +101,44 @@ data class Payment(
             errors.add(ValidationResult.Invalid("user_id", "Usuário é obrigatório"))
         }
 
+        // Validação de dueDate obrigatória
+        if (dueDate.isBlank()) {
+            errors.add(ValidationResult.Invalid(
+                "due_date", "Data de vencimento é obrigatória",
+                com.futebadosparcas.domain.validation.ValidationErrorCode.REQUIRED_FIELD
+            ))
+        }
+
+        // Validação de valor máximo
+        if (amount > ValidationHelper.MAX_PAYMENT_VALUE) {
+            errors.add(ValidationResult.Invalid(
+                "amount", "Valor máximo é R$ ${ValidationHelper.MAX_PAYMENT_VALUE}",
+                com.futebadosparcas.domain.validation.ValidationErrorCode.OUT_OF_RANGE
+            ))
+        }
+
+        // Validação de URL do comprovante
+        val receiptResult = ValidationHelper.validateUrl(receiptUrl, "receipt_url")
+        if (receiptResult is ValidationResult.Invalid) errors.add(receiptResult)
+
+        // Validação de timestamps
+        val tsResult = ValidationHelper.validateTimestampOrder(createdAt, updatedAt)
+        if (tsResult is ValidationResult.Invalid) errors.add(tsResult)
+
+        // Se pago, deve ter paidAt
+        if (status == PaymentStatus.PAID && paidAt == null) {
+            errors.add(ValidationResult.Invalid(
+                "paid_at", "Pagamento marcado como pago deve ter data de pagamento",
+                com.futebadosparcas.domain.validation.ValidationErrorCode.LOGICAL_INCONSISTENCY
+            ))
+        }
+
+        // Validação de notas (máx 500 chars)
+        notes?.let {
+            val notesResult = ValidationHelper.validateLength(it, "notes", 0, ValidationHelper.DESCRIPTION_MAX_LENGTH)
+            if (notesResult is ValidationResult.Invalid) errors.add(notesResult)
+        }
+
         return errors
     }
 
@@ -149,6 +189,7 @@ enum class CrowdfundingStatus {
     ACTIVE, COMPLETED, CANCELLED
 }
 
+@IgnoreExtraProperties
 data class Crowdfunding(
     @DocumentId
     val id: String = "",
@@ -213,6 +254,27 @@ data class Crowdfunding(
         // Validação de organizerId obrigatório
         if (organizerId.isBlank()) {
             errors.add(ValidationResult.Invalid("organizer_id", "Organizador é obrigatório"))
+        }
+
+        // Validação de tipo válido
+        val typeResult = ValidationHelper.validateEnumValue<CrowdfundingType>(type.name, "type", required = true)
+        if (typeResult is ValidationResult.Invalid) errors.add(typeResult)
+
+        // Validação de deadline obrigatória
+        if (deadline.isBlank()) {
+            errors.add(ValidationResult.Invalid(
+                "deadline", "Data limite é obrigatória",
+                com.futebadosparcas.domain.validation.ValidationErrorCode.REQUIRED_FIELD
+            ))
+        }
+
+        // Validação de currentAmount <= targetAmount (consistência)
+        if (currentAmount > targetAmount && targetAmount > 0) {
+            errors.add(ValidationResult.Invalid(
+                "current_amount",
+                "Valor arrecadado não pode exceder a meta",
+                com.futebadosparcas.domain.validation.ValidationErrorCode.LOGICAL_INCONSISTENCY
+            ))
         }
 
         return errors

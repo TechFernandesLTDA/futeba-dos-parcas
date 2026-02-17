@@ -1,6 +1,10 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationErrorCode
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
@@ -17,6 +21,7 @@ import java.util.Date
 /**
  * Registro congelado do desempenho do jogador ao fim da temporada.
  */
+@IgnoreExtraProperties
 data class SeasonFinalStanding(
     @DocumentId
     val id: String = "",
@@ -37,6 +42,19 @@ data class SeasonFinalStanding(
     var frozenAt: Date? = null
 ) {
     constructor() : this(id = "")
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val sResult = ValidationHelper.validateRequiredId(seasonId, "season_id")
+        if (sResult is ValidationResult.Invalid) errors.add(sResult)
+        val uResult = ValidationHelper.validateRequiredId(userId, "user_id")
+        if (uResult is ValidationResult.Invalid) errors.add(uResult)
+        val rResult = ValidationHelper.validateLeagueRating(finalRating, "finalRating")
+        if (rResult is ValidationResult.Invalid) errors.add(rResult)
+        if (wins < 0) errors.add(ValidationResult.Invalid("wins", "Vitórias não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        return errors
+    }
 }
 
 enum class MilestoneType(
@@ -119,8 +137,26 @@ data class Season(
     var closedAt: Date? = null
 ) {
     constructor() : this(id = "")
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val nameResult = ValidationHelper.validateName(name, "name")
+        if (nameResult is ValidationResult.Invalid) errors.add(nameResult)
+        if (startDate.isBlank()) errors.add(ValidationResult.Invalid("start_date", "Data de início é obrigatória", ValidationErrorCode.REQUIRED_FIELD))
+        if (endDate.isBlank()) errors.add(ValidationResult.Invalid("end_date", "Data de fim é obrigatória", ValidationErrorCode.REQUIRED_FIELD))
+        if (startDate.isNotBlank() && endDate.isNotBlank() && startDate > endDate) {
+            errors.add(ValidationResult.Invalid("start_date", "Data de início não pode ser posterior à data de fim", ValidationErrorCode.LOGICAL_INCONSISTENCY))
+        }
+        // Se inativa, deve ter closed_at
+        if (!isActive && closedAt == null) {
+            errors.add(ValidationResult.Invalid("closed_at", "Temporada inativa deve ter data de encerramento", ValidationErrorCode.LOGICAL_INCONSISTENCY))
+        }
+        return errors
+    }
 }
 
+@IgnoreExtraProperties
 data class SeasonParticipation(
     @DocumentId
     val id: String = "",
@@ -149,9 +185,24 @@ data class SeasonParticipation(
     var mvpCount: Int = 0
 ) {
     constructor() : this(id = "")
-    
+
     val goalDifference: Int
         get() = goalsScored - goalsConceded
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val uResult = ValidationHelper.validateRequiredId(userId, "user_id")
+        if (uResult is ValidationResult.Invalid) errors.add(uResult)
+        val sResult = ValidationHelper.validateRequiredId(seasonId, "season_id")
+        if (sResult is ValidationResult.Invalid) errors.add(sResult)
+        if (gamesPlayed < 0) errors.add(ValidationResult.Invalid("games_played", "Jogos não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (wins < 0) errors.add(ValidationResult.Invalid("wins", "Vitórias não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (wins + draws + losses > gamesPlayed && gamesPlayed >= 0) {
+            errors.add(ValidationResult.Invalid("games_played", "Soma de resultados excede total de jogos", ValidationErrorCode.LOGICAL_INCONSISTENCY))
+        }
+        return errors
+    }
 }
 
 // ========== BADGES E CONQUISTAS ==========
@@ -168,6 +219,7 @@ enum class BadgeRarity {
 }
 
 @Parcelize
+@IgnoreExtraProperties
 data class Badge(
     @DocumentId
     val id: String = "",
@@ -183,8 +235,17 @@ data class Badge(
     val rarity: BadgeRarity = BadgeRarity.COMUM
 ) : Parcelable {
     constructor() : this(id = "")
+
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val nameResult = ValidationHelper.validateName(name, "name", min = 2, max = 50)
+        if (nameResult is ValidationResult.Invalid) errors.add(nameResult)
+        if (xpReward < 0) errors.add(ValidationResult.Invalid("xp_reward", "XP reward não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        return errors
+    }
 }
 
+@IgnoreExtraProperties
 data class UserBadge(
     @DocumentId
     val id: String = "",
@@ -203,10 +264,22 @@ data class UserBadge(
     var lastEarnedAt: Date? = null
 ) {
     constructor() : this(id = "")
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val uResult = ValidationHelper.validateRequiredId(userId, "user_id")
+        if (uResult is ValidationResult.Invalid) errors.add(uResult)
+        val bResult = ValidationHelper.validateRequiredId(badgeId, "badge_id")
+        if (bResult is ValidationResult.Invalid) errors.add(bResult)
+        if (count < 1) errors.add(ValidationResult.Invalid("count", "Contagem deve ser pelo menos 1", ValidationErrorCode.OUT_OF_RANGE))
+        return errors
+    }
 }
 
 // ========== STREAK ==========
 
+@IgnoreExtraProperties
 data class UserStreak(
     @DocumentId
     val id: String = "",
@@ -230,6 +303,21 @@ data class UserStreak(
     var streakStartedAt: String? = null
 ) {
     constructor() : this(id = "")
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val uResult = ValidationHelper.validateRequiredId(userId, "user_id")
+        if (uResult is ValidationResult.Invalid) errors.add(uResult)
+        if (currentStreak < 0) errors.add(ValidationResult.Invalid("current_streak", "Streak atual não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (longestStreak < 0) errors.add(ValidationResult.Invalid("longest_streak", "Maior streak não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (longestStreak < currentStreak) {
+            errors.add(ValidationResult.Invalid("longest_streak", "Maior streak ($longestStreak) não pode ser menor que streak atual ($currentStreak)", ValidationErrorCode.LOGICAL_INCONSISTENCY))
+        }
+        val streakResult = ValidationHelper.validateStreak(currentStreak, "current_streak")
+        if (streakResult is ValidationResult.Invalid) errors.add(streakResult)
+        return errors
+    }
 }
 
 // ========== DESAFIOS SEMANAIS ==========
@@ -239,6 +327,7 @@ enum class ChallengeType {
     CLEAN_SHEETS, PLAY_GAMES, INVITE_PLAYERS
 }
 
+@IgnoreExtraProperties
 data class WeeklyChallenge(
     @DocumentId
     val id: String = "",
@@ -265,6 +354,18 @@ data class WeeklyChallenge(
     var scheduleId: String? = null
 ) {
     constructor() : this(id = "")
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val nameResult = ValidationHelper.validateName(name, "name", min = 2, max = 100)
+        if (nameResult is ValidationResult.Invalid) errors.add(nameResult)
+        if (targetValue <= 0) errors.add(ValidationResult.Invalid("target_value", "Meta deve ser maior que zero", ValidationErrorCode.OUT_OF_RANGE))
+        if (xpReward < 0) errors.add(ValidationResult.Invalid("xp_reward", "XP reward não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (startDate.isBlank()) errors.add(ValidationResult.Invalid("start_date", "Data de início é obrigatória", ValidationErrorCode.REQUIRED_FIELD))
+        if (endDate.isBlank()) errors.add(ValidationResult.Invalid("end_date", "Data de fim é obrigatória", ValidationErrorCode.REQUIRED_FIELD))
+        return errors
+    }
 }
 
 data class UserChallengeProgress(
@@ -301,6 +402,7 @@ enum class CardRarity {
     COMUM, INCOMUM, RARO, EPICO, LENDARIO
 }
 
+@IgnoreExtraProperties
 data class PlayerCard(
     @DocumentId
     val id: String = "",
@@ -337,6 +439,22 @@ data class PlayerCard(
 ) {
     constructor() : this(id = "")
 
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val uResult = ValidationHelper.validateRequiredId(userId, "user_id")
+        if (uResult is ValidationResult.Invalid) errors.add(uResult)
+        val min = ValidationHelper.CARD_RATING_MIN
+        val max = ValidationHelper.CARD_RATING_MAX
+        if (attackRating !in min..max) errors.add(ValidationResult.Invalid("attack_rating", "Ataque deve estar entre $min e $max", ValidationErrorCode.OUT_OF_RANGE))
+        if (defenseRating !in min..max) errors.add(ValidationResult.Invalid("defense_rating", "Defesa deve estar entre $min e $max", ValidationErrorCode.OUT_OF_RANGE))
+        if (physicalRating !in min..max) errors.add(ValidationResult.Invalid("physical_rating", "Físico deve estar entre $min e $max", ValidationErrorCode.OUT_OF_RANGE))
+        if (techniqueRating !in min..max) errors.add(ValidationResult.Invalid("technique_rating", "Técnica deve estar entre $min e $max", ValidationErrorCode.OUT_OF_RANGE))
+        if (overallRating !in min..max) errors.add(ValidationResult.Invalid("overall_rating", "Overall deve estar entre $min e $max", ValidationErrorCode.OUT_OF_RANGE))
+        if (totalGames < 0) errors.add(ValidationResult.Invalid("total_games", "Total de jogos não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        return errors
+    }
+
     // Cor da carta baseada na raridade
     fun getCardColor(): String {
         return when (rarity) {
@@ -351,6 +469,7 @@ data class PlayerCard(
 
 // ========== CONFRONTO DIRETO (FREGUESIA) ==========
 
+@IgnoreExtraProperties
 data class HeadToHead(
     @DocumentId
     val id: String = "",
@@ -378,6 +497,26 @@ data class HeadToHead(
     var player2Goals: Int = 0
 ) {
     constructor() : this(id = "")
+
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+        val p1Result = ValidationHelper.validateRequiredId(player1Id, "player1_id")
+        if (p1Result is ValidationResult.Invalid) errors.add(p1Result)
+        val p2Result = ValidationHelper.validateRequiredId(player2Id, "player2_id")
+        if (p2Result is ValidationResult.Invalid) errors.add(p2Result)
+        if (player1Id.isNotBlank() && player1Id == player2Id) {
+            errors.add(ValidationResult.Invalid("player2_id", "Jogador 1 e 2 não podem ser o mesmo", ValidationErrorCode.LOGICAL_INCONSISTENCY))
+        }
+        if (player1Wins < 0) errors.add(ValidationResult.Invalid("player1_wins", "Vitórias P1 não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (player2Wins < 0) errors.add(ValidationResult.Invalid("player2_wins", "Vitórias P2 não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (totalGames < 0) errors.add(ValidationResult.Invalid("total_games", "Total de jogos não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        val resultsSum = player1Wins + player2Wins + draws
+        if (resultsSum > totalGames && totalGames >= 0) {
+            errors.add(ValidationResult.Invalid("total_games", "Soma de resultados ($resultsSum) excede total de jogos ($totalGames)", ValidationErrorCode.LOGICAL_INCONSISTENCY))
+        }
+        return errors
+    }
 
     fun getWinPercentage(playerId: String): Double {
         if (totalGames == 0) return 0.0

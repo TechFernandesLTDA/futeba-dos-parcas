@@ -1,6 +1,11 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.validation.ValidationErrorCode
+import com.futebadosparcas.domain.validation.ValidationHelper
+import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.Exclude
+import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
@@ -12,9 +17,16 @@ import java.util.Date
  * para que as queries orderBy funcionem corretamente.
  * Ex: orderBy("totalGoals") requer campo "totalGoals" no documento.
  */
+@IgnoreExtraProperties
 data class UserStatistics(
     @DocumentId
     val id: String = "", // mesmo ID do usuario
+
+    // Campos presentes no Firestore para consistência
+    @get:PropertyName("user_id")
+    @set:PropertyName("user_id")
+    var userId: String = "",
+
     var totalGames: Int = 0,
     var totalGoals: Int = 0,
     var totalAssists: Int = 0,
@@ -41,7 +53,12 @@ data class UserStatistics(
     @ServerTimestamp
     @get:PropertyName("last_calculated_at")
     @set:PropertyName("last_calculated_at")
-    var lastCalculatedAt: Date? = null
+    var lastCalculatedAt: Date? = null,
+
+    // Última atualização do documento no Firestore
+    @get:PropertyName("updated_at")
+    @set:PropertyName("updated_at")
+    var updatedAt: Date? = null
 ) {
     constructor() : this(id = "")
 
@@ -111,6 +128,60 @@ data class UserStatistics(
      */
     val mvpRate: Double
         get() = if (totalGames > 0) bestPlayerCount.toDouble() / totalGames else 0.0
+
+    // ==================== VALIDAÇÃO ====================
+
+    /**
+     * Valida todos os campos das estatísticas.
+     *
+     * @return Lista de erros de validação (vazia se tudo válido)
+     */
+    @Exclude
+    fun validate(): List<ValidationResult.Invalid> {
+        val errors = mutableListOf<ValidationResult.Invalid>()
+
+        // Campos inteiros não podem ser negativos
+        if (totalGames < 0) errors.add(ValidationResult.Invalid(
+            "totalGames", "Total de jogos não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (totalGoals < 0) errors.add(ValidationResult.Invalid(
+            "totalGoals", "Total de gols não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (totalAssists < 0) errors.add(ValidationResult.Invalid(
+            "totalAssists", "Total de assistências não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (totalSaves < 0) errors.add(ValidationResult.Invalid(
+            "totalSaves", "Total de defesas não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (totalYellowCards < 0) errors.add(ValidationResult.Invalid(
+            "totalYellowCards", "Cartões amarelos não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (totalRedCards < 0) errors.add(ValidationResult.Invalid(
+            "totalRedCards", "Cartões vermelhos não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (bestPlayerCount < 0) errors.add(ValidationResult.Invalid(
+            "bestPlayerCount", "Contagem MVP não pode ser negativa", ValidationErrorCode.NEGATIVE_VALUE))
+        if (worstPlayerCount < 0) errors.add(ValidationResult.Invalid(
+            "worstPlayerCount", "Contagem Bola Murcha não pode ser negativa", ValidationErrorCode.NEGATIVE_VALUE))
+        if (gamesWon < 0) errors.add(ValidationResult.Invalid(
+            "gamesWon", "Vitórias não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (gamesLost < 0) errors.add(ValidationResult.Invalid(
+            "gamesLost", "Derrotas não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+        if (gamesDraw < 0) errors.add(ValidationResult.Invalid(
+            "gamesDraw", "Empates não pode ser negativo", ValidationErrorCode.NEGATIVE_VALUE))
+
+        // Consistência lógica: won + lost + draw <= totalGames
+        val totalResults = gamesWon + gamesLost + gamesDraw
+        if (totalResults > totalGames && totalGames >= 0) {
+            errors.add(ValidationResult.Invalid(
+                "totalGames",
+                "Soma de resultados ($totalResults) excede total de jogos ($totalGames)",
+                ValidationErrorCode.LOGICAL_INCONSISTENCY
+            ))
+        }
+
+        return errors
+    }
+
+    /**
+     * Verifica se as estatísticas são válidas.
+     */
+    @Exclude
+    fun isValid(): Boolean = validate().isEmpty()
 }
 
 data class RankingEntry(
