@@ -1,5 +1,7 @@
 package com.futebadosparcas.data.network
 
+import kotlinx.datetime.Clock
+
 /**
  * Utilitários de Compressão de Dados para transferência de rede.
  * Minimiza uso de banda em conexões lentas ou limitadas.
@@ -138,9 +140,9 @@ class DefaultDataCompressor(
     }
 
     override fun compressWithStats(data: ByteArray): Pair<ByteArray, CompressionResult> {
-        val startTime = System.currentTimeMillis()
+        val startTime = Clock.System.now().toEpochMilliseconds()
         val compressed = compress(data)
-        val endTime = System.currentTimeMillis()
+        val endTime = Clock.System.now().toEpochMilliseconds()
 
         val result = CompressionResult(
             originalSize = data.size,

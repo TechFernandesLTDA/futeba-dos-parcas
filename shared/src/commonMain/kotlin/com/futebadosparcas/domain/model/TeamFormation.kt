@@ -95,6 +95,15 @@ data class DraftSettings(
 }
 
 /**
+ * Formata um Float com 1 casa decimal, compativel com KMP/wasmJs.
+ */
+private fun Float.fmt1d(): String {
+    val intPart = this.toLong()
+    val decPart = ((this - intPart) * 10).toLong().let { if (it < 0) -it else it }
+    return "$intPart.$decPart"
+}
+
+/**
  * Forca/Overall de um time calculado.
  * Logica pura compartilhavel entre plataformas.
  */
@@ -127,9 +136,9 @@ data class TeamStrength(
     }
 
     override fun toString(): String =
-        "TeamStrength($teamName: OVR=${"%.1f".format(overallRating)}, " +
-            "ATK=${"%.1f".format(attackRating)}, DEF=${"%.1f".format(defenseRating)}, " +
-            "MID=${"%.1f".format(midfieldRating)}, GK=${"%.1f".format(goalkeeperRating)}, " +
+        "TeamStrength($teamName: OVR=${overallRating.fmt1d()}, " +
+            "ATK=${attackRating.fmt1d()}, DEF=${defenseRating.fmt1d()}, " +
+            "MID=${midfieldRating.fmt1d()}, GK=${goalkeeperRating.fmt1d()}, " +
             "players=$playerCount, hasGK=$hasGoalkeeper)"
 }
 

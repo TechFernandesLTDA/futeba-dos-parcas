@@ -203,7 +203,12 @@ data class PlayerLocationStatus(
         return distanceMeters?.let { meters ->
             when {
                 meters < 1000 -> "${meters}m"
-                else -> String.format("%.1fkm", meters / 1000.0)
+                else -> {
+                    val km = meters / 1000.0
+                    val intPart = km.toLong()
+                    val decPart = ((km - intPart) * 10).toLong()
+                    "${intPart}.${decPart}km"
+                }
             }
         }
     }
