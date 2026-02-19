@@ -75,6 +75,14 @@ kotlin {
                 // SQLDelight 2.2.1 - suporta wasmJs via web-worker-driver
                 implementation("app.cash.sqldelight:runtime:2.2.1")
                 implementation("app.cash.sqldelight:coroutines-extensions:2.2.1")
+
+                // GitLive Firebase Kotlin SDK 2.4.0 - suporta Android + iOS
+                // wasmJs NAO suportado - ver wasmJsMain para stubs
+                val gitLiveVersion = "2.4.0"
+                implementation("dev.gitlive:firebase-auth:$gitLiveVersion")
+                implementation("dev.gitlive:firebase-firestore:$gitLiveVersion")
+                implementation("dev.gitlive:firebase-storage:$gitLiveVersion")
+                implementation("dev.gitlive:firebase-functions:$gitLiveVersion")
             }
         }
 
@@ -90,10 +98,10 @@ kotlin {
                 // SQLDelight Android driver
                 implementation("app.cash.sqldelight:android-driver:2.2.1")
 
-                // Firebase Android SDK (apenas androidMain)
-                implementation("com.google.firebase:firebase-firestore-ktx:24.10.0")
-                implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
-                implementation("com.google.firebase:firebase-storage-ktx:20.2.1")
+                // Firebase Android SDK - fornecido via GitLive SDK (transitivo)
+                // GitLive traz firebase-firestore, firebase-auth, firebase-storage transitivamente
+                // kotlinx-coroutines-play-services: necessário para Tasks.await() em código legado
+                // TODO: Fase 2 - remover após migração completa para GitLive suspend functions
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
                 // AndroidX Security Crypto (para SecureStorage)
