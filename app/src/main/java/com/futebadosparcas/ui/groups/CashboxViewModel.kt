@@ -15,7 +15,6 @@ import com.futebadosparcas.util.toAndroidCashboxEntries
 import com.futebadosparcas.util.toAndroidCashboxSummary
 import com.futebadosparcas.util.toKmpCashboxEntry
 import com.futebadosparcas.util.toKmpCashboxFilter
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,10 +25,8 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import javax.inject.Inject
 
-@HiltViewModel
-class CashboxViewModel @Inject constructor(
+class CashboxViewModel(
     private val cashboxRepository: CashboxRepository,
     private val groupRepository: GroupRepository
 ) : ViewModel() {

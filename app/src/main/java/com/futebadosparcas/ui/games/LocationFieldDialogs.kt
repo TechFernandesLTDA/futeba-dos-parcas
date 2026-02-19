@@ -19,7 +19,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Field
@@ -35,11 +34,9 @@ import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.text.Normalizer
-import javax.inject.Inject
 import com.futebadosparcas.util.toAndroidLocations
 import com.futebadosparcas.util.toAndroidFields
 
@@ -52,7 +49,7 @@ import com.futebadosparcas.util.toAndroidFields
 fun LocationSelectionDialog(
     onDismiss: () -> Unit,
     onLocationSelected: (Location) -> Unit,
-    viewModel: LocationSelectionViewModel = hiltViewModel()
+    viewModel: LocationSelectionViewModel = org.koin.compose.viewmodel.koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
@@ -336,7 +333,7 @@ fun FieldSelectionDialog(
     location: Location,
     onDismiss: () -> Unit,
     onFieldSelected: (Field) -> Unit,
-    viewModel: FieldSelectionViewModel = hiltViewModel()
+    viewModel: FieldSelectionViewModel = org.koin.compose.viewmodel.koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val fields by viewModel.fields.collectAsStateWithLifecycle()
@@ -632,8 +629,7 @@ private fun ErrorFieldState(
 
 // ViewModels para os dialogs
 
-@HiltViewModel
-class LocationSelectionViewModel @Inject constructor(
+class LocationSelectionViewModel(
     private val locationRepository: LocationRepository
 ) : ViewModel() {
 
@@ -712,8 +708,7 @@ class LocationSelectionViewModel @Inject constructor(
     }
 }
 
-@HiltViewModel
-class FieldSelectionViewModel @Inject constructor(
+class FieldSelectionViewModel(
     private val locationRepository: LocationRepository
 ) : ViewModel() {
 

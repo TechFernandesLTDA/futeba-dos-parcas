@@ -4,7 +4,6 @@ import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
-import javax.inject.Inject
 
 /**
  * Start Game Use Case
@@ -17,7 +16,7 @@ import javax.inject.Inject
  * val result = startGameUseCase(StartGameParams(gameId = "game123"))
  * ```
  */
-class StartGameUseCase @Inject constructor(
+class StartGameUseCase constructor(
     private val gameRepository: GameRepository
 ) : SuspendUseCase<StartGameParams, Game>() {
 

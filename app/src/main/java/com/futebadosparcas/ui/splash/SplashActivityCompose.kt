@@ -17,10 +17,9 @@ import com.futebadosparcas.ui.auth.LoginActivityCompose
 import com.futebadosparcas.ui.main.MainActivityCompose
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.util.PreferencesManager
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import org.koin.android.ext.android.inject
 import kotlin.random.Random
 
 /**
@@ -33,17 +32,11 @@ import kotlin.random.Random
  * 3. Carrega brasão do usuário se logado
  * 4. Navega para MainActivity ou LoginActivity
  */
-@AndroidEntryPoint
 class SplashActivityCompose : AppCompatActivity() {
 
-    @Inject
-    lateinit var authRepository: AuthRepository
-
-    @Inject
-    lateinit var userRepository: UserRepository
-
-    @Inject
-    lateinit var preferencesManager: PreferencesManager
+    private val authRepository: AuthRepository by inject()
+    private val userRepository: UserRepository by inject()
+    private val preferencesManager: PreferencesManager by inject()
 
     companion object {
         private const val FOUR_HOURS_IN_MILLIS = 4 * 60 * 60 * 1000L // 4 horas em milissegundos

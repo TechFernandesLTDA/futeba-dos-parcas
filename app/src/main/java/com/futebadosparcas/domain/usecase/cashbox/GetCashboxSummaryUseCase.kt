@@ -3,7 +3,6 @@ package com.futebadosparcas.domain.usecase.cashbox
 import com.futebadosparcas.domain.model.CashboxSummary
 import com.futebadosparcas.domain.repository.CashboxRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
-import javax.inject.Inject
 
 /**
  * Get Cashbox Summary Use Case
@@ -35,7 +34,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class GetCashboxSummaryUseCase @Inject constructor(
+class GetCashboxSummaryUseCase constructor(
     private val cashboxRepository: CashboxRepository
 ) : SuspendUseCase<GetCashboxSummaryParams, CashboxSummary>() {
 

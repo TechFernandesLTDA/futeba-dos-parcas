@@ -17,7 +17,6 @@ import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.ConnectivityMonitor
 import com.futebadosparcas.domain.cache.SharedCacheService
 import com.futebadosparcas.domain.prefetch.PrefetchService
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -29,11 +28,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
-import javax.inject.Inject
 import kotlin.math.pow
 
-@HiltViewModel
-class HomeViewModel @Inject constructor(
+class HomeViewModel(
     private val gameRepository: GameRepository,
     private val userRepository: UserRepository,
     private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,

@@ -5,15 +5,11 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.suspendCancellableCoroutine
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.coroutines.resume
 
-@Singleton
-class BiometricHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class BiometricHelper constructor(
+    private val context: Context
 ) {
 
     // Constructor for non-DI usage (legacy)

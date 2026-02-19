@@ -6,9 +6,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Clipboard Helper
@@ -17,7 +14,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var clipboardHelper: ClipboardHelper
+ * lateinit var clipboardHelper: ClipboardHelper
  *
  * // Copy text to clipboard
  * clipboardHelper.copyText("Game ID: ABC123")
@@ -34,9 +31,8 @@ import javax.inject.Singleton
  * }
  * ```
  */
-@Singleton
-class ClipboardHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class ClipboardHelper constructor(
+    private val context: Context
 ) {
 
     private val clipboardManager: ClipboardManager =

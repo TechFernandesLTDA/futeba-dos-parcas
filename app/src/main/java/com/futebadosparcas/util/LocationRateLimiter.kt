@@ -4,8 +4,6 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Rate limiter para criacao de locais.
@@ -28,8 +26,7 @@ import javax.inject.Singleton
  *
  * @param preferencesManager Gerenciador de preferencias encriptadas
  */
-@Singleton
-class LocationRateLimiter @Inject constructor(
+class LocationRateLimiter constructor(
     private val preferencesManager: PreferencesManager
 ) {
     companion object {

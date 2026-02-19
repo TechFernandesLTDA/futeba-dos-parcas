@@ -9,15 +9,12 @@ import com.futebadosparcas.domain.model.PaymentType
 import com.futebadosparcas.data.repository.PaymentRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class PaymentViewModel @Inject constructor(
+class PaymentViewModel(
     private val paymentRepository: PaymentRepository,
     private val userRepository: UserRepository
 ) : ViewModel() {

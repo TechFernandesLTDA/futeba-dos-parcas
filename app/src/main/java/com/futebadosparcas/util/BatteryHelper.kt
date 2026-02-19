@@ -4,9 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Battery Helper
@@ -15,7 +12,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var batteryHelper: BatteryHelper
+ * lateinit var batteryHelper: BatteryHelper
  *
  * // Check battery level
  * val level = batteryHelper.getBatteryLevel()
@@ -32,9 +29,8 @@ import javax.inject.Singleton
  * val status = batteryHelper.getBatteryStatus()
  * ```
  */
-@Singleton
-class BatteryHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class BatteryHelper constructor(
+    private val context: Context
 ) {
 
     private val batteryManager: BatteryManager? by lazy {

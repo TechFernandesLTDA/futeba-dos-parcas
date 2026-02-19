@@ -10,7 +10,6 @@ import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.LeagueService
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
-import javax.inject.Inject
 
 /**
  * Use Case para buscar classificacao da liga.
@@ -21,7 +20,7 @@ import javax.inject.Inject
  * - Verificar criterios de promocao/rebaixamento
  * - Fornecer estatisticas da temporada
  */
-class GetLeagueStandingsUseCase @Inject constructor(
+class GetLeagueStandingsUseCase constructor(
     private val gamificationRepository: GamificationRepository,
     private val leagueService: LeagueService,
     private val userRepository: UserRepository,

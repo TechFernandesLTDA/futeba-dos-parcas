@@ -7,15 +7,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.*
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Classe responsável por garantir que as temporadas existam e estejam ativas.
  * Funciona como um processo "vivo" dentro do app.
  */
-@Singleton
-class SeasonGuardian @Inject constructor(
+class SeasonGuardian constructor(
     private val firestore: FirebaseFirestore,
     private val seasonClosureService: com.futebadosparcas.domain.ranking.SeasonClosureService
 ) {

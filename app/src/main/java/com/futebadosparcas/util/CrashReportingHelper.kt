@@ -1,8 +1,6 @@
 package com.futebadosparcas.util
 
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Crash Reporting Helper
@@ -18,7 +16,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var crashReporting: CrashReportingHelper
+ * lateinit var crashReporting: CrashReportingHelper
  *
  * try {
  *     // Risky operation
@@ -30,8 +28,7 @@ import javax.inject.Singleton
  * }
  * ```
  */
-@Singleton
-class CrashReportingHelper @Inject constructor() {
+class CrashReportingHelper constructor() {
 
     private val crashlytics: FirebaseCrashlytics = FirebaseCrashlytics.getInstance()
 

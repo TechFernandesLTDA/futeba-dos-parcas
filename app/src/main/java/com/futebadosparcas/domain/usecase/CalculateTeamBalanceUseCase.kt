@@ -5,7 +5,6 @@ import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.Team
 import com.futebadosparcas.domain.ai.AiTeamBalancer
 import com.futebadosparcas.util.AppLogger
-import javax.inject.Inject
 
 /**
  * Use Case para calcular balanceamento de times.
@@ -16,7 +15,7 @@ import javax.inject.Inject
  * - Executar algoritmo de balanceamento (TeamBalancer)
  * - Salvar times gerados
  */
-class CalculateTeamBalanceUseCase @Inject constructor(
+class CalculateTeamBalanceUseCase constructor(
     private val firebaseDataSource: FirebaseDataSource,
     private val teamBalancer: AiTeamBalancer
 ) {

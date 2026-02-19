@@ -5,7 +5,6 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
 /**
  * Mark Notification Read Use Case
@@ -30,7 +29,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class MarkNotificationReadUseCase @Inject constructor(
+class MarkNotificationReadUseCase constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
 ) : CompletableUseCase<MarkNotificationReadParams>() {

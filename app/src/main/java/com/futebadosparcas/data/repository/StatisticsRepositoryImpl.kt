@@ -6,11 +6,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class StatisticsRepositoryImpl @Inject constructor(
+class StatisticsRepositoryImpl constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
 ) : IStatisticsRepository, StatisticsRepository {

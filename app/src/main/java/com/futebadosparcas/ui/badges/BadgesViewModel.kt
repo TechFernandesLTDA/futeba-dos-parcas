@@ -10,7 +10,6 @@ import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -19,7 +18,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
 /**
  * ViewModel da tela de Badges/Conquistas.
@@ -29,8 +27,7 @@ import javax.inject.Inject
  * - Batch fetch de badges (whereIn chunked) em vez de N+1 queries sequenciais
  * - async/awaitAll para queries paralelas em chunks
  */
-@HiltViewModel
-class BadgesViewModel @Inject constructor(
+class BadgesViewModel(
     private val gamificationRepository: GamificationRepository,
     private val authRepository: AuthRepository,
     private val firestore: FirebaseFirestore

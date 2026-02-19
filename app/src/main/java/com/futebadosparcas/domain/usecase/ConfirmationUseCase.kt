@@ -17,8 +17,6 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.util.Date
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Use case para gerenciar confirmacoes de presenca em jogos (Issues #31-40).
@@ -31,8 +29,7 @@ import javax.inject.Singleton
  * - Check-in por GPS
  * - Calcular taxa de presenca
  */
-@Singleton
-class ConfirmationUseCase @Inject constructor(
+class ConfirmationUseCase constructor(
     private val gameRepository: GameRepository,
     private val waitlistRepository: WaitlistRepository,
     private val notificationRepository: NotificationRepository,

@@ -1,11 +1,8 @@
 package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.model.UserStatistics
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class FakeStatisticsRepository @Inject constructor() : IStatisticsRepository {
+class FakeStatisticsRepository constructor() : IStatisticsRepository {
 
     private val stats = mutableListOf<UserStatistics>()
 

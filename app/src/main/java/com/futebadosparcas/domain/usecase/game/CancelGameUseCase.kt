@@ -3,7 +3,6 @@ package com.futebadosparcas.domain.usecase.game
 import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
-import javax.inject.Inject
 
 /**
  * Cancel Game Use Case
@@ -30,7 +29,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class CancelGameUseCase @Inject constructor(
+class CancelGameUseCase constructor(
     private val gameRepository: GameRepository
 ) : SuspendUseCase<CancelGameParams, Unit>() {
 

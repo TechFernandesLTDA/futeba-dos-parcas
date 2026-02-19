@@ -10,7 +10,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import javax.inject.Inject
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -21,7 +20,7 @@ import kotlin.time.Duration.Companion.minutes
  *
  * Usage:
  * ```kotlin
- * class UserRepository @Inject constructor(
+ * class UserRepository constructor(
  *     private val firestore: FirebaseFirestore,
  *     memoryCache: MemoryCache,
  *     cacheStrategy: CacheStrategy

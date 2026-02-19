@@ -4,7 +4,6 @@ import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.LocationQueries
 import com.futebadosparcas.util.LocationQueryMetrics
-import javax.inject.Inject
 
 /**
  * Decorator para LocationRepository que adiciona métricas de performance.
@@ -22,7 +21,7 @@ import javax.inject.Inject
  *
  * @param delegate Implementação base do LocationRepository (KMP)
  */
-class MeteredLocationRepository @Inject constructor(
+class MeteredLocationRepository constructor(
     private val delegate: LocationRepository
 ) : LocationRepository {
 

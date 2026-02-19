@@ -7,15 +7,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Implementacao Android do GameTemplateRepository.
  * Usa Firebase Firestore para salvar/buscar/deletar templates de jogos.
  */
-@Singleton
-class GameTemplateRepositoryImpl @Inject constructor(
+class GameTemplateRepositoryImpl constructor(
     private val firestore: FirebaseFirestore
 ) : GameTemplateRepository {
 

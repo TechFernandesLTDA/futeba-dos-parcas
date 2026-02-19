@@ -8,8 +8,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 import java.util.*
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Resultado da atualizacao de liga.
@@ -39,8 +37,7 @@ data class LeagueUpdateResult(
  * NOTA: O calculador de League Rating foi movido para o shared module (KMP).
  * Este service converte entre os modelos Android e shared.
  */
-@Singleton
-class LeagueService @Inject constructor(
+class LeagueService constructor(
     private val firestore: FirebaseFirestore
 ) {
     companion object {

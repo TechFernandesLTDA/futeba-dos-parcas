@@ -7,12 +7,9 @@ import android.graphics.Matrix
 import androidx.core.graphics.scale
 import androidx.exifinterface.media.ExifInterface
 import android.net.Uri
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Image Helper
@@ -22,7 +19,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var imageHelper: ImageHelper
+ * lateinit var imageHelper: ImageHelper
  *
  * val optimizedUri = imageHelper.optimizeImage(
  *     originalUri,
@@ -31,9 +28,8 @@ import javax.inject.Singleton
  * )
  * ```
  */
-@Singleton
-class ImageHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class ImageHelper constructor(
+    private val context: Context
 ) {
 
     companion object {

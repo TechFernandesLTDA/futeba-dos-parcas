@@ -1,4 +1,4 @@
-package com.futebadosparcas.di
+package com.futebadosparcas.di.koin
 
 import com.futebadosparcas.data.datasource.ProfilePhotoDataSource
 import com.google.firebase.auth.FirebaseAuth
@@ -6,39 +6,29 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.MemoryCacheSettings
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import org.koin.android.ext.koin.androidApplication
+import org.koin.dsl.module
 
-@Module
-@InstallIn(SingletonComponent::class)
-object FirebaseModule {
+val firebaseKoinModule = module {
 
     // ⚠️ ALTERNE AQUI: true = Banco Local (Emulador), false = Banco de Produção (Real)
-    private const val USE_EMULATOR = false
+    val useEmulator = false
 
-    @Provides
-    @Singleton
-    fun provideFirebaseAuth(): FirebaseAuth {
+    single<FirebaseAuth> {
         val auth = FirebaseAuth.getInstance()
-        if (com.futebadosparcas.BuildConfig.DEBUG && USE_EMULATOR) {
+        if (com.futebadosparcas.BuildConfig.DEBUG && useEmulator) {
             try {
                 auth.useEmulator("10.0.2.2", 9099)
             } catch (e: Exception) {
-                // Ignore if already connected
+                // Ignorar se já conectado
             }
         }
-        return auth
+        auth
     }
 
-    @Provides
-    @Singleton
-    fun provideFirebaseFirestore(): FirebaseFirestore {
+    single<FirebaseFirestore> {
         val firestore = FirebaseFirestore.getInstance()
-
-        if (com.futebadosparcas.BuildConfig.DEBUG && USE_EMULATOR) {
+        if (com.futebadosparcas.BuildConfig.DEBUG && useEmulator) {
             try {
                 firestore.useEmulator("10.0.2.2", 8085)
                 val settings = com.google.firebase.firestore.FirebaseFirestoreSettings.Builder()
@@ -46,11 +36,9 @@ object FirebaseModule {
                     .build()
                 firestore.firestoreSettings = settings
             } catch (e: Exception) {
-                // Ignore
+                // Ignorar
             }
         } else {
-            // PERFORMANCE OPTIMIZATION: Enable Persistent Cache (100MB)
-            // Permite funcionar offline com cache local persistente
             try {
                 val settings = com.google.firebase.firestore.FirebaseFirestoreSettings.Builder()
                     .setLocalCacheSettings(
@@ -61,40 +49,30 @@ object FirebaseModule {
                     .build()
                 firestore.firestoreSettings = settings
             } catch (e: Exception) {
-                // Settings already configured
+                // Settings já configuradas
             }
         }
-
-        return firestore
+        firestore
     }
 
-    @Provides
-    @Singleton
-    fun provideFirebaseMessaging(): FirebaseMessaging {
-        return FirebaseMessaging.getInstance()
+    single<FirebaseMessaging> {
+        FirebaseMessaging.getInstance()
     }
 
-    @Provides
-    @Singleton
-    fun provideFirebaseStorage(): FirebaseStorage {
+    single<FirebaseStorage> {
         val storage = FirebaseStorage.getInstance()
-        if (com.futebadosparcas.BuildConfig.DEBUG && USE_EMULATOR) {
+        if (com.futebadosparcas.BuildConfig.DEBUG && useEmulator) {
             try {
                 storage.useEmulator("10.0.2.2", 9199)
             } catch (e: Exception) {
-                // Ignore
+                // Ignorar
             }
         }
-        return storage
+        storage
     }
 
     // CMD-06: Provider para ProfilePhotoDataSource
-    @Provides
-    @Singleton
-    fun provideProfilePhotoDataSource(
-        storage: FirebaseStorage,
-        application: android.app.Application
-    ): ProfilePhotoDataSource {
-        return ProfilePhotoDataSource(storage, application)
+    single<ProfilePhotoDataSource> {
+        ProfilePhotoDataSource(get(), androidApplication())
     }
 }

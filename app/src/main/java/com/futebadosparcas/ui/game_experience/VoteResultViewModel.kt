@@ -7,21 +7,18 @@ import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.MVPVoteResult
 import com.futebadosparcas.data.model.VoteCategory
 import com.futebadosparcas.data.repository.GameRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import javax.inject.Inject
 
 /**
  * ViewModel para a tela de resultados de votação MVP.
  * Calcula e exibe o pódio com contagem de votos por categoria.
  */
-@HiltViewModel
-class VoteResultViewModel @Inject constructor(
+class VoteResultViewModel(
     private val gameRepository: GameRepository
 ) : ViewModel() {
 

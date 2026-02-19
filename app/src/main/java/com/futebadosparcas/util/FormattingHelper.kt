@@ -6,8 +6,6 @@ import java.text.SimpleDateFormat
 import java.util.Currency
 import java.util.Date
 import java.util.Locale
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Formatting Helper
@@ -16,7 +14,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var formattingHelper: FormattingHelper
+ * lateinit var formattingHelper: FormattingHelper
  *
  * // Format currency
  * val formatted = formattingHelper.formatCurrency(1500.50) // "R$ 1.500,50"
@@ -28,8 +26,7 @@ import javax.inject.Singleton
  * val xp = formattingHelper.formatLargeNumber(1250000) // "1,25M"
  * ```
  */
-@Singleton
-class FormattingHelper @Inject constructor() {
+class FormattingHelper constructor() {
 
     private val brazilLocale = Locale.forLanguageTag("pt-BR")
 

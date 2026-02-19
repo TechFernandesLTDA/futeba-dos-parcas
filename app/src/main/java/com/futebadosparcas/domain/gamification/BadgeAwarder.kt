@@ -10,15 +10,12 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.flowOf
 import java.util.Date
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Service that listens for new badges awarded to the current user (via Cloud Functions)
  * and emits them for UI display.
  */
-@Singleton
-class BadgeAwarder @Inject constructor(
+class BadgeAwarder constructor(
     private val authRepository: AuthRepository,
     private val firestore: FirebaseFirestore
 ) {

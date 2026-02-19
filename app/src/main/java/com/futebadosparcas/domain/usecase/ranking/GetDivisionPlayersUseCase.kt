@@ -4,7 +4,6 @@ import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.domain.model.SeasonParticipation
 import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
-import javax.inject.Inject
 
 /**
  * Get Division Players Use Case
@@ -49,7 +48,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class GetDivisionPlayersUseCase @Inject constructor(
+class GetDivisionPlayersUseCase constructor(
     private val gamificationRepository: GamificationRepository
 ) : SuspendUseCase<GetDivisionPlayersParams, List<SeasonParticipation>>() {
 

@@ -6,15 +6,12 @@ import com.futebadosparcas.domain.model.AppThemeConfig
 import com.futebadosparcas.domain.model.ThemeMode
 import com.futebadosparcas.domain.repository.ThemeRepository
 import com.futebadosparcas.util.PreferencesManager
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class ThemeViewModel @Inject constructor(
+class ThemeViewModel(
     private val themeRepository: ThemeRepository,
     private val preferencesManager: PreferencesManager
 ) : ViewModel() {

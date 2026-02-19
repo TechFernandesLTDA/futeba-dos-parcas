@@ -6,7 +6,6 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
 /**
  * Get Top Scorers Use Case
@@ -38,7 +37,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class GetTopScorersUseCase @Inject constructor(
+class GetTopScorersUseCase constructor(
     private val firestore: FirebaseFirestore
 ) : SuspendUseCase<GetTopScorersParams, List<UserStatistics>>() {
 

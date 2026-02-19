@@ -10,23 +10,19 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import com.futebadosparcas.R
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.Calendar
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Sistema de lembretes inteligentes que aprende com o comportamento do usuário.
  * Envia notificações personalizadas baseadas em padrões de uso e preferências.
  */
-@Singleton
-class SmartReminderHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class SmartReminderHelper constructor(
+    private val context: Context
 ) {
     companion object {
         private const val TAG = "SmartReminderHelper"

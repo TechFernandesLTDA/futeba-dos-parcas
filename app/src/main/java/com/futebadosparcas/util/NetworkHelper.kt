@@ -5,12 +5,9 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Network Helper
@@ -19,7 +16,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var networkHelper: NetworkHelper
+ * lateinit var networkHelper: NetworkHelper
  *
  * // Check if connected
  * if (networkHelper.isNetworkAvailable()) {
@@ -43,9 +40,8 @@ import javax.inject.Singleton
  * }
  * ```
  */
-@Singleton
-class NetworkHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class NetworkHelper constructor(
+    private val context: Context
 ) {
 
     private val connectivityManager =

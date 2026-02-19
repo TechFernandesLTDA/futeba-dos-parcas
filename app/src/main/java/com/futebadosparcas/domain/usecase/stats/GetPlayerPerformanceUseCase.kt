@@ -5,7 +5,6 @@ import com.futebadosparcas.data.repository.StatisticsRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.futebadosparcas.util.AppLogger
 import java.util.Date
-import javax.inject.Inject
 
 /**
  * Get Player Performance Use Case
@@ -36,7 +35,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class GetPlayerPerformanceUseCase @Inject constructor(
+class GetPlayerPerformanceUseCase constructor(
     private val statisticsRepository: StatisticsRepository
 ) : SuspendUseCase<GetPlayerPerformanceParams, PlayerPerformanceMetrics>() {
 

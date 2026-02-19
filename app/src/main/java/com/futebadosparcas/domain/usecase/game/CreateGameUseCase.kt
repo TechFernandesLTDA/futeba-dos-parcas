@@ -6,7 +6,6 @@ import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.futebadosparcas.util.ValidationHelper
 import java.util.Date
-import javax.inject.Inject
 
 /**
  * Create Game Use Case
@@ -31,7 +30,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class CreateGameUseCase @Inject constructor(
+class CreateGameUseCase constructor(
     private val gameRepository: GameRepository
 ) : SuspendUseCase<CreateGameParams, Game>() {
 

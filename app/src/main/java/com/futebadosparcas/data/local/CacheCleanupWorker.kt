@@ -1,7 +1,6 @@
 package com.futebadosparcas.data.local
 
 import android.content.Context
-import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
@@ -13,9 +12,9 @@ import com.futebadosparcas.data.local.dao.UserDao
 import com.futebadosparcas.domain.cache.SharedCacheService
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.PerformanceTracker
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
 import java.util.concurrent.TimeUnit
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
  * Worker para limpeza automatica de cache expirado.
@@ -28,15 +27,15 @@ import java.util.concurrent.TimeUnit
  *
  * Agendado: A cada 12 horas via WorkManager
  */
-@HiltWorker
-class CacheCleanupWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted workerParams: WorkerParameters,
-    private val gameDao: GameDao,
-    private val userDao: UserDao,
-    private val sharedCache: SharedCacheService,
-    private val performanceTracker: PerformanceTracker
-) : CoroutineWorker(context, workerParams) {
+class CacheCleanupWorker(
+    context: Context,
+    workerParams: WorkerParameters
+) : CoroutineWorker(context, workerParams), KoinComponent {
+
+    private val gameDao: GameDao by inject()
+    private val userDao: UserDao by inject()
+    private val sharedCache: SharedCacheService by inject()
+    private val performanceTracker: PerformanceTracker by inject()
 
     companion object {
         private const val TAG = "CacheCleanupWorker"

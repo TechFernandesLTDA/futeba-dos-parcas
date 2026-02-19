@@ -6,15 +6,12 @@ import com.futebadosparcas.data.model.*
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.LiveGameRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class LiveGameViewModel @Inject constructor(
+class LiveGameViewModel(
     private val liveGameRepository: LiveGameRepository,
     private val gameRepository: GameRepository,
     private val authRepository: AuthRepository,

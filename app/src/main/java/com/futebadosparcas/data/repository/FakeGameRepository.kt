@@ -5,9 +5,8 @@ import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.data.model.Team
 import com.futebadosparcas.ui.games.GameWithConfirmations
-import javax.inject.Inject
 
-class FakeGameRepository @Inject constructor() : GameRepository {
+class FakeGameRepository constructor() : GameRepository {
 
     private var games = mutableListOf<Game>()
     private var confirmations = mutableListOf<GameConfirmation>()

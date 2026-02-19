@@ -13,8 +13,6 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Implementacao Android do GameConfirmationRepository (KMP).
@@ -24,8 +22,7 @@ import javax.inject.Singleton
  *
  * @param dataSource DataSource Firebase para acesso aos dados
  */
-@Singleton
-class GameConfirmationRepositoryImpl @Inject constructor(
+class GameConfirmationRepositoryImpl constructor(
     private val dataSource: FirebaseDataSource
 ) : GameConfirmationRepository {
 

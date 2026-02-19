@@ -5,8 +5,6 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.QueryDocumentSnapshot
 import java.text.SimpleDateFormat
 import java.util.*
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Data Converter
@@ -15,7 +13,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var dataConverter: DataConverter
+ * lateinit var dataConverter: DataConverter
  *
  * // Convert Firestore Timestamp to Date
  * val date = dataConverter.timestampToDate(timestamp)
@@ -27,8 +25,7 @@ import javax.inject.Singleton
  * val user = dataConverter.parseDocument<User>(document)
  * ```
  */
-@Singleton
-class DataConverter @Inject constructor() {
+class DataConverter constructor() {
 
     /**
      * Convert Firestore Timestamp to Date

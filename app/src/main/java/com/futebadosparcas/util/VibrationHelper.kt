@@ -5,9 +5,6 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Vibration Helper
@@ -16,7 +13,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var vibrationHelper: VibrationHelper
+ * lateinit var vibrationHelper: VibrationHelper
  *
  * // Short vibration for button press
  * vibrationHelper.vibrateClick()
@@ -31,9 +28,8 @@ import javax.inject.Singleton
  * vibrationHelper.vibratePattern(longArrayOf(0, 100, 50, 100))
  * ```
  */
-@Singleton
-class VibrationHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class VibrationHelper constructor(
+    private val context: Context
 ) {
 
     private val vibrator: Vibrator by lazy {

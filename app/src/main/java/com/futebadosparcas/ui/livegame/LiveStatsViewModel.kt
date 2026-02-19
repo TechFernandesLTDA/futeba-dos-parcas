@@ -4,15 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.LivePlayerStats
 import com.futebadosparcas.data.repository.LiveGameRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class LiveStatsViewModel @Inject constructor(
+class LiveStatsViewModel(
     private val liveGameRepository: LiveGameRepository
 ) : ViewModel() {
 

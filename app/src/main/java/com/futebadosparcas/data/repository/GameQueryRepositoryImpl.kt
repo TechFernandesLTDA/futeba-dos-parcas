@@ -42,8 +42,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Implementacao Android do GameQueryRepository.
@@ -53,8 +51,7 @@ import javax.inject.Singleton
  *
  * Permissões são gerenciadas pelo PermissionManager centralizado.
  */
-@Singleton
-class GameQueryRepositoryImpl @Inject constructor(
+class GameQueryRepositoryImpl constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
     private val gameDao: GameDao,

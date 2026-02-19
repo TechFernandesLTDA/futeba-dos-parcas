@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -29,9 +28,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * Activity de Login com suporte a Google Sign-In e autenticação biométrica.
@@ -42,16 +41,14 @@ import javax.inject.Inject
  * 2. Tenta autenticação biométrica se disponível
  * 3. Permite login com Google Credential Manager
  */
-@AndroidEntryPoint
 class LoginActivityCompose : AppCompatActivity() {
 
-    private val viewModel: LoginViewModel by viewModels()
+    private val viewModel: LoginViewModel by viewModel()
 
     private lateinit var auth: FirebaseAuth
     private lateinit var credentialManager: CredentialManager
 
-    @Inject
-    lateinit var preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager by inject()
 
     companion object {
         private const val TAG = "LoginActivity"

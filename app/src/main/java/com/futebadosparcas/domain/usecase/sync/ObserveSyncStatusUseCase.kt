@@ -4,7 +4,6 @@ import com.futebadosparcas.data.local.model.LocationSyncEntity
 import com.futebadosparcas.domain.sync.LocationSyncManager
 import com.futebadosparcas.domain.sync.SyncStatus
 import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
 
 /**
  * Dados de status de sincronização para a UI.
@@ -43,7 +42,7 @@ data class SyncStatusInfo(
  * }
  * ```
  */
-class ObserveSyncStatusUseCase @Inject constructor(
+class ObserveSyncStatusUseCase constructor(
     private val syncManager: LocationSyncManager
 ) {
     /**
@@ -76,7 +75,7 @@ class ObserveSyncStatusUseCase @Inject constructor(
  * - Botão "Sincronizar agora"
  * - Retentativa após erro
  */
-class TriggerSyncUseCase @Inject constructor(
+class TriggerSyncUseCase constructor(
     private val syncManager: LocationSyncManager
 ) {
     /**
@@ -90,7 +89,7 @@ class TriggerSyncUseCase @Inject constructor(
 /**
  * Use case para cancelar uma operação pendente.
  */
-class CancelPendingSyncUseCase @Inject constructor(
+class CancelPendingSyncUseCase constructor(
     private val syncManager: LocationSyncManager
 ) {
     /**
@@ -106,7 +105,7 @@ class CancelPendingSyncUseCase @Inject constructor(
 /**
  * Use case para limpar itens com falha permanente.
  */
-class ClearFailedSyncsUseCase @Inject constructor(
+class ClearFailedSyncsUseCase constructor(
     private val syncManager: LocationSyncManager
 ) {
     /**

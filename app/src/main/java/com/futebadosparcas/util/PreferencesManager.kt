@@ -5,18 +5,14 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Gerenciador de preferências do app com suporte a encriptação.
  * Dados sensíveis são armazenados em EncryptedSharedPreferences.
  * Dados não-sensíveis usam SharedPreferences padrão para performance.
  */
-@Singleton
-class PreferencesManager @Inject constructor(
-    @ApplicationContext private val context: Context
+class PreferencesManager constructor(
+    private val context: Context
 ) {
     // Master key para encriptação AES256
     private val masterKey: MasterKey by lazy {

@@ -40,8 +40,8 @@ import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.ui.onboarding.OnboardingFlow
 import com.futebadosparcas.util.PreferencesManager
 import com.google.firebase.firestore.FirebaseFirestore
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.People
@@ -53,32 +53,16 @@ import androidx.compose.material.icons.filled.Sports
  * MainActivity versão Compose.
  * Substitui gradualmente a versão XML.
  */
-@AndroidEntryPoint
 class MainActivityCompose : AppCompatActivity() {
 
-    @javax.inject.Inject
-    lateinit var badgeAwarder: BadgeAwarder
-
-    @javax.inject.Inject
-    lateinit var firestore: FirebaseFirestore
-
-    @javax.inject.Inject
-    lateinit var postGameEventEmitter: PostGameEventEmitter
-
-    @javax.inject.Inject
-    lateinit var themeRepository: ThemeRepository
-
-    @javax.inject.Inject
-    lateinit var notificationRepository: NotificationRepository
-
-    @javax.inject.Inject
-    lateinit var preferencesManager: PreferencesManager
-
-    @javax.inject.Inject
-    lateinit var authRepository: com.futebadosparcas.data.repository.AuthRepository
-
-    @javax.inject.Inject
-    lateinit var updateProfileUseCase: com.futebadosparcas.domain.usecase.user.UpdateProfileUseCase
+    private val badgeAwarder: BadgeAwarder by inject()
+    private val firestore: FirebaseFirestore by inject()
+    private val postGameEventEmitter: PostGameEventEmitter by inject()
+    private val themeRepository: ThemeRepository by inject()
+    private val notificationRepository: NotificationRepository by inject()
+    private val preferencesManager: PreferencesManager by inject()
+    private val authRepository: com.futebadosparcas.data.repository.AuthRepository by inject()
+    private val updateProfileUseCase: com.futebadosparcas.domain.usecase.user.UpdateProfileUseCase by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)

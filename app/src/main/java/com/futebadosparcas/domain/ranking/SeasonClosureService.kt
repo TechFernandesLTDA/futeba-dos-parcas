@@ -10,11 +10,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 import java.util.Date
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class SeasonClosureService @Inject constructor(
+class SeasonClosureService constructor(
     private val firestore: FirebaseFirestore,
     private val notificationRepository: NotificationRepository
 ) {

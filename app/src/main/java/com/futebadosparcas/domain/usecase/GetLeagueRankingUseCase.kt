@@ -11,7 +11,6 @@ import com.google.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import javax.inject.Inject
 
 /**
  * Use Case para buscar rankings da liga.
@@ -22,7 +21,7 @@ import javax.inject.Inject
  * - Enriquecer dados com informações de usuário
  * - Calcular posição do jogador no ranking
  */
-class GetLeagueRankingUseCase @Inject constructor(
+class GetLeagueRankingUseCase constructor(
     private val firebaseDataSource: FirebaseDataSource,
     private val auth: FirebaseAuth
 ) {

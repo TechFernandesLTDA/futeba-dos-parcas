@@ -16,7 +16,6 @@ import com.futebadosparcas.domain.usecase.group.ManageMembersUseCase
 import com.futebadosparcas.domain.usecase.group.TransferOwnershipUseCase
 import com.futebadosparcas.domain.usecase.group.UpdateGroupUseCase
 import com.google.firebase.auth.FirebaseAuth
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +25,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 import com.futebadosparcas.util.AppLogger
 
 /**
@@ -44,8 +42,7 @@ import com.futebadosparcas.util.AppLogger
  * 9. Verificação de membros elegíveis
  * 10. Timeout para operações de rede
  */
-@HiltViewModel
-class GroupDetailViewModel @Inject constructor(
+class GroupDetailViewModel(
     private val groupRepository: GroupRepository,
     private val userRepository: com.futebadosparcas.domain.repository.UserRepository,
     private val auth: FirebaseAuth,

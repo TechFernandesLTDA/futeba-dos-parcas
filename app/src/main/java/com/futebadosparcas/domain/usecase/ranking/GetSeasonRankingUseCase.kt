@@ -3,7 +3,6 @@ package com.futebadosparcas.domain.usecase.ranking
 import com.futebadosparcas.domain.model.SeasonParticipation
 import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
-import javax.inject.Inject
 
 /**
  * Get Season Ranking Use Case
@@ -36,7 +35,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class GetSeasonRankingUseCase @Inject constructor(
+class GetSeasonRankingUseCase constructor(
     private val gamificationRepository: GamificationRepository
 ) : SuspendUseCase<GetSeasonRankingParams, List<SeasonParticipation>>() {
 

@@ -7,15 +7,12 @@ import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toAndroidLocations
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class FieldOwnerDashboardViewModel @Inject constructor(
+class FieldOwnerDashboardViewModel(
     private val locationRepository: LocationRepository,
     private val userRepository: UserRepository
 ) : ViewModel() {

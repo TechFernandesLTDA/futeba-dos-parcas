@@ -4,12 +4,11 @@ import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.data.repository.GroupRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
 
 /**
  * Use Case para obter grupos do usuário
  */
-class GetGroupsUseCase @Inject constructor(
+class GetGroupsUseCase constructor(
     private val groupRepository: GroupRepository
 ) {
     /**

@@ -3,9 +3,6 @@ package com.futebadosparcas.util
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Debug
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.math.roundToInt
 
 /**
@@ -16,7 +13,7 @@ import kotlin.math.roundToInt
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var memoryHelper: MemoryHelper
+ * lateinit var memoryHelper: MemoryHelper
  *
  * // Check memory status
  * when (val status = memoryHelper.getMemoryStatus()) {
@@ -33,9 +30,8 @@ import kotlin.math.roundToInt
  * }
  * ```
  */
-@Singleton
-class MemoryHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class MemoryHelper constructor(
+    private val context: Context
 ) {
 
     private val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager

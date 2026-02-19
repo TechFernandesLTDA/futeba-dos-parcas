@@ -4,8 +4,6 @@ import android.os.Bundle
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Location Analytics Helper
@@ -24,14 +22,13 @@ import javax.inject.Singleton
  *
  * Uso:
  * ```kotlin
- * @Inject lateinit var locationAnalytics: LocationAnalytics
+ * lateinit var locationAnalytics: LocationAnalytics
  *
  * locationAnalytics.trackMapViewed(locationCount = 10, source = "home")
  * locationAnalytics.trackLocationDetailOpened(locationId = "abc123", source = "map")
  * ```
  */
-@Singleton
-class LocationAnalytics @Inject constructor() {
+class LocationAnalytics constructor() {
 
     private val analytics: FirebaseAnalytics = Firebase.analytics
 

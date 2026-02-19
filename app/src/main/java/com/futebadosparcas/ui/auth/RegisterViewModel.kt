@@ -2,10 +2,8 @@ package com.futebadosparcas.ui.auth
 
 import androidx.lifecycle.ViewModel
 import com.futebadosparcas.data.model.User
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import javax.inject.Inject
 
 /**
  * ViewModel para o fluxo de registro.
@@ -13,8 +11,7 @@ import javax.inject.Inject
  * Nota: O registro agora e feito via Google Sign-In.
  * Este ViewModel e mantido para compatibilidade futura.
  */
-@HiltViewModel
-class RegisterViewModel @Inject constructor() : ViewModel() {
+class RegisterViewModel() : ViewModel() {
 
     private val _registerState = MutableStateFlow<RegisterState>(RegisterState.Idle)
     val registerState: StateFlow<RegisterState> = _registerState

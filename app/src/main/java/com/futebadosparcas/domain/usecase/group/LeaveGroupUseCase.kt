@@ -3,7 +3,6 @@ package com.futebadosparcas.domain.usecase.group
 import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.domain.usecase.CompletableUseCase
-import javax.inject.Inject
 
 /**
  * Use Case para sair de um grupo voluntariamente
@@ -30,7 +29,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class LeaveGroupUseCase @Inject constructor(
+class LeaveGroupUseCase constructor(
     private val groupRepository: GroupRepository
 ) : CompletableUseCase<LeaveGroupParams>() {
 

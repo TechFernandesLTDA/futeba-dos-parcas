@@ -8,15 +8,12 @@ import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.LocationAnalytics
 import com.futebadosparcas.util.LocationSources
 import com.futebadosparcas.util.toAndroidLocations
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class LocationsMapViewModel @Inject constructor(
+class LocationsMapViewModel(
     private val locationRepository: LocationRepository,
     private val locationAnalytics: LocationAnalytics
 ) : ViewModel() {

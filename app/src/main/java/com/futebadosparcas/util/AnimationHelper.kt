@@ -13,8 +13,6 @@ import androidx.compose.animation.core.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Animation Helper
@@ -23,7 +21,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var animationHelper: AnimationHelper
+ * lateinit var animationHelper: AnimationHelper
  *
  * // Fade in a view
  * animationHelper.fadeIn(view, duration = 300)
@@ -35,8 +33,7 @@ import javax.inject.Singleton
  * animationHelper.slideUp(view, fromY = 100f, duration = 400)
  * ```
  */
-@Singleton
-class AnimationHelper @Inject constructor() {
+class AnimationHelper constructor() {
 
     /**
      * Default animation duration

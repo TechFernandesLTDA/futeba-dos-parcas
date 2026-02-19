@@ -5,7 +5,6 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
 /**
  * Clear All Notifications Use Case
@@ -28,7 +27,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class ClearAllNotificationsUseCase @Inject constructor(
+class ClearAllNotificationsUseCase constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
 ) : CompletableUseCase<Unit>() {

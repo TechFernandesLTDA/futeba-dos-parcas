@@ -1,40 +1,45 @@
 package com.futebadosparcas
 
 import android.app.Application
-import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import com.futebadosparcas.data.local.CacheCleanupWorker
-import com.futebadosparcas.util.PreferencesManager
-import com.futebadosparcas.util.ThemeHelper
-import dagger.hilt.android.HiltAndroidApp
-import javax.inject.Inject
-import com.google.firebase.FirebaseApp
-import com.google.firebase.appcheck.FirebaseAppCheck
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
-import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import coil.Coil
 import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
-import coil.Coil
+import com.futebadosparcas.data.local.CacheCleanupWorker
+import com.futebadosparcas.di.koin.allKoinModules
+import com.futebadosparcas.util.PreferencesManager
+import com.futebadosparcas.util.ThemeHelper
+import com.google.firebase.FirebaseApp
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import org.koin.android.ext.android.inject
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.androidx.workmanager.factory.KoinWorkerFactory
+import org.koin.androidx.workmanager.koin.workManagerFactory
+import org.koin.core.context.startKoin
 
-@HiltAndroidApp
 class FutebaApplication : Application(), Configuration.Provider {
-
-    @Inject
-    lateinit var preferencesManager: PreferencesManager
-
-    @Inject
-    lateinit var workerFactory: HiltWorkerFactory
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
+            .setWorkerFactory(KoinWorkerFactory())
             .build()
 
     override fun onCreate() {
         super.onCreate()
 
-        // Initialize Firebase App Check with error handling
+        // Inicializar Koin
+        startKoin {
+            androidLogger()
+            androidContext(this@FutebaApplication)
+            workManagerFactory()
+            modules(allKoinModules)
+        }
+
+        // Inicializar Firebase App Check com tratamento de erros
         try {
             FirebaseApp.initializeApp(this)
             val firebaseAppCheck = FirebaseAppCheck.getInstance()
@@ -54,33 +59,33 @@ class FutebaApplication : Application(), Configuration.Provider {
                 "Error initializing Firebase: ${e.message}",
                 e
             )
-            // Firebase initialization errors are non-critical for app functionality
         }
 
-        // Configure Coil for optimal image loading performance
+        // Configurar Coil para carregamento de imagens otimizado
         val imageLoader = ImageLoader.Builder(this)
             .memoryCache {
                 MemoryCache.Builder(this)
-                    .maxSizePercent(0.25) // 25% da memória disponível
+                    .maxSizePercent(0.25)
                     .build()
             }
             .diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("image_cache"))
-                    .maxSizeBytes(100 * 1024 * 1024) // 100MB (P0 #25 optimization)
+                    .maxSizeBytes(100 * 1024 * 1024) // 100MB
                     .build()
             }
-            .crossfade(true) // Transições suaves
-            .respectCacheHeaders(false) // Não respeitar headers de cache do servidor
+            .crossfade(true)
+            .respectCacheHeaders(false)
             .build()
 
         Coil.setImageLoader(imageLoader)
 
-        // Apply saved theme preference (default: light)
+        // Aplicar preferência de tema salva (padrão: claro)
+        val preferencesManager: PreferencesManager by inject()
         val theme = preferencesManager.getThemePreference()
         ThemeHelper.applyTheme(theme)
 
-        // Schedule cache cleanup worker (every 12 hours)
+        // Agendar worker de limpeza de cache (a cada 12 horas)
         CacheCleanupWorker.schedule(this)
     }
 }

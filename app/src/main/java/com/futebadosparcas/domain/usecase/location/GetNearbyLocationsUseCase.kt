@@ -4,7 +4,6 @@ import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 import kotlin.math.*
 
 /**
@@ -21,7 +20,7 @@ import kotlin.math.*
  * ))
  * ```
  */
-class GetNearbyLocationsUseCase @Inject constructor(
+class GetNearbyLocationsUseCase constructor(
     private val firestore: FirebaseFirestore
 ) : SuspendUseCase<GetNearbyLocationsParams, List<LocationWithDistance>>() {
 

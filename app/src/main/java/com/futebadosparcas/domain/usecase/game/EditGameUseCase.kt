@@ -4,7 +4,6 @@ import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.futebadosparcas.util.ValidationHelper
-import javax.inject.Inject
 
 /**
  * Edit Game Use Case
@@ -37,7 +36,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class EditGameUseCase @Inject constructor(
+class EditGameUseCase constructor(
     private val gameRepository: GameRepository
 ) : SuspendUseCase<EditGameParams, Game>() {
 

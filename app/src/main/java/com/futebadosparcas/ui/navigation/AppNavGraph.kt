@@ -26,7 +26,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.about.AboutScreen
 import com.futebadosparcas.ui.badges.BadgesScreen
@@ -202,7 +202,7 @@ fun AppNavHost(
         // ==================== ROOT DESTINATIONS (Bottom Nav) ====================
 
         composable(Screen.Home.route) {
-            val viewModel: com.futebadosparcas.ui.home.HomeViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.home.HomeViewModel = koinViewModel()
             HomeScreen(
                 viewModel = viewModel,
                 onGameClick = { gameId ->
@@ -242,7 +242,7 @@ fun AppNavHost(
         }
 
         composable(Screen.Games.route) {
-            val viewModel: com.futebadosparcas.ui.games.GamesViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.games.GamesViewModel = koinViewModel()
             GamesScreen(
                 viewModel = viewModel,
                 onGameClick = { gameId ->
@@ -264,7 +264,7 @@ fun AppNavHost(
         }
 
         composable(Screen.Players.route) {
-            val viewModel: com.futebadosparcas.ui.players.PlayersViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.players.PlayersViewModel = koinViewModel()
             PlayersScreen(
                 viewModel = viewModel,
                 onPlayerClick = { /* Navegação para detalhe do jogador */ },
@@ -281,7 +281,7 @@ fun AppNavHost(
         }
 
         composable(Screen.League.route) {
-            val viewModel: com.futebadosparcas.ui.league.LeagueViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.league.LeagueViewModel = koinViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val unreadCount by viewModel.unreadCount.collectAsStateWithLifecycle()
             val availableSeasons by viewModel.availableSeasons.collectAsStateWithLifecycle()
@@ -303,7 +303,7 @@ fun AppNavHost(
         }
 
         composable(Screen.Statistics.route) {
-            val viewModel: com.futebadosparcas.ui.statistics.StatisticsViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.statistics.StatisticsViewModel = koinViewModel()
             StatisticsScreen(
                 viewModel = viewModel,
                 onNavigateToRanking = {
@@ -319,7 +319,7 @@ fun AppNavHost(
         }
 
         composable(Screen.Profile.route) {
-            val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = koinViewModel()
             ProfileScreen(
                 viewModel = viewModel,
                 onEditProfileClick = {
@@ -366,7 +366,7 @@ fun AppNavHost(
         // ==================== SECONDARY DESTINATIONS ====================
 
         composable(Screen.Ranking.route) {
-            val viewModel: com.futebadosparcas.ui.statistics.RankingViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.statistics.RankingViewModel = koinViewModel()
             SecondaryScreenWrapper(
                 titleResId = Screen.Ranking.titleResId,
                 onNavigateBack = { navController.popBackStack() }
@@ -378,7 +378,7 @@ fun AppNavHost(
         }
 
         composable(Screen.Evolution.route) {
-            val viewModel: com.futebadosparcas.ui.statistics.RankingViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.statistics.RankingViewModel = koinViewModel()
             SecondaryScreenWrapper(
                 titleResId = Screen.Evolution.titleResId,
                 onNavigateBack = { navController.popBackStack() }
@@ -390,7 +390,7 @@ fun AppNavHost(
         }
 
         composable(Screen.Badges.route) {
-            val viewModel: com.futebadosparcas.ui.badges.BadgesViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.badges.BadgesViewModel = koinViewModel()
             // BadgesScreen tem sua própria TopBar no Scaffold
             BadgesScreen(
                 viewModel = viewModel
@@ -404,7 +404,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("gameId") { type = NavType.StringType })
         ) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId") ?: ""
-            val viewModel: com.futebadosparcas.ui.games.GameDetailViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.games.GameDetailViewModel = koinViewModel()
             // GameDetailScreen tem TopBar customizada com ações - não usa SecondaryScreenWrapper
             GameDetailScreen(
                 viewModel = viewModel,
@@ -423,7 +423,7 @@ fun AppNavHost(
         }
 
         composable(Screen.CreateGame.route) {
-            val viewModel: com.futebadosparcas.ui.games.CreateGameViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.games.CreateGameViewModel = koinViewModel()
             SecondaryScreenWrapper(
                 titleResId = Screen.CreateGame.titleResId,
                 onNavigateBack = { navController.popBackStack() }
@@ -447,9 +447,9 @@ fun AppNavHost(
             arguments = listOf(navArgument("gameId") { type = NavType.StringType })
         ) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId") ?: ""
-            val viewModel: com.futebadosparcas.ui.livegame.LiveGameViewModel = hiltViewModel()
-            val statsViewModel: com.futebadosparcas.ui.livegame.LiveStatsViewModel = hiltViewModel()
-            val eventsViewModel: com.futebadosparcas.ui.livegame.LiveEventsViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.livegame.LiveGameViewModel = koinViewModel()
+            val statsViewModel: com.futebadosparcas.ui.livegame.LiveStatsViewModel = koinViewModel()
+            val eventsViewModel: com.futebadosparcas.ui.livegame.LiveEventsViewModel = koinViewModel()
             // LiveGameScreen tem TopBar customizada com ações - não usa SecondaryScreenWrapper
             LiveGameScreen(
                 viewModel = viewModel,
@@ -468,7 +468,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("gameId") { type = NavType.StringType })
         ) { backStackEntry ->
             val gameId = backStackEntry.arguments?.getString("gameId") ?: ""
-            val viewModel: com.futebadosparcas.ui.game_experience.MVPVoteViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.game_experience.MVPVoteViewModel = koinViewModel()
             // MVPVoteScreen tem sua própria TopBar no Scaffold
             MVPVoteScreen(
                 viewModel = viewModel,
@@ -487,7 +487,7 @@ fun AppNavHost(
         // ==================== GROUP MANAGEMENT ====================
 
         composable(Screen.Groups.route) {
-            val viewModel: com.futebadosparcas.ui.groups.GroupsViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.groups.GroupsViewModel = koinViewModel()
             // GroupsScreen tem sua própria TopBar no Scaffold
             GroupsScreen(
                 viewModel = viewModel,
@@ -506,7 +506,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("groupId") { type = NavType.StringType })
         ) { backStackEntry ->
             val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
-            val viewModel: com.futebadosparcas.ui.groups.GroupDetailViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.groups.GroupDetailViewModel = koinViewModel()
             // GroupDetailScreen tem TopBar customizada com ações - não usa SecondaryScreenWrapper
             GroupDetailScreen(
                 viewModel = viewModel,
@@ -525,7 +525,7 @@ fun AppNavHost(
         }
 
         composable(Screen.CreateGroup.route) {
-            val viewModel: com.futebadosparcas.ui.groups.GroupsViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.groups.GroupsViewModel = koinViewModel()
             // CreateGroupScreen tem TopBar customizada com ícone Close - não usa SecondaryScreenWrapper
             CreateGroupScreen(
                 viewModel = viewModel,
@@ -543,7 +543,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("groupId") { type = NavType.StringType })
         ) { backStackEntry ->
             val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
-            val viewModel: com.futebadosparcas.ui.groups.InviteViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.groups.InviteViewModel = koinViewModel()
             // InvitePlayersScreen tem sua própria TopBar no Scaffold
             InvitePlayersScreen(
                 viewModel = viewModel,
@@ -557,7 +557,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("groupId") { type = NavType.StringType })
         ) { backStackEntry ->
             val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
-            val viewModel: com.futebadosparcas.ui.groups.CashboxViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.groups.CashboxViewModel = koinViewModel()
             // CashboxScreen tem TopBar customizada com filtros/relatórios - não usa SecondaryScreenWrapper
             CashboxScreen(
                 viewModel = viewModel,
@@ -569,7 +569,7 @@ fun AppNavHost(
         // ==================== LOCATIONS ====================
 
         composable(Screen.LocationsMap.route) {
-            val viewModel: com.futebadosparcas.ui.locations.LocationsMapViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.locations.LocationsMapViewModel = koinViewModel()
             LocationsMapScreen(
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() }
@@ -577,7 +577,7 @@ fun AppNavHost(
         }
 
         composable(Screen.LocationDetail.route) {
-            val viewModel: com.futebadosparcas.ui.locations.LocationDetailViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.locations.LocationDetailViewModel = koinViewModel()
             // LocationDetailScreen tem sua própria TopBar no Scaffold
             LocationDetailScreen(
                 viewModel = viewModel,
@@ -586,7 +586,7 @@ fun AppNavHost(
         }
 
         composable(Screen.ManageLocations.route) {
-            val viewModel: com.futebadosparcas.ui.locations.ManageLocationsViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.locations.ManageLocationsViewModel = koinViewModel()
             // ManageLocationsScreen tem sua própria TopBar no Scaffold
             ManageLocationsScreen(
                 viewModel = viewModel,
@@ -601,7 +601,7 @@ fun AppNavHost(
         }
 
         composable(Screen.FieldOwnerDashboard.route) {
-            val viewModel: com.futebadosparcas.ui.locations.FieldOwnerDashboardViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.locations.FieldOwnerDashboardViewModel = koinViewModel()
             // FieldOwnerDashboardScreen tem sua própria TopBar no Scaffold
             FieldOwnerDashboardScreen(
                 viewModel = viewModel,
@@ -623,9 +623,9 @@ fun AppNavHost(
                 runCatching { navController.getBackStackEntry(Screen.Profile.route) }.getOrNull()
             }
             val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = if (parentEntry != null) {
-                hiltViewModel(parentEntry)
+                koinViewModel(viewModelStoreOwner = remember { parentEntry })
             } else {
-                hiltViewModel()
+                koinViewModel()
             }
             // EditProfileScreen tem sua própria TopBar no Scaffold
             EditProfileScreen(
@@ -640,8 +640,8 @@ fun AppNavHost(
         }
 
         composable(Screen.Preferences.route) {
-            val preferencesViewModel: com.futebadosparcas.ui.preferences.PreferencesViewModel = hiltViewModel()
-            val themeViewModel: com.futebadosparcas.ui.theme.ThemeViewModel = hiltViewModel()
+            val preferencesViewModel: com.futebadosparcas.ui.preferences.PreferencesViewModel = koinViewModel()
+            val themeViewModel: com.futebadosparcas.ui.theme.ThemeViewModel = koinViewModel()
             SecondaryScreenWrapper(
                 titleResId = Screen.Preferences.titleResId,
                 onNavigateBack = { navController.popBackStack() }
@@ -661,7 +661,7 @@ fun AppNavHost(
         }
 
         composable(Screen.Developer.route) {
-            val viewModel: com.futebadosparcas.ui.developer.DeveloperViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.developer.DeveloperViewModel = koinViewModel()
             // DeveloperScreen NÃO tem TopBar própria - precisa do wrapper
             SecondaryScreenWrapper(
                 titleResId = Screen.Developer.titleResId,
@@ -672,7 +672,7 @@ fun AppNavHost(
         }
 
         composable(Screen.ThemeSettings.route) {
-            val viewModel: com.futebadosparcas.ui.theme.ThemeViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.theme.ThemeViewModel = koinViewModel()
             SecondaryScreenWrapper(
                 titleResId = Screen.ThemeSettings.titleResId,
                 onNavigateBack = { navController.popBackStack() }
@@ -685,7 +685,7 @@ fun AppNavHost(
         }
 
         composable(Screen.GamificationSettings.route) {
-            val viewModel: com.futebadosparcas.ui.settings.SettingsViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.settings.SettingsViewModel = koinViewModel()
             SecondaryScreenWrapper(
                 titleResId = Screen.GamificationSettings.titleResId,
                 onNavigateBack = { navController.popBackStack() }
@@ -704,10 +704,10 @@ fun AppNavHost(
                 runCatching { navController.getBackStackEntry(Screen.Profile.route) }.getOrNull()
             }
             val viewModel: com.futebadosparcas.ui.profile.ProfileViewModel = if (parentEntry != null) {
-                hiltViewModel(parentEntry)
+                koinViewModel(viewModelStoreOwner = remember { parentEntry })
             } else {
                 // Profile não está no back stack - criar instância própria
-                hiltViewModel()
+                koinViewModel()
             }
             // LevelJourneyScreen tem sua própria TopBar no Scaffold
             LevelJourneyScreen(
@@ -727,7 +727,7 @@ fun AppNavHost(
         }
 
         composable(Screen.Schedules.route) {
-            val viewModel: com.futebadosparcas.ui.schedules.SchedulesViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.schedules.SchedulesViewModel = koinViewModel()
             SecondaryScreenWrapper(
                 titleResId = Screen.Schedules.titleResId,
                 onNavigateBack = { navController.popBackStack() }
@@ -739,7 +739,7 @@ fun AppNavHost(
         // ==================== NOTIFICATIONS ====================
 
         composable(Screen.Notifications.route) {
-            val viewModel: com.futebadosparcas.ui.notifications.NotificationsViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.notifications.NotificationsViewModel = koinViewModel()
             // NotificationsScreen tem TopBar customizada com badge e menu - não usa SecondaryScreenWrapper
             NotificationsScreen(
                 viewModel = viewModel,
@@ -761,7 +761,7 @@ fun AppNavHost(
         // ==================== ADMIN ====================
 
         composable(Screen.UserManagement.route) {
-            val viewModel: com.futebadosparcas.ui.admin.UserManagementViewModel = hiltViewModel()
+            val viewModel: com.futebadosparcas.ui.admin.UserManagementViewModel = koinViewModel()
             // UserManagementScreen tem TopBar customizada - não usa SecondaryScreenWrapper
             UserManagementScreen(
                 viewModel = viewModel,

@@ -57,8 +57,6 @@ import androidx.compose.ui.unit.sp
 import com.futebadosparcas.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Componente de Soundboard para reações sonoras em tempo real.
@@ -121,8 +119,7 @@ data class ReactionCount(
 /**
  * Helper para gerenciar sons do soundboard.
  */
-@Singleton
-class SoundboardHelper @Inject constructor(
+class SoundboardHelper constructor(
     private val context: Context
 ) {
     private val soundPool: SoundPool by lazy {

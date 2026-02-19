@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
  * Usage:
  * ```kotlin
  * @HiltViewModel
- * class HomeViewModel @Inject constructor(
+ * class HomeViewModel constructor(
  *     private val getUserUseCase: GetUserUseCase
  * ) : BaseViewModel<HomeUiState, HomeUiEvent>() {
  *

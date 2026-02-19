@@ -5,13 +5,12 @@ import com.futebadosparcas.data.model.Activity as AndroidActivity
 import com.futebadosparcas.domain.repository.ActivityRepository as KmpActivityRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
 
 /**
  * Adaptador que converte entre modelos Android e KMP para ActivityRepository.
  * Mantém compatibilidade com ViewModels que usam o modelo Android.
  */
-class ActivityRepositoryAdapter @Inject constructor(
+class ActivityRepositoryAdapter constructor(
     private val kmpRepository: KmpActivityRepository
 ) : ActivityRepository {
 

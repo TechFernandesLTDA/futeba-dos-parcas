@@ -16,8 +16,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.util.*
-import javax.inject.Inject
-import javax.inject.Singleton
 import com.google.firebase.firestore.FieldPath as FirestoreFieldPath
 
 /**
@@ -29,8 +27,7 @@ import com.google.firebase.firestore.FieldPath as FirestoreFieldPath
  * - Conversão de exceções Firebase para Result
  * - Flows reativos com callback
  */
-@Singleton
-class FirebaseDataSourceImpl @Inject constructor(
+class FirebaseDataSourceImpl constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
 ) : FirebaseDataSource {

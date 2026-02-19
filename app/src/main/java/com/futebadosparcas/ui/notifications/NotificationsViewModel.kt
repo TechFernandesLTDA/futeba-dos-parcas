@@ -11,7 +11,6 @@ import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toAndroidAppNotifications
 import com.futebadosparcas.util.toAndroidNotificationType
 import com.futebadosparcas.util.toKmpNotificationType
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,10 +18,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class NotificationsViewModel @Inject constructor(
+class NotificationsViewModel(
     private val notificationRepository: NotificationRepository,
     private val inviteRepository: InviteRepository,
     private val gameSummonRepository: GameSummonRepository

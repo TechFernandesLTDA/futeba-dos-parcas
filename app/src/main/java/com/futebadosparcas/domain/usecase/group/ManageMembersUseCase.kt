@@ -3,12 +3,11 @@ package com.futebadosparcas.domain.usecase.group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.data.repository.GroupRepository
-import javax.inject.Inject
 
 /**
  * Use Case para gerenciamento de membros do grupo
  */
-class ManageMembersUseCase @Inject constructor(
+class ManageMembersUseCase constructor(
     private val groupRepository: GroupRepository
 ) {
     /**

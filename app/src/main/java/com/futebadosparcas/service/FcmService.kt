@@ -16,19 +16,17 @@ import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.LevelBadgeHelper
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-@AndroidEntryPoint
-class FcmService : FirebaseMessagingService() {
+class FcmService : FirebaseMessagingService(), KoinComponent {
 
-    @Inject
-    lateinit var userRepository: UserRepository
+    private val userRepository: UserRepository by inject()
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 

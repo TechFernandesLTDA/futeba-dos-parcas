@@ -4,8 +4,6 @@ import android.os.Bundle
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.ktx.Firebase
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Analytics Helper
@@ -21,14 +19,13 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var analytics: AnalyticsHelper
+ * lateinit var analytics: AnalyticsHelper
  *
  * analytics.logGameCreated(gameId, playerCount)
  * analytics.logScreenView("HomeScreen")
  * ```
  */
-@Singleton
-class AnalyticsHelper @Inject constructor() {
+class AnalyticsHelper constructor() {
 
     private val analytics: FirebaseAnalytics = Firebase.analytics
 

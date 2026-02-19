@@ -42,7 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Badge
@@ -69,7 +69,7 @@ import java.util.*
 @Composable
 fun BadgesScreen(
     modifier: Modifier = Modifier,
-    viewModel: BadgesViewModel = hiltViewModel(),
+    viewModel: BadgesViewModel = koinViewModel(),
     onBackClick: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

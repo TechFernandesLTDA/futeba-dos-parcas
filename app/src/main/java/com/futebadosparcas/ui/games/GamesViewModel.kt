@@ -7,7 +7,6 @@ import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.util.AppLogger
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -19,7 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class GameWithConfirmations(
     val game: Game,
@@ -28,8 +26,7 @@ data class GameWithConfirmations(
 )
 
 @OptIn(kotlinx.coroutines.FlowPreview::class)
-@HiltViewModel
-class GamesViewModel @Inject constructor(
+class GamesViewModel(
     private val gameRepository: GameRepository,
     private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
     private val savedStateHandle: SavedStateHandle
