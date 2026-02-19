@@ -5,6 +5,7 @@ import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.repository.GameConfirmationRepository
 import com.futebadosparcas.domain.repository.GameTeamRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
+import com.futebadosparcas.platform.firebase.getFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow

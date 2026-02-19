@@ -8,6 +8,7 @@ import com.futebadosparcas.domain.model.UpcomingGame
 import com.futebadosparcas.domain.model.gameSummonId
 import com.futebadosparcas.domain.repository.GameSummonRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
+import com.futebadosparcas.platform.firebase.getFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow

@@ -5,6 +5,7 @@ import com.futebadosparcas.domain.model.MVPVote
 import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.domain.repository.GameExperienceRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
+import com.futebadosparcas.platform.firebase.getFirestore
 import com.futebadosparcas.platform.logging.PlatformLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose

@@ -58,7 +58,7 @@ import org.koin.dsl.module
 val repositoryKoinModule = module {
 
     single<FirebaseDataSource> {
-        FirebaseDataSource(get(), get())
+        FirebaseDataSource()
     }
 
     single<FutebaDatabase> {
