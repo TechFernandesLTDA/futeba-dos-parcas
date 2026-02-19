@@ -8,7 +8,6 @@ import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.toAndroidGroupInvites
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,10 +16,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class InviteViewModel @Inject constructor(
+class InviteViewModel(
     private val inviteRepository: InviteRepository,
     private val userRepository: UserRepository,
     private val groupRepository: GroupRepository

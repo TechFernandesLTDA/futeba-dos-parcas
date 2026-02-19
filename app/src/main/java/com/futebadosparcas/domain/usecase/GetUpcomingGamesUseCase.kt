@@ -6,7 +6,6 @@ import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
 
 /**
  * Use Case para buscar jogos futuros.
@@ -17,7 +16,7 @@ import javax.inject.Inject
  * - Ordenar por data
  * - Fornecer Flow reativo para UI
  */
-class GetUpcomingGamesUseCase @Inject constructor(
+class GetUpcomingGamesUseCase constructor(
     private val firebaseDataSource: FirebaseDataSource
 ) {
     companion object {

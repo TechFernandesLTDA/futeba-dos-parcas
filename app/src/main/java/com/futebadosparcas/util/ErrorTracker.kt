@@ -2,8 +2,6 @@ package com.futebadosparcas.util
 
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Error Tracker
@@ -12,7 +10,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var errorTracker: ErrorTracker
+ * lateinit var errorTracker: ErrorTracker
  *
  * // Log error
  * errorTracker.logError(exception, "Failed to load games")
@@ -27,8 +25,7 @@ import javax.inject.Singleton
  * errorTracker.setCustomKey("game_id", gameId)
  * ```
  */
-@Singleton
-class ErrorTracker @Inject constructor(
+class ErrorTracker constructor(
     private val buildConfigHelper: BuildConfigHelper
 ) {
 

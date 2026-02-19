@@ -4,7 +4,6 @@ import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.model.GameStatus
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
-import javax.inject.Inject
 
 /**
  * Duplicate Game Use Case
@@ -21,7 +20,7 @@ import javax.inject.Inject
  * ))
  * ```
  */
-class DuplicateGameUseCase @Inject constructor(
+class DuplicateGameUseCase constructor(
     private val gameRepository: GameRepository
 ) : SuspendUseCase<DuplicateGameParams, Game>() {
 

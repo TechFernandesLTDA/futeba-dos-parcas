@@ -5,7 +5,6 @@ import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.Team
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
-import javax.inject.Inject
 
 /**
  * Get Game Details Use Case
@@ -32,7 +31,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class GetGameDetailsUseCase @Inject constructor(
+class GetGameDetailsUseCase constructor(
     private val gameRepository: GameRepository
 ) : SuspendUseCase<GetGameDetailsParams, GameDetails>() {
 

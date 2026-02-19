@@ -8,12 +8,9 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.futebadosparcas.data.model.GameDraft
 import com.google.gson.Gson
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
-import javax.inject.Singleton
 
 private val Context.gameDraftDataStore: DataStore<Preferences> by preferencesDataStore(
     name = "game_draft_prefs"
@@ -23,9 +20,8 @@ private val Context.gameDraftDataStore: DataStore<Preferences> by preferencesDat
  * Repositorio para persistencia de rascunhos de jogos.
  * Utiliza DataStore para salvar o estado do formulario de criacao de jogo.
  */
-@Singleton
-class CreateGameDraftRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+class CreateGameDraftRepository constructor(
+    private val context: Context
 ) {
     private val gson = Gson()
 

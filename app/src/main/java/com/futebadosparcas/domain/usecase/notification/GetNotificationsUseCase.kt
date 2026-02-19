@@ -6,7 +6,6 @@ import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
 
 /**
  * Use Case para gerenciar notificações.
@@ -17,7 +16,7 @@ import javax.inject.Inject
  * - Marcar como lidas
  * - Fornecer contagem de não lidas
  */
-class GetNotificationsUseCase @Inject constructor(
+class GetNotificationsUseCase constructor(
     private val notificationRepository: NotificationRepository
 ) {
     companion object {

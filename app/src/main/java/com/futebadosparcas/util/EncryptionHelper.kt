@@ -8,8 +8,6 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Encryption Helper
@@ -24,7 +22,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var encryptionHelper: EncryptionHelper
+ * lateinit var encryptionHelper: EncryptionHelper
  *
  * // Encrypt sensitive data
  * val encrypted = encryptionHelper.encrypt("my_secret_data")
@@ -33,8 +31,7 @@ import javax.inject.Singleton
  * val decrypted = encryptionHelper.decrypt(encrypted)
  * ```
  */
-@Singleton
-class EncryptionHelper @Inject constructor() {
+class EncryptionHelper constructor() {
 
     private val keyStore: KeyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply {
         load(null)

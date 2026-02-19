@@ -4,7 +4,6 @@ import com.futebadosparcas.domain.model.SeasonParticipation
 import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.google.firebase.auth.FirebaseAuth
-import javax.inject.Inject
 
 /**
  * Get User Season Participation Use Case
@@ -46,7 +45,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class GetUserSeasonParticipationUseCase @Inject constructor(
+class GetUserSeasonParticipationUseCase constructor(
     private val gamificationRepository: GamificationRepository,
     private val auth: FirebaseAuth
 ) : SuspendUseCase<GetUserSeasonParticipationParams, SeasonParticipation?>() {

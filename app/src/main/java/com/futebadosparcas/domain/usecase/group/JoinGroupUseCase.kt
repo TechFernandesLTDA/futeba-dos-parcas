@@ -3,7 +3,6 @@ package com.futebadosparcas.domain.usecase.group
 import com.futebadosparcas.data.model.Group
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
-import javax.inject.Inject
 
 /**
  * Use Case para o usuário entrar em um grupo
@@ -29,7 +28,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class JoinGroupUseCase @Inject constructor(
+class JoinGroupUseCase constructor(
     private val groupRepository: GroupRepository
 ) : SuspendUseCase<JoinGroupParams, Group>() {
 

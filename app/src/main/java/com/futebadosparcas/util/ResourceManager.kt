@@ -7,9 +7,6 @@ import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Resource Manager
@@ -18,7 +15,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var resourceManager: ResourceManager
+ * lateinit var resourceManager: ResourceManager
  *
  * // Get string
  * val text = resourceManager.getString(R.string.app_name)
@@ -30,9 +27,8 @@ import javax.inject.Singleton
  * val icon = resourceManager.getDrawable(R.drawable.ic_star)
  * ```
  */
-@Singleton
-class ResourceManager @Inject constructor(
-    @ApplicationContext private val context: Context
+class ResourceManager constructor(
+    private val context: Context
 ) {
 
     /**

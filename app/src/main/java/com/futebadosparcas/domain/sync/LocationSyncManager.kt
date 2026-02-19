@@ -7,7 +7,6 @@ import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.NetworkMonitor
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,8 +20,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.google.gson.Gson
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Status da sincronização de Locations.
@@ -65,7 +62,7 @@ data class SyncItemResult(
  *
  * Uso:
  * ```kotlin
- * @Inject lateinit var syncManager: LocationSyncManager
+ * lateinit var syncManager: LocationSyncManager
  *
  * // Enfileirar operação offline
  * syncManager.queueCreate(location)
@@ -82,8 +79,7 @@ data class SyncItemResult(
  * }
  * ```
  */
-@Singleton
-class LocationSyncManager @Inject constructor(
+class LocationSyncManager constructor(
     private val locationSyncDao: LocationSyncDao,
     private val locationRepository: LocationRepository,
     private val networkMonitor: NetworkMonitor

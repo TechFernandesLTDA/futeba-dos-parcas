@@ -23,7 +23,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Field
@@ -55,7 +55,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun CreateGameScreen(
     gameId: String? = null,
-    viewModel: CreateGameViewModel = hiltViewModel(),
+    viewModel: CreateGameViewModel = koinViewModel(),
     hapticManager: HapticManager,
     onNavigateBack: () -> Unit,
     onGameCreated: (gameId: String) -> Unit

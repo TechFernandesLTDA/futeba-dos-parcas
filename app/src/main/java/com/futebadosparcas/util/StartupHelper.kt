@@ -2,9 +2,6 @@ package com.futebadosparcas.util
 
 import android.content.Context
 import android.os.SystemClock
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Startup Helper
@@ -22,9 +19,8 @@ import javax.inject.Singleton
  * Log.d("Startup", "App started in ${startupTime}ms")
  * ```
  */
-@Singleton
-class StartupHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class StartupHelper constructor(
+    private val context: Context
 ) {
 
     private var startupStartTime: Long = 0

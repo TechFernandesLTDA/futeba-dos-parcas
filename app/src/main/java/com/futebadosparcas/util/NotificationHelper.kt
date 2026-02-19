@@ -9,9 +9,6 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.main.MainActivityCompose
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Notification Helper
@@ -21,7 +18,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var notificationHelper: NotificationHelper
+ * lateinit var notificationHelper: NotificationHelper
  *
  * notificationHelper.showGameNotification(
  *     title = "Novo jogo criado!",
@@ -30,9 +27,8 @@ import javax.inject.Singleton
  * )
  * ```
  */
-@Singleton
-class NotificationHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class NotificationHelper constructor(
+    private val context: Context
 ) {
 
     private val notificationManager =

@@ -4,7 +4,6 @@ import com.futebadosparcas.data.model.Season
 import com.futebadosparcas.domain.usecase.SuspendNoParamsUseCase
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
 /**
  * Get Active Season Use Case
@@ -21,7 +20,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class GetActiveSeasonUseCase @Inject constructor(
+class GetActiveSeasonUseCase constructor(
     private val firestore: FirebaseFirestore
 ) : SuspendNoParamsUseCase<Season?>() {
 

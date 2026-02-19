@@ -2,10 +2,7 @@ package com.futebadosparcas.util
 
 import android.content.Context
 import androidx.work.*
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * WorkManager Helper
@@ -14,7 +11,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var workManagerHelper: WorkManagerHelper
+ * lateinit var workManagerHelper: WorkManagerHelper
  *
  * // Schedule one-time task
  * workManagerHelper.scheduleOneTimeWork(
@@ -31,9 +28,8 @@ import javax.inject.Singleton
  * )
  * ```
  */
-@Singleton
-class WorkManagerHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class WorkManagerHelper constructor(
+    private val context: Context
 ) {
 
     private val workManager = WorkManager.getInstance(context)

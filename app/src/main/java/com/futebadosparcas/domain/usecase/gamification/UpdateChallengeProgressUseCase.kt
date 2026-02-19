@@ -4,7 +4,6 @@ import com.futebadosparcas.domain.model.UserChallengeProgress
 import com.futebadosparcas.domain.model.WeeklyChallenge
 import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
-import javax.inject.Inject
 
 /**
  * Update Challenge Progress Use Case
@@ -41,7 +40,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class UpdateChallengeProgressUseCase @Inject constructor(
+class UpdateChallengeProgressUseCase constructor(
     private val gamificationRepository: GamificationRepository
 ) : SuspendUseCase<UpdateChallengeProgressParams, UserChallengeProgress>() {
 

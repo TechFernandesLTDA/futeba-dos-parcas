@@ -5,7 +5,6 @@ import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
-import javax.inject.Inject
 
 /**
  * Use Case para buscar jogadores.
@@ -16,7 +15,7 @@ import javax.inject.Inject
  * - Ordenar por habilidade/rating
  * - Paginar resultados
  */
-class SearchPlayersUseCase @Inject constructor(
+class SearchPlayersUseCase constructor(
     private val userRepository: UserRepository
 ) {
     companion object {

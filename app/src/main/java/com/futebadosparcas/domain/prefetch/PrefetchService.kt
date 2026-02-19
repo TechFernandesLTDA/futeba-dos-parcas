@@ -10,8 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Serviço de prefetch preditivo baseado em padrões de navegação.
@@ -22,8 +20,7 @@ import javax.inject.Singleton
  * - Silent fail (não bloqueia UI se falhar)
  * - Fire-and-forget (non-blocking)
  */
-@Singleton
-class PrefetchService @Inject constructor(
+class PrefetchService constructor(
     private val gameRepository: GameRepository,
     private val userRepository: UserRepository,
     private val statisticsRepository: StatisticsRepository,

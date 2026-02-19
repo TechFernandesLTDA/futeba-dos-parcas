@@ -3,13 +3,12 @@ package com.futebadosparcas.domain.usecase.game
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.Team
 import com.futebadosparcas.domain.ai.AiTeamBalancer
-import javax.inject.Inject
 
 /**
  * Use case para calcular balanceamento de times.
  * Utiliza o TeamBalancer para criar times equilibrados baseado nas habilidades dos jogadores.
  */
-class CalculateTeamBalanceUseCase @Inject constructor(
+class CalculateTeamBalanceUseCase constructor(
     private val teamBalancer: AiTeamBalancer
 ) {
     /**

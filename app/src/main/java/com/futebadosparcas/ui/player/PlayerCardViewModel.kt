@@ -7,15 +7,12 @@ import com.futebadosparcas.data.model.UserStatistics
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.toDataModel
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class PlayerCardViewModel @Inject constructor(
+class PlayerCardViewModel(
     private val userRepository: UserRepository,
     private val statisticsRepository: StatisticsRepository
 ) : ViewModel() {

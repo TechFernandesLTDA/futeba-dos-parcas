@@ -11,9 +11,6 @@ import android.provider.Settings
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Permission Helper
@@ -22,7 +19,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var permissionHelper: PermissionHelper
+ * lateinit var permissionHelper: PermissionHelper
  *
  * // Check if permission is granted
  * if (permissionHelper.hasPermission(Manifest.permission.CAMERA)) {
@@ -44,9 +41,8 @@ import javax.inject.Singleton
  * }
  * ```
  */
-@Singleton
-class PermissionHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class PermissionHelper constructor(
+    private val context: Context
 ) {
 
     /**

@@ -2,8 +2,6 @@ package com.futebadosparcas.data.cache
 
 import android.util.LruCache
 import java.util.Locale
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -21,7 +19,7 @@ import kotlin.time.Duration.Companion.minutes
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var memoryCache: MemoryCache
+ * lateinit var memoryCache: MemoryCache
  *
  * // Put
  * memoryCache.put("user_123", user, ttl = 5.minutes)
@@ -33,8 +31,7 @@ import kotlin.time.Duration.Companion.minutes
  * memoryCache.remove("user_123")
  * ```
  */
-@Singleton
-class MemoryCache @Inject constructor() {
+class MemoryCache constructor() {
 
     companion object {
         /** Fração da memória disponível usada para cache (1/5 = 20%) */

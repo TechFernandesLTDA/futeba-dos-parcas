@@ -4,7 +4,6 @@ import com.futebadosparcas.data.datasource.FirebaseDataSource
 import com.futebadosparcas.data.model.*
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
-import javax.inject.Inject
 
 /**
  * Use Case para confirmar presença em jogos.
@@ -15,7 +14,7 @@ import javax.inject.Inject
  * - Criar confirmação no Firebase
  * - Atualizar contadores do jogo
  */
-class ConfirmPresenceUseCase @Inject constructor(
+class ConfirmPresenceUseCase constructor(
     private val firebaseDataSource: FirebaseDataSource,
     private val auth: FirebaseAuth
 ) {

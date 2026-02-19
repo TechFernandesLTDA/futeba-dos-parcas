@@ -2,8 +2,6 @@ package com.futebadosparcas.util
 
 import com.google.firebase.perf.FirebasePerformance
 import com.google.firebase.perf.metrics.Trace
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Performance Monitoring Helper
@@ -19,7 +17,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var perfMonitor: PerformanceMonitor
+ * lateinit var perfMonitor: PerformanceMonitor
  *
  * val trace = perfMonitor.startTrace("load_games")
  * try {
@@ -30,8 +28,7 @@ import javax.inject.Singleton
  * }
  * ```
  */
-@Singleton
-class PerformanceMonitor @Inject constructor() {
+class PerformanceMonitor constructor() {
 
     // Make performance public to allow inline functions
     val performance: FirebasePerformance = FirebasePerformance.getInstance()

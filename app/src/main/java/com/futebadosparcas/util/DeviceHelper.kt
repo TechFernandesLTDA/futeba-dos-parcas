@@ -4,10 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.Locale
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Device Helper
@@ -16,15 +13,14 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var deviceHelper: DeviceHelper
+ * lateinit var deviceHelper: DeviceHelper
  *
  * val deviceInfo = deviceHelper.getDeviceInfo()
  * Log.d("Device", "Model: ${deviceInfo.model}, Android: ${deviceInfo.androidVersion}")
  * ```
  */
-@Singleton
-class DeviceHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class DeviceHelper constructor(
+    private val context: Context
 ) {
 
     /**

@@ -16,7 +16,6 @@ import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidLocations
 import com.futebadosparcas.util.toAndroidLocationReviews
 import com.futebadosparcas.util.toKmpLocation
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -31,7 +30,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import javax.inject.Inject
 import kotlin.math.*
 
 /**
@@ -48,8 +46,7 @@ import kotlin.math.*
  * - Filtro por amenidades
  * - Criação inline de local
  */
-@HiltViewModel
-class LocationSelectorViewModel @Inject constructor(
+class LocationSelectorViewModel(
     private val locationRepository: LocationRepository,
     private val gameRepository: GameRepository,
     private val authRepository: AuthRepository,

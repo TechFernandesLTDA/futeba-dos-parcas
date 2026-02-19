@@ -6,8 +6,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import java.util.concurrent.ConcurrentLinkedQueue
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Emite eventos pos-jogo para que a UI possa mostrar o resumo de XP.
@@ -16,8 +14,7 @@ import javax.inject.Singleton
  * Usa replay maior para garantir que eventos nao sejam perdidos
  * quando multiplos jogos terminam em sequencia.
  */
-@Singleton
-class PostGameEventEmitter @Inject constructor() {
+class PostGameEventEmitter constructor() {
 
     companion object {
         private const val TAG = "PostGameEventEmitter"

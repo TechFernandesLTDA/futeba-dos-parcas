@@ -7,16 +7,12 @@ import com.futebadosparcas.data.model.CashboxCategory
 import com.futebadosparcas.data.model.CashboxEntryType
 import com.futebadosparcas.domain.model.CashboxEntry
 import com.futebadosparcas.domain.repository.CashboxRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.Calendar
 import java.util.Date
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.random.Random
 
-@Singleton
-class CashboxSeeder @Inject constructor(
-    @ApplicationContext private val context: Context,
+class CashboxSeeder constructor(
+    private val context: Context,
     private val cashboxRepository: CashboxRepository
 ) {
 

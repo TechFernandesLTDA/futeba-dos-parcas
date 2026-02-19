@@ -4,13 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.AuthRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * ViewModel para o fluxo de login.
@@ -18,8 +16,7 @@ import javax.inject.Inject
  * Gerencia o estado de autenticacao e recupera os dados do usuario
  * apos o login com Google.
  */
-@HiltViewModel
-class LoginViewModel @Inject constructor(
+class LoginViewModel(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 

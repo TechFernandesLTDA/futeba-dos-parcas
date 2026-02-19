@@ -10,14 +10,13 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.FileProvider
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.ui.players.PlayerCardContent
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.io.FileOutputStream
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * BottomSheet do Cartão de Jogador com Jetpack Compose
@@ -25,10 +24,9 @@ import java.io.FileOutputStream
  * Substitui a implementação XML por uma versão Compose moderna
  * seguindo os padrões Material Design 3 do projeto.
  */
-@AndroidEntryPoint
 class PlayerCardBottomSheet : BottomSheetDialogFragment() {
 
-    private val viewModel: PlayerCardViewModel by viewModels()
+    private val viewModel: PlayerCardViewModel by viewModel()
     private var userId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {

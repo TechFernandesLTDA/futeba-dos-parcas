@@ -9,7 +9,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
 /**
  * Get User Profile Use Case
@@ -37,7 +36,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class GetUserProfileUseCase @Inject constructor(
+class GetUserProfileUseCase constructor(
     private val firestore: FirebaseFirestore
 ) : SuspendUseCase<GetUserProfileParams, UserProfile>() {
 

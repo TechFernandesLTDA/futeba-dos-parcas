@@ -8,7 +8,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
 /**
  * Use Case para enviar convite de entrada em grupo
@@ -40,7 +39,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class InviteToGroupUseCase @Inject constructor(
+class InviteToGroupUseCase constructor(
     private val groupRepository: GroupRepository,
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth

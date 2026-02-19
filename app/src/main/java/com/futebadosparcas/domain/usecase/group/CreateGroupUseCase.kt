@@ -3,12 +3,11 @@ package com.futebadosparcas.domain.usecase.group
 import android.net.Uri
 import com.futebadosparcas.data.model.Group
 import com.futebadosparcas.data.repository.GroupRepository
-import javax.inject.Inject
 
 /**
  * Use Case para criação de grupos
  */
-class CreateGroupUseCase @Inject constructor(
+class CreateGroupUseCase constructor(
     private val groupRepository: GroupRepository
 ) {
     suspend operator fun invoke(

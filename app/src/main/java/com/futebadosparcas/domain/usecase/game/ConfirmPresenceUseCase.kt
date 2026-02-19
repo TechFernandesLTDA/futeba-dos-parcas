@@ -2,13 +2,12 @@ package com.futebadosparcas.domain.usecase.game
 
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.repository.GameRepository
-import javax.inject.Inject
 
 /**
  * Use case para confirmar presença do usuário em um jogo.
  * Valida os parâmetros e delega a confirmação ao repositório.
  */
-class ConfirmPresenceUseCase @Inject constructor(
+class ConfirmPresenceUseCase constructor(
     private val gameRepository: GameRepository
 ) {
     /**

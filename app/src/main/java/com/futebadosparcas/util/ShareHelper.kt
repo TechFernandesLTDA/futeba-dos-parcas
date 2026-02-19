@@ -4,10 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Share Helper
@@ -16,7 +13,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var shareHelper: ShareHelper
+ * lateinit var shareHelper: ShareHelper
  *
  * // Share text
  * shareHelper.shareText("Confira meu ranking!", "Compartilhar")
@@ -32,9 +29,8 @@ import javax.inject.Singleton
  * shareHelper.shareImage(imageFile, "Compartilhar foto")
  * ```
  */
-@Singleton
-class ShareHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class ShareHelper constructor(
+    private val context: Context
 ) {
 
     /**

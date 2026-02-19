@@ -6,12 +6,9 @@ import com.futebadosparcas.data.model.Team
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ai.AiTeamBalancer
 import com.futebadosparcas.util.AppLogger
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.math.ceil
 
-@Singleton
-class GeminiTeamBalancer @Inject constructor(
+class GeminiTeamBalancer constructor(
     private val userRepository: UserRepository
 ) : AiTeamBalancer {
 

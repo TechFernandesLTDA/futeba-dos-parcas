@@ -9,7 +9,6 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import com.google.firebase.storage.storageMetadata
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -19,8 +18,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * DataSource para gerenciar upload e processamento de fotos de grupos.
@@ -37,10 +34,9 @@ import javax.inject.Singleton
  *
  * Path no Storage: groups/{groupId}/logo.jpg + groups/{groupId}/thumb.jpg
  */
-@Singleton
-class GroupPhotoDataSource @Inject constructor(
+class GroupPhotoDataSource constructor(
     private val storage: FirebaseStorage,
-    @ApplicationContext private val context: Context
+    private val context: Context
 ) {
     companion object {
         private const val TAG = "GroupPhotoDataSource"

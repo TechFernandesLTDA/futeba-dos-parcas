@@ -8,7 +8,6 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import javax.inject.Inject
 
 /**
  * Use Case para buscar estatísticas de jogadores.
@@ -19,7 +18,7 @@ import javax.inject.Inject
  * - Fornecer histórico de XP
  * - Comparar estatísticas entre jogadores
  */
-class GetPlayerStatisticsUseCase @Inject constructor(
+class GetPlayerStatisticsUseCase constructor(
     private val firebaseDataSource: FirebaseDataSource,
     private val auth: FirebaseAuth
 ) {

@@ -2,8 +2,6 @@ package com.futebadosparcas.domain.service
 
 import com.futebadosparcas.data.model.Game
 import com.futebadosparcas.data.repository.GameRepository
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Dados de sugestao de horario com taxa de adesao.
@@ -19,8 +17,7 @@ data class TimeSuggestion(
  * Analisa jogos anteriores do usuario para determinar os horarios
  * com maior taxa de adesao (confirmacoes / max_players).
  */
-@Singleton
-class TimeSuggestionService @Inject constructor(
+class TimeSuggestionService constructor(
     private val gameRepository: GameRepository
 ) {
     companion object {

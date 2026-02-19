@@ -16,7 +16,6 @@ import com.futebadosparcas.domain.ranking.MilestoneChecker
 import com.futebadosparcas.data.cache.MemoryCache
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,10 +23,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.minutes
-import javax.inject.Inject
 
-@HiltViewModel
-class RankingViewModel @Inject constructor(
+class RankingViewModel(
     private val rankingRepository: RankingRepository,
     private val statisticsRepository: StatisticsRepository,
     private val userRepository: UserRepository,

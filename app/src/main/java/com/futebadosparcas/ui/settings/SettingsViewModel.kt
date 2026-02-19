@@ -5,13 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.GamificationSettings
 import com.futebadosparcas.domain.repository.SettingsRepository
 import com.futebadosparcas.util.AppLogger
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 sealed class SettingsUiState {
     object Loading : SettingsUiState()
@@ -20,8 +18,7 @@ sealed class SettingsUiState {
     object Saved : SettingsUiState()
 }
 
-@HiltViewModel
-class SettingsViewModel @Inject constructor(
+class SettingsViewModel(
     private val repository: SettingsRepository
 ) : ViewModel() {
 

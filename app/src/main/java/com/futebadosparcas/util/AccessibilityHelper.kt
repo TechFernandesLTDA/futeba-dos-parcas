@@ -7,10 +7,7 @@ import android.view.accessibility.AccessibilityManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.Locale
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Accessibility Helper
@@ -19,7 +16,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var accessibilityHelper: AccessibilityHelper
+ * lateinit var accessibilityHelper: AccessibilityHelper
  *
  * // Check if TalkBack/screen reader is enabled
  * if (accessibilityHelper.isScreenReaderEnabled()) {
@@ -30,9 +27,8 @@ import javax.inject.Singleton
  * accessibilityHelper.announce(view, "Jogo criado com sucesso")
  * ```
  */
-@Singleton
-class AccessibilityHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class AccessibilityHelper constructor(
+    private val context: Context
 ) {
 
     private val accessibilityManager: AccessibilityManager =

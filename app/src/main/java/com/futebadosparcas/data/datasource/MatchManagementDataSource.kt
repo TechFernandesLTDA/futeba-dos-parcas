@@ -5,12 +5,9 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.math.max
 
-@Singleton
-class MatchManagementDataSource @Inject constructor(
+class MatchManagementDataSource constructor(
     private val firestore: FirebaseFirestore
 ) {
     private val gamesCollection = firestore.collection("games")

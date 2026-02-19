@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
  *
  * Usage:
  * ```kotlin
- * class GetUserUseCase @Inject constructor(
+ * class GetUserUseCase constructor(
  *     private val userRepository: UserRepository
  * ) : FlowUseCase<String, User>() {
  *

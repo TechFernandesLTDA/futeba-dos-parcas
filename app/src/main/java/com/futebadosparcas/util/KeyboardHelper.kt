@@ -5,9 +5,6 @@ import android.content.Context
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.Fragment
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Keyboard Helper
@@ -16,7 +13,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var keyboardHelper: KeyboardHelper
+ * lateinit var keyboardHelper: KeyboardHelper
  *
  * // Show keyboard
  * keyboardHelper.showKeyboard(editText)
@@ -30,9 +27,8 @@ import javax.inject.Singleton
  * }
  * ```
  */
-@Singleton
-class KeyboardHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class KeyboardHelper constructor(
+    private val context: Context
 ) {
 
     private val inputMethodManager: InputMethodManager =

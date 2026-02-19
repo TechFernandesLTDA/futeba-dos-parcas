@@ -7,7 +7,6 @@ import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.GroupRepository
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.UserRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -17,7 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 // ==================== ViewModel-specific Models ====================
 
@@ -61,8 +59,7 @@ data class GlobalSearchResult(
  * ViewModel para a tela de busca global.
  * Realiza busca em jogos, grupos, jogadores e locais.
  */
-@HiltViewModel
-class GlobalSearchViewModel @Inject constructor(
+class GlobalSearchViewModel(
     private val gameRepository: GameRepository,
     private val groupRepository: GroupRepository,
     private val userRepository: UserRepository,

@@ -5,8 +5,6 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Gerenciador centralizado de permissões.
@@ -18,7 +16,7 @@ import javax.inject.Singleton
  *
  * Uso:
  * ```kotlin
- * @Inject lateinit var permissionManager: PermissionManager
+ * lateinit var permissionManager: PermissionManager
  *
  * // Verificar se pode ver todos os jogos
  * if (permissionManager.canViewAllGames()) { ... }
@@ -27,8 +25,7 @@ import javax.inject.Singleton
  * if (permissionManager.canEditGame(gameOwnerId)) { ... }
  * ```
  */
-@Singleton
-class PermissionManager @Inject constructor(
+class PermissionManager constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
 ) {

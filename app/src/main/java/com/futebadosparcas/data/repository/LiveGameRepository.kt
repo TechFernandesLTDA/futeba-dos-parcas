@@ -9,11 +9,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class LiveGameRepository @Inject constructor(
+class LiveGameRepository constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
 ) {

@@ -3,8 +3,6 @@ package com.futebadosparcas.util
 import android.content.Intent
 import android.net.Uri
 import androidx.core.net.toUri
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Deep Link Helper
@@ -21,7 +19,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var deepLinkHelper: DeepLinkHelper
+ * lateinit var deepLinkHelper: DeepLinkHelper
  *
  * val deepLink = deepLinkHelper.parse(intent)
  * when (deepLink) {
@@ -31,8 +29,7 @@ import javax.inject.Singleton
  * }
  * ```
  */
-@Singleton
-class DeepLinkHelper @Inject constructor() {
+class DeepLinkHelper constructor() {
 
     companion object {
         const val SCHEME = "futebadosparcas"

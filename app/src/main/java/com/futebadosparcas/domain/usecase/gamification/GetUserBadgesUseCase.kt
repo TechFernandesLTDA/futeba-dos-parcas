@@ -4,7 +4,6 @@ import com.futebadosparcas.domain.model.BadgeDefinition
 import com.futebadosparcas.domain.model.UserBadge
 import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
-import javax.inject.Inject
 
 /**
  * Get User Badges Use Case
@@ -36,7 +35,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class GetUserBadgesUseCase @Inject constructor(
+class GetUserBadgesUseCase constructor(
     private val gamificationRepository: GamificationRepository
 ) : SuspendUseCase<GetUserBadgesParams, UserBadgesResult>() {
 

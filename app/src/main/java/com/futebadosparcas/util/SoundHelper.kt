@@ -7,9 +7,6 @@ import android.media.MediaPlayer
 import android.media.SoundPool
 import android.media.ToneGenerator
 import androidx.annotation.RawRes
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Sound Helper - Reprodutor de efeitos sonoros para eventos do jogo
@@ -26,7 +23,7 @@ import javax.inject.Singleton
  *
  * Uso:
  * ```kotlin
- * @Inject lateinit var soundHelper: SoundHelper
+ * lateinit var soundHelper: SoundHelper
  *
  * // Tocar som de gol
  * soundHelper.playGoalHorn()
@@ -38,9 +35,8 @@ import javax.inject.Singleton
  * soundHelper.playCardSound()
  * ```
  */
-@Singleton
-class SoundHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class SoundHelper constructor(
+    private val context: Context
 ) {
 
     companion object {

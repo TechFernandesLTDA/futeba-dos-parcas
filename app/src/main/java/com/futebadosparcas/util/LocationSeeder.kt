@@ -5,12 +5,11 @@ import com.futebadosparcas.domain.model.Field
 import com.futebadosparcas.domain.repository.LocationRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * Helper para popular locais com quadras de exemplo
  */
-class LocationSeeder @Inject constructor(
+class LocationSeeder constructor(
     private val locationRepository: LocationRepository
 ) {
     

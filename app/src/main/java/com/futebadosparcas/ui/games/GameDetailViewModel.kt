@@ -6,7 +6,6 @@ import com.futebadosparcas.data.model.*
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.util.AppLogger
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +18,6 @@ import java.time.temporal.TemporalAdjusters
 import com.futebadosparcas.domain.repository.ScheduleRepository
 import com.futebadosparcas.util.toAndroidSchedule
 import com.futebadosparcas.util.toKmpSchedule
-import javax.inject.Inject
 import com.futebadosparcas.util.toKmpAppNotifications
 import com.futebadosparcas.data.model.CancellationReason
 import com.futebadosparcas.data.model.GameWaitlist
@@ -27,8 +25,7 @@ import com.futebadosparcas.data.model.GameInviteLink
 import com.futebadosparcas.data.model.PlayerAttendance
 import com.futebadosparcas.data.model.PixKeyType
 
-@HiltViewModel
-class GameDetailViewModel @Inject constructor(
+class GameDetailViewModel(
     private val gameRepository: GameRepository,
     private val authRepository: AuthRepository,
     private val gameExperienceRepository: com.futebadosparcas.data.repository.GameExperienceRepository,

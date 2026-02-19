@@ -5,7 +5,6 @@ import com.futebadosparcas.domain.model.UserBadge
 import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
-import javax.inject.Inject
 
 /**
  * Use Case para gerenciar badges do jogador.
@@ -16,7 +15,7 @@ import javax.inject.Inject
  * - Listar badges disponíveis
  * - Calcular estatísticas de gamificação
  */
-class GetUserBadgesUseCase @Inject constructor(
+class GetUserBadgesUseCase constructor(
     private val gamificationRepository: GamificationRepository,
     private val auth: FirebaseAuth
 ) {

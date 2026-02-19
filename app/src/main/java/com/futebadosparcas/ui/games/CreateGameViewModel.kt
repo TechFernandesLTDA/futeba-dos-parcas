@@ -18,7 +18,6 @@ import com.futebadosparcas.domain.service.DayAvailability
 import com.futebadosparcas.domain.service.FieldAvailabilityService
 import com.futebadosparcas.domain.service.TimeSuggestion
 import com.futebadosparcas.domain.service.TimeSuggestionService
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +38,6 @@ import com.futebadosparcas.data.model.GameVisibility
 import com.futebadosparcas.domain.repository.AddressLookupResult
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toKmpSchedule
-import javax.inject.Inject
 import com.futebadosparcas.util.toKmpAppNotifications
 import com.futebadosparcas.util.toKmpGameTemplate
 import com.futebadosparcas.util.toAndroidGameTemplate
@@ -54,8 +52,7 @@ enum class CreateGameStep(val index: Int, val titleResId: Int) {
     CONFIRMATION(3, 0) // Confirmacao
 }
 
-@HiltViewModel
-class CreateGameViewModel @Inject constructor(
+class CreateGameViewModel(
     private val gameRepository: GameRepository,
     private val authRepository: AuthRepository,
     private val gameTemplateRepository: GameTemplateRepository,

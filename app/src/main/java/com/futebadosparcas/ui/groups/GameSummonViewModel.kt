@@ -6,17 +6,14 @@ import com.futebadosparcas.data.model.GameSummon
 import com.futebadosparcas.data.model.PlayerPosition
 import com.futebadosparcas.data.model.UpcomingGame
 import com.futebadosparcas.data.repository.GameSummonRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class GameSummonViewModel @Inject constructor(
+class GameSummonViewModel(
     private val gameSummonRepository: GameSummonRepository
 ) : ViewModel() {
 

@@ -5,8 +5,6 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Gerenciador de feedback háptico com suporte para APIs modernas (Android 13+).
@@ -14,8 +12,7 @@ import javax.inject.Singleton
  * Usa VibratorManager para API 31+ e VibrationEffect para API 26+.
  * Mantém compatibilidade com API 24+ (minSdk do projeto).
  */
-@Singleton
-class HapticManager @Inject constructor(
+class HapticManager constructor(
     private val context: Context
 ) {
     private val vibrator: Vibrator? by lazy {

@@ -8,13 +8,10 @@ import com.futebadosparcas.data.model.Location
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Utilitário para exportar dados de locais para backup.
@@ -23,7 +20,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var locationExporter: LocationExporter
+ * lateinit var locationExporter: LocationExporter
  *
  * // Exportar locais específicos para JSON
  * val result = locationExporter.exportToJson(listOf("loc1", "loc2"))
@@ -35,9 +32,8 @@ import javax.inject.Singleton
  * val result = locationExporter.exportToCsv(listOf("loc1", "loc2"))
  * ```
  */
-@Singleton
-class LocationExporter @Inject constructor(
-    @ApplicationContext private val context: Context,
+class LocationExporter constructor(
+    private val context: Context,
     private val locationRepository: LocationRepository
 ) {
     companion object {

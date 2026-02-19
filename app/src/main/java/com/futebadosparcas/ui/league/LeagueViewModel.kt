@@ -12,7 +12,6 @@ import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -21,13 +20,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
 /**
  * ViewModel da tela de Liga/Ranking
  */
-@HiltViewModel
-class LeagueViewModel @Inject constructor(
+class LeagueViewModel(
     private val gamificationRepository: GamificationRepository,
     private val authRepository: AuthRepository,
     private val firestore: FirebaseFirestore,

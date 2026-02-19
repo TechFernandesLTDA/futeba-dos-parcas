@@ -10,9 +10,6 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Theme Helper
@@ -21,7 +18,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var themeHelper: ThemeHelper
+ * lateinit var themeHelper: ThemeHelper
  *
  * // Check if dark mode is enabled
  * if (themeHelper.isDarkMode()) {
@@ -32,9 +29,8 @@ import javax.inject.Singleton
  * themeHelper.setThemeMode(ThemeMode.DARK)
  * ```
  */
-@Singleton
-class ThemeHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class ThemeHelper constructor(
+    private val context: Context
 ) {
 
     /**

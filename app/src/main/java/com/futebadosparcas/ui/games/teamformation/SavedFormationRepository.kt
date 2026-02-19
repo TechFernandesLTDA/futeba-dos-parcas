@@ -6,14 +6,11 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 import java.util.Date
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Repositorio para gerenciar formacoes de times salvas.
  */
-@Singleton
-class SavedFormationRepository @Inject constructor(
+class SavedFormationRepository constructor(
     private val firestore: FirebaseFirestore
 ) {
     companion object {

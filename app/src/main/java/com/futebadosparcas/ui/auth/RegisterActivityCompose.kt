@@ -8,8 +8,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.FutebaTheme
-import dagger.hilt.android.AndroidEntryPoint
-
 /**
  * Activity de Registro (descontinuada).
  *
@@ -18,7 +16,6 @@ import dagger.hilt.android.AndroidEntryPoint
  *
  * Modernizada para Jetpack Compose.
  */
-@AndroidEntryPoint
 class RegisterActivityCompose : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -5,7 +5,6 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
-    id("com.google.dagger.hilt.android")
     id("androidx.navigation.safeargs.kotlin")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
@@ -188,11 +187,14 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
 
-    // Dependency Injection - Hilt
-    implementation("com.google.dagger:hilt-android:2.59")
-    ksp("com.google.dagger:hilt-compiler:2.59")
-
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    // Dependency Injection - Koin
+    val koinVersion = "4.1.1"
+    implementation("io.insert-koin:koin-core:$koinVersion")
+    implementation("io.insert-koin:koin-android:$koinVersion")
+    implementation("io.insert-koin:koin-compose:$koinVersion")
+    implementation("io.insert-koin:koin-compose-viewmodel:$koinVersion")
+    implementation("io.insert-koin:koin-compose-viewmodel-navigation:$koinVersion")
+    implementation("io.insert-koin:koin-androidx-workmanager:$koinVersion")
     // Firebase - usando BoM para gerenciar versoes
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-analytics")
@@ -272,11 +274,11 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-    // Hilt Testing
-    testImplementation("com.google.dagger:hilt-android-testing:2.59")
-    kspTest("com.google.dagger:hilt-compiler:2.59")
-    androidTestImplementation("com.google.dagger:hilt-android-testing:2.59")
-    kspAndroidTest("com.google.dagger:hilt-compiler:2.59")
+    // Koin Testing
+    testImplementation("io.insert-koin:koin-test:$koinVersion")
+    testImplementation("io.insert-koin:koin-test-junit4:$koinVersion")
+    androidTestImplementation("io.insert-koin:koin-test:$koinVersion")
+    androidTestImplementation("io.insert-koin:koin-test-junit4:$koinVersion")
 
     // Arch Core Testing (for InstantTaskExecutorRule)
     testImplementation("androidx.arch.core:core-testing:2.2.0")
@@ -298,8 +300,6 @@ dependencies {
 
     // WorkManager (for background cache cleanup)
     implementation("androidx.work:work-runtime-ktx:2.11.1")
-    implementation("androidx.hilt:hilt-work:1.2.0")
-    ksp("androidx.hilt:hilt-compiler:1.2.0")
 
     // Gson for Object Conversion
     implementation("com.google.code.gson:gson:2.10.1")

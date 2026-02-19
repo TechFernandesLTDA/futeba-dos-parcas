@@ -11,17 +11,14 @@ import com.futebadosparcas.domain.ai.SwapSuggestion
 import com.futebadosparcas.domain.ai.toPlayerForBalancing
 import com.futebadosparcas.data.model.PlayerPosition
 import com.futebadosparcas.util.AppLogger
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class TeamFormationViewModel @Inject constructor(
+class TeamFormationViewModel(
     private val gameRepository: GameRepository,
     private val authRepository: AuthRepository,
     private val savedFormationRepository: SavedFormationRepository

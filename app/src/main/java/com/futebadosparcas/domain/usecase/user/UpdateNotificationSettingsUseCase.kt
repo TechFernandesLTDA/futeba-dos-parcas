@@ -6,7 +6,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ServerTimestamp
 import kotlinx.coroutines.tasks.await
 import java.util.Date
-import javax.inject.Inject
 
 /**
  * Update Notification Settings Use Case
@@ -41,7 +40,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class UpdateNotificationSettingsUseCase @Inject constructor(
+class UpdateNotificationSettingsUseCase constructor(
     private val firestore: FirebaseFirestore
 ) : SuspendUseCase<UpdateNotificationSettingsParams, NotificationSettings>() {
 

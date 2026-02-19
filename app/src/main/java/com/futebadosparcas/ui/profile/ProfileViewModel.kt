@@ -21,7 +21,6 @@ import com.futebadosparcas.util.toDataLocations
 import com.futebadosparcas.util.toDataModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -29,11 +28,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.Date
-import javax.inject.Inject
 import kotlin.math.abs
 
-@HiltViewModel
-class ProfileViewModel @Inject constructor(
+class ProfileViewModel(
     private val userRepository: UserRepository,
     private val authRepository: AuthRepository,
     private val gameRepository: GameRepository,

@@ -9,8 +9,6 @@ import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * CachedGameRepository - Camada de cache para games
@@ -27,8 +25,7 @@ import javax.inject.Singleton
  *
  * Funciona offline: Se não houver rede, retorna dados em cache mesmo expirados
  */
-@Singleton
-class CachedGameRepository @Inject constructor(
+class CachedGameRepository constructor(
     private val gameDao: GameDao,
     private val networkRepository: GameRepository // Repository que busca do Firestore
 ) {

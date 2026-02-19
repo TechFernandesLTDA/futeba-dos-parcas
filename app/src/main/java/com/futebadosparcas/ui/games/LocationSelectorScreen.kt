@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.futebadosparcas.R
@@ -80,7 +80,7 @@ fun LocationSelectorScreen(
     selectedDate: LocalDate? = null,
     selectedTime: LocalTime? = null,
     selectedEndTime: LocalTime? = null,
-    viewModel: LocationSelectorViewModel = hiltViewModel()
+    viewModel: LocationSelectorViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()

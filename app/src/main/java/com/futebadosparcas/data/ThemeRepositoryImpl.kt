@@ -13,15 +13,12 @@ import com.futebadosparcas.domain.model.ThemeMode
 import com.futebadosparcas.domain.repository.ThemeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Implementacao Android do ThemeRepository.
  * Usa DataStore para persistencia local de preferencias de tema.
  */
-@Singleton
-class ThemeRepositoryImpl @Inject constructor(
+class ThemeRepositoryImpl constructor(
     private val dataStore: DataStore<Preferences>
 ) : ThemeRepository {
 

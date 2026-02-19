@@ -30,16 +30,13 @@ import com.futebadosparcas.util.toAndroidUser
 import com.futebadosparcas.util.toKmpField
 import com.futebadosparcas.util.toKmpLocation
 import com.futebadosparcas.util.toKmpLocationReview
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
-import javax.inject.Inject
 
-@HiltViewModel
-class LocationDetailViewModel @Inject constructor(
+class LocationDetailViewModel(
     private val locationRepository: LocationRepository,
     private val userRepository: UserRepository,
     private val addressRepository: KmpAddressRepository,

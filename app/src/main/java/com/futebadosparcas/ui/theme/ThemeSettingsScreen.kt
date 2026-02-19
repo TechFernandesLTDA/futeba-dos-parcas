@@ -18,14 +18,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemeSettingsScreen(
-    viewModel: ThemeViewModel = hiltViewModel(),
+    viewModel: ThemeViewModel = koinViewModel(),
     onBackClick: () -> Unit = {}
 ) {
     val config by viewModel.themeConfig.collectAsStateWithLifecycle()

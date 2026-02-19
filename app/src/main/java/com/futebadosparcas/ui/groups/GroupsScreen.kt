@@ -28,7 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -52,7 +52,7 @@ import com.futebadosparcas.ui.components.CachedProfileImage
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupsScreen(
-    viewModel: GroupsViewModel = hiltViewModel(),
+    viewModel: GroupsViewModel = koinViewModel(),
     onGroupClick: (String) -> Unit,
     onCreateGroupClick: () -> Unit,
     onBackClick: () -> Unit

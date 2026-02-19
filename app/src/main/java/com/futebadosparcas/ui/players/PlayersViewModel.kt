@@ -8,7 +8,6 @@ import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -21,11 +20,9 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @OptIn(FlowPreview::class)
-@HiltViewModel
-class PlayersViewModel @Inject constructor(
+class PlayersViewModel(
     private val userRepository: UserRepository,
     private val statisticsRepository: com.futebadosparcas.data.repository.IStatisticsRepository,
     private val groupRepository: com.futebadosparcas.data.repository.GroupRepository,

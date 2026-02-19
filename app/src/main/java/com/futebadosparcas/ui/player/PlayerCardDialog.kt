@@ -11,19 +11,17 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.FileProvider
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import com.futebadosparcas.ui.players.PlayerCardContent
 import com.futebadosparcas.ui.theme.FutebaTheme
-import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.io.FileOutputStream
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
-@AndroidEntryPoint
 class PlayerCardDialog : DialogFragment() {
 
-    private val viewModel: PlayerCardViewModel by viewModels()
+    private val viewModel: PlayerCardViewModel by viewModel()
     private var userId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {

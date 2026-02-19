@@ -16,7 +16,7 @@ import kotlin.time.Duration.Companion.minutes
  *
  * Usage:
  * ```kotlin
- * class UserRepository @Inject constructor(
+ * class UserRepository constructor(
  *     private val cacheStrategy: CacheStrategy
  * ) {
  *     fun getUser(id: String) = cacheStrategy.cacheFirst(

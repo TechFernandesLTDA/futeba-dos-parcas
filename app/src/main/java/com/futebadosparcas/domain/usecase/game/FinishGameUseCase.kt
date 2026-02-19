@@ -3,7 +3,6 @@ package com.futebadosparcas.domain.usecase.game
 import com.futebadosparcas.domain.ranking.GameProcessingResult
 import com.futebadosparcas.domain.ranking.MatchFinalizationService
 import com.futebadosparcas.domain.usecase.SuspendUseCase
-import javax.inject.Inject
 
 /**
  * Finish Game Use Case
@@ -30,7 +29,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class FinishGameUseCase @Inject constructor(
+class FinishGameUseCase constructor(
     private val matchFinalizationService: MatchFinalizationService
 ) : SuspendUseCase<FinishGameParams, FinishGameResult>() {
 

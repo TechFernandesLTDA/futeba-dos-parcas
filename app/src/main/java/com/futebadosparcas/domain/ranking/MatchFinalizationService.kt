@@ -15,8 +15,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.WeekFields
 import java.util.*
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Resultado do processamento de um jogador.
@@ -53,8 +51,7 @@ data class GameProcessingResult(
  * IMPORTANTE: Usa transações atômicas para evitar race conditions e garantir
  * consistência dos dados.
  */
-@Singleton
-class MatchFinalizationService @Inject constructor(
+class MatchFinalizationService constructor(
     private val firestore: FirebaseFirestore,
     private val settingsRepository: com.futebadosparcas.domain.repository.SettingsRepository,
     private val leagueService: LeagueService

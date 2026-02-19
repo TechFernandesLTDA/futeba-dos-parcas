@@ -2,12 +2,11 @@ package com.futebadosparcas.domain.usecase.group
 
 import android.net.Uri
 import com.futebadosparcas.data.repository.GroupRepository
-import javax.inject.Inject
 
 /**
  * Use Case para atualizar informações do grupo
  */
-class UpdateGroupUseCase @Inject constructor(
+class UpdateGroupUseCase constructor(
     private val groupRepository: GroupRepository
 ) {
     suspend operator fun invoke(

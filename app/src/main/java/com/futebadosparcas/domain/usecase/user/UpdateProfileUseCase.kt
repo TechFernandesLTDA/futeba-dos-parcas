@@ -6,7 +6,6 @@ import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
 /**
  * Update Profile Use Case
@@ -29,7 +28,7 @@ import javax.inject.Inject
  * ))
  * ```
  */
-class UpdateProfileUseCase @Inject constructor(
+class UpdateProfileUseCase constructor(
     private val firestore: FirebaseFirestore
 ) : SuspendUseCase<UpdateProfileParams, User>() {
 

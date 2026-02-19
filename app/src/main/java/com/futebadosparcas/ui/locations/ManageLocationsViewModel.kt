@@ -10,7 +10,6 @@ import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidFields
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidLocations
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -20,10 +19,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import com.futebadosparcas.data.seeding.LocationsSeed
-import javax.inject.Inject
 
-@HiltViewModel
-class ManageLocationsViewModel @Inject constructor(
+class ManageLocationsViewModel(
     private val locationRepository: LocationRepository
 ) : ViewModel() {
 

@@ -5,8 +5,6 @@ import com.futebadosparcas.data.repository.GameRepository
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Representa um slot de horario em uma quadra.
@@ -31,8 +29,7 @@ data class DayAvailability(
  * Servico para verificar disponibilidade de quadras.
  * Fornece dados para exibicao de calendario visual de disponibilidade.
  */
-@Singleton
-class FieldAvailabilityService @Inject constructor(
+class FieldAvailabilityService constructor(
     private val gameRepository: GameRepository
 ) {
     companion object {

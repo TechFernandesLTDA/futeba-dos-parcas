@@ -2,14 +2,11 @@ package com.futebadosparcas.util
 
 import android.content.Context
 import android.net.Uri
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * File Helper
@@ -18,7 +15,7 @@ import javax.inject.Singleton
  *
  * Usage:
  * ```kotlin
- * @Inject lateinit var fileHelper: FileHelper
+ * lateinit var fileHelper: FileHelper
  *
  * // Create temporary file
  * val tempFile = fileHelper.createTempFile("photo", ".jpg")
@@ -27,9 +24,8 @@ import javax.inject.Singleton
  * fileHelper.clearOldCacheFiles(maxAgeDays = 7)
  * ```
  */
-@Singleton
-class FileHelper @Inject constructor(
-    @ApplicationContext private val context: Context
+class FileHelper constructor(
+    private val context: Context
 ) {
 
     /**

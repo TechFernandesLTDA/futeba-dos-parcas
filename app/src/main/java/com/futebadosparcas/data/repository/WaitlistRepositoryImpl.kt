@@ -11,8 +11,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.util.Date
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Implementacao do WaitlistRepository usando Firebase Firestore.
@@ -20,8 +18,7 @@ import javax.inject.Singleton
  * Estrutura:
  * - games/{gameId}/waitlist/{waitlistId}
  */
-@Singleton
-class WaitlistRepositoryImpl @Inject constructor(
+class WaitlistRepositoryImpl constructor(
     private val firestore: FirebaseFirestore
 ) : WaitlistRepository {
 

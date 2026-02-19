@@ -3,7 +3,6 @@ package com.futebadosparcas.domain.usecase.gamification
 import com.futebadosparcas.domain.model.WeeklyChallenge
 import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
-import javax.inject.Inject
 
 /**
  * Get Active Challenges Use Case
@@ -31,7 +30,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class GetActiveChallengesUseCase @Inject constructor(
+class GetActiveChallengesUseCase constructor(
     private val gamificationRepository: GamificationRepository
 ) : SuspendUseCase<Unit, List<WeeklyChallenge>>() {
 

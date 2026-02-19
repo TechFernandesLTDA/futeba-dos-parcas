@@ -23,8 +23,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Locale
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * GameRepository implementado como Facade que delega para repositórios especializados:
@@ -33,8 +31,7 @@ import javax.inject.Singleton
  * - GameEventsRepository: eventos de partida
  * - GameTeamRepository: gerenciamento de times
  */
-@Singleton
-class GameRepositoryImpl @Inject constructor(
+class GameRepositoryImpl constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
     private val gameDao: GameDao,

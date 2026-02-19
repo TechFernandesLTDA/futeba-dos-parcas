@@ -9,17 +9,14 @@ import com.futebadosparcas.data.repository.GameExperienceRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.MatchFinalizationService
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
-@HiltViewModel
-class MVPVoteViewModel @Inject constructor(
+class MVPVoteViewModel(
     private val gameRepository: GameRepository,
     private val gameExperienceRepository: GameExperienceRepository,
     private val userRepository: UserRepository,

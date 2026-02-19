@@ -7,8 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Cache global compartilhado entre ViewModels para evitar requisições duplicadas.
@@ -21,8 +19,7 @@ import javax.inject.Singleton
  * - Reactive updates via StateFlow
  * - Batch operations
  */
-@Singleton
-class SharedCacheService @Inject constructor() {
+class SharedCacheService constructor() {
 
     // User cache: 500 usuários (aprox. 50KB cada = 25MB total)
     private val userCache = LruCache<String, CachedValue<User>>(500)

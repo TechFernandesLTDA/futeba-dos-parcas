@@ -7,7 +7,6 @@ import com.futebadosparcas.domain.repository.CashboxRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.futebadosparcas.util.ValidationHelper
 import kotlinx.datetime.Clock
-import javax.inject.Inject
 
 /**
  * Record Payment Use Case
@@ -43,7 +42,7 @@ import javax.inject.Inject
  * )
  * ```
  */
-class RecordPaymentUseCase @Inject constructor(
+class RecordPaymentUseCase constructor(
     private val cashboxRepository: CashboxRepository,
     private val validationHelper: ValidationHelper
 ) : SuspendUseCase<RecordPaymentParams, String>() {

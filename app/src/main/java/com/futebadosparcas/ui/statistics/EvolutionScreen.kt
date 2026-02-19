@@ -25,7 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import com.futebadosparcas.data.model.MilestoneType
@@ -53,7 +53,7 @@ import java.util.*
 @Composable
 fun EvolutionScreen(
     modifier: Modifier = Modifier,
-    viewModel: RankingViewModel = hiltViewModel()
+    viewModel: RankingViewModel = koinViewModel()
 ) {
     val evolutionState by viewModel.evolutionState.collectAsStateWithLifecycle()
 

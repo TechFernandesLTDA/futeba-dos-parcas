@@ -8,13 +8,11 @@ import com.futebadosparcas.util.toAndroidSchedules
 import com.futebadosparcas.util.toKmpSchedule
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.domain.repository.ScheduleRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * ViewModel para gerenciamento de horarios recorrentes.
@@ -22,8 +20,7 @@ import javax.inject.Inject
  * CMD-08: Debug de filtro vazio com logs detalhados
  * CMD-09: Suporte para criar novos horarios
  */
-@HiltViewModel
-class SchedulesViewModel @Inject constructor(
+class SchedulesViewModel(
     private val scheduleRepository: ScheduleRepository,
     private val authRepository: AuthRepository
 ) : ViewModel() {
