@@ -318,16 +318,9 @@ class NormalizeTimestampsMigration(
             is Number -> value.toLong()
             is String -> value.toLongOrNull()
             else -> {
-                // Timestamp do Firestore - tenta extrair seconds
-                try {
-                    val seconds = value?.let {
-                        val clazz = it::class
-                        clazz.members.find { m -> m.name == "seconds" }?.call(it) as? Long
-                    }
-                    seconds?.times(1000)
-                } catch (e: Exception) {
-                    null
-                }
+                // Kotlin Reflection não está disponível em wasmJs.
+                // Firebase Timestamp é apenas Android/iOS - retorna null no web.
+                null
             }
         }
     }

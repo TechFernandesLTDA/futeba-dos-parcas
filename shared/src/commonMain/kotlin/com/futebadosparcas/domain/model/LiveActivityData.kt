@@ -1,5 +1,6 @@
 package com.futebadosparcas.domain.model
 
+import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 
 /**
@@ -35,7 +36,7 @@ data class LiveActivityData(
     /**
      * Timestamp de criação
      */
-    val createdAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
 
     /**
      * Timestamp de expiração (para limpeza automática)
@@ -148,7 +149,7 @@ data class LiveGameActivityData(
     /**
      * Timestamp da última atualização
      */
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = Clock.System.now().toEpochMilliseconds()
 )
 
 /**
@@ -344,7 +345,7 @@ data class GameCountdownData(
  * Calcula tempo restante até o jogo em formato legível
  */
 fun GameCountdownData.getTimeRemaining(): String {
-    val now = System.currentTimeMillis()
+    val now = Clock.System.now().toEpochMilliseconds()
     val diff = gameStartTimestamp - now
 
     if (diff <= 0) return "Agora"
@@ -364,7 +365,7 @@ fun GameCountdownData.getTimeRemaining(): String {
  */
 fun LiveActivityData.isExpired(): Boolean {
     val expiry = expiresAt ?: return false
-    return System.currentTimeMillis() > expiry
+    return Clock.System.now().toEpochMilliseconds() > expiry
 }
 
 /**

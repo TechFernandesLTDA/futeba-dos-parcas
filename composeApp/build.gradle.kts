@@ -1,6 +1,9 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
+
 plugins {
     kotlin("multiplatform")
-    id("com.android.library")  // Changed from application - this is a KMP shared module, not standalone app
+    id("com.android.library")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.compose")
 }
@@ -25,9 +28,29 @@ kotlin {
         }
     }
 
+    // Web target (wasmJs) - Fase 0: infraestrutura CMP 1.10.0
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        // moduleName removido (deprecated em Kotlin 2.2.x - usar outputModuleName no futuro)
+        browser {
+            val rootDirPath = project.rootDir.path
+            val projectDirPath = project.projectDir.path
+            commonWebpackConfig {
+                outputFileName = "composeApp.js"
+                devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
+                    static = (static ?: mutableListOf()).apply {
+                        add(rootDirPath)
+                        add(projectDirPath)
+                    }
+                }
+            }
+        }
+        binaries.executable()
+    }
+
     sourceSets {
         commonMain.dependencies {
-            // Compose Multiplatform
+            // Compose Multiplatform 1.10.0
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -38,11 +61,12 @@ kotlin {
             // Shared module - business logic
             implementation(project(":shared"))
 
-            // Navigation
-            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10")
+            // Navigation - atualizado para CMP 1.10.0
+            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.1")
 
-            // ViewModel
-            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
+            // ViewModel + Lifecycle - atualizado para 2.9.6
+            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.6")
+            implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.9.6")
         }
 
         androidMain.dependencies {
@@ -52,7 +76,15 @@ kotlin {
         }
 
         iosMain.dependencies {
-            // iOS-specific dependencies if needed
+            // iOS-specific dependencies se necessário
+        }
+
+        // Web (wasmJs) - dependências específicas serão adicionadas nas Fases 4-6
+        wasmJsMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.ui)
         }
     }
 }
@@ -63,8 +95,7 @@ android {
 
     defaultConfig {
         minSdk = 24
-        // No applicationId - this is a library module, not a standalone app
-        // versionCode/versionName removed - inherited from main app module
+        // Módulo biblioteca - sem applicationId ou versionCode
     }
 
     buildTypes {

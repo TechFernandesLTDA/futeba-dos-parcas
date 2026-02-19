@@ -313,6 +313,6 @@ data class LocationCacheStats(
     override fun toString(): String {
         return "LocationCacheStats(entries=$totalEntries/$maxEntries, " +
                 "byId=$locationByIdCount, byOwner=$locationsByOwnerCount, " +
-                "search=$searchResultsCount, utilization=${String.format("%.1f", utilizationPercent)}%)"
+                "search=$searchResultsCount, utilization=${utilizationPercent.toInt()}.${((utilizationPercent * 10).toInt() % 10)}%)"
     }
 }

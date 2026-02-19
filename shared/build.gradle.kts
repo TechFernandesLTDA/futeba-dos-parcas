@@ -1,18 +1,17 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
     kotlin("plugin.serialization")
-    id("app.cash.sqldelight") version "2.0.1"
+    id("app.cash.sqldelight") version "2.2.1"
 }
 
 kotlin {
     // Android target
     androidTarget {
-        compilations.all {
-            @Suppress("DEPRECATION")
-            kotlinOptions {
-                jvmTarget = "17"
-            }
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
 
@@ -28,26 +27,27 @@ kotlin {
         }
     }
 
+    // Web target (wasmJs) - Fase 0: infraestrutura
+    // SQLDelight 2.2.1 já suporta wasmJs nativamente
+    // Ktor 2.x não tem variante wasmJs - migração para Ktor 3.x na Fase 2
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+    }
+
     sourceSets {
+        // ========================
+        // commonMain: apenas libs com suporte universal (incluindo wasmJs)
+        // ========================
         val commonMain by getting {
             dependencies {
-                // Ktor Client
-                implementation("io.ktor:ktor-client-core:2.3.8")
-                implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
-                implementation("io.ktor:ktor-client-logging:2.3.8")
-
-                // SQLDelight
-                implementation("app.cash.sqldelight:runtime:2.0.1")
-                implementation("app.cash.sqldelight:coroutines-extensions:2.0.1")
-
-                // Coroutines (alinhado com app module 1.9.0)
+                // Coroutines - suporta wasmJs
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 
-                // Serialization (alinhado com Kotlin 2.2.x)
+                // Serialization - suporta wasmJs
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
-                // DateTime
+                // DateTime - suporta wasmJs
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
             }
         }
@@ -58,15 +58,39 @@ kotlin {
             }
         }
 
+        // ========================
+        // nativeAndAndroidMain: sourceset intermediário para Android + iOS
+        // Ktor 2.x fica aqui (sem suporte wasmJs) - migrar para Ktor 3.x na Fase 2
+        // SQLDelight 2.2.1 já está no commonMain via plugin (suporta wasmJs)
+        // ========================
+        val nativeAndAndroidMain by creating {
+            dependsOn(commonMain)
+            dependencies {
+                // Ktor Client - não tem variante wasmJs no 2.x
+                implementation("io.ktor:ktor-client-core:2.3.8")
+                implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
+                implementation("io.ktor:ktor-client-logging:2.3.8")
+
+                // SQLDelight 2.2.1 - suporta wasmJs via web-worker-driver
+                implementation("app.cash.sqldelight:runtime:2.2.1")
+                implementation("app.cash.sqldelight:coroutines-extensions:2.2.1")
+            }
+        }
+
+        // ========================
+        // androidMain: Android específico
+        // ========================
         val androidMain by getting {
+            dependsOn(nativeAndAndroidMain)
             dependencies {
                 // Ktor Android engine
                 implementation("io.ktor:ktor-client-okhttp:2.3.8")
 
                 // SQLDelight Android driver
-                implementation("app.cash.sqldelight:android-driver:2.0.1")
+                implementation("app.cash.sqldelight:android-driver:2.2.1")
 
-                // Firebase Android SDK (para androidMain only)
+                // Firebase Android SDK (apenas androidMain)
                 implementation("com.google.firebase:firebase-firestore-ktx:24.10.0")
                 implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
                 implementation("com.google.firebase:firebase-storage-ktx:20.2.1")
@@ -77,12 +101,15 @@ kotlin {
             }
         }
 
+        // ========================
+        // iosMain: iOS específico
+        // ========================
         val iosX64Main by getting
         val iosArm64Main by getting
         val iosSimulatorArm64Main by getting
 
         val iosMain by creating {
-            dependsOn(commonMain)
+            dependsOn(nativeAndAndroidMain)
             iosX64Main.dependsOn(this)
             iosArm64Main.dependsOn(this)
             iosSimulatorArm64Main.dependsOn(this)
@@ -92,8 +119,20 @@ kotlin {
                 implementation("io.ktor:ktor-client-darwin:2.3.8")
 
                 // SQLDelight native driver
-                implementation("app.cash.sqldelight:native-driver:2.0.1")
+                implementation("app.cash.sqldelight:native-driver:2.2.1")
             }
+        }
+
+        // ========================
+        // wasmJsMain: Web - stubs de Fase 0
+        // Firebase e HTTP reais: Fase 2 (GitLive SDK + Ktor 3.x)
+        // SQLDelight: Fase 3 (web-worker-driver quando migrar para 2.2.1)
+        // ========================
+        val wasmJsMain by getting {
+            // Coroutines, serialization, datetime disponíveis via commonMain
+            // SQLDelight 2.2.1 suporta wasmJs nativamente (runtime incluído automaticamente pelo plugin)
+            // TODO: Fase 2 - adicionar GitLive Firebase SDK (suporta wasmJs)
+            // TODO: Fase 2 - adicionar Ktor 3.x (suporta wasmJs nativo)
         }
     }
 }
@@ -116,7 +155,6 @@ sqldelight {
     databases {
         create("FutebaDatabase") {
             packageName.set("com.futebadosparcas.db")
-            // Migração automática: SQLDelight 2.x lê arquivos .sqm
             schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
             verifyMigrations.set(true)
             deriveSchemaFromMigrations.set(true)
