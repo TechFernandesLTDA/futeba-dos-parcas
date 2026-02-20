@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.asImage
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.futebadosparcas.domain.model.PlayerRankingItem
@@ -566,11 +567,12 @@ private fun PlayerAvatar(
         contentAlignment = Alignment.Center
     ) {
         if (!photoUrl.isNullOrBlank()) {
+            val placeholderImage = context.getDrawable(R.drawable.ic_person)?.asImage()
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(photoUrl)
-                    .error(R.drawable.ic_person)
-                    .placeholder(R.drawable.ic_person)
+                    .error(placeholderImage)
+                    .placeholder(placeholderImage)
                     .build(),
                 contentDescription = stringResource(R.string.player_avatar_cd, playerName),
                 modifier = Modifier.fillMaxSize(),

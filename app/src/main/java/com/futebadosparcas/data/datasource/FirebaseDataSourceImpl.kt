@@ -163,7 +163,7 @@ class FirebaseDataSourceImpl constructor(
             )
 
             AppLogger.d(TAG) { "Encontrados ${games.size} jogos confirmados" }
-            games.sortedBy { it.dateTime }
+            games.sortedBy { it.createdAt }
         }
     }
 
@@ -293,16 +293,16 @@ class FirebaseDataSourceImpl constructor(
                 position = position,
                 status = ConfirmationStatus.CONFIRMED.name,
                 isCasualPlayer = isCasualPlayer,
-                confirmedAt = Date()
+                confirmedAt = Date().time
             )
 
             val docRef = firestore.collection(COLLECTION_CONFIRMATIONS).document()
-            confirmation.id = docRef.id
+            val finalConfirmation = confirmation.copy(id = docRef.id)
 
-            docRef.set(confirmation).await()
+            docRef.set(finalConfirmation).await()
             AppLogger.d(TAG) { "Presença confirmada: ${docRef.id}" }
 
-            confirmation
+            finalConfirmation
         }
     }
 

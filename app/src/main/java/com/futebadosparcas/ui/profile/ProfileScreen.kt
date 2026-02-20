@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.futebadosparcas.BuildConfig
+import com.futebadosparcas.data.model.BadgeType
+import com.futebadosparcas.data.model.UserBadge
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.model.PlayerRatingRole

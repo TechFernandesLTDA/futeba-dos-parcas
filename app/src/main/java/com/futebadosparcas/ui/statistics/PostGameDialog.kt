@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.data.model.MilestoneType
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -304,7 +305,7 @@ private fun LevelProgressSection(
 
 @Composable
 private fun MilestonesUnlockedSection(
-    milestones: List<com.futebadosparcas.domain.model.MilestoneType>
+    milestones: List<MilestoneType>
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),

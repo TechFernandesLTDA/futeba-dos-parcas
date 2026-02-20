@@ -1,7 +1,7 @@
 package com.futebadosparcas.ui.statistics
 
 import com.futebadosparcas.domain.model.LevelTable
-import com.futebadosparcas.domain.model.MilestoneType
+import com.futebadosparcas.data.model.MilestoneType
 import com.futebadosparcas.domain.model.SeasonParticipation
 import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.domain.model.PlayerRankingItem

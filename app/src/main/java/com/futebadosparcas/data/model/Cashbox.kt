@@ -1,5 +1,6 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.model.CashboxAppStatus
 import com.futebadosparcas.domain.validation.ValidationHelper
 import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId

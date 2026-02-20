@@ -3,7 +3,6 @@ package com.futebadosparcas.util
 import com.futebadosparcas.data.model.AppNotification as AndroidAppNotification
 import com.futebadosparcas.data.model.GroupInvite as AndroidGroupInvite
 import com.futebadosparcas.data.model.InviteStatus as AndroidInviteStatus
-import com.futebadosparcas.data.model.CashboxAppStatus as AndroidCashboxAppStatus
 import com.futebadosparcas.data.model.CashboxCategory as AndroidCashboxCategory
 import com.futebadosparcas.data.model.CashboxEntry as AndroidCashboxEntry
 import com.futebadosparcas.data.model.CashboxEntryType as AndroidCashboxEntryType
@@ -182,6 +181,12 @@ fun List<AndroidLocation>.toKmpLocations(): List<KmpLocation> = map { it.toKmpLo
  * Converte uma lista de Location KMP para Location Android.
  */
 fun List<KmpLocation>.toAndroidLocations(): List<AndroidLocation> = map { it.toAndroidLocation() }
+
+/**
+ * Alias para toAndroidLocations() - usado em ViewModels legacy.
+ * TODO: Remover após migração completa para nomenclatura KMP.
+ */
+fun List<KmpLocation>.toDataLocations(): List<AndroidLocation> = toAndroidLocations()
 
 // ========== Field Mappers ==========
 

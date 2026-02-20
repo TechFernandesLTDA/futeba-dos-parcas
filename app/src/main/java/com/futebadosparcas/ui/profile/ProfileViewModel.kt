@@ -113,9 +113,9 @@ class ProfileViewModel(
                     val badgesResult = gamificationRepository.getUserBadges(user.id)
                     val badges = badgesResult.getOrNull()?.toDataBadges() ?: emptyList()
 
-                    // Carregar estatísticas do repositório de domínio e converter para modelo de dados
+                    // Carregar estatísticas do repositório de domínio (já retorna domain.model.Statistics)
                     val statsResult = statisticsRepository.getUserStatistics(user.id)
-                    val stats = statsResult.getOrNull()?.toDataModel(user.id)
+                    val stats = statsResult.getOrNull()
 
                     _uiState.value = ProfileUiState.Success(user, badges, stats, isDevModeEnabled())
 
@@ -266,7 +266,7 @@ class ProfileViewModel(
                                 val badges = badgesResult.getOrNull()?.toDataBadges() ?: emptyList()
 
                                 val statsResult = statisticsRepository.getUserStatistics(refreshedUser.id)
-                                val stats = statsResult.getOrNull()?.toDataModel(refreshedUser.id)
+                                val stats = statsResult.getOrNull()
 
                                 _uiState.value = ProfileUiState.ProfileUpdateSuccess(
                                     user = refreshedUser,

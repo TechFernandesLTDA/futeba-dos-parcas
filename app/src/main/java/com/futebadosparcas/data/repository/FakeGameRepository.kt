@@ -388,18 +388,13 @@ class FakeGameRepository constructor() : GameRepository {
     // === SOFT DELETE (P2 #40) ===
 
     override suspend fun softDeleteGame(gameId: String): Result<Unit> {
-        games.find { it.id == gameId }?.let {
-            val index = games.indexOf(it)
-            games[index] = it.copy(deletedAt = java.util.Date(), deletedBy = "mock_user_id")
-        }
+        // Remover jogo da lista (soft delete simulado sem campos deletedAt/deletedBy)
+        games.removeIf { it.id == gameId }
         return Result.success(Unit)
     }
 
     override suspend fun restoreGame(gameId: String): Result<Unit> {
-        games.find { it.id == gameId }?.let {
-            val index = games.indexOf(it)
-            games[index] = it.copy(deletedAt = null, deletedBy = null)
-        }
+        // Não é possível restaurar em fake repository sem soft delete
         return Result.success(Unit)
     }
 
