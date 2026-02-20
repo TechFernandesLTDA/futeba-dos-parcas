@@ -87,7 +87,7 @@ object MilestoneChecker {
     /**
      * Obtem o valor de um campo especifico das estatisticas.
      */
-    private fun getStatValue(stats: UserStatistics, field: String): Int {
+    private fun getStatValue(stats: Statistics, field: String): Int {
         return when (field) {
             "totalGames" -> stats.totalGames
             "totalGoals" -> stats.totalGoals
@@ -120,7 +120,7 @@ object MilestoneChecker {
     /**
      * Retorna o progresso do jogador em um milestone especifico.
      */
-    fun getProgress(stats: UserStatistics, milestone: MilestoneType): Pair<Int, Int> {
+    fun getProgress(stats: Statistics, milestone: MilestoneType): Pair<Int, Int> {
         val current = getStatValue(stats, milestone.field)
         return Pair(current, milestone.threshold)
     }
@@ -128,7 +128,7 @@ object MilestoneChecker {
     /**
      * Retorna a porcentagem de progresso (0-100) para um milestone.
      */
-    fun getProgressPercent(stats: UserStatistics, milestone: MilestoneType): Int {
+    fun getProgressPercent(stats: Statistics, milestone: MilestoneType): Int {
         val (current, threshold) = getProgress(stats, milestone)
         return if (threshold > 0) {
             ((current.toFloat() / threshold) * 100).toInt().coerceIn(0, 100)

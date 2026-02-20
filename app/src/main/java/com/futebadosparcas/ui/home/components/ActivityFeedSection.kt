@@ -91,7 +91,7 @@ fun ActivityCard(activity: Activity) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon based on type - Show level badge for LEVEL_UP activities
-            val isLevelUp = ActivityType.values().find { it.name == activity.type } == ActivityType.LEVEL_UP
+            val isLevelUp = activity.type == ActivityType.LEVEL_UP
             val level = (activity.metadata["level"] as? Number)?.toInt()
 
             if (isLevelUp && level != null) {

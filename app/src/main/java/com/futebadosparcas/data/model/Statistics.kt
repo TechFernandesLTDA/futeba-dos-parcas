@@ -210,7 +210,7 @@ object PerformanceRatingCalculator {
     private const val MAX_ASSISTS_PER_GAME = 1.2
     private const val MAX_SAVES_PER_GAME = 4.0
 
-    fun fromStats(stats: UserStatistics): AutoRatings {
+    fun fromStats(stats: com.futebadosparcas.domain.model.Statistics): AutoRatings {
         val sampleSize = stats.totalGames
         val confidence = (sampleSize / SAMPLE_TARGET).coerceIn(0.0, 1.0)
 

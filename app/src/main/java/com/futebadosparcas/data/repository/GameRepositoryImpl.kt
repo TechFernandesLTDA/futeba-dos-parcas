@@ -128,15 +128,13 @@ class GameRepositoryImpl constructor(
         queryRepository.getGameDetails(gameId).map { it.toAndroidGame() }
 
     override fun getGameDetailsFlow(gameId: String): Flow<Result<Game>> =
-        queryRepository.getGameDetailsFlow(gameId).map { result ->
-            result.map { it.toAndroidGame() }
-        }
+        queryRepository.getGameDetailsFlow(gameId)
 
     override suspend fun getPublicGames(limit: Int): Result<List<Game>> =
-        queryRepository.getPublicGames(limit).map { it.toAndroidGames() }
+        queryRepository.getPublicGames(limit)
 
     override fun getPublicGamesFlow(limit: Int): Flow<List<Game>> =
-        queryRepository.getPublicGamesFlow(limit).map { it.toAndroidGames() }
+        queryRepository.getPublicGamesFlow(limit)
 
     override suspend fun getNearbyPublicGames(
         userLat: Double,
@@ -144,10 +142,10 @@ class GameRepositoryImpl constructor(
         radiusKm: Double,
         limit: Int
     ): Result<List<Game>> =
-        queryRepository.getNearbyPublicGames(userLat, userLng, radiusKm, limit).map { it.toAndroidGames() }
+        queryRepository.getNearbyPublicGames(userLat, userLng, radiusKm, limit)
 
     override suspend fun getOpenPublicGames(limit: Int): Result<List<Game>> =
-        queryRepository.getOpenPublicGames(limit).map { it.toAndroidGames() }
+        queryRepository.getOpenPublicGames(limit)
 
     override suspend fun checkTimeConflict(
         fieldId: String,
@@ -159,7 +157,7 @@ class GameRepositoryImpl constructor(
         queryRepository.checkTimeConflict(fieldId, date, startTime, endTime, excludeGameId).map { it.toAndroidTimeConflicts() }
 
     override suspend fun getGamesByFieldAndDate(fieldId: String, date: String): Result<List<Game>> =
-        queryRepository.getGamesByFieldAndDate(fieldId, date).map { it.toAndroidGames() }
+        queryRepository.getGamesByFieldAndDate(fieldId, date)
 
     // ========== Confirmation Methods - Delegação para GameConfirmationRepository ==========
     override suspend fun getGameConfirmations(gameId: String): Result<List<AndroidGameConfirmation>> =

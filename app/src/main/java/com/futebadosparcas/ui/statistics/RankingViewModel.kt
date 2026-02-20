@@ -228,10 +228,9 @@ class RankingViewModel(
 
                 // Calcular proximos milestones
                 val nextMilestones = if (stats != null) {
-                    val dataStats = stats.toDataModel(uid)
-                    MilestoneChecker.getNextMilestones(dataStats, achievedMilestones.map { it.name })
+                    MilestoneChecker.getNextMilestones(stats, achievedMilestones.map { it.name })
                         .map { milestone ->
-                            val (current, target) = MilestoneChecker.getProgress(dataStats, milestone)
+                            val (current, target) = MilestoneChecker.getProgress(stats, milestone)
                             MilestoneProgress(
                                 milestone = milestone,
                                 current = current,
