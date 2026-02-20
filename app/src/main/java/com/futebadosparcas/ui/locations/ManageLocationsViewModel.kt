@@ -3,7 +3,7 @@ package com.futebadosparcas.ui.locations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Field
-import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toAndroidField

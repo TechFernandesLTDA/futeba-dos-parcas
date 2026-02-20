@@ -1,7 +1,9 @@
 package com.futebadosparcas.ui.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.annotation.DrawableRes
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -41,13 +43,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
-import coil.request.CachePolicy
-import coil.request.ImageRequest
-import coil.size.Size
-import com.futebadosparcas.R
-
+import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.size.Size
 /**
  * Estado de carregamento progressivo de imagens.
  *
@@ -421,7 +421,7 @@ private fun ErrorContent(
             IconButton(onClick = onRetry) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
-                    contentDescription = stringResource(R.string.cd_retry),
+                    contentDescription = stringResource(Res.string.cd_retry),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(32.dp)
                 )
@@ -429,7 +429,7 @@ private fun ErrorContent(
         } else {
             Icon(
                 imageVector = Icons.Default.BrokenImage,
-                contentDescription = stringResource(R.string.cd_image_load_error),
+                contentDescription = stringResource(Res.string.cd_image_load_error),
                 tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(32.dp)
             )

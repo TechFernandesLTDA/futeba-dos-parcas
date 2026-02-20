@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.usecase.location
 
-import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await

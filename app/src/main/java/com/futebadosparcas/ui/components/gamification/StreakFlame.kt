@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.components.gamification
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -34,10 +36,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import com.futebadosparcas.R
 import androidx.compose.ui.unit.dp
 import kotlin.math.sin
 
@@ -429,7 +430,7 @@ fun StreakCard(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = stringResource(R.string.streak_next_level, nextLevel.displayName),
+                    text = stringResource(Res.string.streak_next_level, nextLevel.displayName),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -470,7 +471,7 @@ fun StreakCard(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = stringResource(R.string.streak_record),
+                text = stringResource(Res.string.streak_record),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -534,7 +535,7 @@ fun StreakLevelUpAnimation(
             )
 
             Text(
-                text = stringResource(R.string.streak_unlocked),
+                text = stringResource(Res.string.streak_unlocked),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

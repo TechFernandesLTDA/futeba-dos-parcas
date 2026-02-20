@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.usecase.game
 
-import com.futebadosparcas.data.model.GameStatus
+import com.futebadosparcas.domain.model.GameStatus
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 

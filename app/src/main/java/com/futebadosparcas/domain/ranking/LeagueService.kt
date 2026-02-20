@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.ranking
 
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.model.LeagueDivision as SharedLeagueDivision
 import com.futebadosparcas.domain.ranking.RecentGameData as SharedRecentGameData
 import com.futebadosparcas.util.AppLogger

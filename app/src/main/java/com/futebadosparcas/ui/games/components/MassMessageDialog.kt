@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.content.Intent
 import android.net.Uri
@@ -15,15 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.ConfirmationStatus
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.ConfirmationStatus
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.PaymentStatus
+import com.futebadosparcas.domain.model.PaymentStatus
 import com.futebadosparcas.ui.theme.BrandColors
 
 /**
@@ -47,15 +48,15 @@ fun MassMessageDialog(
 
     // Templates de mensagem
     val templates = listOf(
-        stringResource(R.string.owner_template_confirmed),
-        stringResource(R.string.owner_template_reminder),
-        stringResource(R.string.owner_template_pix)
+        stringResource(Res.string.owner_template_confirmed),
+        stringResource(Res.string.owner_template_reminder),
+        stringResource(Res.string.owner_template_pix)
     )
 
     // Mensagens formatadas
     val templateMessages = listOf(
-        stringResource(R.string.owner_template_confirmed_msg, game.date, game.time, game.locationName),
-        stringResource(R.string.owner_template_reminder_msg, game.date, game.time),
+        stringResource(Res.string.owner_template_confirmed_msg, game.date, game.time, game.locationName),
+        stringResource(Res.string.owner_template_reminder_msg, game.date, game.time),
         formatPixMessage(game.pixKey, game.dailyPrice)
     )
 
@@ -84,12 +85,12 @@ fun MassMessageDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.owner_mass_message),
+                        text = stringResource(Res.string.owner_mass_message),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.close))
                     }
                 }
 
@@ -115,9 +116,9 @@ fun MassMessageDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = if (recipients.size == 1) {
-                                stringResource(R.string.player_selected_one)
+                                stringResource(Res.string.player_selected_one)
                             } else {
-                                stringResource(R.string.players_selected_many, recipients.size)
+                                stringResource(Res.string.players_selected_many, recipients.size)
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -129,7 +130,7 @@ fun MassMessageDialog(
 
                 // Selecao de template
                 Text(
-                    text = stringResource(R.string.owner_select_template),
+                    text = stringResource(Res.string.owner_select_template),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -174,7 +175,7 @@ fun MassMessageDialog(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = stringResource(R.string.owner_only_unpaid),
+                        text = stringResource(Res.string.owner_only_unpaid),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -183,7 +184,7 @@ fun MassMessageDialog(
 
                 // Preview da mensagem
                 Text(
-                    text = stringResource(R.string.message_preview),
+                    text = stringResource(Res.string.message_preview),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -208,7 +209,7 @@ fun MassMessageDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text(stringResource(R.string.cancel))
+                        Text(stringResource(Res.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
 
@@ -233,7 +234,7 @@ fun MassMessageDialog(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.whatsapp))
+                        Text(stringResource(Res.string.whatsapp))
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -246,14 +247,14 @@ fun MassMessageDialog(
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, message)
                             }
-                            context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_message)))
+                            context.startActivity(Intent.createChooser(intent, context.getString(Res.string.share_message)))
                             onDismiss()
                         },
                         enabled = recipients.isNotEmpty()
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.owner_send_message))
+                        Text(stringResource(Res.string.owner_send_message))
                     }
                 }
             }

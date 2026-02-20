@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.schedules
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.clickable
 import com.futebadosparcas.ui.games.TimePickerDialog
@@ -16,10 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.data.model.RecurrenceType
-import com.futebadosparcas.data.model.Schedule
-import com.futebadosparcas.R
+import com.futebadosparcas.domain.model.Schedule
 import java.time.LocalTime
 
 import com.futebadosparcas.util.AppLogger
@@ -82,7 +83,7 @@ fun CreateScheduleDialog(
             ) {
                 // Title
                 Text(
-                    text = stringResource(R.string.schedules_new_schedule),
+                    text = stringResource(Res.string.schedules_new_schedule),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -95,12 +96,12 @@ fun CreateScheduleDialog(
                         name = it
                         showNameError = false
                     },
-                    label = { Text(stringResource(R.string.schedules_name_optional)) },
+                    label = { Text(stringResource(Res.string.schedules_name_optional)) },
                     singleLine = true,
                     isError = showNameError,
                     modifier = Modifier.fillMaxWidth(),
                     supportingText = if (showNameError) {
-                        { Text(stringResource(R.string.schedules_required_field), color = MaterialTheme.colorScheme.error) }
+                        { Text(stringResource(Res.string.schedules_required_field), color = MaterialTheme.colorScheme.error) }
                     } else null
                 )
 
@@ -108,7 +109,7 @@ fun CreateScheduleDialog(
                 OutlinedTextField(
                     value = if (time.isEmpty()) "--:--" else time,
                     onValueChange = {},
-                    label = { Text(stringResource(R.string.schedules_time_hint)) },
+                    label = { Text(stringResource(Res.string.schedules_time_hint)) },
                     singleLine = true,
                     readOnly = true,
                     enabled = false,
@@ -126,9 +127,9 @@ fun CreateScheduleDialog(
                         disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     supportingText = if (showTimeError) {
-                        { Text(stringResource(R.string.schedules_required_field), color = MaterialTheme.colorScheme.error) }
+                        { Text(stringResource(Res.string.schedules_required_field), color = MaterialTheme.colorScheme.error) }
                     } else if (time.isEmpty()) {
-                        { Text(stringResource(R.string.schedules_tap_to_set_time), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        { Text(stringResource(Res.string.schedules_tap_to_set_time), color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     } else null
                 )
 
@@ -136,9 +137,9 @@ fun CreateScheduleDialog(
                 var expandedDay by remember { mutableStateOf(false) }
                 Box {
                     OutlinedTextField(
-                        value = days.getOrNull(selectedDayOfWeek) ?: stringResource(R.string.schedules_day_sunday),
+                        value = days.getOrNull(selectedDayOfWeek) ?: stringResource(Res.string.schedules_day_sunday),
                         onValueChange = {},
-                        label = { Text(stringResource(R.string.schedules_day_of_week)) },
+                        label = { Text(stringResource(Res.string.schedules_day_of_week)) },
                         readOnly = true,
                         enabled = false,
                         trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
@@ -173,9 +174,9 @@ fun CreateScheduleDialog(
                 var expandedRecurrence by remember { mutableStateOf(false) }
                 Box {
                     OutlinedTextField(
-                        value = recurrenceOptions.find { it.first == selectedRecurrenceType }?.second ?: stringResource(R.string.schedules_recurrence_weekly),
+                        value = recurrenceOptions.find { it.first == selectedRecurrenceType }?.second ?: stringResource(Res.string.schedules_recurrence_weekly),
                         onValueChange = {},
-                        label = { Text(stringResource(R.string.schedules_frequency_hint)) },
+                        label = { Text(stringResource(Res.string.schedules_frequency_hint)) },
                         readOnly = true,
                         enabled = false,
                         trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
@@ -208,7 +209,7 @@ fun CreateScheduleDialog(
 
                 // Info text sobre local
                 Text(
-                    text = stringResource(R.string.schedules_note),
+                    text = stringResource(Res.string.schedules_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -222,7 +223,7 @@ fun CreateScheduleDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text(stringResource(R.string.schedules_cancel))
+                        Text(stringResource(Res.string.schedules_cancel))
                     }
                     Spacer(Modifier.width(8.dp))
                     Button(
@@ -234,19 +235,19 @@ fun CreateScheduleDialog(
                                 val newSchedule = Schedule(
                                     ownerId = userId,
                                     ownerName = userName,
-                                    name = name.ifBlank { context.getString(R.string.schedules_unnamed_schedule) },
+                                    name = name.ifBlank { context.getString(Res.string.schedules_unnamed_schedule) },
                                     time = time,
                                     dayOfWeek = selectedDayOfWeek,
                                     recurrenceType = selectedRecurrenceType,
                                     createdAt = Date()
                                 )
-                                AppLogger.d(TAG) { context.getString(R.string.schedules_create_content, newSchedule.name) }
+                                AppLogger.d(TAG) { context.getString(Res.string.schedules_create_content, newSchedule.name) }
                                 onCreate(newSchedule)
                             }
                         },
                         enabled = time.isNotBlank()
                     ) {
-                        Text(stringResource(R.string.schedules_create))
+                        Text(stringResource(Res.string.schedules_create))
                     }
                 }
             }
@@ -256,7 +257,7 @@ fun CreateScheduleDialog(
     // Time Picker Dialog
     if (showTimePicker) {
         TimePickerDialog(
-            title = stringResource(R.string.schedules_select_time),
+            title = stringResource(Res.string.schedules_select_time),
             onDismiss = { showTimePicker = false },
             onTimeSelected = { hour, minute ->
                 time = String.format("%02d:%02d", hour, minute)
@@ -329,7 +330,7 @@ fun EditScheduleDialog(
             ) {
                 // Title
                 Text(
-                    text = stringResource(R.string.schedules_edit_schedule),
+                    text = stringResource(Res.string.schedules_edit_schedule),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -342,12 +343,12 @@ fun EditScheduleDialog(
                         name = it
                         showNameError = false
                     },
-                    label = { Text(stringResource(R.string.schedules_name_optional)) },
+                    label = { Text(stringResource(Res.string.schedules_name_optional)) },
                     singleLine = true,
                     isError = showNameError,
                     modifier = Modifier.fillMaxWidth(),
                     supportingText = if (showNameError) {
-                        { Text(stringResource(R.string.schedules_required_field), color = MaterialTheme.colorScheme.error) }
+                        { Text(stringResource(Res.string.schedules_required_field), color = MaterialTheme.colorScheme.error) }
                     } else null
                 )
 
@@ -355,7 +356,7 @@ fun EditScheduleDialog(
                 OutlinedTextField(
                     value = if (time.isEmpty()) "--:--" else time,
                     onValueChange = {},
-                    label = { Text(stringResource(R.string.schedules_time_hint)) },
+                    label = { Text(stringResource(Res.string.schedules_time_hint)) },
                     singleLine = true,
                     readOnly = true,
                     enabled = false,
@@ -373,9 +374,9 @@ fun EditScheduleDialog(
                         disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     supportingText = if (showTimeError) {
-                        { Text(stringResource(R.string.schedules_required_field), color = MaterialTheme.colorScheme.error) }
+                        { Text(stringResource(Res.string.schedules_required_field), color = MaterialTheme.colorScheme.error) }
                     } else if (time.isEmpty()) {
-                        { Text(stringResource(R.string.schedules_tap_to_set_time), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        { Text(stringResource(Res.string.schedules_tap_to_set_time), color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     } else null
                 )
 
@@ -383,9 +384,9 @@ fun EditScheduleDialog(
                 var expandedDay by remember { mutableStateOf(false) }
                 Box {
                     OutlinedTextField(
-                        value = days.getOrNull(selectedDayOfWeek) ?: stringResource(R.string.schedules_day_sunday),
+                        value = days.getOrNull(selectedDayOfWeek) ?: stringResource(Res.string.schedules_day_sunday),
                         onValueChange = {},
-                        label = { Text(stringResource(R.string.schedules_day_of_week)) },
+                        label = { Text(stringResource(Res.string.schedules_day_of_week)) },
                         readOnly = true,
                         enabled = false,
                         trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
@@ -420,9 +421,9 @@ fun EditScheduleDialog(
                 var expandedRecurrence by remember { mutableStateOf(false) }
                 Box {
                     OutlinedTextField(
-                        value = recurrenceOptions.find { it.first == selectedRecurrenceType }?.second ?: stringResource(R.string.schedules_recurrence_weekly),
+                        value = recurrenceOptions.find { it.first == selectedRecurrenceType }?.second ?: stringResource(Res.string.schedules_recurrence_weekly),
                         onValueChange = {},
-                        label = { Text(stringResource(R.string.schedules_frequency_hint)) },
+                        label = { Text(stringResource(Res.string.schedules_frequency_hint)) },
                         readOnly = true,
                         enabled = false,
                         trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
@@ -462,7 +463,7 @@ fun EditScheduleDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text(stringResource(R.string.schedules_cancel))
+                        Text(stringResource(Res.string.schedules_cancel))
                     }
                     Spacer(Modifier.width(8.dp))
                     Button(
@@ -484,7 +485,7 @@ fun EditScheduleDialog(
                         },
                         enabled = name.isNotBlank() && time.isNotBlank()
                     ) {
-                        Text(stringResource(R.string.schedules_save))
+                        Text(stringResource(Res.string.schedules_save))
                     }
                 }
             }
@@ -494,7 +495,7 @@ fun EditScheduleDialog(
     // Time Picker Dialog
     if (showTimePicker) {
         TimePickerDialog(
-            title = stringResource(R.string.schedules_select_time),
+            title = stringResource(Res.string.schedules_select_time),
             onDismiss = { showTimePicker = false },
             onTimeSelected = { hour, minute ->
                 time = String.format("%02d:%02d", hour, minute)
@@ -512,13 +513,13 @@ fun EditScheduleDialog(
 @Composable
 private fun getDaysOfWeek(): Array<String> {
     return arrayOf(
-        stringResource(R.string.schedules_day_sunday),
-        stringResource(R.string.schedules_day_monday),
-        stringResource(R.string.schedules_day_tuesday),
-        stringResource(R.string.schedules_day_wednesday),
-        stringResource(R.string.schedules_day_thursday),
-        stringResource(R.string.schedules_day_friday),
-        stringResource(R.string.schedules_day_saturday)
+        stringResource(Res.string.schedules_day_sunday),
+        stringResource(Res.string.schedules_day_monday),
+        stringResource(Res.string.schedules_day_tuesday),
+        stringResource(Res.string.schedules_day_wednesday),
+        stringResource(Res.string.schedules_day_thursday),
+        stringResource(Res.string.schedules_day_friday),
+        stringResource(Res.string.schedules_day_saturday)
     )
 }
 
@@ -528,8 +529,8 @@ private fun getDaysOfWeek(): Array<String> {
 @Composable
 private fun getRecurrenceOptions(): List<Pair<RecurrenceType, String>> {
     return listOf(
-        RecurrenceType.weekly to stringResource(R.string.schedules_recurrence_weekly),
-        RecurrenceType.biweekly to stringResource(R.string.schedules_recurrence_biweekly),
-        RecurrenceType.monthly to stringResource(R.string.schedules_recurrence_monthly)
+        RecurrenceType.weekly to stringResource(Res.string.schedules_recurrence_weekly),
+        RecurrenceType.biweekly to stringResource(Res.string.schedules_recurrence_biweekly),
+        RecurrenceType.monthly to stringResource(Res.string.schedules_recurrence_monthly)
     )
 }

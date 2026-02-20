@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.teamformation.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -16,14 +18,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.HeadToHeadHistory
+import com.futebadosparcas.domain.model.HeadToHeadHistory
 import com.futebadosparcas.data.model.HeadToHeadMatch
-import com.futebadosparcas.data.model.TeamColor
+import com.futebadosparcas.domain.model.TeamColor
 
 /**
  * Secao de historico de confrontos diretos.
@@ -69,7 +70,7 @@ fun HeadToHeadSection(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = stringResource(R.string.head_to_head),
+                        text = stringResource(Res.string.head_to_head),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -102,7 +103,7 @@ fun HeadToHeadSection(
                 Spacer(Modifier.height(16.dp))
 
                 Text(
-                    text = stringResource(R.string.head_to_head_last_matches, headToHead.lastMatches.size),
+                    text = stringResource(Res.string.head_to_head_last_matches, headToHead.lastMatches.size),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -333,7 +334,7 @@ private fun NoHistoryCard(modifier: Modifier = Modifier) {
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = stringResource(R.string.head_to_head_no_history),
+                text = stringResource(Res.string.head_to_head_no_history),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

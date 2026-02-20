@@ -1,10 +1,10 @@
 package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.local.dao.GameDao
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.model.GameConfirmation as AndroidGameConfirmation
 import com.futebadosparcas.data.model.GameEvent
-import com.futebadosparcas.data.model.GameStatus
+import com.futebadosparcas.domain.model.GameStatus
 import com.futebadosparcas.data.model.LiveGameScore
 import com.futebadosparcas.data.model.Team
 import com.futebadosparcas.domain.model.Game as KmpGame

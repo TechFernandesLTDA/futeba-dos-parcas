@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.locations
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.net.Uri
 import android.widget.Toast
@@ -31,12 +33,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.R
+import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.data.model.Field
-import com.futebadosparcas.data.model.FieldType
-import com.futebadosparcas.data.model.Location
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.domain.model.Location
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.ui.components.FieldImage
 import com.futebadosparcas.ui.components.LocationHeaderImage
 import com.futebadosparcas.ui.components.design.AppTopBar
@@ -74,12 +75,12 @@ fun LocationDetailScreen(
     
     // Amenities State
     val availableAmenities = listOf(
-        stringResource(R.string.location_detail_locker_room),
-        stringResource(R.string.location_detail_bar),
-        stringResource(R.string.location_detail_barbecue),
-        stringResource(R.string.location_detail_parking),
-        stringResource(R.string.location_detail_wifi),
-        stringResource(R.string.location_detail_bleachers)
+        stringResource(Res.string.location_detail_locker_room),
+        stringResource(Res.string.location_detail_bar),
+        stringResource(Res.string.location_detail_barbecue),
+        stringResource(Res.string.location_detail_parking),
+        stringResource(Res.string.location_detail_wifi),
+        stringResource(Res.string.location_detail_bleachers)
     )
     val selectedAmenities = remember { mutableStateListOf<String>() }
 
@@ -169,10 +170,10 @@ fun LocationDetailScreen(
         topBar = {
             // CMD-16: TopBar padronizada usando AppTopBar
             AppTopBar(
-                title = { Text(stringResource(R.string.location_detail_title)) },
+                title = { Text(stringResource(Res.string.location_detail_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
                     }
                 },
                 actions = {
@@ -197,7 +198,7 @@ fun LocationDetailScreen(
                             )
                         }
                     }) {
-                        Icon(Icons.Default.Save, contentDescription = stringResource(R.string.cd_save))
+                        Icon(Icons.Default.Save, contentDescription = stringResource(Res.string.cd_save))
                     }
                 }
             )
@@ -208,7 +209,7 @@ fun LocationDetailScreen(
                      selectedField = null
                      showFieldDialog = true
                  }) {
-                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.location_detail_add_field))
+                     Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.location_detail_add_field))
                  }
             }
         }
@@ -226,12 +227,12 @@ fun LocationDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // --- Basic Info ---
-                Text(stringResource(R.string.location_detail_basic_info), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(Res.string.location_detail_basic_info), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
 
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.location_detail_name_label)) },
+                    label = { Text(stringResource(Res.string.location_detail_name_label)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -239,14 +240,14 @@ fun LocationDetailScreen(
                 if (fieldOwners.isNotEmpty()) {
                     Box(Modifier.fillMaxWidth()) {
                         OutlinedTextField(
-                            value = selectedOwner?.getDisplayName() ?: stringResource(R.string.location_detail_no_owner),
+                            value = selectedOwner?.getDisplayName() ?: stringResource(Res.string.location_detail_no_owner),
                             onValueChange = {},
-                            label = { Text(stringResource(R.string.location_detail_owner_label)) },
+                            label = { Text(stringResource(Res.string.location_detail_owner_label)) },
                             readOnly = true,
                             enabled = false,
                             trailingIcon = {
                                 IconButton(onClick = { ownerDropdownExpanded = true }) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_dropdown), Modifier.rotate(270f))
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.cd_dropdown), Modifier.rotate(270f))
                                 }
                             },
                             modifier = Modifier
@@ -265,7 +266,7 @@ fun LocationDetailScreen(
                         ) {
                             // Opção para remover seleção
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.location_detail_no_owner_option), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline) },
+                                text = { Text(stringResource(Res.string.location_detail_no_owner_option), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline) },
                                 onClick = {
                                     selectedOwner = null
                                     ownerDropdownExpanded = false
@@ -294,7 +295,7 @@ fun LocationDetailScreen(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text(stringResource(R.string.location_detail_description_label)) },
+                    label = { Text(stringResource(Res.string.location_detail_description_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2
                 )
@@ -303,52 +304,52 @@ fun LocationDetailScreen(
                     OutlinedTextField(
                         value = phone,
                         onValueChange = { phone = it },
-                        label = { Text(stringResource(R.string.location_detail_phone_label)) },
+                        label = { Text(stringResource(Res.string.location_detail_phone_label)) },
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                     )
                     OutlinedTextField(
                         value = instagram,
                         onValueChange = { instagram = it },
-                        label = { Text(stringResource(R.string.location_detail_instagram_label)) },
+                        label = { Text(stringResource(Res.string.location_detail_instagram_label)) },
                         modifier = Modifier.weight(1f)
                     )
                 }
 
                 // --- Operational ---
-                Text(stringResource(R.string.location_detail_operation), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(Res.string.location_detail_operation), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
 
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = openingTime,
                         onValueChange = { openingTime = it },
-                        label = { Text(stringResource(R.string.location_detail_opens)) },
+                        label = { Text(stringResource(Res.string.location_detail_opens)) },
                         modifier = Modifier.weight(1f)
                     )
                     OutlinedTextField(
                         value = closingTime,
                         onValueChange = { closingTime = it },
-                        label = { Text(stringResource(R.string.location_detail_closes)) },
+                        label = { Text(stringResource(Res.string.location_detail_closes)) },
                         modifier = Modifier.weight(1f)
                     )
                     OutlinedTextField(
                         value = minDuration,
                         onValueChange = { minDuration = it },
-                        label = { Text(stringResource(R.string.location_detail_min_duration)) },
+                        label = { Text(stringResource(Res.string.location_detail_min_duration)) },
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.location_detail_active))
+                    Text(stringResource(Res.string.location_detail_active))
                     Spacer(Modifier.width(8.dp))
                     Switch(checked = isActive, onCheckedChange = { isActive = it })
                 }
 
                 // --- Address ---
                 HorizontalDivider()
-                Text(stringResource(R.string.location_detail_address), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(Res.string.location_detail_address), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -361,14 +362,14 @@ fun LocationDetailScreen(
                             // Filtra apenas dígitos e limita a 8 caracteres
                             cep = newValue.filter { it.isDigit() }.take(8)
                         },
-                        label = { Text(stringResource(R.string.location_detail_cep)) },
+                        label = { Text(stringResource(Res.string.location_detail_cep)) },
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         visualTransformation = CepVisualTransformation.Instance
                     )
                     Button(onClick = { viewModel.searchCep(cep) }) {
-                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search_cep))
-                        Text(stringResource(R.string.search))
+                        Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.cd_search_cep))
+                        Text(stringResource(Res.string.search))
                     }
                 }
 
@@ -376,13 +377,13 @@ fun LocationDetailScreen(
                     OutlinedTextField(
                         value = street,
                         onValueChange = { street = it },
-                        label = { Text(stringResource(R.string.location_detail_street)) },
+                        label = { Text(stringResource(Res.string.location_detail_street)) },
                         modifier = Modifier.weight(2f)
                     )
                     OutlinedTextField(
                         value = number,
                         onValueChange = { number = it },
-                        label = { Text(stringResource(R.string.location_detail_number)) },
+                        label = { Text(stringResource(Res.string.location_detail_number)) },
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
@@ -391,7 +392,7 @@ fun LocationDetailScreen(
                 OutlinedTextField(
                     value = complement,
                     onValueChange = { complement = it },
-                    label = { Text(stringResource(R.string.location_detail_complement)) },
+                    label = { Text(stringResource(Res.string.location_detail_complement)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -399,13 +400,13 @@ fun LocationDetailScreen(
                     OutlinedTextField(
                         value = neighborhood,
                         onValueChange = { neighborhood = it },
-                        label = { Text(stringResource(R.string.location_detail_neighborhood)) },
+                        label = { Text(stringResource(Res.string.location_detail_neighborhood)) },
                         modifier = Modifier.weight(1f)
                     )
                     OutlinedTextField(
                         value = city,
                         onValueChange = { city = it },
-                        label = { Text(stringResource(R.string.location_detail_city)) },
+                        label = { Text(stringResource(Res.string.location_detail_city)) },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -414,13 +415,13 @@ fun LocationDetailScreen(
                     OutlinedTextField(
                         value = region,
                         onValueChange = { region = it },
-                        label = { Text(stringResource(R.string.location_detail_region)) },
+                        label = { Text(stringResource(Res.string.location_detail_region)) },
                         modifier = Modifier.weight(1f)
                     )
                     OutlinedTextField(
                         value = state,
                         onValueChange = { state = it },
-                        label = { Text(stringResource(R.string.location_detail_state)) },
+                        label = { Text(stringResource(Res.string.location_detail_state)) },
                         modifier = Modifier.weight(0.5f)
                     )
                 }
@@ -428,23 +429,23 @@ fun LocationDetailScreen(
                 // Coordinates
                 Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                     Column(Modifier.padding(16.dp)) {
-                        Text(stringResource(R.string.location_detail_geolocation), style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(Res.string.location_detail_geolocation), style = MaterialTheme.typography.titleSmall)
                         Spacer(Modifier.height(4.dp))
-                        Text(stringResource(R.string.location_detail_coordinates, latitude.toString(), longitude.toString()), style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(Res.string.location_detail_coordinates, latitude.toString(), longitude.toString()), style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(8.dp))
                         Button(
                             onClick = { viewModel.updateCoordinates("$street, $number - $city") },
                             modifier = Modifier.align(Alignment.End)
                         ) {
-                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cd_update_coordinates))
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(Res.string.cd_update_coordinates))
                             Spacer(Modifier.width(4.dp))
-                            Text(stringResource(R.string.location_detail_update_coords))
+                            Text(stringResource(Res.string.location_detail_update_coords))
                         }
                     }
                 }
 
                 // --- Amenities ---
-                 Text(stringResource(R.string.location_detail_amenities), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                 Text(stringResource(Res.string.location_detail_amenities), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                  FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                      availableAmenities.forEach { amenity ->
                          AnimatedAmenityChip(
@@ -463,13 +464,13 @@ fun LocationDetailScreen(
 
                 HorizontalDivider()
 
-                Text(stringResource(R.string.location_detail_fields), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(Res.string.location_detail_fields), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
 
                 // List Fields (Quadras)
                 if (uiState is LocationDetailUiState.Success) {
                     val fields = (uiState as LocationDetailUiState.Success).fields
                     if (fields.isEmpty()) {
-                        Text(stringResource(R.string.location_detail_no_fields), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
+                        Text(stringResource(Res.string.location_detail_no_fields), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.outline)
                     } else {
                         fields.forEach { field ->
                             FieldItem(field) {
@@ -520,13 +521,13 @@ fun FieldDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (field == null) stringResource(R.string.location_detail_add_field_title) else stringResource(R.string.location_detail_edit_field_title)) },
+        title = { Text(if (field == null) stringResource(Res.string.location_detail_add_field_title) else stringResource(Res.string.location_detail_edit_field_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.location_detail_field_name)) },
+                    label = { Text(stringResource(Res.string.location_detail_field_name)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -535,11 +536,11 @@ fun FieldDialog(
                     OutlinedTextField(
                         value = type.displayName,
                         onValueChange = {},
-                        label = { Text(stringResource(R.string.location_detail_field_type)) },
+                        label = { Text(stringResource(Res.string.location_detail_field_type)) },
                         readOnly = true,
                         trailingIcon = {
                              IconButton(onClick = { expanded = true }) {
-                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_dropdown), Modifier.rotate(270f))
+                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.cd_dropdown), Modifier.rotate(270f))
                              }
                         },
                         modifier = Modifier.fillMaxWidth()
@@ -563,7 +564,7 @@ fun FieldDialog(
                 OutlinedTextField(
                     value = price,
                     onValueChange = { price = it },
-                    label = { Text(stringResource(R.string.location_detail_field_price)) },
+                    label = { Text(stringResource(Res.string.location_detail_field_price)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
@@ -571,18 +572,18 @@ fun FieldDialog(
                 OutlinedTextField(
                     value = surface,
                     onValueChange = { surface = it },
-                    label = { Text(stringResource(R.string.location_detail_field_surface)) },
+                    label = { Text(stringResource(Res.string.location_detail_field_surface)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                  Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.location_detail_field_covered))
+                    Text(stringResource(Res.string.location_detail_field_covered))
                     Spacer(Modifier.width(8.dp))
                     Switch(checked = isCovered, onCheckedChange = { isCovered = it })
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.location_detail_field_active))
+                    Text(stringResource(Res.string.location_detail_field_active))
                     Spacer(Modifier.width(8.dp))
                     Switch(
                         checked = isActive,
@@ -590,7 +591,7 @@ fun FieldDialog(
                     )
                 }
                 if (field != null && isActive != field.isActive) {
-                     Text(stringResource(R.string.location_detail_field_admin_only), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                     Text(stringResource(Res.string.location_detail_field_admin_only), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                 }
             }
         },
@@ -599,12 +600,12 @@ fun FieldDialog(
                 val p = price.toDoubleOrNull() ?: 0.0
                 onConfirm(name, type, p, surface, isCovered, isActive)
             }) {
-                Text(if (field == null) stringResource(R.string.location_detail_add_button) else stringResource(R.string.location_detail_save_button))
+                Text(if (field == null) stringResource(Res.string.location_detail_add_button) else stringResource(Res.string.location_detail_save_button))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.location_detail_cancel_button))
+                Text(stringResource(Res.string.location_detail_cancel_button))
             }
         }
     )
@@ -641,7 +642,7 @@ fun FieldItem(field: Field, onClick: () -> Unit) {
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(field.name, style = MaterialTheme.typography.bodyLarge)
-            Text(stringResource(R.string.location_detail_field_display, field.type, field.hourlyPrice.toString()), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(Res.string.location_detail_field_display, field.type, field.hourlyPrice.toString()), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.components.modern
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -13,11 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-
 /**
  * Tipos de erro com ícones e mensagens apropriadas
  */
@@ -45,19 +45,19 @@ fun ErrorState(
     errorType: ErrorType = ErrorType.GENERIC,
     message: String? = null,
     onRetry: (() -> Unit)? = null,
-    actionText: String = stringResource(R.string.retry)
+    actionText: String = stringResource(Res.string.retry)
 ) {
     val (icon, defaultMessage) = when (errorType) {
         ErrorType.NETWORK -> Icons.Default.WifiOff to
-            stringResource(R.string.error_network_full)
+            stringResource(Res.string.error_network_full)
         ErrorType.TIMEOUT -> Icons.Default.CloudOff to
-            stringResource(R.string.error_timeout)
+            stringResource(Res.string.error_timeout)
         ErrorType.SERVER -> Icons.Default.Error to
-            stringResource(R.string.error_server)
+            stringResource(Res.string.error_server)
         ErrorType.PERMISSION -> Icons.Default.Warning to
-            stringResource(R.string.error_permission)
+            stringResource(Res.string.error_permission)
         ErrorType.GENERIC -> Icons.Default.Error to
-            stringResource(R.string.error_generic_full)
+            stringResource(Res.string.error_generic_full)
     }
 
     Column(
@@ -79,7 +79,7 @@ fun ErrorState(
 
         // Título
         Text(
-            text = stringResource(R.string.error_oops),
+            text = stringResource(Res.string.error_oops),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -158,7 +158,7 @@ fun CompactErrorState(
 
                 TextButton(onClick = onRetry) {
                     Text(
-                        text = stringResource(R.string.retry),
+                        text = stringResource(Res.string.retry),
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                 }
@@ -185,13 +185,13 @@ fun ErrorSnackbar(
                     onRetry()
                     onDismiss()
                 }) {
-                    Text(stringResource(R.string.retry))
+                    Text(stringResource(Res.string.retry))
                 }
             }
         },
         dismissAction = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.close))
+                Text(stringResource(Res.string.close))
             }
         },
         containerColor = MaterialTheme.colorScheme.errorContainer,

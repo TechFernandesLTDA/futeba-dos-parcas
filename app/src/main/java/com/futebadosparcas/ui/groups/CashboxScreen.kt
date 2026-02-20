@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.groups
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,9 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.data.model.*
-import com.futebadosparcas.R
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.dialogs.ConfirmationDialog
@@ -90,13 +91,13 @@ fun CashboxScreen(
                 viewModel.resetActionState()
             }
             is CashboxActionState.TotalsByCategory -> {
-                totalsDialogTitle = context.getString(R.string.cashbox_totals_by_category)
+                totalsDialogTitle = context.getString(Res.string.cashbox_totals_by_category)
                 totalsDialogData = state.totals.mapKeys { it.key.displayName }
                 showTotalsDialog = true
                 viewModel.resetActionState()
             }
             is CashboxActionState.TotalsByPlayer -> {
-                totalsDialogTitle = context.getString(R.string.cashbox_totals_by_player)
+                totalsDialogTitle = context.getString(Res.string.cashbox_totals_by_player)
                 totalsDialogData = state.totals
                 showTotalsDialog = true
                 viewModel.resetActionState()
@@ -125,9 +126,9 @@ fun CashboxScreen(
     if (showRecalculateDialog) {
         ConfirmationDialog(
             visible = true,
-            title = stringResource(R.string.cashbox_recalculate_balance),
-            message = stringResource(R.string.cashbox_recalculate_message),
-            confirmText = stringResource(R.string.cashbox_recalculate),
+            title = stringResource(Res.string.cashbox_recalculate_balance),
+            message = stringResource(Res.string.cashbox_recalculate_message),
+            confirmText = stringResource(Res.string.cashbox_recalculate),
             type = ConfirmationDialogType.WARNING,
             icon = Icons.Default.Refresh,
             onConfirm = {
@@ -143,9 +144,9 @@ fun CashboxScreen(
         selectedEntry?.let { entry ->
             ConfirmationDialog(
                 visible = true,
-                title = stringResource(R.string.cashbox_void_entry),
-                message = stringResource(R.string.cashbox_void_message),
-                confirmText = stringResource(R.string.cashbox_void),
+                title = stringResource(Res.string.cashbox_void_entry),
+                message = stringResource(Res.string.cashbox_void_message),
+                confirmText = stringResource(Res.string.cashbox_void),
                 type = ConfirmationDialogType.DESTRUCTIVE,
                 icon = Icons.Default.Delete,
                 onConfirm = {
@@ -270,11 +271,11 @@ fun CashboxScreen(
                 is CashboxHistoryState.Empty -> {
                     EmptyState(
                         type = EmptyStateType.NoData(
-                            title = stringResource(R.string.cashbox_no_movement),
+                            title = stringResource(Res.string.cashbox_no_movement),
                             description = if (canManage) {
-                                stringResource(R.string.cashbox_add_first)
+                                stringResource(Res.string.cashbox_add_first)
                             } else {
-                                stringResource(R.string.cashbox_no_movements)
+                                stringResource(Res.string.cashbox_no_movements)
                             },
                             icon = Icons.Default.Receipt
                         )
@@ -339,64 +340,64 @@ private fun CashboxTopBar(
     onReportByPlayer: () -> Unit
 ) {
     TopAppBar(
-        title = { Text(stringResource(R.string.cashbox_group_title)) },
+        title = { Text(stringResource(Res.string.cashbox_group_title)) },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
             }
         },
         actions = {
             // Menu de Filtros ancorado ao botão
             Box {
                 IconButton(onClick = onFilterClick) {
-                    Icon(Icons.Default.FilterList, contentDescription = stringResource(R.string.cashbox_filter))
+                    Icon(Icons.Default.FilterList, contentDescription = stringResource(Res.string.cashbox_filter))
                 }
                 DropdownMenu(
                     expanded = showFilterMenu,
                     onDismissRequest = onFilterDismiss
                 ) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.cashbox_all)) },
+                        text = { Text(stringResource(Res.string.cashbox_all)) },
                         onClick = onFilterAll,
-                        leadingIcon = { Icon(Icons.Default.FilterList, contentDescription = stringResource(R.string.cd_filter_all)) }
+                        leadingIcon = { Icon(Icons.Default.FilterList, contentDescription = stringResource(Res.string.cd_filter_all)) }
                     )
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.cashbox_income_short)) },
+                        text = { Text(stringResource(Res.string.cashbox_income_short)) },
                         onClick = onFilterIncome,
-                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = stringResource(R.string.cd_filter_income)) }
+                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = stringResource(Res.string.cd_filter_income)) }
                     )
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.cashbox_expense_short)) },
+                        text = { Text(stringResource(Res.string.cashbox_expense_short)) },
                         onClick = onFilterExpense,
-                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingDown, contentDescription = stringResource(R.string.cd_filter_expense)) }
+                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingDown, contentDescription = stringResource(Res.string.cd_filter_expense)) }
                     )
                 }
             }
 
             if (canManage) {
                 IconButton(onClick = onRecalculateClick) {
-                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cashbox_recalculate))
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(Res.string.cashbox_recalculate))
                 }
             }
 
             // Menu de Relatórios ancorado ao botão
             Box {
                 IconButton(onClick = onReportClick) {
-                    Icon(Icons.Default.BarChart, contentDescription = stringResource(R.string.cashbox_reports))
+                    Icon(Icons.Default.BarChart, contentDescription = stringResource(Res.string.cashbox_reports))
                 }
                 DropdownMenu(
                     expanded = showReportMenu,
                     onDismissRequest = onReportDismiss
                 ) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.cashbox_totals_by_category)) },
+                        text = { Text(stringResource(Res.string.cashbox_totals_by_category)) },
                         onClick = onReportByCategory,
-                        leadingIcon = { Icon(Icons.Default.Category, contentDescription = stringResource(R.string.cd_report_by_category)) }
+                        leadingIcon = { Icon(Icons.Default.Category, contentDescription = stringResource(Res.string.cd_report_by_category)) }
                     )
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.cashbox_totals_by_player)) },
+                        text = { Text(stringResource(Res.string.cashbox_totals_by_player)) },
                         onClick = onReportByPlayer,
-                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = stringResource(R.string.cd_report_by_player)) }
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = stringResource(Res.string.cd_report_by_player)) }
                     )
                 }
             }
@@ -429,7 +430,7 @@ private fun SummaryCard(summary: CashboxSummary) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(R.string.cashbox_current_balance),
+                text = stringResource(Res.string.cashbox_current_balance),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -462,7 +463,7 @@ private fun SummaryCard(summary: CashboxSummary) {
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = stringResource(R.string.cashbox_income_short),
+                            text = stringResource(Res.string.cashbox_income_short),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
@@ -488,7 +489,7 @@ private fun SummaryCard(summary: CashboxSummary) {
                             tint = MaterialTheme.colorScheme.error
                         )
                         Text(
-                            text = stringResource(R.string.cashbox_expense_short),
+                            text = stringResource(Res.string.cashbox_expense_short),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
@@ -521,27 +522,27 @@ private fun FilterChips(
         FilterChip(
             selected = currentFilter == null,
             onClick = onFilterAll,
-            label = { Text(stringResource(R.string.cashbox_all)) },
+            label = { Text(stringResource(Res.string.cashbox_all)) },
             leadingIcon = if (currentFilter == null) {
-                { Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected), Modifier.size(18.dp)) }
+                { Icon(Icons.Default.Check, contentDescription = stringResource(Res.string.cd_filter_selected), Modifier.size(18.dp)) }
             } else null
         )
 
         FilterChip(
             selected = currentFilter?.type == CashboxEntryType.INCOME,
             onClick = onFilterIncome,
-            label = { Text(stringResource(R.string.cashbox_income_short)) },
+            label = { Text(stringResource(Res.string.cashbox_income_short)) },
             leadingIcon = if (currentFilter?.type == CashboxEntryType.INCOME) {
-                { Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected), Modifier.size(18.dp)) }
+                { Icon(Icons.Default.Check, contentDescription = stringResource(Res.string.cd_filter_selected), Modifier.size(18.dp)) }
             } else null
         )
 
         FilterChip(
             selected = currentFilter?.type == CashboxEntryType.EXPENSE,
             onClick = onFilterExpense,
-            label = { Text(stringResource(R.string.cashbox_expense_short)) },
+            label = { Text(stringResource(Res.string.cashbox_expense_short)) },
             leadingIcon = if (currentFilter?.type == CashboxEntryType.EXPENSE) {
-                { Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected), Modifier.size(18.dp)) }
+                { Icon(Icons.Default.Check, contentDescription = stringResource(Res.string.cd_filter_selected), Modifier.size(18.dp)) }
             } else null
         )
     }
@@ -723,7 +724,7 @@ private fun CashboxFABs(
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer
         ) {
-            Icon(Icons.Default.Remove, contentDescription = stringResource(R.string.cashbox_add_expense))
+            Icon(Icons.Default.Remove, contentDescription = stringResource(Res.string.cashbox_add_expense))
         }
 
         // FAB Adicionar Receita
@@ -733,7 +734,7 @@ private fun CashboxFABs(
                 onAddIncome()
             }
         ) {
-            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cashbox_add_income))
+            Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.cashbox_add_income))
         }
     }
 }
@@ -750,33 +751,33 @@ private fun EntryDetailsDialog(
         icon = {
             Icon(Icons.Default.Receipt, contentDescription = null)
         },
-        title = { Text(stringResource(R.string.cashbox_entry_details)) },
+        title = { Text(stringResource(Res.string.cashbox_entry_details)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                DetailRow(stringResource(R.string.label_description), entry.description)
-                DetailRow(stringResource(R.string.label_category), entry.getCategoryEnum().displayName)
-                DetailRow(stringResource(R.string.label_value), currencyFormat.format(entry.amount))
+                DetailRow(stringResource(Res.string.label_description), entry.description)
+                DetailRow(stringResource(Res.string.label_category), entry.getCategoryEnum().displayName)
+                DetailRow(stringResource(Res.string.label_value), currencyFormat.format(entry.amount))
 
                 val playerName = entry.playerName
                 if (!playerName.isNullOrEmpty()) {
-                    DetailRow(stringResource(R.string.cashbox_player), playerName)
+                    DetailRow(stringResource(Res.string.cashbox_player), playerName)
                 }
 
                 if (entry.status == "VOIDED") {
-                    DetailRow(stringResource(R.string.cashbox_status), stringResource(R.string.cashbox_status_cancelled))
+                    DetailRow(stringResource(Res.string.cashbox_status), stringResource(Res.string.cashbox_status_cancelled))
                 }
 
                 if (!entry.receiptUrl.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = stringResource(R.string.cashbox_receipt) + ":",
+                        text = stringResource(Res.string.cashbox_receipt) + ":",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    coil.compose.AsyncImage(
+                    coil3.compose.AsyncImage(
                         model = entry.receiptUrl,
-                        contentDescription = stringResource(R.string.cashbox_receipt),
+                        contentDescription = stringResource(Res.string.cashbox_receipt),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
@@ -788,7 +789,7 @@ private fun EntryDetailsDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_ok))
+                Text(stringResource(Res.string.action_ok))
             }
         }
     )
@@ -828,7 +829,7 @@ private fun TotalsDialog(
         title = { Text(title) },
         text = {
             if (totals.isEmpty()) {
-                Text(stringResource(R.string.cashbox_no_data))
+                Text(stringResource(Res.string.cashbox_no_data))
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     totals.forEach { (name, amount) ->
@@ -852,7 +853,7 @@ private fun TotalsDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_ok))
+                Text(stringResource(Res.string.action_ok))
             }
         }
     )

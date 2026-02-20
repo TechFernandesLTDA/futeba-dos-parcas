@@ -1,14 +1,15 @@
 package com.futebadosparcas.ui.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.home.LoadingState
 
 @Composable
@@ -48,7 +49,7 @@ fun LoadingStateIndicator(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = stringResource(
-                            R.string.ui_loading_state,
+                            Res.string.ui_loading_state,
                             loadingState.message,
                             loadingState.current,
                             loadingState.total
@@ -71,7 +72,7 @@ fun LoadingStateIndicator(
                     if (loadingState.retryable) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(onClick = onRetry) {
-                            Text(stringResource(R.string.retry))
+                            Text(stringResource(Res.string.retry))
                         }
                     }
                 }

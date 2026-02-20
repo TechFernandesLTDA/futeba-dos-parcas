@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.home.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -22,10 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.UserStreak
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
@@ -90,7 +91,7 @@ fun StreakWidget(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.streak_widget_title, streak.currentStreak),
+                    text = stringResource(Res.string.streak_widget_title, streak.currentStreak),
                     style = if (windowSizeClass.isCompact)
                         MaterialTheme.typography.titleMedium
                     else
@@ -98,7 +99,7 @@ fun StreakWidget(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = stringResource(R.string.streak_widget_record, streak.longestStreak),
+                    text = stringResource(Res.string.streak_widget_record, streak.longestStreak),
                     style = if (windowSizeClass.isCompact)
                         MaterialTheme.typography.bodySmall
                     else

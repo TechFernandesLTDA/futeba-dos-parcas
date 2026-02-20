@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.groups.dialogs
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.net.Uri
 import android.widget.Toast
@@ -30,16 +32,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
-import coil.compose.AsyncImage
-import com.futebadosparcas.R
+import coil3.compose.AsyncImage
 import com.futebadosparcas.data.model.CashboxCategory
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.CachedAsyncImage
-import com.futebadosparcas.data.model.CashboxEntryType
-import com.futebadosparcas.data.model.Group
+import com.futebadosparcas.domain.model.CashboxEntryType
+import com.futebadosparcas.domain.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.util.AppLogger
 import java.io.File
 
@@ -81,10 +82,10 @@ fun EditGroupDialog(
     // Validação de nome
     val nameValidationError = remember(name) {
         when {
-            name.trim().isEmpty() -> context.getString(R.string.validation_name_required)
-            name.trim().length < 3 -> context.getString(R.string.validation_name_min_chars)
-            name.trim().length > 50 -> context.getString(R.string.validation_name_max_chars)
-            !name.trim().matches(Regex("^[\\p{L}\\p{N}\\s\\-_']+$")) -> context.getString(R.string.validation_name_invalid)
+            name.trim().isEmpty() -> context.getString(Res.string.validation_name_required)
+            name.trim().length < 3 -> context.getString(Res.string.validation_name_min_chars)
+            name.trim().length > 50 -> context.getString(Res.string.validation_name_max_chars)
+            !name.trim().matches(Regex("^[\\p{L}\\p{N}\\s\\-_']+$")) -> context.getString(Res.string.validation_name_invalid)
             else -> null
         }
     }
@@ -92,7 +93,7 @@ fun EditGroupDialog(
     // Validação de descrição
     val descriptionValidationError = remember(description) {
         when {
-            description.trim().length > 200 -> context.getString(R.string.validation_description_max_chars)
+            description.trim().length > 200 -> context.getString(Res.string.validation_description_max_chars)
             else -> null
         }
     }
@@ -107,12 +108,12 @@ fun EditGroupDialog(
     if (showPhotoOptions) {
         AlertDialog(
             onDismissRequest = { showPhotoOptions = false },
-            title = { Text(stringResource(R.string.create_group_photo_dialog_title)) },
+            title = { Text(stringResource(Res.string.create_group_photo_dialog_title)) },
             text = {
                 Column {
                     ListItem(
-                        headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_camera)) },
-                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = stringResource(R.string.cd_take_photo)) },
+                        headlineContent = { Text(stringResource(Res.string.create_group_photo_dialog_camera)) },
+                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = stringResource(Res.string.cd_take_photo)) },
                         modifier = Modifier.clickable {
                             try {
                                 val file = File.createTempFile("group_photo_edit_", ".jpg", context.cacheDir)
@@ -125,14 +126,14 @@ fun EditGroupDialog(
                                 takePictureLauncher.launch(uri)
                             } catch (e: Exception) {
                                 AppLogger.e(TAG, "Erro ao abrir câmera para foto do grupo", e)
-                                Toast.makeText(context, context.getString(R.string.dialog_error_camera), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(Res.string.dialog_error_camera), Toast.LENGTH_SHORT).show()
                             }
                             showPhotoOptions = false
                         }
                     )
                     ListItem(
-                        headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_gallery)) },
-                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(R.string.cd_photo_gallery)) },
+                        headlineContent = { Text(stringResource(Res.string.create_group_photo_dialog_gallery)) },
+                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(Res.string.cd_photo_gallery)) },
                         modifier = Modifier.clickable {
                             pickImageLauncher.launch("image/*")
                             showPhotoOptions = false
@@ -143,7 +144,7 @@ fun EditGroupDialog(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showPhotoOptions = false }) {
-                    Text(stringResource(R.string.action_cancel))
+                    Text(stringResource(Res.string.action_cancel))
                 }
             }
         )
@@ -164,7 +165,7 @@ fun EditGroupDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = stringResource(R.string.dialog_edit_group),
+                    text = stringResource(Res.string.dialog_edit_group),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 24.dp)
@@ -188,11 +189,11 @@ fun EditGroupDialog(
                 TextButton(onClick = { showPhotoOptions = true }) {
                     Icon(
                         if (selectedPhotoUri != null) Icons.Default.Edit else Icons.Default.Add,
-                        contentDescription = stringResource(R.string.cd_edit),
+                        contentDescription = stringResource(Res.string.cd_edit),
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text(if (selectedPhotoUri != null) stringResource(R.string.create_group_change_photo) else stringResource(R.string.create_group_add_photo))
+                    Text(if (selectedPhotoUri != null) stringResource(Res.string.create_group_change_photo) else stringResource(Res.string.create_group_add_photo))
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -200,7 +201,7 @@ fun EditGroupDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { if (it.length <= 50) name = it },
-                    label = { Text(stringResource(R.string.dialog_group_name)) },
+                    label = { Text(stringResource(Res.string.dialog_group_name)) },
                     singleLine = true,
                     isError = nameValidationError != null,
                     supportingText = {
@@ -219,7 +220,7 @@ fun EditGroupDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { if (it.length <= 200) description = it },
-                    label = { Text(stringResource(R.string.label_description)) },
+                    label = { Text(stringResource(Res.string.label_description)) },
                     minLines = 3,
                     maxLines = 5,
                     isError = descriptionValidationError != null,
@@ -253,11 +254,11 @@ fun EditGroupDialog(
                     TextButton(onClick = onDismiss) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_cancel),
+                            contentDescription = stringResource(Res.string.action_cancel),
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.action_cancel))
+                        Text(stringResource(Res.string.action_cancel))
                     }
                     Spacer(Modifier.width(8.dp))
                     Button(
@@ -268,11 +269,11 @@ fun EditGroupDialog(
                     ) {
                         Icon(
                             Icons.Default.Save,
-                            contentDescription = stringResource(R.string.cd_save),
+                            contentDescription = stringResource(Res.string.cd_save),
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.action_save))
+                        Text(stringResource(Res.string.action_save))
                     }
                 }
             }
@@ -295,25 +296,25 @@ fun TransferOwnershipDialog(
     if (showConfirmation && selectedMember != null) {
         AlertDialog(
             onDismissRequest = { showConfirmation = false },
-            title = { Text(stringResource(R.string.dialog_transfer_ownership)) },
+            title = { Text(stringResource(Res.string.dialog_transfer_ownership)) },
             text = {
-                Text(stringResource(R.string.dialog_transfer_message, selectedMember?.getDisplayName() ?: ""))
+                Text(stringResource(Res.string.dialog_transfer_message, selectedMember?.getDisplayName() ?: ""))
             },
             confirmButton = {
                 Button(onClick = {
                     selectedMember?.let { onMemberSelected(it) }
                     showConfirmation = false
                 }) {
-                    Icon(Icons.Default.SwapHoriz, contentDescription = stringResource(R.string.cd_transfer_ownership), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.SwapHoriz, contentDescription = stringResource(Res.string.cd_transfer_ownership), modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text(stringResource(R.string.dialog_transfer))
+                    Text(stringResource(Res.string.dialog_transfer))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirmation = false }) {
-                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.cd_close), modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text(stringResource(R.string.action_cancel))
+                    Text(stringResource(Res.string.action_cancel))
                 }
             }
         )
@@ -326,7 +327,7 @@ fun TransferOwnershipDialog(
         ) {
             Column(Modifier.padding(16.dp)) {
                 Text(
-                    text = stringResource(R.string.dialog_transfer_ownership),
+                    text = stringResource(Res.string.dialog_transfer_ownership),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -334,7 +335,7 @@ fun TransferOwnershipDialog(
 
                 if (candidates.isEmpty()) {
                     Text(
-                        stringResource(R.string.dialog_no_members),
+                        stringResource(Res.string.dialog_no_members),
                         modifier = Modifier.padding(16.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -366,9 +367,9 @@ fun TransferOwnershipDialog(
 
                 Row(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close), modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.cd_close), modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.cancel))
+                        Text(stringResource(Res.string.cancel))
                     }
                 }
             }
@@ -410,12 +411,12 @@ fun AddCashboxEntryDialog(
     if (showPhotoOptions) {
         AlertDialog(
             onDismissRequest = { showPhotoOptions = false },
-            title = { Text(stringResource(R.string.cashbox_receipt)) },
+            title = { Text(stringResource(Res.string.cashbox_receipt)) },
             text = {
                 Column {
                     ListItem(
-                        headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_camera)) },
-                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = stringResource(R.string.cd_take_photo)) },
+                        headlineContent = { Text(stringResource(Res.string.create_group_photo_dialog_camera)) },
+                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = stringResource(Res.string.cd_take_photo)) },
                         modifier = Modifier.clickable {
                             try {
                                 val file = File.createTempFile("receipt_", ".jpg", context.cacheDir)
@@ -424,14 +425,14 @@ fun AddCashboxEntryDialog(
                                 takePictureLauncher.launch(uri)
                             } catch (e: Exception) {
                                 AppLogger.e(TAG, "Erro ao abrir câmera para comprovante", e)
-                                Toast.makeText(context, context.getString(R.string.dialog_error_camera), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(Res.string.dialog_error_camera), Toast.LENGTH_SHORT).show()
                             }
                             showPhotoOptions = false
                         }
                     )
                     ListItem(
-                        headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_gallery)) },
-                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(R.string.cd_choose_photo)) },
+                        headlineContent = { Text(stringResource(Res.string.create_group_photo_dialog_gallery)) },
+                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(Res.string.cd_choose_photo)) },
                         modifier = Modifier.clickable {
                             pickImageLauncher.launch("image/*")
                             showPhotoOptions = false
@@ -440,13 +441,13 @@ fun AddCashboxEntryDialog(
                 }
             },
             confirmButton = {},
-            dismissButton = { TextButton(onClick = { showPhotoOptions = false }) { Text(stringResource(R.string.action_cancel)) } }
+            dismissButton = { TextButton(onClick = { showPhotoOptions = false }) { Text(stringResource(Res.string.action_cancel)) } }
         )
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(if (type == CashboxEntryType.INCOME) R.string.cashbox_add_income_type else R.string.cashbox_add_expense_type)) },
+        title = { Text(stringResource(if (type == CashboxEntryType.INCOME) Res.string.cashbox_add_income_type else Res.string.cashbox_add_expense_type)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -455,9 +456,9 @@ fun AddCashboxEntryDialog(
                 // Category Dropdown
                 Box {
                     OutlinedTextField(
-                        value = selectedCategory?.displayName ?: stringResource(R.string.cashbox_select_category),
+                        value = selectedCategory?.displayName ?: stringResource(Res.string.cashbox_select_category),
                         onValueChange = {},
-                        label = { Text(stringResource(R.string.label_category)) },
+                        label = { Text(stringResource(Res.string.label_category)) },
                         readOnly = true,
                         trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
                         modifier = Modifier.fillMaxWidth().clickable { expanded = true },
@@ -496,7 +497,7 @@ fun AddCashboxEntryDialog(
                              amount = input
                          }
                     },
-                    label = { Text(stringResource(R.string.cashbox_value_hint)) },
+                    label = { Text(stringResource(Res.string.cashbox_value_hint)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -505,7 +506,7 @@ fun AddCashboxEntryDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text(stringResource(R.string.label_description)) },
+                    label = { Text(stringResource(Res.string.label_description)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -514,7 +515,7 @@ fun AddCashboxEntryDialog(
                     Box(Modifier.fillMaxWidth().height(150.dp)) {
                         AsyncImage(
                             model = selectedReceiptUri,
-                            contentDescription = stringResource(R.string.cashbox_receipt),
+                            contentDescription = stringResource(Res.string.cashbox_receipt),
                             modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop
                         )
@@ -523,7 +524,7 @@ fun AddCashboxEntryDialog(
                             modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
                                 .background(MaterialTheme.colorScheme.surface.copy(alpha=0.7f), CircleShape)
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete_receipt), tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.cd_delete_receipt), tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 } else {
@@ -531,9 +532,9 @@ fun AddCashboxEntryDialog(
                         onClick = { showPhotoOptions = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(Icons.Default.Image, contentDescription = stringResource(R.string.cd_add_receipt_image))
+                        Icon(Icons.Default.Image, contentDescription = stringResource(Res.string.cd_add_receipt_image))
                         Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.cashbox_add_receipt))
+                        Text(stringResource(Res.string.cashbox_add_receipt))
                     }
                 }
             }
@@ -559,16 +560,16 @@ fun AddCashboxEntryDialog(
                 enabled = amount.isNotBlank() && selectedCategory != null &&
                     amount.replace(",", ".").toDoubleOrNull()?.let { it > 0 } ?: false
             ) {
-                Icon(Icons.Default.Save, contentDescription = stringResource(R.string.cd_save), modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Save, contentDescription = stringResource(Res.string.cd_save), modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
-                Text(stringResource(R.string.action_save))
+                Text(stringResource(Res.string.action_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close), modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.cd_close), modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
-                Text(stringResource(R.string.action_cancel))
+                Text(stringResource(Res.string.action_cancel))
             }
         }
     )

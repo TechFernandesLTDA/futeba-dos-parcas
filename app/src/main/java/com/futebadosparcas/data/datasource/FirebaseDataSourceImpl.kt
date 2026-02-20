@@ -1,6 +1,6 @@
 package com.futebadosparcas.data.datasource
 
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.data.util.BatchOperationHelper
 import com.futebadosparcas.domain.util.RetryPolicy
 import com.futebadosparcas.domain.util.suspendWithRetryResult

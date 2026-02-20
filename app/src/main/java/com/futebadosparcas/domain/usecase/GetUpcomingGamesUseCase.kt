@@ -1,8 +1,8 @@
 package com.futebadosparcas.domain.usecase
 
 import com.futebadosparcas.data.datasource.FirebaseDataSource
-import com.futebadosparcas.data.model.Game
-import com.futebadosparcas.data.model.GameStatus
+import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.GameStatus
 import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

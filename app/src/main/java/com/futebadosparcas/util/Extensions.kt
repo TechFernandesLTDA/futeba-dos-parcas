@@ -3,7 +3,7 @@ package com.futebadosparcas.util
 import android.view.View
 import android.widget.ImageView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import coil.load
+import coil3.load
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -24,7 +24,7 @@ fun ImageView.loadProfileImage(url: String?) {
         crossfade(true)
         placeholder(com.futebadosparcas.R.drawable.ic_player_placeholder)
         error(com.futebadosparcas.R.drawable.ic_player_placeholder)
-        transformations(coil.transform.CircleCropTransformation())
+        transformations(coil3.transform.CircleCropTransformation())
     }
 }
 

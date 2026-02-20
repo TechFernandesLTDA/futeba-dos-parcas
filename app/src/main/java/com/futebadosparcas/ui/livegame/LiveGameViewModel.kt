@@ -2,7 +2,7 @@ package com.futebadosparcas.ui.livegame
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.LiveGameRepository

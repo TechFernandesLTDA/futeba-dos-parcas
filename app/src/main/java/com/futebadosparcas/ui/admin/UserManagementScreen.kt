@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.admin
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,10 +13,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.model.UserRole
 import com.futebadosparcas.ui.components.cards.UserCard
@@ -50,14 +51,14 @@ fun UserManagementScreen(
         if (user != null && newRole != null) {
             ConfirmationDialog(
                 visible = true,
-                title = stringResource(R.string.admin_change_permission),
+                title = stringResource(Res.string.admin_change_permission),
                 message = stringResource(
-                    R.string.admin_confirm_permission,
+                    Res.string.admin_confirm_permission,
                     user.getDisplayName(),
                     newRole.displayName
                 ),
-                confirmText = stringResource(R.string.admin_confirm),
-                dismissText = stringResource(R.string.cancel),
+                confirmText = stringResource(Res.string.admin_confirm),
+                dismissText = stringResource(Res.string.cancel),
                 type = ConfirmationDialogType.WARNING,
                 icon = Icons.Default.Security,
                 onConfirm = {
@@ -141,10 +142,10 @@ private fun UserManagementTopBar(
     onNavigateBack: () -> Unit
 ) {
     TopAppBar(
-        title = { Text(stringResource(R.string.admin_manage_users)) },
+        title = { Text(stringResource(Res.string.admin_manage_users)) },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -163,14 +164,14 @@ private fun SearchField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier,
-        placeholder = { Text(stringResource(R.string.admin_search_hint)) },
+        placeholder = { Text(stringResource(Res.string.admin_search_hint)) },
         leadingIcon = {
             Icon(Icons.Default.Search, contentDescription = null)
         },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.admin_clear))
+                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.admin_clear))
                 }
             }
         },
@@ -213,7 +214,7 @@ private fun UserManagementCard(
                 val (icon, _) = getRoleIconAndColor(role)
                 add(
                     UserCardMenuItem(
-                        label = stringResource(R.string.admin_change_permission) + " ${role.displayName}",
+                        label = stringResource(Res.string.admin_change_permission) + " ${role.displayName}",
                         icon = icon,
                         isDestructive = false,
                         onClick = { onRoleChangeRequested(user, role) }
@@ -255,7 +256,7 @@ private fun EmptySearchResults() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.admin_no_users),
+            text = stringResource(Res.string.admin_no_users),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -263,7 +264,7 @@ private fun EmptySearchResults() {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = stringResource(R.string.admin_try_search),
+            text = stringResource(Res.string.admin_try_search),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )

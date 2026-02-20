@@ -1,7 +1,7 @@
 package com.futebadosparcas.domain.usecase.ranking
 
-import com.futebadosparcas.data.model.LeagueDivision
-import com.futebadosparcas.data.model.SeasonParticipationV2
+import com.futebadosparcas.domain.model.LeagueDivision
+import com.futebadosparcas.domain.model.SeasonParticipation
 import com.futebadosparcas.domain.model.LeagueDivision as SharedLeagueDivision
 import com.futebadosparcas.domain.model.Season
 import com.futebadosparcas.domain.model.User

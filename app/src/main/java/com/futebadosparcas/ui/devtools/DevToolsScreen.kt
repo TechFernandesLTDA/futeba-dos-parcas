@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.devtools
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.content.Intent
 import androidx.compose.foundation.layout.*
@@ -13,10 +15,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.data.local.dao.GameDao
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.ui.auth.LoginActivityCompose
@@ -64,12 +65,12 @@ fun DevToolsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.dev_tools_title)) },
+                title = { Text(stringResource(Res.string.dev_tools_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_back)
+                            contentDescription = stringResource(Res.string.cd_back)
                         )
                     }
                 },
@@ -89,7 +90,7 @@ fun DevToolsScreen(
         ) {
             // ========== MODO DE DADOS ==========
             Text(
-                text = stringResource(R.string.dev_tools_data_source),
+                text = stringResource(Res.string.dev_tools_data_source),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -115,12 +116,12 @@ fun DevToolsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = stringResource(R.string.dev_tools_use_mock_data),
+                                text = stringResource(Res.string.dev_tools_use_mock_data),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = stringResource(R.string.dev_tools_mock_description),
+                                text = stringResource(Res.string.dev_tools_mock_description),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 4.dp)
@@ -131,7 +132,7 @@ fun DevToolsScreen(
                             onCheckedChange = { checked ->
                                 isMockMode = checked
                                 preferencesManager.setMockModeEnabled(checked)
-                                showToast = context.getString(R.string.dev_tools_mode_changed)
+                                showToast = context.getString(Res.string.dev_tools_mode_changed)
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = MaterialTheme.colorScheme.primary,
@@ -144,9 +145,9 @@ fun DevToolsScreen(
 
                     Text(
                         text = if (isMockMode) {
-                            "📱 " + stringResource(R.string.dev_tools_mode_mock)
+                            "📱 " + stringResource(Res.string.dev_tools_mode_mock)
                         } else {
-                            "☁️ " + stringResource(R.string.dev_tools_mode_real)
+                            "☁️ " + stringResource(Res.string.dev_tools_mode_real)
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isMockMode) {
@@ -161,7 +162,7 @@ fun DevToolsScreen(
 
             // ========== AÇÕES DE CACHE ==========
             Text(
-                text = stringResource(R.string.dev_tools_cache_data),
+                text = stringResource(Res.string.dev_tools_cache_data),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -170,8 +171,8 @@ fun DevToolsScreen(
 
             // Limpar Cache Local
             DevToolButton(
-                title = stringResource(R.string.dev_tools_clear_cache),
-                description = stringResource(R.string.dev_tools_clear_cache_desc),
+                title = stringResource(Res.string.dev_tools_clear_cache),
+                description = stringResource(Res.string.dev_tools_clear_cache_desc),
                 icon = Icons.Default.CleaningServices,
                 containerColor = MaterialTheme.colorScheme.errorContainer,
                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -179,9 +180,9 @@ fun DevToolsScreen(
                     scope.launch {
                         try {
                             gameDao.clearAll()
-                            showToast = context.getString(R.string.dev_tools_cache_cleared)
+                            showToast = context.getString(Res.string.dev_tools_cache_cleared)
                         } catch (e: Exception) {
-                            showToast = context.getString(R.string.dev_tools_error_prefix, e.message ?: "")
+                            showToast = context.getString(Res.string.dev_tools_error_prefix, e.message ?: "")
                         }
                     }
                 }
@@ -189,24 +190,24 @@ fun DevToolsScreen(
 
             // Popular Locais
             DevToolButton(
-                title = stringResource(R.string.dev_tools_seed_apollo),
-                description = stringResource(R.string.dev_tools_seed_apollo_desc),
+                title = stringResource(Res.string.dev_tools_seed_apollo),
+                description = stringResource(Res.string.dev_tools_seed_apollo_desc),
                 icon = Icons.Default.LocationOn,
                 isLoading = isSeedingLocations,
                 onClick = {
                     scope.launch {
                         isSeedingLocations = true
-                        showToast = context.getString(R.string.dev_tools_seeding_apollo)
+                        showToast = context.getString(Res.string.dev_tools_seeding_apollo)
 
                         val result = locationRepository.seedGinasioApollo()
 
                         isSeedingLocations = false
                         result.fold(
                             onSuccess = { location ->
-                                showToast = context.getString(R.string.dev_tools_seed_success, location.name)
+                                showToast = context.getString(Res.string.dev_tools_seed_success, location.name)
                             },
                             onFailure = { e ->
-                                showToast = context.getString(R.string.dev_tools_error_prefix, e.message ?: "")
+                                showToast = context.getString(Res.string.dev_tools_error_prefix, e.message ?: "")
                             }
                         )
                     }
@@ -215,21 +216,21 @@ fun DevToolsScreen(
 
             // Limpar Preferências
             DevToolButton(
-                title = stringResource(R.string.dev_tools_reset_prefs),
-                description = stringResource(R.string.dev_tools_reset_prefs_desc),
+                title = stringResource(Res.string.dev_tools_reset_prefs),
+                description = stringResource(Res.string.dev_tools_reset_prefs_desc),
                 icon = Icons.Default.SettingsBackupRestore,
                 containerColor = MaterialTheme.colorScheme.errorContainer,
                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
                 onClick = {
                     preferencesManager.clearAll()
                     isMockMode = preferencesManager.isMockModeEnabled()
-                    showToast = context.getString(R.string.dev_tools_prefs_reset)
+                    showToast = context.getString(Res.string.dev_tools_prefs_reset)
                 }
             )
 
             // ========== SISTEMA ==========
             Text(
-                text = stringResource(R.string.dev_tools_system),
+                text = stringResource(Res.string.dev_tools_system),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -238,8 +239,8 @@ fun DevToolsScreen(
 
             // Reiniciar App
             DevToolButton(
-                title = stringResource(R.string.dev_tools_restart_app),
-                description = stringResource(R.string.dev_tools_restart_app_desc),
+                title = stringResource(Res.string.dev_tools_restart_app),
+                description = stringResource(Res.string.dev_tools_restart_app_desc),
                 icon = Icons.Default.RestartAlt,
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -333,7 +334,7 @@ private fun DevToolButton(
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
-                        contentDescription = stringResource(R.string.dev_tools_execute)
+                        contentDescription = stringResource(Res.string.dev_tools_execute)
                     )
                 }
             }

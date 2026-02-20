@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.owner
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -18,12 +20,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.BrandColors
 import java.text.NumberFormat
@@ -71,10 +72,10 @@ fun GameFinancialDashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.owner_financial_dashboard)) },
+                title = { Text(stringResource(Res.string.owner_financial_dashboard)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -123,7 +124,7 @@ fun GameFinancialDashboardScreen(
             if (paidPlayers.isNotEmpty()) {
                 item {
                     Text(
-                        text = stringResource(R.string.owner_paid) + " (${paidPlayers.size})",
+                        text = stringResource(Res.string.owner_paid) + " (${paidPlayers.size})",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = BrandColors.WhatsApp
@@ -145,7 +146,7 @@ fun GameFinancialDashboardScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = stringResource(R.string.owner_partial) + " (${partialPlayers.size})",
+                        text = stringResource(Res.string.owner_partial) + " (${partialPlayers.size})",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.tertiary
@@ -167,7 +168,7 @@ fun GameFinancialDashboardScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = stringResource(R.string.owner_pending_short) + " (${pendingPlayers.size})",
+                        text = stringResource(Res.string.owner_pending_short) + " (${pendingPlayers.size})",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.error
@@ -222,7 +223,7 @@ private fun FinancialSummaryCard(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.owner_financial_summary),
+                text = stringResource(Res.string.owner_financial_summary),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -235,19 +236,19 @@ private fun FinancialSummaryCard(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 FinancialStatColumn(
-                    label = stringResource(R.string.owner_total_cost),
+                    label = stringResource(Res.string.owner_total_cost),
                     value = currencyFormat.format(totalCost),
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 FinancialStatColumn(
-                    label = stringResource(R.string.owner_collected),
+                    label = stringResource(Res.string.owner_collected),
                     value = currencyFormat.format(totalCollected),
                     color = if (totalCollected >= totalCost) BrandColors.WhatsApp
                            else MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 FinancialStatColumn(
-                    label = if (surplus >= 0) stringResource(R.string.owner_surplus)
-                           else stringResource(R.string.owner_pending),
+                    label = if (surplus >= 0) stringResource(Res.string.owner_surplus)
+                           else stringResource(Res.string.owner_pending),
                     value = currencyFormat.format(if (surplus >= 0) surplus else totalPending.coerceAtLeast(0.0)),
                     color = if (surplus >= 0) BrandColors.WhatsApp
                            else MaterialTheme.colorScheme.error
@@ -309,12 +310,12 @@ private fun PricePerPlayerCard(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = stringResource(R.string.owner_per_player, currencyFormat.format(pricePerPlayer)),
+                        text = stringResource(Res.string.owner_per_player, currencyFormat.format(pricePerPlayer)),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = stringResource(R.string.financial_split_among, totalPlayers),
+                        text = stringResource(Res.string.financial_split_among, totalPlayers),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -339,17 +340,17 @@ private fun PaymentStatusSummary(
     ) {
         StatusBadge(
             count = paidCount,
-            label = stringResource(R.string.owner_paid),
+            label = stringResource(Res.string.owner_paid),
             color = BrandColors.WhatsApp
         )
         StatusBadge(
             count = partialCount,
-            label = stringResource(R.string.owner_partial),
+            label = stringResource(Res.string.owner_partial),
             color = MaterialTheme.colorScheme.tertiary
         )
         StatusBadge(
             count = pendingCount,
-            label = stringResource(R.string.owner_pending_short),
+            label = stringResource(Res.string.owner_pending_short),
             color = MaterialTheme.colorScheme.error
         )
     }
@@ -431,7 +432,7 @@ private fun PlayerPaymentCard(
                 when {
                     isPaid -> {
                         Text(
-                            text = stringResource(R.string.financial_paid, currencyFormat.format(pricePerPlayer)),
+                            text = stringResource(Res.string.financial_paid, currencyFormat.format(pricePerPlayer)),
                             style = MaterialTheme.typography.bodySmall,
                             color = BrandColors.WhatsApp
                         )
@@ -439,21 +440,21 @@ private fun PlayerPaymentCard(
                     isPartial -> {
                         Text(
                             text = stringResource(
-                                R.string.owner_paid_partial_amount,
+                                Res.string.owner_paid_partial_amount,
                                 currencyFormat.format(player.partialPayment)
                             ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.tertiary
                         )
                         Text(
-                            text = stringResource(R.string.financial_remaining, currencyFormat.format(remainingAmount)),
+                            text = stringResource(Res.string.financial_remaining, currencyFormat.format(remainingAmount)),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error
                         )
                     }
                     else -> {
                         Text(
-                            text = stringResource(R.string.financial_owes, currencyFormat.format(pricePerPlayer)),
+                            text = stringResource(Res.string.financial_owes, currencyFormat.format(pricePerPlayer)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -466,7 +467,7 @@ private fun PlayerPaymentCard(
                 IconButton(onClick = onMarkPartial) {
                     Icon(
                         imageVector = Icons.Outlined.Payments,
-                        contentDescription = stringResource(R.string.owner_partial_payment),
+                        contentDescription = stringResource(Res.string.owner_partial_payment),
                         tint = MaterialTheme.colorScheme.tertiary
                     )
                 }

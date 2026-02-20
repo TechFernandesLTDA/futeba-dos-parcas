@@ -5,7 +5,7 @@ import androidx.paging.PagingState
 import com.futebadosparcas.data.local.dao.GameDao
 import com.futebadosparcas.data.local.model.toDomain
 import com.futebadosparcas.data.local.model.toEntity
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.ui.games.GameWithConfirmations
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore

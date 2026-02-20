@@ -1,7 +1,7 @@
 package com.futebadosparcas.domain.usecase
 
 import com.futebadosparcas.data.datasource.FirebaseDataSource
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 

@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -18,10 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-
 @Composable
 fun SyncStatusBanner(
     isConnected: Boolean,
@@ -45,12 +45,12 @@ fun SyncStatusBanner(
             ) {
                 Icon(
                     imageVector = Icons.Default.CloudOff,
-                    contentDescription = stringResource(R.string.cd_offline),
+                    contentDescription = stringResource(Res.string.cd_offline),
                     tint = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = stringResource(R.string.ui_offline_message),
+                    text = stringResource(Res.string.ui_offline_message),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.padding(start = 8.dp)

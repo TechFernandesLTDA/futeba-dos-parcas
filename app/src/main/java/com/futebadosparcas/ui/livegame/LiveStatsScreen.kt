@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.livegame
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -20,9 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.data.model.LivePlayerStats
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.util.ContrastHelper
 
@@ -185,7 +186,7 @@ private fun PlayerStatsCard(
                             color = MaterialTheme.colorScheme.errorContainer
                         ) {
                             Text(
-                                text = stringResource(R.string.live_game_substituted_out),
+                                text = stringResource(Res.string.live_game_substituted_out),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onErrorContainer,
@@ -336,13 +337,13 @@ private fun LiveStatsEmptyState() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.live_game_no_stats),
+            text = stringResource(Res.string.live_game_no_stats),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
-            text = stringResource(R.string.live_game_no_stats_description),
+            text = stringResource(Res.string.live_game_no_stats_description),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)

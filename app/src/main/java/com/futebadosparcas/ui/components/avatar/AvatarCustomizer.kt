@@ -1,7 +1,9 @@
 package com.futebadosparcas.ui.components.avatar
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -62,8 +64,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-
 /**
  * Sistema de customização de avatar para o perfil do jogador.
  * Permite personalizar rosto, cabelo, acessórios, camisa e badges.
@@ -610,14 +610,14 @@ fun AvatarCustomizerScreen(
                 onClick = onCancel,
                 modifier = Modifier.weight(1f)
             ) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
 
             Button(
                 onClick = { onSave(config) },
                 modifier = Modifier.weight(1f)
             ) {
-                Text(stringResource(R.string.save))
+                Text(stringResource(Res.string.save))
             }
         }
     }
@@ -634,7 +634,7 @@ private fun FaceCustomizer(
 ) {
     Column {
         Text(
-            text = stringResource(R.string.avatar_skin_tone),
+            text = stringResource(Res.string.avatar_skin_tone),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -658,7 +658,7 @@ private fun FaceCustomizer(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(R.string.avatar_expression),
+            text = stringResource(Res.string.avatar_expression),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -689,7 +689,7 @@ private fun HairCustomizer(
 ) {
     Column {
         Text(
-            text = stringResource(R.string.avatar_style),
+            text = stringResource(Res.string.avatar_style),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -713,7 +713,7 @@ private fun HairCustomizer(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(R.string.avatar_hair_color),
+            text = stringResource(Res.string.avatar_hair_color),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -747,7 +747,7 @@ private fun AccessoriesCustomizer(
 ) {
     Column {
         Text(
-            text = stringResource(R.string.avatar_glasses),
+            text = stringResource(Res.string.avatar_glasses),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -771,7 +771,7 @@ private fun AccessoriesCustomizer(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(R.string.avatar_facial_hair),
+            text = stringResource(Res.string.avatar_facial_hair),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -816,7 +816,7 @@ private fun ShirtCustomizer(
 
     Column {
         Text(
-            text = stringResource(R.string.avatar_shirt_color),
+            text = stringResource(Res.string.avatar_shirt_color),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -840,7 +840,7 @@ private fun ShirtCustomizer(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(R.string.avatar_number),
+            text = stringResource(Res.string.avatar_number),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -852,7 +852,7 @@ private fun ShirtCustomizer(
                 FilterChip(
                     selected = config.shirtNumber == null,
                     onClick = { onConfigChange(config.copy(shirtNumber = null)) },
-                    label = { Text(stringResource(R.string.avatar_no_number)) }
+                    label = { Text(stringResource(Res.string.avatar_no_number)) }
                 )
             }
             items((1..99).toList(), key = { it }) { number ->
@@ -879,7 +879,7 @@ private fun FrameCustomizer(
 ) {
     Column {
         Text(
-            text = stringResource(R.string.avatar_frame),
+            text = stringResource(Res.string.avatar_frame),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -908,7 +908,7 @@ private fun FrameCustomizer(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(R.string.avatar_badge),
+            text = stringResource(Res.string.avatar_badge),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -922,7 +922,7 @@ private fun FrameCustomizer(
             // Opção sem badge
             EmojiOption(
                 emoji = "❌",
-                label = stringResource(R.string.avatar_none),
+                label = stringResource(Res.string.avatar_none),
                 isSelected = config.badge == null,
                 onClick = { onConfigChange(config.copy(badge = null)) }
             )
@@ -1075,7 +1075,7 @@ private fun FrameOption(
                 if (!isUnlocked) {
                     Icon(
                         imageVector = Icons.Default.Lock,
-                        contentDescription = stringResource(R.string.cd_locked),
+                        contentDescription = stringResource(Res.string.cd_locked),
                         tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(16.dp)
                     )
@@ -1125,7 +1125,7 @@ private fun BadgeOption(
                 if (!isUnlocked) {
                     Icon(
                         imageVector = Icons.Default.Lock,
-                        contentDescription = stringResource(R.string.cd_locked),
+                        contentDescription = stringResource(Res.string.cd_locked),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         modifier = Modifier.size(16.dp)
                     )

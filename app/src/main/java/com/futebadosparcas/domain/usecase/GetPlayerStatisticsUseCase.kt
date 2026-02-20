@@ -1,9 +1,9 @@
 package com.futebadosparcas.domain.usecase
 
 import com.futebadosparcas.data.datasource.FirebaseDataSource
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.model.UserStatistics
-import com.futebadosparcas.data.model.XpLog
+import com.futebadosparcas.domain.model.XpLog
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow

@@ -1,6 +1,6 @@
 package com.futebadosparcas.ui.games.teamformation
 
-import com.futebadosparcas.data.model.SavedTeamFormation
+import com.futebadosparcas.domain.model.SavedTeamFormation
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query

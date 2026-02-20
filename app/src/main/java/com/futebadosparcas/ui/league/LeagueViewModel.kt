@@ -2,10 +2,10 @@ package com.futebadosparcas.ui.league
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.LeagueDivision
+import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.data.model.Season as AndroidSeason
-import com.futebadosparcas.data.model.SeasonParticipationV2
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.SeasonParticipation
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.mapper.SeasonMapper
 import com.futebadosparcas.domain.model.Season
 import com.futebadosparcas.domain.repository.AuthRepository

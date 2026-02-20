@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.content.Context
 import android.content.Intent
@@ -21,10 +23,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 
 /**
  * Botao para adicionar jogo ao calendario do dispositivo.
@@ -56,7 +57,7 @@ fun CalendarIntegrationButton(
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = stringResource(R.string.create_game_add_to_calendar))
+        Text(text = stringResource(Res.string.create_game_add_to_calendar))
     }
 }
 
@@ -97,7 +98,7 @@ fun CalendarIntegrationCard(
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = stringResource(R.string.create_game_add_to_calendar),
+                text = stringResource(Res.string.create_game_add_to_calendar),
                 style = MaterialTheme.typography.labelLarge
             )
         }

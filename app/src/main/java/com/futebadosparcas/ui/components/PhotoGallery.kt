@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
@@ -25,13 +27,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import coil.compose.AsyncImage
-import com.futebadosparcas.R
+import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 
 /**
@@ -74,7 +75,7 @@ fun PhotoGalleryPreview(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = stringResource(R.string.photo_gallery_no_photos),
+                    text = stringResource(Res.string.photo_gallery_no_photos),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -100,7 +101,7 @@ fun PhotoGalleryPreview(
                 ) {
                     AsyncImage(
                         model = photo,
-                        contentDescription = stringResource(R.string.cd_photo_number, index + 1),
+                        contentDescription = stringResource(Res.string.cd_photo_number, index + 1),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -144,7 +145,7 @@ fun PhotoGalleryPreview(
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = stringResource(R.string.photo_gallery_view_all),
+                                text = stringResource(Res.string.photo_gallery_view_all),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
@@ -157,7 +158,7 @@ fun PhotoGalleryPreview(
         // Contador de fotos
         if (photos.size > 1) {
             Text(
-                text = stringResource(R.string.photo_gallery_count_label, photos.size),
+                text = stringResource(Res.string.photo_gallery_count_label, photos.size),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
@@ -220,7 +221,7 @@ fun FullScreenPhotoGallery(
                 title = {
                     Text(
                         text = stringResource(
-                            R.string.photo_gallery_count,
+                            Res.string.photo_gallery_count,
                             pagerState.currentPage + 1,
                             photos.size
                         ),
@@ -231,7 +232,7 @@ fun FullScreenPhotoGallery(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.photo_gallery_close),
+                            contentDescription = stringResource(Res.string.photo_gallery_close),
                             tint = Color.White
                         )
                     }
@@ -289,7 +290,7 @@ fun FullScreenPhotoGallery(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.photo_gallery_previous),
+                            contentDescription = stringResource(Res.string.photo_gallery_previous),
                             tint = Color.White
                         )
                     }
@@ -311,7 +312,7 @@ fun FullScreenPhotoGallery(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = stringResource(R.string.photo_gallery_next),
+                            contentDescription = stringResource(Res.string.photo_gallery_next),
                             tint = Color.White
                         )
                     }

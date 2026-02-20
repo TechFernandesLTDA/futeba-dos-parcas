@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -25,10 +27,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.domain.service.TimeSuggestion
 
 /**
@@ -76,7 +77,7 @@ fun TimeSuggestionChip(
                         )
                         Text(
                             text = stringResource(
-                                R.string.create_game_time_suggestion,
+                                Res.string.create_game_time_suggestion,
                                 timeSuggestion.time,
                                 percentage
                             ),
@@ -87,7 +88,7 @@ fun TimeSuggestionChip(
 
                     AssistChip(
                         onClick = onApply,
-                        label = { Text(stringResource(R.string.create_game_apply)) },
+                        label = { Text(stringResource(Res.string.create_game_apply)) },
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Schedule,

@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.schedules
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import com.futebadosparcas.util.AppLogger
 import androidx.compose.foundation.layout.*
@@ -16,10 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.data.model.RecurrenceType
-import com.futebadosparcas.data.model.Schedule
-import com.futebadosparcas.R
+import com.futebadosparcas.domain.model.Schedule
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.states.LoadingState
@@ -89,10 +90,10 @@ fun SchedulesScreen(
                     // CMD-09: EmptyState padrão com CTA para criar
                     EmptyState(
                         type = EmptyStateType.NoData(
-                            title = stringResource(R.string.schedules_no_schedules),
-                            description = stringResource(R.string.schedules_empty_description),
+                            title = stringResource(Res.string.schedules_no_schedules),
+                            description = stringResource(Res.string.schedules_empty_description),
                             icon = Icons.Default.EventRepeat,
-                            actionLabel = stringResource(R.string.schedules_create_schedule),
+                            actionLabel = stringResource(Res.string.schedules_create_schedule),
                             onAction = { showCreateDialog = true }
                         )
                     )
@@ -122,10 +123,10 @@ fun SchedulesScreen(
                 val errorMsg = (uiState as SchedulesUiState.Error).message
                 EmptyState(
                     type = EmptyStateType.Error(
-                        title = stringResource(R.string.schedules_error_loading),
+                        title = stringResource(Res.string.schedules_error_loading),
                         description = errorMsg,
                         icon = Icons.Default.ErrorOutline,
-                        actionLabel = stringResource(R.string.schedules_try_again),
+                        actionLabel = stringResource(Res.string.schedules_try_again),
                         onRetry = { viewModel.refresh() }
                     )
                 )
@@ -142,7 +143,7 @@ fun SchedulesScreen(
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = stringResource(R.string.schedules_fab_description)
+                contentDescription = stringResource(Res.string.schedules_fab_description)
             )
         }
     }
@@ -187,10 +188,10 @@ fun SchedulesScreen(
                 )
             },
             title = {
-                Text(stringResource(R.string.schedules_delete_title))
+                Text(stringResource(Res.string.schedules_delete_title))
             },
             text = {
-                Text(stringResource(R.string.schedules_delete_message))
+                Text(stringResource(Res.string.schedules_delete_message))
             },
             confirmButton = {
                 TextButton(
@@ -202,12 +203,12 @@ fun SchedulesScreen(
                         contentColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text(stringResource(R.string.schedules_stop))
+                    Text(stringResource(Res.string.schedules_stop))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { scheduleToDelete = null }) {
-                    Text(stringResource(R.string.schedules_cancel))
+                    Text(stringResource(Res.string.schedules_cancel))
                 }
             }
         )
@@ -237,7 +238,7 @@ private fun ScheduleCard(
         ) {
             // Nome do horário
             Text(
-                text = schedule.name.ifEmpty { stringResource(R.string.schedules_no_name) },
+                text = schedule.name.ifEmpty { stringResource(Res.string.schedules_no_name) },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -264,9 +265,9 @@ private fun ScheduleCard(
                     text = buildString {
                         append("$recurrenceStr • $dayStr")
                         if (schedule.time.isNotEmpty()) {
-                            append(" ${stringResource(R.string.schedules_at)} ${schedule.time}")
+                            append(" ${stringResource(Res.string.schedules_at)} ${schedule.time}")
                         } else {
-                            append(" - ${stringResource(R.string.schedules_time_not_defined)}")
+                            append(" - ${stringResource(Res.string.schedules_time_not_defined)}")
                         }
                     },
                     style = MaterialTheme.typography.bodyMedium,
@@ -320,7 +321,7 @@ private fun ScheduleCard(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.schedules_edit))
+                    Text(stringResource(Res.string.schedules_edit))
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -338,7 +339,7 @@ private fun ScheduleCard(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.schedules_delete))
+                    Text(stringResource(Res.string.schedules_delete))
                 }
             }
         }
@@ -351,13 +352,13 @@ private fun ScheduleCard(
 @Composable
 private fun getDayOfWeekString(day: Int): String {
     return when (day) {
-        0 -> stringResource(R.string.schedules_day_sunday)
-        1 -> stringResource(R.string.schedules_day_monday)
-        2 -> stringResource(R.string.schedules_day_tuesday)
-        3 -> stringResource(R.string.schedules_day_wednesday)
-        4 -> stringResource(R.string.schedules_day_thursday)
-        5 -> stringResource(R.string.schedules_day_friday)
-        6 -> stringResource(R.string.schedules_day_saturday)
+        0 -> stringResource(Res.string.schedules_day_sunday)
+        1 -> stringResource(Res.string.schedules_day_monday)
+        2 -> stringResource(Res.string.schedules_day_tuesday)
+        3 -> stringResource(Res.string.schedules_day_wednesday)
+        4 -> stringResource(Res.string.schedules_day_thursday)
+        5 -> stringResource(Res.string.schedules_day_friday)
+        6 -> stringResource(Res.string.schedules_day_saturday)
         else -> "Desconhecido"
     }
 }
@@ -368,8 +369,8 @@ private fun getDayOfWeekString(day: Int): String {
 @Composable
 private fun getRecurrenceString(recurrenceType: RecurrenceType): String {
     return when (recurrenceType) {
-        RecurrenceType.weekly -> stringResource(R.string.schedules_recurrence_weekly)
-        RecurrenceType.biweekly -> stringResource(R.string.schedules_recurrence_biweekly)
-        RecurrenceType.monthly -> stringResource(R.string.schedules_recurrence_monthly)
+        RecurrenceType.weekly -> stringResource(Res.string.schedules_recurrence_weekly)
+        RecurrenceType.biweekly -> stringResource(Res.string.schedules_recurrence_biweekly)
+        RecurrenceType.monthly -> stringResource(Res.string.schedules_recurrence_monthly)
     }
 }

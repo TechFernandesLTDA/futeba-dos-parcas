@@ -2,7 +2,7 @@ package com.futebadosparcas.ui.games
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.util.AppLogger
@@ -20,9 +20,9 @@ import com.futebadosparcas.util.toAndroidSchedule
 import com.futebadosparcas.util.toKmpSchedule
 import com.futebadosparcas.util.toKmpAppNotifications
 import com.futebadosparcas.data.model.CancellationReason
-import com.futebadosparcas.data.model.GameWaitlist
-import com.futebadosparcas.data.model.GameInviteLink
-import com.futebadosparcas.data.model.PlayerAttendance
+import com.futebadosparcas.domain.model.GameWaitlist
+import com.futebadosparcas.domain.model.GameInviteLink
+import com.futebadosparcas.domain.model.PlayerAttendance
 import com.futebadosparcas.data.model.PixKeyType
 
 class GameDetailViewModel(

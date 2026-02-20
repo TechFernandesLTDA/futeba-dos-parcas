@@ -2,14 +2,14 @@ package com.futebadosparcas.ui.games.teamformation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.ai.EnhancedTeamBalancer
 import com.futebadosparcas.domain.ai.PlayerForBalancing
 import com.futebadosparcas.domain.ai.SwapSuggestion
 import com.futebadosparcas.domain.ai.toPlayerForBalancing
-import com.futebadosparcas.data.model.PlayerPosition
+import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

@@ -1,7 +1,8 @@
 package com.futebadosparcas.util
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.content.Context
-import com.futebadosparcas.R
 import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthException
@@ -235,19 +236,19 @@ object LocationErrorHandler {
         return when (error) {
             is LocationError.Network -> {
                 if (error.isTimeout) {
-                    context.getString(R.string.location_error_timeout)
+                    context.getString(Res.string.location_error_timeout)
                 } else {
-                    context.getString(R.string.location_error_no_connection)
+                    context.getString(Res.string.location_error_no_connection)
                 }
             }
 
             is LocationError.Auth -> {
                 when (error.reason) {
                     "not_authenticated",
-                    "user_not_found" -> context.getString(R.string.location_error_not_authenticated)
-                    "permission_denied" -> context.getString(R.string.location_error_permission_denied)
-                    "token_expired" -> context.getString(R.string.location_error_session_expired)
-                    else -> context.getString(R.string.location_error_auth_generic)
+                    "user_not_found" -> context.getString(Res.string.location_error_not_authenticated)
+                    "permission_denied" -> context.getString(Res.string.location_error_permission_denied)
+                    "token_expired" -> context.getString(Res.string.location_error_session_expired)
+                    else -> context.getString(Res.string.location_error_auth_generic)
                 }
             }
 
@@ -255,21 +256,21 @@ object LocationErrorHandler {
                 when {
                     error.message.contains("not_found") ||
                     error.message.contains("não encontrado") ->
-                        context.getString(R.string.location_error_not_found)
+                        context.getString(Res.string.location_error_not_found)
                     error.message.contains("corrompido") ||
                     error.message.contains("corrupted") ->
-                        context.getString(R.string.location_error_corrupted_data)
+                        context.getString(Res.string.location_error_corrupted_data)
                     else -> error.message.ifBlank {
-                        context.getString(R.string.location_error_data_generic)
+                        context.getString(Res.string.location_error_data_generic)
                     }
                 }
             }
 
             is LocationError.Validation -> {
                 if (error.fields.isNotEmpty()) {
-                    context.getString(R.string.location_error_validation_fields, error.fields.joinToString(", "))
+                    context.getString(Res.string.location_error_validation_fields, error.fields.joinToString(", "))
                 } else {
-                    context.getString(R.string.location_error_validation_generic)
+                    context.getString(Res.string.location_error_validation_generic)
                 }
             }
         }
@@ -284,11 +285,11 @@ object LocationErrorHandler {
      */
     fun getActionButtonText(action: RecoveryAction, context: Context): String {
         return when (action) {
-            is RecoveryAction.Retry -> context.getString(R.string.location_error_action_retry)
-            is RecoveryAction.CheckInternet -> context.getString(R.string.location_error_action_check_connection)
-            is RecoveryAction.Login -> context.getString(R.string.location_error_action_login)
-            is RecoveryAction.GoBack -> context.getString(R.string.location_error_action_go_back)
-            is RecoveryAction.FixFields -> context.getString(R.string.location_error_action_fix_fields)
+            is RecoveryAction.Retry -> context.getString(Res.string.location_error_action_retry)
+            is RecoveryAction.CheckInternet -> context.getString(Res.string.location_error_action_check_connection)
+            is RecoveryAction.Login -> context.getString(Res.string.location_error_action_login)
+            is RecoveryAction.GoBack -> context.getString(Res.string.location_error_action_go_back)
+            is RecoveryAction.FixFields -> context.getString(Res.string.location_error_action_fix_fields)
         }
     }
 

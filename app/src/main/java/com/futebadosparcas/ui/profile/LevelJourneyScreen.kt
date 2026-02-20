@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.profile
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -34,14 +36,13 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 import com.futebadosparcas.util.LevelHelper
@@ -77,7 +78,7 @@ fun LevelJourneyScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.level_journey_title),
+                        text = stringResource(Res.string.level_journey_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -86,7 +87,7 @@ fun LevelJourneyScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -125,7 +126,7 @@ fun LevelJourneyScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(R.string.level_journey_error),
+                            text = stringResource(Res.string.level_journey_error),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -198,7 +199,7 @@ private fun LevelJourneyContent(
                     color = MaterialTheme.colorScheme.outlineVariant
                 )
                 Text(
-                    text = stringResource(R.string.level_journey_your_journey),
+                    text = stringResource(Res.string.level_journey_your_journey),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -292,7 +293,7 @@ private fun CurrentLevelCard(
 
                 androidx.compose.foundation.Image(
                     painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
-                    contentDescription = stringResource(R.string.cd_level_journey_badge, level),
+                    contentDescription = stringResource(Res.string.cd_level_journey_badge, level),
                     modifier = Modifier.size(90.dp)
                 )
             }
@@ -305,7 +306,7 @@ private fun CurrentLevelCard(
                 shape = RoundedCornerShape(20.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.level_number, level),
+                    text = stringResource(Res.string.level_number, level),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onPrimary,
@@ -333,7 +334,7 @@ private fun CurrentLevelCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.level_journey_progress),
+                        text = stringResource(Res.string.level_journey_progress),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -402,7 +403,7 @@ private fun CurrentLevelCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = stringResource(R.string.level_journey_level_quote),
+                            text = stringResource(Res.string.level_journey_level_quote),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -410,7 +411,7 @@ private fun CurrentLevelCard(
                         Spacer(modifier = Modifier.weight(1f))
                         Icon(
                             imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = stringResource(if (expanded) R.string.level_journey_collapse_cd else R.string.level_journey_expand_cd),
+                            contentDescription = stringResource(if (expanded) Res.string.level_journey_collapse_cd else Res.string.level_journey_expand_cd),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .size(24.dp)
@@ -461,9 +462,9 @@ private fun CurrentLevelCard(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = if (remaining > 0) {
-                                    stringResource(R.string.level_journey_xp_remaining_to, remaining, nextLevelName)
+                                    stringResource(Res.string.level_journey_xp_remaining_to, remaining, nextLevelName)
                                 } else {
-                                    stringResource(R.string.level_journey_next_level, nextLevelName)
+                                    stringResource(Res.string.level_journey_next_level, nextLevelName)
                                 },
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
@@ -493,7 +494,7 @@ private fun CurrentLevelCard(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = stringResource(R.string.level_max_reached, levelName),
+                            text = stringResource(Res.string.level_max_reached, levelName),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -596,7 +597,7 @@ private fun LevelJourneyItemContent(
         ) {
             androidx.compose.foundation.Image(
                 painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
-                contentDescription = stringResource(R.string.cd_level_journey_badge, level),
+                contentDescription = stringResource(Res.string.cd_level_journey_badge, level),
                 modifier = Modifier
                     .size(if (isCurrent) 52.dp else 44.dp)
                     .alpha(if (isUnlocked) 1f else 0.3f)
@@ -614,7 +615,7 @@ private fun LevelJourneyItemContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = stringResource(R.string.level_journey_current_level_cd),
+                        contentDescription = stringResource(Res.string.level_journey_current_level_cd),
                         modifier = Modifier.size(14.dp),
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
@@ -630,7 +631,7 @@ private fun LevelJourneyItemContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.level_short, level),
+                        text = stringResource(Res.string.level_short, level),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = if (isUnlocked) {
@@ -647,7 +648,7 @@ private fun LevelJourneyItemContent(
                             color = GamificationColors.XpGreen
                         ) {
                             Text(
-                                text = stringResource(R.string.level_current_label),
+                                text = stringResource(Res.string.level_current_label),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -670,7 +671,7 @@ private fun LevelJourneyItemContent(
                 // Mostrar XP necessário
                 Text(
                     text = if (isUnlocked) {
-                        stringResource(R.string.level_journey_unlocked)
+                        stringResource(Res.string.level_journey_unlocked)
                     } else {
                         "$xpRequired XP"
                     },
@@ -691,9 +692,9 @@ private fun LevelJourneyItemContent(
                     else -> Icons.Default.Lock
                 },
                 contentDescription = stringResource(when {
-                    isCurrent -> R.string.level_journey_current_level_cd
-                    isUnlocked -> R.string.level_journey_unlocked_cd
-                    else -> R.string.level_journey_locked_cd
+                    isCurrent -> Res.string.level_journey_current_level_cd
+                    isUnlocked -> Res.string.level_journey_unlocked_cd
+                    else -> Res.string.level_journey_locked_cd
                 }),
                 modifier = Modifier.size(24.dp),
                 tint = when {
@@ -738,7 +739,7 @@ private fun XpGuideSection() {
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = stringResource(R.string.level_journey_how_to_earn_xp),
+                    text = stringResource(Res.string.level_journey_how_to_earn_xp),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -746,7 +747,7 @@ private fun XpGuideSection() {
                 )
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = stringResource(if (expanded) R.string.level_journey_collapse_cd else R.string.level_journey_expand_cd),
+                    contentDescription = stringResource(if (expanded) Res.string.level_journey_collapse_cd else Res.string.level_journey_expand_cd),
                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
@@ -760,14 +761,14 @@ private fun XpGuideSection() {
                     modifier = Modifier.padding(top = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    XpSourceItem(stringResource(R.string.level_journey_xp_presence_title), stringResource(R.string.level_journey_xp_presence_value), stringResource(R.string.level_journey_xp_presence_desc))
-                    XpSourceItem(stringResource(R.string.level_journey_xp_goal_title), stringResource(R.string.level_journey_xp_goal_value), stringResource(R.string.level_journey_xp_goal_desc))
-                    XpSourceItem(stringResource(R.string.level_journey_xp_assist_title), stringResource(R.string.level_journey_xp_assist_value), stringResource(R.string.level_journey_xp_assist_desc))
-                    XpSourceItem(stringResource(R.string.level_journey_xp_save_title), stringResource(R.string.level_journey_xp_save_value), stringResource(R.string.level_journey_xp_save_desc))
-                    XpSourceItem(stringResource(R.string.level_journey_xp_win_title), stringResource(R.string.level_journey_xp_win_value), stringResource(R.string.level_journey_xp_win_desc))
-                    XpSourceItem(stringResource(R.string.level_journey_xp_mvp_title), stringResource(R.string.level_journey_xp_mvp_value), stringResource(R.string.level_journey_xp_mvp_desc))
-                    XpSourceItem(stringResource(R.string.level_journey_xp_hattrick_title), stringResource(R.string.level_journey_xp_hattrick_value), stringResource(R.string.level_journey_xp_hattrick_desc))
-                    XpSourceItem(stringResource(R.string.level_journey_xp_streak_title), stringResource(R.string.level_journey_xp_streak_value), stringResource(R.string.level_journey_xp_streak_desc))
+                    XpSourceItem(stringResource(Res.string.level_journey_xp_presence_title), stringResource(Res.string.level_journey_xp_presence_value), stringResource(Res.string.level_journey_xp_presence_desc))
+                    XpSourceItem(stringResource(Res.string.level_journey_xp_goal_title), stringResource(Res.string.level_journey_xp_goal_value), stringResource(Res.string.level_journey_xp_goal_desc))
+                    XpSourceItem(stringResource(Res.string.level_journey_xp_assist_title), stringResource(Res.string.level_journey_xp_assist_value), stringResource(Res.string.level_journey_xp_assist_desc))
+                    XpSourceItem(stringResource(Res.string.level_journey_xp_save_title), stringResource(Res.string.level_journey_xp_save_value), stringResource(Res.string.level_journey_xp_save_desc))
+                    XpSourceItem(stringResource(Res.string.level_journey_xp_win_title), stringResource(Res.string.level_journey_xp_win_value), stringResource(Res.string.level_journey_xp_win_desc))
+                    XpSourceItem(stringResource(Res.string.level_journey_xp_mvp_title), stringResource(Res.string.level_journey_xp_mvp_value), stringResource(Res.string.level_journey_xp_mvp_desc))
+                    XpSourceItem(stringResource(Res.string.level_journey_xp_hattrick_title), stringResource(Res.string.level_journey_xp_hattrick_value), stringResource(Res.string.level_journey_xp_hattrick_desc))
+                    XpSourceItem(stringResource(Res.string.level_journey_xp_streak_title), stringResource(Res.string.level_journey_xp_streak_value), stringResource(Res.string.level_journey_xp_streak_desc))
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -776,7 +777,7 @@ private fun XpGuideSection() {
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.level_journey_xp_tip_emoji),
+                            text = stringResource(Res.string.level_journey_xp_tip_emoji),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.padding(12.dp)
@@ -872,7 +873,7 @@ private fun LevelBadgeDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.level_journey_close_cd),
+                            contentDescription = stringResource(Res.string.level_journey_close_cd),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -900,7 +901,7 @@ private fun LevelBadgeDialog(
 
                     androidx.compose.foundation.Image(
                         painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
-                        contentDescription = stringResource(R.string.cd_level_journey_badge, level),
+                        contentDescription = stringResource(Res.string.cd_level_journey_badge, level),
                         modifier = Modifier.size(160.dp)
                     )
                 }
@@ -913,7 +914,7 @@ private fun LevelBadgeDialog(
                     shape = RoundedCornerShape(20.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.level_number, level),
+                        text = stringResource(Res.string.level_number, level),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,

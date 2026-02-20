@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.owner
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.content.Context
 import android.content.Intent
@@ -26,15 +28,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
@@ -92,22 +93,22 @@ fun PostGameReportScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.owner_post_game_report)) },
+                title = { Text(stringResource(Res.string.owner_post_game_report)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 actions = {
                     IconButton(onClick = onShareWhatsApp) {
                         Icon(
                             painter = androidx.compose.ui.res.painterResource(R.drawable.ic_whatsapp),
-                            contentDescription = stringResource(R.string.share),
+                            contentDescription = stringResource(Res.string.share),
                             tint = com.futebadosparcas.ui.theme.BrandColors.WhatsApp
                         )
                     }
                     IconButton(onClick = onShare) {
-                        Icon(Icons.Outlined.Share, contentDescription = stringResource(R.string.share))
+                        Icon(Icons.Outlined.Share, contentDescription = stringResource(Res.string.share))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -153,10 +154,10 @@ fun PostGameReportScreen(
             if (report.topScorers.isNotEmpty()) {
                 item {
                     ReportTopPlayersCard(
-                        title = stringResource(R.string.owner_top_scorers),
+                        title = stringResource(Res.string.owner_top_scorers),
                         players = report.topScorers,
                         icon = Icons.Filled.SportsSoccer,
-                        valueLabel = stringResource(R.string.goals)
+                        valueLabel = stringResource(Res.string.goals)
                     )
                 }
             }
@@ -165,10 +166,10 @@ fun PostGameReportScreen(
             if (report.topAssists.isNotEmpty()) {
                 item {
                     ReportTopPlayersCard(
-                        title = stringResource(R.string.owner_top_assists),
+                        title = stringResource(Res.string.owner_top_assists),
                         players = report.topAssists,
                         icon = Icons.Filled.Star,
-                        valueLabel = stringResource(R.string.assists)
+                        valueLabel = stringResource(Res.string.assists)
                     )
                 }
             }
@@ -188,7 +189,7 @@ fun PostGameReportScreen(
             // Lista de presentes
             item {
                 Text(
-                    text = stringResource(R.string.owner_present_players, presentPlayers.size),
+                    text = stringResource(Res.string.owner_present_players, presentPlayers.size),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -206,7 +207,7 @@ fun PostGameReportScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = stringResource(R.string.owner_absent_players, absentPlayers.size),
+                        text = stringResource(Res.string.owner_absent_players, absentPlayers.size),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.error
@@ -226,7 +227,7 @@ fun PostGameReportScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = stringResource(R.string.owner_unpaid_players, unpaidPlayers.size),
+                        text = stringResource(Res.string.owner_unpaid_players, unpaidPlayers.size),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.tertiary
@@ -286,7 +287,7 @@ private fun ReportScoreCard(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = team1?.name ?: stringResource(R.string.team_label_one),
+                        text = team1?.name ?: stringResource(Res.string.team_label_one),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -319,7 +320,7 @@ private fun ReportScoreCard(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = team2?.name ?: stringResource(R.string.team_label_two),
+                        text = team2?.name ?: stringResource(Res.string.team_label_two),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -354,7 +355,7 @@ private fun MvpCard(player: GameConfirmation) {
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.owner_mvp_title),
+                    text = stringResource(Res.string.owner_mvp_title),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
@@ -385,7 +386,7 @@ private fun ReportStatsCard(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = stringResource(R.string.owner_match_stats),
+                text = stringResource(Res.string.owner_match_stats),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -397,27 +398,27 @@ private fun ReportStatsCard(
             ) {
                 StatBox(
                     value = presentCount.toString(),
-                    label = stringResource(R.string.owner_present),
+                    label = stringResource(Res.string.owner_present),
                     color = com.futebadosparcas.ui.theme.BrandColors.WhatsApp
                 )
                 StatBox(
                     value = absentCount.toString(),
-                    label = stringResource(R.string.owner_absent),
+                    label = stringResource(Res.string.owner_absent),
                     color = MaterialTheme.colorScheme.error
                 )
                 StatBox(
                     value = totalGoals.toString(),
-                    label = stringResource(R.string.goals),
+                    label = stringResource(Res.string.goals),
                     color = MaterialTheme.colorScheme.primary
                 )
                 StatBox(
                     value = yellowCards.toString(),
-                    label = stringResource(R.string.owner_yellow),
+                    label = stringResource(Res.string.owner_yellow),
                     color = Color(0xFFFDD835)
                 )
                 StatBox(
                     value = redCards.toString(),
-                    label = stringResource(R.string.owner_red),
+                    label = stringResource(Res.string.owner_red),
                     color = MaterialTheme.colorScheme.error
                 )
             }
@@ -552,7 +553,7 @@ private fun ReportFinancialCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.owner_financial_summary),
+                    text = stringResource(Res.string.owner_financial_summary),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -572,7 +573,7 @@ private fun ReportFinancialCard(
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Text(
-                        text = stringResource(R.string.owner_total_cost),
+                        text = stringResource(Res.string.owner_total_cost),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                     )
@@ -585,7 +586,7 @@ private fun ReportFinancialCard(
                         color = com.futebadosparcas.ui.theme.BrandColors.WhatsApp
                     )
                     Text(
-                        text = stringResource(R.string.owner_collected_count, paidCount),
+                        text = stringResource(Res.string.owner_collected_count, paidCount),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                     )
@@ -598,7 +599,7 @@ private fun ReportFinancialCard(
                         color = MaterialTheme.colorScheme.error
                     )
                     Text(
-                        text = stringResource(R.string.owner_pending_count, unpaidCount),
+                        text = stringResource(Res.string.owner_pending_count, unpaidCount),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                     )

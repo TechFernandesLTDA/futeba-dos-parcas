@@ -1,8 +1,8 @@
 package com.futebadosparcas.domain.ai
 
-import com.futebadosparcas.data.model.DraftPlayer
-import com.futebadosparcas.data.model.PlayerPair
-import com.futebadosparcas.data.model.TeamStrength
+import com.futebadosparcas.domain.model.DraftPlayer
+import com.futebadosparcas.domain.model.PlayerPair
+import com.futebadosparcas.domain.model.TeamStrength
 import com.futebadosparcas.domain.model.PlayerPosition
 import kotlin.math.abs
 

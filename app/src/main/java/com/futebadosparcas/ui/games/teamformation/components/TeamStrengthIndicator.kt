@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.teamformation.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
@@ -14,12 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.TeamColor
-import com.futebadosparcas.data.model.TeamStrength
+import com.futebadosparcas.domain.model.TeamColor
+import com.futebadosparcas.domain.model.TeamStrength
 import com.futebadosparcas.util.ContrastHelper
 import kotlin.math.abs
 
@@ -57,7 +58,7 @@ fun TeamStrengthBadge(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.team_strength, strength.overallRating),
+                    text = stringResource(Res.string.team_strength, strength.overallRating),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -193,9 +194,9 @@ private fun GoalkeeperIndicator(hasGoalkeeper: Boolean) {
         Spacer(Modifier.width(4.dp))
         Text(
             text = if (hasGoalkeeper) {
-                stringResource(R.string.has_goalkeeper)
+                stringResource(Res.string.has_goalkeeper)
             } else {
-                stringResource(R.string.no_goalkeeper)
+                stringResource(Res.string.no_goalkeeper)
             },
             style = MaterialTheme.typography.labelSmall,
             color = color
@@ -237,8 +238,8 @@ fun TeamComparisonBar(
     }
 
     val statusText = when {
-        isBalanced -> stringResource(R.string.teams_balanced)
-        else -> stringResource(R.string.teams_unbalanced, diffPercent)
+        isBalanced -> stringResource(Res.string.teams_balanced)
+        else -> stringResource(Res.string.teams_unbalanced, diffPercent)
     }
 
     Column(
@@ -386,7 +387,7 @@ fun TeamComparisonCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = stringResource(R.string.team_comparison),
+                text = stringResource(Res.string.team_comparison),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -543,7 +544,7 @@ fun PositionDistributionCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = stringResource(R.string.team_strength_position_distribution),
+                text = stringResource(Res.string.team_strength_position_distribution),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )

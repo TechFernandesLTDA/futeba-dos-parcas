@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,12 +27,10 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-
 /**
  * TopBar com efeito Glassmorphism (vidro fosco).
  * Cria um efeito visual moderno com transparência e blur.
@@ -194,7 +194,7 @@ fun GlassTopBarWithBack(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.back),
+                    contentDescription = stringResource(Res.string.back),
                     tint = glassConfig.contentColor.copy(alpha = 0.9f)
                 )
             }

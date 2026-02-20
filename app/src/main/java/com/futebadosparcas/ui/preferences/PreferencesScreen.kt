@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.preferences
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -15,9 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.domain.model.ThemeMode
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.ThemeViewModel
 import com.futebadosparcas.util.PreferencesManager
 
@@ -58,7 +59,7 @@ fun PreferencesScreen(
     ) {
             // ========== TEMA ==========
             Text(
-                text = stringResource(R.string.preferences_appearance),
+                text = stringResource(Res.string.preferences_appearance),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -79,7 +80,7 @@ fun PreferencesScreen(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.preferences_theme),
+                        text = stringResource(Res.string.preferences_theme),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(bottom = 12.dp)
@@ -91,7 +92,7 @@ fun PreferencesScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         ThemeButton(
-                            text = stringResource(R.string.preferences_theme_light),
+                            text = stringResource(Res.string.preferences_theme_light),
                             icon = Icons.Default.LightMode,
                             isSelected = themeConfig.mode == ThemeMode.LIGHT,
                             onClick = { themeViewModel.setThemeMode(ThemeMode.LIGHT) },
@@ -99,7 +100,7 @@ fun PreferencesScreen(
                         )
 
                         ThemeButton(
-                            text = stringResource(R.string.preferences_theme_dark),
+                            text = stringResource(Res.string.preferences_theme_dark),
                             icon = Icons.Default.DarkMode,
                             isSelected = themeConfig.mode == ThemeMode.DARK,
                             onClick = { themeViewModel.setThemeMode(ThemeMode.DARK) },
@@ -107,7 +108,7 @@ fun PreferencesScreen(
                         )
 
                         ThemeButton(
-                            text = stringResource(R.string.preferences_theme_system),
+                            text = stringResource(Res.string.preferences_theme_system),
                             icon = Icons.Default.SettingsBrightness,
                             isSelected = themeConfig.mode == ThemeMode.SYSTEM,
                             onClick = { themeViewModel.setThemeMode(ThemeMode.SYSTEM) },
@@ -144,7 +145,7 @@ fun PreferencesScreen(
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = stringResource(R.string.preferences_customize_colors),
+                            text = stringResource(Res.string.preferences_customize_colors),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
@@ -158,7 +159,7 @@ fun PreferencesScreen(
 
             // ========== PRIVACIDADE ==========
             Text(
-                text = stringResource(R.string.preferences_privacy),
+                text = stringResource(Res.string.preferences_privacy),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -182,12 +183,12 @@ fun PreferencesScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(R.string.preferences_profile_visible),
+                            text = stringResource(Res.string.preferences_profile_visible),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = stringResource(R.string.preferences_profile_visible_desc),
+                            text = stringResource(Res.string.preferences_profile_visible_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 4.dp)
@@ -207,7 +208,7 @@ fun PreferencesScreen(
             // ========== DESENVOLVEDOR ==========
             if (isDevModeEnabled) {
                 Text(
-                    text = stringResource(R.string.preferences_developer),
+                    text = stringResource(Res.string.preferences_developer),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -241,13 +242,13 @@ fun PreferencesScreen(
                             )
                             Column {
                                 Text(
-                                    text = stringResource(R.string.preferences_developer_tools),
+                                    text = stringResource(Res.string.preferences_developer_tools),
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer
                                 )
                                 Text(
-                                    text = stringResource(R.string.preferences_dev_mode_active),
+                                    text = stringResource(Res.string.preferences_dev_mode_active),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                                 )

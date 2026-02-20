@@ -4,8 +4,8 @@ import android.location.Location as AndroidGeoLocation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Field
-import com.futebadosparcas.data.model.Location
-import com.futebadosparcas.data.model.LocationReview
+import com.futebadosparcas.domain.model.Location
+import com.futebadosparcas.domain.model.LocationReview
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.LocationRepository

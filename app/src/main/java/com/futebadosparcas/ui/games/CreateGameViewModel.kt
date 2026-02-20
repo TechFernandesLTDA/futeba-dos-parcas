@@ -5,9 +5,9 @@ import android.provider.CalendarContract
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.Field
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.model.GameDraft
-import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.CreateGameDraftRepository
 import com.futebadosparcas.data.repository.GameRepository
@@ -28,13 +28,13 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import com.futebadosparcas.domain.repository.ScheduleRepository
-import com.futebadosparcas.data.model.Schedule
+import com.futebadosparcas.domain.model.Schedule
 import com.futebadosparcas.data.model.RecurrenceType
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.GameVisibility
+import com.futebadosparcas.domain.model.GameVisibility
 import com.futebadosparcas.domain.repository.AddressLookupResult
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toKmpSchedule

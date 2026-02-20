@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
 import com.futebadosparcas.data.model.Field
-import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder

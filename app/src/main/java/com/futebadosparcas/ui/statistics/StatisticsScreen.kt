@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.statistics
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
@@ -26,17 +28,16 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import com.futebadosparcas.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
@@ -112,8 +113,8 @@ private fun StatisticsContent(
             is StatisticsUiState.Empty -> {
                 EmptyState(
                     type = EmptyStateType.NoData(
-                        title = stringResource(R.string.statistics_empty_title),
-                        description = stringResource(R.string.statistics_empty_description),
+                        title = stringResource(Res.string.statistics_empty_title),
+                        description = stringResource(Res.string.statistics_empty_description),
                         icon = Icons.Default.BarChart
                     )
                 )
@@ -121,9 +122,9 @@ private fun StatisticsContent(
             is StatisticsUiState.Error -> {
                 EmptyState(
                     type = EmptyStateType.Error(
-                        title = stringResource(R.string.error),
+                        title = stringResource(Res.string.error),
                         description = uiState.message,
-                        actionLabel = stringResource(R.string.retry),
+                        actionLabel = stringResource(Res.string.retry),
                         onRetry = onRefresh
                     )
                 )
@@ -259,7 +260,7 @@ private fun StatisticsSuccessContent(
         // Título
         item {
             Text(
-                text = stringResource(R.string.statistics_my_stats),
+                text = stringResource(Res.string.statistics_my_stats),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -290,7 +291,7 @@ private fun StatisticsSuccessContent(
         // Seção de Rankings
         item {
             Text(
-                text = stringResource(R.string.statistics_rankings_general),
+                text = stringResource(Res.string.statistics_rankings_general),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -302,7 +303,7 @@ private fun StatisticsSuccessContent(
         if (statistics.topScorers.isNotEmpty()) {
             item {
                 RankingSection(
-                    title = stringResource(R.string.statistics_top_scorers),
+                    title = stringResource(Res.string.statistics_top_scorers),
                     rankingItems = statistics.topScorers,
                     icon = Icons.Default.SportsScore,
                     iconTint = MaterialTheme.colorScheme.tertiary,
@@ -315,7 +316,7 @@ private fun StatisticsSuccessContent(
         if (statistics.topGoalkeepers.isNotEmpty()) {
             item {
                 RankingSection(
-                    title = stringResource(R.string.statistics_top_goalkeepers),
+                    title = stringResource(Res.string.statistics_top_goalkeepers),
                     rankingItems = statistics.topGoalkeepers,
                     icon = Icons.Default.Shield,
                     iconTint = MaterialTheme.colorScheme.secondary,
@@ -328,7 +329,7 @@ private fun StatisticsSuccessContent(
         if (statistics.bestPlayers.isNotEmpty()) {
             item {
                 RankingSection(
-                    title = stringResource(R.string.statistics_best_players),
+                    title = stringResource(Res.string.statistics_best_players),
                     rankingItems = statistics.bestPlayers,
                     icon = Icons.Default.Star,
                     iconTint = GamificationColors.Gold,
@@ -363,11 +364,11 @@ private fun NavigationButtons(
         ) {
             Icon(
                 imageVector = Icons.Default.EmojiEvents,
-                contentDescription = stringResource(R.string.statistics_league),
+                contentDescription = stringResource(Res.string.statistics_league),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.statistics_league))
+            Text(stringResource(Res.string.statistics_league))
         }
 
         // Botões secundários: Ranking e Evolução
@@ -381,11 +382,11 @@ private fun NavigationButtons(
             ) {
                 Icon(
                     imageVector = Icons.Default.Leaderboard,
-                    contentDescription = stringResource(R.string.statistics_rankings_general),
+                    contentDescription = stringResource(Res.string.statistics_rankings_general),
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.statistics_rankings_general))
+                Text(stringResource(Res.string.statistics_rankings_general))
             }
 
             OutlinedButton(
@@ -394,11 +395,11 @@ private fun NavigationButtons(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.TrendingUp,
-                    contentDescription = stringResource(R.string.statistics_evolution),
+                    contentDescription = stringResource(Res.string.statistics_evolution),
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.statistics_evolution))
+                Text(stringResource(Res.string.statistics_evolution))
             }
         }
     }
@@ -424,7 +425,7 @@ private fun PersonalStatsCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.statistics_my_stats),
+                text = stringResource(Res.string.statistics_my_stats),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -439,14 +440,14 @@ private fun PersonalStatsCard(
                     icon = Icons.Default.CalendarMonth,
                     iconTint = MaterialTheme.colorScheme.primary,
                     value = statistics.totalGames.toString(),
-                    label = stringResource(R.string.games),
+                    label = stringResource(Res.string.games),
                     modifier = Modifier.weight(1f)
                 )
                 StatItem(
                     icon = Icons.Default.SportsScore,
                     iconTint = MaterialTheme.colorScheme.tertiary,
                     value = statistics.totalGoals.toString(),
-                    label = stringResource(R.string.goals),
+                    label = stringResource(Res.string.goals),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -460,14 +461,14 @@ private fun PersonalStatsCard(
                     icon = Icons.Default.Star,
                     iconTint = GamificationColors.Gold,
                     value = statistics.bestPlayerCount.toString(),
-                    label = stringResource(R.string.statistics_best_players),
+                    label = stringResource(Res.string.statistics_best_players),
                     modifier = Modifier.weight(1f)
                 )
                 StatItem(
                     icon = Icons.Default.CheckCircle,
                     iconTint = MaterialTheme.colorScheme.primary,
                     value = "${(statistics.presenceRate * 100).toInt()}%",
-                    label = stringResource(R.string.presence_rate),
+                    label = stringResource(Res.string.presence_rate),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -532,7 +533,7 @@ private fun GoalEvolutionCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.statistics_goal_evolution),
+                text = stringResource(Res.string.statistics_goal_evolution),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -566,7 +567,7 @@ private fun GoalEvolutionChart(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = stringResource(R.string.statistics_no_data),
+                text = stringResource(Res.string.statistics_no_data),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -804,7 +805,7 @@ private fun RankingItem(
                         .data(item.photoUrl)
                         .crossfade(true)
                         .build(),
-                    contentDescription = stringResource(R.string.statistics_avatar, item.playerName),
+                    contentDescription = stringResource(Res.string.statistics_avatar, item.playerName),
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(CircleShape),
@@ -816,7 +817,7 @@ private fun RankingItem(
                 // Badge de nível
                 Image(
                     painter = painterResource(LevelBadgeHelper.getBadgeForLevel(item.level)),
-                    contentDescription = stringResource(R.string.statistics_level_badge, item.level),
+                    contentDescription = stringResource(Res.string.statistics_level_badge, item.level),
                     modifier = Modifier
                         .size(20.dp)
                         .align(Alignment.BottomEnd)
@@ -837,7 +838,7 @@ private fun RankingItem(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "${item.gamesPlayed} ${stringResource(R.string.statistics_jogos)} • ${stringResource(R.string.statistics_average)}: ${"%.1f".format(item.average)}",
+                    text = "${item.gamesPlayed} ${stringResource(Res.string.statistics_jogos)} • ${stringResource(Res.string.statistics_average)}: ${"%.1f".format(item.average)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -855,7 +856,7 @@ private fun RankingItem(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = stringResource(R.string.statistics_points),
+                    text = stringResource(Res.string.statistics_points),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

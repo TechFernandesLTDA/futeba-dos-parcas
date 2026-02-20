@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -17,13 +19,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.futebadosparcas.R
-
 /**
  * TopBar padronizada do app Futeba dos Parcas.
  *
@@ -58,7 +58,7 @@ fun FutebaTopBar(
         ) {
             // Titulo do app
             Text(
-                text = stringResource(R.string.app_name),
+                text = stringResource(Res.string.app_name),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -73,7 +73,7 @@ fun FutebaTopBar(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_notifications),
-                        contentDescription = stringResource(R.string.cd_notifications),
+                        contentDescription = stringResource(Res.string.cd_notifications),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -109,7 +109,7 @@ fun FutebaTopBar(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_group),
-                    contentDescription = stringResource(R.string.cd_groups),
+                    contentDescription = stringResource(Res.string.cd_groups),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -121,7 +121,7 @@ fun FutebaTopBar(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_map),
-                    contentDescription = stringResource(R.string.cd_map),
+                    contentDescription = stringResource(Res.string.cd_map),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }

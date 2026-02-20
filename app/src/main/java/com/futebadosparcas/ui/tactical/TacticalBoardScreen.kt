@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.tactical
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.content.Intent
 import android.graphics.Color
@@ -16,11 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
-import com.futebadosparcas.R
-
 /**
  * Cores para o quadro tático (Material Design 3 compliant)
  */
@@ -51,12 +51,12 @@ fun TacticalBoardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.tactical_title)) },
+                title = { Text(stringResource(Res.string.tactical_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.tactical_back)
+                            contentDescription = stringResource(Res.string.tactical_back)
                         )
                     }
                 },
@@ -113,16 +113,16 @@ fun TacticalBoardScreen(
                                 putExtra(Intent.EXTRA_STREAM, uri)
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
-                            context.startActivity(Intent.createChooser(intent, context.getString(R.string.tactical_share_tactic)))
+                            context.startActivity(Intent.createChooser(intent, context.getString(Res.string.tactical_share_tactic)))
                         } catch (e: Exception) {
                             Toast.makeText(
                                 context,
-                                context.getString(R.string.tactical_error_share, e.message ?: ""),
+                                context.getString(Res.string.tactical_error_share, e.message ?: ""),
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
                     } else {
-                        Toast.makeText(context, context.getString(R.string.tactical_error_save), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(Res.string.tactical_error_save), Toast.LENGTH_SHORT).show()
                     }
                 }
             )
@@ -153,7 +153,7 @@ private fun TacticalBoardControls(
         ) {
             // Color Selection
             Text(
-                text = stringResource(R.string.tactical_draw_color),
+                text = stringResource(Res.string.tactical_draw_color),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -210,7 +210,7 @@ private fun TacticalBoardControls(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.tactical_clear))
+                    Text(stringResource(Res.string.tactical_clear))
                 }
 
                 Button(
@@ -223,7 +223,7 @@ private fun TacticalBoardControls(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(R.string.tactical_share))
+                    Text(stringResource(Res.string.tactical_share))
                 }
             }
         }

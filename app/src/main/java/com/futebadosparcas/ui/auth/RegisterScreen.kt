@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.auth
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,11 +23,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.res.stringResource
-import coil.compose.AsyncImage
+import org.jetbrains.compose.resources.stringResource
+import coil3.compose.AsyncImage
 import com.futebadosparcas.BuildConfig
-import com.futebadosparcas.R
-
 /**
  * Tela de Registro (descontinuada).
  *
@@ -74,7 +74,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = stringResource(R.string.auth_register_title),
+                    text = stringResource(Res.string.auth_register_title),
                     style = typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.primary
@@ -83,7 +83,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = stringResource(R.string.auth_register_message),
+                    text = stringResource(Res.string.auth_register_message),
                     style = typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = colorScheme.onSurface
@@ -92,7 +92,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = stringResource(R.string.auth_register_redirect),
+                    text = stringResource(Res.string.auth_register_redirect),
                     style = typography.bodySmall,
                     textAlign = TextAlign.Center,
                     color = colorScheme.onSurfaceVariant

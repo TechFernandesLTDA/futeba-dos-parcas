@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.statistics
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,10 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.GamificationColors
 
 /**
@@ -61,7 +62,7 @@ fun PostGameDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.post_game_leveled_up),
+                        text = stringResource(Res.string.post_game_leveled_up),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.primary,
@@ -70,7 +71,7 @@ fun PostGameDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Filled.Close,
-                            contentDescription = stringResource(R.string.post_game_close),
+                            contentDescription = stringResource(Res.string.post_game_close),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -99,7 +100,7 @@ fun PostGameDialog(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                         Text(
-                            text = stringResource(R.string.post_game_xp_label),
+                            text = stringResource(Res.string.post_game_xp_label),
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
@@ -140,7 +141,7 @@ fun PostGameDialog(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.post_game_rumoa),
+                        text = stringResource(Res.string.post_game_rumoa),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(vertical = 4.dp),
@@ -155,9 +156,9 @@ fun PostGameDialog(
 @Composable
 private fun GameResultBadge(result: String) {
     val (backgroundColor, text) = when (result.uppercase()) {
-        "WIN" -> MaterialTheme.colorScheme.primary to stringResource(R.string.post_game_win)
-        "LOSS" -> MaterialTheme.colorScheme.error to stringResource(R.string.post_game_loss)
-        else -> GamificationColors.LevelUpGold to stringResource(R.string.post_game_max_effort)
+        "WIN" -> MaterialTheme.colorScheme.primary to stringResource(Res.string.post_game_win)
+        "LOSS" -> MaterialTheme.colorScheme.error to stringResource(Res.string.post_game_loss)
+        else -> GamificationColors.LevelUpGold to stringResource(Res.string.post_game_max_effort)
     }
 
     Box(
@@ -188,7 +189,7 @@ private fun XpBreakdownSection(breakdown: Map<String, Long>) {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.post_game_journey),
+                text = stringResource(Res.string.post_game_journey),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -241,7 +242,7 @@ private fun LevelProgressSection(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = stringResource(R.string.post_game_level_up),
+                    text = stringResource(Res.string.post_game_level_up),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.tertiary
@@ -255,7 +256,7 @@ private fun LevelProgressSection(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = stringResource(R.string.post_game_level, previousLevel),
+                    text = stringResource(Res.string.post_game_level, previousLevel),
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -265,7 +266,7 @@ private fun LevelProgressSection(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = stringResource(R.string.post_game_level_to, newLevel, newLevelName),
+                    text = stringResource(Res.string.post_game_level_to, newLevel, newLevelName),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -273,7 +274,7 @@ private fun LevelProgressSection(
             }
         } else {
             Text(
-                text = stringResource(R.string.post_game_current_level, newLevel),
+                text = stringResource(Res.string.post_game_current_level, newLevel),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
@@ -294,7 +295,7 @@ private fun LevelProgressSection(
         )
 
         Text(
-            text = stringResource(R.string.post_game_progress, (progress * 100).toInt()),
+            text = stringResource(Res.string.post_game_progress, (progress * 100).toInt()),
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp)
@@ -328,7 +329,7 @@ private fun MilestonesUnlockedSection(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.post_game_conquistas),
+                    text = stringResource(Res.string.post_game_conquistas),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.tertiary

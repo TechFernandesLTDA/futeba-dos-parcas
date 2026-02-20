@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.components.dialogs
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
@@ -9,12 +11,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-
 /**
  * Formato de exportação disponível.
  */
@@ -76,7 +76,7 @@ fun LocationExportDialog(
         },
         title = {
             Text(
-                text = stringResource(R.string.location_export_title),
+                text = stringResource(Res.string.location_export_title),
                 style = MaterialTheme.typography.headlineSmall
             )
         },
@@ -88,14 +88,14 @@ fun LocationExportDialog(
                 // Informação sobre a exportação
                 if (locationsCount > 0) {
                     Text(
-                        text = stringResource(R.string.location_export_count, locationsCount),
+                        text = stringResource(Res.string.location_export_count, locationsCount),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
                 Text(
-                    text = stringResource(R.string.location_export_select_format),
+                    text = stringResource(Res.string.location_export_select_format),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
@@ -108,8 +108,8 @@ fun LocationExportDialog(
                 ) {
                     ExportFormatOption(
                         format = ExportFormat.JSON,
-                        title = stringResource(R.string.location_export_json),
-                        description = stringResource(R.string.location_export_json_description),
+                        title = stringResource(Res.string.location_export_json),
+                        description = stringResource(Res.string.location_export_json_description),
                         icon = Icons.Default.Code,
                         selected = selectedFormat == ExportFormat.JSON,
                         onClick = { selectedFormat = ExportFormat.JSON }
@@ -117,8 +117,8 @@ fun LocationExportDialog(
 
                     ExportFormatOption(
                         format = ExportFormat.CSV,
-                        title = stringResource(R.string.location_export_csv),
-                        description = stringResource(R.string.location_export_csv_description),
+                        title = stringResource(Res.string.location_export_csv),
+                        description = stringResource(Res.string.location_export_csv_description),
                         icon = Icons.Default.TableChart,
                         selected = selectedFormat == ExportFormat.CSV,
                         onClick = { selectedFormat = ExportFormat.CSV }
@@ -141,12 +141,12 @@ fun LocationExportDialog(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.location_export_button))
+                Text(stringResource(Res.string.location_export_button))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
@@ -252,10 +252,10 @@ fun LocationExportDialogSimple(
             )
         },
         title = {
-            Text(stringResource(R.string.location_export_title))
+            Text(stringResource(Res.string.location_export_title))
         },
         text = {
-            Text(stringResource(R.string.location_export_select_format))
+            Text(stringResource(Res.string.location_export_select_format))
         },
         confirmButton = {
             Row(
@@ -268,7 +268,7 @@ fun LocationExportDialogSimple(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.location_export_csv))
+                    Text(stringResource(Res.string.location_export_csv))
                 }
 
                 Button(onClick = onExportJson) {
@@ -278,13 +278,13 @@ fun LocationExportDialogSimple(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.location_export_json))
+                    Text(stringResource(Res.string.location_export_json))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )

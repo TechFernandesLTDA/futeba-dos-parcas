@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.teamformation.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -22,16 +24,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.DraftPlayer
+import com.futebadosparcas.domain.model.DraftPlayer
 import com.futebadosparcas.data.model.DraftState
-import com.futebadosparcas.data.model.TeamColor
+import com.futebadosparcas.domain.model.TeamColor
 import com.futebadosparcas.ui.components.CachedProfileImage
 
 /**
@@ -74,7 +75,7 @@ fun CaptainPicksPanel(
 
             // Jogadores disponiveis
             Text(
-                text = stringResource(R.string.captain_pick_choose_player),
+                text = stringResource(Res.string.captain_pick_choose_player),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -101,7 +102,7 @@ fun CaptainPicksPanel(
             Spacer(Modifier.height(12.dp))
 
             Text(
-                text = stringResource(R.string.captain_pick_tap_to_add),
+                text = stringResource(Res.string.captain_pick_tap_to_add),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -159,12 +160,12 @@ private fun CaptainPickHeader(
 
             Column {
                 Text(
-                    text = stringResource(R.string.captain_turn, draftState.currentPickerName),
+                    text = stringResource(Res.string.captain_turn, draftState.currentPickerName),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = stringResource(R.string.pick_number, draftState.pickNumber),
+                    text = stringResource(Res.string.pick_number, draftState.pickNumber),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -302,7 +303,7 @@ fun CaptainSelectionDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = stringResource(R.string.select_captains),
+                text = stringResource(Res.string.select_captains),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -311,7 +312,7 @@ fun CaptainSelectionDialog(
             Column {
                 // Instrucoes
                 Text(
-                    text = stringResource(R.string.captain_pick_alternating),
+                    text = stringResource(Res.string.captain_pick_alternating),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -354,7 +355,7 @@ fun CaptainSelectionDialog(
 
                 // Lista de jogadores
                 Text(
-                    text = stringResource(R.string.captain_pick_select_captain, stringResource(if (currentSelection == 1) R.string.captain_1 else R.string.captain_2)),
+                    text = stringResource(Res.string.captain_pick_select_captain, stringResource(if (currentSelection == 1) Res.string.captain_1 else Res.string.captain_2)),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -396,12 +397,12 @@ fun CaptainSelectionDialog(
                 },
                 enabled = captain1 != null && captain2 != null
             ) {
-                Text(stringResource(R.string.start))
+                Text(stringResource(Res.string.start))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
@@ -428,7 +429,7 @@ private fun CaptainSlot(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = stringResource(if (number == 1) R.string.captain_1 else R.string.captain_2),
+            text = stringResource(if (number == 1) Res.string.captain_1 else Res.string.captain_2),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold
         )
@@ -471,7 +472,7 @@ private fun CaptainSlot(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.remove),
+                            contentDescription = stringResource(Res.string.remove),
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onErrorContainer
                         )

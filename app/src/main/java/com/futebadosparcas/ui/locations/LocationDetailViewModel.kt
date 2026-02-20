@@ -6,10 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.datasource.FieldPhotoDataSource
 import com.futebadosparcas.data.model.Field as AndroidField
-import com.futebadosparcas.data.model.FieldType
+import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.data.model.Location as AndroidLocation
 import com.futebadosparcas.data.model.LocationReview as AndroidLocationReview
-import com.futebadosparcas.data.model.User as AndroidUser
+// KmpUser removed - using domain.model.User directly
 import com.futebadosparcas.domain.model.Field
 import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.model.LocationReview
@@ -26,7 +26,6 @@ import com.futebadosparcas.util.RecoveryAction
 import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidLocationReview
-import com.futebadosparcas.util.toAndroidUser
 import com.futebadosparcas.util.toKmpField
 import com.futebadosparcas.util.toKmpLocation
 import com.futebadosparcas.util.toKmpLocationReview
@@ -51,8 +50,8 @@ class LocationDetailViewModel(
     private val _uiState = MutableStateFlow<LocationDetailUiState>(LocationDetailUiState.Success(AndroidLocation(), emptyList()))
     val uiState: StateFlow<LocationDetailUiState> = _uiState
 
-    private val _fieldOwners = MutableStateFlow<List<AndroidUser>>(emptyList())
-    val fieldOwners: StateFlow<List<AndroidUser>> = _fieldOwners
+    private val _fieldOwners = MutableStateFlow<List<KmpUser>>(emptyList())
+    val fieldOwners: StateFlow<List<KmpUser>> = _fieldOwners
 
     private var currentLocation: AndroidLocation? = null
 
@@ -78,7 +77,7 @@ class LocationDetailViewModel(
     private fun loadFieldOwners() {
         viewModelScope.launch {
             userRepository.getFieldOwners().onSuccess { owners ->
-                _fieldOwners.value = owners.map { it.toAndroidUser() }
+                _fieldOwners.value = owners
             }
         }
     }

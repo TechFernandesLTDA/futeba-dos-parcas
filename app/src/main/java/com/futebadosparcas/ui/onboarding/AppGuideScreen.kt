@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.onboarding
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -33,12 +35,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-
 /**
  * Tela de guia do aplicativo.
  * Apresenta as principais funcionalidades e como usar.
@@ -64,7 +64,7 @@ fun AppGuideScreen(
 
             // Título
             Text(
-                text = stringResource(R.string.app_guide_title),
+                text = stringResource(Res.string.app_guide_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -74,7 +74,7 @@ fun AppGuideScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(R.string.app_guide_subtitle),
+                text = stringResource(Res.string.app_guide_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -85,40 +85,40 @@ fun AppGuideScreen(
             // Cards de funcionalidades
             GuideFeatureCard(
                 icon = Icons.Default.Home,
-                title = stringResource(R.string.app_guide_home_title),
-                description = stringResource(R.string.app_guide_home_desc)
+                title = stringResource(Res.string.app_guide_home_title),
+                description = stringResource(Res.string.app_guide_home_desc)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             GuideFeatureCard(
                 icon = Icons.Default.Sports,
-                title = stringResource(R.string.app_guide_games_title),
-                description = stringResource(R.string.app_guide_games_desc)
+                title = stringResource(Res.string.app_guide_games_title),
+                description = stringResource(Res.string.app_guide_games_desc)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             GuideFeatureCard(
                 icon = Icons.Default.People,
-                title = stringResource(R.string.app_guide_players_title),
-                description = stringResource(R.string.app_guide_players_desc)
+                title = stringResource(Res.string.app_guide_players_title),
+                description = stringResource(Res.string.app_guide_players_desc)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             GuideFeatureCard(
                 icon = Icons.Default.EmojiEvents,
-                title = stringResource(R.string.app_guide_league_title),
-                description = stringResource(R.string.app_guide_league_desc)
+                title = stringResource(Res.string.app_guide_league_title),
+                description = stringResource(Res.string.app_guide_league_desc)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             GuideFeatureCard(
                 icon = Icons.Default.Groups,
-                title = stringResource(R.string.app_guide_groups_title),
-                description = stringResource(R.string.app_guide_groups_desc)
+                title = stringResource(Res.string.app_guide_groups_title),
+                description = stringResource(Res.string.app_guide_groups_desc)
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -141,7 +141,7 @@ fun AppGuideScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = stringResource(R.string.app_guide_tip),
+                        text = stringResource(Res.string.app_guide_tip),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -161,7 +161,7 @@ fun AppGuideScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.app_guide_start),
+                    text = stringResource(Res.string.app_guide_start),
                     style = MaterialTheme.typography.titleMedium
                 )
             }

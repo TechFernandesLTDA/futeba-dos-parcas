@@ -1,8 +1,8 @@
 package com.futebadosparcas.app.domain.ranking
 
-import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.PlayerPosition
-import com.futebadosparcas.data.model.XpLog
+import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.PlayerPosition
+import com.futebadosparcas.domain.model.XpLog
 import com.futebadosparcas.data.repository.GameResult
 
 /**

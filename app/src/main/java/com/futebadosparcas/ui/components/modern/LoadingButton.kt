@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.components.modern
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -9,10 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-
 /**
  * Botão com estado de loading interno
  *
@@ -56,7 +56,7 @@ fun LoadingButton(
         }
 
         Text(
-            text = if (isLoading) stringResource(R.string.loading) else text,
+            text = if (isLoading) stringResource(Res.string.loading) else text,
             style = MaterialTheme.typography.labelLarge
         )
     }
@@ -93,7 +93,7 @@ fun LoadingTextButton(
         }
 
         Text(
-            text = if (isLoading) stringResource(R.string.loading) else text,
+            text = if (isLoading) stringResource(Res.string.loading) else text,
             style = MaterialTheme.typography.labelLarge
         )
     }
@@ -132,7 +132,7 @@ fun LoadingFilledTonalButton(
         }
 
         Text(
-            text = if (isLoading) stringResource(R.string.loading) else text,
+            text = if (isLoading) stringResource(Res.string.loading) else text,
             style = MaterialTheme.typography.labelLarge
         )
     }
@@ -171,7 +171,7 @@ fun LoadingOutlinedButton(
         }
 
         Text(
-            text = if (isLoading) stringResource(R.string.loading) else text,
+            text = if (isLoading) stringResource(Res.string.loading) else text,
             style = MaterialTheme.typography.labelLarge
         )
     }
@@ -229,7 +229,7 @@ fun LoadingExtendedFloatingActionButton(
                 strokeWidth = 2.dp
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.loading))
+            Text(stringResource(Res.string.loading))
         } else {
             Icon(
                 imageVector = icon,

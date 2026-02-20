@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.owner
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.content.Intent
 import android.net.Uri
@@ -27,15 +29,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.ui.components.CachedProfileImage
 import java.text.NumberFormat
 import java.util.Locale
@@ -99,7 +100,7 @@ fun GameFinancialSummary(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = stringResource(R.string.owner_financial_dashboard),
+                        text = stringResource(Res.string.owner_financial_dashboard),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -118,20 +119,20 @@ fun GameFinancialSummary(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 FinancialStatItem(
-                    label = stringResource(R.string.owner_total_cost),
+                    label = stringResource(Res.string.owner_total_cost),
                     value = currencyFormat.format(game.totalCost),
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 FinancialStatItem(
-                    label = stringResource(R.string.owner_collected),
+                    label = stringResource(Res.string.owner_collected),
                     value = currencyFormat.format(totalCollected),
                     color = if (totalCollected >= game.totalCost)
                         com.futebadosparcas.ui.theme.BrandColors.WhatsApp
                     else MaterialTheme.colorScheme.primary
                 )
                 FinancialStatItem(
-                    label = if (surplus >= 0) stringResource(R.string.owner_surplus)
-                           else stringResource(R.string.owner_pending),
+                    label = if (surplus >= 0) stringResource(Res.string.owner_surplus)
+                           else stringResource(Res.string.owner_pending),
                     value = currencyFormat.format(if (surplus >= 0) surplus else totalPending.coerceAtLeast(0.0)),
                     color = if (surplus >= 0) com.futebadosparcas.ui.theme.BrandColors.WhatsApp
                            else MaterialTheme.colorScheme.error
@@ -142,7 +143,7 @@ fun GameFinancialSummary(
 
             // Preco por jogador
             Text(
-                text = stringResource(R.string.owner_per_player, currencyFormat.format(pricePerPlayer)),
+                text = stringResource(Res.string.owner_per_player, currencyFormat.format(pricePerPlayer)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -164,17 +165,17 @@ fun GameFinancialSummary(
                     ) {
                         PaymentStatusBadge(
                             count = paidPlayers.size,
-                            label = stringResource(R.string.owner_paid),
+                            label = stringResource(Res.string.owner_paid),
                             color = com.futebadosparcas.ui.theme.BrandColors.WhatsApp
                         )
                         PaymentStatusBadge(
                             count = partialPlayers.size,
-                            label = stringResource(R.string.owner_partial),
+                            label = stringResource(Res.string.owner_partial),
                             color = MaterialTheme.colorScheme.tertiary
                         )
                         PaymentStatusBadge(
                             count = pendingPlayers.size,
-                            label = stringResource(R.string.owner_pending_short),
+                            label = stringResource(Res.string.owner_pending_short),
                             color = MaterialTheme.colorScheme.error
                         )
                     }
@@ -183,7 +184,7 @@ fun GameFinancialSummary(
 
                     // Lista de jogadores com status de pagamento
                     Text(
-                        text = stringResource(R.string.owner_payment_list),
+                        text = stringResource(Res.string.owner_payment_list),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -299,7 +300,7 @@ private fun PlayerPaymentRow(
             if (isPartial) {
                 Text(
                     text = stringResource(
-                        R.string.owner_paid_partial_amount,
+                        Res.string.owner_paid_partial_amount,
                         currencyFormat.format(player.partialPayment)
                     ),
                     style = MaterialTheme.typography.labelSmall,
@@ -313,7 +314,7 @@ private fun PlayerPaymentRow(
             IconButton(onClick = onMarkPartial) {
                 Icon(
                     imageVector = Icons.Outlined.Payments,
-                    contentDescription = stringResource(R.string.owner_partial_payment),
+                    contentDescription = stringResource(Res.string.owner_partial_payment),
                     tint = MaterialTheme.colorScheme.tertiary
                 )
             }
@@ -346,16 +347,16 @@ fun PartialPaymentDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.owner_partial_payment)) },
+        title = { Text(stringResource(Res.string.owner_partial_payment)) },
         text = {
             Column {
                 Text(
-                    text = stringResource(R.string.owner_partial_payment_for, playerName),
+                    text = stringResource(Res.string.owner_partial_payment_for, playerName),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = stringResource(R.string.owner_total_due, currencyFormat.format(totalAmount)),
+                    text = stringResource(Res.string.owner_total_due, currencyFormat.format(totalAmount)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -363,10 +364,10 @@ fun PartialPaymentDialog(
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' || c == ',' } },
-                    label = { Text(stringResource(R.string.owner_amount_paid)) },
+                    label = { Text(stringResource(Res.string.owner_amount_paid)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
-                    prefix = { Text(stringResource(R.string.currency_prefix) + " ") }
+                    prefix = { Text(stringResource(Res.string.currency_prefix) + " ") }
                 )
             }
         },
@@ -377,12 +378,12 @@ fun PartialPaymentDialog(
                     onConfirm(parsedAmount)
                 }
             ) {
-                Text(stringResource(R.string.confirm))
+                Text(stringResource(Res.string.confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
@@ -403,15 +404,15 @@ fun MassMessageDialog(
     var customMessage by remember { mutableStateOf("") }
 
     val templates = listOf(
-        stringResource(R.string.owner_template_confirmed),
-        stringResource(R.string.owner_template_reminder),
-        stringResource(R.string.owner_template_pix)
+        stringResource(Res.string.owner_template_confirmed),
+        stringResource(Res.string.owner_template_reminder),
+        stringResource(Res.string.owner_template_pix)
     )
 
     val templateMessages = listOf(
-        stringResource(R.string.owner_template_confirmed_msg, game.date, game.time, game.locationName),
-        stringResource(R.string.owner_template_reminder_msg, game.date, game.time),
-        stringResource(R.string.owner_template_pix_msg, game.pixKey, game.dailyPrice)
+        stringResource(Res.string.owner_template_confirmed_msg, game.date, game.time, game.locationName),
+        stringResource(Res.string.owner_template_reminder_msg, game.date, game.time),
+        stringResource(Res.string.owner_template_pix_msg, game.pixKey, game.dailyPrice)
     )
 
     Dialog(onDismissRequest = onDismiss) {
@@ -423,7 +424,7 @@ fun MassMessageDialog(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = stringResource(R.string.owner_mass_message),
+                    text = stringResource(Res.string.owner_mass_message),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -432,7 +433,7 @@ fun MassMessageDialog(
 
                 // Template selection
                 Text(
-                    text = stringResource(R.string.owner_select_template),
+                    text = stringResource(Res.string.owner_select_template),
                     style = MaterialTheme.typography.labelLarge
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -462,7 +463,7 @@ fun MassMessageDialog(
                         onCheckedChange = { onlyUnpaid = it }
                     )
                     Text(
-                        text = stringResource(R.string.owner_only_unpaid),
+                        text = stringResource(Res.string.owner_only_unpaid),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -490,7 +491,7 @@ fun MassMessageDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text(stringResource(R.string.cancel))
+                        Text(stringResource(Res.string.cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -515,7 +516,7 @@ fun MassMessageDialog(
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.owner_send_message))
+                        Text(stringResource(Res.string.owner_send_message))
                     }
                 }
             }
@@ -541,11 +542,11 @@ fun DelegateAdminDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.owner_delegate_admin)) },
+        title = { Text(stringResource(Res.string.owner_delegate_admin)) },
         text = {
             Column {
                 Text(
-                    text = stringResource(R.string.owner_delegate_admin_desc),
+                    text = stringResource(Res.string.owner_delegate_admin_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -553,7 +554,7 @@ fun DelegateAdminDialog(
 
                 if (eligiblePlayers.isEmpty()) {
                     Text(
-                        text = stringResource(R.string.owner_no_players_to_delegate),
+                        text = stringResource(Res.string.owner_no_players_to_delegate),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 } else {
@@ -602,12 +603,12 @@ fun DelegateAdminDialog(
         },
         confirmButton = {
             Button(onClick = { onConfirm(selectedUsers.toList()) }) {
-                Text(stringResource(R.string.save))
+                Text(stringResource(Res.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
@@ -625,21 +626,21 @@ fun AutoCloseDialog(
     var selectedOption by remember { mutableStateOf(currentHours) }
 
     val options = listOf(
-        null to stringResource(R.string.owner_auto_close_disabled),
-        1 to stringResource(R.string.owner_auto_close_1h),
-        2 to stringResource(R.string.owner_auto_close_2h),
-        4 to stringResource(R.string.owner_auto_close_4h),
-        12 to stringResource(R.string.owner_auto_close_12h),
-        24 to stringResource(R.string.owner_auto_close_24h)
+        null to stringResource(Res.string.owner_auto_close_disabled),
+        1 to stringResource(Res.string.owner_auto_close_1h),
+        2 to stringResource(Res.string.owner_auto_close_2h),
+        4 to stringResource(Res.string.owner_auto_close_4h),
+        12 to stringResource(Res.string.owner_auto_close_12h),
+        24 to stringResource(Res.string.owner_auto_close_24h)
     )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.owner_auto_close_title)) },
+        title = { Text(stringResource(Res.string.owner_auto_close_title)) },
         text = {
             Column {
                 Text(
-                    text = stringResource(R.string.owner_auto_close_desc),
+                    text = stringResource(Res.string.owner_auto_close_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -664,12 +665,12 @@ fun AutoCloseDialog(
         },
         confirmButton = {
             Button(onClick = { onConfirm(selectedOption) }) {
-                Text(stringResource(R.string.save))
+                Text(stringResource(Res.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
@@ -687,20 +688,20 @@ fun EditRulesDialog(
     var rules by remember { mutableStateOf(currentRules) }
 
     val templates = listOf(
-        stringResource(R.string.owner_rule_template_1),
-        stringResource(R.string.owner_rule_template_2),
-        stringResource(R.string.owner_rule_template_3)
+        stringResource(Res.string.owner_rule_template_1),
+        stringResource(Res.string.owner_rule_template_2),
+        stringResource(Res.string.owner_rule_template_3)
     )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.owner_edit_rules)) },
+        title = { Text(stringResource(Res.string.owner_edit_rules)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = rules,
                     onValueChange = { rules = it },
-                    label = { Text(stringResource(R.string.owner_rules_label)) },
+                    label = { Text(stringResource(Res.string.owner_rules_label)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(150.dp),
@@ -710,7 +711,7 @@ fun EditRulesDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = stringResource(R.string.owner_rule_templates),
+                    text = stringResource(Res.string.owner_rule_templates),
                     style = MaterialTheme.typography.labelMedium
                 )
 
@@ -733,12 +734,12 @@ fun EditRulesDialog(
         },
         confirmButton = {
             Button(onClick = { onConfirm(rules) }) {
-                Text(stringResource(R.string.save))
+                Text(stringResource(Res.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
@@ -762,11 +763,11 @@ fun TransferOwnershipDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.owner_transfer_ownership)) },
+        title = { Text(stringResource(Res.string.owner_transfer_ownership)) },
         text = {
             Column {
                 Text(
-                    text = stringResource(R.string.owner_transfer_warning),
+                    text = stringResource(Res.string.owner_transfer_warning),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -774,7 +775,7 @@ fun TransferOwnershipDialog(
 
                 if (eligiblePlayers.isEmpty()) {
                     Text(
-                        text = stringResource(R.string.owner_no_players_to_transfer),
+                        text = stringResource(Res.string.owner_no_players_to_transfer),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 } else {
@@ -817,12 +818,12 @@ fun TransferOwnershipDialog(
                     containerColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text(stringResource(R.string.owner_confirm_transfer))
+                Text(stringResource(Res.string.owner_confirm_transfer))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )

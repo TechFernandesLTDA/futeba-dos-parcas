@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -20,17 +22,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.ConfirmationStatus
+import coil3.compose.AsyncImage
+import com.futebadosparcas.domain.model.ConfirmationStatus
 import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.PaymentStatus
-import com.futebadosparcas.data.model.PlayerPosition
+import com.futebadosparcas.domain.model.PaymentStatus
+import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.ui.games.presence.GuestBadge
 import com.futebadosparcas.ui.games.presence.ReliabilityBadge
 import java.text.SimpleDateFormat
@@ -241,7 +242,7 @@ private fun PlayerCardContent(
             .animateContentSize()
             .clickable(
                 onClick = onCardClick,
-                onClickLabel = stringResource(R.string.player_card_click)
+                onClickLabel = stringResource(Res.string.player_card_click)
             ),
         colors = CardDefaults.cardColors(
             containerColor = when {
@@ -317,7 +318,7 @@ private fun PlayerCardContent(
                             color = MaterialTheme.colorScheme.secondaryContainer
                         ) {
                             Text(
-                                text = stringResource(R.string.goalkeeper_short),
+                                text = stringResource(Res.string.goalkeeper_short),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
@@ -339,8 +340,8 @@ private fun PlayerCardContent(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = confirmation.checkedInAt?.let {
-                                    stringResource(R.string.checkin_done_at, timeFormat.format(it))
-                                } ?: stringResource(R.string.status_checked_in),
+                                    stringResource(Res.string.checkin_done_at, timeFormat.format(it))
+                                } ?: stringResource(Res.string.status_checked_in),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -354,7 +355,7 @@ private fun PlayerCardContent(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = confirmation.getEtaDisplay() ?: stringResource(R.string.status_on_the_way),
+                                text = confirmation.getEtaDisplay() ?: stringResource(Res.string.status_on_the_way),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.tertiary
                             )
@@ -393,7 +394,7 @@ private fun PlayerCardContent(
                     IconButton(onClick = onShowOptionsMenu) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = stringResource(R.string.more_options),
+                            contentDescription = stringResource(Res.string.more_options),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -405,8 +406,8 @@ private fun PlayerCardContent(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    if (isPaid) stringResource(R.string.mark_unpaid)
-                                    else stringResource(R.string.mark_paid)
+                                    if (isPaid) stringResource(Res.string.mark_unpaid)
+                                    else stringResource(Res.string.mark_paid)
                                 )
                             },
                             onClick = {
@@ -424,7 +425,7 @@ private fun PlayerCardContent(
                         )
 
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.partial_payment)) },
+                            text = { Text(stringResource(Res.string.partial_payment)) },
                             onClick = {
                                 onShowPartialPayment()
                                 onDismissOptionsMenu()
@@ -440,7 +441,7 @@ private fun PlayerCardContent(
                         HorizontalDivider()
 
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.remove_player)) },
+                            text = { Text(stringResource(Res.string.remove_player)) },
                             onClick = {
                                 onRemovePlayer()
                                 onDismissOptionsMenu()
@@ -503,9 +504,9 @@ private fun PaymentStatusBadge(
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = when {
-                    isPaid -> stringResource(R.string.paid)
-                    hasPartial -> stringResource(R.string.partial_value, partialAmount)
-                    else -> stringResource(R.string.pending_payment)
+                    isPaid -> stringResource(Res.string.paid)
+                    hasPartial -> stringResource(Res.string.partial_value, partialAmount)
+                    else -> stringResource(Res.string.pending_payment)
                 },
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Medium,
@@ -526,11 +527,11 @@ private fun PartialPaymentDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.partial_payment)) },
+        title = { Text(stringResource(Res.string.partial_payment)) },
         text = {
             Column {
                 Text(
-                    text = stringResource(R.string.partial_payment_description, totalPrice),
+                    text = stringResource(Res.string.partial_payment_description, totalPrice),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -538,8 +539,8 @@ private fun PartialPaymentDialog(
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
-                    label = { Text(stringResource(R.string.amount)) },
-                    prefix = { Text(stringResource(R.string.currency_prefix) + " ") },
+                    label = { Text(stringResource(Res.string.amount)) },
+                    prefix = { Text(stringResource(Res.string.currency_prefix) + " ") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -551,12 +552,12 @@ private fun PartialPaymentDialog(
                     amount.toDoubleOrNull()?.let { onConfirm(it) }
                 }
             ) {
-                Text(stringResource(R.string.confirm))
+                Text(stringResource(Res.string.confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )

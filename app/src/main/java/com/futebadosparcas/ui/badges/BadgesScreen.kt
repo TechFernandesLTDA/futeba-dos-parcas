@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.badges
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -36,7 +38,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -44,7 +46,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Badge
 import com.futebadosparcas.data.model.BadgeRarity
 import com.futebadosparcas.data.model.BadgeType
@@ -98,8 +99,8 @@ fun BadgesScreen(
                 is BadgesUiState.Empty -> {
                     com.futebadosparcas.ui.components.modern.EmptyState(
                         icon = Icons.Default.EmojiEvents,
-                        title = stringResource(R.string.badges_empty_title),
-                        message = stringResource(R.string.badges_empty_message)
+                        title = stringResource(Res.string.badges_empty_title),
+                        message = stringResource(Res.string.badges_empty_message)
                     )
                 }
                 is BadgesUiState.Success -> {
@@ -126,7 +127,7 @@ private fun BadgesTopBar(
     TopAppBar(
         title = {
             Text(
-                text = stringResource(R.string.badges_title),
+                text = stringResource(Res.string.badges_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -136,7 +137,7 @@ private fun BadgesTopBar(
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.back)
+                        contentDescription = stringResource(Res.string.back)
                     )
                 }
             }
@@ -180,11 +181,11 @@ private fun BadgesSuccessContent(
             // Empty state
             EmptyState(
                 type = EmptyStateType.NoData(
-                    title = stringResource(R.string.badges_no_badges),
+                    title = stringResource(Res.string.badges_no_badges),
                     description = if (state.selectedCategory != null) {
-                        stringResource(R.string.badges_no_badges_category)
+                        stringResource(Res.string.badges_no_badges_category)
                     } else {
-                        stringResource(R.string.badges_no_badges_general)
+                        stringResource(Res.string.badges_no_badges_general)
                     },
                     icon = Icons.Default.EmojiEvents
                 ),
@@ -243,7 +244,7 @@ private fun BadgeProgressHeader(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(R.string.badges_progress),
+                text = stringResource(Res.string.badges_progress),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 fontWeight = FontWeight.Bold
@@ -283,7 +284,7 @@ private fun BadgeProgressHeader(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(R.string.badges_unlocked),
+                text = stringResource(Res.string.badges_unlocked),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
@@ -316,7 +317,7 @@ private fun BadgeCategoryTabs(
         Tab(
             selected = selectedCategory == null,
             onClick = { onCategorySelected(null) },
-            text = { Text(stringResource(R.string.badges_all)) }
+            text = { Text(stringResource(Res.string.badges_all)) }
         )
         BadgeCategory.entries.forEach { category ->
             Tab(
@@ -461,10 +462,10 @@ private fun BadgeCard(
 @Composable
 private fun BadgeRarityLabel(rarity: BadgeRarity) {
     val rarityText = when (rarity) {
-        BadgeRarity.COMUM -> stringResource(R.string.badges_rarity_comum)
-        BadgeRarity.RARO -> stringResource(R.string.badges_rarity_raro)
-        BadgeRarity.EPICO -> stringResource(R.string.badges_rarity_epico)
-        BadgeRarity.LENDARIO -> stringResource(R.string.badges_rarity_lendario)
+        BadgeRarity.COMUM -> stringResource(Res.string.badges_rarity_comum)
+        BadgeRarity.RARO -> stringResource(Res.string.badges_rarity_raro)
+        BadgeRarity.EPICO -> stringResource(Res.string.badges_rarity_epico)
+        BadgeRarity.LENDARIO -> stringResource(Res.string.badges_rarity_lendario)
     }
 
     val rarityColor = getRarityColor(rarity)
@@ -546,7 +547,7 @@ private fun BadgeDetailDialog(
             ) {
                 // Header
                 Text(
-                    text = stringResource(R.string.badges_unlocked_title),
+                    text = stringResource(Res.string.badges_unlocked_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -631,7 +632,7 @@ private fun BadgeDetailDialog(
                 userBadge.unlockedAt?.let { date ->
                     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.forLanguageTag("pt-BR")) }
                     Text(
-                        text = stringResource(R.string.badge_unlocked_at, dateFormat.format(date)),
+                        text = stringResource(Res.string.badge_unlocked_at, dateFormat.format(date)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -641,7 +642,7 @@ private fun BadgeDetailDialog(
                 if (userBadge.count > 1) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = stringResource(R.string.badge_count_times, userBadge.count),
+                        text = stringResource(Res.string.badge_count_times, userBadge.count),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.tertiary,
                         fontWeight = FontWeight.Bold
@@ -656,7 +657,7 @@ private fun BadgeDetailDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(stringResource(R.string.badges_continue))
+                    Text(stringResource(Res.string.badges_continue))
                 }
             }
         }
@@ -789,7 +790,7 @@ private fun BadgesErrorState(
 ) {
     EmptyState(
         type = EmptyStateType.Error(
-            title = stringResource(R.string.badges_error_title),
+            title = stringResource(Res.string.badges_error_title),
             description = message,
             onRetry = onRetry
         ),

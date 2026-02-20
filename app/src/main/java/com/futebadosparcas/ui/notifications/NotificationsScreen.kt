@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.notifications
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.content.Context
 import android.os.Build
@@ -33,7 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -42,9 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.AppNotification
-import com.futebadosparcas.data.model.NotificationType
+import com.futebadosparcas.domain.model.Notification
+import com.futebadosparcas.domain.model.NotificationType
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerListContent
@@ -81,11 +82,11 @@ import kotlinx.coroutines.launch
  * Tipos de filtro disponíveis
  */
 enum class NotificationFilter(val labelRes: Int, val icon: ImageVector) {
-    ALL(R.string.notifications_filter_all, Icons.Default.AllInbox),
-    GAMES(R.string.notifications_filter_games, Icons.Default.SportsScore),
-    GROUPS(R.string.notifications_filter_groups, Icons.Default.Groups),
-    ACHIEVEMENTS(R.string.notifications_filter_achievements, Icons.Default.Star),
-    SYSTEM(R.string.notifications_filter_system, Icons.Default.Info)
+    ALL(Res.string.notifications_filter_all, Icons.Default.AllInbox),
+    GAMES(Res.string.notifications_filter_games, Icons.Default.SportsScore),
+    GROUPS(Res.string.notifications_filter_groups, Icons.Default.Groups),
+    ACHIEVEMENTS(Res.string.notifications_filter_achievements, Icons.Default.Star),
+    SYSTEM(Res.string.notifications_filter_system, Icons.Default.Info)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -151,8 +152,8 @@ fun NotificationsScreen(
     LaunchedEffect(lastDeletedNotification) {
         lastDeletedNotification?.let { notification ->
             val result = snackbarHostState.showSnackbar(
-                message = context.getString(R.string.notifications_deleted),
-                actionLabel = context.getString(R.string.notifications_undo),
+                message = context.getString(Res.string.notifications_deleted),
+                actionLabel = context.getString(Res.string.notifications_undo),
                 duration = SnackbarDuration.Short
             )
             if (result == SnackbarResult.ActionPerformed) {
@@ -164,16 +165,16 @@ fun NotificationsScreen(
     }
 
     // String resources (must be read at composable level)
-    val emptyTitle = stringResource(R.string.fragment_notifications_text_1)
-    val emptyDescription = stringResource(R.string.fragment_notifications_text_2)
+    val emptyTitle = stringResource(Res.string.fragment_notifications_text_1)
+    val emptyDescription = stringResource(Res.string.fragment_notifications_text_2)
 
     // Melhoria 5: Dialog de confirmação
     if (showDeleteConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
             icon = { Icon(Icons.Default.DeleteSweep, contentDescription = null) },
-            title = { Text(stringResource(R.string.notifications_delete_old_title)) },
-            text = { Text(stringResource(R.string.notifications_delete_old_message)) },
+            title = { Text(stringResource(Res.string.notifications_delete_old_title)) },
+            text = { Text(stringResource(Res.string.notifications_delete_old_message)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -184,12 +185,12 @@ fun NotificationsScreen(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text(stringResource(R.string.notifications_delete_confirm))
+                    Text(stringResource(Res.string.notifications_delete_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -215,7 +216,7 @@ fun NotificationsScreen(
                 ExtendedFloatingActionButton(
                     onClick = { showDeleteConfirmDialog = true },
                     icon = { Icon(Icons.Default.ClearAll, contentDescription = null) },
-                    text = { Text(stringResource(R.string.notifications_clear_all)) },
+                    text = { Text(stringResource(Res.string.notifications_clear_all)) },
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer
                 )
@@ -252,8 +253,8 @@ fun NotificationsScreen(
                         is NotificationsUiState.Empty -> {
                             EmptyState(
                                 type = EmptyStateType.NoData(
-                                    title = stringResource(R.string.empty_state_no_notifications_title),
-                                    description = stringResource(R.string.empty_state_no_notifications_desc),
+                                    title = stringResource(Res.string.empty_state_no_notifications_title),
+                                    description = stringResource(Res.string.empty_state_no_notifications_desc),
                                     icon = Icons.Default.NotificationsNone
                                 )
                             )
@@ -268,8 +269,8 @@ fun NotificationsScreen(
                             if (filteredNotifications.isEmpty()) {
                                 EmptyState(
                                     type = EmptyStateType.NoData(
-                                        title = stringResource(R.string.notifications_filter_empty),
-                                        description = stringResource(R.string.notifications_filter_empty_desc),
+                                        title = stringResource(Res.string.notifications_filter_empty),
+                                        description = stringResource(Res.string.notifications_filter_empty_desc),
                                         icon = Icons.Default.FilterList
                                     )
                                 )
@@ -308,7 +309,7 @@ fun NotificationsScreen(
                         is NotificationsUiState.Error -> {
                             EmptyState(
                                 type = EmptyStateType.Error(
-                                    title = stringResource(R.string.notifications_load_error),
+                                    title = stringResource(Res.string.notifications_load_error),
                                     description = state.message,
                                     onRetry = { viewModel.loadNotifications() }
                                 )
@@ -451,7 +452,7 @@ private fun NotificationsTopBar(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.notifications),
+                    text = stringResource(Res.string.notifications),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -493,7 +494,7 @@ private fun NotificationsTopBar(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.notifications_cd_back)
+                    contentDescription = stringResource(Res.string.notifications_cd_back)
                 )
             }
         },
@@ -501,7 +502,7 @@ private fun NotificationsTopBar(
             IconButton(onClick = { showMenu = true }) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
-                    contentDescription = stringResource(R.string.notifications_cd_menu)
+                    contentDescription = stringResource(Res.string.notifications_cd_menu)
                 )
             }
 
@@ -510,7 +511,7 @@ private fun NotificationsTopBar(
                 onDismissRequest = { showMenu = false }
             ) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.menu_notifications_title_1)) },
+                    text = { Text(stringResource(Res.string.menu_notifications_title_1)) },
                     onClick = {
                         onMarkAllRead()
                         showMenu = false
@@ -520,7 +521,7 @@ private fun NotificationsTopBar(
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.menu_notifications_title_2)) },
+                    text = { Text(stringResource(Res.string.menu_notifications_title_2)) },
                     onClick = {
                         onDeleteOld()
                         showMenu = false
@@ -745,7 +746,7 @@ private fun SwipeableNotificationCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = stringResource(R.string.notifications_cd_delete),
+                        contentDescription = stringResource(Res.string.notifications_cd_delete),
                         tint = MaterialTheme.colorScheme.onError,
                         modifier = Modifier
                             .scale(iconScale)
@@ -894,14 +895,14 @@ private fun NotificationCard(
                                     contentColor = MaterialTheme.colorScheme.error
                                 )
                             ) {
-                                Text(stringResource(R.string.item_notification_text_1))
+                                Text(stringResource(Res.string.item_notification_text_1))
                             }
 
                             Button(
                                 onClick = onAccept,
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text(stringResource(R.string.item_notification_text_2))
+                                Text(stringResource(Res.string.item_notification_text_2))
                             }
                         }
                     }
@@ -930,7 +931,7 @@ private fun NotificationCard(
                         } else {
                             Icon(
                                 imageVector = Icons.Default.MarkEmailUnread,
-                                contentDescription = stringResource(R.string.notifications_mark_unread),
+                                contentDescription = stringResource(Res.string.notifications_mark_unread),
                                 modifier = Modifier.size(16.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -1107,11 +1108,11 @@ private fun groupNotificationsByDate(
     notifications.forEach { notification ->
         val date = notification.createdAt
         val section = when {
-            date == null -> context.getString(R.string.notifications_old)
-            date.time >= today.timeInMillis -> context.getString(R.string.notifications_today)
-            date.time >= yesterday.timeInMillis -> context.getString(R.string.notifications_yesterday)
-            date.time >= weekAgo.timeInMillis -> context.getString(R.string.notifications_this_week)
-            else -> context.getString(R.string.notifications_old)
+            date == null -> context.getString(Res.string.notifications_old)
+            date.time >= today.timeInMillis -> context.getString(Res.string.notifications_today)
+            date.time >= yesterday.timeInMillis -> context.getString(Res.string.notifications_yesterday)
+            date.time >= weekAgo.timeInMillis -> context.getString(Res.string.notifications_this_week)
+            else -> context.getString(Res.string.notifications_old)
         }
 
         grouped.getOrPut(section) { mutableListOf() }.add(notification)

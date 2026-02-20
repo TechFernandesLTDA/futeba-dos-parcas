@@ -1,8 +1,9 @@
 package com.futebadosparcas.ui.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import com.futebadosparcas.R
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -55,7 +56,7 @@ fun SearchBar(
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = stringResource(R.string.cd_search)
+                contentDescription = stringResource(Res.string.cd_search)
             )
         },
         trailingIcon = {
@@ -63,7 +64,7 @@ fun SearchBar(
                 IconButton(onClick = { onQueryChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Clear,
-                        contentDescription = stringResource(R.string.cd_clear)
+                        contentDescription = stringResource(Res.string.cd_clear)
                     )
                 }
             }

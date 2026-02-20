@@ -1,8 +1,9 @@
 package com.futebadosparcas.ui.debug
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
-import com.futebadosparcas.R
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,12 +64,12 @@ fun LocationMetricsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.debug_location_metrics_title)) },
+                title = { Text(stringResource(Res.string.debug_location_metrics_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_back)
+                            contentDescription = stringResource(Res.string.cd_back)
                         )
                     }
                 },
@@ -77,7 +78,7 @@ fun LocationMetricsScreen(
                     IconButton(onClick = { refreshTrigger++ }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = stringResource(R.string.cd_refresh)
+                            contentDescription = stringResource(Res.string.cd_refresh)
                         )
                     }
                     // Botao de limpar metricas
@@ -87,7 +88,7 @@ fun LocationMetricsScreen(
                     }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.cd_clear_metrics)
+                            contentDescription = stringResource(Res.string.cd_clear_metrics)
                         )
                     }
                     // Botao de enviar ao Analytics
@@ -96,7 +97,7 @@ fun LocationMetricsScreen(
                     }) {
                         Icon(
                             imageVector = Icons.Default.CloudUpload,
-                            contentDescription = stringResource(R.string.cd_send_analytics)
+                            contentDescription = stringResource(Res.string.cd_send_analytics)
                         )
                     }
                 },
@@ -144,12 +145,12 @@ private fun DebugOnlyMessage(onBack: () -> Unit) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = stringResource(R.string.debug_only_available),
+                text = stringResource(Res.string.debug_only_available),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Button(onClick = onBack) {
-                Text(stringResource(R.string.back))
+                Text(stringResource(Res.string.back))
             }
         }
     }
@@ -172,12 +173,12 @@ private fun EmptyMetricsMessage(modifier: Modifier = Modifier) {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = stringResource(R.string.debug_no_metrics),
+                text = stringResource(Res.string.debug_no_metrics),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = stringResource(R.string.debug_run_operations),
+                text = stringResource(Res.string.debug_run_operations),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -256,7 +257,7 @@ private fun SummaryCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = stringResource(R.string.debug_summary_title),
+                text = stringResource(Res.string.debug_summary_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -267,18 +268,18 @@ private fun SummaryCard(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 SummaryItem(
-                    label = stringResource(R.string.debug_total_queries),
+                    label = stringResource(Res.string.debug_total_queries),
                     value = totalQueries.toString(),
                     icon = Icons.Default.Storage
                 )
                 SummaryItem(
-                    label = stringResource(R.string.debug_errors),
+                    label = stringResource(Res.string.debug_errors),
                     value = totalErrors.toString(),
                     icon = Icons.Default.Error,
                     isError = totalErrors > 0
                 )
                 SummaryItem(
-                    label = stringResource(R.string.debug_avg_overall),
+                    label = stringResource(Res.string.debug_avg_overall),
                     value = "${overallAvgMs}ms",
                     icon = Icons.Default.Speed
                 )
@@ -344,15 +345,15 @@ private fun LegendCard() {
         ) {
             LegendItem(
                 color = Color(0xFF4CAF50),
-                label = stringResource(R.string.debug_legend_good)
+                label = stringResource(Res.string.debug_legend_good)
             )
             LegendItem(
                 color = Color(0xFFFF9800),
-                label = stringResource(R.string.debug_legend_slow)
+                label = stringResource(Res.string.debug_legend_slow)
             )
             LegendItem(
                 color = Color(0xFFF44336),
-                label = stringResource(R.string.debug_legend_critical)
+                label = stringResource(Res.string.debug_legend_critical)
             )
         }
     }

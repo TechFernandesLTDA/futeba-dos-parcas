@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.statistics
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -55,12 +57,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.futebadosparcas.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -184,7 +185,7 @@ fun WeeklyRecapScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.cd_close),
+                    contentDescription = stringResource(Res.string.cd_close),
                     tint = Color.White
                 )
             }
@@ -234,7 +235,7 @@ fun WeeklyRecapScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Share,
-                    contentDescription = stringResource(R.string.cd_share),
+                    contentDescription = stringResource(Res.string.cd_share),
                     tint = Color.White
                 )
             }
@@ -286,7 +287,7 @@ fun WeeklyRecapScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.cd_previous),
+                        contentDescription = stringResource(Res.string.cd_previous),
                         tint = Color.White
                     )
                 }
@@ -307,7 +308,7 @@ fun WeeklyRecapScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = stringResource(R.string.cd_next),
+                        contentDescription = stringResource(Res.string.cd_next),
                         tint = Color.White
                     )
                 }
@@ -342,7 +343,7 @@ private fun IntroSlide(data: WeeklyRecapData) {
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = stringResource(R.string.recap_your_summary),
+                    text = stringResource(Res.string.recap_your_summary),
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White.copy(alpha = 0.8f)
                 )
@@ -350,7 +351,7 @@ private fun IntroSlide(data: WeeklyRecapData) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = stringResource(R.string.recap_week_number, data.weekNumber),
+                    text = stringResource(Res.string.recap_week_number, data.weekNumber),
                     style = MaterialTheme.typography.displayLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -376,7 +377,7 @@ private fun IntroSlide(data: WeeklyRecapData) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = stringResource(R.string.recap_lets_see),
+                    text = stringResource(Res.string.recap_lets_see),
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White.copy(alpha = 0.9f)
                 )
@@ -411,7 +412,7 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(R.string.recap_you_played),
+            text = stringResource(Res.string.recap_you_played),
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White.copy(alpha = 0.8f)
         )
@@ -428,7 +429,7 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
         )
 
         Text(
-            text = stringResource(if (data.gamesPlayed == 1) R.string.recap_pelada_singular else R.string.recap_pelada_plural),
+            text = stringResource(if (data.gamesPlayed == 1) Res.string.recap_pelada_singular else Res.string.recap_pelada_plural),
             style = MaterialTheme.typography.headlineMedium,
             color = Color.White
         )
@@ -452,7 +453,7 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
                     color = Color.White
                 )
                 Text(
-                    text = stringResource(R.string.recap_minutes_on_field),
+                    text = stringResource(Res.string.recap_minutes_on_field),
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White.copy(alpha = 0.8f)
                 )
@@ -480,7 +481,7 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(R.string.recap_your_performance),
+            text = stringResource(Res.string.recap_your_performance),
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White.copy(alpha = 0.8f)
         )
@@ -494,12 +495,12 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
         ) {
             StatBox(
                 value = "${data.goals}",
-                label = stringResource(R.string.recap_summary_goals),
+                label = stringResource(Res.string.recap_summary_goals),
                 icon = R.drawable.ic_football
             )
             StatBox(
                 value = "${data.assists}",
-                label = stringResource(R.string.recap_summary_assists),
+                label = stringResource(Res.string.recap_summary_assists),
                 icon = R.drawable.ic_assist
             )
         }
@@ -543,7 +544,7 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
                     color = Color.White
                 )
                 Text(
-                    text = stringResource(R.string.recap_win_rate),
+                    text = stringResource(Res.string.recap_win_rate),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.8f)
                 )
@@ -572,13 +573,13 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
                 )
                 Column {
                     Text(
-                        text = stringResource(R.string.recap_xp_earned_format, data.xpEarned),
+                        text = stringResource(Res.string.recap_xp_earned_format, data.xpEarned),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
-                        text = stringResource(R.string.recap_xp_earned_this_week),
+                        text = stringResource(Res.string.recap_xp_earned_this_week),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.8f)
                     )
@@ -638,7 +639,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(R.string.recap_social_life),
+            text = stringResource(Res.string.recap_social_life),
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White.copy(alpha = 0.8f)
         )
@@ -659,7 +660,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = stringResource(R.string.recap_your_pelada_partner),
+                        text = stringResource(Res.string.recap_your_pelada_partner),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.7f)
                     )
@@ -692,7 +693,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
                     )
 
                     Text(
-                        text = stringResource(R.string.recap_games_together, data.topPartnerGames),
+                        text = stringResource(Res.string.recap_games_together, data.topPartnerGames),
                         style = MaterialTheme.typography.bodyMedium,
                         color = RecapColors.AccentGold
                     )
@@ -726,7 +727,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(R.string.recap_favorite_location),
+                            text = stringResource(Res.string.recap_favorite_location),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.7f)
                         )
@@ -760,7 +761,7 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(R.string.recap_achievements),
+            text = stringResource(Res.string.recap_achievements),
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White.copy(alpha = 0.8f)
         )
@@ -789,13 +790,13 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(R.string.recap_streak_days, data.streakDays),
+                            text = stringResource(Res.string.recap_streak_days, data.streakDays),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = stringResource(R.string.recap_keep_going),
+                            text = stringResource(Res.string.recap_keep_going),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.8f)
                         )
@@ -828,13 +829,13 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(R.string.recap_mvp_count, data.mvpCount),
+                            text = stringResource(Res.string.recap_mvp_count, data.mvpCount),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = stringResource(R.string.recap_mvp_star),
+                            text = stringResource(Res.string.recap_mvp_star),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.8f)
                         )
@@ -873,16 +874,16 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = if (isUp) {
-                                stringResource(R.string.recap_ranked_up, data.rankingChange)
+                                stringResource(Res.string.recap_ranked_up, data.rankingChange)
                             } else {
-                                stringResource(R.string.recap_ranked_down, -data.rankingChange)
+                                stringResource(Res.string.recap_ranked_down, -data.rankingChange)
                             },
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = stringResource(R.string.recap_in_group_ranking),
+                            text = stringResource(Res.string.recap_in_group_ranking),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.8f)
                         )
@@ -896,7 +897,7 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = stringResource(R.string.recap_personal_bests),
+                text = stringResource(Res.string.recap_personal_bests),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -936,7 +937,7 @@ private fun FunFactsSlide(data: WeeklyRecapData) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(R.string.recap_curiosities),
+            text = stringResource(Res.string.recap_curiosities),
             style = MaterialTheme.typography.headlineSmall,
             color = Color.White.copy(alpha = 0.8f)
         )
@@ -1016,7 +1017,7 @@ private fun SummarySlide(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(R.string.recap_thats_it),
+            text = stringResource(Res.string.recap_thats_it),
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
             color = Color.White
@@ -1025,7 +1026,7 @@ private fun SummarySlide(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.recap_week_was_great, data.weekNumber),
+            text = stringResource(Res.string.recap_week_was_great, data.weekNumber),
             style = MaterialTheme.typography.titleLarge,
             color = Color.White.copy(alpha = 0.9f)
         )
@@ -1044,11 +1045,11 @@ private fun SummarySlide(
                 modifier = Modifier.padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                SummaryRow(stringResource(R.string.recap_summary_games), "${data.gamesPlayed}")
-                SummaryRow(stringResource(R.string.recap_summary_goals), "${data.goals}")
-                SummaryRow(stringResource(R.string.recap_summary_assists), "${data.assists}")
-                SummaryRow(stringResource(R.string.recap_summary_xp), "+${data.xpEarned}")
-                SummaryRow(stringResource(R.string.recap_win_rate), "${(data.winRate * 100).toInt()}%")
+                SummaryRow(stringResource(Res.string.recap_summary_games), "${data.gamesPlayed}")
+                SummaryRow(stringResource(Res.string.recap_summary_goals), "${data.goals}")
+                SummaryRow(stringResource(Res.string.recap_summary_assists), "${data.assists}")
+                SummaryRow(stringResource(Res.string.recap_summary_xp), "+${data.xpEarned}")
+                SummaryRow(stringResource(Res.string.recap_win_rate), "${(data.winRate * 100).toInt()}%")
             }
         }
 
@@ -1073,7 +1074,7 @@ private fun SummarySlide(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = stringResource(R.string.recap_share_summary),
+                text = stringResource(Res.string.recap_share_summary),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -1082,7 +1083,7 @@ private fun SummarySlide(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.recap_see_you_next),
+            text = stringResource(Res.string.recap_see_you_next),
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White.copy(alpha = 0.7f)
         )

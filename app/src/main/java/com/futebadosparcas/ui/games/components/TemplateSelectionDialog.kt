@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,12 +33,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.GameTemplate
+import com.futebadosparcas.domain.model.GameTemplate
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -64,7 +65,7 @@ fun TemplateSelectionDialog(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = stringResource(R.string.create_game_templates_title),
+                    text = stringResource(Res.string.create_game_templates_title),
                     style = MaterialTheme.typography.titleLarge
                 )
             }
@@ -76,13 +77,13 @@ fun TemplateSelectionDialog(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = stringResource(R.string.create_game_templates_empty),
+                        text = stringResource(Res.string.create_game_templates_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = stringResource(R.string.create_game_templates_hint),
+                        text = stringResource(Res.string.create_game_templates_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
@@ -107,7 +108,7 @@ fun TemplateSelectionDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.close))
+                Text(stringResource(Res.string.close))
             }
         }
     )
@@ -206,7 +207,7 @@ private fun TemplateItem(
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.delete),
+                    contentDescription = stringResource(Res.string.delete),
                     tint = MaterialTheme.colorScheme.error
                 )
             }
@@ -228,14 +229,14 @@ fun SaveTemplateDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = stringResource(R.string.create_game_save_template_title),
+                text = stringResource(Res.string.create_game_save_template_title),
                 style = MaterialTheme.typography.titleLarge
             )
         },
         text = {
             Column {
                 Text(
-                    text = stringResource(R.string.create_game_save_template_hint),
+                    text = stringResource(Res.string.create_game_save_template_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -245,7 +246,7 @@ fun SaveTemplateDialog(
                 androidx.compose.material3.OutlinedTextField(
                     value = templateName,
                     onValueChange = onTemplateNameChange,
-                    label = { Text(stringResource(R.string.create_game_template_name)) },
+                    label = { Text(stringResource(Res.string.create_game_template_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -256,12 +257,12 @@ fun SaveTemplateDialog(
                 onClick = onConfirm,
                 enabled = templateName.isNotBlank()
             ) {
-                Text(stringResource(R.string.save))
+                Text(stringResource(Res.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )

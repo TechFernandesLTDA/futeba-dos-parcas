@@ -1,11 +1,8 @@
 package com.futebadosparcas.data
 
-import com.futebadosparcas.data.model.*
-import com.futebadosparcas.domain.model.GroupInvite as KmpGroupInvite
-import com.futebadosparcas.domain.model.InviteStatus as KmpInviteStatus
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.util.AppLogger
-import com.futebadosparcas.util.toKmpGroupInvite
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -14,7 +11,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
-import java.util.Date
 
 /**
  * Implementacao Android do InviteRepository.
@@ -34,7 +30,7 @@ class InviteRepositoryImpl constructor(
     private val usersCollection = firestore.collection("users")
     private val notificationsCollection = firestore.collection("notifications")
 
-    override suspend fun createInvite(groupId: String, invitedUserId: String): Result<KmpGroupInvite> {
+    override suspend fun createInvite(groupId: String, invitedUserId: String): Result<GroupInvite> {
         return try {
             val currentUserId = auth.currentUser?.uid
                 ?: return Result.failure(Exception("Usuário não autenticado"))
@@ -51,7 +47,7 @@ class InviteRepositoryImpl constructor(
             }
 
             val member = memberDoc.toObject(GroupMember::class.java)
-            if (member?.canInvite() != true) {
+            if (member?.isAdmin() != true) {
                 return Result.failure(Exception("Você não tem permissão para convidar"))
             }
 
@@ -112,7 +108,7 @@ class InviteRepositoryImpl constructor(
                 invitedById = currentUserId,
                 invitedByName = currentUserName,
                 status = InviteStatus.PENDING.name,
-                expiresAt = GroupInvite.calculateExpirationDate()
+                expiresAt = calculateGroupInviteExpirationDate()
             )
 
             // Criar notificação
@@ -120,7 +116,7 @@ class InviteRepositoryImpl constructor(
             val notification = AppNotification(
                 id = notificationRef.id,
                 userId = invitedUserId,
-                type = NotificationType.GROUP_INVITE.name,
+                type = NotificationType.GROUP_INVITE,
                 title = "Convite para grupo",
                 message = "$currentUserName convidou você para o grupo $groupName",
                 senderId = currentUserId,
@@ -128,9 +124,9 @@ class InviteRepositoryImpl constructor(
                 senderPhoto = currentUser.photoUrl,
                 referenceId = inviteRef.id,
                 referenceType = "invite",
-                actionType = NotificationAction.ACCEPT_DECLINE.name,
-                createdAtRaw = Date(),
-                expiresAtRaw = androidInvite.expiresAt
+                actionType = NotificationAction.ACCEPT_DECLINE,
+                createdAt = System.currentTimeMillis(),
+                expiresAt = androidInvite.expiresAt
             )
 
             // Salvar convite e notificação em transação
@@ -139,19 +135,18 @@ class InviteRepositoryImpl constructor(
                 transaction.set(notificationRef, notification)
             }.await()
 
-            Result.success(androidInvite.toKmpGroupInvite())
+            Result.success(androidInvite)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao enviar convite para grupo", e)
             Result.failure(e)
         }
     }
 
-    override suspend fun getMyPendingInvites(): Result<List<KmpGroupInvite>> {
+    override suspend fun getMyPendingInvites(): Result<List<GroupInvite>> {
         return try {
             val userId = auth.currentUser?.uid
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            val now = Date()
             // P1 #12: Adicionar .limit() - máximo 50 convites pendentes por usuário
             val snapshot = invitesCollection
                 .whereEqualTo("invited_user_id", userId)
@@ -161,8 +156,7 @@ class InviteRepositoryImpl constructor(
                 .await()
 
             val invites = snapshot.toObjects(GroupInvite::class.java)
-                .filter { it.expiresAt?.after(now) == true }
-                .map { it.toKmpGroupInvite() }
+                .filter { it.hasExpired().not() }
 
             Result.success(invites)
         } catch (e: Exception) {
@@ -170,7 +164,7 @@ class InviteRepositoryImpl constructor(
         }
     }
 
-    override fun getMyPendingInvitesFlow(): Flow<List<KmpGroupInvite>> = callbackFlow {
+    override fun getMyPendingInvitesFlow(): Flow<List<GroupInvite>> = callbackFlow {
         val userId = auth.currentUser?.uid
         if (userId == null) {
             trySend(emptyList())
@@ -190,11 +184,9 @@ class InviteRepositoryImpl constructor(
                 }
 
                 if (snapshot != null) {
-                    val now = Date()
                     val invites = snapshot.toObjects(GroupInvite::class.java)
-                        .filter { it.expiresAt?.after(now) == true }
+                        .filter { it.hasExpired().not() }
                         .sortedByDescending { it.createdAt }
-                        .map { it.toKmpGroupInvite() }
                     trySend(invites)
                 } else {
                     trySend(emptyList())
@@ -204,9 +196,8 @@ class InviteRepositoryImpl constructor(
         awaitClose { listener.remove() }
     }
 
-    override suspend fun getGroupPendingInvites(groupId: String): Result<List<KmpGroupInvite>> {
+    override suspend fun getGroupPendingInvites(groupId: String): Result<List<GroupInvite>> {
         return try {
-            val now = Date()
             // P1 #12: Adicionar .limit() - máximo 100 convites pendentes por grupo
             val snapshot = invitesCollection
                 .whereEqualTo("group_id", groupId)
@@ -216,8 +207,7 @@ class InviteRepositoryImpl constructor(
                 .await()
 
             val invites = snapshot.toObjects(GroupInvite::class.java)
-                .filter { it.expiresAt?.after(now) == true }
-                .map { it.toKmpGroupInvite() }
+                .filter { it.hasExpired().not() }
 
             Result.success(invites)
         } catch (e: Exception) {
@@ -271,13 +261,13 @@ class InviteRepositoryImpl constructor(
 
                 val member = GroupMember(
                     id = userId,
+                    groupId = invite.groupId,
                     userId = userId,
                     userName = user.name, // Mantem nome original
                     nickname = user.nickname, // Adiciona apelido
                     userPhoto = user.photoUrl,
                     role = GroupMemberRole.MEMBER.name,
-                    status = GroupMemberStatus.ACTIVE.name,
-                    invitedBy = invite.invitedById
+                    joinedAt = System.currentTimeMillis()
                 )
                 transaction.set(memberRef, member)
 
@@ -290,11 +280,12 @@ class InviteRepositoryImpl constructor(
                     .collection("groups").document(invite.groupId)
                 val userGroup = UserGroup(
                     id = invite.groupId,
+                    userId = userId,
                     groupId = invite.groupId,
                     groupName = invite.groupName,
                     groupPhoto = invite.groupPhoto,
                     role = GroupMemberRole.MEMBER.name,
-                    memberCount = newMemberCount
+                    joinedAt = System.currentTimeMillis()
                 )
                 transaction.set(userGroupRef, userGroup)
 
@@ -303,15 +294,15 @@ class InviteRepositoryImpl constructor(
                 val notification = AppNotification(
                     id = notificationRef.id,
                     userId = invite.invitedById,
-                    type = NotificationType.GROUP_INVITE_ACCEPTED.name,
+                    type = NotificationType.GROUP_INVITE_ACCEPTED,
                     title = "Convite aceito",
                     message = "$userNameDisplay aceitou o convite para o grupo ${invite.groupName}",
                     senderId = userId,
                     senderName = userNameDisplay,
                     referenceId = invite.groupId,
                     referenceType = "group",
-                    actionType = NotificationAction.VIEW_DETAILS.name,
-                    createdAtRaw = Date()
+                    actionType = NotificationAction.VIEW_DETAILS,
+                    createdAt = System.currentTimeMillis()
                 )
                 transaction.set(notificationRef, notification)
             }.await()
@@ -362,15 +353,15 @@ class InviteRepositoryImpl constructor(
                 val notification = AppNotification(
                     id = notificationRef.id,
                     userId = invite.invitedById,
-                    type = NotificationType.GROUP_INVITE_DECLINED.name,
+                    type = NotificationType.GROUP_INVITE_DECLINED,
                     title = "Convite recusado",
                     message = "$userNameDisplay recusou o convite para o grupo ${invite.groupName}",
                     senderId = userId,
                     senderName = userNameDisplay,
                     referenceId = invite.groupId,
                     referenceType = "group",
-                    actionType = NotificationAction.NONE.name,
-                    createdAtRaw = Date()
+                    actionType = NotificationAction.NONE,
+                    createdAt = System.currentTimeMillis()
                 )
                 transaction.set(notificationRef, notification)
             }.await()
@@ -422,14 +413,14 @@ class InviteRepositoryImpl constructor(
         }
     }
 
-    override suspend fun getInviteById(inviteId: String): Result<KmpGroupInvite> {
+    override suspend fun getInviteById(inviteId: String): Result<GroupInvite> {
         return try {
             val doc = invitesCollection.document(inviteId).get().await()
 
             if (doc.exists()) {
                 val invite = doc.toObject(GroupInvite::class.java)
                     ?: return Result.failure(Exception("Erro ao converter convite"))
-                Result.success(invite.toKmpGroupInvite())
+                Result.success(invite)
             } else {
                 Result.failure(Exception("Convite não encontrado"))
             }
@@ -443,8 +434,6 @@ class InviteRepositoryImpl constructor(
             val userId = auth.currentUser?.uid
                 ?: return Result.failure(Exception("Usuário não autenticado"))
 
-            val now = Date()
-
             // P1 #12: Adicionar .limit() para evitar leitura excessiva de contagem
             val snapshot = invitesCollection
                 .whereEqualTo("invited_user_id", userId)
@@ -454,8 +443,9 @@ class InviteRepositoryImpl constructor(
                 .await()
 
             val count = snapshot.documents.count { doc ->
-                val expiresAt = doc.getDate("expires_at")
-                expiresAt?.after(now) == true
+                val expiresAt = doc.getLong("expires_at")
+                val nowMillis = System.currentTimeMillis()
+                expiresAt?.let { it > nowMillis } == true
             }
 
             Result.success(count)

@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -31,9 +33,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
@@ -237,7 +238,7 @@ private fun DefaultEmptyContent() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = stringResource(R.string.no_data_available),
+            text = stringResource(Res.string.no_data_available),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

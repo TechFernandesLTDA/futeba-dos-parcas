@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.livegame
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.app.Activity
 import android.app.PictureInPictureParams
@@ -35,8 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.R
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -299,7 +300,7 @@ fun LiveIndicator(
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
-            text = stringResource(R.string.pip_live_indicator),
+            text = stringResource(Res.string.pip_live_indicator),
             color = MaterialTheme.colorScheme.onError,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold

@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.navigation
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -30,10 +32,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-
 /**
  * Sistema de navegação adaptativa para diferentes tamanhos de tela.
  *
@@ -75,31 +75,31 @@ sealed class NavigationDestination(
     data object Home : NavigationDestination(
         route = "home",
         icon = Icons.Default.Home,
-        labelResId = R.string.nav_home
+        labelResId = Res.string.nav_home
     )
 
     data object Games : NavigationDestination(
         route = "games",
         icon = Icons.Default.CalendarMonth,
-        labelResId = R.string.nav_games
+        labelResId = Res.string.nav_games
     )
 
     data object Groups : NavigationDestination(
         route = "groups",
         icon = Icons.Default.Groups,
-        labelResId = R.string.nav_groups
+        labelResId = Res.string.nav_groups
     )
 
     data object Rankings : NavigationDestination(
         route = "rankings",
         icon = Icons.Default.Leaderboard,
-        labelResId = R.string.nav_rankings
+        labelResId = Res.string.nav_rankings
     )
 
     data object Profile : NavigationDestination(
         route = "profile",
         icon = Icons.Default.Person,
-        labelResId = R.string.nav_profile
+        labelResId = Res.string.nav_profile
     )
 }
 
@@ -267,7 +267,7 @@ fun AdaptivePermanentDrawer(
             ) {
                 // Header do drawer
                 Text(
-                    text = stringResource(R.string.app_name),
+                    text = stringResource(Res.string.app_name),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(16.dp)
@@ -309,7 +309,7 @@ fun AdaptivePermanentDrawer(
                         )
                     },
                     label = {
-                        Text(text = stringResource(R.string.settings_title))
+                        Text(text = stringResource(Res.string.settings_title))
                     },
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                 )

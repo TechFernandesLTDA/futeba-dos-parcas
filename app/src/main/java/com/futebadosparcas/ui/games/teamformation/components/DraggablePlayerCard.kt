@@ -1,6 +1,8 @@
 @file:OptIn(ExperimentalFoundationApi::class)
 
 package com.futebadosparcas.ui.games.teamformation.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.content.ClipData
 import androidx.compose.animation.animateColorAsState
@@ -32,14 +34,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.DraftPlayer
-import com.futebadosparcas.data.model.TeamColor
-import com.futebadosparcas.data.model.PlayerPosition
+import com.futebadosparcas.domain.model.DraftPlayer
+import com.futebadosparcas.domain.model.TeamColor
+import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.ui.components.CachedProfileImage
 
 /**
@@ -190,7 +191,7 @@ fun DraggablePlayerCard(
             // Icone de arrastar
             Icon(
                 imageVector = Icons.Default.DragIndicator,
-                contentDescription = stringResource(R.string.drag_players_here),
+                contentDescription = stringResource(Res.string.drag_players_here),
                 modifier = Modifier
                     .size(24.dp)
                     .alpha(0.5f),
@@ -406,7 +407,7 @@ fun EmptyPlayerDropZone(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = stringResource(R.string.drag_players_here),
+                text = stringResource(Res.string.drag_players_here),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )

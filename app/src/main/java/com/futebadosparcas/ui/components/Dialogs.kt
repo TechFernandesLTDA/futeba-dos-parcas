@@ -1,16 +1,16 @@
 package com.futebadosparcas.ui.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.CheckCircle
-import com.futebadosparcas.R
-
 /**
  * Dialogs
  *
@@ -26,8 +26,8 @@ fun ConfirmationDialog(
     message: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    confirmText: String = stringResource(R.string.confirm),
-    dismissText: String = stringResource(R.string.cancel),
+    confirmText: String = stringResource(Res.string.confirm),
+    dismissText: String = stringResource(Res.string.cancel),
     icon: ImageVector? = Icons.Default.Warning
 ) {
     AlertDialog(
@@ -58,12 +58,12 @@ fun DeleteConfirmationDialog(
     onDismiss: () -> Unit
 ) {
     ConfirmationDialog(
-        title = stringResource(R.string.delete_item_title, itemName),
-        message = stringResource(R.string.delete_cannot_undo),
+        title = stringResource(Res.string.delete_item_title, itemName),
+        message = stringResource(Res.string.delete_cannot_undo),
         onConfirm = onConfirm,
         onDismiss = onDismiss,
-        confirmText = stringResource(R.string.delete),
-        dismissText = stringResource(R.string.cancel),
+        confirmText = stringResource(Res.string.delete),
+        dismissText = stringResource(Res.string.cancel),
         icon = Icons.Default.Delete
     )
 }
@@ -76,7 +76,7 @@ fun InfoDialog(
     title: String,
     message: String,
     onDismiss: () -> Unit,
-    buttonText: String = stringResource(R.string.ok)
+    buttonText: String = stringResource(Res.string.ok)
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -99,7 +99,7 @@ fun SuccessDialog(
     title: String,
     message: String,
     onDismiss: () -> Unit,
-    buttonText: String = stringResource(R.string.ok)
+    buttonText: String = stringResource(Res.string.ok)
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -119,7 +119,7 @@ fun SuccessDialog(
  */
 @Composable
 fun ErrorDialog(
-    title: String = stringResource(R.string.error_title),
+    title: String = stringResource(Res.string.error_title),
     message: String,
     onDismiss: () -> Unit,
     onRetry: (() -> Unit)? = null
@@ -132,18 +132,18 @@ fun ErrorDialog(
         confirmButton = {
             if (onRetry != null) {
                 TextButton(onClick = onRetry) {
-                    Text(stringResource(R.string.retry))
+                    Text(stringResource(Res.string.retry))
                 }
             } else {
                 TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.ok))
+                    Text(stringResource(Res.string.ok))
                 }
             }
         },
         dismissButton = if (onRetry != null) {
             {
                 TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         } else null
@@ -155,7 +155,7 @@ fun ErrorDialog(
  */
 @Composable
 fun LoadingDialog(
-    message: String = stringResource(R.string.loading)
+    message: String = stringResource(Res.string.loading)
 ) {
     AlertDialog(
         onDismissRequest = { /* Cannot dismiss */ },
@@ -197,7 +197,7 @@ fun <T> ChoiceDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
@@ -213,8 +213,8 @@ fun InputDialog(
     initialValue: String = "",
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
-    confirmText: String = stringResource(R.string.confirm),
-    dismissText: String = stringResource(R.string.cancel)
+    confirmText: String = stringResource(Res.string.confirm),
+    dismissText: String = stringResource(Res.string.cancel)
 ) {
     var text = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(initialValue) }
 

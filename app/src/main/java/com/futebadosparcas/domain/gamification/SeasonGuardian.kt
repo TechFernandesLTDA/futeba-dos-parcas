@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.gamification
 
-import com.futebadosparcas.data.model.LeagueDivision
+import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.data.model.Season
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore

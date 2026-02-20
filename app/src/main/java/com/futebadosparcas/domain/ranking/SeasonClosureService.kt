@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.ranking
 
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.model.AppNotification as DomainAppNotification
 import com.futebadosparcas.domain.model.NotificationAction
 import com.futebadosparcas.domain.model.NotificationType

@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -22,15 +24,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.AnimatedStateContainer
 import com.futebadosparcas.ui.components.StateType
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.ui.components.FutebaTopBar
 import com.futebadosparcas.ui.components.ShimmerGameCard
@@ -75,7 +76,7 @@ fun GamesScreen(
                 onClick = onCreateGameClick,
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_game))
+                Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.create_game))
             }
         }
     ) { paddingValues ->
@@ -200,11 +201,11 @@ private fun GamesFilters(
         FilterChip(
             selected = selectedFilter == GameFilterType.ALL,
             onClick = { onFilterChange(GameFilterType.ALL) },
-            label = { Text(stringResource(R.string.all_games)) },
+            label = { Text(stringResource(Res.string.all_games)) },
             leadingIcon = {
                 Icon(
                     imageVector = if (selectedFilter == GameFilterType.ALL) Icons.Default.Check else Icons.Default.CalendarMonth,
-                    contentDescription = stringResource(R.string.all_games),
+                    contentDescription = stringResource(Res.string.all_games),
                     modifier = Modifier.size(FilterChipDefaults.IconSize)
                 )
             }
@@ -213,11 +214,11 @@ private fun GamesFilters(
         FilterChip(
             selected = selectedFilter == GameFilterType.OPEN,
             onClick = { onFilterChange(GameFilterType.OPEN) },
-            label = { Text(stringResource(R.string.open_games)) },
+            label = { Text(stringResource(Res.string.open_games)) },
             leadingIcon = {
                 Icon(
                     imageVector = if (selectedFilter == GameFilterType.OPEN) Icons.Default.Check else Icons.Default.LockOpen,
-                    contentDescription = stringResource(R.string.open_games),
+                    contentDescription = stringResource(Res.string.open_games),
                     modifier = Modifier.size(FilterChipDefaults.IconSize)
                 )
             }
@@ -226,11 +227,11 @@ private fun GamesFilters(
         FilterChip(
             selected = selectedFilter == GameFilterType.MY_GAMES,
             onClick = { onFilterChange(GameFilterType.MY_GAMES) },
-            label = { Text(stringResource(R.string.my_games)) },
+            label = { Text(stringResource(Res.string.my_games)) },
             leadingIcon = {
                 Icon(
                     imageVector = if (selectedFilter == GameFilterType.MY_GAMES) Icons.Default.Check else Icons.Default.Person,
-                    contentDescription = stringResource(R.string.my_games),
+                    contentDescription = stringResource(Res.string.my_games),
                     modifier = Modifier.size(FilterChipDefaults.IconSize)
                 )
             }
@@ -346,7 +347,7 @@ private fun GameCard(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "${game.game.playersCount} ${stringResource(R.string.confirmed_players)}",
+                    text = "${game.game.playersCount} ${stringResource(Res.string.confirmed_players)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -414,7 +415,7 @@ private fun GamesEmptyState(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(R.string.empty_state_no_games_title_generic),
+            text = stringResource(Res.string.empty_state_no_games_title_generic),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
@@ -423,7 +424,7 @@ private fun GamesEmptyState(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = stringResource(R.string.empty_state_no_games_desc_generic),
+            text = stringResource(Res.string.empty_state_no_games_desc_generic),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -438,9 +439,9 @@ private fun GamesEmptyState(
                 .fillMaxWidth(0.6f)
                 .height(48.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_game), modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.create_game), modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.empty_state_no_games_action))
+            Text(stringResource(Res.string.empty_state_no_games_action))
         }
     }
 }
@@ -470,7 +471,7 @@ private fun GamesErrorState(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.error),
+            text = stringResource(Res.string.error),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.error
         )
@@ -484,9 +485,9 @@ private fun GamesErrorState(
         )
 
         Button(onClick = onRetry) {
-            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry), modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.Refresh, contentDescription = stringResource(Res.string.retry), modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.retry))
+            Text(stringResource(Res.string.retry))
         }
     }
 }
@@ -520,12 +521,12 @@ private fun getStatusColor(status: String) = when (status.uppercase()) {
  */
 @Composable
 private fun getStatusText(status: String): String = when (status.uppercase()) {
-    "OPEN" -> stringResource(R.string.status_display_open)
-    "CONFIRMED" -> stringResource(R.string.status_display_confirmed)
-    "SCHEDULED" -> stringResource(R.string.status_display_scheduled)
-    "LIVE" -> stringResource(R.string.status_display_live)
-    "FINISHED" -> stringResource(R.string.status_display_finished)
-    "CANCELLED" -> stringResource(R.string.status_display_cancelled)
+    "OPEN" -> stringResource(Res.string.status_display_open)
+    "CONFIRMED" -> stringResource(Res.string.status_display_confirmed)
+    "SCHEDULED" -> stringResource(Res.string.status_display_scheduled)
+    "LIVE" -> stringResource(Res.string.status_display_live)
+    "FINISHED" -> stringResource(Res.string.status_display_finished)
+    "CANCELLED" -> stringResource(Res.string.status_display_cancelled)
     else -> status
 }
 

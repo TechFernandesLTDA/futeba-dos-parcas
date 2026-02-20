@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.theme
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,10 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
-import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,7 +40,7 @@ fun ThemeSettingsScreen(
         // Theme Mode
         Card {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(stringResource(R.string.theme_mode), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(Res.string.theme_mode), style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ThemeMode.values().forEach { mode ->
@@ -81,7 +82,7 @@ fun ThemeSettingsScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = stringResource(R.string.theme_settings_preview_note),
+            text = stringResource(Res.string.theme_settings_preview_note),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -94,7 +95,7 @@ fun ThemeSettingsScreen(
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             )
         ) {
-            Text(stringResource(R.string.theme_settings_action_reset))
+            Text(stringResource(Res.string.theme_settings_action_reset))
         }
     }
 }

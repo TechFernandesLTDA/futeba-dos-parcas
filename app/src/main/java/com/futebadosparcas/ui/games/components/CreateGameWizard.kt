@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
@@ -27,10 +29,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.games.CreateGameStep
 
 /**
@@ -159,7 +160,7 @@ fun WizardNavigationBar(
                 onClick = onPreviousClick,
                 modifier = Modifier.weight(1f)
             ) {
-                Text(text = stringResource(R.string.create_game_wizard_previous))
+                Text(text = stringResource(Res.string.create_game_wizard_previous))
             }
         } else {
             Spacer(modifier = Modifier.weight(1f))
@@ -171,7 +172,7 @@ fun WizardNavigationBar(
                 enabled = canProceed,
                 modifier = Modifier.weight(1f)
             ) {
-                Text(text = stringResource(R.string.create_game_wizard_finish))
+                Text(text = stringResource(Res.string.create_game_wizard_finish))
             }
         } else {
             Button(
@@ -179,7 +180,7 @@ fun WizardNavigationBar(
                 enabled = canProceed,
                 modifier = Modifier.weight(1f)
             ) {
-                Text(text = stringResource(R.string.create_game_wizard_next))
+                Text(text = stringResource(Res.string.create_game_wizard_next))
             }
         }
     }

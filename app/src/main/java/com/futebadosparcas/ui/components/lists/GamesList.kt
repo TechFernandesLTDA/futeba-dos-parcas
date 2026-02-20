@@ -17,8 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.data.model.Game
-import com.futebadosparcas.data.model.GameStatus
+import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.GameStatus
 import java.util.*
 
 /**

@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.presence
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -16,10 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-
 /**
  * Badge que indica que o jogador e um convidado (nao membro do grupo).
  * Issue #38: Badge de convidado
@@ -42,7 +42,7 @@ fun GuestBadge(modifier: Modifier = Modifier) {
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
             Text(
-                text = stringResource(R.string.guest_label),
+                text = stringResource(Res.string.guest_label),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier.padding(start = 2.dp)

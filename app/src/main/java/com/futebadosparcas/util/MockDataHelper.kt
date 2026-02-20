@@ -1,6 +1,6 @@
 package com.futebadosparcas.util
 
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await

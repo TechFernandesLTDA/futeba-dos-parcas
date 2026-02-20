@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.Manifest
 import android.content.Context
@@ -36,7 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -46,10 +48,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
-import coil.compose.AsyncImage
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.*
+import org.jetbrains.compose.resources.stringResource
+import coil3.compose.AsyncImage
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
@@ -113,9 +114,9 @@ fun GameDetailScreen(
         if (state is GameDetailUiState.Success) {
             state.schedulingEvent?.let { event ->
                 val message = when (event) {
-                    is SchedulingEvent.Success -> context.getString(R.string.next_game_scheduled, event.nextDate)
-                    is SchedulingEvent.Conflict -> context.getString(R.string.scheduling_conflict, event.date)
-                    is SchedulingEvent.Error -> context.getString(R.string.scheduling_error, event.message)
+                    is SchedulingEvent.Success -> context.getString(Res.string.next_game_scheduled, event.nextDate)
+                    is SchedulingEvent.Conflict -> context.getString(Res.string.scheduling_conflict, event.date)
+                    is SchedulingEvent.Error -> context.getString(Res.string.scheduling_error, event.message)
                 }
                 snackbarHostState.showSnackbar(message)
                 viewModel.clearSchedulingEvent()
@@ -126,7 +127,7 @@ fun GameDetailScreen(
             }
         }
         if (state is GameDetailUiState.GameDeleted) {
-            snackbarHostState.showSnackbar(context.getString(R.string.game_cancelled_success))
+            snackbarHostState.showSnackbar(context.getString(Res.string.game_cancelled_success))
             onNavigateBack()
         }
     }
@@ -140,8 +141,8 @@ fun GameDetailScreen(
                     game = state.game,
                     hasTeams = state.teams.isNotEmpty(),
                     onBackClick = onNavigateBack,
-                    onInviteWhatsApp = { inviteToWhatsApp(context, state, context.getString(R.string.whatsapp_invite_title)) },
-                    onShare = { shareGameDetails(context, state, context.getString(R.string.game_at), context.getString(R.string.share)) },
+                    onInviteWhatsApp = { inviteToWhatsApp(context, state, context.getString(Res.string.whatsapp_invite_title)) },
+                    onShare = { shareGameDetails(context, state, context.getString(Res.string.game_at), context.getString(Res.string.share)) },
                     onVoteMvp = { onNavigateToMvpVote(gameId) },
                     onShareCard = { generateAndShareCard(context, state) },
                     onTacticalBoard = onNavigateToTacticalBoard
@@ -149,10 +150,10 @@ fun GameDetailScreen(
             } else {
                 // TopBar padrão para loading/error
                 TopAppBar(
-                    title = { Text(stringResource(R.string.game_details)) },
+                    title = { Text(stringResource(Res.string.game_details)) },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -170,9 +171,9 @@ fun GameDetailScreen(
                 is GameDetailUiState.Error -> {
                     EmptyState(
                         type = EmptyStateType.Error(
-                            title = stringResource(R.string.error),
+                            title = stringResource(Res.string.error),
                             description = state.message,
-                            actionLabel = stringResource(R.string.retry),
+                            actionLabel = stringResource(Res.string.retry),
                             onRetry = { viewModel.loadGameDetails(gameId) }
                         )
                     )
@@ -213,45 +214,45 @@ fun GameDetailTopBar(
     var showMenu by remember { mutableStateOf(false) }
 
     TopAppBar(
-        title = { Text(stringResource(R.string.game_details)) },
+        title = { Text(stringResource(Res.string.game_details)) },
         navigationIcon = {
             IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
             }
         },
         actions = {
             IconButton(onClick = onInviteWhatsApp) {
-                Icon(painterResource(R.drawable.ic_whatsapp), contentDescription = stringResource(R.string.invite_whatsapp), tint = com.futebadosparcas.ui.theme.BrandColors.WhatsApp)
+                Icon(painterResource(R.drawable.ic_whatsapp), contentDescription = stringResource(Res.string.invite_whatsapp), tint = com.futebadosparcas.ui.theme.BrandColors.WhatsApp)
             }
             // Box para ancorar o DropdownMenu ao IconButton
             Box {
                 IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
+                    Icon(Icons.Default.MoreVert, contentDescription = stringResource(Res.string.more_options))
                 }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.share_link)) },
+                        text = { Text(stringResource(Res.string.share_link)) },
                         onClick = { onShare(); showMenu = false },
-                        leadingIcon = { Icon(Icons.Outlined.Share, stringResource(R.string.share)) }
+                        leadingIcon = { Icon(Icons.Outlined.Share, stringResource(Res.string.share)) }
                     )
                     if (game.status == "FINISHED") {
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.vote_mvp)) },
+                            text = { Text(stringResource(Res.string.vote_mvp)) },
                             onClick = { onVoteMvp(); showMenu = false },
-                            leadingIcon = { Icon(Icons.Default.Star, stringResource(R.string.mvp)) }
+                            leadingIcon = { Icon(Icons.Default.Star, stringResource(Res.string.mvp)) }
                         )
                         if (hasTeams) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.generate_game_card)) },
+                                text = { Text(stringResource(Res.string.generate_game_card)) },
                                 onClick = { onShareCard(); showMenu = false },
-                                leadingIcon = { Icon(Icons.Default.Share, stringResource(R.string.card)) }
+                                leadingIcon = { Icon(Icons.Default.Share, stringResource(Res.string.card)) }
                             )
                         }
                     }
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.tactical_board)) },
+                        text = { Text(stringResource(Res.string.tactical_board)) },
                         onClick = { onTacticalBoard(); showMenu = false },
-                        leadingIcon = { Icon(Icons.Default.Create, stringResource(R.string.tactical_board)) }
+                        leadingIcon = { Icon(Icons.Default.Create, stringResource(Res.string.tactical_board)) }
                     )
                 }
             }
@@ -280,16 +281,16 @@ fun GameDetailContent(
     if (showCancelDialog) {
         AlertDialog(
             onDismissRequest = { showCancelDialog = false },
-            title = { Text(stringResource(R.string.cancel_game)) },
-            text = { Text(stringResource(R.string.cancel_game_confirmation)) },
+            title = { Text(stringResource(Res.string.cancel_game)) },
+            text = { Text(stringResource(Res.string.cancel_game_confirmation)) },
             confirmButton = {
                 TextButton(onClick = { viewModel.deleteGame(gameId); showCancelDialog = false }) {
-                    Text(stringResource(R.string.yes))
+                    Text(stringResource(Res.string.yes))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCancelDialog = false }) {
-                    Text(stringResource(R.string.no))
+                    Text(stringResource(Res.string.no))
                 }
             }
         )
@@ -379,7 +380,7 @@ fun GameDetailContent(
             if (state.teams.isNotEmpty()) {
                 item {
                     Text(
-                        stringResource(R.string.teams),
+                        stringResource(Res.string.teams),
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(16.dp)
                     )
@@ -405,7 +406,7 @@ fun GameDetailContent(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(stringResource(R.string.attendance_list), style = MaterialTheme.typography.titleLarge)
+                    Text(stringResource(Res.string.attendance_list), style = MaterialTheme.typography.titleLarge)
                     Text("${state.confirmations.size}/${state.game.maxPlayers}")
                 }
             }
@@ -447,9 +448,9 @@ fun GameDetailContent(
             ) {
                 Text(
                     text = when {
-                        state.isUserConfirmed -> stringResource(R.string.cancel_presence)
-                        state.isUserPending -> stringResource(R.string.accept_invite)
-                        else -> stringResource(R.string.confirm_presence)
+                        state.isUserConfirmed -> stringResource(Res.string.cancel_presence)
+                        state.isUserPending -> stringResource(Res.string.accept_invite)
+                        else -> stringResource(Res.string.confirm_presence)
                     },
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
@@ -494,23 +495,23 @@ fun GameHeaderSection(
                 Text(game.locationName, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.clickable { onLocationClick() })
             }
             if (game.fieldName.isNotEmpty()) {
-                Text(stringResource(R.string.field_field, game.fieldName), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(Res.string.field_field, game.fieldName), style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(modifier = Modifier.height(16.dp))
 
             if (canManage) {
                 Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
                     FilledTonalButton(onClick = onEdit) {
-                        Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.edit))
+                        Icon(Icons.Outlined.Edit, contentDescription = stringResource(Res.string.edit))
                         Spacer(Modifier.width(4.dp))
-                        Text(stringResource(R.string.edit), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(stringResource(Res.string.edit), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     if (game.status == "OPEN" || game.status == "SCHEDULED") {
                         FilledTonalButton(
                             onClick = onStart,
                             colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                         ) {
-                            Text(stringResource(R.string.start_game), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(stringResource(Res.string.start_game), maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                     if (game.status == "LIVE") {
@@ -518,7 +519,7 @@ fun GameHeaderSection(
                             onClick = onFinish,
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                         ) {
-                            Text(stringResource(R.string.finish), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(stringResource(Res.string.finish), maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 }
@@ -527,19 +528,19 @@ fun GameHeaderSection(
                     Switch(checked = game.status == "CONFIRMED", onCheckedChange = onToggleStatus)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (game.status == "CONFIRMED") stringResource(R.string.list_closed) else stringResource(R.string.list_open),
+                        text = if (game.status == "CONFIRMED") stringResource(Res.string.list_closed) else stringResource(Res.string.list_open),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
                 TextButton(onClick = onGenerateTeams) {
-                    Text(stringResource(R.string.generate_teams), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(Res.string.generate_teams), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 TextButton(
                     onClick = onCancel,
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text(stringResource(R.string.cancel_game), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(Res.string.cancel_game), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
@@ -577,22 +578,22 @@ fun ConfirmationCard(
 
             if (currentUserId == confirmation.userId && confirmation.status == "PENDING") {
                 IconButton(onClick = onAcceptClick) {
-                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.accept), tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.Check, contentDescription = stringResource(Res.string.accept), tint = MaterialTheme.colorScheme.primary)
                 }
                 IconButton(onClick = onDeclineClick) {
-                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.decline), tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.decline), tint = MaterialTheme.colorScheme.error)
                 }
             } else {
                 if (isOwner || currentUserId == confirmation.userId) {
                     val payColor = if (confirmation.paymentStatus == "PAID")
                         com.futebadosparcas.ui.theme.BrandColors.WhatsApp else MaterialTheme.colorScheme.onSurfaceVariant
                     IconButton(onClick = onPaymentClick) {
-                        Icon(painterResource(R.drawable.ic_money), contentDescription = stringResource(R.string.payment), tint = payColor)
+                        Icon(painterResource(R.drawable.ic_money), contentDescription = stringResource(Res.string.payment), tint = payColor)
                     }
                 }
                 if (isOwner) {
                     IconButton(onClick = onRemoveClick) {
-                        Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.action_remove), tint = MaterialTheme.colorScheme.error)
+                        Icon(Icons.Outlined.Delete, contentDescription = stringResource(Res.string.action_remove), tint = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -611,7 +612,7 @@ fun TeamCard(
         Column(modifier = Modifier.padding(12.dp)) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Text(team.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.goals_count, team.score), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(Res.string.goals_count, team.score), style = MaterialTheme.typography.titleMedium)
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             // Usa Column + forEach para evitar LazyColumn aninhado dentro de LazyColumn
@@ -696,15 +697,15 @@ fun PositionSelectionDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.select_position)) },
+        title = { Text(stringResource(Res.string.select_position)) },
         text = {
             Column {
                 Button(onClick = { onConfirm(PlayerPosition.GOALKEEPER) }, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.goalkeeper))
+                    Text(stringResource(Res.string.goalkeeper))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(onClick = { onConfirm(PlayerPosition.FIELD) }, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.field_player))
+                    Text(stringResource(Res.string.field_player))
                 }
             }
         },
@@ -723,10 +724,10 @@ fun GenerateTeamsDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.generate_teams)) },
+        title = { Text(stringResource(Res.string.generate_teams)) },
         text = {
             Column {
-                Text(stringResource(R.string.how_many_teams))
+                Text(stringResource(Res.string.how_many_teams))
                 Row {
                     listOf(2, 3, 4).forEach { num ->
                         FilterChip(
@@ -740,18 +741,18 @@ fun GenerateTeamsDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = balanced, onCheckedChange = { balanced = it })
-                    Text(stringResource(R.string.balance_by_skill))
+                    Text(stringResource(Res.string.balance_by_skill))
                 }
             }
         },
         confirmButton = {
             Button(onClick = { onGenerate(selectedTeams, balanced) }) {
-                Text(stringResource(R.string.generate))
+                Text(stringResource(Res.string.generate))
             }
         },
         dismissButton = {
             TextButton(onClick = onClear) {
-                Text(stringResource(R.string.clear_teams))
+                Text(stringResource(Res.string.clear_teams))
             }
         }
     )
@@ -770,7 +771,7 @@ fun MovePlayerDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card {
             Column(Modifier.padding(16.dp)) {
-                Text(stringResource(R.string.move_to), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(Res.string.move_to), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 teams.forEach { team ->
                     TextButton(
@@ -803,11 +804,11 @@ fun FinishGameDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.finish_game)) },
+        title = { Text(stringResource(Res.string.finish_game)) },
         text = {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(teamA?.name ?: stringResource(R.string.team_a), modifier = Modifier.weight(1f))
+                    Text(teamA?.name ?: stringResource(Res.string.team_a), modifier = Modifier.weight(1f))
                     OutlinedTextField(
                         value = scoreA,
                         onValueChange = { scoreA = it },
@@ -817,7 +818,7 @@ fun FinishGameDialog(
                 }
                 Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(teamB?.name ?: stringResource(R.string.team_b), modifier = Modifier.weight(1f))
+                    Text(teamB?.name ?: stringResource(Res.string.team_b), modifier = Modifier.weight(1f))
                     OutlinedTextField(
                         value = scoreB,
                         onValueChange = { scoreB = it },
@@ -826,10 +827,10 @@ fun FinishGameDialog(
                     )
                 }
                 Spacer(Modifier.height(16.dp))
-                Text(stringResource(R.string.match_mvp))
+                Text(stringResource(Res.string.match_mvp))
                 Box {
                     OutlinedButton(onClick = { expandedMvp = true }, modifier = Modifier.fillMaxWidth()) {
-                        Text(candidates.find { it.userId == selectedMvp }?.userName ?: stringResource(R.string.choose_mvp))
+                        Text(candidates.find { it.userId == selectedMvp }?.userName ?: stringResource(Res.string.choose_mvp))
                     }
                     DropdownMenu(expanded = expandedMvp, onDismissRequest = { expandedMvp = false }) {
                         candidates.forEach { player ->
@@ -851,12 +852,12 @@ fun FinishGameDialog(
                 val sB = scoreB.toIntOrNull() ?: 0
                 onFinish(sA, sB, selectedMvp)
             }) {
-                Text(stringResource(R.string.confirm))
+                Text(stringResource(Res.string.confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
+                Text(stringResource(Res.string.action_cancel))
             }
         }
     )
@@ -870,7 +871,7 @@ fun LiveMatchSection(
 ) {
     Card(Modifier.padding(16.dp).fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.real_time), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(Res.string.real_time), style = MaterialTheme.typography.titleMedium)
 
             Column(Modifier.fillMaxWidth()) {
                 val sortedEvents = state.events.sortedByDescending { it.createdAt }
@@ -893,7 +894,7 @@ fun LiveMatchSection(
                         Spacer(modifier = Modifier.weight(1f))
                         if (state.canLogEvents) {
                             IconButton(onClick = { onDeleteEvent(event.id) }) {
-                                Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error)
+                                Icon(Icons.Outlined.Delete, contentDescription = stringResource(Res.string.delete), tint = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -904,13 +905,13 @@ fun LiveMatchSection(
             if (state.canLogEvents && state.game.status == "LIVE") {
                 Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
                     IconButton(onClick = { onAddEvent(GameEventType.GOAL) }) {
-                        Icon(painterResource(R.drawable.ic_football), contentDescription = stringResource(R.string.live_goal), tint = MatchEventColors.goalColor())
+                        Icon(painterResource(R.drawable.ic_football), contentDescription = stringResource(Res.string.live_goal), tint = MatchEventColors.goalColor())
                     }
                     IconButton(onClick = { onAddEvent(GameEventType.YELLOW_CARD) }) {
-                        Icon(painterResource(R.drawable.ic_card_filled), contentDescription = stringResource(R.string.live_yellow_card), tint = MatchEventColors.yellowCardColor())
+                        Icon(painterResource(R.drawable.ic_card_filled), contentDescription = stringResource(Res.string.live_yellow_card), tint = MatchEventColors.yellowCardColor())
                     }
                     IconButton(onClick = { onAddEvent(GameEventType.RED_CARD) }) {
-                        Icon(painterResource(R.drawable.ic_card_filled), contentDescription = stringResource(R.string.live_red_card), tint = MatchEventColors.redCardColor())
+                        Icon(painterResource(R.drawable.ic_card_filled), contentDescription = stringResource(Res.string.live_red_card), tint = MatchEventColors.redCardColor())
                     }
                 }
             }

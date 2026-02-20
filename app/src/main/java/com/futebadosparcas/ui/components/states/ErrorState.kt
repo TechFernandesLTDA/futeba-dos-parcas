@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.components.states
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -8,11 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-
 /**
  * Estado de erro padrão com retry button
  *
@@ -42,7 +42,7 @@ fun ErrorState(
     message: String,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
-    retryButtonText: String = stringResource(R.string.retry),
+    retryButtonText: String = stringResource(Res.string.retry),
     icon: ImageVector = Icons.Default.Error
 ) {
     Column(
@@ -63,7 +63,7 @@ fun ErrorState(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.error_title),
+            text = stringResource(Res.string.error_title),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -104,7 +104,7 @@ fun ErrorStateCompact(
     message: String,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
-    retryButtonText: String = stringResource(R.string.retry)
+    retryButtonText: String = stringResource(Res.string.retry)
 ) {
     Column(
         modifier = modifier
@@ -155,7 +155,7 @@ fun NoConnectionErrorState(
     modifier: Modifier = Modifier
 ) {
     ErrorState(
-        message = stringResource(R.string.empty_state_no_connection_desc),
+        message = stringResource(Res.string.empty_state_no_connection_desc),
         onRetry = onRetry,
         modifier = modifier,
         icon = Icons.Default.WifiOff
@@ -171,7 +171,7 @@ fun TimeoutErrorState(
     modifier: Modifier = Modifier
 ) {
     ErrorState(
-        message = stringResource(R.string.error_timeout),
+        message = stringResource(Res.string.error_timeout),
         onRetry = onRetry,
         modifier = modifier,
         icon = Icons.Default.HourglassEmpty
@@ -184,7 +184,7 @@ fun TimeoutErrorState(
 @Composable
 fun PermissionDeniedErrorState(
     modifier: Modifier = Modifier,
-    message: String = stringResource(R.string.error_permission),
+    message: String = stringResource(Res.string.error_permission),
     onRetry: (() -> Unit)? = null
 ) {
     Column(
@@ -205,7 +205,7 @@ fun PermissionDeniedErrorState(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.access_denied_title),
+            text = stringResource(Res.string.access_denied_title),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -223,7 +223,7 @@ fun PermissionDeniedErrorState(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedButton(onClick = onRetry) {
-                Text(stringResource(R.string.back))
+                Text(stringResource(Res.string.back))
             }
         }
     }

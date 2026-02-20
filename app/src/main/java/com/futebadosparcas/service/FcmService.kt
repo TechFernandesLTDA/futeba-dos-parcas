@@ -1,4 +1,6 @@
 package com.futebadosparcas.service
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -9,7 +11,6 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
-import com.futebadosparcas.R
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.ui.main.MainActivityCompose
 import com.futebadosparcas.util.AppLogger
@@ -37,12 +38,12 @@ class FcmService : FirebaseMessagingService(), KoinComponent {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        AppLogger.d(TAG) { getString(R.string.fcm_new_token_received) }
+        AppLogger.d(TAG) { getString(Res.string.fcm_new_token_received) }
         serviceScope.launch {
             try {
                 userRepository.updateFcmToken(token)
             } catch (e: Exception) {
-                AppLogger.e(TAG, getString(R.string.fcm_error_updating_token), e)
+                AppLogger.e(TAG, getString(Res.string.fcm_error_updating_token), e)
             }
         }
     }
@@ -71,10 +72,10 @@ class FcmService : FirebaseMessagingService(), KoinComponent {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                getString(R.string.fcm_channel_name),
+                getString(Res.string.fcm_channel_name),
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = getString(R.string.fcm_channel_description)
+                description = getString(Res.string.fcm_channel_description)
                 enableLights(true)
                 enableVibration(true)
             }
@@ -117,7 +118,7 @@ class FcmService : FirebaseMessagingService(), KoinComponent {
                     // Reciclar pode causar crash: "Canvas: trying to use a recycled bitmap"
                 }
             } catch (e: Exception) {
-                AppLogger.e(TAG, getString(R.string.fcm_error_badge_notification), e)
+                AppLogger.e(TAG, getString(Res.string.fcm_error_badge_notification), e)
             }
         }
 

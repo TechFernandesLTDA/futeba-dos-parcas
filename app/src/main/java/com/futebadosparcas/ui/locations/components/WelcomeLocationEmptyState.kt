@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.locations.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -18,12 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-
 /**
  * Estado vazio progressivo para onboarding de Locais
  *
@@ -67,7 +67,7 @@ fun WelcomeLocationEmptyState(
 
         // Titulo
         Text(
-            text = stringResource(R.string.location_onboarding_title),
+            text = stringResource(Res.string.location_onboarding_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -78,7 +78,7 @@ fun WelcomeLocationEmptyState(
 
         // Subtitulo
         Text(
-            text = stringResource(R.string.location_onboarding_subtitle),
+            text = stringResource(Res.string.location_onboarding_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -103,12 +103,12 @@ fun WelcomeLocationEmptyState(
                 // Passo 1: Criar local
                 OnboardingStep(
                     stepNumber = 1,
-                    title = stringResource(R.string.location_onboarding_step1_title),
-                    description = stringResource(R.string.location_onboarding_step1_desc),
+                    title = stringResource(Res.string.location_onboarding_step1_title),
+                    description = stringResource(Res.string.location_onboarding_step1_desc),
                     icon = Icons.Default.AddLocation,
                     isCompleted = currentStep > 0,
                     isCurrent = currentStep == 0,
-                    actionLabel = if (currentStep == 0) stringResource(R.string.location_onboarding_step1_action) else null,
+                    actionLabel = if (currentStep == 0) stringResource(Res.string.location_onboarding_step1_action) else null,
                     onAction = if (currentStep == 0) onCreateLocation else null
                 )
 
@@ -118,12 +118,12 @@ fun WelcomeLocationEmptyState(
                 // Passo 2: Adicionar quadras
                 OnboardingStep(
                     stepNumber = 2,
-                    title = stringResource(R.string.location_onboarding_step2_title),
-                    description = stringResource(R.string.location_onboarding_step2_desc),
+                    title = stringResource(Res.string.location_onboarding_step2_title),
+                    description = stringResource(Res.string.location_onboarding_step2_desc),
                     icon = Icons.Default.SportsSoccer,
                     isCompleted = currentStep > 1,
                     isCurrent = currentStep == 1,
-                    actionLabel = if (currentStep == 1) stringResource(R.string.location_onboarding_step2_action) else null,
+                    actionLabel = if (currentStep == 1) stringResource(Res.string.location_onboarding_step2_action) else null,
                     onAction = if (currentStep == 1) onAddField else null
                 )
 
@@ -133,12 +133,12 @@ fun WelcomeLocationEmptyState(
                 // Passo 3: Definir precos
                 OnboardingStep(
                     stepNumber = 3,
-                    title = stringResource(R.string.location_onboarding_step3_title),
-                    description = stringResource(R.string.location_onboarding_step3_desc),
+                    title = stringResource(Res.string.location_onboarding_step3_title),
+                    description = stringResource(Res.string.location_onboarding_step3_desc),
                     icon = Icons.Default.Payments,
                     isCompleted = currentStep > 2,
                     isCurrent = currentStep == 2,
-                    actionLabel = if (currentStep == 2) stringResource(R.string.location_onboarding_step3_action) else null,
+                    actionLabel = if (currentStep == 2) stringResource(Res.string.location_onboarding_step3_action) else null,
                     onAction = if (currentStep == 2) onSetPricing else null
                 )
             }
@@ -168,7 +168,7 @@ fun WelcomeLocationEmptyState(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Text(
-                    text = stringResource(R.string.location_onboarding_tip),
+                    text = stringResource(Res.string.location_onboarding_tip),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
@@ -315,7 +315,7 @@ private fun StepIndicator(
         if (isCompleted) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = stringResource(R.string.location_onboarding_step_completed),
+                contentDescription = stringResource(Res.string.location_onboarding_step_completed),
                 tint = contentColor,
                 modifier = Modifier.size(18.dp)
             )

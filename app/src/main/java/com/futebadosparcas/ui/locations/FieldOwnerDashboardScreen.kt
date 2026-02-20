@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.locations
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,12 +14,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.states.ErrorState
 import com.futebadosparcas.ui.components.states.LoadingState
@@ -54,7 +55,7 @@ fun FieldOwnerDashboardScreen(
                 onClick = onNavigateToAddLocation,
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_location))
+                Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.cd_add_location))
             }
         }
     ) { paddingValues ->
@@ -99,10 +100,10 @@ private fun FieldOwnerDashboardTopBar(
     onNavigateBack: () -> Unit
 ) {
     TopAppBar(
-        title = { Text(stringResource(R.string.profile_menu_my_locations)) },
+        title = { Text(stringResource(Res.string.profile_menu_my_locations)) },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -193,7 +194,7 @@ private fun LocationDashboardCard(
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = stringResource(R.string.field_owner_verified),
+                                    text = stringResource(Res.string.field_owner_verified),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Medium
@@ -262,10 +263,10 @@ private fun EmptyLocationsState(
 ) {
     EmptyState(
         type = com.futebadosparcas.ui.components.EmptyStateType.NoData(
-            title = stringResource(R.string.field_owner_empty_title),
-            description = stringResource(R.string.field_owner_empty_description),
+            title = stringResource(Res.string.field_owner_empty_title),
+            description = stringResource(Res.string.field_owner_empty_description),
             icon = Icons.Default.Stadium,
-            actionLabel = stringResource(R.string.field_owner_empty_action),
+            actionLabel = stringResource(Res.string.field_owner_empty_action),
             onAction = onAddLocation
         )
     )

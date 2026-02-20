@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.CashboxCategory
 import com.futebadosparcas.data.model.CashboxEntry as AndroidCashboxEntry
-import com.futebadosparcas.data.model.CashboxEntryType
+import com.futebadosparcas.domain.model.CashboxEntryType
 import com.futebadosparcas.data.model.CashboxFilter
 import com.futebadosparcas.data.model.CashboxSummary as AndroidCashboxSummary
 import com.futebadosparcas.data.model.GroupMemberRole

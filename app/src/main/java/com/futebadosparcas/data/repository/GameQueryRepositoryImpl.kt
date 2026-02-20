@@ -7,10 +7,10 @@ import com.futebadosparcas.data.local.model.toEntity
 import com.futebadosparcas.data.model.Game as AndroidGame
 import com.futebadosparcas.data.model.GameConfirmation as AndroidGameConfirmation
 import com.futebadosparcas.data.model.GameEvent as AndroidGameEvent
-import com.futebadosparcas.data.model.GameStatus
+import com.futebadosparcas.domain.model.GameStatus
 import com.futebadosparcas.data.model.Team as AndroidTeam
-import com.futebadosparcas.data.model.User
-import com.futebadosparcas.data.model.UserRole
+import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.domain.model.UserRole
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.GameDetailConsolidated

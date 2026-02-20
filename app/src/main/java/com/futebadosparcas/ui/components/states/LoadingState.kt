@@ -1,13 +1,14 @@
 package com.futebadosparcas.ui.components.states
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.lists.ShimmerBox
 import com.futebadosparcas.ui.components.lists.ShimmerCircle
 import com.futebadosparcas.ui.components.lists.GameCardShimmer
@@ -268,7 +269,7 @@ private fun NotificationItemShimmer(
 @Composable
 fun LoadingStateCompact(
     modifier: Modifier = Modifier,
-    message: String = stringResource(R.string.state_loading)
+    message: String = stringResource(Res.string.state_loading)
 ) {
     Column(
         modifier = modifier
@@ -298,7 +299,7 @@ fun LoadingStateCompact(
 @Composable
 fun FullScreenLoadingState(
     modifier: Modifier = Modifier,
-    message: String = stringResource(R.string.state_loading)
+    message: String = stringResource(Res.string.state_loading)
 ) {
     Box(
         modifier = modifier.fillMaxSize(),

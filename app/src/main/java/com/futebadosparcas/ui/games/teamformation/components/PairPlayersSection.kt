@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.teamformation.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -25,14 +27,13 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.DraftPlayer
-import com.futebadosparcas.data.model.PlayerPair
+import com.futebadosparcas.domain.model.DraftPlayer
+import com.futebadosparcas.domain.model.PlayerPair
 import com.futebadosparcas.ui.components.CachedProfileImage
 
 /**
@@ -73,7 +74,7 @@ fun PairPlayersSection(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = stringResource(R.string.keep_together),
+                        text = stringResource(Res.string.keep_together),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -89,14 +90,14 @@ fun PairPlayersSection(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text(stringResource(R.string.add))
+                    Text(stringResource(Res.string.add))
                 }
             }
 
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = stringResource(R.string.keep_together_description),
+                text = stringResource(Res.string.keep_together_description),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -168,7 +169,7 @@ private fun EmptyPairsPlaceholder() {
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = stringResource(R.string.pair_players_none),
+                text = stringResource(Res.string.pair_players_none),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
@@ -268,7 +269,7 @@ private fun PairCard(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(R.string.remove),
+                    contentDescription = stringResource(Res.string.remove),
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.error
                 )
@@ -313,7 +314,7 @@ private fun AddPairDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = stringResource(R.string.keep_together),
+                text = stringResource(Res.string.keep_together),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -321,7 +322,7 @@ private fun AddPairDialog(
         text = {
             Column {
                 Text(
-                    text = stringResource(R.string.keep_together_description),
+                    text = stringResource(Res.string.keep_together_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -336,7 +337,7 @@ private fun AddPairDialog(
 
                 // Selecao de jogadores
                 Text(
-                    text = stringResource(R.string.player_1),
+                    text = stringResource(Res.string.player_1),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -366,7 +367,7 @@ private fun AddPairDialog(
                 Spacer(Modifier.height(16.dp))
 
                 Text(
-                    text = stringResource(R.string.player_2),
+                    text = stringResource(Res.string.player_2),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -405,12 +406,12 @@ private fun AddPairDialog(
                 },
                 enabled = player1 != null && player2 != null
             ) {
-                Text(stringResource(R.string.add))
+                Text(stringResource(Res.string.add))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )

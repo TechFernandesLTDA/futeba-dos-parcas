@@ -1,6 +1,8 @@
 @file:OptIn(ExperimentalLayoutApi::class)
 
 package com.futebadosparcas.ui.games
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -33,7 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -44,11 +46,10 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import com.futebadosparcas.R
+import coil3.compose.AsyncImage
 import com.futebadosparcas.data.model.Field
-import com.futebadosparcas.data.model.Location
-import com.futebadosparcas.data.model.LocationReview
+import com.futebadosparcas.domain.model.Location
+import com.futebadosparcas.domain.model.LocationReview
 import com.futebadosparcas.ui.components.CachedFieldImage
 import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.components.states.LoadingItemType
@@ -163,7 +164,7 @@ fun LocationSelectorScreen(
                     TopAppBar(
                         title = {
                             Text(
-                                text = stringResource(R.string.location_selector_title),
+                                text = stringResource(Res.string.location_selector_title),
                                 style = MaterialTheme.typography.titleLarge
                             )
                         },
@@ -171,7 +172,7 @@ fun LocationSelectorScreen(
                             IconButton(onClick = onDismiss) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = stringResource(R.string.close)
+                                    contentDescription = stringResource(Res.string.close)
                                 )
                             }
                         },
@@ -191,7 +192,7 @@ fun LocationSelectorScreen(
                                     } else {
                                         Icons.Default.ViewList
                                     },
-                                    contentDescription = stringResource(R.string.location_selector_toggle_view)
+                                    contentDescription = stringResource(Res.string.location_selector_toggle_view)
                                 )
                             }
 
@@ -200,7 +201,7 @@ fun LocationSelectorScreen(
                                 IconButton(onClick = { showSortMenu = true }) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.Sort,
-                                        contentDescription = stringResource(R.string.location_selector_sort)
+                                        contentDescription = stringResource(Res.string.location_selector_sort)
                                     )
                                 }
                                 SortDropdownMenu(
@@ -228,7 +229,7 @@ fun LocationSelectorScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.FilterList,
-                                        contentDescription = stringResource(R.string.location_selector_filter)
+                                        contentDescription = stringResource(Res.string.location_selector_filter)
                                     )
                                 }
                             }
@@ -241,8 +242,8 @@ fun LocationSelectorScreen(
                 floatingActionButton = {
                     ExtendedFloatingActionButton(
                         onClick = { viewModel.showCreateLocationDialog() },
-                        icon = { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_location)) },
-                        text = { Text(stringResource(R.string.location_selector_create_new)) },
+                        icon = { Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.cd_add_location)) },
+                        text = { Text(stringResource(Res.string.location_selector_create_new)) },
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -385,7 +386,7 @@ private fun SearchBar(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier,
-        placeholder = { Text(stringResource(R.string.location_selector_search_hint)) },
+        placeholder = { Text(stringResource(Res.string.location_selector_search_hint)) },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
@@ -398,7 +399,7 @@ private fun SearchBar(
                 IconButton(onClick = onClear) {
                     Icon(
                         imageVector = Icons.Default.Clear,
-                        contentDescription = stringResource(R.string.empty_state_clear_search)
+                        contentDescription = stringResource(Res.string.empty_state_clear_search)
                     )
                 }
             }
@@ -431,39 +432,39 @@ private fun SortDropdownMenu(
         onDismissRequest = onDismiss
     ) {
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.location_selector_sort_name)) },
+            text = { Text(stringResource(Res.string.location_selector_sort_name)) },
             onClick = { onSortSelected(LocationSortMode.NAME) },
             leadingIcon = {
                 if (currentSort == LocationSortMode.NAME) {
-                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected))
+                    Icon(Icons.Default.Check, contentDescription = stringResource(Res.string.cd_filter_selected))
                 }
             }
         )
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.location_selector_sort_distance)) },
+            text = { Text(stringResource(Res.string.location_selector_sort_distance)) },
             onClick = { onSortSelected(LocationSortMode.DISTANCE) },
             enabled = hasUserLocation,
             leadingIcon = {
                 if (currentSort == LocationSortMode.DISTANCE) {
-                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected))
+                    Icon(Icons.Default.Check, contentDescription = stringResource(Res.string.cd_filter_selected))
                 }
             }
         )
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.location_selector_sort_rating)) },
+            text = { Text(stringResource(Res.string.location_selector_sort_rating)) },
             onClick = { onSortSelected(LocationSortMode.RATING) },
             leadingIcon = {
                 if (currentSort == LocationSortMode.RATING) {
-                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected))
+                    Icon(Icons.Default.Check, contentDescription = stringResource(Res.string.cd_filter_selected))
                 }
             }
         )
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.location_selector_sort_favorites)) },
+            text = { Text(stringResource(Res.string.location_selector_sort_favorites)) },
             onClick = { onSortSelected(LocationSortMode.FAVORITES_FIRST) },
             leadingIcon = {
                 if (currentSort == LocationSortMode.FAVORITES_FIRST) {
-                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected))
+                    Icon(Icons.Default.Check, contentDescription = stringResource(Res.string.cd_filter_selected))
                 }
             }
         )
@@ -489,7 +490,7 @@ private fun SelectedAmenitiesRow(
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.location_selector_remove_filter),
+                        contentDescription = stringResource(Res.string.location_selector_remove_filter),
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -497,7 +498,7 @@ private fun SelectedAmenitiesRow(
         }
         item {
             TextButton(onClick = onClearAll) {
-                Text(stringResource(R.string.location_selector_clear_filters))
+                Text(stringResource(Res.string.location_selector_clear_filters))
             }
         }
     }
@@ -521,7 +522,7 @@ private fun LocationListView(
         if (recentLocations.isNotEmpty() && searchQuery.isEmpty()) {
             item {
                 Text(
-                    text = stringResource(R.string.location_selector_recent),
+                    text = stringResource(Res.string.location_selector_recent),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
@@ -543,9 +544,9 @@ private fun LocationListView(
         item {
             Text(
                 text = if (searchQuery.isNotEmpty()) {
-                    stringResource(R.string.location_selector_search_results)
+                    stringResource(Res.string.location_selector_search_results)
                 } else {
-                    stringResource(R.string.location_selector_all_locations)
+                    stringResource(Res.string.location_selector_all_locations)
                 },
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
@@ -705,7 +706,7 @@ private fun LocationCard(
                     IconButton(onClick = onFavoriteToggle) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = stringResource(R.string.location_selector_favorite),
+                            contentDescription = stringResource(Res.string.location_selector_favorite),
                             tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -786,7 +787,7 @@ private fun LocationCard(
                     // Número de quadras
                     if (location.fieldCount > 0) {
                         Text(
-                            text = stringResource(R.string.location_selector_field_count, location.fieldCount),
+                            text = stringResource(Res.string.location_selector_field_count, location.fieldCount),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -849,13 +850,13 @@ private fun MapViewPlaceholder(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = stringResource(R.string.location_selector_map_placeholder),
+                text = stringResource(Res.string.location_selector_map_placeholder),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
             Text(
-                text = stringResource(R.string.location_selector_locations_count, locations.size),
+                text = stringResource(Res.string.location_selector_locations_count, locations.size),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -922,7 +923,7 @@ private fun LocationDetailBottomSheet(
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "(${location.ratingCount} ${stringResource(R.string.location_selector_reviews)})",
+                                text = "(${location.ratingCount} ${stringResource(Res.string.location_selector_reviews)})",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -932,7 +933,7 @@ private fun LocationDetailBottomSheet(
                 IconButton(onClick = onFavoriteToggle) {
                     Icon(
                         imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = if (isFavorite) stringResource(R.string.cd_unfavorite) else stringResource(R.string.cd_favorite),
+                        contentDescription = if (isFavorite) stringResource(Res.string.cd_unfavorite) else stringResource(Res.string.cd_favorite),
                         tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -978,7 +979,7 @@ private fun LocationDetailBottomSheet(
             if (location.amenities.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = stringResource(R.string.location_selector_amenities),
+                    text = stringResource(Res.string.location_selector_amenities),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -997,7 +998,7 @@ private fun LocationDetailBottomSheet(
             location.photoUrl?.let {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = stringResource(R.string.location_selector_photos),
+                    text = stringResource(Res.string.location_selector_photos),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -1017,7 +1018,7 @@ private fun LocationDetailBottomSheet(
             if (fields.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = stringResource(R.string.location_selector_fields),
+                    text = stringResource(Res.string.location_selector_fields),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -1039,7 +1040,7 @@ private fun LocationDetailBottomSheet(
             if (reviews.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = stringResource(R.string.location_selector_recent_reviews),
+                    text = stringResource(Res.string.location_selector_recent_reviews),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -1057,7 +1058,7 @@ private fun LocationDetailBottomSheet(
                 onClick = onLocationConfirmed,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(stringResource(R.string.location_selector_select_location))
+                Text(stringResource(Res.string.location_selector_select_location))
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -1128,7 +1129,7 @@ private fun FieldCard(
                     )
                     if (field.hourlyPrice > 0) {
                         Text(
-                            text = stringResource(R.string.location_selector_price_per_hour, field.hourlyPrice),
+                            text = stringResource(Res.string.location_selector_price_per_hour, field.hourlyPrice),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Medium
@@ -1142,9 +1143,9 @@ private fun FieldCard(
                 Icon(
                     imageVector = if (isAvailable) Icons.Default.CheckCircle else Icons.Default.Cancel,
                     contentDescription = if (isAvailable) {
-                        stringResource(R.string.location_selector_available)
+                        stringResource(Res.string.location_selector_available)
                     } else {
-                        stringResource(R.string.location_selector_unavailable)
+                        stringResource(Res.string.location_selector_unavailable)
                     },
                     tint = if (isAvailable) {
                         MaterialTheme.colorScheme.primary
@@ -1264,7 +1265,7 @@ private fun AmenitiesFilterSheet(
                 .padding(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.location_selector_filter_amenities),
+                text = stringResource(Res.string.location_selector_filter_amenities),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -1297,7 +1298,7 @@ private fun AmenitiesFilterSheet(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(stringResource(R.string.location_selector_apply_filters))
+                Text(stringResource(Res.string.location_selector_apply_filters))
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -1345,12 +1346,12 @@ private fun CreateLocationDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(R.string.location_selector_create_title),
+                        text = stringResource(Res.string.location_selector_create_title),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.close))
                     }
                 }
 
@@ -1369,10 +1370,10 @@ private fun CreateLocationDialog(
                             name = it
                             nameError = false
                         },
-                        label = { Text(stringResource(R.string.location_selector_field_name)) },
+                        label = { Text(stringResource(Res.string.location_selector_field_name)) },
                         isError = nameError,
                         supportingText = if (nameError) {
-                            { Text(stringResource(R.string.location_selector_field_required)) }
+                            { Text(stringResource(Res.string.location_selector_field_required)) }
                         } else null,
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
@@ -1384,10 +1385,10 @@ private fun CreateLocationDialog(
                             address = it
                             addressError = false
                         },
-                        label = { Text(stringResource(R.string.location_selector_field_address)) },
+                        label = { Text(stringResource(Res.string.location_selector_field_address)) },
                         isError = addressError,
                         supportingText = if (addressError) {
-                            { Text(stringResource(R.string.location_selector_field_required)) }
+                            { Text(stringResource(Res.string.location_selector_field_required)) }
                         } else null,
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
@@ -1400,14 +1401,14 @@ private fun CreateLocationDialog(
                         OutlinedTextField(
                             value = city,
                             onValueChange = { city = it },
-                            label = { Text(stringResource(R.string.location_selector_field_city)) },
+                            label = { Text(stringResource(Res.string.location_selector_field_city)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true
                         )
                         OutlinedTextField(
                             value = stateField,
                             onValueChange = { stateField = it },
-                            label = { Text(stringResource(R.string.location_selector_field_state)) },
+                            label = { Text(stringResource(Res.string.location_selector_field_state)) },
                             modifier = Modifier.weight(0.5f),
                             singleLine = true
                         )
@@ -1416,14 +1417,14 @@ private fun CreateLocationDialog(
                     OutlinedTextField(
                         value = neighborhood,
                         onValueChange = { neighborhood = it },
-                        label = { Text(stringResource(R.string.location_selector_field_neighborhood)) },
+                        label = { Text(stringResource(Res.string.location_selector_field_neighborhood)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
 
                     // Amenidades
                     Text(
-                        text = stringResource(R.string.location_selector_amenities),
+                        text = stringResource(Res.string.location_selector_amenities),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 8.dp)
@@ -1486,7 +1487,7 @@ private fun CreateLocationDialog(
                         modifier = Modifier.weight(1f),
                         enabled = state !is CreateLocationState.Loading
                     ) {
-                        Text(stringResource(R.string.cancel))
+                        Text(stringResource(Res.string.cancel))
                     }
                     Button(
                         onClick = {
@@ -1513,7 +1514,7 @@ private fun CreateLocationDialog(
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         } else {
-                            Text(stringResource(R.string.save))
+                            Text(stringResource(Res.string.save))
                         }
                     }
                 }
@@ -1539,9 +1540,9 @@ private fun EmptyLocationsState(hasQuery: Boolean) {
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = if (hasQuery) {
-                stringResource(R.string.location_selector_no_results)
+                stringResource(Res.string.location_selector_no_results)
             } else {
-                stringResource(R.string.location_selector_no_locations)
+                stringResource(Res.string.location_selector_no_locations)
             },
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1577,7 +1578,7 @@ private fun ErrorState(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) {
-            Text(stringResource(R.string.retry))
+            Text(stringResource(Res.string.retry))
         }
     }
 }
@@ -1602,14 +1603,14 @@ private fun getAmenityIcon(amenity: String): androidx.compose.ui.graphics.vector
 @Composable
 private fun getAmenityDisplayName(amenity: String): String {
     return when (amenity.lowercase()) {
-        "estacionamento" -> stringResource(R.string.location_amenity_parking)
-        "vestiario" -> stringResource(R.string.location_amenity_locker)
-        "churrasqueira" -> stringResource(R.string.location_amenity_bbq)
-        "bar" -> stringResource(R.string.location_amenity_bar)
-        "restaurante" -> stringResource(R.string.location_amenity_restaurant)
-        "iluminacao" -> stringResource(R.string.location_amenity_lighting)
-        "wifi" -> stringResource(R.string.location_amenity_wifi)
-        "banheiro" -> stringResource(R.string.location_amenity_bathroom)
+        "estacionamento" -> stringResource(Res.string.location_amenity_parking)
+        "vestiario" -> stringResource(Res.string.location_amenity_locker)
+        "churrasqueira" -> stringResource(Res.string.location_amenity_bbq)
+        "bar" -> stringResource(Res.string.location_amenity_bar)
+        "restaurante" -> stringResource(Res.string.location_amenity_restaurant)
+        "iluminacao" -> stringResource(Res.string.location_amenity_lighting)
+        "wifi" -> stringResource(Res.string.location_amenity_wifi)
+        "banheiro" -> stringResource(Res.string.location_amenity_bathroom)
         else -> amenity.replaceFirstChar { it.uppercase() }
     }
 }

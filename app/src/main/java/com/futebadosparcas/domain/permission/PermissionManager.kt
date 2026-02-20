@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.permission
 
-import com.futebadosparcas.data.model.UserRole
+import com.futebadosparcas.domain.model.UserRole
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore

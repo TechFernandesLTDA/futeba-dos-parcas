@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.service
 
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.repository.GameRepository
 import java.time.LocalDate
 import java.time.LocalTime

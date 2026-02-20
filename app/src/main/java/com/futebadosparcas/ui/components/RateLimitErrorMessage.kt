@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -35,12 +37,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.util.LocationRateLimiter
 import kotlinx.coroutines.delay
 
@@ -120,7 +121,7 @@ fun RateLimitErrorMessage(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = stringResource(R.string.location_rate_limit_title),
+                        text = stringResource(Res.string.location_rate_limit_title),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         fontWeight = FontWeight.Bold
@@ -130,7 +131,7 @@ fun RateLimitErrorMessage(
                 IconButton(onClick = onDismiss) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.close),
+                        contentDescription = stringResource(Res.string.close),
                         tint = MaterialTheme.colorScheme.onErrorContainer
                     )
                 }
@@ -141,7 +142,7 @@ fun RateLimitErrorMessage(
             // Mensagem principal
             Text(
                 text = stringResource(
-                    R.string.location_rate_limit_message,
+                    Res.string.location_rate_limit_message,
                     LocationRateLimiter.MAX_LOCATIONS_PER_HOUR
                 ),
                 style = MaterialTheme.typography.bodyMedium,
@@ -177,7 +178,7 @@ fun RateLimitErrorMessage(
                 onClick = onDismiss
             ) {
                 Text(
-                    text = stringResource(R.string.understood),
+                    text = stringResource(Res.string.understood),
                     color = MaterialTheme.colorScheme.error
                 )
             }
@@ -205,7 +206,7 @@ private fun CountdownDisplay(
         // Minutos
         TimeUnit(
             value = minutes.toInt(),
-            label = stringResource(R.string.minutes_short)
+            label = stringResource(Res.string.minutes_short)
         )
 
         Text(
@@ -219,7 +220,7 @@ private fun CountdownDisplay(
         // Segundos
         TimeUnit(
             value = seconds.toInt(),
-            label = stringResource(R.string.seconds_short)
+            label = stringResource(Res.string.seconds_short)
         )
     }
 }
@@ -303,7 +304,7 @@ fun RateLimitBanner(
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = stringResource(R.string.location_rate_limit_banner, timeText),
+                text = stringResource(Res.string.location_rate_limit_banner, timeText),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
@@ -315,7 +316,7 @@ fun RateLimitBanner(
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = stringResource(R.string.close),
+                contentDescription = stringResource(Res.string.close),
                 tint = MaterialTheme.colorScheme.onErrorContainer,
                 modifier = Modifier.size(16.dp)
             )

@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.map
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -49,11 +51,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-
 /**
  * Tela de Mapa de Jogos Públicos.
  */
@@ -115,15 +115,15 @@ fun PublicGamesMapScreen(
         scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.public_games_map)) },
+                title = { Text(stringResource(Res.string.public_games_map)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { showFilters = !showFilters }) {
-                        Icon(Icons.Default.FilterList, contentDescription = stringResource(R.string.filters))
+                        Icon(Icons.Default.FilterList, contentDescription = stringResource(Res.string.filters))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -150,7 +150,7 @@ fun PublicGamesMapScreen(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = 200.dp),
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             ) {
-                Icon(Icons.Default.MyLocation, contentDescription = stringResource(R.string.my_location),
+                Icon(Icons.Default.MyLocation, contentDescription = stringResource(Res.string.my_location),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer)
             }
         }
@@ -165,10 +165,10 @@ private fun MapPlaceholder(games: List<MapGameMarker>, selectedGame: MapGameMark
             Icon(Icons.Default.Map, contentDescription = null, Modifier.size(96.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
             Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.map_placeholder), style = MaterialTheme.typography.bodyLarge,
+            Text(stringResource(Res.string.map_placeholder), style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
-            Text(stringResource(R.string.map_games_found, games.size), style = MaterialTheme.typography.bodyMedium,
+            Text(stringResource(Res.string.map_games_found, games.size), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary)
         }
     }
@@ -178,7 +178,7 @@ private fun MapPlaceholder(games: List<MapGameMarker>, selectedGame: MapGameMark
 private fun GameListSheet(games: List<MapGameMarker>, selectedGame: MapGameMarker?,
                           onGameSelect: (MapGameMarker) -> Unit, onGameClick: (String) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(16.dp)) {
-        Text(stringResource(R.string.nearby_games), style = MaterialTheme.typography.titleMedium,
+        Text(stringResource(Res.string.nearby_games), style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface)
         Spacer(Modifier.height(12.dp))
         games.forEach { game ->
@@ -220,13 +220,13 @@ private fun MapGameCard(game: MapGameMarker, isSelected: Boolean, onClick: () ->
                 }
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(if (game.price > 0) "R$ ${game.price.toInt()}" else stringResource(R.string.free),
+                Text(if (game.price > 0) "R$ ${game.price.toInt()}" else stringResource(Res.string.free),
                     style = MaterialTheme.typography.labelLarge,
                     color = if (game.price > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary)
                 if (game.hasVacancies) {
                     Spacer(Modifier.height(4.dp))
                     Button(onClick = onJoinClick, Modifier.defaultMinSize(minHeight = 48.dp)) {
-                        Text(stringResource(R.string.join), style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(Res.string.join), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -240,15 +240,15 @@ private fun MapFiltersOverlay(filters: MapFilters, onFiltersChange: (MapFilters)
                               onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     Card(modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Column(Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.quick_filters), style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(Res.string.quick_filters), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(filters.showOnlyWithVacancies,
                     { onFiltersChange(filters.copy(showOnlyWithVacancies = !filters.showOnlyWithVacancies)) },
-                    label = { Text(stringResource(R.string.filter_with_vacancies)) })
+                    label = { Text(stringResource(Res.string.filter_with_vacancies)) })
                 FilterChip(filters.showOnlyFree,
                     { onFiltersChange(filters.copy(showOnlyFree = !filters.showOnlyFree)) },
-                    label = { Text(stringResource(R.string.filter_free_games)) })
+                    label = { Text(stringResource(Res.string.filter_free_games)) })
             }
         }
     }

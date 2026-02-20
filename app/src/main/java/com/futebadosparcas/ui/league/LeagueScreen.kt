@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.league
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
@@ -23,19 +25,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.LeagueDivision
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.data.model.Season
 import com.futebadosparcas.domain.model.LeagueDivision as DomainLeagueDivision
-import com.futebadosparcas.data.model.SeasonParticipationV2
+import com.futebadosparcas.domain.model.SeasonParticipation
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateCompact
 import com.futebadosparcas.ui.components.EmptyStateType
@@ -100,9 +101,9 @@ fun LeagueScreen(
                     is LeagueUiState.Error -> {
                         EmptyState(
                             type = EmptyStateType.Error(
-                                title = stringResource(R.string.error),
+                                title = stringResource(Res.string.error),
                                 description = uiState.message,
-                                actionLabel = stringResource(R.string.retry),
+                                actionLabel = stringResource(Res.string.retry),
                                 onRetry = onRefresh
                             ),
                             modifier = Modifier.align(Alignment.Center)
@@ -111,8 +112,8 @@ fun LeagueScreen(
                     is LeagueUiState.NoActiveSeason -> {
                         EmptyState(
                             type = EmptyStateType.NoData(
-                                title = stringResource(R.string.league_no_season),
-                                description = stringResource(R.string.league_season_message),
+                                title = stringResource(Res.string.league_no_season),
+                                description = stringResource(Res.string.league_season_message),
                                 icon = Icons.Default.EmojiEvents
                             ),
                             modifier = Modifier.align(Alignment.Center)
@@ -188,12 +189,12 @@ fun LeagueContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = stringResource(R.string.league_classification),
+                            text = stringResource(Res.string.league_classification),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = stringResource(R.string.league_players_count, filteredRanking.size),
+                            text = stringResource(Res.string.league_players_count, filteredRanking.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -207,7 +208,7 @@ fun LeagueContent(
             item {
                 EmptyStateCompact(
                     icon = Icons.Default.EmojiEvents,
-                    message = stringResource(R.string.league_no_players),
+                    message = stringResource(Res.string.league_no_players),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 48.dp)
@@ -263,7 +264,7 @@ fun LeagueHeader(
                         value = season.name,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text(stringResource(R.string.league_period)) },
+                        label = { Text(stringResource(Res.string.league_period)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -289,7 +290,7 @@ fun LeagueHeader(
                                         )
                                         if (s.isActive) {
                                             Text(
-                                                text = stringResource(R.string.league_active),
+                                                text = stringResource(Res.string.league_active),
                                                 fontSize = 11.sp,
                                                 color = MaterialTheme.colorScheme.primary
                                             )
@@ -317,7 +318,7 @@ fun LeagueHeader(
                 ) {
                     Column {
                         Text(
-                            text = stringResource(R.string.league_my_position),
+                            text = stringResource(Res.string.league_my_position),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 14.sp
                         )
@@ -375,13 +376,13 @@ fun LeagueHeader(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = stringResource(R.string.league_rating_format, "%.1f".format(currentRating)),
+                                text = stringResource(Res.string.league_rating_format, "%.1f".format(currentRating)),
                                 color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = stringResource(R.string.league_next_threshold, nextThreshold.toInt()),
+                                text = stringResource(Res.string.league_next_threshold, nextThreshold.toInt()),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 12.sp
                             )
@@ -406,9 +407,9 @@ fun LeagueHeader(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    MiniStatItem(stringResource(R.string.league_points), "${myParticipation?.points ?: 0}")
-                    MiniStatItem(stringResource(R.string.league_games_played), "${myParticipation?.gamesPlayed ?: 0}")
-                    MiniStatItem(stringResource(R.string.league_victories), "✅ ${myParticipation?.wins ?: 0}")
+                    MiniStatItem(stringResource(Res.string.league_points), "${myParticipation?.points ?: 0}")
+                    MiniStatItem(stringResource(Res.string.league_games_played), "${myParticipation?.gamesPlayed ?: 0}")
+                    MiniStatItem(stringResource(Res.string.league_victories), "✅ ${myParticipation?.wins ?: 0}")
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -418,9 +419,9 @@ fun LeagueHeader(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    MiniStatItem(stringResource(R.string.league_goals), "⚽ ${myParticipation?.goalsScored ?: 0}")
-                    MiniStatItem(stringResource(R.string.league_assists), "👟 ${myParticipation?.assists ?: 0}")
-                    MiniStatItem(stringResource(R.string.league_mvp_count), "⭐ ${myParticipation?.mvpCount ?: 0}")
+                    MiniStatItem(stringResource(Res.string.league_goals), "⚽ ${myParticipation?.goalsScored ?: 0}")
+                    MiniStatItem(stringResource(Res.string.league_assists), "👟 ${myParticipation?.assists ?: 0}")
+                    MiniStatItem(stringResource(Res.string.league_mvp_count), "⭐ ${myParticipation?.mvpCount ?: 0}")
                 }
             }
         }
@@ -458,14 +459,14 @@ fun DivisionSelector(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                stringResource(R.string.league_divisions),
+                stringResource(Res.string.league_divisions),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             TextButton(onClick = { showInfo = !showInfo }) {
                 Text(
-                    if (showInfo) stringResource(R.string.league_rules_hide) else stringResource(R.string.league_rules_show),
+                    if (showInfo) stringResource(Res.string.league_rules_hide) else stringResource(Res.string.league_rules_show),
                     fontSize = 12.sp
                 )
             }
@@ -482,7 +483,7 @@ fun DivisionSelector(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        stringResource(R.string.league_title),
+                        stringResource(Res.string.league_title),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -491,44 +492,44 @@ fun DivisionSelector(
 
                     DivisionInfoItem(
                         emoji = "💎",
-                        name = stringResource(R.string.league_division_diamond),
+                        name = stringResource(Res.string.league_division_diamond),
                         rating = "70-100",
                         color = GamificationColors.Diamond,
-                        description = stringResource(R.string.league_elite)
+                        description = stringResource(Res.string.league_elite)
                     )
                     DivisionInfoItem(
                         emoji = "🥇",
-                        name = stringResource(R.string.league_division_gold),
+                        name = stringResource(Res.string.league_division_gold),
                         rating = "50-69",
                         color = GamificationColors.Gold,
-                        description = stringResource(R.string.league_experienced)
+                        description = stringResource(Res.string.league_experienced)
                     )
                     DivisionInfoItem(
                         emoji = "🥈",
-                        name = stringResource(R.string.league_division_silver),
+                        name = stringResource(Res.string.league_division_silver),
                         rating = "30-49",
                         color = GamificationColors.Silver,
-                        description = stringResource(R.string.league_evolving)
+                        description = stringResource(Res.string.league_evolving)
                     )
                     DivisionInfoItem(
                         emoji = "🥉",
-                        name = stringResource(R.string.league_division_bronze),
+                        name = stringResource(Res.string.league_division_bronze),
                         rating = "0-29",
                         color = GamificationColors.Bronze,
-                        description = stringResource(R.string.league_beginners)
+                        description = stringResource(Res.string.league_beginners)
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        stringResource(R.string.league_rating_description),
+                        stringResource(Res.string.league_rating_description),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        stringResource(R.string.league_rating_components),
+                        stringResource(Res.string.league_rating_components),
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -697,19 +698,19 @@ fun RankingListItem(
             // Pontos e Stats
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = stringResource(R.string.league_points_format, item.participation.points),
+                    text = stringResource(Res.string.league_points_format, item.participation.points),
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 16.sp
                 )
                 Text(
-                    text = stringResource(R.string.league_rating_format, "%.1f".format(item.participation.leagueRating)),
+                    text = stringResource(Res.string.league_rating_format, "%.1f".format(item.participation.leagueRating)),
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = stringResource(R.string.league_wins_goals_format, item.participation.wins, item.participation.goalsScored),
+                    text = stringResource(Res.string.league_wins_goals_format, item.participation.wins, item.participation.goalsScored),
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

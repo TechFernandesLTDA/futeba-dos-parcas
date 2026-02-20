@@ -3,8 +3,8 @@ package com.futebadosparcas.data.local.model
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.futebadosparcas.data.model.Game
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.User
 import java.util.Date
 
 @Entity(

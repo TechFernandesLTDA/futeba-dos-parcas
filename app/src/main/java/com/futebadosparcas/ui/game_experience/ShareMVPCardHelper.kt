@@ -17,11 +17,11 @@ import androidx.core.content.FileProvider
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.scale
 import androidx.core.graphics.toColorInt
-import coil.imageLoader
-import coil.request.ImageRequest
-import coil.request.SuccessResult
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
 import com.futebadosparcas.data.model.MVPVoteResult
-import com.futebadosparcas.data.model.VoteCategory
+import com.futebadosparcas.domain.model.VoteCategory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

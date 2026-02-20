@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.MVPVoteResult
-import com.futebadosparcas.data.model.VoteCategory
+import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.data.repository.GameRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

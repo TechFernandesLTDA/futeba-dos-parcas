@@ -1,8 +1,8 @@
 package com.futebadosparcas.data.ai
 
-import com.futebadosparcas.data.model.GameConfirmation
+import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.PlayerRatingRole
-import com.futebadosparcas.data.model.Team
+import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ai.AiTeamBalancer
 import com.futebadosparcas.util.AppLogger

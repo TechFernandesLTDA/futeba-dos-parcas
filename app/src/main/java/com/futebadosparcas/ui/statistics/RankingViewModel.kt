@@ -2,7 +2,7 @@ package com.futebadosparcas.ui.statistics
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.LevelTable
+import com.futebadosparcas.domain.model.LevelTable
 import com.futebadosparcas.data.model.MilestoneType
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.model.PlayerRankingItem

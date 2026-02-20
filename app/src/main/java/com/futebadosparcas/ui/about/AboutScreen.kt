@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.about
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.content.Intent
 import android.net.Uri
@@ -16,13 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.BuildConfig
-import com.futebadosparcas.R
-
 /**
  * Tela Sobre o aplicativo
  *
@@ -73,7 +73,7 @@ fun AboutScreen(
                     // Abrir email
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
                         data = Uri.parse("mailto:techfernandesltda@gmail.com")
-                        putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.about_feedback_subject))
+                        putExtra(Intent.EXTRA_SUBJECT, context.getString(Res.string.about_feedback_subject))
                     }
                     context.startActivity(intent)
                 },
@@ -102,7 +102,7 @@ fun AboutScreen(
         // Footer
         item {
             Text(
-                text = stringResource(R.string.about_footer_text),
+                text = stringResource(Res.string.about_footer_text),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
@@ -135,7 +135,7 @@ private fun AboutHeader() {
             // Logo do app
             Image(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = stringResource(R.string.app_name),
+                contentDescription = stringResource(Res.string.app_name),
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
@@ -145,7 +145,7 @@ private fun AboutHeader() {
 
             // Nome do app
             Text(
-                text = stringResource(R.string.app_name),
+                text = stringResource(Res.string.app_name),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -155,7 +155,7 @@ private fun AboutHeader() {
 
             // Slogan
             Text(
-                text = stringResource(R.string.about_slogan),
+                text = stringResource(Res.string.about_slogan),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
             )
@@ -178,7 +178,7 @@ private fun VersionCard() {
                 .padding(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.about_app_info),
+                text = stringResource(Res.string.about_app_info),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -190,7 +190,7 @@ private fun VersionCard() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = stringResource(R.string.about_version_label),
+                    text = stringResource(Res.string.about_version_label),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -208,7 +208,7 @@ private fun VersionCard() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = stringResource(R.string.about_build_label),
+                    text = stringResource(Res.string.about_build_label),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -237,7 +237,7 @@ private fun DescriptionCard() {
                 .padding(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.about_section_title),
+                text = stringResource(Res.string.about_section_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -245,7 +245,7 @@ private fun DescriptionCard() {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = stringResource(R.string.about_description),
+                text = stringResource(Res.string.about_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Justify
@@ -254,11 +254,11 @@ private fun DescriptionCard() {
             Spacer(modifier = Modifier.height(12.dp))
 
             // Features principais
-            FeatureItem(icon = Icons.Default.Groups, text = stringResource(R.string.about_feature_groups))
-            FeatureItem(icon = Icons.Default.Balance, text = stringResource(R.string.about_feature_teams))
-            FeatureItem(icon = Icons.Default.EmojiEvents, text = stringResource(R.string.about_feature_xp))
-            FeatureItem(icon = Icons.Default.Leaderboard, text = stringResource(R.string.about_feature_ranking))
-            FeatureItem(icon = Icons.Default.AttachMoney, text = stringResource(R.string.about_feature_cashbox))
+            FeatureItem(icon = Icons.Default.Groups, text = stringResource(Res.string.about_feature_groups))
+            FeatureItem(icon = Icons.Default.Balance, text = stringResource(Res.string.about_feature_teams))
+            FeatureItem(icon = Icons.Default.EmojiEvents, text = stringResource(Res.string.about_feature_xp))
+            FeatureItem(icon = Icons.Default.Leaderboard, text = stringResource(Res.string.about_feature_ranking))
+            FeatureItem(icon = Icons.Default.AttachMoney, text = stringResource(Res.string.about_feature_cashbox))
         }
     }
 }
@@ -310,7 +310,7 @@ private fun LinksCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(R.string.about_links_title),
+                text = stringResource(Res.string.about_links_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -318,29 +318,29 @@ private fun LinksCard(
 
             LinkMenuItem(
                 icon = Icons.Default.Star,
-                title = stringResource(R.string.about_rate_app),
-                subtitle = stringResource(R.string.about_rate_app_desc),
+                title = stringResource(Res.string.about_rate_app),
+                subtitle = stringResource(Res.string.about_rate_app_desc),
                 onClick = onRateClick
             )
             HorizontalDivider()
             LinkMenuItem(
                 icon = Icons.Default.Email,
-                title = stringResource(R.string.about_contact_us),
-                subtitle = stringResource(R.string.about_contact_us_desc),
+                title = stringResource(Res.string.about_contact_us),
+                subtitle = stringResource(Res.string.about_contact_us_desc),
                 onClick = onContactClick
             )
             HorizontalDivider()
             LinkMenuItem(
                 icon = Icons.Default.Security,
-                title = stringResource(R.string.about_privacy_policy),
-                subtitle = stringResource(R.string.about_privacy_policy_desc),
+                title = stringResource(Res.string.about_privacy_policy),
+                subtitle = stringResource(Res.string.about_privacy_policy_desc),
                 onClick = onPrivacyClick
             )
             HorizontalDivider()
             LinkMenuItem(
                 icon = Icons.Default.Description,
-                title = stringResource(R.string.about_terms_of_service),
-                subtitle = stringResource(R.string.about_terms_of_service_desc),
+                title = stringResource(Res.string.about_terms_of_service),
+                subtitle = stringResource(Res.string.about_terms_of_service_desc),
                 onClick = onTermsClick
             )
         }
@@ -410,7 +410,7 @@ private fun CreditsCard() {
                 .padding(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.about_credits_title),
+                text = stringResource(Res.string.about_credits_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -418,7 +418,7 @@ private fun CreditsCard() {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = stringResource(R.string.about_credits_tech),
+                text = stringResource(Res.string.about_credits_tech),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -426,7 +426,7 @@ private fun CreditsCard() {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(R.string.about_credits_icons),
+                text = stringResource(Res.string.about_credits_icons),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -434,7 +434,7 @@ private fun CreditsCard() {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(R.string.about_copyright),
+                text = stringResource(Res.string.about_copyright),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

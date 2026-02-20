@@ -1,7 +1,7 @@
 package com.futebadosparcas.ui.auth
 
 import androidx.lifecycle.ViewModel
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 

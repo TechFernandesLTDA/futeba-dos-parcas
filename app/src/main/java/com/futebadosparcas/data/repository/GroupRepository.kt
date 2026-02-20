@@ -1,7 +1,7 @@
 package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.datasource.GroupPhotoDataSource
-import com.futebadosparcas.data.model.Group
+import com.futebadosparcas.domain.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.data.model.GroupMemberStatus

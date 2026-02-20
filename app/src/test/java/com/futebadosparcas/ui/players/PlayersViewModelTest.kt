@@ -5,7 +5,7 @@ import app.cash.turbine.test
 import com.futebadosparcas.domain.model.GroupInvite
 import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.data.repository.GroupRepository
-import com.futebadosparcas.data.repository.IStatisticsRepository
+import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.model.User as SharedUser
 import com.futebadosparcas.domain.model.FieldType
@@ -43,7 +43,7 @@ class PlayersViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var userRepository: UserRepository
-    private lateinit var statisticsRepository: IStatisticsRepository
+    private lateinit var statisticsRepository: StatisticsRepository
     private lateinit var groupRepository: GroupRepository
     private lateinit var inviteRepository: InviteRepository
     private lateinit var notificationRepository: NotificationRepository
@@ -520,7 +520,7 @@ class PlayersViewModelTest {
         createdAt = System.currentTimeMillis()
     )
 
-    private fun createTestStatistics(userId: String) = com.futebadosparcas.data.model.UserStatistics(
+    private fun createTestStatistics(userId: String) = com.futebadosparcas.domain.model.Statistics(
         id = userId,
         totalGames = 50,
         totalGoals = 30,

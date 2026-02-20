@@ -1,7 +1,7 @@
 package com.futebadosparcas.domain.usecase
 
 import com.futebadosparcas.data.datasource.FirebaseDataSource
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.model.UserStatistics
 import com.futebadosparcas.domain.model.RankingCategory
 import com.futebadosparcas.domain.model.RankingPeriod

@@ -1,6 +1,6 @@
 package com.futebadosparcas.data.repository
 
-import com.futebadosparcas.data.model.GameWaitlist
+import com.futebadosparcas.domain.model.GameWaitlist
 import com.futebadosparcas.data.model.WaitlistStatus
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FieldValue

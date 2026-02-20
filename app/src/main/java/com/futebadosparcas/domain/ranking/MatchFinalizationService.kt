@@ -1,7 +1,7 @@
 package com.futebadosparcas.domain.ranking
 
 import com.futebadosparcas.app.domain.ranking.XPCalculator
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.data.repository.GameResult
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FieldValue

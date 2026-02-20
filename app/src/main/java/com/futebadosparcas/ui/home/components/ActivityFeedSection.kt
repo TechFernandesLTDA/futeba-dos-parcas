@@ -36,13 +36,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.futebadosparcas.data.model.Activity
-import com.futebadosparcas.data.model.ActivityType
+import coil3.compose.AsyncImage
+import com.futebadosparcas.domain.model.Activity
+import com.futebadosparcas.domain.model.ActivityType
 import com.futebadosparcas.util.LevelBadgeHelper
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.R
+import org.jetbrains.compose.resources.stringResource
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -53,7 +52,7 @@ fun ActivityFeedSection(
 ) {
     Column(modifier = modifier) {
         Text(
-            text = stringResource(R.string.activity_feed_title),
+            text = stringResource(Res.string.activity_feed_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -98,7 +97,7 @@ fun ActivityCard(activity: Activity) {
                 // Show level badge
                 androidx.compose.foundation.Image(
                     painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
-                    contentDescription = stringResource(R.string.activity_feed_level_badge_cd, level),
+                    contentDescription = stringResource(Res.string.activity_feed_level_badge_cd, level),
                     modifier = Modifier.size(40.dp)
                 )
             } else {
@@ -175,7 +174,7 @@ fun EmptyActivityState() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = stringResource(R.string.activity_feed_no_activity),
+            text = stringResource(Res.string.activity_feed_no_activity),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

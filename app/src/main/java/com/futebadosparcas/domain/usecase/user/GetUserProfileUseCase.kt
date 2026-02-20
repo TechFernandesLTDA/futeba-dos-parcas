@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.usecase.user
 
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.model.UserStatistics
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.futebadosparcas.util.AppLogger

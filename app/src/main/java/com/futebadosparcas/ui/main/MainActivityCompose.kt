@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.main
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.content.res.Configuration
 import android.os.Bundle
@@ -14,7 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -24,7 +26,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.ThemeMode
 import com.futebadosparcas.domain.repository.ThemeRepository
 import com.futebadosparcas.data.model.UserBadge
@@ -325,11 +326,11 @@ data class BottomNavItem(
 
 @Composable
 private fun rememberBottomNavItems(): List<BottomNavItem> {
-    val homeLabel = stringResource(R.string.nav_home)
-    val gamesLabel = stringResource(R.string.nav_games)
-    val playersLabel = stringResource(R.string.nav_players)
-    val leagueLabel = stringResource(R.string.league)
-    val profileLabel = stringResource(R.string.nav_profile)
+    val homeLabel = stringResource(Res.string.nav_home)
+    val gamesLabel = stringResource(Res.string.nav_games)
+    val playersLabel = stringResource(Res.string.nav_players)
+    val leagueLabel = stringResource(Res.string.league)
+    val profileLabel = stringResource(Res.string.nav_profile)
 
     return remember {
         listOf(

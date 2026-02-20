@@ -67,12 +67,19 @@ kotlin {
             // ViewModel + Lifecycle - atualizado para 2.9.6
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.6")
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.9.6")
+
+            // Coil 3 - Image Loading (Kotlin Multiplatform)
+            implementation("io.coil-kt.coil3:coil:3.0.4")
+            implementation("io.coil-kt.coil3:coil-compose:3.0.4")
         }
 
         androidMain.dependencies {
             // Android-specific dependencies
             implementation("androidx.activity:activity-compose:1.12.3")
             implementation("androidx.compose.ui:ui-tooling-preview:1.10.2")
+
+            // Coil 3 - Network support for Android
+            implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
         }
 
         iosMain.dependencies {

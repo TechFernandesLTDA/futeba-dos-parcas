@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.locations
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import android.content.Intent
 import android.widget.Toast
@@ -25,9 +27,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.Location
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.ui.components.FieldImage
 import com.futebadosparcas.ui.components.LocationImage
 import com.futebadosparcas.ui.components.dialogs.ConfirmationDialog
@@ -88,10 +89,10 @@ fun ManageLocationsScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.manage_locations)) },
+                title = { Text(stringResource(Res.string.manage_locations)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
                     }
                 },
                 actions = {
@@ -102,7 +103,7 @@ fun ManageLocationsScreen(
                         IconButton(onClick = { expanded = true }) {
                             Icon(
                                 Icons.Default.MoreVert,
-                                contentDescription = stringResource(R.string.location_menu_more_options_description)
+                                contentDescription = stringResource(Res.string.location_menu_more_options_description)
                             )
                         }
 
@@ -111,24 +112,24 @@ fun ManageLocationsScreen(
                             onDismissRequest = { expanded = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.locations_populate_db)) },
+                                text = { Text(stringResource(Res.string.locations_populate_db)) },
                                 onClick = {
                                     expanded = false
                                     showSeedDialog = true
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.cd_upload))
+                                    Icon(Icons.Default.Upload, contentDescription = stringResource(Res.string.cd_upload))
                                 }
                             )
 
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.locations_remove_duplicates)) },
+                                text = { Text(stringResource(Res.string.locations_remove_duplicates)) },
                                 onClick = {
                                     expanded = false
                                     showDeduplicateDialog = true
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.DeleteSweep, contentDescription = stringResource(R.string.cd_remove_duplicates))
+                                    Icon(Icons.Default.DeleteSweep, contentDescription = stringResource(Res.string.cd_remove_duplicates))
                                 }
                             )
                         }
@@ -138,7 +139,7 @@ fun ManageLocationsScreen(
             )
         },
         floatingActionButton = {
-            val fabDescription = stringResource(R.string.location_fab_add_description)
+            val fabDescription = stringResource(Res.string.location_fab_add_description)
             FloatingActionButton(
                 onClick = onCreateLocationClick,
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -281,8 +282,8 @@ private fun SearchBar(
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val searchDescription = stringResource(R.string.location_search_description)
-    val clearDescription = stringResource(R.string.location_search_clear_description)
+    val searchDescription = stringResource(Res.string.location_search_description)
+    val clearDescription = stringResource(Res.string.location_search_clear_description)
 
     OutlinedTextField(
         value = query,
@@ -292,7 +293,7 @@ private fun SearchBar(
             .semantics {
                 contentDescription = searchDescription
             },
-        placeholder = { Text(stringResource(R.string.search_locations)) },
+        placeholder = { Text(stringResource(Res.string.search_locations)) },
         leadingIcon = {
             Icon(
                 Icons.Default.Search,
@@ -358,7 +359,7 @@ private fun LocationCard(
     // Descricao de acessibilidade para o card completo
     val cardDescription = if (fieldCount > 0) {
         stringResource(
-            R.string.location_card_description,
+            Res.string.location_card_description,
             location.name,
             location.address.ifEmpty { location.neighborhood },
             location.rating,
@@ -366,7 +367,7 @@ private fun LocationCard(
         )
     } else {
         stringResource(
-            R.string.location_card_description_no_fields,
+            Res.string.location_card_description_no_fields,
             location.name,
             location.address.ifEmpty { location.neighborhood },
             location.rating
@@ -399,7 +400,7 @@ private fun LocationCard(
                 // Imagem do local com carregamento progressivo
                 LocationImage(
                     imageUrl = locationWithFields.location.photoUrl,
-                    contentDescription = stringResource(R.string.cd_location_photo, locationWithFields.location.name),
+                    contentDescription = stringResource(Res.string.cd_location_photo, locationWithFields.location.name),
                     modifier = Modifier.size(64.dp),
                     thumbnailSize = 32
                 )
@@ -431,7 +432,7 @@ private fun LocationCard(
                     ) {
                         Icon(
                             Icons.Default.Edit,
-                            contentDescription = stringResource(R.string.locations_edit),
+                            contentDescription = stringResource(Res.string.locations_edit),
                             modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -443,7 +444,7 @@ private fun LocationCard(
                     ) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.locations_delete),
+                            contentDescription = stringResource(Res.string.locations_delete),
                             modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.error
                         )
@@ -456,7 +457,7 @@ private fun LocationCard(
                 HorizontalDivider()
 
                 Text(
-                    text = stringResource(R.string.locations_fields_count, locationWithFields.fields.size),
+                    text = stringResource(Res.string.locations_fields_count, locationWithFields.fields.size),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -474,7 +475,7 @@ private fun LocationCard(
                 }
             } else {
                 Text(
-                    text = stringResource(R.string.locations_no_fields),
+                    text = stringResource(Res.string.locations_no_fields),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
@@ -506,7 +507,7 @@ private fun FieldRow(
         // Imagem do campo com carregamento progressivo
         FieldImage(
             imageUrl = field.photoUrl,
-            contentDescription = stringResource(R.string.cd_field_photo, field.name),
+            contentDescription = stringResource(Res.string.cd_field_photo, field.name),
             width = 48.dp,
             height = 36.dp,
             thumbnailSize = 24,
@@ -536,7 +537,7 @@ private fun FieldRow(
         ) {
             Icon(
                 Icons.Default.Close,
-                contentDescription = stringResource(R.string.locations_delete_field),
+                contentDescription = stringResource(Res.string.locations_delete_field),
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.error
             )
@@ -568,13 +569,13 @@ private fun ManageLocationsEmptyState(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.no_locations),
+            text = stringResource(Res.string.no_locations),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
-            text = stringResource(R.string.no_locations_description),
+            text = stringResource(Res.string.no_locations_description),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)
@@ -584,9 +585,9 @@ private fun ManageLocationsEmptyState(
             onClick = onCreateClick,
             modifier = Modifier.padding(top = 16.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_location), modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.cd_add_location), modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.add_location))
+            Text(stringResource(Res.string.add_location))
         }
     }
 }
@@ -602,9 +603,9 @@ private fun DeleteLocationDialog(
 ) {
     ConfirmationDialog(
         visible = true,
-        title = stringResource(R.string.locations_delete_location_title),
-        message = stringResource(R.string.locations_delete_location_message, locationName),
-        confirmText = stringResource(R.string.locations_delete),
+        title = stringResource(Res.string.locations_delete_location_title),
+        message = stringResource(Res.string.locations_delete_location_message, locationName),
+        confirmText = stringResource(Res.string.locations_delete),
         type = ConfirmationDialogType.DESTRUCTIVE,
         icon = Icons.Default.Delete,
         onConfirm = onConfirm,
@@ -620,9 +621,9 @@ private fun DeleteFieldDialog(
 ) {
     ConfirmationDialog(
         visible = true,
-        title = stringResource(R.string.locations_delete_field_title),
-        message = stringResource(R.string.locations_delete_field_message, fieldName),
-        confirmText = stringResource(R.string.locations_delete),
+        title = stringResource(Res.string.locations_delete_field_title),
+        message = stringResource(Res.string.locations_delete_field_message, fieldName),
+        confirmText = stringResource(Res.string.locations_delete),
         type = ConfirmationDialogType.DESTRUCTIVE,
         icon = Icons.Default.Delete,
         onConfirm = onConfirm,
@@ -637,9 +638,9 @@ private fun SeedDatabaseDialog(
 ) {
     ConfirmationDialog(
         visible = true,
-        title = stringResource(R.string.locations_populate_db),
-        message = stringResource(R.string.locations_populate_db_message),
-        confirmText = stringResource(R.string.action_yes),
+        title = stringResource(Res.string.locations_populate_db),
+        message = stringResource(Res.string.locations_populate_db_message),
+        confirmText = stringResource(Res.string.action_yes),
         type = ConfirmationDialogType.NORMAL,
         icon = Icons.Default.CloudDownload,
         onConfirm = onConfirm,
@@ -654,9 +655,9 @@ private fun DeduplicateDialog(
 ) {
     ConfirmationDialog(
         visible = true,
-        title = stringResource(R.string.locations_remove_duplicates),
-        message = stringResource(R.string.locations_remove_duplicates_message),
-        confirmText = stringResource(R.string.action_yes),
+        title = stringResource(Res.string.locations_remove_duplicates),
+        message = stringResource(Res.string.locations_remove_duplicates_message),
+        confirmText = stringResource(Res.string.action_yes),
         type = ConfirmationDialogType.WARNING,
         icon = Icons.Default.CleaningServices,
         onConfirm = onConfirm,

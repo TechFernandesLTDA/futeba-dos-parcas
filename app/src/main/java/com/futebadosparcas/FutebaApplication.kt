@@ -2,10 +2,14 @@ package com.futebadosparcas
 
 import android.app.Application
 import androidx.work.Configuration
-import coil.Coil
-import coil.ImageLoader
-import coil.disk.DiskCache
-import coil.memory.MemoryCache
+import coil3.SingletonImageLoader
+import coil3.ImageLoader
+import coil3.disk.DiskCache
+import coil3.memory.MemoryCache
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import okhttp3.OkHttpClient
+import okio.Path.Companion.toOkioPath
+import java.util.concurrent.TimeUnit
 import com.futebadosparcas.data.local.CacheCleanupWorker
 import com.futebadosparcas.di.koin.allKoinModules
 import com.futebadosparcas.util.PreferencesManager
@@ -61,24 +65,33 @@ class FutebaApplication : Application(), Configuration.Provider {
             )
         }
 
-        // Configurar Coil para carregamento de imagens otimizado
+        // Configurar Coil 3 (KMP) para carregamento de imagens otimizado
+        // OkHttp client configurado
+        val okHttpClient = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+
         val imageLoader = ImageLoader.Builder(this)
             .memoryCache {
-                MemoryCache.Builder(this)
-                    .maxSizePercent(0.25)
+                MemoryCache.Builder()
+                    .maxSizePercent(percent = 0.25, context = this)
                     .build()
             }
             .diskCache {
                 DiskCache.Builder()
-                    .directory(cacheDir.resolve("image_cache"))
+                    .directory(cacheDir.resolve("image_cache").toPath().toOkioPath())
                     .maxSizeBytes(100 * 1024 * 1024) // 100MB
                     .build()
             }
+            // Coil 3 requires explicit network fetcher
+            .components {
+                add(OkHttpNetworkFetcherFactory(callFactory = okHttpClient))
+            }
             .crossfade(true)
-            .respectCacheHeaders(false)
             .build()
 
-        Coil.setImageLoader(imageLoader)
+        SingletonImageLoader.setSafe { imageLoader }
 
         // Aplicar preferência de tema salva (padrão: claro)
         val preferencesManager: PreferencesManager by inject()

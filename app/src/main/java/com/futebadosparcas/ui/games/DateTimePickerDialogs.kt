@@ -1,13 +1,14 @@
 package com.futebadosparcas.ui.games
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
@@ -49,12 +50,12 @@ fun DatePickerDialog(
                     }
                 }
             ) {
-                Text(stringResource(R.string.dialog_confirm))
+                Text(stringResource(Res.string.dialog_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     ) {
@@ -62,7 +63,7 @@ fun DatePickerDialog(
             state = datePickerState,
             title = {
                 Text(
-                    text = stringResource(R.string.fragment_create_game_hint_13),
+                    text = stringResource(Res.string.fragment_create_game_hint_13),
                     modifier = Modifier.padding(start = 24.dp, top = 16.dp)
                 )
             }
@@ -116,12 +117,12 @@ fun TimePickerDialog(
                     )
                 }
             ) {
-                Text(stringResource(R.string.dialog_confirm))
+                Text(stringResource(Res.string.dialog_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )

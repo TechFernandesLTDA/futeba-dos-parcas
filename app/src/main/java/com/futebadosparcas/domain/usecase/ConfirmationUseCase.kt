@@ -2,12 +2,12 @@ package com.futebadosparcas.domain.usecase
 
 import android.location.Location
 import com.futebadosparcas.data.model.CancellationReason
-import com.futebadosparcas.data.model.ConfirmationStatus
-import com.futebadosparcas.data.model.Game
-import com.futebadosparcas.data.model.GameCancellation
+import com.futebadosparcas.domain.model.ConfirmationStatus
+import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.GameCancellation
 import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.GameWaitlist
-import com.futebadosparcas.data.model.PlayerAttendance
+import com.futebadosparcas.domain.model.GameWaitlist
+import com.futebadosparcas.domain.model.PlayerAttendance
 import com.futebadosparcas.data.model.WaitlistStatus
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.WaitlistRepository

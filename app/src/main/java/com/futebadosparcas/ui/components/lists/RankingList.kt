@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.components.lists
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,13 +21,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import coil.compose.AsyncImage
-import com.futebadosparcas.data.model.LeagueDivision
-import com.futebadosparcas.data.model.RankingEntryV2
+import coil3.compose.AsyncImage
+import com.futebadosparcas.domain.model.LeagueDivision
+import com.futebadosparcas.domain.model.RankingEntry
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
@@ -173,7 +174,7 @@ fun DivisionHeader(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.ranking_division, division.displayName),
+                    text = stringResource(Res.string.ranking_division, division.displayName),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = divisionColor

@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.statistics
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -25,15 +27,14 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.futebadosparcas.R
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.domain.model.RankingCategory
 import com.futebadosparcas.domain.model.RankingPeriod
@@ -75,9 +76,9 @@ fun RankingScreen(
                 state.error != null -> {
                     EmptyState(
                         type = EmptyStateType.Error(
-                            title = stringResource(R.string.error),
-                            description = state.error ?: stringResource(R.string.error_loading_data),
-                            actionLabel = stringResource(R.string.retry),
+                            title = stringResource(Res.string.error),
+                            description = state.error ?: stringResource(Res.string.error_loading_data),
+                            actionLabel = stringResource(Res.string.retry),
                             onRetry = { viewModel.loadRanking() }
                         ),
                         modifier = Modifier.align(Alignment.Center)
@@ -86,8 +87,8 @@ fun RankingScreen(
                 state.rankings.isEmpty() -> {
                     EmptyState(
                         type = EmptyStateType.NoData(
-                            title = stringResource(R.string.empty_state_no_ranking_title),
-                            description = stringResource(R.string.empty_state_no_ranking_desc),
+                            title = stringResource(Res.string.empty_state_no_ranking_title),
+                            description = stringResource(Res.string.empty_state_no_ranking_desc),
                             icon = Icons.Default.Leaderboard
                         ),
                         modifier = Modifier.align(Alignment.Center)
@@ -134,13 +135,13 @@ private fun RankingHeader(
         ) {
             Column {
                 Text(
-                    text = stringResource(R.string.statistics_rankings_general),
+                    text = stringResource(Res.string.statistics_rankings_general),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
                 Text(
-                    text = stringResource(R.string.league_ranking_title),
+                    text = stringResource(Res.string.league_ranking_title),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                 )
@@ -479,14 +480,14 @@ private fun RankingItem(
                     modifier = Modifier.padding(top = 2.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.league_games_played_lower, player.gamesPlayed),
+                        text = stringResource(Res.string.league_games_played_lower, player.gamesPlayed),
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     if (player.average > 0) {
                         Text(
-                            text = stringResource(R.string.ranking_average, String.format("%.2f", player.average)),
+                            text = stringResource(Res.string.ranking_average, String.format("%.2f", player.average)),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -573,7 +574,7 @@ private fun PlayerAvatar(
                     .error(R.drawable.ic_person)
                     .placeholder(R.drawable.ic_person)
                     .build(),
-                contentDescription = stringResource(R.string.player_avatar_cd, playerName),
+                contentDescription = stringResource(Res.string.player_avatar_cd, playerName),
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
@@ -660,7 +661,7 @@ private fun MyPositionCard(
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
-                    text = stringResource(R.string.your_position),
+                    text = stringResource(Res.string.your_position),
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -728,36 +729,36 @@ private fun RankingLoadingState(modifier: Modifier = Modifier) {
 @Composable
 private fun getCategoryLabel(category: RankingCategory): String {
     return when (category) {
-        RankingCategory.GOALS -> stringResource(R.string.goals)
-        RankingCategory.ASSISTS -> stringResource(R.string.assists)
-        RankingCategory.SAVES -> stringResource(R.string.saves)
-        RankingCategory.MVP -> stringResource(R.string.stat_mvp)
-        RankingCategory.XP -> stringResource(R.string.stat_xp)
-        RankingCategory.GAMES -> stringResource(R.string.games)
-        RankingCategory.WINS -> stringResource(R.string.wins)
+        RankingCategory.GOALS -> stringResource(Res.string.goals)
+        RankingCategory.ASSISTS -> stringResource(Res.string.assists)
+        RankingCategory.SAVES -> stringResource(Res.string.saves)
+        RankingCategory.MVP -> stringResource(Res.string.stat_mvp)
+        RankingCategory.XP -> stringResource(Res.string.stat_xp)
+        RankingCategory.GAMES -> stringResource(Res.string.games)
+        RankingCategory.WINS -> stringResource(Res.string.wins)
     }
 }
 
 @Composable
 private fun getPeriodLabel(period: RankingPeriod): String {
     return when (period) {
-        RankingPeriod.WEEK -> stringResource(R.string.week)
-        RankingPeriod.MONTH -> stringResource(R.string.month)
-        RankingPeriod.YEAR -> stringResource(R.string.year)
-        RankingPeriod.ALL_TIME -> stringResource(R.string.all_time)
+        RankingPeriod.WEEK -> stringResource(Res.string.week)
+        RankingPeriod.MONTH -> stringResource(Res.string.month)
+        RankingPeriod.YEAR -> stringResource(Res.string.year)
+        RankingPeriod.ALL_TIME -> stringResource(Res.string.all_time)
     }
 }
 
 @Composable
 private fun getCategoryUnit(category: RankingCategory): String {
     return when (category) {
-        RankingCategory.GOALS -> stringResource(R.string.goals).lowercase()
-        RankingCategory.ASSISTS -> stringResource(R.string.assists).lowercase()
-        RankingCategory.SAVES -> stringResource(R.string.saves).lowercase()
-        RankingCategory.MVP -> stringResource(R.string.stat_mvp_times)
-        RankingCategory.XP -> stringResource(R.string.stat_xp)
-        RankingCategory.GAMES -> stringResource(R.string.games).lowercase()
-        RankingCategory.WINS -> stringResource(R.string.wins).lowercase()
+        RankingCategory.GOALS -> stringResource(Res.string.goals).lowercase()
+        RankingCategory.ASSISTS -> stringResource(Res.string.assists).lowercase()
+        RankingCategory.SAVES -> stringResource(Res.string.saves).lowercase()
+        RankingCategory.MVP -> stringResource(Res.string.stat_mvp_times)
+        RankingCategory.XP -> stringResource(Res.string.stat_xp)
+        RankingCategory.GAMES -> stringResource(Res.string.games).lowercase()
+        RankingCategory.WINS -> stringResource(Res.string.wins).lowercase()
     }
 }
 

@@ -1,8 +1,9 @@
 package com.futebadosparcas.ui.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.*
-import com.futebadosparcas.R
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Close
@@ -94,7 +95,7 @@ fun UndoSnackbar(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.cd_close),
+                            contentDescription = stringResource(Res.string.cd_close),
                             modifier = Modifier.size(18.dp),
                             tint = contentColor.copy(alpha = 0.7f)
                         )

@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.home.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,11 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 
@@ -53,7 +54,7 @@ fun WelcomeEmptyState(
         ) {
             androidx.compose.foundation.Image(
                 painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(userLevel)),
-                contentDescription = stringResource(R.string.welcome_level_badge_cd, userLevel),
+                contentDescription = stringResource(Res.string.welcome_level_badge_cd, userLevel),
                 modifier = Modifier.size(120.dp)
             )
         }
@@ -62,7 +63,7 @@ fun WelcomeEmptyState(
 
         // Mensagem de Boas-vindas
         Text(
-            text = stringResource(R.string.welcome_greeting, userName),
+            text = stringResource(Res.string.welcome_greeting, userName),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -72,7 +73,7 @@ fun WelcomeEmptyState(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = stringResource(R.string.welcome_no_games),
+            text = stringResource(Res.string.welcome_no_games),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -94,7 +95,7 @@ fun WelcomeEmptyState(
                     .padding(20.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.welcome_first_steps),
+                    text = stringResource(Res.string.welcome_first_steps),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -104,21 +105,21 @@ fun WelcomeEmptyState(
 
                 TipItem(
                     icon = Icons.Default.SportsSoccer,
-                    text = stringResource(R.string.welcome_step_create_game)
+                    text = stringResource(Res.string.welcome_step_create_game)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 TipItem(
                     icon = Icons.Default.Group,
-                    text = stringResource(R.string.welcome_step_invite_friends)
+                    text = stringResource(Res.string.welcome_step_invite_friends)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 TipItem(
                     icon = Icons.Default.EmojiEvents,
-                    text = stringResource(R.string.welcome_step_earn_xp)
+                    text = stringResource(Res.string.welcome_step_earn_xp)
                 )
             }
         }
@@ -151,7 +152,7 @@ fun WelcomeEmptyState(
             Spacer(modifier = Modifier.width(12.dp))
 
             Text(
-                text = stringResource(R.string.welcome_xp_tip),
+                text = stringResource(Res.string.welcome_xp_tip),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
@@ -183,7 +184,7 @@ fun WelcomeEmptyState(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = stringResource(R.string.welcome_action_create_game),
+                            text = stringResource(Res.string.welcome_action_create_game),
                             style = MaterialTheme.typography.labelLarge
                         )
                     }
@@ -205,7 +206,7 @@ fun WelcomeEmptyState(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = stringResource(R.string.welcome_action_join_group),
+                            text = stringResource(Res.string.welcome_action_join_group),
                             style = MaterialTheme.typography.labelLarge
                         )
                     }

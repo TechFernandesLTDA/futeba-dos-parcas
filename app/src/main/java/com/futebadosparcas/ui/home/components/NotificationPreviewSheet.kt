@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.home.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,9 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.AppNotification
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.domain.model.Notification
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,7 +39,7 @@ fun NotificationPreviewSheet(
                 .padding(bottom = 24.dp)
         ) {
             Text(
-                text = stringResource(R.string.notifications_recent_title),
+                text = stringResource(Res.string.notifications_recent_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -52,7 +53,7 @@ fun NotificationPreviewSheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = stringResource(R.string.notifications_no_new),
+                        text = stringResource(Res.string.notifications_no_new),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

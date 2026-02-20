@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.components
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -36,10 +38,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.domain.repository.AddressLookupResult
 import kotlinx.coroutines.delay
 
@@ -86,7 +87,7 @@ fun CepLookupField(
                 formattedCep = formatted
                 onCepChange(formatted.filter { it.isDigit() })
             },
-            label = { Text(stringResource(R.string.create_game_cep_label)) },
+            label = { Text(stringResource(Res.string.create_game_cep_label)) },
             placeholder = { Text("00000-000") },
             leadingIcon = {
                 Icon(
@@ -110,7 +111,7 @@ fun CepLookupField(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = stringResource(R.string.search)
+                            contentDescription = stringResource(Res.string.search)
                         )
                     }
                 }
@@ -140,7 +141,7 @@ fun CepLookupField(
                         modifier = Modifier.padding(12.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.create_game_cep_found),
+                            text = stringResource(Res.string.create_game_cep_found),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -166,7 +167,7 @@ fun CepLookupField(
                             horizontalArrangement = Arrangement.End
                         ) {
                             TextButton(onClick = { onAddressAccepted(result) }) {
-                                Text(stringResource(R.string.create_game_cep_use_address))
+                                Text(stringResource(Res.string.create_game_cep_use_address))
                             }
                         }
                     }

@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.profile
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,17 +24,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.R
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.futebadosparcas.BuildConfig
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.FieldType
@@ -233,10 +234,10 @@ private fun ProfileContent(
     }
 
     // Ratings calculados uma vez, SEM animação
-    val attackerLabel = stringResource(R.string.profile_position_attacker)
-    val midfielderLabel = stringResource(R.string.profile_position_midfielder)
-    val defenderLabel = stringResource(R.string.profile_position_defender)
-    val goalkeeperLabel = stringResource(R.string.profile_position_goalkeeper)
+    val attackerLabel = stringResource(Res.string.profile_position_attacker)
+    val midfielderLabel = stringResource(Res.string.profile_position_midfielder)
+    val defenderLabel = stringResource(Res.string.profile_position_defender)
+    val goalkeeperLabel = stringResource(Res.string.profile_position_goalkeeper)
     val ratings = remember(stableUser.id) {
         listOf(
             RatingData(attackerLabel, stableUser.getEffectiveRating(PlayerRatingRole.STRIKER), Icons.Default.SportsSoccer),
@@ -349,7 +350,7 @@ private fun ProfileContent(
         // Versão do App
         item(key = "version") {
             Text(
-                text = stringResource(R.string.version_format, BuildConfig.VERSION_NAME),
+                text = stringResource(Res.string.version_format, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
@@ -394,7 +395,7 @@ private fun ProfileHeader(
                     val photoUrl = remember(user.photoUrl) { user.photoUrl }
                     AsyncImage(
                         model = photoUrl,
-                        contentDescription = stringResource(R.string.cd_profile_photo),
+                        contentDescription = stringResource(Res.string.cd_profile_photo),
                         modifier = Modifier
                             .size(120.dp)
                             .clip(CircleShape),
@@ -421,7 +422,7 @@ private fun ProfileHeader(
                 // Badge de nível sobreposto
                 Image(
                     painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(user.level)),
-                    contentDescription = stringResource(R.string.cd_level_badge_main),
+                    contentDescription = stringResource(Res.string.cd_level_badge_main),
                     modifier = Modifier
                         .size(40.dp)
                         .align(Alignment.BottomEnd)
@@ -461,8 +462,8 @@ private fun ProfileHeader(
                 ) {
                     Text(
                         text = when {
-                            user.isAdmin() -> stringResource(R.string.profile_role_admin)
-                            user.isFieldOwner() -> stringResource(R.string.profile_role_organizer)
+                            user.isAdmin() -> stringResource(Res.string.profile_role_admin)
+                            user.isFieldOwner() -> stringResource(Res.string.profile_role_organizer)
                             else -> ""
                         },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -515,7 +516,7 @@ private fun StaticLevelCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(R.string.profile_level, level),
+                        text = stringResource(Res.string.profile_level, level),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -529,7 +530,7 @@ private fun StaticLevelCard(
 
                 Image(
                     painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
-                    contentDescription = stringResource(R.string.level_badge),
+                    contentDescription = stringResource(Res.string.level_badge),
                     modifier = Modifier.size(48.dp)
                 )
             }
@@ -595,7 +596,7 @@ private fun FieldPreferencesCard(preferredTypes: List<FieldType>) {
                 .padding(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.field_preferences),
+                text = stringResource(Res.string.field_preferences),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -609,17 +610,17 @@ private fun FieldPreferencesCard(preferredTypes: List<FieldType>) {
                 FieldTypeIcon(
                     type = FieldType.SOCIETY,
                     isEnabled = preferredTypes.contains(FieldType.SOCIETY),
-                    label = stringResource(R.string.field_type_society_short)
+                    label = stringResource(Res.string.field_type_society_short)
                 )
                 FieldTypeIcon(
                     type = FieldType.FUTSAL,
                     isEnabled = preferredTypes.contains(FieldType.FUTSAL),
-                    label = stringResource(R.string.field_type_futsal_short)
+                    label = stringResource(Res.string.field_type_futsal_short)
                 )
                 FieldTypeIcon(
                     type = FieldType.CAMPO,
                     isEnabled = preferredTypes.contains(FieldType.CAMPO),
-                    label = stringResource(R.string.field_type_field_short)
+                    label = stringResource(Res.string.field_type_field_short)
                 )
             }
         }
@@ -678,7 +679,7 @@ private fun StaticRatingsCard(ratings: List<RatingData>) {
                 .padding(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.position_ratings),
+                text = stringResource(Res.string.position_ratings),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -778,7 +779,7 @@ private fun StatisticsCard(statistics: UserStatistics?) {
                 .padding(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.statistics_title),
+                text = stringResource(Res.string.statistics_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -792,33 +793,33 @@ private fun StatisticsCard(statistics: UserStatistics?) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        StatItem(label = stringResource(R.string.profile_stats_games), value = statistics.totalGames.toString())
-                        StatItem(label = stringResource(R.string.profile_stats_goals), value = statistics.totalGoals.toString())
-                        StatItem(label = stringResource(R.string.profile_stats_victories), value = statistics.gamesWon.toString())
+                        StatItem(label = stringResource(Res.string.profile_stats_games), value = statistics.totalGames.toString())
+                        StatItem(label = stringResource(Res.string.profile_stats_goals), value = statistics.totalGoals.toString())
+                        StatItem(label = stringResource(Res.string.profile_stats_victories), value = statistics.gamesWon.toString())
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        StatItem(label = stringResource(R.string.profile_stats_assists), value = statistics.totalAssists.toString())
-                        StatItem(label = stringResource(R.string.profile_stats_draws), value = statistics.gamesDraw.toString())
-                        StatItem(label = stringResource(R.string.profile_stats_mvp), value = statistics.bestPlayerCount.toString())
+                        StatItem(label = stringResource(Res.string.profile_stats_assists), value = statistics.totalAssists.toString())
+                        StatItem(label = stringResource(Res.string.profile_stats_draws), value = statistics.gamesDraw.toString())
+                        StatItem(label = stringResource(Res.string.profile_stats_mvp), value = statistics.bestPlayerCount.toString())
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        StatItem(label = stringResource(R.string.profile_stats_saves), value = statistics.totalSaves.toString())
-                        StatItem(label = stringResource(R.string.profile_stats_cards), value = statistics.totalCards.toString())
+                        StatItem(label = stringResource(Res.string.profile_stats_saves), value = statistics.totalSaves.toString())
+                        StatItem(label = stringResource(Res.string.profile_stats_cards), value = statistics.totalCards.toString())
                         StatItem(
-                            label = stringResource(R.string.profile_stats_avg_goals),
+                            label = stringResource(Res.string.profile_stats_avg_goals),
                             value = String.format(Locale.getDefault(), "%.1f", statistics.avgGoalsPerGame ?: 0.0)
                         )
                     }
                 }
             } else {
                 Text(
-                    text = stringResource(R.string.no_stats_available),
+                    text = stringResource(Res.string.no_stats_available),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -868,7 +869,7 @@ private fun BadgesSection(badges: List<UserBadge>) {
                 .padding(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.recent_badges),
+                text = stringResource(Res.string.recent_badges),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -984,11 +985,11 @@ private fun ActionButtonsSection(
         ) {
             Icon(
                 imageVector = Icons.Default.Edit,
-                contentDescription = stringResource(R.string.edit_profile),
+                contentDescription = stringResource(Res.string.edit_profile),
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.edit_profile))
+            Text(stringResource(Res.string.edit_profile))
         }
 
         OutlinedButton(
@@ -998,11 +999,11 @@ private fun ActionButtonsSection(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Logout,
-                contentDescription = stringResource(R.string.logout),
+                contentDescription = stringResource(Res.string.logout),
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.logout))
+            Text(stringResource(Res.string.logout))
         }
     }
 }
@@ -1025,25 +1026,25 @@ private fun SettingsSection(
         Column(modifier = Modifier.fillMaxWidth()) {
             SettingsMenuItem(
                 icon = Icons.Default.Notifications,
-                title = stringResource(R.string.profile_section_notifications),
+                title = stringResource(Res.string.profile_section_notifications),
                 onClick = onNotificationsClick
             )
             HorizontalDivider()
             SettingsMenuItem(
                 icon = Icons.Default.Settings,
-                title = stringResource(R.string.profile_section_preferences),
+                title = stringResource(Res.string.profile_section_preferences),
                 onClick = onSettingsClick
             )
             HorizontalDivider()
             SettingsMenuItem(
                 icon = Icons.Default.Schedule,
-                title = stringResource(R.string.profile_section_schedules),
+                title = stringResource(Res.string.profile_section_schedules),
                 onClick = onSchedulesClick
             )
             HorizontalDivider()
             SettingsMenuItem(
                 icon = Icons.Default.Info,
-                title = stringResource(R.string.profile_section_about),
+                title = stringResource(Res.string.profile_section_about),
                 onClick = onAboutClick
             )
         }
@@ -1065,7 +1066,7 @@ private fun FeedbackSection() {
         Column(modifier = Modifier.fillMaxWidth()) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = stringResource(R.string.feedback_section),
+                text = stringResource(Res.string.feedback_section),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -1074,15 +1075,15 @@ private fun FeedbackSection() {
 
             SettingsMenuItem(
                 icon = Icons.Default.BugReport,
-                title = stringResource(R.string.report_problem),
+                title = stringResource(Res.string.report_problem),
                 onClick = {
                     val appVersion = BuildConfig.VERSION_NAME
                     val androidVersion = Build.VERSION.RELEASE
                     val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}"
 
-                    val subject = context.getString(R.string.report_problem_email_subject, appVersion)
+                    val subject = context.getString(Res.string.report_problem_email_subject, appVersion)
                     val body = context.getString(
-                        R.string.report_problem_email_body,
+                        Res.string.report_problem_email_body,
                         appVersion,
                         androidVersion,
                         deviceModel
@@ -1096,11 +1097,11 @@ private fun FeedbackSection() {
                     }
 
                     try {
-                        context.startActivity(Intent.createChooser(intent, context.getString(R.string.report_problem)))
+                        context.startActivity(Intent.createChooser(intent, context.getString(Res.string.report_problem)))
                     } catch (e: Exception) {
                         Toast.makeText(
                             context,
-                            context.getString(R.string.report_problem_no_email_app),
+                            context.getString(Res.string.report_problem_no_email_app),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -1133,7 +1134,7 @@ private fun AdminSection(
         Column(modifier = Modifier.fillMaxWidth()) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = stringResource(R.string.administration_section),
+                text = stringResource(Res.string.administration_section),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onErrorContainer,
@@ -1143,7 +1144,7 @@ private fun AdminSection(
             if (isAdmin) {
                 AdminMenuItem(
                     icon = Icons.Default.People,
-                    title = stringResource(R.string.profile_section_manage_users),
+                    title = stringResource(Res.string.profile_section_manage_users),
                     onClick = onUserManagementClick
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
@@ -1152,11 +1153,11 @@ private fun AdminSection(
             if (isFieldOwner) {
                 AdminMenuItem(
                     icon = Icons.Default.Place,
-                    title = stringResource(R.string.profile_section_my_locations),
+                    title = stringResource(Res.string.profile_section_my_locations),
                     subtitle = when (myLocationsCount) {
-                        0 -> stringResource(R.string.admin_no_locations)
-                        1 -> stringResource(R.string.admin_one_location)
-                        else -> stringResource(R.string.admin_locations_count, myLocationsCount)
+                        0 -> stringResource(Res.string.admin_no_locations)
+                        1 -> stringResource(Res.string.admin_one_location)
+                        else -> stringResource(Res.string.admin_locations_count, myLocationsCount)
                     },
                     onClick = onMyLocationsClick
                 )
@@ -1166,14 +1167,14 @@ private fun AdminSection(
             if (isAdmin) {
                 AdminMenuItem(
                     icon = Icons.Default.AdminPanelSettings,
-                    title = stringResource(R.string.profile_section_league_settings),
+                    title = stringResource(Res.string.profile_section_league_settings),
                     onClick = onGamificationSettingsClick
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.2f))
 
                 AdminMenuItem(
                     icon = Icons.Default.LocationOn,
-                    title = stringResource(R.string.profile_section_manage_locations),
+                    title = stringResource(Res.string.profile_section_manage_locations),
                     onClick = onManageLocationsClick
                 )
             }
@@ -1212,7 +1213,7 @@ private fun SettingsMenuItem(
         )
         Icon(
             imageVector = Icons.Default.ChevronRight,
-            contentDescription = stringResource(R.string.cd_access_title, title),
+            contentDescription = stringResource(Res.string.cd_access_title, title),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -1258,7 +1259,7 @@ private fun AdminMenuItem(
         }
         Icon(
             imageVector = Icons.Default.ChevronRight,
-            contentDescription = stringResource(R.string.cd_access_title, title),
+            contentDescription = stringResource(Res.string.cd_access_title, title),
             tint = MaterialTheme.colorScheme.onErrorContainer
         )
     }
@@ -1285,20 +1286,20 @@ private fun DeveloperMenuCard(onClick: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Default.Code,
-                contentDescription = stringResource(R.string.cd_developer_menu),
+                contentDescription = stringResource(Res.string.cd_developer_menu),
                 modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = stringResource(R.string.developer_menu),
+                text = stringResource(Res.string.developer_menu),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier.weight(1f)
             )
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = stringResource(R.string.cd_access_developer_menu),
+                contentDescription = stringResource(Res.string.cd_access_developer_menu),
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
@@ -1322,7 +1323,7 @@ private fun ErrorState(
     ) {
         Icon(
             imageVector = Icons.Default.Error,
-            contentDescription = stringResource(R.string.cd_profile_error),
+            contentDescription = stringResource(Res.string.cd_profile_error),
             modifier = Modifier.size(56.dp),
             tint = MaterialTheme.colorScheme.error
         )
@@ -1337,11 +1338,11 @@ private fun ErrorState(
         Button(onClick = onRetry) {
             Icon(
                 imageVector = Icons.Default.Refresh,
-                contentDescription = stringResource(R.string.retry),
+                contentDescription = stringResource(Res.string.retry),
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.retry))
+            Text(stringResource(Res.string.retry))
         }
     }
 }

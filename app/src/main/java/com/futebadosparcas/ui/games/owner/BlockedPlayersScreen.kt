@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.games.owner
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,11 +14,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.data.model.BlockedPlayer
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.ui.components.CachedProfileImage
@@ -42,15 +43,15 @@ fun BlockedPlayersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.owner_blocked_players)) },
+                title = { Text(stringResource(Res.string.owner_blocked_players)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { showBlockDialog = true }) {
-                        Icon(Icons.Outlined.PersonAdd, contentDescription = stringResource(R.string.owner_block_player))
+                        Icon(Icons.Outlined.PersonAdd, contentDescription = stringResource(Res.string.owner_block_player))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -68,8 +69,8 @@ fun BlockedPlayersScreen(
             ) {
                 EmptyState(
                     type = EmptyStateType.NoData(
-                        title = stringResource(R.string.owner_no_blocked_players),
-                        description = stringResource(R.string.owner_no_blocked_players_desc)
+                        title = stringResource(Res.string.owner_no_blocked_players),
+                        description = stringResource(Res.string.owner_no_blocked_players_desc)
                     )
                 )
             }
@@ -138,7 +139,7 @@ private fun BlockedPlayerCard(
                 )
                 if (player.reason.isNotBlank()) {
                     Text(
-                        text = stringResource(R.string.owner_block_reason, player.reason),
+                        text = stringResource(Res.string.owner_block_reason, player.reason),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
@@ -148,7 +149,7 @@ private fun BlockedPlayerCard(
                 player.blockedAt?.let { date ->
                     Text(
                         text = stringResource(
-                            R.string.owner_blocked_since,
+                            Res.string.owner_blocked_since,
                             dateFormat.format(date)
                         ),
                         style = MaterialTheme.typography.labelSmall,
@@ -160,7 +161,7 @@ private fun BlockedPlayerCard(
             IconButton(onClick = onUnblock) {
                 Icon(
                     imageVector = Icons.Default.RemoveCircleOutline,
-                    contentDescription = stringResource(R.string.owner_unblock),
+                    contentDescription = stringResource(Res.string.owner_unblock),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -179,11 +180,11 @@ private fun BlockPlayerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.owner_block_player)) },
+        title = { Text(stringResource(Res.string.owner_block_player)) },
         text = {
             Column {
                 Text(
-                    text = stringResource(R.string.owner_block_player_desc),
+                    text = stringResource(Res.string.owner_block_player_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -192,12 +193,12 @@ private fun BlockPlayerDialog(
                 // Player selection
                 if (availablePlayers.isEmpty()) {
                     Text(
-                        text = stringResource(R.string.owner_no_players_to_block),
+                        text = stringResource(Res.string.owner_no_players_to_block),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 } else {
                     Text(
-                        text = stringResource(R.string.owner_select_player),
+                        text = stringResource(Res.string.owner_select_player),
                         style = MaterialTheme.typography.labelLarge
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -235,7 +236,7 @@ private fun BlockPlayerDialog(
                     OutlinedTextField(
                         value = reason,
                         onValueChange = { reason = it },
-                        label = { Text(stringResource(R.string.owner_block_reason_label)) },
+                        label = { Text(stringResource(Res.string.owner_block_reason_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         maxLines = 2
                     )
@@ -254,12 +255,12 @@ private fun BlockPlayerDialog(
                     containerColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text(stringResource(R.string.owner_block))
+                Text(stringResource(Res.string.owner_block))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         }
     )

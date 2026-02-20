@@ -16,10 +16,10 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import android.widget.Toast
 import androidx.core.content.FileProvider
-import coil.imageLoader
-import coil.request.ImageRequest
-import coil.request.SuccessResult
-import com.futebadosparcas.data.model.LevelTable
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import com.futebadosparcas.domain.model.LevelTable
 import com.futebadosparcas.data.model.UserStatistics
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.User

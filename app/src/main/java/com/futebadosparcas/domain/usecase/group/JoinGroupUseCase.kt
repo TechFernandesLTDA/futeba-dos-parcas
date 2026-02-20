@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.usecase.group
 
-import com.futebadosparcas.data.model.Group
+import com.futebadosparcas.domain.model.Group
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 

@@ -1,4 +1,6 @@
 package com.futebadosparcas.ui.auth
+import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -45,11 +47,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
-import coil.compose.AsyncImage
+import org.jetbrains.compose.resources.stringResource
+import coil3.compose.AsyncImage
 import com.futebadosparcas.BuildConfig
-import com.futebadosparcas.R
-
 /**
  * Tela de login moderna em Jetpack Compose.
  *
@@ -120,7 +120,7 @@ fun LoginScreen(
 
                     // Nome do Aplicativo
                     Text(
-                        text = stringResource(R.string.auth_title),
+                        text = stringResource(Res.string.auth_title),
                         style = MaterialTheme.typography.displaySmall.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -132,7 +132,7 @@ fun LoginScreen(
 
                     // Slogan
                     Text(
-                        text = stringResource(R.string.auth_slogan),
+                        text = stringResource(Res.string.auth_slogan),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -175,7 +175,7 @@ private fun AppLogo() {
         ) {
             AsyncImage(
                 model = R.mipmap.ic_launcher,
-                contentDescription = stringResource(R.string.auth_logo_description),
+                contentDescription = stringResource(Res.string.auth_logo_description),
                 modifier = Modifier
                     .size(100.dp)
                     .clip(RoundedCornerShape(20.dp)),
@@ -207,7 +207,7 @@ private fun LoginCard(
         ) {
             // Título do Card
             Text(
-                text = stringResource(R.string.auth_sign_in_title),
+                text = stringResource(Res.string.auth_sign_in_title),
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold
                 ),
@@ -217,7 +217,7 @@ private fun LoginCard(
 
             // Descrição
             Text(
-                text = stringResource(R.string.auth_sign_in_description),
+                text = stringResource(Res.string.auth_sign_in_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -249,7 +249,7 @@ private fun LoginCard(
                         strokeWidth = 4.dp
                     )
                     Text(
-                        text = stringResource(R.string.auth_authenticating),
+                        text = stringResource(Res.string.auth_authenticating),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -309,7 +309,7 @@ private fun GoogleSignInButton(
         )
         Spacer(modifier = Modifier.size(12.dp))
         Text(
-            text = stringResource(R.string.auth_sign_in_google),
+            text = stringResource(Res.string.auth_sign_in_google),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.SemiBold
             )
@@ -325,14 +325,14 @@ private fun LoginFooter(versionName: String) {
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text(
-            text = stringResource(R.string.auth_developed_by),
+            text = stringResource(Res.string.auth_developed_by),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             textAlign = TextAlign.Center
         )
 
         Text(
-            text = stringResource(R.string.auth_developer_name),
+            text = stringResource(Res.string.auth_developer_name),
             style = MaterialTheme.typography.titleSmall.copy(
                 fontWeight = FontWeight.Bold
             ),
@@ -343,7 +343,7 @@ private fun LoginFooter(versionName: String) {
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = stringResource(R.string.auth_version, versionName),
+            text = stringResource(Res.string.auth_version, versionName),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
