@@ -41,8 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.domain.model.Notification
-import com.futebadosparcas.domain.model.NotificationType
+import com.futebadosparcas.domain.model.AppNotification
+import com.futebadosparcas.domain.model.AppNotificationType
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerListContent

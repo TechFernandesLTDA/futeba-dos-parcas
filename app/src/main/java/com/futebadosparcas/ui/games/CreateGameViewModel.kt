@@ -37,6 +37,7 @@ import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.domain.model.GameVisibility
 import com.futebadosparcas.domain.repository.AddressLookupResult
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.toKmpAppNotifications
 
 /**
  * Passos do wizard de criacao de jogo.

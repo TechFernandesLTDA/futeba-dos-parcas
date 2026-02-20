@@ -6,6 +6,7 @@ import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.toKmpAppNotifications
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

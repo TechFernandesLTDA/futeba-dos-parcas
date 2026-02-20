@@ -25,6 +25,7 @@ import com.futebadosparcas.domain.repository.GameConfirmationRepository
 import com.futebadosparcas.domain.util.deduplicateSortAndLimit
 import com.futebadosparcas.domain.util.mergeAndDeduplicate
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.toKmpGame
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore

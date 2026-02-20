@@ -8,7 +8,7 @@ import com.futebadosparcas.domain.model.GameCancellation
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.domain.model.GameWaitlist
 import com.futebadosparcas.domain.model.PlayerAttendance
-import com.futebadosparcas.data.model.WaitlistStatus
+import com.futebadosparcas.domain.model.WaitlistStatus
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.WaitlistRepository
 import com.futebadosparcas.domain.repository.NotificationRepository

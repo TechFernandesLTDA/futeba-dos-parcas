@@ -2,8 +2,8 @@ package com.futebadosparcas.ui.notifications
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.domain.model.Notification
-import com.futebadosparcas.domain.model.NotificationType
+import com.futebadosparcas.domain.model.AppNotification
+import com.futebadosparcas.domain.model.AppNotificationType
 import com.futebadosparcas.data.repository.GameSummonRepository
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.NotificationRepository

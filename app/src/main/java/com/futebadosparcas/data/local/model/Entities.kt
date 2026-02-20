@@ -154,6 +154,6 @@ fun Game.toEntity() = GameEntity(
     fieldName = fieldName,
     gameType = gameType,
     recurrence = recurrence,
-    createdAt = createdAt?.time,
-    dateTime = createdAt // Use createdAt em vez de dateTime
+    createdAt = createdAt, // Já é Long?
+    dateTime = createdAt // Use createdAt (já é Long?)
 )

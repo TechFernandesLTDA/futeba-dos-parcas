@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.futebadosparcas.domain.model.GameWaitlist
-import com.futebadosparcas.data.model.WaitlistStatus
+import com.futebadosparcas.domain.model.WaitlistStatus
 import com.futebadosparcas.ui.games.WaitlistState
 import java.text.SimpleDateFormat
 import java.util.*

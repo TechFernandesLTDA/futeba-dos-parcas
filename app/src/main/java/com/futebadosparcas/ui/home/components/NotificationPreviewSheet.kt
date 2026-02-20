@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.domain.model.Notification
+import com.futebadosparcas.domain.model.AppNotification
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
