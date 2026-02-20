@@ -90,8 +90,8 @@ fun UserEntity.toDomain() = User(
     name = name,
     photoUrl = photoUrl,
     fcmToken = fcmToken,
-    createdAt = createdAt?.let { Date(it) },
-    updatedAt = updatedAt?.let { Date(it) }
+    createdAt = createdAt, // UserEntity.createdAt é Long?, User.createdAt é Long?
+    updatedAt = updatedAt
 )
 
 fun User.toEntity() = UserEntity(
@@ -100,8 +100,8 @@ fun User.toEntity() = UserEntity(
     name = name,
     photoUrl = photoUrl,
     fcmToken = fcmToken,
-    createdAt = createdAt?.time,
-    updatedAt = updatedAt?.time
+    createdAt = createdAt, // User.createdAt é Long?, UserEntity.createdAt é Long?
+    updatedAt = updatedAt
 )
 
 fun GameEntity.toDomain() = Game(
@@ -127,7 +127,7 @@ fun GameEntity.toDomain() = Game(
     fieldName = fieldName,
     gameType = gameType,
     recurrence = recurrence,
-    createdAt = createdAt?.let { Date(it) }
+    createdAt = createdAt // GameEntity.createdAt é Long?, Game.createdAt é Long?
 )
 
 fun Game.toEntity() = GameEntity(

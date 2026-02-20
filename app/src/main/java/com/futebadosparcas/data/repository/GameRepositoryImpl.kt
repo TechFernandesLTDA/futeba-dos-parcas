@@ -90,10 +90,10 @@ class GameRepositoryImpl constructor(
 
     // ========== Query Methods - Delegação para GameQueryRepository ==========
     override suspend fun getUpcomingGames(): Result<List<Game>> =
-        queryRepository.getUpcomingGames().map { it.toAndroidGames() }
+        queryRepository.getUpcomingGames()
 
     override suspend fun getAllGames(): Result<List<Game>> =
-        queryRepository.getAllGames().map { it.toAndroidGames() }
+        queryRepository.getAllGames()
 
     override suspend fun getAllGamesWithConfirmationCount(): Result<List<GameWithConfirmations>> =
         queryRepository.getAllGamesWithConfirmationCount().map { it.toAndroidGameWithConfirmations() }
@@ -104,7 +104,7 @@ class GameRepositoryImpl constructor(
         }
 
     override suspend fun getConfirmedUpcomingGamesForUser(): Result<List<Game>> =
-        queryRepository.getConfirmedUpcomingGamesForUser().map { it.toAndroidGames() }
+        queryRepository.getConfirmedUpcomingGamesForUser()
 
     override fun getLiveAndUpcomingGamesFlow(): Flow<Result<List<GameWithConfirmations>>> =
         queryRepository.getLiveAndUpcomingGamesFlow().map { result ->
