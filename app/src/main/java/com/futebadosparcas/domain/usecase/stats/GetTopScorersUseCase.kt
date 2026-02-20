@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.usecase.stats
 
-import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore

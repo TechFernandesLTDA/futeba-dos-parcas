@@ -1,10 +1,9 @@
 package com.futebadosparcas.ui.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
-import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 /**
  * Extensões para facilitar o uso de strings do Android
  * em telas Compose.
@@ -13,82 +12,82 @@ import org.jetbrains.compose.resources.stringResource
 // Actions
 @Composable
 @ReadOnlyComposable
-fun stringClose() = stringResource(Res.string.action_close)
+fun stringClose() = stringResource(R.string.action_close)
 @Composable
 @ReadOnlyComposable
-fun stringCancel() = stringResource(Res.string.action_cancel)
+fun stringCancel() = stringResource(R.string.action_cancel)
 @Composable
 @ReadOnlyComposable
-fun stringSave() = stringResource(Res.string.action_save)
+fun stringSave() = stringResource(R.string.action_save)
 @Composable
 @ReadOnlyComposable
-fun stringConfirm() = stringResource(Res.string.action_confirm)
+fun stringConfirm() = stringResource(R.string.action_confirm)
 @Composable
 @ReadOnlyComposable
-fun stringDelete() = stringResource(Res.string.action_delete)
+fun stringDelete() = stringResource(R.string.action_delete)
 @Composable
 @ReadOnlyComposable
-fun stringEdit() = stringResource(Res.string.action_edit)
+fun stringEdit() = stringResource(R.string.action_edit)
 @Composable
 @ReadOnlyComposable
-fun stringRetry() = stringResource(Res.string.action_retry)
+fun stringRetry() = stringResource(R.string.action_retry)
 
 // Common
 @Composable
 @ReadOnlyComposable
-fun stringYes() = stringResource(Res.string.common_yes)
+fun stringYes() = stringResource(R.string.common_yes)
 @Composable
 @ReadOnlyComposable
-fun stringNo() = stringResource(Res.string.common_no)
+fun stringNo() = stringResource(R.string.common_no)
 @Composable
 @ReadOnlyComposable
-fun stringLoading() = stringResource(Res.string.loading)
+fun stringLoading() = stringResource(R.string.loading)
 
 // Errors
 @Composable
 @ReadOnlyComposable
-fun stringErrorDefault() = stringResource(Res.string.error_default)
+fun stringErrorDefault() = stringResource(R.string.error_default)
 @Composable
 @ReadOnlyComposable
-fun stringErrorNetwork() = stringResource(Res.string.error_network)
+fun stringErrorNetwork() = stringResource(R.string.error_network)
 
 // Profile
 @Composable
 @ReadOnlyComposable
-fun stringProfileEdit() = stringResource(Res.string.profile_edit)
+fun stringProfileEdit() = stringResource(R.string.profile_edit)
 @Composable
 @ReadOnlyComposable
-fun stringProfileFullName() = stringResource(Res.string.profile_full_name)
+fun stringProfileFullName() = stringResource(R.string.profile_full_name)
 @Composable
 @ReadOnlyComposable
-fun stringProfileNickname() = stringResource(Res.string.profile_nickname)
+fun stringProfileNickname() = stringResource(R.string.profile_nickname)
 @Composable
 @ReadOnlyComposable
-fun stringProfileBirthDate() = stringResource(Res.string.profile_birth_date)
+fun stringProfileBirthDate() = stringResource(R.string.profile_birth_date)
 
 // Edit Profile
 @Composable
 @ReadOnlyComposable
-fun stringEditProfileTitle() = stringResource(Res.string.edit_profile_title)
+fun stringEditProfileTitle() = stringResource(R.string.edit_profile_title)
 @Composable
 @ReadOnlyComposable
-fun stringEditProfileSave() = stringResource(Res.string.edit_profile_save)
+fun stringEditProfileSave() = stringResource(R.string.edit_profile_save)
 @Composable
 @ReadOnlyComposable
-fun stringEditProfileBasicInfo() = stringResource(Res.string.edit_profile_basic_info)
+fun stringEditProfileBasicInfo() = stringResource(R.string.edit_profile_basic_info)
 @Composable
 @ReadOnlyComposable
-fun stringEditProfilePhysicalInfo() = stringResource(Res.string.edit_profile_physical_info)
+fun stringEditProfilePhysicalInfo() = stringResource(R.string.edit_profile_physical_info)
 
 // Game
 @Composable
 @ReadOnlyComposable
-fun stringGameDetails() = stringResource(Res.string.game_details)
+fun stringGameDetails() = stringResource(R.string.game_details)
 @Composable
 @ReadOnlyComposable
-fun stringGameLive() = stringResource(Res.string.game_live)
+fun stringGameLive() = stringResource(R.string.game_live)
 
 // Locations
 @Composable
 @ReadOnlyComposable
-fun stringLocationsTitle() = stringResource(Res.string.locations_title)
+fun stringLocationsTitle() = stringResource(R.string.locations_title)

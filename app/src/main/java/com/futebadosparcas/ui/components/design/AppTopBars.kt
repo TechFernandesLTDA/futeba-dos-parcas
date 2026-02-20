@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.components.design
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
@@ -26,12 +24,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 /**
  * Componentes de TopAppBar padronizados do Futeba dos Parcas.
  *
@@ -131,7 +130,7 @@ object AppTopBar {
         TopAppBar(
             title = {
                 Text(
-                    text = stringResource(Res.string.app_name),
+                    text = stringResource(R.string.app_name),
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -147,7 +146,7 @@ object AppTopBar {
                 IconButton(onClick = onNavigateGroups) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_group),
-                        contentDescription = stringResource(Res.string.cd_groups),
+                        contentDescription = stringResource(R.string.cd_groups),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -156,7 +155,7 @@ object AppTopBar {
                 IconButton(onClick = onNavigateMap) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_map),
-                        contentDescription = stringResource(Res.string.cd_map),
+                        contentDescription = stringResource(R.string.cd_map),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -200,7 +199,7 @@ object AppTopBar {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(Res.string.back_button_content_description)
+                        contentDescription = stringResource(R.string.back_button_content_description)
                     )
                 }
             },
@@ -217,7 +216,7 @@ object AppTopBar {
      * Versao alternativa que aceita um resource ID para o titulo,
      * garantindo uso de strings.xml.
      *
-     * @param titleResId Resource ID do titulo (Res.string.xxx)
+     * @param titleResId Resource ID do titulo (R.string.xxx)
      * @param onNavigateBack Callback ao clicar no botao voltar
      * @param modifier Modificador opcional
      * @param actions Acoes adicionais na direita (opcional)
@@ -278,7 +277,7 @@ object AppTopBar {
     /**
      * TopBar simples usando resource ID.
      *
-     * @param titleResId Resource ID do titulo (Res.string.xxx)
+     * @param titleResId Resource ID do titulo (R.string.xxx)
      * @param modifier Modificador opcional
      * @param actions Acoes adicionais na direita (opcional)
      * @param scrollBehavior Comportamento ao rolar (opcional)
@@ -325,7 +324,7 @@ object AppTopBar {
                 IconButton(onClick = onSettingsClick) {
                     Icon(
                         imageVector = Icons.Default.Settings,
-                        contentDescription = stringResource(Res.string.settings)
+                        contentDescription = stringResource(R.string.settings)
                     )
                 }
             },
@@ -367,7 +366,7 @@ object AppTopBar {
                 IconButton(onClick = onMenuClick) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = stringResource(Res.string.cd_menu)
+                        contentDescription = stringResource(R.string.cd_menu)
                     )
                 }
             },
@@ -402,7 +401,7 @@ private fun NotificationIconWithBadge(
         IconButton(onClick = onClick) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_notifications),
-                contentDescription = stringResource(Res.string.cd_notifications),
+                contentDescription = stringResource(R.string.cd_notifications),
                 tint = MaterialTheme.colorScheme.primary
             )
         }
@@ -448,7 +447,7 @@ fun BackIconButton(onClick: () -> Unit) {
     IconButton(onClick = onClick) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = stringResource(Res.string.back_button_content_description)
+            contentDescription = stringResource(R.string.back_button_content_description)
         )
     }
 }
@@ -463,7 +462,7 @@ fun SettingsIconButton(onClick: () -> Unit) {
     IconButton(onClick = onClick) {
         Icon(
             imageVector = Icons.Default.Settings,
-            contentDescription = stringResource(Res.string.settings)
+            contentDescription = stringResource(R.string.settings)
         )
     }
 }

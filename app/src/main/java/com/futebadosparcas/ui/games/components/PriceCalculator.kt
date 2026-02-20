@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -39,12 +37,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import java.text.NumberFormat
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Componente que exibe o calculo automatico do preco por jogador.
@@ -90,7 +89,7 @@ fun PricePerPlayerCalculator(
                     )
                     Column {
                         Text(
-                            text = stringResource(Res.string.create_game_price_per_player_label),
+                            text = stringResource(R.string.create_game_price_per_player_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
@@ -114,7 +113,7 @@ fun PricePerPlayerCalculator(
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = stringResource(Res.string.create_game_price_per_player_count, maxPlayers),
+                        text = stringResource(R.string.create_game_price_per_player_count, maxPlayers),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                     )
@@ -212,7 +211,7 @@ fun PricePerPlayerCalculatorWithOverride(
                         )
                         Column {
                             Text(
-                                text = stringResource(Res.string.create_game_price_per_player_label),
+                                text = stringResource(R.string.create_game_price_per_player_label),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (isManualEnabled)
                                     MaterialTheme.colorScheme.onSecondaryContainer
@@ -238,7 +237,7 @@ fun PricePerPlayerCalculatorWithOverride(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = stringResource(Res.string.create_game_manual_price),
+                            text = stringResource(R.string.create_game_manual_price),
                             style = MaterialTheme.typography.labelSmall,
                             color = if (isManualEnabled)
                                 MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
@@ -277,7 +276,7 @@ fun PricePerPlayerCalculatorWithOverride(
                                 val parsed = value.replace(",", ".").toDoubleOrNull()
                                 onManualPriceChange(parsed)
                             },
-                            label = { Text(stringResource(Res.string.create_game_price_per_player_input)) },
+                            label = { Text(stringResource(R.string.create_game_price_per_player_input)) },
                             leadingIcon = {
                                 Text(
                                     text = "R$",
@@ -322,7 +321,7 @@ fun PricePerPlayerCalculatorWithOverride(
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = stringResource(Res.string.create_game_price_per_player_count, maxPlayers),
+                            text = stringResource(R.string.create_game_price_per_player_count, maxPlayers),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                         )

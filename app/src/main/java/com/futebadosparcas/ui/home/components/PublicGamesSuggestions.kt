@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.home.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.model.Game
@@ -44,6 +41,8 @@ import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -67,13 +66,13 @@ fun PublicGamesSuggestions(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = stringResource(Res.string.public_games_region_title),
+                text = stringResource(R.string.public_games_region_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = stringResource(Res.string.public_games_see_all),
+                text = stringResource(R.string.public_games_see_all),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { /* Navigate to search/filter */ }
@@ -118,7 +117,7 @@ fun PublicGamesSuggestions(
 
 @Composable
 fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) {
-    val locationUnknown = stringResource(Res.string.public_games_location_unknown)
+    val locationUnknown = stringResource(R.string.public_games_location_unknown)
     Card(
         modifier = if (fillWidth) {
             Modifier
@@ -188,7 +187,7 @@ fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) 
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = stringResource(Res.string.public_games_slots_available),
+                        text = stringResource(R.string.public_games_slots_available),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )

@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.groups
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,7 +16,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +30,8 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.lists.ShimmerBox
 import com.futebadosparcas.ui.theme.systemBarsPadding
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * InvitePlayersScreen - Convidar jogadores para grupo
@@ -150,12 +149,12 @@ private fun InvitePlayersTopBar(
     onNavigateBack: () -> Unit
 ) {
     TopAppBar(
-        title = { Text(stringResource(Res.string.invite_players_title)) },
+        title = { Text(stringResource(R.string.invite_players_title)) },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(Res.string.invite_players_back)
+                    contentDescription = stringResource(R.string.invite_players_back)
                 )
             }
         },
@@ -175,11 +174,11 @@ private fun SearchField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier,
-        placeholder = { Text(stringResource(Res.string.invite_players_search_hint)) },
+        placeholder = { Text(stringResource(R.string.invite_players_search_hint)) },
         leadingIcon = {
             Icon(
                 Icons.Default.Search,
-                contentDescription = stringResource(Res.string.invite_players_search_icon)
+                contentDescription = stringResource(R.string.invite_players_search_icon)
             )
         },
         trailingIcon = {
@@ -187,7 +186,7 @@ private fun SearchField(
                 IconButton(onClick = { onQueryChange("") }) {
                     Icon(
                         Icons.Default.Close,
-                        contentDescription = stringResource(Res.string.invite_players_clear)
+                        contentDescription = stringResource(R.string.invite_players_clear)
                     )
                 }
             }
@@ -211,8 +210,8 @@ private fun InvitePlayersContent(
         is SearchUsersState.Idle -> {
             EmptyState(
                 type = EmptyStateType.NoData(
-                    title = stringResource(Res.string.invite_players_empty_title),
-                    description = stringResource(Res.string.invite_players_empty_description),
+                    title = stringResource(R.string.invite_players_empty_title),
+                    description = stringResource(R.string.invite_players_empty_description),
                     icon = Icons.Default.PersonSearch
                 )
             )
@@ -223,11 +222,11 @@ private fun InvitePlayersContent(
         is SearchUsersState.Empty -> {
             EmptyState(
                 type = EmptyStateType.NoResults(
-                    title = stringResource(Res.string.invite_players_no_results_title),
-                    description = stringResource(Res.string.invite_players_no_results_description),
+                    title = stringResource(R.string.invite_players_no_results_title),
+                    description = stringResource(R.string.invite_players_no_results_description),
                     icon = Icons.Default.SearchOff,
                     actionLabel = if (searchQuery.isNotEmpty()) {
-                        stringResource(Res.string.action_clear_search)
+                        stringResource(R.string.action_clear_search)
                     } else null,
                     onAction = if (searchQuery.isNotEmpty()) onClearSearch else null
                 )
@@ -244,10 +243,10 @@ private fun InvitePlayersContent(
         is SearchUsersState.Error -> {
             EmptyState(
                 type = EmptyStateType.Error(
-                    title = stringResource(Res.string.invite_players_error_title),
+                    title = stringResource(R.string.invite_players_error_title),
                     description = state.message,
                     icon = Icons.Default.Error,
-                    actionLabel = stringResource(Res.string.invite_players_try_again),
+                    actionLabel = stringResource(R.string.invite_players_try_again),
                     onRetry = onRetrySearch
                 )
             )
@@ -413,7 +412,7 @@ private fun InviteButton(
         isMember -> {
             AssistChip(
                 onClick = { },
-                label = { Text(stringResource(Res.string.invite_players_already_member)) },
+                label = { Text(stringResource(R.string.invite_players_already_member)) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
@@ -432,7 +431,7 @@ private fun InviteButton(
         isPending -> {
             AssistChip(
                 onClick = { },
-                label = { Text(stringResource(Res.string.invite_players_pending)) },
+                label = { Text(stringResource(R.string.invite_players_pending)) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Schedule,
@@ -459,7 +458,7 @@ private fun InviteButton(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(Res.string.invite_players_invite_button))
+                Text(stringResource(R.string.invite_players_invite_button))
             }
         }
     }

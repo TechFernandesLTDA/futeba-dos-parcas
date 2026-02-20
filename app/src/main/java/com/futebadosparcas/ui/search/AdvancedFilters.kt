@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.search
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -49,8 +47,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 /**
  * Componentes de filtros avançados para busca.
  * Permite filtrar por data, horário, distância, número de jogadores, etc.
@@ -62,31 +61,31 @@ import androidx.compose.ui.unit.dp
  * Filtro de data/período.
  */
 enum class DateFilter(val labelResId: Int) {
-    TODAY(Res.string.filter_today),
-    TOMORROW(Res.string.filter_tomorrow),
-    THIS_WEEK(Res.string.filter_this_week),
-    THIS_MONTH(Res.string.filter_this_month),
-    CUSTOM(Res.string.filter_custom_date)
+    TODAY(R.string.filter_today),
+    TOMORROW(R.string.filter_tomorrow),
+    THIS_WEEK(R.string.filter_this_week),
+    THIS_MONTH(R.string.filter_this_month),
+    CUSTOM(R.string.filter_custom_date)
 }
 
 /**
  * Filtro de horário.
  */
 enum class TimeFilter(val labelResId: Int) {
-    MORNING(Res.string.filter_morning),      // 06:00 - 12:00
-    AFTERNOON(Res.string.filter_afternoon),  // 12:00 - 18:00
-    EVENING(Res.string.filter_evening),      // 18:00 - 22:00
-    NIGHT(Res.string.filter_night)           // 22:00 - 06:00
+    MORNING(R.string.filter_morning),      // 06:00 - 12:00
+    AFTERNOON(R.string.filter_afternoon),  // 12:00 - 18:00
+    EVENING(R.string.filter_evening),      // 18:00 - 22:00
+    NIGHT(R.string.filter_night)           // 22:00 - 06:00
 }
 
 /**
  * Tipo de jogo.
  */
 enum class GameTypeFilter(val labelResId: Int) {
-    SOCIETY(Res.string.filter_society),
-    FUTSAL(Res.string.filter_futsal),
-    CAMPO(Res.string.filter_campo),
-    AREIA(Res.string.filter_areia)
+    SOCIETY(R.string.filter_society),
+    FUTSAL(R.string.filter_futsal),
+    CAMPO(R.string.filter_campo),
+    AREIA(R.string.filter_areia)
 }
 
 /**
@@ -192,7 +191,7 @@ fun AdvancedFiltersContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(Res.string.advanced_filters),
+                    text = stringResource(R.string.advanced_filters),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -200,7 +199,7 @@ fun AdvancedFiltersContent(
             IconButton(onClick = onDismiss) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(Res.string.close)
+                    contentDescription = stringResource(R.string.close)
                 )
             }
         }
@@ -210,7 +209,7 @@ fun AdvancedFiltersContent(
         // Seção: Data
         FilterSection(
             icon = Icons.Default.CalendarMonth,
-            title = stringResource(Res.string.filter_date)
+            title = stringResource(R.string.filter_date)
         ) {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -240,7 +239,7 @@ fun AdvancedFiltersContent(
         // Seção: Horário
         FilterSection(
             icon = Icons.Default.Schedule,
-            title = stringResource(Res.string.filter_time)
+            title = stringResource(R.string.filter_time)
         ) {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -270,7 +269,7 @@ fun AdvancedFiltersContent(
         // Seção: Tipo de Jogo
         FilterSection(
             icon = Icons.Default.People,
-            title = stringResource(Res.string.filter_game_type)
+            title = stringResource(R.string.filter_game_type)
         ) {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -300,11 +299,11 @@ fun AdvancedFiltersContent(
         // Seção: Distância
         FilterSection(
             icon = Icons.Default.LocationOn,
-            title = stringResource(Res.string.filter_distance)
+            title = stringResource(R.string.filter_distance)
         ) {
             Column {
                 Text(
-                    text = stringResource(Res.string.filter_max_distance_km, maxDistance.toInt()),
+                    text = stringResource(R.string.filter_max_distance_km, maxDistance.toInt()),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -322,12 +321,12 @@ fun AdvancedFiltersContent(
         // Seção: Número de Jogadores
         FilterSection(
             icon = Icons.Default.People,
-            title = stringResource(Res.string.filter_players)
+            title = stringResource(R.string.filter_players)
         ) {
             Column {
                 Text(
                     text = stringResource(
-                        Res.string.filter_player_range,
+                        R.string.filter_player_range,
                         playerRange.start.toInt(),
                         playerRange.endInclusive.toInt()
                     ),
@@ -347,7 +346,7 @@ fun AdvancedFiltersContent(
 
         // Filtros rápidos
         Text(
-            text = stringResource(Res.string.quick_filters),
+            text = stringResource(R.string.quick_filters),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -360,7 +359,7 @@ fun AdvancedFiltersContent(
             FilterChip(
                 selected = onlyWithVacancies,
                 onClick = { onlyWithVacancies = !onlyWithVacancies },
-                label = { Text(stringResource(Res.string.filter_with_vacancies)) },
+                label = { Text(stringResource(R.string.filter_with_vacancies)) },
                 leadingIcon = if (onlyWithVacancies) {
                     { Icon(Icons.Default.Done, contentDescription = null) }
                 } else null
@@ -368,7 +367,7 @@ fun AdvancedFiltersContent(
             FilterChip(
                 selected = onlyFreeGames,
                 onClick = { onlyFreeGames = !onlyFreeGames },
-                label = { Text(stringResource(Res.string.filter_free_games)) },
+                label = { Text(stringResource(R.string.filter_free_games)) },
                 leadingIcon = if (onlyFreeGames) {
                     { Icon(Icons.Default.Done, contentDescription = null) }
                 } else null
@@ -395,7 +394,7 @@ fun AdvancedFiltersContent(
                 },
                 modifier = Modifier.weight(1f)
             ) {
-                Text(stringResource(Res.string.clear_filters))
+                Text(stringResource(R.string.clear_filters))
             }
 
             Button(
@@ -414,7 +413,7 @@ fun AdvancedFiltersContent(
                 },
                 modifier = Modifier.weight(1f)
             ) {
-                Text(stringResource(Res.string.apply_filters))
+                Text(stringResource(R.string.apply_filters))
             }
         }
     }

@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.home.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -16,10 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
@@ -30,6 +27,8 @@ import com.patrykandpatrick.vico.compose.chart.column.columnChart
 import com.patrykandpatrick.vico.core.axis.AxisPosition
 import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
 import com.patrykandpatrick.vico.core.entry.entryModelOf
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ExpandableStatsSection(
@@ -59,13 +58,13 @@ fun ExpandableStatsSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(Res.string.season_stats_title),
+                    text = stringResource(R.string.season_stats_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Icon(
                     imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (expanded) stringResource(Res.string.cd_collapse) else stringResource(Res.string.cd_expand),
+                    contentDescription = if (expanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -74,7 +73,7 @@ fun ExpandableStatsSection(
                 Column(modifier = Modifier.padding(horizontal = spacing.md, vertical = spacing.sm)) {
 
                     Text(
-                        text = stringResource(Res.string.general_summary_title),
+                        text = stringResource(R.string.general_summary_title),
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(bottom = spacing.sm)
                     )

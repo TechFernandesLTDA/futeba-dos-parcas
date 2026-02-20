@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.teamformation.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -19,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -27,6 +24,8 @@ import com.futebadosparcas.domain.model.SavedTeamFormation
 import com.futebadosparcas.domain.model.TeamColor
 import java.text.SimpleDateFormat
 import java.util.*
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Secao de formacoes salvas (times favoritos).
@@ -65,7 +64,7 @@ fun SavedFormationsSection(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = stringResource(Res.string.favorite_formations),
+                        text = stringResource(R.string.favorite_formations),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -80,7 +79,7 @@ fun SavedFormationsSection(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(4.dp))
-                        Text(stringResource(Res.string.save))
+                        Text(stringResource(R.string.save))
                     }
                 }
             }
@@ -110,8 +109,8 @@ fun SavedFormationsSection(
     showDeleteConfirmation?.let { formation ->
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = null },
-            title = { Text(stringResource(Res.string.delete_formation_title)) },
-            text = { Text(stringResource(Res.string.delete_formation_message, formation.name)) },
+            title = { Text(stringResource(R.string.delete_formation_title)) },
+            text = { Text(stringResource(R.string.delete_formation_message, formation.name)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -120,14 +119,14 @@ fun SavedFormationsSection(
                     }
                 ) {
                     Text(
-                        stringResource(Res.string.delete),
+                        stringResource(R.string.delete),
                         color = MaterialTheme.colorScheme.error
                     )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmation = null }) {
-                    Text(stringResource(Res.string.cancel))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -160,7 +159,7 @@ private fun EmptyFormationsPlaceholder() {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = stringResource(Res.string.no_saved_formations),
+                text = stringResource(R.string.no_saved_formations),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
@@ -224,7 +223,7 @@ private fun FormationCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = stringResource(Res.string.delete),
+                        contentDescription = stringResource(R.string.delete),
                         modifier = Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
                     )
@@ -245,7 +244,7 @@ private fun FormationCard(
             // Quantidade de jogadores
             Text(
                 text = stringResource(
-                    Res.string.formation_players,
+                    R.string.formation_players,
                     formation.team1PlayerIds.size,
                     formation.team2PlayerIds.size
                 ),
@@ -267,7 +266,7 @@ private fun FormationCard(
                 )
                 Spacer(Modifier.width(4.dp))
                 Text(
-                    text = stringResource(Res.string.times_used, formation.timesUsed),
+                    text = stringResource(R.string.times_used, formation.timesUsed),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -305,7 +304,7 @@ fun SaveFormationDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = stringResource(Res.string.save_formation),
+                text = stringResource(R.string.save_formation),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -313,7 +312,7 @@ fun SaveFormationDialog(
         text = {
             Column {
                 Text(
-                    text = stringResource(Res.string.formation_name_prompt),
+                    text = stringResource(R.string.formation_name_prompt),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -326,7 +325,7 @@ fun SaveFormationDialog(
                         formationName = it
                         nameError = null
                     },
-                    label = { Text(stringResource(Res.string.formation_name)) },
+                    label = { Text(stringResource(R.string.formation_name)) },
                     singleLine = true,
                     isError = nameError != null,
                     supportingText = nameError?.let { { Text(it) } },
@@ -337,7 +336,7 @@ fun SaveFormationDialog(
 
                 // Sugestoes
                 Text(
-                    text = stringResource(Res.string.formation_suggestions),
+                    text = stringResource(R.string.formation_suggestions),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -375,12 +374,12 @@ fun SaveFormationDialog(
                     }
                 }
             ) {
-                Text(stringResource(Res.string.save))
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -424,7 +423,7 @@ fun LoadedFormationChip(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(Res.string.close),
+                    contentDescription = stringResource(R.string.close),
                     modifier = Modifier.size(14.dp),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -522,7 +521,7 @@ fun FormationDetailCard(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = stringResource(Res.string.formation_times_used_label),
+                            text = stringResource(R.string.formation_times_used_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -535,7 +534,7 @@ fun FormationDetailCard(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = stringResource(Res.string.formation_players_label),
+                            text = stringResource(R.string.formation_players_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -558,7 +557,7 @@ fun FormationDetailCard(
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = null, Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text(stringResource(Res.string.delete))
+                        Text(stringResource(R.string.delete))
                     }
 
                     Button(
@@ -567,7 +566,7 @@ fun FormationDetailCard(
                     ) {
                         Icon(Icons.Default.Download, contentDescription = null, Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text(stringResource(Res.string.load))
+                        Text(stringResource(R.string.load))
                     }
                 }
             }

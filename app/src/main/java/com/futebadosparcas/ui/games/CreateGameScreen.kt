@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -19,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +32,8 @@ import com.futebadosparcas.util.HapticManager
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela moderna de criação/edição de jogos em Jetpack Compose
@@ -210,19 +209,19 @@ fun CreateGameScreen(
                 var hasError = false
 
                 if (ownerName.trim().length < 3) {
-                    ownerNameError = context.getString(Res.string.create_game_error_owner_name)
+                    ownerNameError = context.getString(R.string.create_game_error_owner_name)
                     hasError = true
                 }
 
                 val priceValue = price.toDoubleOrNull()
                 if (priceValue == null || priceValue < 0) {
-                    priceError = context.getString(Res.string.create_game_error_price)
+                    priceError = context.getString(R.string.create_game_error_price)
                     hasError = true
                 }
 
                 val maxPlayersValue = maxPlayers.toIntOrNull()
                 if (maxPlayersValue == null || maxPlayersValue < 4 || maxPlayersValue > 100) {
-                    maxPlayersError = context.getString(Res.string.create_game_error_max_players)
+                    maxPlayersError = context.getString(R.string.create_game_error_max_players)
                     hasError = true
                 }
 
@@ -294,7 +293,7 @@ fun CreateGameScreen(
 
     if (showStartTimePicker) {
         TimePickerDialog(
-            title = stringResource(Res.string.create_game_hint_start),
+            title = stringResource(R.string.create_game_hint_start),
             onDismiss = { showStartTimePicker = false },
             onTimeSelected = { hour, minute ->
                 viewModel.setTime(hour, minute)
@@ -306,7 +305,7 @@ fun CreateGameScreen(
 
     if (showEndTimePicker) {
         TimePickerDialog(
-            title = stringResource(Res.string.create_game_hint_end),
+            title = stringResource(R.string.create_game_hint_end),
             onDismiss = { showEndTimePicker = false },
             onTimeSelected = { hour, minute ->
                 viewModel.setEndTime(hour, minute)
@@ -381,7 +380,7 @@ private fun CreateGameContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Warning,
-                            contentDescription = stringResource(Res.string.cd_error_warning),
+                            contentDescription = stringResource(R.string.cd_error_warning),
                             tint = MaterialTheme.colorScheme.error
                         )
                         Text(
@@ -413,12 +412,12 @@ private fun CreateGameContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = stringResource(Res.string.create_game_cd_alert),
+                        contentDescription = stringResource(R.string.create_game_cd_alert),
                         tint = MaterialTheme.colorScheme.tertiary
                     )
                     Column {
                         Text(
-                            text = stringResource(Res.string.create_game_conflict_detected),
+                            text = stringResource(R.string.create_game_conflict_detected),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -437,7 +436,7 @@ private fun CreateGameContent(
         }
 
         // Seção: Local e Quadra
-        SectionTitle(stringResource(Res.string.create_game_section_location))
+        SectionTitle(stringResource(R.string.create_game_section_location))
 
         LocationSelectionCard(
             selectedLocation = selectedLocation,
@@ -457,12 +456,12 @@ private fun CreateGameContent(
         }
 
         // Seção: Informações básicas
-        SectionTitle(stringResource(Res.string.create_game_section_basic_info))
+        SectionTitle(stringResource(R.string.create_game_section_basic_info))
 
         OutlinedTextField(
             value = ownerName,
             onValueChange = onOwnerNameChange,
-            label = { Text(stringResource(Res.string.create_game_hint_owner)) },
+            label = { Text(stringResource(R.string.create_game_hint_owner)) },
             isError = ownerNameError != null,
             supportingText = ownerNameError?.let { { Text(it) } },
             modifier = Modifier.fillMaxWidth(),
@@ -481,7 +480,7 @@ private fun CreateGameContent(
                     value = selectedGroup?.groupName ?: "",
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text(stringResource(Res.string.create_game_hint_group)) },
+                    label = { Text(stringResource(R.string.create_game_hint_group)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -506,7 +505,7 @@ private fun CreateGameContent(
             }
         } else {
             Text(
-                text = stringResource(Res.string.create_game_no_groups_warning),
+                text = stringResource(R.string.create_game_no_groups_warning),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(vertical = 8.dp)
@@ -514,18 +513,18 @@ private fun CreateGameContent(
         }
 
         // Seção: Data e Horário
-        SectionTitle(stringResource(Res.string.create_game_section_datetime))
+        SectionTitle(stringResource(R.string.create_game_section_datetime))
 
         OutlinedTextField(
             value = selectedDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "",
             onValueChange = {},
-            label = { Text(stringResource(Res.string.create_game_hint_date)) },
+            label = { Text(stringResource(R.string.create_game_hint_date)) },
             readOnly = true,
             enabled = false,
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.DateRange,
-                    contentDescription = stringResource(Res.string.cd_select_date)
+                    contentDescription = stringResource(R.string.cd_select_date)
                 )
             },
             modifier = Modifier
@@ -546,13 +545,13 @@ private fun CreateGameContent(
             OutlinedTextField(
                 value = selectedTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "",
                 onValueChange = {},
-                label = { Text(stringResource(Res.string.create_game_hint_start)) },
+                label = { Text(stringResource(R.string.create_game_hint_start)) },
                 readOnly = true,
                 enabled = false,
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Schedule,
-                        contentDescription = stringResource(Res.string.cd_select_start_time)
+                        contentDescription = stringResource(R.string.cd_select_start_time)
                     )
                 },
                 modifier = Modifier
@@ -569,13 +568,13 @@ private fun CreateGameContent(
             OutlinedTextField(
                 value = selectedEndTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "",
                 onValueChange = {},
-                label = { Text(stringResource(Res.string.create_game_hint_end)) },
+                label = { Text(stringResource(R.string.create_game_hint_end)) },
                 readOnly = true,
                 enabled = false,
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Schedule,
-                        contentDescription = stringResource(Res.string.cd_select_end_time)
+                        contentDescription = stringResource(R.string.cd_select_end_time)
                     )
                 },
                 modifier = Modifier
@@ -606,7 +605,7 @@ private fun CreateGameContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(Res.string.create_game_label_auto_schedule),
+                        text = stringResource(R.string.create_game_label_auto_schedule),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -625,7 +624,7 @@ private fun CreateGameContent(
                         modifier = Modifier.padding(top = 8.dp)
                     ) {
                         Text(
-                            text = stringResource(Res.string.create_game_desc_auto_schedule),
+                            text = stringResource(R.string.create_game_desc_auto_schedule),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 8.dp)
@@ -634,9 +633,9 @@ private fun CreateGameContent(
                         var expandedRecurrence by remember { mutableStateOf(false) }
                         val recurrenceOptions = listOf("weekly", "biweekly", "monthly")
                         val recurrenceDisplayNames = mapOf(
-                            "weekly" to stringResource(Res.string.game_schedule_frequency_weekly),
-                            "biweekly" to stringResource(Res.string.game_schedule_frequency_biweekly),
-                            "monthly" to stringResource(Res.string.game_schedule_frequency_monthly)
+                            "weekly" to stringResource(R.string.game_schedule_frequency_weekly),
+                            "biweekly" to stringResource(R.string.game_schedule_frequency_biweekly),
+                            "monthly" to stringResource(R.string.game_schedule_frequency_monthly)
                         )
 
                         ExposedDropdownMenuBox(
@@ -647,7 +646,7 @@ private fun CreateGameContent(
                                 value = recurrenceDisplayNames[recurrenceType] ?: recurrenceType,
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text(stringResource(Res.string.create_game_hint_frequency)) },
+                                label = { Text(stringResource(R.string.create_game_hint_frequency)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedRecurrence) },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -675,7 +674,7 @@ private fun CreateGameContent(
         }
 
         // Seção: Visibilidade
-        SectionTitle(stringResource(Res.string.create_game_label_visibility))
+        SectionTitle(stringResource(R.string.create_game_label_visibility))
 
         VisibilitySelector(
             selectedVisibility = selectedVisibility,
@@ -683,7 +682,7 @@ private fun CreateGameContent(
         )
 
         // Seção: Preço e Jogadores
-        SectionTitle(stringResource(Res.string.create_game_section_pricing))
+        SectionTitle(stringResource(R.string.create_game_section_pricing))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -692,7 +691,7 @@ private fun CreateGameContent(
             OutlinedTextField(
                 value = price,
                 onValueChange = onPriceChange,
-                label = { Text(stringResource(Res.string.create_game_hint_price)) },
+                label = { Text(stringResource(R.string.create_game_hint_price)) },
                 isError = priceError != null,
                 supportingText = priceError?.let { { Text(it) } },
                 modifier = Modifier.weight(1f),
@@ -708,7 +707,7 @@ private fun CreateGameContent(
             OutlinedTextField(
                 value = maxPlayers,
                 onValueChange = onMaxPlayersChange,
-                label = { Text(stringResource(Res.string.create_game_hint_max_players)) },
+                label = { Text(stringResource(R.string.create_game_hint_max_players)) },
                 isError = maxPlayersError != null,
                 supportingText = maxPlayersError?.let { { Text(it) } },
                 modifier = Modifier.weight(1f),
@@ -728,7 +727,7 @@ private fun CreateGameContent(
                 modifier = Modifier.weight(1f),
                 enabled = !isLoading
             ) {
-                Text(stringResource(Res.string.create_game_button_cancel))
+                Text(stringResource(R.string.create_game_button_cancel))
             }
 
             Button(
@@ -742,7 +741,7 @@ private fun CreateGameContent(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text(stringResource(Res.string.create_game_button_schedule))
+                    Text(stringResource(R.string.create_game_button_schedule))
                 }
             }
         }
@@ -788,7 +787,7 @@ private fun LocationSelectionCard(
         ) {
             Icon(
                 imageVector = Icons.Default.Place,
-                contentDescription = stringResource(Res.string.create_game_cd_location_icon),
+                contentDescription = stringResource(R.string.create_game_cd_location_icon),
                 tint = if (selectedLocation != null) {
                     MaterialTheme.colorScheme.onPrimaryContainer
                 } else {
@@ -798,7 +797,7 @@ private fun LocationSelectionCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(Res.string.create_game_label_location),
+                    text = stringResource(R.string.create_game_label_location),
                     style = MaterialTheme.typography.labelMedium,
                     color = if (selectedLocation != null) {
                         MaterialTheme.colorScheme.onPrimaryContainer
@@ -807,7 +806,7 @@ private fun LocationSelectionCard(
                     }
                 )
                 Text(
-                    text = selectedLocation?.name ?: stringResource(Res.string.create_game_tap_to_select),
+                    text = selectedLocation?.name ?: stringResource(R.string.create_game_tap_to_select),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (selectedLocation != null) FontWeight.Bold else FontWeight.Normal,
                     color = if (selectedLocation != null) {
@@ -827,7 +826,7 @@ private fun LocationSelectionCard(
 
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = stringResource(Res.string.create_game_cd_select),
+                contentDescription = stringResource(R.string.create_game_cd_select),
                 tint = if (selectedLocation != null) {
                     MaterialTheme.colorScheme.onPrimaryContainer
                 } else {
@@ -865,7 +864,7 @@ private fun FieldSelectionCard(
         ) {
             Icon(
                 imageVector = Icons.Default.SportsScore,
-                contentDescription = stringResource(Res.string.create_game_cd_field_icon),
+                contentDescription = stringResource(R.string.create_game_cd_field_icon),
                 tint = if (selectedField != null) {
                     MaterialTheme.colorScheme.onSecondaryContainer
                 } else {
@@ -875,7 +874,7 @@ private fun FieldSelectionCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(Res.string.create_game_label_field),
+                    text = stringResource(R.string.create_game_label_field),
                     style = MaterialTheme.typography.labelMedium,
                     color = if (selectedField != null) {
                         MaterialTheme.colorScheme.onSecondaryContainer
@@ -884,7 +883,7 @@ private fun FieldSelectionCard(
                     }
                 )
                 Text(
-                    text = selectedField?.name ?: stringResource(Res.string.create_game_tap_to_select),
+                    text = selectedField?.name ?: stringResource(R.string.create_game_tap_to_select),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (selectedField != null) FontWeight.Bold else FontWeight.Normal,
                     color = if (selectedField != null) {
@@ -904,7 +903,7 @@ private fun FieldSelectionCard(
 
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = stringResource(Res.string.create_game_cd_select),
+                contentDescription = stringResource(R.string.create_game_cd_select),
                 tint = if (selectedField != null) {
                     MaterialTheme.colorScheme.onSecondaryContainer
                 } else {
@@ -925,24 +924,24 @@ private fun VisibilitySelector(
     ) {
         VisibilityOption(
             icon = Icons.Default.Group,
-            title = stringResource(Res.string.create_game_visibility_group_only_label),
-            description = stringResource(Res.string.create_game_visibility_group_only),
+            title = stringResource(R.string.create_game_visibility_group_only_label),
+            description = stringResource(R.string.create_game_visibility_group_only),
             isSelected = selectedVisibility == GameVisibility.GROUP_ONLY,
             onClick = { onVisibilitySelected(GameVisibility.GROUP_ONLY) }
         )
 
         VisibilityOption(
             icon = Icons.Default.Lock,
-            title = stringResource(Res.string.create_game_visibility_public_closed),
-            description = stringResource(Res.string.create_game_visibility_public_closed_desc),
+            title = stringResource(R.string.create_game_visibility_public_closed),
+            description = stringResource(R.string.create_game_visibility_public_closed_desc),
             isSelected = selectedVisibility == GameVisibility.PUBLIC_CLOSED,
             onClick = { onVisibilitySelected(GameVisibility.PUBLIC_CLOSED) }
         )
 
         VisibilityOption(
             icon = Icons.Default.Public,
-            title = stringResource(Res.string.create_game_visibility_public_open),
-            description = stringResource(Res.string.create_game_visibility_public_open_desc),
+            title = stringResource(R.string.create_game_visibility_public_open),
+            description = stringResource(R.string.create_game_visibility_public_open_desc),
             isSelected = selectedVisibility == GameVisibility.PUBLIC_OPEN,
             onClick = { onVisibilitySelected(GameVisibility.PUBLIC_OPEN) }
         )

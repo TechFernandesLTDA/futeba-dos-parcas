@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.profile
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.net.Uri
 import android.widget.Toast
@@ -25,7 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,6 +36,8 @@ import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.util.PreferencesManager
 import java.text.SimpleDateFormat
 import java.util.*
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * EditProfileScreen - Tela de edição de perfil em Compose
@@ -75,7 +74,7 @@ fun EditProfileScreen(
 
     // Cache do usuário para manter o formulário visível durante Loading
     var cachedUser by remember { mutableStateOf<com.futebadosparcas.domain.model.User?>(null) }
-    var cachedStatistics by remember { mutableStateOf<com.futebadosparcas.data.model.UserStatistics?>(null) }
+    var cachedStatistics by remember { mutableStateOf<com.futebadosparcas.domain.model.Statistics?>(null) }
 
     // Atualiza o cache quando temos dados
     LaunchedEffect(uiState) {
@@ -100,7 +99,7 @@ fun EditProfileScreen(
             is ProfileUiState.ProfileUpdateSuccess -> {
                 if (isSaving) {
                     isSaving = false
-                    Toast.makeText(context, context.getString(Res.string.edit_profile_success), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.edit_profile_success), Toast.LENGTH_SHORT).show()
                     onProfileUpdated()
                 }
             }
@@ -114,12 +113,12 @@ fun EditProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(Res.string.edit_profile_title)) },
+                title = { Text(stringResource(R.string.edit_profile_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back)
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -181,7 +180,7 @@ fun EditProfileScreen(
                             preferencesManager.setDevModeEnabled(true)
                             Toast.makeText(
                                 context,
-                                context.getString(Res.string.edit_profile_dev_mode_enabled),
+                                context.getString(R.string.edit_profile_dev_mode_enabled),
                                 Toast.LENGTH_SHORT
                             ).show()
                             devModeClickCount = 0
@@ -212,13 +211,13 @@ fun EditProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = stringResource(Res.string.edit_profile_error_loading),
+                            text = stringResource(R.string.edit_profile_error_loading),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.error
                         )
                         Text(text = errorState.message)
                         Button(onClick = { viewModel.loadProfile() }) {
-                            Text(stringResource(Res.string.retry))
+                            Text(stringResource(R.string.retry))
                         }
                     }
                 }
@@ -230,7 +229,7 @@ fun EditProfileScreen(
 @Composable
 private fun EditProfileContent(
     user: com.futebadosparcas.domain.model.User,
-    statistics: com.futebadosparcas.data.model.UserStatistics?,
+    statistics: com.futebadosparcas.domain.model.Statistics?,
     selectedImageUri: Uri?,
     isSaving: Boolean,
     onImageSelected: (Uri?) -> Unit,
@@ -271,11 +270,11 @@ private fun EditProfileContent(
             // Validate image size (max 10MB)
             if (isImageSizeValid(context, it)) {
                 onImageSelected(it)
-                Toast.makeText(context, context.getString(Res.string.edit_profile_image_selected), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.edit_profile_image_selected), Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(
                     context,
-                    context.getString(Res.string.edit_profile_image_too_large),
+                    context.getString(R.string.edit_profile_image_too_large),
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -369,7 +368,7 @@ private fun EditProfileContent(
                 if (name.isBlank() || preferredFieldTypes.isEmpty()) {
                     Toast.makeText(
                         context,
-                        context.getString(Res.string.edit_profile_validation_error),
+                        context.getString(R.string.edit_profile_validation_error),
                         Toast.LENGTH_SHORT
                     ).show()
                     return@Button
@@ -410,7 +409,7 @@ private fun EditProfileContent(
                     strokeWidth = 2.dp
                 )
             } else {
-                Text(stringResource(Res.string.edit_profile_save_changes), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.edit_profile_save_changes), style = MaterialTheme.typography.titleMedium)
             }
         }
 
@@ -442,14 +441,14 @@ private fun PhotoSection(
             ) {
                 CachedProfileImage(
                     photoUrl = (selectedImageUri ?: photoUrl)?.toString(),
-                    userName = stringResource(Res.string.profile_title),
+                    userName = stringResource(R.string.profile_title),
                     size = 120.dp
                 )
             }
         }
 
         Text(
-            text = stringResource(Res.string.edit_profile_photo_tap_to_change),
+            text = stringResource(R.string.edit_profile_photo_tap_to_change),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.primary
         )
@@ -471,7 +470,7 @@ private fun BasicInfoSection(
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = stringResource(Res.string.edit_profile_basic_info),
+            text = stringResource(R.string.edit_profile_basic_info),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -479,7 +478,7 @@ private fun BasicInfoSection(
         OutlinedTextField(
             value = name,
             onValueChange = onNameChange,
-            label = { Text(stringResource(Res.string.edit_profile_full_name)) },
+            label = { Text(stringResource(R.string.edit_profile_full_name)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             shape = RoundedCornerShape(12.dp)
@@ -488,7 +487,7 @@ private fun BasicInfoSection(
         OutlinedTextField(
             value = nickname,
             onValueChange = onNicknameChange,
-            label = { Text(stringResource(Res.string.edit_profile_nickname)) },
+            label = { Text(stringResource(R.string.edit_profile_nickname)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             shape = RoundedCornerShape(12.dp)
@@ -497,12 +496,12 @@ private fun BasicInfoSection(
         OutlinedTextField(
             value = birthDate?.let { dateFormatter.format(it) } ?: "",
             onValueChange = {},
-            label = { Text(stringResource(Res.string.edit_profile_birth_date)) },
+            label = { Text(stringResource(R.string.edit_profile_birth_date)) },
             modifier = Modifier.fillMaxWidth(),
             readOnly = true,
             trailingIcon = {
                 IconButton(onClick = { showDatePicker = true }) {
-                    Icon(Icons.Default.CalendarToday, contentDescription = stringResource(Res.string.edit_profile_select_date))
+                    Icon(Icons.Default.CalendarToday, contentDescription = stringResource(R.string.edit_profile_select_date))
                 }
             },
             shape = RoundedCornerShape(12.dp)
@@ -556,12 +555,12 @@ private fun DatePickerDialog(
                 }
                 onDismiss()
             }) {
-                Text(stringResource(Res.string.ok))
+                Text(stringResource(R.string.ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(R.string.cancel))
             }
         }
     ) {
@@ -592,7 +591,7 @@ private fun PhysicalInfoSection(
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = stringResource(Res.string.edit_profile_physical_info),
+            text = stringResource(R.string.edit_profile_physical_info),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -606,7 +605,7 @@ private fun PhysicalInfoSection(
                 value = mapValueToEntry(gender, genderValues.toList(), genderEntries.toList()),
                 onValueChange = {},
                 readOnly = true,
-                label = { Text(stringResource(Res.string.edit_profile_gender)) },
+                label = { Text(stringResource(R.string.edit_profile_gender)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -636,7 +635,7 @@ private fun PhysicalInfoSection(
             OutlinedTextField(
                 value = heightCm,
                 onValueChange = { if (it.all { char -> char.isDigit() }) onHeightChange(it) },
-                label = { Text(stringResource(Res.string.edit_profile_height_cm)) },
+                label = { Text(stringResource(R.string.edit_profile_height_cm)) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -649,7 +648,7 @@ private fun PhysicalInfoSection(
             OutlinedTextField(
                 value = weightKg,
                 onValueChange = { if (it.all { char -> char.isDigit() }) onWeightChange(it) },
-                label = { Text(stringResource(Res.string.edit_profile_weight_kg)) },
+                label = { Text(stringResource(R.string.edit_profile_weight_kg)) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -669,7 +668,7 @@ private fun PhysicalInfoSection(
                 value = mapValueToEntry(dominantFoot, footValues.toList(), footEntries.toList()),
                 onValueChange = {},
                 readOnly = true,
-                label = { Text(stringResource(Res.string.edit_profile_dominant_foot)) },
+                label = { Text(stringResource(R.string.edit_profile_dominant_foot)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = footExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -705,7 +704,7 @@ private fun FieldPreferencesSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = stringResource(Res.string.edit_profile_field_types),
+            text = stringResource(R.string.edit_profile_field_types),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -721,7 +720,7 @@ private fun FieldPreferencesSection(
                 checked = societyChecked,
                 onCheckedChange = null // Handled by Row click
             )
-            Text(stringResource(Res.string.profile_field_type_society))
+            Text(stringResource(R.string.profile_field_type_society))
         }
 
         Row(
@@ -735,7 +734,7 @@ private fun FieldPreferencesSection(
                 checked = futsalChecked,
                 onCheckedChange = null // Handled by Row click
             )
-            Text(stringResource(Res.string.profile_field_type_futsal))
+            Text(stringResource(R.string.profile_field_type_futsal))
         }
 
         Row(
@@ -749,7 +748,7 @@ private fun FieldPreferencesSection(
                 checked = fieldChecked,
                 onCheckedChange = null // Handled by Row click
             )
-            Text(stringResource(Res.string.profile_field_type_field))
+            Text(stringResource(R.string.profile_field_type_field))
         }
     }
 }
@@ -777,7 +776,7 @@ private fun PositionSection(
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = stringResource(Res.string.edit_profile_position_style),
+            text = stringResource(R.string.edit_profile_position_style),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
@@ -791,7 +790,7 @@ private fun PositionSection(
                 value = mapValueToEntry(primaryPosition, positionValues.toList(), positionEntries.toList()),
                 onValueChange = {},
                 readOnly = true,
-                label = { Text(stringResource(Res.string.edit_profile_primary_position)) },
+                label = { Text(stringResource(R.string.edit_profile_primary_position)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = primaryExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -823,7 +822,7 @@ private fun PositionSection(
                 value = mapValueToEntry(secondaryPosition, positionValues.toList(), positionEntries.toList()),
                 onValueChange = {},
                 readOnly = true,
-                label = { Text(stringResource(Res.string.edit_profile_secondary_position)) },
+                label = { Text(stringResource(R.string.edit_profile_secondary_position)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = secondaryExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -855,7 +854,7 @@ private fun PositionSection(
                 value = mapValueToEntry(playStyle, playStyleValues.toList(), playStyleEntries.toList()),
                 onValueChange = {},
                 readOnly = true,
-                label = { Text(stringResource(Res.string.edit_profile_play_style)) },
+                label = { Text(stringResource(R.string.edit_profile_play_style)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = playStyleExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -881,7 +880,7 @@ private fun PositionSection(
         OutlinedTextField(
             value = experienceYears,
             onValueChange = { if (it.all { char -> char.isDigit() }) onExperienceYearsChange(it) },
-            label = { Text(stringResource(Res.string.edit_profile_experience_years)) },
+            label = { Text(stringResource(R.string.edit_profile_experience_years)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(
@@ -903,7 +902,7 @@ private fun PositionRatingsSection(
     onDefChange: (Float) -> Unit,
     gkRating: Float,
     onGkChange: (Float) -> Unit,
-    statistics: com.futebadosparcas.data.model.UserStatistics?
+    statistics: com.futebadosparcas.domain.model.Statistics?
 ) {
     // Calculate auto ratings from statistics
     val autoRatings = statistics?.let {
@@ -913,42 +912,42 @@ private fun PositionRatingsSection(
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = stringResource(Res.string.edit_profile_position_ratings),
+            text = stringResource(R.string.edit_profile_position_ratings),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
 
         if (autoRatings != null && sampleSize > 0) {
             Text(
-                text = stringResource(Res.string.edit_profile_based_on_games, sampleSize),
+                text = stringResource(R.string.edit_profile_based_on_games, sampleSize),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
         PositionRatingSlider(
-            label = stringResource(Res.string.profile_position_attacker),
+            label = stringResource(R.string.profile_position_attacker),
             value = strikerRating,
             onValueChange = onStrikerChange,
             autoRating = autoRatings?.striker
         )
 
         PositionRatingSlider(
-            label = stringResource(Res.string.profile_position_midfielder),
+            label = stringResource(R.string.profile_position_midfielder),
             value = midRating,
             onValueChange = onMidChange,
             autoRating = autoRatings?.mid
         )
 
         PositionRatingSlider(
-            label = stringResource(Res.string.profile_position_defender),
+            label = stringResource(R.string.profile_position_defender),
             value = defRating,
             onValueChange = onDefChange,
             autoRating = autoRatings?.defender
         )
 
         PositionRatingSlider(
-            label = stringResource(Res.string.profile_position_goalkeeper),
+            label = stringResource(R.string.profile_position_goalkeeper),
             value = gkRating,
             onValueChange = onGkChange,
             autoRating = autoRatings?.gk
@@ -980,7 +979,7 @@ private fun PositionRatingSlider(
             ) {
                 if (autoRating != null && autoRating > 0) {
                     Text(
-                        text = stringResource(Res.string.edit_profile_auto_rating, formatRating(autoRating)),
+                        text = stringResource(R.string.edit_profile_auto_rating, formatRating(autoRating)),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

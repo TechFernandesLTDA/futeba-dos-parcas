@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.adaptive
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -39,8 +37,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 /**
  * Sistema de List-Detail adaptativo para diferentes tamanhos de tela.
  * Versão simplificada que não depende de bibliotecas Material3 Adaptive.
@@ -251,7 +250,7 @@ fun <T> SinglePaneListDetailLayout(
                         IconButton(onClick = onBackFromDetail) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(Res.string.back)
+                                contentDescription = stringResource(R.string.back)
                             )
                         }
                     }
@@ -296,7 +295,7 @@ fun EmptyDetailPlaceholder(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = stringResource(Res.string.select_game_to_view),
+                text = stringResource(R.string.select_game_to_view),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

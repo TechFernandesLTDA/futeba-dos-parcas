@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.home.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,14 +25,15 @@ import androidx.compose.ui.res.painterResource
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.AdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
-import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 @Composable
 fun ExpressiveHubHeader(
     user: com.futebadosparcas.domain.model.User,
     summary: GamificationSummary,
     onProfileClick: () -> Unit,
     modifier: Modifier = Modifier,
-    statistics: com.futebadosparcas.data.model.UserStatistics? = null,
+    statistics: com.futebadosparcas.domain.model.Statistics? = null,
     hapticManager: HapticManager? = null,
     onLevelClick: () -> Unit = {}
 ) {
@@ -98,7 +97,7 @@ fun ExpressiveHubHeader(
 private fun CompactHeaderLayout(
     user: com.futebadosparcas.domain.model.User,
     summary: GamificationSummary,
-    statistics: com.futebadosparcas.data.model.UserStatistics?,
+    statistics: com.futebadosparcas.domain.model.Statistics?,
     animatedProgress: Float,
     photoSize: Dp,
     badgeSize: Dp,
@@ -138,7 +137,7 @@ private fun CompactHeaderLayout(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(Res.string.hub_welcome_back),
+                text = stringResource(R.string.hub_welcome_back),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -166,7 +165,7 @@ private fun CompactHeaderLayout(
                 modifier = Modifier.padding(horizontal = 12.dp)
             ) {
                 Text(
-                    text = stringResource(Res.string.hub_level_short, summary.level),
+                    text = stringResource(R.string.hub_level_short, summary.level),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -189,10 +188,10 @@ private fun CompactHeaderLayout(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            HeaderStatItem(stringResource(Res.string.hub_stat_games), statistics.totalGames.toString())
-            HeaderStatItem(stringResource(Res.string.hub_stat_goals), statistics.totalGoals.toString())
-            HeaderStatItem(stringResource(Res.string.hub_stat_assists), statistics.totalAssists.toString())
-            HeaderStatItem(stringResource(Res.string.hub_stat_mvp), statistics.bestPlayerCount.toString())
+            HeaderStatItem(stringResource(R.string.hub_stat_games), statistics.totalGames.toString())
+            HeaderStatItem(stringResource(R.string.hub_stat_goals), statistics.totalGoals.toString())
+            HeaderStatItem(stringResource(R.string.hub_stat_assists), statistics.totalAssists.toString())
+            HeaderStatItem(stringResource(R.string.hub_stat_mvp), statistics.bestPlayerCount.toString())
         }
     }
 }
@@ -201,7 +200,7 @@ private fun CompactHeaderLayout(
 private fun ExpandedHeaderLayout(
     user: com.futebadosparcas.domain.model.User,
     summary: GamificationSummary,
-    statistics: com.futebadosparcas.data.model.UserStatistics?,
+    statistics: com.futebadosparcas.domain.model.Statistics?,
     animatedProgress: Float,
     photoSize: Dp,
     badgeSize: Dp,
@@ -245,7 +244,7 @@ private fun ExpandedHeaderLayout(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(Res.string.hub_welcome_back),
+                    text = stringResource(R.string.hub_welcome_back),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -273,7 +272,7 @@ private fun ExpandedHeaderLayout(
                         modifier = Modifier.padding(horizontal = 16.dp)
                     ) {
                         Text(
-                            text = stringResource(Res.string.hub_level_full, summary.level, summary.levelName),
+                            text = stringResource(R.string.hub_level_full, summary.level, summary.levelName),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -289,10 +288,10 @@ private fun ExpandedHeaderLayout(
                 modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                HeaderStatItem(stringResource(Res.string.hub_stat_games), statistics.totalGames.toString())
-                HeaderStatItem(stringResource(Res.string.hub_stat_goals), statistics.totalGoals.toString())
-                HeaderStatItem(stringResource(Res.string.hub_stat_assists), statistics.totalAssists.toString())
-                HeaderStatItem(stringResource(Res.string.hub_stat_mvp), statistics.bestPlayerCount.toString())
+                HeaderStatItem(stringResource(R.string.hub_stat_games), statistics.totalGames.toString())
+                HeaderStatItem(stringResource(R.string.hub_stat_goals), statistics.totalGoals.toString())
+                HeaderStatItem(stringResource(R.string.hub_stat_assists), statistics.totalAssists.toString())
+                HeaderStatItem(stringResource(R.string.hub_stat_mvp), statistics.bestPlayerCount.toString())
             }
         }
     }
@@ -358,8 +357,8 @@ private fun XpProgressSection(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = if (summary.isMaxLevel) stringResource(Res.string.hub_max_level_reached)
-                   else stringResource(Res.string.hub_xp_remaining, summary.nextLevelXp, summary.nextLevelName),
+            text = if (summary.isMaxLevel) stringResource(R.string.hub_max_level_reached)
+                   else stringResource(R.string.hub_xp_remaining, summary.nextLevelXp, summary.nextLevelName),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.outline
         )

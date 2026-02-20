@@ -2,7 +2,7 @@ package com.futebadosparcas.domain.usecase
 
 import com.futebadosparcas.data.datasource.FirebaseDataSource
 import com.futebadosparcas.domain.model.User
-import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.domain.model.XpLog
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth

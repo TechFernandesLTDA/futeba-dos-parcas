@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -16,7 +14,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -25,6 +22,8 @@ import com.futebadosparcas.data.model.WaitlistStatus
 import com.futebadosparcas.ui.games.WaitlistState
 import java.text.SimpleDateFormat
 import java.util.*
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Secao de lista de espera com visualizacao expandida (Issue #32).
@@ -83,7 +82,7 @@ fun WaitlistSection(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = stringResource(Res.string.waitlist_title),
+                            text = stringResource(R.string.waitlist_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -95,7 +94,7 @@ fun WaitlistSection(
                             color = MaterialTheme.colorScheme.primaryContainer
                         ) {
                             Text(
-                                text = stringResource(Res.string.waitlist_count, entries.size),
+                                text = stringResource(R.string.waitlist_count, entries.size),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -106,7 +105,7 @@ fun WaitlistSection(
 
                         Icon(
                             imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = if (isExpanded) stringResource(Res.string.cd_collapse) else stringResource(Res.string.cd_expand),
+                            contentDescription = if (isExpanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -149,7 +148,7 @@ fun WaitlistSection(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(Res.string.waitlist_leave))
+                            Text(stringResource(R.string.waitlist_leave))
                         }
                     } else if (gameFull && canConfirm) {
                         Button(
@@ -162,7 +161,7 @@ fun WaitlistSection(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(Res.string.waitlist_enter))
+                            Text(stringResource(R.string.waitlist_enter))
                         }
                     }
                 }
@@ -214,7 +213,7 @@ private fun WaitlistEmptyWithJoinButton(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(Res.string.game_full_message),
+                text = stringResource(R.string.game_full_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -229,7 +228,7 @@ private fun WaitlistEmptyWithJoinButton(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(Res.string.waitlist_enter))
+                Text(stringResource(R.string.waitlist_enter))
             }
         }
     }
@@ -267,7 +266,7 @@ private fun UserWaitlistPositionCard(entry: GameWaitlist) {
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(Res.string.waitlist_position, entry.queuePosition),
+                    text = stringResource(R.string.waitlist_position, entry.queuePosition),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
@@ -277,7 +276,7 @@ private fun UserWaitlistPositionCard(entry: GameWaitlist) {
                 when (entry.getStatusEnum()) {
                     WaitlistStatus.WAITING -> {
                         Text(
-                            text = stringResource(Res.string.waitlist_waiting_message),
+                            text = stringResource(R.string.waitlist_waiting_message),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -292,7 +291,7 @@ private fun UserWaitlistPositionCard(entry: GameWaitlist) {
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = stringResource(Res.string.waitlist_vacancy_available),
+                                text = stringResource(R.string.waitlist_vacancy_available),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.tertiary
@@ -306,7 +305,7 @@ private fun UserWaitlistPositionCard(entry: GameWaitlist) {
             // Tempo na fila
             entry.addedAt?.let { addedAt ->
                 Text(
-                    text = stringResource(Res.string.waitlist_since, timeFormat.format(addedAt)),
+                    text = stringResource(R.string.waitlist_since, timeFormat.format(addedAt)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -376,7 +375,7 @@ private fun WaitlistPlayerRow(
                     color = MaterialTheme.colorScheme.tertiaryContainer
                 ) {
                     Text(
-                        text = stringResource(Res.string.waitlist_notified),
+                        text = stringResource(R.string.waitlist_notified),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -389,7 +388,7 @@ private fun WaitlistPlayerRow(
                     color = MaterialTheme.colorScheme.errorContainer
                 ) {
                     Text(
-                        text = stringResource(Res.string.waitlist_expired),
+                        text = stringResource(R.string.waitlist_expired),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)

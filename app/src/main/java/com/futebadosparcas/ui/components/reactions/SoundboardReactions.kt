@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.components.reactions
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.content.Context
 import android.media.AudioAttributes
@@ -54,10 +52,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Componente de Soundboard para reações sonoras em tempo real.
@@ -342,7 +341,7 @@ fun SoundboardPanel(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = stringResource(Res.string.reactions_title),
+                text = stringResource(R.string.reactions_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -352,7 +351,7 @@ fun SoundboardPanel(
 
             // Categoria: Positivas
             Text(
-                text = stringResource(Res.string.reactions_positive),
+                text = stringResource(R.string.reactions_positive),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -385,7 +384,7 @@ fun SoundboardPanel(
 
             // Categoria: Divertidas
             Text(
-                text = stringResource(Res.string.reactions_funny),
+                text = stringResource(R.string.reactions_funny),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -418,7 +417,7 @@ fun SoundboardPanel(
 
             // Categoria: Especiais
             Text(
-                text = stringResource(Res.string.reactions_special),
+                text = stringResource(R.string.reactions_special),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

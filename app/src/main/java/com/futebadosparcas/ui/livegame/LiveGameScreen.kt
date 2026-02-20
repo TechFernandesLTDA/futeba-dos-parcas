@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.livegame
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.os.SystemClock
 import androidx.compose.animation.*
@@ -31,13 +29,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
 import kotlinx.coroutines.launch
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * LiveGameScreen - Tela principal de jogo ao vivo em Jetpack Compose
@@ -231,7 +230,7 @@ private fun LiveGameTopBar(
             if (uiState is LiveGameUiState.Success) {
                 Column {
                     Text(
-                        text = stringResource(Res.string.live_game_label),
+                        text = stringResource(R.string.live_game_label),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -243,7 +242,7 @@ private fun LiveGameTopBar(
                 }
             } else {
                 Text(
-                    text = stringResource(Res.string.live_game_label),
+                    text = stringResource(R.string.live_game_label),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -253,7 +252,7 @@ private fun LiveGameTopBar(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(Res.string.action_back)
+                    contentDescription = stringResource(R.string.action_back)
                 )
             }
         },
@@ -288,7 +287,7 @@ private fun IsolatedGameTimer(
     val seconds = (elapsedTime / 1000 % 60).toInt()
 
     Text(
-        text = if (isFinished) stringResource(Res.string.live_game_end_label) else String.format("%02d:%02d", minutes, seconds),
+        text = if (isFinished) stringResource(R.string.live_game_end_label) else String.format("%02d:%02d", minutes, seconds),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -347,7 +346,7 @@ private fun LiveGameHeader(
 
                 // VS
                 Text(
-                    text = stringResource(Res.string.live_game_vs),
+                    text = stringResource(R.string.live_game_vs),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -375,11 +374,11 @@ private fun LiveGameHeader(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = stringResource(Res.string.live_game_finish),
+                        contentDescription = stringResource(R.string.live_game_finish),
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = stringResource(Res.string.live_game_finish_content))
+                    Text(text = stringResource(R.string.live_game_finish_content))
                 }
             }
         }
@@ -444,7 +443,7 @@ private fun LiveGameTabs(
     gameId: String,
     onTabSelected: (Int) -> Unit
 ) {
-    val tabTitles = listOf(stringResource(Res.string.live_game_statistics), stringResource(Res.string.live_game_events))
+    val tabTitles = listOf(stringResource(R.string.live_game_statistics), stringResource(R.string.live_game_events))
     val tabIcons = listOf(Icons.Default.BarChart, Icons.AutoMirrored.Filled.EventNote)
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -560,11 +559,11 @@ private fun LiveGameFAB(
         icon = {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = stringResource(Res.string.live_game_add_event)
+                contentDescription = stringResource(R.string.live_game_add_event)
             )
         },
         text = {
-            Text(text = stringResource(Res.string.live_game_add_event))
+            Text(text = stringResource(R.string.live_game_add_event))
         },
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -614,7 +613,7 @@ private fun AddEventBottomSheet(
         ) {
             // Título
             Text(
-                text = stringResource(Res.string.live_game_add_event_title),
+                text = stringResource(R.string.live_game_add_event_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -624,7 +623,7 @@ private fun AddEventBottomSheet(
 
             // Tipo de Evento
             Text(
-                text = stringResource(Res.string.live_game_event_type),
+                text = stringResource(R.string.live_game_event_type),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -634,14 +633,14 @@ private fun AddEventBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 EventTypeChip(
-                    label = stringResource(Res.string.live_game_goal),
+                    label = stringResource(R.string.live_game_goal),
                     icon = "⚽",
                     selected = selectedEventType == GameEventType.GOAL,
                     onClick = { selectedEventType = GameEventType.GOAL },
                     modifier = Modifier.weight(1f)
                 )
                 EventTypeChip(
-                    label = stringResource(Res.string.live_game_save),
+                    label = stringResource(R.string.live_game_save),
                     icon = "🧤",
                     selected = selectedEventType == GameEventType.SAVE,
                     onClick = { selectedEventType = GameEventType.SAVE },
@@ -654,14 +653,14 @@ private fun AddEventBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 EventTypeChip(
-                    label = stringResource(Res.string.live_game_yellow_card),
+                    label = stringResource(R.string.live_game_yellow_card),
                     icon = "🟨",
                     selected = selectedEventType == GameEventType.YELLOW_CARD,
                     onClick = { selectedEventType = GameEventType.YELLOW_CARD },
                     modifier = Modifier.weight(1f)
                 )
                 EventTypeChip(
-                    label = stringResource(Res.string.live_game_red_card),
+                    label = stringResource(R.string.live_game_red_card),
                     icon = "🟥",
                     selected = selectedEventType == GameEventType.RED_CARD,
                     onClick = { selectedEventType = GameEventType.RED_CARD },
@@ -673,7 +672,7 @@ private fun AddEventBottomSheet(
 
             // Seleção de Time
             Text(
-                text = stringResource(Res.string.live_game_select_team),
+                text = stringResource(R.string.live_game_select_team),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -685,13 +684,13 @@ private fun AddEventBottomSheet(
                 FilterChip(
                     selected = selectedTeam.id == team1.id,
                     onClick = { selectedTeam = team1 },
-                    label = { Text(team1.name.ifEmpty { stringResource(Res.string.live_game_team_default_1) }) },
+                    label = { Text(team1.name.ifEmpty { stringResource(R.string.live_game_team_default_1) }) },
                     modifier = Modifier.weight(1f)
                 )
                 FilterChip(
                     selected = selectedTeam.id == team2.id,
                     onClick = { selectedTeam = team2 },
-                    label = { Text(team2.name.ifEmpty { stringResource(Res.string.live_game_team_default_2) }) },
+                    label = { Text(team2.name.ifEmpty { stringResource(R.string.live_game_team_default_2) }) },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -702,7 +701,7 @@ private fun AddEventBottomSheet(
             OutlinedTextField(
                 value = minute,
                 onValueChange = { minute = it.filter { char -> char.isDigit() } },
-                label = { Text(stringResource(Res.string.live_game_minute)) },
+                label = { Text(stringResource(R.string.live_game_minute)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -715,11 +714,11 @@ private fun AddEventBottomSheet(
             // Seleção de Jogador (Dropdown)
             var playerExpanded by remember { mutableStateOf(false) }
             val playerLabel = when (selectedEventType) {
-                GameEventType.GOAL -> stringResource(Res.string.live_game_goal_label)
-                GameEventType.SAVE -> stringResource(Res.string.live_game_save_label)
-                GameEventType.YELLOW_CARD -> stringResource(Res.string.live_game_yellow_card_label)
-                GameEventType.RED_CARD -> stringResource(Res.string.live_game_red_card_label)
-                else -> stringResource(Res.string.live_game_player_label)
+                GameEventType.GOAL -> stringResource(R.string.live_game_goal_label)
+                GameEventType.SAVE -> stringResource(R.string.live_game_save_label)
+                GameEventType.YELLOW_CARD -> stringResource(R.string.live_game_yellow_card_label)
+                GameEventType.RED_CARD -> stringResource(R.string.live_game_red_card_label)
+                else -> stringResource(R.string.live_game_player_label)
             }
 
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -730,7 +729,7 @@ private fun AddEventBottomSheet(
                     readOnly = true,
                     trailingIcon = {
                         IconButton(onClick = { playerExpanded = true }) {
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = stringResource(Res.string.live_game_expand))
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = stringResource(R.string.live_game_expand))
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
@@ -751,7 +750,7 @@ private fun AddEventBottomSheet(
                     }
                     if (currentPlayers.isEmpty()) {
                         DropdownMenuItem(
-                            text = { Text(stringResource(Res.string.live_game_no_player)) },
+                            text = { Text(stringResource(R.string.live_game_no_player)) },
                             onClick = { playerExpanded = false },
                             enabled = false
                         )
@@ -767,11 +766,11 @@ private fun AddEventBottomSheet(
                     OutlinedTextField(
                         value = selectedAssist?.userName ?: "",
                         onValueChange = {},
-                        label = { Text(stringResource(Res.string.live_game_assist)) },
+                        label = { Text(stringResource(R.string.live_game_assist)) },
                         readOnly = true,
                         trailingIcon = {
                             IconButton(onClick = { assistExpanded = true }) {
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = stringResource(Res.string.live_game_expand))
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = stringResource(R.string.live_game_expand))
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
@@ -782,7 +781,7 @@ private fun AddEventBottomSheet(
                          modifier = Modifier.fillMaxWidth()
                     ) {
                          DropdownMenuItem(
-                            text = { Text(stringResource(Res.string.live_game_no_assist_label)) },
+                            text = { Text(stringResource(R.string.live_game_no_assist_label)) },
                             onClick = {
                                 selectedAssist = null
                                 assistExpanded = false
@@ -813,7 +812,7 @@ private fun AddEventBottomSheet(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(Res.string.action_cancel))
+                    Text(stringResource(R.string.action_cancel))
                 }
                 Button(
                     onClick = {
@@ -832,7 +831,7 @@ private fun AddEventBottomSheet(
                     },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(Res.string.action_confirm))
+                    Text(stringResource(R.string.action_confirm))
                 }
             }
 
@@ -914,9 +913,9 @@ private fun ErrorContent(
 ) {
     EmptyState(
         type = EmptyStateType.Error(
-            title = stringResource(Res.string.live_game_load_error),
+            title = stringResource(R.string.live_game_load_error),
             description = message,
-            actionLabel = stringResource(Res.string.action_retry),
+            actionLabel = stringResource(R.string.action_retry),
             onRetry = onRetry
         )
     )

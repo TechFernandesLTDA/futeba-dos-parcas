@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.components.modern
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -12,8 +10,9 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 /**
  * Destino de navegação
  */
@@ -78,25 +77,25 @@ fun appDestinations() = listOf(
         route = "home",
         label = "Início",
         icon = Icons.Default.Home,
-        contentDescription = stringResource(Res.string.cd_home_screen)
+        contentDescription = stringResource(R.string.cd_home_screen)
     ),
     NavDestination(
         route = "games",
         label = "Jogos",
         icon = Icons.Default.SportsFootball,
-        contentDescription = stringResource(Res.string.cd_games_list)
+        contentDescription = stringResource(R.string.cd_games_list)
     ),
     NavDestination(
         route = "league",
         label = "Liga",
         icon = Icons.Default.EmojiEvents,
-        contentDescription = stringResource(Res.string.cd_rankings)
+        contentDescription = stringResource(R.string.cd_rankings)
     ),
     NavDestination(
         route = "profile",
         label = "Perfil",
         icon = Icons.Default.Person,
-        contentDescription = stringResource(Res.string.cd_user_profile)
+        contentDescription = stringResource(R.string.cd_user_profile)
     )
 )
 

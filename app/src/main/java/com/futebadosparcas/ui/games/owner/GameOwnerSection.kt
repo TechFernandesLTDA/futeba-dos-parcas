@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.owner
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -18,11 +16,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.model.*
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Secao completa de ferramentas do organizador para GameDetailScreen.
@@ -79,13 +78,13 @@ fun GameOwnerSection(
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = stringResource(Res.string.owner_tools_title),
+                            text = stringResource(R.string.owner_tools_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (isOwner) stringResource(Res.string.owner_role_owner)
-                                   else stringResource(Res.string.owner_role_co_organizer),
+                            text = if (isOwner) stringResource(R.string.owner_role_owner)
+                                   else stringResource(R.string.owner_role_co_organizer),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -105,18 +104,18 @@ fun GameOwnerSection(
             ) {
                 QuickActionButton(
                     icon = Icons.Outlined.AttachMoney,
-                    label = stringResource(Res.string.owner_financial_short),
+                    label = stringResource(R.string.owner_financial_short),
                     onClick = onShowFinancialDashboard
                 )
                 QuickActionButton(
                     icon = Icons.AutoMirrored.Filled.Send,
-                    label = stringResource(Res.string.owner_notify_short),
+                    label = stringResource(R.string.owner_notify_short),
                     onClick = onShowMassMessage
                 )
                 if (game.status == GameStatus.FINISHED.name) {
                     QuickActionButton(
                         icon = Icons.Outlined.Summarize,
-                        label = stringResource(Res.string.owner_report_short),
+                        label = stringResource(R.string.owner_report_short),
                         onClick = onShowPostGameReport
                     )
                 }
@@ -135,49 +134,49 @@ fun GameOwnerSection(
                     // Grid de opcoes
                     OwnerOptionItem(
                         icon = Icons.Outlined.PeopleAlt,
-                        title = stringResource(Res.string.owner_delegate_admin),
-                        subtitle = stringResource(Res.string.owner_delegate_admin_subtitle),
+                        title = stringResource(R.string.owner_delegate_admin),
+                        subtitle = stringResource(R.string.owner_delegate_admin_subtitle),
                         onClick = onShowDelegateAdmin
                     )
 
                     OwnerOptionItem(
                         icon = Icons.Outlined.Block,
-                        title = stringResource(Res.string.owner_blocked_players),
-                        subtitle = stringResource(Res.string.owner_blocked_players_subtitle),
+                        title = stringResource(R.string.owner_blocked_players),
+                        subtitle = stringResource(R.string.owner_blocked_players_subtitle),
                         onClick = onShowBlockedPlayers
                     )
 
                     OwnerOptionItem(
                         icon = Icons.Outlined.Timer,
-                        title = stringResource(Res.string.owner_auto_close_title),
+                        title = stringResource(R.string.owner_auto_close_title),
                         subtitle = if (game.autoCloseHours != null)
-                            stringResource(Res.string.owner_auto_close_enabled, game.autoCloseHours ?: 0)
-                        else stringResource(Res.string.owner_auto_close_disabled),
+                            stringResource(R.string.owner_auto_close_enabled, game.autoCloseHours ?: 0)
+                        else stringResource(R.string.owner_auto_close_disabled),
                         onClick = onShowAutoClose
                     )
 
                     OwnerOptionItem(
                         icon = Icons.Outlined.LocationOn,
-                        title = stringResource(Res.string.checkin_settings_title),
+                        title = stringResource(R.string.checkin_settings_title),
                         subtitle = if (game.requireCheckin)
-                            stringResource(Res.string.checkin_enabled_with_radius, game.checkinRadiusMeters)
-                        else stringResource(Res.string.checkin_disabled),
+                            stringResource(R.string.checkin_enabled_with_radius, game.checkinRadiusMeters)
+                        else stringResource(R.string.checkin_disabled),
                         onClick = onShowCheckinSettings
                     )
 
                     OwnerOptionItem(
                         icon = Icons.AutoMirrored.Outlined.Rule,
-                        title = stringResource(Res.string.owner_rules),
+                        title = stringResource(R.string.owner_rules),
                         subtitle = if (game.rules.isNotBlank())
                             game.rules.take(50) + "..."
-                        else stringResource(Res.string.owner_rules_empty),
+                        else stringResource(R.string.owner_rules_empty),
                         onClick = onShowRules
                     )
 
                     OwnerOptionItem(
                         icon = Icons.Outlined.BarChart,
-                        title = stringResource(Res.string.owner_my_stats),
-                        subtitle = stringResource(Res.string.owner_my_stats_subtitle),
+                        title = stringResource(R.string.owner_my_stats),
+                        subtitle = stringResource(R.string.owner_my_stats_subtitle),
                         onClick = onShowOwnerStats
                     )
 
@@ -186,8 +185,8 @@ fun GameOwnerSection(
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                         OwnerOptionItem(
                             icon = Icons.Outlined.SwapHoriz,
-                            title = stringResource(Res.string.owner_transfer_ownership),
-                            subtitle = stringResource(Res.string.owner_transfer_ownership_subtitle),
+                            title = stringResource(R.string.owner_transfer_ownership),
+                            subtitle = stringResource(R.string.owner_transfer_ownership_subtitle),
                             onClick = onShowTransferOwnership,
                             isDanger = true
                         )
@@ -298,7 +297,7 @@ fun GameRulesSection(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(Res.string.owner_game_rules),
+                    text = stringResource(R.string.owner_game_rules),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.tertiary
@@ -341,7 +340,7 @@ fun CoOrganizersChip(
         onClick = { },
         label = {
             Text(
-                text = stringResource(Res.string.owner_co_organizers, displayText),
+                text = stringResource(R.string.owner_co_organizers, displayText),
                 style = MaterialTheme.typography.labelSmall
             )
         },

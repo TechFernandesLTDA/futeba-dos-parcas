@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.Manifest
 import android.content.Context
@@ -21,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -31,6 +28,8 @@ import com.futebadosparcas.data.model.GameConfirmation
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlin.math.roundToInt
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Card que exibe o botão de check-in para jogadores confirmados.
@@ -114,9 +113,9 @@ fun PlayerCheckInCard(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = if (hasCheckedIn)
-                        stringResource(Res.string.status_checked_in)
+                        stringResource(R.string.status_checked_in)
                     else
-                        stringResource(Res.string.checkin_required),
+                        stringResource(R.string.checkin_required),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = if (hasCheckedIn)
@@ -129,7 +128,7 @@ fun PlayerCheckInCard(
             if (!hasCheckedIn) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = stringResource(Res.string.checkin_radius_info, game.checkinRadiusMeters),
+                    text = stringResource(R.string.checkin_radius_info, game.checkinRadiusMeters),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -177,14 +176,14 @@ fun PlayerCheckInCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    Text(stringResource(Res.string.checkin_button))
+                    Text(stringResource(R.string.checkin_button))
                 }
             } else {
                 Spacer(modifier = Modifier.height(4.dp))
                 userConfirmation.checkedInAt?.let { date ->
                     val timeFormat = remember { java.text.SimpleDateFormat("HH:mm", java.util.Locale.forLanguageTag("pt-BR")) }
                     Text(
-                        text = stringResource(Res.string.checkin_done_at, timeFormat.format(date)),
+                        text = stringResource(R.string.checkin_done_at, timeFormat.format(date)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -219,7 +218,7 @@ fun CheckInSettingsDialog(
             )
         },
         title = {
-            Text(stringResource(Res.string.checkin_settings_title))
+            Text(stringResource(R.string.checkin_settings_title))
         },
         text = {
             Column {
@@ -231,12 +230,12 @@ fun CheckInSettingsDialog(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(Res.string.checkin_require_label),
+                            text = stringResource(R.string.checkin_require_label),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = stringResource(Res.string.checkin_require_description),
+                            text = stringResource(R.string.checkin_require_description),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -251,13 +250,13 @@ fun CheckInSettingsDialog(
                 AnimatedVisibility(visible = enabled) {
                     Column(modifier = Modifier.padding(top = 24.dp)) {
                         Text(
-                            text = stringResource(Res.string.checkin_radius_label),
+                            text = stringResource(R.string.checkin_radius_label),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = stringResource(Res.string.checkin_radius_value, radius.roundToInt()),
+                            text = stringResource(R.string.checkin_radius_value, radius.roundToInt()),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -303,7 +302,7 @@ fun CheckInSettingsDialog(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = stringResource(Res.string.checkin_radius_tip),
+                                    text = stringResource(R.string.checkin_radius_tip),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -317,12 +316,12 @@ fun CheckInSettingsDialog(
             Button(
                 onClick = { onSave(enabled, radius.roundToInt()) }
             ) {
-                Text(stringResource(Res.string.action_save))
+                Text(stringResource(R.string.action_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.action_cancel))
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )
@@ -354,16 +353,16 @@ fun CheckInSettingsItem(
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(Res.string.checkin_settings_title),
+                text = stringResource(R.string.checkin_settings_title),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = if (enabled)
-                    stringResource(Res.string.checkin_enabled_with_radius, radius)
+                    stringResource(R.string.checkin_enabled_with_radius, radius)
                 else
-                    stringResource(Res.string.checkin_disabled),
+                    stringResource(R.string.checkin_disabled),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -413,11 +412,11 @@ fun OnTheWayButton(
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = if (isOnTheWay && eta != null)
-                stringResource(Res.string.on_the_way_eta, eta)
+                stringResource(R.string.on_the_way_eta, eta)
             else if (isOnTheWay)
-                stringResource(Res.string.on_the_way)
+                stringResource(R.string.on_the_way)
             else
-                stringResource(Res.string.mark_on_the_way),
+                stringResource(R.string.mark_on_the_way),
             color = if (isOnTheWay)
                 MaterialTheme.colorScheme.secondary
             else

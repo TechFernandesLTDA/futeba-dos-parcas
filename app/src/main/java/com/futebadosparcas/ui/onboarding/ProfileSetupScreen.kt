@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.onboarding
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,10 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 /**
  * Tela de configuração inicial do perfil.
  * Coleta informações básicas do jogador.
@@ -49,10 +48,10 @@ fun ProfileSetupScreen(
     var futsalSelected by remember { mutableStateOf(false) }
     var campoSelected by remember { mutableStateOf(false) }
 
-    val goalkeeperLabel = stringResource(Res.string.profile_position_goalkeeper)
-    val defenderLabel = stringResource(Res.string.profile_position_defender)
-    val midfielderLabel = stringResource(Res.string.profile_position_midfielder)
-    val attackerLabel = stringResource(Res.string.profile_position_attacker)
+    val goalkeeperLabel = stringResource(R.string.profile_position_goalkeeper)
+    val defenderLabel = stringResource(R.string.profile_position_defender)
+    val midfielderLabel = stringResource(R.string.profile_position_midfielder)
+    val attackerLabel = stringResource(R.string.profile_position_attacker)
     val positions = listOf(
         goalkeeperLabel to "goalkeeper",
         defenderLabel to "defender",
@@ -75,7 +74,7 @@ fun ProfileSetupScreen(
 
             // Título
             Text(
-                text = stringResource(Res.string.profile_setup_title),
+                text = stringResource(R.string.profile_setup_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -85,7 +84,7 @@ fun ProfileSetupScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(Res.string.profile_setup_subtitle),
+                text = stringResource(R.string.profile_setup_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -97,8 +96,8 @@ fun ProfileSetupScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text(stringResource(Res.string.profile_setup_name)) },
-                placeholder = { Text(stringResource(Res.string.profile_setup_name_hint)) },
+                label = { Text(stringResource(R.string.profile_setup_name)) },
+                placeholder = { Text(stringResource(R.string.profile_setup_name_hint)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -110,8 +109,8 @@ fun ProfileSetupScreen(
             OutlinedTextField(
                 value = nickname,
                 onValueChange = { nickname = it },
-                label = { Text(stringResource(Res.string.profile_setup_nickname)) },
-                placeholder = { Text(stringResource(Res.string.profile_setup_nickname_hint)) },
+                label = { Text(stringResource(R.string.profile_setup_nickname)) },
+                placeholder = { Text(stringResource(R.string.profile_setup_nickname_hint)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -121,7 +120,7 @@ fun ProfileSetupScreen(
 
             // Posição Preferida
             Text(
-                text = stringResource(Res.string.profile_setup_position),
+                text = stringResource(R.string.profile_setup_position),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.fillMaxWidth()
@@ -163,7 +162,7 @@ fun ProfileSetupScreen(
 
             // Tipo de Campo Preferido
             Text(
-                text = stringResource(Res.string.profile_setup_field_type),
+                text = stringResource(R.string.profile_setup_field_type),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.fillMaxWidth()
@@ -178,19 +177,19 @@ fun ProfileSetupScreen(
                 FilterChip(
                     selected = societySelected,
                     onClick = { societySelected = !societySelected },
-                    label = { Text(stringResource(Res.string.field_type_society)) },
+                    label = { Text(stringResource(R.string.field_type_society)) },
                     modifier = Modifier.weight(1f)
                 )
                 FilterChip(
                     selected = futsalSelected,
                     onClick = { futsalSelected = !futsalSelected },
-                    label = { Text(stringResource(Res.string.field_type_futsal)) },
+                    label = { Text(stringResource(R.string.field_type_futsal)) },
                     modifier = Modifier.weight(1f)
                 )
                 FilterChip(
                     selected = campoSelected,
                     onClick = { campoSelected = !campoSelected },
-                    label = { Text(stringResource(Res.string.field_type_campo)) },
+                    label = { Text(stringResource(R.string.field_type_campo)) },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -221,7 +220,7 @@ fun ProfileSetupScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    text = stringResource(Res.string.continue_button),
+                    text = stringResource(R.string.continue_button),
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -231,7 +230,7 @@ fun ProfileSetupScreen(
             // Botão Pular
             TextButton(onClick = onSkip) {
                 Text(
-                    text = stringResource(Res.string.profile_setup_skip),
+                    text = stringResource(R.string.profile_setup_skip),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

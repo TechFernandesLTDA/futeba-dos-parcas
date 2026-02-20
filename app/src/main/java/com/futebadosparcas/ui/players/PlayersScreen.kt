@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.players
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -30,7 +28,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -55,6 +52,8 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela de listagem de jogadores com Jetpack Compose
@@ -110,7 +109,7 @@ fun PlayersScreen(
             when (event) {
                 is InviteUiEvent.InviteSent -> {
                     snackbarHostState.showSnackbar(
-                        message = context.getString(Res.string.invite_sent_success, event.userName)
+                        message = context.getString(R.string.invite_sent_success, event.userName)
                     )
                 }
                 is InviteUiEvent.Error -> {
@@ -250,9 +249,9 @@ fun PlayersScreen(
                             // Error state
                             EmptyState(
                                 type = EmptyStateType.Error(
-                                    title = stringResource(Res.string.players_error_title),
+                                    title = stringResource(R.string.players_error_title),
                                     description = state.message,
-                                    actionLabel = stringResource(Res.string.retry),
+                                    actionLabel = stringResource(R.string.retry),
                                     onRetry = { viewModel.loadPlayers(searchQuery) }
                                 ),
                                 modifier = Modifier.fillMaxSize()
@@ -308,7 +307,7 @@ fun PlayersScreen(
                                 context = context,
                                 user = player,
                                 stats = selectedPlayerStats,
-                                generatedBy = context.getString(Res.string.app_name)
+                                generatedBy = context.getString(R.string.app_name)
                             )
                         },
                         modifier = Modifier.padding(bottom = 32.dp)
@@ -350,11 +349,11 @@ private fun PlayersSearchAndFilters(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(stringResource(Res.string.players_search_hint_players)) },
+            placeholder = { Text(stringResource(R.string.players_search_hint_players)) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = stringResource(Res.string.players_content_description_search)
+                    contentDescription = stringResource(R.string.players_content_description_search)
                 )
             },
             trailingIcon = {
@@ -372,7 +371,7 @@ private fun PlayersSearchAndFilters(
                     ) {
                         Icon(
                             imageVector = if (isComparisonMode) Icons.Default.Close else Icons.Outlined.Compare,
-                            contentDescription = if (isComparisonMode) stringResource(Res.string.players_content_description_cancel_compare) else stringResource(Res.string.players_content_description_compare)
+                            contentDescription = if (isComparisonMode) stringResource(R.string.players_content_description_cancel_compare) else stringResource(R.string.players_content_description_compare)
                         )
                     }
 
@@ -381,7 +380,7 @@ private fun PlayersSearchAndFilters(
                         IconButton(onClick = { onSearchQueryChange("") }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
-                                contentDescription = stringResource(Res.string.players_content_description_clear_search)
+                                contentDescription = stringResource(R.string.players_content_description_clear_search)
                             )
                         }
                     }
@@ -403,7 +402,7 @@ private fun PlayersSearchAndFilters(
                 color = MaterialTheme.colorScheme.errorContainer
             ) {
                 Text(
-                    text = stringResource(Res.string.players_select_two),
+                    text = stringResource(R.string.players_select_two),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.padding(12.dp)
@@ -419,7 +418,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedFieldType == null,
                 onClick = { onFieldTypeChange(null) },
-                label = { Text(stringResource(Res.string.players_filter_all)) },
+                label = { Text(stringResource(R.string.players_filter_all)) },
                 leadingIcon = if (selectedFieldType == null) {
                     { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
                 } else null
@@ -428,7 +427,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedFieldType == FieldType.SOCIETY,
                 onClick = { onFieldTypeChange(FieldType.SOCIETY) },
-                label = { Text(stringResource(Res.string.players_filter_society)) },
+                label = { Text(stringResource(R.string.players_filter_society)) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (selectedFieldType == FieldType.SOCIETY) Icons.Default.Check else Icons.Default.Sports,
@@ -441,7 +440,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedFieldType == FieldType.FUTSAL,
                 onClick = { onFieldTypeChange(FieldType.FUTSAL) },
-                label = { Text(stringResource(Res.string.players_filter_futsal)) },
+                label = { Text(stringResource(R.string.players_filter_futsal)) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (selectedFieldType == FieldType.FUTSAL) Icons.Default.Check else Icons.Default.SportsSoccer,
@@ -454,7 +453,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedFieldType == FieldType.CAMPO,
                 onClick = { onFieldTypeChange(FieldType.CAMPO) },
-                label = { Text(stringResource(Res.string.players_filter_campo)) },
+                label = { Text(stringResource(R.string.players_filter_campo)) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (selectedFieldType == FieldType.CAMPO) Icons.Default.Check else Icons.Default.Grass,
@@ -473,7 +472,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedSortOption == PlayersViewModel.SortOption.NAME,
                 onClick = { onSortOptionChange(PlayersViewModel.SortOption.NAME) },
-                label = { Text(stringResource(Res.string.players_sort_name)) },
+                label = { Text(stringResource(R.string.players_sort_name)) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (selectedSortOption == PlayersViewModel.SortOption.NAME) Icons.Default.Check else Icons.Default.SortByAlpha,
@@ -486,7 +485,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedSortOption == PlayersViewModel.SortOption.BEST_STRIKER,
                 onClick = { onSortOptionChange(PlayersViewModel.SortOption.BEST_STRIKER) },
-                label = { Text(stringResource(Res.string.players_sort_striker)) },
+                label = { Text(stringResource(R.string.players_sort_striker)) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (selectedSortOption == PlayersViewModel.SortOption.BEST_STRIKER) Icons.Default.Check else Icons.AutoMirrored.Filled.TrendingUp,
@@ -499,7 +498,7 @@ private fun PlayersSearchAndFilters(
             FilterChip(
                 selected = selectedSortOption == PlayersViewModel.SortOption.BEST_GK,
                 onClick = { onSortOptionChange(PlayersViewModel.SortOption.BEST_GK) },
-                label = { Text(stringResource(Res.string.players_sort_gk)) },
+                label = { Text(stringResource(R.string.players_sort_gk)) },
                 leadingIcon = {
                     Icon(
                         imageVector = if (selectedSortOption == PlayersViewModel.SortOption.BEST_GK) Icons.Default.Check else Icons.Default.Shield,
@@ -629,13 +628,13 @@ private fun PlayerCard(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     PlayerRatingBadge(
-                        label = stringResource(Res.string.players_rating_atk),
+                        label = stringResource(R.string.players_rating_atk),
                         rating = player.getEffectiveRating(PlayerRatingRole.STRIKER),
                         color = MaterialTheme.colorScheme.tertiary
                     )
 
                     PlayerRatingBadge(
-                        label = stringResource(Res.string.players_rating_gk),
+                        label = stringResource(R.string.players_rating_gk),
                         rating = player.getEffectiveRating(PlayerRatingRole.GOALKEEPER),
                         color = MaterialTheme.colorScheme.secondary
                     )
@@ -653,7 +652,7 @@ private fun PlayerCard(
                     color = GamificationColors.Gold.copy(alpha = 0.15f)
                 ) {
                     Text(
-                        text = stringResource(Res.string.players_level_format, player.level),
+                        text = stringResource(R.string.players_level_format, player.level),
                         style = MaterialTheme.typography.labelMedium,
                         color = GamificationColors.Gold,
                         fontWeight = FontWeight.Bold,
@@ -669,7 +668,7 @@ private fun PlayerCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.PersonAdd,
-                            contentDescription = stringResource(Res.string.players_content_description_invite),
+                            contentDescription = stringResource(R.string.players_content_description_invite),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -746,7 +745,7 @@ private fun GroupSelectionDialog(
         },
         title = {
             Text(
-                text = stringResource(Res.string.select_group_for_invite),
+                text = stringResource(R.string.select_group_for_invite),
                 style = MaterialTheme.typography.headlineSmall
             )
         },
@@ -785,7 +784,7 @@ private fun GroupSelectionDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(R.string.cancel))
             }
         }
     )

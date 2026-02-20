@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.owner
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -25,6 +22,8 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Issue #64: Tela para gerenciar jogadores bloqueados
@@ -43,15 +42,15 @@ fun BlockedPlayersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(Res.string.owner_blocked_players)) },
+                title = { Text(stringResource(R.string.owner_blocked_players)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { showBlockDialog = true }) {
-                        Icon(Icons.Outlined.PersonAdd, contentDescription = stringResource(Res.string.owner_block_player))
+                        Icon(Icons.Outlined.PersonAdd, contentDescription = stringResource(R.string.owner_block_player))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -69,8 +68,8 @@ fun BlockedPlayersScreen(
             ) {
                 EmptyState(
                     type = EmptyStateType.NoData(
-                        title = stringResource(Res.string.owner_no_blocked_players),
-                        description = stringResource(Res.string.owner_no_blocked_players_desc)
+                        title = stringResource(R.string.owner_no_blocked_players),
+                        description = stringResource(R.string.owner_no_blocked_players_desc)
                     )
                 )
             }
@@ -139,7 +138,7 @@ private fun BlockedPlayerCard(
                 )
                 if (player.reason.isNotBlank()) {
                     Text(
-                        text = stringResource(Res.string.owner_block_reason, player.reason),
+                        text = stringResource(R.string.owner_block_reason, player.reason),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
@@ -149,7 +148,7 @@ private fun BlockedPlayerCard(
                 player.blockedAt?.let { date ->
                     Text(
                         text = stringResource(
-                            Res.string.owner_blocked_since,
+                            R.string.owner_blocked_since,
                             dateFormat.format(date)
                         ),
                         style = MaterialTheme.typography.labelSmall,
@@ -161,7 +160,7 @@ private fun BlockedPlayerCard(
             IconButton(onClick = onUnblock) {
                 Icon(
                     imageVector = Icons.Default.RemoveCircleOutline,
-                    contentDescription = stringResource(Res.string.owner_unblock),
+                    contentDescription = stringResource(R.string.owner_unblock),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -180,11 +179,11 @@ private fun BlockPlayerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.owner_block_player)) },
+        title = { Text(stringResource(R.string.owner_block_player)) },
         text = {
             Column {
                 Text(
-                    text = stringResource(Res.string.owner_block_player_desc),
+                    text = stringResource(R.string.owner_block_player_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -193,12 +192,12 @@ private fun BlockPlayerDialog(
                 // Player selection
                 if (availablePlayers.isEmpty()) {
                     Text(
-                        text = stringResource(Res.string.owner_no_players_to_block),
+                        text = stringResource(R.string.owner_no_players_to_block),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 } else {
                     Text(
-                        text = stringResource(Res.string.owner_select_player),
+                        text = stringResource(R.string.owner_select_player),
                         style = MaterialTheme.typography.labelLarge
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -236,7 +235,7 @@ private fun BlockPlayerDialog(
                     OutlinedTextField(
                         value = reason,
                         onValueChange = { reason = it },
-                        label = { Text(stringResource(Res.string.owner_block_reason_label)) },
+                        label = { Text(stringResource(R.string.owner_block_reason_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         maxLines = 2
                     )
@@ -255,12 +254,12 @@ private fun BlockPlayerDialog(
                     containerColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text(stringResource(Res.string.owner_block))
+                Text(stringResource(R.string.owner_block))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(R.string.cancel))
             }
         }
     )

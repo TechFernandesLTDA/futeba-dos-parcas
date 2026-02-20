@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.statistics
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -22,14 +20,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.data.model.MilestoneType
+import com.futebadosparcas.domain.model.MilestoneType
 import com.futebadosparcas.domain.model.XpLog
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
@@ -38,6 +35,8 @@ import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 import java.text.SimpleDateFormat
 import java.util.*
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela de Evolucao do Jogador
@@ -80,9 +79,9 @@ fun EvolutionScreen(
             is EvolutionUiState.Error -> {
                 EmptyState(
                     type = EmptyStateType.Error(
-                        title = stringResource(Res.string.error),
+                        title = stringResource(R.string.error),
                         description = state.message,
-                        actionLabel = stringResource(Res.string.retry),
+                        actionLabel = stringResource(R.string.retry),
                         onRetry = { viewModel.loadEvolution() }
                     )
                 )
@@ -183,7 +182,7 @@ private fun EvolutionSuccessContent(
         // Milestones Conquistados
         if (data.achievedMilestones.isNotEmpty()) {
             Text(
-                text = stringResource(Res.string.achieved_milestones),
+                text = stringResource(R.string.achieved_milestones),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -194,7 +193,7 @@ private fun EvolutionSuccessContent(
         // Proximos Milestones
         if (data.nextMilestones.isNotEmpty()) {
             Text(
-                text = stringResource(Res.string.next_milestones),
+                text = stringResource(R.string.next_milestones),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -253,7 +252,7 @@ private fun LevelHeader(
                 // Badge image
                 androidx.compose.foundation.Image(
                     painter = painterResource(LevelBadgeHelper.getBadgeForLevel(currentLevel)),
-                    contentDescription = stringResource(Res.string.level_prefix, currentLevel),
+                    contentDescription = stringResource(R.string.level_prefix, currentLevel),
                     modifier = Modifier.size(72.dp)
                 )
             }
@@ -283,7 +282,7 @@ private fun LevelHeader(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = stringResource(Res.string.progress_to_next_level),
+                        text = stringResource(R.string.progress_to_next_level),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
@@ -313,7 +312,7 @@ private fun LevelHeader(
  * Card com dados da liga
  */
 @Composable
-private fun LeagueCard(leagueData: com.futebadosparcas.data.model.SeasonParticipationV2) {
+private fun LeagueCard(leagueData: com.futebadosparcas.domain.model.SeasonParticipation) {
     val divisionColor = when (leagueData.division) {
         com.futebadosparcas.data.model.LeagueDivision.DIAMANTE -> GamificationColors.Diamond
         com.futebadosparcas.data.model.LeagueDivision.OURO -> GamificationColors.Gold
@@ -337,7 +336,7 @@ private fun LeagueCard(leagueData: com.futebadosparcas.data.model.SeasonParticip
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = stringResource(Res.string.current_season),
+                    text = stringResource(R.string.current_season),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -386,7 +385,7 @@ private fun XpEvolutionChartCard(xpEvolution: Map<String, Long>) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = stringResource(Res.string.xp_evolution),
+                text = stringResource(R.string.xp_evolution),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -419,7 +418,7 @@ private fun XpEvolutionChart(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = stringResource(Res.string.no_data),
+                text = stringResource(R.string.no_data),
                 style = MaterialTheme.typography.bodyMedium,
                 color = onSurfaceVariant
             )
@@ -496,7 +495,7 @@ private fun XpHistoryCard(xpHistory: List<XpLog>) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = stringResource(Res.string.recent_xp_gains),
+                text = stringResource(R.string.recent_xp_gains),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface

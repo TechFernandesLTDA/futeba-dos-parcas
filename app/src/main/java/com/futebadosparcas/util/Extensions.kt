@@ -22,7 +22,7 @@ fun ImageView.loadProfileImage(url: String?) {
     this.load(url) {
         placeholder(com.futebadosparcas.R.drawable.ic_player_placeholder)
         error(com.futebadosparcas.R.drawable.ic_player_placeholder)
-        transformations(coil3.transform.CircleCropTransformation())
+        // NOTE: CircleCropTransformation removed - use Modifier.clip(CircleShape) in Compose instead
     }
 }
 

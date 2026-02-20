@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.components.states
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -13,12 +11,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.util.LocationError
 import com.futebadosparcas.util.LocationErrorHandler
 import com.futebadosparcas.util.RecoveryAction
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Estado de erro com recuperacao contextual.
@@ -252,17 +251,17 @@ private fun getErrorIconTint(errorType: LocationError): androidx.compose.ui.grap
 private fun getErrorTitle(errorType: LocationError): String {
     return when (errorType) {
         is LocationError.Network -> {
-            if (errorType.isTimeout) stringResource(Res.string.location_error_title_timeout)
-            else stringResource(Res.string.location_error_title_no_connection)
+            if (errorType.isTimeout) stringResource(R.string.location_error_title_timeout)
+            else stringResource(R.string.location_error_title_no_connection)
         }
         is LocationError.Auth -> {
             when (errorType.reason) {
-                "permission_denied" -> stringResource(Res.string.location_error_title_permission)
-                else -> stringResource(Res.string.location_error_title_auth)
+                "permission_denied" -> stringResource(R.string.location_error_title_permission)
+                else -> stringResource(R.string.location_error_title_auth)
             }
         }
-        is LocationError.Data -> stringResource(Res.string.location_error_title_data)
-        is LocationError.Validation -> stringResource(Res.string.location_error_title_validation)
+        is LocationError.Data -> stringResource(R.string.location_error_title_data)
+        is LocationError.Validation -> stringResource(R.string.location_error_title_validation)
     }
 }
 
@@ -355,14 +354,14 @@ private fun SecondaryActionButton(
         is RecoveryAction.CheckInternet -> {
             Spacer(modifier = Modifier.height(12.dp))
             TextButton(onClick = onGoBack) {
-                Text(stringResource(Res.string.location_error_action_go_back))
+                Text(stringResource(R.string.location_error_action_go_back))
             }
         }
         // Para erros de autenticacao, oferece opcao de tentar novamente como secundario
         is RecoveryAction.Login -> {
             Spacer(modifier = Modifier.height(12.dp))
             TextButton(onClick = onRetry) {
-                Text(stringResource(Res.string.location_error_action_retry))
+                Text(stringResource(R.string.location_error_action_retry))
             }
         }
         // Nao mostra botao secundario para outros casos
@@ -385,7 +384,7 @@ private fun ValidationFieldsList(fields: List<String>) {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = stringResource(Res.string.location_error_fields_to_fix),
+                text = stringResource(R.string.location_error_fields_to_fix),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.error
             )

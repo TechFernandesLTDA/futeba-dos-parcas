@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.groups
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -29,7 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import org.jetbrains.compose.resources.stringResource as androidStringResource
+ as androidStringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.TextFieldValue
@@ -38,10 +36,11 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.FutebaTheme
 import java.io.File
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela moderna de criação de grupo em Jetpack Compose
@@ -77,10 +76,10 @@ fun CreateGroupScreen(
     LaunchedEffect(groupName) {
         nameError = when {
             groupName.isEmpty() -> null
-            groupName.length < 3 -> context.getString(Res.string.create_group_error_name_min)
-            groupName.length > 50 -> context.getString(Res.string.create_group_error_name_max)
+            groupName.length < 3 -> context.getString(R.string.create_group_error_name_min)
+            groupName.length > 50 -> context.getString(R.string.create_group_error_name_max)
             !groupName.matches(Regex("^[\\p{L}\\p{N}\\s\\-_']+$")) ->
-                context.getString(Res.string.create_group_error_name_invalid)
+                context.getString(R.string.create_group_error_name_invalid)
             else -> null
         }
     }
@@ -126,12 +125,12 @@ fun CreateGroupScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(Res.string.create_group_title)) },
+                title = { Text(stringResource(R.string.create_group_title)) },
                 navigationIcon = {
                     IconButton(
                         onClick = onNavigateBack,
                         modifier = Modifier.semantics {
-                            contentDescription = context.getString(Res.string.create_group_cd_close)
+                            contentDescription = context.getString(R.string.create_group_cd_close)
                         }
                     ) {
                         Icon(Icons.Default.Close, contentDescription = null)
@@ -162,7 +161,7 @@ fun CreateGroupScreen(
             OutlinedTextField(
                 value = groupName,
                 onValueChange = { groupName = it },
-                label = { Text(stringResource(Res.string.fragment_create_group_hint_2)) },
+                label = { Text(stringResource(R.string.fragment_create_group_hint_2)) },
                 isError = nameError != null,
                 supportingText = nameError?.let { { Text(it) } },
                 singleLine = true,
@@ -191,7 +190,7 @@ fun CreateGroupScreen(
                 onValueChange = {
                     if (it.length <= 200) groupDescription = it
                 },
-                label = { Text(stringResource(Res.string.fragment_create_group_hint_3)) },
+                label = { Text(stringResource(R.string.fragment_create_group_hint_3)) },
                 minLines = 3,
                 maxLines = 5,
                 modifier = Modifier
@@ -215,7 +214,7 @@ fun CreateGroupScreen(
 
             // Dica informativa
             Text(
-                text = stringResource(Res.string.fragment_create_group_text_4),
+                text = stringResource(R.string.fragment_create_group_text_4),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 24.dp)
@@ -238,9 +237,9 @@ fun CreateGroupScreen(
                     )
                     Text(
                         text = if (selectedPhotoUri != null) {
-                            stringResource(Res.string.create_group_uploading)
+                            stringResource(R.string.create_group_uploading)
                         } else {
-                            stringResource(Res.string.create_group_creating)
+                            stringResource(R.string.create_group_creating)
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
@@ -293,7 +292,7 @@ fun CreateGroupScreen(
                     )
                 } else {
                     Text(
-                        text = stringResource(Res.string.fragment_create_group_text_5),
+                        text = stringResource(R.string.fragment_create_group_text_5),
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -368,7 +367,7 @@ private fun GroupPhotoSection(
                 )
                 .clickable(onClick = onPhotoClick)
                 .semantics {
-                    contentDescription = context.getString(Res.string.create_group_cd_photo)
+                    contentDescription = context.getString(R.string.create_group_cd_photo)
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -408,9 +407,9 @@ private fun GroupPhotoSection(
             Text(
                 text = stringResource(
                     if (hasPhoto)
-                        Res.string.create_group_change_photo
+                        R.string.create_group_change_photo
                     else
-                        Res.string.create_group_add_photo
+                        R.string.create_group_add_photo
                 )
             )
         }
@@ -429,7 +428,7 @@ private fun PhotoOptionsDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(stringResource(Res.string.create_group_photo_dialog_title))
+            Text(stringResource(R.string.create_group_photo_dialog_title))
         },
         text = {
             Column(
@@ -454,7 +453,7 @@ private fun PhotoOptionsDialog(
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
-                            text = stringResource(Res.string.create_group_photo_dialog_camera),
+                            text = stringResource(R.string.create_group_photo_dialog_camera),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
@@ -478,7 +477,7 @@ private fun PhotoOptionsDialog(
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
-                            text = stringResource(Res.string.create_group_photo_dialog_gallery),
+                            text = stringResource(R.string.create_group_photo_dialog_gallery),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
@@ -488,7 +487,7 @@ private fun PhotoOptionsDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.action_cancel))
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )

@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.auth
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.R
 /**
  * Activity de Registro (descontinuada).
  *
@@ -30,7 +29,7 @@ class RegisterActivityCompose : AppCompatActivity() {
                         // Mostrar Toast informativo
                         Toast.makeText(
                             this@RegisterActivityCompose,
-                            getString(Res.string.register_use_google_button),
+                            getString(R.string.register_use_google_button),
                             Toast.LENGTH_LONG
                         ).show()
 

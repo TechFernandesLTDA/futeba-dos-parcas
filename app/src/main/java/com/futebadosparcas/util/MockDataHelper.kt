@@ -566,7 +566,7 @@ object MockDataHelper {
                      position = if(Random.nextBoolean()) PlayerPosition.LINE.name else PlayerPosition.GOALKEEPER.name,
                      status = ConfirmationStatus.CONFIRMED.name,
                      paymentStatus = PaymentStatus.PENDING.name,
-                     confirmedAt = Date()
+                     confirmedAt = Date().time
                  )
                  confirmationsCollection.document(confirmation.id).set(confirmation).await()
                  addedCount++

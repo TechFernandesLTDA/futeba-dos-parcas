@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.home
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,12 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.ui.components.AnimatedStateContainer
 import com.futebadosparcas.ui.components.StateType
-import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.ui.components.PlayerCardShareHelper
 import com.futebadosparcas.ui.players.PlayerCardContent
 import com.futebadosparcas.domain.model.Activity
 import com.futebadosparcas.domain.model.Game
-import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.ui.games.GameWithConfirmations
 import com.futebadosparcas.domain.model.UserStreak
 import com.futebadosparcas.domain.model.WeeklyChallenge
@@ -46,6 +43,8 @@ import com.futebadosparcas.domain.model.UserBadge
 import com.futebadosparcas.ui.components.*
 import com.futebadosparcas.ui.home.components.*
 import com.futebadosparcas.util.HapticManager
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * HomeScreen - Tela Principal consolidada em Jetpack Compose
@@ -277,7 +276,7 @@ private fun HomeSuccessContent(
         if (!hasAnyContent) {
             item(key = "welcome_empty_state") {
                 WelcomeEmptyState(
-                    userName = user.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: stringResource(Res.string.default_player_name),
+                    userName = user.name.split(" ").firstOrNull()?.takeIf { it.isNotBlank() } ?: stringResource(R.string.default_player_name),
                     userLevel = gamificationSummary?.level ?: 0,
                     onCreateGame = onCreateGameClick,
                     onJoinGroup = onJoinGroupClick,
@@ -409,7 +408,7 @@ private fun HomeErrorState(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = stringResource(Res.string.error_default),
+            text = stringResource(R.string.error_default),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -423,7 +422,7 @@ private fun HomeErrorState(
         )
 
         Button(onClick = onRetry) {
-            Text(stringResource(Res.string.action_retry))
+            Text(stringResource(R.string.action_retry))
         }
     }
 }

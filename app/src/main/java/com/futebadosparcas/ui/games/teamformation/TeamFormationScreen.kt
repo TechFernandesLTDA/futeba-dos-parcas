@@ -1,8 +1,6 @@
 @file:OptIn(ExperimentalFoundationApi::class)
 
 package com.futebadosparcas.ui.games.teamformation
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -38,7 +36,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +55,8 @@ import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.util.ContrastHelper
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela de formacao de times com animacao de draft, drag-and-drop,
@@ -92,17 +91,17 @@ fun TeamFormationScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(Res.string.team_formation_title)) },
+                title = { Text(stringResource(R.string.team_formation_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
                     val state = uiState
                     if (state is TeamFormationUiState.Ready) {
                         IconButton(onClick = { viewModel.resetDraft() }) {
-                            Icon(Icons.Default.Refresh, contentDescription = stringResource(Res.string.reset))
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.reset))
                         }
                     }
                 },
@@ -122,9 +121,9 @@ fun TeamFormationScreen(
                 is TeamFormationUiState.Error -> {
                     EmptyState(
                         type = EmptyStateType.Error(
-                            title = stringResource(Res.string.error),
+                            title = stringResource(R.string.error),
                             description = state.message,
-                            actionLabel = stringResource(Res.string.retry),
+                            actionLabel = stringResource(R.string.retry),
                             onRetry = { viewModel.loadGame(gameId) }
                         )
                     )
@@ -215,15 +214,15 @@ private fun TeamFormationContent(
                     onClick = { showDraftModeDialog = true },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = stringResource(Res.string.cd_start_draft))
+                    Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.cd_start_draft))
                     Spacer(Modifier.width(8.dp))
-                    Text(stringResource(Res.string.start_draft))
+                    Text(stringResource(R.string.start_draft))
                 }
 
                 OutlinedButton(
                     onClick = { showSettingsDialog = true }
                 ) {
-                    Icon(Icons.Default.Settings, contentDescription = stringResource(Res.string.settings))
+                    Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
                 }
             }
 
@@ -274,18 +273,18 @@ private fun TeamFormationContent(
                     onClick = { showSaveFormationDialog = true },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.Star, contentDescription = stringResource(Res.string.cd_save_formation))
+                    Icon(Icons.Default.Star, contentDescription = stringResource(R.string.cd_save_formation))
                     Spacer(Modifier.width(8.dp))
-                    Text(stringResource(Res.string.save_formation))
+                    Text(stringResource(R.string.save_formation))
                 }
 
                 Button(
                     onClick = onConfirmTeams,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = stringResource(Res.string.cd_confirm_teams_icon))
+                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_confirm_teams_icon))
                     Spacer(Modifier.width(8.dp))
-                    Text(stringResource(Res.string.confirm_teams))
+                    Text(stringResource(R.string.confirm_teams))
                 }
             }
         }
@@ -396,7 +395,7 @@ private fun AvailablePlayersSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(Res.string.available_players, players.size),
+                    text = stringResource(R.string.available_players, players.size),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -404,7 +403,7 @@ private fun AvailablePlayersSection(
                 TextButton(onClick = onAddPair) {
                     Icon(Icons.Default.Link, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text(stringResource(Res.string.add_pair))
+                    Text(stringResource(R.string.add_pair))
                 }
             }
 
@@ -424,7 +423,7 @@ private fun AvailablePlayersSection(
             if (pairs.isNotEmpty()) {
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    text = stringResource(Res.string.configured_pairs),
+                    text = stringResource(R.string.configured_pairs),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -512,7 +511,7 @@ private fun PairChip(pair: PlayerPair, onRemove: () -> Unit) {
             ) {
                 Icon(
                     Icons.Default.Close,
-                    contentDescription = stringResource(Res.string.remove),
+                    contentDescription = stringResource(R.string.remove),
                     modifier = Modifier.size(14.dp),
                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
@@ -584,12 +583,12 @@ private fun TeamsDisplaySection(
                 ) {
                     Column {
                         Text(
-                            text = stringResource(Res.string.captain_turn, inProgress.currentPickerName),
+                            text = stringResource(R.string.captain_turn, inProgress.currentPickerName),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = stringResource(Res.string.pick_number, inProgress.pickNumber),
+                            text = stringResource(R.string.pick_number, inProgress.pickNumber),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -731,7 +730,7 @@ private fun TeamCard(
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = stringResource(
-                            if (teamIndex == 0) Res.string.team_a else Res.string.team_b
+                            if (teamIndex == 0) R.string.team_a else R.string.team_b
                         ),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
@@ -744,7 +743,7 @@ private fun TeamCard(
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Text(
-                            text = stringResource(Res.string.team_strength, strength.overallRating),
+                            text = stringResource(R.string.team_strength, strength.overallRating),
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
@@ -759,7 +758,7 @@ private fun TeamCard(
             // Lista de jogadores (draggable)
             if (players.isEmpty()) {
                 Text(
-                    text = stringResource(Res.string.drag_players_here),
+                    text = stringResource(R.string.drag_players_here),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
@@ -792,9 +791,9 @@ private fun TeamCard(
                     Spacer(Modifier.width(4.dp))
                     Text(
                         text = if (strength.hasGoalkeeper) {
-                            stringResource(Res.string.has_goalkeeper)
+                            stringResource(R.string.has_goalkeeper)
                         } else {
-                            stringResource(Res.string.no_goalkeeper)
+                            stringResource(R.string.no_goalkeeper)
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = if (strength.hasGoalkeeper) {
@@ -846,9 +845,9 @@ private fun DraggablePlayerRow(player: DraftPlayer, teamColor: Color) {
             )
             Text(
                 text = if (player.position == com.futebadosparcas.data.model.PlayerPosition.GOALKEEPER) {
-                    stringResource(Res.string.goalkeeper)
+                    stringResource(R.string.goalkeeper)
                 } else {
-                    stringResource(Res.string.field_player)
+                    stringResource(R.string.field_player)
                 },
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -857,7 +856,7 @@ private fun DraggablePlayerRow(player: DraftPlayer, teamColor: Color) {
         // Melhoria de acessibilidade: contentDescription para indicador de arrastar
         Icon(
             Icons.Default.DragIndicator,
-            contentDescription = stringResource(Res.string.cd_drag_to_move, player.name),
+            contentDescription = stringResource(R.string.cd_drag_to_move, player.name),
             modifier = Modifier.size(20.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -910,7 +909,7 @@ private fun TeamComparisonSection(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = stringResource(Res.string.team_comparison),
+                text = stringResource(R.string.team_comparison),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -987,9 +986,9 @@ private fun TeamComparisonSection(
                 Spacer(Modifier.width(4.dp))
                 Text(
                     text = if (isBalanced) {
-                        stringResource(Res.string.teams_balanced)
+                        stringResource(R.string.teams_balanced)
                     } else {
-                        stringResource(Res.string.teams_unbalanced, diffPercent)
+                        stringResource(R.string.teams_unbalanced, diffPercent)
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = if (isBalanced) {
@@ -1007,7 +1006,7 @@ private fun TeamComparisonSection(
                 Spacer(Modifier.height(12.dp))
 
                 Text(
-                    text = stringResource(Res.string.head_to_head),
+                    text = stringResource(R.string.head_to_head),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -1039,7 +1038,7 @@ private fun RotationSuggestionsSection(suggestions: List<SwapSuggestion>) {
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = stringResource(Res.string.rotation_suggestions),
+                    text = stringResource(R.string.rotation_suggestions),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.tertiary
@@ -1051,7 +1050,7 @@ private fun RotationSuggestionsSection(suggestions: List<SwapSuggestion>) {
             suggestions.forEach { suggestion ->
                 Text(
                     text = stringResource(
-                        Res.string.swap_suggestion,
+                        R.string.swap_suggestion,
                         suggestion.player1Name,
                         suggestion.player2Name
                     ),
@@ -1077,12 +1076,12 @@ private fun SavedFormationsSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = stringResource(Res.string.favorite_formations),
+                text = stringResource(R.string.favorite_formations),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
             TextButton(onClick = onViewAll) {
-                Text(stringResource(Res.string.see_all))
+                Text(stringResource(R.string.see_all))
             }
         }
 
@@ -1122,7 +1121,7 @@ private fun SavedFormationCard(
             Spacer(Modifier.height(4.dp))
             Text(
                 text = stringResource(
-                    Res.string.formation_players,
+                    R.string.formation_players,
                     formation.team1PlayerIds.size,
                     formation.team2PlayerIds.size
                 ),
@@ -1136,7 +1135,7 @@ private fun SavedFormationCard(
                         .background(Color(formation.getTeam1ColorEnum().hexValue), CircleShape)
                 )
                 Spacer(Modifier.width(4.dp))
-                Text(stringResource(Res.string.team_vs), style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.team_vs), style = MaterialTheme.typography.labelSmall)
                 Spacer(Modifier.width(4.dp))
                 Box(
                     modifier = Modifier
@@ -1228,11 +1227,11 @@ private fun DraftModeSelectionDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.select_draft_mode)) },
+        title = { Text(stringResource(R.string.select_draft_mode)) },
         text = {
             Column {
                 Text(
-                    text = stringResource(Res.string.draft_mode_description),
+                    text = stringResource(R.string.draft_mode_description),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -1245,7 +1244,7 @@ private fun DraftModeSelectionDialog(
                 ) {
                     Icon(Icons.Default.AutoMode, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(stringResource(Res.string.auto_draft))
+                    Text(stringResource(R.string.auto_draft))
                 }
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(
@@ -1254,13 +1253,13 @@ private fun DraftModeSelectionDialog(
                 ) {
                     Icon(Icons.Default.People, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(stringResource(Res.string.captain_picks))
+                    Text(stringResource(R.string.captain_picks))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -1277,11 +1276,11 @@ private fun CaptainSelectionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.select_captains)) },
+        title = { Text(stringResource(R.string.select_captains)) },
         text = {
             Column {
                 Text(
-                    text = stringResource(Res.string.captain_1),
+                    text = stringResource(R.string.captain_1),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -1305,7 +1304,7 @@ private fun CaptainSelectionDialog(
                 Spacer(Modifier.height(8.dp))
 
                 Text(
-                    text = stringResource(Res.string.captain_2),
+                    text = stringResource(R.string.captain_2),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -1338,12 +1337,12 @@ private fun CaptainSelectionDialog(
                 },
                 enabled = captain1Id != null && captain2Id != null
             ) {
-                Text(stringResource(Res.string.start))
+                Text(stringResource(R.string.start))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -1355,11 +1354,11 @@ private fun ColorPickerDialog(
     onDismiss: () -> Unit,
     onSelectColor: (TeamColor) -> Unit
 ) {
-    val selectedLabel = stringResource(Res.string.selected)
+    val selectedLabel = stringResource(R.string.selected)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.select_vest_color)) },
+        title = { Text(stringResource(R.string.select_vest_color)) },
         text = {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1404,7 +1403,7 @@ private fun ColorPickerDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.close))
+                Text(stringResource(R.string.close))
             }
         }
     )
@@ -1432,11 +1431,11 @@ private fun PairSelectionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.keep_together)) },
+        title = { Text(stringResource(R.string.keep_together)) },
         text = {
             Column {
                 Text(
-                    text = stringResource(Res.string.keep_together_description),
+                    text = stringResource(R.string.keep_together_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1444,7 +1443,7 @@ private fun PairSelectionDialog(
                 Spacer(Modifier.height(12.dp))
 
                 Text(
-                    text = stringResource(Res.string.player_1),
+                    text = stringResource(R.string.player_1),
                     style = MaterialTheme.typography.labelMedium
                 )
                 LazyRow(
@@ -1465,7 +1464,7 @@ private fun PairSelectionDialog(
                 }
 
                 Text(
-                    text = stringResource(Res.string.player_2),
+                    text = stringResource(R.string.player_2),
                     style = MaterialTheme.typography.labelMedium
                 )
                 LazyRow(
@@ -1497,12 +1496,12 @@ private fun PairSelectionDialog(
                 },
                 enabled = player1Id != null && player2Id != null
             ) {
-                Text(stringResource(Res.string.add))
+                Text(stringResource(R.string.add))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -1517,12 +1516,12 @@ private fun SaveFormationDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.save_formation)) },
+        title = { Text(stringResource(R.string.save_formation)) },
         text = {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text(stringResource(Res.string.formation_name)) },
+                label = { Text(stringResource(R.string.formation_name)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -1532,12 +1531,12 @@ private fun SaveFormationDialog(
                 onClick = { onSave(name) },
                 enabled = name.isNotBlank()
             ) {
-                Text(stringResource(Res.string.save))
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -1554,7 +1553,7 @@ private fun SavedFormationsListDialog(
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = stringResource(Res.string.saved_formations),
+                    text = stringResource(R.string.saved_formations),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -1563,7 +1562,7 @@ private fun SavedFormationsListDialog(
 
                 if (formations.isEmpty()) {
                     Text(
-                        text = stringResource(Res.string.no_saved_formations),
+                        text = stringResource(R.string.no_saved_formations),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1586,7 +1585,7 @@ private fun SavedFormationsListDialog(
                                     )
                                     Text(
                                         text = stringResource(
-                                            Res.string.times_used,
+                                            R.string.times_used,
                                             formation.timesUsed
                                         ),
                                         style = MaterialTheme.typography.labelSmall,
@@ -1598,13 +1597,13 @@ private fun SavedFormationsListDialog(
                                     IconButton(onClick = { onLoad(formation.id) }) {
                                         Icon(
                                             Icons.Default.PlayArrow,
-                                            contentDescription = stringResource(Res.string.load)
+                                            contentDescription = stringResource(R.string.load)
                                         )
                                     }
                                     IconButton(onClick = { onDelete(formation.id) }) {
                                         Icon(
                                             Icons.Default.Delete,
-                                            contentDescription = stringResource(Res.string.delete),
+                                            contentDescription = stringResource(R.string.delete),
                                             tint = MaterialTheme.colorScheme.error
                                         )
                                     }
@@ -1620,7 +1619,7 @@ private fun SavedFormationsListDialog(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End)
                 ) {
-                    Text(stringResource(Res.string.close))
+                    Text(stringResource(R.string.close))
                 }
             }
         }
@@ -1638,7 +1637,7 @@ private fun DraftSettingsDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.draft_settings)) },
+        title = { Text(stringResource(R.string.draft_settings)) },
         text = {
             Column {
                 Row(
@@ -1646,7 +1645,7 @@ private fun DraftSettingsDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(stringResource(Res.string.consider_positions))
+                    Text(stringResource(R.string.consider_positions))
                     Switch(
                         checked = considerPositions,
                         onCheckedChange = { considerPositions = it }
@@ -1655,7 +1654,7 @@ private fun DraftSettingsDialog(
 
                 Spacer(Modifier.height(16.dp))
 
-                Text(stringResource(Res.string.goalkeepers_per_team))
+                Text(stringResource(R.string.goalkeepers_per_team))
                 Spacer(Modifier.height(8.dp))
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1681,12 +1680,12 @@ private fun DraftSettingsDialog(
                     )
                 }
             ) {
-                Text(stringResource(Res.string.save))
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(R.string.cancel))
             }
         }
     )

@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -33,9 +31,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Componentes de Lazy Loading Progressivo.
@@ -238,7 +237,7 @@ private fun DefaultEmptyContent() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = stringResource(Res.string.no_data_available),
+            text = stringResource(R.string.no_data_available),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

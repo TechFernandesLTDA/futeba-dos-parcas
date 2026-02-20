@@ -167,7 +167,7 @@ class ProfileViewModel(
 
                 if (snapshot != null && snapshot.exists()) {
                     try {
-                        val updatedStats = snapshot.toObject(com.futebadosparcas.data.model.UserStatistics::class.java)
+                        val updatedStats = snapshot.toObject(com.futebadosparcas.domain.model.Statistics::class.java)
                         val currentState = _uiState.value
 
                         if (currentState is ProfileUiState.Success && updatedStats != null) {
@@ -328,7 +328,7 @@ class ProfileViewModel(
         return preferencesManager.isDevModeEnabled()
     }
 
-    private fun maybeUpdateAutoRatings(user: User, stats: com.futebadosparcas.data.model.UserStatistics?) {
+    private fun maybeUpdateAutoRatings(user: User, stats: com.futebadosparcas.domain.model.Statistics?) {
         if (stats == null || stats.totalGames < 3) return
 
         val autoRatings = PerformanceRatingCalculator.fromStats(stats)
@@ -394,13 +394,13 @@ sealed class ProfileUiState {
     data class Success(
         val user: User,
         val badges: List<com.futebadosparcas.data.model.UserBadge>,
-        val statistics: com.futebadosparcas.data.model.UserStatistics?,
+        val statistics: com.futebadosparcas.domain.model.Statistics?,
         val isDevMode: Boolean
     ) : ProfileUiState()
     data class ProfileUpdateSuccess(
         val user: User,
         val badges: List<com.futebadosparcas.data.model.UserBadge> = emptyList(),
-        val statistics: com.futebadosparcas.data.model.UserStatistics? = null,
+        val statistics: com.futebadosparcas.domain.model.Statistics? = null,
         val isDevMode: Boolean = false
     ) : ProfileUiState()
     data class Error(val message: String) : ProfileUiState()

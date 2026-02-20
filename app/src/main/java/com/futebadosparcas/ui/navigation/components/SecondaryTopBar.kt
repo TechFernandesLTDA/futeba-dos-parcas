@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.navigation.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -11,11 +9,12 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.MaterialTheme
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * TopBar padrao para telas secundarias com botao de voltar.
@@ -36,7 +35,7 @@ import androidx.compose.material3.MaterialTheme
  * Com string resource:
  * ```
  * SecondaryTopBar(
- *     titleResId = Res.string.game_detail_title,
+ *     titleResId = R.string.game_detail_title,
  *     onNavigateBack = { navController.popBackStack() }
  * )
  * ```
@@ -71,7 +70,7 @@ fun SecondaryTopBar(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(Res.string.back_button_content_description)
+                    contentDescription = stringResource(R.string.back_button_content_description)
                 )
             }
         },
@@ -120,7 +119,7 @@ fun SecondaryTopBarScroll(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(Res.string.back_button_content_description)
+                    contentDescription = stringResource(R.string.back_button_content_description)
                 )
             }
         },

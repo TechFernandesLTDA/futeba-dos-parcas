@@ -124,7 +124,7 @@ package com.futebadosparcas.ui.navigation.components
  *     onNavigateBack = { navController.popBackStack() },
  *     menuItems = listOf(
  *         AppTopBarMenuItem(
- *             textResId = Res.string.action_one,
+ *             textResId = R.string.action_one,
  *             icon = Icons.Default.ActionOne,
  *             onClick = { ... },
  *             showInline = true // ou false para menu dropdown

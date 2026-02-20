@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,13 +11,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.model.ConfirmationStatus
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Issue #70: Dialog para transferir titularidade do jogo.
@@ -55,14 +54,14 @@ fun TransferOwnershipDialog(
             },
             title = {
                 Text(
-                    text = stringResource(Res.string.transfer_confirm_title),
+                    text = stringResource(R.string.transfer_confirm_title),
                     textAlign = TextAlign.Center
                 )
             },
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = stringResource(Res.string.transfer_about_to),
+                        text = stringResource(R.string.transfer_about_to),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -90,7 +89,7 @@ fun TransferOwnershipDialog(
                         )
                     ) {
                         Text(
-                            text = stringResource(Res.string.transfer_irreversible),
+                            text = stringResource(R.string.transfer_irreversible),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             textAlign = TextAlign.Center,
@@ -112,12 +111,12 @@ fun TransferOwnershipDialog(
                 ) {
                     Icon(Icons.Default.SwapHoriz, contentDescription = null)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(Res.string.owner_confirm_transfer))
+                    Text(stringResource(R.string.owner_confirm_transfer))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirmation = false }) {
-                    Text(stringResource(Res.string.cancel))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -133,7 +132,7 @@ fun TransferOwnershipDialog(
                         tint = MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.owner_transfer_ownership))
+                    Text(stringResource(R.string.owner_transfer_ownership))
                 }
             },
             text = {
@@ -155,7 +154,7 @@ fun TransferOwnershipDialog(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = stringResource(Res.string.owner_transfer_warning),
+                                text = stringResource(R.string.owner_transfer_warning),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -181,7 +180,7 @@ fun TransferOwnershipDialog(
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = stringResource(Res.string.owner_no_players_to_transfer),
+                                    text = stringResource(R.string.owner_no_players_to_transfer),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center
@@ -190,7 +189,7 @@ fun TransferOwnershipDialog(
                         }
                     } else {
                         Text(
-                            text = stringResource(Res.string.transfer_select_organizer),
+                            text = stringResource(R.string.transfer_select_organizer),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -246,12 +245,12 @@ fun TransferOwnershipDialog(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text(stringResource(Res.string.action_continue))
+                    Text(stringResource(R.string.action_continue))
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text(stringResource(Res.string.cancel))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

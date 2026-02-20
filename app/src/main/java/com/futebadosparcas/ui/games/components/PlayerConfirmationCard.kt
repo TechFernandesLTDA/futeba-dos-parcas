@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -22,7 +20,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -37,6 +34,8 @@ import com.futebadosparcas.ui.games.presence.ReliabilityBadge
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Card de confirmacao de jogador com swipe actions para owner/admin.
@@ -242,7 +241,7 @@ private fun PlayerCardContent(
             .animateContentSize()
             .clickable(
                 onClick = onCardClick,
-                onClickLabel = stringResource(Res.string.player_card_click)
+                onClickLabel = stringResource(R.string.player_card_click)
             ),
         colors = CardDefaults.cardColors(
             containerColor = when {
@@ -318,7 +317,7 @@ private fun PlayerCardContent(
                             color = MaterialTheme.colorScheme.secondaryContainer
                         ) {
                             Text(
-                                text = stringResource(Res.string.goalkeeper_short),
+                                text = stringResource(R.string.goalkeeper_short),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
@@ -340,8 +339,8 @@ private fun PlayerCardContent(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = confirmation.checkedInAt?.let {
-                                    stringResource(Res.string.checkin_done_at, timeFormat.format(it))
-                                } ?: stringResource(Res.string.status_checked_in),
+                                    stringResource(R.string.checkin_done_at, timeFormat.format(it))
+                                } ?: stringResource(R.string.status_checked_in),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -355,7 +354,7 @@ private fun PlayerCardContent(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = confirmation.getEtaDisplay() ?: stringResource(Res.string.status_on_the_way),
+                                text = confirmation.getEtaDisplay() ?: stringResource(R.string.status_on_the_way),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.tertiary
                             )
@@ -394,7 +393,7 @@ private fun PlayerCardContent(
                     IconButton(onClick = onShowOptionsMenu) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = stringResource(Res.string.more_options),
+                            contentDescription = stringResource(R.string.more_options),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -406,8 +405,8 @@ private fun PlayerCardContent(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    if (isPaid) stringResource(Res.string.mark_unpaid)
-                                    else stringResource(Res.string.mark_paid)
+                                    if (isPaid) stringResource(R.string.mark_unpaid)
+                                    else stringResource(R.string.mark_paid)
                                 )
                             },
                             onClick = {
@@ -425,7 +424,7 @@ private fun PlayerCardContent(
                         )
 
                         DropdownMenuItem(
-                            text = { Text(stringResource(Res.string.partial_payment)) },
+                            text = { Text(stringResource(R.string.partial_payment)) },
                             onClick = {
                                 onShowPartialPayment()
                                 onDismissOptionsMenu()
@@ -441,7 +440,7 @@ private fun PlayerCardContent(
                         HorizontalDivider()
 
                         DropdownMenuItem(
-                            text = { Text(stringResource(Res.string.remove_player)) },
+                            text = { Text(stringResource(R.string.remove_player)) },
                             onClick = {
                                 onRemovePlayer()
                                 onDismissOptionsMenu()
@@ -504,9 +503,9 @@ private fun PaymentStatusBadge(
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = when {
-                    isPaid -> stringResource(Res.string.paid)
-                    hasPartial -> stringResource(Res.string.partial_value, partialAmount)
-                    else -> stringResource(Res.string.pending_payment)
+                    isPaid -> stringResource(R.string.paid)
+                    hasPartial -> stringResource(R.string.partial_value, partialAmount)
+                    else -> stringResource(R.string.pending_payment)
                 },
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Medium,
@@ -527,11 +526,11 @@ private fun PartialPaymentDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.partial_payment)) },
+        title = { Text(stringResource(R.string.partial_payment)) },
         text = {
             Column {
                 Text(
-                    text = stringResource(Res.string.partial_payment_description, totalPrice),
+                    text = stringResource(R.string.partial_payment_description, totalPrice),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -539,8 +538,8 @@ private fun PartialPaymentDialog(
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
-                    label = { Text(stringResource(Res.string.amount)) },
-                    prefix = { Text(stringResource(Res.string.currency_prefix) + " ") },
+                    label = { Text(stringResource(R.string.amount)) },
+                    prefix = { Text(stringResource(R.string.currency_prefix) + " ") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -552,12 +551,12 @@ private fun PartialPaymentDialog(
                     amount.toDoubleOrNull()?.let { onConfirm(it) }
                 }
             ) {
-                Text(stringResource(Res.string.confirm))
+                Text(stringResource(R.string.confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(R.string.cancel))
             }
         }
     )

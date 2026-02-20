@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.game_experience
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -18,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -31,6 +28,8 @@ import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * MVPVoteScreen - Tela de Votação MVP/Melhor Goleiro/Bola Murcha
@@ -70,13 +69,13 @@ fun MVPVoteScreen(
                             is MVPVoteUiState.Voting -> {
                                 val category = (uiState as MVPVoteUiState.Voting).currentCategory
                                 when (category) {
-                                    VoteCategory.MVP -> stringResource(Res.string.mvp_vote_1_3)
-                                    VoteCategory.BEST_GOALKEEPER -> stringResource(Res.string.mvp_vote_2_3)
-                                    VoteCategory.WORST -> stringResource(Res.string.mvp_vote_3_3)
-                                    VoteCategory.CUSTOM -> stringResource(Res.string.mvp_vote_title)
+                                    VoteCategory.MVP -> stringResource(R.string.mvp_vote_1_3)
+                                    VoteCategory.BEST_GOALKEEPER -> stringResource(R.string.mvp_vote_2_3)
+                                    VoteCategory.WORST -> stringResource(R.string.mvp_vote_3_3)
+                                    VoteCategory.CUSTOM -> stringResource(R.string.mvp_vote_title)
                                 }
                             }
-                            else -> stringResource(Res.string.mvp_vote_title)
+                            else -> stringResource(R.string.mvp_vote_title)
                         }
                     )
                 },
@@ -84,7 +83,7 @@ fun MVPVoteScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back)
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -145,9 +144,9 @@ fun MVPVoteScreen(
                 is MVPVoteUiState.Error -> {
                     EmptyState(
                         type = EmptyStateType.Error(
-                            title = stringResource(Res.string.error),
+                            title = stringResource(R.string.error),
                             description = state.message,
-                            actionLabel = stringResource(Res.string.retry),
+                            actionLabel = stringResource(R.string.retry),
                             onRetry = { viewModel.loadCandidates(gameId) }
                         )
                     )
@@ -187,10 +186,10 @@ private fun VotingContent(
             ) {
                 Text(
                     text = when (category) {
-                        VoteCategory.MVP -> stringResource(Res.string.mvp_who_was_star)
-                        VoteCategory.BEST_GOALKEEPER -> stringResource(Res.string.mvp_best_goalkeeper)
-                        VoteCategory.WORST -> stringResource(Res.string.mvp_worst_player)
-                        VoteCategory.CUSTOM -> stringResource(Res.string.mvp_vote_title)
+                        VoteCategory.MVP -> stringResource(R.string.mvp_who_was_star)
+                        VoteCategory.BEST_GOALKEEPER -> stringResource(R.string.mvp_best_goalkeeper)
+                        VoteCategory.WORST -> stringResource(R.string.mvp_worst_player)
+                        VoteCategory.CUSTOM -> stringResource(R.string.mvp_vote_title)
                     },
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
@@ -201,10 +200,10 @@ private fun VotingContent(
 
                 Text(
                     text = when (category) {
-                        VoteCategory.MVP -> stringResource(Res.string.mvp_best_player_desc)
-                        VoteCategory.BEST_GOALKEEPER -> stringResource(Res.string.mvp_goalkeeper_desc)
-                        VoteCategory.WORST -> stringResource(Res.string.mvp_worst_desc)
-                        VoteCategory.CUSTOM -> stringResource(Res.string.mvp_vote_title)
+                        VoteCategory.MVP -> stringResource(R.string.mvp_best_player_desc)
+                        VoteCategory.BEST_GOALKEEPER -> stringResource(R.string.mvp_goalkeeper_desc)
+                        VoteCategory.WORST -> stringResource(R.string.mvp_worst_desc)
+                        VoteCategory.CUSTOM -> stringResource(R.string.mvp_vote_title)
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -277,7 +276,7 @@ private fun CandidateCard(
                     .placeholder(R.drawable.ic_person)
                     .error(R.drawable.ic_person)
                     .build(),
-                contentDescription = stringResource(Res.string.player_photo, candidate.getDisplayName()),
+                contentDescription = stringResource(R.string.player_photo, candidate.getDisplayName()),
                 modifier = Modifier
                     .size(80.dp)
                     .clip(CircleShape),
@@ -307,7 +306,7 @@ private fun CandidateCard(
 
             Text(
                 text = stringResource(
-                    if (posEnum == PlayerPosition.GOALKEEPER) Res.string.goalkeeper else Res.string.field_player
+                    if (posEnum == PlayerPosition.GOALKEEPER) R.string.goalkeeper else R.string.field_player
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -337,7 +336,7 @@ private fun FinishedContent(
             // Ícone de sucesso com animação
             Icon(
                 imageVector = Icons.Default.CheckCircle,
-                contentDescription = stringResource(Res.string.cd_success_check),
+                contentDescription = stringResource(R.string.cd_success_check),
                 modifier = Modifier.size(120.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -345,7 +344,7 @@ private fun FinishedContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.mvp_vote_registered),
+                text = stringResource(R.string.mvp_vote_registered),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -353,7 +352,7 @@ private fun FinishedContent(
         } else {
             Icon(
                 imageVector = Icons.Default.CheckCircle,
-                contentDescription = stringResource(Res.string.cd_success_check),
+                contentDescription = stringResource(R.string.cd_success_check),
                 modifier = Modifier.size(80.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -361,7 +360,7 @@ private fun FinishedContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.mvp_already_voted),
+                text = stringResource(R.string.mvp_already_voted),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -371,7 +370,7 @@ private fun FinishedContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = stringResource(Res.string.mvp_wait_all_votes),
+            text = stringResource(R.string.mvp_wait_all_votes),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -393,7 +392,7 @@ private fun FinishedContent(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(Res.string.mvp_finish_voting_owner))
+                Text(stringResource(R.string.mvp_finish_voting_owner))
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -403,7 +402,7 @@ private fun FinishedContent(
             onClick = onCloseClick,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(stringResource(Res.string.close))
+            Text(stringResource(R.string.close))
         }
     }
 }

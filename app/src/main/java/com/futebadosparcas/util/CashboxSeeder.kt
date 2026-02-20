@@ -1,16 +1,15 @@
 package com.futebadosparcas.util
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.content.Context
 import com.futebadosparcas.domain.model.CashboxStatus
-import com.futebadosparcas.data.model.CashboxCategory
+import com.futebadosparcas.domain.model.CashboxCategory
 import com.futebadosparcas.domain.model.CashboxEntryType
 import com.futebadosparcas.domain.model.CashboxEntry
 import com.futebadosparcas.domain.repository.CashboxRepository
 import java.util.Calendar
 import java.util.Date
 import kotlin.random.Random
+import com.futebadosparcas.R
 
 class CashboxSeeder constructor(
     private val context: Context,
@@ -42,11 +41,11 @@ class CashboxSeeder constructor(
             }
 
             val description = when (category) {
-                CashboxCategory.MONTHLY_FEE -> context.getString(Res.string.cashbox_monthly_fee, i)
-                CashboxCategory.DONATION -> context.getString(Res.string.cashbox_donation)
-                CashboxCategory.FIELD_RENTAL -> context.getString(Res.string.cashbox_field_rental)
-                CashboxCategory.EQUIPMENT -> context.getString(Res.string.cashbox_equipment)
-                else -> context.getString(Res.string.cashbox_general_movement)
+                CashboxCategory.MONTHLY_FEE -> context.getString(R.string.cashbox_monthly_fee, i)
+                CashboxCategory.DONATION -> context.getString(R.string.cashbox_donation)
+                CashboxCategory.FIELD_RENTAL -> context.getString(R.string.cashbox_field_rental)
+                CashboxCategory.EQUIPMENT -> context.getString(R.string.cashbox_equipment)
+                else -> context.getString(R.string.cashbox_general_movement)
             }
 
             val entry = CashboxEntry(

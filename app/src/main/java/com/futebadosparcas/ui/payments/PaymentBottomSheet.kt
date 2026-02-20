@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.payments
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -15,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -23,6 +20,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import java.text.NumberFormat
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * PaymentBottomSheet - Modal bottom sheet para pagamento via Pix
@@ -67,7 +66,7 @@ fun PaymentBottomSheet(
             uiState = uiState,
             amount = amount,
             onCopyClick = { pixCode ->
-                copyToClipboard(context, pixCode, context.getString(Res.string.payment_copied))
+                copyToClipboard(context, pixCode, context.getString(R.string.payment_copied))
             },
             onConfirmClick = { paymentId ->
                 viewModel.confirmPayment(paymentId)
@@ -102,7 +101,7 @@ private fun PaymentBottomSheetContent(
     ) {
         // Header
         Text(
-            text = stringResource(Res.string.payment_pix_title),
+            text = stringResource(R.string.payment_pix_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -119,7 +118,7 @@ private fun PaymentBottomSheetContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = stringResource(Res.string.payment_amount_label),
+                    text = stringResource(R.string.payment_amount_label),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -169,7 +168,7 @@ private fun PaymentLoadingState() {
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = stringResource(Res.string.payment_generating),
+            text = stringResource(R.string.payment_generating),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -202,7 +201,7 @@ private fun PixGeneratedContent(
             ) {
                 AsyncImage(
                     model = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=$pixCode",
-                    contentDescription = stringResource(Res.string.payment_qr_description),
+                    contentDescription = stringResource(R.string.payment_qr_description),
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(8.dp)
@@ -211,7 +210,7 @@ private fun PixGeneratedContent(
         }
 
         Text(
-            text = stringResource(Res.string.payment_scan_instruction),
+            text = stringResource(R.string.payment_scan_instruction),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -222,7 +221,7 @@ private fun PixGeneratedContent(
             value = pixCode,
             onValueChange = {},
             readOnly = true,
-            label = { Text(stringResource(Res.string.payment_pix_code)) },
+            label = { Text(stringResource(R.string.payment_pix_code)) },
             trailingIcon = {
                 IconButton(
                     onClick = {
@@ -232,7 +231,7 @@ private fun PixGeneratedContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.ContentCopy,
-                        contentDescription = stringResource(Res.string.payment_copy_code),
+                        contentDescription = stringResource(R.string.payment_copy_code),
                         tint = if (isCopied) {
                             MaterialTheme.colorScheme.primary
                         } else {
@@ -255,12 +254,12 @@ private fun PixGeneratedContent(
                 .height(48.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text(stringResource(Res.string.payment_confirm_button))
+            Text(stringResource(R.string.payment_confirm_button))
         }
 
         if (!isCopied) {
             Text(
-                text = stringResource(Res.string.payment_copy_instruction),
+                text = stringResource(R.string.payment_copy_instruction),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -277,5 +276,5 @@ private fun copyToClipboard(context: Context, text: String, message: String) {
 }
 
 private fun showPaymentConfirmedToast(context: Context) {
-    Toast.makeText(context, context.getString(Res.string.payment_confirmed), Toast.LENGTH_LONG).show()
+    Toast.makeText(context, context.getString(R.string.payment_confirmed), Toast.LENGTH_LONG).show()
 }

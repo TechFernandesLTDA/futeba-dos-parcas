@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.search
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -68,10 +66,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 /**
  * Tela de Busca Global do Futeba dos Parças.
  * Permite buscar jogos, jogadores, grupos e locais em uma única interface.
@@ -83,11 +82,11 @@ import androidx.compose.ui.unit.dp
  * Categoria de busca.
  */
 enum class SearchCategory(val labelResId: Int, val icon: ImageVector) {
-    ALL(Res.string.search_all, Icons.Default.Search),
-    GAMES(Res.string.search_games, Icons.Default.SportsScore),
-    PLAYERS(Res.string.search_players, Icons.Default.Person),
-    GROUPS(Res.string.search_groups, Icons.Default.Groups),
-    LOCATIONS(Res.string.search_locations, Icons.Default.LocationOn)
+    ALL(R.string.search_all, Icons.Default.Search),
+    GAMES(R.string.search_games, Icons.Default.SportsScore),
+    PLAYERS(R.string.search_players, Icons.Default.Person),
+    GROUPS(R.string.search_groups, Icons.Default.Groups),
+    LOCATIONS(R.string.search_locations, Icons.Default.LocationOn)
 }
 
 /**
@@ -297,7 +296,7 @@ private fun SearchTopBar(
                 onValueChange = onQueryChange,
                 placeholder = {
                     Text(
-                        text = stringResource(Res.string.search_hint),
+                        text = stringResource(R.string.search_hint),
                         style = MaterialTheme.typography.bodyLarge
                     )
                 },
@@ -319,7 +318,7 @@ private fun SearchTopBar(
                         IconButton(onClick = onClear) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
-                                contentDescription = stringResource(Res.string.clear)
+                                contentDescription = stringResource(R.string.clear)
                             )
                         }
                     }
@@ -339,7 +338,7 @@ private fun SearchTopBar(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(Res.string.back)
+                    contentDescription = stringResource(R.string.back)
                 )
             }
         },
@@ -347,7 +346,7 @@ private fun SearchTopBar(
             IconButton(onClick = onFilterClick) {
                 Icon(
                     imageVector = Icons.Default.FilterList,
-                    contentDescription = stringResource(Res.string.filters)
+                    contentDescription = stringResource(R.string.filters)
                 )
             }
         },
@@ -407,13 +406,13 @@ private fun AdvancedFiltersSection(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = stringResource(Res.string.advanced_filters),
+                text = stringResource(R.string.advanced_filters),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = stringResource(Res.string.search_advanced_filters_hint),
+                text = stringResource(R.string.search_advanced_filters_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -441,12 +440,12 @@ private fun InitialSearchContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(Res.string.recent_searches),
+                        text = stringResource(R.string.recent_searches),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = stringResource(Res.string.clear_all),
+                        text = stringResource(R.string.clear_all),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
@@ -477,7 +476,7 @@ private fun InitialSearchContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(Res.string.popular_searches),
+                    text = stringResource(R.string.popular_searches),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -630,13 +629,13 @@ private fun EmptySearchContent(query: String) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = stringResource(Res.string.no_results_for, query),
+                text = stringResource(R.string.no_results_for, query),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = stringResource(Res.string.try_different_search),
+                text = stringResource(R.string.try_different_search),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -655,7 +654,7 @@ private fun ErrorSearchContent(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = stringResource(Res.string.search_error),
+                text = stringResource(R.string.search_error),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.error
             )

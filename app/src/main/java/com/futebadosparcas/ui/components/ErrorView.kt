@@ -1,9 +1,6 @@
 package com.futebadosparcas.ui.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Arrangement
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Error View Component
@@ -57,7 +56,7 @@ fun ErrorView(
     ) {
         Icon(
             imageVector = Icons.Default.Error,
-            contentDescription = stringResource(Res.string.cd_error),
+            contentDescription = stringResource(R.string.cd_error),
             tint = MaterialTheme.colorScheme.error,
             modifier = Modifier.size(64.dp)
         )

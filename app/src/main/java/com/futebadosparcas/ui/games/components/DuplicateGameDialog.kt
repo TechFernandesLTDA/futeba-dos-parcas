@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,6 +35,8 @@ import com.futebadosparcas.domain.model.Game
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Dialog para selecionar um jogo anterior para duplicar.
@@ -62,7 +61,7 @@ fun DuplicateGameDialog(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = stringResource(Res.string.create_game_duplicate_title),
+                    text = stringResource(R.string.create_game_duplicate_title),
                     style = MaterialTheme.typography.titleLarge
                 )
             }
@@ -70,7 +69,7 @@ fun DuplicateGameDialog(
         text = {
             if (recentGames.isEmpty()) {
                 Text(
-                    text = stringResource(Res.string.create_game_duplicate_empty),
+                    text = stringResource(R.string.create_game_duplicate_empty),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -93,7 +92,7 @@ fun DuplicateGameDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
+                Text(stringResource(R.string.cancel))
             }
         }
     )

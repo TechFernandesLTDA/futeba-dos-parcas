@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.livegame
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.app.Activity
 import android.app.PictureInPictureParams
@@ -37,7 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -45,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Dados do placar ao vivo para exibição em Picture-in-Picture
@@ -300,7 +299,7 @@ fun LiveIndicator(
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
-            text = stringResource(Res.string.pip_live_indicator),
+            text = stringResource(R.string.pip_live_indicator),
             color = MaterialTheme.colorScheme.onError,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold

@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.teamformation.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -22,7 +20,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,6 +29,8 @@ import com.futebadosparcas.domain.model.TeamColor
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.util.ContrastHelper
 import kotlinx.coroutines.delay
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Animacao de revelacao do draft com efeitos de suspense.
@@ -340,7 +339,7 @@ fun DraftCountdown(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(Res.string.start_draft),
+                text = stringResource(R.string.start_draft),
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White
             )
@@ -399,7 +398,7 @@ fun DraftProgressIndicator(
             TeamCountChip(
                 count = teamACount,
                 color = Color(teamAColor.hexValue),
-                label = stringResource(Res.string.team_a)
+                label = stringResource(R.string.team_a)
             )
 
             Text(
@@ -411,7 +410,7 @@ fun DraftProgressIndicator(
             TeamCountChip(
                 count = teamBCount,
                 color = Color(teamBColor.hexValue),
-                label = stringResource(Res.string.team_b)
+                label = stringResource(R.string.team_b)
             )
         }
     }

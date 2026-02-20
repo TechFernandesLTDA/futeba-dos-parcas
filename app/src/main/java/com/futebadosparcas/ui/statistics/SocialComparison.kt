@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.statistics
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -46,13 +44,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.ui.components.CachedAsyncImage
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Componentes para comparação social de estatísticas entre jogadores.
@@ -530,7 +529,7 @@ private fun LeaderboardItem(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = stringResource(Res.string.social_level, player.level),
+                text = stringResource(R.string.social_level, player.level),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

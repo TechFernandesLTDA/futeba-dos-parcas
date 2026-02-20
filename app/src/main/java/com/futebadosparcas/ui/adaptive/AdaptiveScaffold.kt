@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.adaptive
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
@@ -15,9 +13,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 /**
  * Item de navegação para o scaffold adaptativo.
  */
@@ -276,7 +275,7 @@ fun AdaptiveListDetail(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(Res.string.select_item_to_view_details),
+                            text = stringResource(R.string.select_item_to_view_details),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.home.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.model.WeeklyChallenge
@@ -33,6 +30,8 @@ import com.futebadosparcas.domain.model.UserChallengeProgress
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -50,7 +49,7 @@ fun ChallengesSection(
 
     Column(modifier = modifier) {
         Text(
-            text = stringResource(Res.string.challenges_title),
+            text = stringResource(R.string.challenges_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = spacing.contentPaddingHorizontal, vertical = spacing.sm)

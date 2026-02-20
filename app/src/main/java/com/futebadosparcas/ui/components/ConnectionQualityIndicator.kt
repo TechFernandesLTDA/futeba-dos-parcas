@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -43,8 +41,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 /**
  * Indicador visual de qualidade de conexão.
  * Mostra estado da rede e qualidade do sinal em tempo real.
@@ -265,7 +264,7 @@ fun OfflineBanner(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(Res.string.offline_message),
+                    text = stringResource(R.string.offline_message),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.weight(1f)
@@ -384,11 +383,11 @@ private fun getQualityColor(quality: ConnectionQuality): Color {
 @Composable
 private fun getQualityLabel(quality: ConnectionQuality): String {
     return when (quality) {
-        ConnectionQuality.EXCELLENT -> stringResource(Res.string.connection_excellent)
-        ConnectionQuality.GOOD -> stringResource(Res.string.connection_good)
-        ConnectionQuality.FAIR -> stringResource(Res.string.connection_fair)
-        ConnectionQuality.POOR -> stringResource(Res.string.connection_poor)
-        ConnectionQuality.OFFLINE -> stringResource(Res.string.connection_offline)
+        ConnectionQuality.EXCELLENT -> stringResource(R.string.connection_excellent)
+        ConnectionQuality.GOOD -> stringResource(R.string.connection_good)
+        ConnectionQuality.FAIR -> stringResource(R.string.connection_fair)
+        ConnectionQuality.POOR -> stringResource(R.string.connection_poor)
+        ConnectionQuality.OFFLINE -> stringResource(R.string.connection_offline)
     }
 }
 
@@ -396,10 +395,10 @@ private fun getQualityLabel(quality: ConnectionQuality): String {
 private fun getConnectionTypeLabel(type: ConnectionType): String {
     return when (type) {
         ConnectionType.WIFI -> "Wi-Fi"
-        ConnectionType.MOBILE -> stringResource(Res.string.mobile_data)
+        ConnectionType.MOBILE -> stringResource(R.string.mobile_data)
         ConnectionType.ETHERNET -> "Ethernet"
-        ConnectionType.UNKNOWN -> stringResource(Res.string.unknown_connection)
-        ConnectionType.NONE -> stringResource(Res.string.no_connection)
+        ConnectionType.UNKNOWN -> stringResource(R.string.unknown_connection)
+        ConnectionType.NONE -> stringResource(R.string.no_connection)
     }
 }
 

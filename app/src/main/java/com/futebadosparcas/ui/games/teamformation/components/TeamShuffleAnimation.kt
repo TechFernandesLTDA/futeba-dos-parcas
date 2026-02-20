@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.teamformation.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -21,7 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,6 +28,8 @@ import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.util.ContrastHelper
 import kotlinx.coroutines.delay
 import kotlin.random.Random
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Estado da animacao de shuffle.
@@ -119,7 +118,7 @@ private fun ShufflingCards(
     ) {
         // Titulo
         Text(
-            text = stringResource(Res.string.team_shuffle_shuffling),
+            text = stringResource(R.string.team_shuffle_shuffling),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = Color.White
@@ -361,7 +360,7 @@ private fun ShuffleCompleteMessage() {
         Spacer(Modifier.height(16.dp))
 
         Text(
-            text = stringResource(Res.string.team_shuffle_done),
+            text = stringResource(R.string.team_shuffle_done),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = Color.White

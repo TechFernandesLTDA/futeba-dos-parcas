@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.settings
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,10 +17,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.domain.model.GamificationSettings
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun GamificationSettingsScreen(
@@ -76,25 +75,25 @@ fun SettingsForm(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Categoria: Partida e Resultado
-        SectionCard(title = stringResource(Res.string.gamification_section_match_result), icon = Icons.Filled.EmojiEvents) {
-            SettingsInput(stringResource(Res.string.gamification_xp_win), settings.xpWin, Icons.Filled.CheckCircle) { settings = settings.copy(xpWin = it) }
-            SettingsInput(stringResource(Res.string.gamification_xp_draw), settings.xpDraw, Icons.Filled.RemoveCircle) { settings = settings.copy(xpDraw = it) }
-            SettingsInput(stringResource(Res.string.gamification_xp_presence), settings.xpPresence, Icons.Filled.Person) { settings = settings.copy(xpPresence = it) }
-            SettingsInput(stringResource(Res.string.gamification_xp_mvp), settings.xpMvp, Icons.Filled.Star) { settings = settings.copy(xpMvp = it) }
+        SectionCard(title = stringResource(R.string.gamification_section_match_result), icon = Icons.Filled.EmojiEvents) {
+            SettingsInput(stringResource(R.string.gamification_xp_win), settings.xpWin, Icons.Filled.CheckCircle) { settings = settings.copy(xpWin = it) }
+            SettingsInput(stringResource(R.string.gamification_xp_draw), settings.xpDraw, Icons.Filled.RemoveCircle) { settings = settings.copy(xpDraw = it) }
+            SettingsInput(stringResource(R.string.gamification_xp_presence), settings.xpPresence, Icons.Filled.Person) { settings = settings.copy(xpPresence = it) }
+            SettingsInput(stringResource(R.string.gamification_xp_mvp), settings.xpMvp, Icons.Filled.Star) { settings = settings.copy(xpMvp = it) }
         }
 
         // Categoria: Ações Técnicas
-        SectionCard(title = stringResource(Res.string.gamification_section_technical_skills), icon = Icons.Filled.SportsFootball) {
-            SettingsInput(stringResource(Res.string.gamification_xp_per_goal), settings.xpPerGoal, Icons.Filled.AddCircle) { settings = settings.copy(xpPerGoal = it) }
-            SettingsInput(stringResource(Res.string.gamification_xp_per_assist), settings.xpPerAssist, Icons.Filled.Handshake) { settings = settings.copy(xpPerAssist = it) }
-            SettingsInput(stringResource(Res.string.gamification_xp_per_save), settings.xpPerSave, Icons.Filled.Shield) { settings = settings.copy(xpPerSave = it) }
+        SectionCard(title = stringResource(R.string.gamification_section_technical_skills), icon = Icons.Filled.SportsFootball) {
+            SettingsInput(stringResource(R.string.gamification_xp_per_goal), settings.xpPerGoal, Icons.Filled.AddCircle) { settings = settings.copy(xpPerGoal = it) }
+            SettingsInput(stringResource(R.string.gamification_xp_per_assist), settings.xpPerAssist, Icons.Filled.Handshake) { settings = settings.copy(xpPerAssist = it) }
+            SettingsInput(stringResource(R.string.gamification_xp_per_save), settings.xpPerSave, Icons.Filled.Shield) { settings = settings.copy(xpPerSave = it) }
         }
 
         // Categoria: Sequências (Streaks)
-        SectionCard(title = stringResource(Res.string.gamification_section_streaks), icon = Icons.Filled.Whatshot) {
-            SettingsInput(stringResource(Res.string.gamification_xp_streak_3), settings.xpStreak3, Icons.Filled.Filter3) { settings = settings.copy(xpStreak3 = it) }
-            SettingsInput(stringResource(Res.string.gamification_xp_streak_7), settings.xpStreak7, Icons.Filled.Filter7) { settings = settings.copy(xpStreak7 = it) }
-            SettingsInput(stringResource(Res.string.gamification_xp_streak_10), settings.xpStreak10, Icons.Filled.Filter9Plus) { settings = settings.copy(xpStreak10 = it) }
+        SectionCard(title = stringResource(R.string.gamification_section_streaks), icon = Icons.Filled.Whatshot) {
+            SettingsInput(stringResource(R.string.gamification_xp_streak_3), settings.xpStreak3, Icons.Filled.Filter3) { settings = settings.copy(xpStreak3 = it) }
+            SettingsInput(stringResource(R.string.gamification_xp_streak_7), settings.xpStreak7, Icons.Filled.Filter7) { settings = settings.copy(xpStreak7 = it) }
+            SettingsInput(stringResource(R.string.gamification_xp_streak_10), settings.xpStreak10, Icons.Filled.Filter9Plus) { settings = settings.copy(xpStreak10 = it) }
         }
 
         Button(
@@ -104,7 +103,7 @@ fun SettingsForm(
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text(stringResource(Res.string.edit_profile_save_changes).uppercase(), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(stringResource(R.string.edit_profile_save_changes).uppercase(), fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
         
         Spacer(modifier = Modifier.height(32.dp))
@@ -215,7 +214,7 @@ fun ErrorMessage(message: String, onRetry: () -> Unit) {
         Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) {
-            Text(stringResource(Res.string.retry))
+            Text(stringResource(R.string.retry))
         }
     }
 }

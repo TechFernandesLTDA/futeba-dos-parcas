@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.statistics
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -21,9 +19,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Card de evolucao do jogador mostrando nivel e XP.
@@ -91,7 +90,7 @@ fun PlayerEvolutionCard(
                         color = onPrimaryColor
                     )
                     Text(
-                        text = stringResource(Res.string.player_evolution_level),
+                        text = stringResource(R.string.player_evolution_level),
                         fontSize = 10.sp,
                         color = onPrimaryColor.copy(alpha = 0.8f)
                     )
@@ -143,7 +142,7 @@ fun PlayerEvolutionCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = stringResource(Res.string.player_evolution_xp_remaining, xpNeeded - xpProgress),
+                    text = stringResource(R.string.player_evolution_xp_remaining, xpNeeded - xpProgress),
                     fontSize = 11.sp,
                     color = onPrimaryColor.copy(alpha = 0.7f),
                     modifier = Modifier.fillMaxWidth(),
@@ -155,7 +154,7 @@ fun PlayerEvolutionCard(
 
             // Total XP
             Text(
-                text = stringResource(Res.string.player_evolution_total, currentXp),
+                text = stringResource(R.string.player_evolution_total, currentXp),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = onPrimaryColor
@@ -219,13 +218,13 @@ fun PlayerLeagueCard(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(Res.string.player_evolution_league, division.displayName),
+                        text = stringResource(R.string.player_evolution_league, division.displayName),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = stringResource(Res.string.player_evolution_rating, leagueRating.toFloat()),
+                        text = stringResource(R.string.player_evolution_rating, leagueRating.toFloat()),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -236,17 +235,17 @@ fun PlayerLeagueCard(
             val hasExplicitStatus = protectionGames > 0 || promotionProgress > 0 || relegationProgress > 0
             if (protectionGames > 0) {
                 StatusBadge(
-                    text = stringResource(Res.string.evolution_protected),
+                    text = stringResource(R.string.evolution_protected),
                     color = MaterialTheme.colorScheme.primary
                 )
             } else if (promotionProgress > 0) {
                 StatusBadge(
-                    text = stringResource(Res.string.evolution_promoting, promotionProgress),
+                    text = stringResource(R.string.evolution_promoting, promotionProgress),
                     color = MaterialTheme.colorScheme.primary
                 )
             } else if (relegationProgress > 0) {
                 StatusBadge(
-                    text = stringResource(Res.string.evolution_relegating, relegationProgress),
+                    text = stringResource(R.string.evolution_relegating, relegationProgress),
                     color = MaterialTheme.colorScheme.error
                 )
             }
@@ -427,7 +426,7 @@ fun MilestoneProgressCard(
                     color = MaterialTheme.colorScheme.tertiary
                 )
                 Text(
-                    text = stringResource(Res.string.player_evolution_xp, xpReward),
+                    text = stringResource(R.string.player_evolution_xp, xpReward),
                     fontSize = 10.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

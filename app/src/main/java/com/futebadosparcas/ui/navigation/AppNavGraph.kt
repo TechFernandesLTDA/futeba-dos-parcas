@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.navigation
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
@@ -22,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import org.jetbrains.compose.resources.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -66,6 +63,8 @@ import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.util.PreferencesManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Define todas as rotas da navegação do app.
@@ -88,58 +87,58 @@ sealed class Screen(
     // ==================== SECONDARY DESTINATIONS ====================
 
     // Statistics & Rankings (Statistics agora é secundário, acessível via League)
-    data object Statistics : Screen("statistics", titleResId = Res.string.nav_statistics)
-    data object Ranking : Screen("ranking", titleResId = Res.string.fragment_statistics_text_1)
-    data object Evolution : Screen("evolution", titleResId = Res.string.fragment_statistics_text_2)
-    data object Badges : Screen("badges", titleResId = Res.string.badges_title)
+    data object Statistics : Screen("statistics", titleResId = R.string.nav_statistics)
+    data object Ranking : Screen("ranking", titleResId = R.string.fragment_statistics_text_1)
+    data object Evolution : Screen("evolution", titleResId = R.string.fragment_statistics_text_2)
+    data object Badges : Screen("badges", titleResId = R.string.badges_title)
 
     // Game management
-    data object GameDetail : Screen("game_detail/{gameId}", titleResId = Res.string.game_detail) {
+    data object GameDetail : Screen("game_detail/{gameId}", titleResId = R.string.game_detail) {
         fun createRoute(gameId: String) = "game_detail/$gameId"
     }
-    data object CreateGame : Screen("create_game", titleResId = Res.string.create_game)
-    data object LiveGame : Screen("live_game/{gameId}", titleResId = Res.string.live_game) {
+    data object CreateGame : Screen("create_game", titleResId = R.string.create_game)
+    data object LiveGame : Screen("live_game/{gameId}", titleResId = R.string.live_game) {
         fun createRoute(gameId: String) = "live_game/$gameId"
     }
-    data object MVPVote : Screen("mvp_vote/{gameId}", titleResId = Res.string.mvp_vote) {
+    data object MVPVote : Screen("mvp_vote/{gameId}", titleResId = R.string.mvp_vote) {
         fun createRoute(gameId: String) = "mvp_vote/$gameId"
     }
-    data object TacticalBoard : Screen("tactical_board", titleResId = Res.string.tactical_board)
+    data object TacticalBoard : Screen("tactical_board", titleResId = R.string.tactical_board)
 
     // Group management
-    data object Groups : Screen("groups", titleResId = Res.string.groups)
-    data object GroupDetail : Screen("group_detail/{groupId}", titleResId = Res.string.group_detail) {
+    data object Groups : Screen("groups", titleResId = R.string.groups)
+    data object GroupDetail : Screen("group_detail/{groupId}", titleResId = R.string.group_detail) {
         fun createRoute(groupId: String) = "group_detail/$groupId"
     }
-    data object CreateGroup : Screen("create_group", titleResId = Res.string.create_group)
-    data object InvitePlayers : Screen("invite_players/{groupId}", titleResId = Res.string.invite_players) {
+    data object CreateGroup : Screen("create_group", titleResId = R.string.create_group)
+    data object InvitePlayers : Screen("invite_players/{groupId}", titleResId = R.string.invite_players) {
         fun createRoute(groupId: String) = "invite_players/$groupId"
     }
-    data object Cashbox : Screen("cashbox/{groupId}", titleResId = Res.string.cashbox) {
+    data object Cashbox : Screen("cashbox/{groupId}", titleResId = R.string.cashbox) {
         fun createRoute(groupId: String) = "cashbox/$groupId"
     }
 
     // Locations
-    data object LocationsMap : Screen("locations_map", titleResId = Res.string.location_map_title)
-    data object LocationDetail : Screen("location_detail", titleResId = Res.string.location_detail)
-    data object ManageLocations : Screen("manage_locations", titleResId = Res.string.manage_locations)
-    data object FieldOwnerDashboard : Screen("field_owner_dashboard", titleResId = Res.string.field_owner_dashboard)
+    data object LocationsMap : Screen("locations_map", titleResId = R.string.location_map_title)
+    data object LocationDetail : Screen("location_detail", titleResId = R.string.location_detail)
+    data object ManageLocations : Screen("manage_locations", titleResId = R.string.manage_locations)
+    data object FieldOwnerDashboard : Screen("field_owner_dashboard", titleResId = R.string.field_owner_dashboard)
 
     // Profile & Settings
-    data object EditProfile : Screen("edit_profile", titleResId = Res.string.edit_profile)
-    data object Preferences : Screen("preferences", titleResId = Res.string.preferences)
-    data object ThemeSettings : Screen("theme_settings", titleResId = Res.string.theme_settings)
-    data object GamificationSettings : Screen("gamification_settings", titleResId = Res.string.gamification_settings)
-    data object Developer : Screen("developer", titleResId = Res.string.developer)
-    data object LevelJourney : Screen("level_journey", titleResId = Res.string.level_journey)
-    data object About : Screen("about", titleResId = Res.string.about)
-    data object Schedules : Screen("schedules", titleResId = Res.string.schedules)
+    data object EditProfile : Screen("edit_profile", titleResId = R.string.edit_profile)
+    data object Preferences : Screen("preferences", titleResId = R.string.preferences)
+    data object ThemeSettings : Screen("theme_settings", titleResId = R.string.theme_settings)
+    data object GamificationSettings : Screen("gamification_settings", titleResId = R.string.gamification_settings)
+    data object Developer : Screen("developer", titleResId = R.string.developer)
+    data object LevelJourney : Screen("level_journey", titleResId = R.string.level_journey)
+    data object About : Screen("about", titleResId = R.string.about)
+    data object Schedules : Screen("schedules", titleResId = R.string.schedules)
 
     // Notifications
-    data object Notifications : Screen("notifications", titleResId = Res.string.notifications)
+    data object Notifications : Screen("notifications", titleResId = R.string.notifications)
 
     // Admin
-    data object UserManagement : Screen("user_management", titleResId = Res.string.admin_manage_users)
+    data object UserManagement : Screen("user_management", titleResId = R.string.admin_manage_users)
 }
 
 /**
@@ -795,7 +794,7 @@ private fun SecondaryScreenWrapper(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.back)
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },

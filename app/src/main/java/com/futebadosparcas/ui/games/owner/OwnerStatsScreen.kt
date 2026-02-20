@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.owner
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -29,6 +26,8 @@ import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.components.states.LoadingItemType
 import java.text.NumberFormat
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Issue #67: Estatisticas do Organizador
@@ -58,10 +57,10 @@ fun OwnerStatsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(Res.string.owner_stats_title)) },
+                title = { Text(stringResource(R.string.owner_stats_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -98,7 +97,7 @@ fun OwnerStatsScreen(
                     ) {
                         stats.bestAttendedGame?.let { game ->
                             HighlightGameCard(
-                                title = stringResource(Res.string.owner_best_game),
+                                title = stringResource(R.string.owner_best_game),
                                 game = game,
                                 icon = Icons.Default.ThumbUp,
                                 color = com.futebadosparcas.ui.theme.BrandColors.WhatsApp,
@@ -108,7 +107,7 @@ fun OwnerStatsScreen(
                         }
                         stats.worstAttendedGame?.let { game ->
                             HighlightGameCard(
-                                title = stringResource(Res.string.owner_worst_game),
+                                title = stringResource(R.string.owner_worst_game),
                                 game = game,
                                 icon = Icons.Default.ThumbDown,
                                 color = MaterialTheme.colorScheme.error,
@@ -122,7 +121,7 @@ fun OwnerStatsScreen(
                 // Jogos recentes
                 item {
                     Text(
-                        text = stringResource(Res.string.owner_recent_games),
+                        text = stringResource(R.string.owner_recent_games),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -154,7 +153,7 @@ private fun OwnerStatsHeader(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = stringResource(Res.string.owner_stats_overview),
+                text = stringResource(R.string.owner_stats_overview),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -168,12 +167,12 @@ private fun OwnerStatsHeader(
             ) {
                 StatItem(
                     value = stats.totalGamesOrganized.toString(),
-                    label = stringResource(Res.string.owner_games_organized),
+                    label = stringResource(R.string.owner_games_organized),
                     icon = Icons.Default.SportsScore
                 )
                 StatItem(
                     value = stats.totalPlayersHosted.toString(),
-                    label = stringResource(Res.string.owner_players_hosted),
+                    label = stringResource(R.string.owner_players_hosted),
                     icon = Icons.Default.Groups
                 )
             }
@@ -186,12 +185,12 @@ private fun OwnerStatsHeader(
             ) {
                 StatItem(
                     value = "${(stats.averageAttendance * 100).toInt()}%",
-                    label = stringResource(Res.string.owner_avg_attendance),
+                    label = stringResource(R.string.owner_avg_attendance),
                     icon = Icons.Default.CheckCircle
                 )
                 StatItem(
                     value = currencyFormat.format(stats.totalRevenue),
-                    label = stringResource(Res.string.owner_total_revenue),
+                    label = stringResource(R.string.owner_total_revenue),
                     icon = Icons.Default.AttachMoney
                 )
             }
@@ -248,7 +247,7 @@ private fun AttendanceTrendCard(trend: List<Float>) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(Res.string.owner_attendance_trend),
+                    text = stringResource(R.string.owner_attendance_trend),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -284,7 +283,7 @@ private fun AttendanceTrendCard(trend: List<Float>) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(Res.string.owner_last_n_games, trend.size.coerceAtMost(10)),
+                text = stringResource(R.string.owner_last_n_games, trend.size.coerceAtMost(10)),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

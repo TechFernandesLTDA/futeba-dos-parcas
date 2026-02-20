@@ -7,6 +7,7 @@ import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import com.futebadosparcas.R
 
 /**
  * Resource Manager
@@ -18,7 +19,7 @@ import androidx.core.content.ContextCompat
  * lateinit var resourceManager: ResourceManager
  *
  * // Get string
- * val text = resourceManager.getString(Res.string.app_name)
+ * val text = resourceManager.getString(R.string.app_name)
  *
  * // Get color
  * val color = resourceManager.getColor(R.color.primary)

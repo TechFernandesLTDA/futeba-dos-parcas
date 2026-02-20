@@ -41,9 +41,10 @@ import com.futebadosparcas.domain.model.Activity
 import com.futebadosparcas.domain.model.ActivityType
 import com.futebadosparcas.util.LevelBadgeHelper
 import androidx.compose.ui.res.painterResource
-import org.jetbrains.compose.resources.stringResource
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ActivityFeedSection(
@@ -52,7 +53,7 @@ fun ActivityFeedSection(
 ) {
     Column(modifier = modifier) {
         Text(
-            text = stringResource(Res.string.activity_feed_title),
+            text = stringResource(R.string.activity_feed_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -97,7 +98,7 @@ fun ActivityCard(activity: Activity) {
                 // Show level badge
                 androidx.compose.foundation.Image(
                     painter = painterResource(id = LevelBadgeHelper.getBadgeForLevel(level)),
-                    contentDescription = stringResource(Res.string.activity_feed_level_badge_cd, level),
+                    contentDescription = stringResource(R.string.activity_feed_level_badge_cd, level),
                     modifier = Modifier.size(40.dp)
                 )
             } else {
@@ -174,7 +175,7 @@ fun EmptyActivityState() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = stringResource(Res.string.activity_feed_no_activity),
+            text = stringResource(R.string.activity_feed_no_activity),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.components.design
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,12 +14,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.ui.theme.AppDimensions
 import kotlinx.coroutines.flow.StateFlow
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Lista de ranking com paginação automática.
@@ -111,7 +110,7 @@ fun <T : Any> PaginatedRankingList(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = stringResource(Res.string.list_end),
+                            text = stringResource(R.string.list_end),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.home.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,6 +26,8 @@ import com.futebadosparcas.domain.model.UserBadge
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Carrossel de badges recentes.
@@ -53,7 +52,7 @@ fun RecentBadgesCarousel(
 
     Column(modifier = modifier) {
         Text(
-            text = stringResource(Res.string.recent_badges_title),
+            text = stringResource(R.string.recent_badges_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = spacing.contentPaddingHorizontal, vertical = spacing.sm)

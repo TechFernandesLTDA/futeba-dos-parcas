@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.locations
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,11 +12,12 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.domain.model.Location
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * LocationsMapScreen - Mapa com locais de pelada
@@ -41,12 +40,12 @@ fun LocationsMapScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(Res.string.locations_map_title)) },
+                title = { Text(stringResource(R.string.locations_map_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.locations_map_back)
+                            contentDescription = stringResource(R.string.locations_map_back)
                         )
                     }
                 },
@@ -120,7 +119,7 @@ private fun MapContent(
 
     // Descricao para acessibilidade do mapa inteiro
     val validLocationCount = locations.count { it.latitude != null && it.longitude != null }
-    val mapDescription = stringResource(Res.string.location_map_region_description, validLocationCount)
+    val mapDescription = stringResource(R.string.location_map_region_description, validLocationCount)
 
     GoogleMap(
         modifier = Modifier
@@ -162,7 +161,7 @@ private fun buildMarkerDescription(location: Location): String {
     return when {
         hasNeighborhood && hasRating -> {
             stringResource(
-                Res.string.location_marker_description,
+                R.string.location_marker_description,
                 location.name,
                 location.neighborhood,
                 location.rating
@@ -170,21 +169,21 @@ private fun buildMarkerDescription(location: Location): String {
         }
         hasNeighborhood && !hasRating -> {
             stringResource(
-                Res.string.location_marker_description_no_rating,
+                R.string.location_marker_description_no_rating,
                 location.name,
                 location.neighborhood
             )
         }
         !hasNeighborhood && hasRating -> {
             stringResource(
-                Res.string.location_marker_description_no_neighborhood,
+                R.string.location_marker_description_no_neighborhood,
                 location.name,
                 location.rating
             )
         }
         else -> {
             stringResource(
-                Res.string.location_marker_description_name_only,
+                R.string.location_marker_description_name_only,
                 location.name
             )
         }
@@ -193,7 +192,7 @@ private fun buildMarkerDescription(location: Location): String {
 
 @Composable
 private fun LoadingState() {
-    val loadingDescription = stringResource(Res.string.location_loading_description)
+    val loadingDescription = stringResource(R.string.location_loading_description)
 
     Box(
         modifier = Modifier
@@ -221,12 +220,12 @@ private fun EmptyState() {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = stringResource(Res.string.locations_map_no_locations),
+                text = stringResource(R.string.locations_map_no_locations),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = stringResource(Res.string.locations_map_add_first),
+                text = stringResource(R.string.locations_map_add_first),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -249,7 +248,7 @@ private fun ErrorState(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = stringResource(Res.string.locations_map_error_title),
+                text = stringResource(R.string.locations_map_error_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.error
             )
@@ -259,7 +258,7 @@ private fun ErrorState(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Button(onClick = onRetry) {
-                Text(stringResource(Res.string.locations_map_retry))
+                Text(stringResource(R.string.locations_map_retry))
             }
         }
     }

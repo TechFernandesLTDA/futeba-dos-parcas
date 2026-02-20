@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.players
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -24,13 +22,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.window.Dialog
 import coil3.compose.AsyncImage
 import com.futebadosparcas.domain.model.LevelTable
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.User
-import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
@@ -40,6 +37,8 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Dialog de Comparação de Jogadores
@@ -79,7 +78,7 @@ fun ComparePlayersUiDialog(
                     PlayerHeader(user = user1, color = MaterialTheme.colorScheme.primary)
                     
                     Text(
-                        text = stringResource(Res.string.players_vs),
+                        text = stringResource(R.string.players_vs),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -121,7 +120,7 @@ fun ComparePlayersUiDialog(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(stringResource(Res.string.players_close))
+                    Text(stringResource(R.string.players_close))
                 }
             }
         }
@@ -274,10 +273,10 @@ private fun StatsComparisonTable(
     color2: Color
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        StatRow(stringResource(Res.string.players_goals), stats1?.totalGoals ?: 0, stats2?.totalGoals ?: 0, color1, color2)
-        StatRow(stringResource(Res.string.players_assists), stats1?.totalAssists ?: 0, stats2?.totalAssists ?: 0, color1, color2)
-        StatRow(stringResource(Res.string.players_games), stats1?.totalGames ?: 0, stats2?.totalGames ?: 0, color1, color2)
-        StatRow(stringResource(Res.string.players_mvps), stats1?.bestPlayerCount ?: 0, stats2?.bestPlayerCount ?: 0, color1, color2)
+        StatRow(stringResource(R.string.players_goals), stats1?.totalGoals ?: 0, stats2?.totalGoals ?: 0, color1, color2)
+        StatRow(stringResource(R.string.players_assists), stats1?.totalAssists ?: 0, stats2?.totalAssists ?: 0, color1, color2)
+        StatRow(stringResource(R.string.players_games), stats1?.totalGames ?: 0, stats2?.totalGames ?: 0, color1, color2)
+        StatRow(stringResource(R.string.players_mvps), stats1?.bestPlayerCount ?: 0, stats2?.bestPlayerCount ?: 0, color1, color2)
     }
 }
 
@@ -354,7 +353,7 @@ fun PlayerCardContent(
                 val badgeRes = LevelBadgeHelper.getBadgeForLevel(user.level)
                 Image(
                     painter = painterResource(id = badgeRes),
-                    contentDescription = stringResource(Res.string.cd_level_badge),
+                    contentDescription = stringResource(R.string.cd_level_badge),
                     modifier = Modifier
                         .size(36.dp)
                         .offset(x = 4.dp, y = 4.dp)
@@ -411,7 +410,7 @@ fun PlayerCardContent(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = stringResource(Res.string.players_xp),
+                        text = stringResource(R.string.players_xp),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -440,9 +439,9 @@ fun PlayerCardContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem(label = stringResource(Res.string.players_games), value = stats?.totalGames?.toString() ?: "0")
-                StatItem(label = stringResource(Res.string.players_goals), value = stats?.totalGoals?.toString() ?: "0")
-                StatItem(label = stringResource(Res.string.players_assists), value = stats?.totalAssists?.toString() ?: "0")
+                StatItem(label = stringResource(R.string.players_games), value = stats?.totalGames?.toString() ?: "0")
+                StatItem(label = stringResource(R.string.players_goals), value = stats?.totalGoals?.toString() ?: "0")
+                StatItem(label = stringResource(R.string.players_assists), value = stats?.totalAssists?.toString() ?: "0")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -451,9 +450,9 @@ fun PlayerCardContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem(label = stringResource(Res.string.players_wins), value = stats?.gamesWon?.toString() ?: "0")
-                StatItem(label = stringResource(Res.string.players_mvps), value = stats?.bestPlayerCount?.toString() ?: "0")
-                StatItem(label = stringResource(Res.string.players_saves), value = stats?.totalSaves?.toString() ?: "0")
+                StatItem(label = stringResource(R.string.players_wins), value = stats?.gamesWon?.toString() ?: "0")
+                StatItem(label = stringResource(R.string.players_mvps), value = stats?.bestPlayerCount?.toString() ?: "0")
+                StatItem(label = stringResource(R.string.players_saves), value = stats?.totalSaves?.toString() ?: "0")
             }
             
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
@@ -464,22 +463,22 @@ fun PlayerCardContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 SkillBar(
-                    label = stringResource(Res.string.players_attack),
+                    label = stringResource(R.string.players_attack),
                     rating = user.getEffectiveRating(PlayerRatingRole.STRIKER),
                     color = MaterialTheme.colorScheme.tertiary
                 )
                 SkillBar(
-                    label = stringResource(Res.string.players_goalkeeper),
+                    label = stringResource(R.string.players_goalkeeper),
                     rating = user.getEffectiveRating(PlayerRatingRole.GOALKEEPER),
                     color = MaterialTheme.colorScheme.secondary
                 )
                 SkillBar(
-                    label = stringResource(Res.string.players_mid),
+                    label = stringResource(R.string.players_mid),
                     rating = user.getEffectiveRating(PlayerRatingRole.MID),
                     color = MaterialTheme.colorScheme.primary
                 )
                 SkillBar(
-                    label = stringResource(Res.string.players_defense),
+                    label = stringResource(R.string.players_defense),
                     rating = user.getEffectiveRating(PlayerRatingRole.DEFENDER),
                     color = MaterialTheme.colorScheme.error
                 )
@@ -489,7 +488,7 @@ fun PlayerCardContent(
 
             // Timestamp
             Text(
-                text = stringResource(Res.string.players_generated_on, SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale.forLanguageTag("pt-BR")).format(Date())),
+                text = stringResource(R.string.players_generated_on, SimpleDateFormat("dd/MM/yyyy 'às' HH:mm", Locale.forLanguageTag("pt-BR")).format(Date())),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
@@ -505,7 +504,7 @@ fun PlayerCardContent(
                     onClick = onClose,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(Res.string.players_close))
+                    Text(stringResource(R.string.players_close))
                 }
 
                 Button(
@@ -518,7 +517,7 @@ fun PlayerCardContent(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.players_share))
+                    Text(stringResource(R.string.players_share))
                 }
             }
         }

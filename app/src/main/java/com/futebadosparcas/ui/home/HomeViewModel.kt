@@ -438,7 +438,7 @@ sealed class HomeUiState {
         val user: com.futebadosparcas.domain.model.User,
         val games: List<GameWithConfirmations>,
         val gamificationSummary: GamificationSummary,
-        val statistics: com.futebadosparcas.data.model.UserStatistics? = null,
+        val statistics: com.futebadosparcas.domain.model.Statistics? = null,
         val activities: List<Activity> = emptyList(),
         val publicGames: List<Game> = emptyList(),
         val streak: com.futebadosparcas.domain.model.UserStreak? = null,

@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
@@ -17,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -38,6 +35,8 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.text.Normalizer
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Dialog moderno de seleção de local com busca integrada ao Google Places
@@ -78,14 +77,14 @@ fun LocationSelectionDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = stringResource(Res.string.dialog_select_location_text_1),
+                        text = stringResource(R.string.dialog_select_location_text_1),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(Res.string.close)
+                            contentDescription = stringResource(R.string.close)
                         )
                     }
                 }
@@ -97,7 +96,7 @@ fun LocationSelectionDialog(
                     value = searchQuery,
                     onValueChange = viewModel::onSearchQueryChanged,
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text(stringResource(Res.string.dialog_select_location_hint_2)) },
+                    placeholder = { Text(stringResource(R.string.dialog_select_location_hint_2)) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
@@ -109,7 +108,7 @@ fun LocationSelectionDialog(
                             IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
                                 Icon(
                                     imageVector = Icons.Default.Clear,
-                                    contentDescription = stringResource(Res.string.empty_state_clear_search)
+                                    contentDescription = stringResource(R.string.empty_state_clear_search)
                                 )
                             }
                         }
@@ -126,9 +125,9 @@ fun LocationSelectionDialog(
                 // Section title
                 Text(
                     text = if (searchQuery.length >= 3) {
-                        stringResource(Res.string.create_game_search_results)
+                        stringResource(R.string.create_game_search_results)
                     } else {
-                        stringResource(Res.string.dialog_select_location_text_3)
+                        stringResource(R.string.dialog_select_location_text_3)
                     },
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
@@ -193,7 +192,7 @@ fun LocationSelectionDialog(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End)
                 ) {
-                    Text(stringResource(Res.string.cancel))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         }
@@ -283,9 +282,9 @@ private fun EmptyLocationState(searchQuery: String) {
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = if (searchQuery.length >= 3) {
-                stringResource(Res.string.empty_state_no_results_title)
+                stringResource(R.string.empty_state_no_results_title)
             } else {
-                stringResource(Res.string.dialog_select_location_text_4)
+                stringResource(R.string.dialog_select_location_text_4)
             },
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -317,7 +316,7 @@ private fun ErrorLocationState(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) {
-            Text(stringResource(Res.string.retry))
+            Text(stringResource(R.string.retry))
         }
     }
 }
@@ -365,7 +364,7 @@ fun FieldSelectionDialog(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(Res.string.dialog_select_field_text_1),
+                            text = stringResource(R.string.dialog_select_field_text_1),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
@@ -378,7 +377,7 @@ fun FieldSelectionDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(Res.string.close)
+                            contentDescription = stringResource(R.string.close)
                         )
                     }
                 }
@@ -397,22 +396,22 @@ fun FieldSelectionDialog(
                     edgePadding = 0.dp
                 ) {
                     FilterChipTab(
-                        text = stringResource(Res.string.dialog_select_field_text_3),
+                        text = stringResource(R.string.dialog_select_field_text_3),
                         isSelected = selectedFieldType == null,
                         onClick = { viewModel.filterByType(null) }
                     )
                     FilterChipTab(
-                        text = stringResource(Res.string.dialog_select_field_text_4),
+                        text = stringResource(R.string.dialog_select_field_text_4),
                         isSelected = selectedFieldType == FieldType.SOCIETY,
                         onClick = { viewModel.filterByType(FieldType.SOCIETY) }
                     )
                     FilterChipTab(
-                        text = stringResource(Res.string.dialog_select_field_text_5),
+                        text = stringResource(R.string.dialog_select_field_text_5),
                         isSelected = selectedFieldType == FieldType.FUTSAL,
                         onClick = { viewModel.filterByType(FieldType.FUTSAL) }
                     )
                     FilterChipTab(
-                        text = stringResource(Res.string.dialog_select_field_text_6),
+                        text = stringResource(R.string.dialog_select_field_text_6),
                         isSelected = selectedFieldType == FieldType.CAMPO,
                         onClick = { viewModel.filterByType(FieldType.CAMPO) }
                     )
@@ -467,7 +466,7 @@ fun FieldSelectionDialog(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End)
                 ) {
-                    Text(stringResource(Res.string.cancel))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         }
@@ -590,7 +589,7 @@ private fun EmptyFieldState() {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = stringResource(Res.string.dialog_select_field_text_7),
+            text = stringResource(R.string.dialog_select_field_text_7),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -621,7 +620,7 @@ private fun ErrorFieldState(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) {
-            Text(stringResource(Res.string.retry))
+            Text(stringResource(R.string.retry))
         }
     }
 }

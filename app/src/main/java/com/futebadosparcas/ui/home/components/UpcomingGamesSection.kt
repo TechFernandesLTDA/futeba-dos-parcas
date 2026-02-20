@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.home.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -45,7 +43,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameStatus
@@ -54,6 +51,8 @@ import com.futebadosparcas.ui.games.GameWithConfirmations
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Seção de próximos jogos na Home com status de confirmação (CMD-29)
@@ -93,7 +92,7 @@ fun UpcomingGamesSection(
         // Seção "Para Confirmar" - Prioridade máxima
         if (pendingGames.isNotEmpty()) {
             GamesByStatusSection(
-                title = stringResource(Res.string.upcoming_games_pending),
+                title = stringResource(R.string.upcoming_games_pending),
                 count = pendingGames.size,
                 icon = Icons.Default.NotificationsActive,
                 iconTint = MaterialTheme.colorScheme.error,
@@ -111,7 +110,7 @@ fun UpcomingGamesSection(
                 Spacer(modifier = Modifier.height(8.dp))
             }
             GamesByStatusSection(
-                title = stringResource(Res.string.upcoming_games_confirmed),
+                title = stringResource(R.string.upcoming_games_confirmed),
                 count = confirmedGames.size,
                 icon = Icons.Default.CheckCircle,
                 iconTint = GamificationColors.XpGreen,
@@ -199,7 +198,7 @@ private fun GamesByStatusSection(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = stringResource(Res.string.upcoming_games_see_all),
+                    text = stringResource(R.string.upcoming_games_see_all),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Medium
@@ -353,7 +352,7 @@ private fun GameConfirmationCard(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = game.locationName.takeIf { it.isNotEmpty() } ?: stringResource(Res.string.public_games_location_unknown),
+                        text = game.locationName.takeIf { it.isNotEmpty() } ?: stringResource(R.string.public_games_location_unknown),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = if (isPending) FontWeight.Bold else FontWeight.SemiBold,
                         color = if (isPending) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -417,9 +416,9 @@ private fun GameConfirmationCard(
                 ) {
                     Text(
                         text = when {
-                            gameStatus == GameStatus.CONFIRMED -> stringResource(Res.string.upcoming_games_status_confirmed)
-                            isUserConfirmed -> stringResource(Res.string.upcoming_games_status_user_confirmed)
-                            else -> stringResource(Res.string.upcoming_games_status_pending)
+                            gameStatus == GameStatus.CONFIRMED -> stringResource(R.string.upcoming_games_status_confirmed)
+                            isUserConfirmed -> stringResource(R.string.upcoming_games_status_user_confirmed)
+                            else -> stringResource(R.string.upcoming_games_status_pending)
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = statusColor,
@@ -443,7 +442,7 @@ private fun GameConfirmationCard(
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text(stringResource(Res.string.confirm), style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(R.string.confirm), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }

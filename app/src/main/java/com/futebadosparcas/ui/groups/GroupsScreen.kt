@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.groups
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -26,7 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,6 +35,8 @@ import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela principal de listagem de grupos em Jetpack Compose
@@ -130,7 +129,7 @@ fun GroupsScreen(
                 is GroupsUiState.Error -> {
                     EmptyState(
                         type = EmptyStateType.Error(
-                            title = stringResource(Res.string.error),
+                            title = stringResource(R.string.error),
                             description = state.message,
                             onRetry = { viewModel.refreshGroups() }
                         )
@@ -152,7 +151,7 @@ private fun GroupsTopBar(
     TopAppBar(
         title = {
             Text(
-                text = stringResource(Res.string.cd_groups),
+                text = stringResource(R.string.cd_groups),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -161,7 +160,7 @@ private fun GroupsTopBar(
             IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(Res.string.close)
+                    contentDescription = stringResource(R.string.close)
                 )
             }
         },
@@ -191,7 +190,7 @@ private fun CreateGroupFab(
     ) {
         Icon(
             imageVector = Icons.Default.Add,
-            contentDescription = stringResource(Res.string.fragment_groups_contentdescription_7)
+            contentDescription = stringResource(R.string.fragment_groups_contentdescription_7)
         )
     }
 }
@@ -256,12 +255,12 @@ private fun SearchBar(
         onValueChange = onQueryChange,
         modifier = modifier.fillMaxWidth(),
         placeholder = {
-            Text(text = stringResource(Res.string.fragment_groups_hint_1))
+            Text(text = stringResource(R.string.fragment_groups_hint_1))
         },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = stringResource(Res.string.search),
+                contentDescription = stringResource(R.string.search),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
@@ -270,7 +269,7 @@ private fun SearchBar(
                 IconButton(onClick = { onQueryChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(Res.string.close),
+                        contentDescription = stringResource(R.string.close),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -350,7 +349,7 @@ private fun GroupCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.People,
-                            contentDescription = stringResource(Res.string.cd_member_count, group.memberCount, if (group.memberCount == 1) "membro" else "membros"),
+                            contentDescription = stringResource(R.string.cd_member_count, group.memberCount, if (group.memberCount == 1) "membro" else "membros"),
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -370,7 +369,7 @@ private fun GroupCard(
             // Ícone de navegação
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = stringResource(Res.string.cd_access_group),
+                contentDescription = stringResource(R.string.cd_access_group),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -472,10 +471,10 @@ private fun EmptyGroupsState(
 ) {
     EmptyState(
         type = EmptyStateType.NoData(
-            title = stringResource(Res.string.fragment_groups_text_2),
-            description = stringResource(Res.string.fragment_groups_text_3),
+            title = stringResource(R.string.fragment_groups_text_2),
+            description = stringResource(R.string.fragment_groups_text_3),
             icon = Icons.Default.Groups,
-            actionLabel = stringResource(Res.string.fragment_groups_text_4),
+            actionLabel = stringResource(R.string.fragment_groups_text_4),
             onAction = onCreateGroup
         )
     )
@@ -491,8 +490,8 @@ private fun EmptySearchGroupsState(
 ) {
     EmptyState(
         type = EmptyStateType.NoResults(
-            description = stringResource(Res.string.fragment_groups_text_5),
-            actionLabel = stringResource(Res.string.groups_clear_search),
+            description = stringResource(R.string.fragment_groups_text_5),
+            actionLabel = stringResource(R.string.groups_clear_search),
             onAction = onClearSearch
         )
     )

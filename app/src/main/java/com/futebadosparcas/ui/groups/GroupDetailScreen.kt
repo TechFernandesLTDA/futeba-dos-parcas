@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.groups
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,6 +38,8 @@ import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.groups.dialogs.EditGroupDialog
 import com.futebadosparcas.ui.groups.dialogs.TransferOwnershipDialog
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * GroupDetailScreen - Exibe detalhes de um grupo (CMD-30)
@@ -240,9 +239,9 @@ fun GroupDetailScreen(
                     )
                     is GroupDetailUiState.Error -> EmptyState(
                         type = EmptyStateType.Error(
-                            title = stringResource(Res.string.error),
+                            title = stringResource(R.string.error),
                             description = currentState.message,
-                            actionLabel = stringResource(Res.string.retry),
+                            actionLabel = stringResource(R.string.retry),
                             onRetry = { viewModel.loadGroup(groupId) }
                         )
                     )
@@ -301,7 +300,7 @@ private fun GroupDetailTopBar(
     TopAppBar(
         title = {
             Text(
-                text = group?.name ?: stringResource(Res.string.group_detail),
+                text = group?.name ?: stringResource(R.string.group_detail),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -310,7 +309,7 @@ private fun GroupDetailTopBar(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(Res.string.back)
+                    contentDescription = stringResource(R.string.back)
                 )
             }
         },
@@ -320,7 +319,7 @@ private fun GroupDetailTopBar(
                 IconButton(onClick = { showMenu = true }) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = stringResource(Res.string.more_options)
+                        contentDescription = stringResource(R.string.more_options)
                     )
                 }
 
@@ -331,39 +330,39 @@ private fun GroupDetailTopBar(
                 // Invite (admin+)
                 if (isOwnerOrAdmin) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.invite_players)) },
+                        text = { Text(stringResource(R.string.invite_players)) },
                         onClick = {
                             showMenu = false
                             onInviteClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.PersonAdd, contentDescription = stringResource(Res.string.cd_invite_player))
+                            Icon(Icons.Default.PersonAdd, contentDescription = stringResource(R.string.cd_invite_player))
                         }
                     )
                 }
 
                 // Cashbox (all)
                 DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.cashbox)) },
+                    text = { Text(stringResource(R.string.cashbox)) },
                     onClick = {
                         showMenu = false
                         onCashboxClick()
                     },
                     leadingIcon = {
-                        Icon(Icons.Default.AccountBalanceWallet, contentDescription = stringResource(Res.string.cd_cashbox))
+                        Icon(Icons.Default.AccountBalanceWallet, contentDescription = stringResource(R.string.cd_cashbox))
                     }
                 )
 
                 // Create Game (admin+)
                 if (isOwnerOrAdmin) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.create_game)) },
+                        text = { Text(stringResource(R.string.create_game)) },
                         onClick = {
                             showMenu = false
                             onCreateGameClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.cd_add_game))
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_game))
                         }
                     )
                 }
@@ -373,13 +372,13 @@ private fun GroupDetailTopBar(
                 // Edit (admin+)
                 if (isOwnerOrAdmin) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.edit_group)) },
+                        text = { Text(stringResource(R.string.edit_group)) },
                         onClick = {
                             showMenu = false
                             onEditClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.cd_edit_group))
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_edit_group))
                         }
                     )
                 }
@@ -387,13 +386,13 @@ private fun GroupDetailTopBar(
                 // Transfer Ownership (owner)
                 if (isOwner) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.transfer_ownership)) },
+                        text = { Text(stringResource(R.string.transfer_ownership)) },
                         onClick = {
                             showMenu = false
                             onTransferOwnershipClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.SwapHoriz, contentDescription = stringResource(Res.string.cd_transfer_ownership))
+                            Icon(Icons.Default.SwapHoriz, contentDescription = stringResource(R.string.cd_transfer_ownership))
                         }
                     )
                 }
@@ -401,13 +400,13 @@ private fun GroupDetailTopBar(
                 // Leave Group (non-owner)
                 if (!isOwner && myRole != null) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.leave_group)) },
+                        text = { Text(stringResource(R.string.leave_group)) },
                         onClick = {
                             showMenu = false
                             onLeaveGroupClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = stringResource(Res.string.cd_leave_group))
+                            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = stringResource(R.string.cd_leave_group))
                         }
                     )
                 }
@@ -415,13 +414,13 @@ private fun GroupDetailTopBar(
                 // Archive (owner)
                 if (isOwner) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.archive_group)) },
+                        text = { Text(stringResource(R.string.archive_group)) },
                         onClick = {
                             showMenu = false
                             onArchiveGroupClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Archive, contentDescription = stringResource(Res.string.cd_archive_group))
+                            Icon(Icons.Default.Archive, contentDescription = stringResource(R.string.cd_archive_group))
                         }
                     )
                 }
@@ -429,13 +428,13 @@ private fun GroupDetailTopBar(
                 // Delete (owner)
                 if (isOwner) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.delete_group)) },
+                        text = { Text(stringResource(R.string.delete_group)) },
                         onClick = {
                             showMenu = false
                             onDeleteGroupClick()
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.cd_delete_group))
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete_group))
                         },
                         colors = MenuDefaults.itemColors(
                             textColor = MaterialTheme.colorScheme.error
@@ -570,7 +569,7 @@ private fun GroupHeader(
 
             // Descrição
             Text(
-                text = group.description.ifEmpty { stringResource(Res.string.no_description) },
+                text = group.description.ifEmpty { stringResource(R.string.no_description) },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -598,8 +597,8 @@ private fun GroupHeader(
                             modifier = Modifier.size(18.dp)
                         )
                         val memberCountText = when (group.memberCount) {
-                            1 -> stringResource(Res.string.member_count_one, group.memberCount)
-                            else -> stringResource(Res.string.member_count_many, group.memberCount)
+                            1 -> stringResource(R.string.member_count_one, group.memberCount)
+                            else -> stringResource(R.string.member_count_many, group.memberCount)
                         }
                         Text(memberCountText, style = MaterialTheme.typography.labelMedium)
                     }
@@ -627,10 +626,10 @@ private fun GroupHeader(
                             modifier = Modifier.size(18.dp)
                         )
                         val roleText = when (myRole) {
-                            GroupMemberRole.OWNER -> stringResource(Res.string.role_owner)
-                            GroupMemberRole.ADMIN -> stringResource(Res.string.role_admin)
-                            GroupMemberRole.MEMBER -> stringResource(Res.string.role_member)
-                            null -> stringResource(Res.string.role_visitor)
+                            GroupMemberRole.OWNER -> stringResource(R.string.role_owner)
+                            GroupMemberRole.ADMIN -> stringResource(R.string.role_admin)
+                            GroupMemberRole.MEMBER -> stringResource(R.string.role_member)
+                            null -> stringResource(R.string.role_visitor)
                         }
                         Text(roleText, style = MaterialTheme.typography.labelMedium)
                     }
@@ -720,7 +719,7 @@ private fun EnhancedGroupHeader(
 
             // Descrição
             Text(
-                text = group.description.ifEmpty { stringResource(Res.string.no_description) },
+                text = group.description.ifEmpty { stringResource(R.string.no_description) },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -751,8 +750,8 @@ private fun EnhancedGroupHeader(
                             tint = MaterialTheme.colorScheme.primary
                         )
                         val memberCountText = when (membersCount) {
-                            1 -> stringResource(Res.string.groups_member_count_one, membersCount)
-                            else -> stringResource(Res.string.groups_member_count_many, membersCount)
+                            1 -> stringResource(R.string.groups_member_count_one, membersCount)
+                            else -> stringResource(R.string.groups_member_count_many, membersCount)
                         }
                         Text(memberCountText, style = MaterialTheme.typography.labelMedium)
                     }
@@ -772,22 +771,22 @@ private fun EnhancedGroupHeader(
 private fun RoleBadgeChip(myRole: GroupMemberRole?) {
     val (text, icon, color) = when (myRole) {
         GroupMemberRole.OWNER -> Triple(
-            stringResource(Res.string.groups_role_owner),
+            stringResource(R.string.groups_role_owner),
             Icons.Default.Star,
             GamificationColors.Gold
         )
         GroupMemberRole.ADMIN -> Triple(
-            stringResource(Res.string.groups_role_admin),
+            stringResource(R.string.groups_role_admin),
             Icons.Default.Shield,
             MaterialTheme.colorScheme.primary
         )
         GroupMemberRole.MEMBER -> Triple(
-            stringResource(Res.string.groups_role_member),
+            stringResource(R.string.groups_role_member),
             Icons.Default.Person,
             MaterialTheme.colorScheme.secondary
         )
         null -> Triple(
-            stringResource(Res.string.groups_role_visitor),
+            stringResource(R.string.groups_role_visitor),
             Icons.Default.Visibility,
             MaterialTheme.colorScheme.surfaceVariant
         )
@@ -842,7 +841,7 @@ private fun MembersSectionHeader(
                 modifier = Modifier.size(20.dp)
             )
             Text(
-                text = stringResource(Res.string.members),
+                text = stringResource(R.string.members),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -861,7 +860,7 @@ private fun MembersSectionHeader(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = stringResource(Res.string.groups_manage),
+                    text = stringResource(R.string.groups_manage),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -902,14 +901,14 @@ private fun EmptyMembersState(
             )
 
             Text(
-                text = stringResource(Res.string.groups_no_members_yet),
+                text = stringResource(R.string.groups_no_members_yet),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Text(
-                text = stringResource(Res.string.groups_invite_to_start),
+                text = stringResource(R.string.groups_invite_to_start),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -924,7 +923,7 @@ private fun EmptyMembersState(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.groups_invite_players))
+                    Text(stringResource(R.string.groups_invite_players))
                 }
             }
         }
@@ -960,7 +959,7 @@ private fun GroupActionButtons(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = stringResource(Res.string.invite),
+                    text = stringResource(R.string.invite),
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.labelLarge
@@ -980,7 +979,7 @@ private fun GroupActionButtons(
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = stringResource(Res.string.cashbox),
+                text = stringResource(R.string.cashbox),
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.labelLarge
@@ -1000,7 +999,7 @@ private fun GroupActionButtons(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = stringResource(Res.string.create_game),
+                    text = stringResource(R.string.create_game),
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.labelLarge
@@ -1069,9 +1068,9 @@ private fun GroupMemberListItem(
         photoUrl = member.userPhoto,
         name = member.getDisplayName(),
         role = when (memberRole) {
-            GroupMemberRole.OWNER -> stringResource(Res.string.groups_role_owner)
-            GroupMemberRole.ADMIN -> stringResource(Res.string.groups_role_admin)
-            GroupMemberRole.MEMBER -> stringResource(Res.string.groups_role_member)
+            GroupMemberRole.OWNER -> stringResource(R.string.groups_role_owner)
+            GroupMemberRole.ADMIN -> stringResource(R.string.groups_role_admin)
+            GroupMemberRole.MEMBER -> stringResource(R.string.groups_role_member)
         },
         roleIcon = when (memberRole) {
             GroupMemberRole.OWNER -> Icons.Default.Star

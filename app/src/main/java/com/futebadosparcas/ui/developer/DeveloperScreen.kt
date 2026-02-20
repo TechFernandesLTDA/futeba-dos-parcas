@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.developer
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -17,7 +15,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.jetbrains.compose.resources.stringResource
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 /**
  * DeveloperScreen - Ferramentas de Geração e Análise de Dados
  *
@@ -63,7 +62,7 @@ fun DeveloperScreen(
         ) {
                 // ========== GERAÇÃO DE DADOS ==========
                 Text(
-                    text = stringResource(Res.string.developer_data_generation),
+                    text = stringResource(R.string.developer_data_generation),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -71,8 +70,8 @@ fun DeveloperScreen(
                 )
 
                 DeveloperActionCard(
-                    title = stringResource(Res.string.developer_generate_mock),
-                    description = stringResource(Res.string.developer_generate_mock_desc),
+                    title = stringResource(R.string.developer_generate_mock),
+                    description = stringResource(R.string.developer_generate_mock_desc),
                     icon = Icons.Default.AddCircle,
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -81,8 +80,8 @@ fun DeveloperScreen(
                 )
 
                 DeveloperActionCard(
-                    title = stringResource(Res.string.developer_populate_fields),
-                    description = stringResource(Res.string.developer_populate_fields_desc),
+                    title = stringResource(R.string.developer_populate_fields),
+                    description = stringResource(R.string.developer_populate_fields_desc),
                     icon = Icons.Default.Stadium,
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -92,7 +91,7 @@ fun DeveloperScreen(
 
                 // ========== ANÁLISE ==========
                 Text(
-                    text = stringResource(Res.string.developer_analysis),
+                    text = stringResource(R.string.developer_analysis),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -100,8 +99,8 @@ fun DeveloperScreen(
                 )
 
                 DeveloperActionCard(
-                    title = stringResource(Res.string.developer_analyze_firestore),
-                    description = stringResource(Res.string.developer_analyze_firestore_desc),
+                    title = stringResource(R.string.developer_analyze_firestore),
+                    description = stringResource(R.string.developer_analyze_firestore_desc),
                     icon = Icons.Default.Analytics,
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -111,7 +110,7 @@ fun DeveloperScreen(
 
                 // ========== LIMPEZA ==========
                 Text(
-                    text = stringResource(Res.string.developer_data_cleanup),
+                    text = stringResource(R.string.developer_data_cleanup),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.error,
@@ -119,8 +118,8 @@ fun DeveloperScreen(
                 )
 
                 DeveloperActionCard(
-                    title = stringResource(Res.string.developer_clean_invalid),
-                    description = stringResource(Res.string.developer_clean_invalid_desc),
+                    title = stringResource(R.string.developer_clean_invalid),
+                    description = stringResource(R.string.developer_clean_invalid_desc),
                     icon = Icons.Default.CleaningServices,
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -155,7 +154,7 @@ fun DeveloperScreen(
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = stringResource(Res.string.developer_processing),
+                            text = stringResource(R.string.developer_processing),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium
                         )
@@ -233,7 +232,7 @@ private fun DeveloperActionCard(
 
             Icon(
                 imageVector = Icons.Default.PlayArrow,
-                contentDescription = stringResource(Res.string.developer_cd_execute),
+                contentDescription = stringResource(R.string.developer_cd_execute),
                 tint = contentColor,
                 modifier = Modifier.size(28.dp)
             )

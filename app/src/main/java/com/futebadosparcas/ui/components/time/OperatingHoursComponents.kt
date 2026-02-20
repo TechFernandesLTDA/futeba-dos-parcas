@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.components.time
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,13 +21,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.util.LocationTimeFormatter
 import com.futebadosparcas.util.PreferencesManager
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Composable para exibir um horario formatado de acordo com o locale do usuario.
@@ -249,7 +248,7 @@ fun OperatingHoursCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = stringResource(Res.string.location_time_operating_hours),
+                text = stringResource(R.string.location_time_operating_hours),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -324,9 +323,9 @@ fun OpenStatusIndicator(
     }
 
     val statusText = if (isOpen) {
-        stringResource(Res.string.location_time_open_now)
+        stringResource(R.string.location_time_open_now)
     } else {
-        stringResource(Res.string.location_time_closed)
+        stringResource(R.string.location_time_closed)
     }
 
     val statusColor = if (isOpen) {

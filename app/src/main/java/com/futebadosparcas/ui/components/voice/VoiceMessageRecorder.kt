@@ -1,9 +1,6 @@
 package com.futebadosparcas.ui.components.voice
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.Manifest
-import org.jetbrains.compose.resources.stringResource
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
@@ -81,6 +78,8 @@ import java.io.File
 import java.util.Locale
 import java.util.UUID
 import kotlin.math.sin
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Sistema de gravação e reprodução de mensagens de voz.
@@ -458,7 +457,7 @@ fun VoiceRecordButton(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = Icons.Default.Mic,
-                        contentDescription = stringResource(Res.string.cd_recording),
+                        contentDescription = stringResource(R.string.cd_recording),
                         tint = MaterialTheme.colorScheme.onError,
                         modifier = Modifier.size(24.dp)
                     )
@@ -472,7 +471,7 @@ fun VoiceRecordButton(
             else -> {
                 Icon(
                     imageVector = Icons.Default.Mic,
-                    contentDescription = stringResource(Res.string.cd_record_voice),
+                    contentDescription = stringResource(R.string.cd_record_voice),
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(24.dp)
                 )
@@ -580,7 +579,7 @@ fun VoiceMessagePlayer(
                     } else {
                         Icons.Default.PlayArrow
                     },
-                    contentDescription = if (playbackState == RecordingState.PLAYING) stringResource(Res.string.cd_pause) else stringResource(Res.string.cd_play),
+                    contentDescription = if (playbackState == RecordingState.PLAYING) stringResource(R.string.cd_pause) else stringResource(R.string.cd_play),
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
@@ -745,7 +744,7 @@ fun VoiceRecorderCard(
             when (state) {
                 RecordingState.IDLE -> {
                     Text(
-                        text = stringResource(Res.string.voice_tap_to_record),
+                        text = stringResource(R.string.voice_tap_to_record),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -777,7 +776,7 @@ fun VoiceRecorderCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Mic,
-                            contentDescription = stringResource(Res.string.cd_record),
+                            contentDescription = stringResource(R.string.cd_record),
                             tint = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(32.dp)
                         )
@@ -825,7 +824,7 @@ fun VoiceRecorderCard(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = stringResource(Res.string.cd_cancel),
+                                contentDescription = stringResource(R.string.cd_cancel),
                                 tint = MaterialTheme.colorScheme.onErrorContainer
                             )
                         }
@@ -883,7 +882,7 @@ fun VoiceRecorderCard(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
-                                    contentDescription = stringResource(Res.string.cd_discard),
+                                    contentDescription = stringResource(R.string.cd_discard),
                                     tint = MaterialTheme.colorScheme.onErrorContainer
                                 )
                             }
@@ -903,7 +902,7 @@ fun VoiceRecorderCard(
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.Send,
-                                    contentDescription = stringResource(Res.string.cd_send),
+                                    contentDescription = stringResource(R.string.cd_send),
                                     tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }

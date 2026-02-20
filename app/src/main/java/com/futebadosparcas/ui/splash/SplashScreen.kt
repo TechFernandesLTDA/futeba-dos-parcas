@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.splash
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,7 +24,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,6 +31,8 @@ import coil3.compose.AsyncImage
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.util.LevelBadgeHelper
 import kotlinx.coroutines.delay
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela de Splash em Jetpack Compose.
@@ -86,7 +85,7 @@ fun SplashScreen(
                 if (user != null) {
                     AsyncImage(
                         model = LevelBadgeHelper.getBadgeForLevel(user.level),
-                        contentDescription = stringResource(Res.string.activity_splash_contentdescription_1),
+                        contentDescription = stringResource(R.string.activity_splash_contentdescription_1),
                         modifier = Modifier
                             .size(200.dp)
                             .alpha(badgeAlpha)
@@ -98,7 +97,7 @@ fun SplashScreen(
                 // Logo do App
                 AsyncImage(
                     model = R.drawable.ic_launcher_foreground,
-                    contentDescription = stringResource(Res.string.app_name),
+                    contentDescription = stringResource(R.string.app_name),
                     modifier = Modifier
                         .size(100.dp)
                         .padding(top = 24.dp)
@@ -126,21 +125,21 @@ fun SplashScreen(
                 verticalArrangement = Arrangement.Bottom
             ) {
                 Text(
-                    text = stringResource(Res.string.layout_splash_branding_text_1),
+                    text = stringResource(R.string.layout_splash_branding_text_1),
                     style = typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.primary
                 )
 
                 Text(
-                    text = stringResource(Res.string.version, versionName),
+                    text = stringResource(R.string.version, versionName),
                     style = typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
 
                 Text(
-                    text = stringResource(Res.string.layout_splash_branding_text_2),
+                    text = stringResource(R.string.layout_splash_branding_text_2),
                     style = typography.bodySmall,
                     color = colorScheme.onSurface,
                     modifier = Modifier.padding(top = 4.dp)

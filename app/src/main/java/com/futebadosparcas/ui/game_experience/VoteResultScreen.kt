@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.game_experience
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -63,7 +61,6 @@ import com.futebadosparcas.util.ContrastHelper
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -79,6 +76,8 @@ import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.LoadingView
 import com.futebadosparcas.ui.theme.GamificationColors
 import kotlinx.coroutines.delay
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela de resultados da votação MVP.
@@ -102,12 +101,12 @@ fun VoteResultScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(Res.string.mvp_results_title)) },
+                title = { Text(stringResource(R.string.mvp_results_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(Res.string.action_back)
+                            contentDescription = stringResource(R.string.action_back)
                         )
                     }
                 },
@@ -137,8 +136,8 @@ fun VoteResultScreen(
             is VoteResultUiState.Empty -> {
                 EmptyState(
                     type = EmptyStateType.NoData(
-                        title = stringResource(Res.string.mvp_no_votes),
-                        description = stringResource(Res.string.mvp_wait_all_votes)
+                        title = stringResource(R.string.mvp_no_votes),
+                        description = stringResource(R.string.mvp_wait_all_votes)
                     ),
                     modifier = Modifier.padding(padding)
                 )
@@ -147,7 +146,7 @@ fun VoteResultScreen(
             is VoteResultUiState.Error -> {
                 EmptyState(
                     type = EmptyStateType.NoData(
-                        title = stringResource(Res.string.error_title),
+                        title = stringResource(R.string.error_title),
                         description = state.message
                     ),
                     modifier = Modifier.padding(padding)
@@ -199,7 +198,7 @@ private fun VoteResultContent(
                 ) {
                     CategoryResultCard(
                         category = VoteCategory.MVP,
-                        categoryTitle = stringResource(Res.string.mvp_category_mvp),
+                        categoryTitle = stringResource(R.string.mvp_category_mvp),
                         categoryIcon = Icons.Default.EmojiEvents,
                         iconTint = GamificationColors.Gold,
                         results = results.mvpResults,
@@ -219,7 +218,7 @@ private fun VoteResultContent(
                 ) {
                     CategoryResultCard(
                         category = VoteCategory.BEST_GOALKEEPER,
-                        categoryTitle = stringResource(Res.string.mvp_category_goalkeeper),
+                        categoryTitle = stringResource(R.string.mvp_category_goalkeeper),
                         categoryIcon = Icons.Default.SportsSoccer,
                         iconTint = MaterialTheme.colorScheme.primary,
                         results = results.gkResults,
@@ -239,7 +238,7 @@ private fun VoteResultContent(
                 ) {
                     CategoryResultCard(
                         category = VoteCategory.WORST,
-                        categoryTitle = stringResource(Res.string.mvp_category_worst),
+                        categoryTitle = stringResource(R.string.mvp_category_worst),
                         categoryIcon = Icons.Default.ThumbDown,
                         iconTint = MaterialTheme.colorScheme.error,
                         results = results.worstResults,
@@ -356,7 +355,7 @@ private fun CategoryResultCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = stringResource(Res.string.mvp_total_votes) + ": $totalVotes",
+                            text = stringResource(R.string.mvp_total_votes) + ": $totalVotes",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -367,7 +366,7 @@ private fun CategoryResultCard(
                 IconButton(onClick = onShare) {
                     Icon(
                         imageVector = Icons.Default.Share,
-                        contentDescription = stringResource(Res.string.action_share),
+                        contentDescription = stringResource(R.string.action_share),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }

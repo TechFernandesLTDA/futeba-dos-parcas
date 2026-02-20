@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.teamformation.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.spring
@@ -26,11 +24,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.model.TeamColor
 import com.futebadosparcas.util.ContrastHelper
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Seletor de cores de colete para times.
@@ -65,7 +64,7 @@ fun VestColorPicker(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = stringResource(Res.string.select_vest_color),
+                    text = stringResource(R.string.select_vest_color),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -79,7 +78,7 @@ fun VestColorPicker(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TeamColorTab(
-                    label = stringResource(Res.string.team_a),
+                    label = stringResource(R.string.team_a),
                     color = team1Color,
                     isSelected = selectedTeam == 0,
                     onClick = { selectedTeam = 0 },
@@ -87,7 +86,7 @@ fun VestColorPicker(
                 )
 
                 TeamColorTab(
-                    label = stringResource(Res.string.team_b),
+                    label = stringResource(R.string.team_b),
                     color = team2Color,
                     isSelected = selectedTeam == 1,
                     onClick = { selectedTeam = 1 },
@@ -297,7 +296,7 @@ fun VestColorPickerDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = stringResource(Res.string.select_vest_color),
+                text = stringResource(R.string.select_vest_color),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -328,7 +327,7 @@ fun VestColorPickerDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.close))
+                Text(stringResource(R.string.close))
             }
         }
     )
@@ -371,7 +370,7 @@ fun TeamColorChip(
             Spacer(Modifier.width(4.dp))
             Icon(
                 imageVector = Icons.Default.Palette,
-                contentDescription = stringResource(Res.string.select_vest_color),
+                contentDescription = stringResource(R.string.select_vest_color),
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )

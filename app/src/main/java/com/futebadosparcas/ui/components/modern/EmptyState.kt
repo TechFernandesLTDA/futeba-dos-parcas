@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.components.modern
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -12,9 +10,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 /**
  * Empty state moderno com ilustração, mensagem e CTA
  *
@@ -100,9 +99,9 @@ fun EmptyGamesState(
 ) {
     EmptyState(
         icon = Icons.Default.SportsFootball,
-        title = stringResource(Res.string.empty_state_no_games_title_generic),
-        message = stringResource(Res.string.empty_state_no_games_desc_generic),
-        actionText = if (onCreateGame != null) stringResource(Res.string.empty_state_no_games_action) else null,
+        title = stringResource(R.string.empty_state_no_games_title_generic),
+        message = stringResource(R.string.empty_state_no_games_desc_generic),
+        actionText = if (onCreateGame != null) stringResource(R.string.empty_state_no_games_action) else null,
         onAction = onCreateGame,
         modifier = modifier
     )
@@ -117,8 +116,8 @@ fun EmptyConfirmationsState(
 ) {
     EmptyState(
         icon = Icons.Default.PeopleAlt,
-        title = stringResource(Res.string.empty_state_no_games_title_generic),
-        message = stringResource(Res.string.empty_state_no_games_desc_generic),
+        title = stringResource(R.string.empty_state_no_games_title_generic),
+        message = stringResource(R.string.empty_state_no_games_desc_generic),
         modifier = modifier
     )
 }
@@ -132,8 +131,8 @@ fun EmptyStatisticsState(
 ) {
     EmptyState(
         icon = Icons.Default.BarChart,
-        title = stringResource(Res.string.empty_state_no_statistics_title),
-        message = stringResource(Res.string.empty_state_no_statistics_desc),
+        title = stringResource(R.string.empty_state_no_statistics_title),
+        message = stringResource(R.string.empty_state_no_statistics_desc),
         modifier = modifier
     )
 }
@@ -147,8 +146,8 @@ fun EmptyBadgesState(
 ) {
     EmptyState(
         icon = Icons.Default.EmojiEvents,
-        title = stringResource(Res.string.empty_state_no_games_title_generic),
-        message = stringResource(Res.string.empty_state_no_games_desc_generic),
+        title = stringResource(R.string.empty_state_no_games_title_generic),
+        message = stringResource(R.string.empty_state_no_games_desc_generic),
         modifier = modifier
     )
 }
@@ -162,8 +161,8 @@ fun EmptyNotificationsState(
 ) {
     EmptyState(
         icon = Icons.Default.NotificationsNone,
-        title = stringResource(Res.string.empty_state_no_notifications_title),
-        message = stringResource(Res.string.empty_state_no_notifications_desc),
+        title = stringResource(R.string.empty_state_no_notifications_title),
+        message = stringResource(R.string.empty_state_no_notifications_desc),
         modifier = modifier
     )
 }
@@ -177,8 +176,8 @@ fun EmptyRankingState(
 ) {
     EmptyState(
         icon = Icons.Default.Leaderboard,
-        title = stringResource(Res.string.empty_state_no_ranking_title),
-        message = stringResource(Res.string.empty_state_no_ranking_desc),
+        title = stringResource(R.string.empty_state_no_ranking_title),
+        message = stringResource(R.string.empty_state_no_ranking_desc),
         modifier = modifier
     )
 }
@@ -209,7 +208,7 @@ fun EmptyGroupsState(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(Res.string.empty_state_no_groups_title),
+            text = stringResource(R.string.empty_state_no_groups_title),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
@@ -218,7 +217,7 @@ fun EmptyGroupsState(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = stringResource(Res.string.empty_state_no_groups_desc),
+            text = stringResource(R.string.empty_state_no_groups_desc),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -241,7 +240,7 @@ fun EmptyGroupsState(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(Res.string.empty_state_no_groups_action),
+                    text = stringResource(R.string.empty_state_no_groups_action),
                     style = MaterialTheme.typography.labelLarge
                 )
             }
@@ -263,7 +262,7 @@ fun EmptyGroupsState(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(Res.string.empty_state_no_groups_join_action),
+                    text = stringResource(R.string.empty_state_no_groups_join_action),
                     style = MaterialTheme.typography.labelLarge
                 )
             }
@@ -281,8 +280,8 @@ fun EmptySearchState(
 ) {
     EmptyState(
         icon = Icons.Default.SearchOff,
-        title = stringResource(Res.string.empty_state_no_games_title_generic),
-        message = stringResource(Res.string.empty_state_no_games_desc_generic),
+        title = stringResource(R.string.empty_state_no_games_title_generic),
+        message = stringResource(R.string.empty_state_no_games_desc_generic),
         modifier = modifier
     )
 }
@@ -297,9 +296,9 @@ fun EmptyCashboxState(
 ) {
     EmptyState(
         icon = Icons.Default.AccountBalanceWallet,
-        title = stringResource(Res.string.empty_state_no_cashbox_title),
-        message = stringResource(Res.string.empty_state_no_cashbox_desc),
-        actionText = if (onAddTransaction != null) stringResource(Res.string.empty_state_no_cashbox_action) else null,
+        title = stringResource(R.string.empty_state_no_cashbox_title),
+        message = stringResource(R.string.empty_state_no_cashbox_desc),
+        actionText = if (onAddTransaction != null) stringResource(R.string.empty_state_no_cashbox_action) else null,
         onAction = onAddTransaction,
         modifier = modifier
     )
@@ -314,8 +313,8 @@ fun EmptyBadgesFullState(
 ) {
     EmptyState(
         icon = Icons.Default.EmojiEvents,
-        title = stringResource(Res.string.empty_state_no_badges_title),
-        message = stringResource(Res.string.empty_state_no_badges_desc),
+        title = stringResource(R.string.empty_state_no_badges_title),
+        message = stringResource(R.string.empty_state_no_badges_desc),
         modifier = modifier
     )
 }
@@ -329,8 +328,8 @@ fun EmptySchedulesState(
 ) {
     EmptyState(
         icon = Icons.Default.CalendarMonth,
-        title = stringResource(Res.string.empty_state_no_schedules_title),
-        message = stringResource(Res.string.empty_state_no_schedules_desc),
+        title = stringResource(R.string.empty_state_no_schedules_title),
+        message = stringResource(R.string.empty_state_no_schedules_desc),
         modifier = modifier
     )
 }
@@ -345,9 +344,9 @@ fun EmptyMembersState(
 ) {
     EmptyState(
         icon = Icons.Default.PersonAdd,
-        title = stringResource(Res.string.empty_state_no_members_title),
-        message = stringResource(Res.string.empty_state_no_members_desc),
-        actionText = if (onInvite != null) stringResource(Res.string.empty_state_no_members_action) else null,
+        title = stringResource(R.string.empty_state_no_members_title),
+        message = stringResource(R.string.empty_state_no_members_desc),
+        actionText = if (onInvite != null) stringResource(R.string.empty_state_no_members_action) else null,
         onAction = onInvite,
         modifier = modifier
     )
@@ -362,8 +361,8 @@ fun EmptyActivitiesState(
 ) {
     EmptyState(
         icon = Icons.Default.Timeline,
-        title = stringResource(Res.string.empty_state_no_activities_title),
-        message = stringResource(Res.string.empty_state_no_activities_desc),
+        title = stringResource(R.string.empty_state_no_activities_title),
+        message = stringResource(R.string.empty_state_no_activities_desc),
         modifier = modifier
     )
 }
@@ -377,8 +376,8 @@ fun EmptyXpLogsState(
 ) {
     EmptyState(
         icon = Icons.Default.TrendingUp,
-        title = stringResource(Res.string.empty_state_no_xp_logs_title),
-        message = stringResource(Res.string.empty_state_no_xp_logs_desc),
+        title = stringResource(R.string.empty_state_no_xp_logs_title),
+        message = stringResource(R.string.empty_state_no_xp_logs_desc),
         modifier = modifier
     )
 }
@@ -393,9 +392,9 @@ fun EmptyLocationsState(
 ) {
     EmptyState(
         icon = Icons.Default.LocationOn,
-        title = stringResource(Res.string.empty_state_no_locations_title),
-        message = stringResource(Res.string.empty_state_no_locations_desc),
-        actionText = if (onAddLocation != null) stringResource(Res.string.empty_state_no_locations_action) else null,
+        title = stringResource(R.string.empty_state_no_locations_title),
+        message = stringResource(R.string.empty_state_no_locations_desc),
+        actionText = if (onAddLocation != null) stringResource(R.string.empty_state_no_locations_action) else null,
         onAction = onAddLocation,
         modifier = modifier
     )
@@ -411,9 +410,9 @@ fun EmptyPlayersState(
 ) {
     EmptyState(
         icon = Icons.Default.People,
-        title = stringResource(Res.string.empty_state_no_players_title),
-        message = stringResource(Res.string.empty_state_no_players_desc),
-        actionText = if (onInvite != null) stringResource(Res.string.empty_state_invite_players) else null,
+        title = stringResource(R.string.empty_state_no_players_title),
+        message = stringResource(R.string.empty_state_no_players_desc),
+        actionText = if (onInvite != null) stringResource(R.string.empty_state_invite_players) else null,
         onAction = onInvite,
         modifier = modifier
     )

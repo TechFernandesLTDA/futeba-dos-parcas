@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.onboarding
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -20,10 +18,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 /**
  * Tela de boas-vindas do onboarding.
  * Apresenta o app e seus principais recursos.
@@ -56,7 +55,7 @@ fun WelcomeScreen(
 
             // Título
             Text(
-                text = stringResource(Res.string.welcome_title),
+                text = stringResource(R.string.welcome_title),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -67,7 +66,7 @@ fun WelcomeScreen(
 
             // Subtítulo
             Text(
-                text = stringResource(Res.string.welcome_subtitle),
+                text = stringResource(R.string.welcome_subtitle),
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -78,19 +77,19 @@ fun WelcomeScreen(
             // Features
             WelcomeFeatureItem(
                 emoji = "\u26BD",
-                text = stringResource(Res.string.welcome_feature_games)
+                text = stringResource(R.string.welcome_feature_games)
             )
             WelcomeFeatureItem(
                 emoji = "\uD83C\uDFC6",
-                text = stringResource(Res.string.welcome_feature_ranking)
+                text = stringResource(R.string.welcome_feature_ranking)
             )
             WelcomeFeatureItem(
                 emoji = "\uD83D\uDCCA",
-                text = stringResource(Res.string.welcome_feature_stats)
+                text = stringResource(R.string.welcome_feature_stats)
             )
             WelcomeFeatureItem(
                 emoji = "\uD83E\uDD1D",
-                text = stringResource(Res.string.welcome_feature_balance)
+                text = stringResource(R.string.welcome_feature_balance)
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -104,7 +103,7 @@ fun WelcomeScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    text = stringResource(Res.string.welcome_get_started),
+                    text = stringResource(R.string.welcome_get_started),
                     style = MaterialTheme.typography.titleMedium
                 )
             }

@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,12 +18,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.data.model.GameDraft
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Dialog para restaurar rascunho de jogo salvo anteriormente.
@@ -47,14 +46,14 @@ fun DraftRestorationDialog(
         },
         title = {
             Text(
-                text = stringResource(Res.string.create_game_draft_title),
+                text = stringResource(R.string.create_game_draft_title),
                 style = MaterialTheme.typography.titleLarge
             )
         },
         text = {
             Column {
                 Text(
-                    text = stringResource(Res.string.create_game_draft_message),
+                    text = stringResource(R.string.create_game_draft_message),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -62,12 +61,12 @@ fun DraftRestorationDialog(
         },
         confirmButton = {
             TextButton(onClick = onRestore) {
-                Text(stringResource(Res.string.create_game_draft_restore))
+                Text(stringResource(R.string.create_game_draft_restore))
             }
         },
         dismissButton = {
             TextButton(onClick = onDiscard) {
-                Text(stringResource(Res.string.create_game_draft_discard))
+                Text(stringResource(R.string.create_game_draft_discard))
             }
         }
     )
@@ -93,10 +92,10 @@ fun AutoSaveIndicator(
     ) {
         Text(
             text = if (isSaving) {
-                stringResource(Res.string.create_game_draft_saving)
+                stringResource(R.string.create_game_draft_saving)
             } else {
                 stringResource(
-                    Res.string.create_game_draft_saved,
+                    R.string.create_game_draft_saved,
                     dateFormat.format(Date(lastSavedAt ?: 0L))
                 )
             },

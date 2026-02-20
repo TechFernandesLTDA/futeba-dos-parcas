@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.home.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.model.Activity
@@ -27,6 +24,8 @@ import com.futebadosparcas.ui.adaptive.adaptiveValue
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ActivityHeatmapSection(
@@ -43,7 +42,7 @@ fun ActivityHeatmapSection(
     ) {
         Column(modifier = Modifier.padding(spacing.md)) {
             Text(
-                text = stringResource(Res.string.game_frequency_title),
+                text = stringResource(R.string.game_frequency_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = spacing.gridItemSpacing)

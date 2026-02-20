@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.games.components
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -41,6 +38,8 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Mini-calendario visual mostrando disponibilidade de horarios da quadra.
@@ -57,7 +56,7 @@ fun AvailabilityCalendar(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = stringResource(Res.string.create_game_availability_title),
+            text = stringResource(R.string.create_game_availability_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -90,11 +89,11 @@ fun AvailabilityCalendar(
         ) {
             LegendItem(
                 color = MaterialTheme.colorScheme.primaryContainer,
-                label = stringResource(Res.string.create_game_availability_available)
+                label = stringResource(R.string.create_game_availability_available)
             )
             LegendItem(
                 color = MaterialTheme.colorScheme.errorContainer,
-                label = stringResource(Res.string.create_game_availability_occupied)
+                label = stringResource(R.string.create_game_availability_occupied)
             )
         }
     }

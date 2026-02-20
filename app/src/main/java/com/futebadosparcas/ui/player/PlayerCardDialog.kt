@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.player
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -19,6 +17,7 @@ import com.futebadosparcas.ui.theme.FutebaTheme
 import java.io.File
 import java.io.FileOutputStream
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import com.futebadosparcas.R
 
 class PlayerCardDialog : DialogFragment() {
 
@@ -102,7 +101,7 @@ class PlayerCardDialog : DialogFragment() {
             }
 
         } catch (e: Exception) {
-            android.widget.Toast.makeText(requireContext(), getString(Res.string.error_sharing), android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(requireContext(), getString(R.string.error_sharing), android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 

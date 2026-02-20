@@ -3,7 +3,7 @@ package com.futebadosparcas.ui.groups
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.CashboxCategory
+import com.futebadosparcas.domain.model.CashboxCategory
 import com.futebadosparcas.data.model.CashboxEntry as AndroidCashboxEntry
 import com.futebadosparcas.domain.model.CashboxEntryType
 import com.futebadosparcas.data.model.CashboxFilter

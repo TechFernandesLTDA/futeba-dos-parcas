@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.livegame
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -20,9 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.data.model.GameEvent
 import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * LiveEventsScreen - Exibe eventos ao vivo de um jogo
@@ -126,7 +125,7 @@ private fun GameEventCard(
             ) {
                 Icon(
                     imageVector = getEventIcon(event.eventType),
-                    contentDescription = stringResource(Res.string.cd_event_type_icon),
+                    contentDescription = stringResource(R.string.cd_event_type_icon),
                     modifier = Modifier
                         .size(40.dp)
                         .padding(8.dp),
@@ -159,7 +158,7 @@ private fun GameEventCard(
                 // Assistência (se houver)
                 if (!event.assistedById.isNullOrEmpty()) {
                     Text(
-                        text = stringResource(Res.string.live_game_assist_by, event.assistedByName ?: event.assistedById ?: ""),
+                        text = stringResource(R.string.live_game_assist_by, event.assistedByName ?: event.assistedById ?: ""),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -204,13 +203,13 @@ private fun LiveEventsEmptyState() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(Res.string.live_game_no_events),
+            text = stringResource(R.string.live_game_no_events),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
-            text = stringResource(Res.string.live_game_no_events_description),
+            text = stringResource(R.string.live_game_no_events_description),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)
@@ -259,12 +258,12 @@ private fun getEventTypeLabel(eventType: String): String {
         else -> "📝 "
     }
     val label = when (eventType.lowercase()) {
-        "goal" -> stringResource(Res.string.live_game_event_goal)
-        "substitution" -> stringResource(Res.string.live_game_event_substitution)
-        "yellowcard" -> stringResource(Res.string.live_game_event_yellow_card)
-        "redcard" -> stringResource(Res.string.live_game_event_red_card)
-        "foul" -> stringResource(Res.string.live_game_event_foul)
-        else -> stringResource(Res.string.live_game_event_default)
+        "goal" -> stringResource(R.string.live_game_event_goal)
+        "substitution" -> stringResource(R.string.live_game_event_substitution)
+        "yellowcard" -> stringResource(R.string.live_game_event_yellow_card)
+        "redcard" -> stringResource(R.string.live_game_event_red_card)
+        "foul" -> stringResource(R.string.live_game_event_foul)
+        else -> stringResource(R.string.live_game_event_default)
     }
     return prefix + label
 }

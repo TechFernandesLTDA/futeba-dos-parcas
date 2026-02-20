@@ -1,6 +1,4 @@
 package com.futebadosparcas.ui.locations
-import org.jetbrains.compose.resources.stringResource
-import com.futebadosparcas.compose.resources.Res
 
 import android.net.Uri
 import android.widget.Toast
@@ -30,12 +28,13 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
 import coil3.compose.AsyncImage
-import org.jetbrains.compose.resources.stringResource
 import com.futebadosparcas.data.model.Field
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.ui.components.CachedFieldImage
 import com.futebadosparcas.util.AppLogger
 import java.io.File
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 private const val TAG = "ComposeLocationDialogs"
 
@@ -91,12 +90,12 @@ fun FieldEditDialog(
     if (showPhotoOptions) {
         AlertDialog(
             onDismissRequest = { showPhotoOptions = false },
-            title = { Text(stringResource(Res.string.location_dialog_photo_title)) },
+            title = { Text(stringResource(R.string.location_dialog_photo_title)) },
             text = {
                 Column {
                     ListItem(
-                        headlineContent = { Text(stringResource(Res.string.location_dialog_take_photo)) },
-                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = stringResource(Res.string.location_dialog_take_photo)) },
+                        headlineContent = { Text(stringResource(R.string.location_dialog_take_photo)) },
+                        leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = stringResource(R.string.location_dialog_take_photo)) },
                         modifier = Modifier.clickable {
                             try {
                                 val file = File.createTempFile("field_", ".jpg", context.cacheDir)
@@ -105,14 +104,14 @@ fun FieldEditDialog(
                                 takePictureLauncher.launch(uri)
                             } catch (e: Exception) {
                                 AppLogger.e(TAG, "Erro ao abrir câmera para foto da quadra", e)
-                                Toast.makeText(context, context.getString(Res.string.location_dialog_camera_error), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.location_dialog_camera_error), Toast.LENGTH_SHORT).show()
                             }
                             showPhotoOptions = false
                         }
                     )
                     ListItem(
-                        headlineContent = { Text(stringResource(Res.string.location_dialog_choose_gallery)) },
-                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(Res.string.location_dialog_choose_gallery)) },
+                        headlineContent = { Text(stringResource(R.string.location_dialog_choose_gallery)) },
+                        leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(R.string.location_dialog_choose_gallery)) },
                         modifier = Modifier.clickable {
                             pickImageLauncher.launch("image/*")
                             showPhotoOptions = false
@@ -123,7 +122,7 @@ fun FieldEditDialog(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showPhotoOptions = false }) {
-                    Text(stringResource(Res.string.location_dialog_cancel))
+                    Text(stringResource(R.string.location_dialog_cancel))
                 }
             }
         )
@@ -148,7 +147,7 @@ fun FieldEditDialog(
                 item {
                     // Title
                     Text(
-                        text = if (field != null) stringResource(Res.string.location_dialog_edit_field) else stringResource(Res.string.location_dialog_new_field),
+                        text = if (field != null) stringResource(R.string.location_dialog_edit_field) else stringResource(R.string.location_dialog_new_field),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -193,7 +192,7 @@ fun FieldEditDialog(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    stringResource(Res.string.location_dialog_tap_to_add),
+                                    stringResource(R.string.location_dialog_tap_to_add),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
@@ -209,9 +208,9 @@ fun FieldEditDialog(
                             TextButton(
                                 onClick = { showPhotoOptions = true }
                             ) {
-                                Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.location_dialog_change_photo), modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.location_dialog_change_photo), modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(4.dp))
-                                Text(stringResource(Res.string.location_dialog_change_photo))
+                                Text(stringResource(R.string.location_dialog_change_photo))
                             }
                         }
                     }
@@ -225,12 +224,12 @@ fun FieldEditDialog(
                             name = it
                             showNameError = false
                         },
-                        label = { Text(stringResource(Res.string.location_dialog_field_name)) },
+                        label = { Text(stringResource(R.string.location_dialog_field_name)) },
                         singleLine = true,
                         isError = showNameError,
                         modifier = Modifier.fillMaxWidth(),
                         supportingText = if (showNameError) {
-                            { Text(stringResource(Res.string.location_dialog_field_required), color = MaterialTheme.colorScheme.error) }
+                            { Text(stringResource(R.string.location_dialog_field_required), color = MaterialTheme.colorScheme.error) }
                         } else null
                     )
                 }
@@ -241,7 +240,7 @@ fun FieldEditDialog(
                         OutlinedTextField(
                             value = selectedType.displayName,
                             onValueChange = {},
-                            label = { Text(stringResource(Res.string.location_dialog_field_type)) },
+                            label = { Text(stringResource(R.string.location_dialog_field_type)) },
                             readOnly = true,
                             enabled = false,
                             trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },  // Decorativo (dropdown)
@@ -283,13 +282,13 @@ fun FieldEditDialog(
                                 showPriceError = false
                             }
                         },
-                        label = { Text(stringResource(Res.string.location_dialog_price)) },
+                        label = { Text(stringResource(R.string.location_dialog_price)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         isError = showPriceError,
                         modifier = Modifier.fillMaxWidth(),
                         supportingText = if (showPriceError) {
-                            { Text(stringResource(Res.string.location_dialog_price_invalid), color = MaterialTheme.colorScheme.error) }
+                            { Text(stringResource(R.string.location_dialog_price_invalid), color = MaterialTheme.colorScheme.error) }
                         } else null
                     )
                 }
@@ -299,8 +298,8 @@ fun FieldEditDialog(
                     OutlinedTextField(
                         value = surface,
                         onValueChange = { surface = it },
-                        label = { Text(stringResource(Res.string.location_dialog_surface)) },
-                        placeholder = { Text(stringResource(Res.string.location_dialog_surface_placeholder)) },
+                        label = { Text(stringResource(R.string.location_dialog_surface)) },
+                        placeholder = { Text(stringResource(R.string.location_dialog_surface_placeholder)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -311,8 +310,8 @@ fun FieldEditDialog(
                     OutlinedTextField(
                         value = dimensions,
                         onValueChange = { dimensions = it },
-                        label = { Text(stringResource(Res.string.location_dialog_dimensions)) },
-                        placeholder = { Text(stringResource(Res.string.location_dialog_dimensions_placeholder)) },
+                        label = { Text(stringResource(R.string.location_dialog_dimensions)) },
+                        placeholder = { Text(stringResource(R.string.location_dialog_dimensions_placeholder)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -327,7 +326,7 @@ fun FieldEditDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(stringResource(Res.string.location_dialog_covered))
+                        Text(stringResource(R.string.location_dialog_covered))
                         Switch(
                             checked = isCovered,
                             onCheckedChange = { isCovered = it }
@@ -341,7 +340,7 @@ fun FieldEditDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(stringResource(Res.string.location_dialog_active))
+                        Text(stringResource(R.string.location_dialog_active))
                         Switch(
                             checked = isActive,
                             onCheckedChange = { isActive = it }
@@ -363,7 +362,7 @@ fun FieldEditDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         TextButton(onClick = onDismiss) {
-                            Text(stringResource(Res.string.location_dialog_cancel))
+                            Text(stringResource(R.string.location_dialog_cancel))
                         }
                         Spacer(Modifier.width(8.dp))
                         Button(
@@ -393,7 +392,7 @@ fun FieldEditDialog(
                             },
                             enabled = name.isNotBlank()
                         ) {
-                            Text(stringResource(Res.string.location_dialog_save))
+                            Text(stringResource(R.string.location_dialog_save))
                         }
                     }
                 }
