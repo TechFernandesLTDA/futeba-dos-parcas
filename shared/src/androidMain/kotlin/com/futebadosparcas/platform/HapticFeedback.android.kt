@@ -1,5 +1,6 @@
 package com.futebadosparcas.platform
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
@@ -21,6 +22,7 @@ class AndroidHapticFeedback(private val context: Context) : HapticFeedback {
         }
     }
 
+    @SuppressLint("MissingPermission") // VIBRATE permission declared in AndroidManifest
     override fun vibrate(durationMs: Long) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
@@ -30,6 +32,7 @@ class AndroidHapticFeedback(private val context: Context) : HapticFeedback {
         }
     }
 
+    @SuppressLint("MissingPermission") // VIBRATE permission declared in AndroidManifest
     override fun vibratePattern(pattern: LongArray) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
@@ -39,6 +42,7 @@ class AndroidHapticFeedback(private val context: Context) : HapticFeedback {
         }
     }
 
+    @SuppressLint("MissingPermission") // VIBRATE permission declared in AndroidManifest
     override fun light() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
@@ -47,6 +51,7 @@ class AndroidHapticFeedback(private val context: Context) : HapticFeedback {
         }
     }
 
+    @SuppressLint("MissingPermission") // VIBRATE permission declared in AndroidManifest
     override fun medium() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
@@ -55,6 +60,7 @@ class AndroidHapticFeedback(private val context: Context) : HapticFeedback {
         }
     }
 
+    @SuppressLint("MissingPermission") // VIBRATE permission declared in AndroidManifest
     override fun heavy() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
