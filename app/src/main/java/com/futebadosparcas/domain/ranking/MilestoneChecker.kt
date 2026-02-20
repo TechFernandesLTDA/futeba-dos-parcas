@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.ranking
 
-import com.futebadosparcas.domain.model.MilestoneType
+import com.futebadosparcas.data.model.MilestoneType
 import com.futebadosparcas.domain.model.Statistics
 
 /**
