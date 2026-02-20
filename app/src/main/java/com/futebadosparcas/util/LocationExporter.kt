@@ -403,8 +403,8 @@ data class LocationData(
                 closingTime = location.closingTime,
                 operatingDays = location.operatingDays,
                 minGameDurationMinutes = location.minGameDurationMinutes,
-                createdAt = location.createdAt?.time,
-                updatedAt = location.updatedAt?.time
+                createdAt = location.createdAt, // KMP Location.createdAt é Long?
+                updatedAt = location.updatedAt
             )
         }
     }
