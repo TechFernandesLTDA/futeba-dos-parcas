@@ -276,7 +276,7 @@ private fun StatsComparisonTable(
         StatRow(stringResource(R.string.players_goals), stats1?.totalGoals ?: 0, stats2?.totalGoals ?: 0, color1, color2)
         StatRow(stringResource(R.string.players_assists), stats1?.totalAssists ?: 0, stats2?.totalAssists ?: 0, color1, color2)
         StatRow(stringResource(R.string.players_games), stats1?.totalGames ?: 0, stats2?.totalGames ?: 0, color1, color2)
-        StatRow(stringResource(R.string.players_mvps), stats1?.bestPlayerCount ?: 0, stats2?.bestPlayerCount ?: 0, color1, color2)
+        StatRow(stringResource(R.string.players_mvps), stats1?.mvpCount ?: 0, stats2?.mvpCount ?: 0, color1, color2)
     }
 }
 
@@ -450,8 +450,8 @@ fun PlayerCardContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem(label = stringResource(R.string.players_wins), value = stats?.gamesWon?.toString() ?: "0")
-                StatItem(label = stringResource(R.string.players_mvps), value = stats?.bestPlayerCount?.toString() ?: "0")
+                StatItem(label = stringResource(R.string.players_wins), value = stats?.totalWins?.toString() ?: "0")
+                StatItem(label = stringResource(R.string.players_mvps), value = stats?.mvpCount?.toString() ?: "0")
                 StatItem(label = stringResource(R.string.players_saves), value = stats?.totalSaves?.toString() ?: "0")
             }
             

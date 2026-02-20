@@ -191,7 +191,7 @@ private fun CompactHeaderLayout(
             HeaderStatItem(stringResource(R.string.hub_stat_games), statistics.totalGames.toString())
             HeaderStatItem(stringResource(R.string.hub_stat_goals), statistics.totalGoals.toString())
             HeaderStatItem(stringResource(R.string.hub_stat_assists), statistics.totalAssists.toString())
-            HeaderStatItem(stringResource(R.string.hub_stat_mvp), statistics.bestPlayerCount.toString())
+            HeaderStatItem(stringResource(R.string.hub_stat_mvp), statistics.mvpCount.toString())
         }
     }
 }
@@ -291,7 +291,7 @@ private fun ExpandedHeaderLayout(
                 HeaderStatItem(stringResource(R.string.hub_stat_games), statistics.totalGames.toString())
                 HeaderStatItem(stringResource(R.string.hub_stat_goals), statistics.totalGoals.toString())
                 HeaderStatItem(stringResource(R.string.hub_stat_assists), statistics.totalAssists.toString())
-                HeaderStatItem(stringResource(R.string.hub_stat_mvp), statistics.bestPlayerCount.toString())
+                HeaderStatItem(stringResource(R.string.hub_stat_mvp), statistics.mvpCount.toString())
             }
         }
     }

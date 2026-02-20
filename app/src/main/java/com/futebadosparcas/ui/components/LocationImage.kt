@@ -274,7 +274,6 @@ private fun ProgressiveImage(
                 model = ImageRequest.Builder(context)
                     .data(imageUrl)
                     .size(thumbnailSize, thumbnailSize)
-                    .crossfade(true)
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .memoryCachePolicy(CachePolicy.ENABLED)
                     .build(),
@@ -314,8 +313,7 @@ private fun ProgressiveImage(
                     model = ImageRequest.Builder(context)
                         .data(imageUrl)
                         .size(Size.ORIGINAL)
-                        .crossfade(true)
-                        .diskCachePolicy(CachePolicy.ENABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
                         .memoryCachePolicy(CachePolicy.ENABLED)
                         .build(),
                     contentDescription = contentDescription,

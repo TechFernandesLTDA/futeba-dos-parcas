@@ -794,15 +794,15 @@ private fun StatisticsCard(statistics: UserStatistics?) {
                     ) {
                         StatItem(label = stringResource(R.string.profile_stats_games), value = statistics.totalGames.toString())
                         StatItem(label = stringResource(R.string.profile_stats_goals), value = statistics.totalGoals.toString())
-                        StatItem(label = stringResource(R.string.profile_stats_victories), value = statistics.gamesWon.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_victories), value = statistics.totalWins.toString())
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         StatItem(label = stringResource(R.string.profile_stats_assists), value = statistics.totalAssists.toString())
-                        StatItem(label = stringResource(R.string.profile_stats_draws), value = statistics.gamesDraw.toString())
-                        StatItem(label = stringResource(R.string.profile_stats_mvp), value = statistics.bestPlayerCount.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_draws), value = statistics.totalDraws.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_mvp), value = statistics.mvpCount.toString())
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),

@@ -88,7 +88,6 @@ class FutebaApplication : Application(), Configuration.Provider {
             .components {
                 add(OkHttpNetworkFetcherFactory(callFactory = okHttpClient))
             }
-            .crossfade(true)
             .build()
 
         SingletonImageLoader.setSafe { imageLoader }

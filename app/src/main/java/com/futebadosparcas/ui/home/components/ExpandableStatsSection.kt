@@ -88,7 +88,7 @@ fun ExpandableStatsSection(
                             StatItem("Jogos", statistics.totalGames.toString())
                             StatItem("Gols", statistics.totalGoals.toString())
                             StatItem("Assistências", statistics.totalAssists.toString())
-                            StatItem("MVPs", statistics.bestPlayerCount.toString())
+                            StatItem("MVPs", statistics.mvpCount.toString())
                         }
                     } else {
                         // Layout expandido: duas linhas ou grid
@@ -108,7 +108,7 @@ fun ExpandableStatsSection(
                                 horizontalArrangement = Arrangement.SpaceAround
                             ) {
                                 StatItemLarge("Assistências", statistics.totalAssists.toString())
-                                StatItemLarge("MVPs", statistics.bestPlayerCount.toString())
+                                StatItemLarge("MVPs", statistics.mvpCount.toString())
                             }
                         }
                     }

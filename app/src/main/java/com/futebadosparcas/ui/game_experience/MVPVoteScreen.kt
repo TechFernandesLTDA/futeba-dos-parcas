@@ -272,7 +272,6 @@ private fun CandidateCard(
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(candidate.userPhoto)
-                    .crossfade(true)
                     .placeholder(R.drawable.ic_person)
                     .error(R.drawable.ic_person)
                     .build(),

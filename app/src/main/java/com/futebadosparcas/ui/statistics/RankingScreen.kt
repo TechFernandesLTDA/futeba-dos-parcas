@@ -569,7 +569,6 @@ private fun PlayerAvatar(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(photoUrl)
-                    .crossfade(true)
                     .error(R.drawable.ic_person)
                     .placeholder(R.drawable.ic_person)
                     .build(),

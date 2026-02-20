@@ -459,14 +459,14 @@ private fun PersonalStatsCard(
                 StatItem(
                     icon = Icons.Default.Star,
                     iconTint = GamificationColors.Gold,
-                    value = statistics.bestPlayerCount.toString(),
+                    value = statistics.mvpCount.toString(),
                     label = stringResource(R.string.statistics_best_players),
                     modifier = Modifier.weight(1f)
                 )
                 StatItem(
                     icon = Icons.Default.CheckCircle,
                     iconTint = MaterialTheme.colorScheme.primary,
-                    value = "${(statistics.presenceRate * 100).toInt()}%",
+                    value = "${if (statistics.totalGames > 0) 100 else 0}%",
                     label = stringResource(R.string.presence_rate),
                     modifier = Modifier.weight(1f)
                 )
@@ -802,7 +802,6 @@ private fun RankingItem(
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(item.photoUrl)
-                        .crossfade(true)
                         .build(),
                     contentDescription = stringResource(R.string.statistics_avatar, item.playerName),
                     modifier = Modifier

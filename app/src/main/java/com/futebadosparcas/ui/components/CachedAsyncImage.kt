@@ -83,7 +83,6 @@ fun CachedAsyncImage(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(imageUrl)
-                    .crossfade(durationMillis = 300)
                     .build(),
                 contentDescription = contentDescription,
                 modifier = Modifier
@@ -175,7 +174,6 @@ fun CachedFieldImage(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(imageUrl)
-                    .crossfade(durationMillis = 300)
                     .build(),
                 contentDescription = stringResource(R.string.cd_field_image_named, fieldName),
                 modifier = Modifier
@@ -246,7 +244,6 @@ fun CachedGroupImage(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(photoUrl)
-                    .crossfade(durationMillis = 300)
                     .build(),
                 contentDescription = stringResource(R.string.cd_group_photo, groupName),
                 modifier = Modifier

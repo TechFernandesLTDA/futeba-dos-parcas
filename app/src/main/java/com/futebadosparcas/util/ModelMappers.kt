@@ -48,6 +48,10 @@ import com.futebadosparcas.data.model.UserStreak as AndroidUserStreak
 import com.futebadosparcas.data.model.RankingEntryV2 as AndroidRankingEntryV2
 import com.futebadosparcas.data.model.RankingDocument as AndroidRankingDocument
 import com.futebadosparcas.data.model.XpLog as AndroidXpLog
+import com.futebadosparcas.data.model.UserStatistics as AndroidUserStatistics
+
+// KMP imports
+import com.futebadosparcas.domain.model.Statistics as KmpStatistics
 
 import com.futebadosparcas.domain.model.AppNotification as KmpAppNotification
 import com.futebadosparcas.domain.model.GameTemplate as KmpGameTemplate
@@ -449,6 +453,69 @@ fun List<AndroidUserBadge>.toKmpUserBadges(): List<KmpUserBadge> = map { it.toKm
  * Converte uma lista de UserBadge KMP para UserBadge Android.
  */
 fun List<KmpUserBadge>.toAndroidUserBadges(): List<AndroidUserBadge> = map { it.toAndroidUserBadge() }
+
+/**
+ * Alias para toAndroidUserBadges() - usado em ViewModels legacy.
+ * TODO: Remover após migração completa para nomenclatura KMP.
+ */
+fun List<KmpUserBadge>.toDataBadges(): List<AndroidUserBadge> = toAndroidUserBadges()
+
+// ========== Statistics Mappers ==========
+
+/**
+ * Converte Statistics KMP para UserStatistics Android.
+ *
+ * @param userId ID do usuário (necessário para o modelo Android)
+ */
+fun KmpStatistics.toDataModel(userId: String): AndroidUserStatistics {
+    return AndroidUserStatistics(
+        id = userId,
+        userId = userId,
+        totalGames = totalGames,
+        totalGoals = totalGoals,
+        totalAssists = totalAssists,
+        totalSaves = totalSaves,
+        totalYellowCards = yellowCards,
+        totalRedCards = redCards,
+        bestPlayerCount = mvpCount,
+        worstPlayerCount = worstPlayerCount,
+        bestGoalCount = 0, // Campo não existe no KMP Statistics
+        gamesWon = totalWins,
+        gamesLost = totalLosses,
+        gamesDraw = totalDraws,
+        currentMvpStreak = currentStreak,
+        gamesInvited = 0, // Campo não existe no KMP Statistics
+        gamesAttended = totalGames, // Aproximação: totalGames = jogos que compareceu
+        lastCalculatedAt = updatedAt?.let { java.util.Date(it) },
+        updatedAt = updatedAt?.let { java.util.Date(it) }
+    )
+}
+
+/**
+ * Converte UserStatistics Android para Statistics KMP.
+ */
+fun AndroidUserStatistics.toKmpStatistics(): KmpStatistics {
+    return KmpStatistics(
+        id = id,
+        userId = userId,
+        totalGames = totalGames,
+        totalGoals = totalGoals,
+        totalAssists = totalAssists,
+        totalSaves = totalSaves,
+        totalWins = gamesWon,
+        totalDraws = gamesDraw,
+        totalLosses = gamesLost,
+        mvpCount = bestPlayerCount,
+        bestGkCount = 0, // Campo não existe no Android UserStatistics
+        worstPlayerCount = worstPlayerCount,
+        currentStreak = currentMvpStreak,
+        bestStreak = 0, // Campo não existe no Android UserStatistics
+        yellowCards = totalYellowCards,
+        redCards = totalRedCards,
+        lastGameDate = null, // Campo não existe no Android UserStatistics
+        updatedAt = updatedAt?.time
+    )
+}
 
 // ========== Game Mappers ==========
 

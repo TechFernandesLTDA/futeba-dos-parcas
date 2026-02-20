@@ -340,7 +340,7 @@ object PlayerCardShareHelper {
             drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 0.5f, statsY, "JOGOS", stats.totalGames.toString(), textPrimary, textSecondary)
             drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 1.5f, statsY, "GOLS", stats.totalGoals.toString(), textPrimary, textSecondary)
             drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 2.5f, statsY, "ASSISTS", stats.totalAssists.toString(), textPrimary, textSecondary)
-            drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 3.5f, statsY, "MVPs", stats.bestPlayerCount.toString(), textPrimary, textSecondary)
+            drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 3.5f, statsY, "MVPs", stats.mvpCount.toString(), textPrimary, textSecondary)
 
             yPos += 70f
         }
