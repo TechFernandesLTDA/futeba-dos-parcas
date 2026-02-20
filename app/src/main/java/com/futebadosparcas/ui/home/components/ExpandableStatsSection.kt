@@ -32,7 +32,7 @@ import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ExpandableStatsSection(
-    statistics: UserStatistics,
+    statistics: Statistics,
     modifier: Modifier = Modifier
 ) {
     val windowSizeClass = rememberWindowSizeClass()

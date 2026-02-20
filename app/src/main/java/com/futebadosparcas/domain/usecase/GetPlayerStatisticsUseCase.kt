@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.combine
  * Use Case para buscar estatísticas de jogadores.
  *
  * Responsabilidades:
- * - Buscar estatísticas completas (User + UserStatistics)
+ * - Buscar estatísticas completas (User + Statistics)
  * - Calcular métricas derivadas (taxas, médias)
  * - Fornecer histórico de XP
  * - Comparar estatísticas entre jogadores
@@ -31,7 +31,7 @@ class GetPlayerStatisticsUseCase constructor(
      */
     data class PlayerStats(
         val user: User,
-        val statistics: UserStatistics,
+        val statistics: Statistics,
         val level: Int,
         val experiencePoints: Long,
         val nextLevelXp: Long,
@@ -61,7 +61,7 @@ class GetPlayerStatisticsUseCase constructor(
 
         // 1. Buscar usuário e estatísticas em paralelo
         val userResult = firebaseDataSource.getUserById(userId)
-        val statsResult = firebaseDataSource.getUserStatistics(userId)
+        val statsResult = firebaseDataSource.getStatistics(userId)
 
         // 2. Verificar erros
         val user = userResult.getOrElse { return Result.failure(it) }
@@ -104,7 +104,7 @@ class GetPlayerStatisticsUseCase constructor(
     fun getPlayerStatsFlow(userId: String): Flow<Result<PlayerStats>> {
         AppLogger.d(TAG) { "Iniciando flow de estatísticas: $userId" }
 
-        val statsFlow = firebaseDataSource.getUserStatisticsFlow(userId)
+        val statsFlow = firebaseDataSource.getStatisticsFlow(userId)
 
         return statsFlow.combine(
             // Pode adicionar flow do user aqui se necessário

@@ -3,6 +3,9 @@ package com.futebadosparcas.ui.games.teamformation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.*
+import com.futebadosparcas.data.model.SavedTeamFormation
+import com.futebadosparcas.data.model.DraftState
+import com.futebadosparcas.data.model.TeamColor
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.ai.EnhancedTeamBalancer

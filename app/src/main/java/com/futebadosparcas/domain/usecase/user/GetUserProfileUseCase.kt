@@ -64,7 +64,7 @@ class GetUserProfileUseCase constructor(
 
         val results = awaitAll(userDeferred, statisticsDeferred)
         val user = results[0] as User
-        val statistics = results[1] as UserStatistics?
+        val statistics = results[1] as Statistics?
 
         AppLogger.d(TAG) {
             "Perfil completo do usuário carregado: userId=${params.userId}"
@@ -92,14 +92,14 @@ class GetUserProfileUseCase constructor(
         return user
     }
 
-    private suspend fun fetchStatistics(userId: String): UserStatistics? {
+    private suspend fun fetchStatistics(userId: String): Statistics? {
         return try {
             val statsSnapshot = firestore.collection("statistics")
                 .document(userId)
                 .get()
                 .await()
 
-            val statistics = statsSnapshot.toObject(UserStatistics::class.java)
+            val statistics = statsSnapshot.toObject(Statistics::class.java)
 
             if (statistics != null) {
                 AppLogger.d(TAG) {
@@ -136,7 +136,7 @@ data class GetUserProfileParams(
  */
 data class UserProfile(
     val user: User,
-    val statistics: UserStatistics? = null
+    val statistics: Statistics? = null
 ) {
     /**
      * Retorna a estatística de presença do usuário, ou 0.0 se não houver dados.

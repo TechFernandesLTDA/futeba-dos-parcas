@@ -46,9 +46,9 @@ import androidx.compose.ui.res.stringResource
 @Composable
 fun ComparePlayersUiDialog(
     user1: User,
-    stats1: UserStatistics?,
+    stats1: Statistics?,
     user2: User,
-    stats2: UserStatistics?,
+    stats2: Statistics?,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -267,8 +267,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDataset(
 
 @Composable
 private fun StatsComparisonTable(
-    stats1: UserStatistics?,
-    stats2: UserStatistics?,
+    stats1: Statistics?,
+    stats2: Statistics?,
     color1: Color,
     color2: Color
 ) {
@@ -320,7 +320,7 @@ private fun StatRow(label: String, val1: Int, val2: Int, color1: Color, color2: 
 @Composable
 fun PlayerCardContent(
     user: User,
-    stats: UserStatistics?,
+    stats: Statistics?,
     onClose: () -> Unit,
     onShare: () -> Unit,
     modifier: Modifier = Modifier

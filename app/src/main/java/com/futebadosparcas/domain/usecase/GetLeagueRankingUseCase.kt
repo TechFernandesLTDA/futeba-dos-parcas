@@ -250,7 +250,7 @@ class GetLeagueRankingUseCase constructor(
         category: RankingCategory,
         currentUserId: String?
     ): List<RankingEntry> {
-        val stats = documents.mapNotNull { it.toObject(UserStatistics::class.java) }
+        val stats = documents.mapNotNull { it.toObject(Statistics::class.java) }
         val userIds = stats.map { it.id }
 
         // Buscar dados de usuários em batch
@@ -315,7 +315,7 @@ class GetLeagueRankingUseCase constructor(
         }
     }
 
-    private fun getStatValue(stats: UserStatistics, category: RankingCategory): Int {
+    private fun getStatValue(stats: Statistics, category: RankingCategory): Int {
         return when (category) {
             RankingCategory.GOALS -> stats.totalGoals
             RankingCategory.ASSISTS -> stats.totalAssists

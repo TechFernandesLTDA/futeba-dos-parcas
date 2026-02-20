@@ -196,7 +196,7 @@ fun ProfileScreen(
 private fun ProfileContent(
     user: User,
     badges: List<UserBadge>,
-    statistics: UserStatistics?,
+    statistics: Statistics?,
     isDevMode: Boolean,
     myLocationsCount: Int,
     onEditProfileClick: () -> Unit,
@@ -768,7 +768,7 @@ private fun StaticRatingItem(
  * Card de estatísticas
  */
 @Composable
-private fun StatisticsCard(statistics: UserStatistics?) {
+private fun StatisticsCard(statistics: Statistics?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),

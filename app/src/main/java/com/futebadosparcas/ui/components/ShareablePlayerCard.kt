@@ -74,7 +74,7 @@ object PlayerCardShareHelper {
     fun shareAsImage(
         context: Context,
         user: User,
-        stats: UserStatistics?,
+        stats: Statistics?,
         generatedBy: String = "Futeba dos Parças"
     ) {
         // Executar em coroutine para carregar foto
@@ -174,7 +174,7 @@ object PlayerCardShareHelper {
     private fun createPlayerCardBitmap(
         context: Context,
         user: User,
-        stats: UserStatistics?,
+        stats: Statistics?,
         generatedBy: String,
         isDarkMode: Boolean,
         photoBitmap: Bitmap?

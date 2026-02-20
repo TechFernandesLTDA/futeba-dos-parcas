@@ -349,9 +349,9 @@ class MatchFinalizationService constructor(
         // 7. Buscar estatisticas globais
         val statsDoc = statisticsCollection.document(userId).get().await()
         val currentStats = if (statsDoc.exists()) {
-            statsDoc.toObject(UserStatistics::class.java) ?: UserStatistics(id = userId)
+            statsDoc.toObject(Statistics::class.java) ?: Statistics(id = userId, userId = userId)
         } else {
-            UserStatistics(id = userId)
+            Statistics(id = userId, userId = userId)
         }
 
         // 8. Calcular novas estatisticas globais

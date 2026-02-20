@@ -20,8 +20,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.domain.model.SavedTeamFormation
-import com.futebadosparcas.domain.model.TeamColor
+import com.futebadosparcas.data.model.SavedTeamFormation
+import com.futebadosparcas.data.model.TeamColor
 import java.text.SimpleDateFormat
 import java.util.*
 import com.futebadosparcas.R

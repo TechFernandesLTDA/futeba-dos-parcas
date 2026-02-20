@@ -37,7 +37,7 @@ object MilestoneChecker {
      * @return Lista de novos milestones alcancados e XP total ganho
      */
     fun check(
-        stats: UserStatistics,
+        stats: Statistics,
         achievedMilestones: List<String>
     ): MilestoneCheckResult {
         val newMilestones = mutableListOf<MilestoneType>()
@@ -74,7 +74,7 @@ object MilestoneChecker {
      * Use esta versao quando nao puder garantir atomicidade da leitura.
      */
     fun checkSafe(
-        stats: UserStatistics,
+        stats: Statistics,
         achievedMilestones: List<String>,
         pendingMilestones: List<String> = emptyList()
     ): MilestoneCheckResult {
@@ -141,7 +141,7 @@ object MilestoneChecker {
      * Retorna o proximo milestone a ser alcancado para cada categoria.
      */
     fun getNextMilestones(
-        stats: UserStatistics,
+        stats: Statistics,
         achievedMilestones: List<String>
     ): List<MilestoneType> {
         val achievedSet = achievedMilestones.toSet()
@@ -172,7 +172,7 @@ object MilestoneChecker {
      * Verifica se um milestone especifico foi alcancado.
      */
     fun isAchieved(
-        stats: UserStatistics,
+        stats: Statistics,
         milestone: MilestoneType
     ): Boolean {
         val currentValue = getStatValue(stats, milestone.field)
@@ -183,7 +183,7 @@ object MilestoneChecker {
      * Calcula quantos pontos faltam para o proximo milestone de uma categoria.
      */
     fun getPointsToNext(
-        stats: UserStatistics,
+        stats: Statistics,
         achievedMilestones: List<String>,
         category: String
     ): Int? {

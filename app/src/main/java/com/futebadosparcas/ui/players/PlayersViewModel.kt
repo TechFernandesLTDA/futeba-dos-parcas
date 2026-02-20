@@ -111,7 +111,7 @@ class PlayersViewModel(
         playerStatsJob = viewModelScope.launch {
             _selectedPlayerStats.value = null // Limpar anterior
             try {
-                statisticsRepository.getUserStatistics(userId)
+                statisticsRepository.getStatistics(userId)
                     .onSuccess { stats ->
                         _selectedPlayerStats.value = stats
                     }
@@ -262,10 +262,10 @@ class PlayersViewModel(
 
                 // Busca estatisticas em paralelo
                 val stats1Async = async {
-                    runCatching { statisticsRepository.getUserStatistics(user1.id) }
+                    runCatching { statisticsRepository.getStatistics(user1.id) }
                 }
                 val stats2Async = async {
-                    runCatching { statisticsRepository.getUserStatistics(user2.id) }
+                    runCatching { statisticsRepository.getStatistics(user2.id) }
                 }
 
                 val result1 = stats1Async.await()

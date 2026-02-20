@@ -40,7 +40,7 @@ class PlayerCardViewModel(
                 }
 
                 // Buscar estatísticas
-                val statsResult = statisticsRepository.getUserStatistics(userId)
+                val statsResult = statisticsRepository.getStatistics(userId)
                 val statistics = statsResult.getOrNull()?.toDataModel(userId)
 
                 _uiState.value = PlayerCardUiState.Success(
@@ -59,7 +59,7 @@ sealed class PlayerCardUiState {
     object Loading : PlayerCardUiState()
     data class Success(
         val user: User,
-        val statistics: UserStatistics?
+        val statistics: Statistics?
     ) : PlayerCardUiState()
     data class Error(val message: String) : PlayerCardUiState()
 }

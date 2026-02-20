@@ -39,7 +39,7 @@ import kotlinx.coroutines.tasks.await
  */
 class GetTopScorersUseCase constructor(
     private val firestore: FirebaseFirestore
-) : SuspendUseCase<GetTopScorersParams, List<UserStatistics>>() {
+) : SuspendUseCase<GetTopScorersParams, List<Statistics>>() {
 
     companion object {
         private const val TAG = "GetTopScorersUseCase"
@@ -48,7 +48,7 @@ class GetTopScorersUseCase constructor(
         private const val MAX_LIMIT = 100
     }
 
-    override suspend fun execute(params: GetTopScorersParams): List<UserStatistics> {
+    override suspend fun execute(params: GetTopScorersParams): List<Statistics> {
         AppLogger.d(TAG) {
             "Buscando top scorers: limit=${params.limit}, minGames=${params.minGames}"
         }
@@ -69,7 +69,7 @@ class GetTopScorersUseCase constructor(
             .get()
             .await()
 
-        val allStats = snapshot.toObjects(UserStatistics::class.java)
+        val allStats = snapshot.toObjects(Statistics::class.java)
 
         // Filtrar por mínimo de jogos se necessário
         return if (params.minGames > 0) {
