@@ -2,7 +2,7 @@ package com.futebadosparcas.domain.ranking
 
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.model.LeagueDivision as SharedLeagueDivision
-import com.futebadosparcas.domain.ranking.RecentGameData as SharedRecentGameData
+import com.futebadosparcas.domain.ranking.SharedRecentGameData as SharedSharedRecentGameData
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -96,13 +96,13 @@ class LeagueService constructor(
             val doc = seasonParticipationCollection.document(docId).get().await()
 
             val participation = if (doc.exists()) {
-                doc.toObject(SeasonParticipationV2::class.java) ?: createNewParticipation(userId, seasonId)
+                doc.toObject(SeasonParticipation::class.java) ?: createNewParticipation(userId, seasonId)
             } else {
                 createNewParticipation(userId, seasonId)
             }
 
             // 2. Adicionar jogo recente
-            val newRecentGame = RecentGameData(
+            val newRecentGame = SharedRecentGameData(
                 gameId = gameId,
                 xpEarned = xpEarned,
                 won = won,
@@ -117,7 +117,7 @@ class LeagueService constructor(
 
             // 3. Calcular novo League Rating usando o calculador do shared module
             val sharedRecentGames = updatedRecentGames.map { game ->
-                SharedRecentGameData(
+                SharedSharedRecentGameData(
                     gameId = game.gameId,
                     xpEarned = game.xpEarned,
                     won = game.won,
@@ -248,13 +248,13 @@ class LeagueService constructor(
     /**
      * Busca participacao de um jogador em uma temporada.
      */
-    suspend fun getParticipation(userId: String, seasonId: String): Result<SeasonParticipationV2?> {
+    suspend fun getParticipation(userId: String, seasonId: String): Result<SeasonParticipation?> {
         return try {
             val docId = "${seasonId}_$userId"
             val doc = seasonParticipationCollection.document(docId).get().await()
 
             val participation = if (doc.exists()) {
-                doc.toObject(SeasonParticipationV2::class.java)
+                doc.toObject(SeasonParticipation::class.java)
             } else {
                 null
             }
@@ -269,7 +269,7 @@ class LeagueService constructor(
     /**
      * Busca ranking da liga (ordenado por pontos).
      */
-    suspend fun getLeagueRanking(seasonId: String, limit: Int = 50): Result<List<SeasonParticipationV2>> {
+    suspend fun getLeagueRanking(seasonId: String, limit: Int = 50): Result<List<SeasonParticipation>> {
         return try {
             val snapshot = seasonParticipationCollection
                 .whereEqualTo("season_id", seasonId)
@@ -278,7 +278,7 @@ class LeagueService constructor(
                 .get()
                 .await()
 
-            val participations = snapshot.toObjects(SeasonParticipationV2::class.java)
+            val participations = snapshot.toObjects(SeasonParticipation::class.java)
             Result.success(participations)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar ranking da liga", e)
@@ -293,7 +293,7 @@ class LeagueService constructor(
         seasonId: String,
         division: SharedLeagueDivision,
         limit: Int = 50
-    ): Result<List<SeasonParticipationV2>> {
+    ): Result<List<SeasonParticipation>> {
         return try {
             val androidDivision = toAndroidDivision(division)
             val snapshot = seasonParticipationCollection
@@ -304,7 +304,7 @@ class LeagueService constructor(
                 .get()
                 .await()
 
-            val participations = snapshot.toObjects(SeasonParticipationV2::class.java)
+            val participations = snapshot.toObjects(SeasonParticipation::class.java)
             Result.success(participations)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogadores da divisao $division", e)
@@ -312,9 +312,9 @@ class LeagueService constructor(
         }
     }
 
-    private suspend fun createNewParticipation(userId: String, seasonId: String): SeasonParticipationV2 {
+    private suspend fun createNewParticipation(userId: String, seasonId: String): SeasonParticipation {
         var startDivision = com.futebadosparcas.data.model.LeagueDivision.BRONZE
-        var momentumGames = emptyList<RecentGameData>()
+        var momentumGames = emptyList<SharedRecentGameData>()
 
         // Tenta buscar QUALQUER historico anterior para definir a divisao inicial e momentum
         try {
@@ -326,7 +326,7 @@ class LeagueService constructor(
                 .await()
 
              val lastParticipation = allParticipations.documents.firstOrNull()
-                ?.toObject(SeasonParticipationV2::class.java)
+                ?.toObject(SeasonParticipation::class.java)
 
              if (lastParticipation != null) {
                 // Bug #2 Fix: Busca ultima participacao independente do mes
@@ -344,7 +344,7 @@ class LeagueService constructor(
             AppLogger.e(TAG, "Erro ao calcular divisao inicial para $seasonId", e)
         }
 
-        return SeasonParticipationV2(
+        return SeasonParticipation(
             id = "${seasonId}_$userId",
             userId = userId,
             seasonId = seasonId,
