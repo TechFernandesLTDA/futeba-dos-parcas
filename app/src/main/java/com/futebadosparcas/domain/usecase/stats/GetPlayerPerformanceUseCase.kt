@@ -1,7 +1,7 @@
 package com.futebadosparcas.domain.usecase.stats
 
-import com.futebadosparcas.data.model.UserStatistics
-import com.futebadosparcas.data.repository.StatisticsRepository
+import com.futebadosparcas.domain.model.Statistics
+import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.futebadosparcas.util.AppLogger
 import java.util.Date
@@ -64,7 +64,7 @@ class GetPlayerPerformanceUseCase constructor(
         }
 
         // Buscar estatísticas completas do jogador
-        val result = statisticsRepository.getUserStatistics(params.userId)
+        val result = statisticsRepository.getStatistics(params.userId)
         val statistics = result.getOrElse { exception ->
             AppLogger.e(TAG, "Erro ao buscar estatísticas", exception)
             throw exception
@@ -85,7 +85,7 @@ class GetPlayerPerformanceUseCase constructor(
      * Calcula métricas de desempenho com base em estatísticas
      */
     private fun calculatePerformanceMetrics(
-        statistics: UserStatistics,
+        statistics: Statistics,
         params: GetPlayerPerformanceParams
     ): PlayerPerformanceMetrics {
         // Se houver período definido, pode ser aplicado aqui quando houver histórico temporal
@@ -130,7 +130,7 @@ class GetPlayerPerformanceUseCase constructor(
     /**
      * Calcula rating geral do jogador (0 a 5 estrelas)
      */
-    private fun calculateOverallRating(stats: UserStatistics): Double {
+    private fun calculateOverallRating(stats: Statistics): Double {
         // Fórmula ponderada: 40% ofensiva, 30% defesa, 20% wins, 10% disciplina
         val offensive = (stats.avgGoalsPerGame / 1.5).coerceIn(0.0, 1.0)
         val defensive = (stats.avgSavesPerGame / 4.0).coerceIn(0.0, 1.0)
@@ -144,7 +144,7 @@ class GetPlayerPerformanceUseCase constructor(
     /**
      * Calcula pontuação de ofensiva (0 a 100)
      */
-    private fun calculateOffensiveScore(stats: UserStatistics): Int {
+    private fun calculateOffensiveScore(stats: Statistics): Int {
         val goalsScore = ((stats.avgGoalsPerGame / 1.5) * 50).toInt().coerceIn(0, 50)
         val assistsScore = ((stats.avgAssistsPerGame / 1.2) * 50).toInt().coerceIn(0, 50)
         return goalsScore + assistsScore
@@ -153,7 +153,7 @@ class GetPlayerPerformanceUseCase constructor(
     /**
      * Calcula pontuação de defesa (0 a 100)
      */
-    private fun calculateDefensiveScore(stats: UserStatistics): Int {
+    private fun calculateDefensiveScore(stats: Statistics): Int {
         val savesScore = ((stats.avgSavesPerGame / 4.0) * 50).toInt().coerceIn(0, 50)
         val disciplineScore = ((1.0 - (stats.avgCardsPerGame / 2.0)) * 50).toInt().coerceIn(0, 50)
         return savesScore + disciplineScore
@@ -163,7 +163,7 @@ class GetPlayerPerformanceUseCase constructor(
      * Calcula score de consistência (0 a 100)
      * Jogadores com MVP rate mais consistente pontuam melhor
      */
-    private fun calculateConsistencyScore(stats: UserStatistics): Int {
+    private fun calculateConsistencyScore(stats: Statistics): Int {
         if (stats.totalGames == 0) return 0
 
         // MVP rate alta = consistente em ser destaque
@@ -178,7 +178,7 @@ class GetPlayerPerformanceUseCase constructor(
     /**
      * Calcula impacto no time (0 a 100)
      */
-    private fun calculateTeamImpactScore(stats: UserStatistics): Int {
+    private fun calculateTeamImpactScore(stats: Statistics): Int {
         // Combina: MVPs, contribuição em gols/assistências, taxa de vitória
         val mvpImpact = ((stats.bestPlayerCount.toDouble() / stats.totalGames) * 33).toInt()
             .coerceIn(0, 33)

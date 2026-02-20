@@ -3,8 +3,8 @@ package com.futebadosparcas.ui.home
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.Activity
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Activity
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.WeeklyChallenge
 import com.futebadosparcas.ui.games.GameWithConfirmations
 import com.futebadosparcas.domain.model.UserChallengeProgress
@@ -35,8 +35,8 @@ class HomeViewModel(
     private val userRepository: UserRepository,
     private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
     private val gamificationRepository: GamificationRepository,
-    private val statisticsRepository: com.futebadosparcas.data.repository.StatisticsRepository,
-    private val activityRepository: com.futebadosparcas.data.repository.ActivityRepository,
+    private val statisticsRepository: com.futebadosparcas.domain.repository.StatisticsRepository,
+    private val activityRepository: com.futebadosparcas.domain.repository.ActivityRepository,
     private val gameConfirmationRepository: com.futebadosparcas.domain.repository.GameConfirmationRepository,
     private val connectivityMonitor: ConnectivityMonitor,
     private val savedStateHandle: SavedStateHandle,

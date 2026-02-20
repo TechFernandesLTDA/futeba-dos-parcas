@@ -18,17 +18,10 @@ import com.futebadosparcas.data.RankingRepositoryImpl
 import com.futebadosparcas.data.StatisticsRepositoryImpl
 import com.futebadosparcas.data.database.DatabaseDriverFactory
 import com.futebadosparcas.data.database.DatabaseFactory
-import com.futebadosparcas.data.repository.ActivityRepositoryAdapter
 import com.futebadosparcas.data.repository.CachedGameRepository
-import com.futebadosparcas.data.repository.GameEventsRepositoryAdapter
-import com.futebadosparcas.data.repository.GameExperienceRepositoryAdapter
-import com.futebadosparcas.data.repository.GameRequestRepositoryAdapter
-import com.futebadosparcas.data.repository.GameSummonRepositoryAdapter
-import com.futebadosparcas.data.repository.GameTeamRepositoryAdapter
 import com.futebadosparcas.data.repository.LiveGameRepositoryImpl
 import com.futebadosparcas.data.repository.MeteredLocationRepository
 import com.futebadosparcas.data.repository.PaymentRepositoryImpl
-import com.futebadosparcas.data.repository.StatisticsRepositoryAdapter
 import com.futebadosparcas.data.repository.UserRepositoryImpl
 import com.futebadosparcas.data.repository.WaitlistRepositoryImpl
 import com.futebadosparcas.db.FutebaDatabase
@@ -141,35 +134,6 @@ val repositoryKoinModule = module {
 
     single<GameTeamRepository> {
         GameTeamRepositoryImpl(get(), get())
-    }
-
-    // Adaptadores para compatibilidade com UI Android
-    single<com.futebadosparcas.data.repository.ActivityRepository> {
-        ActivityRepositoryAdapter(get())
-    }
-
-    single<com.futebadosparcas.data.repository.StatisticsRepository> {
-        StatisticsRepositoryAdapter(get())
-    }
-
-    single<com.futebadosparcas.data.repository.GameRequestRepository> {
-        GameRequestRepositoryAdapter(get())
-    }
-
-    single<com.futebadosparcas.data.repository.GameSummonRepository> {
-        GameSummonRepositoryAdapter(get())
-    }
-
-    single<com.futebadosparcas.data.repository.GameExperienceRepository> {
-        GameExperienceRepositoryAdapter(get())
-    }
-
-    single<com.futebadosparcas.data.repository.GameEventsRepository> {
-        GameEventsRepositoryAdapter(get())
-    }
-
-    single<com.futebadosparcas.data.repository.GameTeamRepository> {
-        GameTeamRepositoryAdapter(get())
     }
 
     single<com.futebadosparcas.data.repository.WaitlistRepository> {
