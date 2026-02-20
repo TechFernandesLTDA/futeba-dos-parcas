@@ -3,8 +3,7 @@ package com.futebadosparcas.ui.notifications
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.AppNotification
-import com.futebadosparcas.domain.model.AppNotificationType
-import com.futebadosparcas.data.repository.GameSummonRepository
+import com.futebadosparcas.domain.model.NotificationType
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.util.AppLogger
@@ -42,9 +41,8 @@ class NotificationsViewModel(
     private fun observeNotifications() {
         notificationsJob?.cancel()
         notificationsJob = notificationRepository.getMyNotificationsFlow()
-            .onEach { kmpNotifications ->
-                val androidNotifications = kmpNotifications.toAndroidAppNotifications()
-                val sortedNotifications = sortNotifications(androidNotifications)
+            .onEach { notifications ->
+                val sortedNotifications = sortNotifications(notifications)
                 _uiState.value = if (sortedNotifications.isEmpty()) {
                     NotificationsUiState.Empty
                 } else {
@@ -85,9 +83,8 @@ class NotificationsViewModel(
             val result = notificationRepository.getMyNotifications()
 
             result.fold(
-                onSuccess = { kmpNotifications ->
-                    val androidNotifications = kmpNotifications.toAndroidAppNotifications()
-                    val sortedNotifications = sortNotifications(androidNotifications)
+                onSuccess = { notifications ->
+                    val sortedNotifications = sortNotifications(notifications)
                     _uiState.value = if (sortedNotifications.isEmpty()) {
                         NotificationsUiState.Empty
                     } else {
@@ -159,19 +156,8 @@ class NotificationsViewModel(
      */
     fun restoreNotification(notification: AppNotification) {
         viewModelScope.launch {
-            // Converte para KMP model e recria
-            val kmpNotification = com.futebadosparcas.domain.model.AppNotification(
-                id = notification.id,
-                userId = notification.userId,
-                type = notification.getTypeEnum().toKmpNotificationType(),
-                title = notification.title,
-                message = notification.message,
-                read = notification.read,
-                createdAt = notification.createdAt?.time,
-                referenceId = notification.referenceId,
-                referenceType = notification.referenceType,
-                expiresAt = notification.expiresAt?.time
-            )
+            // Notification já é KMP model (domain.model.AppNotification)
+            val kmpNotification = notification.copy(read = false)
 
             val result = notificationRepository.createNotification(kmpNotification)
 
@@ -206,7 +192,7 @@ class NotificationsViewModel(
     }
 
     fun handleNotificationAction(notification: AppNotification, accept: Boolean) {
-        when (notification.getTypeEnum()) {
+        when (notification.type) {
             NotificationType.GROUP_INVITE -> {
                 handleGroupInvite(notification, accept)
             }
@@ -287,9 +273,8 @@ class NotificationsViewModel(
             val result = notificationRepository.getNotificationsByType(type.toKmpNotificationType())
 
             result.fold(
-                onSuccess = { kmpNotifications ->
-                    val androidNotifications = kmpNotifications.toAndroidAppNotifications()
-                    val sortedNotifications = sortNotifications(androidNotifications)
+                onSuccess = { notifications ->
+                    val sortedNotifications = sortNotifications(notifications)
                     _uiState.value = if (sortedNotifications.isEmpty()) {
                         NotificationsUiState.Empty
                     } else {
