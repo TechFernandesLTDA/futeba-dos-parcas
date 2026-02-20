@@ -5,6 +5,7 @@ import com.futebadosparcas.domain.model.RequestStatus
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.domain.repository.GameRequestRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
+import com.futebadosparcas.platform.firebase.getFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow

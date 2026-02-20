@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
  * - Retry logic e tratamento de erros
  * - Migração incremental para KMP
  */
-expect class FirebaseDataSource {
+expect class FirebaseDataSource() {
 
     // ========== GAMES ==========
 
