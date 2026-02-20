@@ -38,8 +38,6 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.text.Normalizer
-import com.futebadosparcas.util.toAndroidLocations
-import com.futebadosparcas.util.toAndroidFields
 
 /**
  * Dialog moderno de seleção de local com busca integrada ao Google Places

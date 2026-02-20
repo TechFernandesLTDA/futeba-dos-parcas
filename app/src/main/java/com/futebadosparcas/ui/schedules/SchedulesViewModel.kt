@@ -4,8 +4,6 @@ import com.futebadosparcas.util.AppLogger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.Schedule
-import com.futebadosparcas.util.toAndroidSchedules
-import com.futebadosparcas.util.toKmpSchedule
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.domain.repository.ScheduleRepository
 import kotlinx.coroutines.flow.MutableStateFlow

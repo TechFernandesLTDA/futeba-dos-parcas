@@ -14,8 +14,6 @@ import com.futebadosparcas.domain.model.GameWithConfirmations as KmpGameWithConf
 import com.futebadosparcas.domain.model.TimeConflict as KmpTimeConflict
 import com.futebadosparcas.ui.games.GameWithConfirmations
 import com.futebadosparcas.util.AppLogger
-import com.futebadosparcas.util.toAndroidGame
-import com.futebadosparcas.util.toAndroidGames
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow

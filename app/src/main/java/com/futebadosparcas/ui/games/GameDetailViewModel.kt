@@ -16,9 +16,6 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 import java.time.temporal.TemporalAdjusters
 import com.futebadosparcas.domain.repository.ScheduleRepository
-import com.futebadosparcas.util.toAndroidSchedule
-import com.futebadosparcas.util.toKmpSchedule
-import com.futebadosparcas.util.toKmpAppNotifications
 import com.futebadosparcas.data.model.CancellationReason
 import com.futebadosparcas.domain.model.GameWaitlist
 import com.futebadosparcas.domain.model.GameInviteLink

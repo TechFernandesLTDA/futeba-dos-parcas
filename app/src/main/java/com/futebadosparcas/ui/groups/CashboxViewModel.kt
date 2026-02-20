@@ -11,10 +11,6 @@ import com.futebadosparcas.data.model.CashboxSummary as AndroidCashboxSummary
 import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.domain.repository.CashboxRepository
 import com.futebadosparcas.data.repository.GroupRepository
-import com.futebadosparcas.util.toAndroidCashboxEntries
-import com.futebadosparcas.util.toAndroidCashboxSummary
-import com.futebadosparcas.util.toKmpCashboxEntry
-import com.futebadosparcas.util.toKmpCashboxFilter
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

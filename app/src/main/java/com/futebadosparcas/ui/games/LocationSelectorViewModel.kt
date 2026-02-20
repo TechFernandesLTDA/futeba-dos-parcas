@@ -10,12 +10,6 @@ import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.AppLogger
-import com.futebadosparcas.util.toAndroidField
-import com.futebadosparcas.util.toAndroidFields
-import com.futebadosparcas.util.toAndroidLocation
-import com.futebadosparcas.util.toAndroidLocations
-import com.futebadosparcas.util.toAndroidLocationReviews
-import com.futebadosparcas.util.toKmpLocation
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
