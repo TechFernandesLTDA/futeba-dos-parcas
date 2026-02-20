@@ -432,8 +432,8 @@ object MockDataHelper {
                     preferredFieldTypes = preferredTypes,
                     role = UserRole.PLAYER.name,
                     isSearchable = true,
-                    createdAt = Date(),
-                    updatedAt = Date()
+                    createdAt = Date().time,
+                    updatedAt = Date().time
                 )
                 usersCollection.document(id).set(user).await()
                 createdCount++
@@ -563,7 +563,7 @@ object MockDataHelper {
                      userId = user.id,
                      userName = user.name,
                      userPhoto = user.photoUrl,
-                     position = if(Random.nextBoolean()) PlayerPosition.FIELD.name else PlayerPosition.GOALKEEPER.name,
+                     position = if(Random.nextBoolean()) PlayerPosition.LINE.name else PlayerPosition.GOALKEEPER.name,
                      status = ConfirmationStatus.CONFIRMED.name,
                      paymentStatus = PaymentStatus.PENDING.name,
                      confirmedAt = Date()

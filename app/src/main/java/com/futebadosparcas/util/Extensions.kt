@@ -12,16 +12,14 @@ import kotlinx.coroutines.launch
 /**
  * Extensão para carregar imagens com Coil
  */
-fun ImageView.loadUrl(url: String?, placeholder: Int? = null) {
+fun ImageView.loadUrl(url: String?, placeholderRes: Int? = null) {
     this.load(url) {
-        placeholder?.let { placeholder(it) }
-        crossfade(true)
+        placeholderRes?.let { placeholder(it) }
     }
 }
 
 fun ImageView.loadProfileImage(url: String?) {
     this.load(url) {
-        crossfade(true)
         placeholder(com.futebadosparcas.R.drawable.ic_player_placeholder)
         error(com.futebadosparcas.R.drawable.ic_player_placeholder)
         transformations(coil3.transform.CircleCropTransformation())
