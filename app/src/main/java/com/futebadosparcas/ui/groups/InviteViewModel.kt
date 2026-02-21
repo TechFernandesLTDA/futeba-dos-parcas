@@ -310,7 +310,7 @@ sealed class InviteActionState {
 sealed class GroupPendingInvitesState {
     object Idle : GroupPendingInvitesState()
     object Loading : GroupPendingInvitesState()
-    data class Success(val invites: List<com.futebadosparcas.data.model.GroupInvite>) : GroupPendingInvitesState()
+    data class Success(val invites: List<GroupInvite>) : GroupPendingInvitesState()
     data class Error(val message: String) : GroupPendingInvitesState()
 }
 

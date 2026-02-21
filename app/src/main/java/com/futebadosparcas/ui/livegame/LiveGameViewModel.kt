@@ -6,6 +6,7 @@ import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.LiveGameRepository
+import com.futebadosparcas.data.model.GameConfirmation as DataGameConfirmation
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.*
@@ -264,8 +265,8 @@ sealed class LiveGameUiState {
         val score: LiveGameScore,
         val team1: Team,
         val team2: Team,
-        val team1Players: List<GameConfirmation>,
-        val team2Players: List<GameConfirmation>,
+        val team1Players: List<DataGameConfirmation>,
+        val team2Players: List<DataGameConfirmation>,
         val isOwner: Boolean
     ) : LiveGameUiState()
     data class Error(val message: String) : LiveGameUiState()

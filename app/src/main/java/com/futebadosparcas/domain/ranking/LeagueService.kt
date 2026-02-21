@@ -110,12 +110,12 @@ class LeagueService constructor(
                 else -> -10
             }
             val newLeagueRating = (participation.leagueRating + ratingChange).toDouble()
-            val suggestedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating.toInt())
+            val suggestedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating)
 
             // FIXME: protectionGames, promotionProgress, relegationProgress nao existem no SeasonParticipation
             // Simplificando: divisao baseada apenas no league rating atual
             val oldDivisionShared = SharedLeagueDivision.fromString(participation.division)
-            val newDivisionShared = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating.toInt())
+            val newDivisionShared = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating)
 
             val promoted = newDivisionShared.ordinal > oldDivisionShared.ordinal
             val relegated = newDivisionShared.ordinal < oldDivisionShared.ordinal

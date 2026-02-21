@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.GameSummon
 import com.futebadosparcas.domain.model.PlayerPosition
-import com.futebadosparcas.data.model.UpcomingGame
+import com.futebadosparcas.domain.model.UpcomingGame
 import com.futebadosparcas.domain.repository.GameSummonRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
