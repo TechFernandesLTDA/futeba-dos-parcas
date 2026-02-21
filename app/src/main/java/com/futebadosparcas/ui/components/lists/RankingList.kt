@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.futebadosparcas.domain.model.LeagueDivision
-import com.futebadosparcas.domain.model.RankingEntry
+import com.futebadosparcas.ui.league.RankingItem
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
@@ -56,8 +56,8 @@ import androidx.compose.ui.res.stringResource
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun RankingList(
-    entries: Map<LeagueDivision, List<RankingEntryV2>>,
-    onPlayerClick: (RankingEntryV2) -> Unit,
+    entries: Map<LeagueDivision, List<RankingItem>>,
+    onPlayerClick: (RankingItem) -> Unit,
     modifier: Modifier = Modifier,
     state: LazyListState = rememberLazyListState(),
     isLoading: Boolean = false,
@@ -119,14 +119,15 @@ fun RankingList(
                         // Items da divisão
                         itemsIndexed(
                             items = divisionEntries,
-                            key = { _, entry -> entry.userId }
+                            key = { _, entry -> entry.user.id }
                         ) { index, entry ->
                             RankingItem(
                                 entry = entry,
+                                rank = index + 1,
                                 division = division,
                                 onClick = { onPlayerClick(entry) },
                                 isTopThree = index < 3,
-                                modifier = Modifier.animateItem()
+                                modifier = Modifier
                             )
                         }
                     }
@@ -195,7 +196,8 @@ fun DivisionHeader(
  */
 @Composable
 fun RankingItem(
-    entry: RankingEntryV2,
+    entry: RankingItem,
+    rank: Int,
     division: LeagueDivision,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -226,7 +228,7 @@ fun RankingItem(
         ) {
             // Posição com badge especial para top 3
             RankBadge(
-                rank = entry.rank,
+                rank = rank,
                 isTopThree = isTopThree,
                 division = division
             )
@@ -235,8 +237,8 @@ fun RankingItem(
 
             // Avatar
             CachedProfileImage(
-                photoUrl = entry.userPhoto,
-                userName = entry.userName,
+                photoUrl = entry.user.photoUrl,
+                userName = entry.user.name,
                 size = 48.dp
             )
 
@@ -245,7 +247,7 @@ fun RankingItem(
             // Informações do jogador
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = entry.nickname ?: entry.userName,
+                    text = entry.user.nickname?.takeIf { it.isNotBlank() } ?: entry.user.name,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = if (isTopThree) FontWeight.Bold else FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -264,15 +266,18 @@ fun RankingItem(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "${entry.gamesPlayed} jogos",
+                        text = "${entry.participation.gamesPlayed} jogos",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    if (entry.average > 0) {
+                    val avgGoals = if (entry.participation.gamesPlayed > 0) {
+                        entry.participation.goals.toDouble() / entry.participation.gamesPlayed
+                    } else 0.0
+                    if (avgGoals > 0) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "• Média: %.1f".format(entry.average),
+                            text = "• Média: %.1f".format(avgGoals),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -280,13 +285,13 @@ fun RankingItem(
                 }
             }
 
-            // Valor (pontos, gols, etc)
+            // Valor (pontos)
             Surface(
                 shape = RoundedCornerShape(8.dp),
                 color = getDivisionColor(division).copy(alpha = 0.2f)
             ) {
                 Text(
-                    text = entry.value.toString(),
+                    text = entry.participation.points.toString(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = getDivisionColor(division),
@@ -408,8 +413,8 @@ fun RankingListShimmer(
  */
 @Composable
 fun SimpleRankingList(
-    entries: List<RankingEntryV2>,
-    onPlayerClick: (RankingEntryV2) -> Unit,
+    entries: List<RankingItem>,
+    onPlayerClick: (RankingItem) -> Unit,
     modifier: Modifier = Modifier,
     state: LazyListState = rememberLazyListState(),
     isLoading: Boolean = false,
