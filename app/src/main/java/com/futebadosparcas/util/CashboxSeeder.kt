@@ -1,11 +1,10 @@
 package com.futebadosparcas.util
 
 import android.content.Context
-import com.futebadosparcas.domain.model.CashboxStatus
+import com.futebadosparcas.domain.model.CashboxAppStatus
 import com.futebadosparcas.domain.model.CashboxCategory
 import com.futebadosparcas.domain.model.CashboxEntryType
 import com.futebadosparcas.domain.model.CashboxEntry
-import com.futebadosparcas.domain.model.CashboxAppStatus
 import com.futebadosparcas.domain.repository.CashboxRepository
 import java.util.Calendar
 import java.util.Date

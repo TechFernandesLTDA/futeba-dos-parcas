@@ -313,11 +313,12 @@ private fun LevelHeader(
  */
 @Composable
 private fun LeagueCard(leagueData: com.futebadosparcas.domain.model.SeasonParticipation) {
-    val divisionColor = when (leagueData.division) {
-        com.futebadosparcas.data.model.LeagueDivision.DIAMANTE -> GamificationColors.Diamond
-        com.futebadosparcas.data.model.LeagueDivision.OURO -> GamificationColors.Gold
-        com.futebadosparcas.data.model.LeagueDivision.PRATA -> GamificationColors.Silver
-        com.futebadosparcas.data.model.LeagueDivision.BRONZE -> GamificationColors.Bronze
+    val divisionEnum = leagueData.getDivisionEnum()
+    val divisionColor = when (divisionEnum) {
+        com.futebadosparcas.domain.model.LeagueDivision.DIAMANTE -> GamificationColors.Diamond
+        com.futebadosparcas.domain.model.LeagueDivision.OURO -> GamificationColors.Gold
+        com.futebadosparcas.domain.model.LeagueDivision.PRATA -> GamificationColors.Silver
+        com.futebadosparcas.domain.model.LeagueDivision.BRONZE -> GamificationColors.Bronze
     }
 
     Card(
@@ -341,7 +342,7 @@ private fun LeagueCard(leagueData: com.futebadosparcas.domain.model.SeasonPartic
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = leagueData.division.displayName,
+                    text = divisionEnum.displayName,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = divisionColor

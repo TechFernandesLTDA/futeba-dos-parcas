@@ -16,9 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.futebadosparcas.data.model.RecurrenceType as AndroidRecurrenceType
+import com.futebadosparcas.domain.model.RecurrenceType
 import com.futebadosparcas.domain.model.Schedule
-import com.futebadosparcas.util.toAndroidRecurrenceType
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.states.LoadingState
@@ -259,7 +258,7 @@ private fun ScheduleCard(
                 )
 
                 val dayStr = getDayOfWeekString(schedule.dayOfWeek)
-                val recurrenceStr = getRecurrenceString(schedule.recurrenceType.toAndroidRecurrenceType())
+                val recurrenceStr = getRecurrenceString(schedule.recurrenceType)
 
                 Text(
                     text = buildString {
@@ -367,10 +366,10 @@ private fun getDayOfWeekString(day: Int): String {
  * Helper function para converter tipo de recorrência em string
  */
 @Composable
-private fun getRecurrenceString(recurrenceType: AndroidRecurrenceType): String {
+private fun getRecurrenceString(recurrenceType: RecurrenceType): String {
     return when (recurrenceType) {
-        AndroidRecurrenceType.weekly -> stringResource(R.string.schedules_recurrence_weekly)
-        AndroidRecurrenceType.biweekly -> stringResource(R.string.schedules_recurrence_biweekly)
-        AndroidRecurrenceType.monthly -> stringResource(R.string.schedules_recurrence_monthly)
+        RecurrenceType.WEEKLY -> stringResource(R.string.schedules_recurrence_weekly)
+        RecurrenceType.BIWEEKLY -> stringResource(R.string.schedules_recurrence_biweekly)
+        RecurrenceType.MONTHLY -> stringResource(R.string.schedules_recurrence_monthly)
     }
 }
