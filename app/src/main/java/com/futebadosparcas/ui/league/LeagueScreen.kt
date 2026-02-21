@@ -145,7 +145,7 @@ fun LeagueContent(
     // Usa derivedStateOf para evitar recálculos desnecessários durante scroll
     val filteredRanking by remember(state.allRankings, state.selectedDivision) {
         derivedStateOf {
-            state.allRankings.filter { it.participation.division == state.selectedDivision }
+            state.allRankings.filter { it.participation.getDivisionEnum() == state.selectedDivision }
         }
     }
 
@@ -234,7 +234,7 @@ fun LeagueHeader(
     season: Season,
     availableSeasons: List<Season>,
     selectedSeason: Season?,
-    myParticipation: SeasonParticipationV2?,
+    myParticipation: SeasonParticipation?,
     myPosition: Int?,
     onSeasonSelected: (Season) -> Unit
 ) {
@@ -357,9 +357,7 @@ fun LeagueHeader(
                 // Barra de Progresso da Divisão (Rating)
                 if (myParticipation != null) {
                     val currentRating = myParticipation.leagueRating
-                    val division = myParticipation.division
-                    // Converter para domain model se necessário, ou usar Companion object
-                    val domainDivision = DomainLeagueDivision.valueOf(division.name)
+                    val domainDivision = myParticipation.getDivisionEnum()
                     val nextThreshold = DomainLeagueDivision.getNextDivisionThreshold(domainDivision)
                     val prevThreshold = DomainLeagueDivision.getPreviousDivisionThreshold(domainDivision)
 
@@ -418,7 +416,7 @@ fun LeagueHeader(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    MiniStatItem(stringResource(R.string.league_goals), "⚽ ${myParticipation?.goalsScored ?: 0}")
+                    MiniStatItem(stringResource(R.string.league_goals), "⚽ ${myParticipation?.goals ?: 0}")
                     MiniStatItem(stringResource(R.string.league_assists), "👟 ${myParticipation?.assists ?: 0}")
                     MiniStatItem(stringResource(R.string.league_mvp_count), "⭐ ${myParticipation?.mvpCount ?: 0}")
                 }
@@ -709,7 +707,7 @@ fun RankingListItem(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = stringResource(R.string.league_wins_goals_format, item.participation.wins, item.participation.goalsScored),
+                    text = stringResource(R.string.league_wins_goals_format, item.participation.wins, item.participation.goals),
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
