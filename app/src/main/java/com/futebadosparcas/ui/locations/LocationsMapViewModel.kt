@@ -7,6 +7,14 @@ import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.LocationAnalytics
 import com.futebadosparcas.util.LocationSources
+import com.futebadosparcas.util.toAndroidLocation
+import com.futebadosparcas.util.toAndroidField
+import com.futebadosparcas.util.toAndroidFields
+import com.futebadosparcas.util.toAndroidLocationReview
+import com.futebadosparcas.util.toAndroidLocationReviews
+import com.futebadosparcas.util.toAndroidCashboxEntry
+import com.futebadosparcas.util.toAndroidCashboxEntries
+import com.futebadosparcas.util.toAndroidGroupInvites
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -7,6 +7,13 @@ import com.futebadosparcas.domain.model.NotificationType
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.toKmpSchedule
+import com.futebadosparcas.util.toKmpLocation
+import com.futebadosparcas.util.toKmpLocationReview
+import com.futebadosparcas.util.toKmpGameTemplate
+import com.futebadosparcas.util.toKmpCashboxFilter
+import com.futebadosparcas.util.toKmpCashboxEntry
+import com.futebadosparcas.util.toKmpNotificationType
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

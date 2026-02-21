@@ -36,6 +36,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.text.Normalizer
 import com.futebadosparcas.R
+import com.futebadosparcas.util.toAndroidLocation
+import com.futebadosparcas.util.toAndroidField
+import com.futebadosparcas.util.toAndroidFields
 import androidx.compose.ui.res.stringResource
 
 /**

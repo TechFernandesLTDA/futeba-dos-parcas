@@ -38,6 +38,11 @@ import com.futebadosparcas.domain.model.GameVisibility
 import com.futebadosparcas.domain.repository.AddressLookupResult
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toKmpAppNotifications
+import com.futebadosparcas.util.toAndroidLocation
+import com.futebadosparcas.util.toAndroidField
+import com.futebadosparcas.util.toAndroidGameTemplate
+import com.futebadosparcas.util.toAndroidSchedule
+import com.futebadosparcas.util.toKmpSchedule
 
 /**
  * Passos do wizard de criacao de jogo.

@@ -22,6 +22,11 @@ import com.futebadosparcas.domain.model.GameWaitlist
 import com.futebadosparcas.domain.model.GameInviteLink
 import com.futebadosparcas.domain.model.PlayerAttendance
 import com.futebadosparcas.data.model.PixKeyType
+import com.futebadosparcas.util.toAndroidLocation
+import com.futebadosparcas.util.toAndroidField
+import com.futebadosparcas.util.toAndroidGameTemplate
+import com.futebadosparcas.util.toAndroidSchedule
+import com.futebadosparcas.util.toKmpSchedule
 
 class GameDetailViewModel(
     private val gameRepository: GameRepository,
