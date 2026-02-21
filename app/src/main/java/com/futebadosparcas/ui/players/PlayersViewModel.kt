@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 @OptIn(FlowPreview::class)
 class PlayersViewModel(
     private val userRepository: UserRepository,
-    private val statisticsRepository: com.futebadosparcas.data.repository.IStatisticsRepository,
+    private val statisticsRepository: com.futebadosparcas.domain.repository.StatisticsRepository,
     private val groupRepository: com.futebadosparcas.data.repository.GroupRepository,
     private val inviteRepository: com.futebadosparcas.domain.repository.InviteRepository,
     private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
@@ -111,7 +111,7 @@ class PlayersViewModel(
         playerStatsJob = viewModelScope.launch {
             _selectedPlayerStats.value = null // Limpar anterior
             try {
-                statisticsRepository.getStatistics(userId)
+                statisticsRepository.getUserStatistics(userId)
                     .onSuccess { stats ->
                         _selectedPlayerStats.value = stats
                     }
@@ -262,10 +262,10 @@ class PlayersViewModel(
 
                 // Busca estatisticas em paralelo
                 val stats1Async = async {
-                    runCatching { statisticsRepository.getStatistics(user1.id) }
+                    runCatching { statisticsRepository.getUserStatistics(user1.id) }
                 }
                 val stats2Async = async {
-                    runCatching { statisticsRepository.getStatistics(user2.id) }
+                    runCatching { statisticsRepository.getUserStatistics(user2.id) }
                 }
 
                 val result1 = stats1Async.await()

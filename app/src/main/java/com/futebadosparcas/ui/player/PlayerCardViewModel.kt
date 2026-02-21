@@ -40,7 +40,7 @@ class PlayerCardViewModel(
                 }
 
                 // Buscar estatísticas
-                val statsResult = statisticsRepository.getStatistics(userId)
+                val statsResult = statisticsRepository.getUserStatistics(userId)
                 val statistics = statsResult.getOrNull() // Já é domain.model.Statistics (KMP)
 
                 _uiState.value = PlayerCardUiState.Success(

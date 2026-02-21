@@ -64,7 +64,7 @@ class GetPlayerPerformanceUseCase constructor(
         }
 
         // Buscar estatísticas completas do jogador
-        val result = statisticsRepository.getStatistics(params.userId)
+        val result = statisticsRepository.getUserStatistics(params.userId)
         val statistics = result.getOrElse { exception ->
             AppLogger.e(TAG, "Erro ao buscar estatísticas", exception)
             throw exception

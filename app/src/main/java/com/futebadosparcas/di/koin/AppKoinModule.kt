@@ -7,6 +7,7 @@ import com.futebadosparcas.data.GameTemplateRepositoryImpl
 import com.futebadosparcas.data.InviteRepositoryImpl
 import com.futebadosparcas.data.ScheduleRepositoryImpl
 import com.futebadosparcas.data.SettingsRepositoryImpl
+import com.futebadosparcas.data.StatisticsRepositoryImpl
 import com.futebadosparcas.data.ai.GeminiTeamBalancer
 import com.futebadosparcas.data.repository.GameQueryRepositoryImpl
 import com.futebadosparcas.data.repository.GameRepository
@@ -21,6 +22,7 @@ import com.futebadosparcas.domain.repository.GameTemplateRepository
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.ScheduleRepository
 import com.futebadosparcas.domain.repository.SettingsRepository
+import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.util.PreferencesManager
 import org.koin.android.ext.koin.androidContext
@@ -53,13 +55,9 @@ val appKoinModule = module {
         }
     }
 
-    single<com.futebadosparcas.data.repository.IStatisticsRepository> {
-        val preferencesManager: PreferencesManager = get()
-        if (preferencesManager.isMockModeEnabled()) {
-            com.futebadosparcas.data.repository.FakeStatisticsRepository()
-        } else {
-            com.futebadosparcas.data.repository.StatisticsRepositoryImpl(get(), get())
-        }
+    single<com.futebadosparcas.domain.repository.StatisticsRepository> {
+        // TODO: Re-adicionar mock mode após criar FakeStatisticsRepository
+        com.futebadosparcas.data.StatisticsRepositoryImpl(get())
     }
 
     single<GameTemplateRepository> {

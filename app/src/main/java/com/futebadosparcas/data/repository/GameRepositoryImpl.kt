@@ -37,8 +37,8 @@ class GameRepositoryImpl constructor(
     private val gameDao: GameDao,
     private val queryRepository: com.futebadosparcas.domain.repository.GameQueryRepository,
     private val confirmationRepository: com.futebadosparcas.domain.repository.GameConfirmationRepository,
-    private val eventsRepository: GameEventsRepository,
-    private val teamRepository: GameTeamRepository,
+    private val eventsRepository: com.futebadosparcas.domain.repository.GameEventsRepository,
+    private val teamRepository: com.futebadosparcas.domain.repository.GameTeamRepository,
     private val liveGameRepository: LiveGameRepository
 ) : GameRepository {
     private val gamesCollection = firestore.collection("games")
@@ -50,7 +50,7 @@ class GameRepositoryImpl constructor(
     // ========== Helper Methods para Conversao KMP -> Android ==========
 
     private fun KmpGameWithConfirmations.toAndroidGameWithConfirmations(): GameWithConfirmations = GameWithConfirmations(
-        game = game.toAndroidGame(),
+        game = game, // Já é domain.model.Game (KmpGame)
         confirmedCount = confirmedCount,
         isUserConfirmed = isUserConfirmed
     )
@@ -68,7 +68,7 @@ class GameRepositoryImpl constructor(
     )
 
     private fun KmpTimeConflict.toAndroidTimeConflict(): TimeConflict = TimeConflict(
-        conflictingGame = conflictingGame.toAndroidGame(),
+        conflictingGame = conflictingGame, // Já é domain.model.Game
         overlapMinutes = overlapMinutes
     )
 
@@ -125,7 +125,7 @@ class GameRepositoryImpl constructor(
         }
 
     override suspend fun getGameDetails(gameId: String): Result<Game> =
-        queryRepository.getGameDetails(gameId).map { it.toAndroidGame() }
+        queryRepository.getGameDetails(gameId) // Já retorna domain.model.Game
 
     override fun getGameDetailsFlow(gameId: String): Flow<Result<Game>> =
         queryRepository.getGameDetailsFlow(gameId)

@@ -114,7 +114,7 @@ class ProfileViewModel(
                     val badges = badgesResult.getOrNull()?.toDataBadges() ?: emptyList()
 
                     // Carregar estatísticas do repositório de domínio (já retorna domain.model.Statistics)
-                    val statsResult = statisticsRepository.getStatistics(user.id)
+                    val statsResult = statisticsRepository.getUserStatistics(user.id)
                     val stats = statsResult.getOrNull()
 
                     _uiState.value = ProfileUiState.Success(user, badges, stats, isDevModeEnabled())
@@ -147,7 +147,7 @@ class ProfileViewModel(
     private fun loadMyLocations(userId: String) {
         viewModelScope.launch {
             locationRepository.getLocationsByOwner(userId).onSuccess { locations ->
-                _myLocations.value = locations.toDataLocations()
+                _myLocations.value = locations
             }
         }
     }
@@ -265,7 +265,7 @@ class ProfileViewModel(
                                 val badgesResult = gamificationRepository.getUserBadges(refreshedUser.id)
                                 val badges = badgesResult.getOrNull()?.toDataBadges() ?: emptyList()
 
-                                val statsResult = statisticsRepository.getStatistics(refreshedUser.id)
+                                val statsResult = statisticsRepository.getUserStatistics(refreshedUser.id)
                                 val stats = statsResult.getOrNull()
 
                                 _uiState.value = ProfileUiState.ProfileUpdateSuccess(
