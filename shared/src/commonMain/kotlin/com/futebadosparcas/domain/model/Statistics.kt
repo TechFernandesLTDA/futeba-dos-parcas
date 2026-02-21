@@ -81,34 +81,34 @@ data class Statistics(
      * Taxa de vitoria (0.0 - 1.0).
      * Computed property usando extension function winRate().
      */
-    val winRate: Float
-        get() = winRate()
+    val winRate: Double
+        get() = winRate().toDouble()
 
     /**
      * Media de gols por jogo.
      * Computed property usando extension function goalsPerGame().
      */
-    val avgGoalsPerGame: Float
-        get() = goalsPerGame()
+    val avgGoalsPerGame: Double
+        get() = goalsPerGame().toDouble()
 
     /**
      * Media de assistencias por jogo.
      * Computed property usando extension function assistsPerGame().
      */
-    val avgAssistsPerGame: Float
-        get() = assistsPerGame()
+    val avgAssistsPerGame: Double
+        get() = assistsPerGame().toDouble()
 
     /**
      * Media de defesas por jogo.
      */
-    val avgSavesPerGame: Float
-        get() = if (totalGames == 0) 0f else totalSaves.toFloat() / totalGames.toFloat()
+    val avgSavesPerGame: Double
+        get() = if (totalGames == 0) 0.0 else totalSaves.toDouble() / totalGames.toDouble()
 
     /**
      * Media de cartoes por jogo.
      */
-    val avgCardsPerGame: Float
-        get() = if (totalGames == 0) 0f else totalCards.toFloat() / totalGames.toFloat()
+    val avgCardsPerGame: Double
+        get() = if (totalGames == 0) 0.0 else totalCards.toDouble() / totalGames.toDouble()
 
     // Nota: Metodos get*() removidos para evitar clash com computed properties.
     // Use as computed properties ou extension functions diretas.
