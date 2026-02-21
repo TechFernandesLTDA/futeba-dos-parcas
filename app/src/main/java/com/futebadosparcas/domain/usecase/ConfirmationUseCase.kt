@@ -1,7 +1,7 @@
 package com.futebadosparcas.domain.usecase
 
 import android.location.Location
-import com.futebadosparcas.data.model.CancellationReason
+import com.futebadosparcas.domain.model.CancellationReason
 import com.futebadosparcas.domain.model.ConfirmationStatus
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameCancellation
@@ -57,17 +57,9 @@ class ConfirmationUseCase constructor(
      */
     suspend fun canConfirmPresence(game: Game): Result<ConfirmationCheck> {
         return try {
-            val deadline = game.getConfirmationDeadline()
-
-            if (deadline == null) {
-                Result.success(ConfirmationCheck(canConfirm = true))
-            } else {
-                val now = Date()
-                val canConfirm = now.before(deadline)
-                val timeRemaining = if (canConfirm) deadline.time - now.time else 0L
-
-                Result.success(
-                    ConfirmationCheck(
+            // TODO: getConfirmationDeadline() foi removido do modelo Game
+            // Implementar via configurações do Group ou outro mecanismo
+            Result.success(ConfirmationCheck(canConfirm = true, timeRemainingMs = null))
                         canConfirm = canConfirm,
                         deadline = deadline,
                         timeRemainingMs = timeRemaining
@@ -99,18 +91,13 @@ class ConfirmationUseCase constructor(
             val game = gameResult.getOrNull()
                 ?: return Result.failure(Exception("Jogo nao encontrado"))
 
-            // Verificar deadline
-            if (game.isConfirmationDeadlinePassed()) {
-                return Result.success(
-                    ConfirmationResult(
-                        success = false,
-                        errorMessage = "Prazo para confirmacao encerrado"
-                    )
-                )
-            }
+            // TODO: isConfirmationDeadlinePassed() e isFull() foram removidos
+            // Implementar via lógica manual ou configurações do Group
+            val totalPlayers = game.playersCount + game.goalkeepersCount
+            val maxTotal = game.maxPlayers + game.maxGoalkeepers
 
             // Verificar se jogo esta lotado
-            if (game.isFull()) {
+            if (totalPlayers >= maxTotal) {
                 // Adicionar a lista de espera (Issue #32)
                 val user = userRepository.getCurrentUser().getOrNull()
                     ?: return Result.failure(Exception("Usuario nao autenticado"))
