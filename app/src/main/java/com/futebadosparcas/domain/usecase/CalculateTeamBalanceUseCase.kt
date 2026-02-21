@@ -75,11 +75,9 @@ class CalculateTeamBalanceUseCase constructor(
         }
 
         // 4. Executar algoritmo de balanceamento
-        // Converter domain.model.GameConfirmation → data.model.GameConfirmation para AiTeamBalancer
-        val dataModelPlayers = confirmedPlayers.map { it.toDataModel() }
         val teams = teamBalancer.balanceTeams(
             gameId = gameId,
-            players = dataModelPlayers,
+            players = confirmedPlayers,
             numberOfTeams = numberOfTeams
         ).getOrElse {
             AppLogger.e(TAG, "Erro ao balancear times", it)
@@ -100,9 +98,8 @@ class CalculateTeamBalanceUseCase constructor(
                 }
             }
 
-            // Salvar novos times (converter data → domain antes de salvar)
-            val domainTeams = teams.map { it.toDomainModel() }
-            firebaseDataSource.saveTeams(gameId, domainTeams)
+            // Salvar novos times
+            firebaseDataSource.saveTeams(gameId, teams)
                 .getOrElse { return Result.failure(it) }
 
             AppLogger.d(TAG) { "Times salvos com sucesso no Firebase" }
@@ -120,10 +117,7 @@ class CalculateTeamBalanceUseCase constructor(
     suspend fun getGeneratedTeams(gameId: String): Result<List<Team>> {
         AppLogger.d(TAG) { "Buscando times gerados: gameId=$gameId" }
 
-        // FirebaseDataSource retorna domain.model.Team, precisa converter para data.model.Team
-        return firebaseDataSource.getGameTeams(gameId).map { domainTeams ->
-            domainTeams.map { it.toDataModel() }
-        }
+        return firebaseDataSource.getGameTeams(gameId)
     }
 
     /**
@@ -193,53 +187,5 @@ class CalculateTeamBalanceUseCase constructor(
         val averageSize: Double,
         val sizeDifference: Int,
         val balanceScore: Double
-    )
-}
-
-// Extension functions for domain ↔ data model conversions
-private fun com.futebadosparcas.domain.model.GameConfirmation.toDataModel(): com.futebadosparcas.data.model.GameConfirmation {
-    return com.futebadosparcas.data.model.GameConfirmation(
-        id = id,
-        gameId = gameId,
-        userId = userId,
-        userName = userName,
-        userPhoto = userPhoto,
-        position = position,
-        status = status,
-        paymentStatus = paymentStatus,
-        isCasualPlayer = isCasualPlayer,
-        goals = goals,
-        assists = assists,
-        saves = saves,
-        yellowCards = yellowCards,
-        redCards = redCards,
-        nickname = nickname,
-        xpEarned = xpEarned,
-        isMvp = isMvp,
-        isBestGk = isBestGk,
-        isWorstPlayer = isWorstPlayer,
-        confirmedAt = confirmedAt?.let { java.util.Date(it) }
-    )
-}
-
-private fun Team.toDomainModel(): com.futebadosparcas.domain.model.Team {
-    return com.futebadosparcas.domain.model.Team(
-        id = id,
-        gameId = gameId,
-        name = name,
-        color = color,
-        playerIds = playerIds,
-        score = score
-    )
-}
-
-private fun com.futebadosparcas.domain.model.Team.toDataModel(): Team {
-    return Team(
-        id = id,
-        gameId = gameId,
-        name = name,
-        color = color,
-        playerIds = playerIds,
-        score = score
     )
 }

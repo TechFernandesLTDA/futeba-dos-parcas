@@ -124,29 +124,6 @@ class GameRepositoryImpl constructor(
         )
     }
 
-    // Conversores para Team (domain ↔ data)
-    private fun com.futebadosparcas.domain.model.Team.toAndroidTeam(): com.futebadosparcas.data.model.Team {
-        return com.futebadosparcas.data.model.Team(
-            id = id,
-            gameId = gameId,
-            name = name,
-            color = color,
-            playerIds = playerIds,
-            score = score
-        )
-    }
-
-    private fun com.futebadosparcas.data.model.Team.toKmpTeam(): com.futebadosparcas.domain.model.Team {
-        return com.futebadosparcas.domain.model.Team(
-            id = id,
-            gameId = gameId,
-            name = name,
-            color = color,
-            playerIds = playerIds,
-            score = score
-        )
-    }
-
     private fun KmpGameFilterType.toAndroidFilterType(): GameFilterType = when (this) {
         KmpGameFilterType.ALL -> GameFilterType.ALL
         KmpGameFilterType.OPEN -> GameFilterType.OPEN
@@ -295,28 +272,19 @@ class GameRepositoryImpl constructor(
         gameId: String,
         numberOfTeams: Int,
         balanceTeams: Boolean
-    ): Result<List<com.futebadosparcas.data.model.Team>> =
-        teamRepository.generateTeams(gameId, numberOfTeams, balanceTeams).map { domainTeams ->
-            domainTeams.map { it.toAndroidTeam() }
-        }
+    ): Result<List<Team>> = teamRepository.generateTeams(gameId, numberOfTeams, balanceTeams)
 
-    override suspend fun getGameTeams(gameId: String): Result<List<com.futebadosparcas.data.model.Team>> =
-        teamRepository.getGameTeams(gameId).map { domainTeams ->
-            domainTeams.map { it.toAndroidTeam() }
-        }
+    override suspend fun getGameTeams(gameId: String): Result<List<Team>> =
+        teamRepository.getGameTeams(gameId)
 
-    override fun getGameTeamsFlow(gameId: String): Flow<Result<List<com.futebadosparcas.data.model.Team>>> =
-        teamRepository.getGameTeamsFlow(gameId).map { result ->
-            result.map { domainTeams ->
-                domainTeams.map { it.toAndroidTeam() }
-            }
-        }
+    override fun getGameTeamsFlow(gameId: String): Flow<Result<List<Team>>> =
+        teamRepository.getGameTeamsFlow(gameId)
 
     override suspend fun clearGameTeams(gameId: String): Result<Unit> =
         teamRepository.clearGameTeams(gameId)
 
-    override suspend fun updateTeams(teams: List<com.futebadosparcas.data.model.Team>): Result<Unit> =
-        teamRepository.updateTeams(teams.map { it.toKmpTeam() })
+    override suspend fun updateTeams(teams: List<Team>): Result<Unit> =
+        teamRepository.updateTeams(teams)
 
     // ========== Game Management Methods - Mantidos aqui (CRUD e Status) ==========
     override suspend fun createGame(game: Game): Result<Game> {
