@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.data.repository.AuthRepository
-import com.futebadosparcas.data.repository.GameRepository
+import com.futebadosparcas.domain.repository.GameRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toKmpAppNotifications
 import kotlinx.coroutines.Job
@@ -25,8 +25,6 @@ import com.futebadosparcas.data.model.PixKeyType
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidGameTemplate
-import com.futebadosparcas.util.toAndroidSchedule
-import com.futebadosparcas.util.toKmpSchedule
 
 class GameDetailViewModel(
     private val gameRepository: GameRepository,
@@ -381,9 +379,9 @@ class GameDetailViewModel(
     private suspend fun resolveScheduleTemplate(
         sourceGame: Game,
         recurrenceRaw: String
-    ): Pair<String, Schedule?>? {
+    ): Pair<String, com.futebadosparcas.domain.model.Schedule?>? {
         var currentScheduleId = sourceGame.scheduleId
-        var scheduleTemplate: Schedule? = null
+        var scheduleTemplate: com.futebadosparcas.domain.model.Schedule? = null
 
         if (currentScheduleId.isNotEmpty()) {
             val existingScheduleResult = scheduleRepository.getScheduleById(currentScheduleId)
@@ -391,11 +389,10 @@ class GameDetailViewModel(
                 AppLogger.i(TAG) { "Agendamento automatico cancelado: O template de recorrencia foi excluido pelo usuario." }
                 return null
             }
-            scheduleTemplate = existingScheduleResult.getOrNull()?.toAndroidSchedule()
+            scheduleTemplate = existingScheduleResult.getOrNull()
         } else {
             val newSchedule = buildScheduleFromGame(sourceGame, recurrenceRaw)
-            val kmpSchedule = newSchedule.toKmpSchedule()
-            val result = scheduleRepository.createSchedule(kmpSchedule)
+            val result = scheduleRepository.createSchedule(newSchedule)
             result.onSuccess { id ->
                 currentScheduleId = id
                 scheduleTemplate = newSchedule.copy(id = id)
@@ -409,8 +406,8 @@ class GameDetailViewModel(
     /**
      * Constrói um Schedule a partir dos dados de um Game existente.
      */
-    private fun buildScheduleFromGame(sourceGame: Game, recurrenceRaw: String): Schedule {
-        return Schedule(
+    private fun buildScheduleFromGame(sourceGame: Game, recurrenceRaw: String): com.futebadosparcas.domain.model.Schedule {
+        return com.futebadosparcas.domain.model.Schedule(
             ownerId = sourceGame.ownerId,
             ownerName = sourceGame.ownerName,
             name = "Jogo de ${sourceGame.ownerName} - ${sourceGame.locationName}",
@@ -530,7 +527,7 @@ class GameDetailViewModel(
         scheduleId: String,
         nextDateStr: String,
         nextDateTime: java.util.Date?,
-        template: Schedule?
+        template: com.futebadosparcas.domain.model.Schedule?
     ): Game {
         val nextGame = sourceGame.copy(
             id = "",
@@ -1275,8 +1272,8 @@ sealed class SchedulingEvent {
 
 data class CombinedData(
     val gameResult: Result<Game>,
-    val confirmationsResult: Result<List<GameConfirmation>>,
-    val eventsResult: Result<List<GameEvent>>,
-    val teamsResult: Result<List<Team>>,
-    val liveScore: LiveGameScore?
+    val confirmationsResult: Result<List<com.futebadosparcas.domain.model.GameConfirmation>>,
+    val eventsResult: Result<List<com.futebadosparcas.domain.model.GameEvent>>,
+    val teamsResult: Result<List<com.futebadosparcas.domain.model.Team>>,
+    val liveScore: com.futebadosparcas.domain.model.LiveScore?
 )

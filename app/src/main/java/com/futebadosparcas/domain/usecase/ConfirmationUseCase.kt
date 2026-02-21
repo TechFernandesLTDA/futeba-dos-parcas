@@ -59,7 +59,7 @@ class ConfirmationUseCase constructor(
         return try {
             // TODO: getConfirmationDeadline() foi removido do modelo Game
             // Implementar via configurações do Group ou outro mecanismo
-            Result.success(ConfirmationCheck(canConfirm = true, timeRemainingMs = null))
+            Result.success(ConfirmationCheck(canConfirm = true, timeRemainingMs = 0L))
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao verificar deadline", e)
             Result.failure(e)
@@ -205,16 +205,18 @@ class ConfirmationUseCase constructor(
             val nextInLine = nextResult.getOrNull()
             if (nextInLine != null) {
                 // Criar notificacao in-app sobre vaga disponivel
+                // Use default 30 minutos para promoção da waitlist (propriedade foi removida do Game)
+                val autoPromoteMinutes = 30
                 val notification = com.futebadosparcas.domain.model.AppNotification(
                     userId = nextInLine.userId,
                     type = com.futebadosparcas.domain.model.NotificationType.GAME_VACANCY,
                     title = "Vaga Disponível!",
-                    message = "Uma vaga abriu para o jogo ${game.date} às ${game.time} em ${game.locationName}. Você tem 30 minutos para confirmar.",
+                    message = "Uma vaga abriu para o jogo ${game.date} às ${game.time} em ${game.locationName}. Você tem $autoPromoteMinutes minutos para confirmar.",
                     referenceId = gameId,
                     referenceType = "game",
                     actionType = com.futebadosparcas.domain.model.NotificationAction.CONFIRM_POSITION,
                     createdAt = System.currentTimeMillis(),
-                    expiresAt = System.currentTimeMillis() + (game.waitlistAutoPromoteMinutes * 60 * 1000L)
+                    expiresAt = System.currentTimeMillis() + (autoPromoteMinutes * 60 * 1000L)
                 )
                 notificationRepository.createNotification(notification)
 

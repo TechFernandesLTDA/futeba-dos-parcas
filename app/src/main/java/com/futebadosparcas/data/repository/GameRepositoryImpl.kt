@@ -74,6 +74,79 @@ class GameRepositoryImpl constructor(
 
     private fun List<KmpTimeConflict>.toAndroidTimeConflicts(): List<TimeConflict> = map { it.toAndroidTimeConflict() }
 
+    // Conversores para GameEvent (domain -> data)
+    private fun com.futebadosparcas.domain.model.GameEvent.toAndroidGameEvent(): com.futebadosparcas.data.model.GameEvent {
+        return com.futebadosparcas.data.model.GameEvent(
+            id = id,
+            gameId = gameId,
+            eventType = eventType,
+            playerId = playerId,
+            playerName = playerName,
+            teamId = teamId,
+            assistedById = assistedById,
+            assistedByName = assistedByName,
+            minute = minute,
+            createdBy = createdBy,
+            createdAt = createdAt?.let { java.util.Date(it) }
+        )
+    }
+
+    private fun List<com.futebadosparcas.domain.model.GameEvent>.toAndroidGameEvents(): List<com.futebadosparcas.data.model.GameEvent> = map { it.toAndroidGameEvent() }
+
+    // Conversor para LiveScore (domain -> data)
+    private fun com.futebadosparcas.domain.model.LiveScore.toAndroidLiveGameScore(): com.futebadosparcas.data.model.LiveGameScore {
+        return com.futebadosparcas.data.model.LiveGameScore(
+            id = id,
+            gameId = gameId,
+            team1Id = team1Id,
+            team1Score = team1Score,
+            team2Id = team2Id,
+            team2Score = team2Score,
+            startedAt = startedAt?.let { java.util.Date(it) },
+            finishedAt = finishedAt?.let { java.util.Date(it) }
+        )
+    }
+
+    // Conversor para GameEvent (data -> domain)
+    private fun com.futebadosparcas.data.model.GameEvent.toKmpGameEvent(): com.futebadosparcas.domain.model.GameEvent {
+        return com.futebadosparcas.domain.model.GameEvent(
+            id = id,
+            gameId = gameId,
+            eventType = eventType,
+            playerId = playerId,
+            playerName = playerName,
+            teamId = teamId,
+            assistedById = assistedById,
+            assistedByName = assistedByName,
+            minute = minute,
+            createdBy = createdBy,
+            createdAt = createdAt?.time
+        )
+    }
+
+    // Conversores para Team (domain ↔ data)
+    private fun com.futebadosparcas.domain.model.Team.toAndroidTeam(): com.futebadosparcas.data.model.Team {
+        return com.futebadosparcas.data.model.Team(
+            id = id,
+            gameId = gameId,
+            name = name,
+            color = color,
+            playerIds = playerIds,
+            score = score
+        )
+    }
+
+    private fun com.futebadosparcas.data.model.Team.toKmpTeam(): com.futebadosparcas.domain.model.Team {
+        return com.futebadosparcas.domain.model.Team(
+            id = id,
+            gameId = gameId,
+            name = name,
+            color = color,
+            playerIds = playerIds,
+            score = score
+        )
+    }
+
     private fun KmpGameFilterType.toAndroidFilterType(): GameFilterType = when (this) {
         KmpGameFilterType.ALL -> GameFilterType.ALL
         KmpGameFilterType.OPEN -> GameFilterType.OPEN
@@ -201,14 +274,18 @@ class GameRepositoryImpl constructor(
         confirmationRepository.acceptInvitation(gameId, position).map { it.toAndroidModel() }
 
     // ========== Events Methods - Delegação para GameEventsRepository ==========
-    override fun getGameEventsFlow(gameId: String): Flow<Result<List<GameEvent>>> =
-        eventsRepository.getGameEventsFlow(gameId)
+    override fun getGameEventsFlow(gameId: String): Flow<Result<List<com.futebadosparcas.data.model.GameEvent>>> =
+        eventsRepository.getGameEventsFlow(gameId).map { result ->
+            result.map { it.toAndroidGameEvents() }
+        }
 
-    override fun getLiveScoreFlow(gameId: String): Flow<LiveGameScore?> =
-        eventsRepository.getLiveScoreFlow(gameId)
+    override fun getLiveScoreFlow(gameId: String): Flow<com.futebadosparcas.data.model.LiveGameScore?> =
+        eventsRepository.getLiveScoreFlow(gameId).map { liveScore ->
+            liveScore?.toAndroidLiveGameScore()
+        }
 
-    override suspend fun sendGameEvent(gameId: String, event: GameEvent): Result<Unit> =
-        eventsRepository.sendGameEvent(gameId, event)
+    override suspend fun sendGameEvent(gameId: String, event: com.futebadosparcas.data.model.GameEvent): Result<Unit> =
+        eventsRepository.sendGameEvent(gameId, event.toKmpGameEvent())
 
     override suspend fun deleteGameEvent(gameId: String, eventId: String): Result<Unit> =
         eventsRepository.deleteGameEvent(gameId, eventId)
@@ -218,19 +295,28 @@ class GameRepositoryImpl constructor(
         gameId: String,
         numberOfTeams: Int,
         balanceTeams: Boolean
-    ): Result<List<Team>> = teamRepository.generateTeams(gameId, numberOfTeams, balanceTeams)
+    ): Result<List<com.futebadosparcas.data.model.Team>> =
+        teamRepository.generateTeams(gameId, numberOfTeams, balanceTeams).map { domainTeams ->
+            domainTeams.map { it.toAndroidTeam() }
+        }
 
-    override suspend fun getGameTeams(gameId: String): Result<List<Team>> =
-        teamRepository.getGameTeams(gameId)
+    override suspend fun getGameTeams(gameId: String): Result<List<com.futebadosparcas.data.model.Team>> =
+        teamRepository.getGameTeams(gameId).map { domainTeams ->
+            domainTeams.map { it.toAndroidTeam() }
+        }
 
-    override fun getGameTeamsFlow(gameId: String): Flow<Result<List<Team>>> =
-        teamRepository.getGameTeamsFlow(gameId)
+    override fun getGameTeamsFlow(gameId: String): Flow<Result<List<com.futebadosparcas.data.model.Team>>> =
+        teamRepository.getGameTeamsFlow(gameId).map { result ->
+            result.map { domainTeams ->
+                domainTeams.map { it.toAndroidTeam() }
+            }
+        }
 
     override suspend fun clearGameTeams(gameId: String): Result<Unit> =
         teamRepository.clearGameTeams(gameId)
 
-    override suspend fun updateTeams(teams: List<Team>): Result<Unit> =
-        teamRepository.updateTeams(teams)
+    override suspend fun updateTeams(teams: List<com.futebadosparcas.data.model.Team>): Result<Unit> =
+        teamRepository.updateTeams(teams.map { it.toKmpTeam() })
 
     // ========== Game Management Methods - Mantidos aqui (CRUD e Status) ==========
     override suspend fun createGame(game: Game): Result<Game> {

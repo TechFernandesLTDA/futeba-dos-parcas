@@ -44,9 +44,6 @@ val imageKoinModule = module {
             .diskCachePolicy(CachePolicy.ENABLED)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .networkCachePolicy(CachePolicy.ENABLED)
-            // Image loading options
-            .allowHardware(true)
-            .allowRgb565(true)
             .build()
     }
 }

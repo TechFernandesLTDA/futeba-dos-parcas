@@ -451,9 +451,10 @@ class EnhancedTeamBalancer {
  * Extensao para converter DraftPlayer para PlayerForBalancing.
  */
 fun DraftPlayer.toPlayerForBalancing(): PlayerForBalancing {
-    val kmpPosition = when (position) {
-        com.futebadosparcas.data.model.PlayerPosition.GOALKEEPER -> com.futebadosparcas.domain.model.PlayerPosition.GOALKEEPER
-        com.futebadosparcas.data.model.PlayerPosition.FIELD -> com.futebadosparcas.domain.model.PlayerPosition.LINE
+    // Converter position string para enum
+    val kmpPosition = when (position?.uppercase()) {
+        "GOALKEEPER" -> com.futebadosparcas.domain.model.PlayerPosition.GOALKEEPER
+        "FIELD", "LINE" -> com.futebadosparcas.domain.model.PlayerPosition.LINE
         else -> com.futebadosparcas.domain.model.PlayerPosition.LINE
     }
     return PlayerForBalancing(

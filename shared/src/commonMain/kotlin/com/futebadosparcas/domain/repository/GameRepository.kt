@@ -327,4 +327,51 @@ interface GameRepository {
      * Observa confirmacoes em tempo real (metodo simples).
      */
     fun observeConfirmations(gameId: String): Flow<List<GameConfirmation>>
+
+    // ========== INVITATION & MANAGEMENT ==========
+
+    /**
+     * Aceita um convite para jogo pendente.
+     *
+     * @param gameId ID do jogo
+     * @param position Posicao preferida do jogador
+     */
+    suspend fun acceptInvitation(gameId: String, position: String = "FIELD"): Result<GameConfirmation>
+
+    /**
+     * Confirma um jogador como organizador/dono do jogo.
+     *
+     * @param gameId ID do jogo
+     * @param userId ID do usuario a confirmar
+     */
+    suspend fun confirmPlayerAsOwner(gameId: String, userId: String): Result<Unit>
+
+    // ========== SOFT DELETE & RESTORE (P2 #40) ==========
+
+    /**
+     * Marca um jogo como deletado (soft delete).
+     * Permite restauracao posterior.
+     *
+     * @param gameId ID do jogo
+     */
+    suspend fun softDeleteGame(gameId: String): Result<Unit>
+
+    /**
+     * Restaura um jogo soft-deletado.
+     * Disponivel apenas para admins/owners.
+     *
+     * @param gameId ID do jogo
+     */
+    suspend fun restoreGame(gameId: String): Result<Unit>
+
+    // ========== PAYMENT MANAGEMENT ==========
+
+    /**
+     * Atualiza pagamento parcial de um jogador.
+     *
+     * @param gameId ID do jogo
+     * @param userId ID do usuario
+     * @param amount Valor pago
+     */
+    suspend fun updatePartialPayment(gameId: String, userId: String, amount: Double): Result<Unit>
 }

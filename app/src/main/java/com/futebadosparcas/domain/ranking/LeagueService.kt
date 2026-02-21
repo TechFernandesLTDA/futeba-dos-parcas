@@ -110,11 +110,11 @@ class LeagueService constructor(
                 else -> -10
             }
             val newLeagueRating = (participation.leagueRating + ratingChange).toDouble()
-            val suggestedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating)
+            val suggestedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating.toInt())
 
             // FIXME: protectionGames, promotionProgress, relegationProgress nao existem no SeasonParticipation
             // Simplificando: divisao baseada apenas no league rating atual
-            val oldDivisionShared = LeagueDivision.fromString(participation.division)
+            val oldDivisionShared = SharedLeagueDivision.fromString(participation.division)
             val newDivisionShared = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating.toInt())
 
             val promoted = newDivisionShared.ordinal > oldDivisionShared.ordinal
@@ -247,8 +247,7 @@ class LeagueService constructor(
     }
 
     private suspend fun createNewParticipation(userId: String, seasonId: String): SeasonParticipation {
-        var startDivision = com.futebadosparcas.data.model.LeagueDivision.BRONZE
-        var momentumGames = emptyList<SharedRecentGameData>()
+        var startDivision = SharedLeagueDivision.BRONZE.name
 
         // Tenta buscar QUALQUER historico anterior para definir a divisao inicial e momentum
         try {
@@ -265,7 +264,7 @@ class LeagueService constructor(
              if (lastParticipation != null) {
                 // Bug #2 Fix: Busca ultima participacao independente do mes
                 val sharedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(lastParticipation.leagueRating)
-                startDivision = toAndroidDivision(sharedDivision)
+                startDivision = sharedDivision.name
 
                 // Bug #3 Fix: Momentum - FIXME: recentGames nao existe no modelo KMP
                 // momentumGames = lastParticipation.recentGames.take(5)

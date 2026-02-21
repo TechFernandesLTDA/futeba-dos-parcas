@@ -338,12 +338,12 @@ class LiveGameRepository constructor(
                     return@addSnapshotListener
                 }
 
-                val events = snapshot?.documents?.mapNotNull { doc ->
+                var events = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(GameEvent::class.java)?.apply { id = doc.id }
                 } ?: emptyList()
 
                 // Sort in memory
-                val sortedEvents = events.sortedByDescending { it.createdAt?.time ?: 0L }
+                events = events.sortedByDescending { it.createdAt ?: 0L }
 
                 trySend(sortedEvents)
             }
