@@ -454,6 +454,7 @@ fun DraftPlayer.toPlayerForBalancing(): PlayerForBalancing {
     val kmpPosition = when (position) {
         com.futebadosparcas.data.model.PlayerPosition.GOALKEEPER -> com.futebadosparcas.domain.model.PlayerPosition.GOALKEEPER
         com.futebadosparcas.data.model.PlayerPosition.FIELD -> com.futebadosparcas.domain.model.PlayerPosition.LINE
+        else -> com.futebadosparcas.domain.model.PlayerPosition.LINE
     }
     return PlayerForBalancing(
         id = id,

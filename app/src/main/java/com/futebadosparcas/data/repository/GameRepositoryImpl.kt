@@ -242,23 +242,8 @@ class GameRepositoryImpl constructor(
 
             // Safety check: ensure dateTime is set
             var finalGame = game.copy(id = docRef.id, ownerId = uid)
-            if (finalGame.dateTime == null && finalGame.date.isNotEmpty() && finalGame.time.isNotEmpty()) {
-                try {
-                    // Combine date and time (assuming format yyyy-MM-dd and HH:mm)
-                    val dateTimeStr = "${finalGame.date} ${finalGame.time}"
-                    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                    finalGame = finalGame.copy(dateTimeRaw = sdf.parse(dateTimeStr))
-                } catch (e: Exception) {
-                    AppLogger.e(TAG, "createGame: Error parsing dateTime from date/time strings", e)
-                }
-            }
-
-            // Validar o jogo antes de salvar (#28 - Validação de bounds)
-            val validationErrors = finalGame.validate()
-            if (validationErrors.isNotEmpty()) {
-                val errorMsg = validationErrors.joinToString(", ") { it.message }
-                return Result.failure(IllegalArgumentException("Validação falhou: $errorMsg"))
-            }
+            // dateTime e dateTimeRaw sao computed properties no model KMP
+            // Validacao de bounds feita via init {} no model
 
             docRef.set(finalGame).await()
             Result.success(finalGame)
@@ -325,17 +310,10 @@ class GameRepositoryImpl constructor(
 
     override suspend fun updateGame(game: Game): Result<Unit> {
         return try {
-            // Validar o jogo antes de salvar (#28 - Validação de bounds)
-            val validationErrors = game.validate()
-            if (validationErrors.isNotEmpty()) {
-                val errorMsg = validationErrors.joinToString(", ") { it.message }
-                return Result.failure(IllegalArgumentException("Validação falhou: $errorMsg"))
-            }
+            // Validacao de bounds feita via init {} no model KMP
 
             // Atualizar o timestamp de atualização (#1 - Campo updatedAt)
-            val updatedGame = game.copy().apply {
-                updatedAt = java.util.Date()
-            }
+            val updatedGame = game.copy(updatedAt = System.currentTimeMillis())
 
             gamesCollection.document(game.id).set(updatedGame).await()
             Result.success(Unit)

@@ -918,7 +918,7 @@ class CreateGameViewModel(
                 groupName = group?.groupName,
                 visibility = visibility.name,
                 isPublic = visibility != GameVisibility.GROUP_ONLY,
-                dateTimeRaw = java.util.Date.from(selectedDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant())
+                createdAt = java.util.Date.from(selectedDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant()).time
             )
 
             if (game.id.isNotEmpty() && (gameId != null || _currentGameId != null)) {

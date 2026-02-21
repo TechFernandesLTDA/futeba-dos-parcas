@@ -201,7 +201,7 @@ class ConfirmationUseCase constructor(
                 userName = user.name,
                 reason = reason.name,
                 reasonText = if (reason == CancellationReason.OTHER) reasonText else null,
-                cancelledAtRaw = Date(),
+                cancelledAt = System.currentTimeMillis(),
                 hoursBeforeGame = hoursBeforeGame
             )
 
@@ -215,9 +215,10 @@ class ConfirmationUseCase constructor(
             }
 
             // Notificar proximo da fila (Issue #33)
+            // waitlistAutoPromoteMinutes esta no Group, nao no Game. Usando valor padrao.
             val nextResult = waitlistRepository.notifyNextInLine(
                 gameId,
-                game.waitlistAutoPromoteMinutes
+                30 // default: 30 minutos
             )
 
             val nextInLine = nextResult.getOrNull()
@@ -227,7 +228,7 @@ class ConfirmationUseCase constructor(
                     userId = nextInLine.userId,
                     type = com.futebadosparcas.domain.model.NotificationType.GAME_VACANCY,
                     title = "Vaga Disponível!",
-                    message = "Uma vaga abriu para o jogo ${game.date} às ${game.time} em ${game.locationName}. Você tem ${game.waitlistAutoPromoteMinutes} minutos para confirmar.",
+                    message = "Uma vaga abriu para o jogo ${game.date} às ${game.time} em ${game.locationName}. Você tem 30 minutos para confirmar.",
                     referenceId = gameId,
                     referenceType = "game",
                     actionType = com.futebadosparcas.domain.model.NotificationAction.CONFIRM_POSITION,

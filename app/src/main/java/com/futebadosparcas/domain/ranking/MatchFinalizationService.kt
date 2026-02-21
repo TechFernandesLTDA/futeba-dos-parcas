@@ -2,7 +2,7 @@ package com.futebadosparcas.domain.ranking
 
 import com.futebadosparcas.app.domain.ranking.XPCalculator
 import com.futebadosparcas.domain.model.*
-import com.futebadosparcas.data.repository.GameResult
+import com.futebadosparcas.data.model.MilestoneType
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -360,12 +360,12 @@ class MatchFinalizationService constructor(
             totalGoals = currentStats.totalGoals + confirmation.goals,
             totalAssists = currentStats.totalAssists + confirmation.assists,
             totalSaves = currentStats.totalSaves + confirmation.saves,
-            totalYellowCards = currentStats.totalYellowCards + confirmation.yellowCards,
-            totalRedCards = currentStats.totalRedCards + confirmation.redCards,
-            gamesWon = currentStats.gamesWon + if (playerTeamResult == GameResult.WIN) 1 else 0,
-            gamesLost = currentStats.gamesLost + if (playerTeamResult == GameResult.LOSS) 1 else 0,
-            gamesDraw = currentStats.gamesDraw + if (playerTeamResult == GameResult.DRAW) 1 else 0,
-            bestPlayerCount = if (isMvp) currentStats.bestPlayerCount + 1 else currentStats.bestPlayerCount,
+            yellowCards = currentStats.yellowCards + confirmation.yellowCards,
+            redCards = currentStats.redCards + confirmation.redCards,
+            totalWins = currentStats.totalWins + if (playerTeamResult == GameResult.WIN) 1 else 0,
+            totalLosses = currentStats.totalLosses + if (playerTeamResult == GameResult.LOSS) 1 else 0,
+            totalDraws = currentStats.totalDraws + if (playerTeamResult == GameResult.DRAW) 1 else 0,
+            mvpCount = if (isMvp) currentStats.mvpCount + 1 else currentStats.mvpCount,
             worstPlayerCount = if (isWorstPlayer) currentStats.worstPlayerCount + 1 else currentStats.worstPlayerCount
         )
 

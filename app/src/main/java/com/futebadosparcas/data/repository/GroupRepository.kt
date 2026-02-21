@@ -109,8 +109,7 @@ class GroupRepository constructor(
                 ownerId = userId,
                 ownerName = userName,
                 photoUrl = photoUrl,
-                memberCount = 1,
-                status = GroupStatus.ACTIVE.name
+                membersCount = 1
             )
 
             // Transação para criar grupo e adicionar owner como membro

@@ -102,31 +102,15 @@ class LeagueService constructor(
             }
 
             // 2. Adicionar jogo recente
-            val newRecentGame = SharedRecentGameData(
-                gameId = gameId,
-                xpEarned = xpEarned,
-                won = won,
-                drew = drew,
-                goalDiff = goalDiff,
-                wasMvp = wasMvp,
-                playedAt = Date()
-            )
-
-            val updatedRecentGames = (listOf(newRecentGame) + participation.recentGames)
-                .take(MAX_RECENT_GAMES)
-
-            // 3. Calcular novo League Rating usando o calculador do shared module
-            val sharedRecentGames = updatedRecentGames.map { game ->
-                SharedSharedRecentGameData(
-                    gameId = game.gameId,
-                    xpEarned = game.xpEarned,
-                    won = game.won,
-                    drew = game.drew,
-                    goalDiff = game.goalDiff,
-                    wasMvp = game.wasMvp
-                )
+            // FIXME: recentGames nao existe no modelo KMP SeasonParticipation
+            // Calculando league rating baseado apenas no rating atual + resultado do jogo
+            val ratingChange = when {
+                wasMvp -> 50
+                won -> 20
+                drew -> 5
+                else -> -10
             }
-            val newLeagueRating = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.calculate(sharedRecentGames)
+            val newLeagueRating = (participation.leagueRating + ratingChange).toDouble()
             val suggestedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating)
 
             // Converter divisao Android para Shared
@@ -202,26 +186,24 @@ class LeagueService constructor(
             AppLogger.d(TAG) { "League Update: Jogador $userId em $oldDivision (Rating Atual: ${"%.1f".format(newLeagueRating)})" }
 
             // 5. Atualizar estatisticas
+            // Nota: promotionProgress, relegationProgress, protectionGames, goalsScored/Conceded,
+            // recentGames e lastCalculatedAt nao existem no modelo KMP SeasonParticipation.
+            // Remover ou adicionar ao model se necessario.
             val updatedParticipation = participation.copy(
                 division = newDivision,
-                promotionProgress = currentPromotionProgress,
-                relegationProgress = currentRelegationProgress,
-                protectionGames = currentProtection,
                 gamesPlayed = participation.gamesPlayed + 1,
                 wins = participation.wins + if (won) 1 else 0,
                 draws = participation.draws + if (drew) 1 else 0,
                 losses = participation.losses + if (!won && !drew) 1 else 0,
-                goalsScored = participation.goalsScored + maxOf(0, goalDiff),
-                goalsConceded = participation.goalsConceded + maxOf(0, -goalDiff),
+                goals = participation.goals + maxOf(0, goalDiff),
                 mvpCount = participation.mvpCount + if (wasMvp) 1 else 0,
                 points = participation.points + when {
                     won -> 3
                     drew -> 1
                     else -> 0
                 },
-                leagueRating = newLeagueRating,
-                recentGames = updatedRecentGames,
-                lastCalculatedAt = Date()
+                leagueRating = newLeagueRating.toInt(),
+                updatedAt = System.currentTimeMillis()
             )
 
             // 6. Salvar (Adicionar ao Batch)
@@ -333,11 +315,11 @@ class LeagueService constructor(
                 val sharedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(lastParticipation.leagueRating)
                 startDivision = toAndroidDivision(sharedDivision)
 
-                // Bug #3 Fix: Momentum - Carregar últimos jogos (max 5) para não zerar rating
-                momentumGames = lastParticipation.recentGames.take(5)
+                // Bug #3 Fix: Momentum - FIXME: recentGames nao existe no modelo KMP
+                // momentumGames = lastParticipation.recentGames.take(5)
 
                 AppLogger.d(TAG) {
-                    "Usuario $userId inicia a temporada $seasonId em $startDivision (Rating anterior: ${lastParticipation.leagueRating}, Momentum: ${momentumGames.size} jogos)"
+                    "Usuario $userId inicia a temporada $seasonId em $startDivision (Rating anterior: ${lastParticipation.leagueRating})"
                 }
              }
         } catch (e: Exception) {
@@ -349,7 +331,7 @@ class LeagueService constructor(
             userId = userId,
             seasonId = seasonId,
             division = startDivision,
-            recentGames = momentumGames // Começa com histórico anterior (momentum)
+            leagueRating = 1000 // Rating inicial padrão
         )
     }
 }

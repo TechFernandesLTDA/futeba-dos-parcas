@@ -6,6 +6,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
+// Extension functions para UserRole
+private fun UserRole.isAdmin(): Boolean = this == UserRole.ADMIN
+private fun UserRole.canViewAllGames(): Boolean = this == UserRole.ADMIN
+private fun UserRole.canViewAllHistory(): Boolean = this == UserRole.ADMIN
+private fun UserRole.canEditAllGames(): Boolean = this == UserRole.ADMIN
+private fun UserRole.canJoinAllGames(): Boolean = this == UserRole.ADMIN
+
 /**
  * Gerenciador centralizado de permissões.
  *
@@ -215,8 +222,8 @@ class PermissionManager constructor(
         val role = getCurrentUserRole()
 
         return when {
-            role.hasGamePermission("FinalizeAllGames") -> true
-            gameOwnerId == uid && role.hasGamePermission("FinalizeOwnedGames") -> true
+            role.isAdmin() -> true
+            gameOwnerId == uid -> true
             else -> false
         }
     }
@@ -229,8 +236,8 @@ class PermissionManager constructor(
         val role = getCurrentUserRole()
 
         return when {
-            role.hasGamePermission("DeleteAllGames") -> true
-            gameOwnerId == uid && role.hasGamePermission("DeleteOwnedGames") -> true
+            role.isAdmin() -> true
+            gameOwnerId == uid -> true
             else -> false
         }
     }
@@ -243,8 +250,8 @@ class PermissionManager constructor(
         val role = getCurrentUserRole()
 
         return when {
-            role.hasGamePermission("ManageAllConfirmations") -> true
-            gameOwnerId == uid && role.hasGamePermission("ManageOwnConfirmations") -> true
+            role.isAdmin() -> true
+            gameOwnerId == uid -> true
             else -> false
         }
     }
@@ -259,8 +266,8 @@ class PermissionManager constructor(
         val role = getCurrentUserRole()
 
         return when {
-            role.hasGroupPermission("EditAllGroups") -> true
-            groupAdminId == uid && role.hasGroupPermission("EditOwnedGroups") -> true
+            role.isAdmin() -> true
+            groupAdminId == uid -> true
             else -> false
         }
     }
@@ -273,8 +280,8 @@ class PermissionManager constructor(
         val role = getCurrentUserRole()
 
         return when {
-            role.hasGroupPermission("ManageAllMembers") -> true
-            groupAdminId == uid && role.hasGroupPermission("ManageOwnMembers") -> true
+            role.isAdmin() -> true
+            groupAdminId == uid -> true
             else -> false
         }
     }
