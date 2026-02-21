@@ -60,12 +60,6 @@ class ConfirmationUseCase constructor(
             // TODO: getConfirmationDeadline() foi removido do modelo Game
             // Implementar via configurações do Group ou outro mecanismo
             Result.success(ConfirmationCheck(canConfirm = true, timeRemainingMs = null))
-                        canConfirm = canConfirm,
-                        deadline = deadline,
-                        timeRemainingMs = timeRemaining
-                    )
-                )
-            }
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao verificar deadline", e)
             Result.failure(e)
