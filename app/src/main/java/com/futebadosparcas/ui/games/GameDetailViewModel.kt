@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 import java.time.temporal.TemporalAdjusters
 import com.futebadosparcas.domain.repository.ScheduleRepository
-import com.futebadosparcas.data.model.CancellationReason
+import com.futebadosparcas.domain.model.CancellationReason
 import com.futebadosparcas.domain.model.GameWaitlist
 import com.futebadosparcas.domain.model.GameInviteLink
 import com.futebadosparcas.domain.model.PlayerAttendance
@@ -31,7 +31,7 @@ import com.futebadosparcas.util.toKmpSchedule
 class GameDetailViewModel(
     private val gameRepository: GameRepository,
     private val authRepository: AuthRepository,
-    private val gameExperienceRepository: com.futebadosparcas.data.repository.GameExperienceRepository,
+    private val gameExperienceRepository: com.futebadosparcas.domain.repository.GameExperienceRepository,
     private val scheduleRepository: ScheduleRepository,
     private val groupRepository: com.futebadosparcas.data.repository.GroupRepository,
     private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
@@ -103,10 +103,12 @@ class GameDetailViewModel(
                     }
 
                     // Atualizar placar do jogo com o liveScore se disponível
-                    liveScore?.let {
-                        game.team1Score = it.team1Score
-                        game.team2Score = it.team2Score
-                    }
+                    val gameWithLiveScore = liveScore?.let {
+                        game.copy(
+                            team1Score = it.team1Score,
+                            team2Score = it.team2Score
+                        )
+                    } ?: game
 
                     val confirmations = confirmationsResult.getOrNull() ?: emptyList()
                     val events = eventsResult.getOrNull() ?: emptyList()
@@ -134,26 +136,26 @@ class GameDetailViewModel(
 
                     val confirmedWithStats = confirmations.map { conf ->
                         val playerEvents = events.filter { it.playerId == conf.userId }
-                        conf.apply {
-                            goals = playerEvents.count { it.eventType == GameEventType.GOAL.name }
-                            yellowCards = playerEvents.count { it.eventType == GameEventType.YELLOW_CARD.name }
-                            redCards = playerEvents.count { it.eventType == GameEventType.RED_CARD.name }
+                        conf.copy(
+                            goals = playerEvents.count { it.eventType == GameEventType.GOAL.name },
+                            yellowCards = playerEvents.count { it.eventType == GameEventType.YELLOW_CARD.name },
+                            redCards = playerEvents.count { it.eventType == GameEventType.RED_CARD.name },
                             assists = events.count { it.assistedById == conf.userId }
-                        }
+                        )
                     }
 
                     // Check vote status if game is finished
                     var hasVoted: Boolean? = (_uiState.value as? GameDetailUiState.Success)?.hasVoted
-                    if (game.status == GameStatus.FINISHED.name && currentUserId != null) {
-                        val voteResult = gameExperienceRepository.hasUserVoted(game.id, currentUserId)
+                    if (gameWithLiveScore.status == GameStatus.FINISHED.name && currentUserId != null) {
+                        val voteResult = gameExperienceRepository.hasUserVoted(gameWithLiveScore.id, currentUserId)
                         hasVoted = voteResult.getOrNull() ?: false
                     }
 
-                    // Ordenar por ordem de confirmacao (Issue #40)
-                    val sortedConfirmations = confirmedWithStats.sortedBy { it.confirmationOrder }
+                    // Ordenar por ordem de confirmacao (Issue #40) - usar confirmedAt
+                    val sortedConfirmations = confirmedWithStats.sortedBy { it.confirmedAt ?: Long.MAX_VALUE }
 
                     _uiState.value = GameDetailUiState.Success(
-                        game = game,
+                        game = gameWithLiveScore,
                         confirmations = sortedConfirmations,
                         teams = teams,
                         events = events,
@@ -167,7 +169,7 @@ class GameDetailViewModel(
                         userMessage = currentMessage,
                         currentUserId = currentUserId,
                         hasVoted = hasVoted,
-                        isSoftDeleted = game.isSoftDeleted() // P2 #40
+                        isSoftDeleted = gameWithLiveScore.isSoftDeleted // P2 #40
                     )
                 }
             } catch (e: Exception) {
@@ -191,7 +193,7 @@ class GameDetailViewModel(
             val result = if (originalIsConfirmed) {
                 gameRepository.cancelConfirmation(gameId)
             } else {
-                gameRepository.confirmPresence(gameId, PlayerPosition.FIELD.name, false)
+                gameRepository.confirmPresence(gameId, PlayerPosition.LINE.name, false)
             }
 
             if (result.isFailure) {
@@ -437,10 +439,10 @@ class GameDetailViewModel(
      */
     private fun parseRecurrenceType(recurrenceRaw: String): RecurrenceType {
         return when {
-            recurrenceRaw.contains("semanal") || recurrenceRaw == "weekly" -> RecurrenceType.weekly
-            recurrenceRaw.contains("quinzenal") || recurrenceRaw == "biweekly" -> RecurrenceType.biweekly
-            recurrenceRaw.contains("mensal") || recurrenceRaw == "monthly" -> RecurrenceType.monthly
-            else -> RecurrenceType.weekly
+            recurrenceRaw.contains("semanal") || recurrenceRaw == "weekly" -> RecurrenceType.WEEKLY
+            recurrenceRaw.contains("quinzenal") || recurrenceRaw == "biweekly" -> RecurrenceType.BIWEEKLY
+            recurrenceRaw.contains("mensal") || recurrenceRaw == "monthly" -> RecurrenceType.MONTHLY
+            else -> RecurrenceType.WEEKLY
         }
     }
 
@@ -552,18 +554,15 @@ class GameDetailViewModel(
             status = GameStatus.SCHEDULED.name,
             playersCount = 0,
             goalkeepersCount = 0,
-            players = emptyList(),
             team1Score = 0,
             team2Score = 0,
             mvpId = null,
-            dateTimeRaw = nextDateTime,
             createdAt = null,
             xpProcessed = false,
             xpProcessedAt = null,
             groupId = template?.groupId ?: sourceGame.groupId,
             groupName = template?.groupName ?: sourceGame.groupName
         )
-        nextGame.id = "" // Reset de segurança
         return nextGame
     }
 
@@ -808,19 +807,9 @@ class GameDetailViewModel(
      * Issue #31: Atualiza o estado do deadline de confirmacao.
      */
     private fun updateConfirmationDeadlineState(game: Game) {
-        val deadline = game.getConfirmationDeadline()
-        if (deadline == null) {
-            _confirmationDeadline.value = null
-        } else {
-            val now = java.util.Date()
-            val isPassed = now.after(deadline)
-            val timeRemaining = if (!isPassed) deadline.time - now.time else 0L
-            _confirmationDeadline.value = ConfirmationDeadlineState(
-                deadline = deadline,
-                isPassed = isPassed,
-                timeRemainingMs = timeRemaining
-            )
-        }
+        // TODO: getConfirmationDeadline() foi removido do modelo Game
+        // Implementar cálculo de deadline baseado em configurações do Group
+        _confirmationDeadline.value = null
     }
 
     /**
@@ -1003,13 +992,11 @@ class GameDetailViewModel(
     fun updateConfirmationDeadline(gameId: String, hours: Int) {
         viewModelScope.launch {
             val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
-            val updatedGame = currentState.game.copy(confirmationDeadlineHours = hours)
-            val result = gameRepository.updateGame(updatedGame)
-            if (result.isFailure) {
-                _uiState.value = currentState.copy(
-                    userMessage = "Erro ao atualizar deadline: ${result.exceptionOrNull()?.message}"
-                )
-            }
+            // TODO: confirmationDeadlineHours foi removido do modelo Game
+            // Implementar via Group settings ou outro mecanismo
+            _uiState.value = currentState.copy(
+                userMessage = "Funcionalidade em desenvolvimento"
+            )
         }
     }
 
@@ -1026,10 +1013,9 @@ class GameDetailViewModel(
         viewModelScope.launch {
             val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
             val updatedGame = currentState.game.copy(
-                pixKey = pixKey,
-                pixKeyType = pixKeyType.name,
-                pixBeneficiaryName = beneficiaryName,
-                pixPaymentEnabled = enabled
+                pixKey = pixKey
+                // TODO: pixKeyType, pixBeneficiaryName, pixPaymentEnabled foram removidos do modelo Game
+                // Implementar via Group settings ou outro mecanismo
             )
             val result = gameRepository.updateGame(updatedGame)
             if (result.isFailure) {
@@ -1046,16 +1032,11 @@ class GameDetailViewModel(
     fun updateCheckinSettings(gameId: String, required: Boolean, radiusMeters: Int) {
         viewModelScope.launch {
             val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
-            val updatedGame = currentState.game.copy(
-                requireCheckin = required,
-                checkinRadiusMeters = radiusMeters
+            // TODO: requireCheckin e checkinRadiusMeters foram removidos do modelo Game
+            // Implementar via Group settings ou outro mecanismo
+            _uiState.value = currentState.copy(
+                userMessage = "Funcionalidade em desenvolvimento"
             )
-            val result = gameRepository.updateGame(updatedGame)
-            if (result.isFailure) {
-                _uiState.value = currentState.copy(
-                    userMessage = "Erro ao atualizar check-in: ${result.exceptionOrNull()?.message}"
-                )
-            }
         }
     }
 
@@ -1099,13 +1080,11 @@ class GameDetailViewModel(
     fun updateAutoCloseHours(gameId: String, hours: Int?) {
         viewModelScope.launch {
             val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
-            val updatedGame = currentState.game.copy(autoCloseHours = hours)
-            val result = gameRepository.updateGame(updatedGame)
-            if (result.isFailure) {
-                _uiState.value = currentState.copy(
-                    userMessage = "Erro ao atualizar configuracao: ${result.exceptionOrNull()?.message}"
-                )
-            }
+            // TODO: autoCloseHours foi removido do modelo Game (existe no Group)
+            // Implementar via Group settings
+            _uiState.value = currentState.copy(
+                userMessage = "Funcionalidade em desenvolvimento"
+            )
         }
     }
 
@@ -1115,13 +1094,11 @@ class GameDetailViewModel(
     fun updateGameRules(gameId: String, rules: String) {
         viewModelScope.launch {
             val currentState = _uiState.value as? GameDetailUiState.Success ?: return@launch
-            val updatedGame = currentState.game.copy(rules = rules)
-            val result = gameRepository.updateGame(updatedGame)
-            if (result.isFailure) {
-                _uiState.value = currentState.copy(
-                    userMessage = "Erro ao atualizar regras: ${result.exceptionOrNull()?.message}"
-                )
-            }
+            // TODO: rules foi removido do modelo Game
+            // Implementar via Group settings ou outro mecanismo
+            _uiState.value = currentState.copy(
+                userMessage = "Funcionalidade em desenvolvimento"
+            )
         }
     }
 
