@@ -124,7 +124,19 @@ data class Game(
 
     // Grupo
     @SerialName("group_id") val groupId: String? = null,
-    @SerialName("group_name") val groupName: String? = null
+    @SerialName("group_name") val groupName: String? = null,
+
+    // Timestamps adicionais
+    @SerialName("updated_at") val updatedAt: Long? = null,
+    @SerialName("xp_processed_at") val xpProcessedAt: Long? = null,
+
+    // Co-organizadores
+    @SerialName("co_organizers") val coOrganizers: List<String> = emptyList(),
+
+    // Flags de estado
+    @SerialName("has_user_voted") val hasUserVoted: Boolean = false,
+    @SerialName("is_soft_deleted") val isSoftDeleted: Boolean = false,
+    @SerialName("is_public") val isPublic: Boolean = false
 ) {
     init {
         require(maxPlayers >= 0) { "maxPlayers nao pode ser negativo: $maxPlayers" }
@@ -148,6 +160,29 @@ data class Game(
         GameVisibility.valueOf(visibility)
     } catch (e: Exception) {
         GameVisibility.GROUP_ONLY
+    }
+
+    /**
+     * Retorna data e hora combinadas para comparacao/ordenacao.
+     * Formato: "2024-03-15 14:30"
+     */
+    val dateTime: String
+        get() = "$date $time"
+
+    /**
+     * Timestamp bruto da data/hora (Long) para ordenacao.
+     * Retorna createdAt como fallback se disponivel.
+     */
+    val dateTimeRaw: Long
+        get() = createdAt ?: 0L
+
+    /**
+     * Verifica se o jogo e publicamente visivel.
+     * Retorna true se for PUBLIC_OPEN ou PUBLIC_CLOSED.
+     */
+    fun isPubliclyVisible(): Boolean {
+        val vis = getVisibilityEnum()
+        return vis == GameVisibility.PUBLIC_OPEN || vis == GameVisibility.PUBLIC_CLOSED
     }
 
     fun isLive(): Boolean = getStatusEnum() == GameStatus.LIVE

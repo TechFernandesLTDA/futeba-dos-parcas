@@ -34,7 +34,7 @@ import com.google.firebase.auth.FirebaseAuth
  *         if (participation != null) {
  *             println("Posição: ${participation.points} pontos")
  *             println("Divisão: ${participation.division}")
- *             println("Taxa de vitória: ${participation.getWinRate() * 100}%")
+ *             println("Taxa de vitória: ${participation.winRate * 100}%")
  *         } else {
  *             println("Usuário não participa da temporada atual")
  *         }
