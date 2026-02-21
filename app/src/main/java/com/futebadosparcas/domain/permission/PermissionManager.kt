@@ -296,8 +296,8 @@ class PermissionManager constructor(
         val role = getCurrentUserRole()
 
         return when {
-            role.hasUserPermission("EditAllProfiles") -> true
-            profileUserId == uid && role.hasUserPermission("EditOwnProfile") -> true
+            role.isAdmin() -> true
+            profileUserId == uid -> true
             else -> false
         }
     }
@@ -305,12 +305,12 @@ class PermissionManager constructor(
     /**
      * Verifica se pode banir usuários.
      */
-    suspend fun canBanUsers(): Boolean = getCurrentUserRole().hasUserPermission("BanUsers")
+    suspend fun canBanUsers(): Boolean = getCurrentUserRole().isAdmin()
 
     /**
      * Verifica se pode alterar roles de usuários.
      */
-    suspend fun canChangeUserRoles(): Boolean = getCurrentUserRole().hasUserPermission("ChangeUserRoles")
+    suspend fun canChangeUserRoles(): Boolean = getCurrentUserRole().isAdmin()
 
     // ========== Permissões de Locais ==========
 
@@ -322,8 +322,8 @@ class PermissionManager constructor(
         val role = getCurrentUserRole()
 
         return when {
-            role.hasLocationPermission("EditAllLocations") -> true
-            locationOwnerId == uid && role.hasLocationPermission("EditOwnedLocations") -> true
+            role.isAdmin() -> true
+            locationOwnerId == uid -> true
             else -> false
         }
     }
@@ -344,8 +344,8 @@ class PermissionManager constructor(
             canViewAllHistory = role.canViewAllHistory(),
             canEditAllGames = role.canEditAllGames(),
             canJoinAllGames = role.canJoinAllGames(),
-            canBanUsers = role.hasUserPermission("BanUsers"),
-            canChangeRoles = role.hasUserPermission("ChangeUserRoles"),
+            canBanUsers = role.isAdmin(),
+            canChangeRoles = role.isAdmin(),
             userId = uid
         )
     }

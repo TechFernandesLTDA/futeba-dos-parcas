@@ -2,7 +2,6 @@ package com.futebadosparcas.domain.ranking
 
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.model.LeagueDivision as SharedLeagueDivision
-import com.futebadosparcas.domain.ranking.SharedRecentGameData as SharedSharedRecentGameData
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -113,62 +112,15 @@ class LeagueService constructor(
             val newLeagueRating = (participation.leagueRating + ratingChange).toDouble()
             val suggestedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating)
 
-            // Converter divisao Android para Shared
-            val oldDivisionShared = toSharedDivision(participation.division)
+            // FIXME: protectionGames, promotionProgress, relegationProgress nao existem no SeasonParticipation
+            // Simplificando: divisao baseada apenas no league rating atual
+            val oldDivisionShared = LeagueDivision.fromString(participation.division)
+            val newDivisionShared = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating.toInt())
 
-            // 4. Verificar promocao/rebaixamento
-            // Thresholds
-            val nextTierThreshold = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getNextDivisionThreshold(oldDivisionShared)
-            val prevTierThreshold = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getPreviousDivisionThreshold(oldDivisionShared)
+            val promoted = newDivisionShared.ordinal > oldDivisionShared.ordinal
+            val relegated = newDivisionShared.ordinal < oldDivisionShared.ordinal
 
-            var currentProtection = participation.protectionGames
-            var currentPromotionProgress = participation.promotionProgress
-            var currentRelegationProgress = participation.relegationProgress
-
-            var promoted = false
-            var relegated = false
-            var newDivisionShared = oldDivisionShared
-
-            // Se estiver protegido, decrementa e nao altera progressos
-            if (currentProtection > 0) {
-                currentProtection--
-                currentPromotionProgress = 0
-                currentRelegationProgress = 0
-            } else {
-                // Checa Promocao
-                if (newLeagueRating >= nextTierThreshold && oldDivisionShared != SharedLeagueDivision.DIAMANTE) {
-                    currentPromotionProgress++
-                    currentRelegationProgress = 0 // Reseta o oposto
-
-                    if (currentPromotionProgress >= PROMOTION_GAMES_REQUIRED) {
-                        promoted = true
-                        currentPromotionProgress = 0
-                        currentProtection = PROTECTION_GAMES
-                        newDivisionShared = SharedLeagueDivision.getNextDivision(oldDivisionShared)
-                    }
-                }
-                // Checa Rebaixamento
-                else if (newLeagueRating < prevTierThreshold && oldDivisionShared != SharedLeagueDivision.BRONZE) {
-                    currentRelegationProgress++
-                    currentPromotionProgress = 0 // Reseta o oposto
-
-                    if (currentRelegationProgress >= RELEGATION_GAMES_REQUIRED) {
-                        relegated = true
-                        currentRelegationProgress = 0
-                        currentProtection = PROTECTION_GAMES // Ganha protecao na nova (inferior) divisao? Discutivel. Por enquanto sim.
-                        newDivisionShared = SharedLeagueDivision.getPreviousDivision(oldDivisionShared)
-                    }
-                } else {
-                    // Mantem status quo mas pode resetar progressos se saiu da zona
-                    // Opcional: Resetar se rating voltar ao normal?
-                    // Por simplicidade: Se nao esta na zona de promocao, zera promocao.
-                    if (newLeagueRating < nextTierThreshold) currentPromotionProgress = 0
-                    if (newLeagueRating >= prevTierThreshold) currentRelegationProgress = 0
-                }
-            }
-
-            // Converter de volta para Android
-            val newDivision = toAndroidDivision(newDivisionShared)
+            val newDivision = newDivisionShared.name
             val oldDivision = participation.division
 
             // REGRA DE TEMPORADA: Se a regra for mudar apenas no fim da temporada,
