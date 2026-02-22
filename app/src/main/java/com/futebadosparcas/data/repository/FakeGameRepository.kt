@@ -1,15 +1,9 @@
 package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.domain.model.Game
-<<<<<<< HEAD
-import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.domain.model.GameStatus
-import com.futebadosparcas.data.model.Team
-=======
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.GameStatus
 import com.futebadosparcas.domain.model.Team
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.ui.games.GameWithConfirmations
 
 class FakeGameRepository constructor() : GameRepository {

@@ -5,11 +5,7 @@ import com.futebadosparcas.domain.model.CancellationReason
 import com.futebadosparcas.domain.model.ConfirmationStatus
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameCancellation
-<<<<<<< HEAD
-import com.futebadosparcas.data.model.GameConfirmation
-=======
 import com.futebadosparcas.domain.model.GameConfirmation
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.model.GameWaitlist
 import com.futebadosparcas.domain.model.PlayerAttendance
 import com.futebadosparcas.domain.model.WaitlistStatus
@@ -63,17 +59,7 @@ class ConfirmationUseCase constructor(
         return try {
             // TODO: getConfirmationDeadline() foi removido do modelo Game
             // Implementar via configurações do Group ou outro mecanismo
-<<<<<<< HEAD
-            Result.success(ConfirmationCheck(canConfirm = true, timeRemainingMs = null))
-                        canConfirm = canConfirm,
-                        deadline = deadline,
-                        timeRemainingMs = timeRemaining
-                    )
-                )
-            }
-=======
             Result.success(ConfirmationCheck(canConfirm = true, timeRemainingMs = 0L))
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao verificar deadline", e)
             Result.failure(e)
@@ -223,11 +209,7 @@ class ConfirmationUseCase constructor(
                     userId = nextInLine.userId,
                     type = com.futebadosparcas.domain.model.NotificationType.GAME_VACANCY,
                     title = "Vaga Disponível!",
-<<<<<<< HEAD
-                    message = "Uma vaga abriu para o jogo ${game.date} às ${game.time} em ${game.locationName}. Você tem 30 minutos para confirmar.",
-=======
                     message = "Uma vaga abriu para o jogo ${game.date} às ${game.time} em ${game.locationName}. Você tem $autoPromoteMinutes minutos para confirmar.",
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
                     referenceId = gameId,
                     referenceType = "game",
                     actionType = com.futebadosparcas.domain.model.NotificationAction.CONFIRM_POSITION,

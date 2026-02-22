@@ -26,10 +26,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
-<<<<<<< HEAD
-=======
 import com.futebadosparcas.util.toInstant
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 
 @Composable
 fun ActivityHeatmapSection(

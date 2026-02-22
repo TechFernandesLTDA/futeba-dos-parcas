@@ -4,30 +4,6 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.CashboxCategory
-<<<<<<< HEAD
-import com.futebadosparcas.data.model.CashboxEntry as AndroidCashboxEntry
-import com.futebadosparcas.domain.model.CashboxEntryType
-import com.futebadosparcas.data.model.CashboxFilter
-import com.futebadosparcas.data.model.CashboxSummary as AndroidCashboxSummary
-import com.futebadosparcas.data.model.GroupMemberRole
-import com.futebadosparcas.domain.repository.CashboxRepository
-import com.futebadosparcas.data.repository.GroupRepository
-import com.futebadosparcas.util.toAndroidLocation
-import com.futebadosparcas.util.toAndroidField
-import com.futebadosparcas.util.toAndroidFields
-import com.futebadosparcas.util.toAndroidLocationReview
-import com.futebadosparcas.util.toAndroidLocationReviews
-import com.futebadosparcas.util.toAndroidCashboxEntry
-import com.futebadosparcas.util.toAndroidCashboxEntries
-import com.futebadosparcas.util.toAndroidGroupInvites
-import com.futebadosparcas.util.toKmpSchedule
-import com.futebadosparcas.util.toKmpLocation
-import com.futebadosparcas.util.toKmpLocationReview
-import com.futebadosparcas.util.toKmpGameTemplate
-import com.futebadosparcas.util.toKmpCashboxFilter
-import com.futebadosparcas.util.toKmpCashboxEntry
-import com.futebadosparcas.util.toKmpNotificationType
-=======
 import com.futebadosparcas.domain.model.CashboxEntryType
 import com.futebadosparcas.domain.model.GroupMemberRole
 import com.futebadosparcas.domain.repository.CashboxRepository
@@ -43,7 +19,6 @@ import com.futebadosparcas.data.model.toKmpCashboxFilter
 import com.futebadosparcas.data.model.createAndroidCashboxEntry
 import com.futebadosparcas.data.model.toKotlinxInstant
 import com.futebadosparcas.data.model.toJavaDate
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

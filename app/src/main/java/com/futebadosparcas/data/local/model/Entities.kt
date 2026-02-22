@@ -113,10 +113,6 @@ fun GameEntity.toDomain() = Game(
     status = status,
     maxPlayers = maxPlayers,
     maxGoalkeepers = maxGoalkeepers,
-<<<<<<< HEAD
-    players = emptyList(), // KMP Game não tem players list
-=======
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
     dailyPrice = dailyPrice,
     numberOfTeams = numberOfTeams,
     ownerId = ownerId,

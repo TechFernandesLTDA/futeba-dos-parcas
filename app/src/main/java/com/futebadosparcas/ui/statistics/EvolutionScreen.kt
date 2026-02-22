@@ -313,20 +313,12 @@ private fun LevelHeader(
  */
 @Composable
 private fun LeagueCard(leagueData: com.futebadosparcas.domain.model.SeasonParticipation) {
-<<<<<<< HEAD
-    val divisionColor = when (leagueData.division) {
-        com.futebadosparcas.data.model.LeagueDivision.DIAMANTE -> GamificationColors.Diamond
-        com.futebadosparcas.data.model.LeagueDivision.OURO -> GamificationColors.Gold
-        com.futebadosparcas.data.model.LeagueDivision.PRATA -> GamificationColors.Silver
-        com.futebadosparcas.data.model.LeagueDivision.BRONZE -> GamificationColors.Bronze
-=======
     val divisionEnum = leagueData.getDivisionEnum()
     val divisionColor = when (divisionEnum) {
         com.futebadosparcas.domain.model.LeagueDivision.DIAMANTE -> GamificationColors.Diamond
         com.futebadosparcas.domain.model.LeagueDivision.OURO -> GamificationColors.Gold
         com.futebadosparcas.domain.model.LeagueDivision.PRATA -> GamificationColors.Silver
         com.futebadosparcas.domain.model.LeagueDivision.BRONZE -> GamificationColors.Bronze
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
     }
 
     Card(

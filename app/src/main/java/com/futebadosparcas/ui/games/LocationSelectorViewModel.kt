@@ -12,11 +12,8 @@ import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidField
-<<<<<<< HEAD
-=======
 import com.futebadosparcas.util.toAndroidFields
 import com.futebadosparcas.util.toAndroidLocations
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.util.toAndroidLocationReviews
 import com.futebadosparcas.util.toKmpSchedule
 import com.futebadosparcas.util.toKmpLocation

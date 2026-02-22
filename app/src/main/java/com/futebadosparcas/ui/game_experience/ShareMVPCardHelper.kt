@@ -20,11 +20,8 @@ import androidx.core.graphics.toColorInt
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
-<<<<<<< HEAD
-=======
 import coil3.request.allowHardware
 import coil3.toBitmap
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.data.model.MVPVoteResult
 import com.futebadosparcas.domain.model.VoteCategory
 import kotlinx.coroutines.CoroutineScope

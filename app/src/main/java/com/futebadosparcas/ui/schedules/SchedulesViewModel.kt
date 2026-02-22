@@ -3,15 +3,9 @@ package com.futebadosparcas.ui.schedules
 import com.futebadosparcas.util.AppLogger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-<<<<<<< HEAD
-import com.futebadosparcas.data.model.Schedule
-=======
 import com.futebadosparcas.domain.model.Schedule
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.domain.repository.ScheduleRepository
-import com.futebadosparcas.util.toAndroidSchedules
-import com.futebadosparcas.util.toKmpSchedule
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

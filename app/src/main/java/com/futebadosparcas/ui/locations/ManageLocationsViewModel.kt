@@ -2,11 +2,7 @@ package com.futebadosparcas.ui.locations
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-<<<<<<< HEAD
-import com.futebadosparcas.data.model.Field
-=======
 import com.futebadosparcas.domain.model.Field
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.AppLogger
@@ -19,14 +15,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import com.futebadosparcas.data.seeding.LocationsSeed
-import com.futebadosparcas.util.toAndroidLocation
-import com.futebadosparcas.util.toAndroidField
-import com.futebadosparcas.util.toAndroidFields
-import com.futebadosparcas.util.toAndroidLocationReview
-import com.futebadosparcas.util.toAndroidLocationReviews
-import com.futebadosparcas.util.toAndroidCashboxEntry
-import com.futebadosparcas.util.toAndroidCashboxEntries
-import com.futebadosparcas.util.toAndroidGroupInvites
 
 class ManageLocationsViewModel(
     private val locationRepository: LocationRepository

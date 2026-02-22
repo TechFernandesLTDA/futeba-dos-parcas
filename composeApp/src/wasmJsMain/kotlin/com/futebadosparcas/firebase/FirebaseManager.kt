@@ -7,6 +7,7 @@ object FirebaseManager {
     private var currentUserId: String? = null
     private var currentUserEmail: String? = null
     private var currentUserName: String? = null
+    private var currentUserPhotoUrl: String? = null
     private var isInitialized = false
 
     private val mockGroups = listOf(
@@ -161,7 +162,27 @@ object FirebaseManager {
         delay(300)
         currentUserId = "mock-user-${email.hashCode()}"
         currentUserEmail = email
-        currentUserName = if (email.contains("admin")) "Admin Teste" else "Jogador Teste"
+        currentUserName = email.substringBefore("@").replaceFirstChar { it.uppercase() }
+        currentUserPhotoUrl = null
+        return currentUserId
+    }
+
+    suspend fun signInWithGoogle(): String? {
+        delay(500)
+        val timestamp = jsGetTimestamp().toLong()
+        currentUserId = "google-user-$timestamp"
+        currentUserEmail = "googleuser@gmail.com"
+        currentUserName = "Usuário Google"
+        currentUserPhotoUrl = "https://ui-avatars.com/api/?name=Usuario+Google&background=4285F4&color=fff"
+        return currentUserId
+    }
+
+    suspend fun signUpWithEmailAndPassword(email: String, password: String, name: String): String? {
+        delay(300)
+        currentUserId = "new-user-${email.hashCode()}"
+        currentUserEmail = email
+        currentUserName = name
+        currentUserPhotoUrl = null
         return currentUserId
     }
 
@@ -170,6 +191,7 @@ object FirebaseManager {
         currentUserId = null
         currentUserEmail = null
         currentUserName = null
+        currentUserPhotoUrl = null
     }
 
     suspend fun deleteAccount() {
@@ -177,11 +199,13 @@ object FirebaseManager {
         currentUserId = null
         currentUserEmail = null
         currentUserName = null
+        currentUserPhotoUrl = null
     }
 
     fun getCurrentUserEmail(): String? = currentUserEmail
     fun getCurrentUserId(): String? = currentUserId
     fun getCurrentUserName(): String? = currentUserName
+    fun getCurrentUserPhotoUrl(): String? = currentUserPhotoUrl
     fun getCurrentUserRole(): String? = if (currentUserEmail?.contains("admin") == true) "ADMIN" else "PLAYER"
 
     suspend fun getCurrentUserProfile(): Map<String, Any?>? {

@@ -43,10 +43,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
-<<<<<<< HEAD
-=======
 import com.futebadosparcas.util.toDate
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

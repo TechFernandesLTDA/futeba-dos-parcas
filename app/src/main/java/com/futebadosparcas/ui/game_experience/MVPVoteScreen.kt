@@ -22,13 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-<<<<<<< HEAD
-import com.futebadosparcas.data.model.GameConfirmation
-=======
 import coil3.request.placeholder
 import coil3.request.error
 import com.futebadosparcas.domain.model.GameConfirmation
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.ui.components.EmptyState

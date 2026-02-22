@@ -4,11 +4,7 @@ import android.content.Intent
 import android.provider.CalendarContract
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-<<<<<<< HEAD
-import com.futebadosparcas.data.model.Field
-=======
 import com.futebadosparcas.domain.model.Field
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.model.GameDraft
 import com.futebadosparcas.domain.model.Location
@@ -32,21 +28,13 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import com.futebadosparcas.domain.repository.ScheduleRepository
-<<<<<<< HEAD
-import com.futebadosparcas.domain.model.Schedule
-=======
 import com.futebadosparcas.data.model.Schedule as AndroidSchedule
 import com.futebadosparcas.domain.model.Schedule as KmpSchedule
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.data.model.RecurrenceType
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.data.model.GroupMember
-<<<<<<< HEAD
-import com.futebadosparcas.data.model.GameConfirmation
-=======
 import com.futebadosparcas.domain.model.GameConfirmation
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.model.GameVisibility
 import com.futebadosparcas.domain.repository.AddressLookupResult
 import com.futebadosparcas.util.AppLogger
@@ -56,10 +44,7 @@ import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidGameTemplate
 import com.futebadosparcas.util.toAndroidSchedule
 import com.futebadosparcas.util.toKmpSchedule
-<<<<<<< HEAD
-=======
 import com.futebadosparcas.util.toKmpGameTemplate
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 
 /**
  * Passos do wizard de criacao de jogo.

@@ -20,11 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-<<<<<<< HEAD
-import com.futebadosparcas.data.model.LivePlayerStats
-=======
 import com.futebadosparcas.domain.model.LivePlayerStats
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.R
