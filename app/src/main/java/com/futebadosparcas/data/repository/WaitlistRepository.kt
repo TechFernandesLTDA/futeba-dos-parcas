@@ -1,7 +1,7 @@
 package com.futebadosparcas.data.repository
 
-import com.futebadosparcas.data.model.GameWaitlist
-import com.futebadosparcas.data.model.WaitlistStatus
+import com.futebadosparcas.domain.model.GameWaitlist
+import com.futebadosparcas.domain.model.WaitlistStatus
 import kotlinx.coroutines.flow.Flow
 
 /**

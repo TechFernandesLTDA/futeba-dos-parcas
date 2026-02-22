@@ -3,18 +3,22 @@ package com.futebadosparcas.ui.groups
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.CashboxCategory
-import com.futebadosparcas.data.model.CashboxEntry as AndroidCashboxEntry
-import com.futebadosparcas.data.model.CashboxEntryType
-import com.futebadosparcas.data.model.CashboxFilter
-import com.futebadosparcas.data.model.CashboxSummary as AndroidCashboxSummary
-import com.futebadosparcas.data.model.GroupMemberRole
+import com.futebadosparcas.domain.model.CashboxCategory
+import com.futebadosparcas.domain.model.CashboxEntryType
+import com.futebadosparcas.domain.model.GroupMemberRole
 import com.futebadosparcas.domain.repository.CashboxRepository
 import com.futebadosparcas.data.repository.GroupRepository
-import com.futebadosparcas.util.toAndroidCashboxEntries
-import com.futebadosparcas.util.toAndroidCashboxSummary
-import com.futebadosparcas.util.toKmpCashboxEntry
-import com.futebadosparcas.util.toKmpCashboxFilter
+import com.futebadosparcas.data.model.AndroidCashboxEntry
+import com.futebadosparcas.data.model.AndroidCashboxSummary
+import com.futebadosparcas.data.model.AndroidCashboxFilter
+import com.futebadosparcas.data.model.toAndroidCashboxEntry
+import com.futebadosparcas.data.model.toAndroidCashboxEntries
+import com.futebadosparcas.data.model.toAndroidCashboxSummary
+import com.futebadosparcas.data.model.toKmpCashboxEntry
+import com.futebadosparcas.data.model.toKmpCashboxFilter
+import com.futebadosparcas.data.model.createAndroidCashboxEntry
+import com.futebadosparcas.data.model.toKotlinxInstant
+import com.futebadosparcas.data.model.toJavaDate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,8 +47,8 @@ class CashboxViewModel(
     private val _actionState = MutableStateFlow<CashboxActionState>(CashboxActionState.Idle)
     val actionState: StateFlow<CashboxActionState> = _actionState
 
-    private val _currentFilter = MutableStateFlow<CashboxFilter?>(null)
-    val currentFilter: StateFlow<CashboxFilter?> = _currentFilter
+    private val _currentFilter = MutableStateFlow<AndroidCashboxFilter?>(null)
+    val currentFilter: StateFlow<AndroidCashboxFilter?> = _currentFilter
 
     private var currentGroupId: String? = null
     private var summaryJob: Job? = null
@@ -60,15 +64,15 @@ class CashboxViewModel(
     private fun loadUserRole(groupId: String) {
         viewModelScope.launch {
             val role = groupRepository.getMyRoleInGroup(groupId).getOrNull()
-            _userRole.value = role
+            _userRole.value = role?.let { GroupMemberRole.valueOf(it.name) }
         }
     }
 
     private fun observeSummary(groupId: String) {
         summaryJob?.cancel()
         summaryJob = cashboxRepository.getSummaryFlow(groupId)
-            .onEach { summary ->
-                val androidSummary = summary.toAndroidCashboxSummary()
+            .onEach { kmpSummary ->
+                val androidSummary = kmpSummary.toAndroidCashboxSummary()
                 _summaryState.value = CashboxSummaryState.Success(androidSummary)
             }
             .catch { e ->
@@ -84,8 +88,8 @@ class CashboxViewModel(
     private fun observeHistory(groupId: String) {
         historyJob?.cancel()
         historyJob = cashboxRepository.getHistoryFlow(groupId)
-            .onEach { entries ->
-                val androidEntries = entries.toAndroidCashboxEntries()
+            .onEach { kmpEntries ->
+                val androidEntries = kmpEntries.toAndroidCashboxEntries()
                 _historyState.value = if (androidEntries.isEmpty()) {
                     CashboxHistoryState.Empty
                 } else {
@@ -104,7 +108,7 @@ class CashboxViewModel(
     private fun groupEntriesByMonth(entries: List<AndroidCashboxEntry>): List<CashboxListItem> {
         val result = mutableListOf<CashboxListItem>()
         val grouped = entries.groupBy { entry ->
-            val date = entry.createdAt ?: entry.referenceDate ?: Date()
+            val date = entry.createdAt ?: entry.referenceDate
             val cal = java.util.Calendar.getInstance()
             cal.time = date
             cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
@@ -147,7 +151,7 @@ class CashboxViewModel(
         viewModelScope.launch {
             _actionState.value = CashboxActionState.Loading
 
-            val androidEntry = AndroidCashboxEntry(
+            val androidEntry = createAndroidCashboxEntry(
                 type = type.name,
                 category = category.name,
                 customCategory = customCategory,
@@ -236,7 +240,7 @@ class CashboxViewModel(
         }
     }
 
-    fun applyFilter(filter: CashboxFilter) {
+    fun applyFilter(filter: AndroidCashboxFilter) {
         val groupId = currentGroupId ?: return
 
         viewModelScope.launch {
@@ -247,8 +251,8 @@ class CashboxViewModel(
             val result = cashboxRepository.getHistoryFiltered(groupId, kmpFilter)
 
             result.fold(
-                onSuccess = { entries ->
-                    val androidEntries = entries.toAndroidCashboxEntries()
+                onSuccess = { kmpEntries ->
+                    val androidEntries = kmpEntries.toAndroidCashboxEntries()
                     _historyState.value = if (androidEntries.isEmpty()) {
                         CashboxHistoryState.Empty
                     } else {
@@ -272,19 +276,21 @@ class CashboxViewModel(
     }
 
     fun filterByType(type: CashboxEntryType) {
-        applyFilter(CashboxFilter(type = type))
+        // AndroidCashboxFilter já usa enums domain.model
+        applyFilter(AndroidCashboxFilter(type = type))
     }
 
     fun filterByCategory(category: CashboxCategory) {
-        applyFilter(CashboxFilter(category = category))
+        // AndroidCashboxFilter já usa enums domain.model
+        applyFilter(AndroidCashboxFilter(category = category))
     }
 
     fun filterByDateRange(startDate: Date, endDate: Date) {
-        applyFilter(CashboxFilter(startDate = startDate, endDate = endDate))
+        applyFilter(AndroidCashboxFilter(startDate = startDate, endDate = endDate))
     }
 
     fun filterByPlayer(playerId: String) {
-        applyFilter(CashboxFilter(playerId = playerId))
+        applyFilter(AndroidCashboxFilter(playerId = playerId))
     }
 
     fun loadEntriesByMonth(year: Int, month: Int) {
@@ -296,8 +302,8 @@ class CashboxViewModel(
             val result = cashboxRepository.getEntriesByMonth(groupId, year, month)
 
             result.fold(
-                onSuccess = { entries ->
-                    val androidEntries = entries.toAndroidCashboxEntries()
+                onSuccess = { kmpEntries ->
+                    val androidEntries = kmpEntries.toAndroidCashboxEntries()
                     _historyState.value = if (androidEntries.isEmpty()) {
                         CashboxHistoryState.Empty
                     } else {
@@ -323,9 +329,9 @@ class CashboxViewModel(
             val result = cashboxRepository.recalculateBalance(groupId)
 
             result.fold(
-                onSuccess = { summary ->
-                    val sign = if (summary.balance >= 0) "" else "-"
-                    val formattedBalance = "$sign R$ ${String.format(Locale.getDefault(), "%.2f", kotlin.math.abs(summary.balance))}"
+                onSuccess = { kmpSummary ->
+                    val androidSummary = kmpSummary.toAndroidCashboxSummary()
+                    val formattedBalance = androidSummary.getFormattedBalance()
                     _actionState.value = CashboxActionState.Success(
                         "Saldo recalculado: $formattedBalance"
                     )
@@ -346,10 +352,10 @@ class CashboxViewModel(
             val result = cashboxRepository.getHistory(groupId, limit = 1000)
 
             result.fold(
-                onSuccess = { entries ->
+                onSuccess = { kmpEntries ->
                     // Calcular totais por categoria localmente
                     val totalsByCategory = mutableMapOf<CashboxCategory, Double>()
-                    for (entry in entries) {
+                    for (entry in kmpEntries) {
                         val category = try {
                             CashboxCategory.valueOf(entry.category)
                         } catch (e: Exception) {
@@ -376,10 +382,10 @@ class CashboxViewModel(
             val result = cashboxRepository.getHistory(groupId, limit = 1000)
 
             result.fold(
-                onSuccess = { entries ->
+                onSuccess = { kmpEntries ->
                     // Calcular totais por jogador localmente
                     val totalsByPlayer = mutableMapOf<String, Double>()
-                    for (entry in entries) {
+                    for (entry in kmpEntries) {
                         val playerName = entry.playerName ?: "Desconhecido"
                         val currentAmount = totalsByPlayer[playerName] ?: 0.0
                         totalsByPlayer[playerName] = currentAmount + entry.amount

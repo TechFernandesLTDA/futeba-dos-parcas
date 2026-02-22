@@ -16,10 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
-
+import androidx.compose.ui.res.stringResource
 /**
  * Badge que indica que o jogador e um convidado (nao membro do grupo).
  * Issue #38: Badge de convidado

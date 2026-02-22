@@ -11,13 +11,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.util.LocationError
 import com.futebadosparcas.util.LocationErrorHandler
 import com.futebadosparcas.util.RecoveryAction
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Estado de erro com recuperacao contextual.

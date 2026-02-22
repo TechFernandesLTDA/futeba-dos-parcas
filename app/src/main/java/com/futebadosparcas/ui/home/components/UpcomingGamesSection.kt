@@ -43,16 +43,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.Game
-import com.futebadosparcas.data.model.GameStatus
+import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.GameStatus
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.ui.games.GameWithConfirmations
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.util.toDate
 
 /**
  * Seção de próximos jogos na Home com status de confirmação (CMD-29)
@@ -78,13 +79,13 @@ fun UpcomingGamesSection(
     val pendingGames = remember { derivedStateOf {
         games.filter {
             val gameStatus = it.game.getStatusEnum()
-            !it.isUserConfirmed && gameStatus == com.futebadosparcas.data.model.GameStatus.SCHEDULED
+            !it.isUserConfirmed && gameStatus == GameStatus.SCHEDULED
         }
     } }.value
     val confirmedGames = remember { derivedStateOf {
         games.filter {
             val gameStatus = it.game.getStatusEnum()
-            it.isUserConfirmed || gameStatus == com.futebadosparcas.data.model.GameStatus.CONFIRMED
+            it.isUserConfirmed || gameStatus == GameStatus.CONFIRMED
         }
     } }.value
 
@@ -373,7 +374,7 @@ private fun GameConfirmationCard(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = formatGameDateTime(game.dateTime),
+                        text = formatGameDateTime(game.dateTime.toDate()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

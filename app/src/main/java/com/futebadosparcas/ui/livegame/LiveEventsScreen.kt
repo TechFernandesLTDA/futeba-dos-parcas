@@ -18,10 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.data.model.GameEvent
-import com.futebadosparcas.R
+import com.futebadosparcas.domain.model.GameEvent
 import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * LiveEventsScreen - Exibe eventos ao vivo de um jogo

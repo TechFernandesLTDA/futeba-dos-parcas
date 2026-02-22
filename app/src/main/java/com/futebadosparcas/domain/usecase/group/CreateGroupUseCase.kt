@@ -1,7 +1,7 @@
 package com.futebadosparcas.domain.usecase.group
 
 import android.net.Uri
-import com.futebadosparcas.data.model.Group
+import com.futebadosparcas.domain.model.Group
 import com.futebadosparcas.data.repository.GroupRepository
 
 /**

@@ -15,7 +15,6 @@ import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.lifecycleScope
 import com.futebadosparcas.BuildConfig
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.main.MainActivityCompose
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.futebadosparcas.util.AppLogger
@@ -31,6 +30,7 @@ import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import com.futebadosparcas.R
 
 /**
  * Activity de Login com suporte a Google Sign-In e autenticação biométrica.

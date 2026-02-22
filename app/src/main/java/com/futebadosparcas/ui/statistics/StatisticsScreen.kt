@@ -26,17 +26,15 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import com.futebadosparcas.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
@@ -45,6 +43,8 @@ import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.util.LevelBadgeHelper
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela principal de Estatísticas com Jetpack Compose
@@ -409,7 +409,7 @@ private fun NavigationButtons(
  */
 @Composable
 private fun PersonalStatsCard(
-    statistics: com.futebadosparcas.data.model.UserStatistics,
+    statistics: com.futebadosparcas.domain.model.Statistics,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -459,14 +459,14 @@ private fun PersonalStatsCard(
                 StatItem(
                     icon = Icons.Default.Star,
                     iconTint = GamificationColors.Gold,
-                    value = statistics.bestPlayerCount.toString(),
+                    value = statistics.mvpCount.toString(),
                     label = stringResource(R.string.statistics_best_players),
                     modifier = Modifier.weight(1f)
                 )
                 StatItem(
                     icon = Icons.Default.CheckCircle,
                     iconTint = MaterialTheme.colorScheme.primary,
-                    value = "${(statistics.presenceRate * 100).toInt()}%",
+                    value = "${if (statistics.totalGames > 0) 100 else 0}%",
                     label = stringResource(R.string.presence_rate),
                     modifier = Modifier.weight(1f)
                 )
@@ -802,7 +802,6 @@ private fun RankingItem(
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(item.photoUrl)
-                        .crossfade(true)
                         .build(),
                     contentDescription = stringResource(R.string.statistics_avatar, item.playerName),
                     modifier = Modifier

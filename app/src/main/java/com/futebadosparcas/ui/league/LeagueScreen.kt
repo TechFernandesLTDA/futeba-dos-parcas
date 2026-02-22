@@ -23,19 +23,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.LeagueDivision
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.data.model.Season
 import com.futebadosparcas.domain.model.LeagueDivision as DomainLeagueDivision
-import com.futebadosparcas.data.model.SeasonParticipationV2
+import com.futebadosparcas.domain.model.SeasonParticipation
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateCompact
 import com.futebadosparcas.ui.components.EmptyStateType
@@ -43,6 +41,8 @@ import com.futebadosparcas.ui.components.lists.RankingItemShimmer
 import com.futebadosparcas.ui.components.FutebaTopBar
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,7 +145,7 @@ fun LeagueContent(
     // Usa derivedStateOf para evitar recálculos desnecessários durante scroll
     val filteredRanking by remember(state.allRankings, state.selectedDivision) {
         derivedStateOf {
-            state.allRankings.filter { it.participation.division == state.selectedDivision }
+            state.allRankings.filter { it.participation.getDivisionEnum() == state.selectedDivision }
         }
     }
 
@@ -234,12 +234,12 @@ fun LeagueHeader(
     season: Season,
     availableSeasons: List<Season>,
     selectedSeason: Season?,
-    myParticipation: SeasonParticipationV2?,
+    myParticipation: SeasonParticipation?,
     myPosition: Int?,
     onSeasonSelected: (Season) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val divisionColor = getDivisionColor(myParticipation?.division ?: LeagueDivision.BRONZE)
+    val divisionColor = getDivisionColor(myParticipation?.getDivisionEnum() ?: LeagueDivision.BRONZE)
 
     Card(
         modifier = Modifier
@@ -341,11 +341,11 @@ fun LeagueHeader(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = getDivisionEmoji(myParticipation?.division ?: LeagueDivision.BRONZE),
+                                text = getDivisionEmoji(myParticipation?.getDivisionEnum() ?: LeagueDivision.BRONZE),
                                 fontSize = 18.sp
                             )
                             Text(
-                                text = (myParticipation?.division ?: LeagueDivision.BRONZE).name,
+                                text = (myParticipation?.getDivisionEnum() ?: LeagueDivision.BRONZE).name,
                                 color = divisionColor,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
@@ -357,9 +357,7 @@ fun LeagueHeader(
                 // Barra de Progresso da Divisão (Rating)
                 if (myParticipation != null) {
                     val currentRating = myParticipation.leagueRating
-                    val division = myParticipation.division
-                    // Converter para domain model se necessário, ou usar Companion object
-                    val domainDivision = DomainLeagueDivision.valueOf(division.name)
+                    val domainDivision = myParticipation.getDivisionEnum()
                     val nextThreshold = DomainLeagueDivision.getNextDivisionThreshold(domainDivision)
                     val prevThreshold = DomainLeagueDivision.getPreviousDivisionThreshold(domainDivision)
 
@@ -418,7 +416,7 @@ fun LeagueHeader(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    MiniStatItem(stringResource(R.string.league_goals), "⚽ ${myParticipation?.goalsScored ?: 0}")
+                    MiniStatItem(stringResource(R.string.league_goals), "⚽ ${myParticipation?.goals ?: 0}")
                     MiniStatItem(stringResource(R.string.league_assists), "👟 ${myParticipation?.assists ?: 0}")
                     MiniStatItem(stringResource(R.string.league_mvp_count), "⭐ ${myParticipation?.mvpCount ?: 0}")
                 }
@@ -709,7 +707,7 @@ fun RankingListItem(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = stringResource(R.string.league_wins_goals_format, item.participation.wins, item.participation.goalsScored),
+                    text = stringResource(R.string.league_wins_goals_format, item.participation.wins, item.participation.goals),
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -1,8 +1,6 @@
 package com.futebadosparcas.ui.components
 
 import androidx.compose.foundation.background
-import com.futebadosparcas.R
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -29,9 +27,11 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
-import coil.request.ImageRequest
+import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.request.ImageRequest
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * CachedAsyncImage - Wrapper otimizado para AsyncImage com Coil caching
@@ -83,7 +83,6 @@ fun CachedAsyncImage(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(imageUrl)
-                    .crossfade(durationMillis = 300)
                     .build(),
                 contentDescription = contentDescription,
                 modifier = Modifier
@@ -175,7 +174,6 @@ fun CachedFieldImage(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(imageUrl)
-                    .crossfade(durationMillis = 300)
                     .build(),
                 contentDescription = stringResource(R.string.cd_field_image_named, fieldName),
                 modifier = Modifier
@@ -246,7 +244,6 @@ fun CachedGroupImage(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(photoUrl)
-                    .crossfade(durationMillis = 300)
                     .build(),
                 contentDescription = stringResource(R.string.cd_group_photo, groupName),
                 modifier = Modifier

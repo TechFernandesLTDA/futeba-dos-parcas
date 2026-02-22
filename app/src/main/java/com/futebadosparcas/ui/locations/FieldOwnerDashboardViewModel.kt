@@ -2,11 +2,13 @@ package com.futebadosparcas.ui.locations
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.AppLogger
-import com.futebadosparcas.util.toAndroidLocations
+import com.futebadosparcas.util.toAndroidLocation
+import com.futebadosparcas.util.toAndroidField
+import com.futebadosparcas.util.toAndroidFields
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,7 +41,7 @@ class FieldOwnerDashboardViewModel(
 
             locationRepository.getLocationsByOwner(userId).fold(
                 onSuccess = { kmpLocations ->
-                    _uiState.value = FieldOwnerDashboardUiState.Success(kmpLocations.toAndroidLocations())
+                    _uiState.value = FieldOwnerDashboardUiState.Success(kmpLocations)
                 },
                 onFailure = { error ->
                     _uiState.value = FieldOwnerDashboardUiState.Error(error.message ?: "Erro ao carregar locais")

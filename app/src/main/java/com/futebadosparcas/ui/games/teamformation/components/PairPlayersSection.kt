@@ -25,15 +25,15 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.DraftPlayer
-import com.futebadosparcas.data.model.PlayerPair
+import com.futebadosparcas.domain.model.DraftPlayer
+import com.futebadosparcas.domain.model.PlayerPair
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Secao de gerenciamento de pares de jogadores.

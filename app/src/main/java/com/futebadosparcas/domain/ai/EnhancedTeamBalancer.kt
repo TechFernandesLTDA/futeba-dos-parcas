@@ -1,8 +1,8 @@
 package com.futebadosparcas.domain.ai
 
-import com.futebadosparcas.data.model.DraftPlayer
-import com.futebadosparcas.data.model.PlayerPair
-import com.futebadosparcas.data.model.TeamStrength
+import com.futebadosparcas.domain.model.DraftPlayer
+import com.futebadosparcas.domain.model.PlayerPair
+import com.futebadosparcas.domain.model.TeamStrength
 import com.futebadosparcas.domain.model.PlayerPosition
 import kotlin.math.abs
 
@@ -451,14 +451,12 @@ class EnhancedTeamBalancer {
  * Extensao para converter DraftPlayer para PlayerForBalancing.
  */
 fun DraftPlayer.toPlayerForBalancing(): PlayerForBalancing {
-    val kmpPosition = when (position) {
-        com.futebadosparcas.data.model.PlayerPosition.GOALKEEPER -> com.futebadosparcas.domain.model.PlayerPosition.GOALKEEPER
-        com.futebadosparcas.data.model.PlayerPosition.FIELD -> com.futebadosparcas.domain.model.PlayerPosition.LINE
-    }
+    // DraftPlayer (domain.model) ja usa o enum correto PlayerPosition (domain.model)
+    // Nao precisa conversao - apenas mapear os campos
     return PlayerForBalancing(
         id = id,
         name = name,
-        position = kmpPosition,
+        position = position, // Ja é domain.model.PlayerPosition
         attackSkill = strikerRating,
         midfieldSkill = midRating,
         defenseSkill = defenderRating,

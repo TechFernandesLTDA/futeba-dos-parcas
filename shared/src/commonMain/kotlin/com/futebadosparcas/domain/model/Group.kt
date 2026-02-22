@@ -41,7 +41,11 @@ data class Group(
     @SerialName("default_max_players") val defaultMaxPlayers: Int = DEFAULT_MAX_PLAYERS,
     @SerialName("default_price") val defaultPrice: Double = 0.0,
     @SerialName("created_at") val createdAt: Long? = null,
-    @SerialName("updated_at") val updatedAt: Long? = null
+    @SerialName("updated_at") val updatedAt: Long? = null,
+
+    // Configuracoes de waitlist e auto-close
+    @SerialName("waitlist_auto_promote_minutes") val waitlistAutoPromoteMinutes: Int? = null,
+    @SerialName("auto_close_hours") val autoCloseHours: Int? = null
 ) {
     /**
      * Verifica se o grupo tem configuracoes padrao de jogo preenchidas.

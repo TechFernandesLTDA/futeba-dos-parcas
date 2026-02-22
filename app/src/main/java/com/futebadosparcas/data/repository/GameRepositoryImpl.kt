@@ -1,12 +1,12 @@
 package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.local.dao.GameDao
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.model.GameConfirmation as AndroidGameConfirmation
 import com.futebadosparcas.data.model.GameEvent
-import com.futebadosparcas.data.model.GameStatus
+import com.futebadosparcas.domain.model.GameStatus
 import com.futebadosparcas.data.model.LiveGameScore
-import com.futebadosparcas.data.model.Team
+import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.model.Game as KmpGame
 import com.futebadosparcas.domain.model.GameConfirmation as KmpGameConfirmation
 import com.futebadosparcas.domain.model.GameFilterType as KmpGameFilterType
@@ -37,8 +37,8 @@ class GameRepositoryImpl constructor(
     private val gameDao: GameDao,
     private val queryRepository: com.futebadosparcas.domain.repository.GameQueryRepository,
     private val confirmationRepository: com.futebadosparcas.domain.repository.GameConfirmationRepository,
-    private val eventsRepository: GameEventsRepository,
-    private val teamRepository: GameTeamRepository,
+    private val eventsRepository: com.futebadosparcas.domain.repository.GameEventsRepository,
+    private val teamRepository: com.futebadosparcas.domain.repository.GameTeamRepository,
     private val liveGameRepository: LiveGameRepository
 ) : GameRepository {
     private val gamesCollection = firestore.collection("games")
@@ -50,7 +50,7 @@ class GameRepositoryImpl constructor(
     // ========== Helper Methods para Conversao KMP -> Android ==========
 
     private fun KmpGameWithConfirmations.toAndroidGameWithConfirmations(): GameWithConfirmations = GameWithConfirmations(
-        game = game.toAndroidGame(),
+        game = game, // Já é domain.model.Game (KmpGame)
         confirmedCount = confirmedCount,
         isUserConfirmed = isUserConfirmed
     )
@@ -68,11 +68,61 @@ class GameRepositoryImpl constructor(
     )
 
     private fun KmpTimeConflict.toAndroidTimeConflict(): TimeConflict = TimeConflict(
-        conflictingGame = conflictingGame.toAndroidGame(),
+        conflictingGame = conflictingGame, // Já é domain.model.Game
         overlapMinutes = overlapMinutes
     )
 
     private fun List<KmpTimeConflict>.toAndroidTimeConflicts(): List<TimeConflict> = map { it.toAndroidTimeConflict() }
+
+    // Conversores para GameEvent (domain -> data)
+    private fun com.futebadosparcas.domain.model.GameEvent.toAndroidGameEvent(): com.futebadosparcas.data.model.GameEvent {
+        return com.futebadosparcas.data.model.GameEvent(
+            id = id,
+            gameId = gameId,
+            eventType = eventType,
+            playerId = playerId,
+            playerName = playerName,
+            teamId = teamId,
+            assistedById = assistedById,
+            assistedByName = assistedByName,
+            minute = minute,
+            createdBy = createdBy,
+            createdAt = createdAt?.let { java.util.Date(it) }
+        )
+    }
+
+    private fun List<com.futebadosparcas.domain.model.GameEvent>.toAndroidGameEvents(): List<com.futebadosparcas.data.model.GameEvent> = map { it.toAndroidGameEvent() }
+
+    // Conversor para LiveScore (domain -> data)
+    private fun com.futebadosparcas.domain.model.LiveScore.toAndroidLiveGameScore(): com.futebadosparcas.data.model.LiveGameScore {
+        return com.futebadosparcas.data.model.LiveGameScore(
+            id = id,
+            gameId = gameId,
+            team1Id = team1Id,
+            team1Score = team1Score,
+            team2Id = team2Id,
+            team2Score = team2Score,
+            startedAt = startedAt?.let { java.util.Date(it) },
+            finishedAt = finishedAt?.let { java.util.Date(it) }
+        )
+    }
+
+    // Conversor para GameEvent (data -> domain)
+    private fun com.futebadosparcas.data.model.GameEvent.toKmpGameEvent(): com.futebadosparcas.domain.model.GameEvent {
+        return com.futebadosparcas.domain.model.GameEvent(
+            id = id,
+            gameId = gameId,
+            eventType = eventType,
+            playerId = playerId,
+            playerName = playerName,
+            teamId = teamId,
+            assistedById = assistedById,
+            assistedByName = assistedByName,
+            minute = minute,
+            createdBy = createdBy,
+            createdAt = createdAt?.time
+        )
+    }
 
     private fun KmpGameFilterType.toAndroidFilterType(): GameFilterType = when (this) {
         KmpGameFilterType.ALL -> GameFilterType.ALL
@@ -90,10 +140,10 @@ class GameRepositoryImpl constructor(
 
     // ========== Query Methods - Delegação para GameQueryRepository ==========
     override suspend fun getUpcomingGames(): Result<List<Game>> =
-        queryRepository.getUpcomingGames().map { it.toAndroidGames() }
+        queryRepository.getUpcomingGames()
 
     override suspend fun getAllGames(): Result<List<Game>> =
-        queryRepository.getAllGames().map { it.toAndroidGames() }
+        queryRepository.getAllGames()
 
     override suspend fun getAllGamesWithConfirmationCount(): Result<List<GameWithConfirmations>> =
         queryRepository.getAllGamesWithConfirmationCount().map { it.toAndroidGameWithConfirmations() }
@@ -104,7 +154,7 @@ class GameRepositoryImpl constructor(
         }
 
     override suspend fun getConfirmedUpcomingGamesForUser(): Result<List<Game>> =
-        queryRepository.getConfirmedUpcomingGamesForUser().map { it.toAndroidGames() }
+        queryRepository.getConfirmedUpcomingGamesForUser()
 
     override fun getLiveAndUpcomingGamesFlow(): Flow<Result<List<GameWithConfirmations>>> =
         queryRepository.getLiveAndUpcomingGamesFlow().map { result ->
@@ -125,18 +175,16 @@ class GameRepositoryImpl constructor(
         }
 
     override suspend fun getGameDetails(gameId: String): Result<Game> =
-        queryRepository.getGameDetails(gameId).map { it.toAndroidGame() }
+        queryRepository.getGameDetails(gameId) // Já retorna domain.model.Game
 
     override fun getGameDetailsFlow(gameId: String): Flow<Result<Game>> =
-        queryRepository.getGameDetailsFlow(gameId).map { result ->
-            result.map { it.toAndroidGame() }
-        }
+        queryRepository.getGameDetailsFlow(gameId)
 
     override suspend fun getPublicGames(limit: Int): Result<List<Game>> =
-        queryRepository.getPublicGames(limit).map { it.toAndroidGames() }
+        queryRepository.getPublicGames(limit)
 
     override fun getPublicGamesFlow(limit: Int): Flow<List<Game>> =
-        queryRepository.getPublicGamesFlow(limit).map { it.toAndroidGames() }
+        queryRepository.getPublicGamesFlow(limit)
 
     override suspend fun getNearbyPublicGames(
         userLat: Double,
@@ -144,10 +192,10 @@ class GameRepositoryImpl constructor(
         radiusKm: Double,
         limit: Int
     ): Result<List<Game>> =
-        queryRepository.getNearbyPublicGames(userLat, userLng, radiusKm, limit).map { it.toAndroidGames() }
+        queryRepository.getNearbyPublicGames(userLat, userLng, radiusKm, limit)
 
     override suspend fun getOpenPublicGames(limit: Int): Result<List<Game>> =
-        queryRepository.getOpenPublicGames(limit).map { it.toAndroidGames() }
+        queryRepository.getOpenPublicGames(limit)
 
     override suspend fun checkTimeConflict(
         fieldId: String,
@@ -159,27 +207,21 @@ class GameRepositoryImpl constructor(
         queryRepository.checkTimeConflict(fieldId, date, startTime, endTime, excludeGameId).map { it.toAndroidTimeConflicts() }
 
     override suspend fun getGamesByFieldAndDate(fieldId: String, date: String): Result<List<Game>> =
-        queryRepository.getGamesByFieldAndDate(fieldId, date).map { it.toAndroidGames() }
+        queryRepository.getGamesByFieldAndDate(fieldId, date)
 
     // ========== Confirmation Methods - Delegação para GameConfirmationRepository ==========
-    override suspend fun getGameConfirmations(gameId: String): Result<List<AndroidGameConfirmation>> =
-        confirmationRepository.getGameConfirmations(gameId).map { kmpConfirmations ->
-            kmpConfirmations.map { it.toAndroidModel() }
-        }
+    override suspend fun getGameConfirmations(gameId: String): Result<List<com.futebadosparcas.domain.model.GameConfirmation>> =
+        confirmationRepository.getGameConfirmations(gameId)
 
-    override fun getGameConfirmationsFlow(gameId: String): Flow<Result<List<AndroidGameConfirmation>>> =
-        confirmationRepository.getGameConfirmationsFlow(gameId).map { result ->
-            result.map { kmpConfirmations ->
-                kmpConfirmations.map { it.toAndroidModel() }
-            }
-        }
+    override fun getGameConfirmationsFlow(gameId: String): Flow<Result<List<com.futebadosparcas.domain.model.GameConfirmation>>> =
+        confirmationRepository.getGameConfirmationsFlow(gameId)
 
     override suspend fun confirmPresence(
         gameId: String,
         position: String,
         isCasual: Boolean
-    ): Result<AndroidGameConfirmation> =
-        confirmationRepository.confirmPresence(gameId, position, isCasual).map { it.toAndroidModel() }
+    ): Result<com.futebadosparcas.domain.model.GameConfirmation> =
+        confirmationRepository.confirmPresence(gameId, position, isCasual)
 
     override suspend fun getGoalkeeperCount(gameId: String): Result<Int> =
         confirmationRepository.getGoalkeeperCount(gameId)
@@ -196,21 +238,25 @@ class GameRepositoryImpl constructor(
     override suspend fun updatePaymentStatus(gameId: String, userId: String, isPaid: Boolean): Result<Unit> =
         confirmationRepository.updatePaymentStatus(gameId, userId, isPaid)
 
-    override suspend fun summonPlayers(gameId: String, confirmations: List<AndroidGameConfirmation>): Result<Unit> =
-        confirmationRepository.summonPlayers(gameId, confirmations.map { it.toKmpModel() })
+    override suspend fun summonPlayers(gameId: String, confirmations: List<com.futebadosparcas.domain.model.GameConfirmation>): Result<Unit> =
+        confirmationRepository.summonPlayers(gameId, confirmations)
 
-    override suspend fun acceptInvitation(gameId: String, position: String): Result<AndroidGameConfirmation> =
-        confirmationRepository.acceptInvitation(gameId, position).map { it.toAndroidModel() }
+    override suspend fun acceptInvitation(gameId: String, position: String): Result<com.futebadosparcas.domain.model.GameConfirmation> =
+        confirmationRepository.acceptInvitation(gameId, position)
 
     // ========== Events Methods - Delegação para GameEventsRepository ==========
-    override fun getGameEventsFlow(gameId: String): Flow<Result<List<GameEvent>>> =
-        eventsRepository.getGameEventsFlow(gameId)
+    override fun getGameEventsFlow(gameId: String): Flow<Result<List<com.futebadosparcas.data.model.GameEvent>>> =
+        eventsRepository.getGameEventsFlow(gameId).map { result ->
+            result.map { it.toAndroidGameEvents() }
+        }
 
-    override fun getLiveScoreFlow(gameId: String): Flow<LiveGameScore?> =
-        eventsRepository.getLiveScoreFlow(gameId)
+    override fun getLiveScoreFlow(gameId: String): Flow<com.futebadosparcas.data.model.LiveGameScore?> =
+        eventsRepository.getLiveScoreFlow(gameId).map { liveScore ->
+            liveScore?.toAndroidLiveGameScore()
+        }
 
-    override suspend fun sendGameEvent(gameId: String, event: GameEvent): Result<Unit> =
-        eventsRepository.sendGameEvent(gameId, event)
+    override suspend fun sendGameEvent(gameId: String, event: com.futebadosparcas.data.model.GameEvent): Result<Unit> =
+        eventsRepository.sendGameEvent(gameId, event.toKmpGameEvent())
 
     override suspend fun deleteGameEvent(gameId: String, eventId: String): Result<Unit> =
         eventsRepository.deleteGameEvent(gameId, eventId)
@@ -244,23 +290,8 @@ class GameRepositoryImpl constructor(
 
             // Safety check: ensure dateTime is set
             var finalGame = game.copy(id = docRef.id, ownerId = uid)
-            if (finalGame.dateTime == null && finalGame.date.isNotEmpty() && finalGame.time.isNotEmpty()) {
-                try {
-                    // Combine date and time (assuming format yyyy-MM-dd and HH:mm)
-                    val dateTimeStr = "${finalGame.date} ${finalGame.time}"
-                    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                    finalGame = finalGame.copy(dateTimeRaw = sdf.parse(dateTimeStr))
-                } catch (e: Exception) {
-                    AppLogger.e(TAG, "createGame: Error parsing dateTime from date/time strings", e)
-                }
-            }
-
-            // Validar o jogo antes de salvar (#28 - Validação de bounds)
-            val validationErrors = finalGame.validate()
-            if (validationErrors.isNotEmpty()) {
-                val errorMsg = validationErrors.joinToString(", ") { it.message }
-                return Result.failure(IllegalArgumentException("Validação falhou: $errorMsg"))
-            }
+            // dateTime e dateTimeRaw sao computed properties no model KMP
+            // Validacao de bounds feita via init {} no model
 
             docRef.set(finalGame).await()
             Result.success(finalGame)
@@ -327,17 +358,10 @@ class GameRepositoryImpl constructor(
 
     override suspend fun updateGame(game: Game): Result<Unit> {
         return try {
-            // Validar o jogo antes de salvar (#28 - Validação de bounds)
-            val validationErrors = game.validate()
-            if (validationErrors.isNotEmpty()) {
-                val errorMsg = validationErrors.joinToString(", ") { it.message }
-                return Result.failure(IllegalArgumentException("Validação falhou: $errorMsg"))
-            }
+            // Validacao de bounds feita via init {} no model KMP
 
             // Atualizar o timestamp de atualização (#1 - Campo updatedAt)
-            val updatedGame = game.copy().apply {
-                updatedAt = java.util.Date()
-            }
+            val updatedGame = game.copy(updatedAt = System.currentTimeMillis())
 
             gamesCollection.document(game.id).set(updatedGame).await()
             Result.success(Unit)

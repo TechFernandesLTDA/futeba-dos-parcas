@@ -25,11 +25,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.domain.service.TimeSuggestion
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Chip de sugestao de horario baseado no historico.

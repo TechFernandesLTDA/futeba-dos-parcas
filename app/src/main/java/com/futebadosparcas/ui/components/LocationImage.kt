@@ -1,7 +1,6 @@
 package com.futebadosparcas.ui.components
 
 import androidx.annotation.DrawableRes
-import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -41,13 +40,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
-import coil.request.CachePolicy
-import coil.request.ImageRequest
-import coil.size.Size
+import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.size.Size
 import com.futebadosparcas.R
-
+import androidx.compose.ui.res.stringResource
 /**
  * Estado de carregamento progressivo de imagens.
  *
@@ -275,7 +274,6 @@ private fun ProgressiveImage(
                 model = ImageRequest.Builder(context)
                     .data(imageUrl)
                     .size(thumbnailSize, thumbnailSize)
-                    .crossfade(true)
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .memoryCachePolicy(CachePolicy.ENABLED)
                     .build(),
@@ -315,8 +313,7 @@ private fun ProgressiveImage(
                     model = ImageRequest.Builder(context)
                         .data(imageUrl)
                         .size(Size.ORIGINAL)
-                        .crossfade(true)
-                        .diskCachePolicy(CachePolicy.ENABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
                         .memoryCachePolicy(CachePolicy.ENABLED)
                         .build(),
                     contentDescription = contentDescription,

@@ -41,10 +41,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
-
+import androidx.compose.ui.res.stringResource
 /**
  * Indicador visual de qualidade de conexão.
  * Mostra estado da rede e qualidade do sinal em tempo real.

@@ -34,12 +34,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import com.futebadosparcas.R
 import androidx.compose.ui.unit.dp
 import kotlin.math.sin
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Componentes visuais para exibir sequências (streaks) de jogos.

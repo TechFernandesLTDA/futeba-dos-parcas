@@ -2,9 +2,8 @@ package com.futebadosparcas.ui.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.R
-
+import androidx.compose.ui.res.stringResource
 /**
  * Extensões para facilitar o uso de strings do Android
  * em telas Compose.

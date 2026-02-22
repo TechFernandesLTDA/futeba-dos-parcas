@@ -1,10 +1,13 @@
 package com.futebadosparcas.domain.usecase
 
 import com.futebadosparcas.data.datasource.FirebaseDataSource
-import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.Team
+import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.ai.AiTeamBalancer
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.toAndroidGameConfirmations
+import com.futebadosparcas.util.toKmpTeams
+import com.futebadosparcas.util.toAndroidTeams
 
 /**
  * Use Case para calcular balanceamento de times.
@@ -53,7 +56,7 @@ class CalculateTeamBalanceUseCase constructor(
 
         // 3. Filtrar apenas jogadores confirmados
         val confirmedPlayers = confirmations.filter {
-            it.getStatusEnum() == com.futebadosparcas.data.model.ConfirmationStatus.CONFIRMED
+            it.getStatusEnum() == com.futebadosparcas.domain.model.ConfirmationStatus.CONFIRMED
         }
 
         if (confirmedPlayers.isEmpty()) {
@@ -75,14 +78,19 @@ class CalculateTeamBalanceUseCase constructor(
         }
 
         // 4. Executar algoritmo de balanceamento
-        val teams = teamBalancer.balanceTeams(
+        // Converter para data.model antes de chamar o balancer
+        val androidPlayers = confirmedPlayers.toAndroidGameConfirmations()
+        val androidTeams = teamBalancer.balanceTeams(
             gameId = gameId,
-            players = confirmedPlayers,
+            players = androidPlayers,
             numberOfTeams = numberOfTeams
         ).getOrElse {
             AppLogger.e(TAG, "Erro ao balancear times", it)
             return Result.failure(it)
         }
+
+        // Converter de volta para domain.model
+        val teams = androidTeams.toKmpTeams()
 
         AppLogger.d(TAG) {
             "Times balanceados com sucesso: ${teams.size} times gerados"
@@ -98,7 +106,7 @@ class CalculateTeamBalanceUseCase constructor(
                 }
             }
 
-            // Salvar novos times
+            // Salvar novos times (já são domain.model.Team)
             firebaseDataSource.saveTeams(gameId, teams)
                 .getOrElse { return Result.failure(it) }
 

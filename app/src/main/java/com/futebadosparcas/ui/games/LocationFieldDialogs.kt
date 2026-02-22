@@ -15,15 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
 import com.futebadosparcas.data.model.Field
-import com.futebadosparcas.data.model.FieldType
-import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.data.model.FieldType as AndroidFieldType
+import com.futebadosparcas.domain.model.FieldType as KmpFieldType
+import com.futebadosparcas.domain.model.Location
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModel
@@ -37,8 +36,12 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.text.Normalizer
-import com.futebadosparcas.util.toAndroidLocations
+import com.futebadosparcas.R
+import com.futebadosparcas.util.toAndroidLocation
+import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidFields
+import com.futebadosparcas.util.toAndroidLocations
+import androidx.compose.ui.res.stringResource
 
 /**
  * Dialog moderno de seleção de local com busca integrada ao Google Places
@@ -390,9 +393,9 @@ fun FieldSelectionDialog(
                 ScrollableTabRow(
                     selectedTabIndex = when (selectedFieldType) {
                         null -> 0
-                        FieldType.SOCIETY -> 1
-                        FieldType.FUTSAL -> 2
-                        FieldType.CAMPO -> 3
+                        KmpFieldType.SOCIETY -> 1
+                        KmpFieldType.FUTSAL -> 2
+                        KmpFieldType.CAMPO -> 3
                         else -> 0
                     },
                     edgePadding = 0.dp
@@ -404,18 +407,18 @@ fun FieldSelectionDialog(
                     )
                     FilterChipTab(
                         text = stringResource(R.string.dialog_select_field_text_4),
-                        isSelected = selectedFieldType == FieldType.SOCIETY,
-                        onClick = { viewModel.filterByType(FieldType.SOCIETY) }
+                        isSelected = selectedFieldType == KmpFieldType.SOCIETY,
+                        onClick = { viewModel.filterByType(KmpFieldType.SOCIETY) }
                     )
                     FilterChipTab(
                         text = stringResource(R.string.dialog_select_field_text_5),
-                        isSelected = selectedFieldType == FieldType.FUTSAL,
-                        onClick = { viewModel.filterByType(FieldType.FUTSAL) }
+                        isSelected = selectedFieldType == KmpFieldType.FUTSAL,
+                        onClick = { viewModel.filterByType(KmpFieldType.FUTSAL) }
                     )
                     FilterChipTab(
                         text = stringResource(R.string.dialog_select_field_text_6),
-                        isSelected = selectedFieldType == FieldType.CAMPO,
-                        onClick = { viewModel.filterByType(FieldType.CAMPO) }
+                        isSelected = selectedFieldType == KmpFieldType.CAMPO,
+                        onClick = { viewModel.filterByType(KmpFieldType.CAMPO) }
                     )
                 }
 
@@ -551,8 +554,10 @@ private fun FieldItem(
                     AssistChip(
                         onClick = {},
                         label = {
+                            // getTypeEnum() retorna AndroidFieldType, que tem displayName
+                            val androidFieldType: AndroidFieldType = field.getTypeEnum()
                             Text(
-                                text = field.getTypeEnum().displayName,
+                                text = androidFieldType.displayName,
                                 style = MaterialTheme.typography.labelSmall
                             )
                         }
@@ -654,9 +659,9 @@ class LocationSelectionViewModel(
             try {
                 val result = locationRepository.getAllLocations()
                 result.fold(
-                    onSuccess = { list ->
-                        savedLocations = list.toAndroidLocations()
-                        _locations.value = list.toAndroidLocations()
+                    onSuccess = { locations ->
+                        savedLocations = locations // Repository já retorna domain.model.Location
+                        _locations.value = locations
                         _uiState.value = LocationSelectionUiState.Success
                     },
                     onFailure = { error ->
@@ -718,8 +723,8 @@ class FieldSelectionViewModel(
     private val _fields = MutableStateFlow<List<Field>>(emptyList())
     val fields: StateFlow<List<Field>> = _fields
 
-    private val _selectedFieldType = MutableStateFlow<FieldType?>(null)
-    val selectedFieldType: StateFlow<FieldType?> = _selectedFieldType
+    private val _selectedFieldType = MutableStateFlow<KmpFieldType?>(null)
+    val selectedFieldType: StateFlow<KmpFieldType?> = _selectedFieldType
 
     private var allFields: List<Field> = emptyList()
 
@@ -729,8 +734,8 @@ class FieldSelectionViewModel(
             try {
                 val result = locationRepository.getFieldsByLocation(locationId)
                 result.fold(
-                    onSuccess = { list ->
-                        allFields = list.toAndroidFields()
+                    onSuccess = { kmpFields ->
+                        allFields = kmpFields.toAndroidFields()
                         applyFilter()
                         _uiState.value = FieldSelectionUiState.Success
                     },
@@ -748,7 +753,7 @@ class FieldSelectionViewModel(
         }
     }
 
-    fun filterByType(type: FieldType?) {
+    fun filterByType(type: KmpFieldType?) {
         _selectedFieldType.value = type
         applyFilter()
     }
@@ -757,7 +762,9 @@ class FieldSelectionViewModel(
         _fields.value = if (_selectedFieldType.value == null) {
             allFields
         } else {
-            allFields.filter { it.getTypeEnum() == _selectedFieldType.value }
+            // Comparar type String do Field Android com o nome do enum KMP
+            val targetTypeName = _selectedFieldType.value?.name
+            allFields.filter { it.type == targetTypeName }
         }
     }
 }

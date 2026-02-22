@@ -7,7 +7,7 @@ import android.graphics.Canvas
 import android.view.LayoutInflater
 import android.view.View
 import androidx.core.content.FileProvider
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.databinding.LayoutShareCardBinding
 import java.io.File
 import java.io.FileOutputStream

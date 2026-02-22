@@ -1,8 +1,6 @@
 package com.futebadosparcas.ui.components.voice
 
 import android.Manifest
-import com.futebadosparcas.R
-import androidx.compose.ui.res.stringResource
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
@@ -80,6 +78,8 @@ import java.io.File
 import java.util.Locale
 import java.util.UUID
 import kotlin.math.sin
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Sistema de gravação e reprodução de mensagens de voz.

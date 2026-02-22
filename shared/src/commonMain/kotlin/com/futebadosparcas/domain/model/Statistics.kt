@@ -48,35 +48,97 @@ data class Statistics(
         require(redCards >= 0) { "redCards nao pode ser negativo: $redCards" }
     }
 
-    /**
-     * Calcula a taxa de vitoria.
-     * @deprecated Use a extension function winRate() de HasGameStats
-     */
-    fun getWinRate(): Float = winRate()
+    // ========== Computed Properties (compat com codigo legado Android) ==========
 
     /**
-     * Calcula media de gols por jogo.
-     * @deprecated Use a extension function goalsPerGame() de HasGameStats
+     * Total de cartoes (amarelos + vermelhos).
      */
-    fun getGoalsPerGame(): Float = goalsPerGame()
+    val totalCards: Int
+        get() = yellowCards + redCards
 
     /**
-     * Calcula media de assistencias por jogo.
-     * @deprecated Use a extension function assistsPerGame() de HasGameStats
+     * Numero de vezes que foi melhor jogador (MVP).
+     * Alias para mvpCount para compatibilidade.
      */
-    fun getAssistsPerGame(): Float = assistsPerGame()
+    val bestPlayerCount: Int
+        get() = mvpCount
 
     /**
-     * Calcula participacao em gols (gols + assistencias).
-     * @deprecated Use a extension function goalParticipation() de HasGameStats
+     * Numero de vitorias.
+     * Alias para totalWins para compatibilidade.
      */
-    fun getGoalParticipation(): Int = goalParticipation()
+    val gamesWon: Int
+        get() = totalWins
 
     /**
-     * Calcula media de participacao em gols por jogo.
-     * @deprecated Use a extension function goalParticipationPerGame() de HasGameStats
+     * Numero de vitorias.
+     * Alias para totalWins para compatibilidade.
      */
-    fun getGoalParticipationPerGame(): Float = goalParticipationPerGame()
+    val wins: Int
+        get() = totalWins
+
+    /**
+     * Taxa de vitoria (0.0 - 1.0).
+     * Computed property usando extension function winRate().
+     */
+    val winRate: Double
+        get() = winRate().toDouble()
+
+    /**
+     * Media de gols por jogo.
+     * Computed property usando extension function goalsPerGame().
+     */
+    val avgGoalsPerGame: Double
+        get() = goalsPerGame().toDouble()
+
+    /**
+     * Media de assistencias por jogo.
+     * Computed property usando extension function assistsPerGame().
+     */
+    val avgAssistsPerGame: Double
+        get() = assistsPerGame().toDouble()
+
+    /**
+     * Media de defesas por jogo.
+     */
+    val avgSavesPerGame: Double
+        get() = if (totalGames == 0) 0.0 else totalSaves.toDouble() / totalGames.toDouble()
+
+    /**
+     * Media de cartoes por jogo.
+     */
+    val avgCardsPerGame: Double
+        get() = if (totalGames == 0) 0.0 else totalCards.toDouble() / totalGames.toDouble()
+
+    /**
+     * Taxa de MVP (melhor jogador) - mvpCount / totalGames.
+     */
+    val mvpRate: Double
+        get() = if (totalGames == 0) 0.0 else mvpCount.toDouble() / totalGames.toDouble()
+
+    /**
+     * Taxa de presenca (jogos jogados / total de convocacoes).
+     * Como nao temos convocacoes aqui, retorna 0.0 como fallback.
+     */
+    val presenceRate: Double
+        get() = 0.0 // TODO: Implementar quando tivermos dados de convocacoes
+
+    /**
+     * Sequencia atual de MVPs consecutivos.
+     * Como nao temos historico aqui, retorna 0 como fallback.
+     */
+    val currentMvpStreak: Int
+        get() = 0 // TODO: Implementar quando tivermos historico de jogos
+
+    /**
+     * Melhor quantidade de gols em um unico jogo.
+     * Como nao temos historico aqui, retorna 0 como fallback.
+     */
+    val bestGoalCount: Int
+        get() = 0 // TODO: Implementar quando tivermos historico de jogos
+
+    // Nota: Metodos get*() removidos para evitar clash com computed properties.
+    // Use as computed properties ou extension functions diretas.
 }
 
 /**

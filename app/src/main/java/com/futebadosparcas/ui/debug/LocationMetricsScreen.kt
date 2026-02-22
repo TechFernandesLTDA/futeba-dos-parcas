@@ -1,8 +1,6 @@
 package com.futebadosparcas.ui.debug
 
 import androidx.compose.foundation.background
-import com.futebadosparcas.R
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.util.LocationQueryMetrics
 import com.futebadosparcas.util.QueryStats
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela de debug para visualizar metricas de queries de Location.

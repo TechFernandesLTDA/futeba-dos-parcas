@@ -3,7 +3,7 @@ package com.futebadosparcas.ui.groups
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.Group
+import com.futebadosparcas.domain.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.data.model.UserGroup

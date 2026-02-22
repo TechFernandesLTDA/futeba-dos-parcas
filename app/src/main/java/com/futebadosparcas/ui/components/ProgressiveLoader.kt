@@ -31,10 +31,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import kotlinx.coroutines.flow.distinctUntilChanged
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Componentes de Lazy Loading Progressivo.

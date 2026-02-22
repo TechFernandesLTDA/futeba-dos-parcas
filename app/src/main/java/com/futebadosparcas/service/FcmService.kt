@@ -9,7 +9,6 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
-import com.futebadosparcas.R
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.ui.main.MainActivityCompose
 import com.futebadosparcas.util.AppLogger
@@ -23,6 +22,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import com.futebadosparcas.R
 
 class FcmService : FirebaseMessagingService(), KoinComponent {
 

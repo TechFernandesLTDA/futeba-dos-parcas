@@ -36,7 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -46,10 +45,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
-import coil.compose.AsyncImage
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.*
+import coil3.compose.AsyncImage
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
@@ -61,6 +58,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Cores semânticas para eventos de jogo (Material Design 3 compliant)
@@ -703,7 +702,7 @@ fun PositionSelectionDialog(
                     Text(stringResource(R.string.goalkeeper))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { onConfirm(PlayerPosition.FIELD) }, modifier = Modifier.fillMaxWidth()) {
+                Button(onClick = { onConfirm(PlayerPosition.LINE) }, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.field_player))
                 }
             }

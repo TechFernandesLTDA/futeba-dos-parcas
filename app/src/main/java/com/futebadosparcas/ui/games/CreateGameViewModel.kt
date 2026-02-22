@@ -4,10 +4,10 @@ import android.content.Intent
 import android.provider.CalendarContract
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.Field
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Field
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.model.GameDraft
-import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.CreateGameDraftRepository
 import com.futebadosparcas.data.repository.GameRepository
@@ -28,19 +28,23 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import com.futebadosparcas.domain.repository.ScheduleRepository
-import com.futebadosparcas.data.model.Schedule
+import com.futebadosparcas.data.model.Schedule as AndroidSchedule
+import com.futebadosparcas.domain.model.Schedule as KmpSchedule
 import com.futebadosparcas.data.model.RecurrenceType
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.data.model.GroupMember
-import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.GameVisibility
+import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.GameVisibility
 import com.futebadosparcas.domain.repository.AddressLookupResult
 import com.futebadosparcas.util.AppLogger
-import com.futebadosparcas.util.toKmpSchedule
 import com.futebadosparcas.util.toKmpAppNotifications
-import com.futebadosparcas.util.toKmpGameTemplate
+import com.futebadosparcas.util.toAndroidLocation
+import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidGameTemplate
+import com.futebadosparcas.util.toAndroidSchedule
+import com.futebadosparcas.util.toKmpSchedule
+import com.futebadosparcas.util.toKmpGameTemplate
 
 /**
  * Passos do wizard de criacao de jogo.
@@ -856,7 +860,7 @@ class CreateGameViewModel(
             // Create Schedule if recurrence is set and it's a new game (not editing)
             // Or if editing and adding recurrence for the first time
             if (recurrence != "none" && gameId == null && _currentGameId == null) {
-                val newSchedule = Schedule(
+                val newSchedule = AndroidSchedule(
                     ownerId = authRepository.getCurrentUserId() ?: "",
                     ownerName = ownerName,
                     name = "Jogo de $ownerName - ${location.name}",
@@ -916,7 +920,7 @@ class CreateGameViewModel(
                 groupName = group?.groupName,
                 visibility = visibility.name,
                 isPublic = visibility != GameVisibility.GROUP_ONLY,
-                dateTimeRaw = java.util.Date.from(selectedDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant())
+                createdAt = java.util.Date.from(selectedDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant()).time
             )
 
             if (game.id.isNotEmpty() && (gameId != null || _currentGameId != null)) {
@@ -949,7 +953,7 @@ class CreateGameViewModel(
         val currentUserName = authRepository.getCurrentFirebaseUser()?.displayName ?: "Organizador"
 
         groupRepository.getGroupMembers(groupId).onSuccess { members ->
-            val summoms = members.map { member ->
+            val summons = members.map { member ->
                 GameConfirmation(
                     gameId = game.id,
                     userId = member.userId,
@@ -958,8 +962,8 @@ class CreateGameViewModel(
                     status = if (member.userId == currentUserId) "CONFIRMED" else "PENDING"
                 )
             }
-            if (summoms.isNotEmpty()) {
-                gameRepository.summonPlayers(game.id, summoms)
+            if (summons.isNotEmpty()) {
+                gameRepository.summonPlayers(game.id, summons)
 
                 // Enviar notificacoes apenas para outros membros
                 val notifications = members

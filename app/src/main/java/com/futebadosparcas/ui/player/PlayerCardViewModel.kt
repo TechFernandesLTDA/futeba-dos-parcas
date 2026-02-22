@@ -3,7 +3,7 @@ package com.futebadosparcas.ui.player
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.User
-import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.util.toDataModel
@@ -41,7 +41,7 @@ class PlayerCardViewModel(
 
                 // Buscar estatísticas
                 val statsResult = statisticsRepository.getUserStatistics(userId)
-                val statistics = statsResult.getOrNull()?.toDataModel(userId)
+                val statistics = statsResult.getOrNull() // Já é domain.model.Statistics (KMP)
 
                 _uiState.value = PlayerCardUiState.Success(
                     user = user,
@@ -59,7 +59,7 @@ sealed class PlayerCardUiState {
     object Loading : PlayerCardUiState()
     data class Success(
         val user: User,
-        val statistics: UserStatistics?
+        val statistics: Statistics?
     ) : PlayerCardUiState()
     data class Error(val message: String) : PlayerCardUiState()
 }

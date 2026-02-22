@@ -1,16 +1,16 @@
 package com.futebadosparcas.ui.statistics
 
-import com.futebadosparcas.data.model.LevelTable
+import com.futebadosparcas.domain.model.LevelTable
 import com.futebadosparcas.data.model.MilestoneType
-import com.futebadosparcas.data.model.SeasonParticipationV2
-import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.domain.model.SeasonParticipation
+import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.domain.model.RankingCategory
 import com.futebadosparcas.domain.model.RankingPeriod
 import com.futebadosparcas.domain.model.XpLog
 
 data class CombinedStatistics(
-    val myStats: UserStatistics,
+    val myStats: Statistics,
     val topScorers: List<PlayerRankingItem>,
     val topGoalkeepers: List<PlayerRankingItem>,
     val bestPlayers: List<PlayerRankingItem>,
@@ -56,7 +56,7 @@ data class PlayerEvolutionData(
     val xpEvolution: Map<String, Long> = emptyMap(), // Mes -> XP ganho
     val achievedMilestones: List<MilestoneType> = emptyList(),
     val nextMilestones: List<MilestoneProgress> = emptyList(),
-    val leagueData: SeasonParticipationV2? = null
+    val leagueData: SeasonParticipation? = null
 )
 
 data class MilestoneProgress(

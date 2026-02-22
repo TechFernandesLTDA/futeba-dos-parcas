@@ -16,12 +16,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.R
-import com.futebadosparcas.data.model.*
+import androidx.compose.ui.res.stringResource
 
 /**
  * Secao completa de ferramentas do organizador para GameDetailScreen.

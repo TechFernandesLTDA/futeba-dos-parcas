@@ -31,12 +31,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.Field
-import com.futebadosparcas.data.model.FieldType
-import com.futebadosparcas.data.model.Location
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.Field
+import com.futebadosparcas.domain.model.FieldType
+import com.futebadosparcas.domain.model.Location
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.ui.components.FieldImage
 import com.futebadosparcas.ui.components.LocationHeaderImage
 import com.futebadosparcas.ui.components.design.AppTopBar
@@ -44,6 +42,8 @@ import com.futebadosparcas.ui.components.input.CepVisualTransformation
 import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.ui.navigation.components.SecondaryTopBar
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable

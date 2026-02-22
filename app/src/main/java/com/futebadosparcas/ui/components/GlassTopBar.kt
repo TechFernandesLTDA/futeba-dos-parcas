@@ -25,12 +25,11 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
-
+import androidx.compose.ui.res.stringResource
 /**
  * TopBar com efeito Glassmorphism (vidro fosco).
  * Cria um efeito visual moderno com transparência e blur.

@@ -20,14 +20,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
 import com.futebadosparcas.data.model.MilestoneType
 import com.futebadosparcas.domain.model.XpLog
 import com.futebadosparcas.ui.components.EmptyState
@@ -37,6 +35,8 @@ import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 import java.text.SimpleDateFormat
 import java.util.*
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela de Evolucao do Jogador
@@ -312,12 +312,13 @@ private fun LevelHeader(
  * Card com dados da liga
  */
 @Composable
-private fun LeagueCard(leagueData: com.futebadosparcas.data.model.SeasonParticipationV2) {
-    val divisionColor = when (leagueData.division) {
-        com.futebadosparcas.data.model.LeagueDivision.DIAMANTE -> GamificationColors.Diamond
-        com.futebadosparcas.data.model.LeagueDivision.OURO -> GamificationColors.Gold
-        com.futebadosparcas.data.model.LeagueDivision.PRATA -> GamificationColors.Silver
-        com.futebadosparcas.data.model.LeagueDivision.BRONZE -> GamificationColors.Bronze
+private fun LeagueCard(leagueData: com.futebadosparcas.domain.model.SeasonParticipation) {
+    val divisionEnum = leagueData.getDivisionEnum()
+    val divisionColor = when (divisionEnum) {
+        com.futebadosparcas.domain.model.LeagueDivision.DIAMANTE -> GamificationColors.Diamond
+        com.futebadosparcas.domain.model.LeagueDivision.OURO -> GamificationColors.Gold
+        com.futebadosparcas.domain.model.LeagueDivision.PRATA -> GamificationColors.Silver
+        com.futebadosparcas.domain.model.LeagueDivision.BRONZE -> GamificationColors.Bronze
     }
 
     Card(
@@ -341,7 +342,7 @@ private fun LeagueCard(leagueData: com.futebadosparcas.data.model.SeasonParticip
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = leagueData.division.displayName,
+                    text = divisionEnum.displayName,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = divisionColor

@@ -1,7 +1,7 @@
 package com.futebadosparcas.data.repository
 
-import com.futebadosparcas.data.model.GameWaitlist
-import com.futebadosparcas.data.model.WaitlistStatus
+import com.futebadosparcas.domain.model.GameWaitlist
+import com.futebadosparcas.domain.model.WaitlistStatus
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -77,15 +77,15 @@ class WaitlistRepositoryImpl constructor(
                 position = position,
                 queuePosition = currentCount + 1,
                 status = WaitlistStatus.WAITING.name,
-                addedAtRaw = Date()
+                addedAt = Date().time
             )
 
             val docRef = waitlistCollection(gameId).add(entry).await()
-            entry.id = docRef.id
+            val entryWithId = entry.copy(id = docRef.id)
 
-            AppLogger.i(TAG) { "Usuario $userId adicionado a lista de espera do jogo $gameId na posicao ${entry.queuePosition}" }
+            AppLogger.i(TAG) { "Usuario $userId adicionado a lista de espera do jogo $gameId na posicao ${entryWithId.queuePosition}" }
 
-            Result.success(entry)
+            Result.success(entryWithId)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao adicionar a lista de espera", e)
             Result.failure(e)
@@ -136,7 +136,7 @@ class WaitlistRepositoryImpl constructor(
                 .await()
 
             val list = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(GameWaitlist::class.java)?.apply { id = doc.id }
+                doc.toObject(GameWaitlist::class.java)?.copy(id = doc.id)
             }
 
             Result.success(list)
@@ -162,7 +162,7 @@ class WaitlistRepositoryImpl constructor(
                 }
 
                 val list = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(GameWaitlist::class.java)?.apply { id = doc.id }
+                    doc.toObject(GameWaitlist::class.java)?.copy(id = doc.id)
                 } ?: emptyList()
 
                 trySend(Result.success(list))
@@ -227,7 +227,7 @@ class WaitlistRepositoryImpl constructor(
                 .await()
 
             val doc = snapshot.documents.firstOrNull() ?: return Result.success(null)
-            val entry = doc.toObject(GameWaitlist::class.java)?.apply { id = doc.id }
+            val entry = doc.toObject(GameWaitlist::class.java)?.copy(id = doc.id)
                 ?: return Result.success(null)
 
             // Atualizar status para PROMOTED
@@ -237,14 +237,14 @@ class WaitlistRepositoryImpl constructor(
                 )
             ).await()
 
-            entry.status = WaitlistStatus.PROMOTED.name
+            val updatedEntry = entry.copy(status = WaitlistStatus.PROMOTED.name)
 
             // Reordenar fila
             reorderQueue(gameId)
 
-            AppLogger.i(TAG) { "Usuario ${entry.userId} promovido da lista de espera do jogo $gameId" }
+            AppLogger.i(TAG) { "Usuario ${updatedEntry.userId} promovido da lista de espera do jogo $gameId" }
 
-            Result.success(entry)
+            Result.success(updatedEntry)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao promover proximo da fila", e)
             Result.failure(e)
@@ -264,7 +264,7 @@ class WaitlistRepositoryImpl constructor(
                 .await()
 
             val doc = snapshot.documents.firstOrNull() ?: return Result.success(null)
-            val entry = doc.toObject(GameWaitlist::class.java)?.apply { id = doc.id }
+            val entry = doc.toObject(GameWaitlist::class.java)?.copy(id = doc.id)
                 ?: return Result.success(null)
 
             // Calcular deadline de resposta
@@ -275,18 +275,20 @@ class WaitlistRepositoryImpl constructor(
             doc.reference.update(
                 mapOf(
                     "status" to WaitlistStatus.NOTIFIED.name,
-                    "notified_at" to now,
-                    "response_deadline" to deadline
+                    "notified_at" to now.time,
+                    "response_deadline" to deadline.time
                 )
             ).await()
 
-            entry.status = WaitlistStatus.NOTIFIED.name
-            entry.notifiedAtRaw = now
-            entry.responseDeadlineRaw = deadline
+            val updatedEntry = entry.copy(
+                status = WaitlistStatus.NOTIFIED.name,
+                notifiedAt = now.time,
+                responseDeadline = deadline.time
+            )
 
-            AppLogger.i(TAG) { "Usuario ${entry.userId} notificado sobre vaga no jogo $gameId" }
+            AppLogger.i(TAG) { "Usuario ${updatedEntry.userId} notificado sobre vaga no jogo $gameId" }
 
-            Result.success(entry)
+            Result.success(updatedEntry)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao notificar proximo da fila", e)
             Result.failure(e)
@@ -335,7 +337,7 @@ class WaitlistRepositoryImpl constructor(
                 .await()
 
             val list = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(GameWaitlist::class.java)?.apply { id = doc.id }
+                doc.toObject(GameWaitlist::class.java)?.copy(id = doc.id)
             }
 
             Result.success(list)

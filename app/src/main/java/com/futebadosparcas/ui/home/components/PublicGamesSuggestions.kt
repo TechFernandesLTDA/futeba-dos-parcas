@@ -33,16 +33,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.util.toDate
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -170,7 +171,7 @@ fun PublicGameCard(game: Game, onClick: () -> Unit, fillWidth: Boolean = false) 
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = formatDate(game.dateTime),
+                        text = formatDate(game.dateTime.toDate()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

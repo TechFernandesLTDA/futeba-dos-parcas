@@ -1,8 +1,8 @@
 package com.futebadosparcas.data.repository
 
-import com.futebadosparcas.data.model.Game
-import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.Team
+import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.ui.games.GameWithConfirmations
 
 /**

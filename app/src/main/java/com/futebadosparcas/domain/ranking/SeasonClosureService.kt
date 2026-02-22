@@ -1,6 +1,6 @@
 package com.futebadosparcas.domain.ranking
 
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.model.AppNotification as DomainAppNotification
 import com.futebadosparcas.domain.model.NotificationAction
 import com.futebadosparcas.domain.model.NotificationType
@@ -59,7 +59,7 @@ class SeasonClosureService constructor(
                 .get()
                 .await()
 
-            val participations = participationsSnapshot.toObjects(SeasonParticipationV2::class.java)
+            val participations = participationsSnapshot.toObjects(SeasonParticipation::class.java)
             val notifications = mutableListOf<DomainAppNotification>()
 
             val batch = firestore.batch()
@@ -67,20 +67,21 @@ class SeasonClosureService constructor(
 
             for (participation in participations) {
                 // Criar registro final congelado
-                val finalStanding = SeasonFinalStanding(
-                    id = "${seasonId}_${participation.userId}",
-                    seasonId = seasonId,
-                    userId = participation.userId,
-                    finalDivision = participation.division,
-                    finalRating = participation.leagueRating,
-                    points = participation.points,
-                    wins = participation.wins,
-                    draws = participation.draws,
-                    losses = participation.losses,
-                    frozenAt = Date()
+                val finalStandingId = "${seasonId}_${participation.userId}"
+                val finalStanding = hashMapOf(
+                    "id" to finalStandingId,
+                    "season_id" to seasonId,
+                    "user_id" to participation.userId,
+                    "final_division" to participation.division,
+                    "final_rating" to participation.leagueRating,
+                    "points" to participation.points,
+                    "wins" to participation.wins,
+                    "draws" to participation.draws,
+                    "losses" to participation.losses,
+                    "frozen_at" to Date()
                 )
 
-                val standingRef = firestore.collection(COLLECTION_FINAL_STANDINGS).document(finalStanding.id)
+                val standingRef = firestore.collection(COLLECTION_FINAL_STANDINGS).document(finalStandingId)
                 batch.set(standingRef, finalStanding, SetOptions.merge())
 
                 // Preparar notificação

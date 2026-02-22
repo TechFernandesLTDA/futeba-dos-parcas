@@ -11,14 +11,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.ConfirmationStatus
+import com.futebadosparcas.domain.model.ConfirmationStatus
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Issue #70: Dialog para transferir titularidade do jogo.

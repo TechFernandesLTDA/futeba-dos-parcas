@@ -1,9 +1,9 @@
 package com.futebadosparcas.app.domain.ranking
 
-import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.PlayerPosition
-import com.futebadosparcas.data.model.XpLog
-import com.futebadosparcas.data.repository.GameResult
+import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.GameResult
+import com.futebadosparcas.domain.model.PlayerPosition
+import com.futebadosparcas.domain.model.XpLog
 
 /**
  * Resultado do calculo de XP para um jogador em uma partida.

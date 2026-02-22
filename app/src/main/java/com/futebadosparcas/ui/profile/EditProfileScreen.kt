@@ -23,21 +23,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import coil.compose.AsyncImage
-import com.futebadosparcas.R
+import coil3.compose.AsyncImage
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.ui.components.AppTopBar
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.util.PreferencesManager
 import java.text.SimpleDateFormat
 import java.util.*
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * EditProfileScreen - Tela de edição de perfil em Compose
@@ -74,7 +74,7 @@ fun EditProfileScreen(
 
     // Cache do usuário para manter o formulário visível durante Loading
     var cachedUser by remember { mutableStateOf<com.futebadosparcas.domain.model.User?>(null) }
-    var cachedStatistics by remember { mutableStateOf<com.futebadosparcas.data.model.UserStatistics?>(null) }
+    var cachedStatistics by remember { mutableStateOf<com.futebadosparcas.domain.model.Statistics?>(null) }
 
     // Atualiza o cache quando temos dados
     LaunchedEffect(uiState) {
@@ -229,7 +229,7 @@ fun EditProfileScreen(
 @Composable
 private fun EditProfileContent(
     user: com.futebadosparcas.domain.model.User,
-    statistics: com.futebadosparcas.data.model.UserStatistics?,
+    statistics: com.futebadosparcas.domain.model.Statistics?,
     selectedImageUri: Uri?,
     isSaving: Boolean,
     onImageSelected: (Uri?) -> Unit,
@@ -902,7 +902,7 @@ private fun PositionRatingsSection(
     onDefChange: (Float) -> Unit,
     gkRating: Float,
     onGkChange: (Float) -> Unit,
-    statistics: com.futebadosparcas.data.model.UserStatistics?
+    statistics: com.futebadosparcas.domain.model.Statistics?
 ) {
     // Calculate auto ratings from statistics
     val autoRatings = statistics?.let {

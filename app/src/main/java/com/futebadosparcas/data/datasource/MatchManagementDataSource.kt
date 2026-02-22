@@ -1,6 +1,6 @@
 package com.futebadosparcas.data.datasource
 
-import com.futebadosparcas.data.model.GameConfirmation
+import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query

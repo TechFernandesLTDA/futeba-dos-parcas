@@ -1,15 +1,15 @@
 package com.futebadosparcas.util
 
 import android.content.Context
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.CashboxAppStatus
-import com.futebadosparcas.data.model.CashboxCategory
-import com.futebadosparcas.data.model.CashboxEntryType
+import com.futebadosparcas.domain.model.CashboxAppStatus
+import com.futebadosparcas.domain.model.CashboxCategory
+import com.futebadosparcas.domain.model.CashboxEntryType
 import com.futebadosparcas.domain.model.CashboxEntry
 import com.futebadosparcas.domain.repository.CashboxRepository
 import java.util.Calendar
 import java.util.Date
 import kotlin.random.Random
+import com.futebadosparcas.R
 
 class CashboxSeeder constructor(
     private val context: Context,

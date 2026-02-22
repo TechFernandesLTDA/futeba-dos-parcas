@@ -1,7 +1,7 @@
 package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.datasource.GroupPhotoDataSource
-import com.futebadosparcas.data.model.Group
+import com.futebadosparcas.domain.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.data.model.GroupMemberStatus
@@ -109,8 +109,7 @@ class GroupRepository constructor(
                 ownerId = userId,
                 ownerName = userName,
                 photoUrl = photoUrl,
-                memberCount = 1,
-                status = GroupStatus.ACTIVE.name
+                membersCount = 1
             )
 
             // Transação para criar grupo e adicionar owner como membro

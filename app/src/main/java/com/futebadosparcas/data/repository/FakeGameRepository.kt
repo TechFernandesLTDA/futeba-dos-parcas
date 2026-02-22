@@ -1,9 +1,9 @@
 package com.futebadosparcas.data.repository
 
-import com.futebadosparcas.data.model.Game
-import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.GameStatus
-import com.futebadosparcas.data.model.Team
+import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.GameStatus
+import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.ui.games.GameWithConfirmations
 
 class FakeGameRepository constructor() : GameRepository {
@@ -388,18 +388,13 @@ class FakeGameRepository constructor() : GameRepository {
     // === SOFT DELETE (P2 #40) ===
 
     override suspend fun softDeleteGame(gameId: String): Result<Unit> {
-        games.find { it.id == gameId }?.let {
-            val index = games.indexOf(it)
-            games[index] = it.copy(deletedAt = java.util.Date(), deletedBy = "mock_user_id")
-        }
+        // Remover jogo da lista (soft delete simulado sem campos deletedAt/deletedBy)
+        games.removeIf { it.id == gameId }
         return Result.success(Unit)
     }
 
     override suspend fun restoreGame(gameId: String): Result<Unit> {
-        games.find { it.id == gameId }?.let {
-            val index = games.indexOf(it)
-            games[index] = it.copy(deletedAt = null, deletedBy = null)
-        }
+        // Não é possível restaurar em fake repository sem soft delete
         return Result.success(Unit)
     }
 

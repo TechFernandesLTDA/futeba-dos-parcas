@@ -7,6 +7,15 @@ plugins {
     id("app.cash.sqldelight") version "2.2.1"
 }
 
+// Forçar Kotlin stdlib 2.2.10 para evitar mismatch com compiler
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlin:kotlin-stdlib:2.2.10")
+        force("org.jetbrains.kotlin:kotlin-stdlib-common:2.2.10")
+        force("org.jetbrains.kotlin:kotlin-stdlib-wasm-js:2.2.10")
+    }
+}
+
 kotlin {
     // Android target
     androidTarget {

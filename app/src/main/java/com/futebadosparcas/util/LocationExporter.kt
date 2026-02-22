@@ -3,8 +3,8 @@ package com.futebadosparcas.util
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
-import com.futebadosparcas.data.model.Field
-import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.domain.model.Field
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -156,11 +156,10 @@ class LocationExporter constructor(
                     continue
                 }
 
-                val kmpLocation = locationResult.getOrNull() ?: continue
-                val location = kmpLocation.toAndroidLocation()
+                val location = locationResult.getOrNull() ?: continue
 
                 val fieldsResult = locationRepository.getFieldsByLocation(locationId)
-                val fields = fieldsResult.getOrNull()?.map { it.toAndroidField() } ?: emptyList()
+                val fields = fieldsResult.getOrNull() ?: emptyList()
 
                 // Coleta URLs de fotos
                 val photoUrls = mutableListOf<String>()
@@ -404,8 +403,8 @@ data class LocationData(
                 closingTime = location.closingTime,
                 operatingDays = location.operatingDays,
                 minGameDurationMinutes = location.minGameDurationMinutes,
-                createdAt = location.createdAt?.time,
-                updatedAt = location.updatedAt?.time
+                createdAt = location.createdAt, // KMP Location.createdAt é Long?
+                updatedAt = location.updatedAt
             )
         }
     }

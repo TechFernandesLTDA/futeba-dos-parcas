@@ -22,14 +22,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
-import coil.compose.AsyncImage
-import com.futebadosparcas.data.model.LevelTable
+import coil3.compose.AsyncImage
+import com.futebadosparcas.domain.model.LevelTable
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.User
-import com.futebadosparcas.data.model.UserStatistics
-import com.futebadosparcas.R
+import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
@@ -39,6 +37,8 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Dialog de Comparação de Jogadores
@@ -46,9 +46,9 @@ import kotlin.math.sin
 @Composable
 fun ComparePlayersUiDialog(
     user1: User,
-    stats1: UserStatistics?,
+    stats1: Statistics?,
     user2: User,
-    stats2: UserStatistics?,
+    stats2: Statistics?,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -267,8 +267,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDataset(
 
 @Composable
 private fun StatsComparisonTable(
-    stats1: UserStatistics?,
-    stats2: UserStatistics?,
+    stats1: Statistics?,
+    stats2: Statistics?,
     color1: Color,
     color2: Color
 ) {
@@ -276,7 +276,7 @@ private fun StatsComparisonTable(
         StatRow(stringResource(R.string.players_goals), stats1?.totalGoals ?: 0, stats2?.totalGoals ?: 0, color1, color2)
         StatRow(stringResource(R.string.players_assists), stats1?.totalAssists ?: 0, stats2?.totalAssists ?: 0, color1, color2)
         StatRow(stringResource(R.string.players_games), stats1?.totalGames ?: 0, stats2?.totalGames ?: 0, color1, color2)
-        StatRow(stringResource(R.string.players_mvps), stats1?.bestPlayerCount ?: 0, stats2?.bestPlayerCount ?: 0, color1, color2)
+        StatRow(stringResource(R.string.players_mvps), stats1?.mvpCount ?: 0, stats2?.mvpCount ?: 0, color1, color2)
     }
 }
 
@@ -320,7 +320,7 @@ private fun StatRow(label: String, val1: Int, val2: Int, color1: Color, color2: 
 @Composable
 fun PlayerCardContent(
     user: User,
-    stats: UserStatistics?,
+    stats: Statistics?,
     onClose: () -> Unit,
     onShare: () -> Unit,
     modifier: Modifier = Modifier
@@ -450,8 +450,8 @@ fun PlayerCardContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem(label = stringResource(R.string.players_wins), value = stats?.gamesWon?.toString() ?: "0")
-                StatItem(label = stringResource(R.string.players_mvps), value = stats?.bestPlayerCount?.toString() ?: "0")
+                StatItem(label = stringResource(R.string.players_wins), value = stats?.totalWins?.toString() ?: "0")
+                StatItem(label = stringResource(R.string.players_mvps), value = stats?.mvpCount?.toString() ?: "0")
                 StatItem(label = stringResource(R.string.players_saves), value = stats?.totalSaves?.toString() ?: "0")
             }
             

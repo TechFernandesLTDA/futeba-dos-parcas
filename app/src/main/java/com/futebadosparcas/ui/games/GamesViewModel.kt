@@ -3,7 +3,7 @@ package com.futebadosparcas.ui.games
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.util.AppLogger

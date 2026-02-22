@@ -1,6 +1,6 @@
 package com.futebadosparcas.util
 
-import com.futebadosparcas.data.model.FieldType
+import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.Field
 import com.futebadosparcas.domain.repository.LocationRepository
 import kotlinx.coroutines.CoroutineScope

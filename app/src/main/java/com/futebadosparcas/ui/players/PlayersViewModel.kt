@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 @OptIn(FlowPreview::class)
 class PlayersViewModel(
     private val userRepository: UserRepository,
-    private val statisticsRepository: com.futebadosparcas.data.repository.IStatisticsRepository,
+    private val statisticsRepository: com.futebadosparcas.domain.repository.StatisticsRepository,
     private val groupRepository: com.futebadosparcas.data.repository.GroupRepository,
     private val inviteRepository: com.futebadosparcas.domain.repository.InviteRepository,
     private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
@@ -38,8 +38,8 @@ class PlayersViewModel(
     val unreadCount: StateFlow<Int> = _unreadCount
 
     // Estatísticas do jogador selecionado para o PlayerCard
-    private val _selectedPlayerStats = MutableStateFlow<com.futebadosparcas.data.model.UserStatistics?>(null)
-    val selectedPlayerStats: StateFlow<com.futebadosparcas.data.model.UserStatistics?> = _selectedPlayerStats
+    private val _selectedPlayerStats = MutableStateFlow<com.futebadosparcas.domain.model.Statistics?>(null)
+    val selectedPlayerStats: StateFlow<com.futebadosparcas.domain.model.Statistics?> = _selectedPlayerStats
 
     // Flow para busca com debounce automático
     private val _searchQuery = MutableSharedFlow<String>(replay = 1)
@@ -426,9 +426,9 @@ sealed class ComparisonUiState {
     object Loading : ComparisonUiState()
     data class Ready(
         val user1: User,
-        val stats1: com.futebadosparcas.data.model.UserStatistics?,
+        val stats1: com.futebadosparcas.domain.model.Statistics?,
         val user2: User,
-        val stats2: com.futebadosparcas.data.model.UserStatistics?
+        val stats2: com.futebadosparcas.domain.model.Statistics?
     ) : ComparisonUiState()
     data class Error(val message: String) : ComparisonUiState()
 }

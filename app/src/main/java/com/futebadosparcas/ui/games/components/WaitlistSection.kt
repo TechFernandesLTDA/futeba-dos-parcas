@@ -14,16 +14,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.GameWaitlist
-import com.futebadosparcas.data.model.WaitlistStatus
+import coil3.compose.AsyncImage
+import com.futebadosparcas.domain.model.GameWaitlist
+import com.futebadosparcas.domain.model.WaitlistStatus
 import com.futebadosparcas.ui.games.WaitlistState
 import java.text.SimpleDateFormat
 import java.util.*
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Secao de lista de espera com visualizacao expandida (Issue #32).

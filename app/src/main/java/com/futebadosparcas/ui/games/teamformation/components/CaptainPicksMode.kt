@@ -22,17 +22,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.DraftPlayer
+import com.futebadosparcas.domain.model.DraftPlayer
+import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.data.model.DraftState
-import com.futebadosparcas.data.model.TeamColor
+import com.futebadosparcas.domain.model.TeamColor
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Componente principal do modo de escolha por capitaes.
@@ -277,7 +278,7 @@ private fun PickablePlayerCard(
 
             // Posicao
             Text(
-                text = if (player.position == com.futebadosparcas.data.model.PlayerPosition.GOALKEEPER) "GK" else "LINHA",
+                text = if (player.position == PlayerPosition.GOALKEEPER) "GK" else "LINHA",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

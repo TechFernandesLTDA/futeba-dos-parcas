@@ -1,9 +1,12 @@
 package com.futebadosparcas.data.datasource
 
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.domain.model.*
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.Flow
+
+// Typealias para compatibilidade durante migração
+typealias UserStatistics = Statistics
 
 /**
  * Interface abstrata para acesso aos dados do Firebase.

@@ -33,7 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -44,11 +43,10 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import com.futebadosparcas.R
+import coil3.compose.AsyncImage
 import com.futebadosparcas.data.model.Field
-import com.futebadosparcas.data.model.Location
-import com.futebadosparcas.data.model.LocationReview
+import com.futebadosparcas.domain.model.Location
+import com.futebadosparcas.domain.model.LocationReview
 import com.futebadosparcas.ui.components.CachedFieldImage
 import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.components.states.LoadingItemType
@@ -57,6 +55,8 @@ import com.google.android.gms.location.Priority
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela avançada de seleção de local com:

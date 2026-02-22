@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.home.GamificationSummary
 import com.futebadosparcas.ui.theme.GamificationColors
@@ -25,16 +25,15 @@ import androidx.compose.ui.res.painterResource
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.AdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
-import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.R
-
+import androidx.compose.ui.res.stringResource
 @Composable
 fun ExpressiveHubHeader(
     user: com.futebadosparcas.domain.model.User,
     summary: GamificationSummary,
     onProfileClick: () -> Unit,
     modifier: Modifier = Modifier,
-    statistics: com.futebadosparcas.data.model.UserStatistics? = null,
+    statistics: com.futebadosparcas.domain.model.Statistics? = null,
     hapticManager: HapticManager? = null,
     onLevelClick: () -> Unit = {}
 ) {
@@ -98,7 +97,7 @@ fun ExpressiveHubHeader(
 private fun CompactHeaderLayout(
     user: com.futebadosparcas.domain.model.User,
     summary: GamificationSummary,
-    statistics: com.futebadosparcas.data.model.UserStatistics?,
+    statistics: com.futebadosparcas.domain.model.Statistics?,
     animatedProgress: Float,
     photoSize: Dp,
     badgeSize: Dp,
@@ -192,7 +191,7 @@ private fun CompactHeaderLayout(
             HeaderStatItem(stringResource(R.string.hub_stat_games), statistics.totalGames.toString())
             HeaderStatItem(stringResource(R.string.hub_stat_goals), statistics.totalGoals.toString())
             HeaderStatItem(stringResource(R.string.hub_stat_assists), statistics.totalAssists.toString())
-            HeaderStatItem(stringResource(R.string.hub_stat_mvp), statistics.bestPlayerCount.toString())
+            HeaderStatItem(stringResource(R.string.hub_stat_mvp), statistics.mvpCount.toString())
         }
     }
 }
@@ -201,7 +200,7 @@ private fun CompactHeaderLayout(
 private fun ExpandedHeaderLayout(
     user: com.futebadosparcas.domain.model.User,
     summary: GamificationSummary,
-    statistics: com.futebadosparcas.data.model.UserStatistics?,
+    statistics: com.futebadosparcas.domain.model.Statistics?,
     animatedProgress: Float,
     photoSize: Dp,
     badgeSize: Dp,
@@ -292,7 +291,7 @@ private fun ExpandedHeaderLayout(
                 HeaderStatItem(stringResource(R.string.hub_stat_games), statistics.totalGames.toString())
                 HeaderStatItem(stringResource(R.string.hub_stat_goals), statistics.totalGoals.toString())
                 HeaderStatItem(stringResource(R.string.hub_stat_assists), statistics.totalAssists.toString())
-                HeaderStatItem(stringResource(R.string.hub_stat_mvp), statistics.bestPlayerCount.toString())
+                HeaderStatItem(stringResource(R.string.hub_stat_mvp), statistics.mvpCount.toString())
             }
         }
     }

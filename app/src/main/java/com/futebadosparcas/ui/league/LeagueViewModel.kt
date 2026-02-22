@@ -2,11 +2,11 @@ package com.futebadosparcas.ui.league
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.LeagueDivision
+import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.data.model.Season as AndroidSeason
-import com.futebadosparcas.data.model.SeasonParticipationV2
-import com.futebadosparcas.data.model.User
-import com.futebadosparcas.data.mapper.SeasonMapper
+import com.futebadosparcas.domain.model.SeasonParticipation
+import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.util.toAndroidSeason
 import com.futebadosparcas.domain.model.Season
 import com.futebadosparcas.domain.repository.AuthRepository
 import com.futebadosparcas.domain.repository.GamificationRepository
@@ -73,13 +73,13 @@ class LeagueViewModel(
                 val seasons = seasonsResult.getOrNull() ?: emptyList()
 
                 // Converter para Android Season models
-                _availableSeasons.value = SeasonMapper.toAndroidSeasons(seasons)
+                _availableSeasons.value = seasons.map { it.toAndroidSeason() }
 
                 // Se há seasons, selecionar a primeira (mais recente) ou a ativa
                 if (seasons.isNotEmpty()) {
                     // Preferir season ativa
                     val activeSeason = seasons.find { it.isActive }
-                    _selectedSeason.value = SeasonMapper.toAndroidSeason(activeSeason ?: seasons.first())
+                    _selectedSeason.value = (activeSeason ?: seasons.first()).toAndroidSeason()
                     loadLeagueData()
                 } else {
                     _uiState.value = LeagueUiState.NoActiveSeason
@@ -162,11 +162,8 @@ class LeagueViewModel(
                     _uiState.value = LeagueUiState.Error("Erro ao carregar ranking: ${e.message}")
                 }
                 .collect { participations ->
-                    // Converter SeasonParticipation para SeasonParticipationV2
-                    val participationsV2 = participations.map { SeasonMapper.toSeasonParticipationV2(it) }
-
                     // 1. Identificar usuários faltantes no cache
-                    val missingUserIds = participationsV2.map { it.userId }
+                    val missingUserIds = participations.map { it.userId }
                         .filter { !_userCache.containsKey(it) }
                         .distinct()
 
@@ -184,7 +181,7 @@ class LeagueViewModel(
                     }
 
                     // 3. Montar RankingItems
-                    val rankingItems = participationsV2.mapNotNull { part ->
+                    val rankingItems = participations.mapNotNull { part ->
                          _userCache[part.userId]?.let { user ->
                              RankingItem(participation = part, user = user)
                          }
@@ -192,9 +189,9 @@ class LeagueViewModel(
 
                     // 4. Identificar usuário atual
                     val currentUserId = authRepository.getCurrentUserId()
-                    val myParticipation = participationsV2.find { it.userId == currentUserId }
+                    val myParticipation = participations.find { it.userId == currentUserId }
                     val myPosition = if (myParticipation != null) {
-                        participationsV2.indexOf(myParticipation) + 1
+                        participations.indexOf(myParticipation) + 1
                     } else null
 
                     // 5. Atualizar Estado
@@ -204,7 +201,7 @@ class LeagueViewModel(
                         myParticipation = myParticipation,
                         myPosition = myPosition,
                         selectedDivision = ( _uiState.value as? LeagueUiState.Success)?.selectedDivision
-                            ?: myParticipation?.division
+                            ?: myParticipation?.getDivisionEnum()
                             ?: LeagueDivision.BRONZE
                     )
                 }
@@ -307,7 +304,7 @@ class LeagueViewModel(
      * Retorna o ranking filtrado pela divisão selecionada
      */
     fun getFilteredRanking(state: LeagueUiState.Success): List<RankingItem> {
-        return state.allRankings.filter { it.participation.division == state.selectedDivision }
+        return state.allRankings.filter { it.participation.getDivisionEnum() == state.selectedDivision }
     }
 
     override fun onCleared() {
@@ -331,7 +328,7 @@ sealed class LeagueUiState {
     data class Success(
         val season: AndroidSeason,
         val allRankings: List<RankingItem>,
-        val myParticipation: SeasonParticipationV2?,
+        val myParticipation: SeasonParticipation?,
         val myPosition: Int?,
         val selectedDivision: LeagueDivision
     ) : LeagueUiState()
@@ -341,6 +338,6 @@ sealed class LeagueUiState {
  * Item do ranking com dados do usuário e participação
  */
 data class RankingItem(
-    val participation: SeasonParticipationV2,
+    val participation: SeasonParticipation,
     val user: User
 )

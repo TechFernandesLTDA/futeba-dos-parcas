@@ -14,14 +14,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.TeamColor
-import com.futebadosparcas.data.model.TeamStrength
+import com.futebadosparcas.domain.model.TeamColor
+import com.futebadosparcas.domain.model.TeamStrength
 import com.futebadosparcas.util.ContrastHelper
 import kotlin.math.abs
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Componente que exibe a forca calculada de um time.

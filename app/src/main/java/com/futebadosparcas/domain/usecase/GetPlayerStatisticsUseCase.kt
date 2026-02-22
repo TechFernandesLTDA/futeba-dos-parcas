@@ -1,9 +1,9 @@
 package com.futebadosparcas.domain.usecase
 
 import com.futebadosparcas.data.datasource.FirebaseDataSource
-import com.futebadosparcas.data.model.User
-import com.futebadosparcas.data.model.UserStatistics
-import com.futebadosparcas.data.model.XpLog
+import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.domain.model.Statistics
+import com.futebadosparcas.domain.model.XpLog
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.combine
  * Use Case para buscar estatísticas de jogadores.
  *
  * Responsabilidades:
- * - Buscar estatísticas completas (User + UserStatistics)
+ * - Buscar estatísticas completas (User + Statistics)
  * - Calcular métricas derivadas (taxas, médias)
  * - Fornecer histórico de XP
  * - Comparar estatísticas entre jogadores
@@ -31,7 +31,7 @@ class GetPlayerStatisticsUseCase constructor(
      */
     data class PlayerStats(
         val user: User,
-        val statistics: UserStatistics,
+        val statistics: Statistics,
         val level: Int,
         val experiencePoints: Long,
         val nextLevelXp: Long,

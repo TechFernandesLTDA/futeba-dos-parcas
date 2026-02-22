@@ -16,20 +16,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.PlayerPosition
-import com.futebadosparcas.data.model.VoteCategory
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.placeholder
+import coil3.request.error
+import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.PlayerPosition
+import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * MVPVoteScreen - Tela de Votação MVP/Melhor Goleiro/Bola Murcha
@@ -272,7 +274,6 @@ private fun CandidateCard(
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(candidate.userPhoto)
-                    .crossfade(true)
                     .placeholder(R.drawable.ic_person)
                     .error(R.drawable.ic_person)
                     .build(),
@@ -301,7 +302,7 @@ private fun CandidateCard(
             val posEnum = try {
                 PlayerPosition.valueOf(candidate.position)
             } catch (e: Exception) {
-                PlayerPosition.FIELD
+                PlayerPosition.LINE
             }
 
             Text(

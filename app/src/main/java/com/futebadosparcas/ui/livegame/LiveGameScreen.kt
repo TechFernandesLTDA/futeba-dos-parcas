@@ -29,14 +29,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.data.model.*
-import com.futebadosparcas.R
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
 import kotlinx.coroutines.launch
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * LiveGameScreen - Tela principal de jogo ao vivo em Jetpack Compose
@@ -323,7 +323,7 @@ private fun LiveGameHeader(
             // Cronômetro isolado (reduz recomposições em 98%)
             if (state.score.startedAt != null || isFinished) {
                 IsolatedGameTimer(
-                    startTimeMs = state.score.startedAt?.time,
+                    startTimeMs = state.score.startedAt,
                     isFinished = isFinished
                 )
             }

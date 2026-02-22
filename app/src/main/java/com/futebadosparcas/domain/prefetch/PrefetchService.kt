@@ -1,9 +1,9 @@
 package com.futebadosparcas.domain.prefetch
 
 import com.futebadosparcas.util.AppLogger
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.data.repository.GameRepository
-import com.futebadosparcas.data.repository.StatisticsRepository
+import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.cache.SharedCacheService
 import com.futebadosparcas.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope

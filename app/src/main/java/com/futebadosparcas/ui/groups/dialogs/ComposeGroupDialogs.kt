@@ -30,18 +30,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
-import coil.compose.AsyncImage
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.CashboxCategory
+import coil3.compose.AsyncImage
+import com.futebadosparcas.domain.model.CashboxCategory
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.CachedAsyncImage
-import com.futebadosparcas.data.model.CashboxEntryType
-import com.futebadosparcas.data.model.Group
+import com.futebadosparcas.domain.model.CashboxEntryType
+import com.futebadosparcas.domain.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
-import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.util.AppLogger
 import java.io.File
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 private const val TAG = "ComposeGroupDialogs"
 

@@ -14,13 +14,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.ui.theme.AppDimensions
 import kotlinx.coroutines.flow.StateFlow
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Lista de ranking com paginação automática.

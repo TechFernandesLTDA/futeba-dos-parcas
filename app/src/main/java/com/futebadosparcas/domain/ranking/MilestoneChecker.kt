@@ -1,7 +1,7 @@
 package com.futebadosparcas.domain.ranking
 
 import com.futebadosparcas.data.model.MilestoneType
-import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.domain.model.Statistics
 
 /**
  * Resultado da verificacao de milestones.
@@ -37,7 +37,7 @@ object MilestoneChecker {
      * @return Lista de novos milestones alcancados e XP total ganho
      */
     fun check(
-        stats: UserStatistics,
+        stats: Statistics,
         achievedMilestones: List<String>
     ): MilestoneCheckResult {
         val newMilestones = mutableListOf<MilestoneType>()
@@ -74,7 +74,7 @@ object MilestoneChecker {
      * Use esta versao quando nao puder garantir atomicidade da leitura.
      */
     fun checkSafe(
-        stats: UserStatistics,
+        stats: Statistics,
         achievedMilestones: List<String>,
         pendingMilestones: List<String> = emptyList()
     ): MilestoneCheckResult {
@@ -87,7 +87,7 @@ object MilestoneChecker {
     /**
      * Obtem o valor de um campo especifico das estatisticas.
      */
-    private fun getStatValue(stats: UserStatistics, field: String): Int {
+    private fun getStatValue(stats: Statistics, field: String): Int {
         return when (field) {
             "totalGames" -> stats.totalGames
             "totalGoals" -> stats.totalGoals
@@ -120,7 +120,7 @@ object MilestoneChecker {
     /**
      * Retorna o progresso do jogador em um milestone especifico.
      */
-    fun getProgress(stats: UserStatistics, milestone: MilestoneType): Pair<Int, Int> {
+    fun getProgress(stats: Statistics, milestone: MilestoneType): Pair<Int, Int> {
         val current = getStatValue(stats, milestone.field)
         return Pair(current, milestone.threshold)
     }
@@ -128,7 +128,7 @@ object MilestoneChecker {
     /**
      * Retorna a porcentagem de progresso (0-100) para um milestone.
      */
-    fun getProgressPercent(stats: UserStatistics, milestone: MilestoneType): Int {
+    fun getProgressPercent(stats: Statistics, milestone: MilestoneType): Int {
         val (current, threshold) = getProgress(stats, milestone)
         return if (threshold > 0) {
             ((current.toFloat() / threshold) * 100).toInt().coerceIn(0, 100)
@@ -141,7 +141,7 @@ object MilestoneChecker {
      * Retorna o proximo milestone a ser alcancado para cada categoria.
      */
     fun getNextMilestones(
-        stats: UserStatistics,
+        stats: Statistics,
         achievedMilestones: List<String>
     ): List<MilestoneType> {
         val achievedSet = achievedMilestones.toSet()
@@ -172,7 +172,7 @@ object MilestoneChecker {
      * Verifica se um milestone especifico foi alcancado.
      */
     fun isAchieved(
-        stats: UserStatistics,
+        stats: Statistics,
         milestone: MilestoneType
     ): Boolean {
         val currentValue = getStatValue(stats, milestone.field)
@@ -183,7 +183,7 @@ object MilestoneChecker {
      * Calcula quantos pontos faltam para o proximo milestone de uma categoria.
      */
     fun getPointsToNext(
-        stats: UserStatistics,
+        stats: Statistics,
         achievedMilestones: List<String>,
         category: String
     ): Int? {

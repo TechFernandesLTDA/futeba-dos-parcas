@@ -22,8 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.futebadosparcas.data.model.User
+import coil3.compose.AsyncImage
+import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.ui.components.CachedProfileImage
 

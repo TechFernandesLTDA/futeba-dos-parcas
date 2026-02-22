@@ -27,14 +27,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
-import coil.compose.AsyncImage
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.Field
-import com.futebadosparcas.data.model.FieldType
+import coil3.compose.AsyncImage
+import com.futebadosparcas.domain.model.Field
+import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.ui.components.CachedFieldImage
 import com.futebadosparcas.util.AppLogger
 import java.io.File
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 private const val TAG = "ComposeLocationDialogs"
 

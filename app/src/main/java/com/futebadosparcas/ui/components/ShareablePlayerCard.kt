@@ -16,11 +16,13 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import android.widget.Toast
 import androidx.core.content.FileProvider
-import coil.imageLoader
-import coil.request.ImageRequest
-import coil.request.SuccessResult
-import com.futebadosparcas.data.model.LevelTable
-import com.futebadosparcas.data.model.UserStatistics
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.toBitmap
+import com.futebadosparcas.domain.model.LevelTable
+import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.User
 import kotlinx.coroutines.CoroutineScope
@@ -74,7 +76,7 @@ object PlayerCardShareHelper {
     fun shareAsImage(
         context: Context,
         user: User,
-        stats: UserStatistics?,
+        stats: Statistics?,
         generatedBy: String = "Futeba dos Parças"
     ) {
         // Executar em coroutine para carregar foto
@@ -159,7 +161,7 @@ object PlayerCardShareHelper {
 
                 val result = context.imageLoader.execute(request)
                 if (result is SuccessResult) {
-                    (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                    result.image.toBitmap()
                 } else null
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -174,7 +176,7 @@ object PlayerCardShareHelper {
     private fun createPlayerCardBitmap(
         context: Context,
         user: User,
-        stats: UserStatistics?,
+        stats: Statistics?,
         generatedBy: String,
         isDarkMode: Boolean,
         photoBitmap: Bitmap?
@@ -340,7 +342,7 @@ object PlayerCardShareHelper {
             drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 0.5f, statsY, "JOGOS", stats.totalGames.toString(), textPrimary, textSecondary)
             drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 1.5f, statsY, "GOLS", stats.totalGoals.toString(), textPrimary, textSecondary)
             drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 2.5f, statsY, "ASSISTS", stats.totalAssists.toString(), textPrimary, textSecondary)
-            drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 3.5f, statsY, "MVPs", stats.bestPlayerCount.toString(), textPrimary, textSecondary)
+            drawStatItem(canvas, textPaint, CARD_PADDING + statSpacing * 3.5f, statsY, "MVPs", stats.mvpCount.toString(), textPrimary, textSecondary)
 
             yPos += 70f
         }

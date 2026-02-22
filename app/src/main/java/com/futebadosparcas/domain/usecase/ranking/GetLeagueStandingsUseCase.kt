@@ -1,7 +1,7 @@
 package com.futebadosparcas.domain.usecase.ranking
 
-import com.futebadosparcas.data.model.LeagueDivision
-import com.futebadosparcas.data.model.SeasonParticipationV2
+import com.futebadosparcas.domain.model.LeagueDivision
+import com.futebadosparcas.domain.model.SeasonParticipation
 import com.futebadosparcas.domain.model.LeagueDivision as SharedLeagueDivision
 import com.futebadosparcas.domain.model.Season
 import com.futebadosparcas.domain.model.User
@@ -48,7 +48,7 @@ class GetLeagueStandingsUseCase constructor(
     data class RankedPlayer(
         val position: Int,
         val user: User,
-        val participation: SeasonParticipationV2,
+        val participation: SeasonParticipation,
         val division: LeagueDivision,
         val isCurrentUser: Boolean,
         val positionChange: Int,
@@ -219,7 +219,7 @@ class GetLeagueStandingsUseCase constructor(
                 ?: return Result.failure(IllegalStateException("Nenhuma temporada ativa"))
 
             // 2. Buscar participação
-            val domainParticipation = gamificationRepository.getUserParticipation(currentUserId, season.id)
+            val participation = gamificationRepository.getUserParticipation(currentUserId, season.id)
                 .getOrElse { return Result.success(null) } // Usuário não está participando
                 ?: return Result.success(null) // Participação nula
 
@@ -227,26 +227,8 @@ class GetLeagueStandingsUseCase constructor(
             val userResult = userRepository.getCurrentUser()
             val user = userResult.getOrNull() ?: createUnknownUser(currentUserId)
 
-            // 4. Converter para SeasonParticipationV2 (compatibilidade com LeagueService)
-            val division = LeagueDivision.valueOf(domainParticipation.division)
-            val participation = SeasonParticipationV2(
-                id = domainParticipation.id,
-                userId = domainParticipation.userId,
-                seasonId = domainParticipation.seasonId,
-                division = division,
-                points = domainParticipation.points,
-                gamesPlayed = domainParticipation.gamesPlayed,
-                wins = domainParticipation.wins,
-                draws = domainParticipation.draws,
-                losses = domainParticipation.losses,
-                goalsScored = domainParticipation.goals,
-                goalsConceded = 0,
-                assists = domainParticipation.assists,
-                mvpCount = domainParticipation.mvpCount,
-                leagueRating = domainParticipation.leagueRating.toDouble()
-            )
-
-            // 5. Buscar posição na divisão
+            // 4. Buscar posição na divisão
+            val division = LeagueDivision.valueOf(participation.division)
             val standingsResult = getDivisionStandings(division, 100)
             val position = standingsResult.getOrNull()?.currentUserPosition ?: 0
 

@@ -2,7 +2,7 @@ package com.futebadosparcas.ui.statistics
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.LevelTable
+import com.futebadosparcas.domain.model.LevelTable
 import com.futebadosparcas.data.model.MilestoneType
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.model.PlayerRankingItem
@@ -228,10 +228,9 @@ class RankingViewModel(
 
                 // Calcular proximos milestones
                 val nextMilestones = if (stats != null) {
-                    val dataStats = stats.toDataModel(uid)
-                    MilestoneChecker.getNextMilestones(dataStats, achievedMilestones.map { it.name })
+                    MilestoneChecker.getNextMilestones(stats, achievedMilestones.map { it.name })
                         .map { milestone ->
-                            val (current, target) = MilestoneChecker.getProgress(dataStats, milestone)
+                            val (current, target) = MilestoneChecker.getProgress(stats, milestone)
                             MilestoneProgress(
                                 milestone = milestone,
                                 current = current,

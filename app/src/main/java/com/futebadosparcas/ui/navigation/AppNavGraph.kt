@@ -20,14 +20,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import org.koin.compose.viewmodel.koinViewModel
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.about.AboutScreen
 import com.futebadosparcas.ui.badges.BadgesScreen
 import com.futebadosparcas.ui.statistics.EvolutionScreen
@@ -65,6 +63,8 @@ import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.util.PreferencesManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Define todas as rotas da navegação do app.

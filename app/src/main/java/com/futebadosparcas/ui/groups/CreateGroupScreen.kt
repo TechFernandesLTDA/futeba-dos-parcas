@@ -34,13 +34,13 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.R
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.FutebaTheme
 import java.io.File
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela moderna de criação de grupo em Jetpack Compose

@@ -6,8 +6,8 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.futebadosparcas.BuildConfig
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.FutebaTheme
+import com.futebadosparcas.R
 /**
  * Activity de Registro (descontinuada).
  *

@@ -1,7 +1,7 @@
 package com.futebadosparcas.domain.usecase.stats
 
-import com.futebadosparcas.data.model.UserStatistics
-import com.futebadosparcas.data.repository.StatisticsRepository
+import com.futebadosparcas.domain.model.Statistics
+import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.futebadosparcas.util.AppLogger
 
@@ -31,13 +31,13 @@ import com.futebadosparcas.util.AppLogger
  */
 class GetPlayerStatisticsUseCase constructor(
     private val statisticsRepository: StatisticsRepository
-) : SuspendUseCase<GetPlayerStatisticsParams, UserStatistics>() {
+) : SuspendUseCase<GetPlayerStatisticsParams, Statistics>() {
 
     companion object {
         private const val TAG = "GetPlayerStatisticsUseCase"
     }
 
-    override suspend fun execute(params: GetPlayerStatisticsParams): UserStatistics {
+    override suspend fun execute(params: GetPlayerStatisticsParams): Statistics {
         AppLogger.d(TAG) { "Buscando estatísticas do jogador: ${params.userId}" }
 
         // Validar parâmetros

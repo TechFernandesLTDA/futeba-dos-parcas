@@ -1,8 +1,6 @@
 package com.futebadosparcas.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import com.futebadosparcas.R
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -18,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Search Bar Component

@@ -106,7 +106,7 @@ class PostGameEventEmitter constructor() {
             previousLevel = previousLevel,
             newLevel = result.newLevel,
             leveledUp = result.leveledUp,
-            newLevelName = com.futebadosparcas.data.model.LevelTable.getLevelName(result.newLevel),
+            newLevelName = com.futebadosparcas.domain.model.LevelTable.getLevelName(result.newLevel),
             milestonesUnlocked = result.milestonesUnlocked,
             gameResult = result.gameResult.name
         )

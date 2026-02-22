@@ -30,10 +30,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
-
+import androidx.compose.ui.res.stringResource
 /**
  * Sistema de navegação adaptativa para diferentes tamanhos de tela.
  *

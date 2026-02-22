@@ -9,12 +9,12 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import com.futebadosparcas.R
 import androidx.compose.material3.MaterialTheme
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * TopBar padrao para telas secundarias com botao de voltar.

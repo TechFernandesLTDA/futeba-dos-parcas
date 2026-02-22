@@ -9,8 +9,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.futebadosparcas.R
+import com.futebadosparcas.compose.resources.Res
 import com.futebadosparcas.domain.model.User
+import org.jetbrains.compose.resources.getString
+import kotlinx.coroutines.runBlocking
 import com.futebadosparcas.ui.theme.FutebaTheme
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -51,13 +53,15 @@ class LoginScreenTest {
         context = InstrumentationRegistry.getInstrumentation().targetContext
 
         // Carrega strings de recursos para usar nos testes
-        appTitle = context.getString(R.string.auth_title)
-        slogan = context.getString(R.string.auth_slogan)
-        signInTitle = context.getString(R.string.auth_sign_in_title)
-        signInDescription = context.getString(R.string.auth_sign_in_description)
-        googleSignInText = context.getString(R.string.auth_sign_in_google)
-        authenticatingText = context.getString(R.string.auth_authenticating)
-        logoDescription = context.getString(R.string.auth_logo_description)
+        runBlocking {
+            appTitle = getString(Res.string.auth_title)
+            slogan = getString(Res.string.auth_slogan)
+            signInTitle = getString(Res.string.auth_sign_in_title)
+            signInDescription = getString(Res.string.auth_sign_in_description)
+            googleSignInText = getString(Res.string.auth_sign_in_google)
+            authenticatingText = getString(Res.string.auth_authenticating)
+            logoDescription = getString(Res.string.auth_logo_description)
+        }
     }
 
     // ==================== Testes de Estado Idle ====================
@@ -147,7 +151,7 @@ class LoginScreenTest {
         }
 
         // Then - Verifica que a versao esta exibida
-        val versionText = context.getString(R.string.auth_version, versionName)
+        val versionText = runBlocking { getString(Res.string.auth_version, versionName) }
         composeTestRule
             .onNodeWithText(versionText)
             .assertIsDisplayed()
@@ -508,8 +512,8 @@ class LoginScreenTest {
         }
 
         // Then - Verifica informacoes do desenvolvedor
-        val developedByText = context.getString(R.string.auth_developed_by)
-        val developerName = context.getString(R.string.auth_developer_name)
+        val developedByText = runBlocking { getString(Res.string.auth_developed_by) }
+        val developerName = runBlocking { getString(Res.string.auth_developer_name) }
 
         composeTestRule
             .onNodeWithText(developedByText)

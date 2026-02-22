@@ -33,7 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -42,9 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.AppNotification
-import com.futebadosparcas.data.model.NotificationType
+import com.futebadosparcas.domain.model.AppNotification
+import com.futebadosparcas.domain.model.NotificationType
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerListContent
@@ -57,6 +55,8 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela principal de notificações com Material Design 3
@@ -368,22 +368,22 @@ private fun filterNotifications(
     return notifications.filter { notification ->
         when (filter) {
             NotificationFilter.ALL -> true
-            NotificationFilter.GAMES -> notification.getTypeEnum() in listOf(
+            NotificationFilter.GAMES -> notification.type in listOf(
                 NotificationType.GAME_SUMMON,
                 NotificationType.GAME_REMINDER,
                 NotificationType.GAME_CANCELLED,
                 NotificationType.GAME_CONFIRMED,
                 NotificationType.GAME_VACANCY
             )
-            NotificationFilter.GROUPS -> notification.getTypeEnum() in listOf(
+            NotificationFilter.GROUPS -> notification.type in listOf(
                 NotificationType.GROUP_INVITE,
                 NotificationType.GROUP_INVITE_ACCEPTED,
                 NotificationType.GROUP_INVITE_DECLINED,
                 NotificationType.MEMBER_JOINED,
                 NotificationType.MEMBER_LEFT
             )
-            NotificationFilter.ACHIEVEMENTS -> notification.getTypeEnum() == NotificationType.ACHIEVEMENT
-            NotificationFilter.SYSTEM -> notification.getTypeEnum() in listOf(
+            NotificationFilter.ACHIEVEMENTS -> notification.type == NotificationType.ACHIEVEMENT
+            NotificationFilter.SYSTEM -> notification.type in listOf(
                 NotificationType.ADMIN_MESSAGE,
                 NotificationType.SYSTEM,
                 NotificationType.GENERAL,
@@ -781,7 +781,7 @@ private fun NotificationCard(
     onDecline: () -> Unit,
     onToggleRead: () -> Unit
 ) {
-    val isAchievement = notification.getTypeEnum() == NotificationType.ACHIEVEMENT
+    val isAchievement = notification.type == NotificationType.ACHIEVEMENT
 
     // Melhoria 10: Gradiente dourado para conquistas
     val cardBackground = if (isAchievement && !notification.read) {
@@ -841,7 +841,7 @@ private fun NotificationCard(
             ) {
                 // Ícone da notificação (com efeito especial para conquistas)
                 NotificationIcon(
-                    type = notification.getTypeEnum(),
+                    type = notification.type,
                     isRead = notification.read,
                     isAchievement = isAchievement
                 )
@@ -1105,12 +1105,12 @@ private fun groupNotificationsByDate(
     }
 
     notifications.forEach { notification ->
-        val date = notification.createdAt
+        val timestamp = notification.createdAt
         val section = when {
-            date == null -> context.getString(R.string.notifications_old)
-            date.time >= today.timeInMillis -> context.getString(R.string.notifications_today)
-            date.time >= yesterday.timeInMillis -> context.getString(R.string.notifications_yesterday)
-            date.time >= weekAgo.timeInMillis -> context.getString(R.string.notifications_this_week)
+            timestamp == null -> context.getString(R.string.notifications_old)
+            timestamp >= today.timeInMillis -> context.getString(R.string.notifications_today)
+            timestamp >= yesterday.timeInMillis -> context.getString(R.string.notifications_yesterday)
+            timestamp >= weekAgo.timeInMillis -> context.getString(R.string.notifications_this_week)
             else -> context.getString(R.string.notifications_old)
         }
 
@@ -1123,9 +1123,9 @@ private fun groupNotificationsByDate(
 /**
  * Formata data/hora relativa (ex: "5 min atrás", "2 horas atrás")
  */
-private fun formatRelativeTime(date: Date): String {
+private fun formatRelativeTime(timestamp: Long): String {
     val now = System.currentTimeMillis()
-    val diff = now - date.time
+    val diff = now - timestamp
 
     return when {
         diff < TimeUnit.MINUTES.toMillis(1) -> "Agora"
@@ -1142,7 +1142,7 @@ private fun formatRelativeTime(date: Date): String {
             "${days}d atrás"
         }
         else -> {
-            SimpleDateFormat("dd/MM/yyyy", Locale.forLanguageTag("pt-BR")).format(date)
+            SimpleDateFormat("dd/MM/yyyy", Locale.forLanguageTag("pt-BR")).format(Date(timestamp))
         }
     }
 }

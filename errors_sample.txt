@@ -1,0 +1,100 @@
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/ai/GeminiTeamBalancer.kt:11:1 Class 'GeminiTeamBalancer' is not abstract and does not implement abstract member:
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/ai/GeminiTeamBalancer.kt:25:5 'balanceTeams' overrides nothing. Potential signatures for overriding:
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/local/model/Entities.kt:93:17 Argument type mismatch: actual type is 'Date?', but 'Long?' was expected.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/local/model/Entities.kt:94:17 Argument type mismatch: actual type is 'Date?', but 'Long?' was expected.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/local/model/Entities.kt:103:28 Unresolved reference 'time'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/local/model/Entities.kt:104:28 Unresolved reference 'time'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/local/model/Entities.kt:116:5 No parameter with name 'players' found.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/local/model/Entities.kt:116:15 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/local/model/Entities.kt:130:17 Argument type mismatch: actual type is 'Date?', but 'Long?' was expected.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/FakeGameRepository.kt:349:11 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/FakeGameRepository.kt:349:35 Unresolved reference 'dateTime'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameQueryRepositoryImpl.kt:250:44 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameQueryRepositoryImpl.kt:250:53 None of the following candidates is applicable:
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameQueryRepositoryImpl.kt:258:85 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameQueryRepositoryImpl.kt:314:44 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameQueryRepositoryImpl.kt:314:53 None of the following candidates is applicable:
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameQueryRepositoryImpl.kt:322:85 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameQueryRepositoryImpl.kt:370:41 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameQueryRepositoryImpl.kt:370:50 None of the following candidates is applicable:
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameQueryRepositoryImpl.kt:574:48 None of the following candidates is applicable:
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameQueryRepositoryImpl.kt:586:74 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameQueryRepositoryImpl.kt:675:52 None of the following candidates is applicable:
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:40:35 Unresolved reference 'GameEventsRepository'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:41:33 Unresolved reference 'GameTeamRepository'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:53:16 Argument type mismatch: actual type is 'com.futebadosparcas.data.model.Game', but 'com.futebadosparcas.domain.model.Game' was expected.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:71:27 Argument type mismatch: actual type is 'com.futebadosparcas.data.model.Game', but 'com.futebadosparcas.domain.model.Game' was expected.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:93:50 Return type mismatch: expected 'List<com.futebadosparcas.domain.model.Game>', actual 'List<com.futebadosparcas.data.model.Game>'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:96:45 Return type mismatch: expected 'List<com.futebadosparcas.domain.model.Game>', actual 'List<com.futebadosparcas.data.model.Game>'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:107:66 Return type mismatch: expected 'List<com.futebadosparcas.domain.model.Game>', actual 'List<com.futebadosparcas.data.model.Game>'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:128:54 Return type mismatch: expected 'com.futebadosparcas.domain.model.Game', actual 'com.futebadosparcas.data.model.Game'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:132:13 Return type mismatch: expected 'Result<com.futebadosparcas.domain.model.Game>', actual 'Result<com.futebadosparcas.data.model.Game>'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:136:53 Return type mismatch: expected 'List<com.futebadosparcas.domain.model.Game>', actual 'List<com.futebadosparcas.data.model.Game>'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:139:57 Return type mismatch: expected 'List<com.futebadosparcas.domain.model.Game>', actual 'List<com.futebadosparcas.data.model.Game>'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:147:87 Return type mismatch: expected 'List<com.futebadosparcas.domain.model.Game>', actual 'List<com.futebadosparcas.data.model.Game>'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:150:57 Return type mismatch: expected 'List<com.futebadosparcas.domain.model.Game>', actual 'List<com.futebadosparcas.data.model.Game>'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:162:69 Return type mismatch: expected 'List<com.futebadosparcas.domain.model.Game>', actual 'List<com.futebadosparcas.data.model.Game>'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:207:26 Unresolved reference 'getGameEventsFlow'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:210:26 Unresolved reference 'getLiveScoreFlow'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:213:26 Unresolved reference 'sendGameEvent'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:216:26 Unresolved reference 'deleteGameEvent'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:223:44 Unresolved reference 'generateTeams'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:226:24 Unresolved reference 'getGameTeams'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:229:24 Unresolved reference 'getGameTeamsFlow'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:232:24 Unresolved reference 'clearGameTeams'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:235:24 Unresolved reference 'updateTeams'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:247:27 Unresolved reference 'dateTime'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:252:48 No parameter with name 'dateTimeRaw' found.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:259:46 Unresolved reference 'validate'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:261:70 Unresolved reference 'it'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:331:41 Unresolved reference 'validate'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:333:70 Unresolved reference 'it'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GameRepositoryImpl.kt:339:17 Unresolved reference 'updatedAt'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GroupRepository.kt:112:17 No parameter with name 'memberCount' found.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/GroupRepository.kt:113:17 No parameter with name 'status' found.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/LiveGameRepository.kt:342:66 'val' cannot be reassigned.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/LiveGameRepository.kt:346:78 Unresolved reference 'time'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/WaitlistRepositoryImpl.kt:80:17 No parameter with name 'addedAtRaw' found.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/WaitlistRepositoryImpl.kt:84:19 'val' cannot be reassigned.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/WaitlistRepositoryImpl.kt:139:65 'val' cannot be reassigned.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/WaitlistRepositoryImpl.kt:165:69 'val' cannot be reassigned.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/WaitlistRepositoryImpl.kt:230:73 'val' cannot be reassigned.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/WaitlistRepositoryImpl.kt:240:19 'val' cannot be reassigned.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/WaitlistRepositoryImpl.kt:267:73 'val' cannot be reassigned.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/WaitlistRepositoryImpl.kt:283:19 'val' cannot be reassigned.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/WaitlistRepositoryImpl.kt:284:19 Unresolved reference 'notifiedAtRaw'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/WaitlistRepositoryImpl.kt:285:19 Unresolved reference 'responseDeadlineRaw'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/data/repository/WaitlistRepositoryImpl.kt:338:65 'val' cannot be reassigned.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/AppKoinModule.kt:52:67 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/AppKoinModule.kt:52:74 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/AppKoinModule.kt:56:48 Unresolved reference 'IStatisticsRepository'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/AppKoinModule.kt:56:71 Argument type mismatch: actual type is 'Function2<Scope, ParametersHolder, uninferred T (of fun <T> single)>', but 'Function2<Scope, ParametersHolder, uninferred T (of fun <T> single)>' was expected.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/AppKoinModule.kt:59:49 Unresolved reference 'FakeStatisticsRepository'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/AppKoinModule.kt:61:49 Unresolved reference 'StatisticsRepositoryImpl'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/AppKoinModule.kt:61:74 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/AppKoinModule.kt:61:81 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/ImageKoinModule.kt:48:14 Unresolved reference 'allowHardware'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/ViewModelKoinModule.kt:75:36 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/ViewModelKoinModule.kt:140:40 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/ViewModelKoinModule.kt:188:40 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/ViewModelKoinModule.kt:303:36 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/di/koin/ViewModelKoinModule.kt:348:36 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/ai/EnhancedTeamBalancer.kt:454:23 'when' expression must be exhaustive. Add the 'LINE', 'GOALKEEPER' branches or an 'else' branch.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/ai/EnhancedTeamBalancer.kt:455:9 Comparison of incompatible enums 'com.futebadosparcas.domain.model.PlayerPosition' and 'com.futebadosparcas.data.model.PlayerPosition' is always unsuccessful.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/ai/EnhancedTeamBalancer.kt:456:9 Comparison of incompatible enums 'com.futebadosparcas.domain.model.PlayerPosition' and 'com.futebadosparcas.data.model.PlayerPosition' is always unsuccessful.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:95:59 Unresolved reference 'isAdmin'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:101:48 Unresolved reference 'isAdmin'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:108:67 Unresolved reference 'canViewAllGames'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:113:69 Unresolved reference 'canViewAllHistory'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:118:67 Unresolved reference 'canEditAllGames'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:123:67 Unresolved reference 'canJoinAllGames'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:141:18 Unresolved reference 'canEditAllGames'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:171:18 Unresolved reference 'canViewAllGames'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:201:18 Unresolved reference 'canViewAllHistory'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:218:18 Unresolved reference 'hasGamePermission'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:219:40 Unresolved reference 'hasGamePermission'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:232:18 Unresolved reference 'hasGamePermission'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:233:40 Unresolved reference 'hasGamePermission'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:246:18 Unresolved reference 'hasGamePermission'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:247:40 Unresolved reference 'hasGamePermission'.
+e: file:///C:/Projetos/FutebaDosParcas/app/src/main/java/com/futebadosparcas/domain/permission/PermissionManager.kt:262:18 Unresolved reference 'hasGroupPermission'.

@@ -21,11 +21,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.res.stringResource
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.R
-
+import androidx.compose.ui.res.stringResource
 /**
  * Tela de Registro (descontinuada).
  *

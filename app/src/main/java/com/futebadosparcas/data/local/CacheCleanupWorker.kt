@@ -6,7 +6,6 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import coil.Coil
 import com.futebadosparcas.data.local.dao.GameDao
 import com.futebadosparcas.data.local.dao.UserDao
 import com.futebadosparcas.domain.cache.SharedCacheService

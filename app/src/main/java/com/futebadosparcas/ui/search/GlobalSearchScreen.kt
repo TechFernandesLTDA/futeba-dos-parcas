@@ -66,12 +66,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
-
+import androidx.compose.ui.res.stringResource
 /**
  * Tela de Busca Global do Futeba dos Parças.
  * Permite buscar jogos, jogadores, grupos e locais em uma única interface.

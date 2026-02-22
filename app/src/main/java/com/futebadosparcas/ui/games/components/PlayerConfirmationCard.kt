@@ -20,22 +20,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.ConfirmationStatus
+import coil3.compose.AsyncImage
+import com.futebadosparcas.domain.model.ConfirmationStatus
 import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.PaymentStatus
-import com.futebadosparcas.data.model.PlayerPosition
+import com.futebadosparcas.domain.model.PaymentStatus
+import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.ui.games.presence.GuestBadge
 import com.futebadosparcas.ui.games.presence.ReliabilityBadge
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Card de confirmacao de jogador com swipe actions para owner/admin.

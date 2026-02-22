@@ -4,7 +4,7 @@ import com.futebadosparcas.data.local.dao.GameDao
 import com.futebadosparcas.data.local.model.GameEntity
 import com.futebadosparcas.data.local.model.toDomain
 import com.futebadosparcas.data.local.model.toEntity
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

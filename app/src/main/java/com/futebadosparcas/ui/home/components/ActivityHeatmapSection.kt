@@ -15,17 +15,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.Activity
+import com.futebadosparcas.domain.model.Activity
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.util.toInstant
 
 @Composable
 fun ActivityHeatmapSection(
@@ -73,9 +74,9 @@ fun HeatmapGrid(
     val activityCounts = remember(activities) {
         val counts = mutableMapOf<java.time.LocalDate, Int>()
         activities.forEach { activity ->
-            activity.createdAt?.let { date ->
+            activity.createdAt?.let { timestamp ->
                 try {
-                    val localDate = date.toInstant()
+                    val localDate = java.time.Instant.ofEpochMilli(timestamp)
                         .atZone(java.time.ZoneId.systemDefault())
                         .toLocalDate()
                     counts[localDate] = (counts[localDate] ?: 0) + 1

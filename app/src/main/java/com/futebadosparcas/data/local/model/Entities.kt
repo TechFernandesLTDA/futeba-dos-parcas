@@ -3,8 +3,8 @@ package com.futebadosparcas.data.local.model
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.futebadosparcas.data.model.Game
-import com.futebadosparcas.data.model.User
+import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.User
 import java.util.Date
 
 @Entity(
@@ -90,8 +90,8 @@ fun UserEntity.toDomain() = User(
     name = name,
     photoUrl = photoUrl,
     fcmToken = fcmToken,
-    createdAt = createdAt?.let { Date(it) },
-    updatedAt = updatedAt?.let { Date(it) }
+    createdAt = createdAt, // UserEntity.createdAt é Long?, User.createdAt é Long?
+    updatedAt = updatedAt
 )
 
 fun User.toEntity() = UserEntity(
@@ -100,8 +100,8 @@ fun User.toEntity() = UserEntity(
     name = name,
     photoUrl = photoUrl,
     fcmToken = fcmToken,
-    createdAt = createdAt?.time,
-    updatedAt = updatedAt?.time
+    createdAt = createdAt, // User.createdAt é Long?, UserEntity.createdAt é Long?
+    updatedAt = updatedAt
 )
 
 fun GameEntity.toDomain() = Game(
@@ -113,9 +113,7 @@ fun GameEntity.toDomain() = Game(
     status = status,
     maxPlayers = maxPlayers,
     maxGoalkeepers = maxGoalkeepers,
-    players = players,
     dailyPrice = dailyPrice,
-    confirmationClosesAt = confirmationClosesAt,
     numberOfTeams = numberOfTeams,
     ownerId = ownerId,
     ownerName = ownerName,
@@ -128,8 +126,7 @@ fun GameEntity.toDomain() = Game(
     fieldName = fieldName,
     gameType = gameType,
     recurrence = recurrence,
-    createdAt = createdAt?.let { Date(it) },
-    dateTimeRaw = dateTime?.let { Date(it) }
+    createdAt = createdAt // GameEntity.createdAt é Long?, Game.createdAt é Long?
 )
 
 fun Game.toEntity() = GameEntity(
@@ -141,9 +138,9 @@ fun Game.toEntity() = GameEntity(
     status = status,
     maxPlayers = maxPlayers,
     maxGoalkeepers = maxGoalkeepers,
-    players = players,
+    players = emptyList(), // KMP Game não tem players list
     dailyPrice = dailyPrice,
-    confirmationClosesAt = confirmationClosesAt,
+    confirmationClosesAt = null, // KMP Game não tem confirmationClosesAt
     numberOfTeams = numberOfTeams,
     ownerId = ownerId,
     ownerName = ownerName,
@@ -156,6 +153,6 @@ fun Game.toEntity() = GameEntity(
     fieldName = fieldName,
     gameType = gameType,
     recurrence = recurrence,
-    createdAt = createdAt?.time,
-    dateTime = dateTime?.time
+    createdAt = createdAt, // Já é Long?
+    dateTime = createdAt // Use createdAt (já é Long?)
 )

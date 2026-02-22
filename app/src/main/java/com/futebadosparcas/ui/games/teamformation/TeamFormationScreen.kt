@@ -36,7 +36,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -46,9 +45,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.*
+import coil3.compose.AsyncImage
+import com.futebadosparcas.domain.model.*
+import com.futebadosparcas.data.model.SavedTeamFormation
+import com.futebadosparcas.data.model.DraftState
+import com.futebadosparcas.data.model.DraftRevealAnimation
 import com.futebadosparcas.domain.ai.SwapSuggestion
 import com.futebadosparcas.ui.components.AppTopBar
 import com.futebadosparcas.ui.components.CachedProfileImage
@@ -57,6 +58,8 @@ import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.util.ContrastHelper
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela de formacao de times com animacao de draft, drag-and-drop,
@@ -844,7 +847,7 @@ private fun DraggablePlayerRow(player: DraftPlayer, teamColor: Color) {
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = if (player.position == com.futebadosparcas.data.model.PlayerPosition.GOALKEEPER) {
+                text = if (player.position == PlayerPosition.GOALKEEPER) {
                     stringResource(R.string.goalkeeper)
                 } else {
                     stringResource(R.string.field_player)

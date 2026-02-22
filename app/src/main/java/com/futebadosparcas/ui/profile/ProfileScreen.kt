@@ -22,17 +22,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.futebadosparcas.BuildConfig
-import com.futebadosparcas.data.model.*
+import com.futebadosparcas.data.model.BadgeType
+import com.futebadosparcas.data.model.UserBadge
+import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.FieldType
@@ -47,6 +47,8 @@ import androidx.core.net.toUri
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import java.util.Locale
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Tela principal do Perfil do usuário em Jetpack Compose
@@ -194,7 +196,7 @@ fun ProfileScreen(
 private fun ProfileContent(
     user: User,
     badges: List<UserBadge>,
-    statistics: UserStatistics?,
+    statistics: Statistics?,
     isDevMode: Boolean,
     myLocationsCount: Int,
     onEditProfileClick: () -> Unit,
@@ -766,7 +768,7 @@ private fun StaticRatingItem(
  * Card de estatísticas
  */
 @Composable
-private fun StatisticsCard(statistics: UserStatistics?) {
+private fun StatisticsCard(statistics: Statistics?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -794,15 +796,15 @@ private fun StatisticsCard(statistics: UserStatistics?) {
                     ) {
                         StatItem(label = stringResource(R.string.profile_stats_games), value = statistics.totalGames.toString())
                         StatItem(label = stringResource(R.string.profile_stats_goals), value = statistics.totalGoals.toString())
-                        StatItem(label = stringResource(R.string.profile_stats_victories), value = statistics.gamesWon.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_victories), value = statistics.totalWins.toString())
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         StatItem(label = stringResource(R.string.profile_stats_assists), value = statistics.totalAssists.toString())
-                        StatItem(label = stringResource(R.string.profile_stats_draws), value = statistics.gamesDraw.toString())
-                        StatItem(label = stringResource(R.string.profile_stats_mvp), value = statistics.bestPlayerCount.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_draws), value = statistics.totalDraws.toString())
+                        StatItem(label = stringResource(R.string.profile_stats_mvp), value = statistics.mvpCount.toString())
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),

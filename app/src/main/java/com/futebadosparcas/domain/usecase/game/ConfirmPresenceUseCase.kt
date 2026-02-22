@@ -2,6 +2,7 @@ package com.futebadosparcas.domain.usecase.game
 
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.repository.GameRepository
+import com.futebadosparcas.util.toAndroidGameConfirmation
 
 /**
  * Use case para confirmar presença do usuário em um jogo.
@@ -39,6 +40,8 @@ class ConfirmPresenceUseCase constructor(
             )
         }
 
+        // Repository retorna domain.model, converter para data.model
         return gameRepository.confirmPresence(gameId, position, isCasual)
+            .map { it.toAndroidGameConfirmation() }
     }
 }

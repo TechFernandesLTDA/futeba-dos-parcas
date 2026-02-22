@@ -1,7 +1,6 @@
 package com.futebadosparcas.ui.components.avatar
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -63,7 +62,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
-
+import androidx.compose.ui.res.stringResource
 /**
  * Sistema de customização de avatar para o perfil do jogador.
  * Permite personalizar rosto, cabelo, acessórios, camisa e badges.

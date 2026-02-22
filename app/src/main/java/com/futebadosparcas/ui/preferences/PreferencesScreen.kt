@@ -15,11 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.domain.model.ThemeMode
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.ThemeViewModel
 import com.futebadosparcas.util.PreferencesManager
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * PreferencesScreen - Tela de Preferências

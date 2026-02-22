@@ -16,14 +16,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.data.model.RecurrenceType
-import com.futebadosparcas.data.model.Schedule
-import com.futebadosparcas.R
+import com.futebadosparcas.data.model.RecurrenceType as AndroidRecurrenceType
+import com.futebadosparcas.domain.model.Schedule
 import java.time.LocalTime
 
 import com.futebadosparcas.util.AppLogger
+import com.futebadosparcas.util.toKmpRecurrenceType
+import com.futebadosparcas.util.toAndroidRecurrenceType
 import java.util.Date
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 private const val TAG = "ComposeScheduleDialogs"
 
@@ -43,7 +45,7 @@ fun CreateScheduleDialog(
     var name by remember { mutableStateOf("") }
     var time by remember { mutableStateOf("19:00") }
     var selectedDayOfWeek by remember { mutableIntStateOf(0) }
-    var selectedRecurrenceType by remember { mutableStateOf(RecurrenceType.weekly) }
+    var selectedRecurrenceType by remember { mutableStateOf(AndroidRecurrenceType.weekly) }
     var showTimeError by remember { mutableStateOf(false) }
     var showNameError by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -237,8 +239,8 @@ fun CreateScheduleDialog(
                                     name = name.ifBlank { context.getString(R.string.schedules_unnamed_schedule) },
                                     time = time,
                                     dayOfWeek = selectedDayOfWeek,
-                                    recurrenceType = selectedRecurrenceType,
-                                    createdAt = Date()
+                                    recurrenceType = selectedRecurrenceType.toKmpRecurrenceType(),
+                                    createdAt = Date().time
                                 )
                                 AppLogger.d(TAG) { context.getString(R.string.schedules_create_content, newSchedule.name) }
                                 onCreate(newSchedule)
@@ -287,7 +289,7 @@ fun EditScheduleDialog(
     var name by remember { mutableStateOf(schedule.name) }
     var time by remember { mutableStateOf(schedule.time) }
     var selectedDayOfWeek by remember { mutableIntStateOf(schedule.dayOfWeek) }
-    var selectedRecurrenceType by remember { mutableStateOf(schedule.recurrenceType) }
+    var selectedRecurrenceType by remember { mutableStateOf(schedule.recurrenceType.toAndroidRecurrenceType()) }
     var showTimeError by remember { mutableStateOf(false) }
     var showNameError by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -476,7 +478,7 @@ fun EditScheduleDialog(
                                     name = name,
                                     time = time,
                                     dayOfWeek = selectedDayOfWeek,
-                                    recurrenceType = selectedRecurrenceType
+                                    recurrenceType = selectedRecurrenceType.toKmpRecurrenceType()
                                 )
                                 onSave(updatedSchedule)
                                 onDismiss()
@@ -526,10 +528,10 @@ private fun getDaysOfWeek(): Array<String> {
  * Helper function para obter lista de opções de recorrência
  */
 @Composable
-private fun getRecurrenceOptions(): List<Pair<RecurrenceType, String>> {
+private fun getRecurrenceOptions(): List<Pair<AndroidRecurrenceType, String>> {
     return listOf(
-        RecurrenceType.weekly to stringResource(R.string.schedules_recurrence_weekly),
-        RecurrenceType.biweekly to stringResource(R.string.schedules_recurrence_biweekly),
-        RecurrenceType.monthly to stringResource(R.string.schedules_recurrence_monthly)
+        AndroidRecurrenceType.weekly to stringResource(R.string.schedules_recurrence_weekly),
+        AndroidRecurrenceType.biweekly to stringResource(R.string.schedules_recurrence_biweekly),
+        AndroidRecurrenceType.monthly to stringResource(R.string.schedules_recurrence_monthly)
     )
 }

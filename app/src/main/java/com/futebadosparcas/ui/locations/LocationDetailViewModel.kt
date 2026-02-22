@@ -5,11 +5,10 @@ import com.futebadosparcas.util.AppLogger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.datasource.FieldPhotoDataSource
-import com.futebadosparcas.data.model.Field as AndroidField
-import com.futebadosparcas.data.model.FieldType
+import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.data.model.Location as AndroidLocation
 import com.futebadosparcas.data.model.LocationReview as AndroidLocationReview
-import com.futebadosparcas.data.model.User as AndroidUser
+// KmpUser removed - using domain.model.User directly
 import com.futebadosparcas.domain.model.Field
 import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.model.LocationReview
@@ -23,13 +22,20 @@ import com.futebadosparcas.util.LocationError
 import com.futebadosparcas.util.LocationErrorHandler
 import com.futebadosparcas.util.LocationSources
 import com.futebadosparcas.util.RecoveryAction
-import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidLocation
+import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidLocationReview
-import com.futebadosparcas.util.toAndroidUser
-import com.futebadosparcas.util.toKmpField
+import com.futebadosparcas.util.toAndroidLocationReviews
+import com.futebadosparcas.util.toAndroidCashboxEntry
+import com.futebadosparcas.util.toAndroidCashboxEntries
+import com.futebadosparcas.util.toAndroidGroupInvites
+import com.futebadosparcas.util.toKmpSchedule
 import com.futebadosparcas.util.toKmpLocation
 import com.futebadosparcas.util.toKmpLocationReview
+import com.futebadosparcas.util.toKmpGameTemplate
+import com.futebadosparcas.util.toKmpCashboxFilter
+import com.futebadosparcas.util.toKmpCashboxEntry
+import com.futebadosparcas.util.toKmpNotificationType
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,8 +57,8 @@ class LocationDetailViewModel(
     private val _uiState = MutableStateFlow<LocationDetailUiState>(LocationDetailUiState.Success(AndroidLocation(), emptyList()))
     val uiState: StateFlow<LocationDetailUiState> = _uiState
 
-    private val _fieldOwners = MutableStateFlow<List<AndroidUser>>(emptyList())
-    val fieldOwners: StateFlow<List<AndroidUser>> = _fieldOwners
+    private val _fieldOwners = MutableStateFlow<List<KmpUser>>(emptyList())
+    val fieldOwners: StateFlow<List<KmpUser>> = _fieldOwners
 
     private var currentLocation: AndroidLocation? = null
 
@@ -78,7 +84,7 @@ class LocationDetailViewModel(
     private fun loadFieldOwners() {
         viewModelScope.launch {
             userRepository.getFieldOwners().onSuccess { owners ->
-                _fieldOwners.value = owners.map { it.toAndroidUser() }
+                _fieldOwners.value = owners
             }
         }
     }
@@ -201,8 +207,8 @@ class LocationDetailViewModel(
             if (fieldsResult.isSuccess) {
                  _uiState.value = LocationDetailUiState.Success(
                      location,
-                     fieldsResult.getOrNull()?.map { it.toAndroidField() } ?: emptyList(),
-                     reviewsResult.getOrNull()?.map { it.toAndroidLocationReview() } ?: emptyList()
+                     fieldsResult.getOrNull() ?: emptyList(), // Repository retorna domain.model.Field
+                     reviewsResult.getOrNull()?.map { it.toAndroidLocationReview() } ?: emptyList() // Converter para data.model
                  )
             } else {
                  val exception = fieldsResult.exceptionOrNull()
@@ -393,7 +399,7 @@ class LocationDetailViewModel(
                 }
             }
 
-            val newField = AndroidField(
+            val newField = Field(
                 locationId = location.id,
                 name = name,
                 type = type.name,
@@ -404,7 +410,7 @@ class LocationDetailViewModel(
                 isCovered = isCovered,
                 dimensions = dimensions
             )
-            locationRepository.createField(newField.toKmpField()).fold(
+            locationRepository.createField(newField).fold(
                 onSuccess = { loadData(location.id, location) },
                 onFailure = { error -> _uiState.value = LocationDetailUiState.Error(error.message ?: "Erro ao criar quadra") }
             )
@@ -437,9 +443,9 @@ class LocationDetailViewModel(
             val isLocationManager = location.managers.contains(currentUser.id)
             val isAdmin = currentUser.role == "ADMIN"
 
-            var currentField: AndroidField? = null
+            var currentField: Field? = null
              locationRepository.getFieldById(fieldId).onSuccess {
-                currentField = it.toAndroidField()
+                currentField = it // Repository já retorna domain.model.Field
             }.onFailure {
                 _uiState.value = LocationDetailUiState.Error("Quadra não encontrada")
                 return@launch
@@ -514,7 +520,7 @@ class LocationDetailViewModel(
                 dimensions = dimensions
             )
 
-            locationRepository.updateField(updatedField.toKmpField()).fold(
+            locationRepository.updateField(updatedField).fold(
                 onSuccess = {
                     loadData(location.id, location)
                 },
@@ -562,7 +568,7 @@ sealed class LocationDetailUiState {
     data object Loading : LocationDetailUiState()
     data class Success(
         val location: AndroidLocation,
-        val fields: List<AndroidField>,
+        val fields: List<Field>,
         val reviews: List<AndroidLocationReview> = emptyList()
     ) : LocationDetailUiState()
 

@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.datasource.ProfilePhotoDataSource
 import com.futebadosparcas.data.model.AutoRatings
-import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.data.model.PerformanceRatingCalculator
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.data.repository.LiveGameRepository
@@ -113,9 +113,9 @@ class ProfileViewModel(
                     val badgesResult = gamificationRepository.getUserBadges(user.id)
                     val badges = badgesResult.getOrNull()?.toDataBadges() ?: emptyList()
 
-                    // Carregar estatísticas do repositório de domínio e converter para modelo de dados
+                    // Carregar estatísticas do repositório de domínio (já retorna domain.model.Statistics)
                     val statsResult = statisticsRepository.getUserStatistics(user.id)
-                    val stats = statsResult.getOrNull()?.toDataModel(user.id)
+                    val stats = statsResult.getOrNull()
 
                     _uiState.value = ProfileUiState.Success(user, badges, stats, isDevModeEnabled())
 
@@ -147,7 +147,7 @@ class ProfileViewModel(
     private fun loadMyLocations(userId: String) {
         viewModelScope.launch {
             locationRepository.getLocationsByOwner(userId).onSuccess { locations ->
-                _myLocations.value = locations.toDataLocations()
+                _myLocations.value = locations
             }
         }
     }
@@ -167,7 +167,7 @@ class ProfileViewModel(
 
                 if (snapshot != null && snapshot.exists()) {
                     try {
-                        val updatedStats = snapshot.toObject(com.futebadosparcas.data.model.UserStatistics::class.java)
+                        val updatedStats = snapshot.toObject(com.futebadosparcas.domain.model.Statistics::class.java)
                         val currentState = _uiState.value
 
                         if (currentState is ProfileUiState.Success && updatedStats != null) {
@@ -266,7 +266,7 @@ class ProfileViewModel(
                                 val badges = badgesResult.getOrNull()?.toDataBadges() ?: emptyList()
 
                                 val statsResult = statisticsRepository.getUserStatistics(refreshedUser.id)
-                                val stats = statsResult.getOrNull()?.toDataModel(refreshedUser.id)
+                                val stats = statsResult.getOrNull()
 
                                 _uiState.value = ProfileUiState.ProfileUpdateSuccess(
                                     user = refreshedUser,
@@ -328,7 +328,7 @@ class ProfileViewModel(
         return preferencesManager.isDevModeEnabled()
     }
 
-    private fun maybeUpdateAutoRatings(user: User, stats: com.futebadosparcas.data.model.UserStatistics?) {
+    private fun maybeUpdateAutoRatings(user: User, stats: com.futebadosparcas.domain.model.Statistics?) {
         if (stats == null || stats.totalGames < 3) return
 
         val autoRatings = PerformanceRatingCalculator.fromStats(stats)
@@ -394,13 +394,13 @@ sealed class ProfileUiState {
     data class Success(
         val user: User,
         val badges: List<com.futebadosparcas.data.model.UserBadge>,
-        val statistics: com.futebadosparcas.data.model.UserStatistics?,
+        val statistics: com.futebadosparcas.domain.model.Statistics?,
         val isDevMode: Boolean
     ) : ProfileUiState()
     data class ProfileUpdateSuccess(
         val user: User,
         val badges: List<com.futebadosparcas.data.model.UserBadge> = emptyList(),
-        val statistics: com.futebadosparcas.data.model.UserStatistics? = null,
+        val statistics: com.futebadosparcas.domain.model.Statistics? = null,
         val isDevMode: Boolean = false
     ) : ProfileUiState()
     data class Error(val message: String) : ProfileUiState()

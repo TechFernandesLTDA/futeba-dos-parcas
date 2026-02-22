@@ -2,12 +2,19 @@ package com.futebadosparcas.ui.locations
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.Location
+import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.LocationAnalytics
 import com.futebadosparcas.util.LocationSources
-import com.futebadosparcas.util.toAndroidLocations
+import com.futebadosparcas.util.toAndroidLocation
+import com.futebadosparcas.util.toAndroidField
+import com.futebadosparcas.util.toAndroidFields
+import com.futebadosparcas.util.toAndroidLocationReview
+import com.futebadosparcas.util.toAndroidLocationReviews
+import com.futebadosparcas.util.toAndroidCashboxEntry
+import com.futebadosparcas.util.toAndroidCashboxEntries
+import com.futebadosparcas.util.toAndroidGroupInvites
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,17 +47,16 @@ class LocationsMapViewModel(
         viewModelScope.launch {
             _uiState.value = LocationsMapUiState.Loading
             locationRepository.getAllLocations().fold(
-                onSuccess = { kmpLocations ->
-                    val androidLocations = kmpLocations.toAndroidLocations()
-                    _uiState.value = if (androidLocations.isEmpty()) {
+                onSuccess = { locations ->
+                    _uiState.value = if (locations.isEmpty()) {
                         LocationsMapUiState.Empty
                     } else {
                         // Rastreia visualização do mapa com contagem de locais
                         locationAnalytics.trackMapViewed(
-                            locationCount = androidLocations.size,
+                            locationCount = locations.size,
                             source = navigationSource
                         )
-                        LocationsMapUiState.Success(androidLocations)
+                        LocationsMapUiState.Success(locations)
                     }
                 },
                 onFailure = { error ->

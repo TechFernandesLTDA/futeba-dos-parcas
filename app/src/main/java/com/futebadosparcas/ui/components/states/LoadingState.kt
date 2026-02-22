@@ -5,15 +5,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.lists.ShimmerBox
 import com.futebadosparcas.ui.components.lists.ShimmerCircle
 import com.futebadosparcas.ui.components.lists.GameCardShimmer
 import com.futebadosparcas.ui.components.lists.PlayerCardShimmer
 import com.futebadosparcas.ui.components.lists.RankingItemShimmer
 import com.futebadosparcas.ui.components.LocationCardSkeleton
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Estado de loading padrao com shimmer

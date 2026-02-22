@@ -335,7 +335,7 @@ class RankingRepositoryImpl(
                         value = stats.totalGoals.toLong(),
                         photoUrl = user.photoUrl,
                         gamesPlayed = stats.totalGames,
-                        average = stats.getGoalsPerGame().toDouble(),
+                        average = stats.avgGoalsPerGame.toDouble(),
                         nickname = user.nickname,
                         level = user.level
                     )

@@ -14,11 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.rememberAdaptiveSpacing
 import com.futebadosparcas.ui.adaptive.adaptiveValue
@@ -29,10 +27,12 @@ import com.patrykandpatrick.vico.compose.chart.column.columnChart
 import com.patrykandpatrick.vico.core.axis.AxisPosition
 import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
 import com.patrykandpatrick.vico.core.entry.entryModelOf
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ExpandableStatsSection(
-    statistics: UserStatistics,
+    statistics: Statistics,
     modifier: Modifier = Modifier
 ) {
     val windowSizeClass = rememberWindowSizeClass()
@@ -88,7 +88,7 @@ fun ExpandableStatsSection(
                             StatItem("Jogos", statistics.totalGames.toString())
                             StatItem("Gols", statistics.totalGoals.toString())
                             StatItem("Assistências", statistics.totalAssists.toString())
-                            StatItem("MVPs", statistics.bestPlayerCount.toString())
+                            StatItem("MVPs", statistics.mvpCount.toString())
                         }
                     } else {
                         // Layout expandido: duas linhas ou grid
@@ -108,7 +108,7 @@ fun ExpandableStatsSection(
                                 horizontalArrangement = Arrangement.SpaceAround
                             ) {
                                 StatItemLarge("Assistências", statistics.totalAssists.toString())
-                                StatItemLarge("MVPs", statistics.bestPlayerCount.toString())
+                                StatItemLarge("MVPs", statistics.mvpCount.toString())
                             }
                         }
                     }

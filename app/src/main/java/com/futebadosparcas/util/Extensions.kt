@@ -3,28 +3,36 @@ package com.futebadosparcas.util
 import android.view.View
 import android.widget.ImageView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import coil.load
+import coil3.asImage
+import coil3.load
+import coil3.request.crossfade
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Extensão para carregar imagens com Coil
+ * Extensão para carregar imagens com Coil 3
+ * Note: Coil 3 mudou a API - placeholder/error agora precisam de .asImage()
  */
-fun ImageView.loadUrl(url: String?, placeholder: Int? = null) {
+fun ImageView.loadUrl(url: String?, placeholderRes: Int? = null) {
     this.load(url) {
-        placeholder?.let { placeholder(it) }
+        // Coil 3: Convert drawable to Image using asImage()
+        if (placeholderRes != null) {
+            placeholder(context.getDrawable(placeholderRes)?.asImage())
+        }
         crossfade(true)
     }
 }
 
 fun ImageView.loadProfileImage(url: String?) {
     this.load(url) {
+        // Coil 3: Convert drawable to Image using asImage()
+        val placeholderDrawable = context.getDrawable(com.futebadosparcas.R.drawable.ic_player_placeholder)
+        placeholder(placeholderDrawable?.asImage())
+        error(placeholderDrawable?.asImage())
         crossfade(true)
-        placeholder(com.futebadosparcas.R.drawable.ic_player_placeholder)
-        error(com.futebadosparcas.R.drawable.ic_player_placeholder)
-        transformations(coil.transform.CircleCropTransformation())
+        // NOTE: CircleCropTransformation removed - use Modifier.clip(CircleShape) in Compose instead
     }
 }
 

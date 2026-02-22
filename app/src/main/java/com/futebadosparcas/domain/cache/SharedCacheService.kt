@@ -2,7 +2,7 @@ package com.futebadosparcas.domain.cache
 
 import android.util.LruCache
 import com.futebadosparcas.domain.model.User
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.sync.Mutex

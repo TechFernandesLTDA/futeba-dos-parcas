@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -24,10 +23,9 @@ import androidx.compose.ui.unit.dp
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.AnimatedStateContainer
 import com.futebadosparcas.ui.components.StateType
-import com.futebadosparcas.data.model.Group
+import com.futebadosparcas.domain.model.Group
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.ui.components.CachedGroupImage
@@ -40,6 +38,8 @@ import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.groups.dialogs.EditGroupDialog
 import com.futebadosparcas.ui.groups.dialogs.TransferOwnershipDialog
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * GroupDetailScreen - Exibe detalhes de um grupo (CMD-30)
@@ -596,9 +596,9 @@ private fun GroupHeader(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                        val memberCountText = when (group.memberCount) {
-                            1 -> stringResource(R.string.member_count_one, group.memberCount)
-                            else -> stringResource(R.string.member_count_many, group.memberCount)
+                        val memberCountText = when (group.membersCount) {
+                            1 -> stringResource(R.string.member_count_one, group.membersCount)
+                            else -> stringResource(R.string.member_count_many, group.membersCount)
                         }
                         Text(memberCountText, style = MaterialTheme.typography.labelMedium)
                     }

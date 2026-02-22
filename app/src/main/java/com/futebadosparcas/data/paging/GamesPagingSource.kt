@@ -3,7 +3,7 @@ package com.futebadosparcas.data.paging
 import com.futebadosparcas.util.AppLogger
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.futebadosparcas.data.model.Game
+import com.futebadosparcas.domain.model.Game
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot

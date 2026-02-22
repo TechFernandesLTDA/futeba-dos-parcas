@@ -30,13 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.ui.components.AnimatedStateContainer
 import com.futebadosparcas.ui.components.StateType
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.components.PlayerCardShareHelper
 import com.futebadosparcas.ui.players.PlayerCardContent
-import com.futebadosparcas.data.model.Activity
-import com.futebadosparcas.data.model.Game
-import com.futebadosparcas.data.model.UserStatistics
+import com.futebadosparcas.domain.model.Activity
+import com.futebadosparcas.domain.model.Game
+import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.ui.games.GameWithConfirmations
 import com.futebadosparcas.domain.model.UserStreak
 import com.futebadosparcas.domain.model.WeeklyChallenge
@@ -45,6 +43,8 @@ import com.futebadosparcas.domain.model.UserBadge
 import com.futebadosparcas.ui.components.*
 import com.futebadosparcas.ui.home.components.*
 import com.futebadosparcas.util.HapticManager
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * HomeScreen - Tela Principal consolidada em Jetpack Compose

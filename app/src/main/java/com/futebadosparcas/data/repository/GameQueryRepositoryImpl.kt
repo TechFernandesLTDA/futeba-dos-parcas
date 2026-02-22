@@ -7,10 +7,10 @@ import com.futebadosparcas.data.local.model.toEntity
 import com.futebadosparcas.data.model.Game as AndroidGame
 import com.futebadosparcas.data.model.GameConfirmation as AndroidGameConfirmation
 import com.futebadosparcas.data.model.GameEvent as AndroidGameEvent
-import com.futebadosparcas.data.model.GameStatus
+import com.futebadosparcas.domain.model.GameStatus
 import com.futebadosparcas.data.model.Team as AndroidTeam
-import com.futebadosparcas.data.model.User
-import com.futebadosparcas.data.model.UserRole
+import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.domain.model.UserRole
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.GameDetailConsolidated
@@ -247,7 +247,7 @@ class GameQueryRepositoryImpl constructor(
                 )
 
             // Sync to local
-            val entities = allAndroidGames.map { it.toEntity() }
+            val entities = allAndroidGames.map { it.toKmpGame().toEntity() }
             gameDao.insertGames(entities)
 
             // Converter para KMP
@@ -255,7 +255,7 @@ class GameQueryRepositoryImpl constructor(
             Result.success(kmpGames)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos remotos, tentando local", e)
-            val localGames = gameDao.getUpcomingGamesSnapshot().map { it.toDomain().toKmpGame() }
+            val localGames = gameDao.getUpcomingGamesSnapshot().map { it.toDomain() }
             Result.success(localGames)
         }
     }
@@ -311,7 +311,7 @@ class GameQueryRepositoryImpl constructor(
             AppLogger.d(TAG) { "Admin: encontrados ${allAndroidGames.size} jogos" }
 
             // Sync to local
-            val entities = allAndroidGames.map { it.toEntity() }
+            val entities = allAndroidGames.map { it.toKmpGame().toEntity() }
             gameDao.insertGames(entities)
 
             // Converter para KMP
@@ -319,7 +319,7 @@ class GameQueryRepositoryImpl constructor(
             Result.success(kmpGames)
         } catch (e: Exception) {
             AppLogger.e(TAG, "Admin: Erro ao buscar todos os jogos", e)
-            val localGames = gameDao.getUpcomingGamesSnapshot().map { it.toDomain().toKmpGame() }
+            val localGames = gameDao.getUpcomingGamesSnapshot().map { it.toDomain() } // toDomain() já retorna domain.model.Game
             Result.success(localGames)
         }
     }
@@ -367,7 +367,7 @@ class GameQueryRepositoryImpl constructor(
                     .take(50)
 
                 // Sync to Local DB
-                val entities = allGames.map { it.toEntity() }
+                val entities = allGames.map { it.toKmpGame().toEntity() }
                 gameDao.insertGames(entities)
 
                 Result.success(allGames.toKmpGames())
@@ -375,7 +375,7 @@ class GameQueryRepositoryImpl constructor(
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar jogos remotos, tentando local", e)
             try {
-                val localGames = gameDao.getAllGamesSnapshot().map { (it.toDomain() as AndroidGame).toKmpGame() }
+                val localGames = gameDao.getAllGamesSnapshot().map { it.toDomain() }
                 if (localGames.isNotEmpty()) {
                     Result.success(localGames)
                 } else {
@@ -571,7 +571,7 @@ class GameQueryRepositoryImpl constructor(
 
             // Cache Update
             try {
-                gameDao.insertGame(androidGame.toEntity())
+                gameDao.insertGame(androidGame.toKmpGame().toEntity())
             } catch (e: Exception) {
                 AppLogger.e(TAG, "Erro ao salvar cache local do jogo", e)
             }
@@ -583,7 +583,7 @@ class GameQueryRepositoryImpl constructor(
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao buscar detalhes do jogo remoto, tentando local", e)
             try {
-                val localGame = gameDao.getGameById(gameId)?.toDomain()?.toKmpGame()
+                val localGame = gameDao.getGameById(gameId)?.toDomain()
                 if (localGame != null) {
                     Result.success(localGame)
                 } else {
@@ -672,7 +672,7 @@ class GameQueryRepositoryImpl constructor(
 
                 // Cache do jogo
                 try {
-                    gameDao.insertGame(androidGame.toEntity())
+                    gameDao.insertGame(androidGame.toKmpGame().toEntity())
                 } catch (e: Exception) {
                     AppLogger.e(TAG, "Erro ao salvar game cache consolidado", e)
                 }

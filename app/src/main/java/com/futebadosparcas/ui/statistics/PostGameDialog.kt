@@ -17,11 +17,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.futebadosparcas.R
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.data.model.MilestoneType
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Dialog exibido apos finalizacao de um jogo mostrando XP ganho.
@@ -304,7 +305,7 @@ private fun LevelProgressSection(
 
 @Composable
 private fun MilestonesUnlockedSection(
-    milestones: List<com.futebadosparcas.data.model.MilestoneType>
+    milestones: List<MilestoneType>
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),

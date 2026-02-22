@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -24,7 +23,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.futebadosparcas.R
 import com.futebadosparcas.domain.model.ThemeMode
 import com.futebadosparcas.domain.repository.ThemeRepository
 import com.futebadosparcas.data.model.UserBadge
@@ -48,6 +46,8 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Sports
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * MainActivity versão Compose.
@@ -106,7 +106,7 @@ class MainActivityCompose : AppCompatActivity() {
                                     val currentUserId = authRepository.getCurrentUserId()
                                     if (currentUserId != null && (profileData.name.isNotBlank() || profileData.nickname != null || profileData.preferredPosition != null || profileData.preferredFieldTypes.isNotEmpty())) {
                                         val fieldTypes = profileData.preferredFieldTypes.mapNotNull {
-                                            try { com.futebadosparcas.data.model.FieldType.valueOf(it) } catch (e: Exception) { null }
+                                            try { com.futebadosparcas.domain.model.FieldType.valueOf(it) } catch (e: Exception) { null }
                                         }
                                         val params = com.futebadosparcas.domain.usecase.user.UpdateProfileParams(
                                             userId = currentUserId,

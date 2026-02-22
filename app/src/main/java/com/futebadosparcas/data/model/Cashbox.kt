@@ -1,5 +1,6 @@
 package com.futebadosparcas.data.model
 
+import com.futebadosparcas.domain.model.CashboxAppStatus
 import com.futebadosparcas.domain.validation.ValidationHelper
 import com.futebadosparcas.domain.validation.ValidationResult
 import com.google.firebase.firestore.DocumentId
@@ -301,10 +302,11 @@ data class CashboxSummary(
 
 /**
  * Filtro para listagem do caixa
+ * Usa enums do domain.model para consistência com o resto da UI
  */
 data class CashboxFilter(
-    val type: CashboxEntryType? = null,
-    val category: CashboxCategory? = null,
+    val type: com.futebadosparcas.domain.model.CashboxEntryType? = null,
+    val category: com.futebadosparcas.domain.model.CashboxCategory? = null,
     val startDate: Date? = null,
     val endDate: Date? = null,
     val playerId: String? = null

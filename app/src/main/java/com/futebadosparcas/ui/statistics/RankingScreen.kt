@@ -25,15 +25,14 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import com.futebadosparcas.R
+import coil3.asImage
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.futebadosparcas.domain.model.PlayerRankingItem
 import com.futebadosparcas.domain.model.RankingCategory
 import com.futebadosparcas.domain.model.RankingPeriod
@@ -44,6 +43,8 @@ import com.futebadosparcas.ui.components.lists.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -566,12 +567,12 @@ private fun PlayerAvatar(
         contentAlignment = Alignment.Center
     ) {
         if (!photoUrl.isNullOrBlank()) {
+            val placeholderImage = context.getDrawable(R.drawable.ic_person)?.asImage()
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(photoUrl)
-                    .crossfade(true)
-                    .error(R.drawable.ic_person)
-                    .placeholder(R.drawable.ic_person)
+                    .error(placeholderImage)
+                    .placeholder(placeholderImage)
                     .build(),
                 contentDescription = stringResource(R.string.player_avatar_cd, playerName),
                 modifier = Modifier.fillMaxSize(),

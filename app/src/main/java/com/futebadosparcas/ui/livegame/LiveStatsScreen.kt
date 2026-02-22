@@ -20,11 +20,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.res.stringResource
-import com.futebadosparcas.data.model.LivePlayerStats
-import com.futebadosparcas.R
+import com.futebadosparcas.domain.model.LivePlayerStats
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.util.ContrastHelper
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * LiveStatsScreen - Exibe estatísticas ao vivo dos jogadores

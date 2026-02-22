@@ -32,15 +32,15 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.R
-import com.futebadosparcas.data.model.DraftPlayer
-import com.futebadosparcas.data.model.TeamColor
-import com.futebadosparcas.data.model.PlayerPosition
+import com.futebadosparcas.domain.model.DraftPlayer
+import com.futebadosparcas.domain.model.TeamColor
+import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 
 /**
  * Card de jogador arrastavel para formacao de times.
