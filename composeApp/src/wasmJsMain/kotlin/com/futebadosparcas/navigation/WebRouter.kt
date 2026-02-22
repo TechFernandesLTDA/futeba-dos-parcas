@@ -24,6 +24,7 @@ sealed class WebRoute {
     object DeveloperTools : WebRoute()
     data class Invite(val code: String) : WebRoute()
     data class TacticalBoard(val gameId: String? = null) : WebRoute()
+    data class TeamFormation(val gameId: String) : WebRoute()
     object Admin : WebRoute()
     object AdminUsers : WebRoute()
     object AdminReports : WebRoute()
@@ -48,6 +49,7 @@ sealed class WebRoute {
             is DeveloperTools -> "/dev-tools"
             is Invite -> "/invite/$code"
             is TacticalBoard -> "/tactical${gameId?.let { "/game/$it" } ?: ""}"
+            is TeamFormation -> "/team-formation/$gameId"
             is Admin -> "/admin"
             is AdminUsers -> "/admin/users"
             is AdminReports -> "/admin/reports"
@@ -66,13 +68,14 @@ sealed class WebRoute {
             is Admin, is AdminUsers, is AdminReports -> 8
             is Invite -> 0
             is TacticalBoard -> 1
+            is TeamFormation -> 1
         }
 
     val isDetailScreen: Boolean
         get() = this is GameDetail || this is GroupDetail || this is LocationDetail || 
                 this is LeagueDetail || this is StatisticsDetail || this is Invite || 
                 this is TacticalBoard || this is DeveloperTools || this is PlayerDetail ||
-                this is AdminUsers || this is AdminReports
+                this is AdminUsers || this is AdminReports || this is TeamFormation
 
     val title: String
         get() = when (this) {
@@ -94,6 +97,7 @@ sealed class WebRoute {
             is DeveloperTools -> "Developer Tools"
             is Invite -> "Convite"
             is TacticalBoard -> "Quadro Tático"
+            is TeamFormation -> "Formação de Times"
             is Admin -> "Admin"
             is AdminUsers -> "Gerenciar Usuários"
             is AdminReports -> "Denúncias"
@@ -183,6 +187,10 @@ object WebRouter {
         navigate(WebRoute.TacticalBoard(gameId))
     }
 
+    fun navigateToTeamFormation(gameId: String) {
+        navigate(WebRoute.TeamFormation(gameId))
+    }
+
     fun navigateToPlayer(playerId: String) {
         navigate(WebRoute.PlayerDetail(playerId))
     }
@@ -247,6 +255,7 @@ object WebRouter {
                     WebRoute.TacticalBoard()
                 }
             }
+            segments[0] == "team-formation" && segments.size == 2 -> WebRoute.TeamFormation(segments[1])
             segments[0] == "admin" && segments.size == 1 -> WebRoute.Admin
             segments[0] == "admin" && segments.size == 2 && segments[1] == "users" -> WebRoute.AdminUsers
             segments[0] == "admin" && segments.size == 2 && segments[1] == "reports" -> WebRoute.AdminReports
