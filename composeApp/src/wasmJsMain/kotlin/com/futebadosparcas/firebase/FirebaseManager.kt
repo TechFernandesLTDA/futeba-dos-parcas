@@ -56,7 +56,8 @@ object FirebaseManager {
             "hasActiveFields" to true,
             "amenities" to listOf("Estacionamento", "Vestiário", "Churrasqueira", "Bar"),
             "priceRange" to 120.0,
-            "isActive" to true
+            "isActive" to true,
+            "gamesPlayed" to 89
         ),
         mapOf(
             "id" to "loc2",
@@ -74,7 +75,8 @@ object FirebaseManager {
             "hasActiveFields" to true,
             "amenities" to listOf("Vestiário", "Arquibancada"),
             "priceRange" to 80.0,
-            "isActive" to true
+            "isActive" to true,
+            "gamesPlayed" to 45
         ),
         mapOf(
             "id" to "loc3",
@@ -92,7 +94,8 @@ object FirebaseManager {
             "hasActiveFields" to true,
             "amenities" to listOf("Estacionamento", "Lanchonete"),
             "priceRange" to 200.0,
-            "isActive" to true
+            "isActive" to true,
+            "gamesPlayed" to 156
         ),
         mapOf(
             "id" to "loc4",
@@ -110,7 +113,8 @@ object FirebaseManager {
             "hasActiveFields" to true,
             "amenities" to listOf("Vestiário"),
             "priceRange" to 50.0,
-            "isActive" to true
+            "isActive" to true,
+            "gamesPlayed" to 34
         ),
         mapOf(
             "id" to "loc5",
@@ -128,7 +132,8 @@ object FirebaseManager {
             "hasActiveFields" to true,
             "amenities" to listOf("Estacionamento", "Vestiário", "Churrasqueira", "Bar", "Wi-Fi"),
             "priceRange" to 150.0,
-            "isActive" to true
+            "isActive" to true,
+            "gamesPlayed" to 234
         ),
         mapOf(
             "id" to "loc6",
@@ -146,7 +151,8 @@ object FirebaseManager {
             "hasActiveFields" to true,
             "amenities" to listOf("Estacionamento", "Vestiário", "Churrasqueira"),
             "priceRange" to 300.0,
-            "isActive" to true
+            "isActive" to false,
+            "gamesPlayed" to 67
         )
     )
 
@@ -480,6 +486,37 @@ object FirebaseManager {
         )
         createdLocations.add(newLocation)
         return locationId
+    }
+
+    suspend fun updateLocationStatus(locationId: String, isActive: Boolean): Boolean {
+        delay(200)
+        val allLocations = mockLocations + createdLocations
+        val index = allLocations.indexOfFirst { it["id"] == locationId }
+        if (index < 0) return false
+
+        val mockIndex = mockLocations.indexOfFirst { it["id"] == locationId }
+        if (mockIndex >= 0) {
+            return true
+        }
+
+        val createdIndex = createdLocations.indexOfFirst { it["id"] == locationId }
+        if (createdIndex >= 0) {
+            val updated = createdLocations[createdIndex].toMutableMap()
+            updated["isActive"] = isActive
+            createdLocations[createdIndex] = updated
+            return true
+        }
+
+        return false
+    }
+
+    suspend fun deleteLocation(locationId: String): Boolean {
+        delay(200)
+        val removedFromCreated = createdLocations.removeAll { it["id"] == locationId }
+        if (removedFromCreated) return true
+
+        val existsInMock = mockLocations.any { it["id"] == locationId }
+        return existsInMock
     }
 
     private val mockNotifications = mutableListOf<Map<String, Any?>>()
