@@ -187,28 +187,84 @@
             return user ? user.photoURL : null;
         };
 
-        // External functions for Kotlin/Wasm interop
-        window.jsFirebaseGetCurrentUser = function() {
-            return firebase.auth().currentUser;
-        };
-
-        window.jsFirebaseSignIn = function(email, password) {
-            return firebase.auth().signInWithEmailAndPassword(email, password);
-        };
-
-        window.jsFirebaseCreateUser = function(email, password) {
-            return firebase.auth().createUserWithEmailAndPassword(email, password);
-        };
-
-        window.jsFirebaseSignOut = function() {
-            return firebase.auth().signOut();
+        // External functions for Kotlin/Wasm Firebase Auth interop (real auth)
+        window.jsFirebaseSignInWithEmail = function(email, password) {
+            return firebase.auth().signInWithEmailAndPassword(email, password)
+                .then(function(userCredential) {
+                    return { success: true, uid: userCredential.user.uid, email: userCredential.user.email, displayName: userCredential.user.displayName };
+                })
+                .catch(function(error) {
+                    return { success: false, error: error.message };
+                });
         };
 
         window.jsFirebaseSignInWithGoogle = function() {
             var provider = new firebase.auth.GoogleAuthProvider();
             provider.addScope('email');
             provider.addScope('profile');
-            return firebase.auth().signInWithPopup(provider);
+            return firebase.auth().signInWithPopup(provider)
+                .then(function(result) {
+                    return { success: true, uid: result.user.uid, email: result.user.email, displayName: result.user.displayName, photoURL: result.user.photoURL };
+                })
+                .catch(function(error) {
+                    return { success: false, error: error.message };
+                });
+        };
+
+        window.jsFirebaseSignUp = function(email, password, displayName) {
+            return firebase.auth().createUserWithEmailAndPassword(email, password)
+                .then(function(userCredential) {
+                    if (displayName) {
+                        return userCredential.user.updateProfile({ displayName: displayName })
+                            .then(function() {
+                                return { success: true, uid: userCredential.user.uid, email: userCredential.user.email, displayName: displayName };
+                            });
+                    }
+                    return { success: true, uid: userCredential.user.uid, email: userCredential.user.email, displayName: null };
+                })
+                .catch(function(error) {
+                    return { success: false, error: error.message };
+                });
+        };
+
+        window.jsFirebaseSignOut = function() {
+            return firebase.auth().signOut()
+                .then(function() {
+                    return { success: true };
+                })
+                .catch(function(error) {
+                    return { success: false, error: error.message };
+                });
+        };
+
+        window.jsFirebaseGetCurrentUser = function() {
+            var user = firebase.auth().currentUser;
+            if (user) {
+                return { uid: user.uid, email: user.email, displayName: user.displayName, photoURL: user.photoURL };
+            }
+            return null;
+        };
+
+        window.jsFirebaseOnAuthStateChanged = function(callback) {
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    callback({ uid: user.uid, email: user.email, displayName: user.displayName, photoURL: user.photoURL });
+                } else {
+                    callback(null);
+                }
+            });
+        };
+
+        window.jsFirebaseGetIdToken = function() {
+            var user = firebase.auth().currentUser;
+            if (user) {
+                return user.getIdToken().then(function(token) {
+                    return { success: true, token: token };
+                }).catch(function(error) {
+                    return { success: false, error: error.message };
+                });
+            }
+            return Promise.resolve({ success: false, error: 'No user logged in' });
         };
 
         window.dateNow = function() {
