@@ -1,26 +1,47 @@
 package com.futebadosparcas.ui
 
 import androidx.compose.animation.core.*
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.background
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.layout.*
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.lazy.LazyColumn
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.lazy.LazyRow
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.lazy.items
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.shape.CircleShape
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.material3.*
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.runtime.*
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.Alignment
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.Modifier
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.draw.clip
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.graphics.Brush
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.graphics.Color
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.text.font.FontWeight
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.text.style.TextAlign
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.text.style.TextOverflow
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.components.states.ErrorState
 import com.futebadosparcas.firebase.FirebaseManager
+import com.futebadosparcas.ui.components.states.ErrorState
 import kotlinx.coroutines.launch
+import com.futebadosparcas.ui.components.states.ErrorState
 
 private sealed class PlayerDetailUiState {
     object Loading : PlayerDetailUiState()
