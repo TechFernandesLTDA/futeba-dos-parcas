@@ -960,8 +960,8 @@ fun KmpCashboxSummary.toAndroidCashboxSummary(): AndroidCashboxSummary {
  */
 fun AndroidCashboxFilter.toKmpCashboxFilter(): KmpCashboxFilter {
     return KmpCashboxFilter(
-        type = type?.toKmpCashboxEntryType(),
-        category = category?.toKmpCashboxCategory(),
+        type = type, // AndroidCashboxFilter já usa domain.model enums
+        category = category, // AndroidCashboxFilter já usa domain.model enums
         startDate = startDate?.time?.let { Instant.fromEpochMilliseconds(it) },
         endDate = endDate?.time?.let { Instant.fromEpochMilliseconds(it) },
         playerId = playerId
@@ -973,8 +973,8 @@ fun AndroidCashboxFilter.toKmpCashboxFilter(): KmpCashboxFilter {
  */
 fun KmpCashboxFilter.toAndroidCashboxFilter(): AndroidCashboxFilter {
     return AndroidCashboxFilter(
-        type = type?.toAndroidCashboxEntryType(),
-        category = category?.toAndroidCashboxCategory(),
+        type = type, // AndroidCashboxFilter já usa domain.model enums
+        category = category, // AndroidCashboxFilter já usa domain.model enums
         startDate = startDate?.toEpochMilliseconds()?.let { java.util.Date(it) },
         endDate = endDate?.toEpochMilliseconds()?.let { java.util.Date(it) },
         playerId = playerId

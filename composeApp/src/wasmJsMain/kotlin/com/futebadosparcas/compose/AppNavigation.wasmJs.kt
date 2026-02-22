@@ -15,7 +15,9 @@ actual fun AppNavigation(
     onLoginSuccess: () -> Unit
 ) {
     if (isLoggedIn) {
-        HomeScreenWeb()
+        HomeScreenWeb(
+            onLogout = { onLoginSuccess() }
+        )
     } else {
         LoginScreen(onLoginSuccess = onLoginSuccess)
     }

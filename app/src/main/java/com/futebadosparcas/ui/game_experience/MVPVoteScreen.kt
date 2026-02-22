@@ -22,7 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import com.futebadosparcas.data.model.GameConfirmation
+import coil3.request.placeholder
+import coil3.request.error
+import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.ui.components.EmptyState
@@ -300,7 +302,7 @@ private fun CandidateCard(
             val posEnum = try {
                 PlayerPosition.valueOf(candidate.position)
             } catch (e: Exception) {
-                PlayerPosition.FIELD
+                PlayerPosition.LINE
             }
 
             Text(

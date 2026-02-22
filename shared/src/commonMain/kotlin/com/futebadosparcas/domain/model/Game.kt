@@ -133,6 +133,12 @@ data class Game(
     // Co-organizadores
     @SerialName("co_organizers") val coOrganizers: List<String> = emptyList(),
 
+    // Configurações avançadas
+    @SerialName("auto_close_hours") val autoCloseHours: Int? = null,
+    @SerialName("require_checkin") val requireCheckin: Boolean = false,
+    @SerialName("checkin_radius_meters") val checkinRadiusMeters: Double = 100.0,
+    val rules: String = "",
+
     // Flags de estado
     @SerialName("has_user_voted") val hasUserVoted: Boolean = false,
     @SerialName("is_soft_deleted") val isSoftDeleted: Boolean = false,
@@ -267,7 +273,11 @@ data class GameConfirmation(
     @SerialName("is_mvp") val isMvp: Boolean = false,
     @SerialName("is_best_gk") val isBestGk: Boolean = false,
     @SerialName("is_worst_player") val isWorstPlayer: Boolean = false,
-    @SerialName("confirmed_at") val confirmedAt: Long? = null
+    @SerialName("confirmed_at") val confirmedAt: Long? = null,
+
+    // Pagamento e presença
+    @SerialName("partial_payment") val partialPayment: Double = 0.0,
+    @SerialName("was_present") val wasPresent: Boolean = false
 ) {
     init {
         require(goals >= 0) { "goals nao pode ser negativo: $goals" }
@@ -293,6 +303,24 @@ data class GameConfirmation(
     }
 
     fun getPositionEnum(): PlayerPosition = PlayerPosition.fromString(position)
+
+    /**
+     * Verifica se há pagamento parcial pendente.
+     */
+    fun hasPartialPayment(): Boolean =
+        getPaymentStatusEnum() == PaymentStatus.PARTIAL && partialPayment > 0.0
+
+    /**
+     * Retorna o valor restante a ser pago.
+     * Assume que o jogo tem um custo por jogador (dailyPrice / maxPlayers).
+     */
+    fun getRemainingPayment(dailyPricePerPlayer: Double): Double {
+        return if (hasPartialPayment()) {
+            (dailyPricePerPlayer - partialPayment).coerceAtLeast(0.0)
+        } else {
+            0.0
+        }
+    }
 }
 
 /**

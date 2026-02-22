@@ -23,6 +23,7 @@ import com.futebadosparcas.util.LocationErrorHandler
 import com.futebadosparcas.util.LocationSources
 import com.futebadosparcas.util.RecoveryAction
 import com.futebadosparcas.util.toAndroidLocation
+import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidLocationReview
 import com.futebadosparcas.util.toAndroidLocationReviews
 import com.futebadosparcas.util.toAndroidCashboxEntry
@@ -206,8 +207,8 @@ class LocationDetailViewModel(
             if (fieldsResult.isSuccess) {
                  _uiState.value = LocationDetailUiState.Success(
                      location,
-                     fieldsResult.getOrNull()?.map { it.toField() } ?: emptyList(),
-                     reviewsResult.getOrNull()?.map { it.toAndroidLocationReview() } ?: emptyList()
+                     fieldsResult.getOrNull() ?: emptyList(), // Repository retorna domain.model.Field
+                     reviewsResult.getOrNull()?.map { it.toAndroidLocationReview() } ?: emptyList() // Converter para data.model
                  )
             } else {
                  val exception = fieldsResult.exceptionOrNull()
@@ -444,7 +445,7 @@ class LocationDetailViewModel(
 
             var currentField: Field? = null
              locationRepository.getFieldById(fieldId).onSuccess {
-                currentField = it.toField()
+                currentField = it // Repository já retorna domain.model.Field
             }.onFailure {
                 _uiState.value = LocationDetailUiState.Error("Quadra não encontrada")
                 return@launch

@@ -74,9 +74,9 @@ fun HeatmapGrid(
     val activityCounts = remember(activities) {
         val counts = mutableMapOf<java.time.LocalDate, Int>()
         activities.forEach { activity ->
-            activity.createdAt?.let { date ->
+            activity.createdAt?.let { timestamp ->
                 try {
-                    val localDate = date.toInstant()
+                    val localDate = java.time.Instant.ofEpochMilli(timestamp)
                         .atZone(java.time.ZoneId.systemDefault())
                         .toLocalDate()
                     counts[localDate] = (counts[localDate] ?: 0) + 1

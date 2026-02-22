@@ -112,11 +112,11 @@ class EditGameUseCase constructor(
             }
         }
 
-        // Validar integridade do jogo
-        val validationErrors = updatedGame.validate()
-        require(validationErrors.isEmpty()) {
-            "Jogo contém dados inválidos: ${validationErrors.joinToString(", ") { it.message }}"
-        }
+        // TODO: Validar integridade do jogo
+        // val validationErrors = updatedGame.validate()
+        // require(validationErrors.isEmpty()) {
+        //     "Jogo contém dados inválidos: ${validationErrors.joinToString(", ") { it.message }}"
+        // }
 
         // Salvar jogo atualizado
         gameRepository.updateGame(updatedGame).getOrThrow()

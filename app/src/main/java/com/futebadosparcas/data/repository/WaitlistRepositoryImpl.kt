@@ -162,7 +162,7 @@ class WaitlistRepositoryImpl constructor(
                 }
 
                 val list = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(GameWaitlist::class.java)?.apply { id = doc.id }
+                    doc.toObject(GameWaitlist::class.java)?.copy(id = doc.id)
                 } ?: emptyList()
 
                 trySend(Result.success(list))

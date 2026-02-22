@@ -25,7 +25,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.domain.model.*
+import com.futebadosparcas.domain.model.CashboxCategory
+import com.futebadosparcas.domain.model.CashboxEntryType as KmpCashboxEntryType
+import com.futebadosparcas.data.model.CashboxEntryType as AndroidCashboxEntryType
+import com.futebadosparcas.domain.model.GroupMemberRole
+import com.futebadosparcas.data.model.AndroidCashboxEntry
+import com.futebadosparcas.data.model.AndroidCashboxFilter
+import com.futebadosparcas.data.model.AndroidCashboxSummary
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.dialogs.ConfirmationDialog
@@ -62,13 +68,13 @@ fun CashboxScreen(
     var showFilterMenu by remember { mutableStateOf(false) }
     var showRecalculateDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var selectedEntry by remember { mutableStateOf<CashboxEntry?>(null) }
+    var selectedEntry by remember { mutableStateOf<AndroidCashboxEntry?>(null) }
     var showEntryDetails by remember { mutableStateOf(false) }
     var showReportMenu by remember { mutableStateOf(false) }
     var showTotalsDialog by remember { mutableStateOf(false) }
     var totalsDialogTitle by remember { mutableStateOf("") }
     var totalsDialogData by remember { mutableStateOf<Map<String, Double>>(emptyMap()) }
-    var showAddEntryDialog by remember { mutableStateOf<CashboxEntryType?>(null) }
+    var showAddEntryDialog by remember { mutableStateOf<KmpCashboxEntryType?>(null) }
 
     val context = LocalContext.current
     val canManage = userRole == GroupMemberRole.ADMIN || userRole == GroupMemberRole.OWNER
@@ -111,7 +117,7 @@ fun CashboxScreen(
             type = type,
             onDismiss = { showAddEntryDialog = null },
             onSave = { description, amount, category, receiptUri ->
-                if (type == CashboxEntryType.INCOME) {
+                if (type == KmpCashboxEntryType.INCOME) {
                     viewModel.addIncome(category, amount, description, receiptUri = receiptUri)
                 } else {
                     viewModel.addExpense(category, amount, description, receiptUri = receiptUri)
@@ -197,11 +203,11 @@ fun CashboxScreen(
                     showFilterMenu = false
                 },
                 onFilterIncome = {
-                    viewModel.filterByType(CashboxEntryType.INCOME)
+                    viewModel.filterByType(KmpCashboxEntryType.INCOME)
                     showFilterMenu = false
                 },
                 onFilterExpense = {
-                    viewModel.filterByType(CashboxEntryType.EXPENSE)
+                    viewModel.filterByType(KmpCashboxEntryType.EXPENSE)
                     showFilterMenu = false
                 },
                 onRecalculateClick = { showRecalculateDialog = true },
@@ -220,8 +226,8 @@ fun CashboxScreen(
         floatingActionButton = {
             if (canManage) {
                 CashboxFABs(
-                    onAddIncome = { showAddEntryDialog = CashboxEntryType.INCOME },
-                    onAddExpense = { showAddEntryDialog = CashboxEntryType.EXPENSE }
+                    onAddIncome = { showAddEntryDialog = KmpCashboxEntryType.INCOME },
+                    onAddExpense = { showAddEntryDialog = KmpCashboxEntryType.EXPENSE }
                 )
             }
         },
@@ -258,8 +264,8 @@ fun CashboxScreen(
             FilterChips(
                 currentFilter = currentFilter,
                 onFilterAll = { viewModel.clearFilter() },
-                onFilterIncome = { viewModel.filterByType(CashboxEntryType.INCOME) },
-                onFilterExpense = { viewModel.filterByType(CashboxEntryType.EXPENSE) }
+                onFilterIncome = { viewModel.filterByType(KmpCashboxEntryType.INCOME) },
+                onFilterExpense = { viewModel.filterByType(KmpCashboxEntryType.EXPENSE) }
             )
 
             // Histórico
@@ -316,7 +322,7 @@ fun CashboxScreen(
  */
 sealed class CashboxListItem {
     data class Header(val title: String) : CashboxListItem()
-    data class Entry(val entry: CashboxEntry) : CashboxListItem()
+    data class Entry(val entry: AndroidCashboxEntry) : CashboxListItem()
 }
 
 
@@ -411,7 +417,7 @@ private fun CashboxTopBar(
 }
 
 @Composable
-private fun SummaryCard(summary: CashboxSummary) {
+private fun SummaryCard(summary: AndroidCashboxSummary) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -507,7 +513,7 @@ private fun SummaryCard(summary: CashboxSummary) {
 
 @Composable
 private fun FilterChips(
-    currentFilter: CashboxFilter?,
+    currentFilter: AndroidCashboxFilter?,
     onFilterAll: () -> Unit,
     onFilterIncome: () -> Unit,
     onFilterExpense: () -> Unit
@@ -528,19 +534,19 @@ private fun FilterChips(
         )
 
         FilterChip(
-            selected = currentFilter?.type == CashboxEntryType.INCOME,
+            selected = currentFilter?.type == KmpCashboxEntryType.INCOME,
             onClick = onFilterIncome,
             label = { Text(stringResource(R.string.cashbox_income_short)) },
-            leadingIcon = if (currentFilter?.type == CashboxEntryType.INCOME) {
+            leadingIcon = if (currentFilter?.type == KmpCashboxEntryType.INCOME) {
                 { Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected), Modifier.size(18.dp)) }
             } else null
         )
 
         FilterChip(
-            selected = currentFilter?.type == CashboxEntryType.EXPENSE,
+            selected = currentFilter?.type == KmpCashboxEntryType.EXPENSE,
             onClick = onFilterExpense,
             label = { Text(stringResource(R.string.cashbox_expense_short)) },
-            leadingIcon = if (currentFilter?.type == CashboxEntryType.EXPENSE) {
+            leadingIcon = if (currentFilter?.type == KmpCashboxEntryType.EXPENSE) {
                 { Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_filter_selected), Modifier.size(18.dp)) }
             } else null
         )
@@ -552,8 +558,8 @@ private fun HistoryList(
     items: List<CashboxListItem>,
     canDelete: Boolean,
     contentPadding: PaddingValues,
-    onEntryClick: (CashboxEntry) -> Unit,
-    onEntryLongClick: (CashboxEntry) -> Unit
+    onEntryClick: (AndroidCashboxEntry) -> Unit,
+    onEntryLongClick: (AndroidCashboxEntry) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -599,11 +605,12 @@ private fun MonthHeader(title: String) {
 
 @Composable
 private fun EntryCard(
-    entry: CashboxEntry,
+    entry: AndroidCashboxEntry,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)?
 ) {
-    val isIncome = entry.getTypeEnum() == CashboxEntryType.INCOME
+    // entry.getTypeEnum() retorna AndroidCashboxEntryType (data.model)
+    val isIncome = entry.getTypeEnum() == AndroidCashboxEntryType.INCOME
     val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
 
     Card(
@@ -740,7 +747,7 @@ private fun CashboxFABs(
 
 @Composable
 private fun EntryDetailsDialog(
-    entry: CashboxEntry,
+    entry: AndroidCashboxEntry,
     onDismiss: () -> Unit
 ) {
     val currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))

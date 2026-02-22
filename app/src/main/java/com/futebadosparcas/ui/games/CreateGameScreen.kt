@@ -24,11 +24,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.data.model.Field
+import com.futebadosparcas.domain.model.Field
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.GameVisibility
 import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.util.HapticManager
+import com.futebadosparcas.util.toKmpField
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -273,7 +274,7 @@ fun CreateGameScreen(
                 location = location,
                 onDismiss = { showFieldDialog = false },
                 onFieldSelected = { field ->
-                    viewModel.setField(field)
+                    viewModel.setField(field.toKmpField()) // Converter data.model.Field -> domain.model.Field
                     showFieldDialog = false
                 }
             )

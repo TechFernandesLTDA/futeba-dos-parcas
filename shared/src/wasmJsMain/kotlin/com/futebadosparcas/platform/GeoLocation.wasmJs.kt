@@ -11,7 +11,7 @@ package com.futebadosparcas.platform
  * - coords.accuracy
  * - timestamp
  *
- * Essas extensões são placeholders para futuras integrações com Web APIs
+ * External declarations estão em BrowserExternals.kt
  */
 
 /**
@@ -28,6 +28,6 @@ fun createGeoLocation(
         longitude = longitude,
         altitude = altitude,
         accuracy = accuracy,
-        timestamp = js("Date.now()") as Long
+        timestamp = Date.now().toLong()
     )
 }

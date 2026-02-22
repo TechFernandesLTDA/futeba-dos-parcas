@@ -702,7 +702,7 @@ fun PositionSelectionDialog(
                     Text(stringResource(R.string.goalkeeper))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { onConfirm(PlayerPosition.FIELD) }, modifier = Modifier.fillMaxWidth()) {
+                Button(onClick = { onConfirm(PlayerPosition.LINE) }, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.field_player))
                 }
             }

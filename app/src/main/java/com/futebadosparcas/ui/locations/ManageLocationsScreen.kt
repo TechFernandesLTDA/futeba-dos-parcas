@@ -72,7 +72,7 @@ fun ManageLocationsScreen(
     var showDeleteLocationDialog by remember { mutableStateOf(false) }
     var showDeleteFieldDialog by remember { mutableStateOf(false) }
     var selectedLocationToDelete by remember { mutableStateOf<LocationWithFieldsData?>(null) }
-    var selectedFieldToDelete by remember { mutableStateOf<com.futebadosparcas.data.model.Field?>(null) }
+    var selectedFieldToDelete by remember { mutableStateOf<com.futebadosparcas.domain.model.Field?>(null) }
     var showSeedDialog by remember { mutableStateOf(false) }
     var showDeduplicateDialog by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
@@ -324,7 +324,7 @@ private fun ManageLocationsContent(
     onLocationClick: (locationId: String) -> Unit,
     onRefresh: () -> Unit,
     onDeleteLocation: (LocationWithFieldsData) -> Unit,
-    onDeleteField: (com.futebadosparcas.data.model.Field) -> Unit
+    onDeleteField: (com.futebadosparcas.domain.model.Field) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -350,7 +350,7 @@ private fun LocationCard(
     locationWithFields: LocationWithFieldsData,
     onLocationClick: () -> Unit,
     onDeleteLocation: () -> Unit,
-    onDeleteField: (com.futebadosparcas.data.model.Field) -> Unit
+    onDeleteField: (com.futebadosparcas.domain.model.Field) -> Unit
 ) {
     val location = locationWithFields.location
     val fieldCount = locationWithFields.fields.size
@@ -489,7 +489,7 @@ private fun LocationCard(
  */
 @Composable
 private fun FieldRow(
-    field: com.futebadosparcas.data.model.Field,
+    field: com.futebadosparcas.domain.model.Field,
     onDelete: () -> Unit
 ) {
     Row(

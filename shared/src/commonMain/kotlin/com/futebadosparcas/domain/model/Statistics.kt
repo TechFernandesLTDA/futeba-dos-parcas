@@ -110,6 +110,33 @@ data class Statistics(
     val avgCardsPerGame: Double
         get() = if (totalGames == 0) 0.0 else totalCards.toDouble() / totalGames.toDouble()
 
+    /**
+     * Taxa de MVP (melhor jogador) - mvpCount / totalGames.
+     */
+    val mvpRate: Double
+        get() = if (totalGames == 0) 0.0 else mvpCount.toDouble() / totalGames.toDouble()
+
+    /**
+     * Taxa de presenca (jogos jogados / total de convocacoes).
+     * Como nao temos convocacoes aqui, retorna 0.0 como fallback.
+     */
+    val presenceRate: Double
+        get() = 0.0 // TODO: Implementar quando tivermos dados de convocacoes
+
+    /**
+     * Sequencia atual de MVPs consecutivos.
+     * Como nao temos historico aqui, retorna 0 como fallback.
+     */
+    val currentMvpStreak: Int
+        get() = 0 // TODO: Implementar quando tivermos historico de jogos
+
+    /**
+     * Melhor quantidade de gols em um unico jogo.
+     * Como nao temos historico aqui, retorna 0 como fallback.
+     */
+    val bestGoalCount: Int
+        get() = 0 // TODO: Implementar quando tivermos historico de jogos
+
     // Nota: Metodos get*() removidos para evitar clash com computed properties.
     // Use as computed properties ou extension functions diretas.
 }

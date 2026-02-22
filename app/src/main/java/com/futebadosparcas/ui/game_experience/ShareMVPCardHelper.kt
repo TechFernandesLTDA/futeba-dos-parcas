@@ -20,6 +20,8 @@ import androidx.core.graphics.toColorInt
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.toBitmap
 import com.futebadosparcas.data.model.MVPVoteResult
 import com.futebadosparcas.domain.model.VoteCategory
 import kotlinx.coroutines.CoroutineScope
@@ -179,7 +181,7 @@ object ShareMVPCardHelper {
 
                 val result = context.imageLoader.execute(request)
                 if (result is SuccessResult) {
-                    (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                    result.image.toBitmap()
                 } else null
             } catch (e: Exception) {
                 null

@@ -3,6 +3,8 @@ package com.futebadosparcas.domain.usecase.game
 import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.ai.AiTeamBalancer
+import com.futebadosparcas.util.toAndroidGameConfirmations
+import com.futebadosparcas.util.toKmpTeams
 
 /**
  * Use case para calcular balanceamento de times.
@@ -47,7 +49,11 @@ class CalculateTeamBalanceUseCase constructor(
             )
         }
 
-        // Calcular balanceamento
-        return teamBalancer.balanceTeams(gameId, players, numberOfTeams)
+        // Calcular balanceamento (converter para data.model)
+        val androidPlayers = players.toAndroidGameConfirmations()
+        val result = teamBalancer.balanceTeams(gameId, androidPlayers, numberOfTeams)
+
+        // Converter resultado de volta para domain.model
+        return result.map { it.toKmpTeams() }
     }
 }
