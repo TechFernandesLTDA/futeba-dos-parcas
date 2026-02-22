@@ -24,11 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-<<<<<<< HEAD
-import com.futebadosparcas.data.model.Field
-=======
 import com.futebadosparcas.domain.model.Field
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.GameVisibility
 import com.futebadosparcas.domain.model.Location

@@ -61,7 +61,7 @@ class GetPlayerStatisticsUseCase constructor(
 
         // 1. Buscar usuário e estatísticas em paralelo
         val userResult = firebaseDataSource.getUserById(userId)
-        val statsResult = firebaseDataSource.getStatistics(userId)
+        val statsResult = firebaseDataSource.getUserStatistics(userId)
 
         // 2. Verificar erros
         val user = userResult.getOrElse { return Result.failure(it) }
@@ -104,7 +104,7 @@ class GetPlayerStatisticsUseCase constructor(
     fun getPlayerStatsFlow(userId: String): Flow<Result<PlayerStats>> {
         AppLogger.d(TAG) { "Iniciando flow de estatísticas: $userId" }
 
-        val statsFlow = firebaseDataSource.getStatisticsFlow(userId)
+        val statsFlow = firebaseDataSource.getUserStatisticsFlow(userId)
 
         return statsFlow.combine(
             // Pode adicionar flow do user aqui se necessário

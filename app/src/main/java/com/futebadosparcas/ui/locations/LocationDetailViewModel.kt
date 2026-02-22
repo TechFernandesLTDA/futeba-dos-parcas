@@ -5,10 +5,6 @@ import com.futebadosparcas.util.AppLogger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.datasource.FieldPhotoDataSource
-<<<<<<< HEAD
-import com.futebadosparcas.data.model.Field as AndroidField
-=======
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.data.model.Location as AndroidLocation
 import com.futebadosparcas.data.model.LocationReview as AndroidLocationReview
@@ -28,10 +24,6 @@ import com.futebadosparcas.util.LocationSources
 import com.futebadosparcas.util.RecoveryAction
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidField
-<<<<<<< HEAD
-import com.futebadosparcas.util.toAndroidFields
-=======
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.util.toAndroidLocationReview
 import com.futebadosparcas.util.toAndroidLocationReviews
 import com.futebadosparcas.util.toAndroidCashboxEntry

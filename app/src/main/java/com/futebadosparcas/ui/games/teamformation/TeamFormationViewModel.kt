@@ -5,11 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.data.model.SavedTeamFormation
 import com.futebadosparcas.data.model.DraftState
-<<<<<<< HEAD
-import com.futebadosparcas.data.model.TeamColor
-=======
 import com.futebadosparcas.data.model.DraftRevealAnimation
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.ai.EnhancedTeamBalancer

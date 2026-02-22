@@ -25,11 +25,6 @@ import com.futebadosparcas.data.model.PixKeyType
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidGameTemplate
-<<<<<<< HEAD
-import com.futebadosparcas.util.toAndroidSchedule
-import com.futebadosparcas.util.toKmpSchedule
-=======
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 
 class GameDetailViewModel(
     private val gameRepository: GameRepository,

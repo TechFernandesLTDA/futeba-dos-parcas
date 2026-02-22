@@ -1,10 +1,7 @@
 package com.futebadosparcas.domain.usecase.group
 
 import com.futebadosparcas.domain.model.GroupInvite
-<<<<<<< HEAD
-=======
 import com.futebadosparcas.domain.model.calculateGroupInviteExpirationDate
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase

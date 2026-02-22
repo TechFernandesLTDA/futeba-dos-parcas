@@ -25,9 +25,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-<<<<<<< HEAD
-import com.futebadosparcas.domain.model.*
-=======
 import com.futebadosparcas.domain.model.CashboxCategory
 import com.futebadosparcas.domain.model.CashboxEntryType as KmpCashboxEntryType
 import com.futebadosparcas.data.model.CashboxEntryType as AndroidCashboxEntryType
@@ -35,7 +32,6 @@ import com.futebadosparcas.domain.model.GroupMemberRole
 import com.futebadosparcas.data.model.AndroidCashboxEntry
 import com.futebadosparcas.data.model.AndroidCashboxFilter
 import com.futebadosparcas.data.model.AndroidCashboxSummary
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.dialogs.ConfirmationDialog

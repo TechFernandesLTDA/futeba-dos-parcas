@@ -20,12 +20,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.data.model.Field
-<<<<<<< HEAD
-import com.futebadosparcas.domain.model.FieldType
-=======
 import com.futebadosparcas.data.model.FieldType as AndroidFieldType
 import com.futebadosparcas.domain.model.FieldType as KmpFieldType
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.model.Location
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -44,10 +40,7 @@ import com.futebadosparcas.R
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidField
 import com.futebadosparcas.util.toAndroidFields
-<<<<<<< HEAD
-=======
 import com.futebadosparcas.util.toAndroidLocations
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import androidx.compose.ui.res.stringResource
 
 /**

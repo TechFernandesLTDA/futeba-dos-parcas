@@ -7,17 +7,6 @@ import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.UserRepository
-<<<<<<< HEAD
-import com.futebadosparcas.util.toAndroidLocation
-import com.futebadosparcas.util.toAndroidField
-import com.futebadosparcas.util.toAndroidFields
-import com.futebadosparcas.util.toAndroidLocationReview
-import com.futebadosparcas.util.toAndroidLocationReviews
-import com.futebadosparcas.util.toAndroidCashboxEntry
-import com.futebadosparcas.util.toAndroidCashboxEntries
-import com.futebadosparcas.util.toAndroidGroupInvites
-=======
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow

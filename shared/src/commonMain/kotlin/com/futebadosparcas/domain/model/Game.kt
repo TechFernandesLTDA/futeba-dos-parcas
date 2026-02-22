@@ -133,15 +133,12 @@ data class Game(
     // Co-organizadores
     @SerialName("co_organizers") val coOrganizers: List<String> = emptyList(),
 
-<<<<<<< HEAD
-=======
     // Configurações avançadas
     @SerialName("auto_close_hours") val autoCloseHours: Int? = null,
     @SerialName("require_checkin") val requireCheckin: Boolean = false,
     @SerialName("checkin_radius_meters") val checkinRadiusMeters: Double = 100.0,
     val rules: String = "",
 
->>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
     // Flags de estado
     @SerialName("has_user_voted") val hasUserVoted: Boolean = false,
     @SerialName("is_soft_deleted") val isSoftDeleted: Boolean = false,
