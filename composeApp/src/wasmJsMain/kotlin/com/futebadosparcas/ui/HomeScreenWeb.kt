@@ -278,10 +278,21 @@ fun HomeScreenWeb(
                             onGameClick = navigateToGameDetail,
                             onCreateGameClick = { WebRouter.navigate(WebRoute.CreateGame) }
                         )
-                        is WebRoute.GameDetail -> GameDetailScreenWeb(
-                            gameId = route.gameId,
-                            onBackClick = navigateBack
-                        )
+                        is WebRoute.GameDetail -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("⚽", style = MaterialTheme.typography.displayLarge)
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text("Detalhes do Jogo", style = MaterialTheme.typography.titleMedium)
+                                    Text("ID: ${route.gameId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Button(onClick = navigateBack) { Text("← Voltar") }
+                                }
+                            }
+                        }
                         is WebRoute.CreateGame -> CreateGameScreen(
                             onBackClick = navigateBack,
                             onGameCreated = { game ->
@@ -322,11 +333,23 @@ fun HomeScreenWeb(
                             onLeagueClick = { WebRouter.navigateToLeague() },
                             onPlayerClick = { userId -> WebRouter.navigateToStatistics(userId) }
                         )
-                        is WebRoute.LeagueDetail -> LeagueDetailScreen(
-                            seasonId = route.seasonId,
-                            onBackClick = navigateBack,
-                            onPlayerClick = { userId -> WebRouter.navigateToStatistics(userId) }
-                        )
+                        is WebRoute.LeagueDetail -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("🏆", style = MaterialTheme.typography.displayLarge)
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text("Detalhes da Liga", style = MaterialTheme.typography.titleMedium)
+                                    route.seasonId?.let { 
+                                        Text("Temporada: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Button(onClick = navigateBack) { Text("← Voltar") }
+                                }
+                            }
+                        }
                         is WebRoute.StatisticsDetail -> StatisticsDetailScreen(
                             userId = route.userId,
                             groupId = route.groupId,
