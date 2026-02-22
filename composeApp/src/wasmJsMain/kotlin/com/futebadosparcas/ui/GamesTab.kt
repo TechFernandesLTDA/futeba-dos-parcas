@@ -113,13 +113,13 @@ data class WebConfirmation(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GamesTab(
-    onGameClick: ((String) -> Unit)? = null
+    onGameClick: ((String) -> Unit)? = null,
+    onCreateGameClick: (() -> Unit)? = null
 ) {
     var games by remember { mutableStateOf<List<WebGame>>(emptyList()) }
     var uiState by remember { mutableStateOf<UiState<List<WebGame>>>(UiState.Loading) }
     var selectedStatusFilter by remember { mutableStateOf(StatusFilter.ALL) }
     var selectedDateFilter by remember { mutableStateOf(DateFilter.ALL) }
-    var showCreateDialog by remember { mutableStateOf(false) }
     var selectedGame by remember { mutableStateOf<WebGame?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -158,7 +158,7 @@ fun GamesTab(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showCreateDialog = true },
+                onClick = { onCreateGameClick?.invoke() },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
@@ -196,7 +196,7 @@ fun GamesTab(
 
             when (val state = uiState) {
                 is UiState.Loading -> GamesLoadingState()
-                is UiState.Empty -> GamesEmptyState(onCreateClick = { showCreateDialog = true })
+                is UiState.Empty -> GamesEmptyState(onCreateClick = { onCreateGameClick?.invoke() })
                 is UiState.Error -> GamesErrorState(message = state.message, onRetry = { loadGames() })
                 is UiState.Success -> {
                     if (filteredGames.isEmpty()) {
@@ -220,10 +220,6 @@ fun GamesTab(
                 }
             }
         }
-    }
-
-    if (showCreateDialog) {
-        CreateGameDialog(onDismiss = { showCreateDialog = false }, onCreate = { showCreateDialog = false })
     }
 
     selectedGame?.let { game ->

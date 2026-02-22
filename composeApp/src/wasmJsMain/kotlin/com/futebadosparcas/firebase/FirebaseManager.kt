@@ -1270,4 +1270,4 @@ object FirebaseManager {
 
 private external fun jsGetCurrentDate(): String
 private external fun jsGetDatePlusDays(days: Int): String
-private external fun jsGetTimestamp(): Double
+external fun jsGetTimestamp(): Double

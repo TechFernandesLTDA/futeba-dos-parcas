@@ -105,6 +105,7 @@ fun HomeScreenWeb(
                             gamificationScreen == GamificationScreen.XpHistory -> "Histórico de XP"
                             gamificationScreen == GamificationScreen.Settings -> "Configurações"
                             currentRoute is WebRoute.GameDetail -> "Detalhes do Jogo"
+                            currentRoute is WebRoute.CreateGame -> "Criar Jogo"
                             currentRoute is WebRoute.GroupDetail -> "Detalhes do Grupo"
                             currentRoute is WebRoute.Invite -> "Convite"
                             currentRoute is WebRoute.TacticalBoard -> "Quadro Tático"
@@ -274,11 +275,18 @@ fun HomeScreenWeb(
                             onGameClick = navigateToGameDetail
                         )
                         is WebRoute.Games -> GamesTab(
-                            onGameClick = navigateToGameDetail
+                            onGameClick = navigateToGameDetail,
+                            onCreateGameClick = { WebRouter.navigate(WebRoute.CreateGame) }
                         )
                         is WebRoute.GameDetail -> GameDetailScreenWeb(
                             gameId = route.gameId,
                             onBackClick = navigateBack
+                        )
+                        is WebRoute.CreateGame -> CreateGameScreen(
+                            onBackClick = navigateBack,
+                            onGameCreated = { game ->
+                                WebRouter.navigateToGame(game.id)
+                            }
                         )
                         is WebRoute.Groups -> GroupsTab(
                             onGroupClick = navigateToGroupDetail
