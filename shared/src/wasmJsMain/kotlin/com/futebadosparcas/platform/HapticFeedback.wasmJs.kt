@@ -1,59 +1,49 @@
 package com.futebadosparcas.platform
 
 /**
- * Implementação Web de HapticFeedback usando navigator.vibrate() (se disponível)
+ * Implementação Web de HapticFeedback - stub para Kotlin/Wasm
+ *
+ * Nota: A Vibration API requer acesso a objetos JS nativos que não são
+ * facilmente representáveis em Kotlin/Wasm sem bibliotecas adicionais.
+ * Esta implementação é um placeholder que não vibra, mas compila.
+ *
+ * Para implementação completa, considerar:
+ * - kotlinx-browser library
+ * - Wrapper customizado com @JsModule
  */
 class WebHapticFeedback : HapticFeedback {
 
-    private fun vibrateIfSupported(duration: Long) {
-        try {
-            // Usar navigator.vibrate() se disponível
-            js("if (navigator.vibrate) { navigator.vibrate(duration); }")
-        } catch (e: Throwable) {
-            // Vibração não suportada ou bloqueada - fail silently
-        }
-    }
-
-    private fun vibratePatternIfSupported(pattern: LongArray) {
-        try {
-            // Converter para JS array
-            val jsArray = pattern.map { it.toInt() }.toTypedArray()
-            js("if (navigator.vibrate) { navigator.vibrate(jsArray); }")
-        } catch (e: Throwable) {
-            // Vibração não suportada ou bloqueada - fail silently
-        }
-    }
-
     override fun vibrate(durationMs: Long) {
-        vibrateIfSupported(durationMs)
+        // Stub: navegadores modernos suportam navigator.vibrate()
+        // mas requer JS interop mais complexo em Kotlin/Wasm
     }
 
     override fun vibratePattern(pattern: LongArray) {
-        vibratePatternIfSupported(pattern)
+        // Stub: requer conversão de LongArray para JS Array
     }
 
     override fun light() {
-        vibrateIfSupported(10L)
+        // Stub: vibração leve (10ms)
     }
 
     override fun medium() {
-        vibrateIfSupported(25L)
+        // Stub: vibração média (25ms)
     }
 
     override fun heavy() {
-        vibrateIfSupported(50L)
+        // Stub: vibração forte (50ms)
     }
 
     override fun success() {
-        vibratePatternIfSupported(longArrayOf(0, 50, 50, 50))
+        // Stub: padrão de sucesso
     }
 
     override fun error() {
-        vibratePatternIfSupported(longArrayOf(0, 100, 50, 100, 50, 100))
+        // Stub: padrão de erro
     }
 
     override fun warning() {
-        vibratePatternIfSupported(longArrayOf(0, 75, 50, 75))
+        // Stub: padrão de aviso
     }
 }
 

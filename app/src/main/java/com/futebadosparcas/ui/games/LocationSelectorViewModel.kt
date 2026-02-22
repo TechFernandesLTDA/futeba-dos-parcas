@@ -12,6 +12,11 @@ import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidField
+<<<<<<< HEAD
+=======
+import com.futebadosparcas.util.toAndroidFields
+import com.futebadosparcas.util.toAndroidLocations
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.util.toAndroidLocationReviews
 import com.futebadosparcas.util.toKmpSchedule
 import com.futebadosparcas.util.toKmpLocation
@@ -139,8 +144,8 @@ class LocationSelectorViewModel(
             try {
                 val result = locationRepository.getAllLocations()
                 result.fold(
-                    onSuccess = { kmpLocations ->
-                        allLocations = kmpLocations.toAndroidLocations()
+                    onSuccess = { locations ->
+                        allLocations = locations // Repository já retorna domain.model.Location
                         applyFiltersAndSort()
                         _uiState.value = LocationSelectorUiState.Success
                     },
@@ -296,7 +301,7 @@ class LocationSelectorViewModel(
                 // Buscar os locais pelos IDs
                 val locations = recentIds.mapNotNull { id ->
                     try {
-                        locationRepository.getLocationById(id).getOrNull()?.toAndroidLocation()
+                        locationRepository.getLocationById(id).getOrNull() // Repository já retorna domain.model.Location
                     } catch (e: Exception) {
                         null
                     }
@@ -442,8 +447,8 @@ class LocationSelectorViewModel(
                 _selectedLocationFields.value = kmpFields.toAndroidFields()
             }
 
-            reviewsResult.onSuccess { kmpReviews ->
-                _selectedLocationReviews.value = kmpReviews.toAndroidLocationReviews()
+            reviewsResult.onSuccess { reviews ->
+                _selectedLocationReviews.value = reviews // Repository já retorna domain.model.LocationReview
             }
         }
     }
@@ -488,10 +493,10 @@ class LocationSelectorViewModel(
                     isActive = true
                 )
 
-                val result = locationRepository.createLocation(newLocation.toKmpLocation())
+                val result = locationRepository.createLocation(newLocation) // newLocation já é domain.model.Location
                 result.fold(
-                    onSuccess = { kmpLocation ->
-                        val savedLocation = kmpLocation.toAndroidLocation()
+                    onSuccess = { savedLocation ->
+                        // Repository já retorna domain.model.Location
                         _createLocationState.value = CreateLocationState.Success(savedLocation)
                         // Recarregar lista
                         loadLocations()

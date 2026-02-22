@@ -41,7 +41,7 @@ class FieldOwnerDashboardViewModel(
 
             locationRepository.getLocationsByOwner(userId).fold(
                 onSuccess = { kmpLocations ->
-                    _uiState.value = FieldOwnerDashboardUiState.Success(kmpLocations.toAndroidLocations())
+                    _uiState.value = FieldOwnerDashboardUiState.Success(kmpLocations)
                 },
                 onFailure = { error ->
                     _uiState.value = FieldOwnerDashboardUiState.Error(error.message ?: "Erro ao carregar locais")

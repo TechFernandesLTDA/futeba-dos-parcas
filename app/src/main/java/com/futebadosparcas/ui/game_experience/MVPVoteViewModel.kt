@@ -2,10 +2,17 @@ package com.futebadosparcas.ui.game_experience
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+<<<<<<< HEAD
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.domain.model.MVPVote
 import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.data.repository.GameExperienceRepository
+=======
+import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.MVPVote
+import com.futebadosparcas.domain.model.VoteCategory
+import com.futebadosparcas.domain.repository.GameExperienceRepository
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.domain.ranking.MatchFinalizationService

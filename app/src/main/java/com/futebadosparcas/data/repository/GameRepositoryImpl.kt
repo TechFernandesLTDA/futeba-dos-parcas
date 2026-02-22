@@ -6,7 +6,7 @@ import com.futebadosparcas.data.model.GameConfirmation as AndroidGameConfirmatio
 import com.futebadosparcas.data.model.GameEvent
 import com.futebadosparcas.domain.model.GameStatus
 import com.futebadosparcas.data.model.LiveGameScore
-import com.futebadosparcas.data.model.Team
+import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.model.Game as KmpGame
 import com.futebadosparcas.domain.model.GameConfirmation as KmpGameConfirmation
 import com.futebadosparcas.domain.model.GameFilterType as KmpGameFilterType
@@ -73,6 +73,56 @@ class GameRepositoryImpl constructor(
     )
 
     private fun List<KmpTimeConflict>.toAndroidTimeConflicts(): List<TimeConflict> = map { it.toAndroidTimeConflict() }
+
+    // Conversores para GameEvent (domain -> data)
+    private fun com.futebadosparcas.domain.model.GameEvent.toAndroidGameEvent(): com.futebadosparcas.data.model.GameEvent {
+        return com.futebadosparcas.data.model.GameEvent(
+            id = id,
+            gameId = gameId,
+            eventType = eventType,
+            playerId = playerId,
+            playerName = playerName,
+            teamId = teamId,
+            assistedById = assistedById,
+            assistedByName = assistedByName,
+            minute = minute,
+            createdBy = createdBy,
+            createdAt = createdAt?.let { java.util.Date(it) }
+        )
+    }
+
+    private fun List<com.futebadosparcas.domain.model.GameEvent>.toAndroidGameEvents(): List<com.futebadosparcas.data.model.GameEvent> = map { it.toAndroidGameEvent() }
+
+    // Conversor para LiveScore (domain -> data)
+    private fun com.futebadosparcas.domain.model.LiveScore.toAndroidLiveGameScore(): com.futebadosparcas.data.model.LiveGameScore {
+        return com.futebadosparcas.data.model.LiveGameScore(
+            id = id,
+            gameId = gameId,
+            team1Id = team1Id,
+            team1Score = team1Score,
+            team2Id = team2Id,
+            team2Score = team2Score,
+            startedAt = startedAt?.let { java.util.Date(it) },
+            finishedAt = finishedAt?.let { java.util.Date(it) }
+        )
+    }
+
+    // Conversor para GameEvent (data -> domain)
+    private fun com.futebadosparcas.data.model.GameEvent.toKmpGameEvent(): com.futebadosparcas.domain.model.GameEvent {
+        return com.futebadosparcas.domain.model.GameEvent(
+            id = id,
+            gameId = gameId,
+            eventType = eventType,
+            playerId = playerId,
+            playerName = playerName,
+            teamId = teamId,
+            assistedById = assistedById,
+            assistedByName = assistedByName,
+            minute = minute,
+            createdBy = createdBy,
+            createdAt = createdAt?.time
+        )
+    }
 
     private fun KmpGameFilterType.toAndroidFilterType(): GameFilterType = when (this) {
         KmpGameFilterType.ALL -> GameFilterType.ALL
@@ -160,24 +210,18 @@ class GameRepositoryImpl constructor(
         queryRepository.getGamesByFieldAndDate(fieldId, date)
 
     // ========== Confirmation Methods - Delegação para GameConfirmationRepository ==========
-    override suspend fun getGameConfirmations(gameId: String): Result<List<AndroidGameConfirmation>> =
-        confirmationRepository.getGameConfirmations(gameId).map { kmpConfirmations ->
-            kmpConfirmations.map { it.toAndroidModel() }
-        }
+    override suspend fun getGameConfirmations(gameId: String): Result<List<com.futebadosparcas.domain.model.GameConfirmation>> =
+        confirmationRepository.getGameConfirmations(gameId)
 
-    override fun getGameConfirmationsFlow(gameId: String): Flow<Result<List<AndroidGameConfirmation>>> =
-        confirmationRepository.getGameConfirmationsFlow(gameId).map { result ->
-            result.map { kmpConfirmations ->
-                kmpConfirmations.map { it.toAndroidModel() }
-            }
-        }
+    override fun getGameConfirmationsFlow(gameId: String): Flow<Result<List<com.futebadosparcas.domain.model.GameConfirmation>>> =
+        confirmationRepository.getGameConfirmationsFlow(gameId)
 
     override suspend fun confirmPresence(
         gameId: String,
         position: String,
         isCasual: Boolean
-    ): Result<AndroidGameConfirmation> =
-        confirmationRepository.confirmPresence(gameId, position, isCasual).map { it.toAndroidModel() }
+    ): Result<com.futebadosparcas.domain.model.GameConfirmation> =
+        confirmationRepository.confirmPresence(gameId, position, isCasual)
 
     override suspend fun getGoalkeeperCount(gameId: String): Result<Int> =
         confirmationRepository.getGoalkeeperCount(gameId)
@@ -194,21 +238,25 @@ class GameRepositoryImpl constructor(
     override suspend fun updatePaymentStatus(gameId: String, userId: String, isPaid: Boolean): Result<Unit> =
         confirmationRepository.updatePaymentStatus(gameId, userId, isPaid)
 
-    override suspend fun summonPlayers(gameId: String, confirmations: List<AndroidGameConfirmation>): Result<Unit> =
-        confirmationRepository.summonPlayers(gameId, confirmations.map { it.toKmpModel() })
+    override suspend fun summonPlayers(gameId: String, confirmations: List<com.futebadosparcas.domain.model.GameConfirmation>): Result<Unit> =
+        confirmationRepository.summonPlayers(gameId, confirmations)
 
-    override suspend fun acceptInvitation(gameId: String, position: String): Result<AndroidGameConfirmation> =
-        confirmationRepository.acceptInvitation(gameId, position).map { it.toAndroidModel() }
+    override suspend fun acceptInvitation(gameId: String, position: String): Result<com.futebadosparcas.domain.model.GameConfirmation> =
+        confirmationRepository.acceptInvitation(gameId, position)
 
     // ========== Events Methods - Delegação para GameEventsRepository ==========
-    override fun getGameEventsFlow(gameId: String): Flow<Result<List<GameEvent>>> =
-        eventsRepository.getGameEventsFlow(gameId)
+    override fun getGameEventsFlow(gameId: String): Flow<Result<List<com.futebadosparcas.data.model.GameEvent>>> =
+        eventsRepository.getGameEventsFlow(gameId).map { result ->
+            result.map { it.toAndroidGameEvents() }
+        }
 
-    override fun getLiveScoreFlow(gameId: String): Flow<LiveGameScore?> =
-        eventsRepository.getLiveScoreFlow(gameId)
+    override fun getLiveScoreFlow(gameId: String): Flow<com.futebadosparcas.data.model.LiveGameScore?> =
+        eventsRepository.getLiveScoreFlow(gameId).map { liveScore ->
+            liveScore?.toAndroidLiveGameScore()
+        }
 
-    override suspend fun sendGameEvent(gameId: String, event: GameEvent): Result<Unit> =
-        eventsRepository.sendGameEvent(gameId, event)
+    override suspend fun sendGameEvent(gameId: String, event: com.futebadosparcas.data.model.GameEvent): Result<Unit> =
+        eventsRepository.sendGameEvent(gameId, event.toKmpGameEvent())
 
     override suspend fun deleteGameEvent(gameId: String, eventId: String): Result<Unit> =
         eventsRepository.deleteGameEvent(gameId, eventId)

@@ -2,7 +2,7 @@ package com.futebadosparcas.ui.livegame
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.GameEvent
+import com.futebadosparcas.domain.model.GameEvent
 import com.futebadosparcas.data.repository.LiveGameRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

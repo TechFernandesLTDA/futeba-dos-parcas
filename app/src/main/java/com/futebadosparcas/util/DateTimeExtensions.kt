@@ -96,6 +96,27 @@ fun Long.toDate(): Date {
     return Date(this)
 }
 
+/**
+ * Convert String in format "yyyy-MM-dd HH:mm" to Date
+ * Returns null if parsing fails
+ */
+fun String.toDate(): Date? {
+    if (this.isBlank()) return null
+    return try {
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.forLanguageTag("pt-BR"))
+        format.parse(this)
+    } catch (e: Exception) {
+        null
+    }
+}
+
+/**
+ * Convert Date to Instant
+ */
+fun Date.toInstant(): Instant {
+    return Instant.ofEpochMilli(this.time)
+}
+
 // ============================================
 // Time Calculations
 // ============================================

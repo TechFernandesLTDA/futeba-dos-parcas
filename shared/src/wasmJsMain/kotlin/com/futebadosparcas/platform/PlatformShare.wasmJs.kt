@@ -1,34 +1,39 @@
 package com.futebadosparcas.platform
 
 import kotlinx.coroutines.await
-import kotlin.js.Promise
 
 /**
  * Implementação Web de PlatformShare usando Web Share API (navigator.share)
+ *
+ * Referências:
+ * - [Kotlin/Wasm JS Interop](https://kotlinlang.org/docs/wasm-js-interop.html)
+ * - [Web Share API](https://w3c.github.io/web-share/)
+ * - [Promise.await() wasmJs](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await.html)
+ *
+ * External declarations estão em BrowserExternals.kt
  */
 class WebPlatformShare : PlatformShare {
 
     override suspend fun share(text: String, url: String?, title: String?): Boolean {
         return try {
             if (!isSupported()) {
-                // Fallback: copiar para clipboard ou abrir em nova janela
+                // Fallback: copiar para clipboard
                 copyToClipboard("$text ${url ?: ""}")
                 return true
             }
 
-            val data = js("({})")
-            data["text"] = text
-            url?.let { data["url"] = it }
-            title?.let { data["title"] = it }
+            val shareData = createShareData(text, url ?: "", title ?: "")
 
             // Chamar navigator.share() e aguardar Promise
-            val sharePromise = js("navigator.share(data)") as Promise<Unit>
-            sharePromise.await()
+            navigator.share(shareData).await<Unit>()
             true
         } catch (e: Throwable) {
-            e.printStackTrace()
             // Fallback: copiar para clipboard
-            copyToClipboard("$text ${url ?: ""}")
+            try {
+                copyToClipboard("$text ${url ?: ""}")
+            } catch (clipboardError: Throwable) {
+                // Silenciosamente falhar se clipboard também falhar
+            }
             false
         }
     }
@@ -36,8 +41,8 @@ class WebPlatformShare : PlatformShare {
     override suspend fun shareImage(uri: PlatformUri, text: String?, title: String?): Boolean {
         return try {
             if (!isSupported()) {
-                // Fallback: abrir imagem em nova janela
-                js("window.open(uri.asString(), '_blank')")
+                // Fallback: abrir imagem em nova janela via js()
+                openInNewWindow(uri.asString())
                 return true
             }
 
@@ -45,24 +50,23 @@ class WebPlatformShare : PlatformShare {
             // Por ora, compartilhar apenas o URL da imagem
             share(text ?: "", uri.asString(), title)
         } catch (e: Throwable) {
-            e.printStackTrace()
             false
         }
     }
 
     override fun isSupported(): Boolean {
         return try {
-            js("'share' in navigator") as Boolean
+            hasShareSupport()
         } catch (e: Throwable) {
             false
         }
     }
 
-    private fun copyToClipboard(text: String) {
+    private suspend fun copyToClipboard(text: String) {
         try {
-            js("navigator.clipboard.writeText(text)")
+            navigator.clipboard.writeText(text).await<Unit>()
         } catch (e: Throwable) {
-            // Fallback silencioso
+            // Fallback silencioso - clipboard pode estar bloqueado
         }
     }
 }

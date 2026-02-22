@@ -2,7 +2,11 @@ package com.futebadosparcas.ui.locations
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+<<<<<<< HEAD
 import com.futebadosparcas.data.model.Field
+=======
+import com.futebadosparcas.domain.model.Field
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.util.AppLogger
@@ -114,8 +118,8 @@ class ManageLocationsViewModel(
                         val locationsWithFields = kmpLocations.map { kmpLocation ->
                             async {
                                 val fieldsResult = locationRepository.getFieldsByLocation(kmpLocation.id)
-                                val fields = fieldsResult.getOrNull()?.map { it.toAndroidField() } ?: emptyList()
-                                LocationWithFieldsData(kmpLocation.toAndroidLocation(), fields)
+                                val fields = fieldsResult.getOrNull() ?: emptyList()
+                                LocationWithFieldsData(kmpLocation, fields)
                             }
                         }.awaitAll()
 

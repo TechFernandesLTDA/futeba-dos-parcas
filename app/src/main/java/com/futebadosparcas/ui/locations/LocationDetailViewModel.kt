@@ -5,7 +5,10 @@ import com.futebadosparcas.util.AppLogger
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.data.datasource.FieldPhotoDataSource
+<<<<<<< HEAD
 import com.futebadosparcas.data.model.Field as AndroidField
+=======
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.data.model.Location as AndroidLocation
 import com.futebadosparcas.data.model.LocationReview as AndroidLocationReview
@@ -25,7 +28,10 @@ import com.futebadosparcas.util.LocationSources
 import com.futebadosparcas.util.RecoveryAction
 import com.futebadosparcas.util.toAndroidLocation
 import com.futebadosparcas.util.toAndroidField
+<<<<<<< HEAD
 import com.futebadosparcas.util.toAndroidFields
+=======
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.util.toAndroidLocationReview
 import com.futebadosparcas.util.toAndroidLocationReviews
 import com.futebadosparcas.util.toAndroidCashboxEntry
@@ -209,8 +215,8 @@ class LocationDetailViewModel(
             if (fieldsResult.isSuccess) {
                  _uiState.value = LocationDetailUiState.Success(
                      location,
-                     fieldsResult.getOrNull()?.map { it.toAndroidField() } ?: emptyList(),
-                     reviewsResult.getOrNull()?.map { it.toAndroidLocationReview() } ?: emptyList()
+                     fieldsResult.getOrNull() ?: emptyList(), // Repository retorna domain.model.Field
+                     reviewsResult.getOrNull()?.map { it.toAndroidLocationReview() } ?: emptyList() // Converter para data.model
                  )
             } else {
                  val exception = fieldsResult.exceptionOrNull()
@@ -401,7 +407,7 @@ class LocationDetailViewModel(
                 }
             }
 
-            val newField = AndroidField(
+            val newField = Field(
                 locationId = location.id,
                 name = name,
                 type = type.name,
@@ -412,7 +418,7 @@ class LocationDetailViewModel(
                 isCovered = isCovered,
                 dimensions = dimensions
             )
-            locationRepository.createField(newField.toKmpField()).fold(
+            locationRepository.createField(newField).fold(
                 onSuccess = { loadData(location.id, location) },
                 onFailure = { error -> _uiState.value = LocationDetailUiState.Error(error.message ?: "Erro ao criar quadra") }
             )
@@ -445,9 +451,9 @@ class LocationDetailViewModel(
             val isLocationManager = location.managers.contains(currentUser.id)
             val isAdmin = currentUser.role == "ADMIN"
 
-            var currentField: AndroidField? = null
+            var currentField: Field? = null
              locationRepository.getFieldById(fieldId).onSuccess {
-                currentField = it.toAndroidField()
+                currentField = it // Repository já retorna domain.model.Field
             }.onFailure {
                 _uiState.value = LocationDetailUiState.Error("Quadra não encontrada")
                 return@launch
@@ -522,7 +528,7 @@ class LocationDetailViewModel(
                 dimensions = dimensions
             )
 
-            locationRepository.updateField(updatedField.toKmpField()).fold(
+            locationRepository.updateField(updatedField).fold(
                 onSuccess = {
                     loadData(location.id, location)
                 },
@@ -570,7 +576,7 @@ sealed class LocationDetailUiState {
     data object Loading : LocationDetailUiState()
     data class Success(
         val location: AndroidLocation,
-        val fields: List<AndroidField>,
+        val fields: List<Field>,
         val reviews: List<AndroidLocationReview> = emptyList()
     ) : LocationDetailUiState()
 

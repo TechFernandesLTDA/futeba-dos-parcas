@@ -5,7 +5,11 @@ import com.futebadosparcas.domain.model.CancellationReason
 import com.futebadosparcas.domain.model.ConfirmationStatus
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.GameCancellation
+<<<<<<< HEAD
 import com.futebadosparcas.data.model.GameConfirmation
+=======
+import com.futebadosparcas.domain.model.GameConfirmation
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.model.GameWaitlist
 import com.futebadosparcas.domain.model.PlayerAttendance
 import com.futebadosparcas.domain.model.WaitlistStatus
@@ -59,6 +63,7 @@ class ConfirmationUseCase constructor(
         return try {
             // TODO: getConfirmationDeadline() foi removido do modelo Game
             // Implementar via configurações do Group ou outro mecanismo
+<<<<<<< HEAD
             Result.success(ConfirmationCheck(canConfirm = true, timeRemainingMs = null))
                         canConfirm = canConfirm,
                         deadline = deadline,
@@ -66,6 +71,9 @@ class ConfirmationUseCase constructor(
                     )
                 )
             }
+=======
+            Result.success(ConfirmationCheck(canConfirm = true, timeRemainingMs = 0L))
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
         } catch (e: Exception) {
             AppLogger.e(TAG, "Erro ao verificar deadline", e)
             Result.failure(e)
@@ -175,11 +183,9 @@ class ConfirmationUseCase constructor(
                 ?: return Result.failure(Exception("Jogo nao encontrado"))
 
             // Calcular horas antes do jogo
-            val gameDateTime = game.dateTime
-            val hoursBeforeGame = if (gameDateTime != null) {
-                val diff = gameDateTime.time - System.currentTimeMillis()
-                diff.toDouble() / (1000 * 60 * 60)
-            } else 0.0
+            // TODO: KMP Game model não tem dateTime property - precisa reconstruir a partir de date+time strings
+            // ou armazenar timestamp no modelo Game
+            val hoursBeforeGame = 0.0
 
             // Registrar cancelamento (Issue #39)
             val cancellation = GameCancellation(
@@ -211,16 +217,22 @@ class ConfirmationUseCase constructor(
             val nextInLine = nextResult.getOrNull()
             if (nextInLine != null) {
                 // Criar notificacao in-app sobre vaga disponivel
+                // Use default 30 minutos para promoção da waitlist (propriedade foi removida do Game)
+                val autoPromoteMinutes = 30
                 val notification = com.futebadosparcas.domain.model.AppNotification(
                     userId = nextInLine.userId,
                     type = com.futebadosparcas.domain.model.NotificationType.GAME_VACANCY,
                     title = "Vaga Disponível!",
+<<<<<<< HEAD
                     message = "Uma vaga abriu para o jogo ${game.date} às ${game.time} em ${game.locationName}. Você tem 30 minutos para confirmar.",
+=======
+                    message = "Uma vaga abriu para o jogo ${game.date} às ${game.time} em ${game.locationName}. Você tem $autoPromoteMinutes minutos para confirmar.",
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
                     referenceId = gameId,
                     referenceType = "game",
                     actionType = com.futebadosparcas.domain.model.NotificationAction.CONFIRM_POSITION,
                     createdAt = System.currentTimeMillis(),
-                    expiresAt = System.currentTimeMillis() + (game.waitlistAutoPromoteMinutes * 60 * 1000L)
+                    expiresAt = System.currentTimeMillis() + (autoPromoteMinutes * 60 * 1000L)
                 )
                 notificationRepository.createNotification(notification)
 
@@ -347,7 +359,8 @@ class ConfirmationUseCase constructor(
             }
 
             val distance = userLocation.distanceTo(gameLocation)
-            val maxRadius = game.checkinRadiusMeters.takeIf { it > 0 } ?: DEFAULT_CHECKIN_RADIUS_METERS
+            // TODO: KMP Game model não tem checkinRadiusMeters - usar default ou buscar do Group
+            val maxRadius = DEFAULT_CHECKIN_RADIUS_METERS
 
             if (distance > maxRadius) {
                 return Result.success(
@@ -446,7 +459,24 @@ class ConfirmationUseCase constructor(
                 .documents
                 .mapNotNull { it.toObject(GameCancellation::class.java) }
 
-            val attendance = PlayerAttendance.calculate(userId, confirmations, cancellations)
+            // TODO: PlayerAttendance.calculate() não existe no modelo KMP - calcular manualmente
+            val totalConfirmed = confirmations.size
+            val totalAttended = confirmations.count { it.wasPresent == true }
+            val totalCancelled = cancellations.size
+            val lastMinuteCancellations = cancellations.count { it.hoursBeforeGame <= 24.0 }
+            val attendanceRate = if (totalConfirmed > 0) {
+                totalAttended.toDouble() / totalConfirmed.toDouble()
+            } else 1.0
+
+            val attendance = PlayerAttendance(
+                userId = userId,
+                totalConfirmed = totalConfirmed,
+                totalAttended = totalAttended,
+                totalCancelled = totalCancelled,
+                lastMinuteCancellations = lastMinuteCancellations,
+                attendanceRate = attendanceRate,
+                lastUpdated = System.currentTimeMillis()
+            )
 
             // Salvar no documento do usuario
             firestore.collection("users")

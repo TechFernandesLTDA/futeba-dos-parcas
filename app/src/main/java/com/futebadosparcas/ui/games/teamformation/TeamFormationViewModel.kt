@@ -5,7 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.data.model.SavedTeamFormation
 import com.futebadosparcas.data.model.DraftState
+<<<<<<< HEAD
 import com.futebadosparcas.data.model.TeamColor
+=======
+import com.futebadosparcas.data.model.DraftRevealAnimation
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.data.repository.AuthRepository
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.ai.EnhancedTeamBalancer
@@ -80,16 +84,17 @@ class TeamFormationViewModel(
 
                 // Converter para DraftPlayer
                 currentPlayers = confirmedPlayers.map { conf ->
+                    val position = PlayerPosition.fromString(conf.position)
                     DraftPlayer(
                         id = conf.userId,
                         name = conf.userName,
                         photoUrl = conf.userPhoto,
-                        position = conf.getPositionEnum(),
+                        position = position,
                         overallRating = 3.0f, // Valor padrao, idealmente buscar do perfil
                         strikerRating = 3.0f,
                         midRating = 3.0f,
                         defenderRating = 3.0f,
-                        gkRating = if (conf.getPositionEnum() == PlayerPosition.GOALKEEPER) 4.0f else 2.0f
+                        gkRating = if (position == PlayerPosition.GOALKEEPER) 4.0f else 2.0f
                     )
                 }
 
@@ -218,7 +223,7 @@ class TeamFormationViewModel(
                             playerPhoto = draftPlayer?.photoUrl,
                             teamIndex = 0,
                             teamName = "Time A",
-                            teamColor = state.teamAColor,
+                            teamColor = toAndroidTeamColor(state.teamAColor),
                             revealDelayMs = allReveals.size * DRAFT_REVEAL_DELAY_MS
                         )
                     )
@@ -233,7 +238,7 @@ class TeamFormationViewModel(
                             playerPhoto = draftPlayer?.photoUrl,
                             teamIndex = 1,
                             teamName = "Time B",
-                            teamColor = state.teamBColor,
+                            teamColor = toAndroidTeamColor(state.teamBColor),
                             revealDelayMs = allReveals.size * DRAFT_REVEAL_DELAY_MS
                         )
                     )
@@ -535,8 +540,8 @@ class TeamFormationViewModel(
         _uiState.value = state.copy(
             teamAPlayers = team1Players,
             teamBPlayers = team2Players,
-            teamAColor = formation.getTeam1ColorEnum(),
-            teamBColor = formation.getTeam2ColorEnum(),
+            teamAColor = toKmpTeamColor(formation.getTeam1ColorEnum()),
+            teamBColor = toKmpTeamColor(formation.getTeam2ColorEnum()),
             teamAStrength = teamAStrength,
             teamBStrength = teamBStrength
         )
@@ -638,6 +643,42 @@ class TeamFormationViewModel(
         loadJob?.cancel()
         draftJob?.cancel()
         timerJob?.cancel()
+    }
+
+    /**
+     * Converte TeamColor de data.model para domain.model.
+     */
+    private fun toKmpTeamColor(androidColor: com.futebadosparcas.data.model.TeamColor): TeamColor {
+        return when (androidColor) {
+            com.futebadosparcas.data.model.TeamColor.RED -> TeamColor.RED
+            com.futebadosparcas.data.model.TeamColor.BLUE -> TeamColor.BLUE
+            com.futebadosparcas.data.model.TeamColor.GREEN -> TeamColor.GREEN
+            com.futebadosparcas.data.model.TeamColor.YELLOW -> TeamColor.YELLOW
+            com.futebadosparcas.data.model.TeamColor.ORANGE -> TeamColor.ORANGE
+            com.futebadosparcas.data.model.TeamColor.PURPLE -> TeamColor.PURPLE
+            com.futebadosparcas.data.model.TeamColor.BLACK -> TeamColor.BLACK
+            com.futebadosparcas.data.model.TeamColor.WHITE -> TeamColor.WHITE
+            com.futebadosparcas.data.model.TeamColor.PINK -> TeamColor.PINK
+            com.futebadosparcas.data.model.TeamColor.CYAN -> TeamColor.CYAN
+        }
+    }
+
+    /**
+     * Converte TeamColor de domain.model para data.model (inverso).
+     */
+    private fun toAndroidTeamColor(kmpColor: TeamColor): com.futebadosparcas.data.model.TeamColor {
+        return when (kmpColor) {
+            TeamColor.RED -> com.futebadosparcas.data.model.TeamColor.RED
+            TeamColor.BLUE -> com.futebadosparcas.data.model.TeamColor.BLUE
+            TeamColor.GREEN -> com.futebadosparcas.data.model.TeamColor.GREEN
+            TeamColor.YELLOW -> com.futebadosparcas.data.model.TeamColor.YELLOW
+            TeamColor.ORANGE -> com.futebadosparcas.data.model.TeamColor.ORANGE
+            TeamColor.PURPLE -> com.futebadosparcas.data.model.TeamColor.PURPLE
+            TeamColor.BLACK -> com.futebadosparcas.data.model.TeamColor.BLACK
+            TeamColor.WHITE -> com.futebadosparcas.data.model.TeamColor.WHITE
+            TeamColor.PINK -> com.futebadosparcas.data.model.TeamColor.PINK
+            TeamColor.CYAN -> com.futebadosparcas.data.model.TeamColor.CYAN
+        }
     }
 }
 

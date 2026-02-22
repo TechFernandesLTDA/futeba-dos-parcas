@@ -34,11 +34,11 @@ class StartGameUseCase constructor(
             "Jogo não pode ser iniciado. Status atual: $currentStatus"
         }
 
-        // Atualizar status para LIVE
-        game.status = GameStatus.LIVE.name
+        // Atualizar status para LIVE (game.status é val, usar copy)
+        val liveGame = game.copy(status = GameStatus.LIVE.name)
 
         // Salvar
-        gameRepository.updateGame(game)
+        gameRepository.updateGame(liveGame)
 
         return game
     }

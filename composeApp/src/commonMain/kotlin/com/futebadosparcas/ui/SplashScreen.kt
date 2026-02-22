@@ -11,6 +11,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Expect/actual para detectar plataforma
+expect fun getPlatformName(): String
+
 @Composable
 fun SplashScreen() {
     Box(
@@ -34,7 +37,7 @@ fun SplashScreen() {
                 color = MaterialTheme.colorScheme.onPrimary
             )
             Text(
-                text = "iOS Edition",
+                text = "${getPlatformName()} Edition",
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
             )

@@ -18,7 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+<<<<<<< HEAD
 import com.futebadosparcas.data.model.GameEvent
+=======
+import com.futebadosparcas.domain.model.GameEvent
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource

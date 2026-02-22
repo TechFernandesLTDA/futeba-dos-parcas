@@ -504,7 +504,7 @@ private fun PlayerEntryCard(
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = if (player.position == com.futebadosparcas.data.model.PlayerPosition.GOALKEEPER) {
+                    text = if (player.position == com.futebadosparcas.domain.model.PlayerPosition.GOALKEEPER) {
                         "Goleiro"
                     } else {
                         "Linha"

@@ -3,7 +3,7 @@ package com.futebadosparcas.ui.game_experience
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.futebadosparcas.data.model.GameConfirmation
+import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.data.model.MVPVoteResult
 import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.data.repository.GameRepository

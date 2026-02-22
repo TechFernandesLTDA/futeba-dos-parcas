@@ -114,8 +114,13 @@ class LeagueService constructor(
 
             // FIXME: protectionGames, promotionProgress, relegationProgress nao existem no SeasonParticipation
             // Simplificando: divisao baseada apenas no league rating atual
+<<<<<<< HEAD
             val oldDivisionShared = LeagueDivision.fromString(participation.division)
             val newDivisionShared = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating.toInt())
+=======
+            val oldDivisionShared = SharedLeagueDivision.fromString(participation.division)
+            val newDivisionShared = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(newLeagueRating)
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 
             val promoted = newDivisionShared.ordinal > oldDivisionShared.ordinal
             val relegated = newDivisionShared.ordinal < oldDivisionShared.ordinal
@@ -247,8 +252,12 @@ class LeagueService constructor(
     }
 
     private suspend fun createNewParticipation(userId: String, seasonId: String): SeasonParticipation {
+<<<<<<< HEAD
         var startDivision = com.futebadosparcas.data.model.LeagueDivision.BRONZE
         var momentumGames = emptyList<SharedRecentGameData>()
+=======
+        var startDivision = SharedLeagueDivision.BRONZE.name
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 
         // Tenta buscar QUALQUER historico anterior para definir a divisao inicial e momentum
         try {
@@ -264,8 +273,8 @@ class LeagueService constructor(
 
              if (lastParticipation != null) {
                 // Bug #2 Fix: Busca ultima participacao independente do mes
-                val sharedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(lastParticipation.leagueRating)
-                startDivision = toAndroidDivision(sharedDivision)
+                val sharedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(lastParticipation.leagueRating.toDouble())
+                startDivision = sharedDivision.name
 
                 // Bug #3 Fix: Momentum - FIXME: recentGames nao existe no modelo KMP
                 // momentumGames = lastParticipation.recentGames.take(5)

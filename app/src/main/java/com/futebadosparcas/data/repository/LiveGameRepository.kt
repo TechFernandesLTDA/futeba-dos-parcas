@@ -196,22 +196,26 @@ class LiveGameRepository constructor(
 
         firestore.runTransaction { transaction ->
             val snapshot = transaction.get(scoreDoc)
-            val score = snapshot.toObject(LiveGameScore::class.java) 
+            val score = snapshot.toObject(LiveGameScore::class.java)
                 ?: return@runTransaction // Se ainda não existir após tentativa, aborta
 
-            var newTeam1Score = score.team1Score
-            var newTeam2Score = score.team2Score
-
-            if (score.team1Id == teamId) {
-                newTeam1Score += 1
-                transaction.update(scoreDoc, "team1_score", newTeam1Score)
-            } else if (score.team2Id == teamId) {
-                newTeam2Score += 1
-                transaction.update(scoreDoc, "team2_score", newTeam2Score)
-            } else {
-                // Caso o teamId não bata com nenhum (ex: substituição manual de times no meio do jogo)
-                // Vamos tentar associar ao time que não tem ID ou simplesmente ignorar
-                AppLogger.w(TAG) { "GOL para time desconhecido no placar: $teamId" }
+            val (newTeam1Score, newTeam2Score) = when {
+                score.team1Id == teamId -> {
+                    val newScore = score.team1Score + 1
+                    transaction.update(scoreDoc, "team1_score", newScore)
+                    Pair(newScore, score.team2Score)
+                }
+                score.team2Id == teamId -> {
+                    val newScore = score.team2Score + 1
+                    transaction.update(scoreDoc, "team2_score", newScore)
+                    Pair(score.team1Score, newScore)
+                }
+                else -> {
+                    // Caso o teamId não bata com nenhum (ex: substituição manual de times no meio do jogo)
+                    // Vamos tentar associar ao time que não tem ID ou simplesmente ignorar
+                    AppLogger.w(TAG) { "GOL para time desconhecido no placar: $teamId" }
+                    Pair(score.team1Score, score.team2Score)
+                }
             }
 
             // Sincronizar com documento principal do jogo para exibição na lista
@@ -339,13 +343,10 @@ class LiveGameRepository constructor(
                 }
 
                 val events = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(GameEvent::class.java)?.apply { id = doc.id }
-                } ?: emptyList()
+                    doc.toObject(GameEvent::class.java)?.copy(id = doc.id)
+                }?.sortedByDescending { it.createdAt ?: 0L } ?: emptyList()
 
-                // Sort in memory
-                val sortedEvents = events.sortedByDescending { it.createdAt?.time ?: 0L }
-
-                trySend(sortedEvents)
+                trySend(events)
             }
 
         awaitClose { listener.remove() }

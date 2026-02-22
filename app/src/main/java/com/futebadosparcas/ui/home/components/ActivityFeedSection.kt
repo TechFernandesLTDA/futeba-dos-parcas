@@ -107,13 +107,13 @@ fun ActivityCard(activity: Activity) {
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(getActivityColor(activity.type).copy(alpha = 0.2f)),
+                        .background(getActivityColor(activity.type.name).copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = getActivityIcon(activity.type),
+                        imageVector = getActivityIcon(activity.type.name),
                         contentDescription = null,
-                        tint = getActivityColor(activity.type),
+                        tint = getActivityColor(activity.type.name),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -203,16 +203,21 @@ fun getActivityColor(type: String): androidx.compose.ui.graphics.Color {
     }
 }
 
+fun getRelativeTime(timestamp: Long?): String {
+    if (timestamp == null) return ""
+    return getRelativeTime(java.util.Date(timestamp))
+}
+
 fun getRelativeTime(date: java.util.Date?): String {
     if (date == null) return ""
     val now = java.util.Date().time
     val diff = now - date.time
-    
+
     val seconds = diff / 1000
     val minutes = seconds / 60
     val hours = minutes / 60
     val days = hours / 24
-    
+
     return when {
         minutes < 1 -> "agora"
         minutes < 60 -> "${minutes}m"

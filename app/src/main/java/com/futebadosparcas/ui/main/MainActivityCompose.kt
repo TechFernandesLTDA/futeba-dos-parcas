@@ -106,7 +106,7 @@ class MainActivityCompose : AppCompatActivity() {
                                     val currentUserId = authRepository.getCurrentUserId()
                                     if (currentUserId != null && (profileData.name.isNotBlank() || profileData.nickname != null || profileData.preferredPosition != null || profileData.preferredFieldTypes.isNotEmpty())) {
                                         val fieldTypes = profileData.preferredFieldTypes.mapNotNull {
-                                            try { com.futebadosparcas.data.model.FieldType.valueOf(it) } catch (e: Exception) { null }
+                                            try { com.futebadosparcas.domain.model.FieldType.valueOf(it) } catch (e: Exception) { null }
                                         }
                                         val params = com.futebadosparcas.domain.usecase.user.UpdateProfileParams(
                                             userId = currentUserId,

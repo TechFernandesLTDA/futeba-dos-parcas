@@ -323,7 +323,7 @@ private fun LiveGameHeader(
             // Cronômetro isolado (reduz recomposições em 98%)
             if (state.score.startedAt != null || isFinished) {
                 IsolatedGameTimer(
-                    startTimeMs = state.score.startedAt?.time,
+                    startTimeMs = state.score.startedAt,
                     isFinished = isFinished
                 )
             }

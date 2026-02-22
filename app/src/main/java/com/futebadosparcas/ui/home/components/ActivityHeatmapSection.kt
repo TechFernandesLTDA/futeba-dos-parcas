@@ -26,6 +26,10 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+<<<<<<< HEAD
+=======
+import com.futebadosparcas.util.toInstant
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 
 @Composable
 fun ActivityHeatmapSection(
@@ -73,9 +77,9 @@ fun HeatmapGrid(
     val activityCounts = remember(activities) {
         val counts = mutableMapOf<java.time.LocalDate, Int>()
         activities.forEach { activity ->
-            activity.createdAt?.let { date ->
+            activity.createdAt?.let { timestamp ->
                 try {
-                    val localDate = date.toInstant()
+                    val localDate = java.time.Instant.ofEpochMilli(timestamp)
                         .atZone(java.time.ZoneId.systemDefault())
                         .toLocalDate()
                     counts[localDate] = (counts[localDate] ?: 0) + 1

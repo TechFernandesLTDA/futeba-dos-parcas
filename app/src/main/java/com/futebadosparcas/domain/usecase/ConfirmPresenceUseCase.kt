@@ -32,7 +32,7 @@ class ConfirmPresenceUseCase constructor(
      */
     suspend fun execute(
         gameId: String,
-        position: String = PlayerPosition.FIELD.name,
+        position: String = PlayerPosition.LINE.name,
         isCasualPlayer: Boolean = false
     ): Result<GameConfirmation> {
         AppLogger.d(TAG) {
@@ -81,7 +81,7 @@ class ConfirmPresenceUseCase constructor(
         val positionEnum = try {
             PlayerPosition.valueOf(position)
         } catch (e: Exception) {
-            PlayerPosition.FIELD
+            PlayerPosition.LINE
         }
 
         val confirmedCount = existingConfirmations.filter {
@@ -126,10 +126,11 @@ class ConfirmPresenceUseCase constructor(
             updates["players_count"] = currentCount + 1
         }
 
-        // Adicionar usuário à lista de jogadores se não estiver
-        if (!game.players.contains(userId)) {
-            updates["players"] = game.players + userId
-        }
+        // FIXME: domain.model.Game não tem lista de players (apenas playersCount)
+        // A lista de jogadores é gerenciada via GameConfirmation collection
+        // if (!game.players.contains(userId)) {
+        //     updates["players"] = game.players + userId
+        // }
 
         val updateResult = firebaseDataSource.updateGame(gameId, updates)
         if (updateResult.isFailure) {
@@ -196,10 +197,11 @@ class ConfirmPresenceUseCase constructor(
             updates["players_count"] = (game.playersCount - 1).coerceAtLeast(0)
         }
 
-        // Remover usuário da lista de jogadores
-        if (game.players.contains(userId)) {
-            updates["players"] = game.players.filter { it != userId }
-        }
+        // FIXME: domain.model.Game não tem lista de players (apenas playersCount)
+        // A lista de jogadores é gerenciada via GameConfirmation collection
+        // if (game.players.contains(userId)) {
+        //     updates["players"] = game.players.filter { it != userId }
+        // }
 
         val updateResult = firebaseDataSource.updateGame(gameId, updates)
         if (updateResult.isFailure) {

@@ -5,6 +5,8 @@ import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.data.model.Team
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.usecase.SuspendUseCase
+import com.futebadosparcas.util.toAndroidGameConfirmations
+import com.futebadosparcas.util.toAndroidTeams
 
 /**
  * Get Game Details Use Case
@@ -77,8 +79,8 @@ class GetGameDetailsUseCase constructor(
 
         return GameDetails(
             game = game,
-            confirmations = confirmations,
-            teams = teams,
+            confirmations = confirmations.toAndroidGameConfirmations(),
+            teams = teams.toAndroidTeams(),
             statistics = statistics
         )
     }

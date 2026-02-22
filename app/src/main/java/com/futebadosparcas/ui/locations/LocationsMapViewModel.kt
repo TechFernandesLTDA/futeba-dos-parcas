@@ -47,17 +47,16 @@ class LocationsMapViewModel(
         viewModelScope.launch {
             _uiState.value = LocationsMapUiState.Loading
             locationRepository.getAllLocations().fold(
-                onSuccess = { kmpLocations ->
-                    val androidLocations = kmpLocations.toAndroidLocations()
-                    _uiState.value = if (androidLocations.isEmpty()) {
+                onSuccess = { locations ->
+                    _uiState.value = if (locations.isEmpty()) {
                         LocationsMapUiState.Empty
                     } else {
                         // Rastreia visualização do mapa com contagem de locais
                         locationAnalytics.trackMapViewed(
-                            locationCount = androidLocations.size,
+                            locationCount = locations.size,
                             source = navigationSource
                         )
-                        LocationsMapUiState.Success(androidLocations)
+                        LocationsMapUiState.Success(locations)
                     }
                 },
                 onFailure = { error ->

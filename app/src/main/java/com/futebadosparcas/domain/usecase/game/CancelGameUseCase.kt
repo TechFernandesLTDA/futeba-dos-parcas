@@ -60,9 +60,9 @@ class CancelGameUseCase constructor(
             "Apenas jogos SCHEDULED ou CONFIRMED podem ser cancelados."
         }
 
-        // Atualizar status para CANCELLED
-        game.status = GameStatus.CANCELLED.name
-        gameRepository.updateGame(game).getOrThrow()
+        // Atualizar status para CANCELLED (game.status é val, usar copy)
+        val cancelledGame = game.copy(status = GameStatus.CANCELLED.name)
+        gameRepository.updateGame(cancelledGame).getOrThrow()
     }
 }
 

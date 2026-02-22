@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 class NotificationsViewModel(
     private val notificationRepository: NotificationRepository,
     private val inviteRepository: InviteRepository,
-    private val gameSummonRepository: GameSummonRepository
+    private val gameSummonRepository: com.futebadosparcas.domain.repository.GameSummonRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<NotificationsUiState>(NotificationsUiState.Loading)
@@ -277,7 +277,7 @@ class NotificationsViewModel(
         viewModelScope.launch {
             _uiState.value = NotificationsUiState.Loading
 
-            val result = notificationRepository.getNotificationsByType(type.toKmpNotificationType())
+            val result = notificationRepository.getNotificationsByType(type)
 
             result.fold(
                 onSuccess = { notifications ->
@@ -306,7 +306,7 @@ class NotificationsViewModel(
         // Notificações sem data vão para o final (ordenadas por ID desc)
         return notifications.sortedWith(
             compareByDescending<AppNotification> { it.createdAt != null }
-                .thenByDescending { it.createdAt?.time ?: 0L }
+                .thenByDescending { it.createdAt ?: 0L }
                 .thenByDescending { it.id }
         )
     }

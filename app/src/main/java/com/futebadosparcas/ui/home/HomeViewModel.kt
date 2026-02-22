@@ -298,7 +298,7 @@ class HomeViewModel(
      * Constrói o resumo de gamificação a partir dos dados do usuário.
      */
     private fun buildGamificationSummary(user: com.futebadosparcas.domain.model.User): GamificationSummary {
-        val (progressXp, neededXp) = com.futebadosparcas.data.model.LevelTable.getXpProgress(user.experiencePoints)
+        val (progressXp, neededXp) = com.futebadosparcas.domain.model.LevelTable.getXpProgress(user.experiencePoints)
         val isMaxLevel = user.level >= 10
         val percent = if (isMaxLevel) 100 else {
             if (neededXp > 0L) (progressXp * 100L / neededXp).toInt() else 100
@@ -306,9 +306,9 @@ class HomeViewModel(
 
         return GamificationSummary(
             level = user.level,
-            levelName = com.futebadosparcas.data.model.LevelTable.getLevelName(user.level),
+            levelName = com.futebadosparcas.domain.model.LevelTable.getLevelName(user.level),
             nextLevelXp = neededXp - progressXp,
-            nextLevelName = if (isMaxLevel) "" else com.futebadosparcas.data.model.LevelTable.getLevelName(user.level + 1),
+            nextLevelName = if (isMaxLevel) "" else com.futebadosparcas.domain.model.LevelTable.getLevelName(user.level + 1),
             progressPercent = percent,
             isMaxLevel = isMaxLevel,
             division = LeagueDivision.BRONZE // Será atualizado em FASE 3

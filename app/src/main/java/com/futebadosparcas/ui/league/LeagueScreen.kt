@@ -239,7 +239,7 @@ fun LeagueHeader(
     onSeasonSelected: (Season) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val divisionColor = getDivisionColor(myParticipation?.division ?: LeagueDivision.BRONZE)
+    val divisionColor = getDivisionColor(myParticipation?.getDivisionEnum() ?: LeagueDivision.BRONZE)
 
     Card(
         modifier = Modifier
@@ -341,11 +341,11 @@ fun LeagueHeader(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = getDivisionEmoji(myParticipation?.division ?: LeagueDivision.BRONZE),
+                                text = getDivisionEmoji(myParticipation?.getDivisionEnum() ?: LeagueDivision.BRONZE),
                                 fontSize = 18.sp
                             )
                             Text(
-                                text = (myParticipation?.division ?: LeagueDivision.BRONZE).name,
+                                text = (myParticipation?.getDivisionEnum() ?: LeagueDivision.BRONZE).name,
                                 color = divisionColor,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp

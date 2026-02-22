@@ -68,5 +68,56 @@ data class GameInviteLink(
     companion object {
         /** Expiracao padrao: 48 horas em milissegundos */
         const val DEFAULT_EXPIRATION_MS = 48L * 60 * 60 * 1000
+
+        /**
+         * Gera um novo link de convite para um jogo.
+         *
+         * @param gameId ID do jogo
+         * @param game Dados do jogo (para desnormalizar)
+         * @param createdById ID do criador
+         * @param createdByName Nome do criador
+         * @param maxUses Numero maximo de usos (0 = ilimitado)
+         * @param expirationMs Tempo de expiracao em ms (padrao: 48h)
+         * @return GameInviteLink gerado
+         */
+        fun generate(
+            gameId: String,
+            game: Game,
+            createdById: String,
+            createdByName: String,
+            maxUses: Int = 1,
+            expirationMs: Long = DEFAULT_EXPIRATION_MS
+        ): GameInviteLink {
+            val currentTimeMs = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+            val inviteToken = generateToken()
+
+            return GameInviteLink(
+                id = "", // Sera gerado pelo Firestore
+                gameId = gameId,
+                inviteToken = inviteToken,
+                createdById = createdById,
+                createdByName = createdByName,
+                gameDate = game.date,
+                gameTime = game.time,
+                gameLocation = game.locationName,
+                maxUses = maxUses,
+                currentUses = 0,
+                isActive = true,
+                createdAt = currentTimeMs,
+                expiresAt = currentTimeMs + expirationMs,
+                usedBy = emptyList()
+            )
+        }
+
+        /**
+         * Gera um token aleatorio para o link de convite.
+         * Formato: 8 caracteres alfanumericos
+         */
+        private fun generateToken(): String {
+            val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+            return (1..8)
+                .map { chars.random() }
+                .joinToString("")
+        }
     }
 }

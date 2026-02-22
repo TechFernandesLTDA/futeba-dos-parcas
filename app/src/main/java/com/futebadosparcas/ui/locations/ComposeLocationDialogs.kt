@@ -28,7 +28,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
 import coil3.compose.AsyncImage
+<<<<<<< HEAD
 import com.futebadosparcas.data.model.Field
+=======
+import com.futebadosparcas.domain.model.Field
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.ui.components.CachedFieldImage
 import com.futebadosparcas.util.AppLogger

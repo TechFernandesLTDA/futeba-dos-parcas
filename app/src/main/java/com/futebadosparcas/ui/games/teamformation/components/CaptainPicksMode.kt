@@ -28,6 +28,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.futebadosparcas.domain.model.DraftPlayer
+<<<<<<< HEAD
+=======
+import com.futebadosparcas.domain.model.PlayerPosition
+>>>>>>> f3237fc2328fe3c708bd99fb005154a8d51298a3
 import com.futebadosparcas.data.model.DraftState
 import com.futebadosparcas.domain.model.TeamColor
 import com.futebadosparcas.ui.components.CachedProfileImage
@@ -277,7 +281,7 @@ private fun PickablePlayerCard(
 
             // Posicao
             Text(
-                text = if (player.position == com.futebadosparcas.data.model.PlayerPosition.GOALKEEPER) "GK" else "LINHA",
+                text = if (player.position == PlayerPosition.GOALKEEPER) "GK" else "LINHA",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

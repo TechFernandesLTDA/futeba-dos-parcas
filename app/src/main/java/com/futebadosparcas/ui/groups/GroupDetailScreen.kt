@@ -596,9 +596,9 @@ private fun GroupHeader(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                        val memberCountText = when (group.memberCount) {
-                            1 -> stringResource(R.string.member_count_one, group.memberCount)
-                            else -> stringResource(R.string.member_count_many, group.memberCount)
+                        val memberCountText = when (group.membersCount) {
+                            1 -> stringResource(R.string.member_count_one, group.membersCount)
+                            else -> stringResource(R.string.member_count_many, group.membersCount)
                         }
                         Text(memberCountText, style = MaterialTheme.typography.labelMedium)
                     }
