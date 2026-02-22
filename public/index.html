@@ -1,133 +1,514 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Futeba dos Parças</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#58CC02">
+    <meta name="description" content="Futeba dos Parças - Organize suas peladas com gamificação, ranking de jogadores, estatísticas e muito mais. Baixe grátis!">
+    <meta name="keywords" content="pelada, futebol, futebol society, gerenciamento, ranking, gamificação, estatísticas, amateur soccer">
+    <meta name="author" content="Futeba dos Parças">
+    <meta name="robots" content="index, follow">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="google-site-verification" content="SEU_CODIGO_VERIFICACAO_AQUI">
+    <link rel="canonical" href="https://futebadosparcas.web.app/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://futebadosparcas.web.app/">
+    <meta property="og:title" content="Futeba dos Parças - Organize suas peladas com gamificação">
+    <meta property="og:description" content="Organize peladas, crie rankings, acompanhe estatísticas e gamifique seus jogos de futebol amateur. Disponível para Android, iOS e Web.">
+    <meta property="og:image" content="https://futebadosparcas.web.app/icons/og-image-1200x630.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:site_name" content="Futeba dos Parças">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://futebadosparcas.web.app/">
+    <meta name="twitter:title" content="Futeba dos Parças - Organize suas peladas com gamificação">
+    <meta name="twitter:description" content="Organize peladas, crie rankings, acompanhe estatísticas e gamifique seus jogos de futebol amateur.">
+    <meta name="twitter:image" content="https://futebadosparcas.web.app/icons/og-image-1200x630.png">
+    
+    <!-- Additional SEO -->
+    <meta name="application-name" content="Futeba dos Parças">
+    <meta name="apple-mobile-web-app-title" content="Futeba">
+
+    <title>Futeba dos Parças - Organize suas peladas com gamificação</title>
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Futeba">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+    <meta name="msapplication-TileColor" content="#58CC02">
+    <meta name="msapplication-tap-highlight" content="no">
+
+    <!-- Preload wasmJs binary para performance -->
+    <link rel="modulepreload" href="composeApp.wasm" as="fetch" crossorigin>
+
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f9f9f9;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .container {
-            background-color: #fff;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            text-align: center;
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #121212;
         }
 
-        h1 {
-            color: #58CC02;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            color: #666;
-            font-size: 1.2em;
-            margin-bottom: 30px;
-        }
-
-        .links {
+        /* Splash enquanto o wasmJs carrega */
+        #loading {
+            position: fixed;
+            inset: 0;
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin: 30px 0;
-        }
-
-        .link-card {
-            background-color: #f0f4f8;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #58CC02;
-            text-align: left;
-            transition: transform 0.2s;
-        }
-
-        .link-card:hover {
-            transform: translateX(5px);
-        }
-
-        a {
+            align-items: center;
+            justify-content: center;
+            background-color: #121212;
             color: #58CC02;
-            text-decoration: none;
+            font-family: system-ui, -apple-system, sans-serif;
+            gap: 16px;
+            z-index: 999;
+            transition: opacity 0.3s ease;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #loading-icon {
+            font-size: 64px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        #loading-text {
+            font-size: 24px;
             font-weight: bold;
         }
 
-        a:hover {
-            text-decoration: underline;
+        #loading-subtitle {
+            font-size: 14px;
+            color: #888;
         }
 
-        .link-desc {
-            color: #666;
-            font-size: 0.9em;
-            margin-top: 5px;
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
-        .playstore-badge {
-            margin-top: 30px;
-        }
-
-        .playstore-badge img {
-            height: 60px;
-        }
-
-        .footer {
-            margin-top: 40px;
-            font-size: 0.9em;
-            color: #666;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
+        /* ComposeViewport renderiza diretamente no body (CMP 1.10.0+) */
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <h1>Futeba dos Parças</h1>
-        <p class="subtitle">Organize suas peladas com gamificação!</p>
-
-        <div class="links">
-            <div class="link-card">
-                <a href="privacy_policy.html">Política de Privacidade</a>
-                <p class="link-desc">Saiba como tratamos seus dados pessoais</p>
-            </div>
-
-            <div class="link-card">
-                <a href="terms_of_service.html">Termos de Uso</a>
-                <p class="link-desc">Regras e condições de uso do aplicativo</p>
-            </div>
-
-            <div class="link-card">
-                <a href="delete_account.html">Exclusão de Conta</a>
-                <p class="link-desc">Solicite a exclusão de sua conta e dados</p>
-            </div>
-
-            <div class="link-card">
-                <a href="child_safety.html">Padrões de Segurança Infantil</a>
-                <p class="link-desc">Nossa política de proteção infantil</p>
-            </div>
-        </div>
-
-        <div class="playstore-badge">
-            <a href="https://play.google.com/store/apps/details?id=com.futebadosparcas">
-                <img src="https://play.google.com/intl/pt-BR/badges/static/images/badges/pt-br_badge_web_generic.png"
-                    alt="Disponível no Google Play">
-            </a>
-        </div>
-
-        <div class="footer">
-            <p>&copy; 2026 Tech Fernandes Ltda. Todos os direitos reservados.</p>
-            <p>Contato: <a href="mailto:techfernandesltda@gmail.com">techfernandesltda@gmail.com</a></p>
-        </div>
+    <!-- Splash de carregamento -->
+    <div id="loading">
+        <div id="loading-icon">⚽</div>
+        <div id="loading-text">Futeba dos Parças</div>
+        <div id="loading-subtitle">Carregando...</div>
     </div>
-</body>
 
+    <!-- ComposeViewport renderiza no body diretamente (CMP 1.10.0+) -->
+
+    <!-- Firebase JS SDK v8 (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <script>
+        // Firebase configuration
+        var firebaseConfig = {
+            apiKey: "AIzaSyBMzIKlfST4gJm3RM3QQXY-N0doVE6vMQE",
+            authDomain: "futebadosparcas.firebaseapp.com",
+            projectId: "futebadosparcas",
+            storageBucket: "futebadosparcas.firebasestorage.app",
+            messagingSenderId: "490094091078",
+            appId: "1:490094091078:web:abcd1234efgh5678ijkl"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // External functions for Kotlin/Wasm Firebase Auth interop
+        window.firebaseAuthGetUser = function() {
+            return firebase.auth().currentUser;
+        };
+
+        window.firebaseAuthSignIn = function(email, password) {
+            return firebase.auth().signInWithEmailAndPassword(email, password);
+        };
+
+        window.firebaseAuthCreateUser = function(email, password) {
+            return firebase.auth().createUserWithEmailAndPassword(email, password);
+        };
+
+        window.firebaseAuthSignOut = function() {
+            return firebase.auth().signOut();
+        };
+
+        window.firebaseAuthOnStateChanged = function(callback) {
+            firebase.auth().onAuthStateChanged(function(user) {
+                callback(user);
+            });
+        };
+
+        window.firebaseAuthSignInWithGoogle = function() {
+            var provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('email');
+            provider.addScope('profile');
+            return firebase.auth().signInWithPopup(provider);
+        };
+
+        window.firebaseAuthGetIdToken = function() {
+            var user = firebase.auth().currentUser;
+            if (user) {
+                return user.getIdToken();
+            }
+            return Promise.resolve(null);
+        };
+
+        window.firebaseAuthGetUserDisplayName = function() {
+            var user = firebase.auth().currentUser;
+            return user ? user.displayName : null;
+        };
+
+        window.firebaseAuthGetUserPhotoURL = function() {
+            var user = firebase.auth().currentUser;
+            return user ? user.photoURL : null;
+        };
+
+        // External functions for Kotlin/Wasm interop
+        window.jsFirebaseGetCurrentUser = function() {
+            return firebase.auth().currentUser;
+        };
+
+        window.jsFirebaseSignIn = function(email, password) {
+            return firebase.auth().signInWithEmailAndPassword(email, password);
+        };
+
+        window.jsFirebaseCreateUser = function(email, password) {
+            return firebase.auth().createUserWithEmailAndPassword(email, password);
+        };
+
+        window.jsFirebaseSignOut = function() {
+            return firebase.auth().signOut();
+        };
+
+        window.jsFirebaseSignInWithGoogle = function() {
+            var provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('email');
+            provider.addScope('profile');
+            return firebase.auth().signInWithPopup(provider);
+        };
+
+        window.dateNow = function() {
+            return Date.now();
+        };
+
+        // Date helpers for Kotlin/Wasm
+        window.jsGetCurrentDate = function() {
+            var now = new Date();
+            var year = now.getFullYear();
+            var month = String(now.getMonth() + 1).padStart(2, '0');
+            var day = String(now.getDate()).padStart(2, '0');
+            return year + '-' + month + '-' + day;
+        };
+
+        window.jsGetDatePlusDays = function(days) {
+            var now = new Date();
+            now.setDate(now.getDate() + days);
+            var year = now.getFullYear();
+            var month = String(now.getMonth() + 1).padStart(2, '0');
+            var day = String(now.getDate()).padStart(2, '0');
+            return year + '-' + month + '-' + day;
+        };
+
+        window.jsGetTimestamp = function() {
+            return Date.now();
+        };
+
+        window.jsGetCurrentYear = function() {
+            return new Date().getFullYear();
+        };
+
+        window.jsGetCurrentMonth = function() {
+            return new Date().getMonth() + 1;
+        };
+
+        window.jsGetDayOfMonth = function() {
+            return new Date().getDate();
+        };
+
+        window.jsGetDaysInMonth = function(year, month) {
+            return new Date(year, month, 0).getDate();
+        };
+
+        window.jsGetFirstDayOfMonth = function(year, month) {
+            return new Date(year, month - 1, 1).getDay();
+        };
+
+        // Browser History API for navigation
+        window.jsPushState = function(data, title, url) {
+            history.pushState(data, title || '', url || '');
+        };
+
+        window.jsReplaceState = function(data, title, url) {
+            history.replaceState(data, title || '', url || '');
+        };
+
+        window.jsGetPathname = function() {
+            return window.location.pathname;
+        };
+
+        window.jsGetLocationHref = function() {
+            return window.location.href;
+        };
+
+        window.jsHistoryBack = function() {
+            history.back();
+        };
+
+        window.jsCanGoBack = function() {
+            return window.history.length > 1;
+        };
+
+        window.jsInitPopStateListener = function(callback) {
+            window.addEventListener('popstate', function(event) {
+                callback(window.location.pathname);
+            });
+        };
+
+        // External functions for Kotlin/Wasm Browser API interop (shared module)
+        window.createShareData = function(text, url, title) {
+            return {
+                text: text,
+                url: url !== '' ? url : undefined,
+                title: title !== '' ? title : undefined
+            };
+        };
+
+        window.hasShareSupport = function() {
+            return 'share' in navigator;
+        };
+
+        window.openInNewWindow = function(url) {
+            window.open(url, '_blank');
+        };
+
+        window.createMediaStreamConstraints = function(video, audio) {
+            return {
+                video: video,
+                audio: audio
+            };
+        };
+
+        // Web Notifications API
+        window.jsRequestNotificationPermission = async function() {
+            if (!("Notification" in window)) {
+                return "denied";
+            }
+            return await Notification.requestPermission();
+        };
+
+        window.jsShowNotification = function(title, body, icon) {
+            if (!("Notification" in window)) {
+                return;
+            }
+            if (Notification.permission === "granted") {
+                new Notification(title, { body: body, icon: icon || undefined });
+            }
+        };
+
+        window.jsHasNotificationSupport = function() {
+            return "Notification" in window;
+        };
+
+        window.jsGetNotificationPermission = function() {
+            if (!("Notification" in window)) {
+                return "denied";
+            }
+            return Notification.permission;
+        };
+
+        // Date formatting helper for Kotlin/Wasm
+        window.jsFormatDate = function(timestamp) {
+            var date = new Date(timestamp);
+            var day = String(date.getDate()).padStart(2, '0');
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            var year = date.getFullYear();
+            return day + '/' + month + '/' + year;
+        };
+
+        // Developer Tools JS functions
+        window.jsCalculateLocalStorageBytes = function() {
+            var total = 0;
+            for (var key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    total += localStorage[key].length * 2;
+                }
+            }
+            return total;
+        };
+
+        window.jsGetUserAgent = function() {
+            return navigator.userAgent || 'Unknown';
+        };
+
+        window.jsGetDevModeEnabled = function() {
+            return localStorage.getItem('devModeEnabled') === 'true';
+        };
+
+        window.jsSetDevModeEnabled = function(enabled) {
+            localStorage.setItem('devModeEnabled', enabled ? 'true' : 'false');
+            console.log('Dev mode:', enabled ? 'ENABLED' : 'DISABLED');
+        };
+
+        window.jsClearLocalStorage = function() {
+            var devMode = localStorage.getItem('devModeEnabled');
+            localStorage.clear();
+            if (devMode === 'true') {
+                localStorage.setItem('devModeEnabled', 'true');
+            }
+            console.log('LocalStorage cleared');
+        };
+
+        window.jsClearBrowserCache = function() {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    names.forEach(function(name) {
+                        caches.delete(name);
+                    });
+                });
+            }
+            console.log('Browser cache cleared');
+        };
+
+        window.jsReloadPage = function() {
+            window.location.reload();
+        };
+
+        window.jsExportLogs = function() {
+            var logs = {
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                localStorage: JSON.stringify(localStorage),
+                url: window.location.href
+            };
+            console.log('=== EXPORTED LOGS ===');
+            console.log(JSON.stringify(logs, null, 2));
+            console.log('=== END LOGS ===');
+        };
+
+        window.jsTestAuth = function() {
+            console.log('Test Auth: Simulating authentication flow...');
+            console.log('Current user:', firebase.auth().currentUser ? firebase.auth().currentUser.email : 'Not logged in');
+        };
+
+        // Issue #181: Performance monitoring functions
+        window.jsRequestAnimationFrame = function(callback) {
+            requestAnimationFrame(function() {
+                callback();
+            });
+        };
+
+        window.jsGetMemoryUsage = function() {
+            if (performance && performance.memory) {
+                return performance.memory.usedJSHeapSize;
+            }
+            return null;
+        };
+
+        window.jsGetBundleSizeEstimate = function() {
+            var scripts = document.querySelectorAll('script[src]');
+            var totalSize = 0;
+            scripts.forEach(function(script) {
+                var src = script.getAttribute('src');
+                if (src && (src.includes('composeApp') || src.includes('skiko'))) {
+                    totalSize += 1000000;
+                }
+            });
+            if (totalSize > 0) {
+                return '~' + Math.round(totalSize / 1000000) + ' MB';
+            }
+            return '~8.5 MB';
+        };
+
+        console.log('Firebase initialized successfully');
+    </script>
+
+    <script src="skiko.js"></script>
+    <script src="composeApp.js"></script>
+    <script>
+        // Esconder splash quando o app Compose estiver pronto
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.classList.add('hidden');
+                    setTimeout(function() { loading.remove(); }, 300);
+                }
+            }, 500);
+        });
+
+        // Registro do Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js')
+                    .then(function(reg) {
+                        console.log('SW registrado:', reg.scope);
+                        reg.onupdatefound = function() {
+                            var installingWorker = reg.installing;
+                            installingWorker.onstatechange = function() {
+                                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('Nova versão disponível! Recarregue a página.');
+                                }
+                            };
+                        };
+                    })
+                    .catch(function(err) { console.log('SW falhou:', err); });
+            });
+        }
+
+        // PWA Install Prompt - expor evento para Kotlin/Wasm
+        var deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            window.pwaCanInstall = true;
+            console.log('PWA: App instalável');
+        });
+
+        window.addEventListener('appinstalled', function() {
+            deferredPrompt = null;
+            window.pwaCanInstall = false;
+            window.pwaIsInstalled = true;
+            console.log('PWA: App instalado com sucesso');
+        });
+
+        window.pwaPromptInstall = function() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                return deferredPrompt.userChoice.then(function(result) {
+                    deferredPrompt = null;
+                    window.pwaCanInstall = false;
+                    return result.outcome;
+                });
+            }
+            return Promise.resolve('not-installable');
+        };
+
+        window.pwaCanInstall = false;
+        window.pwaIsInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    </script>
+</body>
 </html>

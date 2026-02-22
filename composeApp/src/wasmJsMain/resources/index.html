@@ -162,6 +162,55 @@
             });
         };
 
+        window.firebaseAuthSignInWithGoogle = function() {
+            var provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('email');
+            provider.addScope('profile');
+            return firebase.auth().signInWithPopup(provider);
+        };
+
+        window.firebaseAuthGetIdToken = function() {
+            var user = firebase.auth().currentUser;
+            if (user) {
+                return user.getIdToken();
+            }
+            return Promise.resolve(null);
+        };
+
+        window.firebaseAuthGetUserDisplayName = function() {
+            var user = firebase.auth().currentUser;
+            return user ? user.displayName : null;
+        };
+
+        window.firebaseAuthGetUserPhotoURL = function() {
+            var user = firebase.auth().currentUser;
+            return user ? user.photoURL : null;
+        };
+
+        // External functions for Kotlin/Wasm interop
+        window.jsFirebaseGetCurrentUser = function() {
+            return firebase.auth().currentUser;
+        };
+
+        window.jsFirebaseSignIn = function(email, password) {
+            return firebase.auth().signInWithEmailAndPassword(email, password);
+        };
+
+        window.jsFirebaseCreateUser = function(email, password) {
+            return firebase.auth().createUserWithEmailAndPassword(email, password);
+        };
+
+        window.jsFirebaseSignOut = function() {
+            return firebase.auth().signOut();
+        };
+
+        window.jsFirebaseSignInWithGoogle = function() {
+            var provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('email');
+            provider.addScope('profile');
+            return firebase.auth().signInWithPopup(provider);
+        };
+
         window.dateNow = function() {
             return Date.now();
         };
