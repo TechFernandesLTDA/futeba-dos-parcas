@@ -22,6 +22,7 @@ import com.futebadosparcas.ui.gamification.BadgesScreen
 import com.futebadosparcas.ui.gamification.XpHistoryScreen
 import com.futebadosparcas.ui.settings.SettingsTab
 import com.futebadosparcas.ui.tactical.TacticalBoardScreen
+import com.futebadosparcas.ui.TeamFormationScreen
 import kotlinx.coroutines.launch
 
 private sealed class GamificationScreen {
@@ -107,6 +108,7 @@ fun HomeScreenWeb(
                             currentRoute is WebRoute.GroupDetail -> "Detalhes do Grupo"
                             currentRoute is WebRoute.Invite -> "Convite"
                             currentRoute is WebRoute.TacticalBoard -> "Quadro Tático"
+                            currentRoute is WebRoute.TeamFormation -> "Formação de Times"
                             currentRoute is WebRoute.Admin -> "Painel Admin"
                             currentRoute is WebRoute.AdminUsers -> "Gerenciar Usuários"
                             currentRoute is WebRoute.AdminReports -> "Denúncias"
@@ -344,6 +346,10 @@ fun HomeScreenWeb(
                             team2Name = "Time B",
                             playersTeam1 = emptyList(),
                             playersTeam2 = emptyList(),
+                            onBackClick = navigateBack
+                        )
+                        is WebRoute.TeamFormation -> TeamFormationScreen(
+                            gameId = route.gameId,
                             onBackClick = navigateBack
                         )
                         is WebRoute.DeveloperTools -> DeveloperToolsScreen(
