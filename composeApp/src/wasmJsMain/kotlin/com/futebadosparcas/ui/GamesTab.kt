@@ -1,28 +1,72 @@
 package com.futebadosparcas.ui
 
+import androidx.compose.animation.core.*
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.background
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.horizontalScroll
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.layout.*
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.lazy.LazyColumn
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.lazy.items
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.rememberScrollState
+import com.futebadosparcas.ui.components.states.ErrorState
+import androidx.compose.foundation.shape.CircleShape
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.material3.*
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.runtime.*
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.Alignment
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.Modifier
+import com.futebadosparcas.ui.components.states.ErrorState
+import androidx.compose.ui.draw.clip
+import com.futebadosparcas.ui.components.states.ErrorState
+import androidx.compose.ui.geometry.Offset
+import com.futebadosparcas.ui.components.states.ErrorState
+import androidx.compose.ui.graphics.Brush
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.graphics.Color
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.text.font.FontWeight
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.text.style.TextAlign
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.text.style.TextOverflow
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.components.states.ErrorState
 import androidx.compose.ui.window.Dialog
+import com.futebadosparcas.ui.components.states.ErrorState
 import com.futebadosparcas.firebase.FirebaseManager
+import com.futebadosparcas.ui.components.states.ErrorState
+import com.futebadosparcas.ui.theme.FieldTypeColors
+import com.futebadosparcas.ui.components.states.ErrorState
+import com.futebadosparcas.ui.theme.GameStatusColors
+import com.futebadosparcas.ui.components.states.ErrorState
+import kotlinx.coroutines.delay
+import com.futebadosparcas.ui.components.states.ErrorState
 import kotlinx.coroutines.launch
+import com.futebadosparcas.ui.components.states.ErrorState
 
-enum class GameFilter(val label: String, val emoji: String) {
+enum class StatusFilter(val label: String, val emoji: String, val status: String?) {
+    ALL("Todos", "📅", null),
+    SCHEDULED("Agendados", "🟢", "SCHEDULED"),
+    CONFIRMED("Fechados", "🟡", "CONFIRMED"),
+    LIVE("Ao Vivo", "🔴", "LIVE"),
+    FINISHED("Finalizados", "✅", "FINISHED")
+}
+
+enum class DateFilter(val label: String, val emoji: String) {
     TODAY("Hoje", "📅"),
     WEEK("Semana", "📆"),
+    MONTH("Mes", "🗓️"),
     ALL("Todos", "📋")
 }
 
@@ -73,15 +117,18 @@ fun GamesTab(
 ) {
     var games by remember { mutableStateOf<List<WebGame>>(emptyList()) }
     var uiState by remember { mutableStateOf<UiState<List<WebGame>>>(UiState.Loading) }
-    var selectedFilter by remember { mutableStateOf(GameFilter.ALL) }
+    var selectedStatusFilter by remember { mutableStateOf(StatusFilter.ALL) }
+    var selectedDateFilter by remember { mutableStateOf(DateFilter.ALL) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var selectedGame by remember { mutableStateOf<WebGame?>(null) }
+    var isRefreshing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     fun loadGames() {
         scope.launch {
             uiState = UiState.Loading
             try {
+                delay(500)
                 val rawGames = FirebaseManager.getCollection("games")
                 games = rawGames.map { mapToWebGame(it) }
                 uiState = if (games.isEmpty()) UiState.Empty else UiState.Success(games)
@@ -91,12 +138,21 @@ fun GamesTab(
         }
     }
 
+    fun refresh() {
+        scope.launch {
+            isRefreshing = true
+            delay(800)
+            loadGames()
+            isRefreshing = false
+        }
+    }
+
     LaunchedEffect(Unit) {
         loadGames()
     }
 
-    val filteredGames = remember(games, selectedFilter) {
-        filterGames(games, selectedFilter)
+    val filteredGames = remember(games, selectedStatusFilter, selectedDateFilter) {
+        filterGames(games, selectedStatusFilter, selectedDateFilter)
     }
 
     Scaffold(
@@ -114,21 +170,29 @@ fun GamesTab(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
         ) {
-            Text(
-                text = "⚽ Jogos",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Text(
+                    text = "Jogos",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 16.dp, bottom = 12.dp)
+                )
 
-            GamesFilterChips(
-                selectedFilter = selectedFilter,
-                onFilterChange = { selectedFilter = it }
-            )
+                StatusFilterChips(
+                    selectedFilter = selectedStatusFilter,
+                    onFilterChange = { selectedStatusFilter = it }
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                DateFilterChips(
+                    selectedFilter = selectedDateFilter,
+                    onFilterChange = { selectedDateFilter = it }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             when (val state = uiState) {
                 is UiState.Loading -> GamesLoadingState()
@@ -136,17 +200,22 @@ fun GamesTab(
                 is UiState.Error -> GamesErrorState(message = state.message, onRetry = { loadGames() })
                 is UiState.Success -> {
                     if (filteredGames.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Nenhum jogo encontrado", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    } else {
-                        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(filteredGames, key = { it.id }) { game ->
-                                GameCard(game = game, onClick = {
-                                    if (onGameClick != null) onGameClick(game.id) else selectedGame = game
-                                })
+                        GamesFilteredEmptyState(
+                            hasFilters = selectedStatusFilter != StatusFilter.ALL || selectedDateFilter != DateFilter.ALL,
+                            onClearFilters = {
+                                selectedStatusFilter = StatusFilter.ALL
+                                selectedDateFilter = DateFilter.ALL
                             }
-                        }
+                        )
+                    } else {
+                        GamesSuccessContent(
+                            games = filteredGames,
+                            isRefreshing = isRefreshing,
+                            onRefresh = { refresh() },
+                            onGameClick = { game ->
+                                if (onGameClick != null) onGameClick(game.id) else selectedGame = game
+                            }
+                        )
                     }
                 }
             }
@@ -163,12 +232,15 @@ fun GamesTab(
 }
 
 @Composable
-private fun GamesFilterChips(selectedFilter: GameFilter, onFilterChange: (GameFilter) -> Unit) {
+private fun StatusFilterChips(
+    selectedFilter: StatusFilter,
+    onFilterChange: (StatusFilter) -> Unit
+) {
     Row(
         modifier = Modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        GameFilter.entries.forEach { filter ->
+        StatusFilter.entries.forEach { filter ->
             FilterChip(
                 selected = selectedFilter == filter,
                 onClick = { onFilterChange(filter) },
@@ -183,16 +255,175 @@ private fun GamesFilterChips(selectedFilter: GameFilter, onFilterChange: (GameFi
 }
 
 @Composable
+private fun DateFilterChips(
+    selectedFilter: DateFilter,
+    onFilterChange: (DateFilter) -> Unit
+) {
+    Row(
+        modifier = Modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        DateFilter.entries.forEach { filter ->
+            FilterChip(
+                selected = selectedFilter == filter,
+                onClick = { onFilterChange(filter) },
+                label = { Text("${filter.emoji} ${filter.label}") },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun GamesSuccessContent(
+    games: List<WebGame>,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    onGameClick: (WebGame) -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(games, key = { it.id }) { game ->
+                GameCard(game = game, onClick = { onGameClick(game) })
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(80.dp))
+            }
+        }
+
+        if (isRefreshing) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+            )
+        }
+    }
+}
+
+@Composable
 private fun GamesLoadingState() {
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        repeat(4) {
-            Card(
-                modifier = Modifier.fillMaxWidth().height(100.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        repeat(5) {
+            ShimmerGameCard()
+        }
+    }
+}
+
+@Composable
+private fun ShimmerGameCard(modifier: Modifier = Modifier) {
+    val shimmerColors = listOf(
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)
+    )
+
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val translateAnim = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmer_translate"
+    )
+
+    val brush = Brush.linearGradient(
+        colors = shimmerColors,
+        start = Offset(translateAnim.value - 1000f, translateAnim.value - 1000f),
+        end = Offset(translateAnim.value, translateAnim.value)
+    )
+
+    Card(
+        modifier = modifier.fillMaxWidth().height(140.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+    ) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                Box(
+                    modifier = Modifier
+                        .width(140.dp)
+                        .height(20.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(brush)
+                )
+                Box(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(24.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(brush)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clip(CircleShape)
+                        .background(brush)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .width(180.dp)
+                        .height(16.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(brush)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clip(CircleShape)
+                            .background(brush)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .width(80.dp)
+                            .height(16.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(brush)
+                    )
                 }
+                Box(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(24.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(brush)
+                )
             }
         }
     }
@@ -201,34 +432,129 @@ private fun GamesLoadingState() {
 @Composable
 private fun GamesEmptyState(onCreateClick: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("📅", style = MaterialTheme.typography.displayLarge)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Nenhum jogo agendado", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("Seja o primeiro a criar uma pelada!", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text = "📅",
+            style = MaterialTheme.typography.displayLarge
+        )
+
         Spacer(modifier = Modifier.height(24.dp))
-        FilledTonalButton(onClick = onCreateClick) { Text("+ Criar Jogo") }
+
+        Text(
+            text = "Nenhum jogo agendado",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "Seja o primeiro a organizar uma pelada e chame os parcass!",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(0.8f)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        FilledTonalButton(
+            onClick = onCreateClick,
+            modifier = Modifier.fillMaxWidth(0.6f).height(48.dp)
+        ) {
+            Text("+ Criar Jogo")
+        }
+    }
+}
+
+@Composable
+private fun GamesFilteredEmptyState(
+    hasFilters: Boolean,
+    onClearFilters: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "🔍",
+            style = MaterialTheme.typography.displayLarge
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Nenhum jogo encontrado",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Tente ajustar os filtros para ver mais jogos",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        if (hasFilters) {
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(onClick = onClearFilters) {
+                Text("✖ Limpar Filtros")
+            }
+        }
     }
 }
 
 @Composable
 private fun GamesErrorState(message: String, onRetry: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("❌", style = MaterialTheme.typography.displayLarge)
+        Text(
+            text = "❌",
+            style = MaterialTheme.typography.displayLarge
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Erro ao carregar jogos", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+
+        Text(
+            text = "Erro ao carregar jogos",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.error
+        )
+
         Spacer(modifier = Modifier.height(8.dp))
-        Text(message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) { Text("🔄 Tentar novamente") }
+
+        Button(onClick = onRetry) {
+            Text("🔄 Tentar novamente")
+        }
     }
 }
 
@@ -236,12 +562,12 @@ private fun GamesErrorState(message: String, onRetry: () -> Unit) {
 private fun GameCard(game: WebGame, onClick: () -> Unit) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -249,51 +575,94 @@ private fun GameCard(game: WebGame, onClick: () -> Unit) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = game.locationName.ifEmpty { "Jogo sem local" },
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        text = game.locationName.ifEmpty { "Local nao definido" },
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+
                     if (game.locationAddress.isNotEmpty()) {
                         Text(
                             text = "📍 ${game.locationAddress}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
-                StatusChip(status = game.status)
-            }
 
-            Text(
-                text = "📅 ${game.date}${if (game.time.isNotEmpty()) " ⏰ ${game.time}" else ""}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = getFieldTypeColor(game.gameType),
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Text(
+                        text = game.gameType,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Surface(shape = RoundedCornerShape(4.dp), color = getFieldTypeColor(game.gameType)) {
+                Text(
+                    text = "⏰",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text = buildString {
+                        append(game.date)
+                        if (game.time.isNotEmpty()) {
+                            append(" ${game.time}")
+                        } else {
+                            append(" (--:--)")
+                        }
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (game.time.isEmpty()) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "👥 ${game.playersCount} confirmados",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                if (game.status.isNotEmpty()) {
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = getStatusColor(game.status),
+                        modifier = Modifier.padding(end = 4.dp)
+                    ) {
                         Text(
-                            text = game.gameType,
+                            text = getStatusText(game.status),
                             style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            color = Color.White
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
-                    Text(
-                        text = "👥 ${game.playersCount}/${game.maxPlayers}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
+
                 if (game.dailyPrice > 0) {
                     Text(
                         text = "R$ ${formatPrice(game.dailyPrice)}",
@@ -307,26 +676,24 @@ private fun GameCard(game: WebGame, onClick: () -> Unit) {
     }
 }
 
-@Composable
-private fun StatusChip(status: String) {
-    val (color, text, emoji) = when (status.uppercase()) {
-        "SCHEDULED" -> Triple(MaterialTheme.colorScheme.primary, "Aberto", "🟢")
-        "CONFIRMED" -> Triple(MaterialTheme.colorScheme.secondary, "Fechado", "🟡")
-        "LIVE" -> Triple(MaterialTheme.colorScheme.error, "Ao Vivo", "🔴")
-        "FINISHED" -> Triple(MaterialTheme.colorScheme.tertiary, "Finalizado", "✅")
-        "CANCELLED" -> Triple(MaterialTheme.colorScheme.outline, "Cancelado", "❌")
-        else -> Triple(MaterialTheme.colorScheme.outline, status, "⚪")
-    }
+private fun getStatusColor(status: String): Color = when (status.uppercase()) {
+    "OPEN" -> GameStatusColors.Scheduled
+    "CONFIRMED" -> GameStatusColors.InProgress
+    "SCHEDULED" -> GameStatusColors.Scheduled
+    "LIVE" -> GameStatusColors.Full
+    "FINISHED" -> GameStatusColors.Finished
+    "CANCELLED" -> GameStatusColors.Cancelled
+    else -> GameStatusColors.Finished
+}
 
-    Surface(shape = RoundedCornerShape(12.dp), color = color) {
-        Text(
-            text = "$emoji $text",
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-            fontWeight = FontWeight.Bold
-        )
-    }
+private fun getStatusText(status: String): String = when (status.uppercase()) {
+    "OPEN" -> "🟢 Aberto"
+    "CONFIRMED" -> "🟡 Fechado"
+    "SCHEDULED" -> "🟢 Agendado"
+    "LIVE" -> "🔴 Ao Vivo"
+    "FINISHED" -> "✅ Finalizado"
+    "CANCELLED" -> "❌ Cancelado"
+    else -> status
 }
 
 private external fun jsGetCurrentDate(): String
@@ -350,7 +717,9 @@ private fun GameDetailDialog(game: WebGame, onDismiss: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("⚽ Detalhes do Jogo", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    TextButton(onClick = onDismiss) { Text("✕") }
+                    TextButton(onClick = onDismiss) {
+                        Text("✕", style = MaterialTheme.typography.titleMedium)
+                    }
                 }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -388,13 +757,17 @@ private fun GameDetailDialog(game: WebGame, onDismiss: () -> Unit) {
     if (showConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
-            title = { Text("Confirmar Presença") },
-            text = { Text("Deseja ${if (isConfirmed) "cancelar" else "confirmar"} presença?") },
+            title = { Text("Confirmar Presenca") },
+            text = { Text("Deseja ${if (isConfirmed) "cancelar" else "confirmar"} presenca?") },
             confirmButton = {
-                Button(onClick = { isConfirmed = !isConfirmed; showConfirmDialog = false }) { Text("Confirmar") }
+                Button(onClick = { isConfirmed = !isConfirmed; showConfirmDialog = false }) {
+                    Text("Confirmar")
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showConfirmDialog = false }) { Text("Cancelar") }
+                TextButton(onClick = { showConfirmDialog = false }) {
+                    Text("Cancelar")
+                }
             }
         )
     }
@@ -404,17 +777,25 @@ private fun GameDetailDialog(game: WebGame, onDismiss: () -> Unit) {
 private fun GameDetailHeader(game: WebGame) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("📅 ${game.date}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(if (game.time.isNotEmpty()) "⏰ ${game.time}" else "⏰ --:--", style = MaterialTheme.typography.titleMedium)
             }
-            Text("📍 ${game.locationName.ifEmpty { "Local não definido" }}", style = MaterialTheme.typography.bodyLarge)
+
+            Text("📍 ${game.locationName.ifEmpty { "Local nao definido" }}", style = MaterialTheme.typography.bodyLarge)
+
             if (game.locationAddress.isNotEmpty()) {
-                Text(game.locationAddress, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = game.locationAddress,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 24.dp)
+                )
             }
+
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Surface(shape = RoundedCornerShape(4.dp), color = getFieldTypeColor(game.gameType)) {
                     Text(
@@ -424,13 +805,34 @@ private fun GameDetailHeader(game: WebGame) {
                         color = Color.White
                     )
                 }
-                StatusChip(status = game.status)
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = getStatusColor(game.status)
+                ) {
+                    Text(
+                        text = getStatusText(game.status),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        color = Color.White
+                    )
+                }
             }
+
             if (game.dailyPrice > 0) {
-                Text("💰 Valor: R$ ${formatPrice(game.dailyPrice)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Text(
+                    "💰 Valor: R$ ${formatPrice(game.dailyPrice)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
             }
+
             if (game.ownerName.isNotEmpty()) {
-                Text("👤 Organizador: ${game.ownerName}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "👤 Organizador: ${game.ownerName}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
@@ -439,7 +841,12 @@ private fun GameDetailHeader(game: WebGame) {
 @Composable
 private fun TeamsSection(game: WebGame) {
     Column {
-        Text("⚽ Times", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp))
+        Text(
+            "⚽ Times",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+        )
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TeamCard(name = game.team1Name, score = game.team1Score, players = game.team1Players, modifier = Modifier.weight(1f))
             TeamCard(name = game.team2Name, score = game.team2Score, players = game.team2Players, modifier = Modifier.weight(1f))
@@ -455,10 +862,17 @@ private fun TeamCard(name: String, score: Int, players: List<String>, modifier: 
     ) {
         Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Text("⚽ $score", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text(
+                "⚽ $score",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
             if (players.isNotEmpty()) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                players.forEach { Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                players.forEach {
+                    Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
         }
     }
@@ -472,8 +886,17 @@ private fun ConfirmationsSection(confirmations: List<WebConfirmation>, maxPlayer
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("👥 Confirmados", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
-            Text("${confirmations.count { it.status == "CONFIRMED" }}/$maxPlayers", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                "👥 Confirmados",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            Text(
+                "${confirmations.count { it.status == "CONFIRMED" }}/$maxPlayers",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         Spacer(modifier = Modifier.height(8.dp))
         if (confirmations.isEmpty()) {
@@ -577,14 +1000,31 @@ internal fun mapToWebGame(map: Map<String, Any?>): WebGame {
     )
 }
 
-private fun filterGames(games: List<WebGame>, filter: GameFilter): List<WebGame> {
+private fun filterGames(
+    games: List<WebGame>,
+    statusFilter: StatusFilter,
+    dateFilter: DateFilter
+): List<WebGame> {
     val todayStr = jsGetCurrentDate()
-    return when (filter) {
-        GameFilter.TODAY -> games.filter { it.date == todayStr }
-        GameFilter.WEEK -> {
+
+    val dateFiltered = when (dateFilter) {
+        DateFilter.TODAY -> games.filter { it.date == todayStr }
+        DateFilter.WEEK -> {
             val weekEndStr = jsGetDatePlusDays(7)
             games.filter { it.date >= todayStr && it.date <= weekEndStr }
         }
-        GameFilter.ALL -> games
-    }.sortedWith(compareBy({ it.date }, { it.time }))
+        DateFilter.MONTH -> {
+            val monthEndStr = jsGetDatePlusDays(30)
+            games.filter { it.date >= todayStr && it.date <= monthEndStr }
+        }
+        DateFilter.ALL -> games
+    }
+
+    val statusFiltered = if (statusFilter != StatusFilter.ALL) {
+        dateFiltered.filter { it.status.equals(statusFilter.status, ignoreCase = true) }
+    } else {
+        dateFiltered
+    }
+
+    return statusFiltered.sortedWith(compareBy({ it.date }, { it.time }))
 }
