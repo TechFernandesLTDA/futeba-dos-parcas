@@ -25,6 +25,7 @@ sealed class WebRoute {
     data class Invite(val code: String) : WebRoute()
     data class TacticalBoard(val gameId: String? = null) : WebRoute()
     data class TeamFormation(val gameId: String) : WebRoute()
+    object CreateGame : WebRoute()
     object Admin : WebRoute()
     object AdminUsers : WebRoute()
     object AdminReports : WebRoute()
@@ -50,6 +51,7 @@ sealed class WebRoute {
             is Invite -> "/invite/$code"
             is TacticalBoard -> "/tactical${gameId?.let { "/game/$it" } ?: ""}"
             is TeamFormation -> "/team-formation/$gameId"
+            is CreateGame -> "/games/create"
             is Admin -> "/admin"
             is AdminUsers -> "/admin/users"
             is AdminReports -> "/admin/reports"
@@ -58,7 +60,7 @@ sealed class WebRoute {
     val tabIndex: Int
         get() = when (this) {
             is Home -> 0
-            is Games, is GameDetail, is Schedules -> 1
+            is Games, is GameDetail, is Schedules, is CreateGame -> 1
             is Groups, is GroupDetail -> 2
             is Players, is PlayerDetail -> 3
             is Locations, is LocationDetail -> 4
@@ -75,7 +77,7 @@ sealed class WebRoute {
         get() = this is GameDetail || this is GroupDetail || this is LocationDetail || 
                 this is LeagueDetail || this is StatisticsDetail || this is Invite || 
                 this is TacticalBoard || this is DeveloperTools || this is PlayerDetail ||
-                this is AdminUsers || this is AdminReports || this is TeamFormation
+                this is AdminUsers || this is AdminReports || this is TeamFormation || this is CreateGame
 
     val title: String
         get() = when (this) {
@@ -98,6 +100,7 @@ sealed class WebRoute {
             is Invite -> "Convite"
             is TacticalBoard -> "Quadro Tático"
             is TeamFormation -> "Formação de Times"
+            is CreateGame -> "Criar Jogo"
             is Admin -> "Admin"
             is AdminUsers -> "Gerenciar Usuários"
             is AdminReports -> "Denúncias"
@@ -191,6 +194,10 @@ object WebRouter {
         navigate(WebRoute.TeamFormation(gameId))
     }
 
+    fun navigateToCreateGame() {
+        navigate(WebRoute.CreateGame)
+    }
+
     fun navigateToPlayer(playerId: String) {
         navigate(WebRoute.PlayerDetail(playerId))
     }
@@ -234,6 +241,7 @@ object WebRouter {
             segments.isEmpty() -> WebRoute.Home
             segments[0] == "schedules" -> WebRoute.Schedules
             segments[0] == "games" && segments.size == 1 -> WebRoute.Games
+            segments[0] == "games" && segments.size == 2 && segments[1] == "create" -> WebRoute.CreateGame
             segments[0] == "games" && segments.size == 2 -> WebRoute.GameDetail(segments[1])
             segments[0] == "groups" && segments.size == 1 -> WebRoute.Groups
             segments[0] == "groups" && segments.size == 2 -> WebRoute.GroupDetail(segments[1])
