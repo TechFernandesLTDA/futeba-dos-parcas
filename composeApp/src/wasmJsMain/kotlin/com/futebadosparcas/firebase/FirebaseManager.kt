@@ -1,6 +1,43 @@
 package com.futebadosparcas.firebase
 
+import kotlinx.coroutines.await
 import kotlinx.coroutines.delay
+import kotlin.js.Promise
+
+external interface JsAuthResult : JsAny {
+    val success: Boolean
+    val uid: String?
+    val email: String?
+    val displayName: String?
+    val photoURL: String?
+    val error: String?
+}
+
+external interface JsSignOutResult : JsAny {
+    val success: Boolean
+    val error: String?
+}
+
+external interface JsUser : JsAny {
+    val uid: String
+    val email: String?
+    val displayName: String?
+    val photoURL: String?
+}
+
+external interface JsIdTokenResult : JsAny {
+    val success: Boolean
+    val token: String?
+    val error: String?
+}
+
+private external fun jsFirebaseSignInWithEmail(email: String, password: String): Promise<JsAuthResult>
+private external fun jsFirebaseSignInWithGoogle(): Promise<JsAuthResult>
+private external fun jsFirebaseSignUp(email: String, password: String, displayName: String?): Promise<JsAuthResult>
+private external fun jsFirebaseSignOut(): Promise<JsSignOutResult>
+private external fun jsFirebaseGetCurrentUser(): JsUser?
+private external fun jsFirebaseOnAuthStateChanged(callback: (JsUser?) -> Unit)
+private external fun jsFirebaseGetIdToken(): Promise<JsIdTokenResult>
 
 object FirebaseManager {
 
@@ -9,6 +46,8 @@ object FirebaseManager {
     private var currentUserName: String? = null
     private var currentUserPhotoUrl: String? = null
     private var isInitialized = false
+    private var authStateListenerRegistered = false
+    private val authStateCallbacks = mutableListOf<(String?) -> Unit>()
 
     private val mockGroups = listOf(
         mapOf(
@@ -161,43 +200,142 @@ object FirebaseManager {
     fun initialize() {
         if (isInitialized) return
         isInitialized = true
-        println("FirebaseManager (Mock) initialized")
+        println("FirebaseManager (Real Auth) initialized")
+        setupAuthStateListener()
+    }
+
+    private fun setupAuthStateListener() {
+        if (authStateListenerRegistered) return
+        authStateListenerRegistered = true
+        
+        jsFirebaseOnAuthStateChanged { user ->
+            if (user != null) {
+                currentUserId = user.uid
+                currentUserEmail = user.email
+                currentUserName = user.displayName
+                currentUserPhotoUrl = user.photoURL
+                println("Auth state changed: user=${user.email}")
+            } else {
+                currentUserId = null
+                currentUserEmail = null
+                currentUserName = null
+                currentUserPhotoUrl = null
+                println("Auth state changed: no user")
+            }
+            authStateCallbacks.forEach { callback ->
+                callback(currentUserId)
+            }
+        }
+    }
+
+    fun addAuthStateCallback(callback: (String?) -> Unit) {
+        authStateCallbacks.add(callback)
+    }
+
+    fun removeAuthStateCallback(callback: (String?) -> Unit) {
+        authStateCallbacks.remove(callback)
     }
 
     suspend fun signInWithEmailAndPassword(email: String, password: String): String? {
-        delay(300)
-        currentUserId = "mock-user-${email.hashCode()}"
-        currentUserEmail = email
-        currentUserName = email.substringBefore("@").replaceFirstChar { it.uppercase() }
-        currentUserPhotoUrl = null
-        return currentUserId
+        return try {
+            val result = jsFirebaseSignInWithEmail(email, password).await<JsAuthResult>()
+            if (result.success && result.uid != null) {
+                currentUserId = result.uid
+                currentUserEmail = result.email
+                currentUserName = result.displayName
+                currentUserId
+            } else {
+                println("SignIn error: ${result.error}")
+                null
+            }
+        } catch (e: Exception) {
+            println("SignIn exception: ${e.message}")
+            null
+        }
     }
 
     suspend fun signInWithGoogle(): String? {
-        delay(500)
-        val timestamp = jsGetTimestamp().toLong()
-        currentUserId = "google-user-$timestamp"
-        currentUserEmail = "googleuser@gmail.com"
-        currentUserName = "Usuário Google"
-        currentUserPhotoUrl = "https://ui-avatars.com/api/?name=Usuario+Google&background=4285F4&color=fff"
-        return currentUserId
+        return try {
+            val result = jsFirebaseSignInWithGoogle().await<JsAuthResult>()
+            if (result.success && result.uid != null) {
+                currentUserId = result.uid
+                currentUserEmail = result.email
+                currentUserName = result.displayName
+                currentUserPhotoUrl = result.photoURL
+                currentUserId
+            } else {
+                println("GoogleSignIn error: ${result.error}")
+                null
+            }
+        } catch (e: Exception) {
+            println("GoogleSignIn exception: ${e.message}")
+            null
+        }
     }
 
     suspend fun signUpWithEmailAndPassword(email: String, password: String, name: String): String? {
-        delay(300)
-        currentUserId = "new-user-${email.hashCode()}"
-        currentUserEmail = email
-        currentUserName = name
-        currentUserPhotoUrl = null
-        return currentUserId
+        return try {
+            val result = jsFirebaseSignUp(email, password, name).await<JsAuthResult>()
+            if (result.success && result.uid != null) {
+                currentUserId = result.uid
+                currentUserEmail = result.email
+                currentUserName = result.displayName ?: name
+                currentUserId
+            } else {
+                println("SignUp error: ${result.error}")
+                null
+            }
+        } catch (e: Exception) {
+            println("SignUp exception: ${e.message}")
+            null
+        }
     }
 
     suspend fun signOut() {
-        delay(100)
-        currentUserId = null
-        currentUserEmail = null
-        currentUserName = null
-        currentUserPhotoUrl = null
+        try {
+            val result = jsFirebaseSignOut().await<JsSignOutResult>()
+            if (result.success) {
+                currentUserId = null
+                currentUserEmail = null
+                currentUserName = null
+                currentUserPhotoUrl = null
+                println("SignOut success")
+            } else {
+                println("SignOut error: ${result.error}")
+            }
+        } catch (e: Exception) {
+            println("SignOut exception: ${e.message}")
+        }
+    }
+
+    suspend fun getIdToken(): String? {
+        return try {
+            val result = jsFirebaseGetIdToken().await<JsIdTokenResult>()
+            if (result.success) {
+                result.token
+            } else {
+                println("GetIdToken error: ${result.error}")
+                null
+            }
+        } catch (e: Exception) {
+            println("GetIdToken exception: ${e.message}")
+            null
+        }
+    }
+
+    fun refreshCurrentUserFromJs() {
+        val user = jsFirebaseGetCurrentUser()
+        if (user != null) {
+            currentUserId = user.uid
+            currentUserEmail = user.email
+            currentUserName = user.displayName
+            currentUserPhotoUrl = user.photoURL
+        } else {
+            currentUserId = null
+            currentUserEmail = null
+            currentUserName = null
+            currentUserPhotoUrl = null
+        }
     }
 
     suspend fun deleteAccount() {
