@@ -53,6 +53,7 @@ import java.util.Date
 import java.util.Locale
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.util.toDate
 
 /**
  * Seção de próximos jogos na Home com status de confirmação (CMD-29)
@@ -78,13 +79,13 @@ fun UpcomingGamesSection(
     val pendingGames = remember { derivedStateOf {
         games.filter {
             val gameStatus = it.game.getStatusEnum()
-            !it.isUserConfirmed && gameStatus == com.futebadosparcas.data.model.GameStatus.SCHEDULED
+            !it.isUserConfirmed && gameStatus == GameStatus.SCHEDULED
         }
     } }.value
     val confirmedGames = remember { derivedStateOf {
         games.filter {
             val gameStatus = it.game.getStatusEnum()
-            it.isUserConfirmed || gameStatus == com.futebadosparcas.data.model.GameStatus.CONFIRMED
+            it.isUserConfirmed || gameStatus == GameStatus.CONFIRMED
         }
     } }.value
 
@@ -373,7 +374,7 @@ private fun GameConfirmationCard(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = formatGameDateTime(game.dateTime),
+                        text = formatGameDateTime(game.dateTime.toDate()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

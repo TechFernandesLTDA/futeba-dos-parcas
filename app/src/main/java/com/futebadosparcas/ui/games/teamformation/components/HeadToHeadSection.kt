@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.model.HeadToHeadHistory
-import com.futebadosparcas.data.model.HeadToHeadMatch
+import com.futebadosparcas.domain.model.HeadToHeadMatch
 import com.futebadosparcas.domain.model.TeamColor
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource

@@ -31,7 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.futebadosparcas.data.model.Field
+import com.futebadosparcas.domain.model.Field
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.Location
 import com.futebadosparcas.domain.model.User

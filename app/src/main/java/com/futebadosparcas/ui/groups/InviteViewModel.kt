@@ -7,14 +7,6 @@ import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.data.repository.GroupRepository
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.UserRepository
-import com.futebadosparcas.util.toAndroidLocation
-import com.futebadosparcas.util.toAndroidField
-import com.futebadosparcas.util.toAndroidFields
-import com.futebadosparcas.util.toAndroidLocationReview
-import com.futebadosparcas.util.toAndroidLocationReviews
-import com.futebadosparcas.util.toAndroidCashboxEntry
-import com.futebadosparcas.util.toAndroidCashboxEntries
-import com.futebadosparcas.util.toAndroidGroupInvites
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,7 +56,7 @@ class InviteViewModel(
     private fun observePendingInvites() {
         inviteRepository.getMyPendingInvitesFlow()
             .onEach { kmpInvites ->
-                val invites = kmpInvites.toAndroidGroupInvites()
+                val invites = kmpInvites
                 _pendingCount.value = invites.size
                 _pendingInvitesState.value = if (invites.isEmpty()) {
                     PendingInvitesState.Empty
@@ -88,7 +80,7 @@ class InviteViewModel(
 
             result.fold(
                 onSuccess = { kmpInvites ->
-                    val invites = kmpInvites.toAndroidGroupInvites()
+                    val invites = kmpInvites
                     _pendingCount.value = invites.size
                     _pendingInvitesState.value = if (invites.isEmpty()) {
                         PendingInvitesState.Empty
@@ -237,7 +229,7 @@ class InviteViewModel(
 
             result.fold(
                 onSuccess = { kmpInvites ->
-                    val invites = kmpInvites.toAndroidGroupInvites()
+                    val invites = kmpInvites
                     _groupPendingInvitesState.value = GroupPendingInvitesState.Success(invites)
                 },
                 onFailure = { error ->

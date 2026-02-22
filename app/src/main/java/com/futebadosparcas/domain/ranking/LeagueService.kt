@@ -263,7 +263,7 @@ class LeagueService constructor(
 
              if (lastParticipation != null) {
                 // Bug #2 Fix: Busca ultima participacao independente do mes
-                val sharedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(lastParticipation.leagueRating)
+                val sharedDivision = com.futebadosparcas.domain.ranking.LeagueRatingCalculator.getDivisionForRating(lastParticipation.leagueRating.toDouble())
                 startDivision = sharedDivision.name
 
                 // Bug #3 Fix: Momentum - FIXME: recentGames nao existe no modelo KMP

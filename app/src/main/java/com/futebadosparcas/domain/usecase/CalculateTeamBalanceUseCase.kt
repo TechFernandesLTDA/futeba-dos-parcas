@@ -1,8 +1,8 @@
 package com.futebadosparcas.domain.usecase
 
 import com.futebadosparcas.data.datasource.FirebaseDataSource
-import com.futebadosparcas.data.model.GameConfirmation
-import com.futebadosparcas.data.model.Team
+import com.futebadosparcas.domain.model.GameConfirmation
+import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.ai.AiTeamBalancer
 import com.futebadosparcas.util.AppLogger
 

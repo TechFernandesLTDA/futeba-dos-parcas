@@ -161,7 +161,7 @@ class WaitlistRepositoryImpl constructor(
                     return@addSnapshotListener
                 }
 
-                var list = snapshot?.documents?.mapNotNull { doc ->
+                val list = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(GameWaitlist::class.java)?.apply { id = doc.id }
                 } ?: emptyList()
 

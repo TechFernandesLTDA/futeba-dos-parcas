@@ -277,7 +277,7 @@ private fun PickablePlayerCard(
 
             // Posicao
             Text(
-                text = if (player.position == com.futebadosparcas.data.model.PlayerPosition.GOALKEEPER) "GK" else "LINHA",
+                text = if (player.position == PlayerPosition.GOALKEEPER) "GK" else "LINHA",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

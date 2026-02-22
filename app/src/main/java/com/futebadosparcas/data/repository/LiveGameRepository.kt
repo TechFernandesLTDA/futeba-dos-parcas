@@ -338,14 +338,11 @@ class LiveGameRepository constructor(
                     return@addSnapshotListener
                 }
 
-                var events = snapshot?.documents?.mapNotNull { doc ->
+                val events = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(GameEvent::class.java)?.apply { id = doc.id }
-                } ?: emptyList()
+                }?.sortedByDescending { it.createdAt ?: 0L } ?: emptyList()
 
-                // Sort in memory
-                events = events.sortedByDescending { it.createdAt ?: 0L }
-
-                trySend(sortedEvents)
+                trySend(events)
             }
 
         awaitClose { listener.remove() }

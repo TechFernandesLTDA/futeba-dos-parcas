@@ -2,6 +2,7 @@ package com.futebadosparcas.compose
 
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
+import com.futebadosparcas.firebase.FirebaseManager
 import kotlinx.browser.document
 
 /**
@@ -15,6 +16,9 @@ import kotlinx.browser.document
  */
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    // Inicializar Firebase antes de renderizar o app
+    FirebaseManager.initialize()
+
     ComposeViewport(document.body!!) {
         App()
     }

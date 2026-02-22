@@ -49,7 +49,7 @@ import coil3.compose.AsyncImage
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.data.model.SavedTeamFormation
 import com.futebadosparcas.data.model.DraftState
-import com.futebadosparcas.data.model.TeamColor
+import com.futebadosparcas.data.model.DraftRevealAnimation
 import com.futebadosparcas.domain.ai.SwapSuggestion
 import com.futebadosparcas.ui.components.AppTopBar
 import com.futebadosparcas.ui.components.CachedProfileImage
@@ -847,7 +847,7 @@ private fun DraggablePlayerRow(player: DraftPlayer, teamColor: Color) {
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = if (player.position == com.futebadosparcas.data.model.PlayerPosition.GOALKEEPER) {
+                text = if (player.position == PlayerPosition.GOALKEEPER) {
                     stringResource(R.string.goalkeeper)
                 } else {
                     stringResource(R.string.field_player)

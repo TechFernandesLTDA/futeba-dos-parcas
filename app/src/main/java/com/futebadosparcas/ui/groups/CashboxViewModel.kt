@@ -4,28 +4,13 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.CashboxCategory
-import com.futebadosparcas.data.model.CashboxEntry as AndroidCashboxEntry
+import com.futebadosparcas.domain.model.CashboxEntry
 import com.futebadosparcas.domain.model.CashboxEntryType
-import com.futebadosparcas.data.model.CashboxFilter
-import com.futebadosparcas.data.model.CashboxSummary as AndroidCashboxSummary
-import com.futebadosparcas.data.model.GroupMemberRole
+import com.futebadosparcas.domain.model.CashboxFilter
+import com.futebadosparcas.domain.model.CashboxSummary
+import com.futebadosparcas.domain.model.GroupMemberRole
 import com.futebadosparcas.domain.repository.CashboxRepository
 import com.futebadosparcas.data.repository.GroupRepository
-import com.futebadosparcas.util.toAndroidLocation
-import com.futebadosparcas.util.toAndroidField
-import com.futebadosparcas.util.toAndroidFields
-import com.futebadosparcas.util.toAndroidLocationReview
-import com.futebadosparcas.util.toAndroidLocationReviews
-import com.futebadosparcas.util.toAndroidCashboxEntry
-import com.futebadosparcas.util.toAndroidCashboxEntries
-import com.futebadosparcas.util.toAndroidGroupInvites
-import com.futebadosparcas.util.toKmpSchedule
-import com.futebadosparcas.util.toKmpLocation
-import com.futebadosparcas.util.toKmpLocationReview
-import com.futebadosparcas.util.toKmpGameTemplate
-import com.futebadosparcas.util.toKmpCashboxFilter
-import com.futebadosparcas.util.toKmpCashboxEntry
-import com.futebadosparcas.util.toKmpNotificationType
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -71,7 +56,7 @@ class CashboxViewModel(
     private fun loadUserRole(groupId: String) {
         viewModelScope.launch {
             val role = groupRepository.getMyRoleInGroup(groupId).getOrNull()
-            _userRole.value = role
+            _userRole.value = role?.let { GroupMemberRole.valueOf(it.name) }
         }
     }
 
@@ -79,8 +64,7 @@ class CashboxViewModel(
         summaryJob?.cancel()
         summaryJob = cashboxRepository.getSummaryFlow(groupId)
             .onEach { summary ->
-                val androidSummary = summary.toAndroidCashboxSummary()
-                _summaryState.value = CashboxSummaryState.Success(androidSummary)
+                _summaryState.value = CashboxSummaryState.Success(summary)
             }
             .catch { e ->
                 _summaryState.value = CashboxSummaryState.Error(
@@ -96,11 +80,10 @@ class CashboxViewModel(
         historyJob?.cancel()
         historyJob = cashboxRepository.getHistoryFlow(groupId)
             .onEach { entries ->
-                val androidEntries = entries.toAndroidCashboxEntries()
-                _historyState.value = if (androidEntries.isEmpty()) {
+                _historyState.value = if (entries.isEmpty()) {
                     CashboxHistoryState.Empty
                 } else {
-                    val groupedItems = groupEntriesByMonth(androidEntries)
+                    val groupedItems = groupEntriesByMonth(entries)
                     CashboxHistoryState.Success(groupedItems)
                 }
             }
@@ -112,7 +95,7 @@ class CashboxViewModel(
             .launchIn(viewModelScope)
     }
 
-    private fun groupEntriesByMonth(entries: List<AndroidCashboxEntry>): List<CashboxListItem> {
+    private fun groupEntriesByMonth(entries: List<CashboxEntry>): List<CashboxListItem> {
         val result = mutableListOf<CashboxListItem>()
         val grouped = entries.groupBy { entry ->
             val date = entry.createdAt ?: entry.referenceDate ?: Date()

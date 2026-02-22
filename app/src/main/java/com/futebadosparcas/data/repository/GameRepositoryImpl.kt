@@ -6,7 +6,7 @@ import com.futebadosparcas.data.model.GameConfirmation as AndroidGameConfirmatio
 import com.futebadosparcas.data.model.GameEvent
 import com.futebadosparcas.domain.model.GameStatus
 import com.futebadosparcas.data.model.LiveGameScore
-import com.futebadosparcas.data.model.Team
+import com.futebadosparcas.domain.model.Team
 import com.futebadosparcas.domain.model.Game as KmpGame
 import com.futebadosparcas.domain.model.GameConfirmation as KmpGameConfirmation
 import com.futebadosparcas.domain.model.GameFilterType as KmpGameFilterType
@@ -210,24 +210,18 @@ class GameRepositoryImpl constructor(
         queryRepository.getGamesByFieldAndDate(fieldId, date)
 
     // ========== Confirmation Methods - Delegação para GameConfirmationRepository ==========
-    override suspend fun getGameConfirmations(gameId: String): Result<List<AndroidGameConfirmation>> =
-        confirmationRepository.getGameConfirmations(gameId).map { kmpConfirmations ->
-            kmpConfirmations.map { it.toAndroidModel() }
-        }
+    override suspend fun getGameConfirmations(gameId: String): Result<List<com.futebadosparcas.domain.model.GameConfirmation>> =
+        confirmationRepository.getGameConfirmations(gameId)
 
-    override fun getGameConfirmationsFlow(gameId: String): Flow<Result<List<AndroidGameConfirmation>>> =
-        confirmationRepository.getGameConfirmationsFlow(gameId).map { result ->
-            result.map { kmpConfirmations ->
-                kmpConfirmations.map { it.toAndroidModel() }
-            }
-        }
+    override fun getGameConfirmationsFlow(gameId: String): Flow<Result<List<com.futebadosparcas.domain.model.GameConfirmation>>> =
+        confirmationRepository.getGameConfirmationsFlow(gameId)
 
     override suspend fun confirmPresence(
         gameId: String,
         position: String,
         isCasual: Boolean
-    ): Result<AndroidGameConfirmation> =
-        confirmationRepository.confirmPresence(gameId, position, isCasual).map { it.toAndroidModel() }
+    ): Result<com.futebadosparcas.domain.model.GameConfirmation> =
+        confirmationRepository.confirmPresence(gameId, position, isCasual)
 
     override suspend fun getGoalkeeperCount(gameId: String): Result<Int> =
         confirmationRepository.getGoalkeeperCount(gameId)
@@ -244,11 +238,11 @@ class GameRepositoryImpl constructor(
     override suspend fun updatePaymentStatus(gameId: String, userId: String, isPaid: Boolean): Result<Unit> =
         confirmationRepository.updatePaymentStatus(gameId, userId, isPaid)
 
-    override suspend fun summonPlayers(gameId: String, confirmations: List<AndroidGameConfirmation>): Result<Unit> =
-        confirmationRepository.summonPlayers(gameId, confirmations.map { it.toKmpModel() })
+    override suspend fun summonPlayers(gameId: String, confirmations: List<com.futebadosparcas.domain.model.GameConfirmation>): Result<Unit> =
+        confirmationRepository.summonPlayers(gameId, confirmations)
 
-    override suspend fun acceptInvitation(gameId: String, position: String): Result<AndroidGameConfirmation> =
-        confirmationRepository.acceptInvitation(gameId, position).map { it.toAndroidModel() }
+    override suspend fun acceptInvitation(gameId: String, position: String): Result<com.futebadosparcas.domain.model.GameConfirmation> =
+        confirmationRepository.acceptInvitation(gameId, position)
 
     // ========== Events Methods - Delegação para GameEventsRepository ==========
     override fun getGameEventsFlow(gameId: String): Flow<Result<List<com.futebadosparcas.data.model.GameEvent>>> =
