@@ -99,8 +99,8 @@ kotlin {
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.9.6")
 
             // Coil 3 - Image Loading (Kotlin Multiplatform)
-            implementation("io.coil-kt.coil3:coil:3.0.4")
-            implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+            implementation("io.coil-kt.coil3:coil:3.3.0")
+            implementation("io.coil-kt.coil3:coil-compose:3.3.0")
         }
 
         androidMain.dependencies {
@@ -109,7 +109,7 @@ kotlin {
             implementation("androidx.compose.ui:ui-tooling-preview:1.10.2")
 
             // Coil 3 - Network support for Android
-            implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
+            implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
         }
 
         iosMain.dependencies {
