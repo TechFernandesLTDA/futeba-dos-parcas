@@ -4,11 +4,16 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,6 +28,8 @@ import com.futebadosparcas.ui.gamification.XpHistoryScreen
 import com.futebadosparcas.ui.settings.SettingsTab
 import com.futebadosparcas.ui.tactical.TacticalBoardScreen
 import com.futebadosparcas.ui.TeamFormationScreen
+import com.futebadosparcas.ui.components.WebIcons
+import com.futebadosparcas.ui.components.WebIcon
 import kotlinx.coroutines.launch
 
 private sealed class GamificationScreen {
@@ -113,72 +120,125 @@ fun HomeScreenWeb(
                             currentRoute is WebRoute.Admin -> "Painel Admin"
                             currentRoute is WebRoute.AdminUsers -> "Gerenciar Usuários"
                             currentRoute is WebRoute.AdminReports -> "Denúncias"
-                            else -> "Futeba dos Parças - ${getPlatformName()}"
-                        }
+                            else -> "Futeba dos Parças"
+                        },
+                        fontWeight = FontWeight.SemiBold
                     )
                 },
                 navigationIcon = {
                     if (currentRoute.isDetailScreen || isGamificationScreen) {
                         IconButton(onClick = navigateBack) {
-                            Text("←", style = MaterialTheme.typography.titleLarge)
+                            WebIcon(
+                                icon = WebIcons.ArrowBack,
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = Color.Transparent,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                modifier = Modifier.background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                        ),
+                        start = Offset(0f, 0f),
+                        end = Offset(1000f, 0f)
+                    )
                 )
             )
         },
         bottomBar = {
             if (!currentRoute.isDetailScreen && !isGamificationScreen) {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 8.dp,
+                    modifier = Modifier.shadow(8.dp)
+                ) {
                     NavigationBarItem(
-                        icon = { Text("🏠") },
+                        icon = { WebIcon(icon = WebIcons.Home) },
                         label = { Text("Início") },
                         selected = currentRoute is WebRoute.Home,
-                        onClick = { WebRouter.navigateToTab(0) }
+                        onClick = { WebRouter.navigateToTab(0) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                     NavigationBarItem(
-                        icon = { Text("📅") },
+                        icon = { WebIcon(icon = WebIcons.Event) },
                         label = { Text("Agenda") },
                         selected = currentRoute is WebRoute.Schedules,
-                        onClick = { WebRouter.navigate(WebRoute.Schedules) }
+                        onClick = { WebRouter.navigate(WebRoute.Schedules) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                     NavigationBarItem(
-                        icon = { Text("⚽") },
+                        icon = { WebIcon(icon = WebIcons.SportsSoccer) },
                         label = { Text("Jogos") },
                         selected = currentRoute is WebRoute.Games || currentRoute is WebRoute.GameDetail,
-                        onClick = { WebRouter.navigateToTab(1) }
+                        onClick = { WebRouter.navigateToTab(1) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                     NavigationBarItem(
-                        icon = { Text("👥") },
+                        icon = { WebIcon(icon = WebIcons.Group) },
                         label = { Text("Grupos") },
                         selected = currentRoute is WebRoute.Groups || currentRoute is WebRoute.GroupDetail,
-                        onClick = { WebRouter.navigateToTab(2) }
+                        onClick = { WebRouter.navigateToTab(2) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                     NavigationBarItem(
-                        icon = { Text("👤") },
+                        icon = { WebIcon(icon = WebIcons.Person) },
                         label = { Text("Jogadores") },
                         selected = currentRoute is WebRoute.Players || currentRoute is WebRoute.PlayerDetail,
-                        onClick = { WebRouter.navigate(WebRoute.Players) }
+                        onClick = { WebRouter.navigate(WebRoute.Players) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                     NavigationBarItem(
-                        icon = { Text("📍") },
+                        icon = { WebIcon(icon = WebIcons.LocationOn) },
                         label = { Text("Locais") },
                         selected = currentRoute is WebRoute.Locations || currentRoute is WebRoute.LocationDetail,
-                        onClick = { WebRouter.navigateToTab(4) }
+                        onClick = { WebRouter.navigateToTab(4) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                     NavigationBarItem(
-                        icon = { Text("🏆") },
+                        icon = { WebIcon(icon = WebIcons.EmojiEvents) },
                         label = { Text("Ranking") },
                         selected = currentRoute is WebRoute.Rankings || currentRoute is WebRoute.LeagueDetail || currentRoute is WebRoute.StatisticsDetail,
-                        onClick = { WebRouter.navigateToTab(5) }
+                        onClick = { WebRouter.navigateToTab(5) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                     NavigationBarItem(
                         icon = {
                             Box {
-                                Text("🔔")
+                                WebIcon(icon = WebIcons.Notifications)
                                 if (unreadNotificationsCount > 0) {
                                     val pulseAnimation = rememberInfiniteTransition(label = "pulse")
                                     val pulseScale by pulseAnimation.animateFloat(
@@ -217,20 +277,35 @@ fun HomeScreenWeb(
                         },
                         label = { Text("Alertas") },
                         selected = currentRoute is WebRoute.Notifications,
-                        onClick = { WebRouter.navigateToTab(6) }
+                        onClick = { WebRouter.navigateToTab(6) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                     NavigationBarItem(
-                        icon = { Text("👤") },
+                        icon = { WebIcon(icon = WebIcons.AccountCircle) },
                         label = { Text("Perfil") },
                         selected = currentRoute is WebRoute.Profile,
-                        onClick = { WebRouter.navigateToTab(7) }
+                        onClick = { WebRouter.navigateToTab(7) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                     if (isAdmin) {
                         NavigationBarItem(
-                            icon = { Text("👑") },
+                            icon = { WebIcon(icon = WebIcons.AdminPanelSettings) },
                             label = { Text("Admin") },
                             selected = currentRoute is WebRoute.Admin || currentRoute is WebRoute.AdminUsers || currentRoute is WebRoute.AdminReports,
-                            onClick = { WebRouter.navigateToTab(8) }
+                            onClick = { WebRouter.navigateToTab(8) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                            )
                         )
                     }
                 }
