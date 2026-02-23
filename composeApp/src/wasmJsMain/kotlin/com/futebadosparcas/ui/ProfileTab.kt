@@ -1,5 +1,11 @@
 package com.futebadosparcas.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,6 +20,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -21,6 +30,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.futebadosparcas.firebase.FirebaseManager
+import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.components.WebIcons
+import com.futebadosparcas.ui.components.WebIcon
+import com.futebadosparcas.ui.components.WebIconBadge
 import kotlinx.coroutines.launch
 
 private data class UserProfile(
@@ -217,53 +230,90 @@ private fun ProfileContent(
 @Composable
 private fun ProfileHeader(profile: UserProfile) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(8.dp, RoundedCornerShape(24.dp)),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                            MaterialTheme.colorScheme.surface
+                        ),
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, 400f)
+                    )
+                )
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
-                modifier = Modifier.size(120.dp),
-                contentAlignment = Alignment.Center
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(500)) + scaleIn(
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                    initialScale = 0.8f
+                )
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.size(130.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = getInitials(profile.name),
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                    Box(
+                        modifier = Modifier
+                            .size(130.dp)
+                            .shadow(12.dp, CircleShape)
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary,
+                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
+                                    ),
+                                    start = Offset(0f, 0f),
+                                    end = Offset(130f, 130f)
+                                ),
+                                CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = getInitials(profile.name),
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 42.sp
+                        )
+                    }
 
-                Surface(
-                    modifier = Modifier.align(Alignment.BottomEnd),
-                    shape = CircleShape,
-                    color = getLevelColor(profile.level)
-                ) {
-                    Text(
-                        text = "${profile.level}",
-                        modifier = Modifier.padding(8.dp),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    Surface(
+                        modifier = Modifier.align(Alignment.BottomEnd),
+                        shape = CircleShape,
+                        shadowElevation = 4.dp,
+                        tonalElevation = 0.dp,
+                        color = getLevelColor(profile.level)
+                    ) {
+                        Box(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${profile.level}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Text(
                 text = profile.name,
@@ -273,41 +323,62 @@ private fun ProfileHeader(profile: UserProfile) {
             )
 
             profile.nickname?.let { nick ->
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "\"$nick\"",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = profile.email,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                WebIcon(
+                    icon = WebIcons.Email,
+                    size = 16.dp,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = profile.email,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             if (profile.role == "ADMIN" || profile.role == "FIELD_OWNER") {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Surface(
-                    shape = MaterialTheme.shapes.small,
+                    shape = RoundedCornerShape(20.dp),
                     color = if (profile.role == "ADMIN") {
-                        MaterialTheme.colorScheme.error
+                        GamificationColors.LevelUpGold
                     } else {
                         MaterialTheme.colorScheme.secondary
-                    }
+                    },
+                    shadowElevation = 4.dp
                 ) {
-                    Text(
-                        text = if (profile.role == "ADMIN") "Administrador" else "Organizador",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = if (profile.role == "ADMIN") {
-                            MaterialTheme.colorScheme.onError
-                        } else {
-                            MaterialTheme.colorScheme.onSecondary
-                        }
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (profile.role == "ADMIN") WebIcons.Star else WebIcons.Trophy,
+                            fontSize = 18.sp,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (profile.role == "ADMIN") "Administrador" else "Organizador",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }
@@ -320,82 +391,125 @@ private fun LevelCard(level: Int, experiencePoints: Long, onClick: () -> Unit = 
     val currentLevelXP = experiencePoints % 200
     val progress = if (xpForLevel > 0) (currentLevelXP.toFloat() / 200f) else 0f
     val levelTitle = getLevelTitle(level)
+    val levelColor = getLevelColor(level)
 
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(6.dp, RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            levelColor.copy(alpha = 0.15f),
+                            MaterialTheme.colorScheme.surface
+                        ),
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, 200f)
+                    )
+                )
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Nível $level",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "›",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
-                        )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = levelColor,
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Text(
+                                        text = "$level",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Nível $level",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    WebIcon(
+                                        icon = WebIcons.ChevronRight,
+                                        size = 20.dp,
+                                        tint = levelColor.copy(alpha = 0.6f)
+                                    )
+                                }
+                                Text(
+                                    text = levelTitle,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = levelColor
+                                )
+                            }
+                        }
                     }
+
                     Text(
-                        text = levelTitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        text = getLevelEmoji(level),
+                        style = MaterialTheme.typography.displayMedium,
+                        fontSize = 40.sp
                     )
                 }
 
-                Text(
-                    text = getLevelEmoji(level),
-                    style = MaterialTheme.typography.displayMedium
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LinearProgressIndicator(
+                    progress = { progress.coerceIn(0f, 1f) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(5.dp)),
+                    color = levelColor,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
                 )
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-            LinearProgressIndicator(
-                progress = { progress.coerceIn(0f, 1f) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                color = Color(0xFF4CAF50),
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "$currentLevelXP / 200 XP",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Text(
-                    text = "${(progress * 100).toInt()}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "$currentLevelXP / 200 XP",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${(progress * 100).toInt()}%",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = levelColor
+                    )
+                }
             }
         }
     }
@@ -414,13 +528,15 @@ private fun GamificationActionsSection(
             modifier = Modifier.weight(1f),
             emoji = "📊",
             title = "Histórico XP",
-            onClick = onXpHistoryClick
+            onClick = onXpHistoryClick,
+            accentColor = MaterialTheme.colorScheme.primary
         )
         GamificationActionCard(
             modifier = Modifier.weight(1f),
             emoji = "🏅",
             title = "Badges",
-            onClick = onBadgesClick
+            onClick = onBadgesClick,
+            accentColor = GamificationColors.Gold
         )
     }
 }
@@ -430,40 +546,66 @@ private fun GamificationActionCard(
     modifier: Modifier = Modifier,
     emoji: String,
     title: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    accentColor: Color
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.shadow(4.dp, RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            accentColor.copy(alpha = 0.1f),
+                            MaterialTheme.colorScheme.surface
+                        )
+                    )
+                )
         ) {
-            Text(
-                text = emoji,
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = "›",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = accentColor.copy(alpha = 0.15f),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Text(
+                            text = emoji,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontSize = 20.sp
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                WebIcon(
+                    icon = WebIcons.ChevronRight,
+                    size = 18.dp,
+                    tint = accentColor.copy(alpha = 0.6f)
+                )
+            }
         }
     }
 }
@@ -471,21 +613,38 @@ private fun GamificationActionCard(
 @Composable
 private fun FieldPreferencesCard(preferredTypes: List<String>) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(4.dp, RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
-            Text(
-                text = "Preferências de Campo",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                WebIconBadge(
+                    icon = WebIcons.SportsSoccer,
+                    size = 36.dp,
+                    iconSize = 20.dp,
+                    backgroundColor = GamificationColors.XpGreen.copy(alpha = 0.15f),
+                    iconTint = GamificationColors.XpGreen
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Preferências de Campo",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -521,19 +680,39 @@ private fun FieldTypeIcon(
     emoji: String,
     label: String
 ) {
+    val bgColor = if (isEnabled) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.alpha(if (isEnabled) 1f else 0.3f)
+        modifier = Modifier.alpha(if (isEnabled) 1f else 0.4f)
     ) {
-        Text(
-            text = emoji,
-            style = MaterialTheme.typography.displaySmall
-        )
-        Spacer(modifier = Modifier.height(4.dp))
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = bgColor,
+            modifier = Modifier.size(64.dp),
+            shadowElevation = if (isEnabled) 4.dp else 0.dp
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Text(
+                    text = emoji,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontSize = 28.sp
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface
+            fontWeight = if (isEnabled) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (isEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -541,35 +720,52 @@ private fun FieldTypeIcon(
 @Composable
 private fun RatingsCard(profile: UserProfile) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(4.dp, RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
-            Text(
-                text = "Ratings por Posição",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                WebIconBadge(
+                    icon = WebIcons.StarRate,
+                    size = 36.dp,
+                    iconSize = 20.dp,
+                    backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                    iconTint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Ratings por Posição",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            RatingItem("⚽ Atacante", profile.strikerRating)
+            RatingItem("⚽ Atacante", profile.strikerRating, GamificationColors.Gold)
             Spacer(modifier = Modifier.height(12.dp))
-            RatingItem("🏃 Meia", profile.midRating)
+            RatingItem("🏃 Meia", profile.midRating, MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(12.dp))
-            RatingItem("🛡️ Zagueiro", profile.defenderRating)
+            RatingItem("🛡️ Zagueiro", profile.defenderRating, MaterialTheme.colorScheme.secondary)
             Spacer(modifier = Modifier.height(12.dp))
-            RatingItem("🧤 Goleiro", profile.gkRating)
+            RatingItem("🧤 Goleiro", profile.gkRating, GamificationColors.Bronze)
         }
     }
 }
 
 @Composable
-private fun RatingItem(label: String, rating: Double) {
+private fun RatingItem(label: String, rating: Double, accentColor: Color) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -581,12 +777,18 @@ private fun RatingItem(label: String, rating: Double) {
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            Text(
-                text = "${(rating * 10).toInt() / 10.0}", // Formato manual para wasmJs
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = accentColor.copy(alpha = 0.15f)
+            ) {
+                Text(
+                    text = "${(rating * 10).toInt() / 10.0}",
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = accentColor
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(6.dp))
@@ -597,7 +799,7 @@ private fun RatingItem(label: String, rating: Double) {
                 .fillMaxWidth()
                 .height(6.dp)
                 .clip(RoundedCornerShape(3.dp)),
-            color = MaterialTheme.colorScheme.primary,
+            color = accentColor,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
         )
     }
@@ -606,51 +808,69 @@ private fun RatingItem(label: String, rating: Double) {
 @Composable
 private fun StatisticsCard(profile: UserProfile) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(4.dp, RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
-            Text(
-                text = "Estatísticas",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                WebIconBadge(
+                    icon = WebIcons.QueryStats,
+                    size = 36.dp,
+                    iconSize = 20.dp,
+                    backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
+                    iconTint = MaterialTheme.colorScheme.secondary
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Estatísticas",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatItem(value = profile.totalGames.toString(), label = "Jogos")
-                    StatItem(value = profile.totalGoals.toString(), label = "Gols")
-                    StatItem(value = profile.totalWins.toString(), label = "Vitórias")
+                    StatItem(value = profile.totalGames.toString(), label = "Jogos", color = MaterialTheme.colorScheme.primary)
+                    StatItem(value = profile.totalGoals.toString(), label = "Gols", color = GamificationColors.Gold)
+                    StatItem(value = profile.totalWins.toString(), label = "Vitórias", color = GamificationColors.XpGreen)
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatItem(value = profile.totalAssists.toString(), label = "Assists")
-                    StatItem(value = profile.totalDraws.toString(), label = "Empates")
-                    StatItem(value = profile.mvpCount.toString(), label = "MVPs")
+                    StatItem(value = profile.totalAssists.toString(), label = "Assists", color = MaterialTheme.colorScheme.secondary)
+                    StatItem(value = profile.totalDraws.toString(), label = "Empates", color = MaterialTheme.colorScheme.tertiary)
+                    StatItem(value = profile.mvpCount.toString(), label = "MVPs", color = GamificationColors.Gold)
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatItem(value = profile.totalSaves.toString(), label = "Defesas")
-                    StatItem(value = "${profile.yellowCards + profile.redCards}", label = "Cartões")
+                    StatItem(value = profile.totalSaves.toString(), label = "Defesas", color = GamificationColors.Bronze)
+                    StatItem(value = "${profile.yellowCards + profile.redCards}", label = "Cartões", color = MaterialTheme.colorScheme.error)
                     StatItem(
                         value = if (profile.totalGames > 0) {
                             val avg = profile.totalGoals.toDouble() / profile.totalGames
-                            "${(avg * 10).toInt() / 10.0}" // Formato manual para wasmJs
+                            "${(avg * 10).toInt() / 10.0}"
                         } else "0.0",
-                        label = "Média Gols"
+                        label = "Média Gols",
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -659,20 +879,28 @@ private fun StatisticsCard(profile: UserProfile) {
 }
 
 @Composable
-private fun RowScope.StatItem(value: String, label: String) {
+private fun RowScope.StatItem(value: String, label: String, color: Color = MaterialTheme.colorScheme.primary) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.weight(1f)
     ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = color.copy(alpha = 0.12f)
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = color,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
@@ -683,32 +911,63 @@ private fun RowScope.StatItem(value: String, label: String) {
 private fun BadgesSection(badges: List<Badge>, onClick: () -> Unit = {}) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(4.dp, RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Badges Recentes",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Ver todas ›",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = GamificationColors.Gold.copy(alpha = 0.15f),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Text(
+                                text = "🏅",
+                                fontSize = 18.sp
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Badges Recentes",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Ver todas",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    WebIcon(
+                        icon = WebIcons.ChevronRight,
+                        size = 16.dp,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -724,10 +983,10 @@ private fun BadgesSection(badges: List<Badge>, onClick: () -> Unit = {}) {
 @Composable
 private fun BadgeItem(badge: Badge) {
     val (emoji, bgColor) = when (badge.badgeId) {
-        "FIRST_GOAL" -> "⚽" to Color(0xFFFFD700)
+        "FIRST_GOAL" -> "⚽" to GamificationColors.Gold
         "STREAK_7" -> "🔥" to MaterialTheme.colorScheme.secondary
-        "MVP_5" -> "🏆" to Color(0xFFFFD700)
-        "HAT_TRICK" -> "🎩" to Color(0xFFFFD700)
+        "MVP_5" -> "🏆" to GamificationColors.Gold
+        "HAT_TRICK" -> "🎩" to GamificationColors.Purple
         "PAREDAO" -> "🧱" to MaterialTheme.colorScheme.primary
         else -> "🏅" to MaterialTheme.colorScheme.surfaceVariant
     }
@@ -739,37 +998,49 @@ private fun BadgeItem(badge: Badge) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(60.dp)
-                .clip(CircleShape)
-                .background(bgColor.copy(alpha = 0.2f))
+                .size(64.dp)
+                .shadow(6.dp, CircleShape)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            bgColor,
+                            bgColor.copy(alpha = 0.7f)
+                        )
+                    ),
+                    CircleShape
+                )
         ) {
             Text(
                 text = emoji,
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
+                fontSize = 28.sp
             )
 
             if (badge.count > 1) {
                 Surface(
                     modifier = Modifier.align(Alignment.TopEnd),
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.error,
+                    shadowElevation = 2.dp
                 ) {
                     Text(
                         text = badge.count.toString(),
-                        modifier = Modifier.padding(4.dp),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onError,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
                         fontSize = 10.sp
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = badge.badgeId.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
             style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             maxLines = 2,
@@ -786,22 +1057,48 @@ private fun ActionButtonsSection(onLogoutClick: () -> Unit) {
     ) {
         Button(
             onClick = { },
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp)
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp)
+                .shadow(4.dp, RoundedCornerShape(16.dp)),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
         ) {
-            Text("✏️")
+            WebIcon(
+                icon = WebIcons.Edit,
+                size = 20.dp,
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Editar Perfil")
+            Text(
+                "Editar Perfil",
+                fontWeight = FontWeight.SemiBold
+            )
         }
 
         OutlinedButton(
             onClick = onLogoutClick,
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(12.dp)
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.error
+            ),
+            border = androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
         ) {
-            Text("🚪")
+            WebIcon(
+                icon = WebIcons.Logout,
+                size = 20.dp,
+                tint = MaterialTheme.colorScheme.error
+            )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Sair")
+            Text(
+                "Sair",
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
@@ -812,25 +1109,56 @@ private fun SettingsSection(
     onDeveloperToolsClick: () -> Unit = {}
 ) {
     val devModeEnabled = remember { jsGetDevModeEnabled() }
-    
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(4.dp, RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            SettingsMenuItem(emoji = "🔔", title = "Notificações", onClick = {})
-            HorizontalDivider()
-            SettingsMenuItem(emoji = "⚙️", title = "Configurações", onClick = onSettingsClick)
-            HorizontalDivider()
-            SettingsMenuItem(emoji = "📅", title = "Agenda", onClick = {})
-            HorizontalDivider()
-            SettingsMenuItem(emoji = "ℹ️", title = "Sobre", onClick = {})
-            
+            SettingsMenuItem(
+                icon = WebIcons.Notifications,
+                iconBgColor = MaterialTheme.colorScheme.errorContainer,
+                iconTint = MaterialTheme.colorScheme.error,
+                title = "Notificações",
+                onClick = {}
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+            SettingsMenuItem(
+                icon = WebIcons.Settings,
+                iconBgColor = MaterialTheme.colorScheme.primaryContainer,
+                iconTint = MaterialTheme.colorScheme.primary,
+                title = "Configurações",
+                onClick = onSettingsClick
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+            SettingsMenuItem(
+                icon = WebIcons.CalendarMonth,
+                iconBgColor = MaterialTheme.colorScheme.secondaryContainer,
+                iconTint = MaterialTheme.colorScheme.secondary,
+                title = "Agenda",
+                onClick = {}
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+            SettingsMenuItem(
+                icon = WebIcons.Info,
+                iconBgColor = MaterialTheme.colorScheme.tertiaryContainer,
+                iconTint = MaterialTheme.colorScheme.tertiary,
+                title = "Sobre",
+                onClick = {}
+            )
+
             if (devModeEnabled) {
-                HorizontalDivider()
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
                 SettingsMenuItem(
-                    emoji = "🔧", 
-                    title = "Developer Tools", 
+                    icon = WebIcons.Build,
+                    iconBgColor = MaterialTheme.colorScheme.errorContainer,
+                    iconTint = MaterialTheme.colorScheme.error,
+                    title = "Developer Tools",
                     onClick = onDeveloperToolsClick,
                     titleColor = MaterialTheme.colorScheme.error
                 )
@@ -841,10 +1169,12 @@ private fun SettingsSection(
 
 @Composable
 private fun SettingsMenuItem(
-    emoji: String, 
-    title: String, 
+    icon: String,
+    iconBgColor: Color,
+    iconTint: Color,
+    title: String,
     onClick: () -> Unit,
-    titleColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+    titleColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     Row(
         modifier = Modifier
@@ -853,21 +1183,25 @@ private fun SettingsMenuItem(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = emoji,
-            style = MaterialTheme.typography.titleMedium
+        WebIconBadge(
+            icon = icon,
+            size = 40.dp,
+            iconSize = 22.dp,
+            backgroundColor = iconBgColor,
+            iconTint = iconTint
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
             color = titleColor,
             modifier = Modifier.weight(1f)
         )
-        Text(
-            text = "›",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        WebIcon(
+            icon = WebIcons.ChevronRight,
+            size = 20.dp,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
         )
     }
 }
@@ -881,8 +1215,10 @@ private fun ProfileLoadingShimmer() {
     ) {
         item {
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(4.dp, RoundedCornerShape(20.dp)),
+                shape = RoundedCornerShape(20.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -892,25 +1228,32 @@ private fun ProfileLoadingShimmer() {
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(120.dp)
+                            .size(130.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                    )
+                                )
+                            )
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     Box(
                         modifier = Modifier
                             .width(200.dp)
-                            .height(24.dp)
-                            .clip(RoundedCornerShape(4.dp))
+                            .height(28.dp)
+                            .clip(RoundedCornerShape(8.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Box(
                         modifier = Modifier
                             .width(150.dp)
-                            .height(16.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .height(18.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
                     )
                 }
             }
@@ -918,28 +1261,30 @@ private fun ProfileLoadingShimmer() {
 
         items(4) {
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(4.dp, RoundedCornerShape(20.dp)),
+                shape = RoundedCornerShape(20.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Box(
                         modifier = Modifier
                             .width(150.dp)
-                            .height(20.dp)
-                            .clip(RoundedCornerShape(4.dp))
+                            .height(22.dp)
+                            .clip(RoundedCornerShape(6.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                     )
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(80.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .height(90.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                     )
                 }
             }
@@ -956,22 +1301,57 @@ private fun ProfileErrorState(message: String, onRetry: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.errorContainer,
+            modifier = Modifier.size(100.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(100.dp)
+            ) {
+                WebIcon(
+                    icon = WebIcons.ErrorOutline,
+                    size = 48.dp,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = "❌",
-            style = MaterialTheme.typography.displayLarge
+            text = "Ops! Algo deu errado",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onRetry) {
-            Text("🔄")
+        Spacer(modifier = Modifier.height(28.dp))
+        Button(
+            onClick = onRetry,
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            ),
+            modifier = Modifier
+                .height(52.dp)
+                .shadow(4.dp, RoundedCornerShape(16.dp))
+        ) {
+            WebIcon(
+                icon = WebIcons.Refresh,
+                size = 20.dp,
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Tentar novamente")
+            Text(
+                "Tentar novamente",
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
@@ -988,10 +1368,10 @@ private fun getInitials(name: String): String {
 @Composable
 private fun getLevelColor(level: Int): Color {
     return when {
-        level >= 50 -> Color(0xFFFFD700)
-        level >= 30 -> Color(0xFF9C27B0)
-        level >= 20 -> Color(0xFF2196F3)
-        level >= 10 -> Color(0xFF4CAF50)
+        level >= 50 -> GamificationColors.Gold
+        level >= 30 -> GamificationColors.Purple
+        level >= 20 -> MaterialTheme.colorScheme.secondary
+        level >= 10 -> GamificationColors.XpGreen
         else -> MaterialTheme.colorScheme.primary
     }
 }
