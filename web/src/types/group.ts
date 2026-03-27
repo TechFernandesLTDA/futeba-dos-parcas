@@ -21,6 +21,7 @@ export interface Group {
   // Type
   type: GroupType;
   isPublic: boolean;
+  isPrivate?: boolean;
   
   // Owner
   ownerId: string;
@@ -49,6 +50,7 @@ export interface Group {
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
+  deletedAt?: Date;
 }
 
 export interface GroupInvite {

@@ -22,15 +22,20 @@ import {
   Google,
   SportsSoccer,
 } from '@mui/icons-material';
+import { useTheme } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
+import { getAuthErrorMessage } from '../../utils/firebaseErrors';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export function LoginScreen() {
+  useDocumentTitle('Login');
+  const theme = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
 
@@ -48,13 +53,7 @@ export function LoginScreen() {
       await signIn(email, password);
       navigate('/');
     } catch (err: any) {
-      if (err.code === 'auth/invalid-credential') {
-        setError('Email ou senha inválidos');
-      } else if (err.code === 'auth/too-many-requests') {
-        setError('Muitas tentativas. Tente novamente mais tarde');
-      } else {
-        setError('Erro ao fazer login. Tente novamente');
-      }
+      setError(getAuthErrorMessage(err, 'Erro ao fazer login. Tente novamente'));
     } finally {
       setLoading(false);
     }
@@ -68,11 +67,7 @@ export function LoginScreen() {
       await signInWithGoogle();
       navigate('/');
     } catch (err: any) {
-      if (err.code === 'auth/popup-closed-by-user') {
-        setError('Login cancelado');
-      } else {
-        setError('Erro ao fazer login com Google');
-      }
+      setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));
     } finally {
       setLoading(false);
     }
@@ -82,7 +77,7 @@ export function LoginScreen() {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #00C853 0%, #2979FF 100%)',
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -105,13 +100,13 @@ export function LoginScreen() {
                 width: 80,
                 height: 80,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #00C853, #00852A)',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 mx: 'auto',
                 mb: 2,
-                boxShadow: '0 4px 12px rgba(0,200,83,0.4)',
+                boxShadow: `0 4px 12px ${theme.palette.primary.main}66`,
               }}
             >
               <SportsSoccer sx={{ fontSize: 40, color: 'white' }} />
@@ -125,12 +120,12 @@ export function LoginScreen() {
           </Box>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} role="alert" aria-live="assertive">
               {error}
             </Alert>
           )}
 
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleLogin} aria-label="Formulário de login">
             <TextField
               fullWidth
               label="Email"
@@ -138,6 +133,7 @@ export function LoginScreen() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
+              autoComplete="email"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -155,6 +151,7 @@ export function LoginScreen() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              autoComplete="current-password"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -167,6 +164,7 @@ export function LoginScreen() {
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
                       disabled={loading}
+                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -185,9 +183,9 @@ export function LoginScreen() {
               sx={{
                 py: 1.5,
                 fontSize: '1rem',
-                background: 'linear-gradient(135deg, #00C853, #00852A)',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #00852A, #006B1F)',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.dark})`,
                 },
               }}
             >
@@ -217,11 +215,11 @@ export function LoginScreen() {
             disabled={loading}
             sx={{
               py: 1.5,
-              borderColor: '#4285F4',
-              color: '#4285F4',
+              borderColor: theme.palette.info.main,
+              color: theme.palette.info.main,
               '&:hover': {
-                borderColor: '#3367D6',
-                backgroundColor: 'rgba(66, 133, 244, 0.04)',
+                borderColor: theme.palette.info.dark,
+                backgroundColor: `${theme.palette.info.main}0A`,
               },
             }}
           >

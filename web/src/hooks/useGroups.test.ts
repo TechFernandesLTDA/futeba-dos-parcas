@@ -1,0 +1,333 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
+
+// Mocks simples
+const mockOnSnapshot = vi.fn();
+const mockGetDoc = vi.fn();
+const mockGetDocs = vi.fn();
+const mockAddDoc = vi.fn();
+const mockCollection = vi.fn();
+const mockDoc = vi.fn();
+const mockQuery = vi.fn();
+const mockWhere = vi.fn();
+const mockOrderBy = vi.fn();
+const mockBatchSet = vi.fn();
+const mockBatchUpdate = vi.fn();
+const mockBatchCommit = vi.fn();
+const mockWriteBatch = vi.fn();
+
+vi.mock('firebase/firestore', () => ({
+  collection: (...args: any[]) => mockCollection(...args),
+  doc: (...args: any[]) => mockDoc(...args),
+  getDoc: (...args: any[]) => mockGetDoc(...args),
+  getDocs: (...args: any[]) => mockGetDocs(...args),
+  addDoc: (...args: any[]) => mockAddDoc(...args),
+  updateDoc: vi.fn(),
+  setDoc: vi.fn(),
+  writeBatch: (...args: any[]) => mockWriteBatch(...args),
+  query: (...args: any[]) => mockQuery(...args),
+  where: (...args: any[]) => mockWhere(...args),
+  orderBy: (...args: any[]) => mockOrderBy(...args),
+  onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
+  Timestamp: { now: () => ({ toDate: () => new Date() }), fromDate: (d: Date) => ({ toDate: () => d }) },
+}));
+
+vi.mock('../services/firebase', () => ({ db: {}, auth: { currentUser: null } }));
+
+let mockAuthReturn: any = {
+  user: { id: 'test-user-id', name: 'Test User', photoUrl: null, level: 5 },
+  firebaseUser: { uid: 'test-user-id', displayName: 'Test User', photoURL: null },
+  loading: false, error: null,
+  signIn: vi.fn(), signOut: vi.fn(), signUp: vi.fn(), logout: vi.fn(),
+  signInWithGoogle: vi.fn(), resetPassword: vi.fn(), updateUserProfile: vi.fn(),
+  refreshUser: vi.fn(), currentUser: { uid: 'test-user-id' },
+};
+
+vi.mock('../contexts/AuthContext', () => ({
+  useAuth: () => mockAuthReturn,
+}));
+
+vi.mock('../utils/logger', () => ({
+  createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
+}));
+
+import { useGroups, useGroupDetail, useCreateGroup, useCashbox, useInvitePlayers } from './useGroups';
+
+// Helper para configurar batch mock
+function setupBatchMock() {
+  mockBatchSet.mockClear();
+  mockBatchUpdate.mockClear();
+  mockBatchCommit.mockClear().mockResolvedValue(undefined);
+  mockWriteBatch.mockReturnValue({
+    set: mockBatchSet,
+    update: mockBatchUpdate,
+    delete: vi.fn(),
+    commit: mockBatchCommit,
+  });
+}
+
+describe('useGroups', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockOnSnapshot.mockReturnValue(vi.fn());
+    mockQuery.mockReturnValue('mock-query');
+    mockCollection.mockReturnValue('mock-collection');
+    mockOrderBy.mockReturnValue('mock-order');
+    mockAuthReturn = {
+      user: { id: 'test-user-id', name: 'Test User', photoUrl: null, level: 5 },
+      firebaseUser: { uid: 'test-user-id', displayName: 'Test User', photoURL: null },
+      loading: false, error: null,
+      signIn: vi.fn(), signOut: vi.fn(), signUp: vi.fn(), logout: vi.fn(),
+      signInWithGoogle: vi.fn(), resetPassword: vi.fn(), updateUserProfile: vi.fn(),
+      refreshUser: vi.fn(), currentUser: { uid: 'test-user-id' },
+    };
+  });
+
+  it('retorna loading=true inicialmente', () => {
+    const { result } = renderHook(() => useGroups());
+    expect(result.current.loading).toBe(true);
+  });
+
+  it('consulta subcoleção users/{uid}/groups', () => {
+    renderHook(() => useGroups());
+    expect(mockCollection).toHaveBeenCalledWith({}, 'users', 'test-user-id', 'groups');
+  });
+
+  it('retorna array vazio quando não há grupos', async () => {
+    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
+      onNext({ empty: true, docs: [] });
+      return vi.fn();
+    });
+    const { result } = renderHook(() => useGroups());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.groups).toEqual([]);
+  });
+
+  it('busca dados completos do grupo da coleção raiz', async () => {
+    mockGetDoc.mockResolvedValue({
+      exists: () => true, id: 'group-1',
+      data: () => ({ name: 'Pelada dos Parças', member_count: 10, owner_id: 'user-1' }),
+    });
+    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
+      onNext({
+        empty: false,
+        docs: [{ id: 'group-1', data: () => ({ group_id: 'group-1', group_name: 'Pelada dos Parças' }) }],
+      });
+      return vi.fn();
+    });
+    const { result } = renderHook(() => useGroups());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.groups).toHaveLength(1);
+    expect(mockGetDoc).toHaveBeenCalled();
+  });
+
+  it('trata erros do snapshot', async () => {
+    mockOnSnapshot.mockImplementation((q: any, onNext: any, onError: any) => {
+      onError(new Error('Permission denied'));
+      return vi.fn();
+    });
+    const { result } = renderHook(() => useGroups());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.error).toBe('Permission denied');
+  });
+
+  it('remove listener no unmount', () => {
+    const unsubscribe = vi.fn();
+    mockOnSnapshot.mockReturnValue(unsubscribe);
+    const { unmount } = renderHook(() => useGroups());
+    unmount();
+    expect(unsubscribe).toHaveBeenCalled();
+  });
+
+  it('não configura listener quando usuário não está autenticado', async () => {
+    mockAuthReturn = {
+      user: null, firebaseUser: null, loading: false, error: null,
+      signIn: vi.fn(), signOut: vi.fn(), signUp: vi.fn(), logout: vi.fn(),
+      signInWithGoogle: vi.fn(), resetPassword: vi.fn(), updateUserProfile: vi.fn(),
+      refreshUser: vi.fn(), currentUser: null,
+    };
+    const { result } = renderHook(() => useGroups());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(mockOnSnapshot).not.toHaveBeenCalled();
+  });
+});
+
+describe('useGroupDetail', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockOnSnapshot.mockReturnValue(vi.fn());
+    mockDoc.mockReturnValue('mock-doc-ref');
+    mockCollection.mockReturnValue('mock-collection');
+    mockQuery.mockReturnValue('mock-query');
+    mockOrderBy.mockReturnValue('mock-order');
+  });
+
+  it('retorna null e loading=false para groupId null', async () => {
+    const { result } = renderHook(() => useGroupDetail(null));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.group).toBeNull();
+  });
+
+  it('configura listeners para grupo e membros', () => {
+    renderHook(() => useGroupDetail('group-1'));
+    expect(mockOnSnapshot).toHaveBeenCalledTimes(2);
+  });
+
+  it('retorna dados do grupo quando snapshot emite', async () => {
+    let callCount = 0;
+    mockOnSnapshot.mockImplementation((ref: any, onNext: any) => {
+      callCount++;
+      if (callCount === 1) {
+        onNext({ exists: () => true, id: 'group-1', data: () => ({ name: 'Meu Grupo', member_count: 5, owner_id: 'user-1' }) });
+      } else {
+        onNext({ docs: [{ id: 'member-1', data: () => ({ user_id: 'user-1', user_name: 'Player 1', role: 'OWNER' }) }] });
+      }
+      return vi.fn();
+    });
+    const { result } = renderHook(() => useGroupDetail('group-1'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.group).not.toBeNull();
+    expect(result.current.members).toHaveLength(1);
+  });
+});
+
+describe('useCreateGroup', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockCollection.mockReturnValue('mock-collection');
+    mockDoc.mockReturnValue({ id: 'new-group-id' });
+    setupBatchMock();
+    mockAuthReturn = {
+      user: { id: 'test-user-id', name: 'Test User', photoUrl: null, level: 5 },
+      firebaseUser: { uid: 'test-user-id', displayName: 'Test User', photoURL: null },
+      loading: false, error: null,
+      signIn: vi.fn(), signOut: vi.fn(), signUp: vi.fn(), logout: vi.fn(),
+      signInWithGoogle: vi.fn(), resetPassword: vi.fn(), updateUserProfile: vi.fn(),
+      refreshUser: vi.fn(), currentUser: { uid: 'test-user-id' },
+    };
+  });
+
+  it('cria grupo com batch write', async () => {
+    const { result } = renderHook(() => useCreateGroup());
+    await act(async () => {
+      const id = await result.current.createGroup({ name: 'Novo Grupo', description: 'Desc' });
+      expect(id).toBe('new-group-id');
+    });
+    expect(mockWriteBatch).toHaveBeenCalled();
+    expect(mockBatchSet).toHaveBeenCalled();
+    expect(mockBatchCommit).toHaveBeenCalled();
+  });
+
+  it('escreve na subcoleção users/{uid}/groups', async () => {
+    const { result } = renderHook(() => useCreateGroup());
+    await act(async () => { await result.current.createGroup({ name: 'Novo Grupo' }); });
+    expect(mockDoc).toHaveBeenCalledWith({}, 'users', 'test-user-id', 'groups', 'new-group-id');
+  });
+
+  it('exige autenticação para criar grupo', async () => {
+    mockAuthReturn = { user: null, firebaseUser: null, loading: false, error: null,
+      signIn: vi.fn(), signOut: vi.fn(), signUp: vi.fn(), logout: vi.fn(),
+      signInWithGoogle: vi.fn(), resetPassword: vi.fn(), updateUserProfile: vi.fn(),
+      refreshUser: vi.fn(), currentUser: null,
+    };
+    const { result } = renderHook(() => useCreateGroup());
+    await expect(act(async () => { await result.current.createGroup({ name: 'Teste' }); }))
+      .rejects.toThrow('User not authenticated');
+  });
+});
+
+describe('useCashbox', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockOnSnapshot.mockReturnValue(vi.fn());
+    mockCollection.mockReturnValue('mock-collection');
+    mockQuery.mockReturnValue('mock-query');
+    mockOrderBy.mockReturnValue('mock-order');
+  });
+
+  it('retorna loading=false para groupId null', async () => {
+    const { result } = renderHook(() => useCashbox(null));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+  });
+
+  it('calcula saldo corretamente com receitas e despesas', async () => {
+    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
+      onNext({
+        docs: [
+          { id: 'tx-1', data: () => ({ type: 'INCOME', amount: 100, date: { toDate: () => new Date() } }) },
+          { id: 'tx-2', data: () => ({ type: 'EXPENSE', amount: 30, date: { toDate: () => new Date() } }) },
+          { id: 'tx-3', data: () => ({ type: 'INCOME', amount: 50, date: { toDate: () => new Date() } }) },
+        ],
+      });
+      return vi.fn();
+    });
+    const { result } = renderHook(() => useCashbox('group-1'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.balance).toBe(120);
+    expect(result.current.transactions).toHaveLength(3);
+  });
+
+  it('trata erros do snapshot', async () => {
+    mockOnSnapshot.mockImplementation((q: any, onNext: any, onError: any) => {
+      onError(new Error('Cashbox error'));
+      return vi.fn();
+    });
+    const { result } = renderHook(() => useCashbox('group-1'));
+    await waitFor(() => expect(result.current.error).toBe('Cashbox error'));
+  });
+});
+
+describe('useInvitePlayers', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAddDoc.mockResolvedValue({ id: 'invite-1' });
+    mockCollection.mockReturnValue('mock-collection');
+    mockDoc.mockReturnValue({ ref: 'mock-ref' });
+    mockQuery.mockReturnValue('mock-query');
+    mockWhere.mockReturnValue('mock-where');
+    setupBatchMock();
+    mockAuthReturn = {
+      user: { id: 'test-user-id', name: 'Test User', photoUrl: null, level: 5 },
+      firebaseUser: { uid: 'test-user-id', displayName: 'Test User', photoURL: null },
+      loading: false, error: null,
+      signIn: vi.fn(), signOut: vi.fn(), signUp: vi.fn(), logout: vi.fn(),
+      signInWithGoogle: vi.fn(), resetPassword: vi.fn(), updateUserProfile: vi.fn(),
+      refreshUser: vi.fn(), currentUser: { uid: 'test-user-id' },
+    };
+  });
+
+  it('generateInviteCode retorna código de 6 caracteres em maiúsculas', async () => {
+    const { result } = renderHook(() => useInvitePlayers());
+    let code: string | undefined;
+    await act(async () => { code = await result.current.generateInviteCode('group-1', 'Meu Grupo'); });
+    expect(code).toBeDefined();
+    expect(code!.length).toBe(6);
+    expect(code).toBe(code!.toUpperCase());
+  });
+
+  it('joinByInviteCode cria documentos de membro e grupo do usuário', async () => {
+    mockGetDocs.mockResolvedValue({
+      empty: false,
+      docs: [{
+        id: 'invite-1', ref: 'invite-ref',
+        data: () => ({ group_id: 'group-1', group_name: 'Grupo Teste', member_count: 5 }),
+      }],
+    });
+    mockGetDoc.mockResolvedValue({ exists: () => true, data: () => ({ name: 'Grupo Teste', photo_url: null }) });
+    const { result } = renderHook(() => useInvitePlayers());
+    await act(async () => {
+      const groupId = await result.current.joinByInviteCode('ABC123');
+      expect(groupId).toBe('group-1');
+    });
+    expect(mockWriteBatch).toHaveBeenCalled();
+    expect(mockBatchSet).toHaveBeenCalled();
+    expect(mockBatchCommit).toHaveBeenCalled();
+  });
+
+  it('joinByInviteCode falha com código inválido', async () => {
+    mockGetDocs.mockResolvedValue({ empty: true, docs: [] });
+    const { result } = renderHook(() => useInvitePlayers());
+    await expect(act(async () => { await result.current.joinByInviteCode('INVALID'); }))
+      .rejects.toThrow('Invalid or expired invite code');
+  });
+});

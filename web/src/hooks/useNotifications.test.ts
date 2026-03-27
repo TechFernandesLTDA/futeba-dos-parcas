@@ -1,0 +1,228 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
+
+// Mocks
+const mockOnSnapshot = vi.fn();
+const mockUpdateDoc = vi.fn();
+const mockDeleteDoc = vi.fn();
+const mockCollection = vi.fn();
+const mockDoc = vi.fn();
+const mockQuery = vi.fn();
+const mockWhere = vi.fn();
+const mockOrderBy = vi.fn();
+const mockLimit = vi.fn();
+
+vi.mock('firebase/firestore', () => ({
+  collection: (...args: any[]) => mockCollection(...args),
+  doc: (...args: any[]) => mockDoc(...args),
+  query: (...args: any[]) => mockQuery(...args),
+  where: (...args: any[]) => mockWhere(...args),
+  orderBy: (...args: any[]) => mockOrderBy(...args),
+  limit: (...args: any[]) => mockLimit(...args),
+  onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
+  updateDoc: (...args: any[]) => mockUpdateDoc(...args),
+  deleteDoc: (...args: any[]) => mockDeleteDoc(...args),
+}));
+
+vi.mock('../services/firebase', () => ({
+  db: {},
+}));
+
+vi.mock('../utils/logger', () => ({
+  createLogger: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  }),
+}));
+
+import { useNotifications } from './useNotifications';
+
+describe('useNotifications', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockOnSnapshot.mockReturnValue(vi.fn());
+    mockQuery.mockReturnValue('mock-query');
+    mockCollection.mockReturnValue('mock-collection');
+    mockDoc.mockReturnValue('mock-doc-ref');
+    mockUpdateDoc.mockResolvedValue(undefined);
+    mockDeleteDoc.mockResolvedValue(undefined);
+  });
+
+  it('retorna loading=true inicialmente', () => {
+    const { result } = renderHook(() => useNotifications('user-1'));
+    expect(result.current.loading).toBe(true);
+  });
+
+  it('retorna loading=false sem userId', async () => {
+    const { result } = renderHook(() => useNotifications(undefined));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.notifications).toEqual([]);
+  });
+
+  it('configura listener com query correta (user_id, ordered, limited)', () => {
+    renderHook(() => useNotifications('user-1'));
+
+    expect(mockCollection).toHaveBeenCalledWith({}, 'notifications');
+    expect(mockWhere).toHaveBeenCalledWith('user_id', '==', 'user-1');
+    expect(mockOrderBy).toHaveBeenCalledWith('created_at', 'desc');
+    expect(mockLimit).toHaveBeenCalledWith(50);
+  });
+
+  it('calcula contagem de não-lidos corretamente', async () => {
+    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
+      onNext({
+        docs: [
+          {
+            id: 'notif-1',
+            data: () => ({
+              user_id: 'user-1',
+              type: 'GAME_INVITE',
+              title: 'Convite',
+              message: 'Você foi convidado',
+              read: false,
+              created_at: { toDate: () => new Date() },
+            }),
+          },
+          {
+            id: 'notif-2',
+            data: () => ({
+              user_id: 'user-1',
+              type: 'LEVEL_UP',
+              title: 'Level Up',
+              message: 'Subiu de nível',
+              read: true,
+              created_at: { toDate: () => new Date() },
+            }),
+          },
+          {
+            id: 'notif-3',
+            data: () => ({
+              user_id: 'user-1',
+              type: 'BADGE',
+              title: 'Badge',
+              message: 'Nova badge',
+              read: false,
+              created_at: { toDate: () => new Date() },
+            }),
+          },
+        ],
+      });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useNotifications('user-1'));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.notifications).toHaveLength(3);
+    expect(result.current.unreadCount).toBe(2);
+  });
+
+  it('markAsRead atualiza o documento da notificação', async () => {
+    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
+      onNext({ docs: [] });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useNotifications('user-1'));
+
+    await act(async () => {
+      await result.current.markAsRead('notif-1');
+    });
+
+    expect(mockUpdateDoc).toHaveBeenCalledWith('mock-doc-ref', { read: true });
+  });
+
+  it('markAllAsRead atualiza todas as notificações não-lidas', async () => {
+    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
+      onNext({
+        docs: [
+          {
+            id: 'notif-1',
+            data: () => ({
+              user_id: 'user-1',
+              title: 'A',
+              message: 'msg',
+              read: false,
+              type: 'SYSTEM',
+              created_at: { toDate: () => new Date() },
+            }),
+          },
+          {
+            id: 'notif-2',
+            data: () => ({
+              user_id: 'user-1',
+              title: 'B',
+              message: 'msg',
+              read: true,
+              type: 'SYSTEM',
+              created_at: { toDate: () => new Date() },
+            }),
+          },
+          {
+            id: 'notif-3',
+            data: () => ({
+              user_id: 'user-1',
+              title: 'C',
+              message: 'msg',
+              read: false,
+              type: 'SYSTEM',
+              created_at: { toDate: () => new Date() },
+            }),
+          },
+        ],
+      });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useNotifications('user-1'));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.markAllAsRead();
+    });
+
+    // Apenas 2 não-lidas devem ser atualizadas
+    expect(mockUpdateDoc).toHaveBeenCalledTimes(2);
+  });
+
+  it('deleteNotification remove o documento', async () => {
+    mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
+      onNext({ docs: [] });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useNotifications('user-1'));
+
+    await act(async () => {
+      await result.current.deleteNotification('notif-1');
+    });
+
+    expect(mockDeleteDoc).toHaveBeenCalledWith('mock-doc-ref');
+  });
+
+  it('trata erros do snapshot', async () => {
+    mockOnSnapshot.mockImplementation((q: any, onNext: any, onError: any) => {
+      onError(new Error('Notification error'));
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useNotifications('user-1'));
+
+    await waitFor(() => {
+      expect(result.current.error).toBe('Notification error');
+      expect(result.current.loading).toBe(false);
+    });
+  });
+});

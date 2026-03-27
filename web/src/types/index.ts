@@ -2,6 +2,47 @@ export * from './user';
 export * from './game';
 export * from './group';
 
+// Re-export gamification sem conflito com Badge de user.ts
+export {
+  type LeagueDivision,
+  type BadgeType,
+  type BadgeRarity,
+  type CardRarity,
+  type ChallengeType,
+  type Season,
+  type SeasonParticipation,
+  type SeasonFinalStanding,
+  type UserBadge,
+  type UserStreak,
+  type WeeklyChallenge,
+  type UserChallengeProgress,
+  type PlayerCard,
+  type HeadToHead,
+  type Milestone,
+  type RankingPlayer,
+  type BadgeDefinition,
+  DIVISION_CONFIG,
+  BADGE_DEFINITIONS,
+  BADGE_RARITY_CONFIG,
+  CARD_RARITY_CONFIG,
+  XP_VALUES,
+  getDivisionFromPoints,
+  getXPForNextLevel,
+} from './gamification';
+
+// Re-export location sem conflito com FieldType de game.ts
+export {
+  type Location,
+  type Field,
+  type LocationReview,
+  type LocationWithFields,
+  FIELD_TYPE_CONFIG,
+  AMENITY_LABELS,
+  canManageLocation,
+  getFullAddress,
+  isOpenNow,
+} from './location';
+
 export interface Notification {
   id: string;
   userId: string;
@@ -14,7 +55,7 @@ export interface Notification {
   createdAt: Date;
 }
 
-export type NotificationType = 
+export type NotificationType =
   | 'GAME_SUMMON'
   | 'GAME_CONFIRMED'
   | 'GAME_REMINDER'
@@ -24,50 +65,3 @@ export type NotificationType =
   | 'LEVEL_UP'
   | 'MVP_RECEIVED'
   | 'STREAK_BROKEN';
-
-export interface RankingPlayer {
-  userId: string;
-  userName: string;
-  nickname?: string;
-  photoUrl?: string;
-  level: number;
-  experiencePoints: number;
-  totalGames: number;
-  totalGoals: number;
-  totalAssists: number;
-  totalWins: number;
-  mvpCount: number;
-  position: number;
-  isCurrentUser?: boolean;
-}
-
-export interface Season {
-  id: string;
-  name: string;
-  description?: string;
-  startDate: Date;
-  endDate: Date;
-  isActive: boolean;
-  totalParticipants: number;
-  totalGames: number;
-}
-
-export interface Location {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  neighborhood?: string;
-  latitude?: number;
-  longitude?: number;
-  photoUrl?: string;
-  phone?: string;
-  primaryFieldType: string;
-  fieldCount: number;
-  rating: number;
-  ratingCount: number;
-  priceRange: number;
-  amenities: string[];
-  isActive: boolean;
-}

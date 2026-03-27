@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -12,6 +13,12 @@ import {
   Tabs,
   Tab,
   Skeleton,
+  LinearProgress,
+  Alert,
+  Button,
+  alpha,
+  useTheme,
+  IconButton,
 } from '@mui/material';
 import {
   Add,
@@ -20,285 +27,279 @@ import {
   LocationOn,
   People,
   SportsSoccer,
+  Close,
+  FilterListOff,
 } from '@mui/icons-material';
-import { Game, STATUS_CONFIG, FIELD_TYPE_LABELS } from '../../../types';
+import { Game, STATUS_CONFIG, FIELD_TYPE_LABELS, GameStatus, FieldType } from '../../../types/game';
+import { useGames } from '../../../hooks/useGames';
+import { useDebounce } from '../../../hooks/useDebounce';
+import { formatGameDate } from '../../../utils/dateFormatters';
 
-// Mock games data
-const mockGames: Game[] = [
-  {
-    id: '1',
-    title: 'Pelada do Sábado',
-    date: new Date('2026-02-28T15:00:00'),
-    time: '15:00',
-    locationName: 'Campo do Parque Ibirapuera',
-    status: 'SCHEDULED',
-    fieldType: 'SOCIETY',
-    gameType: 'Society',
-    maxPlayers: 14,
-    playersCount: 10,
-    confirmations: [],
-    dailyPrice: 25,
-    groupId: '1',
-    groupName: 'Pelada dos Parças',
-    ownerId: '1',
-    ownerName: 'João',
-    isPublic: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '2',
-    title: 'Racha do Domingo',
-    date: new Date('2026-03-01T09:00:00'),
-    time: '09:00',
-    locationName: 'Ginásio Central',
-    status: 'SCHEDULED',
-    fieldType: 'FUTSAL',
-    gameType: 'Futsal',
-    maxPlayers: 12,
-    playersCount: 8,
-    confirmations: [],
-    dailyPrice: 20,
-    groupId: '2',
-    groupName: 'Racha da Firma',
-    ownerId: '2',
-    ownerName: 'Carlos',
-    isPublic: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '3',
-    title: 'Jogo Ao Vivo',
-    date: new Date(),
-    time: '10:00',
-    locationName: 'Campo da Escola',
-    status: 'LIVE',
-    fieldType: 'CAMPO',
-    gameType: 'Campo',
-    maxPlayers: 10,
-    playersCount: 10,
-    team1Score: 3,
-    team2Score: 2,
-    confirmations: [],
-    dailyPrice: 15,
-    groupId: '1',
-    groupName: 'Pelada dos Parças',
-    ownerId: '1',
-    ownerName: 'João',
-    isPublic: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '4',
-    title: 'Partida Finalizada',
-    date: new Date(Date.now() - 86400000),
-    time: '16:00',
-    locationName: 'Arena Futebol',
-    status: 'FINISHED',
-    fieldType: 'SOCIETY',
-    gameType: 'Society',
-    maxPlayers: 14,
-    playersCount: 14,
-    team1Score: 5,
-    team2Score: 3,
-    confirmations: [],
-    dailyPrice: 30,
-    groupId: '1',
-    groupName: 'Pelada dos Parças',
-    ownerId: '1',
-    ownerName: 'João',
-    isPublic: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
-
-type FilterStatus = 'all' | 'SCHEDULED' | 'LIVE' | 'FINISHED';
+type FilterStatus = 'all' | GameStatus;
 
 export function GamesTab() {
+  const navigate = useNavigate();
+  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
-  const [loading] = useState(false);
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  const { games, loading, error } = useGames();
+
+  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all';
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+  };
 
   const filteredGames = useMemo(() => {
-    let games = [...mockGames];
+    let result = [...games];
 
-    // Filter by status
     if (statusFilter !== 'all') {
-      games = games.filter(game => game.status === statusFilter);
+      result = result.filter(game => game.status === statusFilter);
     }
 
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      games = games.filter(
+    if (debouncedSearch) {
+      const query = debouncedSearch.toLowerCase();
+      result = result.filter(
         game =>
-          game.title.toLowerCase().includes(query) ||
-          game.locationName.toLowerCase().includes(query) ||
-          game.groupName.toLowerCase().includes(query)
+          game.locationName?.toLowerCase().includes(query) ||
+          (game.groupName?.toLowerCase() || '').includes(query)
       );
     }
 
-    // Sort by date
-    games.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return result;
+  }, [games, debouncedSearch, statusFilter]);
 
-    return games;
-  }, [searchQuery, statusFilter]);
-
-  const formatDate = (date: Date) => {
-    const d = new Date(date);
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    if (d.toDateString() === today.toDateString()) {
-      return 'Hoje';
-    } else if (d.toDateString() === tomorrow.toDateString()) {
-      return 'Amanhã';
-    }
-    return d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
+  const handleCardClick = (gameId: string) => {
+    navigate(`/game/${gameId}`);
   };
 
   return (
-    <Box sx={{ pb: 8 }}>
-      {/* Search Bar */}
-      <Box sx={{ p: 2, pb: 0 }}>
+    <Box sx={{ pb: 10 }}>
+      {/* Sticky search + filters bar */}
+      <Box
+        sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 5,
+          bgcolor: 'background.paper',
+          p: 2,
+          pb: 0,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+        }}
+      >
         <TextField
           fullWidth
           size="small"
           placeholder="Buscar jogos..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          aria-label="Buscar jogos"
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
                 <Search color="action" />
               </InputAdornment>
             ),
+            endAdornment: searchQuery ? (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setSearchQuery('')} edge="end" aria-label="Limpar busca">
+                  <Close fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ) : null,
           }}
-          sx={{ mb: 2 }}
+          sx={{ mb: 1 }}
         />
 
-        {/* Status Filters */}
-        <Tabs
-          value={statusFilter}
-          onChange={(_, value) => setStatusFilter(value)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ mb: 2, minHeight: 36 }}
-        >
-          <Tab value="all" label="Todos" sx={{ minHeight: 36, py: 0 }} />
-          <Tab value="SCHEDULED" label="Abertos" sx={{ minHeight: 36, py: 0 }} />
-          <Tab value="LIVE" label="Ao Vivo" sx={{ minHeight: 36, py: 0 }} />
-          <Tab value="FINISHED" label="Finalizados" sx={{ minHeight: 36, py: 0 }} />
-        </Tabs>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Tabs
+            value={statusFilter}
+            onChange={(_, value) => setStatusFilter(value)}
+            aria-label="Filtrar por status do jogo"
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ minHeight: 36, flex: 1 }}
+          >
+            <Tab value="all" label="Todos" sx={{ minHeight: 36, py: 0 }} />
+            <Tab value="SCHEDULED" label="Abertos" sx={{ minHeight: 36, py: 0 }} />
+            <Tab value="LIVE" label="Ao Vivo" sx={{ minHeight: 36, py: 0 }} />
+            <Tab value="FINISHED" label="Finalizados" sx={{ minHeight: 36, py: 0 }} />
+          </Tabs>
+          {hasActiveFilters && (
+            <IconButton size="small" onClick={clearFilters} sx={{ ml: 0.5 }} aria-label="Limpar filtros">
+              <FilterListOff fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
       </Box>
 
-      {/* Games List */}
-      <Box sx={{ px: 2 }}>
+      <Box sx={{ px: 2, pt: 2 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
         {loading ? (
-          // Loading skeletons
-          Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} sx={{ mb: 2 }}>
+          Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} sx={{ mb: 2, borderRadius: 3 }}>
               <CardContent>
+                <Box sx={{ display: 'flex', gap: 0.5, mb: 1 }}>
+                  <Skeleton variant="rounded" width={70} height={22} />
+                  <Skeleton variant="rounded" width={60} height={22} />
+                </Box>
                 <Skeleton variant="text" width="60%" height={28} />
+                <Skeleton variant="text" width="50%" />
                 <Skeleton variant="text" width="40%" />
-                <Skeleton variant="text" width="80%" />
+                <Skeleton variant="rectangular" height={6} sx={{ borderRadius: 3, mt: 2 }} />
               </CardContent>
             </Card>
           ))
         ) : filteredGames.length === 0 ? (
-          // Empty state
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <SportsSoccer sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
-              Nenhum jogo encontrado
+              {hasActiveFilters ? 'Nenhum jogo com esses filtros' : 'Nenhum jogo encontrado'}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Crie um novo jogo para começar!
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {hasActiveFilters
+                ? 'Tente alterar a busca ou os filtros'
+                : 'Crie um novo jogo para começar!'}
             </Typography>
+            {hasActiveFilters ? (
+              <Button
+                variant="outlined"
+                startIcon={<FilterListOff />}
+                onClick={clearFilters}
+              >
+                Limpar Filtros
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => navigate('/game/create')}
+              >
+                Criar Jogo
+              </Button>
+            )}
           </Box>
         ) : (
-          filteredGames.map((game) => (
-            <Card key={game.id} sx={{ mb: 2 }}>
-              <CardActionArea>
-                <CardContent>
-                  {/* Header */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                    <Typography variant="subtitle1" fontWeight="bold" noWrap sx={{ flex: 1, mr: 1 }}>
-                      {game.title}
-                    </Typography>
-                    <Chip
-                      label={STATUS_CONFIG[game.status].label}
-                      size="small"
-                      sx={{
-                        bgcolor: STATUS_CONFIG[game.status].color + '20',
-                        color: STATUS_CONFIG[game.status].color,
-                        fontWeight: 600,
-                      }}
-                    />
-                  </Box>
+          filteredGames.map((game) => {
+            const progress = (game.playersCount / game.maxPlayers) * 100;
+            const isFull = game.playersCount >= game.maxPlayers;
 
-                  {/* Info */}
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <CalendarMonth fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
-                        {formatDate(game.date)} às {game.time}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <LocationOn fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary" noWrap>
-                        {game.locationName}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Footer */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Chip
-                        icon={<SportsSoccer />}
-                        label={FIELD_TYPE_LABELS[game.fieldType]}
-                        size="small"
-                        variant="outlined"
-                      />
-                      <Chip
-                        icon={<People />}
-                        label={`${game.playersCount}/${game.maxPlayers}`}
-                        size="small"
-                        variant="outlined"
-                      />
+            return (
+              <Card key={game.id} sx={{ mb: 2 }}>
+                <CardActionArea onClick={() => handleCardClick(game.id)}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Box sx={{ display: 'flex', gap: 0.5, mb: 0.5 }}>
+                          <Chip
+                            label={STATUS_CONFIG[game.status]?.label || game.status}
+                            size="small"
+                            sx={{
+                              bgcolor: alpha(STATUS_CONFIG[game.status]?.color || theme.palette.grey[500], 0.15),
+                              color: STATUS_CONFIG[game.status]?.color || theme.palette.grey[500],
+                              fontWeight: 600,
+                              fontSize: '0.7rem',
+                              height: 22,
+                            }}
+                          />
+                          {game.fieldType && (
+                            <Chip
+                              label={FIELD_TYPE_LABELS[game.fieldType] || game.fieldType}
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontSize: '0.7rem', height: 22 }}
+                            />
+                          )}
+                        </Box>
+                        <Typography variant="subtitle1" fontWeight="bold" noWrap>
+                          {game.locationName || 'Local não definido'}
+                        </Typography>
+                      </Box>
                     </Box>
 
-                    {/* Score for live/finished games */}
-                    {(game.status === 'LIVE' || game.status === 'FINISHED') && game.team1Score !== undefined && (
-                      <Typography variant="h6" fontWeight="bold">
-                        {game.team1Score} - {game.team2Score}
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <CalendarMonth fontSize="small" color="action" />
+                        <Typography variant="body2" color="text.secondary">
+                          {formatGameDate(game.date)} às {game.time}
+                        </Typography>
+                      </Box>
+                      {game.locationAddress && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <LocationOn fontSize="small" color="action" />
+                          <Typography variant="body2" color="text.secondary" noWrap>
+                            {game.locationAddress}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+
+                    <Box sx={{ mt: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <People fontSize="small" color={isFull ? 'error' : 'primary'} />
+                          <Typography
+                            variant="body2"
+                            fontWeight={500}
+                            color={isFull ? 'error' : 'text.primary'}
+                          >
+                            {game.playersCount}/{game.maxPlayers} jogadores
+                          </Typography>
+                        </Box>
+                        {game.status === 'SCHEDULED' && game.dailyPrice > 0 && (
+                          <Typography variant="body2" fontWeight="bold" color="primary">
+                            R$ {game.dailyPrice.toFixed(0)}
+                          </Typography>
+                        )}
+                        {(game.status === 'LIVE' || game.status === 'FINISHED') && (
+                          <Typography variant="h6" fontWeight="bold">
+                            {game.team1Score} - {game.team2Score}
+                          </Typography>
+                        )}
+                      </Box>
+
+                      {game.status === 'SCHEDULED' && (
+                        <LinearProgress
+                          variant="determinate"
+                          value={progress}
+                          sx={{
+                            height: 6,
+                            borderRadius: 3,
+                            bgcolor: alpha(theme.palette.primary.main, 0.1),
+                            '& .MuiLinearProgress-bar': {
+                              borderRadius: 3,
+                              bgcolor: isFull ? theme.palette.error.main : theme.palette.primary.main,
+                            },
+                          }}
+                        />
+                      )}
+                    </Box>
+
+                    {game.groupName && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                        {game.groupName}
                       </Typography>
                     )}
-
-                    {/* Price for scheduled games */}
-                    {game.status === 'SCHEDULED' && (
-                      <Typography variant="body2" fontWeight="bold" color="primary">
-                        R$ {game.dailyPrice.toFixed(0)}
-                      </Typography>
-                    )}
-                  </Box>
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          ))
+                  </CardContent>
+                </CardActionArea>
+              </Card>
+            );
+          })
         )}
       </Box>
 
-      {/* FAB */}
       <Fab
         color="primary"
-        aria-label="add"
+        aria-label="Criar novo jogo"
+        onClick={() => navigate('/game/create')}
         sx={{
           position: 'fixed',
           bottom: 80,

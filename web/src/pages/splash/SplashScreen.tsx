@@ -1,0 +1,80 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, CircularProgress, Typography, useTheme, alpha } from '@mui/material';
+import { SportsSoccer as SoccerIcon } from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+
+export const SplashScreen: React.FC = () => {
+  useDocumentTitle();
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const { firebaseUser, loading } = useAuth();
+
+  useEffect(() => {
+    if (loading) return;
+
+    const timer = setTimeout(() => {
+      if (firebaseUser) {
+        const hasCompletedSetup = localStorage.getItem('profileSetupComplete');
+        const hasSeenGuide = localStorage.getItem('appGuideShown');
+        
+        if (!hasCompletedSetup) {
+          navigate('/profile/setup');
+        } else if (!hasSeenGuide) {
+          navigate('/guide');
+        } else {
+          navigate('/');
+        }
+      } else {
+        navigate('/welcome');
+      }
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [firebaseUser, loading, navigate]);
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+      }}
+    >
+      <Box
+        sx={{
+          width: 120,
+          height: 120,
+          borderRadius: '50%',
+          bgcolor: alpha('#fff', 0.2),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          mb: 3,
+          animation: 'pulse 2s infinite',
+          '@keyframes pulse': {
+            '0%': { transform: 'scale(1)', opacity: 1 },
+            '50%': { transform: 'scale(1.05)', opacity: 0.8 },
+            '100%': { transform: 'scale(1)', opacity: 1 },
+          },
+        }}
+      >
+        <SoccerIcon sx={{ fontSize: 64, color: 'white' }} />
+      </Box>
+
+      <Typography variant="h4" fontWeight={700} color="white" gutterBottom>
+        Futeba dos Parças
+      </Typography>
+
+      <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)', mb: 4 }}>
+        Organize suas peladas
+      </Typography>
+
+      <CircularProgress sx={{ color: 'white' }} />
+    </Box>
+  );
+};
