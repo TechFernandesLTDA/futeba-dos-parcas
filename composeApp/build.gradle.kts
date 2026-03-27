@@ -92,7 +92,7 @@ kotlin {
             implementation(project(":shared"))
 
             // Navigation - atualizado para CMP 1.10.0
-            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.1")
+            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.2")
 
             // ViewModel + Lifecycle - atualizado para 2.9.6
             implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.6")
