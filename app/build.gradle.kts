@@ -214,9 +214,9 @@ dependencies {
     implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
 
     // Image Loading - Coil 3 Kotlin Multiplatform
-    implementation("io.coil-kt.coil3:coil:3.0.4")
-    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
+    implementation("io.coil-kt.coil3:coil:3.3.0")
+    implementation("io.coil-kt.coil3:coil-compose:3.3.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
 
     // Shimmer Effect
     implementation("com.facebook.shimmer:shimmer:0.5.0")
