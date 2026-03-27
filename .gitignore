@@ -101,3 +101,6 @@ nul
 
 # Auto Claude data directory
 .auto-claude/
+
+# Web app build output
+web/dist/

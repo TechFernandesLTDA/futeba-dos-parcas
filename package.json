@@ -1,5 +1,11 @@
 {
   "devDependencies": {
-    "firebase-admin": "^13.6.0"
+    "@commitlint/cli": "^20.4.4",
+    "@commitlint/config-conventional": "^20.4.4",
+    "firebase-admin": "^13.6.0",
+    "husky": "^9.1.7"
+  },
+  "scripts": {
+    "prepare": "husky"
   }
 }

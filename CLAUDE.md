@@ -102,7 +102,7 @@ firebase deploy --only functions           # Deploy
 | App entry point | `app/src/main/java/com/futebadosparcas/ui/main/MainActivityCompose.kt` |
 | Navigation graph | `app/src/main/java/com/futebadosparcas/ui/navigation/AppNavGraph.kt` |
 | Nav destinations | `app/src/main/java/com/futebadosparcas/ui/navigation/NavDestinations.kt` + `routes/AppRoutes.kt` |
-| Hilt DI setup | `app/src/main/java/com/futebadosparcas/di/` (FirebaseModule, RepositoryModule, etc.) |
+| Koin DI modules | `app/src/main/java/com/futebadosparcas/di/koin/` (14 Koin modules) |
 | Theme/Colors | `app/src/main/java/com/futebadosparcas/ui/theme/Theme.kt` |
 | Firestore rules | `firestore.rules` |
 | Cloud Functions | `functions/src/index.ts` (main entry) |
@@ -117,7 +117,7 @@ firebase deploy --only functions           # Deploy
 
 ## Project Overview
 
-**Futeba dos Parças** is an Android app for managing amateur soccer groups ("peladas") with gamification.
+**Futeba dos Parças** is a multi-platform app (Android + Web) for managing amateur soccer groups ("peladas") with gamification.
 
 ### Domain Terminology
 
@@ -135,21 +135,24 @@ firebase deploy --only functions           # Deploy
 
 ### Tech Stack
 
-- **Kotlin 2.0+** with **Jetpack Compose** (all new screens)
+- **Kotlin 2.2.10** with **Jetpack Compose** (all new screens)
 - **MVVM + Clean Architecture**
-- **Hilt** for DI
+- **Koin 4.1.1** for DI (migrated from Hilt in CMP Phase 1)
 - **Firebase** (Firestore, Auth, Storage, Cloud Functions v2, FCM, **App Check**)
 - **Custom Claims** for role-based authorization (zero-cost JWT validation)
 - **Room** for local cache
 - **Coroutines & StateFlow** for async
+- **Web App**: React 18 + TypeScript + Material UI 5 + Vite 5 + TanStack Query
 
 ### Version
 
-- **Current**: 1.10.7 (versionCode: 30)
+- **Current**: 1.19.0 (versionCode: 40)
 - **SDK**: compileSdk 36, minSdk 24, targetSdk 35, JDK 17
 - **Kotlin**: 2.2.10
+- **AGP**: 9.0.1
 - **Compose BOM**: 2024.09.00
-- **Compose Multiplatform**: 1.7.3
+- **Compose Multiplatform**: 1.10.0
+- **KSP**: 2.2.10-2.0.2
 - **Material 3**: Latest (adaptive navigation, pull-to-refresh)
 
 ---
@@ -164,6 +167,7 @@ The project uses a multi-module setup:
 - **`:shared`** - Kotlin Multiplatform shared code (business logic, domain models, repository interfaces)
 - **`:composeApp`** - Compose Multiplatform UI (shared UI components for Android/iOS)
 - **`:baselineprofile`** - Baseline profiles for performance optimization
+- **`web/`** - React web application (React 18 + TypeScript + MUI 5 + Vite 5)
 - **`backend/`** - REST API + WebSocket server (Express.js + TypeORM + PostgreSQL) - separate from Cloud Functions
 
 ### Architecture Layers
@@ -171,7 +175,7 @@ The project uses a multi-module setup:
 ```
 UI (Compose Screens)
     ↓
-ViewModels (@HiltViewModel + StateFlow<UiState>)
+ViewModels (Koin-injected + StateFlow<UiState>)
     ↓
 Domain (Use Cases)
     ↓
@@ -181,7 +185,7 @@ Data (Repositories → Firebase/Room)
 **Implementation Notes:**
 - ViewModels and UI are in `:app` module (Android-specific)
 - Repository interfaces and domain models can be in `:shared/commonMain` (KMP)
-- Repository implementations split between `:shared/androidMain` (Firebase Android SDK) and `:app` (Hilt-injected implementations)
+- Repository implementations split between `:shared/androidMain` (Firebase Android SDK) and `:app` (Koin-injected implementations)
 
 ### Where to Put New Code
 
@@ -193,10 +197,11 @@ Data (Repositories → Firebase/Room)
 | Repository impl (Android) | `shared/src/androidMain/kotlin/...` or `app/src/main/java/.../data/repository/` |
 | Repository impl (iOS) | `shared/src/iosMain/kotlin/...` |
 | Use Cases | `app/src/main/java/com/futebadosparcas/domain/usecase/<feature>/` |
-| DI modules | `app/src/main/java/com/futebadosparcas/di/` |
+| DI modules (Koin) | `app/src/main/java/com/futebadosparcas/di/koin/` |
 | Reusable UI components | `app/src/main/java/com/futebadosparcas/ui/components/` |
 | Adaptive UI | `app/src/main/java/com/futebadosparcas/ui/adaptive/` |
 | Cloud Function | `functions/src/` |
+| Web page/component | `web/src/pages/<feature>/` or `web/src/components/` |
 
 **KMP Structure:**
 - `shared/src/commonMain/` - Cross-platform business logic, domain models, repository interfaces
@@ -209,7 +214,7 @@ The app uses a single-activity architecture with Compose Navigation:
 - `MainActivityCompose.kt` hosts the nav graph
 - **Route definitions**: `NavDestinations.kt` (sealed class, core routes) + `routes/AppRoutes.kt` (extended metadata: `isRootDestination`, `showsTopBar`, `titleResId`)
 - **Nav graph**: `AppNavGraph.kt` (NOT `AppNavigation.kt`)
-- Each screen receives its ViewModel via Hilt (`hiltViewModel()`)
+- Each screen receives its ViewModel via Koin (`koinViewModel()`)
 - Use `onNavigate: (destination: String) -> Unit` callbacks for navigation
 
 ---
@@ -410,11 +415,83 @@ SCHEDULED → CONFIRMED → LIVE → FINISHED
 
 ---
 
+## Web App (React)
+
+The web app lives in `web/` and was fully rewritten in React + TypeScript (PR #194, merged 2026-03).
+
+### Tech Stack
+
+| Library | Version | Purpose |
+|---------|---------|---------|
+| React | 18.2.0 | UI framework |
+| TypeScript | 5.3.3 | Type safety |
+| Vite | 5.0.12 | Build tool & dev server |
+| MUI (Material UI) | 5.15.6 | Component library |
+| TanStack React Query | 5.17.9 | Server state management |
+| React Router DOM | 6.21.3 | Routing |
+| Firebase | 10.7.1 | Backend services |
+| Playwright | - | E2E testing |
+| Vitest | - | Unit testing |
+
+### Web Commands
+
+```bash
+cd web
+npm install                    # Install deps
+npm run dev                    # Dev server (port 5173)
+npm run build                  # Production build
+npm run preview                # Preview production build
+npm run test                   # Unit tests (Vitest)
+npx playwright test            # E2E tests
+npm run lint                   # ESLint
+```
+
+### Web Structure
+
+```
+web/src/
+├── components/               # Reusable UI components
+├── contexts/                 # React contexts (Auth, Theme, Toast)
+├── hooks/                    # Custom hooks (useGames, useGroups)
+├── pages/                    # Page components by feature
+│   ├── auth/                 # Login, Register, ForgotPassword
+│   ├── home/                 # Home with tabs (Home, Games, Groups, Profile)
+│   ├── game/                 # Game detail, create, live
+│   ├── group/                # Group detail, edit, settings
+│   └── ...                   # Other feature pages
+├── services/                 # Firebase service, cloud functions
+├── theme/                    # MUI theme configuration
+├── types/                    # TypeScript type definitions
+└── utils/                    # Utility functions
+```
+
+---
+
+## CMP Migration Status
+
+Compose Multiplatform migration tracked in `specs/CMP_MULTIPLATFORM_MIGRATION.md`.
+
+| Phase | Status | PR | Description |
+|-------|--------|----|-------------|
+| Phase 0 | ✅ COMPLETE | #159 | CMP 1.7.3→1.10.0, SQLDelight 2.2.1, wasmJs targets |
+| Phase 1 | ✅ COMPLETE | #160 | Hilt → Koin 4.1.1 (14 modules) |
+| Phase 2 | 🔄 IN PROGRESS | #161 | GitLive Firebase SDK 2.4.0 migration |
+| Phase 3 | ⏳ PLANNED | - | Shared UI components in composeApp/ |
+| Phase 4 | ⏳ PLANNED | - | iOS app launch via TestFlight |
+
+**Key CMP decisions:**
+- Koin 4.1.1 replaces Hilt (cross-platform DI)
+- GitLive Firebase SDK for Android+iOS (no wasmJs support yet)
+- `nativeAndAndroidMain` sourceset for shared Firebase code
+- wasmJs target uses stubs until GitLive adds support
+
+---
+
 ## GitHub Status
 
 **Repo**: `TechFernandesLTDA/futeba-dos-parcas`
 **Issues abertas**: 0
-**PRs abertos**: Dependabot (deps bumps) + feature branches
+**PRs abertos**: ~12 Dependabot (deps bumps)
 **Branches remotos**: ~64
 
 ### CI Known Behaviors

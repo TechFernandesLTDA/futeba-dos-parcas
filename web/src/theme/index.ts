@@ -90,9 +90,9 @@ export const futebaTheme = createTheme({
           padding: '10px 24px',
         },
         contained: {
-          boxShadow: '0 2px 4px rgba(0,200,83,0.2)',
+          boxShadow: `0 2px 4px ${primary.main}33`,
           '&:hover': {
-            boxShadow: '0 4px 8px rgba(0,200,83,0.3)',
+            boxShadow: `0 4px 8px ${primary.main}4D`,
           },
         },
       },
@@ -149,7 +149,7 @@ export const futebaTheme = createTheme({
     MuiFab: {
       styleOverrides: {
         root: {
-          boxShadow: '0 4px 12px rgba(0,200,83,0.3)',
+          boxShadow: `0 4px 12px ${primary.main}4D`,
         },
       },
     },

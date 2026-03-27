@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -11,6 +12,9 @@ import {
   TextField,
   InputAdornment,
   Skeleton,
+  Alert,
+  Button,
+  IconButton,
 } from '@mui/material';
 import {
   Add,
@@ -21,88 +25,34 @@ import {
   Star,
   Shield,
   Event,
+  Close,
 } from '@mui/icons-material';
-import { Group } from '../../../types';
-
-// Mock groups data
-const mockGroups: (Group & { nextGame?: string })[] = [
-  {
-    id: '1',
-    name: 'Pelada dos Parças',
-    description: 'A pelada mais tradicional do bairro!',
-    type: 'PRIVATE',
-    isPublic: false,
-    ownerId: '1',
-    ownerName: 'João Silva',
-    members: [
-      { userId: '1', userName: 'João Silva', role: 'OWNER', joinedAt: new Date(), totalGames: 45, level: 25 },
-      { userId: '2', userName: 'Pedro Santos', role: 'ADMIN', joinedAt: new Date(), totalGames: 38, level: 22 },
-      { userId: '3', userName: 'Lucas Oliveira', role: 'MEMBER', joinedAt: new Date(), totalGames: 32, level: 19 },
-    ],
-    memberCount: 15,
-    totalGamesPlayed: 120,
-    nextGameDate: new Date('2026-02-28'),
-    nextGameTitle: 'Pelada do Sábado',
-    inviteCode: 'ABC123',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '2',
-    name: 'Racha da Firma',
-    description: 'Funcionários da empresa',
-    type: 'PUBLIC',
-    isPublic: true,
-    ownerId: '2',
-    ownerName: 'Carlos Ferreira',
-    members: [
-      { userId: '2', userName: 'Carlos Ferreira', role: 'OWNER', joinedAt: new Date(), totalGames: 30, level: 20 },
-      { userId: '4', userName: 'André Souza', role: 'MEMBER', joinedAt: new Date(), totalGames: 25, level: 18 },
-    ],
-    memberCount: 12,
-    totalGamesPlayed: 85,
-    nextGameDate: new Date('2026-03-01'),
-    nextGameTitle: 'Racha do Domingo',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+import { useGroups } from '../../../hooks/useGroups';
+import { useAuth } from '../../../contexts/AuthContext';
+import { useDebounce } from '../../../hooks/useDebounce';
+import { formatDateShort } from '../../../utils/dateFormatters';
 
 export function GroupsTab() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading] = useState(false);
+  const debouncedSearch = useDebounce(searchQuery, 300);
+  const { user } = useAuth();
+  const { groups, loading, error } = useGroups();
 
   const filteredGroups = useMemo(() => {
-    if (!searchQuery) return mockGroups;
-    
-    const query = searchQuery.toLowerCase();
-    return mockGroups.filter(
+    if (!debouncedSearch) return groups;
+
+    const query = debouncedSearch.toLowerCase();
+    return groups.filter(
       group =>
         group.name.toLowerCase().includes(query) ||
         group.description?.toLowerCase().includes(query)
     );
-  }, [searchQuery]);
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'OWNER':
-        return <Star sx={{ fontSize: 16, color: '#FFD700' }} />;
-      case 'ADMIN':
-        return <Shield sx={{ fontSize: 16, color: '#2979FF' }} />;
-      default:
-        return null;
-    }
-  };
-
-  const formatDate = (date: Date | undefined) => {
-    if (!date) return '';
-    const d = new Date(date);
-    return d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
-  };
+  }, [groups, debouncedSearch]);
 
   return (
     <Box sx={{ pb: 8 }}>
-      {/* Search Bar */}
+      {/* Barra de busca */}
       <Box sx={{ p: 2, pb: 0 }}>
         <TextField
           fullWidth
@@ -110,12 +60,20 @@ export function GroupsTab() {
           placeholder="Buscar grupos..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          aria-label="Buscar grupos"
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
                 <Search color="action" />
               </InputAdornment>
             ),
+            endAdornment: searchQuery ? (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setSearchQuery('')} edge="end" aria-label="Limpar busca">
+                  <Close fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ) : null,
           }}
           sx={{ mb: 2 }}
         />
@@ -125,11 +83,17 @@ export function GroupsTab() {
         </Typography>
       </Box>
 
-      {/* Groups List */}
+      {/* Lista de grupos */}
       <Box sx={{ px: 2 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
         {loading ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} sx={{ mb: 2 }}>
+          Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} sx={{ mb: 2, borderRadius: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Skeleton variant="circular" width={56} height={56} />
@@ -138,6 +102,11 @@ export function GroupsTab() {
                     <Skeleton variant="text" width="40%" />
                   </Box>
                 </Box>
+                <Skeleton variant="text" width="80%" sx={{ mt: 1.5 }} />
+                <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                  <Skeleton variant="text" width="30%" />
+                  <Skeleton variant="text" width="20%" />
+                </Box>
               </CardContent>
             </Card>
           ))
@@ -145,24 +114,42 @@ export function GroupsTab() {
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <People sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
-              Nenhum grupo encontrado
+              {searchQuery ? 'Nenhum grupo com essa busca' : 'Nenhum grupo encontrado'}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Crie um grupo para começar!
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {searchQuery
+                ? 'Tente alterar o termo de busca'
+                : 'Crie ou entre em um grupo para começar!'}
             </Typography>
+            {searchQuery ? (
+              <Button
+                variant="outlined"
+                onClick={() => setSearchQuery('')}
+              >
+                Limpar Busca
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => navigate('/group/create')}
+              >
+                Criar Grupo
+              </Button>
+            )}
           </Box>
         ) : (
           filteredGroups.map((group) => {
-            const userMember = group.members.find(m => m.userId === '1');
-            const topMembers = group.members.slice(0, 3);
+            const isOwner = group.ownerId === (user?.id || '');
 
             return (
               <Card key={group.id} sx={{ mb: 2 }}>
-                <CardActionArea>
+                <CardActionArea onClick={() => navigate(`/group/${group.id}`)}>
                   <CardContent>
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <Avatar
+                        src={group.photoUrl || undefined}
                         sx={{
                           width: 56,
                           height: 56,
@@ -172,31 +159,31 @@ export function GroupsTab() {
                       >
                         {group.name.charAt(0).toUpperCase()}
                       </Avatar>
-                      
+
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Typography variant="subtitle1" fontWeight="bold" noWrap>
                             {group.name}
                           </Typography>
-                          {group.isPublic ? (
+                          {group.type === 'PUBLIC' ? (
                             <Public fontSize="small" color="action" />
                           ) : (
                             <Lock fontSize="small" color="action" />
                           )}
                         </Box>
-                        
-                        {userMember && (
+
+                        {isOwner && (
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                            {getRoleIcon(userMember.role)}
+                            <Star sx={{ fontSize: 16, color: 'warning.main' }} />
                             <Typography variant="caption" color="text.secondary">
-                              {userMember.role === 'OWNER' ? 'Dono' : userMember.role === 'ADMIN' ? 'Admin' : 'Membro'}
+                              Dono
                             </Typography>
                           </Box>
                         )}
                       </Box>
                     </Box>
 
-                    {/* Description */}
+                    {/* Descrição */}
                     {group.description && (
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
                         {group.description}
@@ -208,15 +195,15 @@ export function GroupsTab() {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <People fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
-                          {group.memberCount} membros
+                          {group.memberCount || 0} membros
                         </Typography>
                       </Box>
                       <Typography variant="body2" color="text.secondary">
-                        {group.totalGamesPlayed} jogos
+                        {group.totalGamesPlayed || 0} jogos
                       </Typography>
                     </Box>
 
-                    {/* Next Game */}
+                    {/* Próximo jogo */}
                     {group.nextGameDate && (
                       <Box
                         sx={{
@@ -231,26 +218,10 @@ export function GroupsTab() {
                       >
                         <Event fontSize="small" color="primary" />
                         <Typography variant="body2" color="primary.main" fontWeight="medium">
-                          Próximo: {group.nextGameTitle} • {formatDate(group.nextGameDate)}
+                          Próximo: {group.nextGameTitle || 'Jogo'} • {formatDateShort(group.nextGameDate)}
                         </Typography>
                       </Box>
                     )}
-
-                    {/* Members Preview */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-                      <AvatarGroup max={4} sx={{ '& .MuiAvatar-root': { width: 28, height: 28, fontSize: '0.75rem' } }}>
-                        {topMembers.map((member) => (
-                          <Avatar key={member.userId} sx={{ bgcolor: 'secondary.main' }}>
-                            {member.userName.charAt(0).toUpperCase()}
-                          </Avatar>
-                        ))}
-                      </AvatarGroup>
-                      {group.memberCount > 3 && (
-                        <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                          +{group.memberCount - 3}
-                        </Typography>
-                      )}
-                    </Box>
                   </CardContent>
                 </CardActionArea>
               </Card>
@@ -262,7 +233,8 @@ export function GroupsTab() {
       {/* FAB */}
       <Fab
         color="primary"
-        aria-label="add"
+        aria-label="Criar novo grupo"
+        onClick={() => navigate('/group/create')}
         sx={{
           position: 'fixed',
           bottom: 80,

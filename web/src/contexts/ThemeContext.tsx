@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
 import { futebaTheme, futebaDarkTheme } from '../theme';
 
@@ -41,16 +41,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('themeMode', mode);
   }, [mode]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setMode(current => {
       if (current === 'light') return 'dark';
       if (current === 'dark') return 'system';
       return 'light';
     });
-  };
+  }, []);
+
+  const value = useMemo<ThemeContextType>(() => ({
+    mode, toggleTheme, setMode,
+  }), [mode, toggleTheme]);
 
   return (
-    <ThemeContext.Provider value={{ mode, toggleTheme, setMode }}>
+    <ThemeContext.Provider value={value}>
       <MuiThemeProvider theme={isDark ? futebaDarkTheme : futebaTheme}>
         <CssBaseline />
         {children}
@@ -66,3 +70,5 @@ export function useTheme() {
   }
   return context;
 }
+
+export const useThemeContext = useTheme;

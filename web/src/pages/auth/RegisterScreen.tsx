@@ -24,9 +24,14 @@ import {
   SportsSoccer,
   ArrowBack,
 } from '@mui/icons-material';
+import { useTheme } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
+import { getAuthErrorMessage } from '../../utils/firebaseErrors';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export function RegisterScreen() {
+  useDocumentTitle('Cadastro');
+  const theme = useTheme();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,7 +39,7 @@ export function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
 
@@ -77,15 +82,7 @@ export function RegisterScreen() {
       await signUp(email, password, name.trim());
       navigate('/');
     } catch (err: any) {
-      if (err.code === 'auth/email-already-in-use') {
-        setError('Este email já está em uso');
-      } else if (err.code === 'auth/weak-password') {
-        setError('Senha muito fraca');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('Email inválido');
-      } else {
-        setError('Erro ao criar conta. Tente novamente');
-      }
+      setError(getAuthErrorMessage(err, 'Erro ao criar conta. Tente novamente'));
     } finally {
       setLoading(false);
     }
@@ -99,11 +96,7 @@ export function RegisterScreen() {
       await signInWithGoogle();
       navigate('/');
     } catch (err: any) {
-      if (err.code === 'auth/popup-closed-by-user') {
-        setError('Login cancelado');
-      } else {
-        setError('Erro ao fazer login com Google');
-      }
+      setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));
     } finally {
       setLoading(false);
     }
@@ -113,7 +106,7 @@ export function RegisterScreen() {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #00C853 0%, #2979FF 100%)',
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -134,6 +127,7 @@ export function RegisterScreen() {
             <IconButton
               onClick={() => navigate('/login')}
               sx={{ position: 'absolute', left: 16, top: 16 }}
+              aria-label="Voltar para login"
             >
               <ArrowBack />
             </IconButton>
@@ -143,7 +137,7 @@ export function RegisterScreen() {
                 width: 64,
                 height: 64,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #00C853, #00852A)',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -162,12 +156,12 @@ export function RegisterScreen() {
           </Box>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} role="alert" aria-live="assertive">
               {error}
             </Alert>
           )}
 
-          <form onSubmit={handleRegister}>
+          <form onSubmit={handleRegister} aria-label="Formulário de cadastro">
             <TextField
               fullWidth
               label="Nome completo"
@@ -220,6 +214,7 @@ export function RegisterScreen() {
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
                       disabled={loading}
+                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -255,9 +250,9 @@ export function RegisterScreen() {
               sx={{
                 py: 1.5,
                 fontSize: '1rem',
-                background: 'linear-gradient(135deg, #00C853, #00852A)',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #00852A, #006B1F)',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.dark})`,
                 },
               }}
             >
@@ -276,11 +271,11 @@ export function RegisterScreen() {
             disabled={loading}
             sx={{
               py: 1.5,
-              borderColor: '#4285F4',
-              color: '#4285F4',
+              borderColor: theme.palette.info.main,
+              color: theme.palette.info.main,
               '&:hover': {
-                borderColor: '#3367D6',
-                backgroundColor: 'rgba(66, 133, 244, 0.04)',
+                borderColor: theme.palette.info.dark,
+                backgroundColor: `${theme.palette.info.main}0A`,
               },
             }}
           >

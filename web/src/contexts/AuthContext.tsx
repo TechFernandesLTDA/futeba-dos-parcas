@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useCallback, ReactNode } from 'react';
 import {
   User as FirebaseUser,
   onAuthStateChanged,
@@ -12,10 +12,15 @@ import {
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../services/firebase';
 import { User } from '../types';
+import { snakeToCamel } from '../utils/firestoreHelpers';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('AuthContext');
 
 interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   user: User | null;
+  currentUser: FirebaseUser | null; // Alias for firebaseUser
   loading: boolean;
   error: string | null;
   
@@ -25,6 +30,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  updateUserProfile: (profile: { displayName?: string; photoURL?: string }) => Promise<void>;
   
   // User methods
   refreshUser: () => Promise<void>;
@@ -43,11 +49,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (userDoc.exists()) {
-        return { id: userDoc.id, ...userDoc.data() } as User;
+        const raw = userDoc.data();
+        const converted = snakeToCamel(raw);
+        return {
+          id: userDoc.id,
+          ...converted,
+          createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
+          updatedAt: (raw.updated_at || raw.updatedAt)?.toDate?.(),
+        } as User;
       }
       return null;
     } catch (err) {
-      console.error('Error fetching user data:', err);
+      logger.error('Error fetching user data:', err);
       return null;
     }
   };
@@ -63,30 +76,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: email || '',
         name: displayName || 'Usuário',
         nickname: '',
-        photoUrl: photoURL || '',
+        photo_url: photoURL || '',
         role: 'PLAYER',
         level: 1,
-        experiencePoints: 0,
-        strikerRating: 0,
-        midRating: 0,
-        defenderRating: 0,
-        gkRating: 0,
-        preferredPosition: null,
-        preferredFieldTypes: [],
-        totalGames: 0,
-        totalGoals: 0,
-        totalAssists: 0,
-        totalWins: 0,
-        totalDraws: 0,
-        totalLosses: 0,
-        totalSaves: 0,
-        mvpCount: 0,
-        yellowCards: 0,
-        redCards: 0,
-        currentStreak: 0,
-        bestStreak: 0,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        experience_points: 0,
+        striker_rating: 0,
+        mid_rating: 0,
+        defender_rating: 0,
+        gk_rating: 0,
+        preferred_position: null,
+        preferred_field_types: [],
+        total_games: 0,
+        total_goals: 0,
+        total_assists: 0,
+        total_wins: 0,
+        total_draws: 0,
+        total_losses: 0,
+        total_saves: 0,
+        mvp_count: 0,
+        yellow_cards: 0,
+        red_cards: 0,
+        current_streak: 0,
+        best_streak: 0,
+        is_searchable: true,
+        is_verified: false,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
         ...additionalData,
       };
 
@@ -94,12 +109,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await setDoc(userRef, userData);
         return { id: firebaseUser.uid, ...userData } as User;
       } catch (err) {
-        console.error('Error creating user document:', err);
+        logger.error('Error creating user document:', err);
         return null;
       }
     }
 
-    return { id: userSnap.id, ...userSnap.data() } as User;
+    const raw = userSnap.data();
+    return { ...snakeToCamel<User>(raw), id: userSnap.id };
   };
 
   // Listen for auth state changes
@@ -127,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Sign in with email/password
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -135,10 +151,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(err.message || 'Erro ao fazer login');
       throw err;
     }
-  };
+  }, []);
 
   // Sign in with Google
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     setError(null);
     try {
       const result = await signInWithPopup(auth, googleProvider);
@@ -147,10 +163,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(err.message || 'Erro ao fazer login com Google');
       throw err;
     }
-  };
+  }, []);
 
   // Sign up with email/password
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = useCallback(async (email: string, password: string, name: string) => {
     setError(null);
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
@@ -160,10 +176,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(err.message || 'Erro ao criar conta');
       throw err;
     }
-  };
+  }, []);
 
   // Logout
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setError(null);
     try {
       await signOut(auth);
@@ -171,10 +187,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(err.message || 'Erro ao sair');
       throw err;
     }
-  };
+  }, []);
 
   // Reset password
-  const resetPassword = async (email: string) => {
+  const resetPassword = useCallback(async (email: string) => {
     setError(null);
     try {
       await sendPasswordResetEmail(auth, email);
@@ -182,19 +198,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(err.message || 'Erro ao enviar email de recuperação');
       throw err;
     }
-  };
+  }, []);
 
   // Refresh user data
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     if (firebaseUser) {
       const userData = await fetchUserData(firebaseUser.uid);
       setUser(userData);
     }
-  };
+  }, [firebaseUser]);
 
-  const value: AuthContextType = {
+  // Update profile
+  const updateUserProfile = useCallback(async (profile: { displayName?: string; photoURL?: string }) => {
+    if (firebaseUser) {
+      await updateProfile(firebaseUser, profile);
+      await refreshUser();
+    }
+  }, [firebaseUser, refreshUser]);
+
+  const value = useMemo<AuthContextType>(() => ({
     firebaseUser,
     user,
+    currentUser: firebaseUser,
     loading,
     error,
     signIn,
@@ -202,8 +227,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUp,
     logout,
     resetPassword,
+    updateUserProfile,
     refreshUser,
-  };
+  }), [firebaseUser, user, loading, error, signIn, signInWithGoogle, signUp, logout, resetPassword, updateUserProfile, refreshUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
