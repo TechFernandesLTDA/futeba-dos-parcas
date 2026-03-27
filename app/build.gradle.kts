@@ -303,7 +303,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.11.1")
 
     // Gson for Object Conversion
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.google.code.gson:gson:2.13.2")
 
     // Lottie Animations
     implementation("com.airbnb.android:lottie:6.0.0")
