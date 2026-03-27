@@ -1,7 +1,7 @@
 # 📋 Futeba dos Parças - Contexto Consolidado do Projeto
 
-> **Última Atualização:** 2026-02-01
-> **Versão:** 1.8.0 (Build 21)
+> **Última Atualização:** 2026-03-27
+> **Versão:** 1.19.0 (Build 40)
 > **Propósito:** Contexto otimizado para Claude Code e outros LLMs
 
 ---
@@ -11,16 +11,18 @@
 **Futeba dos Parças** é um app Android/iOS multiplataforma (Kotlin Multiplatform) para gerenciamento de peladas com gamificação completa. Pense em **Duolingo meets Futebol Amador**.
 
 ### Stack Principal
-- **Frontend:** Jetpack Compose (Android) + Compose Multiplatform (iOS)
+- **Android:** Jetpack Compose + Kotlin 2.2.10 (KMP)
+- **Web:** React 18 + TypeScript + Material UI 5 + Vite 5
 - **Backend:** Firebase (Firestore, Auth, Storage, Cloud Functions v2)
-- **Arquitetura:** MVVM + Clean Architecture + Hilt DI
-- **Linguagem:** Kotlin 2.2.10 (KMP ~95% código compartilhado)
+- **Arquitetura:** MVVM + Clean Architecture + Koin 4.1.1 DI
+- **Linguagem:** Kotlin 2.2.10 (KMP ~95% código compartilhado Android/iOS)
 
 ### Status Atual
-- ✅ Android: **PRODUÇÃO** (Play Store v1.8.0)
-- 🚧 iOS: **FASE 1 COMPLETA** (aguardando Mac para FASE 2)
-- ✅ Backend: Firebase Functions v2 (TypeScript)
-- ✅ CI/CD: GitHub Actions (Android CI, iOS Build, CodeQL, Dependabot)
+- ✅ Android: **PRODUÇÃO** (Play Store v1.19.0)
+- ✅ Web: **PRODUÇÃO** (React app - PR #194 merged)
+- 🚧 iOS: **CMP Phase 2** (GitLive Firebase SDK migration in progress)
+- ✅ Backend: Firebase Functions v2 (TypeScript, 30+ functions, 398 tests)
+- ✅ CI/CD: GitHub Actions (Android CI, Functions CI, iOS Build, CodeQL, Dependabot)
 
 ---
 
@@ -33,7 +35,7 @@ futeba-dos-parcas/
 │   │   ├── ui/                   # Screens (Compose)
 │   │   ├── data/                 # Repositories impl
 │   │   ├── domain/               # Use Cases
-│   │   └── di/                   # Hilt modules
+│   │   └── di/                   # Koin modules
 │   └── build.gradle.kts
 │
 ├── shared/                       # Kotlin Multiplatform
@@ -83,6 +85,18 @@ futeba-dos-parcas/
 │   │   ├── firestore.md
 │   │   └── kotlin-style.md
 │   └── PROJECT_CONTEXT.md        # Este arquivo
+│
+├── web/                          # React Web Application
+│   ├── src/
+│   │   ├── components/           # Reusable UI components
+│   │   ├── contexts/             # Auth, Theme, Toast contexts
+│   │   ├── hooks/                # Custom React hooks
+│   │   ├── pages/                # Page components by feature
+│   │   ├── services/             # Firebase services
+│   │   ├── theme/                # MUI theme config
+│   │   └── types/                # TypeScript definitions
+│   ├── e2e/                      # Playwright E2E tests
+│   └── package.json
 │
 ├── CLAUDE.md                     # Developer guide
 ├── README.md                     # Public README
@@ -479,7 +493,7 @@ private fun FeatureContent(
 - Mutable collections expostas (usar `toList()`)
 
 ✅ **SEMPRE:**
-- Hilt para DI (`@HiltViewModel`, `@Inject`)
+- Koin para DI (`@HiltViewModel`, `@Inject`)
 - Coroutines para async (`viewModelScope`, `lifecycleScope`)
 - `Result<T>` para operações que podem falhar
 - `Flow<T>` para dados em tempo real
@@ -581,25 +595,27 @@ chore(deps): bump Compose to 1.7.3
 ### Q1 (Jan-Mar)
 - ✅ iOS FASE 1 (KMP infrastructure)
 - ✅ GitHub repository professionalization
-- 🚧 iOS FASE 2 (Mac build + TestFlight)
-- 🚧 Adaptive UI para tablets
-- 🚧 Perfis de jogador melhorados
+- ✅ CMP Phase 0 (CMP 1.10.0, SQLDelight 2.2.1, wasmJs)
+- ✅ CMP Phase 1 (Hilt → Koin 4.1.1)
+- ✅ Web App (React 18 + TypeScript + MUI - shipped early!)
+- 🔄 CMP Phase 2 (GitLive Firebase SDK)
 
 ### Q2 (Abr-Jun)
+- 📅 CMP Phase 3 (Shared UI in composeApp/)
+- 📅 iOS app launch via TestFlight
 - 📅 Sistema de torneios
 - 📅 Pagamentos PIX integrados
 - 📅 Votação MVP aprimorada
-- 📅 Cards instagramáveis de partidas
 
 ### Q3 (Jul-Set)
 - 📅 Networking entre grupos
 - 📅 Convites cross-group
-- 📅 Sistema de reputação
+- 📅 Dashboard para donos de quadra
 
 ### Q4 (Out-Dez)
-- 📅 Web app (Compose for Web)
-- 📅 Dashboard para donos de quadra
 - 📅 Analytics avançado
+- 📅 Cards instagramáveis de partidas
+- 📅 Sistema de reputação
 
 ---
 
