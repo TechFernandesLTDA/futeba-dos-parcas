@@ -174,4 +174,62 @@ describe('RegisterScreen', () => {
     await user.click(toggleButton);
     expect(senhaInput).toHaveAttribute('type', 'text');
   });
+
+  it('mostra erro para email vazio', async () => {
+    const user = userEvent.setup();
+    renderRegisterScreen();
+
+    await user.type(screen.getByLabelText(/nome completo/i), 'Jogador Teste');
+    await user.click(screen.getByRole('button', { name: /criar conta/i }));
+
+    expect(await screen.findByText('Digite seu email')).toBeInTheDocument();
+  });
+
+  it('desabilita botão e campos e exibe spinner durante o envio', async () => {
+    let resolveSignUp: () => void;
+    mockSignUp.mockImplementation(() => new Promise<void>((resolve) => {
+      resolveSignUp = resolve;
+    }));
+    const user = userEvent.setup();
+    renderRegisterScreen();
+
+    await user.type(screen.getByLabelText(/nome completo/i), 'Jogador Teste');
+    await user.type(screen.getByLabelText(/email/i), 'test@test.com');
+    await user.type(screen.getByLabelText(/^senha$/i), '123456');
+    await user.type(screen.getByLabelText(/confirmar senha/i), '123456');
+    await user.click(screen.getByRole('button', { name: /criar conta/i }));
+
+    // CircularProgress (spinner) deve estar presente durante o loading
+    await waitFor(() => {
+      expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    });
+
+    // Campos devem estar desabilitados durante o loading
+    expect(screen.getByLabelText(/nome completo/i)).toBeDisabled();
+    expect(screen.getByLabelText(/email/i)).toBeDisabled();
+    expect(screen.getByLabelText(/^senha$/i)).toBeDisabled();
+    expect(screen.getByLabelText(/confirmar senha/i)).toBeDisabled();
+
+    // Resolver a promise para limpar o estado
+    resolveSignUp!();
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+  });
+
+  it('submete formulário ao pressionar Enter no campo de confirmar senha', async () => {
+    mockSignUp.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    renderRegisterScreen();
+
+    await user.type(screen.getByLabelText(/nome completo/i), 'Jogador Teste');
+    await user.type(screen.getByLabelText(/email/i), 'test@test.com');
+    await user.type(screen.getByLabelText(/^senha$/i), '123456');
+    await user.type(screen.getByLabelText(/confirmar senha/i), '123456');
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(mockSignUp).toHaveBeenCalledWith('test@test.com', '123456', 'Jogador Teste');
+    });
+  });
 });

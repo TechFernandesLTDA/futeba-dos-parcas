@@ -338,4 +338,158 @@ describe('AuthContext', () => {
 
     consoleSpy.mockRestore();
   });
+
+  it('resetPassword envia email de recuperação de senha', async () => {
+    mockSendPasswordResetEmail.mockResolvedValue(undefined);
+
+    let resetPasswordFn: any;
+    function Extractor() {
+      const auth = useAuth();
+      resetPasswordFn = auth.resetPassword;
+      return null;
+    }
+
+    render(
+      <AuthProvider>
+        <Extractor />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(resetPasswordFn).toBeDefined());
+
+    await act(async () => {
+      await resetPasswordFn('recover@test.com');
+    });
+
+    expect(mockSendPasswordResetEmail).toHaveBeenCalledWith(
+      expect.anything(),
+      'recover@test.com'
+    );
+  });
+
+  it('resetPassword trata erros definindo error state', async () => {
+    mockSendPasswordResetEmail.mockRejectedValue({
+      code: 'auth/user-not-found',
+      message: 'User not found',
+    });
+
+    let resetPasswordFn: any;
+    function Extractor() {
+      const auth = useAuth();
+      resetPasswordFn = auth.resetPassword;
+      return <span data-testid="reset-err">{auth.error || 'none'}</span>;
+    }
+
+    render(
+      <AuthProvider>
+        <Extractor />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(resetPasswordFn).toBeDefined());
+
+    await act(async () => {
+      try {
+        await resetPasswordFn('nonexistent@test.com');
+      } catch {
+        // Esperado
+      }
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('reset-err').textContent).not.toBe('none');
+    });
+  });
+
+  it('updateUserProfile atualiza displayName e photoURL', async () => {
+    const mockFirebaseUser = { uid: 'profile-uid', email: 'profile@test.com', displayName: 'Old Name' };
+
+    mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
+      setTimeout(() => callback(mockFirebaseUser), 0);
+      return vi.fn();
+    });
+
+    mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      id: 'profile-uid',
+      data: () => ({ name: 'Old Name', email: 'profile@test.com' }),
+    });
+
+    mockUpdateProfile.mockResolvedValue(undefined);
+
+    let updateUserProfileFn: any;
+    function Extractor() {
+      const auth = useAuth();
+      updateUserProfileFn = auth.updateUserProfile;
+      return null;
+    }
+
+    render(
+      <AuthProvider>
+        <Extractor />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(updateUserProfileFn).toBeDefined());
+
+    // Aguardar o auth state change carregar o firebaseUser
+    await waitFor(() => expect(mockGetDoc).toHaveBeenCalled());
+
+    await act(async () => {
+      await updateUserProfileFn({ displayName: 'New Name', photoURL: 'https://photo.url/new.jpg' });
+    });
+
+    expect(mockUpdateProfile).toHaveBeenCalledWith(
+      mockFirebaseUser,
+      { displayName: 'New Name', photoURL: 'https://photo.url/new.jpg' }
+    );
+  });
+
+  it('refreshUser recarrega dados do usuário do Firestore', async () => {
+    const mockFirebaseUser = { uid: 'refresh-uid', email: 'refresh@test.com' };
+
+    mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
+      setTimeout(() => callback(mockFirebaseUser), 0);
+      return vi.fn();
+    });
+
+    mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      id: 'refresh-uid',
+      data: () => ({ name: 'Original Name', email: 'refresh@test.com' }),
+    });
+
+    let refreshUserFn: any;
+    function Extractor() {
+      const auth = useAuth();
+      refreshUserFn = auth.refreshUser;
+      return <span data-testid="refresh-user">{auth.user?.name || 'null'}</span>;
+    }
+
+    render(
+      <AuthProvider>
+        <Extractor />
+      </AuthProvider>
+    );
+
+    // Aguardar carregamento inicial
+    await waitFor(() => {
+      expect(screen.getByTestId('refresh-user').textContent).toBe('Original Name');
+    });
+
+    // Atualizar o mock para retornar dados diferentes
+    mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      id: 'refresh-uid',
+      data: () => ({ name: 'Updated Name', email: 'refresh@test.com' }),
+    });
+
+    await act(async () => {
+      await refreshUserFn();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('refresh-user').textContent).toBe('Updated Name');
+    });
+  });
 });
