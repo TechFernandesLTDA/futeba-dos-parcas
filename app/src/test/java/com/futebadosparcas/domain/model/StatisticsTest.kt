@@ -1,6 +1,7 @@
 package com.futebadosparcas.domain.model
 
 import com.futebadosparcas.domain.model.goalParticipation
+import com.futebadosparcas.domain.model.goalParticipationPerGame
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -169,28 +170,28 @@ class StatisticsTest {
         @DisplayName("Gols + Assistências")
         fun `goals plus assists`() {
             val stats = createStats(totalGoals = 10, totalAssists = 5)
-            assertEquals(15, statsgoalParticipation())
+            assertEquals(15, stats.goalParticipation())
         }
 
         @Test
         @DisplayName("Apenas gols")
         fun `only goals`() {
             val stats = createStats(totalGoals = 10, totalAssists = 0)
-            assertEquals(10, statsgoalParticipation())
+            assertEquals(10, stats.goalParticipation())
         }
 
         @Test
         @DisplayName("Apenas assistências")
         fun `only assists`() {
             val stats = createStats(totalGoals = 0, totalAssists = 10)
-            assertEquals(10, statsgoalParticipation())
+            assertEquals(10, stats.goalParticipation())
         }
 
         @Test
         @DisplayName("Zero participação")
         fun `zero participation`() {
             val stats = createStats(totalGoals = 0, totalAssists = 0)
-            assertEquals(0, statsgoalParticipation())
+            assertEquals(0, stats.goalParticipation())
         }
     }
 
@@ -204,14 +205,14 @@ class StatisticsTest {
         @DisplayName("0 jogos deve retornar 0")
         fun `zero games should return 0`() {
             val stats = createStats(totalGames = 0, totalGoals = 10, totalAssists = 5)
-            assertEquals(0f, stats.getGoalParticipationPerGame())
+            assertEquals(0f, stats.goalParticipationPerGame())
         }
 
         @Test
         @DisplayName("1 participação por jogo")
         fun `one participation per game`() {
             val stats = createStats(totalGames = 10, totalGoals = 5, totalAssists = 5)
-            assertEquals(1.0f, stats.getGoalParticipationPerGame())
+            assertEquals(1.0f, stats.goalParticipationPerGame())
         }
 
         @ParameterizedTest
@@ -228,7 +229,7 @@ class StatisticsTest {
             expected: Float
         ) {
             val stats = createStats(totalGames = games, totalGoals = goals, totalAssists = assists)
-            assertEquals(expected, stats.getGoalParticipationPerGame(), 0.001f)
+            assertEquals(expected, stats.goalParticipationPerGame(), 0.001f)
         }
     }
 

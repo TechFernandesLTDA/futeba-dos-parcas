@@ -526,7 +526,7 @@ class PlayersViewModelTest {
         totalGoals = 30,
         totalAssists = 20,
         totalSaves = 10,
-        bestPlayerCount = 5
+        mvpCount = 5
     )
 
     private fun createTestGroup(
