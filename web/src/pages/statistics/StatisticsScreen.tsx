@@ -14,7 +14,6 @@ import {
   Grid,
   useTheme,
   alpha,
-  Chip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,

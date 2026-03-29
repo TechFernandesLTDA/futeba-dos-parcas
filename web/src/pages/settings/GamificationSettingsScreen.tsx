@@ -15,9 +15,7 @@ import {
   Switch,
   Slider,
   useTheme,
-  alpha,
   Chip,
-  Paper,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -35,7 +33,7 @@ export const GamificationSettingsScreen: React.FC = () => {
   useDocumentTitle('Gamificação');
   const navigate = useNavigate();
   const theme = useTheme();
-  const { user } = useAuth();
+  useAuth();
 
   const [notifications, setNotifications] = useState(true);
   const [showLevel, setShowLevel] = useState(true);

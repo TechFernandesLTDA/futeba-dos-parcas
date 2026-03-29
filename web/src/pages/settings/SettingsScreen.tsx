@@ -10,7 +10,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  ListItemSecondaryAction,
   IconButton,
   Switch,
   FormControlLabel,
@@ -23,12 +22,10 @@ import {
   DialogContentText,
   DialogActions,
   useTheme,
-  alpha,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   Person as PersonIcon,
-  Notifications as NotificationsIcon,
   Palette as PaletteIcon,
   Security as SecurityIcon,
   Info as InfoIcon,

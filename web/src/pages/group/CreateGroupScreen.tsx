@@ -33,7 +33,7 @@ export const CreateGroupScreen: React.FC = () => {
   useDocumentTitle('Criar Grupo');
   const navigate = useNavigate();
   const theme = useTheme();
-  const { currentUser } = useAuth();
+  useAuth();
 
   const { createGroup, loading, error } = useCreateGroup();
   const { showSuccess, showError } = useToast();

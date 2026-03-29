@@ -11,21 +11,16 @@ import {
   Tabs,
   Tab,
   Chip,
-  Skeleton,
   useTheme,
   alpha,
-  Avatar,
   List,
-  Divider,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   EmojiEvents as TrophyIcon,
-  TrendingUp as TrendingIcon,
-  SportsSoccer as SoccerIcon,
   MilitaryTech as MilitaryTechIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, limit, onSnapshot, where, getDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';

@@ -9,24 +9,14 @@ import {
   IconButton,
   Avatar,
   Grid,
-  Paper,
-  Divider,
   Button,
-  Skeleton,
   useTheme,
   alpha,
   Chip,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   EmojiEvents as TrophyIcon,
-  SportsSoccer as SoccerIcon,
-  Person as PersonIcon,
-  TrendingUp as TrendingIcon,
   ThumbDown as ThumbDownIcon,
   Star as StarIcon,
 } from '@mui/icons-material';
@@ -78,7 +68,7 @@ export const VoteResultScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  const { user } = useAuth();
+  useAuth();
 
   const [voteResult, setVoteResult] = useState<VoteResult | null>(null);
   const [gameResult, setGameResult] = useState<GameResult | null>(null);

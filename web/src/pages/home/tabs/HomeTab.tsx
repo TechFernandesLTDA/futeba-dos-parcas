@@ -27,7 +27,6 @@ import {
   TrendingUp,
   EmojiEvents,
   LocalFireDepartment,
-  MilitaryTech,
 } from '@mui/icons-material';
 import { gamificationColors } from '../../../theme';
 import { useGames } from '../../../hooks/useGames';

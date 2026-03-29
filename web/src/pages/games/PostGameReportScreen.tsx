@@ -9,27 +9,18 @@ import {
   IconButton,
   Avatar,
   Grid,
-  Paper,
   Divider,
   Button,
-  Skeleton,
   useTheme,
   alpha,
   Chip,
   List,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   SportsSoccer as SoccerIcon,
   EmojiEvents as TrophyIcon,
   TrendingUp as TrendingIcon,
-  Person as PersonIcon,
   Assessment as StatsIcon,
 } from '@mui/icons-material';
 import { doc, getDoc } from 'firebase/firestore';
@@ -60,7 +51,7 @@ export const PostGameReportScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  const { user } = useAuth();
+  useAuth();
 
   const [stats, setStats] = useState<PostGameStats | null>(null);
   const [loading, setLoading] = useState(true);

@@ -12,7 +12,6 @@ import {
   Divider,
   Grid,
   Paper,
-  Skeleton,
   useTheme,
   alpha,
   List,
@@ -23,19 +22,17 @@ import {
 import {
   ArrowBack as BackIcon,
   SportsSoccer as SoccerIcon,
-  EmojiEvents as TrophyIcon,
   TrendingUp as TrendingIcon,
   CalendarMonth as CalendarIcon,
   Star as StarIcon,
   LocalFireDepartment as FireIcon,
   Timeline as TimelineIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, getDocs, limit } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
-import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
-import { DIVISION_CONFIG } from '../../types/gamification';
+import { LoadingState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 

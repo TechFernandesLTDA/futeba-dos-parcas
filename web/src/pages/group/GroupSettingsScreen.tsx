@@ -27,7 +27,6 @@ import {
 import {
   ArrowBack as BackIcon,
   Edit as EditIcon,
-  Person as PersonIcon,
   Group as GroupIcon,
   ExitToApp as LeaveIcon,
   Delete as DeleteIcon,
@@ -57,7 +56,7 @@ export const GroupSettingsScreen: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { currentUser, firebaseUser, user } = useAuth();
+  const { firebaseUser, user } = useAuth();
   const { showSuccess, showError } = useToast();
 
   const { group, members, loading, error } = useGroupDetail(groupId || null);

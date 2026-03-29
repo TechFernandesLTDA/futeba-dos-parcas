@@ -5,7 +5,6 @@ import {
   Container,
   Typography,
   Card,
-  CardContent,
   IconButton,
   List,
   ListItem,
@@ -15,9 +14,7 @@ import {
   Chip,
   Divider,
   Button,
-  Skeleton,
   useTheme,
-  alpha,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -26,11 +23,10 @@ import {
 import {
   ArrowBack as BackIcon,
   Add as AddIcon,
-  Edit as EditIcon,
   Delete as DeleteIcon,
   Schedule as ScheduleIcon,
 } from '@mui/icons-material';
-import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingState } from '../../components/common/GameCard';
@@ -55,12 +51,11 @@ export const SchedulesScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { groupId } = useParams<{ groupId: string }>();
-  const { user } = useAuth();
+  useAuth();
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
 
   useEffect(() => {
     if (!groupId) return;

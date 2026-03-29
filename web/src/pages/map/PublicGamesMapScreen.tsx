@@ -7,11 +7,6 @@ import {
   IconButton,
   TextField,
   InputAdornment,
-  Card,
-  CardContent,
-  Avatar,
-  Chip,
-  Skeleton,
   useTheme,
   alpha,
   Fab,
@@ -19,10 +14,8 @@ import {
 import {
   ArrowBack as BackIcon,
   Search as SearchIcon,
-  LocationOn as LocationIcon,
   SportsSoccer as SoccerIcon,
   Map as MapIcon,
-  MyLocation as MyLocationIcon,
 } from '@mui/icons-material';
 import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-maps/api';
@@ -37,7 +30,7 @@ export const PublicGamesMapScreen: React.FC = () => {
   useDocumentTitle('Jogos Públicos');
   const navigate = useNavigate();
   const theme = useTheme();
-  const { user } = useAuth();
+  useAuth();
 
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);

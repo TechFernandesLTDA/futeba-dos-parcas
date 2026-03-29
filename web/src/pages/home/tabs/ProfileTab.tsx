@@ -39,7 +39,7 @@ import {
 } from '@mui/icons-material';
 import { getLevelColor } from '../../../types/user';
 import { getLevelBadgeImage, getLevelBadgeDescription } from '../../../utils/levelBadge';
-import { getLevelForXp, getXpProgress, getXpRemaining, getLevelEntry } from '../../../types/gamification';
+import { getLevelForXp, getXpProgress, getLevelEntry } from '../../../types/gamification';
 import { gamificationColors } from '../../../theme';
 import { useNavigate } from 'react-router-dom';
 import { createLogger } from '../../../utils/logger';
@@ -56,7 +56,6 @@ export function ProfileTab() {
   const currentXp = user?.experiencePoints || 0;
   const currentLevel = getLevelForXp(currentXp);
   const levelProgress = getXpProgress(currentXp) * 100;
-  const xpRemaining = getXpRemaining(currentXp);
   const currentEntry = getLevelEntry(currentLevel);
   const nextEntry = currentLevel < 20 ? getLevelEntry(currentLevel + 1) : null;
   const xpInLevel = currentXp - currentEntry.xpRequired;

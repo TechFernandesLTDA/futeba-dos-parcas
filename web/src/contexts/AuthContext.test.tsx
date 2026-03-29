@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
-import { renderHook } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
 
 // Mock Firebase modules
@@ -54,19 +53,9 @@ vi.mock('../utils/logger', () => ({
   }),
 }));
 
-// Helper para simular onAuthStateChanged
-function triggerAuthStateChange(user: any) {
-  const callback = mockOnAuthStateChanged.mock.calls[0]?.[1];
-  if (callback) {
-    act(() => {
-      callback(user);
-    });
-  }
-}
-
 // Componente auxiliar para acessar o contexto
 function AuthConsumer() {
-  const { user, firebaseUser, loading, error, signIn, signUp, logout, signInWithGoogle } = useAuth();
+  const { user, firebaseUser, loading, error } = useAuth();
   return (
     <div>
       <span data-testid="loading">{String(loading)}</span>
@@ -260,11 +249,9 @@ describe('AuthContext', () => {
     });
 
     let signInFn: any;
-    let getError: any;
     function Extractor() {
       const auth = useAuth();
       signInFn = auth.signIn;
-      getError = () => auth.error;
       return <span data-testid="err">{auth.error || 'none'}</span>;
     }
 

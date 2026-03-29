@@ -9,8 +9,6 @@ import {
   IconButton,
   Avatar,
   Grid,
-  Paper,
-  Divider,
   Button,
   Skeleton,
   useTheme,
@@ -19,13 +17,8 @@ import {
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
-  Edit as EditIcon,
-  SportsSoccer as SoccerIcon,
-  EmojiEvents as TrophyIcon,
-  TrendingUp as TrendingIcon,
   Shuffle as ShuffleIcon,
   Save as SaveIcon,
-  Person as PersonIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -50,7 +43,7 @@ export const TeamFormationScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  const { user } = useAuth();
+  useAuth();
 
   const [teamA, setTeamA] = useState<TeamPlayer[]>([]);
   const [teamB, setTeamB] = useState<TeamPlayer[]>([]);

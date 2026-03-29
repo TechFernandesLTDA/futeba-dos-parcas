@@ -9,9 +9,6 @@ import {
   CardContent,
   Avatar,
   List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
   IconButton,
   Badge,
   Skeleton,
@@ -21,7 +18,6 @@ import {
 import {
   ArrowBack as BackIcon,
   Notifications as NotificationIcon,
-  Delete as DeleteIcon,
   Check as CheckIcon,
   Close as CloseIcon,
   EmojiEvents as TrophyIcon,

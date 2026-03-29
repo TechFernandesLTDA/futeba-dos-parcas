@@ -10,7 +10,7 @@ const mockActionClick = vi.fn();
 
 // Componente auxiliar para disparar toasts
 function ToastTrigger() {
-  const { showToast, showSuccess, showError, showWarning, showInfo, dismissToast, showWithAction } = useToast();
+  const { showToast, showSuccess, showError, showWarning, showInfo, showWithAction } = useToast();
   return (
     <div>
       <button onClick={() => showSuccess('Sucesso!')}>success</button>

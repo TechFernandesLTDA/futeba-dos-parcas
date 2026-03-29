@@ -1,4 +1,4 @@
-import { Box, Container, Typography, Button, IconButton, useTheme, alpha } from '@mui/material';
+import { Box, Typography, Button, useTheme, alpha } from '@mui/material';
 import { ArrowForward as ArrowForwardIcon, SportsSoccer as SoccerIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';

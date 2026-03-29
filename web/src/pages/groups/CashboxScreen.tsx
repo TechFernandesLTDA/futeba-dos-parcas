@@ -14,10 +14,7 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
-  Chip,
   Divider,
-  Skeleton,
   useTheme,
   alpha,
   Dialog,
@@ -27,9 +24,6 @@ import {
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
-  Add as AddIcon,
-  Remove as RemoveIcon,
-  Person as PersonIcon,
   Payments as PaymentsIcon,
   TrendingUp as TrendingIcon,
   TrendingDown as TrendingDownIcon,
@@ -39,7 +33,7 @@ import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp,
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
-import { LoadingState, PlayerAvatar } from '../../components/common/GameCard';
+import { LoadingState } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 interface CashboxTransaction {
@@ -67,7 +61,7 @@ export const CashboxScreen: React.FC = () => {
   const { user } = useAuth();
 
   const [transactions, setTransactions] = useState<CashboxTransaction[]>([]);
-  const [members, setMembers] = useState<GroupMember[]>([]);
+  const [, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);

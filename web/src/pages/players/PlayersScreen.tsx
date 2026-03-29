@@ -5,31 +5,25 @@ import {
   Container,
   Typography,
   Card,
-  CardContent,
   IconButton,
-  Avatar,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
   Divider,
-  Button,
-  Skeleton,
   useTheme,
   alpha,
   Chip,
   CircularProgress,
-  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
-  Person as PersonIcon,
   PersonAdd as PersonAddIcon,
   PersonRemove as PersonRemoveIcon,
-  Block as BlockIcon,
   AdminPanelSettings as AdminIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
