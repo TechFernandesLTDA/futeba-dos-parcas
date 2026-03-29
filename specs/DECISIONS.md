@@ -104,4 +104,30 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ---
 
+### [2026-03-29] Manter UTC-3 fixo para America/Sao_Paulo nos lembretes de jogo
+
+**Contexto:** A função `parseScheduledTime` em `functions/src/reminders.ts` (linhas 128-143) usa um offset fixo de `-3` horas para converter horário local (BRT) em UTC ao calcular quando enviar lembretes de jogos. O código não usa uma biblioteca de timezone dinâmica.
+
+**Alternativas consideradas:**
+1. **Offset fixo UTC-3** — Simples, zero dependências extras, funciona para o Brasil atual
+2. **`date-fns-tz` ou `luxon`** — Suporte completo a DST, mas adiciona dependência e complexidade
+3. **`Intl.DateTimeFormat`** — Nativo no Node, mas API verbosa para conversões de offset
+
+**Decisão:** Manter offset fixo `BRAZIL_UTC_OFFSET = -3` (UTC-3 / Horário de Brasília).
+
+**Justificativa:**
+- O horário de verão no Brasil foi **abolido definitivamente pelo Decreto nº 9.772/2019**. Não há DST desde outubro de 2019.
+- UTC-3 é o horário fixo permanente de toda a região BRT (exceto Acre/Fernando de Noronha, fora do escopo do app).
+- Adicionar `date-fns-tz` ou `luxon` apenas para suportar um DST inexistente seria over-engineering.
+
+**Consequências:**
+- (+) Sem dependências extras no bundle de Cloud Functions
+- (+) Código simples e direto
+- (-) Se o DST for reintroduzido no Brasil, este valor precisará ser dinâmico
+- **Plano de migração se necessário**: substituir o offset fixo por `date-fns-tz` ou `Intl.DateTimeFormat` com `timeZone: 'America/Sao_Paulo'`
+
+**Relacionado:** `functions/src/reminders.ts` linhas 128-143
+
+---
+
 <!-- Adicione novas decisões acima desta linha -->

@@ -4,6 +4,7 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 import { getMessaging, isSupported } from 'firebase/messaging';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBMzIKlfST4gJm3RM3QQXY-N0doVE6vMQE",
@@ -20,6 +21,21 @@ export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
+
+// App Check — proteção contra abuso (apenas no browser, seguro para SSR)
+export let appCheck: ReturnType<typeof initializeAppCheck> | null = null;
+if (typeof window !== 'undefined') {
+  // Em desenvolvimento, habilita token de debug para testes locais
+  if (import.meta.env.DEV) {
+    (self as unknown as Record<string, unknown>).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
+  appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(
+      import.meta.env.VITE_RECAPTCHA_SITE_KEY || ''
+    ),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
 
 // Messaging (optional, only in supported browsers)
 export const messagingPromise = isSupported().then(supported => 

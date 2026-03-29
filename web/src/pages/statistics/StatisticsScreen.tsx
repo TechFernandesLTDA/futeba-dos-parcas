@@ -14,6 +14,8 @@ import {
   Grid,
   useTheme,
   alpha,
+  Chip,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -61,6 +63,9 @@ export const StatisticsScreen: React.FC = () => {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
+
+  // Filtro de período: 'all' | 'month' | 'season'
+  const [periodFilter, setPeriodFilter] = useState<'all' | 'month' | 'season'>('all');
 
   useEffect(() => {
     if (user) {
@@ -120,6 +125,41 @@ export const StatisticsScreen: React.FC = () => {
           <Tab label="Gols" />
           <Tab label="Conquistas" />
         </Tabs>
+
+        {/* Filtros de período */}
+        <Box sx={{ display: 'flex', gap: 1, px: 2, py: 1 }}>
+          <Chip
+            label="Todos"
+            onClick={() => setPeriodFilter('all')}
+            color={periodFilter === 'all' ? 'primary' : 'default'}
+            variant={periodFilter === 'all' ? 'filled' : 'outlined'}
+            size="small"
+          />
+          <Tooltip title="Em breve" arrow>
+            <span>
+              <Chip
+                label="Este Mês"
+                onClick={() => setPeriodFilter('month')}
+                color={periodFilter === 'month' ? 'primary' : 'default'}
+                variant={periodFilter === 'month' ? 'filled' : 'outlined'}
+                size="small"
+                disabled
+              />
+            </span>
+          </Tooltip>
+          <Tooltip title="Em breve" arrow>
+            <span>
+              <Chip
+                label="Última Temporada"
+                onClick={() => setPeriodFilter('season')}
+                color={periodFilter === 'season' ? 'primary' : 'default'}
+                variant={periodFilter === 'season' ? 'filled' : 'outlined'}
+                size="small"
+                disabled
+              />
+            </span>
+          </Tooltip>
+        </Box>
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>

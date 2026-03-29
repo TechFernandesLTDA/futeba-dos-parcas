@@ -73,22 +73,28 @@ service firebase.storage {
     // ============================================
     // LOGOS DE GRUPOS
     // Path: groups/{groupId}/logo.jpg
-    // NOTA: Simplificado para evitar falhas de App Check/rate limiting
-    // A validação de admin é feita no app antes do upload
+    //
+    // SEGURANÇA: Upload restrito a admins/owners do grupo via isGroupAdmin().
+    // A função isGroupAdmin() lê o documento groups/{groupId}/members/{uid}
+    // via firestore.get(), verificando role == 'OWNER' || role == 'ADMIN'.
+    //
+    // LIMITAÇÃO CONHECIDA: Storage Rules têm cota limitada de leituras ao
+    // Firestore (firestore.get/exists). Em cenários de alta frequência de
+    // upload, pode haver rate limiting. Se isso ocorrer, o fallback é:
+    // desabilitar temporariamente isGroupAdmin() e manter a validação
+    // apenas na camada de app (GroupRepository.updateGroup + Cloud Function).
     // ============================================
     match /groups/{groupId}/logo.jpg {
       // Qualquer usuário autenticado pode ver logos de grupos
       // (necessário para preview em convites, buscas, etc.)
       allow read: if isAuthenticated();
 
-      // Qualquer usuário autenticado pode fazer upload
-      // A validação de admin/owner é feita no app (GroupRepository.updateGroup)
+      // Apenas admins ou owners do grupo podem fazer upload do logo
       // Máximo 5MB, apenas imagem
-      allow write: if isAuthenticated() && isImage() && isUnderSize(5);
+      allow write: if isAuthenticated() && isGroupAdmin(groupId) && isImage() && isUnderSize(5);
 
-      // Qualquer usuário autenticado pode deletar
-      // A validação de admin/owner é feita no app
-      allow delete: if isAuthenticated();
+      // Apenas admins ou owners do grupo podem deletar o logo
+      allow delete: if isAuthenticated() && isGroupAdmin(groupId);
     }
 
     // ============================================

@@ -34,7 +34,7 @@ import {
   Add as AddIcon,
   Timer as TimerIcon,
 } from '@mui/icons-material';
-import { doc, collection, onSnapshot, updateDoc, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, collection, onSnapshot, updateDoc, addDoc, Timestamp, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Game, GameEvent, LiveGameScore, GameEventType } from '../../types/game';
@@ -60,6 +60,8 @@ export const LiveGameScreen: React.FC = () => {
   const [addEventDialog, setAddEventDialog] = useState(false);
   const [selectedEventType, setSelectedEventType] = useState<GameEventType>('GOAL');
   const [selectedPlayer, setSelectedPlayer] = useState('');
+  const [startingGame, setStartingGame] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -130,6 +132,38 @@ export const LiveGameScreen: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Inicia o jogo atualizando o status para LIVE no Firestore
+  const handleStartGame = async () => {
+    if (!gameId) return;
+    setStartingGame(true);
+    setError(null);
+    try {
+      await updateDoc(doc(db, 'games', gameId), {
+        status: 'LIVE',
+        started_at: serverTimestamp(),
+      });
+    } catch (err) {
+      logger.error('Erro ao iniciar jogo:', err);
+      setError('Não foi possível iniciar o jogo. Tente novamente.');
+    } finally {
+      setStartingGame(false);
+    }
+  };
+
+  // Determina o time do jogador atual com base nos dados do jogo carregados
+  const getCurrentUserTeamId = (): string => {
+    if (!currentUser || !game) {
+      // Fallback: dados do jogo ainda não carregados
+      return 'team1';
+    }
+    const team1Players: string[] = (game as any).team1Players ?? [];
+    const team2Players: string[] = (game as any).team2Players ?? [];
+    if (team2Players.includes(currentUser.uid)) return 'team2';
+    if (team1Players.includes(currentUser.uid)) return 'team1';
+    // Fallback: jogador não encontrado em nenhum time
+    return 'team1';
+  };
+
   const handleAddEvent = async () => {
     if (!selectedPlayer || !gameId) return;
 
@@ -139,7 +173,7 @@ export const LiveGameScreen: React.FC = () => {
         event_type: selectedEventType,
         player_id: selectedPlayer,
         player_name: 'Jogador',
-        team_id: 'team1',
+        team_id: getCurrentUserTeamId(),
         minute: Math.floor(elapsedTime / 60),
         created_by: currentUser?.uid,
         created_at: Timestamp.now(),
@@ -217,6 +251,11 @@ export const LiveGameScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
+        {error && (
+          <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
         <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
@@ -323,9 +362,11 @@ export const LiveGameScreen: React.FC = () => {
                 variant="contained"
                 color="success"
                 startIcon={<PlayIcon />}
+                onClick={handleStartGame}
+                disabled={startingGame}
                 fullWidth
               >
-                Iniciar Jogo
+                {startingGame ? 'Iniciando...' : 'Iniciar Jogo'}
               </Button>
             )}
           </Box>
