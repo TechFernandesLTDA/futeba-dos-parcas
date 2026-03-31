@@ -176,26 +176,55 @@ export const CreateGameScreen: React.FC = () => {
     if (!validateStep(activeStep)) return;
 
     try {
-      const gameId = await createGame({
-        ...formData,
-        visibility: formData.isPublic ? 'PUBLIC_CLOSED' : 'GROUP_ONLY',
-        totalCost: 0,
-        players: [],
-        playersCount: 0,
-        goalkeepersCount: 0,
+      // Montar dados limpos (sem campos undefined)
+      const gamePayload: Record<string, any> = {
+        locationName: formData.locationName,
+        locationAddress: formData.locationAddress,
+        date: formData.date,
+        time: formData.time,
+        endTime: formData.endTime || null,
+        fieldType: formData.fieldType,
+        gameType: formData.fieldType,
+        maxPlayers: formData.maxPlayers,
+        maxGoalkeepers: formData.maxGoalkeepers,
+        numberOfTeams: formData.numberOfTeams,
+        dailyPrice: formData.dailyPrice,
+        pixPaymentEnabled: formData.pixPaymentEnabled,
+        rules: formData.rules || '',
+        isPublic: formData.isPublic,
+        visibility: formData.groupId ? 'GROUP_ONLY' : (formData.isPublic ? 'PUBLIC_CLOSED' : 'PUBLIC_CLOSED'),
         team1Name: 'Time 1',
         team2Name: 'Time 2',
-        team1Score: 0,
-        team2Score: 0,
         confirmationDeadlineHours: 0,
         requireCheckin: false,
         checkinRadiusMeters: 100,
-      });
+      };
+
+      // Campos opcionais (só incluir se tiverem valor)
+      if (formData.locationId) gamePayload.locationId = formData.locationId;
+      if (formData.locationLat) gamePayload.locationLat = formData.locationLat;
+      if (formData.locationLng) gamePayload.locationLng = formData.locationLng;
+      if (formData.groupId) gamePayload.groupId = formData.groupId;
+      if (formData.groupName) gamePayload.groupName = formData.groupName;
+      if (formData.pixPaymentEnabled) {
+        gamePayload.pixKey = formData.pixKey;
+        gamePayload.pixKeyType = formData.pixKeyType;
+        gamePayload.pixBeneficiaryName = formData.pixBeneficiaryName;
+      }
+
+      const gameId = await createGame(gamePayload as any);
       showSuccess('Jogo criado com sucesso!');
       navigate(`/game/${gameId}`);
-    } catch (err) {
+    } catch (err: any) {
       logger.error('Error creating game:', err);
-      showError('Erro ao criar jogo. Tente novamente.');
+      const msg = err?.message || '';
+      if (msg.includes('permission')) {
+        showError('Sem permissão para criar jogo. Verifique se você está logado.');
+      } else if (msg.includes('undefined')) {
+        showError('Erro nos dados do jogo. Verifique todos os campos.');
+      } else {
+        showError(`Erro ao criar jogo: ${msg || 'Tente novamente.'}`);
+      }
     }
   };
 

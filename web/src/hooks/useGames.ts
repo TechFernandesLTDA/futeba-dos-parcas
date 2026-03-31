@@ -260,8 +260,16 @@ export function useCreateGame() {
         // Converter campos do formulário para snake_case do Firestore
         const snakeGameData = camelToSnake(gameData);
 
+        // Remover campos undefined (Firestore não aceita)
+        const cleanData: Record<string, any> = {};
+        for (const [key, value] of Object.entries(snakeGameData)) {
+          if (value !== undefined) {
+            cleanData[key] = value;
+          }
+        }
+
         const newGame = {
-          ...snakeGameData,
+          ...cleanData,
           owner_id: uid,
           owner_name: displayName,
           status: 'SCHEDULED' as GameStatus,
