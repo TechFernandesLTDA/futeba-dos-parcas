@@ -104,10 +104,12 @@ export const MVPVoteScreen: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const voteRef = doc(collection(db, 'games', gameId, 'votes'), currentUser.uid);
+      // Doc ID: {gameId}_{voterId} (determinístico, previne voto duplicado)
+      const voteId = `${gameId}_${currentUser.uid}`;
+      const voteRef = doc(db, 'mvp_votes', voteId);
 
       await setDoc(voteRef, {
-        user_id: currentUser.uid,
+        voter_id: currentUser.uid,
         game_id: gameId,
         mvp_id: mvpVote,
         best_gk_id: bestGkVote || null,
