@@ -388,7 +388,7 @@ export const GameDetailScreen: React.FC = () => {
                           )}
                         </Box>
                       }
-                      secondary={`#${player.confirmationOrder}`}
+                      secondary={`#${player.confirmationOrder ?? (index + 1)}`}
                     />
                     <ListItemSecondaryAction>
                       <StatusChip status={player.paymentStatus} config={PAYMENT_STATUS_CONFIG} />

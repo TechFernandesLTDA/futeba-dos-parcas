@@ -32,6 +32,7 @@ import {
 } from '@mui/icons-material';
 import { useCreateGame } from '../../hooks/useGames';
 import { useGroupDetail } from '../../hooks/useGroups';
+import { useLocations } from '../../hooks/useLocations';
 import { FieldType, PixKeyType } from '../../types/game';
 import { FIELD_TYPE_LABELS, PIX_KEY_TYPE_LABELS } from '../../types/game';
 import { useToast } from '../../contexts/ToastContext';
@@ -41,6 +42,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 const logger = createLogger('CreateGameScreen');
 
 interface GameFormData {
+  locationId: string;
   locationName: string;
   locationAddress: string;
   locationLat?: number;
@@ -66,14 +68,17 @@ interface GameFormData {
 
 const steps = ['Local e Data', 'Configurações', 'Pagamento', 'Regras'];
 
+const CUSTOM_LOCATION = '__custom__';
+
 const defaultFormData: GameFormData = {
+  locationId: '',
   locationName: '',
   locationAddress: '',
   date: '',
   time: '',
   endTime: '',
   fieldType: 'SOCIETY',
-  gameType: 'Society',
+  gameType: 'SOCIETY',
   maxPlayers: 14,
   maxGoalkeepers: 2,
   numberOfTeams: 2,
@@ -94,7 +99,9 @@ export const CreateGameScreen: React.FC = () => {
 
   const { group } = useGroupDetail(groupId || null);
   const { createGame, loading, error } = useCreateGame();
+  const { locations, loading: locationsLoading } = useLocations();
   const { showSuccess, showError } = useToast();
+  const [useCustomLocation, setUseCustomLocation] = useState(false);
 
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<GameFormData>({
@@ -126,8 +133,10 @@ export const CreateGameScreen: React.FC = () => {
 
     switch (step) {
       case 0:
-        if (!formData.locationName.trim()) errors.locationName = 'Nome do local é obrigatório';
-        if (!formData.locationAddress.trim()) errors.locationAddress = 'Endereço é obrigatório';
+        if (!formData.locationName.trim()) {
+          errors.locationName = useCustomLocation ? 'Nome do local é obrigatório' : 'Selecione uma quadra';
+        }
+        if (useCustomLocation && !formData.locationAddress.trim()) errors.locationAddress = 'Endereço é obrigatório';
         if (!formData.date) errors.date = 'Data é obrigatória';
         if (!formData.time) errors.time = 'Horário é obrigatório';
         break;
@@ -201,27 +210,81 @@ export const CreateGameScreen: React.FC = () => {
               </Alert>
             )}
 
+            {/* Seletor de quadras cadastradas */}
             <TextField
-              label="Nome do Local"
-              value={formData.locationName}
-              onChange={(e) => handleInputChange('locationName', e.target.value)}
+              select
+              label="Quadra / Local"
+              value={useCustomLocation ? CUSTOM_LOCATION : formData.locationId}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === CUSTOM_LOCATION) {
+                  setUseCustomLocation(true);
+                  setFormData((prev) => ({ ...prev, locationId: '', locationName: '', locationAddress: '' }));
+                } else {
+                  setUseCustomLocation(false);
+                  const loc = locations.find((l) => l.id === val);
+                  if (loc) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      locationId: loc.id,
+                      locationName: loc.name,
+                      locationAddress: loc.address || `${loc.street || ''}, ${loc.number || ''} - ${loc.district || ''}, ${loc.city || ''}`.replace(/^, | - ,|, $/g, '').trim(),
+                      locationLat: loc.latitude,
+                      locationLng: loc.longitude,
+                    }));
+                  }
+                }
+              }}
               error={!!formErrors.locationName}
-              helperText={formErrors.locationName}
+              helperText={formErrors.locationName || (locationsLoading ? 'Carregando quadras...' : `${locations.length} quadras disponíveis`)}
               fullWidth
               required
-              placeholder="Ex: Quadra do Parque, Ginásio Municipal"
-            />
+            >
+              {locations.map((loc) => (
+                <MenuItem key={loc.id} value={loc.id}>
+                  {loc.name} {loc.city ? `— ${loc.city}` : ''}
+                </MenuItem>
+              ))}
+              <MenuItem value={CUSTOM_LOCATION}>
+                ✏️ Outro local (digitar manualmente)
+              </MenuItem>
+            </TextField>
 
-            <TextField
-              label="Endereço Completo"
-              value={formData.locationAddress}
-              onChange={(e) => handleInputChange('locationAddress', e.target.value)}
-              error={!!formErrors.locationAddress}
-              helperText={formErrors.locationAddress}
-              fullWidth
-              required
-              placeholder="Ex: Rua das Flores, 123 - Centro"
-            />
+            {/* Campos manuais (quando "Outro local" selecionado) */}
+            {useCustomLocation && (
+              <>
+                <TextField
+                  label="Nome do Local"
+                  value={formData.locationName}
+                  onChange={(e) => handleInputChange('locationName', e.target.value)}
+                  error={!!formErrors.locationName}
+                  helperText={formErrors.locationName}
+                  fullWidth
+                  required
+                  placeholder="Ex: Quadra do Parque, Ginásio Municipal"
+                />
+
+                <TextField
+                  label="Endereço Completo"
+                  value={formData.locationAddress}
+                  onChange={(e) => handleInputChange('locationAddress', e.target.value)}
+                  error={!!formErrors.locationAddress}
+                  helperText={formErrors.locationAddress}
+                  fullWidth
+                  required
+                  placeholder="Ex: Rua das Flores, 123 - Centro"
+                />
+              </>
+            )}
+
+            {/* Resumo do local selecionado */}
+            {!useCustomLocation && formData.locationName && (
+              <Alert severity="success" icon={false}>
+                📍 <strong>{formData.locationName}</strong>
+                <br />
+                {formData.locationAddress}
+              </Alert>
+            )}
 
             <TextField
               label="Data"
@@ -267,7 +330,7 @@ export const CreateGameScreen: React.FC = () => {
               select
               label="Tipo de Quadra"
               value={formData.fieldType}
-              onChange={(e) => handleInputChange('fieldType', e.target.value)}
+              onChange={(e) => { handleInputChange('fieldType', e.target.value); handleInputChange('gameType', e.target.value); }}
               fullWidth
             >
               {Object.entries(FIELD_TYPE_LABELS).map(([value, label]) => (
