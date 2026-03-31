@@ -131,7 +131,18 @@ export function RankingsTab() {
           })
         );
 
-        setPlayers(playersData);
+        // Deduplicar por userId (manter a entrada com mais pontos)
+        const uniqueMap = new Map<string, RankingPlayer>();
+        for (const p of playersData) {
+          const existing = uniqueMap.get(p.userId);
+          if (!existing || p.points > existing.points) {
+            uniqueMap.set(p.userId, p);
+          }
+        }
+        const deduplicated = Array.from(uniqueMap.values())
+          .sort((a, b) => b.points - a.points);
+
+        setPlayers(deduplicated);
       } catch (err) {
         logger.error('Erro ao carregar rankings:', err);
       } finally {

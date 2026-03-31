@@ -109,6 +109,7 @@ export function ProfileTab() {
       >
         <Box sx={{ position: 'relative', display: 'inline-block' }}>
           <Avatar
+            src={user?.photoUrl}
             sx={{
               width: 100,
               height: 100,

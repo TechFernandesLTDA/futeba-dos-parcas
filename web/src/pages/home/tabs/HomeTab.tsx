@@ -143,6 +143,7 @@ export function HomeTab() {
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}>
               <Box sx={{ position: 'relative' }}>
                 <Avatar
+                  src={user?.photoUrl}
                   sx={{
                     width: 60,
                     height: 60,
