@@ -30,11 +30,15 @@ import {
   ArrowForward as NextIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '../../services/firebase';
 import { useCreateGame } from '../../hooks/useGames';
 import { useGroupDetail } from '../../hooks/useGroups';
 import { useLocations } from '../../hooks/useLocations';
 import { FieldType, PixKeyType } from '../../types/game';
 import { FIELD_TYPE_LABELS, PIX_KEY_TYPE_LABELS } from '../../types/game';
+import { Field, FieldType as LocationFieldType } from '../../types/location';
+import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -47,6 +51,8 @@ interface GameFormData {
   locationAddress: string;
   locationLat?: number;
   locationLng?: number;
+  fieldId: string;
+  fieldName: string;
   date: string;
   time: string;
   endTime: string;
@@ -74,6 +80,8 @@ const defaultFormData: GameFormData = {
   locationId: '',
   locationName: '',
   locationAddress: '',
+  fieldId: '',
+  fieldName: '',
   date: '',
   time: '',
   endTime: '',
@@ -102,6 +110,8 @@ export const CreateGameScreen: React.FC = () => {
   const { locations, loading: locationsLoading } = useLocations();
   const { showSuccess, showError } = useToast();
   const [useCustomLocation, setUseCustomLocation] = useState(false);
+  const [fields, setFields] = useState<Field[]>([]);
+  const [fieldsLoading, setFieldsLoading] = useState(false);
 
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<GameFormData>({
@@ -110,6 +120,58 @@ export const CreateGameScreen: React.FC = () => {
     groupName: group?.name || undefined,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Carregar quadras quando local é selecionado
+  useEffect(() => {
+    if (!formData.locationId || useCustomLocation) {
+      setFields([]);
+      return;
+    }
+
+    const loadFields = async () => {
+      setFieldsLoading(true);
+      try {
+        // Buscar quadras na subcoleção do local
+        const fieldsRef = collection(db, 'locations', formData.locationId, 'fields');
+        const q = query(fieldsRef, orderBy('name', 'asc'));
+        const snapshot = await getDocs(q);
+        let fieldsData = snapshot.docs
+          .map((d) => ({ ...snakeToCamel<Field>(d.data()), id: d.id }))
+          .filter((f) => f.isActive !== false);
+
+        // Se não encontrou na subcoleção, tentar root collection
+        if (fieldsData.length === 0) {
+          const rootFieldsRef = collection(db, 'fields');
+          const rootQ = query(rootFieldsRef, where('location_id', '==', formData.locationId));
+          const rootSnapshot = await getDocs(rootQ);
+          fieldsData = rootSnapshot.docs
+            .map((d) => ({ ...snakeToCamel<Field>(d.data()), id: d.id }))
+            .filter((f) => f.isActive !== false);
+        }
+
+        setFields(fieldsData);
+
+        // Se só tem 1 quadra, selecionar automaticamente
+        if (fieldsData.length === 1) {
+          const f = fieldsData[0];
+          setFormData((prev) => ({
+            ...prev,
+            fieldId: f.id,
+            fieldName: f.name,
+            fieldType: (f.type as FieldType) || prev.fieldType,
+            gameType: (f.type as string) || prev.gameType,
+            dailyPrice: f.hourlyPrice || prev.dailyPrice,
+          }));
+        }
+      } catch (err) {
+        logger.error('Erro ao carregar quadras:', err);
+      } finally {
+        setFieldsLoading(false);
+      }
+    };
+
+    loadFields();
+  }, [formData.locationId, useCustomLocation]);
 
   useEffect(() => {
     if (group && !formData.groupId) {
@@ -134,9 +196,12 @@ export const CreateGameScreen: React.FC = () => {
     switch (step) {
       case 0:
         if (!formData.locationName.trim()) {
-          errors.locationName = useCustomLocation ? 'Nome do local é obrigatório' : 'Selecione uma quadra';
+          errors.locationName = useCustomLocation ? 'Nome do local é obrigatório' : 'Selecione um local';
         }
         if (useCustomLocation && !formData.locationAddress.trim()) errors.locationAddress = 'Endereço é obrigatório';
+        if (!useCustomLocation && formData.locationId && fields.length > 0 && !formData.fieldId) {
+          errors.fieldId = 'Selecione uma quadra';
+        }
         if (!formData.date) errors.date = 'Data é obrigatória';
         if (!formData.time) errors.time = 'Horário é obrigatório';
         break;
@@ -202,6 +267,8 @@ export const CreateGameScreen: React.FC = () => {
 
       // Campos opcionais (só incluir se tiverem valor)
       if (formData.locationId) gamePayload.locationId = formData.locationId;
+      if (formData.fieldId) gamePayload.fieldId = formData.fieldId;
+      if (formData.fieldName) gamePayload.fieldName = formData.fieldName;
       if (formData.locationLat) gamePayload.locationLat = formData.locationLat;
       if (formData.locationLng) gamePayload.locationLng = formData.locationLng;
       if (formData.groupId) gamePayload.groupId = formData.groupId;
@@ -306,10 +373,55 @@ export const CreateGameScreen: React.FC = () => {
               </>
             )}
 
+            {/* Seletor de quadra (quando local selecionado e tem quadras) */}
+            {!useCustomLocation && formData.locationId && (
+              fieldsLoading ? (
+                <Alert severity="info" icon={false}>
+                  Carregando quadras...
+                </Alert>
+              ) : fields.length > 0 ? (
+                <TextField
+                  select
+                  label="Quadra"
+                  value={formData.fieldId}
+                  onChange={(e) => {
+                    const field = fields.find((f) => f.id === e.target.value);
+                    if (field) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        fieldId: field.id,
+                        fieldName: field.name,
+                        fieldType: (field.type as FieldType) || prev.fieldType,
+                        gameType: (field.type as string) || prev.gameType,
+                        dailyPrice: field.hourlyPrice || prev.dailyPrice,
+                      }));
+                    }
+                  }}
+                  error={!!formErrors.fieldId}
+                  helperText={formErrors.fieldId || `${fields.length} quadra(s) neste local`}
+                  fullWidth
+                  required
+                >
+                  {fields.map((f) => (
+                    <MenuItem key={f.id} value={f.id}>
+                      {f.name} — {FIELD_TYPE_LABELS[f.type as FieldType] || f.type}
+                      {f.hourlyPrice ? ` (R$ ${f.hourlyPrice})` : ''}
+                      {f.isCovered ? ' · Coberta' : ''}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              ) : (
+                <Alert severity="warning" icon={false}>
+                  Nenhuma quadra cadastrada neste local. As informações do local serão usadas.
+                </Alert>
+              )
+            )}
+
             {/* Resumo do local selecionado */}
             {!useCustomLocation && formData.locationName && (
               <Alert severity="success" icon={false}>
                 📍 <strong>{formData.locationName}</strong>
+                {formData.fieldName && <> — {formData.fieldName}</>}
                 <br />
                 {formData.locationAddress}
               </Alert>
