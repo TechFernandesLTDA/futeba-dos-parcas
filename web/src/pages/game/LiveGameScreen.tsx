@@ -54,6 +54,7 @@ export const LiveGameScreen: React.FC = () => {
   const [game, setGame] = useState<Game | null>(null);
   const [score, setScore] = useState<LiveGameScore | null>(null);
   const [events, setEvents] = useState<GameEvent[]>([]);
+  const [confirmedPlayers, setConfirmedPlayers] = useState<{ id: string; name: string; photo?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -99,10 +100,30 @@ export const LiveGameScreen: React.FC = () => {
       setEvents(eventsData.sort((a, b) => b.minute - a.minute));
     });
 
+    // Carregar jogadores confirmados
+    const confirmationsQuery = query(
+      collection(db, 'confirmations'),
+      where('game_id', '==', gameId)
+    );
+    const unsubscribeConfirmations = onSnapshot(confirmationsQuery, (snapshot) => {
+      const players = snapshot.docs
+        .filter((d) => d.data().status === 'CONFIRMED')
+        .map((d) => {
+          const raw = d.data();
+          return {
+            id: raw.user_id,
+            name: raw.user_name || 'Jogador',
+            photo: raw.user_photo || undefined,
+          };
+        });
+      setConfirmedPlayers(players);
+    });
+
     return () => {
       unsubscribeGame();
       unsubscribeScore();
       unsubscribeEvents();
+      unsubscribeConfirmations();
     };
   }, [gameId]);
 
@@ -134,12 +155,12 @@ export const LiveGameScreen: React.FC = () => {
     if (!selectedPlayer || !gameId) return;
 
     try {
+      const player = confirmedPlayers.find((p) => p.id === selectedPlayer);
       const eventData = {
         game_id: gameId,
         event_type: selectedEventType,
         player_id: selectedPlayer,
-        player_name: 'Jogador',
-        team_id: 'team1',
+        player_name: player?.name || 'Jogador',
         minute: Math.floor(elapsedTime / 60),
         created_by: currentUser?.uid,
         created_at: Timestamp.now(),
@@ -343,17 +364,28 @@ export const LiveGameScreen: React.FC = () => {
               onChange={(e) => setSelectedEventType(e.target.value as GameEventType)}
               fullWidth
             >
-              {['GOAL', 'ASSIST', 'YELLOW_CARD', 'RED_CARD', 'SAVE'].map((type) => (
-                <MenuItem key={type} value={type}>{type}</MenuItem>
+              {[
+                { value: 'GOAL', label: 'Gol ⚽' },
+                { value: 'ASSIST', label: 'Assistência 👟' },
+                { value: 'SAVE', label: 'Defesa 🧤' },
+                { value: 'YELLOW_CARD', label: 'Cartão Amarelo 🟨' },
+                { value: 'RED_CARD', label: 'Cartão Vermelho 🟥' },
+              ].map((type) => (
+                <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>
               ))}
             </TextField>
             <TextField
+              select
               label="Jogador"
               value={selectedPlayer}
               onChange={(e) => setSelectedPlayer(e.target.value)}
               fullWidth
-              placeholder="ID do jogador"
-            />
+              required
+            >
+              {confirmedPlayers.map((p) => (
+                <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
+              ))}
+            </TextField>
           </Box>
         </DialogContent>
         <DialogActions>

@@ -30,7 +30,7 @@ import {
   ArrowForward as NextIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useCreateGame } from '../../hooks/useGames';
 import { useGroupDetail } from '../../hooks/useGroups';
@@ -241,6 +241,41 @@ export const CreateGameScreen: React.FC = () => {
     if (!validateStep(activeStep)) return;
 
     try {
+      // Criar dateTime Timestamp a partir de date + time
+      const [year, month, day] = formData.date.split('-').map(Number);
+      const [hours, minutes] = formData.time.split(':').map(Number);
+      const dateTime = Timestamp.fromDate(new Date(year, month - 1, day, hours, minutes));
+
+      // Verificar sobreposição de horários na mesma quadra
+      if (formData.fieldId && formData.date) {
+        const gamesRef = collection(db, 'games');
+        const overlapQuery = query(
+          gamesRef,
+          where('field_id', '==', formData.fieldId),
+          where('date', '==', formData.date),
+        );
+        const existingGames = await getDocs(overlapQuery);
+        const conflicting = existingGames.docs.find((d) => {
+          const g = d.data();
+          if (g.status === 'CANCELLED') return false;
+          const gTime = g.time || '';
+          const gEndTime = g.end_time || '';
+          const newTime = formData.time;
+          const newEndTime = formData.endTime || '';
+          // Sobreposição: jogo existente começa antes do novo terminar E termina depois do novo começar
+          if (gEndTime && newEndTime) {
+            return gTime < newEndTime && gEndTime > newTime;
+          }
+          // Se não tem end_time, considerar 2h de duração padrão
+          return gTime === newTime;
+        });
+        if (conflicting) {
+          const g = conflicting.data();
+          showError(`Já existe um jogo nesta quadra às ${g.time}. Escolha outro horário.`);
+          return;
+        }
+      }
+
       // Montar dados limpos (sem campos undefined)
       const gamePayload: Record<string, any> = {
         locationName: formData.locationName,
@@ -248,6 +283,7 @@ export const CreateGameScreen: React.FC = () => {
         date: formData.date,
         time: formData.time,
         endTime: formData.endTime || null,
+        dateTime,
         fieldType: formData.fieldType,
         gameType: formData.fieldType,
         maxPlayers: formData.maxPlayers,

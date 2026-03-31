@@ -33,6 +33,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { getLevelForXp } from '../../types/gamification';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 
@@ -63,30 +64,39 @@ export const TeamFormationScreen: React.FC = () => {
 
     const fetchGame = async () => {
       try {
-        const gameDoc = await getDoc(doc(db, 'games', gameId));
-        if (gameDoc.exists()) {
-          const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
-          const confirmedPlayers = data.confirmedPlayers || [];
+        // Buscar confirmações da coleção raiz (igual ao Android)
+        const confirmationsRef = collection(db, 'confirmations');
+        const q = query(confirmationsRef, where('game_id', '==', gameId));
+        const snapshot = await getDocs(q);
 
-          const players: TeamPlayer[] = await Promise.all(
-            confirmedPlayers.map(async (uid: string) => {
-              const userDoc = await getDoc(doc(db, 'users', uid));
-              if (userDoc.exists()) {
-                const userData = snakeToCamel(userDoc.data()) as Record<string, any>;
-                return {
-                  id: uid,
-                  name: userData.name || 'Jogador',
-                  photoUrl: userData.photoUrl,
-                  level: getLevelForXp(userData.experiencePoints ?? 0),
-                };
-              }
-              return { id: uid, name: 'Jogador', level: 1 };
-            })
-          );
+        const confirmedDocs = snapshot.docs
+          .filter((d) => d.data().status === 'CONFIRMED')
+          .map((d) => d.data());
 
-          const half = Math.ceil(players.length / 2);
-          setTeamA(players.slice(0, half));
-          setTeamB(players.slice(half));
+        const players: TeamPlayer[] = await Promise.all(
+          confirmedDocs.map(async (conf: any) => {
+            const uid = conf.user_id;
+            const userDoc = await getDoc(doc(db, 'users', uid));
+            if (userDoc.exists()) {
+              const userData = snakeToCamel(userDoc.data()) as Record<string, any>;
+              return {
+                id: uid,
+                name: userData.name || conf.user_name || 'Jogador',
+                photoUrl: userData.photoUrl || conf.user_photo,
+                level: getLevelForXp(userData.experiencePoints ?? 0),
+                position: conf.position || 'FIELD',
+              };
+            }
+            return { id: uid, name: conf.user_name || 'Jogador', level: 1, position: conf.position || 'FIELD' };
+          })
+        );
+
+        if (players.length > 0) {
+          // Sorteio automático: embaralhar e dividir em 2 times
+          const shuffled = [...players].sort(() => Math.random() - 0.5);
+          const half = Math.ceil(shuffled.length / 2);
+          setTeamA(shuffled.slice(0, half));
+          setTeamB(shuffled.slice(half));
         }
       } catch (error) {
         logger.error('Error fetching game:', error);
