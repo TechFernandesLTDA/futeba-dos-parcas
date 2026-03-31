@@ -183,7 +183,7 @@ export function RankingsTab() {
         <Box sx={{ display: 'flex', alignItems: 'center', px: 2, pt: 1.5, pb: 0.5 }}>
           <TrophyIcon sx={{ color: 'primary.main', mr: 1 }} />
           <Typography variant="h6" fontWeight={700} sx={{ flex: 1 }}>
-            Rankings
+            Liga
           </Typography>
           <Tooltip title="Atualizar">
             <IconButton

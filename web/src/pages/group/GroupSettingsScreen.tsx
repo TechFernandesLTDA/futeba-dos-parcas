@@ -78,8 +78,12 @@ export const GroupSettingsScreen: React.FC = () => {
       // Remover do documento de membros do grupo
       await deleteDoc(doc(db, 'groups', groupId, 'members', uid));
 
-      // Remover da subcoleção de grupos do usuário
-      await deleteDoc(doc(db, 'users', uid, 'groups', groupId));
+      // Remover da subcoleção de grupos do usuário (denormalização, não-crítico)
+      try {
+        await deleteDoc(doc(db, 'users', uid, 'groups', groupId));
+      } catch (subErr) {
+        logger.warn('Falha ao remover subcoleção do usuário (não-crítico):', subErr);
+      }
 
       logger.info('Usuário saiu do grupo', { groupId, uid });
       showSuccess('Você saiu do grupo.');

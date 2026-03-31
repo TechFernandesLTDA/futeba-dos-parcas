@@ -108,11 +108,15 @@ export const GroupEditScreen: React.FC = () => {
         updated_at: Timestamp.now(),
       });
 
-      // Atualizar subcoleção users/{uid}/groups com o nome atualizado
-      const userGroupRef = doc(db, 'users', uid, 'groups', groupId);
-      await updateDoc(userGroupRef, {
-        group_name: formData.name.trim(),
-      });
+      // Atualizar subcoleção users/{uid}/groups (denormalização, não-crítico)
+      try {
+        const userGroupRef = doc(db, 'users', uid, 'groups', groupId);
+        await updateDoc(userGroupRef, {
+          group_name: formData.name.trim(),
+        });
+      } catch (subErr) {
+        logger.warn('Falha ao atualizar subcoleção do usuário (não-crítico):', subErr);
+      }
 
       logger.info('Grupo atualizado com sucesso', { groupId });
       showSuccess('Grupo atualizado com sucesso!');
