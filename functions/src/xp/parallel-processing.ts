@@ -672,10 +672,11 @@ isParallelTransactionProcessed(
 export const processXpBatch =
   onCall<BatchXpRequest>(
     {
-      // SEGURANÇA: Exigir autenticação
-      // TODO: Habilitar App Check após testes
-      // enforceAppCheck: true,
-      consumeAppCheckToken: false,
+      // SEGURANÇA: Exigir autenticação e App Check
+      // Rate limiting de game_events é aplicado na camada de Cloud Functions
+      // via middleware rate-limiter (não nas Security Rules) — padrão do projeto
+      enforceAppCheck: true,
+      consumeAppCheckToken: true,
     },
     async (request) => {
       // ======================================

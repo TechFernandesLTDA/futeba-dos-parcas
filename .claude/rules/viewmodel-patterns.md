@@ -5,8 +5,7 @@ Padrões para ViewModels no projeto Futeba dos Parças.
 ## Estrutura Básica
 
 ```kotlin
-@HiltViewModel
-class FeatureViewModel @Inject constructor(
+class FeatureViewModel(
     private val repository: FeatureRepository
 ) : ViewModel() {
 

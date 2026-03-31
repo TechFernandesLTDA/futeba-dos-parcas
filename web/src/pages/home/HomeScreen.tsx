@@ -5,7 +5,7 @@ import {
   Home as HomeIcon,
   SportsSoccer,
   Groups,
-  Leaderboard,
+  EmojiEvents,
   Person,
 } from '@mui/icons-material';
 
@@ -16,7 +16,7 @@ import { RankingsTab } from './tabs/RankingsTab';
 import { ProfileTab } from './tabs/ProfileTab';
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
 
-const TAB_TITLES = ['Início', 'Jogos', 'Grupos', 'Rankings', 'Perfil'];
+const TAB_TITLES = ['Início', 'Jogos', 'Grupos', 'Liga', 'Perfil'];
 
 export function HomeScreen() {
   const [tab, setTab] = useState(0);
@@ -37,7 +37,7 @@ export function HomeScreen() {
     { icon: <HomeIcon />, label: 'Início' },
     { icon: <SportsSoccer />, label: 'Jogos' },
     { icon: <Groups />, label: 'Grupos' },
-    { icon: <Leaderboard />, label: 'Rankings' },
+    { icon: <EmojiEvents />, label: 'Liga' },
     { icon: <Person />, label: 'Perfil' },
   ];
 

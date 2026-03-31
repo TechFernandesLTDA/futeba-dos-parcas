@@ -660,6 +660,14 @@
         { "fieldPath": "season_id", "order": "ASCENDING" },
         { "fieldPath": "user_id", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "invites",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "code", "order": "ASCENDING" },
+        { "fieldPath": "used", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

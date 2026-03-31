@@ -1,7 +1,7 @@
 package com.futebadosparcas.ui.notifications
 
-import com.futebadosparcas.data.model.AppNotification
-import com.futebadosparcas.data.model.NotificationType
+import com.futebadosparcas.domain.model.AppNotification
+import com.futebadosparcas.domain.model.NotificationType
 import com.futebadosparcas.domain.repository.GameSummonRepository
 import com.futebadosparcas.domain.repository.InviteRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
