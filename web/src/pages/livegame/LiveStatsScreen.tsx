@@ -18,20 +18,23 @@ import {
   ListItemText,
   Divider,
   Chip,
+  Skeleton,
   useTheme,
   alpha,
+  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   SportsSoccer as SoccerIcon,
   TrendingUp as TrendingIcon,
+  EmojiEvents as TrophyIcon,
   Person as PersonIcon,
   Star as StarIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { LoadingState } from '../../components/common/GameCard';
+import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -60,7 +63,7 @@ export const LiveStatsScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  useAuth();
+  const { user } = useAuth();
 
   const [tabValue, setTabValue] = useState(0);
   const [stats, setStats] = useState<LiveStats | null>(null);

@@ -38,7 +38,7 @@ export const LocationsMapScreen: React.FC = () => {
   useDocumentTitle('Mapa de Locais');
   const navigate = useNavigate();
   const theme = useTheme();
-  useAuth();
+  const { user } = useAuth();
 
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);

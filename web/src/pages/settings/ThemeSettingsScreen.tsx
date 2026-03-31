@@ -14,8 +14,11 @@ import {
   ListItemText,
   Divider,
   Switch,
+  Button,
   useTheme,
+  alpha,
   Chip,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -24,7 +27,12 @@ import {
   Notifications as NotificationsIcon,
   Language as LanguageIcon,
   Storage as StorageIcon,
+  Security as SecurityIcon,
+  BugReport as BugIcon,
   Refresh as RefreshIcon,
+  Download as DownloadIcon,
+  Upload as UploadIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useThemeContext } from '../../contexts/ThemeContext';
@@ -33,7 +41,7 @@ export const ThemeSettingsScreen: React.FC = () => {
   useDocumentTitle('Tema');
   const navigate = useNavigate();
   const theme = useTheme();
-  useAuth();
+  const { user } = useAuth();
   const { mode, toggleTheme } = useThemeContext();
 
   const [notifications, setNotifications] = useState(true);

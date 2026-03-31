@@ -29,8 +29,8 @@ android {
         applicationId = "com.futebadosparcas"
         minSdk = 24
         targetSdk = 35
-        versionCode = 40
-        versionName = "1.19.0"
+        versionCode = 42
+        versionName = "1.21.0"
 
         val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
@@ -214,9 +214,9 @@ dependencies {
     implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
 
     // Image Loading - Coil 3 Kotlin Multiplatform
-    implementation("io.coil-kt.coil3:coil:3.0.4")
-    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
+    implementation("io.coil-kt.coil3:coil:3.3.0")
+    implementation("io.coil-kt.coil3:coil-compose:3.3.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
 
     // Shimmer Effect
     implementation("com.facebook.shimmer:shimmer:0.5.0")
@@ -261,7 +261,7 @@ dependencies {
     androidTestImplementation("io.mockk:mockk-android:1.14.9")
 
     // Turbine for Flow testing
-    testImplementation("app.cash.turbine:turbine:1.0.0")
+    testImplementation("app.cash.turbine:turbine:1.2.1")
 
     // Coroutines Test
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
@@ -303,7 +303,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.11.1")
 
     // Gson for Object Conversion
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.google.code.gson:gson:2.13.2")
 
     // Lottie Animations
     implementation("com.airbnb.android:lottie:6.0.0")

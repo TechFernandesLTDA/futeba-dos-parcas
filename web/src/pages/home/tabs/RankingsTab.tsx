@@ -22,7 +22,9 @@ import {
 import {
   EmojiEvents as TrophyIcon,
   MilitaryTech as MilitaryTechIcon,
+  SportsSoccer as SoccerIcon,
   Star as StarIcon,
+  TrendingUp as TrendingIcon,
   Refresh as RefreshIcon,
   OpenInNew as OpenIcon,
 } from '@mui/icons-material';

@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   IconButton,
+  Avatar,
   Chip,
   Divider,
   List,
@@ -16,6 +17,7 @@ import {
   Skeleton,
   useTheme,
   alpha,
+  Button,
   Grid,
   Paper,
 } from '@mui/material';
@@ -26,12 +28,13 @@ import {
   EmojiEvents as TrophyIcon,
   TrendingUp as TrendingIcon,
   MilitaryTech as MilitaryTechIcon,
+  CalendarMonth as CalendarIcon,
   Person as PersonIcon,
   Settings as SettingsIcon,
   BarChart as StatsIcon,
   WorkspacePremium as BadgeIcon,
 } from '@mui/icons-material';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';

@@ -7,8 +7,10 @@ import {
   Card,
   CardContent,
   IconButton,
+  Avatar,
   Tabs,
   Tab,
+  Skeleton,
   useTheme,
   alpha,
   Grid,
@@ -291,7 +293,7 @@ export const EvolutionScreen: React.FC = () => {
                 </Box>
               ) : (
                 <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 150 }}>
-                  {evolutionData.slice(0, 12).reverse().map((data) => (
+                  {evolutionData.slice(0, 12).reverse().map((data, index) => (
                     <Box
                       key={data.month}
                       sx={{

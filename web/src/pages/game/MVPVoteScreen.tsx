@@ -8,6 +8,7 @@ import {
   CardContent,
   Button,
   IconButton,
+  Avatar,
   List,
   ListItem,
   ListItemAvatar,
@@ -19,6 +20,7 @@ import {
   FormLabel,
   Alert,
   Skeleton,
+  Chip,
   useTheme,
   alpha,
   CircularProgress,
@@ -27,8 +29,9 @@ import {
   ArrowBack as BackIcon,
   HowToVote as VoteIcon,
   EmojiEvents as TrophyIcon,
+  SportsSoccer as SoccerIcon,
 } from '@mui/icons-material';
-import { doc, collection, onSnapshot, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, collection, onSnapshot, updateDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Game, GameConfirmation } from '../../types/game';
@@ -52,7 +55,7 @@ export const MVPVoteScreen: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [mvpVote, setMvpVote] = useState<string>('');
   const [bestGkVote, setBestGkVote] = useState<string>('');
-  const [worstPlayerVote] = useState<string>('');
+  const [worstPlayerVote, setWorstPlayerVote] = useState<string>('');
   const [hasVoted, setHasVoted] = useState(false);
 
   useEffect(() => {

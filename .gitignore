@@ -33,12 +33,6 @@ proguard/
 
 # Log Files
 *.log
-hs_err_*.log
-
-# Backup files
-*.bak
-*.backup
-firestore.rules.backup.*
 
 # Android Studio Navigation editor temp files
 .navigation/
@@ -110,13 +104,3 @@ nul
 
 # Web app build output
 web/dist/
-
-# Firebase hosting cache
-.firebase/hosting.*.cache
-
-# Claude temp files
-scripts/tmpclaude-*
-**/tmpclaude-*
-
-# Error sample/temp text files
-errors_sample.txt

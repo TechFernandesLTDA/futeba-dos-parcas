@@ -4,11 +4,16 @@ import {
   Box,
   Container,
   Typography,
+  Card,
+  CardContent,
   IconButton,
   Tabs,
   Tab,
+  Chip,
+  Skeleton,
   Fab,
   useTheme,
+  alpha,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -16,7 +21,7 @@ import {
   SportsSoccer as SoccerIcon,
   FilterList as FilterIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { GameCard, LoadingState } from '../../components/common/GameCard';
@@ -28,7 +33,7 @@ export const GamesScreen: React.FC = () => {
   useDocumentTitle('Jogos');
   const navigate = useNavigate();
   const theme = useTheme();
-  useAuth();
+  const { user } = useAuth();
 
   const [tabValue, setTabValue] = useState(0);
   const [games, setGames] = useState<Game[]>([]);

@@ -5,12 +5,15 @@ import {
   Container,
   Typography,
   Card,
+  CardContent,
   IconButton,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
   ListItemSecondaryAction,
+  Avatar,
+  Chip,
   Divider,
   Button,
   useTheme,
@@ -19,9 +22,10 @@ import {
 import {
   ArrowBack as BackIcon,
   Block as BlockIcon,
+  Person as PersonIcon,
   RemoveCircle as UnblockIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../../components/common/GameCard';
@@ -44,7 +48,7 @@ export const BlockedPlayersScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  useAuth();
+  const { user } = useAuth();
 
   const [blockedPlayers, setBlockedPlayers] = useState<BlockedPlayer[]>([]);
   const [loading, setLoading] = useState(true);

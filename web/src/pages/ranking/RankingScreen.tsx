@@ -7,7 +7,12 @@ import {
   Typography,
   Card,
   CardContent,
+  Avatar,
   List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemSecondaryAction,
   IconButton,
   Tabs,
   Tab,
@@ -19,8 +24,11 @@ import {
 import {
   ArrowBack as BackIcon,
   EmojiEvents as TrophyIcon,
+  TrendingUp as TrendingIcon,
+  SportsSoccer as SoccerIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, limit, onSnapshot, getDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, where, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
@@ -60,7 +68,7 @@ export const RankingScreen: React.FC = () => {
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const rankingData = await Promise.all(
-        snapshot.docs.map(async (docSnapshot) => {
+        snapshot.docs.map(async (docSnapshot, index) => {
           const data = snakeToCamel(docSnapshot.data()) as Record<string, any>;
           const userId = data.userId || docSnapshot.id;
 
@@ -71,7 +79,7 @@ export const RankingScreen: React.FC = () => {
               const d = snakeToCamel(userDoc.data()) as Record<string, any>;
               userData = { name: d.name || 'Jogador', photoUrl: d.photoUrl };
             }
-          } catch (_e) { /* usuário não encontrado */ }
+          } catch (e) {}
 
           return {
             id: docSnapshot.id,

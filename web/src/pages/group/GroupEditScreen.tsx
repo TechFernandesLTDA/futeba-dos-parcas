@@ -35,7 +35,7 @@ export const GroupEditScreen: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { firebaseUser, user } = useAuth();
+  const { currentUser, firebaseUser, user } = useAuth();
 
   const { group, members, loading, error } = useGroupDetail(groupId || null);
   const { showSuccess, showError } = useToast();

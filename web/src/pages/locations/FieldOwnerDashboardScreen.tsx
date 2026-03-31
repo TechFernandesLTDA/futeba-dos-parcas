@@ -19,7 +19,10 @@ import {
   ListItemSecondaryAction,
   ListItemAvatar,
   Button,
+  Skeleton,
   useTheme,
+  alpha,
+  LinearProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -27,11 +30,12 @@ import {
   LocationOn as LocationIcon,
   AttachMoney as MoneyIcon,
   Star as StarIcon,
+  TrendingUp as TrendingIcon,
   CalendarMonth as CalendarIcon,
   People as PeopleIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';

@@ -9,16 +9,19 @@ import {
   IconButton,
   Grid,
   Chip,
+  Skeleton,
   useTheme,
   alpha,
+  Avatar,
   Tooltip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
+  EmojiEvents as TrophyIcon,
   Lock as LockIcon,
   WorkspacePremium as BadgeIcon,
 } from '@mui/icons-material';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -28,6 +31,11 @@ import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const logger = createLogger('BadgesScreen');
+
+interface UserBadge {
+  badgeId: string;
+  unlockedAt: Date;
+}
 
 const RARITY_COLORS: Record<string, string> = {
   COMMON: '#9E9E9E',

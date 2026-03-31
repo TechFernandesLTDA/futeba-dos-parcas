@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -11,11 +12,14 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Switch,
   useTheme,
+  alpha,
   Avatar,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
+  Info as InfoIcon,
   Security as SecurityIcon,
   Gavel as TermsIcon,
   PrivacyTip as PrivacyIcon,

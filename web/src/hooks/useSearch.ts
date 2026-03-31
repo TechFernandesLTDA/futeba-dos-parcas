@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
 export interface SearchResult {

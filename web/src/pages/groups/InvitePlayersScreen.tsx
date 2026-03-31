@@ -5,8 +5,11 @@ import {
   Container,
   Typography,
   Card,
+  CardContent,
   IconButton,
   TextField,
+  Button,
+  Avatar,
   List,
   ListItem,
   ListItemAvatar,
@@ -14,13 +17,19 @@ import {
   ListItemSecondaryAction,
   Chip,
   Divider,
+  Skeleton,
   useTheme,
+  alpha,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   Search as SearchIcon,
   PersonAdd as PersonAddIcon,
+  Person as PersonIcon,
+  Close as CloseIcon,
+  Check as CheckIcon,
 } from '@mui/icons-material';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -141,6 +150,8 @@ export const InvitePlayersScreen: React.FC = () => {
       setInviting(null);
     }
   };
+
+  const existingMemberIds = new Set(members.map((m) => m.id));
 
   return (
     <Box sx={{ pb: 4 }}>

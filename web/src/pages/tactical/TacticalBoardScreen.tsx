@@ -5,13 +5,16 @@ import {
   Container,
   Typography,
   IconButton,
+  Button,
   Avatar,
   Grid,
   Paper,
+  Slider,
   ToggleButton,
   ToggleButtonGroup,
   useTheme,
   alpha,
+  Chip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -19,7 +22,7 @@ import {
   Refresh as RefreshIcon,
   SportsSoccer as SoccerIcon,
 } from '@mui/icons-material';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingState } from '../../components/common/GameCard';
@@ -49,7 +52,7 @@ export const TacticalBoardScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  useAuth();
+  const { user } = useAuth();
 
   const [players, setPlayers] = useState<TacticalPlayer[]>([]);
   const [loading, setLoading] = useState(true);

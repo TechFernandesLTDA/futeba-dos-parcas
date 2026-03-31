@@ -22,6 +22,7 @@ import {
   LocalFireDepartment as FireIcon,
   Lock as LockIcon,
   CheckCircle as CheckIcon,
+  SportsSoccer as SoccerIcon,
   EmojiEvents as TrophyIcon,
   Star as StarIcon,
   ExpandMore as ExpandMoreIcon,

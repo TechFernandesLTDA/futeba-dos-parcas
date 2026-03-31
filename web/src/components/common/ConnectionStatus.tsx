@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { WifiOff as OfflineIcon } from '@mui/icons-material';
 
 export const useOnlineStatus = () => {

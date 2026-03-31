@@ -30,7 +30,7 @@ import {
   Close,
   FilterListOff,
 } from '@mui/icons-material';
-import { STATUS_CONFIG, FIELD_TYPE_LABELS, GameStatus } from '../../../types/game';
+import { Game, STATUS_CONFIG, FIELD_TYPE_LABELS, GameStatus, FieldType } from '../../../types/game';
 import { useGames } from '../../../hooks/useGames';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatGameDate } from '../../../utils/dateFormatters';

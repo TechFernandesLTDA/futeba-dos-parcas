@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
   Typography,
+  Card,
+  CardContent,
   IconButton,
   TextField,
   InputAdornment,
   Avatar,
   Chip,
+  Skeleton,
   useTheme,
   alpha,
   List,
@@ -31,7 +34,7 @@ import { collection, query, where, orderBy, limit, getDocs } from 'firebase/fire
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
-import { LoadingState } from '../../components/common/GameCard';
+import { LoadingState, PlayerAvatar } from '../../components/common/GameCard';
 import { formatGameDate } from '../../utils/dateFormatters';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -50,7 +53,7 @@ export const GlobalSearchScreen: React.FC = () => {
   useDocumentTitle('Busca');
   const navigate = useNavigate();
   const theme = useTheme();
-  useAuth();
+  const { user } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);

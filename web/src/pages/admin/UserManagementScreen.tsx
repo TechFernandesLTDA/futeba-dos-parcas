@@ -5,7 +5,9 @@ import {
   Container,
   Typography,
   Card,
+  CardContent,
   IconButton,
+  Avatar,
   List,
   ListItem,
   ListItemAvatar,
@@ -14,6 +16,7 @@ import {
   Divider,
   Button,
   Chip,
+  Skeleton,
   useTheme,
   alpha,
   Dialog,
@@ -21,14 +24,20 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  CircularProgress,
   Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
+  Person as PersonIcon,
+  Block as BlockIcon,
+  Delete as DeleteIcon,
   AdminPanelSettings as AdminIcon,
   Search as SearchIcon,
+  Check as CheckIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, doc, getDoc, updateDoc, deleteDoc, where } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -54,7 +63,7 @@ export const UserManagementScreen: React.FC = () => {
   useDocumentTitle('Gerenciar Usuários');
   const navigate = useNavigate();
   const theme = useTheme();
-  useAuth();
+  const { user: currentUser } = useAuth();
 
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
