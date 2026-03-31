@@ -34,7 +34,7 @@ import {
   Add as AddIcon,
   Timer as TimerIcon,
 } from '@mui/icons-material';
-import { doc, collection, onSnapshot, updateDoc, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Game, GameEvent, LiveGameScore, GameEventType } from '../../types/game';
@@ -68,7 +68,7 @@ export const LiveGameScreen: React.FC = () => {
 
     const gameRef = doc(db, 'games', gameId);
     const scoreRef = doc(db, 'live_scores', gameId);
-    const eventsRef = collection(db, 'games', gameId, 'events');
+    const eventsRef = query(collection(db, 'game_events'), where('game_id', '==', gameId));
 
     const unsubscribeGame = onSnapshot(gameRef, (doc) => {
       if (doc.exists()) {
@@ -145,7 +145,7 @@ export const LiveGameScreen: React.FC = () => {
         created_at: Timestamp.now(),
       };
 
-      await addDoc(collection(db, 'games', gameId, 'events'), eventData);
+      await addDoc(collection(db, 'game_events'), eventData);
       setAddEventDialog(false);
       setSelectedPlayer('');
     } catch (err) {

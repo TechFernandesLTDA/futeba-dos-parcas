@@ -31,7 +31,7 @@ import {
   EmojiEvents as TrophyIcon,
   SportsSoccer as SoccerIcon,
 } from '@mui/icons-material';
-import { doc, collection, onSnapshot, updateDoc, getDoc, Timestamp } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, setDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Game, GameConfirmation } from '../../types/game';
@@ -62,7 +62,7 @@ export const MVPVoteScreen: React.FC = () => {
     if (!gameId) return;
 
     const gameRef = doc(db, 'games', gameId);
-    const confirmationsRef = collection(db, 'games', gameId, 'confirmations');
+    const confirmationsRef = collection(db, 'confirmations');
 
     const unsubscribeGame = onSnapshot(gameRef, (doc) => {
       if (doc.exists()) {
@@ -77,7 +77,7 @@ export const MVPVoteScreen: React.FC = () => {
       setLoading(false);
     });
 
-    const unsubscribeConfirmations = onSnapshot(confirmationsRef, (snapshot) => {
+    const unsubscribeConfirmations = onSnapshot(query(confirmationsRef, where('game_id', '==', gameId)), (snapshot) => {
       const confirmationsData = snapshot.docs
         .filter((doc) => doc.data().status === 'CONFIRMED')
         .map((doc) => {
@@ -106,12 +106,14 @@ export const MVPVoteScreen: React.FC = () => {
     try {
       const voteRef = doc(collection(db, 'games', gameId, 'votes'), currentUser.uid);
 
-      await updateDoc(voteRef, {
+      await setDoc(voteRef, {
+        user_id: currentUser.uid,
+        game_id: gameId,
         mvp_id: mvpVote,
         best_gk_id: bestGkVote || null,
         worst_player_id: worstPlayerVote || null,
         voted_at: Timestamp.now(),
-      });
+      }, { merge: true });
 
       setHasVoted(true);
 
