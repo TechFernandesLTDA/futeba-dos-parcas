@@ -12,7 +12,7 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "futebadosparcas",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "futebadosparcas.firebasestorage.app",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "490094091078",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:490094091078:web:abcd1234efgh5678",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:490094091078:web:2a2bb9d9048da03cb5a347",
 };
 
 export const app = initializeApp(firebaseConfig);
@@ -25,16 +25,21 @@ export const functions = getFunctions(app);
 // App Check — proteção contra abuso (apenas no browser, seguro para SSR)
 export let appCheck: ReturnType<typeof initializeAppCheck> | null = null;
 if (typeof window !== 'undefined') {
-  // Em desenvolvimento, habilita token de debug para testes locais
-  if (import.meta.env.DEV) {
-    (self as unknown as Record<string, unknown>).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  const recaptchaKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+  if (recaptchaKey) {
+    try {
+      // Em desenvolvimento, habilita token de debug para testes locais
+      if (import.meta.env.DEV) {
+        (self as unknown as Record<string, unknown>).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+      }
+      appCheck = initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(recaptchaKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+    } catch (err) {
+      console.warn('App Check initialization failed:', err);
+    }
   }
-  appCheck = initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(
-      import.meta.env.VITE_RECAPTCHA_SITE_KEY || ''
-    ),
-    isTokenAutoRefreshEnabled: true,
-  });
 }
 
 // Messaging (optional, only in supported browsers)
