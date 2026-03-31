@@ -30,12 +30,11 @@ import {
   Person as PersonIcon,
   Notifications as NotificationsIcon,
   Palette as PaletteIcon,
-  Security as SecurityIcon,
   Info as InfoIcon,
   Logout as LogoutIcon,
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { db, auth } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -94,13 +93,13 @@ export const SettingsScreen: React.FC = () => {
     setSaving(true);
     try {
       const settingsRef = doc(db, 'users', user.id, 'settings');
-      await updateDoc(settingsRef, {
+      await setDoc(settingsRef, {
         notifications: settings.notifications,
         email_notifications: settings.emailNotifications,
         game_reminders: settings.gameReminders,
         streak_alerts: settings.streakAlerts,
         updated_at: serverTimestamp(),
-      });
+      }, { merge: true });
       showSuccess('Configurações salvas com sucesso!');
     } catch (error) {
       logger.error('Error saving settings:', error);
@@ -211,18 +210,11 @@ export const SettingsScreen: React.FC = () => {
                   <ListItemText primary="Gamificação" secondary="XP, Níveis, Badges" />
                 </ListItem>
                 <Divider />
-                <ListItem button onClick={() => navigate('/settings/security')}>
-                  <ListItemIcon>
-                    <SecurityIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Segurança" secondary="Senha, autenticação" />
-                </ListItem>
-                <Divider />
                 <ListItem button onClick={() => navigate('/about')}>
                   <ListItemIcon>
                     <InfoIcon />
                   </ListItemIcon>
-                  <ListItemText primary="Sobre o App" secondary="Versão 1.10.7" />
+                  <ListItemText primary="Sobre o App" secondary="Versão 1.19.0" />
                 </ListItem>
               </List>
             </Card>
