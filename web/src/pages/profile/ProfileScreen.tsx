@@ -39,7 +39,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { PlayerAvatar } from '../../components/common/GameCard';
-import { DIVISION_CONFIG } from '../../types/gamification';
+import { DIVISION_CONFIG, getLevelForXp } from '../../types/gamification';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 
@@ -91,8 +91,8 @@ export const ProfileScreen: React.FC = () => {
             name: data.name || 'Jogador',
             email: data.email || '',
             photoUrl: data.photoUrl,
-            level: data.level || 1,
-            xp: data.xp || 0,
+            level: getLevelForXp(data.experiencePoints ?? data.xp ?? 0),
+            xp: data.experiencePoints ?? data.xp ?? 0,
             division: data.division || 'BRONZE',
             gamesPlayed: data.gamesPlayed || 0,
             wins: data.wins || 0,

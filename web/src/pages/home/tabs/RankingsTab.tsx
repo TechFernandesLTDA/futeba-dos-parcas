@@ -33,7 +33,7 @@ import { db } from '../../../services/firebase';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { useAuth } from '../../../contexts/AuthContext';
 import { PlayerAvatar } from '../../../components/common/GameCard';
-import { DIVISION_CONFIG, LeagueDivision } from '../../../types/gamification';
+import { DIVISION_CONFIG, LeagueDivision, getLevelForXp } from '../../../types/gamification';
 import { getLevelBadgeImage } from '../../../utils/levelBadge';
 import {
   XP_PARTICIPATION, XP_GOAL, XP_ASSIST, XP_SAVE,
@@ -101,11 +101,12 @@ export function RankingsTab() {
               const userDoc = await getDoc(doc(db, 'users', userId));
               if (userDoc.exists()) {
                 const d = userDoc.data();
+                const xp = d.experience_points ?? d.experiencePoints ?? 0;
                 userData = {
                   name: d.name || 'Jogador',
                   photoUrl: d.photo_url || d.photoUrl || null,
-                  level: d.level || 1,
-                  xp: d.experience_points || d.experiencePoints || 0,
+                  level: getLevelForXp(xp),
+                  xp,
                 };
               }
             } catch {

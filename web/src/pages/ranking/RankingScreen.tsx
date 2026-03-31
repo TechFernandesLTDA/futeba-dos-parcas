@@ -33,7 +33,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { PlayerAvatar } from '../../components/common/GameCard';
-import { DIVISION_CONFIG, LeagueDivision } from '../../types/gamification';
+import { DIVISION_CONFIG, LeagueDivision, getLevelForXp } from '../../types/gamification';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 interface RankingUser {
@@ -72,12 +72,12 @@ export const RankingScreen: React.FC = () => {
           const data = snakeToCamel(docSnapshot.data()) as Record<string, any>;
           const userId = data.userId || docSnapshot.id;
 
-          let userData = { name: 'Jogador', photoUrl: null as string | null };
+          let userData = { name: 'Jogador', photoUrl: null as string | null, xp: 0 };
           try {
             const userDoc = await getDoc(doc(db, 'users', userId));
             if (userDoc.exists()) {
               const d = snakeToCamel(userDoc.data()) as Record<string, any>;
-              userData = { name: d.name || 'Jogador', photoUrl: d.photoUrl };
+              userData = { name: d.name || 'Jogador', photoUrl: d.photoUrl, xp: d.experiencePoints ?? 0 };
             }
           } catch (e) {}
 
@@ -86,7 +86,7 @@ export const RankingScreen: React.FC = () => {
             userId,
             userName: userData.name,
             userPhoto: userData.photoUrl || undefined,
-            level: data.level || 1,
+            level: getLevelForXp(userData.xp),
             points: data.points || 0,
             gamesPlayed: data.gamesPlayed || 0,
             wins: data.wins || 0,

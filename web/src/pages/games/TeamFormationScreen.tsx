@@ -32,6 +32,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
+import { getLevelForXp } from '../../types/gamification';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 
@@ -76,7 +77,7 @@ export const TeamFormationScreen: React.FC = () => {
                   id: uid,
                   name: userData.name || 'Jogador',
                   photoUrl: userData.photoUrl,
-                  level: userData.level || 1,
+                  level: getLevelForXp(userData.experiencePoints ?? 0),
                 };
               }
               return { id: uid, name: 'Jogador', level: 1 };

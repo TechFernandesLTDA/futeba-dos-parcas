@@ -37,6 +37,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { LoadingState, PlayerAvatar } from '../../components/common/GameCard';
 import { formatGameDate } from '../../utils/dateFormatters';
 import { createLogger } from '../../utils/logger';
+import { getLevelForXp } from '../../types/gamification';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const logger = createLogger('GlobalSearchScreen');
@@ -85,7 +86,7 @@ export const GlobalSearchScreen: React.FC = () => {
             id: d.id,
             type: 'user',
             name: data.name || 'Jogador',
-            subtitle: `Nível ${data.level || 1}`,
+            subtitle: `Nível ${getLevelForXp(data.experiencePoints ?? 0)}`,
             photoUrl: data.photoUrl,
           });
         });
