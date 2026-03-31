@@ -30,6 +30,7 @@
  */
 
 import * as admin from "firebase-admin";
+import "../types/firestore-count";
 
 const db = admin.firestore();
 

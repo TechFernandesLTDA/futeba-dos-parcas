@@ -25,6 +25,7 @@
 
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import "../types/firestore-count";
 
 const getDb = () => admin.firestore();
 

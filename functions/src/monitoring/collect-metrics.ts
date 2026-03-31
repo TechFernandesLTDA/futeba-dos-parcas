@@ -1,6 +1,8 @@
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 
+import "../types/firestore-count";
+
 const db = admin.firestore();
 
 /**
@@ -54,10 +56,7 @@ export const collectHourlyMetrics =
 
       for (const colName of collections) {
         try {
-          const snapshot = await db
-            .collection(colName)
-            .count()
-            .get();
+          const snapshot = await db.collection(colName).count().get();
           counts[colName] =
             snapshot.data().count;
         } catch (error) {
@@ -77,55 +76,29 @@ export const collectHourlyMetrics =
 
       const gamesLast24h = await db
         .collection("games")
-        .where(
-          "created_at",
-          ">=",
-          admin.firestore.Timestamp
-            .fromDate(oneDayAgo)
-        )
-        .count()
-        .get();
+        .where("created_at", ">=", admin.firestore.Timestamp.fromDate(oneDayAgo))
+        .count().get();
 
       const finishedGamesLast24h = await db
         .collection("games")
         .where("status", "==", "FINISHED")
-        .where(
-          "xp_processed_at",
-          ">=",
-          admin.firestore.Timestamp
-            .fromDate(oneDayAgo)
-        )
-        .count()
-        .get();
+        .where("xp_processed_at", ">=", admin.firestore.Timestamp.fromDate(oneDayAgo))
+        .count().get();
 
       // Usuários ativos (últimos 7 dias)
       const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(
-        sevenDaysAgo.getDate() - 7
-      );
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const activeUsersLast7d = await db
         .collection("users")
-        .where(
-          "updated_at",
-          ">=",
-          admin.firestore.Timestamp
-            .fromDate(sevenDaysAgo)
-        )
-        .count()
-        .get();
+        .where("updated_at", ">=", admin.firestore.Timestamp.fromDate(sevenDaysAgo))
+        .count().get();
 
       // XP processado (últimas 24h)
       const xpLogsLast24h = await db
         .collection("xp_logs")
-        .where(
-          "created_at",
-          ">=",
-          admin.firestore.Timestamp
-            .fromDate(oneDayAgo)
-        )
-        .count()
-        .get();
+        .where("created_at", ">=", admin.firestore.Timestamp.fromDate(oneDayAgo))
+        .count().get();
 
       // Buscar métrica anterior para deltas
       const previousMetricsSnap = await db
@@ -254,12 +227,8 @@ export const collectDailyMetrics =
       const gamesFinishedToday = await db
         .collection("games")
         .where("status", "==", "FINISHED")
-        .where(
-          "xp_processed_at", ">=", todayTs
-        )
-        .where(
-          "xp_processed_at", "<", tomorrowTs
-        )
+        .where("xp_processed_at", ">=", todayTs)
+        .where("xp_processed_at", "<", tomorrowTs)
         .count()
         .get();
 

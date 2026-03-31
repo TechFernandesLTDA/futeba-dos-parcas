@@ -494,7 +494,7 @@ export async function sendNotificationToUsers(
         };
 
       const response =
-        await getFcm().sendEachForMulticast(message);
+        await (getFcm() as any).sendEachForMulticast(message);
       totalSuccess += response.successCount;
 
       // Processar falhas individuais
@@ -506,7 +506,7 @@ export async function sendNotificationToUsers(
         );
 
         response.responses.forEach(
-          (sendResponse, index) => {
+          (sendResponse: any, index: number) => {
             if (
               !sendResponse.success &&
               sendResponse.error
