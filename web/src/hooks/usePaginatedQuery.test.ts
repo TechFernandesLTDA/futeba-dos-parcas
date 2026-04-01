@@ -11,12 +11,19 @@ const mockLimit = vi.fn();
 const mockStartAfter = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   collection: (...args: any[]) => mockCollection(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   query: (...args: any[]) => mockQuery(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   where: (...args: any[]) => mockWhere(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   orderBy: (...args: any[]) => mockOrderBy(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   limit: (...args: any[]) => mockLimit(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   startAfter: (...args: any[]) => mockStartAfter(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getDocs: (...args: any[]) => mockGetDocs(...args),
   DocumentSnapshot: vi.fn(),
 }));

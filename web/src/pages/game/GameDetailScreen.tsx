@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -6,10 +6,8 @@ import {
   Typography,
   Card,
   CardContent,
-  Avatar,
   Button,
   Chip,
-  Divider,
   IconButton,
   Tab,
   Tabs,
@@ -22,13 +20,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Alert,
-  Skeleton,
-  Fab,
   useTheme,
   alpha,
-  Grid,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -38,24 +32,19 @@ import {
   SportsSoccer as SoccerIcon,
   Payments as PaymentIcon,
   Check as CheckIcon,
-  Close as CloseIcon,
   Edit as EditIcon,
   PlayArrow as PlayIcon,
   HowToVote as VoteIcon,
   Share as ShareIcon,
   Navigation as NavIcon,
-  Person as PersonIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useGameDetail, useConfirmPresence, useUpdateGameStatus } from '../../hooks/useGames';
 import { softDeleteGame } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-  Game,
-  GameConfirmation,
   STATUS_CONFIG,
   PAYMENT_STATUS_CONFIG,
-  CONFIRMATION_STATUS_CONFIG,
 } from '../../types/game';
 import { PlayerAvatar, StatusChip, ShimmerLoading, EmptyState } from '../../components/common/GameCard';
 import { formatGameDateLong } from '../../utils/dateFormatters';
@@ -86,7 +75,6 @@ export const GameDetailScreen: React.FC = () => {
 
   const [tabValue, setTabValue] = useState(0);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [cancelReason, setCancelReason] = useState('');
   const [positionDialogOpen, setPositionDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -103,7 +91,6 @@ export const GameDetailScreen: React.FC = () => {
 
   const confirmedPlayers = confirmations.filter((c) => c.status === 'CONFIRMED');
   const goalkeepers = confirmedPlayers.filter((c) => c.position === 'GOALKEEPER');
-  const fieldPlayers = confirmedPlayers.filter((c) => c.position === 'FIELD');
   const waitlist = confirmations.filter((c) => c.status === 'WAITLIST');
 
   const handleConfirmPresence = async (position: 'GOALKEEPER' | 'FIELD') => {
@@ -113,8 +100,8 @@ export const GameDetailScreen: React.FC = () => {
       await confirmPresence(gameId, position);
       setPositionDialogOpen(false);
       setSnackbar({ show: true, message: 'Presença confirmada!', severity: 'success' });
-    } catch (err: any) {
-      setSnackbar({ show: true, message: err.message, severity: 'error' });
+    } catch (err) {
+      setSnackbar({ show: true, message: (err as Error).message, severity: 'error' });
     }
   };
 
@@ -125,8 +112,8 @@ export const GameDetailScreen: React.FC = () => {
       await cancelPresence(gameId);
       setCancelDialogOpen(false);
       setSnackbar({ show: true, message: 'Presença cancelada', severity: 'success' });
-    } catch (err: any) {
-      setSnackbar({ show: true, message: err.message, severity: 'error' });
+    } catch (err) {
+      setSnackbar({ show: true, message: (err as Error).message, severity: 'error' });
     }
   };
 
@@ -140,8 +127,8 @@ export const GameDetailScreen: React.FC = () => {
         await updateStatus(gameId, 'LIVE');
         navigate(`/game/${gameId}/live`);
       }
-    } catch (err: any) {
-      setSnackbar({ show: true, message: err.message, severity: 'error' });
+    } catch (err) {
+      setSnackbar({ show: true, message: (err as Error).message, severity: 'error' });
     }
   };
 
@@ -170,8 +157,8 @@ export const GameDetailScreen: React.FC = () => {
       setDeleteDialogOpen(false);
       setSnackbar({ show: true, message: 'Jogo excluído com sucesso', severity: 'success' });
       setTimeout(() => navigate(-1), 1000);
-    } catch (err: any) {
-      setSnackbar({ show: true, message: err?.message || 'Erro ao excluir jogo', severity: 'error' });
+    } catch (err) {
+      setSnackbar({ show: true, message: (err as Error)?.message || 'Erro ao excluir jogo', severity: 'error' });
     } finally {
       setDeleteLoading(false);
     }
@@ -195,8 +182,6 @@ export const GameDetailScreen: React.FC = () => {
       </Container>
     );
   }
-
-  const statusConfig = STATUS_CONFIG[game.status];
 
   return (
     <Box sx={{ pb: 10 }}>

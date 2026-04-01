@@ -9,23 +9,16 @@ import {
   IconButton,
   Avatar,
   Grid,
-  Paper,
-  Divider,
   Button,
-  Skeleton,
   useTheme,
   alpha,
+  Skeleton,
   Chip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
-  Edit as EditIcon,
-  SportsSoccer as SoccerIcon,
-  EmojiEvents as TrophyIcon,
-  TrendingUp as TrendingIcon,
   Shuffle as ShuffleIcon,
   Save as SaveIcon,
-  Person as PersonIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -52,7 +45,7 @@ export const TeamFormationScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  const { user } = useAuth();
+  useAuth();
 
   const [teamA, setTeamA] = useState<TeamPlayer[]>([]);
   const [teamB, setTeamB] = useState<TeamPlayer[]>([]);
@@ -74,10 +67,12 @@ export const TeamFormationScreen: React.FC = () => {
           .map((d) => d.data());
 
         const players: TeamPlayer[] = await Promise.all(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           confirmedDocs.map(async (conf: any) => {
             const uid = conf.user_id;
             const userDoc = await getDoc(doc(db, 'users', uid));
             if (userDoc.exists()) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const userData = snakeToCamel(userDoc.data()) as Record<string, any>;
               return {
                 id: uid,

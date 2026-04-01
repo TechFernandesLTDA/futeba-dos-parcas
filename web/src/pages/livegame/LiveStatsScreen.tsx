@@ -18,23 +18,20 @@ import {
   ListItemText,
   Divider,
   Chip,
-  Skeleton,
   useTheme,
   alpha,
-  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   SportsSoccer as SoccerIcon,
   TrendingUp as TrendingIcon,
-  EmojiEvents as TrophyIcon,
   Person as PersonIcon,
   Star as StarIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
+import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -63,7 +60,7 @@ export const LiveStatsScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  const { user } = useAuth();
+  useAuth();
 
   const [tabValue, setTabValue] = useState(0);
   const [stats, setStats] = useState<LiveStats | null>(null);
@@ -77,6 +74,7 @@ export const LiveStatsScreen: React.FC = () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists()) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
           setStats({
             teamAScore: data.teamAScore || data.team1Score || 0,

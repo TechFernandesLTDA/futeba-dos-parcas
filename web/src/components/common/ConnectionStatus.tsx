@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { WifiOff as OfflineIcon } from '@mui/icons-material';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useOnlineStatus = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 

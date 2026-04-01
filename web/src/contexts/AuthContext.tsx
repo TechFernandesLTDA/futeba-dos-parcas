@@ -147,8 +147,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao fazer login');
+    } catch (err) {
+      setError((err as Error).message || 'Erro ao fazer login');
       throw err;
     }
   }, []);
@@ -159,8 +159,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       await createUserDocument(result.user);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao fazer login com Google');
+    } catch (err) {
+      setError((err as Error).message || 'Erro ao fazer login com Google');
       throw err;
     }
   }, []);
@@ -172,8 +172,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName: name });
       await createUserDocument(result.user, { name });
-    } catch (err: any) {
-      setError(err.message || 'Erro ao criar conta');
+    } catch (err) {
+      setError((err as Error).message || 'Erro ao criar conta');
       throw err;
     }
   }, []);
@@ -183,8 +183,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       await signOut(auth);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao sair');
+    } catch (err) {
+      setError((err as Error).message || 'Erro ao sair');
       throw err;
     }
   }, []);
@@ -194,8 +194,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       await sendPasswordResetEmail(auth, email);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao enviar email de recuperação');
+    } catch (err) {
+      setError((err as Error).message || 'Erro ao enviar email de recuperação');
       throw err;
     }
   }, []);
@@ -234,6 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

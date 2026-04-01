@@ -9,27 +9,18 @@ import {
   IconButton,
   Avatar,
   Grid,
-  Paper,
   Divider,
   Button,
-  Skeleton,
   useTheme,
   alpha,
   Chip,
   List,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   SportsSoccer as SoccerIcon,
   EmojiEvents as TrophyIcon,
   TrendingUp as TrendingIcon,
-  Person as PersonIcon,
   Assessment as StatsIcon,
 } from '@mui/icons-material';
 import { doc, getDoc } from 'firebase/firestore';
@@ -60,7 +51,7 @@ export const PostGameReportScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  const { user } = useAuth();
+  useAuth();
 
   const [stats, setStats] = useState<PostGameStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,12 +63,14 @@ export const PostGameReportScreen: React.FC = () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists()) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
 
           let mvpName = '';
           if (data.mvpId) {
             const mvpDoc = await getDoc(doc(db, 'users', data.mvpId));
-            if (mvpDoc.exists()) mvpName = (snakeToCamel(mvpDoc.data()) as Record<string, any>).name || '';
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          if (mvpDoc.exists()) mvpName = (snakeToCamel(mvpDoc.data()) as Record<string, any>).name || '';
           }
 
           setStats({

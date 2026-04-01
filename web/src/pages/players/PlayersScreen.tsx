@@ -5,31 +5,25 @@ import {
   Container,
   Typography,
   Card,
-  CardContent,
   IconButton,
-  Avatar,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
   Divider,
-  Button,
-  Skeleton,
   useTheme,
   alpha,
   Chip,
   CircularProgress,
-  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   Person as PersonIcon,
   PersonAdd as PersonAddIcon,
   PersonRemove as PersonRemoveIcon,
-  Block as BlockIcon,
   AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -67,6 +61,7 @@ export const PlayersScreen: React.FC = () => {
       try {
         const groupDoc = await getDoc(doc(db, 'groups', groupId));
         if (groupDoc.exists()) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const groupData = snakeToCamel(groupDoc.data()) as Record<string, any>;
           const memberIds = groupData.members || [];
           const ownerId = groupData.ownerId;
@@ -85,6 +80,7 @@ export const PlayersScreen: React.FC = () => {
               const userDoc = await getDoc(doc(db, 'users', uid));
               if (userDoc.exists()) {
                 const raw = userDoc.data();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const d = snakeToCamel(raw) as Record<string, any>;
                 let role: 'OWNER' | 'ADMIN' | 'MEMBER' = 'MEMBER';
                 if (uid === ownerId) role = 'OWNER';

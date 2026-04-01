@@ -324,7 +324,7 @@ export const EmptyState: React.FC<{
 
 export const LoadingState: React.FC<{ shimmerCount?: number; itemType?: string }> = ({
   shimmerCount = 5,
-  itemType = 'CARD',
+  itemType: _itemType = 'CARD',
 }) => {
   return (
     <Box role="status" aria-label="Carregando conteúdo">

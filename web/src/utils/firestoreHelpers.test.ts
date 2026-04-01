@@ -21,8 +21,8 @@ describe('snakeToCamel', () => {
   });
 
   it('retorna null/undefined como está', () => {
-    expect(snakeToCamel(null as any)).toBeNull();
-    expect(snakeToCamel(undefined as any)).toBeUndefined();
+    expect(snakeToCamel(null as unknown as Record<string, unknown>)).toBeNull();
+    expect(snakeToCamel(undefined as unknown as Record<string, unknown>)).toBeUndefined();
   });
 
   it('mantém chaves que já são camelCase', () => {
@@ -36,7 +36,7 @@ describe('snakeToCamel', () => {
     const input = { created_at: mockTimestamp, name: 'test' };
     const result = snakeToCamel(input);
     expect(result).toHaveProperty('createdAt');
-    expect((result as any).createdAt).toBe(mockTimestamp);
+    expect((result as Record<string, unknown>).createdAt).toBe(mockTimestamp);
   });
 
   it('converte arrays no nível raiz', () => {

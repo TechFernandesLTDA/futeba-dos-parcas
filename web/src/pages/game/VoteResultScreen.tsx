@@ -9,24 +9,14 @@ import {
   IconButton,
   Avatar,
   Grid,
-  Paper,
-  Divider,
   Button,
-  Skeleton,
   useTheme,
   alpha,
   Chip,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   EmojiEvents as TrophyIcon,
-  SportsSoccer as SoccerIcon,
-  Person as PersonIcon,
-  TrendingUp as TrendingIcon,
   ThumbDown as ThumbDownIcon,
   Star as StarIcon,
 } from '@mui/icons-material';
@@ -78,7 +68,7 @@ export const VoteResultScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  const { user } = useAuth();
+  useAuth();
 
   const [voteResult, setVoteResult] = useState<VoteResult | null>(null);
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
@@ -92,6 +82,7 @@ export const VoteResultScreen: React.FC = () => {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists()) {
           const raw = gameDoc.data();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(raw) as Record<string, any>;
           setGameResult({
             teamAScore: data.teamAScore || data.team1Score || 0,
@@ -104,6 +95,7 @@ export const VoteResultScreen: React.FC = () => {
             const userDoc = await getDoc(doc(db, 'users', mvpId));
             if (userDoc.exists()) {
               const userRaw = userDoc.data();
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const userData = snakeToCamel(userRaw) as Record<string, any>;
               setVoteResult((prev) => ({
                 ...prev,
@@ -122,6 +114,7 @@ export const VoteResultScreen: React.FC = () => {
             const userDoc = await getDoc(doc(db, 'users', bolaMurchaId));
             if (userDoc.exists()) {
               const userRaw = userDoc.data();
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const userData = snakeToCamel(userRaw) as Record<string, any>;
               setVoteResult((prev) => ({
                 ...prev,

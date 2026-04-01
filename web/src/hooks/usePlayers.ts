@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 
@@ -38,6 +38,7 @@ export const usePlayers = (groupId?: string) => {
               const userDoc = await getDoc(doc(db, 'users', uid));
               if (userDoc.exists()) {
                 const raw = userDoc.data();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const data = snakeToCamel(raw) as Record<string, any>;
                 return {
                   id: uid,
@@ -87,6 +88,7 @@ export const usePlayerDetail = (userId?: string) => {
         const userDoc = await getDoc(doc(db, 'users', userId));
         if (userDoc.exists()) {
           const raw = userDoc.data();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(raw) as Record<string, any>;
           setPlayer({
             id: userId,

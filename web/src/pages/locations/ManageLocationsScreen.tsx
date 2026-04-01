@@ -11,9 +11,7 @@ import {
   InputAdornment,
   Avatar,
   Chip,
-  Skeleton,
   useTheme,
-  alpha,
   Fab,
   Grid,
   Rating,
@@ -24,7 +22,6 @@ import {
   Add as AddIcon,
   LocationOn as LocationIcon,
   SportsSoccer as SoccerIcon,
-  Star as StarIcon,
 } from '@mui/icons-material';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';

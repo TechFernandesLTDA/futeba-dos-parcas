@@ -35,7 +35,7 @@ export const GroupEditScreen: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { currentUser, firebaseUser, user } = useAuth();
+  const { firebaseUser, user } = useAuth();
 
   const { group, members, loading, error } = useGroupDetail(groupId || null);
   const { showSuccess, showError } = useToast();
@@ -67,6 +67,7 @@ export const GroupEditScreen: React.FC = () => {
     }
   }, [group, initialized]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field]) {
@@ -121,7 +122,7 @@ export const GroupEditScreen: React.FC = () => {
       logger.info('Grupo atualizado com sucesso', { groupId });
       showSuccess('Grupo atualizado com sucesso!');
       navigate(-1);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Erro ao atualizar grupo:', err);
       showError('Erro ao atualizar grupo. Tente novamente.');
     } finally {

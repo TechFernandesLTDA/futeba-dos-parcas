@@ -8,9 +8,13 @@ const mockQuery = vi.fn();
 const mockWhere = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   collection: (...args: any[]) => mockCollection(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   query: (...args: any[]) => mockQuery(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   where: (...args: any[]) => mockWhere(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
 }));
 
@@ -50,6 +54,7 @@ describe('useBadges', () => {
   });
 
   it('marca badges desbloqueadas com unlockedIds', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
       onNext({
         docs: [
@@ -89,6 +94,7 @@ describe('useBadges', () => {
   });
 
   it('trata badges vazias corretamente', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
       onNext({ docs: [] });
       return vi.fn();
@@ -105,6 +111,7 @@ describe('useBadges', () => {
   });
 
   it('trata erros do snapshot', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnSnapshot.mockImplementation((q: any, onNext: any, onError: any) => {
       onError(new Error('Badge error'));
       return vi.fn();

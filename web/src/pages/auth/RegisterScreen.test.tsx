@@ -26,6 +26,7 @@ vi.mock('../../contexts/AuthContext', () => ({
 }));
 
 vi.mock('../../utils/firebaseErrors', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getAuthErrorMessage: (err: any, fallback: string) => {
     if (err?.code === 'auth/email-already-in-use') return 'Este email já está em uso';
     return fallback || 'Erro inesperado';

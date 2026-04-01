@@ -56,7 +56,7 @@ export function ProfileTab() {
   const currentXp = user?.experiencePoints || 0;
   const currentLevel = getLevelForXp(currentXp);
   const levelProgress = getXpProgress(currentXp) * 100;
-  const xpRemaining = getXpRemaining(currentXp);
+  const _xpRemaining = getXpRemaining(currentXp);
   const currentEntry = getLevelEntry(currentLevel);
   const nextEntry = currentLevel < 20 ? getLevelEntry(currentLevel + 1) : null;
   const xpInLevel = currentXp - currentEntry.xpRequired;

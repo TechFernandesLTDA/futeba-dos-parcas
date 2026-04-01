@@ -27,20 +27,35 @@ export const mockTimestamp = {
 };
 
 vi.mock('firebase/firestore', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   collection: (...args: any[]) => mockCollection(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   doc: (...args: any[]) => mockDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getDoc: (...args: any[]) => mockGetDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getDocs: (...args: any[]) => mockGetDocs(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addDoc: (...args: any[]) => mockAddDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateDoc: (...args: any[]) => mockUpdateDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deleteDoc: (...args: any[]) => mockDeleteDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setDoc: (...args: any[]) => mockSetDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   writeBatch: (...args: any[]) => mockWriteBatch(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   query: (...args: any[]) => mockQuery(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   where: (...args: any[]) => mockWhere(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   orderBy: (...args: any[]) => mockOrderBy(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   limit: (...args: any[]) => mockLimit(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   startAfter: (...args: any[]) => mockStartAfter(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
   Timestamp: mockTimestamp,
   arrayUnion: vi.fn(),

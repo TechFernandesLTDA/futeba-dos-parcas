@@ -6,6 +6,7 @@ import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useRealtime');
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useRealtimeDocument<T = any>(
   collectionName: string,
   documentId: string | undefined
@@ -47,8 +48,10 @@ export function useRealtimeDocument<T = any>(
   return { data, loading, error };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useRealtimeCollection<T = any>(
   collectionName: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   queryFn?: (ref: any) => any
 ) {
   const [data, setData] = useState<T[]>([]);
@@ -63,7 +66,9 @@ export function useRealtimeCollection<T = any>(
 
     const unsubscribe = onSnapshot(
       q,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (snapshot: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const items = snapshot.docs.map((d: any) => ({
           id: d.id,
           ...snakeToCamel(d.data()),

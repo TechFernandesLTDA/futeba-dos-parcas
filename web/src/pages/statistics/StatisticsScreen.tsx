@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { gamificationColors } from '../../theme';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -14,7 +14,6 @@ import {
   Grid,
   useTheme,
   alpha,
-  Chip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -63,13 +62,7 @@ export const StatisticsScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
 
-  useEffect(() => {
-    if (user) {
-      loadStats();
-    }
-  }, [user]);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const userRef = doc(db, 'users', user!.id);
       const docSnap = await getDoc(userRef);
@@ -80,7 +73,13 @@ export const StatisticsScreen: React.FC = () => {
       logger.error('Error loading stats:', error);
     }
     setLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadStats();
+    }
+  }, [user, loadStats]);
 
   const getWinRate = () => {
     if (!stats || stats.totalGames === 0) return 0;

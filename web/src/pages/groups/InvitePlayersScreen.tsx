@@ -5,11 +5,8 @@ import {
   Container,
   Typography,
   Card,
-  CardContent,
   IconButton,
   TextField,
-  Button,
-  Avatar,
   List,
   ListItem,
   ListItemAvatar,
@@ -17,19 +14,13 @@ import {
   ListItemSecondaryAction,
   Chip,
   Divider,
-  Skeleton,
   useTheme,
-  alpha,
   CircularProgress,
-  Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   Search as SearchIcon,
   PersonAdd as PersonAddIcon,
-  Person as PersonIcon,
-  Close as CloseIcon,
-  Check as CheckIcon,
 } from '@mui/icons-material';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -77,6 +68,7 @@ export const InvitePlayersScreen: React.FC = () => {
       try {
         const groupDoc = await getDoc(doc(db, 'groups', groupId));
         if (groupDoc.exists()) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const groupData = snakeToCamel(groupDoc.data()) as Record<string, any>;
           const memberIds = groupData.members || [];
 
@@ -84,6 +76,7 @@ export const InvitePlayersScreen: React.FC = () => {
             memberIds.map(async (uid: string) => {
               const userDoc = await getDoc(doc(db, 'users', uid));
               if (userDoc.exists()) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const d = snakeToCamel(userDoc.data()) as Record<string, any>;
                 return {
                   id: uid,
@@ -151,7 +144,7 @@ export const InvitePlayersScreen: React.FC = () => {
     }
   };
 
-  const existingMemberIds = new Set(members.map((m) => m.id));
+  const _existingMemberIds = new Set(members.map((m) => m.id));
 
   return (
     <Box sx={{ pb: 4 }}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -11,12 +11,8 @@ import {
   Avatar,
   IconButton,
   MenuItem,
-  FormControl,
-  FormLabel,
-  Chip,
   Alert,
   CircularProgress,
-  Divider,
   useTheme,
 } from '@mui/material';
 import {
@@ -69,19 +65,14 @@ export const EditProfileScreen: React.FC = () => {
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (currentUser) {
-      loadProfile();
-    }
-  }, [currentUser]);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     if (!currentUser) return;
 
     setLoading(true);
     try {
       const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
       if (userDoc.exists()) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = snakeToCamel(userDoc.data()) as Record<string, any>;
         setFormData({
           name: data.name || currentUser.displayName || '',
@@ -91,14 +82,20 @@ export const EditProfileScreen: React.FC = () => {
           bio: data.bio || '',
         });
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser]);
 
-  const handleInputChange = (field: keyof UserProfile, value: any) => {
+  useEffect(() => {
+    if (currentUser) {
+      loadProfile();
+    }
+  }, [currentUser, loadProfile]);
+
+  const handleInputChange = (field: keyof UserProfile, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field]) {
       setFormErrors((prev) => ({ ...prev, [field]: '' }));
@@ -144,8 +141,8 @@ export const EditProfileScreen: React.FC = () => {
 
       setSuccess(true);
       setTimeout(() => navigate(-1), 1500);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError((err as Error).message);
     } finally {
       setSaving(false);
     }
