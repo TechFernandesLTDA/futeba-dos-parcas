@@ -42,6 +42,7 @@ import com.futebadosparcas.ui.components.lists.RankingItemShimmer
 import com.futebadosparcas.ui.components.lists.ShimmerBox
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
+import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
@@ -221,38 +222,58 @@ private fun RankingList(
     category: RankingCategory,
     onPlayerClick: (String) -> Unit
 ) {
-    LazyColumn(
-        contentPadding = PaddingValues(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+    val windowSizeClass = rememberWindowSizeClass()
+
+    // Em tablets, centraliza o conteúdo com largura máxima para legibilidade
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
     ) {
-        // My position card (if not in top 3 and exists)
-        if (myPosition > 3 && myPosition > 0) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxHeight()
+                .then(
+                    if (!windowSizeClass.isCompact) {
+                        Modifier.widthIn(max = windowSizeClass.contentMaxWidth)
+                    } else {
+                        Modifier.fillMaxWidth()
+                    }
+                ),
+            contentPadding = PaddingValues(
+                horizontal = windowSizeClass.horizontalPadding,
+                vertical = 16.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Card com a posição do usuário (se não estiver no top 3)
+            if (myPosition > 3 && myPosition > 0) {
+                item {
+                    MyPositionCard(
+                        position = myPosition,
+                        category = category,
+                        rankings = rankings
+                    )
+                }
+            }
+
+            // Pódio dos top 3
             item {
-                MyPositionCard(
-                    position = myPosition,
+                PodiumSection(rankings.take(3), category)
+            }
+
+            // Restante da lista
+            itemsIndexed(
+                items = rankings.drop(3),
+                key = { _, item -> item.userId }
+            ) { index, player ->
+                RankingItem(
+                    rank = index + 4,
+                    player = player,
                     category = category,
-                    rankings = rankings
+                    isCurrentUser = player.userId == getCurrentUserId(),
+                    onClick = { onPlayerClick(player.userId) }
                 )
             }
-        }
-
-        // Top 3 podium
-        item {
-            PodiumSection(rankings.take(3), category)
-        }
-
-        // Rest of the list
-        itemsIndexed(
-            items = rankings.drop(3),
-            key = { _, item -> item.userId }
-        ) { index, player ->
-            RankingItem(
-                rank = index + 4,
-                player = player,
-                category = category,
-                isCurrentUser = player.userId == getCurrentUserId(),
-                onClick = { onPlayerClick(player.userId) }
-            )
         }
     }
 }

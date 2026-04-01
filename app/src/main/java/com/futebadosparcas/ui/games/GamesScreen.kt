@@ -33,6 +33,8 @@ import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.ui.components.FutebaTopBar
 import com.futebadosparcas.ui.components.ShimmerGameCard
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
+import com.futebadosparcas.ui.adaptive.WindowWidthSizeClass
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -133,7 +135,10 @@ fun GamesScreen(
 }
 
 /**
- * Conteúdo quando temos jogos para exibir
+ * Conteúdo quando temos jogos para exibir.
+ *
+ * Compact: lista de coluna única.
+ * Medium/Expanded: grid de 2 colunas para melhor uso do espaço.
  */
 @Composable
 private fun GamesSuccessContent(
@@ -143,6 +148,7 @@ private fun GamesSuccessContent(
     viewModel: GamesViewModel
 ) {
     var selectedFilter by remember { mutableStateOf(GameFilterType.ALL) }
+    val windowSizeClass = rememberWindowSizeClass()
 
     // Prefetch detalhes dos primeiros 5 jogos quando a lista é carregada
     LaunchedEffect(games) {
@@ -151,9 +157,7 @@ private fun GamesSuccessContent(
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
         // Filtros
         GamesFilters(
             selectedFilter = selectedFilter,
@@ -163,21 +167,46 @@ private fun GamesSuccessContent(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(horizontal = windowSizeClass.horizontalPadding, vertical = 12.dp)
         )
 
-        // Lista de jogos
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(games, key = { it.game.id }) { game ->
-                GameCard(
-                    game = game,
-                    onClick = { onGameClick(game.game.id) },
-                    modifier = Modifier.fillMaxWidth()
-                )
+        if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.COMPACT) {
+            // Compact: lista vertical simples
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    horizontal = windowSizeClass.horizontalPadding,
+                    vertical = 8.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(games, key = { it.game.id }) { game ->
+                    GameCard(
+                        game = game,
+                        onClick = { onGameClick(game.game.id) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        } else {
+            // Medium/Expanded: grid de 2 colunas
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    horizontal = windowSizeClass.horizontalPadding,
+                    vertical = 8.dp
+                ),
+                horizontalArrangement = Arrangement.spacedBy(windowSizeClass.gridSpacing),
+                verticalArrangement = Arrangement.spacedBy(windowSizeClass.gridSpacing)
+            ) {
+                items(games, key = { it.game.id }) { game ->
+                    GameCard(
+                        game = game,
+                        onClick = { onGameClick(game.game.id) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
