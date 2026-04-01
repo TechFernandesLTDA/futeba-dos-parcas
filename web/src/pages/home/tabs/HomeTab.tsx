@@ -27,7 +27,6 @@ import {
   TrendingUp,
   EmojiEvents,
   LocalFireDepartment,
-  MilitaryTech,
 } from '@mui/icons-material';
 import { gamificationColors } from '../../../theme';
 import { useGames } from '../../../hooks/useGames';
@@ -85,6 +84,7 @@ export function HomeTab() {
       (snapshot) => {
         const data = snapshot.docs.map((doc) => {
           const raw = doc.data();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const d = snakeToCamel(raw) as Record<string, any>;
           const createdAt = (raw.created_at || raw.createdAt)?.toDate?.();
           return {

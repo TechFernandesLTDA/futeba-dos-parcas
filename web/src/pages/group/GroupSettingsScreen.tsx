@@ -27,7 +27,6 @@ import {
 import {
   ArrowBack as BackIcon,
   Edit as EditIcon,
-  Person as PersonIcon,
   Group as GroupIcon,
   ExitToApp as LeaveIcon,
   Delete as DeleteIcon,
@@ -57,7 +56,7 @@ export const GroupSettingsScreen: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
-  const { currentUser, firebaseUser, user } = useAuth();
+  const { firebaseUser, user } = useAuth();
   const { showSuccess, showError } = useToast();
 
   const { group, members, loading, error } = useGroupDetail(groupId || null);
@@ -90,7 +89,7 @@ export const GroupSettingsScreen: React.FC = () => {
       showSuccess('Você saiu do grupo.');
       setLeaveDialogOpen(false);
       navigate('/groups');
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Erro ao sair do grupo:', err);
       showError('Erro ao sair do grupo. Tente novamente.');
     } finally {
@@ -109,9 +108,9 @@ export const GroupSettingsScreen: React.FC = () => {
       showSuccess('Grupo excluído com sucesso.');
       setDeleteDialogOpen(false);
       setTimeout(() => navigate('/groups'), 500);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Erro ao excluir grupo:', err);
-      showError(err?.message || 'Erro ao excluir grupo. Tente novamente.');
+      showError((err as Error)?.message || 'Erro ao excluir grupo. Tente novamente.');
     } finally {
       setActionLoading(false);
     }

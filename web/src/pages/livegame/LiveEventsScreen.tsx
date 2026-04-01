@@ -6,14 +6,12 @@ import {
   Container,
   Typography,
   Card,
-  CardContent,
   IconButton,
   Avatar,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
-  Divider,
   Chip,
   Fab,
   Dialog,
@@ -32,14 +30,13 @@ import {
   Add as AddIcon,
   SportsSoccer as SoccerIcon,
   TrendingUp as TrendingIcon,
-  Warning as WarningIcon,
   Star as StarIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
+import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
@@ -175,7 +172,7 @@ export const LiveEventsScreen: React.FC = () => {
           </Box>
         ) : (
           <List disablePadding aria-label="Eventos do jogo">
-            {events.map((event, index) => (
+            {events.map((event, _index) => (
               <Card key={event.id} sx={{ mb: 1 }}>
                 <ListItem sx={{ py: 1.5 }}>
                   <ListItemAvatar>

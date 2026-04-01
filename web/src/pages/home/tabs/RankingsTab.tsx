@@ -22,9 +22,7 @@ import {
 import {
   EmojiEvents as TrophyIcon,
   MilitaryTech as MilitaryTechIcon,
-  SportsSoccer as SoccerIcon,
   Star as StarIcon,
-  TrendingUp as TrendingIcon,
   Refresh as RefreshIcon,
   OpenInNew as OpenIcon,
 } from '@mui/icons-material';
@@ -93,6 +91,7 @@ export function RankingsTab() {
         const playersData = await Promise.all(
           snapshot.docs.map(async (docSnapshot) => {
             const raw = docSnapshot.data();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const data = snakeToCamel(raw) as Record<string, any>;
             const userId = data.userId || raw.user_id || docSnapshot.id;
 

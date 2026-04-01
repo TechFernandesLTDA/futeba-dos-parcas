@@ -9,9 +9,6 @@ import {
   CardContent,
   Avatar,
   List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
   IconButton,
   Badge,
   Skeleton,
@@ -21,7 +18,6 @@ import {
 import {
   ArrowBack as BackIcon,
   Notifications as NotificationIcon,
-  Delete as DeleteIcon,
   Check as CheckIcon,
   Close as CloseIcon,
   EmojiEvents as TrophyIcon,
@@ -62,6 +58,7 @@ export const NotificationsScreen: React.FC = () => {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const notificationsData = snapshot.docs.map((d) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = snakeToCamel(d.data()) as Record<string, any>;
         return {
           id: d.id,

@@ -4,8 +4,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockCallable = vi.fn();
 
 vi.mock('firebase/functions', () => ({
-  httpsCallable: vi.fn((_functions: any, name: string) => {
+  httpsCallable: vi.fn((_functions: unknown, name: string) => {
     // Retorna uma função callable mockada que registra o nome
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const callable = (...args: any[]) => mockCallable(name, ...args);
     callable._name = name;
     return callable;
@@ -81,7 +82,7 @@ describe('cloudFunctions', () => {
 
   it('trata erros de rede', async () => {
     const networkError = new Error('Network error');
-    (networkError as any).code = 'functions/unavailable';
+    (networkError as Error & { code: string }).code = 'functions/unavailable';
     mockCallable.mockRejectedValue(networkError);
 
     await expect(softDeleteGame({ gameId: 'game-123' })).rejects.toThrow('Network error');

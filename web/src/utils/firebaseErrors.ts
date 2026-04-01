@@ -33,15 +33,15 @@ const FIREBASE_FIRESTORE_ERRORS: Record<string, string> = {
 /**
  * Retorna mensagem de erro em PT-BR para um erro do Firebase Auth.
  */
-export function getAuthErrorMessage(error: any, fallback?: string): string {
-  const code = error?.code || '';
+export function getAuthErrorMessage(error: unknown, fallback?: string): string {
+  const code = (error as { code?: string })?.code || '';
   return FIREBASE_AUTH_ERRORS[code] || fallback || 'Erro inesperado. Tente novamente';
 }
 
 /**
  * Retorna mensagem de erro em PT-BR para um erro do Firestore.
  */
-export function getFirestoreErrorMessage(error: any, fallback?: string): string {
-  const code = error?.code || '';
+export function getFirestoreErrorMessage(error: unknown, fallback?: string): string {
+  const code = (error as { code?: string })?.code || '';
   return FIREBASE_FIRESTORE_ERRORS[code] || fallback || 'Erro ao acessar dados. Tente novamente';
 }

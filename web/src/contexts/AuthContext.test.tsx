@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
-import { renderHook } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
 
 // Mock Firebase modules
@@ -14,12 +13,19 @@ const mockUpdateProfile = vi.fn();
 
 vi.mock('firebase/auth', () => ({
   getAuth: vi.fn(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onAuthStateChanged: (...args: any[]) => mockOnAuthStateChanged(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   signInWithEmailAndPassword: (...args: any[]) => mockSignInWithEmailAndPassword(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createUserWithEmailAndPassword: (...args: any[]) => mockCreateUserWithEmailAndPassword(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   signInWithPopup: (...args: any[]) => mockSignInWithPopup(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   signOut: (...args: any[]) => mockSignOut(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendPasswordResetEmail: (...args: any[]) => mockSendPasswordResetEmail(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateProfile: (...args: any[]) => mockUpdateProfile(...args),
   GoogleAuthProvider: vi.fn(),
 }));
@@ -29,8 +35,11 @@ const mockSetDoc = vi.fn();
 const mockDoc = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   doc: (...args: any[]) => mockDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getDoc: (...args: any[]) => mockGetDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setDoc: (...args: any[]) => mockSetDoc(...args),
   serverTimestamp: vi.fn(() => 'server-timestamp'),
 }));
@@ -42,6 +51,7 @@ vi.mock('../services/firebase', () => ({
 }));
 
 vi.mock('../utils/firestoreHelpers', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   snakeToCamel: (obj: any) => obj,
 }));
 
@@ -54,19 +64,9 @@ vi.mock('../utils/logger', () => ({
   }),
 }));
 
-// Helper para simular onAuthStateChanged
-function triggerAuthStateChange(user: any) {
-  const callback = mockOnAuthStateChanged.mock.calls[0]?.[1];
-  if (callback) {
-    act(() => {
-      callback(user);
-    });
-  }
-}
-
 // Componente auxiliar para acessar o contexto
 function AuthConsumer() {
-  const { user, firebaseUser, loading, error, signIn, signUp, logout, signInWithGoogle } = useAuth();
+  const { user, firebaseUser, loading, error } = useAuth();
   return (
     <div>
       <span data-testid="loading">{String(loading)}</span>
@@ -81,6 +81,7 @@ describe('AuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Padrão: onAuthStateChanged retorna unsubscribe e não dispara
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
       // Simular que não há usuário logado
       setTimeout(() => callback(null), 0);
@@ -117,6 +118,7 @@ describe('AuthContext', () => {
   it('define usuário quando Firebase auth state muda', async () => {
     const mockFirebaseUser = { uid: 'test-uid', email: 'test@test.com', displayName: 'Test User' };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
       setTimeout(() => callback(mockFirebaseUser), 0);
       return vi.fn();
@@ -142,6 +144,7 @@ describe('AuthContext', () => {
   it('busca dados do usuário do Firestore', async () => {
     const mockFirebaseUser = { uid: 'user-123', email: 'user@test.com' };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
       setTimeout(() => callback(mockFirebaseUser), 0);
       return vi.fn();
@@ -168,7 +171,7 @@ describe('AuthContext', () => {
     mockSignInWithEmailAndPassword.mockResolvedValue({ user: { uid: 'uid' } });
 
     // Renderiza e extrai o contexto via componente
-    let signInFn: any;
+    let signInFn: ((email: string, password: string) => Promise<void>) | undefined;
     function Extractor() {
       const auth = useAuth();
       signInFn = auth.signIn;
@@ -184,7 +187,7 @@ describe('AuthContext', () => {
     await waitFor(() => expect(signInFn).toBeDefined());
 
     await act(async () => {
-      await signInFn('test@test.com', '123456');
+      await signInFn!('test@test.com', '123456');
     });
 
     expect(mockSignInWithEmailAndPassword).toHaveBeenCalledWith(
@@ -197,7 +200,7 @@ describe('AuthContext', () => {
   it('signOut chama Firebase signOut', async () => {
     mockSignOut.mockResolvedValue(undefined);
 
-    let logoutFn: any;
+    let logoutFn: (() => Promise<void>) | undefined;
     function Extractor() {
       const auth = useAuth();
       logoutFn = auth.logout;
@@ -213,7 +216,7 @@ describe('AuthContext', () => {
     await waitFor(() => expect(logoutFn).toBeDefined());
 
     await act(async () => {
-      await logoutFn();
+      await logoutFn!();
     });
 
     expect(mockSignOut).toHaveBeenCalled();
@@ -226,7 +229,7 @@ describe('AuthContext', () => {
     mockGetDoc.mockResolvedValue({ exists: () => false });
     mockSetDoc.mockResolvedValue(undefined);
 
-    let signUpFn: any;
+    let signUpFn: ((email: string, password: string, name: string) => Promise<void>) | undefined;
     function Extractor() {
       const auth = useAuth();
       signUpFn = auth.signUp;
@@ -242,7 +245,7 @@ describe('AuthContext', () => {
     await waitFor(() => expect(signUpFn).toBeDefined());
 
     await act(async () => {
-      await signUpFn('new@test.com', 'password123', 'Novo Jogador');
+      await signUpFn!('new@test.com', 'password123', 'Novo Jogador');
     });
 
     expect(mockCreateUserWithEmailAndPassword).toHaveBeenCalledWith(
@@ -259,12 +262,10 @@ describe('AuthContext', () => {
       message: 'Invalid credentials',
     });
 
-    let signInFn: any;
-    let getError: any;
+    let signInFn: ((email: string, password: string) => Promise<void>) | undefined;
     function Extractor() {
       const auth = useAuth();
       signInFn = auth.signIn;
-      getError = () => auth.error;
       return <span data-testid="err">{auth.error || 'none'}</span>;
     }
 
@@ -278,7 +279,7 @@ describe('AuthContext', () => {
 
     await act(async () => {
       try {
-        await signInFn('test@test.com', 'wrong');
+        await signInFn!('test@test.com', 'wrong');
       } catch {
         // Esperado
       }
@@ -307,7 +308,7 @@ describe('AuthContext', () => {
     mockGetDoc.mockResolvedValue({ exists: () => false });
     mockSetDoc.mockResolvedValue(undefined);
 
-    let signInWithGoogleFn: any;
+    let signInWithGoogleFn: (() => Promise<void>) | undefined;
     function Extractor() {
       const auth = useAuth();
       signInWithGoogleFn = auth.signInWithGoogle;
@@ -323,7 +324,7 @@ describe('AuthContext', () => {
     await waitFor(() => expect(signInWithGoogleFn).toBeDefined());
 
     await act(async () => {
-      await signInWithGoogleFn();
+      await signInWithGoogleFn!();
     });
 
     expect(mockSignInWithPopup).toHaveBeenCalled();

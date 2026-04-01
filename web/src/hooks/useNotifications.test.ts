@@ -13,14 +13,23 @@ const mockOrderBy = vi.fn();
 const mockLimit = vi.fn();
 
 vi.mock('firebase/firestore', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   collection: (...args: any[]) => mockCollection(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   doc: (...args: any[]) => mockDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   query: (...args: any[]) => mockQuery(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   where: (...args: any[]) => mockWhere(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   orderBy: (...args: any[]) => mockOrderBy(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   limit: (...args: any[]) => mockLimit(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSnapshot: (...args: any[]) => mockOnSnapshot(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateDoc: (...args: any[]) => mockUpdateDoc(...args),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deleteDoc: (...args: any[]) => mockDeleteDoc(...args),
 }));
 
@@ -75,6 +84,7 @@ describe('useNotifications', () => {
   });
 
   it('calcula contagem de não-lidos corretamente', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
       onNext({
         docs: [
@@ -127,6 +137,7 @@ describe('useNotifications', () => {
   });
 
   it('markAsRead atualiza o documento da notificação', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
       onNext({ docs: [] });
       return vi.fn();
@@ -142,6 +153,7 @@ describe('useNotifications', () => {
   });
 
   it('markAllAsRead atualiza todas as notificações não-lidas', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
       onNext({
         docs: [
@@ -198,6 +210,7 @@ describe('useNotifications', () => {
   });
 
   it('deleteNotification remove o documento', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnSnapshot.mockImplementation((q: any, onNext: any) => {
       onNext({ docs: [] });
       return vi.fn();
@@ -213,6 +226,7 @@ describe('useNotifications', () => {
   });
 
   it('trata erros do snapshot', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockOnSnapshot.mockImplementation((q: any, onNext: any, onError: any) => {
       onError(new Error('Notification error'));
       return vi.fn();

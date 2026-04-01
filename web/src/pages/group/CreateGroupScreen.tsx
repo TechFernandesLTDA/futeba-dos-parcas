@@ -33,7 +33,7 @@ export const CreateGroupScreen: React.FC = () => {
   useDocumentTitle('Criar Grupo');
   const navigate = useNavigate();
   const theme = useTheme();
-  const { currentUser } = useAuth();
+  useAuth();
 
   const { createGroup, loading, error } = useCreateGroup();
   const { showSuccess, showError } = useToast();
@@ -45,6 +45,7 @@ export const CreateGroupScreen: React.FC = () => {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field]) {

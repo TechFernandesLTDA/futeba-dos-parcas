@@ -8,7 +8,8 @@ import {
   getDocs,
   startAfter,
   DocumentSnapshot,
-  QueryConstraint
+  QueryConstraint,
+  WhereFilterOp
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
@@ -21,10 +22,10 @@ interface UsePaginatedQueryOptions {
   pageSize?: number;
   orderByField?: string;
   orderDirection?: 'asc' | 'desc';
-  whereClauses?: [string, any, any][];
+  whereClauses?: [string, string, unknown][];
 }
 
-export function usePaginatedQuery<T = any>(options: UsePaginatedQueryOptions) {
+export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePaginatedQueryOptions) {
   const {
     collectionName,
     pageSize = 20,
@@ -49,7 +50,7 @@ export function usePaginatedQuery<T = any>(options: UsePaginatedQueryOptions) {
       const constraints: QueryConstraint[] = [];
 
       whereClauses.forEach(([field, op, value]) => {
-        constraints.push(where(field, op, value));
+        constraints.push(where(field, op as WhereFilterOp, value));
       });
 
       if (orderByField) {

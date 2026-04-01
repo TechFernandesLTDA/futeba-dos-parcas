@@ -226,9 +226,9 @@ export function useCreateGroup() {
         await batch.commit();
         setLoading(false);
         return groupRef.id;
-      } catch (err: any) {
+      } catch (err) {
         logger.error('Error creating group:', err);
-        setError(err.message);
+        setError((err as Error).message);
         setLoading(false);
         throw err;
       }
@@ -318,9 +318,9 @@ export function useInvitePlayers() {
 
         setLoading(false);
         return code;
-      } catch (err: any) {
+      } catch (err) {
         logger.error('Error generating invite:', err);
-        setError(err.message);
+        setError((err as Error).message);
         setLoading(false);
         throw err;
       }
@@ -391,9 +391,9 @@ export function useInvitePlayers() {
         await batch.commit();
         setLoading(false);
         return groupId;
-      } catch (err: any) {
+      } catch (err) {
         logger.error('Error joining group:', err);
-        setError(err.message);
+        setError((err as Error).message);
         setLoading(false);
         throw err;
       }

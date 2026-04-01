@@ -47,6 +47,7 @@ import androidx.core.net.toUri
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import java.util.Locale
+import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -248,9 +249,27 @@ private fun ProfileContent(
         )
     }
 
-    LazyColumn(
+    val windowSizeClass = rememberWindowSizeClass()
+
+    // Em tablets, centraliza o conteúdo com largura máxima para leitura confortável
+    Box(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxHeight()
+            .then(
+                if (!windowSizeClass.isCompact) {
+                    Modifier.widthIn(max = windowSizeClass.contentMaxWidth)
+                } else {
+                    Modifier.fillMaxWidth()
+                }
+            ),
+        contentPadding = PaddingValues(
+            horizontal = windowSizeClass.horizontalPadding,
+            vertical = 8.dp
+        ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Header: Avatar, Nome, Role
@@ -361,6 +380,7 @@ private fun ProfileContent(
             )
         }
     }
+    } // fecha Box adaptativo
 }
 
 /**

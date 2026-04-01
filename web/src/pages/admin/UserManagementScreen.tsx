@@ -5,9 +5,7 @@ import {
   Container,
   Typography,
   Card,
-  CardContent,
   IconButton,
-  Avatar,
   List,
   ListItem,
   ListItemAvatar,
@@ -16,7 +14,6 @@ import {
   Divider,
   Button,
   Chip,
-  Skeleton,
   useTheme,
   alpha,
   Dialog,
@@ -24,20 +21,14 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  CircularProgress,
   Alert,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
-  Person as PersonIcon,
-  Block as BlockIcon,
-  Delete as DeleteIcon,
   AdminPanelSettings as AdminIcon,
   Search as SearchIcon,
-  Check as CheckIcon,
-  Close as CloseIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, limit, getDocs, doc, getDoc, updateDoc, deleteDoc, where } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -63,7 +54,7 @@ export const UserManagementScreen: React.FC = () => {
   useDocumentTitle('Gerenciar Usuários');
   const navigate = useNavigate();
   const theme = useTheme();
-  const { user: currentUser } = useAuth();
+  useAuth();
 
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +72,7 @@ export const UserManagementScreen: React.FC = () => {
         const snapshot = await getDocs(q);
 
         const usersData = snapshot.docs.map((d) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(d.data()) as Record<string, any>;
           return {
             id: d.id,
@@ -119,8 +111,8 @@ export const UserManagementScreen: React.FC = () => {
       );
       setDialogOpen(false);
       setSelectedUser(null);
-    } catch (error: any) {
-      setError(error?.message || 'Erro ao atualizar role');
+    } catch (error) {
+      setError((error as Error)?.message || 'Erro ao atualizar role');
     } finally {
       setActionLoading(false);
     }

@@ -41,6 +41,7 @@ import com.futebadosparcas.ui.components.lists.RankingItemShimmer
 import com.futebadosparcas.ui.components.FutebaTopBar
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -149,8 +150,23 @@ fun LeagueContent(
         }
     }
 
-    LazyColumn(
+    val windowSizeClass = rememberWindowSizeClass()
+
+    // Em tablets, centraliza o conteúdo com largura máxima para legibilidade
+    Box(
         modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
+    ) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxHeight()
+            .then(
+                if (!windowSizeClass.isCompact) {
+                    Modifier.widthIn(max = windowSizeClass.contentMaxWidth)
+                } else {
+                    Modifier.fillMaxWidth()
+                }
+            ),
         // Adiciona contentPadding para melhor performance de scroll
         contentPadding = PaddingValues(bottom = 16.dp)
     ) {
@@ -226,6 +242,7 @@ fun LeagueContent(
             }
         }
     }
+    } // fecha Box adaptativo
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -287,18 +287,9 @@ service cloud.firestore {
       return request.resource.data[field] == request.time;
     }
 
-    // PLACEHOLDER: Verifica se um documento de rate limit existe e nao expirou
-    // Uso: armazenar ultimo timestamp de acao em /rate_limits/{userId}_{action}
-    // Cloud Functions devem criar/atualizar esses documentos
-    // PERF_001 - Fase 3: Implementar verificação real
-    function isWithinRateLimit(action, maxPerMinute) {
-      // NOTA: Esta funcao requer um documento de rate limit criado por Cloud Functions
-      // O documento deve ter: last_action_time (timestamp), action_count (number)
-      // Cloud Functions devem resetar action_count a cada minuto
-      //
-      // Por enquanto, sempre retorna true (rate limiting real via Cloud Functions + App Check)
-      return true;
-    }
+    // NOTA: Rate limiting real é aplicado por Cloud Functions + App Check.
+    // Esta função foi removida pois sempre retornava true e induzia falsa sensação de segurança.
+    // Fase 3 (PERF_001): Implementar via /rate_limits/{userId}_{action} + Cloud Functions.
 
     // ============================================
     // COLECAO: users

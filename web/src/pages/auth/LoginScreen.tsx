@@ -52,7 +52,7 @@ export function LoginScreen() {
     try {
       await signIn(email, password);
       navigate('/');
-    } catch (err: any) {
+    } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao fazer login. Tente novamente'));
     } finally {
       setLoading(false);
@@ -66,7 +66,7 @@ export function LoginScreen() {
     try {
       await signInWithGoogle();
       navigate('/');
-    } catch (err: any) {
+    } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));
     } finally {
       setLoading(false);

@@ -6,12 +6,18 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
@@ -31,6 +37,8 @@ import com.futebadosparcas.domain.ranking.PostGameEventEmitter
 import com.futebadosparcas.domain.repository.NotificationRepository
 import kotlinx.coroutines.flow.collectLatest
 import com.futebadosparcas.ui.adaptive.WindowSizeClass
+import com.futebadosparcas.ui.adaptive.WindowWidthSizeClass
+import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.navigation.AppNavHost
 import com.futebadosparcas.ui.navigation.Screen
 import com.futebadosparcas.ui.theme.CoilConfig
@@ -189,7 +197,11 @@ private fun SetupSystemBars(isDark: Boolean) {
 }
 
 /**
- * Tela principal com navegação Compose.
+ * Tela principal com navegação Compose adaptativa.
+ *
+ * - Compact (< 600dp): NavigationBar (bottom)
+ * - Medium (600–839dp): NavigationRail (lateral)
+ * - Expanded (>= 840dp): NavigationRail com labels visíveis (lateral)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -201,23 +213,23 @@ fun MainScreen(
 ) {
     val context = LocalContext.current
     val navController = androidx.navigation.compose.rememberNavController()
-    val bottomNavItems = rememberBottomNavItems()
+    val navItems = rememberBottomNavItems()
+    val windowSizeClass = rememberWindowSizeClass()
 
-    // Get current back stack entry
+    // Entrada atual da pilha de navegação
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    // Determine if we should show bottom nav
-    val showBottomBar = currentDestination?.route in bottomNavItems.map { it.route }
+    // Exibe navegação apenas nas rotas raiz
+    val showNavigation = currentDestination?.route in navItems.map { it.route }
 
-    // Snackbar host state para badge notifications
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Notification count - coletado do repositório
+    // Contagem de notificações não lidas
     val notificationCount by notificationRepository.getUnreadCountFlow()
         .collectAsStateWithLifecycle(initialValue = 0)
 
-    // Observar novos badges e mostrar snackbar
+    // Exibe snackbar ao desbloquear badge
     LaunchedEffect(Unit) {
         badgeAwarder.newBadges.collectLatest { badge ->
             snackbarHostState.showSnackbar(
@@ -227,7 +239,7 @@ fun MainScreen(
         }
     }
 
-    // Handle back press
+    // Trata o botão voltar
     BackHandler(enabled = true) {
         if (currentDestination?.route != Screen.Home.route) {
             navController.popBackStack()
@@ -236,41 +248,67 @@ fun MainScreen(
         }
     }
 
-    Scaffold(
-        modifier = Modifier,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        bottomBar = {
-            if (showBottomBar) {
-                FutebaBottomBar(
-                    items = bottomNavItems,
-                    currentRoute = currentDestination?.route,
-                    notificationCount = notificationCount,
-                    onNavigate = { route ->
-                        // Navigate to the selected tab
-                        if (route != currentDestination?.route) {
-                            navController.navigate(route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    }
-                )
+    // Callback de navegação com single-top e save/restore state
+    val onNavigate: (String) -> Unit = { route ->
+        if (route != currentDestination?.route) {
+            navController.navigate(route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
             }
         }
-    ) { innerPadding ->
-        // Padding do Scaffold aplicado ao NavHost
-        // Cada tela pode ter Scaffold adicional para controle granular
-        Box(modifier = Modifier.padding(innerPadding)) {
-            AppNavHost(navController = navController)
+    }
+
+    // Layout adaptativo: Rail lateral em Medium/Expanded, BottomBar em Compact
+    if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.COMPACT) {
+        // Compact: Scaffold com NavigationBar no fundo
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            bottomBar = {
+                if (showNavigation) {
+                    FutebaBottomBar(
+                        items = navItems,
+                        currentRoute = currentDestination?.route,
+                        notificationCount = notificationCount,
+                        onNavigate = onNavigate
+                    )
+                }
+            }
+        ) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding)) {
+                AppNavHost(navController = navController)
+            }
+        }
+    } else {
+        // Medium/Expanded: NavigationRail lateral + Scaffold sem bottomBar
+        Row(modifier = Modifier.fillMaxSize()) {
+            if (showNavigation) {
+                FutebaNavigationRail(
+                    items = navItems,
+                    currentRoute = currentDestination?.route,
+                    notificationCount = notificationCount,
+                    showLabels = windowSizeClass.widthSizeClass == WindowWidthSizeClass.EXPANDED,
+                    onNavigate = onNavigate
+                )
+            }
+
+            Scaffold(
+                modifier = Modifier.weight(1f),
+                snackbarHost = { SnackbarHost(snackbarHostState) }
+            ) { innerPadding ->
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    AppNavHost(navController = navController)
+                }
+            }
         }
     }
 }
 
 /**
- * BottomBar Compose.
+ * NavigationBar para telas compactas (telefone portrait).
  */
 @Composable
 private fun FutebaBottomBar(
@@ -308,6 +346,59 @@ private fun FutebaBottomBar(
                 selected = selected,
                 onClick = { onNavigate(item.route) },
                 alwaysShowLabel = true
+            )
+        }
+    }
+}
+
+/**
+ * NavigationRail para telas médias e expandidas (tablet, landscape).
+ *
+ * Em Medium: ícones sem labels.
+ * Em Expanded: ícones com labels.
+ */
+@Composable
+private fun FutebaNavigationRail(
+    items: List<BottomNavItem>,
+    currentRoute: String?,
+    notificationCount: Int,
+    showLabels: Boolean,
+    onNavigate: (String) -> Unit
+) {
+    NavigationRail(
+        modifier = Modifier.fillMaxHeight(),
+        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    ) {
+        Spacer(modifier = Modifier.height(8.dp))
+
+        items.forEach { item ->
+            val selected = currentRoute == item.route
+            val badge = if (item.route == Screen.Profile.route && notificationCount > 0) {
+                notificationCount
+            } else {
+                null
+            }
+
+            NavigationRailItem(
+                selected = selected,
+                onClick = { onNavigate(item.route) },
+                icon = {
+                    BadgedBox(badge = {
+                        if (badge != null) {
+                            Badge { Text(text = badge.toString()) }
+                        }
+                    }) {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = if (!showLabels) item.label else null
+                        )
+                    }
+                },
+                label = if (showLabels) {
+                    { Text(item.label) }
+                } else null,
+                alwaysShowLabel = showLabels
             )
         }
     }

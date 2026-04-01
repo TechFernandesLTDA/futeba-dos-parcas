@@ -5,16 +5,13 @@ import {
   Container,
   Typography,
   IconButton,
-  Button,
   Avatar,
   Grid,
   Paper,
-  Slider,
   ToggleButton,
   ToggleButtonGroup,
   useTheme,
   alpha,
-  Chip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -22,7 +19,7 @@ import {
   Refresh as RefreshIcon,
   SportsSoccer as SoccerIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingState } from '../../components/common/GameCard';
@@ -52,7 +49,7 @@ export const TacticalBoardScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  const { user } = useAuth();
+  useAuth();
 
   const [players, setPlayers] = useState<TacticalPlayer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +63,9 @@ export const TacticalBoardScreen: React.FC = () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists()) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const teamA = (data.teamA || []).map((p: any, i: number) => ({
             id: p.id || `a-${i}`,
             name: p.name || 'Jogador',
@@ -75,6 +74,7 @@ export const TacticalBoardScreen: React.FC = () => {
             y: FORMATIONS[0].positions[i]?.[1] || 70,
             team: 'A' as const,
           }));
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const teamB = (data.teamB || []).map((p: any, i: number) => ({
             id: p.id || `b-${i}`,
             name: p.name || 'Jogador',

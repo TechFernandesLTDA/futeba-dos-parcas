@@ -494,9 +494,9 @@ async function sendMulticastInChunks(
           },
         };
 
+      const messaging = getFcm();
       const response =
-        await (getFcm() as any)
-          .sendEachForMulticast(message);
+        await messaging.sendEachForMulticast(message);
       sent += response.successCount;
       failed += response.failureCount;
 
@@ -508,7 +508,8 @@ async function sendMulticastInChunks(
         }[] = [];
 
         response.responses.forEach(
-          (sendResponse: any, index: number) => {
+          (sendResponse: admin.messaging.SendResponse,
+            index: number) => {
             if (
               !sendResponse.success &&
               sendResponse.error

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { ToastProvider, useToast } from './ToastContext';
@@ -8,7 +8,7 @@ const theme = createTheme();
 
 // Componente auxiliar para disparar toasts
 function ToastTrigger() {
-  const { showToast, showSuccess, showError, showWarning, showInfo, dismissToast } = useToast();
+  const { showToast, showSuccess, showError, showWarning, showInfo } = useToast();
   return (
     <div>
       <button onClick={() => showSuccess('Sucesso!')}>success</button>

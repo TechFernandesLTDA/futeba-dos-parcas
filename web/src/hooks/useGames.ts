@@ -194,9 +194,9 @@ export function useConfirmPresence() {
         await setDoc(confirmationRef, confirmationData);
         setLoading(false);
         return true;
-      } catch (err: any) {
+      } catch (err) {
         logger.error('Error confirming presence:', err);
-        setError(err.message);
+        setError((err as Error).message);
         setLoading(false);
         throw err;
       }
@@ -228,9 +228,9 @@ export function useConfirmPresence() {
         await deleteDoc(confirmationRef);
         setLoading(false);
         return true;
-      } catch (err: any) {
+      } catch (err) {
         logger.error('Error cancelling presence:', err);
-        setError(err.message);
+        setError((err as Error).message);
         setLoading(false);
         throw err;
       }
@@ -261,6 +261,7 @@ export function useCreateGame() {
         const snakeGameData = camelToSnake(gameData);
 
         // Remover campos undefined (Firestore não aceita)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const cleanData: Record<string, any> = {};
         for (const [key, value] of Object.entries(snakeGameData)) {
           if (value !== undefined) {
@@ -290,9 +291,9 @@ export function useCreateGame() {
         const docRef = await addDoc(gamesRef, newGame);
         setLoading(false);
         return docRef.id;
-      } catch (err: any) {
+      } catch (err) {
         logger.error('Error creating game:', err);
-        setError(err.message);
+        setError((err as Error).message);
         setLoading(false);
         throw err;
       }
@@ -341,9 +342,9 @@ export function useUpdateGameStatus() {
 
         setLoading(false);
         return true;
-      } catch (err: any) {
+      } catch (err) {
         logger.error('Error updating game status:', err);
-        setError(err.message);
+        setError((err as Error).message);
         setLoading(false);
         throw err;
       }

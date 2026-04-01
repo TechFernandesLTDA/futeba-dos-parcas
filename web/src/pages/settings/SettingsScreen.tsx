@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -10,7 +10,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  ListItemSecondaryAction,
   IconButton,
   Switch,
   FormControlLabel,
@@ -23,12 +22,10 @@ import {
   DialogContentText,
   DialogActions,
   useTheme,
-  alpha,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   Person as PersonIcon,
-  Notifications as NotificationsIcon,
   Palette as PaletteIcon,
   Info as InfoIcon,
   Logout as LogoutIcon,
@@ -69,13 +66,7 @@ export const SettingsScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      loadSettings();
-    }
-  }, [user]);
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       const settingsRef = doc(db, 'users', user!.id, 'settings');
       const docSnap = await getDoc(settingsRef);
@@ -86,7 +77,13 @@ export const SettingsScreen: React.FC = () => {
       logger.error('Error loading settings:', error);
     }
     setLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadSettings();
+    }
+  }, [user, loadSettings]);
 
   const handleSaveSettings = async () => {
     if (!user) return;

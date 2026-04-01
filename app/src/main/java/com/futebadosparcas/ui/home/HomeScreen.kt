@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.layout.WindowInsets
@@ -42,6 +44,7 @@ import com.futebadosparcas.domain.model.UserChallengeProgress
 import com.futebadosparcas.domain.model.UserBadge
 import com.futebadosparcas.ui.components.*
 import com.futebadosparcas.ui.home.components.*
+import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
@@ -242,11 +245,25 @@ private fun HomeSuccessContent(
             streak != null
     } }.value
 
+    val windowSizeClass = rememberWindowSizeClass()
+
+    // Em tablets, centraliza o conteúdo com largura máxima para leitura confortável
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
+    ) {
     LazyColumn(
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxHeight()
+            .then(
+                if (!windowSizeClass.isCompact) {
+                    Modifier.widthIn(max = windowSizeClass.contentMaxWidth)
+                } else {
+                    Modifier.fillMaxWidth()
+                }
+            ),
         verticalArrangement = Arrangement.Top,
-        contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp) // Padding reduzido
+        contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
     ) {
         // Status de Sincronização
         item(key = "sync_status") {
@@ -357,7 +374,8 @@ private fun HomeSuccessContent(
                 )
             }
         }
-    }
+    } // fecha LazyColumn
+    } // fecha Box adaptativo
 }
 
 /**

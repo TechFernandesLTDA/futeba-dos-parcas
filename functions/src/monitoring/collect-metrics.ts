@@ -76,13 +76,19 @@ export const collectHourlyMetrics =
 
       const gamesLast24h = await db
         .collection("games")
-        .where("created_at", ">=", admin.firestore.Timestamp.fromDate(oneDayAgo))
+        .where(
+          "created_at", ">=",
+          admin.firestore.Timestamp.fromDate(oneDayAgo)
+        )
         .count().get();
 
       const finishedGamesLast24h = await db
         .collection("games")
         .where("status", "==", "FINISHED")
-        .where("xp_processed_at", ">=", admin.firestore.Timestamp.fromDate(oneDayAgo))
+        .where(
+          "xp_processed_at", ">=",
+          admin.firestore.Timestamp.fromDate(oneDayAgo)
+        )
         .count().get();
 
       // Usuários ativos (últimos 7 dias)
@@ -91,13 +97,19 @@ export const collectHourlyMetrics =
 
       const activeUsersLast7d = await db
         .collection("users")
-        .where("updated_at", ">=", admin.firestore.Timestamp.fromDate(sevenDaysAgo))
+        .where(
+          "updated_at", ">=",
+          admin.firestore.Timestamp.fromDate(sevenDaysAgo)
+        )
         .count().get();
 
       // XP processado (últimas 24h)
       const xpLogsLast24h = await db
         .collection("xp_logs")
-        .where("created_at", ">=", admin.firestore.Timestamp.fromDate(oneDayAgo))
+        .where(
+          "created_at", ">=",
+          admin.firestore.Timestamp.fromDate(oneDayAgo)
+        )
         .count().get();
 
       // Buscar métrica anterior para deltas

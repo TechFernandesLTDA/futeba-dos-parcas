@@ -46,10 +46,11 @@ export function ForgotPasswordScreen() {
     try {
       await resetPassword(email);
       setSuccess(true);
-    } catch (err: any) {
-      if (err.code === 'auth/user-not-found') {
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      if (code === 'auth/user-not-found') {
         setError('Email não encontrado');
-      } else if (err.code === 'auth/invalid-email') {
+      } else if (code === 'auth/invalid-email') {
         setError('Email inválido');
       } else {
         setError('Erro ao enviar email de recuperação');

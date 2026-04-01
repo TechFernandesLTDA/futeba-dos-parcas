@@ -10,7 +10,6 @@ import {
   Avatar,
   CircularProgress,
   useTheme,
-  alpha,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -20,7 +19,7 @@ import {
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { getAuth, updateProfile } from 'firebase/auth';
+import { updateProfile } from 'firebase/auth';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 

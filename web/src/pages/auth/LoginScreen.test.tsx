@@ -27,6 +27,7 @@ vi.mock('../../contexts/AuthContext', () => ({
 }));
 
 vi.mock('../../utils/firebaseErrors', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getAuthErrorMessage: (err: any, fallback: string) => {
     if (err?.code === 'auth/invalid-credential') return 'Email ou senha inválidos';
     return fallback || 'Erro inesperado';

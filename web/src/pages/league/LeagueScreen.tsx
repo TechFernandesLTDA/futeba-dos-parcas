@@ -11,21 +11,16 @@ import {
   Tabs,
   Tab,
   Chip,
-  Skeleton,
   useTheme,
   alpha,
-  Avatar,
   List,
-  Divider,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   EmojiEvents as TrophyIcon,
-  TrendingUp as TrendingIcon,
-  SportsSoccer as SoccerIcon,
   MilitaryTech as MilitaryTechIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, limit, onSnapshot, where, getDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -67,6 +62,7 @@ export const LeagueScreen: React.FC = () => {
       const playersData = await Promise.all(
         snapshot.docs.map(async (docSnapshot) => {
           const raw = docSnapshot.data();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(raw) as Record<string, any>;
           const userId = data.userId || docSnapshot.id;
 
@@ -74,6 +70,7 @@ export const LeagueScreen: React.FC = () => {
           try {
             const userDoc = await getDoc(doc(db, 'users', userId));
             if (userDoc.exists()) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const d = snakeToCamel(userDoc.data()) as Record<string, any>;
               userData = { name: d.name || 'Jogador', photoUrl: d.photoUrl, xp: d.experiencePoints ?? 0 };
             }

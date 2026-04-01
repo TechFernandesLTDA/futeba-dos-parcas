@@ -99,8 +99,8 @@ export const GroupDetailScreen: React.FC = () => {
     try {
       const code = await generateInviteCode(groupId, group.name);
       setInviteCode(code);
-    } catch (err: any) {
-      setSnackbar({ show: true, message: err.message, severity: 'error' });
+    } catch (err) {
+      setSnackbar({ show: true, message: (err as Error).message, severity: 'error' });
     }
   };
 
@@ -131,8 +131,8 @@ export const GroupDetailScreen: React.FC = () => {
       setDeleteDialogOpen(false);
       setSnackbar({ show: true, message: 'Grupo excluído com sucesso', severity: 'success' });
       setTimeout(() => navigate('/'), 1000);
-    } catch (err: any) {
-      setSnackbar({ show: true, message: err?.message || 'Erro ao excluir grupo', severity: 'error' });
+    } catch (err) {
+      setSnackbar({ show: true, message: (err as Error)?.message || 'Erro ao excluir grupo', severity: 'error' });
     } finally {
       setDeleteLoading(false);
     }

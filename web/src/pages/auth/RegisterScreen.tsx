@@ -81,7 +81,7 @@ export function RegisterScreen() {
     try {
       await signUp(email, password, name.trim());
       navigate('/');
-    } catch (err: any) {
+    } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao criar conta. Tente novamente'));
     } finally {
       setLoading(false);
@@ -95,7 +95,7 @@ export function RegisterScreen() {
     try {
       await signInWithGoogle();
       navigate('/');
-    } catch (err: any) {
+    } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));
     } finally {
       setLoading(false);

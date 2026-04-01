@@ -34,6 +34,7 @@ export const useLeague = (currentUserId?: string, division?: LeagueDivision) => 
         const playersData = await Promise.all(
           snapshot.docs.map(async (docSnapshot) => {
             const raw = docSnapshot.data();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const data = snakeToCamel(raw) as Record<string, any>;
             const userId = data.userId || raw.user_id || docSnapshot.id;
 
