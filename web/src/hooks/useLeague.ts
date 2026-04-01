@@ -27,7 +27,7 @@ export const useLeague = (currentUserId?: string, division?: LeagueDivision) => 
 
   useEffect(() => {
     const seasonRef = collection(db, 'season_participation');
-    let q = query(seasonRef, orderBy('points', 'desc'), limit(100));
+    const q = query(seasonRef, orderBy('points', 'desc'), limit(100));
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       try {
@@ -44,8 +44,8 @@ export const useLeague = (currentUserId?: string, division?: LeagueDivision) => 
                 const d = userDoc.data();
                 userData = { name: d.name || 'Jogador', photoUrl: d.photo_url || d.photoUrl };
               }
-            } catch {
-              // ignore
+            } catch (_e) {
+              // ignorar erro ao buscar dados do usuário
             }
 
             return {

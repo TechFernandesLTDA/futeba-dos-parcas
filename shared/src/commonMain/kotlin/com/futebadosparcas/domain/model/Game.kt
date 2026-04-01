@@ -114,6 +114,8 @@ data class Game(
 
     // Processamento
     @SerialName("xp_processed") val xpProcessed: Boolean = false,
+    // Flag de lock: Cloud Function está processando XP (evita race condition com Android)
+    @SerialName("xp_processing") val xpProcessing: Boolean = false,
     @SerialName("mvp_id") val mvpId: String? = null,
 
     // Placar

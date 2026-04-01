@@ -79,7 +79,9 @@ export const RankingScreen: React.FC = () => {
               const d = snakeToCamel(userDoc.data()) as Record<string, any>;
               userData = { name: d.name || 'Jogador', photoUrl: d.photoUrl, xp: d.experiencePoints ?? 0 };
             }
-          } catch (e) {}
+          } catch (_e) {
+              // ignorar erro ao buscar dados do usuário
+          }
 
           return {
             id: docSnapshot.id,

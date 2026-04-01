@@ -26,6 +26,7 @@ module.exports = {
     "test/**/*", // Testes não seguem Google style
     "jest.config.js", // Config JS sem tsconfig
     ".eslintrc.js", // Config JS não precisa de lint
+    "src/**/*.d.ts", // Arquivos de declaração de tipo apenas
   ],
   plugins: [
     "@typescript-eslint",

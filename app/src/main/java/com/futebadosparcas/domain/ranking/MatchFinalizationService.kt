@@ -92,9 +92,10 @@ class MatchFinalizationService constructor(
                 val game = gameDoc.toObject(Game::class.java)
                     ?: throw Exception("Jogo nao encontrado")
 
-                // 2. Verificar se ja foi processado (check atômico)
-                if (game.xpProcessed) {
-                    AppLogger.d(TAG) { "Jogo $gameId ja foi processado anteriormente" }
+                // 2. Verificar se já foi processado OU está sendo processado pela Cloud Function
+                // (evita race condition entre Android e CF que causava XP duplicado)
+                if (game.xpProcessed || game.xpProcessing) {
+                    AppLogger.d(TAG) { "Jogo $gameId ja foi processado ou esta em processamento (processed=${game.xpProcessed}, processing=${game.xpProcessing})" }
                     return@runTransaction GameProcessingResult(gameId, true, emptyList(), "Jogo ja processado")
                 }
 
@@ -407,8 +408,9 @@ class MatchFinalizationService constructor(
         ))
 
         // 13. Update User (XP, Level, Milestones)
+        // Usar FieldValue.increment() para evitar lost update em escritas concorrentes
         val userUpdates = mutableMapOf<String, Any>(
-            "experience_points" to newXp,
+            "experience_points" to FieldValue.increment(totalXpEarned),
             "level" to newLevel
         )
         if (milestoneResult.newMilestones.isNotEmpty()) {
