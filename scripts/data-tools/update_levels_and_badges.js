@@ -71,7 +71,7 @@ const BADGE_TYPES = [
 async function updatePlayerLevel(userId, levelData) {
   await db.collection('users').doc(userId).update({
     level: levelData.level,
-    experiencePoints: levelData.xp,
+    experience_points: levelData.xp,
     levelName: levelData.levelName
   });
   console.log(`✅ ${userId} → Nível ${levelData.level} (${levelData.levelName})`);

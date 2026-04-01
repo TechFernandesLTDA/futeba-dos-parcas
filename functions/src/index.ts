@@ -1283,10 +1283,14 @@ export const onGameStatusUpdate = onDocumentUpdated(
           ensureBatchCapacity(10);
 
           // 1. Update User
+          // Usar FieldValue.increment() para evitar lost update
+          // em escritas concorrentes (level usa valor absoluto
+          // pois o lock de xp_processing garante exclusividade)
           const userUpdate: Record<
             string, unknown
           > = {
-            experience_points: finalXp,
+            experience_points: admin.firestore
+              .FieldValue.increment(xp),
             level: newLevel,
             updated_at: now,
           };

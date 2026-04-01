@@ -125,6 +125,10 @@ data class Game(
     @get:PropertyName("xp_processed")
     @set:PropertyName("xp_processed")
     var xpProcessed: Boolean = false,
+    // Flag de lock: Cloud Function está processando XP (evita race condition com Android)
+    @get:PropertyName("xp_processing")
+    @set:PropertyName("xp_processing")
+    var xpProcessing: Boolean = false,
     // Timestamp de quando o XP foi processado
     @get:PropertyName("xp_processed_at")
     @set:PropertyName("xp_processed_at")
