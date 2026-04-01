@@ -493,8 +493,9 @@ export async function sendNotificationToUsers(
           },
         };
 
+      const messaging = getFcm();
       const response =
-        await (getFcm() as any).sendEachForMulticast(message);
+        await messaging.sendEachForMulticast(message);
       totalSuccess += response.successCount;
 
       // Processar falhas individuais
@@ -506,7 +507,8 @@ export async function sendNotificationToUsers(
         );
 
         response.responses.forEach(
-          (sendResponse: any, index: number) => {
+          (sendResponse: admin.messaging.SendResponse,
+            index: number) => {
             if (
               !sendResponse.success &&
               sendResponse.error

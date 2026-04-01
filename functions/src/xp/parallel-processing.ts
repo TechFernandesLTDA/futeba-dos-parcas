@@ -674,7 +674,7 @@ export const processXpBatch =
     {
       // SEGURANÇA: Exigir autenticação e App Check
       // Rate limiting de game_events é aplicado na camada de Cloud Functions
-      // via middleware rate-limiter (não nas Security Rules) — padrão do projeto
+      // via middleware rate-limiter (não nas Security Rules) — padrão
       enforceAppCheck: true,
       consumeAppCheckToken: true,
     },
