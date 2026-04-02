@@ -6,6 +6,11 @@ import {
 import {
   FIRESTORE_WHERE_IN_LIMIT,
   FIRESTORE_BATCH_SAFE_LIMIT,
+  FUNCTION_REGION,
+  MAX_XP_PER_GAME,
+  MAX_GOALS_PER_GAME,
+  MAX_ASSISTS_PER_GAME,
+  MAX_SAVES_PER_GAME,
 } from "./constants";
 import {
   getAllBadgesToAward,
@@ -175,11 +180,7 @@ const DEFAULT_SETTINGS: GamificationSettings = {
   xp_clean_sheet: 15,
 };
 
-// Limites Anti-Cheat (Tetos de XP por jogo)
-const MAX_GOALS_PER_GAME = 15;
-const MAX_ASSISTS_PER_GAME = 10;
-const MAX_SAVES_PER_GAME = 30;
-const MAX_XP_PER_GAME = 500;
+// Limites Anti-Cheat importados de ./constants
 
 // Penalidade "Bola Murcha" (sync XPCalculator.kt)
 const XP_WORST_PLAYER_PENALTY = -10;
@@ -660,7 +661,7 @@ async function fetchAllStreaks(
 // ==========================================
 
 export const onGameStatusUpdate = onDocumentUpdated(
-  "games/{gameId}",
+  {document: "games/{gameId}", region: FUNCTION_REGION},
   async (event) => {
     if (!event.data) return;
 
@@ -2041,7 +2042,7 @@ export const recalculateLeagueRating =
 // ==========================================
 
 export const onGameDeleted = onDocumentDeleted(
-  "games/{gameId}",
+  {document: "games/{gameId}", region: FUNCTION_REGION},
   async (event) => {
     const gameId = event.params.gameId;
     console.log(
@@ -2204,7 +2205,7 @@ export const onGameDeleted = onDocumentDeleted(
 // ==========================================
 
 export const onGroupDeleted = onDocumentDeleted(
-  "groups/{groupId}",
+  {document: "groups/{groupId}", region: FUNCTION_REGION},
   async (event) => {
     const groupId = event.params.groupId;
     console.log(

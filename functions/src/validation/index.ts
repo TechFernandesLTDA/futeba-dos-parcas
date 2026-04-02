@@ -8,6 +8,12 @@
  */
 
 import * as admin from "firebase-admin";
+import {
+  MAX_XP_PER_GAME,
+  MAX_GOALS_PER_GAME,
+  MAX_ASSISTS_PER_GAME,
+  MAX_SAVES_PER_GAME,
+} from "../constants";
 
 // ============================================
 // TIPOS E INTERFACES
@@ -62,11 +68,11 @@ export const VALIDATION_CONSTANTS = {
   LEVEL_MIN: 0,
   LEVEL_MAX: 10,
 
-  // Anti-cheat limits
-  MAX_GOALS_PER_GAME: 15,
-  MAX_ASSISTS_PER_GAME: 10,
-  MAX_SAVES_PER_GAME: 30,
-  MAX_XP_PER_GAME: 500,
+  // Anti-cheat limits (importados de constants.ts)
+  MAX_GOALS_PER_GAME,
+  MAX_ASSISTS_PER_GAME,
+  MAX_SAVES_PER_GAME,
+  MAX_XP_PER_GAME,
 
   // Limites de placar (P0 #30)
   MAX_SCORE: 100,

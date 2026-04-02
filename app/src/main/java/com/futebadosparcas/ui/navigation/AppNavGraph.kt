@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -120,7 +121,11 @@ sealed class Screen(
 
     // Locations
     data object LocationsMap : Screen("locations_map", titleResId = R.string.location_map_title)
-    data object LocationDetail : Screen("location_detail", titleResId = R.string.location_detail)
+    data object LocationDetail : Screen("location_detail?locationId={locationId}", titleResId = R.string.location_detail) {
+        fun createRoute(locationId: String? = null) =
+            if (locationId != null) "location_detail?locationId=$locationId"
+            else "location_detail"
+    }
     data object ManageLocations : Screen("manage_locations", titleResId = R.string.manage_locations)
     data object FieldOwnerDashboard : Screen("field_owner_dashboard", titleResId = R.string.field_owner_dashboard)
 
@@ -576,8 +581,22 @@ fun AppNavHost(
             )
         }
 
-        composable(Screen.LocationDetail.route) {
+        composable(
+            route = Screen.LocationDetail.route,
+            arguments = listOf(navArgument("locationId") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            })
+        ) { backStackEntry ->
+            val locationId = backStackEntry.arguments?.getString("locationId")
             val viewModel: com.futebadosparcas.ui.locations.LocationDetailViewModel = koinViewModel()
+            // Carrega o local existente se locationId foi fornecido
+            LaunchedEffect(locationId) {
+                if (locationId != null) {
+                    viewModel.loadLocation(locationId)
+                }
+            }
             // LocationDetailScreen tem sua própria TopBar no Scaffold
             LocationDetailScreen(
                 viewModel = viewModel,
@@ -591,10 +610,10 @@ fun AppNavHost(
             ManageLocationsScreen(
                 viewModel = viewModel,
                 onLocationClick = { locationId ->
-                    navController.navigate(Screen.LocationDetail.route)
+                    navController.navigate(Screen.LocationDetail.createRoute(locationId))
                 },
                 onCreateLocationClick = {
-                    navController.navigate(Screen.LocationDetail.route)
+                    navController.navigate(Screen.LocationDetail.createRoute())
                 },
                 onNavigateBack = { navController.popBackStack() }
             )
@@ -607,10 +626,10 @@ fun AppNavHost(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLocation = { locationId ->
-                    navController.navigate(Screen.LocationDetail.route)
+                    navController.navigate(Screen.LocationDetail.createRoute(locationId))
                 },
                 onNavigateToAddLocation = {
-                    navController.navigate(Screen.LocationDetail.route)
+                    navController.navigate(Screen.LocationDetail.createRoute())
                 }
             )
         }

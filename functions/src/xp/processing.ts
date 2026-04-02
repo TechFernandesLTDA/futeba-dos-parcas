@@ -10,18 +10,16 @@
 
 import * as admin from "firebase-admin";
 import {logger} from "firebase-functions/v2";
+import {
+  MAX_XP_PER_GAME,
+  MIN_XP_PER_GAME,
+} from "../constants";
 
 const db = admin.firestore();
 
 // ==========================================
 // CONSTANTES DE VALIDAÇÃO
 // ==========================================
-
-/** XP máximo por jogo */
-const MAX_XP_PER_GAME = 500;
-
-/** XP mínimo possível (penalidades) */
-const MIN_XP_PER_GAME = -100;
 
 /** Nível máximo permitido no sistema */
 const MAX_LEVEL = 999;
@@ -393,6 +391,73 @@ export function validateAndSanitizeXpData(
 }
 
 // ==========================================
+// HELPER: SCHEMA DO XP LOG
+// ==========================================
+
+/**
+ * Constrói o objeto de dados para um documento
+ * xp_log. Centraliza o schema para evitar
+ * duplicação entre processXpIdempotent e
+ * processXpBatch.
+ *
+ * @param {string} transactionId - ID da transação
+ * @param {XpTransactionData} data - Dados XP
+ * @return {Record<string, unknown>} Documento
+ */
+function buildXpLogData(
+  transactionId: string,
+  data: XpTransactionData
+): Record<string, unknown> {
+  return {
+    transaction_id: transactionId,
+    user_id: data.userId,
+    game_id: data.gameId,
+    xp_earned: data.xpEarned,
+    xp_before: data.xpBefore,
+    xp_after: data.xpAfter,
+    level_before: data.levelBefore,
+    level_after: data.levelAfter,
+
+    // Breakdown
+    xp_participation:
+      data.breakdown.participation,
+    xp_goals: data.breakdown.goals,
+    xp_assists: data.breakdown.assists,
+    xp_saves: data.breakdown.saves,
+    xp_result: data.breakdown.result,
+    xp_mvp: data.breakdown.mvp,
+    xp_clean_sheet:
+      data.breakdown.cleanSheet,
+    xp_milestones:
+      data.breakdown.milestones,
+    xp_streak: data.breakdown.streak,
+    xp_penalty: data.breakdown.penalty,
+
+    // Metadata
+    goals: data.metadata.goals,
+    assists: data.metadata.assists,
+    saves: data.metadata.saves,
+    was_mvp: data.metadata.wasMvp,
+    was_clean_sheet:
+      data.metadata.wasCleanSheet,
+    was_worst_player:
+      data.metadata.wasWorstPlayer,
+    game_result:
+      data.metadata.gameResult,
+    milestones_unlocked:
+      data.metadata.milestonesUnlocked,
+
+    // Timestamps
+    created_at:
+      admin.firestore.FieldValue
+        .serverTimestamp(),
+    processed_at:
+      admin.firestore.FieldValue
+        .serverTimestamp(),
+  };
+}
+
+// ==========================================
 // GERAÇÃO DE TRANSACTION ID
 // ==========================================
 
@@ -594,53 +659,10 @@ export async function processXpIdempotent(
 
         // 2.4: Criar XP log com transaction_id
         const logRef = xpLogsRef.doc();
-        transaction.set(logRef, {
-          transaction_id: transactionId,
-          user_id: data.userId,
-          game_id: data.gameId,
-          xp_earned: data.xpEarned,
-          xp_before: data.xpBefore,
-          xp_after: data.xpAfter,
-          level_before: data.levelBefore,
-          level_after: data.levelAfter,
-
-          // Breakdown
-          xp_participation:
-            data.breakdown.participation,
-          xp_goals: data.breakdown.goals,
-          xp_assists: data.breakdown.assists,
-          xp_saves: data.breakdown.saves,
-          xp_result: data.breakdown.result,
-          xp_mvp: data.breakdown.mvp,
-          xp_clean_sheet:
-            data.breakdown.cleanSheet,
-          xp_milestones:
-            data.breakdown.milestones,
-          xp_streak: data.breakdown.streak,
-          xp_penalty: data.breakdown.penalty,
-
-          // Metadata
-          goals: data.metadata.goals,
-          assists: data.metadata.assists,
-          saves: data.metadata.saves,
-          was_mvp: data.metadata.wasMvp,
-          was_clean_sheet:
-            data.metadata.wasCleanSheet,
-          was_worst_player:
-            data.metadata.wasWorstPlayer,
-          game_result:
-            data.metadata.gameResult,
-          milestones_unlocked:
-            data.metadata.milestonesUnlocked,
-
-          // Timestamps
-          created_at:
-            admin.firestore.FieldValue
-              .serverTimestamp(),
-          processed_at:
-            admin.firestore.FieldValue
-              .serverTimestamp(),
-        });
+        transaction.set(
+          logRef,
+          buildXpLogData(transactionId, data)
+        );
 
         logger.info(
           "[XP_IDEMPOTENCY] Transação " +
@@ -874,47 +896,10 @@ export async function processXpBatch(
         const logRef = db
           .collection("xp_logs")
           .doc();
-        batch.set(logRef, {
-          transaction_id: transactionId,
-          user_id: data.userId,
-          game_id: data.gameId,
-          xp_earned: data.xpEarned,
-          xp_before: data.xpBefore,
-          xp_after: data.xpAfter,
-          level_before: data.levelBefore,
-          level_after: data.levelAfter,
-          xp_participation:
-            data.breakdown.participation,
-          xp_goals: data.breakdown.goals,
-          xp_assists: data.breakdown.assists,
-          xp_saves: data.breakdown.saves,
-          xp_result: data.breakdown.result,
-          xp_mvp: data.breakdown.mvp,
-          xp_clean_sheet:
-            data.breakdown.cleanSheet,
-          xp_milestones:
-            data.breakdown.milestones,
-          xp_streak: data.breakdown.streak,
-          xp_penalty: data.breakdown.penalty,
-          goals: data.metadata.goals,
-          assists: data.metadata.assists,
-          saves: data.metadata.saves,
-          was_mvp: data.metadata.wasMvp,
-          was_clean_sheet:
-            data.metadata.wasCleanSheet,
-          was_worst_player:
-            data.metadata.wasWorstPlayer,
-          game_result:
-            data.metadata.gameResult,
-          milestones_unlocked:
-            data.metadata.milestonesUnlocked,
-          created_at:
-            admin.firestore.FieldValue
-              .serverTimestamp(),
-          processed_at:
-            admin.firestore.FieldValue
-              .serverTimestamp(),
-        });
+        batch.set(
+          logRef,
+          buildXpLogData(transactionId, data)
+        );
 
         results.push({
           success: true,

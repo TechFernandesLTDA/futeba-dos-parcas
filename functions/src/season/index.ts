@@ -3,6 +3,7 @@ import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions/v2";
 import {
   FIRESTORE_BATCH_LIMIT,
+  FUNCTION_REGION,
 } from "../constants";
 
 const db = admin.firestore();
@@ -19,7 +20,7 @@ const db = admin.firestore();
  * @return {void}
  */
 export const checkSeasonEnd = onSchedule(
-  "every day 03:00",
+  {schedule: "every day 03:00", region: FUNCTION_REGION},
   async () => {
     logger.info(
       "[SEASON] Checking for seasons to close..."

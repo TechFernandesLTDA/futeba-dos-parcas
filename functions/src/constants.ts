@@ -9,6 +9,17 @@
  */
 
 // ==========================================
+// CLOUD FUNCTIONS CONFIG
+// ==========================================
+
+/**
+ * Região padrão para Cloud Functions.
+ * Usuários no Brasil - southamerica-east1
+ * (São Paulo) reduz latência vs us-central1.
+ */
+export const FUNCTION_REGION = "southamerica-east1";
+
+// ==========================================
 // FIRESTORE LIMITS
 // ==========================================
 
@@ -143,6 +154,33 @@ export const BADGE_WINNER_THRESHOLDS = {
 
 /** Defesas mínimas para badge DEFENSIVE_WALL */
 export const BADGE_DEFENSIVE_WALL_SAVES = 10;
+
+// ==========================================
+// VOTING
+// ==========================================
+
+// ==========================================
+// XP LIMITS
+// ==========================================
+
+/** XP máximo por jogo (anti-cheat) */
+export const MAX_XP_PER_GAME = 500;
+
+/** XP mínimo possível por jogo (penalidades) */
+export const MIN_XP_PER_GAME = -100;
+
+// ==========================================
+// ANTI-CHEAT LIMITS
+// ==========================================
+
+/** Máximo de gols por jogo */
+export const MAX_GOALS_PER_GAME = 15;
+
+/** Máximo de assistências por jogo */
+export const MAX_ASSISTS_PER_GAME = 10;
+
+/** Máximo de defesas por jogo */
+export const MAX_SAVES_PER_GAME = 30;
 
 // ==========================================
 // VOTING

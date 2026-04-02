@@ -166,11 +166,13 @@ sealed class AppRoutes(
     )
 
     data object LocationDetail : AppRoutes(
-        route = "location_detail/{locationId}",
+        route = "location_detail?locationId={locationId}",
         isRootDestination = false,
         showsTopBar = true
     ) {
-        fun createRoute(locationId: String) = "location_detail/$locationId"
+        fun createRoute(locationId: String? = null) =
+            if (locationId != null) "location_detail?locationId=$locationId"
+            else "location_detail"
     }
 
     data object ManageLocations : AppRoutes(

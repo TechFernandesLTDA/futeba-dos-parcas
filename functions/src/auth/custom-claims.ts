@@ -31,6 +31,7 @@ import {checkRateLimit} from "../middleware/rate-limiter";
 import {
   FIRESTORE_PAGINATION_LIMIT,
   MAX_CONCURRENT_OPS,
+  FUNCTION_REGION,
 } from "../constants";
 
 const db = admin.firestore();
@@ -78,6 +79,7 @@ interface UserClaims {
  */
 export const setUserRole = onCall<SetUserRoleRequest>(
   {
+    region: FUNCTION_REGION,
     // P0 #32: Firebase App Check - Garante que
     // apenas apps verificados podem chamar
     // PRODUCTION: enforceAppCheck: true
@@ -305,7 +307,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
  * @return {Promise<void>} Promise vazia
  */
 export const onNewUserCreated = onDocumentCreated(
-  "users/{userId}",
+  {document: "users/{userId}", region: FUNCTION_REGION},
   async (event) => {
     const userId = event.params.userId;
     const userData = event.data?.data();
@@ -374,6 +376,7 @@ export const onNewUserCreated = onDocumentCreated(
  */
 export const migrateAllUsersToCustomClaims = onCall(
   {
+    region: FUNCTION_REGION,
     // CRITICAL: Apenas admin pode executar migração
     // enforceAppCheck: false,
     // Permitir chamada via Firebase CLI

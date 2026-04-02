@@ -16,6 +16,9 @@
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 import {
+  FUNCTION_REGION,
+} from "./constants";
+import {
   sendNotificationToUser,
   NotificationType,
   saveNotificationToFirestore,
@@ -679,6 +682,7 @@ export const checkGameReminders = onSchedule(
   {
     schedule: "every 1 hours",
     timeZone: "America/Sao_Paulo",
+    region: FUNCTION_REGION,
     retryCount: 3,
     memory: "256MiB",
   },
@@ -747,6 +751,7 @@ export const testGameReminders = onSchedule(
     // (1 de janeiro a meia-noite)
     schedule: "0 0 1 1 *",
     timeZone: "America/Sao_Paulo",
+    region: FUNCTION_REGION,
   },
   async () => {
     console.log(
@@ -819,6 +824,7 @@ export const processExpiredWaitlistEntries =
     {
       schedule: "every 5 minutes",
       timeZone: "America/Sao_Paulo",
+      region: FUNCTION_REGION,
       retryCount: 3,
       memory: "256MiB",
     },

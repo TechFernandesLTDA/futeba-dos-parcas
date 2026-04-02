@@ -2,6 +2,9 @@ import * as admin from "firebase-admin";
 import {onRequest} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import {
+  FUNCTION_REGION,
+} from "./constants";
+import {
   checkRateLimitByIp,
 } from "./middleware/rate-limiter";
 import {sanitizeText} from "./validation/index";
@@ -84,7 +87,38 @@ function getGameDates(
  * (PAREDAO) e Hat Tricks.
  */
 export const seedDatabase = onRequest(
+  {region: FUNCTION_REGION},
   async (request, response) => {
+    // SECURITY: Bloquear em produção e fora
+    // do emulador. Apenas permitir quando
+    // executando no emulador local OU com
+    // ENVIRONMENT=development explícito.
+    const isEmulator =
+      process.env.FUNCTIONS_EMULATOR === "true";
+    const environment =
+      process.env.ENVIRONMENT || "production";
+    const isProductionProject =
+      process.env.GCLOUD_PROJECT ===
+        "futeba-dos-parcas";
+
+    if (
+      !isEmulator &&
+      (environment !== "development" ||
+        isProductionProject)
+    ) {
+      logger.error(
+        "[SEEDING][SECURITY] Seeding blocked" +
+        ": Not in emulator/dev environment" +
+        ` (env=${environment},` +
+        ` emulator=${isEmulator},` +
+        ` project=${process.env.GCLOUD_PROJECT})`
+      );
+      response.status(403).send(
+        "Seeding is disabled in this environment"
+      );
+      return;
+    }
+
     // Rate limit por IP (3/min)
     const clientIp =
       request.ip || request.headers["x-forwarded-for"] as string || "unknown"; // eslint-disable-line max-len
@@ -100,22 +134,6 @@ export const seedDatabase = onRequest(
       response.status(429).send(
         "Rate limit excedido." +
         " Tente novamente em breve."
-      );
-      return;
-    }
-
-    // SECURITY FIX (CVE-4): Disable seeding
-    // in production to prevent DoS attacks
-    const environment =
-      process.env.ENVIRONMENT || "production";
-    if (environment !== "development") {
-      logger.error(
-        "[SEEDING][SECURITY] Seeding blocked" +
-        ": Not in development environment" +
-        ` (${environment})`
-      );
-      response.status(403).send(
-        "Seeding is disabled in this environment"
       );
       return;
     }
