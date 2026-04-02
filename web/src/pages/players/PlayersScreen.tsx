@@ -28,6 +28,7 @@ import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
+import { PlayerCard } from '../../components/player/PlayerCard';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
@@ -53,6 +54,7 @@ export const PlayersScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!groupId || !user) return;
@@ -198,6 +200,7 @@ export const PlayersScreen: React.FC = () => {
                   isOwner={currentUserRole === 'OWNER'}
                   isActionLoading={actionLoading === member.id}
                   onRemove={handleRemoveMember}
+                  onAvatarClick={setSelectedPlayerId}
                   getRoleColor={getRoleColor}
                   getRoleLabel={getRoleLabel}
                 />
@@ -206,6 +209,12 @@ export const PlayersScreen: React.FC = () => {
           </Card>
         )}
       </Container>
+
+      {/* Card de jogador estilo figurinha */}
+      <PlayerCard
+        userId={selectedPlayerId}
+        onClose={() => setSelectedPlayerId(null)}
+      />
     </Box>
   );
 };
@@ -216,6 +225,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
   isOwner,
   isActionLoading,
   onRemove,
+  onAvatarClick,
   getRoleColor,
   getRoleLabel,
 }: {
@@ -224,6 +234,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
   isOwner: boolean;
   isActionLoading: boolean;
   onRemove: (id: string) => void;
+  onAvatarClick: (id: string) => void;
   getRoleColor: (role: string) => string;
   getRoleLabel: (role: string) => string;
 }) {
@@ -249,7 +260,17 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
         }
       >
         <ListItemAvatar>
-          <PlayerAvatar name={member.name} photoUrl={member.photoUrl} size={48} />
+          {/* Clique no avatar abre a figurinha do jogador */}
+          <Box
+            onClick={() => onAvatarClick(member.id)}
+            sx={{ cursor: 'pointer' }}
+            role="button"
+            aria-label={`Ver figurinha de ${member.name}`}
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && onAvatarClick(member.id)}
+          >
+            <PlayerAvatar name={member.name} photoUrl={member.photoUrl} size={48} />
+          </Box>
         </ListItemAvatar>
         <ListItemText
           primary={

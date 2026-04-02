@@ -31,6 +31,7 @@ import { db } from '../../../services/firebase';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { useAuth } from '../../../contexts/AuthContext';
 import { PlayerAvatar } from '../../../components/common/GameCard';
+import { PlayerCard } from '../../../components/player/PlayerCard';
 import { DIVISION_CONFIG, LeagueDivision, getLevelForXp } from '../../../types/gamification';
 import { getLevelBadgeImage } from '../../../utils/levelBadge';
 import {
@@ -80,6 +81,7 @@ export function RankingsTab() {
   const [players, setPlayers] = useState<RankingPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
   const loadData = useCallback(() => {
     setRefreshing(true);
@@ -440,11 +442,18 @@ export function RankingsTab() {
                 position={index + 1}
                 positionStyle={getPositionStyle(index + 1)}
                 showXP={tabValue === 1}
+                onAvatarClick={setSelectedPlayerId}
               />
             ))
           )
         )}
       </Container>
+
+      {/* Figurinha do jogador */}
+      <PlayerCard
+        userId={selectedPlayerId}
+        onClose={() => setSelectedPlayerId(null)}
+      />
     </Box>
   );
 }
@@ -455,11 +464,13 @@ const RankingCard = React.memo(function RankingCard({
   position,
   positionStyle,
   showXP,
+  onAvatarClick,
 }: {
   player: RankingPlayer;
   position: number;
   positionStyle: { bgcolor: string; color: string };
   showXP: boolean;
+  onAvatarClick: (userId: string) => void;
 }) {
   const divisionConfig = DIVISION_CONFIG[player.division] || DIVISION_CONFIG.BRONZE;
 
@@ -494,13 +505,22 @@ const RankingCard = React.memo(function RankingCard({
             {position <= 3 ? <TrophyIcon sx={{ fontSize: 16 }} /> : position}
           </Box>
 
-          {/* Avatar */}
-          <PlayerAvatar
-            name={player.userName}
-            photoUrl={player.userPhoto}
-            size={44}
-            level={player.level}
-          />
+          {/* Avatar — clique abre a figurinha do jogador */}
+          <Box
+            onClick={() => onAvatarClick(player.userId)}
+            sx={{ cursor: 'pointer', flexShrink: 0 }}
+            role="button"
+            aria-label={`Ver figurinha de ${player.userName}`}
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && onAvatarClick(player.userId)}
+          >
+            <PlayerAvatar
+              name={player.userName}
+              photoUrl={player.userPhoto}
+              size={44}
+              level={player.level}
+            />
+          </Box>
 
           {/* Info */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
