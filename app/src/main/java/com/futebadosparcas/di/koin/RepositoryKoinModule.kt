@@ -45,6 +45,8 @@ import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.storage.PreferencesService
+import com.futebadosparcas.data.datasource.FirebaseDataSource as AndroidFirebaseDataSource
+import com.futebadosparcas.data.datasource.FirebaseDataSourceImpl
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -52,6 +54,11 @@ val repositoryKoinModule = module {
 
     single<FirebaseDataSource> {
         FirebaseDataSource()
+    }
+
+    // FirebaseDataSource Android (abstração Android, diferente do FirebaseDataSource do shared/KMP)
+    single<AndroidFirebaseDataSource> {
+        FirebaseDataSourceImpl(get(), get())
     }
 
     single<FutebaDatabase> {

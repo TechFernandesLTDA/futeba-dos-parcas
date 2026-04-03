@@ -1,8 +1,6 @@
 package com.futebadosparcas.ui.home
 
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.Activity
 import com.futebadosparcas.domain.model.Game
 import com.futebadosparcas.domain.model.WeeklyChallenge
@@ -13,11 +11,13 @@ import com.futebadosparcas.domain.model.LeagueDivision
 import com.futebadosparcas.data.repository.GameRepository
 import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.ui.base.BaseViewModel
+import com.futebadosparcas.ui.base.UiEvent
+import com.futebadosparcas.ui.base.UiState
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.ConnectivityMonitor
 import com.futebadosparcas.domain.cache.SharedCacheService
 import com.futebadosparcas.domain.prefetch.PrefetchService
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 import kotlin.math.pow
@@ -42,10 +41,9 @@ class HomeViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val sharedCache: SharedCacheService,
     private val prefetchService: PrefetchService
-) : ViewModel() {
+) : BaseViewModel<HomeUiState, HomeUiEvent>() {
 
-    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
-    val uiState: StateFlow<HomeUiState> = _uiState
+    override fun createInitialState(): HomeUiState = HomeUiState.Loading
 
     private val _loadingState = MutableStateFlow<LoadingState>(LoadingState.Idle)
     val loadingState: StateFlow<LoadingState> = _loadingState
@@ -72,8 +70,7 @@ class HomeViewModel(
     }
 
     private fun observeConnectivity() {
-        connectivityJob?.cancel()
-        connectivityJob = viewModelScope.launch {
+        launch(key = JOB_CONNECTIVITY) {
             connectivityMonitor.isConnected
                 .catch { e ->
                     // Tratamento de erro: assumir online em caso de falha
@@ -87,8 +84,7 @@ class HomeViewModel(
     }
 
     private fun observeUnreadCount() {
-        unreadCountJob?.cancel()
-        unreadCountJob = viewModelScope.launch {
+        launch(key = JOB_UNREAD_COUNT) {
             notificationRepository.getUnreadCountFlow()
                 .catch { e ->
                     // Tratamento de erro: zerar contador em caso de falha
@@ -101,10 +97,6 @@ class HomeViewModel(
         }
     }
 
-    // Jobs para controle de ciclo de vida dos Flows
-    private var connectivityJob: Job? = null
-    private var unreadCountJob: Job? = null
-    private var loadJob: Job? = null
     private var retryCount = 0
 
     /**
@@ -127,15 +119,14 @@ class HomeViewModel(
         val currentTime = System.currentTimeMillis()
         val cached = cachedSuccessState
         if (!forceRetry && cached != null && (currentTime - lastLoadTime) < CACHE_DURATION_MS) {
-            _uiState.value = cached
+            setState { cached }
             _loadingState.value = LoadingState.Success
             return
         }
 
-        loadJob?.cancel()
-        loadJob = viewModelScope.launch {
+        launch(key = JOB_LOAD) {
             _loadingState.value = LoadingState.Loading("Carregando dados...")
-            _uiState.value = HomeUiState.Loading
+            setState { HomeUiState.Loading }
 
             try {
                 supervisorScope {
@@ -200,7 +191,7 @@ class HomeViewModel(
             recentBadges = emptyList(),
             isGridView = isGridView
         )
-        _uiState.value = currentState
+        setState { currentState }
         cachedSuccessState = currentState
         lastLoadTime = System.currentTimeMillis()
 
@@ -242,7 +233,7 @@ class HomeViewModel(
             activities = activitiesResult.first,
             statistics = activitiesResult.second
         )
-        _uiState.value = currentState
+        setState { currentState }
         cachedSuccessState = currentState
         return currentState
     }
@@ -289,7 +280,7 @@ class HomeViewModel(
             recentBadges = phase3Data.badges,
             gamificationSummary = summary.copy(division = leagueDivision)
         )
-        _uiState.value = currentState
+        setState { currentState }
         cachedSuccessState = currentState
         return currentState
     }
@@ -375,7 +366,7 @@ class HomeViewModel(
             }
 
             _loadingState.value = LoadingState.Error(errorMessage, retryable = true)
-            _uiState.value = HomeUiState.Error(errorMessage)
+            setState { HomeUiState.Error(errorMessage) }
             retryCount = 0
         }
     }
@@ -390,9 +381,9 @@ class HomeViewModel(
 
     fun toggleViewMode() {
         isGridView = !isGridView
-        val currentState = _uiState.value
-        if (currentState is HomeUiState.Success) {
-            _uiState.value = currentState.copy(isGridView = isGridView)
+        setState {
+            if (this is HomeUiState.Success) this.copy(isGridView = isGridView)
+            else this
         }
     }
 
@@ -404,13 +395,6 @@ class HomeViewModel(
         return userRepository.getCurrentUserId()
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        connectivityJob?.cancel()
-        unreadCountJob?.cancel()
-        loadJob?.cancel()
-    }
-
     companion object {
         private const val TAG = "HomeViewModel"
         private const val TIMEOUT_MILLIS = 8_000L // 8 segundos
@@ -419,6 +403,11 @@ class HomeViewModel(
         private const val MAX_DELAY_MS = 4000L // 4 segundos
         private const val CACHE_DURATION_MS = 90_000L // 90 segundos (otimizado)
         private const val KEY_IS_GRID_VIEW = "is_grid_view"
+
+        // Chaves para gerenciamento de jobs via BaseViewModel
+        private const val JOB_CONNECTIVITY = "connectivity"
+        private const val JOB_UNREAD_COUNT = "unread_count"
+        private const val JOB_LOAD = "load"
     }
 }
 
@@ -432,7 +421,7 @@ data class GamificationSummary(
     val division: LeagueDivision
 )
 
-sealed class HomeUiState {
+sealed class HomeUiState : UiState {
     object Loading : HomeUiState()
     data class Success(
         val user: com.futebadosparcas.domain.model.User,
@@ -448,6 +437,11 @@ sealed class HomeUiState {
     ) : HomeUiState()
     data class Error(val message: String) : HomeUiState()
 }
+
+/**
+ * Eventos da tela Home (navegação, toasts, etc.)
+ */
+sealed class HomeUiEvent : UiEvent
 
 sealed class LoadingState {
     object Idle : LoadingState()

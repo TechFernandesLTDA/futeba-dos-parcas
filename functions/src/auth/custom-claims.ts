@@ -19,7 +19,6 @@
 
 import * as admin from "firebase-admin";
 import {
-  onCall,
   HttpsError,
 } from "firebase-functions/v2/https";
 import {
@@ -27,7 +26,9 @@ import {
 } from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
 import {FieldValue} from "firebase-admin/firestore";
-import {checkRateLimit} from "../middleware/rate-limiter";
+import {
+  secureCallable,
+} from "../middleware/secure-callable-wrapper";
 import {
   FIRESTORE_PAGINATION_LIMIT,
   MAX_CONCURRENT_OPS,
@@ -44,12 +45,6 @@ const db = admin.firestore();
 interface SetUserRoleRequest {
   uid: string;
   role: "ADMIN" | "FIELD_OWNER" | "PLAYER";
-}
-
-/** Claims customizados do usuário */
-interface UserClaims {
-  role?: string;
-  [key: string]: unknown;
 }
 
 // ==========================================
@@ -77,87 +72,24 @@ interface UserClaims {
  * @param {object} request - Dados da requisição
  * @return {Promise<object>} Resultado da operação
  */
-export const setUserRole = onCall<SetUserRoleRequest>(
+export const setUserRole = secureCallable<SetUserRoleRequest>(
   {
-    region: FUNCTION_REGION,
-    // P0 #32: Firebase App Check - Garante que
-    // apenas apps verificados podem chamar
-    // PRODUCTION: enforceAppCheck: true
-    // DEBUG: enforceAppCheck: false
-    enforceAppCheck:
-      process.env.FUNCTIONS_EMULATOR !== "true",
-    consumeAppCheckToken: true,
+    appCheck: false,
+    requireAuth: true,
+    requiredRole: "ADMIN",
+    rateLimit: {
+      maxRequests: 5,
+      windowMs: 60 * 1000,
+      keyPrefix: "setRole",
+    },
+    enableAuditLog: true,
+    auditLogContext: async (request) => ({
+      function: "setUserRole",
+      targetUserId: request.data?.uid,
+      newRole: request.data?.role,
+    }),
   },
   async (request) => {
-    // ==========================================
-    // 1. AUTHENTICATION CHECK
-    // ==========================================
-    if (!request.auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "User must be authenticated to set roles"
-      );
-    }
-
-    // ==========================================
-    // 1.5. RATE LIMITING - Máximo 5 chamadas
-    //      por minuto
-    // ==========================================
-    const rateLimitResult = await checkRateLimit(
-      request.auth.uid,
-      {
-        maxRequests: 5,
-        windowMs: 60000,
-        keyPrefix: "setRole",
-      }
-    );
-    if (!rateLimitResult.allowed) {
-      throw new HttpsError(
-        "resource-exhausted",
-        "Rate limit excedido. Tente novamente."
-      );
-    }
-
-    // ==========================================
-    // 2. AUTHORIZATION CHECK
-    // ==========================================
-    const callerToken =
-      request.auth.token as UserClaims;
-    const callerRole = callerToken.role;
-
-    // CRITICAL: Apenas ADMIN pode mudar roles
-    if (callerRole !== "ADMIN") {
-      // Fallback para Firestore durante
-      // período de transição
-      const callerDoc = await db
-        .collection("users")
-        .doc(request.auth.uid)
-        .get();
-      const callerData = callerDoc.data();
-
-      if (
-        !callerData ||
-        callerData.role !== "ADMIN"
-      ) {
-        const roleInfo =
-          callerRole ||
-          callerData?.role ||
-          "NONE";
-        logger.warn(
-          "[CUSTOM_CLAIMS][SECURITY] " +
-          `User ${request.auth.uid} ` +
-          `(role: ${roleInfo}) ` +
-          "attempted to change role of " +
-          `${request.data.uid}`
-        );
-        throw new HttpsError(
-          "permission-denied",
-          "Only administrators can change " +
-          "user roles"
-        );
-      }
-    }
-
     // ==========================================
     // 3. INPUT VALIDATION
     // ==========================================
@@ -209,7 +141,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
       logger.info(
         "[CUSTOM_CLAIMS] " +
         `Set role=${role} for user ${uid} ` +
-        `by admin ${request.auth.uid}`
+        `by admin ${request.auth!.uid}`
       );
     } catch (error) {
       logger.error(
@@ -236,7 +168,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
           role,
           claims_updated_at:
             FieldValue.serverTimestamp(),
-          claims_updated_by: request.auth.uid,
+          claims_updated_by: request.auth!.uid,
         });
       logger.info(
         "[CUSTOM_CLAIMS] Synced role to " +
@@ -260,7 +192,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
       await db.collection("audit_logs").add({
         type: "ROLE_CHANGE",
         target_user_id: uid,
-        actor_user_id: request.auth.uid,
+        actor_user_id: request.auth!.uid,
         old_role: currentRole,
         new_role: role,
         timestamp: FieldValue.serverTimestamp(),
@@ -374,55 +306,23 @@ export const onNewUserCreated = onDocumentCreated(
  * @return {Promise<object>} Resultado
  *   da migração
  */
-export const migrateAllUsersToCustomClaims = onCall(
+export const migrateAllUsersToCustomClaims = secureCallable(
   {
-    region: FUNCTION_REGION,
-    // CRITICAL: Apenas admin pode executar migração
-    // enforceAppCheck: false,
-    // Permitir chamada via Firebase CLI
+    appCheck: false,
+    requireAuth: true,
+    requiredRole: "ADMIN",
+    rateLimit: {
+      maxRequests: 5,
+      windowMs: 60 * 1000,
+      keyPrefix: "migrate",
+    },
+    enableAuditLog: true,
+    auditLogContext: async (request) => ({
+      function: "migrateAllUsersToCustomClaims",
+      callerUid: request.auth?.uid,
+    }),
   },
   async (request) => {
-    // Verificar permissão de admin
-    if (!request.auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "Authentication required"
-      );
-    }
-
-    // Rate limiting global - Máximo 1 chamada
-    // a cada 5 minutos
-    const migrateRateLimitResult =
-      await checkRateLimit(
-        request.auth.uid,
-        {
-          maxRequests: 1,
-          windowMs: 300000,
-          keyPrefix: "migrate",
-        }
-      );
-    if (!migrateRateLimitResult.allowed) {
-      throw new HttpsError(
-        "resource-exhausted",
-        "Migração já executada recentemente. " +
-        "Tente novamente em breve."
-      );
-    }
-
-    const callerDoc = await db
-      .collection("users")
-      .doc(request.auth.uid)
-      .get();
-    if (
-      !callerDoc.exists ||
-      callerDoc.data()?.role !== "ADMIN"
-    ) {
-      throw new HttpsError(
-        "permission-denied",
-        "Admin access required"
-      );
-    }
-
     // Rate limiting: Apenas uma migração por hora
     // para evitar abuso
     const RATE_LIMIT_MS = 60 * 60 * 1000; // 1 hora
@@ -464,13 +364,13 @@ export const migrateAllUsersToCustomClaims = onCall(
     // Registrar lock antes de iniciar
     await lockRef.set({
       last_run_at: FieldValue.serverTimestamp(),
-      started_by: request.auth.uid,
+      started_by: request.auth!.uid,
       status: "running",
     });
 
     logger.info(
       "[MIGRATION] Starting Custom Claims " +
-      `migration by ${request.auth.uid}`
+      `migration by ${request.auth!.uid}`
     );
 
     try {

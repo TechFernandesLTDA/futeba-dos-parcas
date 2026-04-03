@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   collection,
   doc,
@@ -11,7 +11,9 @@ import {
   onSnapshot,
   Timestamp,
   writeBatch,
+  documentId,
 } from 'firebase/firestore';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { Group, GroupMember, GroupRole, CashboxTransaction } from '../types/group';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,81 +22,107 @@ import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useGroups');
 
+// Converte documento Firestore para objeto Group
+function parseGroupDoc(docId: string, raw: Record<string, unknown>): Group {
+  const converted = snakeToCamel(raw);
+  return {
+    id: docId,
+    ...converted,
+    createdAt: ((raw.created_at || raw.createdAt) as { toDate?: () => Date })?.toDate?.(),
+    updatedAt: ((raw.updated_at || raw.updatedAt) as { toDate?: () => Date })?.toDate?.(),
+    nextGameDate: ((raw.next_game_date || raw.nextGameDate) as { toDate?: () => Date })?.toDate?.(),
+    deletedAt: ((raw.deleted_at || raw.deletedAt) as { toDate?: () => Date })?.toDate?.(),
+  } as Group;
+}
+
+// Busca grupos do usuário via subcoleção users/{uid}/groups, com batch reads
+async function fetchUserGroups(uid: string): Promise<Group[]> {
+  // 1. Buscar IDs dos grupos na subcoleção do usuário
+  const userGroupsRef = collection(db, 'users', uid, 'groups');
+  const q = query(userGroupsRef, orderBy('joined_at', 'desc'));
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) return [];
+
+  // 2. Coletar IDs e dados de fallback
+  const groupEntries = snapshot.docs.map((d) => {
+    const data = d.data();
+    return {
+      groupId: (data.group_id as string) || d.id,
+      fallback: {
+        id: (data.group_id as string) || d.id,
+        name: (data.group_name as string) || 'Grupo',
+        photoUrl: (data.group_photo as string) || null,
+        memberCount: (data.member_count as number) || 0,
+      } as Group,
+    };
+  });
+
+  const groupIds = groupEntries.map((e) => e.groupId);
+
+  // 3. Batch fetch em chunks de 10 (limite do whereIn)
+  const groupsMap = new Map<string, Group>();
+  const chunks: string[][] = [];
+  for (let i = 0; i < groupIds.length; i += 10) {
+    chunks.push(groupIds.slice(i, i + 10));
+  }
+
+  const results = await Promise.all(
+    chunks.map((chunk) =>
+      getDocs(query(collection(db, 'groups'), where(documentId(), 'in', chunk)))
+    )
+  );
+
+  for (const result of results) {
+    for (const docSnap of result.docs) {
+      const raw = docSnap.data();
+      groupsMap.set(docSnap.id, parseGroupDoc(docSnap.id, raw));
+    }
+  }
+
+  // 4. Montar lista final com fallback para grupos que falharam
+  return groupEntries
+    .map((entry) => groupsMap.get(entry.groupId) || entry.fallback)
+    .filter((g) => !g.deletedAt);
+}
+
 // Busca grupos do usuário via subcoleção users/{uid}/groups (igual ao Android)
 export function useGroups() {
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { user, firebaseUser } = useAuth();
+  const uid = firebaseUser?.uid || user?.id;
+  const queryClient = useQueryClient();
 
+  const { data: groups = [], isLoading: loading, error: queryError } = useQuery({
+    queryKey: ['groups', uid],
+    queryFn: () => fetchUserGroups(uid!),
+    enabled: !!uid,
+    staleTime: 2 * 60 * 1000, // 2 minutos - grupos mudam com menos frequência
+    gcTime: 10 * 60 * 1000, // 10 minutos no garbage collection
+  });
+
+  // Listener para atualizações real-time na subcoleção do usuário
+  // Invalida o cache quando a subcoleção muda
   useEffect(() => {
-    const uid = firebaseUser?.uid || user?.id;
-    if (!uid) {
-      setLoading(false);
-      return;
-    }
+    if (!uid) return;
 
-    // Consultar subcoleção users/{uid}/groups (mesma abordagem do Android)
     const userGroupsRef = collection(db, 'users', uid, 'groups');
     const q = query(userGroupsRef, orderBy('joined_at', 'desc'));
+    let isFirstSnapshot = true;
 
-    const unsubscribe = onSnapshot(
-      q,
-      async (snapshot) => {
-        if (snapshot.empty) {
-          setGroups([]);
-          setLoading(false);
-          return;
-        }
-
-        // Buscar dados completos de cada grupo
-        const groupPromises = snapshot.docs.map(async (userGroupDoc) => {
-          const userGroupData = userGroupDoc.data();
-          const groupId = userGroupData.group_id || userGroupDoc.id;
-
-          try {
-            const groupSnap = await getDoc(doc(db, 'groups', groupId));
-            if (groupSnap.exists()) {
-              const raw = groupSnap.data();
-              const converted = snakeToCamel(raw);
-              return {
-                id: groupSnap.id,
-                ...converted,
-                createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
-                updatedAt: (raw.updated_at || raw.updatedAt)?.toDate?.(),
-                nextGameDate: (raw.next_game_date || raw.nextGameDate)?.toDate?.(),
-                deletedAt: (raw.deleted_at || raw.deletedAt)?.toDate?.(),
-              } as Group;
-            }
-            return null;
-          } catch (err) {
-            logger.warn(`Erro ao buscar grupo ${groupId}: ${err}`);
-            // Fallback: usar dados da subcoleção
-            return {
-              id: groupId,
-              name: userGroupData.group_name || 'Grupo',
-              photoUrl: userGroupData.group_photo || null,
-              memberCount: userGroupData.member_count || 0,
-            } as Group;
-          }
-        });
-
-        const results = await Promise.all(groupPromises);
-        const validGroups = results.filter(
-          (g): g is Group => g !== null && !g.deletedAt
-        );
-        setGroups(validGroups);
-        setLoading(false);
-      },
-      (err) => {
-        logger.error('Error fetching user groups:', err);
-        setError(err.message);
-        setLoading(false);
+    const unsubscribe = onSnapshot(q, () => {
+      // Ignorar primeiro snapshot (dados já carregados pelo useQuery)
+      if (isFirstSnapshot) {
+        isFirstSnapshot = false;
+        return;
       }
-    );
+      // Invalidar cache para refetch
+      queryClient.invalidateQueries({ queryKey: ['groups', uid] });
+    });
 
     return () => unsubscribe();
-  }, [firebaseUser, user]);
+  }, [uid, queryClient]);
+
+  const error = queryError ? (queryError as Error).message : null;
 
   return { groups, loading, error };
 }
@@ -119,15 +147,7 @@ export function useGroupDetail(groupId: string | null) {
       (docSnap) => {
         if (docSnap.exists()) {
           const raw = docSnap.data();
-          const converted = snakeToCamel(raw);
-          setGroup({
-            id: docSnap.id,
-            ...converted,
-            createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
-            updatedAt: (raw.updated_at || raw.updatedAt)?.toDate?.(),
-            nextGameDate: (raw.next_game_date || raw.nextGameDate)?.toDate?.(),
-            deletedAt: (raw.deleted_at || raw.deletedAt)?.toDate?.(),
-          } as Group);
+          setGroup(parseGroupDoc(docSnap.id, raw));
         } else {
           setGroup(null);
         }
@@ -149,7 +169,7 @@ export function useGroupDetail(groupId: string | null) {
           return {
             ...converted,
             id: d.id,
-            joinedAt: (raw.joined_at || raw.joinedAt)?.toDate?.(),
+            joinedAt: ((raw.joined_at || raw.joinedAt) as { toDate?: () => Date })?.toDate?.() || new Date(),
           };
         });
         setMembers(membersData);
@@ -169,6 +189,7 @@ export function useCreateGroup() {
   const { user, firebaseUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const createGroup = useCallback(
     async (groupData: { name: string; description?: string; isPublic?: boolean }) => {
@@ -224,6 +245,8 @@ export function useCreateGroup() {
         });
 
         await batch.commit();
+        // Invalidar cache de grupos após criar
+        queryClient.invalidateQueries({ queryKey: ['groups', uid] });
         setLoading(false);
         return groupRef.id;
       } catch (err) {
@@ -233,7 +256,7 @@ export function useCreateGroup() {
         throw err;
       }
     },
-    [firebaseUser, user]
+    [firebaseUser, user, queryClient]
   );
 
   return { createGroup, loading, error };
@@ -261,15 +284,15 @@ export function useCashbox(groupId: string | null) {
           const raw = d.data();
           const converted = snakeToCamel(raw);
           if (raw.type === 'INCOME') {
-            totalBalance += raw.amount;
+            totalBalance += raw.amount as number;
           } else {
-            totalBalance -= raw.amount;
+            totalBalance -= raw.amount as number;
           }
           return {
             id: d.id,
             ...converted,
-            date: (raw.date)?.toDate?.(),
-            createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
+            date: (raw.date as { toDate?: () => Date })?.toDate?.(),
+            createdAt: ((raw.created_at || raw.createdAt) as { toDate?: () => Date })?.toDate?.(),
           } as CashboxTransaction;
         });
         setTransactions(transactionsData);
@@ -293,6 +316,7 @@ export function useInvitePlayers() {
   const { user, firebaseUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const generateInviteCode = useCallback(
     async (groupId: string, groupName: string) => {
@@ -389,6 +413,8 @@ export function useInvitePlayers() {
         });
 
         await batch.commit();
+        // Invalidar cache de grupos após entrar em um
+        queryClient.invalidateQueries({ queryKey: ['groups', uid] });
         setLoading(false);
         return groupId;
       } catch (err) {
@@ -398,7 +424,7 @@ export function useInvitePlayers() {
         throw err;
       }
     },
-    [firebaseUser, user]
+    [firebaseUser, user, queryClient]
   );
 
   return { generateInviteCode, joinByInviteCode, loading, error };

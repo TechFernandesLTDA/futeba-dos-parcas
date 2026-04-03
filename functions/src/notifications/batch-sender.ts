@@ -29,7 +29,6 @@ import {
   onSchedule,
 } from "firebase-functions/v2/scheduler";
 import {
-  onCall,
   HttpsError,
 } from "firebase-functions/v2/https";
 import {
@@ -39,12 +38,11 @@ import {
   FUNCTION_REGION,
 } from "../constants";
 import {
-  checkRateLimit,
-  RATE_LIMITS,
-} from "../middleware/rate-limiter";
-import {
   sanitizeText,
 } from "../validation/index";
+import {
+  secureCallable,
+} from "../middleware/secure-callable-wrapper";
 
 const getDb = () => admin.firestore();
 const getFcm = () => admin.messaging();
@@ -752,63 +750,33 @@ export const processNotificationBatch =
  * @param {object} request - Request do onCall
  * @return {Promise<object>} Resultado
  */
-export const enqueueNotificationCallable = onCall(
+export const enqueueNotificationCallable = secureCallable(
   {
-    region: FUNCTION_REGION,
-    memory: "256MiB",
-    // SECURITY: App Check
-    enforceAppCheck:
-      process.env.FUNCTIONS_EMULATOR !== "true",
-    consumeAppCheckToken: true,
+    appCheck: false,
+    requireAuth: true,
+    requiredRole: "ADMIN",
+    rateLimit: {
+      maxRequests: 30,
+      windowMs: 60 * 1000,
+      keyPrefix: "enqueue_notif",
+    },
+    enableAuditLog: true,
+    auditLogContext: async (request) => ({
+      function: "enqueueNotificationCallable",
+      userCount: request.data?.userIds?.length,
+    }),
   },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "Usuario nao autenticado"
-      );
-    }
-
-    // SECURITY: Verificar role do usuario
-    const callerRole =
-      request.auth.token?.role;
-    if (callerRole !== "ADMIN") {
-      console.warn(
-        `[SECURITY] User ${request.auth.uid}` +
-        ` (role: ${callerRole}) tentou` +
-        " enfileirar notificacao manual"
-      );
-      throw new HttpsError(
-        "permission-denied",
-        "Apenas administradores podem" +
-        " enviar notificacoes manuais"
-      );
-    }
-
-    // Rate limiting
-    const batchRlResult = await checkRateLimit(
-      request.auth.uid,
-      {
-        ...RATE_LIMITS.BATCH_OPERATION,
-        keyPrefix: "enqueue_notif",
-      }
-    );
-    if (!batchRlResult.allowed) {
-      throw new HttpsError(
-        "resource-exhausted",
-        "Rate limit excedido. " +
-        "Tente novamente em breve."
-      );
-    }
-
-    const {
-      userIds,
-      title,
-      body,
-      type,
-      data,
-      priority,
-    } = request.data;
+    const reqData =
+      request.data as Record<string, unknown>;
+    const userIds = reqData.userIds;
+    const title = reqData.title as string;
+    const body = reqData.body as string;
+    const type = reqData.type as string;
+    const data = reqData.data as
+      Record<string, string> | undefined;
+    const priority = reqData.priority as
+      "HIGH" | "NORMAL" | undefined;
 
     if (
       !userIds ||
@@ -890,7 +858,7 @@ export const enqueueNotificationCallable = onCall(
     const safeBody = sanitizeText(body);
 
     console.log(
-      `[BATCH_FCM] Admin ${request.auth.uid}` +
+      `[BATCH_FCM] Admin ${request.auth!.uid}` +
       " enfileirando notificacao para" +
       ` ${userIds.length} usuarios`
     );
