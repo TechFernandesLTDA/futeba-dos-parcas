@@ -495,7 +495,7 @@ async function sendMulticastInChunks(
 
       const messaging = getFcm();
       const response =
-        await messaging.sendEachForMulticast(message);
+        await (messaging as any).sendEachForMulticast(message);
       sent += response.successCount;
       failed += response.failureCount;
 
