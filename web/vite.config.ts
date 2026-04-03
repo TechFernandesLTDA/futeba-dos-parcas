@@ -35,6 +35,7 @@ export default defineConfig({
           ],
           'vendor-query': ['@tanstack/react-query'],
           'vendor-utils': ['date-fns', 'react-hot-toast'],
+          'vendor-html2canvas': ['html2canvas'],
         },
       },
     },

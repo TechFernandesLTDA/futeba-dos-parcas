@@ -11,6 +11,7 @@ import com.futebadosparcas.data.datasource.GroupPhotoDataSource
 import com.futebadosparcas.domain.service.FieldAvailabilityService
 import com.futebadosparcas.domain.service.TimeSuggestionService
 import com.futebadosparcas.data.repository.CreateGameDraftRepository
+import com.futebadosparcas.domain.permission.PermissionManager
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -58,5 +59,10 @@ val utilKoinModule = module {
 
     single<CreateGameDraftRepository> {
         CreateGameDraftRepository(get())
+    }
+
+    // Gerenciador de permissões (verificação de roles e acessos)
+    single<PermissionManager> {
+        PermissionManager(get(), get())
     }
 }

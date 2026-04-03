@@ -1,7 +1,5 @@
 package com.futebadosparcas.di.koin
 
-import com.futebadosparcas.data.datasource.FirebaseDataSource
-import com.futebadosparcas.data.datasource.FirebaseDataSourceImpl
 import com.futebadosparcas.domain.usecase.CalculateTeamBalanceUseCase
 import com.futebadosparcas.domain.usecase.ConfirmPresenceUseCase
 import com.futebadosparcas.domain.usecase.GetLeagueRankingUseCase
@@ -16,15 +14,9 @@ import com.futebadosparcas.domain.usecase.group.LeaveGroupUseCase
 import com.futebadosparcas.domain.usecase.group.ManageMembersUseCase
 import com.futebadosparcas.domain.usecase.group.TransferOwnershipUseCase
 import com.futebadosparcas.domain.usecase.group.UpdateGroupUseCase
-import com.futebadosparcas.domain.permission.PermissionManager
 import org.koin.dsl.module
 
 val useCaseKoinModule = module {
-
-    // FirebaseDataSource (abstração Android, diferente do FirebaseDataSource do shared)
-    single<FirebaseDataSource> {
-        FirebaseDataSourceImpl(get(), get())
-    }
 
     single<GetUpcomingGamesUseCase> {
         GetUpcomingGamesUseCase(get())
@@ -48,10 +40,6 @@ val useCaseKoinModule = module {
 
     single<ConfirmationUseCase> {
         ConfirmationUseCase(get(), get(), get(), get(), get())
-    }
-
-    single<PermissionManager> {
-        PermissionManager(get(), get())
     }
 
     // Group use cases (todos têm @Inject constructor)

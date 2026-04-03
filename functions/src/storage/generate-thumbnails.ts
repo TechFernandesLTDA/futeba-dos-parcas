@@ -6,7 +6,9 @@ import {Storage} from "@google-cloud/storage";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs/promises";
-import sharp from "sharp";
+// sharp é carregado dinamicamente dentro dos handlers
+// para evitar cold start cost em todas as outras functions
+// (~10MB de binário nativo carregado apenas quando necessário)
 
 const storage = new Storage();
 const db = admin.firestore();
@@ -173,6 +175,7 @@ export const generateProfileThumbnail =
         console.log(
           "[THUMBNAIL] Generating thumbnail 200x200"
         );
+        const sharp = (await import("sharp")).default;
         await sharp(tempFilePath)
           .resize(200, 200, {
             fit: "cover",
@@ -376,6 +379,7 @@ export const generateGroupThumbnail =
           {destination: tempFilePath}
         );
 
+        const sharp = (await import("sharp")).default;
         await sharp(tempFilePath)
           .resize(200, 200, {
             fit: "cover",

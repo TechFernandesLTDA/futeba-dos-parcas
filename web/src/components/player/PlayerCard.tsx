@@ -21,7 +21,6 @@ import {
   StarRate as StarIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
-import html2canvas from 'html2canvas';
 import { usePlayerCard } from '../../hooks/usePlayerCard';
 import {
   getLevelEntry,
@@ -111,6 +110,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
     if (!cardRef.current || !player) return;
     setSharing(true);
     try {
+      const html2canvas = (await import('html2canvas')).default;
       const canvas = await html2canvas(cardRef.current, {
         backgroundColor: null,
         scale: 2,
@@ -146,7 +146,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
         }
         setSharing(false);
       }, 'image/png');
-    } catch (_e) {
+    } catch (error) {
+      console.error('Erro ao gerar imagem do card:', error);
+      alert('Não foi possível gerar a imagem. Verifique sua conexão e tente novamente.');
       setSharing(false);
     }
   }, [player]);

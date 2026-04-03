@@ -3,6 +3,7 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   addDoc,
   updateDoc,
   query,
@@ -12,6 +13,7 @@ import {
   onSnapshot,
   Timestamp,
 } from 'firebase/firestore';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { Game, GameConfirmation, GameStatus, ConfirmationStatus } from '../types/game';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,19 +23,71 @@ import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useGames');
 
+// Converte documento Firestore para objeto Game
+function parseGameDoc(docId: string, raw: Record<string, unknown>): Game {
+  const converted = snakeToCamel(raw);
+  return {
+    id: docId,
+    ...converted,
+    dateTime: (raw.dateTime as { toDate?: () => Date })?.toDate?.() || (raw.date_time as { toDate?: () => Date })?.toDate?.() || converted.dateTime,
+    createdAt: ((raw.created_at || raw.createdAt) as { toDate?: () => Date })?.toDate?.(),
+    updatedAt: ((raw.updated_at || raw.updatedAt) as { toDate?: () => Date })?.toDate?.(),
+    votingDeadline: ((raw.voting_deadline || raw.votingDeadline) as { toDate?: () => Date })?.toDate?.(),
+    xpProcessedAt: ((raw.xp_processed_at || raw.xpProcessedAt) as { toDate?: () => Date })?.toDate?.(),
+    deletedAt: ((raw.deleted_at || raw.deletedAt) as { toDate?: () => Date })?.toDate?.(),
+  } as Game;
+}
+
+// Busca jogos com filtros
+async function fetchGames(filters?: {
+  status?: GameStatus;
+  groupId?: string;
+  date?: string;
+  limitCount?: number;
+}): Promise<Game[]> {
+  const gamesRef = collection(db, 'games');
+  let q = query(gamesRef, orderBy('dateTime', 'asc'));
+
+  if (filters?.status) {
+    q = query(q, where('status', '==', filters.status));
+  }
+  if (filters?.groupId) {
+    q = query(q, where('group_id', '==', filters.groupId));
+  }
+  if (filters?.date) {
+    q = query(q, where('date', '==', filters.date));
+  }
+  if (filters?.limitCount) {
+    q = query(q, limit(filters.limitCount));
+  }
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs
+    .map((d) => parseGameDoc(d.id, d.data()))
+    .filter((g) => !g.deletedAt);
+}
+
 export function useGames(filters?: {
   status?: GameStatus;
   groupId?: string;
   date?: string;
   limitCount?: number;
 }) {
-  const [games, setGames] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
+  // Chave de query estável baseada nos filtros
+  const queryKey = ['games', filters?.status, filters?.groupId, filters?.date, filters?.limitCount] as const;
+
+  const { data: games = [], isLoading: loading, error: queryError } = useQuery({
+    queryKey,
+    queryFn: () => fetchGames(filters),
+    staleTime: 1 * 60 * 1000, // 1 minuto - jogos mudam com frequência
+    gcTime: 5 * 60 * 1000,
+  });
+
+  // Listener real-time para invalidar cache quando jogos mudam
   useEffect(() => {
     const gamesRef = collection(db, 'games');
-    // Ordenar por dateTime (mesmo campo usado pelo Android)
     let q = query(gamesRef, orderBy('dateTime', 'asc'));
 
     if (filters?.status) {
@@ -49,35 +103,20 @@ export function useGames(filters?: {
       q = query(q, limit(filters.limitCount));
     }
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const gamesData = snapshot.docs.map((d) => {
-          const raw = d.data();
-          const converted = snakeToCamel(raw);
-          return {
-            id: d.id,
-            ...converted,
-            dateTime: raw.dateTime?.toDate?.() || raw.date_time?.toDate?.() || converted.dateTime,
-            createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
-            updatedAt: (raw.updated_at || raw.updatedAt)?.toDate?.(),
-            votingDeadline: (raw.voting_deadline || raw.votingDeadline)?.toDate?.(),
-            xpProcessedAt: (raw.xp_processed_at || raw.xpProcessedAt)?.toDate?.(),
-            deletedAt: (raw.deleted_at || raw.deletedAt)?.toDate?.(),
-          } as Game;
-        });
-        setGames(gamesData.filter((g) => !g.deletedAt));
-        setLoading(false);
-      },
-      (err) => {
-        logger.error('Error fetching games:', err);
-        setError(err.message);
-        setLoading(false);
+    let isFirstSnapshot = true;
+
+    const unsubscribe = onSnapshot(q, () => {
+      if (isFirstSnapshot) {
+        isFirstSnapshot = false;
+        return;
       }
-    );
+      queryClient.invalidateQueries({ queryKey });
+    });
 
     return () => unsubscribe();
-  }, [filters?.status, filters?.groupId, filters?.date, filters?.limitCount]);
+  }, [filters?.status, filters?.groupId, filters?.date, filters?.limitCount, queryClient]);
+
+  const error = queryError ? (queryError as Error).message : null;
 
   return { games, loading, error };
 }
@@ -103,17 +142,7 @@ export function useGameDetail(gameId: string | null) {
       (docSnap) => {
         if (docSnap.exists()) {
           const raw = docSnap.data();
-          const converted = snakeToCamel(raw);
-          setGame({
-            id: docSnap.id,
-            ...converted,
-            dateTime: (raw.dateTime || raw.date_time)?.toDate?.() || converted.dateTime,
-            createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
-            updatedAt: (raw.updated_at || raw.updatedAt)?.toDate?.(),
-            votingDeadline: (raw.voting_deadline || raw.votingDeadline)?.toDate?.(),
-            xpProcessedAt: (raw.xp_processed_at || raw.xpProcessedAt)?.toDate?.(),
-            deletedAt: (raw.deleted_at || raw.deletedAt)?.toDate?.(),
-          } as Game);
+          setGame(parseGameDoc(docSnap.id, raw));
         } else {
           setGame(null);
         }
@@ -136,9 +165,9 @@ export function useGameDetail(gameId: string | null) {
           return {
             id: d.id,
             ...converted,
-            confirmedAt: (raw.confirmed_at || raw.confirmedAt)?.toDate?.(),
-            createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
-            checkedInAt: (raw.checked_in_at || raw.checkedInAt)?.toDate?.(),
+            confirmedAt: ((raw.confirmed_at || raw.confirmedAt) as { toDate?: () => Date })?.toDate?.(),
+            createdAt: ((raw.created_at || raw.createdAt) as { toDate?: () => Date })?.toDate?.(),
+            checkedInAt: ((raw.checked_in_at || raw.checkedInAt) as { toDate?: () => Date })?.toDate?.(),
           } as GameConfirmation;
         });
         // Ordenar por confirmation_order client-side
@@ -245,6 +274,7 @@ export function useCreateGame() {
   const { user, firebaseUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const createGame = useCallback(
     async (gameData: Partial<Game>) => {
@@ -289,6 +319,8 @@ export function useCreateGame() {
         };
 
         const docRef = await addDoc(gamesRef, newGame);
+        // Invalidar cache de jogos após criar
+        queryClient.invalidateQueries({ queryKey: ['games'] });
         setLoading(false);
         return docRef.id;
       } catch (err) {
@@ -298,7 +330,7 @@ export function useCreateGame() {
         throw err;
       }
     },
-    [firebaseUser, user]
+    [firebaseUser, user, queryClient]
   );
 
   return { createGame, loading, error };
@@ -307,6 +339,7 @@ export function useCreateGame() {
 export function useUpdateGameStatus() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const updateStatus = useCallback(
     async (gameId: string, newStatus: GameStatus) => {
@@ -340,6 +373,8 @@ export function useUpdateGameStatus() {
           updated_at: Timestamp.now(),
         });
 
+        // Invalidar cache de jogos após mudar status
+        queryClient.invalidateQueries({ queryKey: ['games'] });
         setLoading(false);
         return true;
       } catch (err) {
@@ -349,7 +384,7 @@ export function useUpdateGameStatus() {
         throw err;
       }
     },
-    []
+    [queryClient]
   );
 
   return { updateStatus, loading, error };

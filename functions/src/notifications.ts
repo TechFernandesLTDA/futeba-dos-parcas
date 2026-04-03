@@ -9,19 +9,18 @@ import {
   onDocumentUpdated,
   onDocumentDeleted,
 } from "firebase-functions/v2/firestore";
-import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {HttpsError} from "firebase-functions/v2/https";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {
   FIRESTORE_WHERE_IN_LIMIT,
   FUNCTION_REGION,
 } from "./constants";
 import {
-  checkRateLimit,
-  RATE_LIMITS,
-} from "./middleware/rate-limiter";
-import {
   sanitizeText,
 } from "./validation/index";
+import {
+  secureCallable,
+} from "./middleware/secure-callable-wrapper";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
@@ -1026,36 +1025,27 @@ export const onLevelUp = onDocumentUpdated(
  * @param {string} request.data.type - Tipo
  * @return {object} Resultado do envio
  */
-export const sendTestNotification = onCall(
-  {region: FUNCTION_REGION},
+export const sendTestNotification = secureCallable(
+  {
+    appCheck: false,
+    requireAuth: true,
+    rateLimit: {
+      maxRequests: 10,
+      windowMs: 60 * 1000,
+      keyPrefix: "send_test_notif",
+    },
+    enableAuditLog: true,
+    auditLogContext: async (request) => ({
+      function: "sendTestNotification",
+      userId: request.auth?.uid,
+    }),
+  },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "Usuario nao autenticado"
-      );
-    }
+    const userId = request.auth!.uid;
 
-    const userId = request.auth.uid;
-
-    // Rate limiting
-    const rlResult = await checkRateLimit(
-      userId,
-      {
-        ...RATE_LIMITS.SEND_NOTIFICATION,
-        keyPrefix: "send_test_notif",
-      }
-    );
-    if (!rlResult.allowed) {
-      throw new HttpsError(
-        "resource-exhausted",
-        "Rate limit excedido. " +
-        "Tente novamente em breve."
-      );
-    }
-
-    const {title, body, type} =
-      request.data || {};
+    const data =
+      (request.data || {}) as Record<string, string>;
+    const {title, body, type} = data;
 
     // Validação de entrada robusta
     if (!title || typeof title !== "string") {
@@ -1085,7 +1075,7 @@ export const sendTestNotification = onCall(
     if (
       type &&
       !Object.values(NotificationType)
-        .includes(type)
+        .includes(type as NotificationType)
     ) {
       const vals =
         Object.values(NotificationType).join(", ");
@@ -1104,7 +1094,7 @@ export const sendTestNotification = onCall(
       {
         title: safeTitle,
         body: safeBody,
-        type: type || NotificationType.GAME_INVITE,
+        type: (type as NotificationType) || NotificationType.GAME_INVITE,
       }
     );
 
@@ -1133,35 +1123,27 @@ interface FakeNotificationResult {
  * @param {number} request.data.count - Quantidade
  * @return {object} Resultado com notificações criadas
  */
-export const createFakeGameNotifications = onCall(
-  {region: FUNCTION_REGION},
+export const createFakeGameNotifications = secureCallable(
+  {
+    appCheck: false,
+    requireAuth: true,
+    rateLimit: {
+      maxRequests: 10,
+      windowMs: 60 * 1000,
+      keyPrefix: "fake_game_notif",
+    },
+    enableAuditLog: true,
+    auditLogContext: async (request) => ({
+      function: "createFakeGameNotifications",
+      userId: request.auth?.uid,
+    }),
+  },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "Usuario nao autenticado"
-      );
-    }
+    const userId = request.auth!.uid;
 
-    const userId = request.auth.uid;
-
-    // Rate limiting
-    const fakeRlResult = await checkRateLimit(
-      userId,
-      {
-        ...RATE_LIMITS.DEFAULT,
-        keyPrefix: "fake_game_notif",
-      }
-    );
-    if (!fakeRlResult.allowed) {
-      throw new HttpsError(
-        "resource-exhausted",
-        "Rate limit excedido. " +
-        "Tente novamente em breve."
-      );
-    }
-
-    const rawCount = request.data?.count;
+    const reqData =
+      (request.data || {}) as Record<string, unknown>;
+    const rawCount = reqData.count;
 
     // Validação: count entre 1 e 5
     const count =
