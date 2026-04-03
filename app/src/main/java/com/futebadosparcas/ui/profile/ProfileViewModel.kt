@@ -15,6 +15,7 @@ import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.domain.repository.UserRepository
+import com.futebadosparcas.domain.usecase.notification.ObserveUnreadCountUseCase
 import com.futebadosparcas.util.AppLogger
 import com.futebadosparcas.util.toDataBadges
 import com.futebadosparcas.util.toDataLocations
@@ -38,7 +39,7 @@ class ProfileViewModel(
     private val gamificationRepository: GamificationRepository,
     private val statisticsRepository: StatisticsRepository,
     private val locationRepository: LocationRepository,
-    private val notificationRepository: com.futebadosparcas.domain.repository.NotificationRepository,
+    private val observeUnreadCountUseCase: ObserveUnreadCountUseCase,
     private val preferencesManager: com.futebadosparcas.util.PreferencesManager,
     private val profilePhotoDataSource: ProfilePhotoDataSource,
     private val firestore: FirebaseFirestore,
@@ -78,7 +79,7 @@ class ProfileViewModel(
     private fun observeUnreadCount() {
         unreadCountJob?.cancel()
         unreadCountJob = viewModelScope.launch {
-            notificationRepository.getUnreadCountFlow()
+            observeUnreadCountUseCase()
                 .catch { e ->
                     AppLogger.e(TAG, "Erro ao observar notificações: ${e.message}", e)
                     _unreadCount.value = 0

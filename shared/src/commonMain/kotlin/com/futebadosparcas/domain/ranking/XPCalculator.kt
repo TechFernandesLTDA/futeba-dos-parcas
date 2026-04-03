@@ -68,6 +68,8 @@ data class PlayerGameData(
 /**
  * Calculador de XP baseado em regras definidas.
  *
+ * Source of truth: shared/xp-constants.json — keep in sync
+ *
  * Regras padrao:
  * - Participacao: 10 XP por jogo
  * - Gols: 10 XP cada

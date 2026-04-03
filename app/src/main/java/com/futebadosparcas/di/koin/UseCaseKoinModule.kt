@@ -6,6 +6,9 @@ import com.futebadosparcas.domain.usecase.GetLeagueRankingUseCase
 import com.futebadosparcas.domain.usecase.GetPlayerStatisticsUseCase
 import com.futebadosparcas.domain.usecase.GetUpcomingGamesUseCase
 import com.futebadosparcas.domain.usecase.ConfirmationUseCase
+import com.futebadosparcas.domain.usecase.livegame.AddGameEventUseCase
+import com.futebadosparcas.domain.usecase.livegame.FinishLiveGameUseCase
+import com.futebadosparcas.domain.usecase.notification.ObserveUnreadCountUseCase
 import com.futebadosparcas.domain.usecase.group.ArchiveGroupUseCase
 import com.futebadosparcas.domain.usecase.group.CreateGroupUseCase
 import com.futebadosparcas.domain.usecase.group.DeleteGroupUseCase
@@ -41,6 +44,13 @@ val useCaseKoinModule = module {
     single<ConfirmationUseCase> {
         ConfirmationUseCase(get(), get(), get(), get(), get())
     }
+
+    // Live game use cases
+    single<AddGameEventUseCase> { AddGameEventUseCase(get()) }
+    single<FinishLiveGameUseCase> { FinishLiveGameUseCase(get(), get()) }
+
+    // Notification use cases
+    single<ObserveUnreadCountUseCase> { ObserveUnreadCountUseCase(get()) }
 
     // Group use cases (todos têm @Inject constructor)
     single<CreateGroupUseCase> { CreateGroupUseCase(get()) }
