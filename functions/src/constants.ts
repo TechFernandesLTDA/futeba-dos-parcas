@@ -6,7 +6,18 @@
  *
  * Regra: Se um número aparece em 2+ arquivos,
  * ele DEVE estar aqui.
+ *
+ * XP e Level Table: Fonte de verdade em shared/xp-constants.json
  */
+
+// Importa constantes de XP do arquivo JSON centralizado
+// Source of truth: shared/xp-constants.json — keep in sync
+import xpConstants from "../../shared/xp-constants.json";
+
+// Re-exporta constantes de XP do JSON centralizado
+export const XP_ACTIONS = xpConstants.xpActions;
+export const STREAK_BONUSES = xpConstants.streakBonuses;
+export const LEVEL_TABLE = xpConstants.levelTable;
 
 // ==========================================
 // CLOUD FUNCTIONS CONFIG
@@ -163,24 +174,24 @@ export const BADGE_DEFENSIVE_WALL_SAVES = 10;
 // XP LIMITS
 // ==========================================
 
-/** XP máximo por jogo (anti-cheat) */
-export const MAX_XP_PER_GAME = 500;
+/** XP máximo por jogo (anti-cheat) — source of truth: shared/xp-constants.json */
+export const MAX_XP_PER_GAME = xpConstants.antiCheatLimits.MAX_XP_PER_GAME;
 
-/** XP mínimo possível por jogo (penalidades) */
-export const MIN_XP_PER_GAME = -100;
+/** XP mínimo possível por jogo (penalidades) — source of truth: shared/xp-constants.json */
+export const MIN_XP_PER_GAME = xpConstants.antiCheatLimits.MIN_XP_PER_GAME;
 
 // ==========================================
 // ANTI-CHEAT LIMITS
 // ==========================================
 
-/** Máximo de gols por jogo */
-export const MAX_GOALS_PER_GAME = 15;
+/** Máximo de gols por jogo — source of truth: shared/xp-constants.json */
+export const MAX_GOALS_PER_GAME = xpConstants.antiCheatLimits.MAX_GOALS_PER_GAME;
 
-/** Máximo de assistências por jogo */
-export const MAX_ASSISTS_PER_GAME = 10;
+/** Máximo de assistências por jogo — source of truth: shared/xp-constants.json */
+export const MAX_ASSISTS_PER_GAME = xpConstants.antiCheatLimits.MAX_ASSISTS_PER_GAME;
 
-/** Máximo de defesas por jogo */
-export const MAX_SAVES_PER_GAME = 30;
+/** Máximo de defesas por jogo — source of truth: shared/xp-constants.json */
+export const MAX_SAVES_PER_GAME = xpConstants.antiCheatLimits.MAX_SAVES_PER_GAME;
 
 // ==========================================
 // VOTING

@@ -47,6 +47,8 @@ private val levelPhrases = mapOf(
 /**
  * Tabela de níveis e XP necessário.
  *
+ * Source of truth: shared/xp-constants.json — keep in sync
+ *
  * Progresso:
  * - Níveis 0-10: ~1,5 anos para jogador que joga 1x/sem (~78 jogos)
  * - Níveis 11-20: ~1,5 anos adicionais (mais ~78 jogos)

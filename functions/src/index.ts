@@ -4,7 +4,6 @@ import {
   onDocumentDeleted,
 } from "firebase-functions/v2/firestore";
 import {
-  FIRESTORE_WHERE_IN_LIMIT,
   FIRESTORE_BATCH_SAFE_LIMIT,
   FUNCTION_REGION,
   MAX_XP_PER_GAME,
@@ -15,6 +14,84 @@ import {
 import {
   getAllBadgesToAward,
 } from "./badges/badge-helper";
+
+// ==========================================
+// IMPORTS DOS MÓDULOS EXTRAÍDOS
+// ==========================================
+
+// Modelos e interfaces
+import type {
+  Game,
+  GamificationSettings,
+  UserStatistics,
+  XpLog,
+} from "./models";
+
+// XP Pipeline (níveis, milestones, settings)
+import {
+  DEFAULT_SETTINGS,
+  XP_WORST_PLAYER_PENALTY,
+  getLevelForXp,
+  checkMilestones,
+} from "./xp/pipeline";
+
+// Game helpers (conversores, resultados, fetch)
+import {
+  toGameConfirmation,
+  toTeam,
+  toLiveScore,
+  getGameDate,
+  getWeekKey,
+  determineGameResults,
+  getOpponentScore,
+  fetchAllUsers,
+  fetchAllStats,
+  fetchAllStreaks,
+  updateRankingDeltas,
+  updateSeasonParticipation,
+} from "./game/helpers";
+
+// ==========================================
+// RE-EXPORTS (manter API pública intacta)
+// ==========================================
+
+// Re-exportar modelos
+export {
+  type Game,
+  type GameConfirmation,
+  type GamificationSettings,
+  type XpLog,
+  type Team,
+  type LiveGameScore,
+  type UserStatistics,
+} from "./models";
+
+// Re-exportar XP pipeline
+export {
+  DEFAULT_SETTINGS,
+  XP_WORST_PLAYER_PENALTY,
+  LEVELS,
+  getLevelForXp,
+  MILESTONES,
+  checkMilestones,
+  type MilestoneDef,
+} from "./xp/pipeline";
+
+// Re-exportar game helpers
+export {
+  toGameConfirmation,
+  toTeam,
+  toLiveScore,
+  getGameDate,
+  getWeekKey,
+  determineGameResults,
+  getOpponentScore,
+  fetchAllUsers,
+  fetchAllStats,
+  fetchAllStreaks,
+  updateRankingDeltas,
+  updateSeasonParticipation,
+} from "./game/helpers";
 
 // PERF_001: Lazy imports para otimizar cold start
 let leagueCalcImported = false;
@@ -52,591 +129,7 @@ async function getNotifications(): Promise<any> { // eslint-disable-line @typesc
 admin.initializeApp();
 const db = admin.firestore();
 
-// ==========================================
-// MODELS & INTERFACES
-// ==========================================
-
-interface Game {
-    id: string;
-    xp_processed?: boolean;
-    xp_processing?: boolean;
-    status: string; // "FINISHED"
-    mvp_id?: string;
-    owner_id: string;
-    date?: string;
-    dateTime?: admin.firestore.Timestamp;
-}
-
-interface GameConfirmation {
-    userId: string;
-    status: string; // "CONFIRMED"
-    position: string;
-    goals: number;
-    assists: number;
-    saves: number;
-    yellowCards: number;
-    redCards: number;
-    game_id: string;
-    // "Bola Murcha" - penalidade de -10 XP
-    is_worst_player?: boolean;
-}
-
-interface Team {
-    id: string;
-    playerIds: string[];
-    score: number;
-}
-
-interface LiveGameScore {
-    gameId: string;
-    team1Id: string;
-    team2Id: string;
-    team1Score: number;
-    team2Score: number;
-}
-
-export interface UserStatistics {
-    totalGames: number;
-    totalGoals: number;
-    totalAssists: number;
-    totalSaves: number;
-    totalYellowCards: number;
-    totalRedCards: number;
-    gamesWon: number;
-    gamesLost: number;
-    gamesDraw: number;
-    bestPlayerCount: number;
-    worstPlayerCount: number;
-    // Sequencia atual de jogos como MVP
-    currentMvpStreak: number;
-}
-
-interface XpLog {
-    user_id: string;
-    game_id: string;
-    xp_earned: number;
-    xp_before: number;
-    xp_after: number;
-    level_before: number;
-    level_after: number;
-    xp_participation: number;
-    xp_goals: number;
-    xp_assists: number;
-    xp_saves: number;
-    xp_result: number;
-    xp_mvp: number;
-    // NOVO: XP por clean sheet (goleiro)
-    xp_clean_sheet: number;
-    xp_milestones: number;
-    xp_streak: number;
-    xp_penalty: number; // Penalidade "Bola Murcha"
-    goals: number;
-    assists: number;
-    saves: number;
-    was_mvp: boolean;
-    was_clean_sheet: boolean; // NOVO: Flag clean sheet
-    // Flag "Bola Murcha"
-    was_worst_player: boolean;
-    game_result: string;
-    milestones_unlocked: string[];
-    created_at: admin.firestore.FieldValue;
-}
-
-interface GamificationSettings {
-    xp_presence: number;
-    xp_per_goal: number;
-    xp_per_assist: number;
-    xp_per_save: number;
-    xp_win: number;
-    xp_draw: number;
-    xp_mvp: number;
-    xp_streak_3: number;
-    // NOVO: Bonus streak 5 jogos
-    xp_streak_5: number;
-    xp_streak_7: number;
-    xp_streak_10: number;
-    // NOVO: Bonus goleiro sem sofrer gols
-    xp_clean_sheet: number;
-}
-
-// ==========================================
-// CONSTANTS & LOGIC (Port from Kotlin)
-// ==========================================
-
-const DEFAULT_SETTINGS: GamificationSettings = {
-  xp_presence: 10,
-  xp_per_goal: 10,
-  xp_per_assist: 7,
-  // Aumentado de 5 para 8 (balance goleiros)
-  xp_per_save: 8,
-  xp_win: 20,
-  xp_draw: 10,
-  xp_mvp: 30,
-  xp_streak_3: 20,
-  xp_streak_5: 35, // NOVO: Bonus intermediário
-  xp_streak_7: 50,
-  xp_streak_10: 100,
-  // NOVO: Bonus goleiro clean sheet
-  xp_clean_sheet: 15,
-};
-
 // Limites Anti-Cheat importados de ./constants
-
-// Penalidade "Bola Murcha" (sync XPCalculator.kt)
-const XP_WORST_PLAYER_PENALTY = -10;
-
-// LevelTable Logic (Synced with Kotlin LevelTable.kt)
-// Formato: level, name, xpRequired (acumulado)
-// Fonte de verdade:
-//   app/.../data/model/LevelTable.kt
-export const LEVELS = [
-  {level: 0, name: "Novato", xpRequired: 0},
-  {level: 1, name: "Iniciante", xpRequired: 100},
-  {level: 2, name: "Amador", xpRequired: 350},
-  {level: 3, name: "Regular", xpRequired: 850},
-  {level: 4, name: "Experiente", xpRequired: 1850},
-  {level: 5, name: "Habilidoso", xpRequired: 3850},
-  {level: 6, name: "Profissional", xpRequired: 7350},
-  {level: 7, name: "Expert", xpRequired: 12850},
-  {level: 8, name: "Mestre", xpRequired: 20850},
-  {level: 9, name: "Lenda", xpRequired: 32850},
-  {level: 10, name: "Imortal", xpRequired: 52850},
-];
-
-/**
- * Retorna o nível correspondente ao XP.
- * @param {number} xp Total de XP do jogador.
- * @return {number} Nível do jogador.
- */
-export function getLevelForXp(xp: number): number {
-  const sorted = [...LEVELS].reverse();
-  const found = sorted.find((l) => xp >= l.xpRequired);
-  // Nível mínimo é 0 (Novato)
-  return found ? found.level : 0;
-}
-
-// Milestone Logic (Synced with Kotlin Gamification.kt)
-type MilestoneDef = {
-    name: string;
-    xpReward: number;
-    threshold: number;
-    field: keyof UserStatistics;
-};
-
-export const MILESTONES: MilestoneDef[] = [
-  // Jogos
-  {
-    name: "GAMES_10", xpReward: 50,
-    threshold: 10, field: "totalGames",
-  },
-  {
-    name: "GAMES_25", xpReward: 100,
-    threshold: 25, field: "totalGames",
-  },
-  {
-    name: "GAMES_50", xpReward: 200,
-    threshold: 50, field: "totalGames",
-  },
-  {
-    name: "GAMES_100", xpReward: 500,
-    threshold: 100, field: "totalGames",
-  },
-  {
-    name: "GAMES_250", xpReward: 1000,
-    threshold: 250, field: "totalGames",
-  },
-  {
-    name: "GAMES_500", xpReward: 2500,
-    threshold: 500, field: "totalGames",
-  },
-
-  // Gols
-  {
-    name: "GOALS_10", xpReward: 50,
-    threshold: 10, field: "totalGoals",
-  },
-  {
-    name: "GOALS_25", xpReward: 100,
-    threshold: 25, field: "totalGoals",
-  },
-  {
-    name: "GOALS_50", xpReward: 200,
-    threshold: 50, field: "totalGoals",
-  },
-  {
-    name: "GOALS_100", xpReward: 500,
-    threshold: 100, field: "totalGoals",
-  },
-  {
-    name: "GOALS_250", xpReward: 1000,
-    threshold: 250, field: "totalGoals",
-  },
-
-  // Assistencias
-  {
-    name: "ASSISTS_10", xpReward: 50,
-    threshold: 10, field: "totalAssists",
-  },
-  {
-    name: "ASSISTS_25", xpReward: 100,
-    threshold: 25, field: "totalAssists",
-  },
-  {
-    name: "ASSISTS_50", xpReward: 200,
-    threshold: 50, field: "totalAssists",
-  },
-  {
-    name: "ASSISTS_100", xpReward: 500,
-    threshold: 100, field: "totalAssists",
-  },
-
-  // Defesas
-  {
-    name: "SAVES_25", xpReward: 50,
-    threshold: 25, field: "totalSaves",
-  },
-  {
-    name: "SAVES_50", xpReward: 100,
-    threshold: 50, field: "totalSaves",
-  },
-  {
-    name: "SAVES_100", xpReward: 200,
-    threshold: 100, field: "totalSaves",
-  },
-  {
-    name: "SAVES_250", xpReward: 500,
-    threshold: 250, field: "totalSaves",
-  },
-
-  // MVPs
-  {
-    name: "MVP_5", xpReward: 100,
-    threshold: 5, field: "bestPlayerCount",
-  },
-  {
-    name: "MVP_10", xpReward: 300,
-    threshold: 10, field: "bestPlayerCount",
-  },
-  {
-    name: "MVP_25", xpReward: 750,
-    threshold: 25, field: "bestPlayerCount",
-  },
-  {
-    name: "MVP_50", xpReward: 1500,
-    threshold: 50, field: "bestPlayerCount",
-  },
-
-  // Vitorias
-  {
-    name: "WINS_10", xpReward: 75,
-    threshold: 10, field: "gamesWon",
-  },
-  {
-    name: "WINS_25", xpReward: 150,
-    threshold: 25, field: "gamesWon",
-  },
-  {
-    name: "WINS_50", xpReward: 300,
-    threshold: 50, field: "gamesWon",
-  },
-  {
-    name: "WINS_100", xpReward: 750,
-    threshold: 100, field: "gamesWon",
-  },
-];
-
-/**
- * Verifica milestones alcançados pelo jogador.
- * @param {UserStatistics} stats Estatísticas atuais.
- * @param {string[]} achieved Milestones já alcançados.
- * @return {{ newMilestones: string[], xp: number }}
- *   Novos milestones e XP ganho.
- */
-export function checkMilestones(
-  stats: UserStatistics,
-  achieved: string[]
-): {newMilestones: string[], xp: number} {
-  const newM: string[] = [];
-  let xp = 0;
-
-  for (const m of MILESTONES) {
-    if (achieved.includes(m.name)) continue;
-    if (stats[m.field] >= m.threshold) {
-      newM.push(m.name);
-      xp += m.xpReward;
-    }
-  }
-  return {newMilestones: newM, xp};
-}
-
-// ==========================================
-// EXTRACTED HELPERS (from onGameStatusUpdate)
-// ==========================================
-
-/**
- * Determina o resultado de cada time no jogo.
- * @param {Team[]} teams Times participantes.
- * @param {LiveGameScore | null} liveScore
- *   Placar ao vivo.
- * @return {Record<string, string>} Mapa de
- *   resultados por time.
- */
-function determineGameResults(
-  teams: Team[],
-  liveScore: LiveGameScore | null
-): Record<string, "WIN" | "LOSS" | "DRAW"> {
-  const results: Record<
-    string, "WIN" | "LOSS" | "DRAW"
-  > = {};
-  if (teams.length < 2) return results;
-
-  const t1 = teams.find(
-    (t) => t.id === (
-      liveScore ?
-        liveScore.team1Id :
-        teams[0].id
-    )
-  );
-  const t2 = teams.find(
-    (t) => t.id === (
-      liveScore ?
-        liveScore.team2Id :
-        teams[1].id
-    )
-  );
-
-  let s1 = t1 ? t1.score : 0;
-  let s2 = t2 ? t2.score : 0;
-  if (liveScore) {
-    s1 = liveScore.team1Score;
-    s2 = liveScore.team2Score;
-  }
-
-  if (t1 && t2) {
-    if (s1 > s2) {
-      results[t1.id] = "WIN";
-      results[t2.id] = "LOSS";
-    } else if (s2 > s1) {
-      results[t1.id] = "LOSS";
-      results[t2.id] = "WIN";
-    } else {
-      results[t1.id] = "DRAW";
-      results[t2.id] = "DRAW";
-    }
-  }
-  return results;
-}
-
-/**
- * Calcula o placar do adversário para um time.
- * Retorna -1 se não for possível determinar.
- * @param {Team | undefined} team Time do jogador.
- * @param {LiveGameScore | null} liveScore
- *   Placar ao vivo.
- * @param {Team[]} teams Todos os times.
- * @return {number} Placar do adversário ou -1.
- */
-function getOpponentScore(
-  team: Team | undefined,
-  liveScore: LiveGameScore | null,
-  teams: Team[]
-): number {
-  if (liveScore) {
-    if (
-      team &&
-      team.id === liveScore.team1Id
-    ) {
-      return liveScore.team2Score;
-    } else if (
-      team &&
-      team.id === liveScore.team2Id
-    ) {
-      return liveScore.team1Score;
-    }
-  } else if (
-    teams.length >= 2 && team
-  ) {
-    const opponent = teams.find(
-      (t) => t.id !== team.id
-    );
-    if (opponent) {
-      return opponent.score;
-    }
-  }
-  return -1;
-}
-
-/**
- * Busca todos os usuários por IDs em chunks
- * de FIRESTORE_WHERE_IN_LIMIT.
- * @param {string[]} ids IDs dos usuários.
- * @return {Promise<Map>} Mapa de dados.
- */
-async function fetchAllUsers(
-  ids: string[]
-): Promise<
-  Map<
-    string,
-    admin.firestore.DocumentData
-  >
-> {
-  const result = new Map<
-    string,
-    admin.firestore.DocumentData
-  >();
-  const chunks: string[][] = [];
-  for (
-    let i = 0;
-    i < ids.length;
-    i += FIRESTORE_WHERE_IN_LIMIT
-  ) {
-    chunks.push(ids.slice(
-      i, i + FIRESTORE_WHERE_IN_LIMIT
-    ));
-  }
-  const snaps = await Promise.all(
-    chunks.map((chunk) =>
-      db.collection("users")
-        .where(
-          admin.firestore
-            .FieldPath.documentId(),
-          "in",
-          chunk
-        )
-        .get()
-    )
-  );
-  for (const snap of snaps) {
-    for (const doc of snap.docs) {
-      result.set(
-        doc.id,
-        doc.data() || {}
-      );
-    }
-  }
-  return result;
-}
-
-/**
- * Busca todas as estatísticas por IDs em
- * chunks de FIRESTORE_WHERE_IN_LIMIT.
- * @param {string[]} ids IDs dos usuários.
- * @return {Promise<Map>} Mapa de estatísticas.
- */
-async function fetchAllStats(
-  ids: string[]
-): Promise<Map<string, UserStatistics>> {
-  const defaultStats: UserStatistics = {
-    totalGames: 0,
-    totalGoals: 0,
-    totalAssists: 0,
-    totalSaves: 0,
-    totalYellowCards: 0,
-    totalRedCards: 0,
-    gamesWon: 0,
-    gamesLost: 0,
-    gamesDraw: 0,
-    bestPlayerCount: 0,
-    worstPlayerCount: 0,
-    currentMvpStreak: 0,
-  };
-  const result =
-    new Map<string, UserStatistics>();
-  const chunks: string[][] = [];
-  for (
-    let i = 0;
-    i < ids.length;
-    i += FIRESTORE_WHERE_IN_LIMIT
-  ) {
-    chunks.push(ids.slice(
-      i, i + FIRESTORE_WHERE_IN_LIMIT
-    ));
-  }
-  const snaps = await Promise.all(
-    chunks.map((chunk) =>
-      db.collection("statistics")
-        .where(
-          admin.firestore
-            .FieldPath.documentId(),
-          "in",
-          chunk
-        )
-        .get()
-    )
-  );
-  for (const snap of snaps) {
-    for (const doc of snap.docs) {
-      result.set(
-        doc.id,
-        (doc.data() || {
-          ...defaultStats,
-        }) as UserStatistics
-      );
-    }
-  }
-  // Preencher faltantes com defaults
-  for (const id of ids) {
-    if (!result.has(id)) {
-      result.set(id, {...defaultStats});
-    }
-  }
-  return result;
-}
-
-/**
- * Busca todos os streaks por IDs em chunks
- * de FIRESTORE_WHERE_IN_LIMIT.
- * @param {string[]} ids IDs dos usuários.
- * @return {Promise<Map>} Mapa de streaks.
- */
-async function fetchAllStreaks(
-  ids: string[]
-): Promise<Map<string, number>> {
-  const result =
-    new Map<string, number>();
-  const chunks: string[][] = [];
-  for (
-    let i = 0;
-    i < ids.length;
-    i += FIRESTORE_WHERE_IN_LIMIT
-  ) {
-    chunks.push(ids.slice(
-      i, i + FIRESTORE_WHERE_IN_LIMIT
-    ));
-  }
-  const snaps = await Promise.all(
-    chunks.map((chunk) =>
-      db.collection("user_streaks")
-        .where(
-          "user_id", "in", chunk
-        )
-        .get()
-    )
-  );
-  for (const snap of snaps) {
-    for (const doc of snap.docs) {
-      const data = doc.data();
-      const userId = data.user_id;
-      if (userId) {
-        // Suportar ambos os formatos:
-        // camelCase e snake_case
-        result.set(
-          userId,
-          data.currentStreak ||
-            data.current_streak ||
-            0
-        );
-      }
-    }
-  }
-  // Preencher faltantes com 0
-  for (const id of ids) {
-    if (!result.has(id)) {
-      result.set(id, 0);
-    }
-  }
-  return result;
-}
 
 // ==========================================
 // CLOUD FUNCTION: onGameStatusUpdate
@@ -1536,303 +1029,6 @@ export const onGameStatusUpdate = onDocumentUpdated(
     }
   }
 );
-
-/**
- * Retorna a chave da semana no formato
- * yyyy-WNN.
- * @param {Date} d Data de referência.
- * @return {string} Chave da semana.
- */
-export function getWeekKey(d: Date): string {
-  const year = d.getFullYear();
-  const firstDayOfYear = new Date(year, 0, 1);
-  const pastDaysOfYear =
-    (d.getTime() - firstDayOfYear.getTime()) /
-    86400000;
-  const weekNumber = Math.ceil(
-    (pastDaysOfYear +
-      firstDayOfYear.getDay() + 1) / 7
-  );
-  return `${year}-W${weekNumber
-    .toString()
-    .padStart(2, "0")}`;
-}
-
-/**
- * Converte documento Firestore em
- * GameConfirmation.
- * @param {admin.firestore.DocumentData} raw
- *   Dados brutos do Firestore.
- * @return {GameConfirmation} Confirmação
- *   tipada.
- */
-export function toGameConfirmation(
-  raw: admin.firestore.DocumentData
-): GameConfirmation {
-  return {
-    userId: raw.user_id ?? raw.userId ?? "",
-    status: raw.status ?? "CONFIRMED",
-    position: raw.position ?? "",
-    goals: Number(raw.goals ?? 0),
-    assists: Number(raw.assists ?? 0),
-    saves: Number(raw.saves ?? 0),
-    yellowCards: Number(
-      raw.yellow_cards ?? raw.yellowCards ?? 0
-    ),
-    redCards: Number(
-      raw.red_cards ?? raw.redCards ?? 0
-    ),
-    game_id:
-      raw.game_id ?? raw.gameId ?? "",
-    is_worst_player:
-      raw.is_worst_player ??
-      raw.isWorstPlayer ??
-      false,
-  };
-}
-
-/**
- * Limite máximo de placar por time.
- * (P0 #30: Score bounds validation)
- */
-const MAX_SCORE = 100;
-
-/**
- * Normaliza placar para o range válido
- * [0, MAX_SCORE].
- * @param {number} score Placar bruto.
- * @return {number} Placar normalizado.
- */
-function clampScore(score: number): number {
-  return Math.max(
-    0, Math.min(MAX_SCORE, Math.round(score))
-  );
-}
-
-/**
- * Converte documento Firestore em Team.
- * @param {string} id ID do documento.
- * @param {admin.firestore.DocumentData} raw
- *   Dados brutos do Firestore.
- * @return {Team} Time tipado.
- */
-export function toTeam(
-  id: string,
-  raw: admin.firestore.DocumentData
-): Team {
-  const rawScore = Number(raw.score ?? 0);
-  return {
-    id: raw.id ?? id,
-    playerIds: (
-      raw.player_ids ?? raw.playerIds ?? []
-    ) as string[],
-    score: clampScore(rawScore),
-  };
-}
-
-/**
- * Converte documento Firestore em
- * LiveGameScore.
- * @param {admin.firestore.DocumentData} raw
- *   Dados brutos do Firestore.
- * @return {LiveGameScore | null} Placar
- *   ao vivo tipado ou null.
- */
-export function toLiveScore(
-  raw?: admin.firestore.DocumentData | null
-): LiveGameScore | null {
-  if (!raw) return null;
-  const rawTeam1Score = Number(
-    raw.team1_score ?? raw.team1Score ?? 0
-  );
-  const rawTeam2Score = Number(
-    raw.team2_score ?? raw.team2Score ?? 0
-  );
-
-  // P0 #30: Logar placares fora dos limites
-  // para investigação
-  if (
-    rawTeam1Score > MAX_SCORE ||
-    rawTeam2Score > MAX_SCORE
-  ) {
-    console.warn(
-      "[SCORE_BOUNDS] Placar fora dos " +
-      "limites detectado: " +
-      `T1=${rawTeam1Score}, ` +
-      `T2=${rawTeam2Score} ` +
-      `(max=${MAX_SCORE}). ` +
-      "Valores serão normalizados."
-    );
-  }
-
-  return {
-    gameId:
-      raw.game_id ?? raw.gameId ?? "",
-    team1Id:
-      raw.team1_id ?? raw.team1Id ?? "",
-    team2Id:
-      raw.team2_id ?? raw.team2Id ?? "",
-    team1Score: clampScore(rawTeam1Score),
-    team2Score: clampScore(rawTeam2Score),
-  };
-}
-
-/**
- * Obtém a data do jogo a partir do
- * documento.
- * @param {Game} game Documento do jogo.
- * @return {Date} Data do jogo.
- */
-export function getGameDate(
-  game?: Game
-): Date {
-  if (!game) return new Date();
-  if (
-    game.dateTime &&
-    typeof game.dateTime.toDate === "function"
-  ) {
-    return game.dateTime.toDate();
-  }
-  if (game.date) {
-    const parsed = new Date(game.date);
-    if (!isNaN(parsed.getTime())) return parsed;
-  }
-  return new Date();
-}
-
-/**
- * Atualiza deltas de ranking semanal e mensal.
- * @param {admin.firestore.WriteBatch} batch
- *   Batch de escrita.
- * @param {string} uid ID do usuário.
- * @param {GameConfirmation} conf Confirmação.
- * @param {string} result Resultado do jogo.
- * @param {number} xp XP ganho.
- * @param {boolean} isMvp Se é MVP.
- * @param {string} weekKey Chave da semana.
- * @param {string} monthKey Chave do mês.
- */
-function updateRankingDeltas(
-  batch: admin.firestore.WriteBatch,
-  uid: string,
-  conf: GameConfirmation,
-  result: string,
-  xp: number,
-  isMvp: boolean,
-  weekKey: string,
-  monthKey: string
-) {
-  const fields = {
-    goals_added: admin.firestore
-      .FieldValue.increment(conf.goals),
-    assists_added: admin.firestore
-      .FieldValue.increment(conf.assists),
-    saves_added: admin.firestore
-      .FieldValue.increment(conf.saves),
-    xp_added: admin.firestore
-      .FieldValue.increment(xp),
-    games_added: admin.firestore
-      .FieldValue.increment(1),
-    wins_added: admin.firestore
-      .FieldValue.increment(
-        result === "WIN" ? 1 : 0
-      ),
-    mvp_added: admin.firestore
-      .FieldValue.increment(
-        isMvp ? 1 : 0
-      ),
-    updated_at: admin.firestore
-      .FieldValue.serverTimestamp(),
-  };
-
-  const weekId =
-    `week_${weekKey}_${uid}`;
-  batch.set(
-    db.collection("ranking_deltas")
-      .doc(weekId),
-    {
-      user_id: uid,
-      period: "week",
-      period_key: weekKey,
-      ...fields,
-    },
-    {merge: true}
-  );
-
-  const monthId =
-    `month_${monthKey}_${uid}`;
-  batch.set(
-    db.collection("ranking_deltas")
-      .doc(monthId),
-    {
-      user_id: uid,
-      period: "month",
-      period_key: monthKey,
-      ...fields,
-    },
-    {merge: true}
-  );
-}
-
-/**
- * Atualiza participação na temporada.
- * @param {admin.firestore.WriteBatch} batch
- *   Batch de escrita.
- * @param {string} uid ID do usuário.
- * @param {string} seasonId ID da temporada.
- * @param {string} result Resultado do jogo.
- * @param {GameConfirmation} conf Confirmação.
- * @param {boolean} isMvp Se é MVP.
- */
-function updateSeasonParticipation(
-  batch: admin.firestore.WriteBatch,
-  uid: string,
-  seasonId: string,
-  result: string,
-  conf: GameConfirmation,
-  isMvp: boolean
-) {
-  const partId = `${seasonId}_${uid}`;
-  const pointsToAdd = result === "WIN" ?
-    3 :
-    (result === "DRAW" ? 1 : 0);
-
-  batch.set(
-    db.collection("season_participation")
-      .doc(partId),
-    {
-      user_id: uid,
-      season_id: seasonId,
-      points: admin.firestore
-        .FieldValue.increment(pointsToAdd),
-      games_played: admin.firestore
-        .FieldValue.increment(1),
-      wins: admin.firestore
-        .FieldValue.increment(
-          result === "WIN" ? 1 : 0
-        ),
-      draws: admin.firestore
-        .FieldValue.increment(
-          result === "DRAW" ? 1 : 0
-        ),
-      losses: admin.firestore
-        .FieldValue.increment(
-          result === "LOSS" ? 1 : 0
-        ),
-      goals_scored: admin.firestore
-        .FieldValue.increment(conf.goals),
-      assists: admin.firestore
-        .FieldValue.increment(conf.assists),
-      mvp_count: admin.firestore
-        .FieldValue.increment(
-          isMvp ? 1 : 0
-        ),
-      last_calculated_at: admin.firestore
-        .FieldValue.serverTimestamp(),
-    },
-    {merge: true}
-  );
-}
 
 // ==========================================
 // RECALCULAR LEAGUE RATING E DIVISÃO

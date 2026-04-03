@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 /**
  * Acoes que concedem (ou penalizam) XP em uma partida.
  *
+ * Source of truth: shared/xp-constants.json — keep in sync
+ *
  * Cada acao tem um valor padrao de XP associado.
  * Esses valores podem ser sobrescritos por [GamificationSettings] do grupo.
  *
