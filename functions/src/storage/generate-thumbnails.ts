@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions/v2";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {FUNCTION_REGION} from "../constants";
 import {Storage} from "@google-cloud/storage";
 import * as path from "path";
 import * as os from "os";
@@ -48,7 +49,7 @@ const ACCEPTED_IMAGE_TYPES = [
 export const generateProfileThumbnail =
   functions.storage.onObjectFinalized(
     {
-      region: "southamerica-east1",
+      region: FUNCTION_REGION,
       memory: "1GiB",
       timeoutSeconds: 120,
     },
@@ -288,7 +289,7 @@ export const generateProfileThumbnail =
 export const generateGroupThumbnail =
   functions.storage.onObjectFinalized(
     {
-      region: "southamerica-east1",
+      region: FUNCTION_REGION,
       memory: "1GiB",
       timeoutSeconds: 120,
     },

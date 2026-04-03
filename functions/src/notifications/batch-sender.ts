@@ -36,6 +36,7 @@ import {
   FCM_MULTICAST_LIMIT,
   FIRESTORE_WHERE_IN_LIMIT,
   FIRESTORE_PAGINATION_LIMIT,
+  FUNCTION_REGION,
 } from "../constants";
 import {
   checkRateLimit,
@@ -709,7 +710,7 @@ export const processNotificationBatch =
     {
       schedule: "* * * * *",
       timeZone: "America/Sao_Paulo",
-      region: "southamerica-east1",
+      region: FUNCTION_REGION,
       memory: "512MiB",
       timeoutSeconds: 120,
       retryCount: 1,
@@ -753,7 +754,7 @@ export const processNotificationBatch =
  */
 export const enqueueNotificationCallable = onCall(
   {
-    region: "southamerica-east1",
+    region: FUNCTION_REGION,
     memory: "256MiB",
     // SECURITY: App Check
     enforceAppCheck:
@@ -926,7 +927,7 @@ export const cleanupNotificationQueue =
     {
       schedule: "0 4 * * *",
       timeZone: "America/Sao_Paulo",
-      region: "southamerica-east1",
+      region: FUNCTION_REGION,
       memory: "256MiB",
       timeoutSeconds: 120,
     },

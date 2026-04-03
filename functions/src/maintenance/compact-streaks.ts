@@ -65,6 +65,7 @@ import * as admin from "firebase-admin";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {
   FIRESTORE_BATCH_SAFE_LIMIT,
+  FUNCTION_REGION,
 } from "../constants";
 
 const db = admin.firestore();
@@ -95,6 +96,7 @@ export const maintainStreaksData = onSchedule(
   {
     schedule: "0 4 1 * *",
     timeZone: "America/Sao_Paulo",
+    region: FUNCTION_REGION,
     timeoutSeconds: 60,
     memory: "256MiB",
     retryCount: 1,

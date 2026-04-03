@@ -13,6 +13,7 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {
   FIRESTORE_WHERE_IN_LIMIT,
+  FUNCTION_REGION,
 } from "./constants";
 import {
   checkRateLimit,
@@ -720,7 +721,7 @@ export async function sendAndSaveNotification(
  * notification_sent para evitar envio duplicado.
  */
 export const onGameCreated = onDocumentCreated(
-  "games/{gameId}",
+  {document: "games/{gameId}", region: FUNCTION_REGION},
   async (event) => {
     const game = event.data?.data();
     if (!game) return;
@@ -913,7 +914,7 @@ export const onGameUpdatedNotification =
  * Notifica o dono do jogo sobre nova confirmação.
  */
 export const onGameConfirmed = onDocumentCreated(
-  "confirmations/{confirmationId}",
+  {document: "confirmations/{confirmationId}", region: FUNCTION_REGION},
   async (event) => {
     const confirmation = event.data?.data();
     if (
@@ -977,7 +978,7 @@ export const onGameConfirmed = onDocumentCreated(
  * Envia notificação de level up.
  */
 export const onLevelUp = onDocumentUpdated(
-  "users/{userId}",
+  {document: "users/{userId}", region: FUNCTION_REGION},
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
@@ -1026,6 +1027,7 @@ export const onLevelUp = onDocumentUpdated(
  * @return {object} Resultado do envio
  */
 export const sendTestNotification = onCall(
+  {region: FUNCTION_REGION},
   async (request) => {
     if (!request.auth) {
       throw new HttpsError(
@@ -1132,6 +1134,7 @@ interface FakeNotificationResult {
  * @return {object} Resultado com notificações criadas
  */
 export const createFakeGameNotifications = onCall(
+  {region: FUNCTION_REGION},
   async (request) => {
     if (!request.auth) {
       throw new HttpsError(
@@ -1269,7 +1272,7 @@ export const createFakeGameNotifications = onCall(
  * Envia notificação push e salva no Firestore.
  */
 export const onBadgeAwarded = onDocumentCreated(
-  "user_badges/{badgeDocId}",
+  {document: "user_badges/{badgeDocId}", region: FUNCTION_REGION},
   async (event) => {
     const userBadge = event.data?.data();
     if (!userBadge) {
@@ -1549,7 +1552,7 @@ export const onGroupInviteCreated =
  * marcar convites pendentes antigos como EXPIRED.
  */
 export const cleanupExpiredInvites = onSchedule(
-  "every 24 hours",
+  {schedule: "every 24 hours", region: FUNCTION_REGION},
   async () => {
     console.log(
       "[CLEANUP] Iniciando limpeza de" +
@@ -1691,7 +1694,7 @@ export async function notifyMvpAwardedDirect(
  * FINISHED.
  */
 export const onMvpAwarded = onDocumentUpdated(
-  "games/{gameId}",
+  {document: "games/{gameId}", region: FUNCTION_REGION},
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
@@ -1952,7 +1955,7 @@ export const onGroupInviteResponse =
  * Notifica admins/owners do grupo.
  */
 export const onMemberJoined = onDocumentCreated(
-  "groups/{groupId}/members/{memberId}",
+  {document: "groups/{groupId}/members/{memberId}", region: FUNCTION_REGION},
   async (event) => {
     const member = event.data?.data();
     if (!member) return;
@@ -2054,7 +2057,7 @@ export const onMemberJoined = onDocumentCreated(
  * Notifica admins/owners do grupo.
  */
 export const onMemberLeft = onDocumentDeleted(
-  "groups/{groupId}/members/{memberId}",
+  {document: "groups/{groupId}/members/{memberId}", region: FUNCTION_REGION},
   async (event) => {
     const groupId = event.params.groupId;
     const memberId = event.params.memberId;
@@ -2266,7 +2269,7 @@ export const onCashboxTransaction =
  * abre vaga. Notifica waitlist e membros do grupo.
  */
 export const onGameVacancy = onDocumentUpdated(
-  "confirmations/{confirmationId}",
+  {document: "confirmations/{confirmationId}", region: FUNCTION_REGION},
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
