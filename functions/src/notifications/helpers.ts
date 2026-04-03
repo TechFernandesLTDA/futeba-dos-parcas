@@ -483,7 +483,7 @@ export async function sendNotificationToUsers(
 
       const messaging = getFcm();
       const response =
-        await messaging.sendEachForMulticast(message);
+        await (messaging as any).sendEachForMulticast(message);
       totalSuccess += response.successCount;
 
       // Processar falhas individuais
