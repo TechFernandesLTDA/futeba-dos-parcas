@@ -2,13 +2,14 @@
 
 [![Android CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml)
 [![iOS Build](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml)
-[![Version](https://img.shields.io/badge/version-1.8.0-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
+[![Functions CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml)
+[![Version](https://img.shields.io/badge/version-1.19.0-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas)
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web-lightgrey.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas)
 
 > Organize suas peladas com gamificação, estatísticas e diversão! 🎮
 
-[📱 Download na Play Store](https://play.google.com/store/apps/details?id=com.futebadosparcas) | [📖 Documentação](https://futebadosparcas.web.app) | [🐛 Report Bug](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=bug_report.yml)
+[📱 Play Store](https://play.google.com/store/apps/details?id=com.futebadosparcas) | [🌐 Web App](https://futebadosparcas.web.app) | [🐛 Reportar Bug](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=bug_report.yml)
 
 ---
 
@@ -35,53 +36,58 @@
 - 🏅 Divisões (Bronze, Prata, Ouro, Diamante)
 - 📱 Widgets Android para próximos jogos
 
+### 🌐 Web App
+- ✅ 55+ telas com paridade total de funcionalidades com o Android
+- ✅ Sincronização em tempo real via React Query + Firestore
+- ✅ PWA-ready com suporte offline
+- ✅ Design responsivo mobile-first (max-width 480dp)
+- ✅ Firebase Hosting com cache CDN
+
 ### 🚀 Moderno & Multiplataforma
-- 🎨 Material Design 3
-- 🌓 Dark Mode
+- 🎨 Material Design 3 (Android) / MUI 5 (Web)
+- 🌓 Dark Mode (Android + Web)
 - 📱 Jetpack Compose (Android)
-- 🍎 SwiftUI + Compose Multiplatform (iOS - em desenvolvimento)
-- 🔄 Kotlin Multiplatform (~95% código compartilhado)
+- 🔄 Kotlin Multiplatform — lógica de negócio compartilhada (~95%)
 - ⚡ Performance otimizada com Baseline Profiles
 
 ---
 
-## 📱 Screenshots
-
-| Home | Game Detail | Live Game | Profile |
-|------|-------------|-----------|---------|
-| ![Home](screenshots/home.png) | ![Game](screenshots/game.png) | ![Live](screenshots/live.png) | ![Profile](screenshots/profile.png) |
-
----
-
-> **📘 New to the codebase?** Start with **[CLAUDE.md](CLAUDE.md)** - your comprehensive guide to the project architecture, build commands, coding patterns, and Spec-Driven Development workflow. Perfect for onboarding and AI-assisted development!
+> **📘 Novo no código?** Comece pelo **[CLAUDE.md](CLAUDE.md)** — guia completo de arquitetura, build commands, padrões de código e workflow Spec-Driven Development.
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Android
-- **Language:** Kotlin 2.0+
-- **UI:** Jetpack Compose + Material 3
-- **Architecture:** MVVM + Clean Architecture
-- **DI:** Hilt
+- **Linguagem:** Kotlin 2.2.10
+- **UI:** Jetpack Compose + Compose BOM 2024.09.00
+- **Arquitetura:** MVVM + Clean Architecture
+- **Injeção de Dependência:** Koin 4.1.1
 - **Async:** Coroutines + Flow
-- **Local DB:** Room + DataStore
-- **Network:** Ktor Client
+- **Database:** Room + DataStore
 - **Image Loading:** Coil
+- **Build:** AGP 9.0.1, SDK 36, JDK 17
+
+### Web
+- **Framework:** React 18 + TypeScript
+- **UI:** Material UI 5
+- **Build:** Vite 5
+- **Server State:** TanStack React Query 5
+- **Routing:** React Router DOM 6
+- **Database:** Firestore (direto, sem cache local)
 
 ### iOS (Em Desenvolvimento)
-- **Language:** Kotlin (shared) + Swift
-- **UI:** Compose Multiplatform
-- **Architecture:** KMP (Kotlin Multiplatform)
-- **Code Reuse:** ~95%
+- **Linguagem:** Kotlin (shared) + Swift
+- **UI:** Compose Multiplatform 1.10.0
+- **Arquitetura:** KMP (~95% código compartilhado)
 
-### Backend
-- **Firebase Auth** - Autenticação
-- **Cloud Firestore** - Database NoSQL
-- **Cloud Storage** - Imagens e arquivos
-- **Cloud Functions** - Lógica server-side (TypeScript)
-- **FCM** - Push Notifications
-- **Crashlytics** - Crash reporting
+### Backend (Firebase)
+- **Auth:** Firebase Authentication
+- **Database:** Cloud Firestore
+- **Storage:** Cloud Storage
+- **Serverless:** Cloud Functions v2 (Node 20, TypeScript)
+- **Push:** Firebase Cloud Messaging
+- **Monitoring:** Crashlytics + App Check
 
 ---
 
@@ -89,26 +95,30 @@
 
 ### Pré-requisitos
 
-- JDK 17+
-- Android Studio Ladybug (2024.2.1+)
-- Android SDK 35
+- JDK 17
+- Android Studio Ladybug (2024.2.1+) ou Hedgehog (2024.1.1+)
+- Android SDK 36 (compileSdk) / minSdk 24 / targetSdk 35
 - Firebase CLI (para Functions)
+- Node.js 20 (para Functions e Web)
 
 ### Clone & Build
 
 ```bash
-# Clone o repositório
 git clone https://github.com/TechFernandesLTDA/futeba-dos-parcas.git
 cd futeba-dos-parcas
 
-# Build Android
+# Android
 ./gradlew :app:assembleDebug
-
-# Instalar no device
 ./gradlew :app:installDebug
 
-# Rodar testes
+# Web
+cd web
+npm install
+npm run dev          # http://localhost:5173
+
+# Testes
 ./gradlew :app:testDebugUnitTest
+cd functions && npx jest --no-coverage   # 398 testes, 12 suites
 ```
 
 ### Configuração Firebase
@@ -121,7 +131,7 @@ cd futeba-dos-parcas
 MAPS_API_KEY=sua_chave_google_maps
 ```
 
-4. Instalar Functions:
+4. Emuladores locais:
 
 ```bash
 cd functions
@@ -139,28 +149,32 @@ futeba-dos-parcas/
 ├── shared/                 # Kotlin Multiplatform (business logic)
 ├── composeApp/             # Compose Multiplatform UI (Android + iOS)
 ├── iosApp/                 # iOS app (Swift + KMP)
-├── functions/              # Cloud Functions (TypeScript)
+├── functions/              # Cloud Functions (TypeScript, Node 20)
+├── web/                    # Web app (React + TypeScript + MUI)
+│   ├── src/pages/          # 55+ telas
+│   ├── src/hooks/          # React hooks (useGames, useGroups, etc.)
+│   ├── src/components/     # Componentes UI reutilizáveis
+│   └── src/contexts/       # Auth, Theme, Toast
 ├── firestore.rules         # Firestore security rules
 ├── specs/                  # Specs técnicas (SDD)
-└── .github/workflows/      # CI/CD pipelines
+├── scripts/                # Scripts utilitários (~70 scripts)
+└── .github/workflows/      # CI/CD pipelines (15 workflows)
 ```
 
 ---
 
-## 📖 Documentation
+## 📖 Documentação
 
-For developers and contributors, please refer to our comprehensive documentation:
+### 🤖 Para Desenvolvimento Assistido por IA
+- **[CLAUDE.md](CLAUDE.md)** — Guia completo com build commands, arquitetura, padrões, gotchas e workflow SDD
+- **[.claude/rules/](.claude/rules)** — Padrões detalhados: Compose, Material 3, ViewModels, Firestore, testes, segurança
+- **[.claude/PROJECT_CONTEXT.md](.claude/PROJECT_CONTEXT.md)** — Contexto consolidado para LLMs
 
-### 🤖 For AI-Assisted Development
-- **[CLAUDE.md](CLAUDE.md)** - **Complete development guide** with build commands, architecture patterns, Spec-Driven Development workflow, common gotchas, and quick references. Optimized for Claude Code and other AI coding assistants.
-- **[.claude/rules/](\.claude\rules)** - Detailed patterns for Compose, Material 3, ViewModels, Firestore, Kotlin style, testing, and security
-- **[.claude/PROJECT_CONTEXT.md](\.claude\PROJECT_CONTEXT.md)** - Consolidated project context for LLMs
-
-### 📚 For Developers
-- **[Tech Stack & Context](docs/TECH_STACK_AND_CONTEXT.md)** - Architecture, libraries, and navigation guide
-- **[Business Rules](docs/BUSINESS_RULES.md)** - XP system, Match Lifecycle, and Ranking logic
-- **[Setup Guide](SETUP_GUIDE.md)** - Complete development environment setup
-- **[Specs](specs/)** - Technical specifications for all features (Spec-Driven Development)
+### 📚 Para Desenvolvedores
+- **[Tech Stack & Context](docs/TECH_STACK_AND_CONTEXT.md)** — Arquitetura, bibliotecas e navegação
+- **[Business Rules](docs/BUSINESS_RULES.md)** — Sistema de XP, ciclo de vida de partidas e ranking
+- **[Setup Guide](SETUP_GUIDE.md)** — Configuração completa do ambiente
+- **[Specs](specs/)** — Especificações técnicas de todas as features (SDD)
 
 ---
 
@@ -188,53 +202,49 @@ Este projeto segue **Spec-Driven Development** rigorosamente:
 
 ## 🔐 Environment & Access
 
-This repository is configured with necessary environment variables and access keys for development:
-- **Firebase Access**: Authenticated via Service Account (located in project root)
-- **Scripts**: Node.js scripts in `/scripts` configured for maintenance tasks
-- **Secrets**: Never commit `google-services.json`, `.env`, or `*.keystore` files
-
----
-
-## 📄 License
-
-Este projeto está sob a licença MIT - veja [LICENSE](LICENSE) para detalhes.
+Este repositório é configurado com variáveis de ambiente e chaves de acesso para desenvolvimento:
+- **Firebase Access**: Autenticado via Service Account (localizado na raiz do projeto)
+- **Scripts**: Scripts Node.js em `/scripts` para tarefas de manutenção
+- **Secrets**: Nunca commitar `google-services.json`, `.env` ou arquivos `*.keystore`
 
 ---
 
 ## 🔗 Links
 
-- 🌐 [Website](https://futebadosparcas.web.app)
+- 🌐 [Web App](https://futebadosparcas.web.app)
 - 📱 [Google Play Store](https://play.google.com/store/apps/details?id=com.futebadosparcas)
-- 📧 [Contato](mailto:techfernandesltda@gmail.com)
+- 🛡️ [Política de Segurança](SECURITY.md)
 - 🐛 [Reportar Bug](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=bug_report.yml)
 - 💡 [Solicitar Feature](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/new?template=feature_request.yml)
+- 📧 [Contato](mailto:techfernandesltda@gmail.com)
 
 ---
 
 ## 📊 Status do Projeto
 
-- ✅ **Android:** Produção (v1.8.0 na Play Store)
-- 🚧 **iOS:** Em desenvolvimento (FASE 1 completa)
+- ✅ **Android:** Produção (v1.19.0 na Play Store)
+- ✅ **Web:** Produção (https://futebadosparcas.web.app)
 - ✅ **Backend:** Firebase Cloud Functions v2
-- ✅ **CI/CD:** GitHub Actions
+- ✅ **CI/CD:** GitHub Actions (15 workflows)
+- 🚧 **iOS:** Em desenvolvimento (KMP ~95%, FASE 1 completa)
 
 ---
 
 ## 🎮 Sistema de XP
 
-| Action | XP |
-|--------|-----|
-| Participation | +10 |
-| Goal | +5 |
-| Assist | +3 |
-| Save (GK) | +2 |
+| Ação | XP |
+|------|-----|
+| Participação | +10 |
+| Gol | +5 |
+| Assistência | +3 |
+| Defesa (Goleiro) | +2 |
 | MVP | +50 |
-| Win | +20 |
+| Vitória | +20 |
 | Streak 3+ | +10 |
 | Streak 7+ | +20 |
 | Streak 10+ | +30 |
 
-**Season Reset**: Mensal no dia 1. XP global nunca reseta.
+**Reset de Temporada**: Mensal no dia 1. XP global nunca reseta.
 
 ---
 

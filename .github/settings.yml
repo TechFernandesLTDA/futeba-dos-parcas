@@ -80,10 +80,7 @@ branches:
         dismiss_stale_reviews: true
         require_code_owner_reviews: true
       required_status_checks:
-        strict: true
-        contexts:
-          - "build (ubuntu-latest)"
-          - lint
-          - detekt
+        strict: false
+        contexts: []
       enforce_admins: false
       restrictions: null

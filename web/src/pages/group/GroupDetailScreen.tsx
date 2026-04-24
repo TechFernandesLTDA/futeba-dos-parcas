@@ -210,7 +210,7 @@ export const GroupDetailScreen: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                   <GroupIcon fontSize="small" color="action" />
                   <Typography variant="body2" color="text.secondary">
-                    {group.memberCount} membros
+                    {group.memberCount ?? 0} membros
                   </Typography>
                   {group.isPublic && (
                     <Chip label="Público" size="small" variant="outlined" />

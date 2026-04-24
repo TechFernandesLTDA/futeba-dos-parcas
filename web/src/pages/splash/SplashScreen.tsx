@@ -50,7 +50,7 @@ export const SplashScreen: React.FC = () => {
           width: 120,
           height: 120,
           borderRadius: '50%',
-          bgcolor: alpha('#fff', 0.2),
+          bgcolor: alpha(theme.palette.common.white, 0.2),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -63,18 +63,18 @@ export const SplashScreen: React.FC = () => {
           },
         }}
       >
-        <SoccerIcon sx={{ fontSize: 64, color: 'white' }} />
+        <SoccerIcon sx={{ fontSize: 64, color: 'primary.contrastText' }} />
       </Box>
 
-      <Typography variant="h4" fontWeight={700} color="white" gutterBottom>
+      <Typography variant="h4" fontWeight={700} color="primary.contrastText" gutterBottom>
         Futeba dos Parças
       </Typography>
 
-      <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)', mb: 4 }}>
+      <Typography variant="body1" sx={{ color: alpha(theme.palette.primary.contrastText, 0.8), mb: 4 }}>
         Organize suas peladas
       </Typography>
 
-      <CircularProgress sx={{ color: 'white' }} />
+      <CircularProgress sx={{ color: 'primary.contrastText' }} />
     </Box>
   );
 };

@@ -26,7 +26,7 @@ export const WelcomeScreen: React.FC = () => {
           width: 120,
           height: 120,
           borderRadius: '50%',
-          bgcolor: alpha('#fff', 0.2),
+          bgcolor: alpha(theme.palette.common.white, 0.2),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -54,7 +54,7 @@ export const WelcomeScreen: React.FC = () => {
             color: theme.palette.primary.main,
             py: 1.5,
             mb: 2,
-            '&:hover': { bgcolor: alpha('#fff', 0.9) },
+            '&:hover': { bgcolor: alpha(theme.palette.common.white, 0.9) },
           }}
           endIcon={<ArrowForwardIcon />}
           onClick={() => navigate('/register')}
@@ -67,10 +67,10 @@ export const WelcomeScreen: React.FC = () => {
           variant="outlined"
           size="large"
           sx={{
-            borderColor: 'white',
-            color: 'white',
+            borderColor: 'primary.contrastText',
+            color: 'primary.contrastText',
             py: 1.5,
-            '&:hover': { borderColor: alpha('#fff', 0.8), bgcolor: alpha('#fff', 0.1) },
+            '&:hover': { borderColor: alpha(theme.palette.common.white, 0.8), bgcolor: alpha(theme.palette.common.white, 0.1) },
           }}
           onClick={() => navigate('/login')}
         >

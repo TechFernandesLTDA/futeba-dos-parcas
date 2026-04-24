@@ -4,16 +4,15 @@ updates:
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "monday"
       time: "09:00"
       timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     reviewers:
       - "TechFernandesLTDA"
     labels:
       - "dependencies"
-      - "platform: android"
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
@@ -22,16 +21,15 @@ updates:
   - package-ecosystem: "npm"
     directory: "/functions"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "monday"
       time: "09:00"
       timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     reviewers:
       - "TechFernandesLTDA"
     labels:
       - "dependencies"
-      - "platform: backend"
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
@@ -40,16 +38,15 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "monday"
       time: "09:00"
       timezone: "America/Sao_Paulo"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     reviewers:
       - "TechFernandesLTDA"
     labels:
       - "dependencies"
-      - "ci/cd"
     commit-message:
       prefix: "chore(ci)"
       include: "scope"

@@ -44,7 +44,7 @@ captures/
 *.iml
 .idea/
 
-# Keystore files
+# Keystore files - NEVER COMMIT!
 *.jks
 *.keystore
 
@@ -56,13 +56,23 @@ captures/
 google-services.json
 app/google-services.json
 
-# Firebase Service Account Keys - NEVER COMMIT THESE!
+# Firebase Service Account Keys - NEVER COMMIT!
 **/serviceAccountKey.json
 **/serviceAccountKey*.json
 **/*firebase-adminsdk*.json
 
+# Firebase emulator data
+.firebase/
+
+# Firebase deploy logs
+firebase-debug.log
+ui-debug.log
+
 # Node modules
 node_modules/
+
+# Node dist output
+dist/
 
 # Environment variables
 .env

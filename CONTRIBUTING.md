@@ -2,12 +2,17 @@
 
 Obrigado por considerar contribuir! 🎉
 
+> **Nota:** Este é um repositório privado. Contribuidores externos devem solicitar acesso antes de enviar contribuições. Entre em contato pelo email [techfernandesltda@gmail.com](mailto:techfernandesltda@gmail.com).
+
 ## 📋 Índice
 
 - [Code of Conduct](#code-of-conduct)
 - [Como Contribuir](#como-contribuir)
 - [Desenvolvimento Local](#desenvolvimento-local)
+- [Web App](#web-app)
+- [Cloud Functions](#cloud-functions)
 - [Padrões de Código](#padrões-de-código)
+- [Conventional Commits](#conventional-commits)
 - [Processo de Pull Request](#processo-de-pull-request)
 - [Reportando Bugs](#reportando-bugs)
 
@@ -21,19 +26,18 @@ Este projeto segue um código de conduta. Ao participar, você concorda em segui
 
 ## Como Contribuir
 
-### 1. Fork o Repositório
+### 1. Solicite Acesso
+
+Este é um repositório privado. Caso não faça parte da organização, solicite acesso via email: [techfernandesltda@gmail.com](mailto:techfernandesltda@gmail.com)
+
+### 2. Clone o Repositório
 
 ```bash
-# Faça fork via GitHub UI
-# Clone seu fork
-git clone https://github.com/SEU-USUARIO/futeba-dos-parcas.git
+git clone https://github.com/TechFernandesLTDA/futeba-dos-parcas.git
 cd futeba-dos-parcas
-
-# Adicione o upstream
-git remote add upstream https://github.com/TechFernandesLTDA/futeba-dos-parcas.git
 ```
 
-### 2. Crie uma Branch
+### 3. Crie uma Branch
 
 ```bash
 # Sempre trabalhe em uma branch separada
@@ -49,36 +53,15 @@ Convenção de nomes:
 - `refactor/descricao` - Refatorações
 - `test/descricao` - Testes
 
-### 3. Faça Suas Mudanças
+### 4. Faça Suas Mudanças
 
 Siga os [Padrões de Código](#padrões-de-código) abaixo.
 
-### 4. Commit
+### 5. Commit
 
-Use [Conventional Commits](https://www.conventionalcommits.org/):
+Siga a convenção de [Conventional Commits](#conventional-commits).
 
-```bash
-# Formato
-<type>(<scope>): <description>
-
-# Exemplos
-feat(games): add MVP voting screen
-fix(auth): resolve login crash on Android 14
-docs(readme): update installation instructions
-refactor(profile): simplify stats calculation
-test(games): add unit tests for GameViewModel
-```
-
-**Types:**
-- `feat` - Nova feature
-- `fix` - Bug fix
-- `docs` - Documentação
-- `style` - Formatação
-- `refactor` - Refatoração
-- `test` - Testes
-- `chore` - Configurações, build
-
-### 5. Push e Pull Request
+### 6. Push e Pull Request
 
 ```bash
 git push origin feature/minha-feature
@@ -97,8 +80,9 @@ Abra um PR no GitHub seguindo o [template](.github/pull_request_template.md).
 - Android SDK 35
 - Git
 - Firebase CLI (para Functions)
+- Node.js 20+ (para Web e Functions)
 
-### Setup
+### Setup Android
 
 ```bash
 # 1. Clone
@@ -113,22 +97,89 @@ cp google-services.json app/
 echo "MAPS_API_KEY=sua_chave" >> local.properties
 
 # 4. Build
-./gradlew build
+./gradlew assembleDebug
 
 # 5. Rodar testes
-./gradlew test
+./gradlew :app:testDebugUnitTest
 
 # 6. Instalar no device
 ./gradlew installDebug
+
+# Compile check rápido
+./gradlew compileDebugKotlin
 ```
 
-### Firebase Functions
+---
+
+## Web App
+
+O app web está em `web/` e usa React 18 + TypeScript + Vite 5 + MUI 5.
+
+```bash
+cd web
+npm install                    # Instalar dependências
+npm run dev                    # Servidor de desenvolvimento (porta 5173)
+npm run build                  # Build de produção
+npm run preview                # Preview do build de produção
+npm run test                   # Testes unitários (Vitest)
+npx playwright test            # Testes E2E (Playwright)
+npm run lint                   # ESLint
+```
+
+**Estrutura do app web:**
+
+```
+web/src/
+├── components/               # Componentes reutilizáveis
+├── contexts/                 # Contextos React (Auth, Theme, Toast)
+├── hooks/                    # Hooks customizados (useGames, useGroups)
+├── pages/                    # Páginas por feature
+│   ├── auth/                 # Login, Register, ForgotPassword
+│   ├── home/                 # Home com tabs (Home, Games, Groups, Profile)
+│   ├── game/                 # Game detail, create, live
+│   └── group/                # Group detail, edit, settings
+├── services/                 # Firebase service, cloud functions
+├── theme/                    # Configuração do tema MUI
+├── types/                    # Definições de tipos TypeScript
+└── utils/                    # Funções utilitárias
+```
+
+---
+
+## Cloud Functions
+
+As Cloud Functions estão em `functions/` e usam TypeScript com Firebase Functions v2.
 
 ```bash
 cd functions
-npm install
-npm run build
-firebase emulators:start
+npm install                    # Instalar dependências
+npm run build                  # Compilar TypeScript
+npm run lint                   # ESLint
+npx jest --no-coverage         # Todos os testes (398 testes, 12 suites)
+npx jest path/to/file.test.ts  # Arquivo de teste específico
+npx jest --testNamePattern="test name"  # Teste específico por nome
+firebase emulators:start       # Teste local com emuladores
+firebase deploy --only functions  # Deploy para produção
+```
+
+**Estrutura das functions:**
+
+```
+functions/src/
+├── index.ts                   # Entry point principal
+├── auth/                      # Gestão de roles (Custom Claims)
+├── badges/                    # Lógica de badges
+├── cache/                     # Cache server-side (leaderboard)
+├── maintenance/               # Tarefas de manutenção (cleanup, keep-warm)
+├── middleware/                 # Rate limiter, secure callable wrapper
+├── monitoring/                # Alerting, métricas
+├── notifications/             # Push notifications (batch sender)
+├── season/                    # Gestão de temporadas
+├── storage/                   # Thumbnails de imagens
+├── validation/                # Validação de inputs
+├── voting/                    # Votação MVP / Bola Murcha
+├── xp/                        # Cálculo e processamento de XP
+└── examples/                  # Exemplos de padrões de segurança
 ```
 
 ---
@@ -158,7 +209,7 @@ UI (Compose) → ViewModel (StateFlow) → UseCase → Repository → DataSource
 ```
 
 - **MVVM** com Clean Architecture
-- **Hilt** para DI
+- **Koin** para DI
 - **StateFlow** para estados (não LiveData em código novo)
 - **Repository pattern** para dados
 
@@ -168,6 +219,51 @@ UI (Compose) → ViewModel (StateFlow) → UseCase → Repository → DataSource
 - Naming: `methodName_condition_expectedResult`
 - Use MockK para mocking
 - Testes em `src/test/` (unit) e `src/androidTest/` (instrumented)
+
+---
+
+## Conventional Commits
+
+Usamos [Conventional Commits](https://www.conventionalcommits.org/) em português (PT-BR) para padronizar mensagens de commit.
+
+### Formato
+
+```
+<tipo>(<escopo>): <descrição em português>
+```
+
+### Tipos
+
+| Tipo | Uso |
+|------|-----|
+| `feat` | Nova funcionalidade |
+| `fix` | Correção de bug |
+| `docs` | Documentação |
+| `style` | Formatação (espaços, ponto-e-vírgula, etc.) |
+| `refactor` | Refatoração de código |
+| `test` | Adição/modificação de testes |
+| `chore` | Tarefas de build, config, dependências |
+| `perf` | Melhorias de performance |
+| `ci` | CI/CD pipelines |
+| `security` | Correções de segurança |
+
+### Escopos comuns
+
+`auth`, `games`, `groups`, `profile`, `ranking`, `xp`, `notifications`, `functions`, `web`, `firestore`, `deps`, `build`
+
+### Exemplos
+
+```bash
+feat(games): adicionar tela de votação MVP
+fix(auth): corrigir crash no login em Android 14
+docs(readme): atualizar instruções de instalação
+refactor(profile): simplificar cálculo de estatísticas
+test(games): adicionar testes unitários para GameViewModel
+chore(deps): atualizar Compose BOM para 2024.09.00
+perf(firestore): otimizar consultas do leaderboard
+ci(deploy): adicionar step de validação de segurança
+security(functions): adicionar rate limiting nas callables
+```
 
 ---
 

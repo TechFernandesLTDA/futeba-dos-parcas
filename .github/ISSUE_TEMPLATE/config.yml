@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Documentação
-    url: https://github.com/TechFernandesLTDA/futeba-dos-parcas/wiki
-    about: Consulte a documentação antes de abrir uma issue
+  - name: 💬 Discussões
+    url: https://github.com/TechFernandesLTDA/futeba-dos-parcas/discussions
+    about: Tire dúvidas e discuta ideias antes de abrir uma issue
+  - name: 📖 Documentação
+    url: https://futebadosparcas.web.app
+    about: Consulte a documentação do projeto

@@ -31,6 +31,7 @@ import {
 import { doc, collection, query, where, onSnapshot, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { Game, GameConfirmation } from '../../types/game';
 import { PlayerAvatar } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
@@ -45,6 +46,7 @@ export const MVPVoteScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { currentUser } = useAuth();
+  const { showError } = useToast();
 
   const [game, setGame] = useState<Game | null>(null);
   const [confirmations, setConfirmations] = useState<GameConfirmation[]>([]);
@@ -121,6 +123,7 @@ export const MVPVoteScreen: React.FC = () => {
       }, 2000);
     } catch (err) {
       logger.error('Error submitting vote:', err);
+      showError((err as Error)?.message || 'Erro ao enviar voto');
     } finally {
       setSubmitting(false);
     }

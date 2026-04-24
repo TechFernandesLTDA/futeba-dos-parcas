@@ -22,6 +22,7 @@ import {
   TextField,
   Alert,
   Skeleton,
+  CircularProgress,
   useTheme,
   alpha,
   MenuItem,
@@ -90,6 +91,8 @@ export const LiveGameScreen: React.FC = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const canManage = canManageGame(game, uid);
 
+  const [actionLoading, setActionLoading] = useState(false);
+
   useEffect(() => {
     if (!gameId) return;
 
@@ -125,6 +128,9 @@ export const LiveGameScreen: React.FC = () => {
           startedAt: (raw.started_at as { toDate?: () => Date })?.toDate?.() || new Date(),
         });
       }
+    }, (err) => {
+      logger.error('Error in score listener:', err);
+      showError('Erro ao carregar dados do jogo');
     });
 
     const eventsQuery = query(collection(db, 'game_events'), where('game_id', '==', gameId));
@@ -138,7 +144,10 @@ export const LiveGameScreen: React.FC = () => {
           createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
         };
       }) as GameEvent[];
-      setEvents(eventsData.sort((a, b) => b.minute - a.minute));
+      setEvents([...eventsData].sort((a, b) => (b.minute ?? 0) - (a.minute ?? 0)));
+    }, (err) => {
+      logger.error('Error in events listener:', err);
+      showError('Erro ao carregar dados do jogo');
     });
 
     const confirmationsQuery = query(
@@ -157,6 +166,9 @@ export const LiveGameScreen: React.FC = () => {
           };
         });
       setConfirmedPlayers(players);
+    }, (err) => {
+      logger.error('Error in confirmations listener:', err);
+      showError('Erro ao carregar dados do jogo');
     });
 
     return () => {
@@ -232,6 +244,21 @@ export const LiveGameScreen: React.FC = () => {
       const msg = (err as Error).message;
       logger.error('Error finishing game:', err);
       showError(`Erro ao finalizar jogo: ${msg}`);
+    }
+  };
+
+  const handleStartGame = async () => {
+    if (!gameId) return;
+    setActionLoading(true);
+    try {
+      await updateDoc(doc(db, 'games', gameId), {
+        status: 'LIVE',
+        updated_at: Timestamp.now(),
+      });
+    } catch (err: any) {
+      showError(err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -383,8 +410,15 @@ export const LiveGameScreen: React.FC = () => {
                   </Button>
                 </>
               ) : (
-                <Button variant="contained" color="success" startIcon={<PlayIcon />} fullWidth>
-                  Iniciar Jogo
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={actionLoading ? <CircularProgress size={20} /> : <PlayIcon />}
+                  onClick={handleStartGame}
+                  disabled={actionLoading}
+                  fullWidth
+                >
+                  {actionLoading ? 'Iniciando...' : 'Iniciar Jogo'}
                 </Button>
               )}
             </Box>

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { gamificationColors } from '../../theme';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -115,9 +114,9 @@ export const LiveEventsScreen: React.FC = () => {
       case 'ASSIST':
         return <TrendingIcon color="info" />;
       case 'YELLOW_CARD':
-        return <Box sx={{ width: 12, height: 16, bgcolor: gamificationColors.gold, borderRadius: 0.5 }} />;
+        return <Box sx={{ width: 12, height: 16, bgcolor: 'warning.main', borderRadius: 0.5 }} />;
       case 'RED_CARD':
-        return <Box sx={{ width: 12, height: 16, bgcolor: '#f44336', borderRadius: 0.5 }} />;
+        return <Box sx={{ width: 12, height: 16, bgcolor: 'error.main', borderRadius: 0.5 }} />;
       case 'SAVE':
         return <StarIcon color="warning" />;
       default:

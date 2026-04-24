@@ -188,6 +188,10 @@ export const futebaDarkTheme = createTheme({
       primary: '#F1F5F9',
       secondary: '#94A3B8',
     },
+    error: { main: '#EF5350', light: '#FF8A80', dark: '#C62828' },
+    warning: { main: '#FFA726', light: '#FFB74D', dark: '#E65100' },
+    success: { main: '#66BB6A', light: '#81C784', dark: '#2E7D32' },
+    info: { main: '#42A5F5', light: '#64B5F6', dark: '#1565C0' },
     divider: '#334155',
   },
   components: {

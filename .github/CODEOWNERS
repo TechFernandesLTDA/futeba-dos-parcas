@@ -1,1 +1,22 @@
-* @TechFernandesLTDA/dev-team
+# Core application
+/app/ @TechFernandesLTDA/dev-team
+/shared/ @TechFernandesLTDA/dev-team
+/composeApp/ @TechFernandesLTDA/dev-team
+
+# Backend
+/functions/ @TechFernandesLTDA/dev-team
+/firestore.rules @TechFernandesLTDA/dev-team
+
+# Web
+/web/ @TechFernandesLTDA/dev-team
+
+# Config & CI
+/.github/ @TechFernandesLTDA/dev-team
+/.github/workflows/ @TechFernandesLTDA/dev-team
+/.claude/ @TechFernandesLTDA/dev-team
+
+# Docs
+/README.md @TechFernandesLTDA/dev-team
+/CLAUDE.md @TechFernandesLTDA/dev-team
+/SECURITY.md @TechFernandesLTDA/dev-team
+/specs/ @TechFernandesLTDA/dev-team

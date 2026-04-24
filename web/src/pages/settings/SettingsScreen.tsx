@@ -67,6 +67,7 @@ export const SettingsScreen: React.FC = () => {
   const [saving, setSaving] = useState(false);
 
   const loadSettings = useCallback(async () => {
+    if (!user) return;
     try {
       const settingsRef = doc(db, 'users', user!.id, 'settings');
       const docSnap = await getDoc(settingsRef);
@@ -107,8 +108,13 @@ export const SettingsScreen: React.FC = () => {
 
   const handleLogout = async () => {
     setLogoutDialogOpen(false);
-    await signOut(auth);
-    navigate('/login');
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (err) {
+      logger.error('Error signing out:', err);
+      showError('Erro ao sair da conta. Tente novamente.');
+    }
   };
 
   return (

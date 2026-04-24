@@ -12,6 +12,26 @@ Inclua o máximo de informações possíveis para nos ajudar a reproduzir e ente
 - Impacto potencial
 - Sugestões de mitigação (se houver)
 
+### Criptografia
+Se desejar enviar informações sensíveis de forma segura, use nossa chave PGP:
+
+**Fingerprint:** `XXXX XXXX XXXX XXXX XXXX  XXXX XXXX XXXX XXXX XXXX`
+**Chave pública:** https://futebadosparcas.web.app/pgp-key.asc
+
+## SLA (Service Level Agreement)
+
+| Severidade | Tempo de resposta | Tempo de correção |
+|------------|-------------------|-------------------|
+| Crítica | 24 horas | 72 horas |
+| Alta | 48 horas | 7 dias |
+| Média | 1 semana | 30 dias |
+| Baixa | 2 semanas | Próximo release |
+
+## Programa de Recompensas
+Atualmente não oferecemos recompensas financeiras, mas todo reporte válido receberá:
+- Crédito público no README e changelog
+- Badge exclusivo "Security Researcher" no app (se aplicável)
+
 ## Escopo
 
 O programa de segurança cobre:

@@ -3,8 +3,14 @@ name: Reportar Bug
 about: Reporte um bug para nos ajudar a melhorar
 title: "[BUG] "
 labels: bug
-assignees: ""
+assignees: []
 ---
+
+### Severidade
+- [ ] 🔴 Crítica (app quebra / perda de dados)
+- [ ] 🟠 Alta (funcionalidade principal quebrada)
+- [ ] 🟡 Média (funcionalidade parcialmente quebrada)
+- [ ] 🟢 Baixa (problema cosmético)
 
 ### Descrição do bug
 Descreva de forma clara e objetiva qual é o problema.

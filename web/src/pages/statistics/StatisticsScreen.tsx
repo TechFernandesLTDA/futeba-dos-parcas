@@ -12,6 +12,8 @@ import {
   Tab,
   Skeleton,
   Grid,
+  Alert,
+  Button,
   useTheme,
   alpha,
 } from '@mui/material';
@@ -60,17 +62,20 @@ export const StatisticsScreen: React.FC = () => {
 
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
 
   const loadStats = useCallback(async () => {
+    if (!user) return;
     try {
       const userRef = doc(db, 'users', user!.id);
       const docSnap = await getDoc(userRef);
       if (docSnap.exists()) {
         setStats(snakeToCamel(docSnap.data()) as UserStats);
       }
-    } catch (error) {
-      logger.error('Error loading stats:', error);
+    } catch (err) {
+      logger.error('Error loading stats:', err);
+      setError('Erro ao carregar estatísticas');
     }
     setLoading(false);
   }, [user]);
@@ -127,6 +132,13 @@ export const StatisticsScreen: React.FC = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 2 }} />
             <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+          </Box>
+        ) : error ? (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+            <Button variant="outlined" onClick={() => { setError(null); setLoading(true); loadStats(); }}>
+              Tentar novamente
+            </Button>
           </Box>
         ) : stats ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -312,8 +324,8 @@ export const StatisticsScreen: React.FC = () => {
                         </Box>
                       </Grid>
                       <Grid item xs={6}>
-                        <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha('#00BCD4', 0.1), borderRadius: 2 }}>
-                          <MedalIcon sx={{ fontSize: 40, color: '#00BCD4' }} />
+                        <Box sx={{ textAlign: 'center', p: 2, bgcolor: alpha(gamificationColors.level, 0.1), borderRadius: 2 }}>
+                          <MedalIcon sx={{ fontSize: 40, color: gamificationColors.level }} />
                           <Typography variant="h4" fontWeight={700}>
                             {stats.bestGkCount || 0}
                           </Typography>

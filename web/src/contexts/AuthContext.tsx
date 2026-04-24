@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useMemo, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef, ReactNode } from 'react';
 import {
   User as FirebaseUser,
   onAuthStateChanged,
@@ -9,7 +9,7 @@ import {
   sendPasswordResetEmail,
   updateProfile,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../services/firebase';
 import { User } from '../types';
 import { snakeToCamel } from '../utils/firestoreHelpers';
@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const prevUserRef = useRef<FirebaseUser | null>(null);
 
   // Fetch user data from Firestore
   const fetchUserData = async (uid: string): Promise<User | null> => {
@@ -107,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         await setDoc(userRef, userData);
-        return { id: firebaseUser.uid, ...userData } as User;
+        return { id: firebaseUser.uid, ...snakeToCamel<Omit<User, 'id'>>(userData) } as User;
       } catch (err) {
         logger.error('Error creating user document:', err);
         return null;
@@ -115,13 +116,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const raw = userSnap.data();
-    return { ...snakeToCamel<User>(raw), id: userSnap.id };
+    const converted = snakeToCamel(raw) as Record<string, unknown>;
+    return {
+      ...converted,
+      id: userSnap.id,
+      createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
+      updatedAt: (raw.updated_at || raw.updatedAt)?.toDate?.(),
+    } as User;
   };
 
   // Listen for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
+      if (firebaseUser?.uid !== prevUserRef.current?.uid) {
+        setLoading(true);
+      }
+      prevUserRef.current = firebaseUser;
       setFirebaseUser(firebaseUser);
 
       if (firebaseUser) {
@@ -159,7 +169,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       await createUserDocument(result.user);
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code === 'auth/popup-closed-by-user') return;
       setError((err as Error).message || 'Erro ao fazer login com Google');
       throw err;
     }
@@ -210,8 +221,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Update profile
   const updateUserProfile = useCallback(async (profile: { displayName?: string; photoURL?: string }) => {
-    if (firebaseUser) {
+    if (firebaseUser && user) {
       await updateProfile(firebaseUser, profile);
+      const userRef = doc(db, 'users', user.id);
+      await updateDoc(userRef, {
+        name: profile.displayName || user.name,
+        photo_url: profile.photoURL || user.photoUrl,
+        updated_at: serverTimestamp(),
+      });
       await refreshUser();
     }
   }, [firebaseUser, refreshUser]);

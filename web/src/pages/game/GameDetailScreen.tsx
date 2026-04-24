@@ -32,7 +32,6 @@ import {
   SportsSoccer as SoccerIcon,
   Payments as PaymentIcon,
   Check as CheckIcon,
-  Edit as EditIcon,
   PlayArrow as PlayIcon,
   HowToVote as VoteIcon,
   Share as ShareIcon,
@@ -84,7 +83,7 @@ export const GameDetailScreen: React.FC = () => {
   const myConfirmation = confirmations.find((c) => c.userId === currentUser?.uid);
   const isConfirmed = myConfirmation?.status === 'CONFIRMED';
   const isOwner = game?.ownerId === currentUser?.uid;
-  const canManage = game && (isOwner || game.coOrganizers.includes(currentUser?.uid || ''));
+  const canManage = game && (isOwner || (game.coOrganizers?.includes(currentUser?.uid || '') ?? false));
 
   const confirmedPlayers = confirmations.filter((c) => c.status === 'CONFIRMED');
   const goalkeepers = confirmedPlayers.filter((c) => c.position === 'GOALKEEPER');
@@ -203,9 +202,10 @@ export const GameDetailScreen: React.FC = () => {
           </IconButton>
           {canManage && (
             <>
-              <IconButton onClick={() => navigate(`/game/${gameId}/edit`)} aria-label="Editar jogo">
+              {/* TODO: Implementar tela de edição de jogo */}
+              {/* <IconButton onClick={() => navigate(`/game/${gameId}/edit`)} aria-label="Editar jogo">
                 <EditIcon />
-              </IconButton>
+              </IconButton> */}
               <IconButton onClick={() => setDeleteDialogOpen(true)} color="error" aria-label="Excluir jogo">
                 <DeleteIcon />
               </IconButton>
