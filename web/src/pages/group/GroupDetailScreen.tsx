@@ -44,6 +44,7 @@ import { useGroupDetail, useInvitePlayers } from '../../hooks/useGroups';
 import { useGames } from '../../hooks/useGames';
 import { softDeleteGroup } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { GroupRole } from '../../types/group';
 import { PlayerAvatar, EmptyState, ShimmerLoading } from '../../components/common/GameCard';
 import { GameCard } from '../../components/common/GameCard';
@@ -73,6 +74,7 @@ export const GroupDetailScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { currentUser } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   const { group, members, loading, error } = useGroupDetail(groupId || null);
   const { games, loading: gamesLoading } = useGames({ groupId: groupId || undefined, limitCount: 5 });
@@ -83,11 +85,6 @@ export const GroupDetailScreen: React.FC = () => {
   const [inviteCode, setInviteCode] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ show: boolean; message: string; severity: 'success' | 'error' }>({
-    show: false,
-    message: '',
-    severity: 'success',
-  });
 
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const isOwner = myMember?.role === 'OWNER';
@@ -100,14 +97,14 @@ export const GroupDetailScreen: React.FC = () => {
       const code = await generateInviteCode(groupId, group.name);
       setInviteCode(code);
     } catch (err) {
-      setSnackbar({ show: true, message: (err as Error).message, severity: 'error' });
+      showError((err as Error).message);
     }
   };
 
   const handleCopyInvite = () => {
     const link = `${window.location.origin}/join/${inviteCode}`;
     navigator.clipboard.writeText(link);
-    setSnackbar({ show: true, message: 'Link copiado!', severity: 'success' });
+    showSuccess('Link copiado!');
   };
 
   const handleShare = async () => {
@@ -129,10 +126,10 @@ export const GroupDetailScreen: React.FC = () => {
     try {
       await softDeleteGroup({ groupId });
       setDeleteDialogOpen(false);
-      setSnackbar({ show: true, message: 'Grupo excluído com sucesso', severity: 'success' });
+      showSuccess('Grupo excluído com sucesso');
       setTimeout(() => navigate('/'), 1000);
     } catch (err) {
-      setSnackbar({ show: true, message: (err as Error)?.message || 'Erro ao excluir grupo', severity: 'error' });
+      showError((err as Error)?.message || 'Erro ao excluir grupo');
     } finally {
       setDeleteLoading(false);
     }
@@ -428,16 +425,6 @@ export const GroupDetailScreen: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {snackbar.show && (
-        <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar({ ...snackbar, show: false })}
-          sx={{ position: 'fixed', bottom: 80, left: 16, right: 16, zIndex: 20 }}
-        >
-          {snackbar.message}
-        </Alert>
-      )}
     </Box>
   );
 };

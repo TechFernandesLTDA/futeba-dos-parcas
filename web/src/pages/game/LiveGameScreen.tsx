@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -34,15 +34,36 @@ import {
   Add as AddIcon,
   Timer as TimerIcon,
 } from '@mui/icons-material';
-import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { Game, GameEvent, LiveGameScore, GameEventType } from '../../types/game';
+import { useToast } from '../../contexts/ToastContext';
+import { Game, GameEvent, GameEventType } from '../../types/game';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('LiveGameScreen');
+
+interface LiveScore {
+  id: string;
+  team1Score: number;
+  team2Score: number;
+  startedAt: Date;
+}
+
+interface ConfirmedPlayer {
+  id: string;
+  name: string;
+  photo?: string;
+}
+
+function canManageGame(game: Game | null, uid?: string): boolean {
+  if (!game || !uid) return false;
+  if (game.ownerId === uid) return true;
+  if (game.coOrganizers?.includes(uid)) return true;
+  return false;
+}
 
 export const LiveGameScreen: React.FC = () => {
   useDocumentTitle('Jogo ao Vivo');
@@ -50,12 +71,16 @@ export const LiveGameScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { currentUser } = useAuth();
+  const { showError } = useToast();
+
+  const uid = currentUser?.uid;
 
   const [game, setGame] = useState<Game | null>(null);
-  const [score, setScore] = useState<LiveGameScore | null>(null);
+  const [score, setScore] = useState<LiveScore | null>(null);
   const [events, setEvents] = useState<GameEvent[]>([]);
-  const [confirmedPlayers, setConfirmedPlayers] = useState<{ id: string; name: string; photo?: string }[]>([]);
+  const [confirmedPlayers, setConfirmedPlayers] = useState<ConfirmedPlayer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [addEventDialog, setAddEventDialog] = useState(false);
@@ -63,36 +88,52 @@ export const LiveGameScreen: React.FC = () => {
   const [selectedPlayer, setSelectedPlayer] = useState('');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const canManage = canManageGame(game, uid);
 
   useEffect(() => {
     if (!gameId) return;
 
     const gameRef = doc(db, 'games', gameId);
+
+    const unsubscribeGame = onSnapshot(
+      gameRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const raw = docSnap.data();
+          const data = snakeToCamel(raw);
+          const parsedGame = { id: docSnap.id, ...data } as Game;
+          setGame(parsedGame);
+          setIsRunning(raw.status === 'LIVE');
+        }
+        setLoading(false);
+      },
+      (err) => {
+        logger.error('Error fetching game:', err);
+        setError(err.message);
+        setLoading(false);
+      }
+    );
+
     const scoreRef = doc(db, 'live_scores', gameId);
-    const eventsRef = query(collection(db, 'game_events'), where('game_id', '==', gameId));
-
-    const unsubscribeGame = onSnapshot(gameRef, (doc) => {
-      if (doc.exists()) {
-        const raw = doc.data();
-        const data = snakeToCamel(raw);
-        setGame({ id: doc.id, ...data } as Game);
-        setIsRunning(raw.status === 'LIVE');
-      }
-      setLoading(false);
-    });
-
-    const unsubscribeScore = onSnapshot(scoreRef, (doc) => {
-      if (doc.exists()) {
-        setScore({ ...snakeToCamel<LiveGameScore>(doc.data()), id: doc.id });
+    const unsubscribeScore = onSnapshot(scoreRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const raw = docSnap.data();
+        setScore({
+          id: docSnap.id,
+          team1Score: raw.team1_score ?? 0,
+          team2Score: raw.team2_score ?? 0,
+          startedAt: (raw.started_at as { toDate?: () => Date })?.toDate?.() || new Date(),
+        });
       }
     });
 
-    const unsubscribeEvents = onSnapshot(eventsRef, (snapshot) => {
-      const eventsData = snapshot.docs.map((doc) => {
-        const raw = doc.data();
+    const eventsQuery = query(collection(db, 'game_events'), where('game_id', '==', gameId));
+    const unsubscribeEvents = onSnapshot(eventsQuery, (snapshot) => {
+      const eventsData = snapshot.docs.map((d) => {
+        const raw = d.data();
         const data = snakeToCamel(raw);
         return {
-          id: doc.id,
+          id: d.id,
           ...data,
           createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
         };
@@ -100,7 +141,6 @@ export const LiveGameScreen: React.FC = () => {
       setEvents(eventsData.sort((a, b) => b.minute - a.minute));
     });
 
-    // Carregar jogadores confirmados
     const confirmationsQuery = query(
       collection(db, 'confirmations'),
       where('game_id', '==', gameId)
@@ -130,14 +170,9 @@ export const LiveGameScreen: React.FC = () => {
   useEffect(() => {
     if (isRunning && score?.startedAt) {
       timerRef.current = setInterval(() => {
-        const started = typeof score.startedAt === 'object' && 'toDate' in score.startedAt 
-          ? (score.startedAt as any).toDate() 
-          : new Date(score.startedAt as any);
-        const elapsed = Math.floor((Date.now() - started.getTime()) / 1000);
-        setElapsedTime(elapsed);
+        setElapsedTime(Math.floor((Date.now() - score.startedAt.getTime()) / 1000));
       }, 1000);
     }
-
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -145,37 +180,45 @@ export const LiveGameScreen: React.FC = () => {
     };
   }, [isRunning, score?.startedAt]);
 
-  const formatTime = (seconds: number) => {
+  const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  }, []);
 
   const handleAddEvent = async () => {
     if (!selectedPlayer || !gameId) return;
+    if (!canManage) {
+      showError('Apenas o organizador pode adicionar eventos');
+      return;
+    }
 
     try {
       const player = confirmedPlayers.find((p) => p.id === selectedPlayer);
-      const eventData = {
+      await addDoc(collection(db, 'game_events'), {
         game_id: gameId,
         event_type: selectedEventType,
         player_id: selectedPlayer,
         player_name: player?.name || 'Jogador',
         minute: Math.floor(elapsedTime / 60),
-        created_by: currentUser?.uid,
+        created_by: uid,
         created_at: Timestamp.now(),
-      };
-
-      await addDoc(collection(db, 'game_events'), eventData);
+      });
       setAddEventDialog(false);
       setSelectedPlayer('');
     } catch (err) {
+      const msg = (err as Error).message;
       logger.error('Error adding event:', err);
+      showError(`Erro ao adicionar evento: ${msg}`);
     }
   };
 
   const handleFinishGame = async () => {
     if (!gameId || !game) return;
+    if (!canManage) {
+      showError('Apenas o organizador pode finalizar o jogo');
+      return;
+    }
 
     try {
       await updateDoc(doc(db, 'games', gameId), {
@@ -186,7 +229,9 @@ export const LiveGameScreen: React.FC = () => {
       });
       navigate(`/game/${gameId}/vote`);
     } catch (err) {
+      const msg = (err as Error).message;
       logger.error('Error finishing game:', err);
+      showError(`Erro ao finalizar jogo: ${msg}`);
     }
   };
 
@@ -199,10 +244,10 @@ export const LiveGameScreen: React.FC = () => {
     );
   }
 
-  if (!game) {
+  if (error || !game) {
     return (
       <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Alert severity="error">Jogo não encontrado</Alert>
+        <Alert severity="error">{error || 'Jogo não encontrado'}</Alert>
         <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
           Voltar
         </Button>
@@ -279,22 +324,30 @@ export const LiveGameScreen: React.FC = () => {
                 {events.map((event, index) => (
                   <React.Fragment key={event.id}>
                     <ListItem>
-                    <ListItemAvatar>
-                      <Avatar sx={{ 
-                        bgcolor: event.eventType === 'GOAL' ? 'success.main' 
-                          : event.eventType === 'YELLOW_CARD' ? 'warning.main'
-                          : event.eventType === 'RED_CARD' ? 'error.main'
-                          : 'primary.main'
-                      }}>
-                        {event.eventType === 'GOAL' && <SoccerIcon />}
-                        {event.eventType === 'YELLOW_CARD' && <Typography>🟨</Typography>}
-                        {event.eventType === 'RED_CARD' && <Typography>🔴</Typography>}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={event.playerName}
-                      secondary={`${event.eventType} - ${event.minute}'`}
-                    />
+                      <ListItemAvatar>
+                        <Avatar
+                          sx={{
+                            bgcolor:
+                              event.eventType === 'GOAL'
+                                ? 'success.main'
+                                : event.eventType === 'YELLOW_CARD'
+                                ? 'warning.main'
+                                : event.eventType === 'RED_CARD'
+                                ? 'error.main'
+                                : 'primary.main',
+                          }}
+                        >
+                          {event.eventType === 'GOAL' && <SoccerIcon />}
+                          {event.eventType === 'YELLOW_CARD' && <Typography variant="caption">YC</Typography>}
+                          {event.eventType === 'RED_CARD' && <Typography variant="caption">RC</Typography>}
+                          {event.eventType === 'ASSIST' && <Typography variant="caption">A</Typography>}
+                          {event.eventType === 'SAVE' && <Typography variant="caption">D</Typography>}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={event.playerName}
+                        secondary={`${event.eventType} - ${event.minute}'`}
+                      />
                     </ListItem>
                     {index < events.length - 1 && <Divider />}
                   </React.Fragment>
@@ -305,53 +358,39 @@ export const LiveGameScreen: React.FC = () => {
         </Card>
       </Container>
 
-      <Box
-        sx={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          bgcolor: 'background.paper',
-          borderTop: `1px solid ${theme.palette.divider}`,
-          p: 2,
-          zIndex: 10,
-        }}
-      >
-        <Container maxWidth="sm">
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            {isRunning ? (
-              <>
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={() => setAddEventDialog(true)}
-                  fullWidth
-                >
-                  Adicionar Evento
+      {canManage && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            bgcolor: 'background.paper',
+            borderTop: `1px solid ${theme.palette.divider}`,
+            p: 2,
+            zIndex: 10,
+          }}
+        >
+          <Container maxWidth="sm">
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {isRunning ? (
+                <>
+                  <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setAddEventDialog(true)} fullWidth>
+                    Adicionar Evento
+                  </Button>
+                  <Button variant="contained" color="error" startIcon={<StopIcon />} onClick={handleFinishGame} fullWidth>
+                    Finalizar Jogo
+                  </Button>
+                </>
+              ) : (
+                <Button variant="contained" color="success" startIcon={<PlayIcon />} fullWidth>
+                  Iniciar Jogo
                 </Button>
-                <Button
-                  variant="contained"
-                  color="error"
-                  startIcon={<StopIcon />}
-                  onClick={handleFinishGame}
-                  fullWidth
-                >
-                  Finalizar Jogo
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<PlayIcon />}
-                fullWidth
-              >
-                Iniciar Jogo
-              </Button>
-            )}
-          </Box>
-        </Container>
-      </Box>
+              )}
+            </Box>
+          </Container>
+        </Box>
+      )}
 
       <Dialog open={addEventDialog} onClose={() => setAddEventDialog(false)} aria-labelledby="add-event-dialog-title">
         <DialogTitle id="add-event-dialog-title">Adicionar Evento</DialogTitle>
@@ -365,11 +404,11 @@ export const LiveGameScreen: React.FC = () => {
               fullWidth
             >
               {[
-                { value: 'GOAL', label: 'Gol ⚽' },
-                { value: 'ASSIST', label: 'Assistência 👟' },
-                { value: 'SAVE', label: 'Defesa 🧤' },
-                { value: 'YELLOW_CARD', label: 'Cartão Amarelo 🟨' },
-                { value: 'RED_CARD', label: 'Cartão Vermelho 🟥' },
+                { value: 'GOAL', label: 'Gol' },
+                { value: 'ASSIST', label: 'Assistência' },
+                { value: 'SAVE', label: 'Defesa' },
+                { value: 'YELLOW_CARD', label: 'Cartão Amarelo' },
+                { value: 'RED_CARD', label: 'Cartão Vermelho' },
               ].map((type) => (
                 <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>
               ))}

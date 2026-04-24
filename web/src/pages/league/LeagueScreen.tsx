@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { gamificationColors } from '../../theme';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -11,6 +11,8 @@ import {
   Tabs,
   Tab,
   Chip,
+  Alert,
+  Button,
   useTheme,
   alpha,
   List,
@@ -19,30 +21,13 @@ import {
   ArrowBack as BackIcon,
   EmojiEvents as TrophyIcon,
   MilitaryTech as MilitaryTechIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, limit, onSnapshot, getDoc, doc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
-import { DIVISION_CONFIG, LeagueDivision, getLevelForXp } from '../../types/gamification';
+import { useLeague, LeaguePlayer } from '../../hooks/useLeague';
+import { DIVISION_CONFIG, LeagueDivision } from '../../types/gamification';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-
-interface LeaguePlayer {
-  id: string;
-  userId: string;
-  userName: string;
-  userPhoto?: string;
-  level: number;
-  points: number;
-  gamesPlayed: number;
-  wins: number;
-  goals: number;
-  assists: number;
-  mvpCount: number;
-  division: LeagueDivision;
-  isCurrentUser?: boolean;
-}
 
 export const LeagueScreen: React.FC = () => {
   useDocumentTitle('Liga');
@@ -51,57 +36,12 @@ export const LeagueScreen: React.FC = () => {
   const { user } = useAuth();
 
   const [tabValue, setTabValue] = useState(0);
-  const [players, setPlayers] = useState<LeaguePlayer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const divisions: LeagueDivision[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'CHAMPION'];
+  const selectedDivision = tabValue > 0 ? divisions[tabValue - 1] : undefined;
 
-  useEffect(() => {
-    const seasonRef = collection(db, 'season_participation');
-    const q = query(seasonRef, orderBy('points', 'desc'), limit(100));
+  const { players, loading, error } = useLeague(user?.id, selectedDivision);
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const playersData = await Promise.all(
-        snapshot.docs.map(async (docSnapshot) => {
-          const raw = docSnapshot.data();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(raw) as Record<string, any>;
-          const userId = data.userId || docSnapshot.id;
-
-          let userData = { name: 'Jogador', photoUrl: null, xp: 0 };
-          try {
-            const userDoc = await getDoc(doc(db, 'users', userId));
-            if (userDoc.exists()) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const d = snakeToCamel(userDoc.data()) as Record<string, any>;
-              userData = { name: d.name || 'Jogador', photoUrl: d.photoUrl, xp: d.experiencePoints ?? 0 };
-            }
-          } catch {
-            // ignore
-          }
-
-          return {
-            id: docSnapshot.id,
-            userId,
-            userName: userData.name,
-            userPhoto: userData.photoUrl || undefined,
-            level: getLevelForXp(userData.xp),
-            points: data.points || 0,
-            gamesPlayed: data.gamesPlayed || 0,
-            wins: data.wins || 0,
-            goals: data.goals || 0,
-            assists: data.assists || 0,
-            mvpCount: data.mvpCount || 0,
-            division: data.division || 'BRONZE',
-            isCurrentUser: userId === user?.id,
-          } as LeaguePlayer;
-        })
-      );
-
-      setPlayers(playersData);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user?.id]);
+  const filteredPlayers = tabValue === 0 ? players : players;
 
   const getPositionStyle = (position: number) => {
     switch (position) {
@@ -115,14 +55,6 @@ export const LeagueScreen: React.FC = () => {
         return { bgcolor: theme.palette.grey[200], color: theme.palette.text.primary };
     }
   };
-
-  const getFilteredPlayers = () => {
-    const divisions: LeagueDivision[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'CHAMPION'];
-    const targetDivision = divisions[tabValue];
-    return players.filter((p) => p.division === targetDivision);
-  };
-
-  const filteredPlayers = tabValue === 0 ? players : getFilteredPlayers();
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -163,6 +95,18 @@ export const LeagueScreen: React.FC = () => {
       <Container maxWidth="sm" sx={{ py: 2 }}>
         {loading ? (
           <LoadingState shimmerCount={8} itemType="RANKING" />
+        ) : error ? (
+          <Alert
+            severity="error"
+            action={
+              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => window.location.reload()}>
+                Tentar novamente
+              </Button>
+            }
+            sx={{ mb: 2 }}
+          >
+            Erro ao carregar liga: {error}
+          </Alert>
         ) : filteredPlayers.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <MilitaryTechIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
@@ -251,7 +195,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
                 {player.wins}V
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {player.goals}⚽
+                {player.goals}g
               </Typography>
             </Box>
           </Box>

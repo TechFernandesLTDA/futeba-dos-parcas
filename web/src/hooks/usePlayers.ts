@@ -9,11 +9,15 @@ export interface Player {
   email: string;
   photoUrl?: string;
   level: number;
+  xp: number;
+  division: string;
   gamesPlayed: number;
+  wins: number;
   goals: number;
   assists: number;
   mvpCount: number;
-  division: string;
+  streak: number;
+  createdAt?: Date;
 }
 
 export const usePlayers = (groupId?: string) => {
@@ -46,11 +50,15 @@ export const usePlayers = (groupId?: string) => {
                   email: data.email || '',
                   photoUrl: data.photoUrl || raw.photo_url,
                   level: data.level || 1,
+                  xp: data.experiencePoints ?? data.xp ?? 0,
+                  division: data.division || 'BRONZE',
                   gamesPlayed: data.gamesPlayed || raw.games_played || 0,
+                  wins: data.wins || 0,
                   goals: data.goals || 0,
                   assists: data.assists || 0,
                   mvpCount: data.mvpCount || raw.mvp_count || 0,
-                  division: data.division || 'BRONZE',
+                  streak: data.streak || 0,
+                  createdAt: raw.created_at?.toDate?.() || data.createdAt,
                 } as Player;
               }
               return null;
@@ -96,11 +104,15 @@ export const usePlayerDetail = (userId?: string) => {
             email: data.email || '',
             photoUrl: data.photoUrl || raw.photo_url,
             level: data.level || 1,
+            xp: data.experiencePoints ?? data.xp ?? 0,
+            division: data.division || 'BRONZE',
             gamesPlayed: data.gamesPlayed || raw.games_played || 0,
+            wins: data.wins || 0,
             goals: data.goals || 0,
             assists: data.assists || 0,
             mvpCount: data.mvpCount || raw.mvp_count || 0,
-            division: data.division || 'BRONZE',
+            streak: data.streak || 0,
+            createdAt: raw.created_at?.toDate?.() || data.createdAt,
           });
         }
         setLoading(false);

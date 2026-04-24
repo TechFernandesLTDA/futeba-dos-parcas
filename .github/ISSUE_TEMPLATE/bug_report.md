@@ -1,42 +1,35 @@
 ---
-name: Bug Report
-about: Reportar um bug ou comportamento inesperado
+name: Reportar Bug
+about: Reporte um bug para nos ajudar a melhorar
 title: "[BUG] "
-labels: bug, needs-triage
-assignees: ''
+labels: bug
+assignees: ""
 ---
 
-## Comportamento Esperado
-<!-- O que deveria acontecer? -->
+### Descrição do bug
+Descreva de forma clara e objetiva qual é o problema.
 
-## Comportamento Atual
-<!-- O que acontece de fato? -->
+### Passos para reproduzir
+1. Vá para '...'
+2. Clique em '...'
+3. Role até '...'
+4. Veja o erro
 
-## Passos para Reproduzir
+### Comportamento esperado
+Descreva o que você esperava que acontecesse.
 
-1.
-2.
-3.
+### Screenshots
+Se aplicável, adicione capturas de tela para ajudar a explicar o problema.
 
-## Ambiente
+### Dispositivo
+- [ ] Android
+- [ ] iOS
+- [ ] Web
 
-- **Device**: <!-- Ex: Samsung Galaxy S23, Pixel 8 -->
-- **Android Version**: <!-- Ex: Android 14 (API 34) -->
-- **App Version**: <!-- Ex: 1.9.0 (versionCode 22) -->
+**Modelo / Navegador:** (ex: Galaxy S23, Chrome 120)
 
-## Screenshots / Logs
-<!-- Adicione screenshots ou cole logs relevantes -->
+### Versão do app
+(ex: 1.19.0)
 
-```
-Logs aqui
-```
-
-## Severidade
-
-- [ ] Critical (crash, perda de dados)
-- [ ] High (feature nao funciona)
-- [ ] Medium (workaround possivel)
-- [ ] Low (visual, menor impacto)
-
-## Contexto Adicional
-<!-- Qualquer informacao extra que ajude a entender o problema -->
+### Contexto adicional
+Adicione qualquer outra informação relevante sobre o problema aqui.

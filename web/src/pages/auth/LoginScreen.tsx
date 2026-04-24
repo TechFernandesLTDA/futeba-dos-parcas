@@ -235,13 +235,7 @@ export function LoginScreen() {
             </Typography>
           </Box>
 
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: 'block', textAlign: 'center', mt: 2 }}
-          >
-            Demo: test@futeba.com / 123456
-          </Typography>
+
         </CardContent>
       </Card>
     </Box>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -9,6 +9,8 @@ import {
   IconButton,
   Grid,
   Chip,
+  Alert,
+  Button,
   useTheme,
   alpha,
   Tooltip,
@@ -17,17 +19,13 @@ import {
   ArrowBack as BackIcon,
   Lock as LockIcon,
   WorkspacePremium as BadgeIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../../services/firebase';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
+import { useBadges } from '../../hooks/useBadges';
 import { LoadingState } from '../../components/common/GameCard';
 import { BADGE_DEFINITIONS, BadgeDefinition } from '../../types/gamification';
-import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-
-const logger = createLogger('BadgesScreen');
 
 const RARITY_COLORS: Record<string, string> = {
   COMMON: '#9E9E9E',
@@ -42,35 +40,7 @@ export const BadgesScreen: React.FC = () => {
   const theme = useTheme();
   const { user } = useAuth();
 
-  const [userBadges, setUserBadges] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchUserBadges = async () => {
-      try {
-        const badgesRef = collection(db, 'user_badges');
-        const q = query(badgesRef, where('user_id', '==', user.id));
-        const snapshot = await getDocs(q);
-        const badgeIds = new Set(snapshot.docs.map((d) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(d.data()) as Record<string, any>;
-          return data.badgeId;
-        }));
-        setUserBadges(badgeIds);
-      } catch (error) {
-        logger.error('Error fetching badges:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserBadges();
-  }, [user?.id]);
+  const { unlockedIds, loading, error } = useBadges(user?.id);
 
   const getRarityStyle = (rarity: string) => {
     const color = RARITY_COLORS[rarity] || RARITY_COLORS.COMMON;
@@ -102,36 +72,52 @@ export const BadgesScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <BadgeIcon color="primary" sx={{ fontSize: 40 }} />
-              <Box>
-                <Typography variant="h5" fontWeight={700}>
-                  {userBadges.size} / {BADGE_DEFINITIONS.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Conquistas desbloqueadas
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-
-        {loading ? (
-          <LoadingState shimmerCount={8} itemType="CARD" />
+        {error ? (
+          <Alert
+            severity="error"
+            action={
+              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => window.location.reload()}>
+                Tentar novamente
+              </Button>
+            }
+            sx={{ mb: 2 }}
+          >
+            Erro ao carregar conquistas: {error}
+          </Alert>
         ) : (
-          <Grid container spacing={2}>
-            {BADGE_DEFINITIONS.map((badge) => (
-              <Grid xs={6} key={badge.id}>
-                <BadgeItem
-                  badge={badge}
-                  isUnlocked={userBadges.has(badge.id)}
-                  rarityStyle={getRarityStyle(badge.rarity)}
-                />
+          <>
+            <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <BadgeIcon color="primary" sx={{ fontSize: 40 }} />
+                  <Box>
+                    <Typography variant="h5" fontWeight={700}>
+                      {unlockedIds.size} / {BADGE_DEFINITIONS.length}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Conquistas desbloqueadas
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+
+            {loading ? (
+              <LoadingState shimmerCount={8} itemType="CARD" />
+            ) : (
+              <Grid container spacing={2}>
+                {BADGE_DEFINITIONS.map((badge) => (
+                  <Grid xs={6} key={badge.id}>
+                    <BadgeItem
+                      badge={badge}
+                      isUnlocked={unlockedIds.has(badge.id)}
+                      rarityStyle={getRarityStyle(badge.rarity)}
+                    />
+                  </Grid>
+                ))}
               </Grid>
-            ))}
-          </Grid>
+            )}
+          </>
         )}
       </Container>
     </Box>

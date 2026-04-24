@@ -1,87 +1,53 @@
 # Política de Segurança
 
-## Versões Suportadas
+## Reportando vulnerabilidades
 
-Apenas as seguintes versões recebem atualizações de segurança:
+Se você descobrir uma vulnerabilidade de segurança, **não abra uma issue pública**. Entre em contato diretamente pelo email:
 
-| Versão | Suportada          |
-| ------ | ------------------ |
-| 1.7.x  | :white_check_mark: |
-| 1.6.x  | :white_check_mark: |
-| < 1.6  | :x:                |
+**[support@futebadosparcas.com](mailto:support@futebadosparcas.com)**
 
-**Nota:** Sempre recomendamos atualizar para a versão mais recente disponível na Google Play Store.
+Inclua o máximo de informações possíveis para nos ajudar a reproduzir e entender o problema:
+- Descrição detalhada da vulnerabilidade
+- Passos para reproduzir
+- Impacto potencial
+- Sugestões de mitigação (se houver)
 
----
+## Escopo
 
-## Reportando uma Vulnerabilidade
+O programa de segurança cobre:
 
-Levamos a segurança a sério. Se você descobriu uma vulnerabilidade de segurança, **por favor NÃO abra uma issue pública**.
+| Componente | Escopo |
+|------------|--------|
+| App Android (Kotlin/Compose) | ✅ Dentro do escopo |
+| App Web (React/TypeScript) | ✅ Dentro do escopo |
+| Cloud Functions (Firebase) | ✅ Dentro do escopo |
+| Firestore Security Rules | ✅ Dentro do escopo |
+| Firebase Hosting | ✅ Dentro do escopo |
+| Site estático (`futebadosparcas.web.app`) | ✅ Dentro do escopo |
+| Dependências de terceiros | ❌ Fora do escopo |
 
-### Como Reportar
+## Processo de resposta
 
-1. **Email:** Envie detalhes para [techfernandesltda@gmail.com](mailto:techfernandesltda@gmail.com)
-2. **Assunto:** `[SECURITY] Descrição breve da vulnerabilidade`
+1. **Confirmação**: Responderemos em até 48 horas confirmando o recebimento.
+2. **Análise**: Nossa equipe investigará a vulnerabilidade e determinará o impacto.
+3. **Correção**: Uma vez validada, trabalharemos em uma correção.
+4. **Divulgação**: Após a correção ser publicada, divulgaremos a vulnerabilidade de forma responsável.
+5. **Crédito**: Com seu consentimento, daremos crédito público pelo reporte.
 
-### Informações para Incluir
+## Versões suportadas
 
-Por favor, inclua o máximo de informações possível:
+Apenas a versão mais recente do app recebe correções de segurança.
 
-- **Tipo de vulnerabilidade** (SQL injection, XSS, etc.)
-- **Localização** (arquivo, linha, função)
-- **Passos para reproduzir**
-- **Impacto potencial**
-- **Versão afetada**
-- **Sugestão de correção** (se tiver)
+| Versão | Suporte |
+|--------|---------|
+| Última release (Play Store / App Store) | ✅ Suportada |
+| Versões beta | ✅ Suportada |
+| Versões anteriores | ❌ Não suportadas |
 
-### Processo de Disclosure
+## Práticas de segurança do projeto
 
-1. **Confirmação:** Responderemos em até 48 horas reconhecendo o recebimento
-2. **Investigação:** Avaliaremos a vulnerabilidade (prazo: 7 dias)
-3. **Correção:** Desenvolveremos e testaremos o patch
-4. **Release:** Publicaremos a correção
-5. **Disclosure:** Publicaremos detalhes após 90 dias (ou quando a maioria dos usuários atualizarem)
-
-### Reconhecimento
-
-Agradeceremos publicamente pesquisadores de segurança que reportarem vulnerabilidades (a menos que prefiram anonimato).
-
----
-
-## Melhores Práticas de Segurança
-
-### Para Usuários
-
-- ✅ Sempre use a versão mais recente do app
-- ✅ Baixe apenas da Google Play Store oficial
-- ✅ Use senhas fortes e únicas
-- ✅ Ative autenticação de dois fatores (quando disponível)
-- ❌ Não compartilhe credenciais
-
-### Para Desenvolvedores
-
-- 🔒 Nunca commite secrets, tokens ou API keys
-- 🔒 Use `EncryptedSharedPreferences` para dados sensíveis
-- 🔒 Valide input do usuário (client E server-side)
-- 🔒 Mantenha dependências atualizadas
-- 🔒 Use Firebase Security Rules adequadas
-- 🔒 Code review para mudanças de segurança
-
----
-
-## Vulnerabilidades Conhecidas
-
-Nenhuma vulnerabilidade conhecida no momento.
-
-**Última atualização:** 2026-02-01
-
----
-
-## Contato
-
-- **Email:** techfernandesltda@gmail.com
-- **PGP Key:** (adicionar se houver)
-
----
-
-**Obrigado por ajudar a manter o Futeba dos Parças seguro! 🔒**
+- Utilizamos **Firebase App Check** para proteção contra uso não autorizado
+- Utilizamos **Firebase Custom Claims** para autorização baseada em roles
+- Seguimos o princípio do **menor privilégio** nas Firestore Security Rules
+- Todas as Cloud Functions sensíveis passam por **rate limiting**
+- Segredos e chaves **nunca** são commitados no repositório

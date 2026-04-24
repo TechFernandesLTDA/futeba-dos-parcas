@@ -42,6 +42,7 @@ import {
 import { useGameDetail, useConfirmPresence, useUpdateGameStatus } from '../../hooks/useGames';
 import { softDeleteGame } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import {
   STATUS_CONFIG,
   PAYMENT_STATUS_CONFIG,
@@ -68,6 +69,7 @@ export const GameDetailScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { currentUser } = useAuth();
+  const { showSuccess, showError } = useToast();
 
   const { game, confirmations, loading, error } = useGameDetail(gameId || null);
   const { confirmPresence, cancelPresence, loading: confirmLoading } = useConfirmPresence();
@@ -78,11 +80,6 @@ export const GameDetailScreen: React.FC = () => {
   const [positionDialogOpen, setPositionDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ show: boolean; message: string; severity: 'success' | 'error' }>({
-    show: false,
-    message: '',
-    severity: 'success',
-  });
 
   const myConfirmation = confirmations.find((c) => c.userId === currentUser?.uid);
   const isConfirmed = myConfirmation?.status === 'CONFIRMED';
@@ -99,9 +96,9 @@ export const GameDetailScreen: React.FC = () => {
     try {
       await confirmPresence(gameId, position);
       setPositionDialogOpen(false);
-      setSnackbar({ show: true, message: 'Presença confirmada!', severity: 'success' });
+      showSuccess('Presença confirmada!');
     } catch (err) {
-      setSnackbar({ show: true, message: (err as Error).message, severity: 'error' });
+      showError((err as Error).message);
     }
   };
 
@@ -111,9 +108,9 @@ export const GameDetailScreen: React.FC = () => {
     try {
       await cancelPresence(gameId);
       setCancelDialogOpen(false);
-      setSnackbar({ show: true, message: 'Presença cancelada', severity: 'success' });
+      showSuccess('Presença cancelada');
     } catch (err) {
-      setSnackbar({ show: true, message: (err as Error).message, severity: 'error' });
+      showError((err as Error).message);
     }
   };
 
@@ -128,7 +125,7 @@ export const GameDetailScreen: React.FC = () => {
         navigate(`/game/${gameId}/live`);
       }
     } catch (err) {
-      setSnackbar({ show: true, message: (err as Error).message, severity: 'error' });
+      showError((err as Error).message);
     }
   };
 
@@ -145,7 +142,7 @@ export const GameDetailScreen: React.FC = () => {
       await navigator.share(shareData);
     } else {
       await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-      setSnackbar({ show: true, message: 'Link copiado!', severity: 'success' });
+      showSuccess('Link copiado!');
     }
   };
 
@@ -155,10 +152,10 @@ export const GameDetailScreen: React.FC = () => {
     try {
       await softDeleteGame({ gameId });
       setDeleteDialogOpen(false);
-      setSnackbar({ show: true, message: 'Jogo excluído com sucesso', severity: 'success' });
+      showSuccess('Jogo excluído com sucesso');
       setTimeout(() => navigate(-1), 1000);
     } catch (err) {
-      setSnackbar({ show: true, message: (err as Error)?.message || 'Erro ao excluir jogo', severity: 'error' });
+      showError((err as Error)?.message || 'Erro ao excluir jogo');
     } finally {
       setDeleteLoading(false);
     }
@@ -605,16 +602,6 @@ export const GameDetailScreen: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {snackbar.show && (
-        <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar({ ...snackbar, show: false })}
-          sx={{ position: 'fixed', bottom: 80, left: 16, right: 16, zIndex: 20 }}
-        >
-          {snackbar.message}
-        </Alert>
-      )}
     </Box>
   );
 };

@@ -1,31 +1,19 @@
 ---
-name: Feature Request
-about: Sugerir uma nova funcionalidade ou melhoria
+name: Solicitar Feature
+about: Sugira uma ideia para o projeto
 title: "[FEATURE] "
-labels: enhancement, needs-triage
-assignees: ''
+labels: feature
+assignees: ""
 ---
 
-## Problema / Oportunidade
-<!-- Qual problema esta feature resolve? Ou que oportunidade ela representa? -->
-<!-- Ex: Como usuario, eu gostaria de... -->
+### Problema que a feature resolve
+Descreva de forma clara qual é o problema que você está enfrentando. Ex: "Sempre me frustro quando [...]"
 
-## Solucao Proposta
-<!-- Descreva a feature desejada em detalhes -->
+### Descrição da solução desejada
+Descreva o que você gostaria que acontecesse. Seja específico sobre como a funcionalidade deve se comportar.
 
-## Alternativas Consideradas
-<!-- Que outras solucoes voce pensou? Por que essa e melhor? -->
+### Alternativas consideradas
+Descreva soluções alternativas ou workarounds que você já tentou ou considerou.
 
-## Spec Link
-<!-- Se ja existe uma spec, coloque o link aqui -->
-
-specs/
-
-## Prioridade Sugerida
-
-- [ ] Must-have (essencial para o produto)
-- [ ] Nice to have (melhoria significativa)
-- [ ] Wishlist (seria legal ter)
-
-## Contexto Adicional
-<!-- Mockups, referencias, exemplos de outros apps, etc. -->
+### Contexto adicional
+Adicione qualquer outra informação, screenshots ou referências sobre a feature solicitada.

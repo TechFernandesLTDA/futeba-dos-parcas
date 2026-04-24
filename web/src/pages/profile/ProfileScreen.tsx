@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -14,6 +13,8 @@ import {
   ListItemIcon,
   ListItemText,
   Skeleton,
+  Alert,
+  Button,
   useTheme,
   alpha,
   Grid,
@@ -30,34 +31,13 @@ import {
   Settings as SettingsIcon,
   BarChart as StatsIcon,
   WorkspacePremium as BadgeIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
+import { usePlayerDetail } from '../../hooks/usePlayers';
 import { PlayerAvatar } from '../../components/common/GameCard';
-import { DIVISION_CONFIG, getLevelForXp } from '../../types/gamification';
+import { DIVISION_CONFIG } from '../../types/gamification';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { createLogger } from '../../utils/logger';
-
-const logger = createLogger('ProfileScreen');
-
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  photoUrl?: string;
-  level: number;
-  xp: number;
-  division: string;
-  gamesPlayed: number;
-  wins: number;
-  goals: number;
-  assists: number;
-  mvpCount: number;
-  streak: number;
-  createdAt?: Date;
-}
 
 export const ProfileScreen: React.FC = () => {
   useDocumentTitle('Perfil');
@@ -66,50 +46,10 @@ export const ProfileScreen: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
 
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-
   const isOwnProfile = !userId || userId === currentUser?.id;
+  const targetUserId = userId || currentUser?.id;
 
-  useEffect(() => {
-    const targetUserId = userId || currentUser?.id;
-    if (!targetUserId) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchProfile = async () => {
-      try {
-        const userDoc = await getDoc(doc(db, 'users', targetUserId));
-        if (userDoc.exists()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(userDoc.data()) as Record<string, any>;
-          setProfile({
-            id: targetUserId,
-            name: data.name || 'Jogador',
-            email: data.email || '',
-            photoUrl: data.photoUrl,
-            level: getLevelForXp(data.experiencePoints ?? data.xp ?? 0),
-            xp: data.experiencePoints ?? data.xp ?? 0,
-            division: data.division || 'BRONZE',
-            gamesPlayed: data.gamesPlayed || 0,
-            wins: data.wins || 0,
-            goals: data.goals || 0,
-            assists: data.assists || 0,
-            mvpCount: data.mvpCount || 0,
-            streak: data.streak || 0,
-            createdAt: data.createdAt?.toDate?.(),
-          });
-        }
-      } catch (error) {
-        logger.error('Error fetching profile:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [userId, currentUser?.id]);
+  const { player: profile, loading, error } = usePlayerDetail(targetUserId);
 
   if (loading) {
     return (
@@ -121,14 +61,39 @@ export const ProfileScreen: React.FC = () => {
     );
   }
 
+  if (error) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => window.location.reload()}>
+              Tentar novamente
+            </Button>
+          }
+        >
+          Erro ao carregar perfil: {error}
+        </Alert>
+        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
+          Voltar
+        </Button>
+      </Container>
+    );
+  }
+
   if (!profile) {
     return (
-      <Box sx={{ textAlign: 'center', py: 8 }}>
-        <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-        <Typography variant="h6" color="text.secondary">
-          Perfil não encontrado
-        </Typography>
-      </Box>
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary">
+            Perfil não encontrado
+          </Typography>
+        </Box>
+        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
+          Voltar
+        </Button>
+      </Container>
     );
   }
 

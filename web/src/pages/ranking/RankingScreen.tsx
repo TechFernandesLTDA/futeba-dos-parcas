@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { gamificationColors } from '../../theme';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -11,39 +11,23 @@ import {
   Tabs,
   Tab,
   Chip,
-  Skeleton,
-  List,
+  Alert,
+  Button,
   useTheme,
   alpha,
+  List,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   EmojiEvents as TrophyIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, limit, onSnapshot, getDoc, doc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
-import { PlayerAvatar } from '../../components/common/GameCard';
+import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { PlayerCard } from '../../components/player/PlayerCard';
-import { DIVISION_CONFIG, LeagueDivision, getLevelForXp } from '../../types/gamification';
+import { useLeague, LeaguePlayer } from '../../hooks/useLeague';
+import { DIVISION_CONFIG } from '../../types/gamification';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-
-interface RankingUser {
-  id: string;
-  userId: string;
-  userName: string;
-  userPhoto?: string;
-  level: number;
-  points: number;
-  gamesPlayed: number;
-  wins: number;
-  goals: number;
-  assists: number;
-  mvpCount: number;
-  division: LeagueDivision;
-  isCurrentUser?: boolean;
-}
 
 export const RankingScreen: React.FC = () => {
   useDocumentTitle('Ranking');
@@ -52,57 +36,21 @@ export const RankingScreen: React.FC = () => {
   const { user } = useAuth();
 
   const [tabValue, setTabValue] = useState(0);
-  const [ranking, setRanking] = useState<RankingUser[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const rankingRef = collection(db, 'ranking');
-    const q = query(rankingRef, orderBy('points', 'desc'), limit(50));
+  const { players, loading, error } = useLeague(user?.id);
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const rankingData = await Promise.all(
-        snapshot.docs.map(async (docSnapshot, _index) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(docSnapshot.data()) as Record<string, any>;
-          const userId = data.userId || docSnapshot.id;
-
-          let userData = { name: 'Jogador', photoUrl: null as string | null, xp: 0 };
-          try {
-            const userDoc = await getDoc(doc(db, 'users', userId));
-            if (userDoc.exists()) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const d = snakeToCamel(userDoc.data()) as Record<string, any>;
-              userData = { name: d.name || 'Jogador', photoUrl: d.photoUrl, xp: d.experiencePoints ?? 0 };
-            }
-          } catch (_e) {
-              // ignorar erro ao buscar dados do usuário
-          }
-
-          return {
-            id: docSnapshot.id,
-            userId,
-            userName: userData.name,
-            userPhoto: userData.photoUrl || undefined,
-            level: getLevelForXp(userData.xp),
-            points: data.points || 0,
-            gamesPlayed: data.gamesPlayed || 0,
-            wins: data.wins || 0,
-            goals: data.goals || 0,
-            assists: data.assists || 0,
-            mvpCount: data.mvpCount || 0,
-            division: data.division || 'BRONZE',
-            isCurrentUser: userId === user?.id,
-          } as RankingUser;
-        })
-      );
-
-      setRanking(rankingData);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user?.id]);
+  const ranked = useMemo(() => {
+    const sorted = [...players];
+    if (tabValue === 1) {
+      sorted.sort((a, b) => b.mvpCount - a.mvpCount);
+    } else if (tabValue === 2) {
+      sorted.sort((a, b) => b.goals - a.goals);
+    } else {
+      sorted.sort((a, b) => b.points - a.points);
+    }
+    return sorted;
+  }, [players, tabValue]);
 
   const getPositionStyle = (position: number) => {
     switch (position) {
@@ -150,41 +98,20 @@ export const RankingScreen: React.FC = () => {
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         {loading ? (
-          Array.from({ length: 5 }).map((_, i) => (
-            <Card key={i} sx={{ mb: 1 }}>
-              <CardContent sx={{ py: 1.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Skeleton variant="circular" width={48} height={48} />
-                  <Box sx={{ flex: 1 }}>
-                    <Skeleton variant="text" width="60%" />
-                    <Skeleton variant="text" width="40%" />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <List disablePadding>
-            {ranking
-              .sort((a, b) => {
-                if (tabValue === 1) return b.mvpCount - a.mvpCount;
-                if (tabValue === 2) return b.goals - a.goals;
-                return b.points - a.points;
-              })
-              .map((player, index) => (
-                <RankingItem
-                  key={player.id}
-                  player={player}
-                  position={index + 1}
-                  positionStyle={getPositionStyle(index + 1)}
-                  tabValue={tabValue}
-                  onAvatarClick={setSelectedPlayerId}
-                />
-              ))}
-          </List>
-        )}
-
-        {ranking.length === 0 && !loading && (
+          <LoadingState shimmerCount={8} itemType="RANKING" />
+        ) : error ? (
+          <Alert
+            severity="error"
+            action={
+              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => window.location.reload()}>
+                Tentar novamente
+              </Button>
+            }
+            sx={{ mb: 2 }}
+          >
+            Erro ao carregar ranking: {error}
+          </Alert>
+        ) : ranked.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <TrophyIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
@@ -194,14 +121,28 @@ export const RankingScreen: React.FC = () => {
               Participe de jogos para entrar no ranking!
             </Typography>
           </Box>
+        ) : (
+          <List disablePadding aria-label="Classificação do ranking">
+            {ranked.map((player, index) => (
+              <RankingItem
+                key={player.id}
+                player={player}
+                position={index + 1}
+                positionStyle={getPositionStyle(index + 1)}
+                tabValue={tabValue}
+                onAvatarClick={setSelectedPlayerId}
+              />
+            ))}
+          </List>
+        )}
+
+        {selectedPlayerId && (
+          <PlayerCard
+            userId={selectedPlayerId}
+            onClose={() => setSelectedPlayerId(null)}
+          />
         )}
       </Container>
-
-      {/* Figurinha do jogador */}
-      <PlayerCard
-        userId={selectedPlayerId}
-        onClose={() => setSelectedPlayerId(null)}
-      />
     </Box>
   );
 };
@@ -213,7 +154,7 @@ const RankingItem = React.memo(function RankingItem({
   tabValue,
   onAvatarClick,
 }: {
-  player: RankingUser;
+  player: LeaguePlayer;
   position: number;
   positionStyle: { bgcolor: string; color: string };
   tabValue: number;
@@ -245,7 +186,6 @@ const RankingItem = React.memo(function RankingItem({
             {position <= 3 ? <TrophyIcon fontSize="small" /> : position}
           </Box>
 
-          {/* Avatar — clique abre a figurinha do jogador */}
           <Box
             onClick={() => onAvatarClick(player.userId)}
             sx={{ cursor: 'pointer' }}
@@ -279,7 +219,7 @@ const RankingItem = React.memo(function RankingItem({
                 {player.wins}V
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {player.goals}⚽
+                {player.goals}g
               </Typography>
             </Box>
           </Box>
