@@ -130,25 +130,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Listen for auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser?.uid !== prevUserRef.current?.uid) {
-        setLoading(true);
-      }
-      prevUserRef.current = firebaseUser;
-      setFirebaseUser(firebaseUser);
-
-      if (firebaseUser) {
-        let userData = await fetchUserData(firebaseUser.uid);
-        
-        if (!userData) {
-          userData = await createUserDocument(firebaseUser);
+      try {
+        if (firebaseUser?.uid !== prevUserRef.current?.uid) {
+          setLoading(true);
         }
-        
-        setUser(userData);
-      } else {
-        setUser(null);
-      }
+        prevUserRef.current = firebaseUser;
+        setFirebaseUser(firebaseUser);
 
-      setLoading(false);
+        if (firebaseUser) {
+          let userData = await fetchUserData(firebaseUser.uid);
+          
+          if (!userData) {
+            userData = await createUserDocument(firebaseUser);
+          }
+          
+          setUser(userData);
+        } else {
+          setUser(null);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        logger.error('Auth state change error:', err);
+        setUser(null);
+        setLoading(false);
+      }
     });
 
     return () => unsubscribe();

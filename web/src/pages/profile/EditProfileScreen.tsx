@@ -21,7 +21,7 @@ import {
   Save as SaveIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -144,7 +144,7 @@ export const EditProfileScreen: React.FC = () => {
         phone: formData.phone,
         preferred_position: formData.preferredPosition,
         bio: formData.bio,
-        updated_at: new Date(),
+        updated_at: serverTimestamp(),
       });
 
       if (formData.name !== currentUser.displayName) {

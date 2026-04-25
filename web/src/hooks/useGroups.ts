@@ -10,6 +10,7 @@ import {
   orderBy,
   onSnapshot,
   Timestamp,
+  serverTimestamp,
   writeBatch,
   documentId,
   increment,
@@ -217,8 +218,8 @@ export function useCreateGroup() {
           member_count: 1,
           members: [uid],
           total_games_played: 0,
-          created_at: Timestamp.now(),
-          updated_at: Timestamp.now(),
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
         };
 
         batch.set(groupRef, newGroup);
@@ -229,7 +230,7 @@ export function useCreateGroup() {
           user_name: displayName,
           user_photo_url: firebaseUser?.photoURL || user?.photoUrl || null,
           role: 'OWNER' as GroupRole,
-          joined_at: Timestamp.now(),
+          joined_at: serverTimestamp(),
           total_games: 0,
           level: user?.level || 1,
         });
@@ -242,7 +243,7 @@ export function useCreateGroup() {
           group_photo: null,
           role: 'OWNER',
           member_count: 1,
-          joined_at: Timestamp.now(),
+          joined_at: serverTimestamp(),
         });
 
         await batch.commit();
@@ -336,7 +337,7 @@ export function useInvitePlayers() {
           group_name: groupName,
           inviter_id: uid,
           inviter_name: displayName,
-          created_at: Timestamp.now(),
+          created_at: serverTimestamp(),
           expires_at: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
           used: false,
         });
@@ -385,7 +386,7 @@ export function useInvitePlayers() {
           user_name: displayName,
           user_photo_url: firebaseUser?.photoURL || user?.photoUrl || null,
           role: 'MEMBER' as GroupRole,
-          joined_at: Timestamp.now(),
+          joined_at: serverTimestamp(),
           total_games: 0,
           level: user?.level || 1,
         });
@@ -400,12 +401,12 @@ export function useInvitePlayers() {
           group_photo: groupData?.photo_url || null,
           role: 'MEMBER',
           member_count: increment(1),
-          joined_at: Timestamp.now(),
+          joined_at: serverTimestamp(),
         });
 
         batch.update(groupRef, {
           member_count: increment(1),
-          updated_at: Timestamp.now(),
+          updated_at: serverTimestamp(),
         });
 
         batch.update(inviteDoc.ref, {

@@ -19,6 +19,7 @@ import {
   DialogActions,
   Button,
   TextField,
+  CircularProgress,
   ToggleButton,
   ToggleButtonGroup,
   useTheme,
@@ -35,6 +36,7 @@ import {
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -64,6 +66,8 @@ export const LiveEventsScreen: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<'A' | 'B'>('A');
   const [minute, setMinute] = useState('0');
   const [playerName, setPlayerName] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { showError } = useToast();
 
   useEffect(() => {
     if (!gameId) return;
@@ -89,22 +93,27 @@ export const LiveEventsScreen: React.FC = () => {
   }, [gameId]);
 
   const handleAddEvent = async () => {
-    if (!gameId || !user || !playerName) return;
-
-    await addDoc(collection(db, 'game_events'), {
-      game_id: gameId,
-      type: eventType,
-      player_id: 'manual',
-      player_name: playerName,
-      team: selectedTeam,
-      minute: parseInt(minute) || 0,
-      created_by: user.id,
-      created_at: serverTimestamp(),
-    });
-
-    setDialogOpen(false);
-    setPlayerName('');
-    setMinute('0');
+    if (!gameId || !user || !playerName.trim() || !eventType) return;
+    setSubmitting(true);
+    try {
+      await addDoc(collection(db, 'game_events'), {
+        game_id: gameId,
+        type: eventType,
+        player_id: 'manual',
+        player_name: playerName,
+        team: selectedTeam,
+        minute: parseInt(minute) || 0,
+        created_by: user.id,
+        created_at: serverTimestamp(),
+      });
+      setDialogOpen(false);
+      setPlayerName('');
+      setMinute('0');
+    } catch (err: any) {
+      showError('Erro ao adicionar evento: ' + err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getEventIcon = (type: string) => {
@@ -257,9 +266,9 @@ export const LiveEventsScreen: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleAddEvent} disabled={!playerName}>
-            Adicionar
+          <Button onClick={() => setDialogOpen(false)} disabled={submitting}>Cancelar</Button>
+          <Button variant="contained" onClick={handleAddEvent} disabled={submitting || !playerName.trim() || !eventType} startIcon={submitting ? <CircularProgress size={16} /> : undefined}>
+            {submitting ? 'Adicionando...' : 'Adicionar'}
           </Button>
         </DialogActions>
       </Dialog>

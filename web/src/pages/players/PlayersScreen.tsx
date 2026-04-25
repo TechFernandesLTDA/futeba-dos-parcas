@@ -15,6 +15,12 @@ import {
   alpha,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -23,7 +29,7 @@ import {
   PersonRemove as PersonRemoveIcon,
   AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, updateDoc, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, writeBatch, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -55,6 +61,7 @@ export const PlayersScreen: React.FC = () => {
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!groupId || !user) return;
@@ -114,14 +121,25 @@ export const PlayersScreen: React.FC = () => {
   }, [groupId, user]);
 
   const handleRemoveMember = async (memberId: string) => {
-    if (!groupId || currentUserRole !== 'OWNER') return;
+    if (!groupId || !user || currentUserRole !== 'OWNER') return;
 
     setActionLoading(memberId);
     try {
-      await updateDoc(doc(db, 'groups', groupId), {
+      const batch = writeBatch(db);
+
+      batch.update(doc(db, 'groups', groupId), {
         members: arrayRemove(memberId),
       });
+
+      const memberRef = doc(db, 'groups', groupId, 'members', memberId);
+      batch.delete(memberRef);
+
+      const userGroupRef = doc(db, 'users', memberId, 'groups', groupId);
+      batch.delete(userGroupRef);
+
+      await batch.commit();
       setMembers((prev) => prev.filter((m) => m.id !== memberId));
+      setConfirmRemoveId(null);
     } catch (error) {
       logger.error('Error removing member:', error);
     } finally {
@@ -199,7 +217,7 @@ export const PlayersScreen: React.FC = () => {
                   showDivider={index > 0}
                   isOwner={currentUserRole === 'OWNER'}
                   isActionLoading={actionLoading === member.id}
-                  onRemove={handleRemoveMember}
+                  onRemove={setConfirmRemoveId}
                   onAvatarClick={setSelectedPlayerId}
                   getRoleColor={getRoleColor}
                   getRoleLabel={getRoleLabel}
@@ -215,6 +233,25 @@ export const PlayersScreen: React.FC = () => {
         userId={selectedPlayerId}
         onClose={() => setSelectedPlayerId(null)}
       />
+
+      <Dialog open={!!confirmRemoveId} onClose={() => setConfirmRemoveId(null)}>
+        <DialogTitle>Remover membro</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Tem certeza que deseja remover este jogador do grupo? Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmRemoveId(null)}>Cancelar</Button>
+          <Button
+            onClick={() => confirmRemoveId && handleRemoveMember(confirmRemoveId)}
+            color="error"
+            variant="contained"
+          >
+            Remover
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
@@ -251,7 +288,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
               <IconButton
                 edge="end"
                 onClick={() => onRemove(member.id)}
-                aria-label={`Remover ${member.name}`}
+                aria-label={`Remover ${member.name} - confirmação necessária`}
               >
                 <PersonRemoveIcon color="error" />
               </IconButton>

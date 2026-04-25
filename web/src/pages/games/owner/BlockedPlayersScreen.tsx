@@ -28,6 +28,7 @@ import { PlayerAvatar, LoadingState } from '../../../components/common/GameCard'
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../../hooks/useDocumentTitle';
 import { createLogger } from '../../../utils/logger';
+import { useToast } from '../../../contexts/ToastContext';
 
 const logger = createLogger('BlockedPlayersScreen');
 
@@ -44,10 +45,13 @@ export const BlockedPlayersScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  useAuth();
+  const { user } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   const [blockedPlayers, setBlockedPlayers] = useState<BlockedPlayer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unblockingId, setUnblockingId] = useState<string | null>(null);
+  const [gameOwnerId, setGameOwnerId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!gameId) return;
@@ -59,6 +63,7 @@ export const BlockedPlayersScreen: React.FC = () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const gameData = snakeToCamel(gameDoc.data()) as Record<string, any>;
           const blockedIds = gameData.blockedPlayers || [];
+          setGameOwnerId(gameData.ownerId || null);
 
           const players = await Promise.all(
             blockedIds.map(async (uid: string) => {
@@ -89,15 +94,25 @@ export const BlockedPlayersScreen: React.FC = () => {
   }, [gameId]);
 
   const handleUnblock = async (playerId: string) => {
-    if (!gameId) return;
-    
+    if (!gameId || !user) return;
+
+    if (user.id !== gameOwnerId) {
+      showError('Apenas o dono do jogo pode desbloquear jogadores.');
+      return;
+    }
+
+    setUnblockingId(playerId);
     try {
       await updateDoc(doc(db, 'games', gameId), {
         blocked_players: arrayRemove(playerId),
       });
       setBlockedPlayers((prev) => prev.filter((p) => p.id !== playerId));
+      showSuccess('Jogador desbloqueado com sucesso.');
     } catch (error) {
       logger.error('Error unblocking player:', error);
+      showError('Erro ao desbloquear jogador. Tente novamente.');
+    } finally {
+      setUnblockingId(null);
     }
   };
 
@@ -156,8 +171,9 @@ export const BlockedPlayersScreen: React.FC = () => {
                         color="primary"
                         startIcon={<UnblockIcon />}
                         onClick={() => handleUnblock(player.id)}
+                        disabled={unblockingId === player.id || (user?.id !== gameOwnerId)}
                       >
-                        Desbloquear
+                        {unblockingId === player.id ? 'Desbloqueando...' : 'Desbloquear'}
                       </Button>
                     </ListItemSecondaryAction>
                   </ListItem>

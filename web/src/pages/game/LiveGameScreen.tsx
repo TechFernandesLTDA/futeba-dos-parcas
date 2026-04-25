@@ -463,7 +463,7 @@ export const LiveGameScreen: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAddEventDialog(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleAddEvent}>Adicionar</Button>
+          <Button variant="contained" onClick={handleAddEvent} disabled={actionLoading}>Adicionar</Button>
         </DialogActions>
       </Dialog>
     </Box>

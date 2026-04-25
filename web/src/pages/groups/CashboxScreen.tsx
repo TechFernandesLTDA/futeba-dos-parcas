@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   IconButton,
+  CircularProgress,
   TextField,
   Button,
   Avatar,
@@ -33,6 +34,7 @@ import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp,
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
@@ -68,6 +70,8 @@ export const CashboxScreen: React.FC = () => {
   const [transactionType, setTransactionType] = useState<'INCOME' | 'EXPENSE'>('INCOME');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { showError } = useToast();
 
   useEffect(() => {
     if (!groupId) return;
@@ -118,24 +122,31 @@ export const CashboxScreen: React.FC = () => {
   }, [groupId]);
 
   const handleAddTransaction = async () => {
-    if (!groupId || !user || !amount || !description) return;
+    const parsedAmount = parseFloat(amount);
+    if (!groupId || !user || !description || isNaN(parsedAmount) || parsedAmount <= 0) return;
+    setSubmitting(true);
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.id));
+      const userName = userDoc.exists() ? userDoc.data().name : 'Usuário';
 
-    const userDoc = await getDoc(doc(db, 'users', user.id));
-    const userName = userDoc.exists() ? userDoc.data().name : 'Usuário';
+      await addDoc(collection(db, 'cashbox'), {
+        group_id: groupId,
+        type: transactionType,
+        amount: parsedAmount,
+        description,
+        created_by: user.id,
+        created_by_name: userName,
+        created_at: serverTimestamp(),
+      });
 
-    await addDoc(collection(db, 'cashbox'), {
-      group_id: groupId,
-      type: transactionType,
-      amount: parseFloat(amount),
-      description,
-      created_by: user.id,
-      created_by_name: userName,
-      created_at: serverTimestamp(),
-    });
-
-    setDialogOpen(false);
-    setAmount('');
-    setDescription('');
+      setDialogOpen(false);
+      setAmount('');
+      setDescription('');
+    } catch (err: any) {
+      showError('Erro ao adicionar transação: ' + err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const formatCurrency = (value: number) => {
@@ -277,9 +288,9 @@ export const CashboxScreen: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
-          <Button onClick={handleAddTransaction} variant="contained" color={transactionType === 'INCOME' ? 'success' : 'error'}>
-            Confirmar
+          <Button onClick={() => setDialogOpen(false)} disabled={submitting}>Cancelar</Button>
+          <Button onClick={handleAddTransaction} variant="contained" color={transactionType === 'INCOME' ? 'success' : 'error'} disabled={submitting || !amount || !description || parseFloat(amount) <= 0 || isNaN(parseFloat(amount))} startIcon={submitting ? <CircularProgress size={16} /> : undefined}>
+            {submitting ? 'Confirmando...' : 'Confirmar'}
           </Button>
         </DialogActions>
       </Dialog>

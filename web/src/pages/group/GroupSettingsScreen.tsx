@@ -31,7 +31,7 @@ import {
   ExitToApp as LeaveIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, writeBatch } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useGroupDetail } from '../../hooks/useGroups';
 import { softDeleteGroup } from '../../services/cloudFunctions';
@@ -75,15 +75,10 @@ export const GroupSettingsScreen: React.FC = () => {
     setActionLoading(true);
 
     try {
-      // Remover do documento de membros do grupo
-      await deleteDoc(doc(db, 'groups', groupId, 'members', uid));
-
-      // Remover da subcoleção de grupos do usuário (denormalização, não-crítico)
-      try {
-        await deleteDoc(doc(db, 'users', uid, 'groups', groupId));
-      } catch (subErr) {
-        logger.warn('Falha ao remover subcoleção do usuário (não-crítico):', subErr);
-      }
+      const batch = writeBatch(db);
+      batch.delete(doc(db, 'groups', groupId, 'members', uid));
+      batch.delete(doc(db, 'users', uid, 'groups', groupId));
+      await batch.commit();
 
       logger.info('Usuário saiu do grupo', { groupId, uid });
       showSuccess('Você saiu do grupo.');

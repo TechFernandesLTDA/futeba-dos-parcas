@@ -6,12 +6,14 @@ import {
   getDocs,
   addDoc,
   updateDoc,
+  setDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
   limit,
   onSnapshot,
-  Timestamp,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
@@ -216,10 +218,9 @@ export function useConfirmPresence() {
           position,
           status: 'CONFIRMED' as ConfirmationStatus,
           is_casual_player: false,
-          created_at: Timestamp.now(),
+          created_at: serverTimestamp(),
         };
 
-        const { setDoc } = await import('firebase/firestore');
         await setDoc(confirmationRef, confirmationData);
         setLoading(false);
         return true;
@@ -253,7 +254,6 @@ export function useConfirmPresence() {
 
         // Apenas deletar a confirmação (igual ao Android)
         // O Cloud Function trigger (onConfirmationWrite) atualiza os contadores do jogo
-        const { deleteDoc } = await import('firebase/firestore');
         await deleteDoc(confirmationRef);
         setLoading(false);
         return true;
@@ -314,8 +314,8 @@ export function useCreateGame() {
           post_game_report_generated: false,
           auto_closed: false,
           co_organizers: [],
-          created_at: Timestamp.now(),
-          updated_at: Timestamp.now(),
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
         };
 
         const docRef = await addDoc(gamesRef, newGame);
@@ -370,7 +370,7 @@ export function useUpdateGameStatus() {
 
         await updateDoc(gameRef, {
           status: newStatus,
-          updated_at: Timestamp.now(),
+          updated_at: serverTimestamp(),
         });
 
         // Invalidar cache de jogos após mudar status

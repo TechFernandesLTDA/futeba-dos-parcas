@@ -15,6 +15,7 @@ import {
   Chip,
   Divider,
   Button,
+  CircularProgress,
   Skeleton,
   useTheme,
   alpha,
@@ -33,6 +34,7 @@ import {
 import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -60,7 +62,11 @@ export const SchedulesScreen: React.FC = () => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingSchedule, setDeletingSchedule] = useState<Schedule | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
+  const { showError, showSuccess } = useToast();
 
   useEffect(() => {
     if (!groupId) return;
@@ -81,14 +87,32 @@ export const SchedulesScreen: React.FC = () => {
   }, [groupId]);
 
   const handleToggleActive = async (schedule: Schedule) => {
-    await updateDoc(doc(db, 'schedules', schedule.id), {
-      is_active: !schedule.isActive,
-    });
+    try {
+      await updateDoc(doc(db, 'schedules', schedule.id), {
+        is_active: !schedule.isActive,
+      });
+    } catch (err: any) {
+      showError('Erro ao alterar status: ' + err.message);
+    }
   };
 
-  const handleDelete = async (scheduleId: string) => {
-    if (confirm('Tem certeza que deseja excluir este agendamento?')) {
-      await deleteDoc(doc(db, 'schedules', scheduleId));
+  const handleDeleteClick = (schedule: Schedule) => {
+    setDeletingSchedule(schedule);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingSchedule) return;
+    setActionLoading(true);
+    try {
+      await deleteDoc(doc(db, 'schedules', deletingSchedule.id));
+      showSuccess('Agendamento excluído.');
+      setDeleteDialogOpen(false);
+      setDeletingSchedule(null);
+    } catch (err: any) {
+      showError('Erro ao excluir: ' + err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -151,7 +175,7 @@ export const SchedulesScreen: React.FC = () => {
                       <IconButton onClick={() => handleToggleActive(schedule)}>
                         <Switch checked={schedule.isActive} size="small" />
                       </IconButton>
-                      <IconButton onClick={() => handleDelete(schedule.id)} aria-label={`Excluir ${schedule.name}`}>
+                      <IconButton onClick={() => handleDeleteClick(schedule)} aria-label={`Excluir ${schedule.name}`}>
                         <DeleteIcon color="error" />
                       </IconButton>
                     </ListItemSecondaryAction>
@@ -171,6 +195,21 @@ export const SchedulesScreen: React.FC = () => {
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
           <Button variant="contained">Salvar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} aria-labelledby="delete-schedule-dialog-title">
+        <DialogTitle id="delete-schedule-dialog-title">Excluir Agendamento</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Tem certeza que deseja excluir &quot;{deletingSchedule?.name}&quot;? Esta ação não pode ser desfeita.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={actionLoading}>Cancelar</Button>
+          <Button onClick={handleDelete} color="error" variant="contained" disabled={actionLoading} startIcon={actionLoading ? <CircularProgress size={16} /> : undefined}>
+            {actionLoading ? 'Excluindo...' : 'Excluir'}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

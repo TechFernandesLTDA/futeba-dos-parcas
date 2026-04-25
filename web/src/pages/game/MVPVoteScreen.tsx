@@ -28,7 +28,7 @@ import {
   HowToVote as VoteIcon,
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
-import { doc, collection, query, where, onSnapshot, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -113,7 +113,7 @@ export const MVPVoteScreen: React.FC = () => {
         mvp_id: mvpVote,
         best_gk_id: bestGkVote || null,
         worst_player_id: worstPlayerVote || null,
-        voted_at: Timestamp.now(),
+          voted_at: serverTimestamp(),
       }, { merge: true });
 
       setHasVoted(true);
@@ -220,7 +220,9 @@ export const MVPVoteScreen: React.FC = () => {
                 sx={{ mt: 2 }}
               >
                 <List disablePadding aria-label="Candidatos a MVP">
-                  {confirmations.map((player) => (
+                  {confirmations
+                    .filter((p) => p.userId !== currentUser?.uid)
+                    .map((player) => (
                     <ListItem
                       key={player.userId}
                       dense

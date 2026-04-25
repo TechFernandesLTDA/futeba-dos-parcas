@@ -22,7 +22,7 @@ import {
   Search as SearchIcon,
   PersonAdd as PersonAddIcon,
 } from '@mui/icons-material';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -60,6 +60,7 @@ export const InvitePlayersScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [inviting, setInviting] = useState<string | null>(null);
+  const [groupName, setGroupName] = useState('Grupo');
 
   useEffect(() => {
     if (!groupId) return;
@@ -71,6 +72,8 @@ export const InvitePlayersScreen: React.FC = () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const groupData = snakeToCamel(groupDoc.data()) as Record<string, any>;
           const memberIds = groupData.members || [];
+
+          setGroupName(groupData.name || 'Grupo');
 
           const membersData = await Promise.all(
             memberIds.map(async (uid: string) => {
@@ -130,10 +133,11 @@ export const InvitePlayersScreen: React.FC = () => {
     try {
       await addDoc(collection(db, 'invites'), {
         group_id: groupId,
-        group_name: 'Grupo',
+        group_name: groupName,
         from_user_id: user.id,
         to_user_id: targetUser.id,
         status: 'PENDING',
+        expires_at: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
         created_at: serverTimestamp(),
       });
       setSearchResults((prev) => prev.filter((r) => r.id !== targetUser.id));

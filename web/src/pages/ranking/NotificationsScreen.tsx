@@ -24,22 +24,9 @@ import {
   TrendingUp as TrendingIcon,
   SportsSoccer as SoccerIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, onSnapshot, updateDoc, doc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
+import { useNotifications } from '../../hooks/useNotifications';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-
-interface Notification {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  read: boolean;
-  createdAt: Date;
-  referenceId?: string;
-  referenceType?: string;
-}
 
 export const NotificationsScreen: React.FC = () => {
   useDocumentTitle('Notificações');
@@ -47,53 +34,9 @@ export const NotificationsScreen: React.FC = () => {
   const theme = useTheme();
   const { user } = useAuth();
 
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { notifications, loading, markAsRead, markAllAsRead, deleteNotification } = useNotifications(user?.id);
 
-  useEffect(() => {
-    if (!user) return;
-
-    const notificationsRef = collection(db, 'users', user.id, 'notifications');
-    const q = query(notificationsRef, orderBy('created_at', 'desc'));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const notificationsData = snapshot.docs.map((d) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = snakeToCamel(d.data()) as Record<string, any>;
-        return {
-          id: d.id,
-          ...data,
-          createdAt: data.createdAt?.toDate?.() || new Date(),
-        };
-      }) as Notification[];
-      setNotifications(notificationsData);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  const handleMarkAsRead = async (notificationId: string) => {
-    if (!user) return;
-    await updateDoc(doc(db, 'users', user.id, 'notifications', notificationId), {
-      read: true,
-    });
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.id === notificationId ? { ...n, read: true } : n
-      )
-    );
-  };
-
-  const handleMarkAllAsRead = async () => {
-    if (!user) return;
-    notifications.forEach(async (n) => {
-      if (!n.read) {
-        await updateDoc(doc(db, 'users', user.id, 'notifications', n.id), { read: true });
-      }
-    });
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -125,8 +68,6 @@ export const NotificationsScreen: React.FC = () => {
     return `${diffDays}d`;
   };
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
   return (
     <Box sx={{ pb: 4 }}>
       <Box
@@ -149,7 +90,7 @@ export const NotificationsScreen: React.FC = () => {
             <Badge badgeContent={unreadCount} color="error" sx={{ mr: 1 }} />
           )}
           {unreadCount > 0 && (
-            <IconButton size="small" onClick={handleMarkAllAsRead} aria-label="Marcar todas como lidas">
+            <IconButton size="small" onClick={markAllAsRead} aria-label="Marcar todas como lidas">
               <CheckIcon fontSize="small" />
             </IconButton>
           )}
@@ -205,7 +146,7 @@ export const NotificationsScreen: React.FC = () => {
                       </Typography>
                     </Box>
                     {!notification.read && (
-                      <IconButton size="small" onClick={() => handleMarkAsRead(notification.id)} aria-label="Marcar como lida">
+                      <IconButton size="small" onClick={() => markAsRead(notification.id)} aria-label="Marcar como lida">
                         <CheckIcon fontSize="small" color="success" />
                       </IconButton>
                     )}

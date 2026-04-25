@@ -29,6 +29,7 @@ import { getLevelForXp } from '../../types/gamification';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { useToast } from '../../contexts/ToastContext';
 
 const logger = createLogger('TeamFormationScreen');
 
@@ -46,6 +47,7 @@ export const TeamFormationScreen: React.FC = () => {
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();
+  const { showError } = useToast();
 
   const [teamA, setTeamA] = useState<TeamPlayer[]>([]);
   const [teamB, setTeamB] = useState<TeamPlayer[]>([]);
@@ -139,6 +141,7 @@ export const TeamFormationScreen: React.FC = () => {
       navigate(-1);
     } catch (error) {
       logger.error('Error saving teams:', error);
+      showError('Erro ao salvar os times. Tente novamente.');
     } finally {
       setSaving(false);
     }
