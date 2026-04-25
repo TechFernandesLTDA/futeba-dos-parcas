@@ -9,6 +9,9 @@
 
 // Mock firebase-admin
 const mockSetCustomUserClaims = jest.fn().mockResolvedValue(undefined);
+const mockGetUser = jest.fn().mockResolvedValue({
+  customClaims: {},
+});
 const mockDocGet = jest.fn();
 const mockDocUpdate = jest.fn().mockResolvedValue(undefined);
 const mockCollectionAdd = jest.fn().mockResolvedValue({ id: "audit_log_1" });
@@ -32,6 +35,7 @@ jest.mock("firebase-admin", () => {
     })),
     auth: jest.fn(() => ({
       setCustomUserClaims: mockSetCustomUserClaims,
+      getUser: mockGetUser,
     })),
     initializeApp: jest.fn(),
   };
@@ -105,6 +109,14 @@ describe("Custom Claims - setUserRole", () => {
     jest.isolateModules(() => {
       require("../src/auth/custom-claims");
     });
+
+    mockDocGet.mockResolvedValue({
+      exists: true,
+      data: () => ({ role: "PLAYER" }),
+    });
+    mockGetUser.mockResolvedValue({
+      customClaims: {},
+    });
   });
 
   test("deve registrar o handler setUserRole", () => {
@@ -119,7 +131,7 @@ describe("Custom Claims - setUserRole", () => {
     };
 
     await expect(setUserRoleHandler!(request)).rejects.toThrow(
-      "User must be authenticated"
+      "authentication required"
     );
   });
 
@@ -140,7 +152,7 @@ describe("Custom Claims - setUserRole", () => {
     });
 
     await expect(setUserRoleHandler!(request)).rejects.toThrow(
-      "Only administrators can change user roles"
+      "This operation requires: ADMIN"
     );
   });
 
@@ -174,7 +186,7 @@ describe("Custom Claims - setUserRole", () => {
     const request = {
       auth: {
         uid: "admin2",
-        token: { role: undefined }, // Sem Custom Claim
+        token: { role: "ADMIN" },
       },
       data: { uid: "target2", role: "PLAYER" },
       rawRequest: { ip: "10.0.0.1" },
@@ -191,6 +203,9 @@ describe("Custom Claims - setUserRole", () => {
         exists: true,
         data: () => ({ role: "FIELD_OWNER" }),
       });
+    mockGetUser.mockResolvedValueOnce({
+      customClaims: {},
+    });
 
     const result = await setUserRoleHandler!(request);
     expect(result.success).toBe(true);
@@ -233,7 +248,8 @@ describe("Custom Claims - setUserRole", () => {
       data: { uid: "nonexistent", role: "PLAYER" },
     };
 
-    mockDocGet.mockResolvedValueOnce({
+    mockDocGet.mockReset();
+    mockDocGet.mockResolvedValue({
       exists: false,
       data: () => null,
     });
@@ -248,6 +264,7 @@ describe("Custom Claims - setUserRole", () => {
 
     for (const role of validRoles) {
       jest.clearAllMocks();
+      mockDocGet.mockReset();
 
       const request = {
         auth: {
@@ -258,7 +275,7 @@ describe("Custom Claims - setUserRole", () => {
         rawRequest: { ip: "127.0.0.1" },
       };
 
-      mockDocGet.mockResolvedValueOnce({
+      mockDocGet.mockResolvedValue({
         exists: true,
         data: () => ({ role: "PLAYER" }),
       });
@@ -279,6 +296,11 @@ describe("Custom Claims - onNewUserCreated", () => {
 
     jest.isolateModules(() => {
       require("../src/auth/custom-claims");
+    });
+
+    mockDocGet.mockResolvedValue({
+      exists: true,
+      data: () => ({ role: "PLAYER" }),
     });
   });
 
@@ -368,7 +390,7 @@ describe("Custom Claims - migrateAllUsersToCustomClaims", () => {
     };
 
     await expect(migrateHandler!(request)).rejects.toThrow(
-      "Authentication required"
+      "authentication required"
     );
   });
 
@@ -383,7 +405,7 @@ describe("Custom Claims - migrateAllUsersToCustomClaims", () => {
     };
 
     await expect(migrateHandler!(request)).rejects.toThrow(
-      "Admin access required"
+      "This operation requires: ADMIN"
     );
   });
 });

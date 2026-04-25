@@ -34,7 +34,17 @@ import {
   RateLimitConfig,
 } from "./rate-limiter";
 
-const db = admin.firestore();
+/**
+ * Obtém instância do Firestore com lazy init.
+ *
+ * @return {FirebaseFirestore.Firestore} Firestore
+ */
+function getDb() {
+  if (!admin.apps.length) {
+    admin.initializeApp();
+  }
+  return admin.firestore();
+}
 
 // ==========================================
 // TIPOS
@@ -211,7 +221,10 @@ export function secureCallable<
         // ======================================
         if (config.requiredRole && userId) {
           const userRole =
-            await getUserRole(userId);
+            await getUserRole(
+              userId,
+              request.auth?.token?.role as string | undefined
+            );
 
           const allowedRoles =
             Array.isArray(
@@ -397,11 +410,17 @@ export function secureCallable<
  * falls back to Firestore.
  *
  * @param {string} userId - UID do usuário
+ * @param {string=} tokenRole - Role já presente no token
  * @return {Promise<string | null>} Role
  */
 async function getUserRole(
-  userId: string
+  userId: string,
+  tokenRole?: string
 ): Promise<string | null> {
+  if (tokenRole) {
+    return tokenRole;
+  }
+
   try {
     // 1. Try Custom Claims first (no read)
     const user =
@@ -412,20 +431,27 @@ async function getUserRole(
     if (customRole) {
       return customRole;
     }
+  } catch (error) {
+    console.error(
+      "[SECURE_CALLABLE] Error getting " +
+      `custom claims for ${userId}:`, error
+    );
+  }
 
+  try {
     // 2. Fallback: read from Firestore
-    const userDoc = await db
+    const userDoc = await getDb()
       .collection("users")
       .doc(userId)
       .get();
     const firestoreRole =
       userDoc.data()?.role;
-
     return firestoreRole || null;
   } catch (error) {
     console.error(
       "[SECURE_CALLABLE] Error getting " +
-      `role for ${userId}:`, error
+      `role from Firestore for ${userId}:`,
+      error
     );
     return null;
   }
@@ -452,7 +478,7 @@ async function logAudit(
   data: Record<string, unknown>
 ): Promise<void> {
   try {
-    await db.collection("audit_logs").add({
+    await getDb().collection("audit_logs").add({
       ...data,
       timestamp:
         admin.firestore.FieldValue
