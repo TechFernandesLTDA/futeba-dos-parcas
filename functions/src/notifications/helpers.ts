@@ -481,9 +481,13 @@ export async function sendNotificationToUsers(
           },
         };
 
-      const messaging = getFcm();
+      const messaging = getFcm() as {
+        sendEachForMulticast: (
+          payload: admin.messaging.MulticastMessage
+        ) => Promise<admin.messaging.BatchResponse>;
+      };
       const response =
-        await (messaging as any).sendEachForMulticast(message);
+        await messaging.sendEachForMulticast(message);
       totalSuccess += response.successCount;
 
       // Processar falhas individuais

@@ -174,24 +174,42 @@ export const BADGE_DEFENSIVE_WALL_SAVES = 10;
 // XP LIMITS
 // ==========================================
 
-/** XP máximo por jogo (anti-cheat) — source of truth: shared/xp-constants.json */
+/**
+ * XP máximo por jogo (anti-cheat)
+ * source of truth: shared/xp-constants.json
+ */
 export const MAX_XP_PER_GAME = xpConstants.antiCheatLimits.MAX_XP_PER_GAME;
 
-/** XP mínimo possível por jogo (penalidades) — source of truth: shared/xp-constants.json */
+/**
+ * XP mínimo possível por jogo (penalidades)
+ * source of truth: shared/xp-constants.json
+ */
 export const MIN_XP_PER_GAME = xpConstants.antiCheatLimits.MIN_XP_PER_GAME;
 
 // ==========================================
 // ANTI-CHEAT LIMITS
 // ==========================================
 
-/** Máximo de gols por jogo — source of truth: shared/xp-constants.json */
-export const MAX_GOALS_PER_GAME = xpConstants.antiCheatLimits.MAX_GOALS_PER_GAME;
+/**
+ * Máximo de gols por jogo
+ * source of truth: shared/xp-constants.json
+ */
+export const MAX_GOALS_PER_GAME =
+  xpConstants.antiCheatLimits.MAX_GOALS_PER_GAME;
 
-/** Máximo de assistências por jogo — source of truth: shared/xp-constants.json */
-export const MAX_ASSISTS_PER_GAME = xpConstants.antiCheatLimits.MAX_ASSISTS_PER_GAME;
+/**
+ * Máximo de assistências por jogo
+ * source of truth: shared/xp-constants.json
+ */
+export const MAX_ASSISTS_PER_GAME =
+  xpConstants.antiCheatLimits.MAX_ASSISTS_PER_GAME;
 
-/** Máximo de defesas por jogo — source of truth: shared/xp-constants.json */
-export const MAX_SAVES_PER_GAME = xpConstants.antiCheatLimits.MAX_SAVES_PER_GAME;
+/**
+ * Máximo de defesas por jogo
+ * source of truth: shared/xp-constants.json
+ */
+export const MAX_SAVES_PER_GAME =
+  xpConstants.antiCheatLimits.MAX_SAVES_PER_GAME;
 
 // ==========================================
 // VOTING

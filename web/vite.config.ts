@@ -16,26 +16,14 @@ export default defineConfig({
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-mui': [
-            '@mui/material',
-            '@mui/icons-material',
-            '@mui/x-date-pickers',
-            '@emotion/react',
-            '@emotion/styled',
-          ],
-          'vendor-firebase': [
-            'firebase/app',
-            'firebase/auth',
-            'firebase/firestore',
-            'firebase/storage',
-            'firebase/functions',
-            'firebase/messaging',
-          ],
-          'vendor-query': ['@tanstack/react-query'],
-          'vendor-utils': ['date-fns', 'react-hot-toast'],
-          'vendor-html2canvas': ['html2canvas'],
+        manualChunks(id) {
+          if (id.includes('node_modules/react') || id.includes('react-router-dom')) return 'vendor-react'
+          if (id.includes('@mui/') || id.includes('@emotion/')) return 'vendor-mui'
+          if (id.includes('firebase/')) return 'vendor-firebase'
+          if (id.includes('@tanstack/react-query')) return 'vendor-query'
+          if (id.includes('date-fns')) return 'vendor-utils'
+          if (id.includes('html2canvas')) return 'vendor-html2canvas'
+          return undefined
         },
       },
     },

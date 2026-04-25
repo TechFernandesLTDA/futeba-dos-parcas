@@ -151,6 +151,18 @@ service cloud.firestore {
       return gameDoc != null && gameDoc.data.owner_id == userId();
     }
 
+    // Verifica se usuario pode gerenciar jogo (owner ou co-organizer)
+    function canManageGame(gameData) {
+      return gameData.owner_id == userId() ||
+             ('co_organizers' in gameData && userId() in gameData.co_organizers);
+    }
+
+    // Verifica se um usuario especifico esta confirmado no jogo
+    function isConfirmedUserForGame(gameId, targetUserId) {
+      let confirmationDoc = get(/databases/$(database)/documents/confirmations/$(gameId + "_" + targetUserId));
+      return confirmationDoc != null && confirmationDoc.data.status == 'CONFIRMED';
+    }
+
     // Helper para verificar se usuario e membro ativo de um grupo
     function isGroupMember(groupId) {
       let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
@@ -411,7 +423,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && (
         isAdmin() ||
         // Dono pode fazer qualquer atualizacao (com validacao de dados)
-        (resource.data.owner_id == userId() &&
+        (canManageGame(resource.data) &&
          // P0 #30: Validacao estrita de scores - Previne exploits de XP
          isValidScore(request.resource.data.team1_score) &&
          isValidScore(request.resource.data.team2_score) &&
@@ -425,13 +437,13 @@ service cloud.firestore {
          (isConfirmedPlayer(gameId) ||
           ('group_id' in resource.data && resource.data.group_id != null && isGroupMember(resource.data.group_id)))) ||
         // Bug fix: Apenas dono do jogo ou admin pode definir MVP, e jogo deve estar FINISHED
-        ((resource.data.owner_id == userId() || isAdmin()) &&
+        ((canManageGame(resource.data) || isAdmin()) &&
          resource.data.status == 'FINISHED' &&
          onlyAllowedFields(['mvp_id']))
       );
 
       // Apenas o dono ou admin pode deletar
-      allow delete: if isAdmin() || isOwner(resource.data.owner_id);
+      allow delete: if isAdmin() || canManageGame(resource.data);
     }
 
     // ============================================
@@ -1269,7 +1281,19 @@ service cloud.firestore {
 
       allow create: if isAuthenticated() && (
         isConfirmedPlayer(request.resource.data.game_id) &&
-        request.resource.data.voter_id == userId()
+        request.resource.data.voter_id == userId() &&
+        request.resource.data.mvp_id != userId() &&
+        isConfirmedUserForGame(request.resource.data.game_id, request.resource.data.mvp_id) &&
+        (
+          request.resource.data.best_gk_id == null ||
+          (request.resource.data.best_gk_id != userId() &&
+           isConfirmedUserForGame(request.resource.data.game_id, request.resource.data.best_gk_id))
+        ) &&
+        (
+          request.resource.data.worst_player_id == null ||
+          (request.resource.data.worst_player_id != userId() &&
+           isConfirmedUserForGame(request.resource.data.game_id, request.resource.data.worst_player_id))
+        )
       );
 
       allow update, delete: if isAdmin();

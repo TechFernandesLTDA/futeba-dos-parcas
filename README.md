@@ -71,10 +71,10 @@
 ### Web
 - **Framework:** React 18 + TypeScript
 - **UI:** Material UI 5
-- **Build:** Vite 5
+- **Build:** Vite 8
 - **Server State:** TanStack React Query 5
 - **Routing:** React Router DOM 6
-- **Database:** Firestore (direto, sem cache local)
+- **Database:** Firestore (com cache/retry via React Query)
 
 ### iOS (Em Desenvolvimento)
 - **Linguagem:** Kotlin (shared) + Swift
@@ -158,7 +158,7 @@ futeba-dos-parcas/
 ├── firestore.rules         # Firestore security rules
 ├── specs/                  # Specs técnicas (SDD)
 ├── scripts/                # Scripts utilitários (~70 scripts)
-└── .github/workflows/      # CI/CD pipelines (15 workflows)
+└── .github/workflows/      # CI/CD pipelines (14+ workflows)
 ```
 
 ---
@@ -203,7 +203,7 @@ Este projeto segue **Spec-Driven Development** rigorosamente:
 ## 🔐 Environment & Access
 
 Este repositório é configurado com variáveis de ambiente e chaves de acesso para desenvolvimento:
-- **Firebase Access**: Autenticado via Service Account (localizado na raiz do projeto)
+- **Firebase Access**: Autentique via `firebase login` ou credenciais locais seguras
 - **Scripts**: Scripts Node.js em `/scripts` para tarefas de manutenção
 - **Secrets**: Nunca commitar `google-services.json`, `.env` ou arquivos `*.keystore`
 
@@ -225,7 +225,7 @@ Este repositório é configurado com variáveis de ambiente e chaves de acesso p
 - ✅ **Android:** Produção (v1.19.0 na Play Store)
 - ✅ **Web:** Produção (https://futebadosparcas.web.app)
 - ✅ **Backend:** Firebase Cloud Functions v2
-- ✅ **CI/CD:** GitHub Actions (15 workflows)
+- ✅ **CI/CD:** GitHub Actions (14+ workflows)
 - 🚧 **iOS:** Em desenvolvimento (KMP ~95%, FASE 1 completa)
 
 ---

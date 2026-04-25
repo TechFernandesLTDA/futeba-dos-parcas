@@ -1748,7 +1748,7 @@ export * from "./voting/mvp-voting";
 // Referência:
 //   specs/MASTER_OPTIMIZATION_CHECKLIST.md
 //   - P2 #29
-export * from "./notifications/batch-sender";
+// Já exportado via "./notifications" para evitar export duplicado.
 
 // ==========================================
 // PHASE 3: MONITORING, ALERTING & CACHE
