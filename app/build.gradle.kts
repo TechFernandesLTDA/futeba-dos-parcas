@@ -268,8 +268,8 @@ dependencies {
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 
     // Truth for better assertions
-    testImplementation("com.google.truth:truth:1.1.5")
-    androidTestImplementation("com.google.truth:truth:1.1.5")
+    testImplementation("com.google.truth:truth:1.4.5")
+    androidTestImplementation("com.google.truth:truth:1.4.5")
 
     // Compose UI Testing
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
