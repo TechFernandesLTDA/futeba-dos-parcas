@@ -24,7 +24,6 @@ import {
   SportsSoccer as SoccerIcon,
   Star as StarIcon,
   Directions as DirectionsIcon,
-  Photo as PhotoIcon,
   Reviews as ReviewIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
@@ -125,9 +124,7 @@ export const LocationDetailScreen: React.FC = () => {
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }} noWrap>
             {location.name}
           </Typography>
-          <IconButton onClick={() => navigate(`/location/${locationId}/photos`)} aria-label="Ver fotos do local">
-            <PhotoIcon />
-          </IconButton>
+
         </Box>
       </Box>
 

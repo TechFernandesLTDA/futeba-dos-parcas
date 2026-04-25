@@ -44,6 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const prevUserRef = useRef<FirebaseUser | null>(null);
+  const firebaseUserRef = useRef(firebaseUser);
+  firebaseUserRef.current = firebaseUser;
 
   // Fetch user data from Firestore
   const fetchUserData = async (uid: string): Promise<User | null> => {
@@ -213,11 +215,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Refresh user data
   const refreshUser = useCallback(async () => {
-    if (firebaseUser) {
-      const userData = await fetchUserData(firebaseUser.uid);
-      setUser(userData);
-    }
-  }, [firebaseUser]);
+    const currentUser = firebaseUserRef.current;
+    if (!currentUser) return;
+    const userData = await fetchUserData(currentUser.uid);
+    setUser(userData);
+  }, []);
 
   // Update profile
   const updateUserProfile = useCallback(async (profile: { displayName?: string; photoURL?: string }) => {

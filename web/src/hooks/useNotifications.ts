@@ -72,7 +72,11 @@ export const useNotifications = (userId?: string) => {
       const updates = notifications
         .filter((n) => !n.read)
         .map((n) => updateDoc(doc(db, 'notifications', n.id), { read: true }));
-      await Promise.all(updates);
+      const results = await Promise.allSettled(updates);
+      const failures = results.filter((r) => r.status === 'rejected');
+      if (failures.length > 0) {
+        logger.error(`${failures.length} notificações falharam ao marcar como lida`);
+      }
     } catch (err) {
       logger.error('Error marking all notifications as read:', err);
     }

@@ -60,7 +60,7 @@ export const usePlayers = (groupId?: string) => {
                   assists: data.assists || 0,
                   mvpCount: data.mvpCount || raw.mvp_count || 0,
                   streak: data.streak || 0,
-                  createdAt: raw.created_at?.toDate?.() || data.createdAt,
+                  createdAt: raw.created_at?.toDate?.() || (data.createdAt as any)?.toDate?.(),
                 } as Player;
               }
               return null;

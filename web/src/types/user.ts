@@ -37,13 +37,16 @@ export interface User {
   yellowCards: number;
   redCards: number;
   
+  isSearchable: boolean;
+  isVerified: boolean;
+
   // Streak
   currentStreak: number;
   bestStreak: number;
   
   // Timestamps
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface UserStats {

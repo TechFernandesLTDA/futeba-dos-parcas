@@ -65,7 +65,6 @@ export function LoginScreen() {
 
     try {
       await signInWithGoogle();
-      navigate('/');
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));
     } finally {
@@ -234,8 +233,6 @@ export function LoginScreen() {
               </Link>
             </Typography>
           </Box>
-
-
         </CardContent>
       </Card>
     </Box>

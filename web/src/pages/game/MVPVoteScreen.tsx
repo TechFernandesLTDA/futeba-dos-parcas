@@ -300,6 +300,11 @@ export const MVPVoteScreen: React.FC = () => {
                           </ListItemSecondaryAction>
                         </ListItem>
                       ))}
+                    {confirmations.filter((p) => p.position === 'GOALKEEPER').length === 0 && (
+                      <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                        Nenhum goleiro neste jogo
+                      </Typography>
+                    )}
                   </List>
                 </RadioGroup>
               </FormControl>

@@ -13,9 +13,21 @@ export const useOnlineStatus = () => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    const checkOnline = async () => {
+      try {
+        await fetch('/favicon.svg', { method: 'HEAD', cache: 'no-store' });
+        setIsOnline(true);
+      } catch {
+        setIsOnline(navigator.onLine);
+      }
+    };
+    const interval = setInterval(checkOnline, 30000);
+    checkOnline();
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      clearInterval(interval);
     };
   }, []);
 

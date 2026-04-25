@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   collection,
   query,
@@ -39,10 +39,12 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
   const [error, setError] = useState<Error | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const loadingRef = useRef(false);
 
   const fetchData = useCallback(async (reset = false) => {
-    if (loading) return;
+    if (loadingRef.current) return;
     
+    loadingRef.current = true;
     setLoading(true);
     setError(null);
 
@@ -88,9 +90,10 @@ export function usePaginatedQuery<T = Record<string, unknown>>(options: UsePagin
       logger.error(`Error fetching ${collectionName}:`, err);
       setError(err as Error);
     } finally {
+      loadingRef.current = false;
       setLoading(false);
     }
-  }, [collectionName, pageSize, orderByField, orderDirection, whereClauses, lastDoc, loading]);
+  }, [collectionName, pageSize, orderByField, orderDirection, lastDoc]);
 
   const loadMore = useCallback(() => {
     if (hasMore && !loading) {

@@ -152,7 +152,7 @@ export const GameDetailScreen: React.FC = () => {
       await softDeleteGame({ gameId });
       setDeleteDialogOpen(false);
       showSuccess('Jogo excluído com sucesso');
-      setTimeout(() => navigate(-1), 1000);
+      setTimeout(() => navigate('/'), 1000);
     } catch (err) {
       showError((err as Error)?.message || 'Erro ao excluir jogo');
     } finally {

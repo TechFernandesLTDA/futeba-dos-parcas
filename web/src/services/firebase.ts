@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
@@ -15,7 +15,15 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:490094091078:web:2a2bb9d9048da03cb5a347",
 };
 
-export const app = initializeApp(firebaseConfig);
+let app: FirebaseApp;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (err) {
+  console.error('Firebase initialization failed:', err);
+  throw new Error('Não foi possível conectar ao servidor. Verifique sua conexão.');
+}
+
+export { app };
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);

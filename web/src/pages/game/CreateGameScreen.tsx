@@ -112,6 +112,7 @@ export const CreateGameScreen: React.FC = () => {
   const [useCustomLocation, setUseCustomLocation] = useState(false);
   const [fields, setFields] = useState<Field[]>([]);
   const [fieldsLoading, setFieldsLoading] = useState(false);
+  const [fieldsError, setFieldsError] = useState<string | null>(null);
 
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<GameFormData>({
@@ -130,6 +131,7 @@ export const CreateGameScreen: React.FC = () => {
 
     const loadFields = async () => {
       setFieldsLoading(true);
+      setFieldsError(null);
       try {
         // Buscar quadras na subcoleção do local
         const fieldsRef = collection(db, 'locations', formData.locationId, 'fields');
@@ -165,6 +167,8 @@ export const CreateGameScreen: React.FC = () => {
         }
       } catch (err) {
         logger.error('Erro ao carregar quadras:', err);
+        setFieldsError('Erro ao carregar quadras. Tente novamente.');
+        showError('Erro ao carregar quadras. Tente novamente.');
       } finally {
         setFieldsLoading(false);
       }
@@ -235,6 +239,12 @@ export const CreateGameScreen: React.FC = () => {
 
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
+  };
+
+  const handleNavigateBack = () => {
+    if (window.confirm('Tem certeza? Os dados do formulário serão perdidos.')) {
+      navigate(-1);
+    }
   };
 
   const handleSubmit = async () => {
@@ -414,6 +424,10 @@ export const CreateGameScreen: React.FC = () => {
                 <Alert severity="info" icon={false}>
                   Carregando quadras...
                 </Alert>
+              ) : fieldsError ? (
+                <Alert severity="error" icon={false}>
+                  {fieldsError}
+                </Alert>
               ) : fields.length > 0 ? (
                 <TextField
                   select
@@ -506,7 +520,7 @@ export const CreateGameScreen: React.FC = () => {
               select
               label="Tipo de Quadra"
               value={formData.fieldType}
-              onChange={(e) => { handleInputChange('fieldType', e.target.value); handleInputChange('gameType', e.target.value); }}
+              onChange={(e) => { handleInputChange('fieldType', e.target.value); }}
               fullWidth
             >
               {Object.entries(FIELD_TYPE_LABELS).map(([value, label]) => (
@@ -674,7 +688,7 @@ export const CreateGameScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={handleNavigateBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>

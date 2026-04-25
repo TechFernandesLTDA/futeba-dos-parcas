@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Box, BottomNavigation, BottomNavigationAction, Paper, Snackbar, Button } from '@mui/material';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import {
@@ -19,11 +20,12 @@ import { useNotificationPermission } from '../../hooks/useNotificationPermission
 const TAB_TITLES = ['Início', 'Jogos', 'Grupos', 'Liga', 'Perfil'];
 
 export function HomeScreen() {
-  const [tab, setTab] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabValue = parseInt(searchParams.get('tab') || '0');
   const { permission, requestPermission } = useNotificationPermission();
   const [showNotifBanner, setShowNotifBanner] = useState(false);
 
-  useDocumentTitle(TAB_TITLES[tab]);
+  useDocumentTitle(TAB_TITLES[tabValue]);
 
   useEffect(() => {
     // Mostrar banner apenas se permissão ainda não foi decidida
@@ -52,11 +54,11 @@ export function HomeScreen() {
           pb: '72px', // Espaço para a bottom nav
         }}
       >
-        {tab === 0 && <HomeTab />}
-        {tab === 1 && <GamesTab />}
-        {tab === 2 && <GroupsTab />}
-        {tab === 3 && <RankingsTab />}
-        {tab === 4 && <ProfileTab />}
+        {tabValue === 0 && <HomeTab />}
+        {tabValue === 1 && <GamesTab />}
+        {tabValue === 2 && <GroupsTab />}
+        {tabValue === 3 && <RankingsTab />}
+        {tabValue === 4 && <ProfileTab />}
       </Box>
 
       {/* Bottom Navigation - 5 botões (igual ao Android) */}
@@ -73,8 +75,8 @@ export function HomeScreen() {
         elevation={3}
       >
         <BottomNavigation
-          value={tab}
-          onChange={(_, newValue) => setTab(newValue)}
+          value={tabValue}
+          onChange={(_, newValue) => setSearchParams({ tab: newValue.toString() })}
           showLabels
           aria-label="Navegação principal"
           sx={{

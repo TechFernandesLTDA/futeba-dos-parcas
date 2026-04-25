@@ -46,7 +46,6 @@ interface Settings {
   notifications: boolean;
   emailNotifications: boolean;
   gameReminders: boolean;
-  streakAlerts: boolean;
 }
 
 export const SettingsScreen: React.FC = () => {
@@ -61,7 +60,6 @@ export const SettingsScreen: React.FC = () => {
     notifications: true,
     emailNotifications: true,
     gameReminders: true,
-    streakAlerts: true,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -95,7 +93,6 @@ export const SettingsScreen: React.FC = () => {
         notifications: settings.notifications,
         email_notifications: settings.emailNotifications,
         game_reminders: settings.gameReminders,
-        streak_alerts: settings.streakAlerts,
         updated_at: serverTimestamp(),
       }, { merge: true });
       showSuccess('Configurações salvas com sucesso!');

@@ -320,7 +320,7 @@ export function useCreateGame() {
 
         const docRef = await addDoc(gamesRef, newGame);
         // Invalidar cache de jogos após criar
-        queryClient.invalidateQueries({ queryKey: ['games'] });
+        queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
         setLoading(false);
         return docRef.id;
       } catch (err) {
@@ -354,7 +354,7 @@ export function useUpdateGameStatus() {
           throw new Error('Game not found');
         }
 
-        const gameData = gameDoc.data() as Game;
+        const gameData = parseGameDoc(gameDoc.id, gameDoc.data());
 
         const validTransitions: Record<GameStatus, GameStatus[]> = {
           SCHEDULED: ['CONFIRMED', 'CANCELLED'],
@@ -374,7 +374,7 @@ export function useUpdateGameStatus() {
         });
 
         // Invalidar cache de jogos após mudar status
-        queryClient.invalidateQueries({ queryKey: ['games'] });
+        queryClient.invalidateQueries({ queryKey: ['games'], exact: false });
         setLoading(false);
         return true;
       } catch (err) {
