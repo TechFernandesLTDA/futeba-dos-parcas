@@ -15,6 +15,14 @@ const secondary = {
   contrastText: '#FFFFFF',
 };
 
+// Badge rarity colors
+export const rarityColors: Record<string, string> = {
+  COMMON: '#9E9E9E',
+  RARE: '#2196F3',
+  EPIC: '#9C27B0',
+  LEGENDARY: '#FF9800',
+};
+
 // Gamification colors
 export const gamificationColors = {
   gold: '#FFD700',

@@ -21,6 +21,8 @@ export const useSearch = (searchQuery: string, type: 'all' | 'users' | 'groups' 
       return;
     }
 
+    let cancelled = false;
+
     const performSearch = async () => {
       setLoading(true);
       setError(null);
@@ -37,6 +39,7 @@ export const useSearch = (searchQuery: string, type: 'all' | 'users' | 'groups' 
             limit(10)
           );
           const usersSnap = await getDocs(usersQ);
+          if (cancelled) return;
           usersSnap.docs.forEach((d) => {
             const data = d.data();
             allResults.push({
@@ -58,6 +61,7 @@ export const useSearch = (searchQuery: string, type: 'all' | 'users' | 'groups' 
             limit(10)
           );
           const groupsSnap = await getDocs(groupsQ);
+          if (cancelled) return;
           groupsSnap.docs.forEach((d) => {
             const data = d.data();
             allResults.push({
@@ -70,16 +74,25 @@ export const useSearch = (searchQuery: string, type: 'all' | 'users' | 'groups' 
           });
         }
 
-        setResults(allResults);
+        if (!cancelled) {
+          setResults(allResults);
+        }
       } catch (err: unknown) {
-        setError((err as Error).message);
+        if (!cancelled) {
+          setError((err as Error).message);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     const debounce = setTimeout(performSearch, 300);
-    return () => clearTimeout(debounce);
+    return () => {
+      cancelled = true;
+      clearTimeout(debounce);
+    };
   }, [searchQuery, type]);
 
   return { results, loading, error };

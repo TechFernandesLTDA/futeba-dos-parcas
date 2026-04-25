@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -64,6 +64,18 @@ export const EditProfileScreen: React.FC = () => {
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const handlePhotoClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
 
   const loadProfile = useCallback(async () => {
     if (!currentUser) return;
@@ -193,8 +205,15 @@ export const EditProfileScreen: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
               <Box sx={{ position: 'relative' }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  hidden
+                  onChange={handleFileChange}
+                />
                 <Avatar
-                  src={currentUser?.photoURL || undefined}
+                  src={previewUrl || currentUser?.photoURL || undefined}
                   sx={{
                     width: 100,
                     height: 100,
@@ -205,6 +224,7 @@ export const EditProfileScreen: React.FC = () => {
                   {formData.name?.charAt(0)?.toUpperCase() || '?'}
                 </Avatar>
                 <IconButton
+                  onClick={handlePhotoClick}
                   sx={{
                     position: 'absolute',
                     bottom: 0,

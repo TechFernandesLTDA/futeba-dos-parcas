@@ -12,6 +12,7 @@ import {
   Timestamp,
   writeBatch,
   documentId,
+  increment,
 } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
@@ -398,12 +399,12 @@ export function useInvitePlayers() {
           group_name: groupData?.name || inviteData.group_name || 'Grupo',
           group_photo: groupData?.photo_url || null,
           role: 'MEMBER',
-          member_count: (inviteData.member_count || inviteData.memberCount || 0) + 1,
+          member_count: increment(1),
           joined_at: Timestamp.now(),
         });
 
         batch.update(groupRef, {
-          member_count: (inviteData.member_count || inviteData.memberCount || 0) + 1,
+          member_count: increment(1),
           updated_at: Timestamp.now(),
         });
 

@@ -54,7 +54,7 @@ export const MVPVoteScreen: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [mvpVote, setMvpVote] = useState<string>('');
   const [bestGkVote, setBestGkVote] = useState<string>('');
-  const [worstPlayerVote, _setWorstPlayerVote] = useState<string>('');
+  const [worstPlayerVote, setWorstPlayerVote] = useState<string>('');
   const [hasVoted, setHasVoted] = useState(false);
 
   useEffect(() => {
@@ -257,55 +257,108 @@ export const MVPVoteScreen: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card sx={{ mb: 2 }}>
-          <CardContent>
-            <FormControl component="fieldset" sx={{ width: '100%' }}>
-              <FormLabel component="legend">
-                <Typography variant="subtitle1" fontWeight={600}>
-                  🧤 Melhor Goleiro
-                </Typography>
-              </FormLabel>
-              <RadioGroup
-                value={bestGkVote}
-                onChange={(e) => setBestGkVote(e.target.value)}
-                sx={{ mt: 2 }}
-              >
-                <List disablePadding aria-label="Candidatos a melhor goleiro">
-                  {confirmations
-                    .filter((p) => p.position === 'GOALKEEPER')
-                    .map((player) => (
-                      <ListItem
-                        key={player.userId}
-                        dense
-                        onClick={() => setBestGkVote(player.userId)}
-                        sx={{
-                          borderRadius: 2,
-                          mb: 1,
-                          bgcolor: bestGkVote === player.userId ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                        }}
-                      >
-                        <ListItemAvatar>
-                          <PlayerAvatar
-                            name={player.userName}
-                            photoUrl={player.userPhoto}
-                            size={44}
+          <Card sx={{ mb: 2 }}>
+            <CardContent>
+              <FormControl component="fieldset" sx={{ width: '100%' }}>
+                <FormLabel component="legend">
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    Melhor Goleiro
+                  </Typography>
+                </FormLabel>
+                <RadioGroup
+                  value={bestGkVote}
+                  onChange={(e) => setBestGkVote(e.target.value)}
+                  sx={{ mt: 2 }}
+                >
+                  <List disablePadding aria-label="Candidatos a melhor goleiro">
+                    {confirmations
+                      .filter((p) => p.position === 'GOALKEEPER')
+                      .map((player) => (
+                        <ListItem
+                          key={player.userId}
+                          dense
+                          onClick={() => setBestGkVote(player.userId)}
+                          sx={{
+                            borderRadius: 2,
+                            mb: 1,
+                            bgcolor: bestGkVote === player.userId ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                          }}
+                        >
+                          <ListItemAvatar>
+                            <PlayerAvatar
+                              name={player.userName}
+                              photoUrl={player.userPhoto}
+                              size={44}
+                            />
+                          </ListItemAvatar>
+                          <ListItemText primary={player.userName} />
+                          <ListItemSecondaryAction>
+                            <Radio
+                              checked={bestGkVote === player.userId}
+                              value={player.userId}
+                            />
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                      ))}
+                  </List>
+                </RadioGroup>
+              </FormControl>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ mb: 2 }}>
+            <CardContent>
+              <FormControl component="fieldset" sx={{ width: '100%' }}>
+                <FormLabel component="legend">
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    Bola Murcha
+                  </Typography>
+                </FormLabel>
+                <RadioGroup
+                  value={worstPlayerVote}
+                  onChange={(e) => setWorstPlayerVote(e.target.value)}
+                  sx={{ mt: 2 }}
+                >
+                  <List disablePadding aria-label="Candidatos a bola murcha">
+                    {confirmations
+                      .filter((p) => p.userId !== currentUser?.uid)
+                      .map((player) => (
+                        <ListItem
+                          key={player.userId}
+                          dense
+                          onClick={() => setWorstPlayerVote(player.userId)}
+                          sx={{
+                            borderRadius: 2,
+                            mb: 1,
+                            cursor: 'pointer',
+                            bgcolor: worstPlayerVote === player.userId ? alpha(theme.palette.error.main, 0.1) : 'transparent',
+                          }}
+                        >
+                          <ListItemAvatar>
+                            <PlayerAvatar
+                              name={player.userName}
+                              photoUrl={player.userPhoto}
+                              size={44}
+                            />
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={player.userName}
+                            secondary={player.position === 'GOALKEEPER' ? 'Goleiro' : 'Jogador de Linha'}
                           />
-                        </ListItemAvatar>
-                        <ListItemText primary={player.userName} />
-                        <ListItemSecondaryAction>
-                          <Radio
-                            checked={bestGkVote === player.userId}
-                            value={player.userId}
-                          />
-                        </ListItemSecondaryAction>
-                      </ListItem>
-                    ))}
-                </List>
-              </RadioGroup>
-            </FormControl>
-          </CardContent>
-        </Card>
-      </Container>
+                          <ListItemSecondaryAction>
+                            <Radio
+                              checked={worstPlayerVote === player.userId}
+                              value={player.userId}
+                            />
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                      ))}
+                  </List>
+                </RadioGroup>
+              </FormControl>
+            </CardContent>
+          </Card>
+        </Container>
 
       <Box
         sx={{
@@ -324,7 +377,7 @@ export const MVPVoteScreen: React.FC = () => {
             variant="contained"
             fullWidth
             size="large"
-            disabled={!mvpVote || submitting}
+            disabled={!mvpVote || !worstPlayerVote || submitting}
             onClick={handleVote}
             startIcon={submitting ? <CircularProgress size={20} /> : <VoteIcon />}
           >

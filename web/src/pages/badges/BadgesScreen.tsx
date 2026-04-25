@@ -25,14 +25,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 import { LoadingState } from '../../components/common/GameCard';
 import { BADGE_DEFINITIONS, BadgeDefinition } from '../../types/gamification';
+import { rarityColors } from '../../theme';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-
-const RARITY_COLORS: Record<string, string> = {
-  COMMON: '#9E9E9E',
-  RARE: '#2196F3',
-  EPIC: '#9C27B0',
-  LEGENDARY: '#FF9800',
-};
 
 export const BadgesScreen: React.FC = () => {
   useDocumentTitle('Badges');
@@ -43,7 +37,7 @@ export const BadgesScreen: React.FC = () => {
   const { unlockedIds, loading, error } = useBadges(user?.id);
 
   const getRarityStyle = (rarity: string) => {
-    const color = RARITY_COLORS[rarity] || RARITY_COLORS.COMMON;
+    const color = rarityColors[rarity] || rarityColors.COMMON;
     return {
       border: `2px solid ${color}`,
       boxShadow: `0 0 10px ${alpha(color, 0.3)}`,
@@ -151,7 +145,7 @@ const BadgeItem = React.memo(function BadgeItem({
               width: 60,
               height: 60,
               borderRadius: '50%',
-              bgcolor: alpha(RARITY_COLORS[badge.rarity], 0.1),
+              bgcolor: alpha(rarityColors[badge.rarity], 0.1),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -171,8 +165,8 @@ const BadgeItem = React.memo(function BadgeItem({
             size="small"
             sx={{
               mt: 0.5,
-              bgcolor: alpha(RARITY_COLORS[badge.rarity], 0.1),
-              color: RARITY_COLORS[badge.rarity],
+              bgcolor: alpha(rarityColors[badge.rarity], 0.1),
+              color: rarityColors[badge.rarity],
               fontSize: '0.65rem',
               height: 18,
             }}

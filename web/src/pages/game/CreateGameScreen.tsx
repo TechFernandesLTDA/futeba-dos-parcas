@@ -248,6 +248,10 @@ export const CreateGameScreen: React.FC = () => {
 
       // Verificar sobreposição de horários na mesma quadra
       if (formData.fieldId && formData.date) {
+        const parseTime = (t: string) => {
+          const [h, m] = t.split(':').map(Number);
+          return h * 60 + m;
+        };
         const gamesRef = collection(db, 'games');
         const overlapQuery = query(
           gamesRef,
@@ -255,19 +259,14 @@ export const CreateGameScreen: React.FC = () => {
           where('date', '==', formData.date),
         );
         const existingGames = await getDocs(overlapQuery);
+        const newStart = parseTime(formData.time);
+        const newEnd = formData.endTime ? parseTime(formData.endTime) : newStart + 120;
         const conflicting = existingGames.docs.find((d) => {
           const g = d.data();
           if (g.status === 'CANCELLED') return false;
-          const gTime = g.time || '';
-          const gEndTime = g.end_time || '';
-          const newTime = formData.time;
-          const newEndTime = formData.endTime || '';
-          // Sobreposição: jogo existente começa antes do novo terminar E termina depois do novo começar
-          if (gEndTime && newEndTime) {
-            return gTime < newEndTime && gEndTime > newTime;
-          }
-          // Se não tem end_time, considerar 2h de duração padrão
-          return gTime === newTime;
+          const gStart = g.time ? parseTime(g.time) : 0;
+          const gEnd = g.end_time ? parseTime(g.end_time) : gStart + 120;
+          return gStart < newEnd && gEnd > newStart;
         });
         if (conflicting) {
           const g = conflicting.data();

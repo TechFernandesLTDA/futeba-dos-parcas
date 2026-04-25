@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Query, onSnapshot, DocumentData } from 'firebase/firestore';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
@@ -34,6 +34,9 @@ export function useFirestoreQuery<T>({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const transformRef = useRef(transform);
+  transformRef.current = transform;
+
   useEffect(() => {
     if (!firestoreQuery || !enabled) {
       setLoading(false);
@@ -49,8 +52,8 @@ export function useFirestoreQuery<T>({
         const results = snapshot.docs.map((doc) => {
           const raw = doc.data();
           const converted = snakeToCamel(raw);
-          if (transform) {
-            return transform(converted, doc.id);
+          if (transformRef.current) {
+            return transformRef.current(converted, doc.id);
           }
           return { id: doc.id, ...converted } as T;
         });
@@ -65,7 +68,7 @@ export function useFirestoreQuery<T>({
     );
 
     return () => unsubscribe();
-  }, [firestoreQuery, enabled, transform]);
+  }, [firestoreQuery, enabled]);
 
   return { data, loading, error };
 }

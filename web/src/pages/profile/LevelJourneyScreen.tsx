@@ -476,7 +476,7 @@ function LevelRow({
               <Box
                 sx={{
                   bgcolor: color,
-                  color: 'white',
+                  color: theme.palette.getContrastText(color),
                   px: 0.8,
                   py: 0.1,
                   borderRadius: 1,

@@ -17,11 +17,11 @@ export function useNotificationPermission() {
   // Escutar notificações em foreground
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
+    let mounted = true;
 
     messagingPromise.then((messaging) => {
-      if (!messaging) return;
+      if (!mounted || !messaging) return;
       unsubscribe = onMessage(messaging, (payload) => {
-        // Exibir notificação nativa quando app está em foreground
         if (Notification.permission === 'granted' && payload.notification) {
           new Notification(payload.notification.title || 'Futeba dos Parças', {
             body: payload.notification.body,
@@ -32,6 +32,7 @@ export function useNotificationPermission() {
     });
 
     return () => {
+      mounted = false;
       if (unsubscribe) unsubscribe();
     };
   }, []);

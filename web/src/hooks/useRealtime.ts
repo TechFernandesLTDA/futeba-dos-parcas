@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { collection, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
@@ -58,11 +58,14 @@ export function useRealtimeCollection<T = any>(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  const queryFnRef = useRef(queryFn);
+  queryFnRef.current = queryFn;
+
   useEffect(() => {
     setLoading(true);
     
     const collectionRef = collection(db, collectionName);
-    const q = queryFn ? queryFn(collectionRef) : collectionRef;
+    const q = queryFnRef.current ? queryFnRef.current(collectionRef) : collectionRef;
 
     const unsubscribe = onSnapshot(
       q,
@@ -85,7 +88,7 @@ export function useRealtimeCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [collectionName, queryFn]);
+  }, [collectionName]);
 
   return { data, loading, error };
 }

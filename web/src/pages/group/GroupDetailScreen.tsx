@@ -101,10 +101,14 @@ export const GroupDetailScreen: React.FC = () => {
     }
   };
 
-  const handleCopyInvite = () => {
+  const handleCopyInvite = async () => {
     const link = `${window.location.origin}/join/${inviteCode}`;
-    navigator.clipboard.writeText(link);
-    showSuccess('Link copiado!');
+    try {
+      await navigator.clipboard.writeText(link);
+      showSuccess('Link copiado!');
+    } catch (err) {
+      showError('Erro ao copiar link');
+    }
   };
 
   const handleShare = async () => {

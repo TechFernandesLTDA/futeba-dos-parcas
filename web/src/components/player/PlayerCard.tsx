@@ -29,6 +29,7 @@ import {
   LEVEL_TABLE,
 } from '../../types/gamification';
 import { getLevelColor } from '../../types/user';
+import { gamificationColors } from '../../theme';
 
 // Mapeamento de posição para rótulo PT-BR
 const POSITION_LABELS: Record<string, string> = {
@@ -491,31 +492,31 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     icon={<SoccerIcon fontSize="small" />}
                     label="Gols"
                     value={player.totalGoals}
-                    color="#4ADE80"
+                    color={theme.palette.primary.light}
                   />
                   <StatItem
                     icon={<StarIcon fontSize="small" />}
                     label="Assists"
                     value={player.totalAssists}
-                    color="#60A5FA"
+                    color={theme.palette.info.light}
                   />
                   <StatItem
                     icon={<TrophyIcon fontSize="small" />}
                     label="MVPs"
                     value={player.mvpCount}
-                    color="#FFD700"
+                    color={gamificationColors.gold}
                   />
                   <StatItem
                     icon={<FireIcon fontSize="small" />}
                     label="Sequência"
                     value={player.currentStreak}
-                    color="#FB923C"
+                    color={theme.palette.warning.light}
                   />
                   <StatItem
                     icon={<TrophyIcon fontSize="small" />}
                     label="Vitórias%"
                     value={`${winRate}%`}
-                    color="#A78BFA"
+                    color={theme.palette.secondary.light}
                   />
                 </Box>
 

@@ -1,7 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'react-hot-toast';
 import { AuthProvider, ThemeProvider, useAuth } from './contexts';
 import { Box } from '@mui/material';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -275,15 +274,6 @@ function App() {
                   <ConnectionStatusWrapper />
                 </MobileShell>
               </ErrorBoundary>
-              <Toaster
-                position="top-center"
-                toastOptions={{
-                  duration: 4000,
-                  style: {
-                    borderRadius: '12px',
-                  },
-                }}
-              />
             </ToastProvider>
           </AuthProvider>
         </BrowserRouter>

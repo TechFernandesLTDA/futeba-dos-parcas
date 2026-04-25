@@ -30,10 +30,12 @@ export const ConnectionStatus: React.FC<{ isOnline: boolean }> = ({ isOnline }) 
       role="alert"
       aria-live="assertive"
       sx={{
-        position: 'fixed',
-        bottom: 80,
+        position: 'sticky',
+        top: 0,
         left: '50%',
         transform: 'translateX(-50%)',
+        maxWidth: 'fit-content',
+        mx: 'auto',
         zIndex: 9999,
         px: 2,
         py: 1,

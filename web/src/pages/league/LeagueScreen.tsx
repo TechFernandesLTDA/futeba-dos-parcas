@@ -41,8 +41,6 @@ export const LeagueScreen: React.FC = () => {
 
   const { players, loading, error } = useLeague(user?.id, selectedDivision);
 
-  const filteredPlayers = tabValue === 0 ? players : players;
-
   const getPositionStyle = (position: number) => {
     switch (position) {
       case 1:
@@ -107,7 +105,7 @@ export const LeagueScreen: React.FC = () => {
           >
             Erro ao carregar liga: {error}
           </Alert>
-        ) : filteredPlayers.length === 0 ? (
+        ) : players.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <MilitaryTechIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
@@ -119,7 +117,7 @@ export const LeagueScreen: React.FC = () => {
           </Box>
         ) : (
           <List disablePadding aria-label="Classificação da liga">
-            {filteredPlayers.map((player, index) => (
+            {players.map((player, index) => (
               <LeaguePlayerItem
                 key={player.id}
                 player={player}

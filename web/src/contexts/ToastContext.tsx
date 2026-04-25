@@ -38,7 +38,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = useCallback((message: string, severity: AlertColor = 'info', duration: number = 4000) => {
-    const id = Date.now().toString();
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const newToast: Toast = { id, message, severity, duration };
     setToasts((prev) => [...prev, newToast]);
   }, []);
@@ -64,7 +64,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     action: { label: string; onClick: () => void },
     severity: AlertColor = 'info'
   ) => {
-    const id = Date.now().toString();
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const newToast: Toast = { id, message, severity, action, duration: 6000 };
     setToasts((prev) => [...prev, newToast]);
   }, []);
@@ -98,7 +98,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           autoHideDuration={toast.duration}
           onClose={handleClose(toast.id)}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          sx={{ top: `${80 + index * 60}px !important` }}
+          sx={{ top: `${80 + index * 60}px !important`, zIndex: 99999 }}
         >
           <Alert
             severity={toast.severity}

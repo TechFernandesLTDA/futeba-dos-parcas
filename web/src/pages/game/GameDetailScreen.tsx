@@ -340,7 +340,7 @@ export const GameDetailScreen: React.FC = () => {
           >
             <Tab label={`Confirmados (${confirmedPlayers.length})`} />
             <Tab label={`Goleiros (${goalkeepers.length})`} />
-            {waitlist.length > 0 && <Tab label={`Espera (${waitlist.length})`} />}
+            <Tab label={`Espera (${waitlist.length})`} />
           </Tabs>
 
           <TabPanel value={tabValue} index={0}>
@@ -401,8 +401,14 @@ export const GameDetailScreen: React.FC = () => {
             )}
           </TabPanel>
 
-          {waitlist.length > 0 && (
-            <TabPanel value={tabValue} index={2}>
+          <TabPanel value={tabValue} index={2}>
+            {waitlist.length === 0 ? (
+              <EmptyState
+                icon={<PeopleIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
+                title="Nenhum jogador na lista de espera"
+                description="Quando a lista estiver cheia, novos jogadores entram aqui"
+              />
+            ) : (
               <List disablePadding>
                 {waitlist.map((player) => (
                   <ListItem key={player.id}>
@@ -413,8 +419,8 @@ export const GameDetailScreen: React.FC = () => {
                   </ListItem>
                 ))}
               </List>
-            </TabPanel>
-          )}
+            )}
+          </TabPanel>
         </Card>
 
         {game.rules && (

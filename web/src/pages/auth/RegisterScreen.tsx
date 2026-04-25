@@ -56,6 +56,10 @@ export function RegisterScreen() {
       setError('Digite seu email');
       return false;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Digite um email válido');
+      return false;
+    }
     if (!password) {
       setError('Digite sua senha');
       return false;

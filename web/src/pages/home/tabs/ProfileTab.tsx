@@ -113,11 +113,12 @@ export function ProfileTab() {
             sx={{
               width: 100,
               height: 100,
-              bgcolor: 'white',
+              bgcolor: 'background.paper',
               color: 'primary.main',
               fontSize: '2.5rem',
               fontWeight: 'bold',
-              border: '4px solid white',
+              border: '4px solid',
+              borderColor: 'background.paper',
               boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
             }}
           >
@@ -144,17 +145,17 @@ export function ProfileTab() {
           </Box>
         </Box>
 
-        <Typography variant="h5" fontWeight="bold" color="white" sx={{ mt: 2 }}>
+        <Typography variant="h5" fontWeight="bold" sx={{ color: 'primary.contrastText', mt: 2 }}>
           {user?.name || 'Jogador'}
         </Typography>
 
         {user?.nickname && (
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+          <Typography variant="body2" sx={{ color: 'primary.contrastText', opacity: 0.9 }}>
             "{user.nickname}"
           </Typography>
         )}
 
-        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mt: 0.5 }}>
+        <Typography variant="body2" sx={{ color: 'primary.contrastText', opacity: 0.8, mt: 0.5 }}>
           {user?.email}
         </Typography>
 

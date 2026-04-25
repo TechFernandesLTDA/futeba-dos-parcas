@@ -92,9 +92,9 @@ export function HomeScreen() {
             },
           }}
         >
-          {tabConfigs.map((config, index) => (
+          {tabConfigs.map((config) => (
             <BottomNavigationAction
-              key={index}
+              key={config.label}
               icon={config.icon}
               label={config.label}
               sx={{

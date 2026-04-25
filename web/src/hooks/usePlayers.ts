@@ -26,6 +26,8 @@ export const usePlayers = (groupId?: string) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (!groupId) {
       setLoading(false);
       return;
@@ -34,6 +36,7 @@ export const usePlayers = (groupId?: string) => {
     const fetchPlayers = async () => {
       try {
         const groupDoc = await getDoc(doc(db, 'groups', groupId));
+        if (cancelled) return;
         if (groupDoc.exists()) {
           const memberIds = groupDoc.data().members || [];
           
@@ -42,7 +45,6 @@ export const usePlayers = (groupId?: string) => {
               const userDoc = await getDoc(doc(db, 'users', uid));
               if (userDoc.exists()) {
                 const raw = userDoc.data();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const data = snakeToCamel(raw) as Record<string, any>;
                 return {
                   id: uid,
@@ -65,16 +67,22 @@ export const usePlayers = (groupId?: string) => {
             })
           );
 
+          if (cancelled) return;
           setPlayers(playersData.filter(Boolean) as Player[]);
         }
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       } catch (err: unknown) {
-        setError((err as Error).message);
-        setLoading(false);
+        if (!cancelled) {
+          setError((err as Error).message);
+          setLoading(false);
+        }
       }
     };
 
     fetchPlayers();
+    return () => { cancelled = true; };
   }, [groupId]);
 
   return { players, loading, error };
@@ -86,6 +94,8 @@ export const usePlayerDetail = (userId?: string) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (!userId) {
       setLoading(false);
       return;
@@ -94,35 +104,42 @@ export const usePlayerDetail = (userId?: string) => {
     const fetchPlayer = async () => {
       try {
         const userDoc = await getDoc(doc(db, 'users', userId));
+        if (cancelled) return;
         if (userDoc.exists()) {
           const raw = userDoc.data();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(raw) as Record<string, any>;
-          setPlayer({
-            id: userId,
-            name: data.name || 'Jogador',
-            email: data.email || '',
-            photoUrl: data.photoUrl || raw.photo_url,
-            level: data.level || 1,
-            xp: data.experiencePoints ?? data.xp ?? 0,
-            division: data.division || 'BRONZE',
-            gamesPlayed: data.gamesPlayed || raw.games_played || 0,
-            wins: data.wins || 0,
-            goals: data.goals || 0,
-            assists: data.assists || 0,
-            mvpCount: data.mvpCount || raw.mvp_count || 0,
-            streak: data.streak || 0,
-            createdAt: raw.created_at?.toDate?.() || data.createdAt,
-          });
+          if (!cancelled) {
+            setPlayer({
+              id: userId,
+              name: data.name || 'Jogador',
+              email: data.email || '',
+              photoUrl: data.photoUrl || raw.photo_url,
+              level: data.level || 1,
+              xp: data.experiencePoints ?? data.xp ?? 0,
+              division: data.division || 'BRONZE',
+              gamesPlayed: data.gamesPlayed || raw.games_played || 0,
+              wins: data.wins || 0,
+              goals: data.goals || 0,
+              assists: data.assists || 0,
+              mvpCount: data.mvpCount || raw.mvp_count || 0,
+              streak: data.streak || 0,
+              createdAt: raw.created_at?.toDate?.() || data.createdAt,
+            });
+          }
         }
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       } catch (err: unknown) {
-        setError((err as Error).message);
-        setLoading(false);
+        if (!cancelled) {
+          setError((err as Error).message);
+          setLoading(false);
+        }
       }
     };
 
     fetchPlayer();
+    return () => { cancelled = true; };
   }, [userId]);
 
   return { player, loading, error };

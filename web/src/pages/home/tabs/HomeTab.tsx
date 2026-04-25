@@ -131,7 +131,7 @@ export function HomeTab() {
         sx={{
           mb: 3,
           background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-          color: 'white',
+          color: 'primary.contrastText',
           borderRadius: 3,
           overflow: 'visible',
           position: 'relative',
@@ -148,10 +148,11 @@ export function HomeTab() {
                     width: 60,
                     height: 60,
                     bgcolor: 'rgba(255,255,255,0.2)',
-                    color: 'white',
+          color: 'primary.contrastText',
                     fontWeight: 'bold',
                     fontSize: '1.5rem',
-                    border: '3px solid rgba(255,255,255,0.4)',
+                    border: '3px solid',
+                    borderColor: 'primary.contrastText',
                   }}
                 >
                   {user?.name?.charAt(0)?.toUpperCase() || '?'}
@@ -169,11 +170,12 @@ export function HomeTab() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: '2px solid white',
+                    border: '2px solid',
+                    borderColor: 'background.paper',
                     boxShadow: `0 0 8px ${levelColor}80`,
                   }}
                 >
-                  <Typography variant="caption" fontWeight="bold" color="white" sx={{ fontSize: '0.65rem' }}>
+                  <Typography variant="caption" fontWeight="bold" sx={{ color: 'primary.contrastText', fontSize: '0.65rem' }}>
                     {currentLevel}
                   </Typography>
                 </Box>

@@ -27,6 +27,8 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
+const FIELD_GREEN = '#2E7D32';
+
 const logger = createLogger('TacticalBoardScreen');
 
 interface TacticalPlayer {
@@ -170,7 +172,7 @@ export const TacticalBoardScreen: React.FC = () => {
         <Paper
           sx={{
             aspectRatio: '3/4',
-            bgcolor: '#2E7D32',
+            bgcolor: FIELD_GREEN,
             position: 'relative',
             borderRadius: 2,
             overflow: 'hidden',
@@ -257,7 +259,7 @@ export const TacticalBoardScreen: React.FC = () => {
                 sx={{
                   display: 'block',
                   textAlign: 'center',
-                  color: 'white',
+                  color: 'common.white',
                   fontSize: 10,
                   mt: 0.5,
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
@@ -278,7 +280,7 @@ export const TacticalBoardScreen: React.FC = () => {
               width: 20,
               height: 20,
               borderRadius: '50%',
-              bgcolor: 'white',
+              bgcolor: 'common.white',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
