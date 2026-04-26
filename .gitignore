@@ -114,3 +114,9 @@ nul
 
 # Web app build output
 web/dist/
+
+# Cloud Functions build output
+functions/lib/
+
+# Claude worktrees agent cache
+.claude/worktrees/
