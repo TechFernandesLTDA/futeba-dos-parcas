@@ -275,6 +275,7 @@ export const submitMvpVote =
             // (24h após fim do jogo)
             const gameDateTime =
               gameData.dateTime;
+            let deadline: Date;
             if (
               gameDateTime &&
               typeof gameDateTime.toDate ===
@@ -282,19 +283,37 @@ export const submitMvpVote =
             ) {
               const gameEndDate =
                 gameDateTime.toDate();
-              const deadline = new Date(
+              deadline = new Date(
                 gameEndDate.getTime() +
                 VOTE_WINDOW_HOURS *
                 60 * 60 * 1000
               );
-              const now = new Date();
-              if (now > deadline) {
-                throw new HttpsError(
-                  "failed-precondition",
-                  "Prazo de votação expirado " +
-                  "(24h após o jogo)"
-                );
-              }
+            } else if (
+              gameData.created_at &&
+              typeof gameData.created_at.toDate ===
+              "function"
+            ) {
+              const createdAt =
+                gameData.created_at.toDate();
+              deadline = new Date(
+                createdAt.getTime() +
+                VOTE_WINDOW_HOURS *
+                60 * 60 * 1000
+              );
+            } else {
+              throw new HttpsError(
+                "internal",
+                "Dados do jogo incompletos: " +
+                "sem data de realização ou criação"
+              );
+            }
+            const now = new Date();
+            if (now > deadline) {
+              throw new HttpsError(
+                "failed-precondition",
+                "Prazo de votação expirado " +
+                "(24h após o jogo)"
+              );
             }
 
             // 3.5: Validar que o votante
@@ -534,29 +553,23 @@ export const concludeMvpVoting =
 
       try {
         // ====================================
-        // 2. BUSCAR VOTOS (fora da transaction
-        //    para evitar limite de leituras)
-        // Nota: Abordagem em 2 passos:
-        //   Passo 1: Ler votos (fora)
-        //   Passo 2: Transaction para
-        //     escrever resultados com lock
-        // ====================================
-        const votesSnap = await db
-          .collection("mvp_votes")
-          .where("game_id", "==", gameId)
-          .get();
-
-        const votes = votesSnap.docs.map(
-          (doc) => doc.data()
-        );
-
-        // ====================================
-        // 3. TRANSACTION: Verificar + Escrever
+        // 2. TRANSACTION: Verificar + Escrever
         // ====================================
         const result =
           await db.runTransaction(
             async (transaction) => {
-              // 3.1: Ler e validar o jogo
+              // 2.1: Buscar votos (dentro
+              // da transaction - evita TOCTOU)
+              const votesSnap =
+                await transaction.get(
+                  db.collection("mvp_votes")
+                    .where("game_id", "==", gameId)
+                );
+              const votes = votesSnap.docs.map(
+                (doc) => doc.data()
+              );
+
+              // 2.2: Ler e validar o jogo
               const gameRef = db
                 .collection("games")
                 .doc(gameId);
@@ -580,7 +593,7 @@ export const concludeMvpVoting =
                 );
               }
 
-              // 3.2: Validar permissão
+              // 2.3: Validar permissão
               // (apenas dono ou admin)
               if (
                 gameData.owner_id !== userId
@@ -599,7 +612,7 @@ export const concludeMvpVoting =
                 }
               }
 
-              // 3.3: Validar FINISHED
+              // 2.4: Validar FINISHED
               if (
                 gameData.status !== "FINISHED"
               ) {
@@ -611,7 +624,7 @@ export const concludeMvpVoting =
                 );
               }
 
-              // 3.4: Idempotência - se já
+              // 2.5: Idempotência - se já
               // concluída, retornar anterior
               if (
                 gameData.voting_status ===
@@ -636,7 +649,7 @@ export const concludeMvpVoting =
                 };
               }
 
-              // 3.5: Sem votos, encerrar
+              // 2.6: Sem votos, encerrar
               // sem vencedor
               if (votes.length === 0) {
                 transaction.update(
@@ -662,7 +675,7 @@ export const concludeMvpVoting =
                 };
               }
 
-              // 3.6: Contar votos
+              // 2.7: Contar votos
               const mvpCounts =
                 tallyVotes(votes, "MVP");
               const bestGkCounts =
@@ -673,7 +686,7 @@ export const concludeMvpVoting =
               const worstCounts =
                 tallyVotes(votes, "WORST");
 
-              // 3.7: Resolver vencedores
+              // 2.8: Resolver vencedores
               // (determinístico em empate)
               const mvpId =
                 resolveWinner(mvpCounts);
@@ -682,7 +695,7 @@ export const concludeMvpVoting =
               const worstPlayerId =
                 resolveWinner(worstCounts);
 
-              // 3.8: Buscar confirmações
+              // 2.9: Buscar confirmações
               // (dentro da transaction)
               const confirmationsSnap =
                 await db
@@ -701,7 +714,7 @@ export const concludeMvpVoting =
                   )
                   .get();
 
-              // 3.9: Atualizar confirmações
+              // 2.10: Atualizar confirmações
               for (
                 const confDoc of
                 confirmationsSnap.docs
@@ -740,7 +753,7 @@ export const concludeMvpVoting =
                 );
               }
 
-              // 3.10: Atualizar jogo com
+              // 2.11: Atualizar jogo com
               // resultados da votação
               const gameUpdates:
                 Record<string, unknown> = {

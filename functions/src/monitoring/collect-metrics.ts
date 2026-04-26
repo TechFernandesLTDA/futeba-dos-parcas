@@ -74,43 +74,83 @@ export const collectHourlyMetrics =
         oneDayAgo.getHours() - 24
       );
 
-      const gamesLast24h = await db
-        .collection("games")
-        .where(
-          "created_at", ">=",
-          admin.firestore.Timestamp.fromDate(oneDayAgo)
-        )
-        .count().get();
+      let gamesLast24h = 0;
+      try {
+        const snap = await db
+          .collection("games")
+          .where(
+            "created_at", ">=",
+            admin.firestore.Timestamp.fromDate(oneDayAgo)
+          )
+          .count().get();
+        gamesLast24h = snap.data().count;
+      } catch (error) {
+        console.error(
+          "[METRICS] Error counting " +
+          "gamesLast24h:", error
+        );
+        gamesLast24h = -1;
+      }
 
-      const finishedGamesLast24h = await db
-        .collection("games")
-        .where("status", "==", "FINISHED")
-        .where(
-          "xp_processed_at", ">=",
-          admin.firestore.Timestamp.fromDate(oneDayAgo)
-        )
-        .count().get();
+      let finishedGamesLast24h = 0;
+      try {
+        const snap = await db
+          .collection("games")
+          .where("status", "==", "FINISHED")
+          .where(
+            "xp_processed_at", ">=",
+            admin.firestore.Timestamp.fromDate(oneDayAgo)
+          )
+          .count().get();
+        finishedGamesLast24h = snap.data().count;
+      } catch (error) {
+        console.error(
+          "[METRICS] Error counting " +
+          "finishedGamesLast24h:", error
+        );
+        finishedGamesLast24h = -1;
+      }
 
       // Usuários ativos (últimos 7 dias)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const activeUsersLast7d = await db
-        .collection("users")
-        .where(
-          "updated_at", ">=",
-          admin.firestore.Timestamp.fromDate(sevenDaysAgo)
-        )
-        .count().get();
+      let activeUsersLast7d = 0;
+      try {
+        const snap = await db
+          .collection("users")
+          .where(
+            "updated_at", ">=",
+            admin.firestore.Timestamp.fromDate(sevenDaysAgo)
+          )
+          .count().get();
+        activeUsersLast7d = snap.data().count;
+      } catch (error) {
+        console.error(
+          "[METRICS] Error counting " +
+          "activeUsersLast7d:", error
+        );
+        activeUsersLast7d = -1;
+      }
 
       // XP processado (últimas 24h)
-      const xpLogsLast24h = await db
-        .collection("xp_logs")
-        .where(
-          "created_at", ">=",
-          admin.firestore.Timestamp.fromDate(oneDayAgo)
-        )
-        .count().get();
+      let xpLogsLast24h = 0;
+      try {
+        const snap = await db
+          .collection("xp_logs")
+          .where(
+            "created_at", ">=",
+            admin.firestore.Timestamp.fromDate(oneDayAgo)
+          )
+          .count().get();
+        xpLogsLast24h = snap.data().count;
+      } catch (error) {
+        console.error(
+          "[METRICS] Error counting " +
+          "xpLogsLast24h:", error
+        );
+        xpLogsLast24h = -1;
+      }
 
       // Buscar métrica anterior para deltas
       const previousMetricsSnap = await db
@@ -146,13 +186,13 @@ export const collectHourlyMetrics =
         document_counts: counts,
         deltas: deltas,
         games_last_24h:
-          gamesLast24h.data().count,
+          gamesLast24h,
         finished_games_last_24h:
-          finishedGamesLast24h.data().count,
+          finishedGamesLast24h,
         active_users_last_7d:
-          activeUsersLast7d.data().count,
+          activeUsersLast7d,
         xp_logs_last_24h:
-          xpLogsLast24h.data().count,
+          xpLogsLast24h,
       };
 
       await db.collection("metrics")
@@ -171,11 +211,11 @@ export const collectHourlyMetrics =
       );
       console.log(
         "[METRICS] Games last 24h: " +
-        gamesLast24h.data().count
+        gamesLast24h
       );
       console.log(
         "[METRICS] Active users last 7d: " +
-        activeUsersLast7d.data().count
+        activeUsersLast7d
       );
     } catch (error) {
       console.error(

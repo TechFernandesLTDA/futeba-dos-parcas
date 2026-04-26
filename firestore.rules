@@ -488,8 +488,8 @@ service cloud.firestore {
     // COLECAO: confirmations
     // ============================================
     match /confirmations/{confirmationId} {
-      // Qualquer usuario autenticado pode ler confirmacoes
-      allow read: if isAuthenticated();
+      // Apenas o proprio usuario pode ler suas confirmacoes
+      allow read: if isAuthenticated() && resource.data.user_id == request.auth.uid;
 
       // C-003 FIX: Usuario pode criar sua propria confirmacao com validação de ID
       // ID deve seguir padrao: {gameId}_{userId}
@@ -532,11 +532,6 @@ service cloud.firestore {
       allow create, update, delete: if isAuthenticated() &&
                                        (isAdmin() || isGameOwner(request.resource.data.game_id));
     }
-
-    // ============================================
-    // COLECAO: statistics
-    // ============================================
-
 
     // ============================================
     // COLECAO: player_stats (estatisticas por jogo)
@@ -1048,7 +1043,7 @@ service cloud.firestore {
       }
 
       match /cashbox_summary/{docId} {
-        allow read: if isAuthenticated();
+        allow read: if isGroupMember(groupId);
         allow create, update: if isAuthenticated() && isGroupAdmin(groupId);
       }
     }
@@ -1134,7 +1129,7 @@ service cloud.firestore {
                        resource.data.user_id == userId() &&
                        onlyAllowedFields(['read', 'read_at']);
 
-      allow delete: if isAuthenticated() && resource.data.user_id == userId();
+      allow delete: if isAuthenticated() && (resource.data.user_id == userId() || isAdmin());
     }
 
     // ============================================
@@ -1143,7 +1138,10 @@ service cloud.firestore {
     // PERF_001 P0 #1: Removida duplicação de isGroupAdmin() - usa função global
     match /users/{userId}/groups/{groupId} {
       allow read: if isAuthenticated() && request.auth.uid == userId;
-      allow create, update, delete: if isAuthenticated() && (
+      allow create: if isAuthenticated() && (
+        request.auth.uid == userId || isAdmin()
+      );
+      allow update, delete: if isAuthenticated() && (
         request.auth.uid == userId ||
         isGroupAdmin(groupId)
       );
@@ -1439,7 +1437,7 @@ service cloud.firestore {
       // Usuario pode criar/atualizar seu proprio progresso OU admin pode gerenciar qualquer
       allow create, update: if isAuthenticated() && (
         request.resource.data.userId == userId() || isAdmin()
-      );
+      ) && firestore.exists(/databases/(default)/documents/challenges/$(request.resource.data.challengeId));
 
       // Apenas admin pode deletar progresso
       allow delete: if isAdmin();

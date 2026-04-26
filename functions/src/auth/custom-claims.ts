@@ -132,58 +132,36 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
     const currentRole = targetUserDoc.data()?.role;
 
     // ==========================================
-    // 5. SET CUSTOM CLAIM
+    // 5. SYNC TO FIRESTORE FIRST
+    //    (Firestore deve persistir antes do
+    //     Custom Claim para manter consistência)
     // ==========================================
-    try {
-      await admin
-        .auth()
-        .setCustomUserClaims(uid, {role});
-      logger.info(
-        "[CUSTOM_CLAIMS] " +
-        `Set role=${role} for user ${uid} ` +
-        `by admin ${request.auth!.uid}`
-      );
-    } catch (error) {
-      logger.error(
-        "[CUSTOM_CLAIMS] Error setting " +
-        `claims for ${uid}:`,
-        error
-      );
-      throw new HttpsError(
-        "internal",
-        "Failed to set custom claims. " +
-        "Please try again."
-      );
-    }
+    await db
+      .collection("users")
+      .doc(uid)
+      .update({
+        role,
+        claims_updated_at:
+          FieldValue.serverTimestamp(),
+        claims_updated_by: request.auth!.uid,
+      });
+    logger.info(
+      "[CUSTOM_CLAIMS] Synced role to " +
+      `Firestore for user ${uid}`
+    );
 
     // ==========================================
-    // 6. SYNC TO FIRESTORE
-    //    (for backward compatibility & audit)
+    // 6. SET CUSTOM CLAIM
+    //    (only after Firestore sync succeeds)
     // ==========================================
-    try {
-      await db
-        .collection("users")
-        .doc(uid)
-        .update({
-          role,
-          claims_updated_at:
-            FieldValue.serverTimestamp(),
-          claims_updated_by: request.auth!.uid,
-        });
-      logger.info(
-        "[CUSTOM_CLAIMS] Synced role to " +
-        `Firestore for user ${uid}`
-      );
-    } catch (error) {
-      logger.error(
-        "[CUSTOM_CLAIMS] Error syncing to " +
-        `Firestore for ${uid}:`,
-        error
-      );
-      // Non-critical error - Custom Claim
-      // já foi setado.
-      // Continue para não bloquear a operação
-    }
+    await admin
+      .auth()
+      .setCustomUserClaims(uid, {role});
+    logger.info(
+      "[CUSTOM_CLAIMS] " +
+      `Set role=${role} for user ${uid} ` +
+      `by admin ${request.auth!.uid}`
+    );
 
     // ==========================================
     // 7. AUDIT LOG

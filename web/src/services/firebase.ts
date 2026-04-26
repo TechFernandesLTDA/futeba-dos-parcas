@@ -47,6 +47,8 @@ if (typeof window !== 'undefined') {
     } catch (err) {
       console.warn('App Check initialization failed:', err);
     }
+  } else if (import.meta.env.DEV) {
+    console.warn('App Check not configured');
   }
 }
 

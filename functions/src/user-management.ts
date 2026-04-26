@@ -127,10 +127,22 @@ export const onUserCreate = auth
               .serverTimestamp(),
         };
 
-        await db
-          .collection("users")
-          .doc(userId)
-          .set(newUserDoc);
+        try {
+          await db
+            .collection("users")
+            .doc(userId)
+            .create(newUserDoc);
+        } catch (createError: any) {
+          if (createError.code === 6) {
+            logger.info(
+              "[USER_MGMT] User " +
+              `${userId} already exists` +
+              " (race condition), skipping."
+            );
+            return;
+          }
+          throw createError;
+        }
 
         // PERF_001: Setar Custom Claim padrao
         // para o JWT token

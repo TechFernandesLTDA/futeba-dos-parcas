@@ -35,7 +35,7 @@ import {
   Add as AddIcon,
   Timer as TimerIcon,
 } from '@mui/icons-material';
-import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, Timestamp, getDoc } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -214,7 +214,7 @@ export const LiveGameScreen: React.FC = () => {
         player_name: player?.name || 'Jogador',
         minute: Math.floor(elapsedTime / 60),
         created_by: uid,
-        created_at: Timestamp.now(),
+        created_at: serverTimestamp(),
       });
       setAddEventDialog(false);
       setSelectedPlayer('');
@@ -237,7 +237,7 @@ export const LiveGameScreen: React.FC = () => {
         status: 'FINISHED',
         team1_score: score?.team1Score || 0,
         team2_score: score?.team2Score || 0,
-        updated_at: Timestamp.now(),
+        updated_at: serverTimestamp(),
       });
       navigate(`/game/${gameId}/vote`);
     } catch (err) {
@@ -253,7 +253,7 @@ export const LiveGameScreen: React.FC = () => {
     try {
       await updateDoc(doc(db, 'games', gameId), {
         status: 'LIVE',
-        updated_at: Timestamp.now(),
+        updated_at: serverTimestamp(),
       });
     } catch (err: any) {
       showError(err.message);

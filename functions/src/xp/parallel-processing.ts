@@ -17,6 +17,7 @@
  */
 
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {
   onCall,
   HttpsError,
@@ -467,7 +468,7 @@ async function processBatch(
         .collection("users")
         .doc(player.userId);
       batch.update(userRef, {
-        experience_points: player.xpAfter,
+        experience_points: FieldValue.increment(player.xpEarned),
         level: player.levelAfter,
         updated_at:
           admin.firestore.FieldValue
@@ -859,6 +860,10 @@ export const processXpBatch =
  */
 export const resetXpRateLimit =
   onCall<{userId: string}>(
+    {
+      enforceAppCheck: true,
+      region: "southamerica-east1",
+    },
     async (request) => {
       // Validar que é admin
       if (!request.auth) {

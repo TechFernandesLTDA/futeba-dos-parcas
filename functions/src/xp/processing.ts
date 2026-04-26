@@ -9,6 +9,7 @@
  */
 
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {logger} from "firebase-functions/v2";
 import {
   MAX_XP_PER_GAME,
@@ -635,7 +636,7 @@ export async function processXpIdempotent(
         }
 
         transaction.update(userRef, {
-          experience_points: data.xpAfter,
+          experience_points: FieldValue.increment(data.xpEarned),
           level: data.levelAfter,
           updated_at:
             admin.firestore.FieldValue
@@ -870,7 +871,7 @@ export async function processXpBatch(
           .collection("users")
           .doc(data.userId);
         batch.update(userRef, {
-          experience_points: data.xpAfter,
+          experience_points: FieldValue.increment(data.xpEarned),
           level: data.levelAfter,
           updated_at:
             admin.firestore.FieldValue

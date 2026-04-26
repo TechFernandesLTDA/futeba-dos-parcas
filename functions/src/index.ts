@@ -537,7 +537,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
         const streakNotificationPromises:
           Promise<void>[] = [];
 
-        for (const conf of confirmations) {
+        for (const conf of validConfirmations) {
           const uid = conf.userId;
           const team = teams.find(
             (t) => t.playerIds.includes(uid)
@@ -953,22 +953,6 @@ export const onGameStatusUpdate = onDocumentUpdated(
           }
         }
 
-        // Aguardar todas as notificações de
-        // streak antes de finalizar
-        if (
-          streakNotificationPromises.length > 0
-        ) {
-          await Promise.all(
-            streakNotificationPromises
-          );
-          console.log(
-            "[STREAK] " +
-            `${streakNotificationPromises
-              .length} ` +
-            "streak notification(s) processed"
-          );
-        }
-
         // Mark Game Processed
         ensureBatchCapacity(1);
         currentBatch.update(
@@ -993,6 +977,23 @@ export const onGameStatusUpdate = onDocumentUpdated(
           `(${batchCommits.length} ` +
           "batch(es) committed)."
         );
+
+        // Aguardar notificações de streak
+        // APÓS batch commit (evita envio
+        // antes do XP persistir)
+        if (
+          streakNotificationPromises.length > 0
+        ) {
+          await Promise.all(
+            streakNotificationPromises
+          );
+          console.log(
+            "[STREAK] " +
+            `${streakNotificationPromises
+              .length} ` +
+            "streak notification(s) processed"
+          );
+        }
 
         // Após XP processado com sucesso,
         // consolidar geração de atividade
@@ -1249,6 +1250,18 @@ export const onGameDeleted = onDocumentDeleted(
     const BATCH_LIMIT = FIRESTORE_BATCH_SAFE_LIMIT;
 
     try {
+      const gameSnap = await db
+        .collection("games")
+        .doc(gameId)
+        .get();
+      if (!gameSnap.exists) {
+        console.log(
+          "[CASCADE DELETE] Game " +
+          `${gameId} no longer exists, ` +
+          "skipping (idempotent)."
+        );
+        return;
+      }
       // Coletar todas as referências de
       // documentos a deletar
       const allRefs: admin.firestore
@@ -1616,6 +1629,7 @@ export const onGroupDeleted = onDocumentDeleted(
 
 // Sync de players_count quando
 // confirmações mudam
+const syncingGameIds = new Set<string>();
 export const onConfirmationWrite =
   onDocumentUpdated(
     "confirmations/{confirmationId}",
@@ -1637,13 +1651,22 @@ export const onConfirmationWrite =
 
       if (statusBefore === statusAfter) return;
 
-      console.log(
-        "[SYNC] Confirmation status " +
-        `changed: ${statusBefore} -> ` +
-        `${statusAfter} for game ${gameId}`
-      );
+      if (syncingGameIds.has(gameId)) {
+        console.log(
+          "[SYNC] Skipping duplicate " +
+          `recalculation for game ${gameId}`
+        );
+        return;
+      }
+      syncingGameIds.add(gameId);
 
       try {
+        console.log(
+          "[SYNC] Confirmation status " +
+          `changed: ${statusBefore} -> ` +
+          `${statusAfter} for game ${gameId}`
+        );
+
         // Recontagem das confirmações
         const confirmationsSnap = await db
           .collection("confirmations")
@@ -1682,6 +1705,8 @@ export const onConfirmationWrite =
           `for game ${gameId}:`,
           error
         );
+      } finally {
+        syncingGameIds.delete(gameId);
       }
     }
   );
