@@ -51,7 +51,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 // Coroutines - suporta wasmJs
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
                 // Serialization - suporta wasmJs
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
@@ -111,7 +111,7 @@ kotlin {
                 // GitLive traz firebase-firestore, firebase-auth, firebase-storage transitivamente
                 // kotlinx-coroutines-play-services: necessário para Tasks.await() em código legado
                 // TODO: Fase 2 - remover após migração completa para GitLive suspend functions
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
 
                 // AndroidX Security Crypto (para SecureStorage)
                 implementation("androidx.security:security-crypto:1.1.0")
