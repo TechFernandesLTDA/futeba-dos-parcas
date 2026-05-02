@@ -777,7 +777,13 @@ export const processXpBatch =
       // ======================================
       // 4. SECURITY VALIDATION
       // ======================================
-      // Verificar que o usuário é dono do jogo
+      if (request.auth.token?.role !== "ADMIN") {
+        throw new HttpsError(
+          "permission-denied",
+          "Admin access required to process XP"
+        );
+      }
+
       const gameDoc = await db
         .collection("games")
         .doc(gameId)
@@ -787,19 +793,6 @@ export const processXpBatch =
         throw new HttpsError(
           "not-found",
           `Game ${gameId} not found`
-        );
-      }
-
-      const gameData = gameDoc.data();
-      if (
-        gameData?.owner_id !== userId &&
-        gameData?.owner_id !==
-          request.auth.uid
-      ) {
-        throw new HttpsError(
-          "permission-denied",
-          "Only the game owner " +
-          "can process XP"
         );
       }
 

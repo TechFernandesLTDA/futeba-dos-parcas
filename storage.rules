@@ -33,13 +33,20 @@ service firebase.storage {
 
     // Verifica se o usuário é membro do grupo
     function isGroupMember(groupId) {
-      return firestore.exists(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid));
+      return isAuthenticated() &&
+             firestore.exists(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)) &&
+             firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.status == 'ACTIVE';
     }
 
     // Verifica se o usuário é admin do grupo
     function isGroupAdmin(groupId) {
-      let member = firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)).data;
-      return member != null && (member.role == 'OWNER' || member.role == 'ADMIN');
+      return isAuthenticated() &&
+             firestore.exists(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)) &&
+             firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.status == 'ACTIVE' &&
+             (
+               firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role == 'OWNER' ||
+               firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role == 'ADMIN'
+             );
     }
 
     // Verifica se o arquivo é uma imagem válida

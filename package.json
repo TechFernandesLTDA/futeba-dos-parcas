@@ -2,10 +2,13 @@
   "devDependencies": {
     "@commitlint/cli": "^20.4.4",
     "@commitlint/config-conventional": "^20.4.4",
+    "@firebase/rules-unit-testing": "^5.0.0",
+    "firebase": "^12.12.1",
     "firebase-admin": "^10.3.0",
     "husky": "^9.1.7"
   },
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:rules:security": "npx firebase emulators:exec --only firestore,storage \"node --test --test-concurrency=1 scripts/validation/firestore-rules.security.test.mjs scripts/validation/storage-rules.security.test.mjs\""
   }
 }

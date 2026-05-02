@@ -379,14 +379,14 @@ describe("processXpBatch - segurança e processamento", () => {
     mockDocGet.mockResolvedValue({ exists: false, data: () => null });
 
     const request = {
-      auth: { uid: "owner1" },
+      auth: { uid: "admin1", token: { role: "ADMIN" } },
       data: { gameId: "nonexistent", playerUpdates: [makePlayerUpdate("user1")] },
     };
 
     await expect(processXpBatchHandler!(request)).rejects.toThrow("not found");
   });
 
-  test("deve rejeitar quando caller não é dono do jogo", async () => {
+  test("deve rejeitar caller sem role ADMIN", async () => {
     mockDocGet.mockResolvedValue({
       exists: true,
       data: () => ({ owner_id: "real_owner", status: "FINISHED" }),
@@ -397,10 +397,27 @@ describe("processXpBatch - segurança e processamento", () => {
       data: { gameId: "game1", playerUpdates: [makePlayerUpdate("user1")] },
     };
 
-    await expect(processXpBatchHandler!(request)).rejects.toThrow("game owner");
+    await expect(processXpBatchHandler!(request)).rejects.toThrow("Admin access");
   });
 
-  test("deve processar XP com sucesso para o dono do jogo", async () => {
+  test("deve rejeitar owner sem role ADMIN para evitar XP arbitrário", async () => {
+    mockDocGet.mockResolvedValue({
+      exists: true,
+      data: () => ({ owner_id: "owner1", status: "FINISHED" }),
+    });
+
+    const request = {
+      auth: { uid: "owner1", token: { role: "PLAYER" } },
+      data: {
+        gameId: "game1",
+        playerUpdates: [makePlayerUpdate("attacker_target", 9999)],
+      },
+    };
+
+    await expect(processXpBatchHandler!(request)).rejects.toThrow("Admin access");
+  });
+
+  test("deve processar XP com sucesso para admin", async () => {
     // Mock: game existe com owner correto
     mockDocGet.mockResolvedValue({
       exists: true,
@@ -408,7 +425,7 @@ describe("processXpBatch - segurança e processamento", () => {
     });
 
     const request = {
-      auth: { uid: "owner1" },
+      auth: { uid: "admin1", token: { role: "ADMIN" } },
       data: {
         gameId: "game1",
         playerUpdates: [makePlayerUpdate("user1", 50)],

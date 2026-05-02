@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 import {
   onDocumentUpdated,
   onDocumentDeleted,
+  onDocumentWritten,
 } from "firebase-functions/v2/firestore";
 import {
   FIRESTORE_BATCH_SAFE_LIMIT,
@@ -1250,18 +1251,6 @@ export const onGameDeleted = onDocumentDeleted(
     const BATCH_LIMIT = FIRESTORE_BATCH_SAFE_LIMIT;
 
     try {
-      const gameSnap = await db
-        .collection("games")
-        .doc(gameId)
-        .get();
-      if (!gameSnap.exists) {
-        console.log(
-          "[CASCADE DELETE] Game " +
-          `${gameId} no longer exists, ` +
-          "skipping (idempotent)."
-        );
-        return;
-      }
       // Coletar todas as referências de
       // documentos a deletar
       const allRefs: admin.firestore
@@ -1631,15 +1620,22 @@ export const onGroupDeleted = onDocumentDeleted(
 // confirmações mudam
 const syncingGameIds = new Set<string>();
 export const onConfirmationWrite =
-  onDocumentUpdated(
-    "confirmations/{confirmationId}",
+  onDocumentWritten(
+    {
+      document: "confirmations/{confirmationId}",
+      region: FUNCTION_REGION,
+    },
     async (event) => {
       if (!event.data) return;
 
       const before =
-        event.data.before.data();
+        event.data.before.exists ?
+          event.data.before.data() :
+          undefined;
       const after =
-        event.data.after.data();
+        event.data.after.exists ?
+          event.data.after.data() :
+          undefined;
       const gameId =
         after?.game_id || before?.game_id;
 

@@ -17,11 +17,14 @@
 // Mock firebase-admin
 const mockBatchUpdate = jest.fn();
 const mockBatchSet = jest.fn();
+const mockBatchDelete = jest.fn();
 const mockBatchCommit = jest.fn().mockResolvedValue([]);
+const mockDocumentWrittenRegistrations: any[] = [];
 
 const mockBatch = jest.fn(() => ({
   update: mockBatchUpdate,
   set: mockBatchSet,
+  delete: mockBatchDelete,
   commit: mockBatchCommit,
 }));
 
@@ -93,6 +96,10 @@ jest.mock("firebase-functions/v2/firestore", () => ({
   onDocumentUpdated: jest.fn((_config: any, handler: any) => handler),
   onDocumentDeleted: jest.fn((_config: any, handler: any) => handler),
   onDocumentCreated: jest.fn((_config: any, handler: any) => handler),
+  onDocumentWritten: jest.fn((config: any, handler: any) => {
+    mockDocumentWrittenRegistrations.push(config);
+    return handler;
+  }),
 }));
 
 jest.mock("firebase-functions/v2/https", () => ({
@@ -179,7 +186,11 @@ jest.mock("../src/badges/badge-helper", () => ({
   getAllBadgesToAward: jest.fn().mockReturnValue([]),
 }));
 
-import { onGameStatusUpdate } from "../src/index";
+import {
+  onConfirmationWrite,
+  onGameDeleted,
+  onGameStatusUpdate,
+} from "../src/index";
 
 // ==========================================
 // HELPERS
@@ -424,6 +435,7 @@ function setupStandardGameMocks(options: {
   mockBatch.mockReturnValue({
     update: mockBatchUpdate.mockReturnThis(),
     set: mockBatchSet.mockReturnThis(),
+    delete: mockBatchDelete.mockReturnThis(),
     commit: mockBatchCommit.mockResolvedValue([]),
   });
 }
@@ -912,5 +924,94 @@ describe("onGameStatusUpdate", () => {
       // Batch should have been committed (XP processed with streak handling)
       expect(mockBatchCommit).toHaveBeenCalled();
     });
+  });
+});
+
+describe("onConfirmationWrite", () => {
+  test("deve registrar trigger para create/update/delete", () => {
+    expect(mockDocumentWrittenRegistrations).toContainEqual(
+      expect.objectContaining({ document: "confirmations/{confirmationId}" }),
+    );
+  });
+
+  test("deve recalcular contadores quando confirmação é criada", async () => {
+    jest.clearAllMocks();
+
+    const confirmedDocs = [
+      { data: () => ({ status: "CONFIRMED", position: "GOALKEEPER" }) },
+      { data: () => ({ status: "CONFIRMED", position: "STRIKER" }) },
+    ];
+
+    mockCollection.mockImplementation((collectionName: string) => ({
+      doc: jest.fn(() => ({ update: mockDocUpdate })),
+      where: jest.fn().mockReturnThis(),
+      get: jest.fn().mockResolvedValue(
+        collectionName === "confirmations" ?
+          { docs: confirmedDocs, size: confirmedDocs.length, empty: false } :
+          { docs: [], size: 0, empty: true },
+      ),
+    }));
+
+    await (onConfirmationWrite as any)({
+      data: {
+        before: { exists: false, data: () => undefined },
+        after: {
+          exists: true,
+          data: () => ({ game_id: "game1", status: "CONFIRMED" }),
+        },
+      },
+      params: { confirmationId: "game1_user1" },
+    });
+
+    expect(mockDocUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      players_count: 2,
+      goalkeepers_count: 1,
+    }));
+  });
+});
+
+describe("onGameDeleted", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockBatch.mockReturnValue({
+      update: mockBatchUpdate.mockReturnThis(),
+      set: mockBatchSet.mockReturnThis(),
+      delete: mockBatchDelete.mockReturnThis(),
+      commit: mockBatchCommit.mockResolvedValue([]),
+    });
+  });
+
+  test("deve limpar dependentes mesmo quando games/{gameId} já não existe", async () => {
+    mockCollection.mockImplementation((collectionName: string) => {
+      if (collectionName === "games") {
+        return {
+          doc: jest.fn(() => ({
+            get: jest.fn().mockResolvedValue({ exists: false, data: () => null }),
+          })),
+        };
+      }
+
+      return {
+        doc: jest.fn((id?: string) => ({
+          id: id || `${collectionName}-doc`,
+          get: jest.fn().mockResolvedValue({
+            exists: collectionName === "live_scores",
+            data: () => ({}),
+          }),
+        })),
+        where: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        get: jest.fn().mockResolvedValue({
+          docs: [{ ref: { id: `${collectionName}-doc` } }],
+          size: 1,
+          empty: false,
+        }),
+      };
+    });
+
+    await (onGameDeleted as any)({ params: { gameId: "game1" } });
+
+    expect(mockBatchDelete).toHaveBeenCalled();
+    expect(mockBatchCommit).toHaveBeenCalled();
   });
 });

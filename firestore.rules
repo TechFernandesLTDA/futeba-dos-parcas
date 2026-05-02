@@ -172,7 +172,24 @@ service cloud.firestore {
     // Helper para verificar se usuario e admin/owner de um grupo
     function isGroupAdmin(groupId) {
       let memberDoc = get(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
-      return memberDoc != null && (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN');
+      return memberDoc != null &&
+             memberDoc.data.status == 'ACTIVE' &&
+             (memberDoc.data.role == 'OWNER' || memberDoc.data.role == 'ADMIN');
+    }
+
+    // Verifica se grupo permite entrada direta sem convite privado.
+    function isPublicActiveGroup(groupId) {
+      let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
+      return groupDoc != null &&
+             groupDoc.data.is_public == true &&
+             (!('deleted_at' in groupDoc.data) || groupDoc.data.deleted_at == null) &&
+             (groupDoc.data.status == 'ACTIVE' || !('status' in groupDoc.data));
+    }
+
+    // Confere que owner_id denormalizado aponta para o owner real do jogo.
+    function hasMatchingGameOwner(gameId, ownerId) {
+      let gameDoc = get(/databases/$(database)/documents/games/$(gameId));
+      return gameDoc != null && gameDoc.data.owner_id == ownerId;
     }
 
     // C-003 FIX: Valida se o ID de confirmation segue o padrao esperado
@@ -394,8 +411,13 @@ service cloud.firestore {
       // Qualquer usuario autenticado pode ler jogos (EXCETO soft-deleted)
       // Admins podem ver soft-deleted para recuperação
       // Bug fix: deleted_at pode nao existir no documento (undefined != null em Firestore rules)
-      allow read: if isAuthenticated() &&
-                     (!('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin());
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          (!('deleted_at' in resource.data) || resource.data.deleted_at == null) &&
+          (!('status' in resource.data) || resource.data.status != 'DELETED')
+        )
+      );
 
       // Qualquer usuario autenticado pode criar jogos
       // Validacoes na criacao de jogo (#28, #29 - Validações de bounds e coordenadas)
@@ -559,10 +581,9 @@ service cloud.firestore {
     match /live_games/{gameId} {
       allow read: if isAuthenticated();
 
-      // PERF_001 P0 #1: Otimizado - usa resource.data.owner_id em vez de get(games/{gameId})
-      // gameId é o próprio ID do documento do jogo, então owner_id está em resource.data
       allow create: if isAuthenticated() &&
-                      (isAdmin() || request.resource.data.owner_id == userId());
+                      hasMatchingGameOwner(gameId, request.resource.data.owner_id) &&
+                      (isAdmin() || isGameOwner(gameId));
 
       allow update, delete: if isAuthenticated() &&
                               (isAdmin() || resource.data.owner_id == userId());
@@ -971,7 +992,7 @@ service cloud.firestore {
       ) && (
         resource.data.is_public == true ||
         resource.data.owner_id == userId() ||
-        exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()))
+        isGroupMember(groupId)
       );
 
       // Validacoes na criacao de grupo
@@ -999,13 +1020,34 @@ service cloud.firestore {
 
       // Sub-colecao: members
       match /members/{memberId} {
-        allow read: if isAuthenticated();
+        allow read: if isAuthenticated() && (
+          isAdmin() ||
+          memberId == userId() ||
+          isGroupMember(groupId)
+        );
 
-        allow create, update: if isAuthenticated() && (
+        allow create: if isAuthenticated() && (
            isGroupAdmin(groupId) ||
            (memberId == userId() && isGroupOwnerById(groupId)) ||
            (request.resource.data.role == 'OWNER' && request.resource.data.user_id == userId() && !exists(/databases/$(database)/documents/groups/$(groupId))) ||
-           (request.resource.data.role == 'MEMBER' && request.resource.data.user_id == userId())
+           (
+             memberId == userId() &&
+             request.resource.data.role == 'MEMBER' &&
+             request.resource.data.user_id == userId() &&
+             request.resource.data.status == 'ACTIVE' &&
+             isPublicActiveGroup(groupId)
+           )
+        );
+
+        allow update: if isAuthenticated() && (
+           isGroupAdmin(groupId) ||
+           (
+             memberId == userId() &&
+             resource.data.user_id == userId() &&
+             fieldUnchanged('user_id') &&
+             fieldUnchanged('role') &&
+             fieldUnchanged('status')
+           )
         );
 
         allow delete: if isAuthenticated() && (
@@ -1054,7 +1096,9 @@ service cloud.firestore {
     match /group_invites/{inviteId} {
       function canManageInvites(gId) {
         let member = get(/databases/$(database)/documents/groups/$(gId)/members/$(request.auth.uid));
-        return member != null && (member.data.role == 'OWNER' || member.data.role == 'ADMIN');
+        return member != null &&
+               member.data.status == 'ACTIVE' &&
+               (member.data.role == 'OWNER' || member.data.role == 'ADMIN');
       }
 
       allow read: if isAuthenticated() && (
@@ -1204,13 +1248,12 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // PERF_001 P0 #30: Validacao estrita de scores (max 100 gols por time)
-      // PERF_001 P0 #1: Otimizado - usa resource.data.owner_id em vez de get(games/{scoreId})
-      // scoreId é o próprio gameId, então owner_id está em resource.data
       allow create: if isAuthenticated() && (
         isAdmin() ||
-        request.resource.data.owner_id == userId() ||
+        isGameOwner(scoreId) ||
         isConfirmedPlayer(scoreId)
       ) &&
+      hasMatchingGameOwner(scoreId, request.resource.data.owner_id) &&
       // Validacao de bounds para placares
       isValidScore(request.resource.data.get('team1_score', null)) &&
       isValidScore(request.resource.data.get('team2_score', null));
@@ -1437,7 +1480,7 @@ service cloud.firestore {
       // Usuario pode criar/atualizar seu proprio progresso OU admin pode gerenciar qualquer
       allow create, update: if isAuthenticated() && (
         request.resource.data.userId == userId() || isAdmin()
-      ) && firestore.exists(/databases/(default)/documents/challenges/$(request.resource.data.challengeId));
+      ) && exists(/databases/$(database)/documents/challenges/$(request.resource.data.challengeId));
 
       // Apenas admin pode deletar progresso
       allow delete: if isAdmin();

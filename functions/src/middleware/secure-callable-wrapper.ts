@@ -33,6 +33,7 @@ import {
   checkRateLimit,
   RateLimitConfig,
 } from "./rate-limiter";
+import {FUNCTION_REGION} from "../constants";
 
 /**
  * Obtém instância do Firestore com lazy init.
@@ -133,6 +134,7 @@ export function secureCallable<
 
   return onCall(
     {
+      region: FUNCTION_REGION,
       enforceAppCheck: config.appCheck,
       consumeAppCheckToken: config.appCheck,
     },

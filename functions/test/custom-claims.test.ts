@@ -61,9 +61,11 @@ jest.mock("firebase-admin/firestore", () => ({
 let setUserRoleHandler: ((request: any) => Promise<any>) | null = null;
 let onNewUserCreatedHandler: ((event: any) => Promise<void>) | null = null;
 let migrateHandler: ((request: any) => Promise<any>) | null = null;
+const mockOnCallConfigs: any[] = [];
 
 jest.mock("firebase-functions/v2/https", () => ({
   onCall: jest.fn((configOrHandler: any, handler?: any) => {
+    mockOnCallConfigs.push(configOrHandler);
     const actualHandler = handler || configOrHandler;
     // Diferenciar pelo contexto de chamada
     if (!setUserRoleHandler) {
@@ -105,6 +107,7 @@ describe("Custom Claims - setUserRole", () => {
     setUserRoleHandler = null;
     onNewUserCreatedHandler = null;
     migrateHandler = null;
+    mockOnCallConfigs.length = 0;
 
     jest.isolateModules(() => {
       require("../src/auth/custom-claims");
@@ -122,6 +125,12 @@ describe("Custom Claims - setUserRole", () => {
   test("deve registrar o handler setUserRole", () => {
     expect(setUserRoleHandler).not.toBeNull();
     expect(typeof setUserRoleHandler).toBe("function");
+  });
+
+  test("deve registrar setUserRole em southamerica-east1", () => {
+    expect(mockOnCallConfigs[0]).toEqual(expect.objectContaining({
+      region: "southamerica-east1",
+    }));
   });
 
   test("deve rejeitar request sem autenticação", async () => {
