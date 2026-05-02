@@ -47,6 +47,15 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
   return (
     <Card
       onClick={onClick}
+      onKeyDown={onClick ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      } : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? 'button' : undefined}
+      aria-label={onClick ? `Jogo em ${game.locationName} às ${game.time}` : undefined}
       sx={{
         mb: 2,
         cursor: onClick ? 'pointer' : 'default',
@@ -55,6 +64,10 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
         '&:hover': onClick ? {
           boxShadow: theme.shadows[4],
           transform: 'translateY(-2px)',
+        } : {},
+        '&:focus-visible': onClick ? {
+          outline: `2px solid ${theme.palette.primary.main}`,
+          outlineOffset: 2,
         } : {},
       }}
     >
@@ -227,23 +240,54 @@ export const PlayerAvatar: React.FC<{
   size?: number;
   level?: number;
 }> = React.memo(({ name, photoUrl, size = 40, level }) => {
+  const [imgLoaded, setImgLoaded] = React.useState(false);
+  const [imgError, setImgError] = React.useState(false);
   const initial = name?.charAt(0)?.toUpperCase() || '?';
+
+  React.useEffect(() => {
+    setImgLoaded(false);
+    setImgError(false);
+  }, [photoUrl]);
+
+  const showInitials = !photoUrl || imgError;
 
   return (
     <Box sx={{ position: 'relative' }}>
+      {photoUrl && !imgLoaded && !imgError && (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 1,
+          }}
+        >
+          <Skeleton
+            variant="circular"
+            width={size}
+            height={size}
+            sx={{ display: 'block' }}
+          />
+        </Box>
+      )}
       <Avatar
-        src={photoUrl}
+        src={imgError ? undefined : photoUrl}
         alt={name}
         sx={{
           width: size,
           height: size,
-          bgcolor: photoUrl ? undefined : 'primary.main',
+          bgcolor: showInitials ? 'primary.main' : undefined,
           fontSize: size * 0.4,
+          opacity: imgLoaded || showInitials ? 1 : 0,
         }}
+        imgProps={photoUrl ? {
+          onLoad: () => setImgLoaded(true),
+          onError: () => setImgError(true),
+          loading: 'lazy',
+        } : undefined}
       >
-        {!photoUrl && initial}
+        {showInitials ? initial : null}
       </Avatar>
-      {level && (
+      {level !== undefined && level > 0 && (
         <Box
           sx={{
             position: 'absolute',

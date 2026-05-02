@@ -1,13 +1,14 @@
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, ThemeProvider, useAuth } from './contexts';
 import { Box } from '@mui/material';
-import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { ErrorBoundary, withErrorBoundary } from './components/common/ErrorBoundary';
 import { ToastProvider } from './contexts/ToastContext';
 import { ConnectionStatus, useOnlineStatus } from './components/common/ConnectionStatus';
 import { SkipNav } from './components/common/SkipNav';
 import { LoadingScreen } from './components/common/LoadingScreen';
+import { useScrollRestoration } from './hooks/useScrollRestoration';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -99,6 +100,30 @@ const AboutScreen = lazy(() => import('./pages/about/AboutScreen').then(m => ({ 
 const UserManagementScreen = lazy(() => import('./pages/admin/UserManagementScreen').then(m => ({ default: m.UserManagementScreen })));
 const DevToolsScreen = lazy(() => import('./pages/devtools/DevToolsScreen').then(m => ({ default: m.DevToolsScreen })));
 
+function RouteFallback() {
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+      <Box
+        sx={{
+          width: 24,
+          height: 24,
+          border: '2px solid',
+          borderColor: 'primary.main',
+          borderTopColor: 'transparent',
+          borderRadius: '50%',
+          animation: 'spin 0.6s linear infinite',
+          '@keyframes spin': {
+            '0%': { transform: 'rotate(0deg)' },
+            '100%': { transform: 'rotate(360deg)' },
+          },
+        }}
+        role="status"
+        aria-label="Carregando página"
+      />
+    </Box>
+  );
+}
+
 function AppLoadingFallback() {
   return <LoadingScreen variant="cards" message="Carregando..." />;
 }
@@ -131,102 +156,117 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function useFocusOnNavigate() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const el = document.querySelector('#main-content') as HTMLElement;
+    if (el) {
+      el.setAttribute('tabIndex', '-1');
+      el.focus();
+    }
+  }, [location.pathname]);
+}
+
 function AppRoutes() {
+  useFocusOnNavigate();
+  useScrollRestoration();
+
   return (
-    <Suspense fallback={<AppLoadingFallback />}>
-      <Routes>
-        {/* Splash & Onboarding */}
-        <Route path="/splash" element={<SplashScreen />} />
-        <Route path="/welcome" element={<PublicRoute><WelcomeScreen /></PublicRoute>} />
-        <Route path="/profile/setup" element={<ProtectedRoute><ProfileSetupScreen /></ProtectedRoute>} />
-        <Route path="/guide" element={<ProtectedRoute><AppGuideScreen /></ProtectedRoute>} />
+    <Routes>
+      {/* Splash & Onboarding */}
+      <Route path="/splash" element={<Suspense fallback={<RouteFallback />}><SplashScreen /></Suspense>} />
+      <Route path="/welcome" element={<PublicRoute><Suspense fallback={<RouteFallback />}><WelcomeScreen /></Suspense></PublicRoute>} />
+      <Route path="/profile/setup" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ProfileSetupScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/guide" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><AppGuideScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Auth */}
-        <Route path="/login" element={<PublicRoute><LoginScreen /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute><RegisterScreen /></PublicRoute>} />
-        <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordScreen /></PublicRoute>} />
+      {/* Auth */}
+      <Route path="/login" element={<PublicRoute><Suspense fallback={<RouteFallback />}><LoginScreen /></Suspense></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><Suspense fallback={<RouteFallback />}><RegisterScreen /></Suspense></PublicRoute>} />
+      <Route path="/forgot-password" element={<PublicRoute><Suspense fallback={<RouteFallback />}><ForgotPasswordScreen /></Suspense></PublicRoute>} />
 
-        {/* Home */}
-        <Route path="/" element={<ProtectedRoute><HomeScreen /></ProtectedRoute>} />
+      {/* Home */}
+      <Route path="/" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><HomeScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Games */}
-        <Route path="/games" element={<ProtectedRoute><GamesScreen /></ProtectedRoute>} />
-        <Route path="/game/:gameId" element={<ProtectedRoute><GameDetailScreen /></ProtectedRoute>} />
-        <Route path="/game/create" element={<ProtectedRoute><CreateGameScreen /></ProtectedRoute>} />
-        <Route path="/game/:gameId/live" element={<ProtectedRoute><LiveGameScreen /></ProtectedRoute>} />
-        <Route path="/game/:gameId/vote" element={<ProtectedRoute><MVPVoteScreen /></ProtectedRoute>} />
-        <Route path="/game/:gameId/results" element={<ProtectedRoute><VoteResultScreen /></ProtectedRoute>} />
-        <Route path="/game/:gameId/teams" element={<ProtectedRoute><TeamFormationScreen /></ProtectedRoute>} />
-        <Route path="/game/:gameId/report" element={<ProtectedRoute><PostGameReportScreen /></ProtectedRoute>} />
-        <Route path="/game/:gameId/blocked" element={<ProtectedRoute><BlockedPlayersScreen /></ProtectedRoute>} />
-        <Route path="/game/:gameId/stats" element={<ProtectedRoute><LiveStatsScreen /></ProtectedRoute>} />
-        <Route path="/game/:gameId/events" element={<ProtectedRoute><LiveEventsScreen /></ProtectedRoute>} />
+      {/* Games */}
+      <Route path="/games" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GamesScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/game/:gameId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GameDetailScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/game/create" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><CreateGameScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/game/:gameId/live" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveGameScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/game/:gameId/vote" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><MVPVoteScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/game/:gameId/results" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><VoteResultScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/game/:gameId/teams" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><TeamFormationScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/game/:gameId/report" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><PostGameReportScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/game/:gameId/blocked" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><BlockedPlayersScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/game/:gameId/stats" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveStatsScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/game/:gameId/events" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveEventsScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Schedules */}
-        <Route path="/group/:groupId/schedules" element={<ProtectedRoute><SchedulesScreen /></ProtectedRoute>} />
+      {/* Schedules */}
+      <Route path="/group/:groupId/schedules" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><SchedulesScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Groups */}
-        <Route path="/groups" element={<ProtectedRoute><GroupsScreen /></ProtectedRoute>} />
-        <Route path="/group/:groupId" element={<ProtectedRoute><GroupDetailScreen /></ProtectedRoute>} />
-        <Route path="/group/create" element={<ProtectedRoute><CreateGroupScreen /></ProtectedRoute>} />
-        <Route path="/group/:groupId/edit" element={<ProtectedRoute><GroupEditScreen /></ProtectedRoute>} />
-        <Route path="/group/:groupId/settings" element={<ProtectedRoute><GroupSettingsScreen /></ProtectedRoute>} />
-        <Route path="/group/:groupId/cashbox" element={<ProtectedRoute><CashboxScreen /></ProtectedRoute>} />
-        <Route path="/group/:groupId/invite" element={<ProtectedRoute><InvitePlayersScreen /></ProtectedRoute>} />
-        <Route path="/group/:groupId/players" element={<ProtectedRoute><PlayersScreen /></ProtectedRoute>} />
+      {/* Groups */}
+      <Route path="/groups" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupsScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/group/:groupId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/group/create" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/group/:groupId/edit" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupEditScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/group/:groupId/settings" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupSettingsScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/group/:groupId/cashbox" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><CashboxScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/group/:groupId/invite" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><InvitePlayersScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/group/:groupId/players" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><PlayersScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Profile */}
-        <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
-        <Route path="/profile/:userId" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
-        <Route path="/profile/edit" element={<ProtectedRoute><EditProfileScreen /></ProtectedRoute>} />
-        <Route path="/level-journey" element={<ProtectedRoute><LevelJourneyScreen /></ProtectedRoute>} />
-        <Route path="/level-journey/:userId" element={<ProtectedRoute><LevelJourneyScreen /></ProtectedRoute>} />
+      {/* Profile */}
+      <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/profile/:userId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/profile/edit" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><EditProfileScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/level-journey" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LevelJourneyScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/level-journey/:userId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LevelJourneyScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Statistics */}
-        <Route path="/statistics" element={<ProtectedRoute><StatisticsScreen /></ProtectedRoute>} />
-        <Route path="/weekly-recap" element={<ProtectedRoute><WeeklyRecapScreen /></ProtectedRoute>} />
-        <Route path="/weekly-recap/:userId" element={<ProtectedRoute><WeeklyRecapScreen /></ProtectedRoute>} />
-        <Route path="/evolution" element={<ProtectedRoute><EvolutionScreen /></ProtectedRoute>} />
-        <Route path="/evolution/:userId" element={<ProtectedRoute><EvolutionScreen /></ProtectedRoute>} />
+      {/* Statistics */}
+      <Route path="/statistics" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><StatisticsScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/weekly-recap" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><WeeklyRecapScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/weekly-recap/:userId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><WeeklyRecapScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/evolution" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><EvolutionScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/evolution/:userId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><EvolutionScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Rankings & League */}
-        <Route path="/ranking" element={<ProtectedRoute><RankingScreen /></ProtectedRoute>} />
-        <Route path="/league" element={<ProtectedRoute><LeagueScreen /></ProtectedRoute>} />
-        <Route path="/badges" element={<ProtectedRoute><BadgesScreen /></ProtectedRoute>} />
+      {/* Rankings & League */}
+      <Route path="/ranking" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><RankingScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/league" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LeagueScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/badges" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><BadgesScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Locations */}
-        <Route path="/locations" element={<ProtectedRoute><ManageLocationsScreen /></ProtectedRoute>} />
-        <Route path="/location/:locationId" element={<ProtectedRoute><LocationDetailScreen /></ProtectedRoute>} />
-        <Route path="/location/create" element={<ProtectedRoute><ManageLocationsScreen /></ProtectedRoute>} />
-        <Route path="/owner/dashboard" element={<ProtectedRoute><FieldOwnerDashboardScreen /></ProtectedRoute>} />
+      {/* Locations */}
+      <Route path="/locations" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/location/:locationId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LocationDetailScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/location/create" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/owner/dashboard" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><FieldOwnerDashboardScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Map */}
-        <Route path="/map/games" element={<ProtectedRoute><PublicGamesMapScreen /></ProtectedRoute>} />
-        <Route path="/map/locations" element={<ProtectedRoute><LocationsMapScreen /></ProtectedRoute>} />
+      {/* Map */}
+      <Route path="/map/games" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><PublicGamesMapScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/map/locations" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LocationsMapScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Tactical */}
-        <Route path="/tactical/:gameId" element={<ProtectedRoute><TacticalBoardScreen /></ProtectedRoute>} />
+      {/* Tactical */}
+      <Route path="/tactical/:gameId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><TacticalBoardScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Settings */}
-        <Route path="/settings" element={<ProtectedRoute><SettingsScreen /></ProtectedRoute>} />
-        <Route path="/settings/theme" element={<ProtectedRoute><ThemeSettingsScreen /></ProtectedRoute>} />
-        <Route path="/settings/gamification" element={<ProtectedRoute><GamificationSettingsScreen /></ProtectedRoute>} />
+      {/* Settings */}
+      <Route path="/settings" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><SettingsScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/settings/theme" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ThemeSettingsScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/settings/gamification" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GamificationSettingsScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Notifications & Search */}
-        <Route path="/notifications" element={<ProtectedRoute><NotificationsScreen /></ProtectedRoute>} />
-        <Route path="/search" element={<ProtectedRoute><GlobalSearchScreen /></ProtectedRoute>} />
+      {/* Notifications & Search */}
+      <Route path="/notifications" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><NotificationsScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/search" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GlobalSearchScreen /></Suspense></ProtectedRoute>} />
 
-        {/* About & Admin */}
-        <Route path="/about" element={<ProtectedRoute><AboutScreen /></ProtectedRoute>} />
-        <Route path="/admin/users" element={<ProtectedRoute><UserManagementScreen /></ProtectedRoute>} />
-        <Route path="/dev" element={<ProtectedRoute><DevToolsScreen /></ProtectedRoute>} />
+      {/* About & Admin */}
+      <Route path="/about" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><AboutScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/admin/users" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><UserManagementScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/dev" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><DevToolsScreen /></Suspense></ProtectedRoute>} />
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Suspense>
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
+
+const SafeScreen = withErrorBoundary(AppRoutes);
 
 function MobileShell({ children }: { children: React.ReactNode }) {
   return (
@@ -247,8 +287,6 @@ function MobileShell({ children }: { children: React.ReactNode }) {
           bgcolor: 'background.default',
           boxShadow: { xs: 'none', sm: '0 0 40px rgba(0,0,0,0.12)' },
           position: 'relative',
-          // transform cria um novo containing block para position:fixed
-          // fazendo com que fixed elements fiquem contidos neste container
           transform: { xs: 'none', sm: 'translateZ(0)' },
         }}
       >
@@ -265,15 +303,13 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <ToastProvider>
-              <ErrorBoundary>
-                <SkipNav />
-                <MobileShell>
-                  <Box component="main" id="main-content">
-                    <AppRoutes />
-                  </Box>
-                  <ConnectionStatusWrapper />
-                </MobileShell>
-              </ErrorBoundary>
+              <SkipNav />
+              <MobileShell>
+                <Box component="main" id="main-content">
+                  <SafeScreen />
+                </Box>
+                <ConnectionStatusWrapper />
+              </MobileShell>
             </ToastProvider>
           </AuthProvider>
         </BrowserRouter>

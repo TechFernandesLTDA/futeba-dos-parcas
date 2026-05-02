@@ -1,7 +1,7 @@
 # 📋 Futeba dos Parças - Contexto Consolidado do Projeto
 
 > **Última Atualização:** 2026-03-27
-> **Versão:** 1.19.0 (Build 40)
+> **Versão:** 1.21.0 (Build 42)
 > **Propósito:** Contexto otimizado para Claude Code e outros LLMs
 
 ---
@@ -12,16 +12,17 @@
 
 ### Stack Principal
 - **Android:** Jetpack Compose + Kotlin 2.2.10 (KMP)
-- **Web:** React 18 + TypeScript + Material UI 5 + Vite 5
+- **Web:** React 18 + TypeScript + Material UI 5 + Vite 8
 - **Backend:** Firebase (Firestore, Auth, Storage, Cloud Functions v2)
 - **Arquitetura:** MVVM + Clean Architecture + Koin 4.1.1 DI
-- **Linguagem:** Kotlin 2.2.10 (KMP ~95% código compartilhado Android/iOS)
+- **Linguagem:** Kotlin 2.2.10 (KMP ~95% código compartilhado)
+- **Web:** React 18 + TypeScript + Material UI 5 + Vite 8
 
 ### Status Atual
-- ✅ Android: **PRODUÇÃO** (Play Store v1.19.0)
-- ✅ Web: **PRODUÇÃO** (React app - PR #194 merged)
+- ✅ Android: **PRODUÇÃO** (Play Store v1.21.0)
+- ✅ Web: **PRODUÇÃO** (React app - PR #194 merged, Vite 8)
 - 🚧 iOS: **CMP Phase 2** (GitLive Firebase SDK migration in progress)
-- ✅ Backend: Firebase Functions v2 (TypeScript, 30+ functions, 398 tests)
+- ✅ Backend: Firebase Functions v2 (TypeScript, 30+ functions)
 - ✅ CI/CD: GitHub Actions (Android CI, Functions CI, iOS Build, CodeQL, Dependabot)
 
 ---
@@ -117,7 +118,7 @@ futeba-dos-parcas/
                    │
 ┌──────────────────▼──────────────────────────┐
 │         ViewModel Layer                     │
-│  - @HiltViewModel                           │
+│  - Koin-injected ViewModels                │
 │  - StateFlow management                     │
 │  - viewModelScope                           │
 └──────────────────┬──────────────────────────┘
@@ -419,8 +420,7 @@ REQUIREMENTS → UX/UI → TECHNICAL DESIGN → TASKS → IMPLEMENTATION → VER
 
 #### ViewModels
 ```kotlin
-@HiltViewModel
-class FeatureViewModel @Inject constructor(
+class FeatureViewModel(
     private val repository: Repository
 ) : ViewModel() {
 
@@ -456,7 +456,7 @@ sealed class UiState {
 ```kotlin
 @Composable
 fun FeatureScreen(
-    viewModel: FeatureViewModel = hiltViewModel(),
+    viewModel: FeatureViewModel = koinViewModel(),
     onNavigate: (destination: String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -493,7 +493,7 @@ private fun FeatureContent(
 - Mutable collections expostas (usar `toList()`)
 
 ✅ **SEMPRE:**
-- Koin para DI (`@HiltViewModel`, `@Inject`)
+- Koin para DI (`koinViewModel()`, `by inject()`)
 - Coroutines para async (`viewModelScope`, `lifecycleScope`)
 - `Result<T>` para operações que podem falhar
 - `Flow<T>` para dados em tempo real

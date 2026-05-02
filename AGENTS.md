@@ -10,7 +10,7 @@
 - **Squash-merge only** on `master`. `delete_branch_on_merge: true`.
 - **Branch protection**: 1 approving review required, code owner review required, no force-push, no deletions.
 - **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bump PRs get closed — deps handled in batch via `npm audit fix`.
-- **Windows (PowerShell)** is the dev environment. `&&` chaining does NOT work — use `;` between commands.
+- **Node 20** required (see `.nvmrc`). Use `nvm use` before working in `web/` or `functions/`.
 - **Firebase Hosting URL**: `https://futebadosparcas.web.app` (SPA, all routes → `/index.html`).
 
 ---
@@ -41,7 +41,7 @@ npx firebase deploy --only hosting --project futebadosparcas
 cd functions
 npm run build         # tsc
 npm run lint          # ESLint
-npx jest --no-coverage                    # All 398 tests
+npx jest --no-coverage                    # All tests
 npx jest --testNamePattern="test name"    # Single test
 ```
 
@@ -64,7 +64,9 @@ gh api repos/TechFernandesLTDA/futeba-dos-parcas/branches --jq '.[].name'
 | Data | `shared/androidMain/` (Firebase Android SDK) | `web/src/services/firebase.ts` |
 | DI | Koin modules at `app/.../di/koin/` | React Context at `web/src/contexts/` |
 
-**Key boundary**: Web app does NOT use the KMP `:shared` module. All Firebase queries are via `web/src/hooks/` → `web/src/services/firebase.ts`.
+**Key boundaries**:
+- Web app does NOT use the KMP `:shared` module. All Firebase queries are via `web/src/hooks/` → `web/src/services/firebase.ts`.
+- `backend/` is a separate Express.js + TypeORM + PostgreSQL REST API/WebSocket server, **distinct from** `functions/` (Firebase Cloud Functions). Do not confuse them.
 
 ---
 
@@ -132,7 +134,7 @@ gh api repos/TechFernandesLTDA/futeba-dos-parcas/branches --jq '.[].name'
 | Web entry | `web/src/main.tsx` |
 | Web routes | `web/src/App.tsx` (55+ lazy routes) |
 | Web theme | `web/src/theme/index.ts` |
-| Web hooks | `web/src/hooks/` (18 hooks) |
+| Web hooks | `web/src/hooks/` |
 | Web types | `web/src/types/` (game, user, group, gamification, location) |
 | Web services | `web/src/services/firebase.ts` |
 | Spec templates | `specs/_TEMPLATE_FEATURE_MOBILE.md`, `_TEMPLATE_BUGFIX_MOBILE.md` |

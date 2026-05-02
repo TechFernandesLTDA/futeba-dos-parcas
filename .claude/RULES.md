@@ -35,16 +35,17 @@ showError(getString(R.string.error_loading_games))
 
 **Exceção:** Logs técnicos (tags, mensagens de debug) podem ser hardcoded.
 
-### 1.2 ViewBinding Obrigatório
+### 1.2 Compose Obrigatório
 
-**REGRA:** **NUNCA** usar `findViewById`. Sempre ViewBinding.
+**REGRA:** **NUNCA** criar novos XML layouts ou Fragments. Sempre Jetpack Compose.
 
 ```kotlin
 // ❌ ERRADO
-val textView = findViewById<TextView>(R.id.text_view)
+class MyFragment : Fragment() { }
 
 // ✅ CORRETO
-binding.textView.text = "Hello"
+@Composable
+fun MyScreen() { }
 ```
 
 ### 1.3 Job Tracking em ViewModels
@@ -52,8 +53,9 @@ binding.textView.text = "Hello"
 **REGRA:** **SEMPRE** armazenar referência de Job e cancelar antes de iniciar novo.
 
 ```kotlin
-@HiltViewModel
-class ExampleViewModel @Inject constructor() : ViewModel() {
+class ExampleViewModel(
+    private val repository: ExampleRepository
+) : ViewModel() {
 
     private var loadJob: Job? = null
 
@@ -204,7 +206,7 @@ val state by viewModel.uiState.collectAsStateWithLifecycle()
 // ✅ CORRETO
 @Composable
 fun ExampleScreen(
-    viewModel: ExampleViewModel,
+    viewModel: ExampleViewModel = koinViewModel(),
     onNavigate: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -456,40 +458,28 @@ AsyncImage(
 )
 ```
 
-### 2.12 Hilt Injection Patterns
+### 2.12 Koin Injection Patterns
 
 ```kotlin
-// ✅ RECOMENDADO - ViewModel
-@HiltViewModel
-class ExampleViewModel @Inject constructor(
+// ✅ RECOMENDADO - Koin module (app/.../di/koin/)
+val repositoryModule = module {
+    single<ExampleRepository> { ExampleRepositoryImpl(get()) }
+}
+
+val viewModelModule = module {
+    viewModel { ExampleViewModel(get()) }
+}
+
+// ✅ RECOMENDADO - ViewModel via Koin
+class ExampleViewModel(
     private val repository: ExampleRepository
 ) : ViewModel()
 
-// ✅ RECOMENDADO - Repository com @Singleton
-@Module
-@InstallIn(SingletonComponent::class)
-object AppModule {
-    @Provides
-    @Singleton
-    fun provideRepository(
-        firestore: FirebaseFirestore
-    ): ExampleRepository {
-        return ExampleRepositoryImpl(firestore)
-    }
-}
-
-// ✅ RECOMENDADO - Qualifier
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class DefaultDispatcher
-
-@Module
-@InstallIn(SingletonComponent::class)
-object DispatcherModule {
-    @DefaultDispatcher
-    @Provides
-    fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
-}
+// ✅ RECOMENDADO - Screen usa koinViewModel()
+@Composable
+fun ExampleScreen(
+    viewModel: ExampleViewModel = koinViewModel()
+) { }
 ```
 
 ---
@@ -599,7 +589,7 @@ kotlin.mpp.androidGradlePluginCompatibility.nowarn=true  // já configurado
 // ✅ Corrigir a causa do warning quando possível
 ```
 
-### 3.11 NÃO emendar fragments em navegação Compose
+### 3.11 NÃO misturar Fragments com Compose Navigation
 
 ```kotlin
 // ❌ ERRADO - misturar padrões
@@ -608,15 +598,10 @@ NavHost(navController, startDestination = "home") {
     // depois tentar usar fragment...
 }
 
-// ✅ CORRETO - manter nav_graph.xml ou ir 100% Compose Navigation
-// Por enquanto: usar nav_graph.xml para tudo
-```
-
-### 3.12 NÃO criar arquivos `.md` não solicitados
-
-```kotlin
-// ❌ ERRADO - criar README.md espontaneamente
-// ✅ CORRETO - esperar usuário solicitar
+// ✅ CORRETO - ir 100% Compose Navigation
+NavHost(navController, startDestination = NavDestinations.Home.route) {
+    composable(NavDestinations.Home.route) { HomeScreen() }
+}
 ```
 
 ---

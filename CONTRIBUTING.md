@@ -113,7 +113,7 @@ echo "MAPS_API_KEY=sua_chave" >> local.properties
 
 ## Web App
 
-O app web está em `web/` e usa React 18 + TypeScript + Vite 5 + MUI 5.
+O app web está em `web/` e usa React 18 + TypeScript + Vite 8 + MUI 5.
 
 ```bash
 cd web
@@ -155,7 +155,7 @@ cd functions
 npm install                    # Instalar dependências
 npm run build                  # Compilar TypeScript
 npm run lint                   # ESLint
-npx jest --no-coverage         # Todos os testes (398 testes, 12 suites)
+npx jest --no-coverage         # Todos os testes
 npx jest path/to/file.test.ts  # Arquivo de teste específico
 npx jest --testNamePattern="test name"  # Teste específico por nome
 firebase emulators:start       # Teste local com emuladores

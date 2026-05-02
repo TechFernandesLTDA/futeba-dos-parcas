@@ -122,6 +122,18 @@ export const CreateGameScreen: React.FC = () => {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
+  const isDirty = JSON.stringify(formData) !== JSON.stringify(defaultFormData);
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
+
   // Carregar quadras quando local é selecionado
   useEffect(() => {
     if (!formData.locationId || useCustomLocation) {
@@ -242,9 +254,12 @@ export const CreateGameScreen: React.FC = () => {
   };
 
   const handleNavigateBack = () => {
-    if (window.confirm('Tem certeza? Os dados do formulário serão perdidos.')) {
-      navigate(-1);
+    if (isDirty) {
+      if (!window.confirm('Tem certeza? Os dados do formulário serão perdidos.')) {
+        return;
+      }
     }
+    navigate(-1);
   };
 
   const handleSubmit = async () => {

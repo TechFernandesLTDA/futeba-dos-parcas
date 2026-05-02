@@ -54,9 +54,66 @@ export const ProfileScreen: React.FC = () => {
   if (loading) {
     return (
       <Box sx={{ p: 2 }}>
-        <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
-        <Skeleton variant="text" width="60%" sx={{ mt: 2 }} />
-        <Skeleton variant="text" width="40%" />
+        {/* Header skeleton */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, p: 1 }}>
+          <Skeleton variant="circular" width={40} height={40} />
+          <Skeleton variant="text" width={100} height={32} />
+        </Box>
+
+        {/* Profile card skeleton */}
+        <Card sx={{ mb: 2 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Skeleton variant="circular" width={80} height={80} />
+              <Box sx={{ flex: 1 }}>
+                <Skeleton variant="text" width="60%" height={36} />
+                <Skeleton variant="text" width="30%" height={24} />
+              </Box>
+            </Box>
+            <Grid container spacing={2}>
+              {[0, 1, 2].map((i) => (
+                <Grid key={i} xs={4}>
+                  <Paper variant="outlined" sx={{ p: 1.5 }}>
+                    <Skeleton variant="text" width="50%" height={32} sx={{ mx: 'auto' }} />
+                    <Skeleton variant="text" width="60%" height={16} sx={{ mx: 'auto' }} />
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </CardContent>
+        </Card>
+
+        {/* Stats card skeleton */}
+        <Card sx={{ mb: 2 }}>
+          <CardContent>
+            <Skeleton variant="text" width="40%" height={28} sx={{ mb: 1.5 }} />
+            <Grid container spacing={2}>
+              {[0, 1, 2, 3].map((i) => (
+                <Grid key={i} xs={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Skeleton variant="circular" width={24} height={24} />
+                    <Box sx={{ flex: 1 }}>
+                      <Skeleton variant="text" width="50%" height={20} />
+                      <Skeleton variant="text" width="30%" height={28} />
+                    </Box>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          </CardContent>
+        </Card>
+
+        {/* Options list skeleton */}
+        <Card>
+          <Box sx={{ p: 2 }}>
+            {[0, 1, 2, 3].map((i) => (
+              <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5 }}>
+                <Skeleton variant="circular" width={24} height={24} />
+                <Skeleton variant="text" width={`${60 - i * 10}%`} height={24} />
+              </Box>
+            ))}
+          </Box>
+        </Card>
       </Box>
     );
   }

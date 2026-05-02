@@ -35,7 +35,7 @@ Se aplicável, adicione capturas de tela para ajudar a explicar o problema.
 **Modelo / Navegador:** (ex: Galaxy S23, Chrome 120)
 
 ### Versão do app
-(ex: 1.19.0)
+(ex: 1.21.0)
 
 ### Contexto adicional
 Adicione qualquer outra informação relevante sobre o problema aqui.

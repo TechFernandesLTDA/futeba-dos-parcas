@@ -1,7 +1,7 @@
 # ⚡ Quick Start - Futeba dos Parças
 
 > **Guia rápido para desenvolvedores e LLMs**
-> **Última Atualização:** 2026-02-01 | **Versão:** 1.8.0
+> **Última Atualização:** 2026-05-02 | **Versão:** 1.21.0
 
 ---
 
@@ -63,7 +63,7 @@ UI (Compose) → ViewModel (StateFlow) → UseCase → Repository → Firebase
 ```
 
 - **UI:** Jetpack Compose Material 3
-- **ViewModel:** @HiltViewModel + StateFlow<UiState>
+- **ViewModel:** Koin + StateFlow<UiState>
 - **Repository:** Interface (shared) + Impl (androidMain)
 - **Firebase:** Firestore, Auth, Storage, Functions, FCM
 

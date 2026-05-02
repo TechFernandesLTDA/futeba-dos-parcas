@@ -3,7 +3,7 @@
 [![Android CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/android-ci.yml)
 [![iOS Build](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/ios-build.yml)
 [![Functions CI](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml/badge.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/actions/workflows/functions-ci.yml)
-[![Version](https://img.shields.io/badge/version-1.19.0-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
+[![Version](https://img.shields.io/badge/version-1.21.0-green.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web-lightgrey.svg)](https://github.com/TechFernandesLTDA/futeba-dos-parcas)
 
@@ -118,7 +118,7 @@ npm run dev          # http://localhost:5173
 
 # Testes
 ./gradlew :app:testDebugUnitTest
-cd functions && npx jest --no-coverage   # 398 testes, 12 suites
+cd functions && npx jest --no-coverage
 ```
 
 ### Configuração Firebase
@@ -173,7 +173,7 @@ futeba-dos-parcas/
 ### 📚 Para Desenvolvedores
 - **[Tech Stack & Context](docs/TECH_STACK_AND_CONTEXT.md)** — Arquitetura, bibliotecas e navegação
 - **[Business Rules](docs/BUSINESS_RULES.md)** — Sistema de XP, ciclo de vida de partidas e ranking
-- **[Setup Guide](SETUP_GUIDE.md)** — Configuração completa do ambiente
+- **[Setup Guide](docs/SETUP_GUIDE.md)** — Configuração completa do ambiente
 - **[Specs](specs/)** — Especificações técnicas de todas as features (SDD)
 
 ---
@@ -222,7 +222,7 @@ Este repositório é configurado com variáveis de ambiente e chaves de acesso p
 
 ## 📊 Status do Projeto
 
-- ✅ **Android:** Produção (v1.19.0 na Play Store)
+- ✅ **Android:** Produção (v1.21.0 na Play Store)
 - ✅ **Web:** Produção (https://futebadosparcas.web.app)
 - ✅ **Backend:** Firebase Cloud Functions v2
 - ✅ **CI/CD:** GitHub Actions (14+ workflows)

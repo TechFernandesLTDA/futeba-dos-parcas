@@ -9,7 +9,7 @@
 | # | Regra | Exemplo |
 |---|-------|---------|
 | 1 | **Sem strings hardcoded** | Usar `stringResource(R.string.x)` no Compose, `getString(R.string.x)` no Android |
-| 2 | **Sem findViewById** | Usar ViewBinding sempre |
+| 2 | **Compose obrigatório** | Sempre Jetpack Compose, nunca XML/Fragment novo |
 | 3 | **Job tracking em ViewModels** | `private var job: Job? = null; job?.cancel()` |
 | 4 | **.catch {} em Flows** | `.catch { e -> _uiState.value = Error(e.message) }` |
 | 5 | **Fechar Channels** | `_actions.close()` em `onCleared()` |
@@ -27,8 +27,7 @@
 
 ### ViewModel
 ```kotlin
-@HiltViewModel
-class FeatureViewModel @Inject constructor(
+class FeatureViewModel(
     private val repository: FeatureRepository
 ) : ViewModel() {
 
@@ -57,7 +56,7 @@ class FeatureViewModel @Inject constructor(
 ```kotlin
 @Composable
 fun FeatureScreen(
-    viewModel: FeatureViewModel,
+    viewModel: FeatureViewModel = koinViewModel(),
     onNavigate: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()

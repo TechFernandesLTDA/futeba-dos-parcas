@@ -146,7 +146,7 @@ firebase deploy --only functions           # Deploy
 
 ### Version
 
-- **Current**: 1.19.0 (versionCode: 40)
+- **Current**: 1.21.0 (versionCode: 42)
 - **SDK**: compileSdk 36, minSdk 24, targetSdk 35, JDK 17
 - **Kotlin**: 2.2.10
 - **AGP**: 9.0.1

@@ -8,12 +8,12 @@
 ## SUMÁRIO EXECUTIVO
 
 **App:** Futeba dos Parças
-**Versão:** 1.4.2 (versionCode: 15)
-**Stack:** Kotlin 2.0 + Jetpack Compose (híbrido XML) + Firebase + Hilt + KMP
+**Versão:** 1.21.0 (versionCode: 42)
+**Stack:** Kotlin 2.2.10 + Jetpack Compose + Firebase + Koin 4.1.1 + KMP
 **Arquitetura:** MVVM + Clean Architecture
 
-**Documentos gerados:** 15 arquivos
-**Localização:** `.claude/`
+**Documentos:** `.claude/`
+**Guia principal:** [CLAUDE.md](../CLAUDE.md)
 
 ---
 
@@ -153,15 +153,15 @@
 ### Nome do App
 **Confirmado:** Futeba dos Parças
 - Package: `com.futebadosparcas`
-- Versão: 1.4.2 (15)
+- Versão: 1.21.0 (42)
 - Nome no launcher: "Futeba dos Parças"
 
 ### Stack Android
-- **UI:** Híbrida XML (38 fragments) + Compose (33 screens)
+- **UI:** Jetpack Compose (todas as telas novas)
 - **Arquitetura:** MVVM + Clean Architecture
-- **DI:** Hilt (Dagger)
-- **Navegação:** Android Navigation Component (XML)
-- **Modularização:** app + shared (KMP)
+- **DI:** Koin 4.1.1
+- **Navegação:** Compose Navigation
+- **Modularização:** app + shared + composeApp (KMP)
 
 ### Stack iOS
 - **Status:** Preparação KMP em andamento
@@ -176,11 +176,11 @@
 5. **Locais:** Map → Locations → Manage
 
 ### Hotspots
-- Coexistência XML + Compose (cuidado ao migrar)
 - Job tracking em ViewModels (memory leaks)
 - Firestore batching (limite de 10)
 - Strings hardcoded (violates rule)
-- KMP migration intermediária (respeitar comentários)
+- `whereIn` queries limitadas a 10 itens
+- KMP: shared/commonMain para lógica cross-platform
 
 ---
 
