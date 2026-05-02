@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   collection,
   doc,
@@ -48,7 +48,7 @@ async function fetchGames(filters?: {
   limitCount?: number;
 }): Promise<Game[]> {
   const gamesRef = collection(db, 'games');
-  let q = query(gamesRef, orderBy('dateTime', 'asc'));
+  let q = query(gamesRef, orderBy('date_time', 'asc'));
 
   if (filters?.status) {
     q = query(q, where('status', '==', filters.status));
@@ -78,7 +78,7 @@ export function useGames(filters?: {
   const queryClient = useQueryClient();
 
   // Chave de query estável baseada nos filtros
-  const queryKey = ['games', filters?.status, filters?.groupId, filters?.date, filters?.limitCount] as const;
+  const queryKey = useMemo(() => ['games', filters?.status, filters?.groupId, filters?.date, filters?.limitCount] as const, [filters?.status, filters?.groupId, filters?.date, filters?.limitCount]);
 
   const { data: games = [], isLoading: loading, error: queryError } = useQuery({
     queryKey,
@@ -90,7 +90,7 @@ export function useGames(filters?: {
   // Listener real-time para invalidar cache quando jogos mudam
   useEffect(() => {
     const gamesRef = collection(db, 'games');
-    let q = query(gamesRef, orderBy('dateTime', 'asc'));
+  let q = query(gamesRef, orderBy('date_time', 'asc'));
 
     if (filters?.status) {
       q = query(q, where('status', '==', filters.status));
@@ -116,7 +116,7 @@ export function useGames(filters?: {
     });
 
     return () => unsubscribe();
-  }, [filters?.status, filters?.groupId, filters?.date, filters?.limitCount, queryClient]);
+  }, [queryKey, filters?.status, filters?.groupId, filters?.date, filters?.limitCount, queryClient]);
 
   const error = queryError ? (queryError as Error).message : null;
 

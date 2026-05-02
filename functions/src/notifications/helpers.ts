@@ -222,24 +222,24 @@ async function sendWithRetry(
  * Remove token FCM inválido do usuário no Firestore.
  *
  * @param {string} userId - ID do usuário
- * @param {string} _token - Token FCM inválido
+ * @param {string} token - Token FCM inválido
  * @return {Promise<void>} Resolução após remoção
  */
 async function removeInvalidToken(
   userId: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _token: string
+  token: string
 ): Promise<void> {
   try {
     console.log(
       `Removendo token invalido do usuario ${userId}`
     );
-    await getDb()
+    const userRef = getDb()
       .collection("users")
-      .doc(userId)
-      .update({
-        fcm_token: admin.firestore.FieldValue.delete(),
-      });
+      .doc(userId);
+    await userRef.update({
+      fcm_token: admin.firestore.FieldValue.delete(),
+      fcmTokens: admin.firestore.FieldValue.arrayRemove(token),
+    });
   } catch (e) {
     console.error(
       "Erro ao remover token invalido" +
@@ -266,9 +266,16 @@ async function getUserFcmToken(
     if (!userDoc.exists) return null;
 
     const userData = userDoc.data();
+    const lastToken =
+      Array.isArray(userData?.fcmTokens) &&
+      userData.fcmTokens.length > 0 ?
+        userData.fcmTokens[userData.fcmTokens.length - 1] :
+        null;
+
     return (
       userData?.fcm_token ||
       userData?.fcmToken ||
+      lastToken ||
       null
     );
   } catch (e) {
@@ -312,8 +319,15 @@ async function getUserFcmTokensWithMapping(
       snapshot.docs.forEach(
         (doc: admin.firestore.QueryDocumentSnapshot) => {
           const data = doc.data();
+          const lastFcmToken =
+            Array.isArray(data?.fcmTokens) &&
+            data.fcmTokens.length > 0 ?
+              data.fcmTokens[data.fcmTokens.length - 1] :
+              null;
           const token =
-            data?.fcm_token || data?.fcmToken;
+            data?.fcm_token ||
+            data?.fcmToken ||
+            lastFcmToken;
           if (token) {
             mappings.push({token, userId: doc.id});
           }

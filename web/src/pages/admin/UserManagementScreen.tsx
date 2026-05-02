@@ -54,7 +54,7 @@ export const UserManagementScreen: React.FC = () => {
   useDocumentTitle('Gerenciar Usuários');
   const navigate = useNavigate();
   const theme = useTheme();
-  useAuth();
+  const { user } = useAuth();
 
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +63,7 @@ export const UserManagementScreen: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -135,7 +136,13 @@ export const UserManagementScreen: React.FC = () => {
     }
   };
 
-  return (
+  return user && user.role !== 'ADMIN' ? (
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2 }}>
+      <AdminIcon sx={{ fontSize: 64, color: 'grey.400' }} />
+      <Typography variant="h6" color="text.secondary">Acesso negado</Typography>
+      <Typography variant="body2" color="text.secondary">Apenas administradores podem gerenciar usuários.</Typography>
+    </Box>
+  ) : (
     <Box sx={{ pb: 4 }}>
       <Box
         sx={{

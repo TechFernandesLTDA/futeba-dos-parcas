@@ -67,7 +67,7 @@ export const SettingsScreen: React.FC = () => {
   const loadSettings = useCallback(async () => {
     if (!user) return;
     try {
-      const settingsRef = doc(db, 'users', user!.id, 'settings');
+      const settingsRef = doc(db, 'users', user!.id, 'settings', 'preferences');
       const docSnap = await getDoc(settingsRef);
       if (docSnap.exists()) {
         setSettings(snakeToCamel(docSnap.data()) as Settings);
@@ -88,7 +88,7 @@ export const SettingsScreen: React.FC = () => {
     if (!user) return;
     setSaving(true);
     try {
-      const settingsRef = doc(db, 'users', user.id, 'settings');
+      const settingsRef = doc(db, 'users', user.id, 'settings', 'preferences');
       await setDoc(settingsRef, {
         notifications: settings.notifications,
         email_notifications: settings.emailNotifications,
