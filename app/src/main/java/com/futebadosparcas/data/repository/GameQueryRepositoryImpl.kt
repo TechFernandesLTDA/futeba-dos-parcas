@@ -827,8 +827,8 @@ class GameQueryRepositoryImpl constructor(
                 trySend(emptyList())
                 return@addSnapshotListener
             }
-            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach {
-                it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id
+            val androidGames = snap?.documents?.mapNotNull { doc ->
+                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
             } ?: emptyList()
             trySend(androidGames)
         }
@@ -962,7 +962,9 @@ class GameQueryRepositoryImpl constructor(
                     callbackFlow {
                         val sub = groupQuery.addSnapshotListener { snap, e ->
                             if (e != null) { trySend(emptyList()); return@addSnapshotListener }
-                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                            val androidGames = snap?.documents?.mapNotNull { doc ->
+                                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                            } ?: emptyList()
                             trySend(androidGames)
                         }
                         awaitClose { sub.remove() }
@@ -976,7 +978,9 @@ class GameQueryRepositoryImpl constructor(
                     callbackFlow {
                         val sub = ownerQuery.addSnapshotListener { snap, e ->
                             if (e != null) { trySend(emptyList()); return@addSnapshotListener }
-                            val androidGames = snap?.toObjects(AndroidGame::class.java)?.onEach { it.id = snap.documents.find { d -> d.id == it.id }?.id ?: it.id } ?: emptyList()
+                            val androidGames = snap?.documents?.mapNotNull { doc ->
+                                doc.toObject(AndroidGame::class.java)?.apply { id = doc.id }
+                            } ?: emptyList()
                             trySend(androidGames)
                         }
                         awaitClose { sub.remove() }

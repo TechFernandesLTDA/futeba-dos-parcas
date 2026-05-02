@@ -27,7 +27,7 @@ function exec(command) {
 
 function getCurrentVersion() {
   const buildGradle = fs.readFileSync(
-    path.join(__dirname, '../app/build.gradle.kts'),
+    path.join(__dirname, '../../app/build.gradle.kts'),
     'utf8'
   );
 
@@ -80,7 +80,7 @@ function bumpVersion(version, type) {
 }
 
 function updateBuildGradle(newVersion, newVersionCode) {
-  const buildGradlePath = path.join(__dirname, '../app/build.gradle.kts');
+  const buildGradlePath = path.join(__dirname, '../../app/build.gradle.kts');
   let content = fs.readFileSync(buildGradlePath, 'utf8');
 
   content = content.replace(

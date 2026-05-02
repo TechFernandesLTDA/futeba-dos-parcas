@@ -125,8 +125,14 @@ service firebase.storage {
     // Path: locations/{locationId}/photos/{timestamp}.jpg
     // ============================================
     match /locations/{locationId}/photos/{fileName} {
-      // Qualquer usuário autenticado pode ver fotos de locais
-      allow read: if isAuthenticated();
+      function isLocationVisible() {
+        let loc = firestore.get(/databases/(default)/documents/locations/$(locationId));
+        return loc != null &&
+               (!('deleted_at' in loc.data) || loc.data.deleted_at == null);
+      }
+
+      // Qualquer usuário autenticado pode ver fotos de locais (se visible)
+      allow read: if isAuthenticated() && isLocationVisible();
 
       // Apenas o dono do local pode fazer upload
       // Máximo 5MB por foto, apenas imagem
@@ -144,8 +150,14 @@ service firebase.storage {
     // Path: locations/{locationId}/fields/{timestamp}.jpg
     // ============================================
     match /locations/{locationId}/fields/{fileName} {
-      // Qualquer usuário autenticado pode ver fotos de campos
-      allow read: if isAuthenticated();
+      function isLocationVisible() {
+        let loc = firestore.get(/databases/(default)/documents/locations/$(locationId));
+        return loc != null &&
+               (!('deleted_at' in loc.data) || loc.data.deleted_at == null);
+      }
+
+      // Qualquer usuário autenticado pode ver fotos de campos (se visible)
+      allow read: if isAuthenticated() && isLocationVisible();
 
       // Apenas o dono do local pode fazer upload
       // Máximo 5MB por foto, apenas imagem

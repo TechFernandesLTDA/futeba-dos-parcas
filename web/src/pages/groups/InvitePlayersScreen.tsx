@@ -29,6 +29,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { LoadingState, PlayerAvatar } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useToast } from '../../contexts/ToastContext';
 
 const logger = createLogger('InvitePlayersScreen');
 
@@ -53,6 +54,7 @@ export const InvitePlayersScreen: React.FC = () => {
   const theme = useTheme();
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
+  const { showError } = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -143,12 +145,11 @@ export const InvitePlayersScreen: React.FC = () => {
       setSearchResults((prev) => prev.filter((r) => r.id !== targetUser.id));
     } catch (error) {
       logger.error('Error inviting user:', error);
+      showError('Erro ao enviar convite. Tente novamente.');
     } finally {
       setInviting(null);
     }
   };
-
-  const _existingMemberIds = new Set(members.map((m) => m.id));
 
   return (
     <Box sx={{ pb: 4 }}>

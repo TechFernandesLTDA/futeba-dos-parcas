@@ -29,7 +29,7 @@ jobs:
       - name: Run version bump script
         id: bump
         run: |
-          node scripts/bump-version.js
+          node scripts/maintenance/bump-version.js
 
           # Check if version changed
           if git diff --quiet app/build.gradle.kts; then

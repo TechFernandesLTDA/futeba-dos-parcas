@@ -774,17 +774,14 @@ service cloud.firestore {
           return isAdmin() || isParentOwner() || isParentManager();
         }
 
-        // Valida dados da quadra
-        function hasValidFieldData() {
-          let data = request.resource.data;
-          return
-            isValidName(data.name) &&
-            // location_id deve corresponder ao pai
-            data.location_id == locationId;
+        function isParentLocationVisible() {
+          let loc = getParentLocation();
+          return loc != null &&
+                 (!('deleted_at' in loc.data) || loc.data.deleted_at == null || isAdmin());
         }
 
-        // Read: usuarios autenticados podem ler quadras
-        allow read: if isAuthenticated();
+        // Read: usuarios autenticados podem ler quadras (se parent visivel)
+        allow read: if isAuthenticated() && isParentLocationVisible();
 
         // Create: owner ou manager do local pode criar quadras
         allow create: if isAuthenticated() &&
@@ -914,8 +911,14 @@ service cloud.firestore {
           );
         }
 
-        // Read: usuarios autenticados
-        allow read: if isAuthenticated();
+        function isParentLocationVisible() {
+          let loc = get(/databases/$(database)/documents/locations/$(locationId));
+          return loc != null &&
+                 (!('deleted_at' in loc.data) || loc.data.deleted_at == null || isAdmin());
+        }
+
+        // Read: usuarios autenticados (se parent visivel)
+        allow read: if isAuthenticated() && isParentLocationVisible();
 
         // Write: owner, managers ou admin
         allow create, update, delete: if isAuthenticated() && canManageAvailability();

@@ -111,9 +111,31 @@ async function deduplicate() {
             console.log(`  Keeping: ${best.name} (${best.id}) - CEP: ${best.cep || 'N/A'}`);
 
             for (const dead of toDelete) {
-                console.log(`  Deleting: ${dead.name} (${dead.id})`);
+                console.log(`  Migrating: ${dead.name} (${dead.id}) -> ${best.id}`);
 
-                // Delete fields first
+                // Migrate games pointing to dead location
+                const gamesSnap = await db.collection('games')
+                    .where('location_id', '==', dead.id)
+                    .get();
+                if (!gamesSnap.empty) {
+                    const batch = db.batch();
+                    gamesSnap.forEach(g => batch.update(g.ref, { location_id: best.id }));
+                    await batch.commit();
+                    console.log(`    Migrated ${gamesSnap.size} games.`);
+                }
+
+                // Also migrate fields pointing to dead location's ID as location_id
+                const fieldsLocationSnap = await db.collection('fields')
+                    .where('location_id', '==', dead.id)
+                    .get();
+                if (!fieldsLocationSnap.empty) {
+                    const batch = db.batch();
+                    fieldsLocationSnap.forEach(f => batch.update(f.ref, { location_id: best.id }));
+                    await batch.commit();
+                    console.log(`    Migrated ${fieldsLocationSnap.size} fields location_id.`);
+                }
+
+                // Delete fields where locationId (camelCase) matches dead id
                 const fieldsSnap = await db.collection('fields').where('locationId', '==', dead.id).get();
                 if (!fieldsSnap.empty) {
                     const batch = db.batch();

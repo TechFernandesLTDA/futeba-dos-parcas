@@ -293,7 +293,7 @@ class GameRepositoryImpl constructor(
             // dateTime e dateTimeRaw sao computed properties no model KMP
             // Validacao de bounds feita via init {} no model
 
-            docRef.set(finalGame).await()
+            docRef.set(finalGame.toAndroidGame()).await()
             Result.success(finalGame)
         } catch (e: Exception) {
             Result.failure(e)
@@ -363,7 +363,7 @@ class GameRepositoryImpl constructor(
             // Atualizar o timestamp de atualização (#1 - Campo updatedAt)
             val updatedGame = game.copy(updatedAt = System.currentTimeMillis())
 
-            gamesCollection.document(game.id).set(updatedGame).await()
+            gamesCollection.document(game.id).set(updatedGame.toAndroidGame()).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

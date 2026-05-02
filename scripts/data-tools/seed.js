@@ -36,7 +36,7 @@ try {
 const db = admin.firestore();
 
 // 1. Read Kotlin File
-const kotlinPath = path.join(__dirname, '../app/src/main/java/com/futebadosparcas/data/seeding/LocationsSeed.kt');
+const kotlinPath = path.join(__dirname, '../../app/src/main/java/com/futebadosparcas/data/seeding/LocationsSeed.kt');
 const content = fs.readFileSync(kotlinPath, 'utf8');
 
 // 2. Parse Kotlin Data

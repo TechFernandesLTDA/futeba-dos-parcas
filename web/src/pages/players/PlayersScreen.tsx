@@ -29,7 +29,7 @@ import {
   PersonRemove as PersonRemoveIcon,
   AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, writeBatch, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, writeBatch, arrayRemove } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -68,48 +68,47 @@ export const PlayersScreen: React.FC = () => {
 
     const fetchMembers = async () => {
       try {
-        const groupDoc = await getDoc(doc(db, 'groups', groupId));
-        if (groupDoc.exists()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const groupData = snakeToCamel(groupDoc.data()) as Record<string, any>;
-          const memberIds = groupData.members || [];
-          const ownerId = groupData.ownerId;
-          const admins = groupData.admins || [];
+        const membersRef = collection(db, 'groups', groupId, 'members');
+        const membersSnap = await getDocs(membersRef);
 
-          if (ownerId === user.id) {
-            setCurrentUserRole('OWNER');
-          } else if (admins.includes(user.id)) {
-            setCurrentUserRole('ADMIN');
-          } else {
-            setCurrentUserRole('MEMBER');
+        const membersData: GroupMember[] = [];
+
+        for (const memberDoc of membersSnap.docs) {
+          const m = memberDoc.data();
+          const uid = m.user_id || memberDoc.id;
+          const role = (m.role || 'MEMBER') as 'OWNER' | 'ADMIN' | 'MEMBER';
+          const status = m.status || 'ACTIVE';
+
+          if (status !== 'ACTIVE') continue;
+
+          if (uid === user.id) {
+            setCurrentUserRole(role);
           }
 
-          const membersData = await Promise.all(
-            memberIds.map(async (uid: string) => {
-              const userDoc = await getDoc(doc(db, 'users', uid));
-              if (userDoc.exists()) {
-                const raw = userDoc.data();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const d = snakeToCamel(raw) as Record<string, any>;
-                let role: 'OWNER' | 'ADMIN' | 'MEMBER' = 'MEMBER';
-                if (uid === ownerId) role = 'OWNER';
-                else if (admins.includes(uid)) role = 'ADMIN';
+          let name = m.user_name || 'Jogador';
+          let photoUrl = m.user_photo || undefined;
 
-                return {
-                  id: uid,
-                  name: d.name || 'Jogador',
-                  email: d.email || '',
-                  photoUrl: d.photoUrl,
-                  role,
-                  joinedAt: (raw.joined_at || raw.joinedAt)?.toDate?.(),
-                };
-              }
-              return null;
-            })
-          );
+          if (!name || name === 'Jogador') {
+            const userDoc = await getDoc(doc(db, 'users', uid));
+            if (userDoc.exists()) {
+              const raw = userDoc.data();
+              const d = snakeToCamel(raw) as { name?: string; photoUrl?: string };
+              name = d.name || 'Jogador';
+              photoUrl = d.photoUrl || photoUrl;
+            }
+          }
 
-          setMembers(membersData.filter(Boolean) as GroupMember[]);
+          membersData.push({
+            id: uid,
+            name,
+            email: '',
+            photoUrl,
+            role,
+            joinedAt: (m.joined_at as { toDate?: () => Date })?.toDate?.(),
+          });
         }
+
+        setMembers(membersData);
       } catch (error) {
         logger.error('Error fetching members:', error);
       } finally {

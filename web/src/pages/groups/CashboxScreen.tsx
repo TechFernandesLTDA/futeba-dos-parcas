@@ -30,7 +30,7 @@ import {
   TrendingDown as TrendingDownIcon,
   History as HistoryIcon,
 } from '@mui/icons-material';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -63,7 +63,7 @@ export const CashboxScreen: React.FC = () => {
   const { user } = useAuth();
 
   const [transactions, setTransactions] = useState<CashboxTransaction[]>([]);
-  const [_members, setMembers] = useState<GroupMember[]>([]);
+  const [, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -99,22 +99,20 @@ export const CashboxScreen: React.FC = () => {
     });
 
     const fetchMembers = async () => {
-      const groupDoc = await getDoc(doc(db, 'groups', groupId));
-      if (groupDoc.exists()) {
-        const memberIds = groupDoc.data().members || [];
-        const membersData = await Promise.all(
-          memberIds.slice(0, 20).map(async (uid: string) => {
-            const userDoc = await getDoc(doc(db, 'users', uid));
-            if (userDoc.exists()) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const d = snakeToCamel(userDoc.data()) as Record<string, any>;
-              return { id: uid, name: d.name || 'Jogador', photoUrl: d.photoUrl };
-            }
-            return { id: uid, name: 'Jogador' };
-          })
-        );
-        setMembers(membersData);
+      const membersRef = collection(db, 'groups', groupId, 'members');
+      const membersSnap = await getDocs(membersRef);
+      const membersData: Array<{ id: string; name: string; photoUrl?: string }> = [];
+
+      for (const memberDoc of membersSnap.docs) {
+        const m = memberDoc.data();
+        if (m.status && m.status !== 'ACTIVE') continue;
+        const uid = m.user_id || memberDoc.id;
+        const name = m.user_name || 'Jogador';
+        const photoUrl = m.user_photo || undefined;
+        membersData.push({ id: uid, name, photoUrl });
       }
+
+      setMembers(membersData);
     };
 
     fetchMembers();
@@ -142,8 +140,9 @@ export const CashboxScreen: React.FC = () => {
       setDialogOpen(false);
       setAmount('');
       setDescription('');
-    } catch (err: any) {
-      showError('Erro ao adicionar transação: ' + err.message);
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      showError('Erro ao adicionar transação: ' + (e.message || ''));
     } finally {
       setSubmitting(false);
     }

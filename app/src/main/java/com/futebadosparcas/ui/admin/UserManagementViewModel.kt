@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.admin
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.User
+import com.futebadosparcas.domain.model.UserRole
 import com.futebadosparcas.domain.repository.UserRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,7 +71,7 @@ class UserManagementViewModel(
 
     fun updateUserRole(user: User, newRole: String) {
         // Validar role antes de enviar para o backend
-        val validRoles = setOf("ADMIN", "PLAYER", "MODERATOR")
+        val validRoles = UserRole.entries.map { it.name }.toSet()
         if (newRole !in validRoles) {
             _uiState.value = UserManagementUiState.Error("Role inválida: $newRole")
             return
