@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
 export interface SearchResult {
@@ -10,7 +10,7 @@ export interface SearchResult {
   photoUrl?: string;
 }
 
-export const useSearch = (searchQuery: string, type: 'all' | 'users' | 'groups' | 'games' = 'all') => {
+export const useSearch = (searchQuery: string, type: 'all' | 'users' | 'groups' | 'games' | 'locations' = 'all') => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +69,51 @@ export const useSearch = (searchQuery: string, type: 'all' | 'users' | 'groups' 
               type: 'group',
               name: data.name || 'Grupo',
               subtitle: `${data.member_count || data.memberCount || 0} membros`,
+              photoUrl: data.photo_url || data.photoUrl,
+            });
+          });
+        }
+
+        if (type === 'all' || type === 'games') {
+          const gamesRef = collection(db, 'games');
+          const gamesQ = query(
+            gamesRef,
+            where('location_name', '>=', searchQuery),
+            where('location_name', '<=', searchQuery + '\uf8ff'),
+            orderBy('location_name'),
+            limit(10)
+          );
+          const gamesSnap = await getDocs(gamesQ);
+          if (cancelled) return;
+          gamesSnap.docs.forEach((d) => {
+            const data = d.data();
+            allResults.push({
+              id: d.id,
+              type: 'game',
+              name: data.location_name || 'Jogo',
+              subtitle: data.date ? new Date(data.date.toDate?.() || data.date).toLocaleDateString('pt-BR') : '',
+              photoUrl: data.photo_url || data.photoUrl,
+            });
+          });
+        }
+
+        if (type === 'all' || type === 'locations') {
+          const locRef = collection(db, 'locations');
+          const locQ = query(
+            locRef,
+            where('name', '>=', searchQuery),
+            where('name', '<=', searchQuery + '\uf8ff'),
+            limit(10)
+          );
+          const locSnap = await getDocs(locQ);
+          if (cancelled) return;
+          locSnap.docs.forEach((d) => {
+            const data = d.data();
+            allResults.push({
+              id: d.id,
+              type: 'location',
+              name: data.name || 'Local',
+              subtitle: `${data.city || ''}`,
               photoUrl: data.photo_url || data.photoUrl,
             });
           });

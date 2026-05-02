@@ -12,7 +12,6 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
   Radio,
   RadioGroup,
   FormControl,
@@ -233,6 +232,12 @@ export const MVPVoteScreen: React.FC = () => {
                         cursor: 'pointer',
                         bgcolor: mvpVote === player.userId ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
                       }}
+                      secondaryAction={
+                        <Radio
+                          checked={mvpVote === player.userId}
+                          value={player.userId}
+                        />
+                      }
                     >
                       <ListItemAvatar>
                         <PlayerAvatar
@@ -245,12 +250,6 @@ export const MVPVoteScreen: React.FC = () => {
                         primary={player.userName}
                         secondary={player.position === 'GOALKEEPER' ? 'Goleiro' : 'Jogador de Linha'}
                       />
-                      <ListItemSecondaryAction>
-                        <Radio
-                          checked={mvpVote === player.userId}
-                          value={player.userId}
-                        />
-                      </ListItemSecondaryAction>
                     </ListItem>
                   ))}
                 </List>
@@ -272,19 +271,23 @@ export const MVPVoteScreen: React.FC = () => {
                   onChange={(e) => setBestGkVote(e.target.value)}
                   sx={{ mt: 2 }}
                 >
-                  <List disablePadding aria-label="Candidatos a melhor goleiro">
+                  <List disablePadding>
                     {confirmations
                       .filter((p) => p.position === 'GOALKEEPER')
                       .map((player) => (
                         <ListItem
                           key={player.userId}
-                          dense
-                          onClick={() => setBestGkVote(player.userId)}
                           sx={{
-                            borderRadius: 2,
+                            borderRadius: 1,
                             mb: 1,
                             bgcolor: bestGkVote === player.userId ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
                           }}
+                          secondaryAction={
+                            <Radio
+                              checked={bestGkVote === player.userId}
+                              value={player.userId}
+                            />
+                          }
                         >
                           <ListItemAvatar>
                             <PlayerAvatar
@@ -294,12 +297,6 @@ export const MVPVoteScreen: React.FC = () => {
                             />
                           </ListItemAvatar>
                           <ListItemText primary={player.userName} />
-                          <ListItemSecondaryAction>
-                            <Radio
-                              checked={bestGkVote === player.userId}
-                              value={player.userId}
-                            />
-                          </ListItemSecondaryAction>
                         </ListItem>
                       ))}
                     {confirmations.filter((p) => p.position === 'GOALKEEPER').length === 0 && (
@@ -326,20 +323,23 @@ export const MVPVoteScreen: React.FC = () => {
                   onChange={(e) => setWorstPlayerVote(e.target.value)}
                   sx={{ mt: 2 }}
                 >
-                  <List disablePadding aria-label="Candidatos a bola murcha">
+                  <List disablePadding>
                     {confirmations
-                      .filter((p) => p.userId !== currentUser?.uid)
+                      .filter((p) => p.position !== 'GOALKEEPER')
                       .map((player) => (
                         <ListItem
                           key={player.userId}
-                          dense
-                          onClick={() => setWorstPlayerVote(player.userId)}
                           sx={{
-                            borderRadius: 2,
+                            borderRadius: 1,
                             mb: 1,
-                            cursor: 'pointer',
-                            bgcolor: worstPlayerVote === player.userId ? alpha(theme.palette.error.main, 0.1) : 'transparent',
+                            bgcolor: worstPlayerVote === player.userId ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
                           }}
+                          secondaryAction={
+                            <Radio
+                              checked={worstPlayerVote === player.userId}
+                              value={player.userId}
+                            />
+                          }
                         >
                           <ListItemAvatar>
                             <PlayerAvatar
@@ -352,19 +352,14 @@ export const MVPVoteScreen: React.FC = () => {
                             primary={player.userName}
                             secondary={player.position === 'GOALKEEPER' ? 'Goleiro' : 'Jogador de Linha'}
                           />
-                          <ListItemSecondaryAction>
-                            <Radio
-                              checked={worstPlayerVote === player.userId}
-                              value={player.userId}
-                            />
-                          </ListItemSecondaryAction>
                         </ListItem>
                       ))}
                   </List>
-                </RadioGroup>
-              </FormControl>
-            </CardContent>
-          </Card>
+              </RadioGroup>
+            </FormControl>
+          </CardContent>
+        </Card>
+
         </Container>
 
       <Box

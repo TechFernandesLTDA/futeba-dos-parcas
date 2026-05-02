@@ -10,7 +10,6 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
   Divider,
   Button,
   useTheme,
@@ -156,15 +155,7 @@ export const BlockedPlayersScreen: React.FC = () => {
               {blockedPlayers.map((player, index) => (
                 <Box key={player.id}>
                   {index > 0 && <Divider />}
-                  <ListItem>
-                    <ListItemAvatar>
-                      <PlayerAvatar name={player.name} photoUrl={player.photoUrl} size={48} />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={player.name}
-                      secondary="Bloqueado para este jogo"
-                    />
-                    <ListItemSecondaryAction>
+                  <ListItem secondaryAction={
                       <Button
                         size="small"
                         variant="outlined"
@@ -175,7 +166,14 @@ export const BlockedPlayersScreen: React.FC = () => {
                       >
                         {unblockingId === player.id ? 'Desbloqueando...' : 'Desbloquear'}
                       </Button>
-                    </ListItemSecondaryAction>
+                    }>
+                    <ListItemAvatar>
+                      <PlayerAvatar name={player.name} photoUrl={player.photoUrl} size={48} />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={player.name}
+                      secondary="Bloqueado para este jogo"
+                    />
                   </ListItem>
                 </Box>
               ))}

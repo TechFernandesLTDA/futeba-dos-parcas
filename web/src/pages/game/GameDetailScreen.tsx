@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ErrorAlert } from '../../components/common/ErrorAlert';
 import {
   Box,
   Container,
@@ -8,6 +9,7 @@ import {
   CardContent,
   Button,
   Chip,
+  CircularProgress,
   IconButton,
   Tab,
   Tabs,
@@ -15,12 +17,10 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Alert,
   useTheme,
   alpha,
 } from '@mui/material';
@@ -46,7 +46,8 @@ import {
   STATUS_CONFIG,
   PAYMENT_STATUS_CONFIG,
 } from '../../types/game';
-import { PlayerAvatar, StatusChip, ShimmerLoading, EmptyState } from '../../components/common/GameCard';
+import { PlayerAvatar, StatusChip, ShimmerLoading } from '../../components/common/GameCard';
+import { EmptyState } from '../../components/common/EmptyState';
 import { formatGameDateLong } from '../../utils/dateFormatters';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
@@ -70,7 +71,8 @@ export const GameDetailScreen: React.FC = () => {
   const { currentUser } = useAuth();
   const { showSuccess, showError } = useToast();
 
-  const { game, confirmations, loading, error } = useGameDetail(gameId || null);
+  const [retryCount, setRetryCount] = useState(0);
+  const { game, confirmations, loading, error } = useGameDetail(gameId || null, retryCount);
   const { confirmPresence, cancelPresence, loading: confirmLoading } = useConfirmPresence();
   const { updateStatus, loading: statusLoading } = useUpdateGameStatus();
 
@@ -171,8 +173,8 @@ export const GameDetailScreen: React.FC = () => {
   if (error || !game) {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Alert severity="error">{error || 'Jogo não encontrado'}</Alert>
-        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
+        <ErrorAlert message={error || 'Jogo não encontrado'} onRetry={() => setRetryCount(c => c + 1)} />
+        <Button startIcon={<BackIcon />} onClick={() => navigate('/')} sx={{ mt: 2 }}>
           Voltar
         </Button>
       </Container>
@@ -353,7 +355,11 @@ export const GameDetailScreen: React.FC = () => {
             ) : (
               <List disablePadding aria-label="Jogadores confirmados">
                 {confirmedPlayers.map((player, index) => (
-                  <ListItem key={player.id} divider={index < confirmedPlayers.length - 1}>
+                  <ListItem
+                    key={player.id}
+                    divider={index < confirmedPlayers.length - 1}
+                    secondaryAction={<StatusChip status={player.paymentStatus} config={PAYMENT_STATUS_CONFIG} />}
+                  >
                     <ListItemAvatar>
                       <PlayerAvatar
                         name={player.userName}
@@ -372,9 +378,6 @@ export const GameDetailScreen: React.FC = () => {
                       }
                       secondary={`#${player.confirmationOrder ?? (index + 1)}`}
                     />
-                    <ListItemSecondaryAction>
-                      <StatusChip status={player.paymentStatus} config={PAYMENT_STATUS_CONFIG} />
-                    </ListItemSecondaryAction>
                   </ListItem>
                 ))}
               </List>
@@ -521,7 +524,7 @@ export const GameDetailScreen: React.FC = () => {
                 <Button
                   variant="contained"
                   fullWidth
-                  startIcon={<CheckIcon />}
+                  startIcon={confirmLoading ? <CircularProgress size={20} /> : <CheckIcon />}
                   onClick={() => setPositionDialogOpen(true)}
                   disabled={confirmLoading || game.playersCount >= game.maxPlayers}
                 >

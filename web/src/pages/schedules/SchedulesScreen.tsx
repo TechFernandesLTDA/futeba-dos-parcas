@@ -10,7 +10,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   Switch,
   Chip,
   Divider,
@@ -159,7 +158,16 @@ export const SchedulesScreen: React.FC = () => {
               {schedules.map((schedule, index) => (
                 <Box key={schedule.id}>
                   {index > 0 && <Divider />}
-                  <ListItem>
+                  <ListItem secondaryAction={
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={() => handleToggleActive(schedule)}>
+                          <Switch checked={schedule.isActive} size="small" />
+                        </IconButton>
+                        <IconButton onClick={() => handleDeleteClick(schedule)} aria-label={`Excluir ${schedule.name}`}>
+                          <DeleteIcon color="error" />
+                        </IconButton>
+                      </Box>
+                    }>
                     <ListItemText
                       primary={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -171,14 +179,6 @@ export const SchedulesScreen: React.FC = () => {
                       }
                       secondary={`${DAYS_OF_WEEK[schedule.dayOfWeek]} às ${schedule.time} • ${schedule.maxPlayers} jogadores`}
                     />
-                    <ListItemSecondaryAction>
-                      <IconButton onClick={() => handleToggleActive(schedule)}>
-                        <Switch checked={schedule.isActive} size="small" />
-                      </IconButton>
-                      <IconButton onClick={() => handleDeleteClick(schedule)} aria-label={`Excluir ${schedule.name}`}>
-                        <DeleteIcon color="error" />
-                      </IconButton>
-                    </ListItemSecondaryAction>
                   </ListItem>
                 </Box>
               ))}

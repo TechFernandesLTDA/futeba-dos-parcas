@@ -226,6 +226,59 @@ export async function enqueueNotifications(
 }
 
 // ==========================================
+// ATOMIC CLAIM: Reivindicar notificações PENDING
+// ==========================================
+
+/**
+ * Reivindica notificações PENDING atomicamente
+ * via transação para evitar duplicação de
+ * envio em execuções concorrentes.
+ *
+ * Fluxo atômico:
+ * 1. Lê docs com status == PENDING (dentro da transação)
+ * 2. Atualiza para PROCESSING com processor_id
+ * 3. Retorna apenas docs reivindicados com sucesso
+ *
+ * @param {admin.firestore.Firestore} db - Firestore instance
+ * @param {number} maxDocs - Máximo de docs a reivindicar
+ * @param {string} processorId - ID único deste processador
+ * @return {Promise<admin.firestore.DocumentSnapshot[]>}
+ *   Documentos reivindicados
+ */
+async function claimPendingNotifications(
+  db: admin.firestore.Firestore,
+  maxDocs: number,
+  processorId: string
+): Promise<admin.firestore.DocumentSnapshot[]> {
+  const claimedDocs: admin.firestore.DocumentSnapshot[] = [];
+
+  await db.runTransaction(async (transaction) => {
+    const pendingSnap = await transaction.get(
+      db.collection(QUEUE_COLLECTION)
+        .where("status", "==", "PENDING")
+        .orderBy("createdAt", "asc")
+        .limit(maxDocs)
+    );
+
+    for (const doc of pendingSnap.docs) {
+      const data = doc.data();
+      if (data?.status === "PENDING") {
+        transaction.update(doc.ref, {
+          status: "PROCESSING",
+          processor_id: processorId,
+          processing_at:
+            admin.firestore.FieldValue
+              .serverTimestamp(),
+        });
+        claimedDocs.push(doc);
+      }
+    }
+  });
+
+  return claimedDocs;
+}
+
+// ==========================================
 // PROCESSOR: Processar fila de notificações
 // ==========================================
 
@@ -252,15 +305,18 @@ async function processNotificationQueue():
   let invalidTokensCleaned = 0;
 
   try {
-    // 1. Buscar notificações pendentes
-    const pendingSnap = await db
-      .collection(QUEUE_COLLECTION)
-      .where("status", "==", "PENDING")
-      .orderBy("createdAt", "asc")
-      .limit(MAX_QUEUE_BATCH_SIZE)
-      .get();
+    const processorId =
+      `${FUNCTION_REGION}-${Date.now()}-` +
+      `${Math.random().toString(36).slice(2, 9)}`;
 
-    if (pendingSnap.empty) {
+    // 1. Buscar e reivindicar notificacoes PENDING atomicamente
+    const claimedDocs = await claimPendingNotifications(
+      db,
+      MAX_QUEUE_BATCH_SIZE,
+      processorId
+    );
+
+    if (claimedDocs.length === 0) {
       return {
         totalTargeted: 0,
         totalSent: 0,
@@ -272,27 +328,16 @@ async function processNotificationQueue():
 
     console.log(
       "[BATCH_FCM] Processando" +
-      ` ${pendingSnap.size}` +
-      " notificacoes da fila"
+      ` ${claimedDocs.length}` +
+      " notificacoes da fila" +
+      ` (processor=${processorId})`
     );
 
-    // 2. Marcar como PROCESSING
-    const processingBatch = db.batch();
-    for (const doc of pendingSnap.docs) {
-      processingBatch.update(doc.ref, {
-        status: "PROCESSING",
-        processing_at:
-          admin.firestore.FieldValue
-            .serverTimestamp(),
-      });
-    }
-    await processingBatch.commit();
-
-    // 3. Coletar todos os userIds únicos
+    // 2. Coletar todos os userIds únicos
     const allUserIds = new Set<string>();
-    for (const doc of pendingSnap.docs) {
+    for (const doc of claimedDocs) {
       const data = doc.data();
-      const userIds = data.userIds as string[];
+      const userIds = data?.userIds as string[];
       if (userIds) {
         userIds.forEach(
           (id) => allUserIds.add(id)
@@ -302,14 +347,14 @@ async function processNotificationQueue():
 
     totalTargeted = allUserIds.size;
 
-    // 4. Buscar tokens FCM em batch
+    // 3. Buscar tokens FCM em batch
     const tokenMap = await fetchTokensInBatch(
       Array.from(allUserIds)
     );
 
-    // 5. Processar cada notificação na fila
-    for (const doc of pendingSnap.docs) {
-      const data = doc.data();
+    // 4. Processar cada notificacao reivindicada
+    for (const doc of claimedDocs) {
+      const data = doc.data() ?? {};
       const userIds =
         (data.userIds as string[]) || [];
       const title = data.title as string;
@@ -350,7 +395,7 @@ async function processNotificationQueue():
         continue;
       }
 
-      // 6. Enviar via multicast em chunks
+      // 5. Enviar via multicast em chunks
       const sendResult =
         await sendMulticastInChunks(
           tokens,
@@ -369,7 +414,7 @@ async function processNotificationQueue():
       invalidTokensCleaned +=
         sendResult.invalidTokensCleaned;
 
-      // 7. Marcar como enviada
+      // 6. Marcar como enviada
       await doc.ref.update({
         status:
           sendResult.failed === tokens.length ?

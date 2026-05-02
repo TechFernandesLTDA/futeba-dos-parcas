@@ -16,7 +16,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  ListItemSecondaryAction,
   ListItemAvatar,
   Button,
   useTheme,
@@ -235,6 +234,13 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                     <ListItem
                       button
                       onClick={() => navigate(`/location/${loc.id}`)}
+                      secondaryAction={
+                        <Chip
+                          icon={<StarIcon />}
+                          label={loc.rating?.toFixed(1) || 'N/A'}
+                          size="small"
+                        />
+                      }
                     >
                       <ListItemAvatar>
                         <Avatar
@@ -249,13 +255,6 @@ export const FieldOwnerDashboardScreen: React.FC = () => {
                         primary={loc.name}
                         secondary={`${loc.city || ''} • ${loc.fieldCount || 1} campos`}
                       />
-                      <ListItemSecondaryAction>
-                        <Chip
-                          icon={<StarIcon />}
-                          label={loc.rating?.toFixed(1) || 'N/A'}
-                          size="small"
-                        />
-                      </ListItemSecondaryAction>
                     </ListItem>
                   </Box>
                 ))}

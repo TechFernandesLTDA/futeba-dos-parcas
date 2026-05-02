@@ -10,7 +10,6 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
   Divider,
   Button,
   Chip,
@@ -191,6 +190,11 @@ export const UserManagementScreen: React.FC = () => {
                       setSelectedUser(u);
                       setDialogOpen(true);
                     }}
+                    secondaryAction={
+                      <IconButton edge="end" aria-label="Gerenciar permissões">
+                        <AdminIcon />
+                      </IconButton>
+                    }
                   >
                     <ListItemAvatar>
                       <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={48} level={u.level} />
@@ -211,11 +215,6 @@ export const UserManagementScreen: React.FC = () => {
                       }
                       secondary={`${u.email} • ${u.gamesPlayed} jogos`}
                     />
-                    <ListItemSecondaryAction>
-                      <IconButton edge="end" aria-label="Gerenciar permissões">
-                        <AdminIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
                   </ListItem>
                 </Box>
               ))}

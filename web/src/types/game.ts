@@ -210,12 +210,12 @@ export interface Game {
   updatedAt?: Date;
 }
 
-export const STATUS_CONFIG: Record<GameStatus, { label: string; color: string; bgColor: string }> = {
-  SCHEDULED: { label: 'Aberto', color: '#4CAF50', bgColor: '#E8F5E9' },
-  CONFIRMED: { label: 'Fechado', color: '#2196F3', bgColor: '#E3F2FD' },
-  LIVE: { label: 'Ao Vivo', color: '#F44336', bgColor: '#FFEBEE' },
-  FINISHED: { label: 'Finalizado', color: '#9E9E9E', bgColor: '#F5F5F5' },
-  CANCELLED: { label: 'Cancelado', color: '#9E9E9E', bgColor: '#FAFAFA' },
+export const STATUS_CONFIG: Record<GameStatus, { label: string; color: string }> = {
+  SCHEDULED: { label: 'Aberto', color: '#4CAF50' },
+  CONFIRMED: { label: 'Fechado', color: '#2196F3' },
+  LIVE: { label: 'Ao Vivo', color: '#F44336' },
+  FINISHED: { label: 'Finalizado', color: '#9E9E9E' },
+  CANCELLED: { label: 'Cancelado', color: '#9E9E9E' },
 };
 
 export const FIELD_TYPE_LABELS: Record<FieldType, string> = {

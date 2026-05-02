@@ -10,11 +10,11 @@ import {
   Fab,
   useTheme,
 } from '@mui/material';
+import { ErrorAlert } from '../../components/common/ErrorAlert';
 import {
   ArrowBack as BackIcon,
   Add as AddIcon,
   SportsSoccer as SoccerIcon,
-  FilterList as FilterIcon,
 } from '@mui/icons-material';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -33,22 +33,35 @@ export const GamesScreen: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
+    setError(null);
+    setLoading(true);
+
     const gamesRef = collection(db, 'games');
     const q = query(gamesRef, orderBy('date', 'desc'));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const gamesData = snapshot.docs.map((doc) => ({
-        ...snakeToCamel<Game>(doc.data()),
-        id: doc.id,
-      }));
-      setGames(gamesData);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const gamesData = snapshot.docs.map((doc) => ({
+          ...snakeToCamel<Game>(doc.data()),
+          id: doc.id,
+        }));
+        setGames(gamesData);
+        setError(null);
+        setLoading(false);
+      },
+      () => {
+        setError('Erro ao carregar jogos. Tente novamente.');
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
-  }, []);
+  }, [retryCount]);
 
   const getStatusFilter = (): GameStatus | null => {
     switch (tabValue) {
@@ -85,9 +98,6 @@ export const GamesScreen: React.FC = () => {
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             Jogos
           </Typography>
-          <IconButton aria-label="Filtrar jogos">
-            <FilterIcon />
-          </IconButton>
         </Box>
         <Tabs
           value={tabValue}
@@ -105,7 +115,9 @@ export const GamesScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
-        {loading ? (
+        {error ? (
+          <ErrorAlert message={error} onRetry={() => setRetryCount(c => c + 1)} />
+        ) : loading ? (
           <LoadingState shimmerCount={8} itemType="GAME" />
         ) : filteredGames.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 8 }}>

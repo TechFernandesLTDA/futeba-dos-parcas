@@ -11,12 +11,12 @@ import {
   Button,
   useTheme,
   alpha,
+  lighten,
 } from '@mui/material';
 import {
   LocationOn as LocationIcon,
   AccessTime as TimeIcon,
   People as PeopleIcon,
-  SportsSoccer as SoccerIcon,
   NavigateNext as NextIcon,
 } from '@mui/icons-material';
 import { Game, STATUS_CONFIG, FIELD_TYPE_LABELS } from '../../types/game';
@@ -40,9 +40,12 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
   showActions = false,
 }) => {
   const theme = useTheme();
-  const statusConfig = STATUS_CONFIG[game.status];
-  const progress = (game.playersCount / game.maxPlayers) * 100;
-  const isFull = game.playersCount >= game.maxPlayers;
+  const playersCount = Number(game.playersCount || 0);
+  const maxPlayers = Number(game.maxPlayers || 0);
+  const dailyPrice = Number(game.dailyPrice || 0);
+  const progress = maxPlayers > 0 ? Math.min(100, (playersCount / maxPlayers) * 100) : 0;
+  const isFull = maxPlayers > 0 && playersCount >= maxPlayers;
+  const fieldTypeLabel = game.fieldType ? FIELD_TYPE_LABELS[game.fieldType] || game.fieldType : 'Campo';
 
   return (
     <Card
@@ -62,18 +65,9 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
           <Box sx={{ flex: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <StatusChip status={game.status} config={STATUS_CONFIG} />
               <Chip
-                label={statusConfig.label}
-                size="small"
-                sx={{
-                  backgroundColor: statusConfig.bgColor,
-                  color: statusConfig.color,
-                  fontWeight: 600,
-                  fontSize: '0.7rem',
-                }}
-              />
-              <Chip
-                label={FIELD_TYPE_LABELS[game.fieldType] || game.fieldType}
+                label={fieldTypeLabel}
                 size="small"
                 variant="outlined"
                 sx={{ fontSize: '0.7rem' }}
@@ -111,12 +105,12 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                 fontWeight={500}
                 color={isFull ? 'error' : 'text.primary'}
               >
-                {game.playersCount}/{game.maxPlayers} jogadores
+                {playersCount}/{maxPlayers} jogadores
               </Typography>
             </Box>
-            {game.dailyPrice > 0 && (
+            {dailyPrice > 0 && (
               <Typography variant="body2" fontWeight={600} color="primary">
-                R$ {game.dailyPrice.toFixed(2)}
+                R$ {dailyPrice.toFixed(2)}
               </Typography>
             )}
           </Box>
@@ -203,16 +197,16 @@ export const GameCardSkeleton: React.FC = () => {
 
 export const StatusChip: React.FC<{
   status: string;
-  config: Record<string, { label: string; color: string; bgColor?: string }>;
+  config: Record<string, { label: string; color: string }>;
 }> = React.memo(({ status, config }) => {
-  const statusConfig = config[status] || { label: status, color: '#9E9E9E', bgColor: '#F5F5F5' };
+  const statusConfig = config[status] || { label: status, color: '#9E9E9E' };
 
   return (
     <Chip
       label={statusConfig.label}
       size="small"
       sx={{
-        backgroundColor: statusConfig.bgColor || alpha(statusConfig.color, 0.1),
+        backgroundColor: (theme) => alpha(theme.palette.mode === 'dark' ? lighten(statusConfig.color, 0.3) : statusConfig.color, 0.12),
         color: statusConfig.color,
         fontWeight: 600,
         fontSize: '0.75rem',
@@ -227,6 +221,7 @@ export const PlayerAvatar: React.FC<{
   size?: number;
   level?: number;
 }> = React.memo(({ name, photoUrl, size = 40, level }) => {
+  const theme = useTheme();
   const initial = name?.charAt(0)?.toUpperCase() || '?';
 
   return (
@@ -256,10 +251,10 @@ export const PlayerAvatar: React.FC<{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '2px solid white',
+            border: `2px solid ${theme.palette.primary.contrastText}`,
           }}
         >
-          <Typography variant="caption" fontWeight={700} color="white" sx={{ fontSize: size * 0.25 }}>
+          <Typography variant="caption" fontWeight={700} color="primary.contrastText" sx={{ fontSize: size * 0.25 }}>
             {level}
           </Typography>
         </Box>
@@ -279,45 +274,6 @@ export const ShimmerLoading: React.FC<{ count?: number; type?: 'card' | 'list' }
           {type === 'card' ? <GameCardSkeleton /> : <Skeleton variant="text" height={60} />}
         </Box>
       ))}
-    </Box>
-  );
-};
-
-export const EmptyState: React.FC<{
-  icon?: React.ReactNode;
-  title: string;
-  description?: string;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-}> = ({ icon, title, description, action }) => {
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 8,
-        px: 4,
-        textAlign: 'center',
-      }}
-    >
-      {icon || <SoccerIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />}
-      <Typography variant="h6" color="text.secondary" gutterBottom>
-        {title}
-      </Typography>
-      {description && (
-        <Typography variant="body2" color="text.disabled" sx={{ mb: 2, maxWidth: 300 }}>
-          {description}
-        </Typography>
-      )}
-      {action && (
-        <Button variant="contained" onClick={action.onClick}>
-          {action.label}
-        </Button>
-      )}
     </Box>
   );
 };

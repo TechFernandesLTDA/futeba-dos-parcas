@@ -11,7 +11,6 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
   Chip,
   Divider,
   useTheme,
@@ -196,15 +195,7 @@ export const InvitePlayersScreen: React.FC = () => {
               {searchResults.map((result, index) => (
                 <Box key={result.id}>
                   {index > 0 && <Divider />}
-                  <ListItem>
-                    <ListItemAvatar>
-                      <PlayerAvatar name={result.name} photoUrl={result.photoUrl} size={40} />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={result.name}
-                      secondary={result.email}
-                    />
-                    <ListItemSecondaryAction>
+                  <ListItem secondaryAction={
                       <IconButton
                         edge="end"
                         onClick={() => handleInvite(result)}
@@ -217,7 +208,14 @@ export const InvitePlayersScreen: React.FC = () => {
                           <PersonAddIcon color="primary" />
                         )}
                       </IconButton>
-                    </ListItemSecondaryAction>
+                    }>
+                    <ListItemAvatar>
+                      <PlayerAvatar name={result.name} photoUrl={result.photoUrl} size={40} />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={result.name}
+                      secondary={result.email}
+                    />
                   </ListItem>
                 </Box>
               ))}

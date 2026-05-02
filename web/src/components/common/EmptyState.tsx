@@ -1,8 +1,9 @@
 import React from 'react';
 import { Box, Typography, Button, SxProps, Theme } from '@mui/material';
+import { SportsSoccer as SportsSoccerIcon } from '@mui/icons-material';
 
 interface EmptyStateProps {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   title: string;
   description?: string;
   actionLabel?: string;
@@ -33,7 +34,7 @@ export const EmptyState = React.memo(function EmptyState({
       aria-label={title}
     >
       <Box sx={{ mb: 2, '& > *': { fontSize: 64, color: 'text.disabled' } }}>
-        {icon}
+        {icon || <SportsSoccerIcon sx={{ fontSize: 64, color: 'text.disabled' }} />}
       </Box>
       <Typography variant="h6" color="text.secondary">
         {title}

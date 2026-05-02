@@ -1,17 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
   Typography,
-  Card,
-  CardContent,
   IconButton,
   TextField,
   InputAdornment,
   Avatar,
   Chip,
-  Skeleton,
   useTheme,
   alpha,
   List,
@@ -30,113 +27,27 @@ import {
   Groups as GroupsIcon,
   Sports as SportsIcon,
 } from '@mui/icons-material';
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '../../services/firebase';
-import { snakeToCamel } from '../../utils/firestoreHelpers';
-import { useAuth } from '../../contexts/AuthContext';
-import { LoadingState, PlayerAvatar } from '../../components/common/GameCard';
-import { formatGameDate } from '../../utils/dateFormatters';
-import { createLogger } from '../../utils/logger';
-import { getLevelForXp } from '../../types/gamification';
+import { LoadingState } from '../../components/common/GameCard';
+import { useSearch, SearchResult } from '../../hooks/useSearch';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
-const logger = createLogger('GlobalSearchScreen');
-
-interface SearchResult {
-  id: string;
-  type: 'user' | 'group' | 'game' | 'location';
-  name: string;
-  subtitle: string;
-  photoUrl?: string;
-}
+const TAB_TO_TYPE: Record<number, 'all' | 'users' | 'groups' | 'games' | 'locations'> = {
+  0: 'all',
+  1: 'users',
+  2: 'groups',
+  3: 'games',
+};
 
 export const GlobalSearchScreen: React.FC = () => {
   useDocumentTitle('Busca');
   const navigate = useNavigate();
   const theme = useTheme();
-  const { user } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
   const [tabValue, setTabValue] = useState(0);
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      setResults([]);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const allResults: SearchResult[] = [];
-
-      if (tabValue === 0 || tabValue === 1) {
-        const usersRef = collection(db, 'users');
-        const usersQ = query(
-          usersRef,
-          where('name', '>=', searchQuery),
-          where('name', '<=', searchQuery + '\uf8ff'),
-          limit(10)
-        );
-        const usersSnap = await getDocs(usersQ);
-        usersSnap.docs.forEach((d) => {
-          const data = snakeToCamel(d.data()) as Record<string, any>;
-          allResults.push({
-            id: d.id,
-            type: 'user',
-            name: data.name || 'Jogador',
-            subtitle: `Nível ${getLevelForXp(data.experiencePoints ?? 0)}`,
-            photoUrl: data.photoUrl,
-          });
-        });
-      }
-
-      if (tabValue === 0 || tabValue === 2) {
-        const groupsRef = collection(db, 'groups');
-        const groupsQ = query(
-          groupsRef,
-          where('name', '>=', searchQuery),
-          where('name', '<=', searchQuery + '\uf8ff'),
-          limit(10)
-        );
-        const groupsSnap = await getDocs(groupsQ);
-        groupsSnap.docs.forEach((d) => {
-          const data = snakeToCamel(d.data()) as Record<string, any>;
-          allResults.push({
-            id: d.id,
-            type: 'group',
-            name: data.name || 'Grupo',
-            subtitle: `${data.memberCount || 0} membros`,
-            photoUrl: data.photoUrl,
-          });
-        });
-      }
-
-      if (tabValue === 0 || tabValue === 3) {
-        const gamesRef = collection(db, 'games');
-        const gamesQ = query(gamesRef, orderBy('date', 'desc'), limit(20));
-        const gamesSnap = await getDocs(gamesQ);
-        gamesSnap.docs.forEach((d) => {
-          const data = snakeToCamel(d.data()) as Record<string, any>;
-          if (data.locationName?.toLowerCase().includes(searchQuery.toLowerCase())) {
-            allResults.push({
-              id: d.id,
-              type: 'game',
-              name: data.locationName || 'Jogo',
-              subtitle: formatGameDate(data.date),
-            });
-          }
-        });
-      }
-
-      setResults(allResults);
-    } catch (error) {
-      logger.error('Error searching:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const searchType = useMemo(() => TAB_TO_TYPE[tabValue] ?? 'all', [tabValue]);
+  const { results, loading } = useSearch(searchQuery, searchType);
 
   const handleResultClick = (result: SearchResult) => {
     switch (result.type) {
@@ -211,7 +122,6 @@ export const GlobalSearchScreen: React.FC = () => {
             placeholder="Buscar jogadores, grupos, jogos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">

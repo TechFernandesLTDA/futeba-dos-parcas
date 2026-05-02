@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import {
@@ -21,23 +20,16 @@ import {
   ArrowBack as BackIcon,
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
-  Notifications as NotificationsIcon,
-  Language as LanguageIcon,
   Storage as StorageIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
 import { useThemeContext } from '../../contexts/ThemeContext';
 
 export const ThemeSettingsScreen: React.FC = () => {
   useDocumentTitle('Tema');
   const navigate = useNavigate();
   const theme = useTheme();
-  useAuth();
   const { mode, toggleTheme } = useThemeContext();
-
-  const [notifications, setNotifications] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(true);
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -74,38 +66,6 @@ export const ThemeSettingsScreen: React.FC = () => {
               <Switch
                 checked={mode === 'dark'}
                 onChange={toggleTheme}
-              />
-            </ListItem>
-          </List>
-        </Card>
-
-        <Card sx={{ mb: 2 }}>
-          <List disablePadding>
-            <ListItem>
-              <ListItemIcon>
-                <NotificationsIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary="Notificações Push"
-                secondary="Receber notificações no navegador"
-              />
-              <Switch
-                checked={notifications}
-                onChange={(e) => setNotifications(e.target.checked)}
-              />
-            </ListItem>
-            <Divider />
-            <ListItem>
-              <ListItemIcon>
-                <LanguageIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary="Notificações por Email"
-                secondary="Receber atualizações por email"
-              />
-              <Switch
-                checked={emailNotifications}
-                onChange={(e) => setEmailNotifications(e.target.checked)}
               />
             </ListItem>
           </List>

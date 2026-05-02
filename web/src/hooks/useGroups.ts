@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   collection,
   doc,
@@ -129,7 +129,7 @@ export function useGroups() {
   return { groups, loading, error };
 }
 
-export function useGroupDetail(groupId: string | null) {
+export function useGroupDetail(groupId: string | null, retryCount?: number) {
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,6 +140,9 @@ export function useGroupDetail(groupId: string | null) {
       setLoading(false);
       return;
     }
+
+    setLoading(true);
+    setError(null);
 
     const groupRef = doc(db, 'groups', groupId);
     const membersRef = collection(db, 'groups', groupId, 'members');
@@ -182,7 +185,7 @@ export function useGroupDetail(groupId: string | null) {
       unsubscribeGroup();
       unsubscribeMembers();
     };
-  }, [groupId]);
+  }, [groupId, retryCount]);
 
   return { group, members, loading, error };
 }

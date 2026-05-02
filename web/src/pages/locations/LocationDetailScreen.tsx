@@ -30,6 +30,7 @@ import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebas
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
+import { ErrorAlert } from '../../components/common/ErrorAlert';
 import { Location } from '../../types/location';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -54,11 +55,15 @@ export const LocationDetailScreen: React.FC = () => {
   const [location, setLocation] = useState<Location | null>(null);
   const [reviews, setReviews] = useState<LocationReview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (!locationId) return;
 
     const fetchLocation = async () => {
+      setError(null);
+      setLoading(true);
       try {
         const locDoc = await getDoc(doc(db, 'locations', locationId));
         if (locDoc.exists()) {
@@ -79,16 +84,28 @@ export const LocationDetailScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching location:', error);
+        setError('Erro ao carregar local. Tente novamente.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchLocation();
-  }, [locationId]);
+  }, [locationId, retryCount]);
 
   if (loading) {
     return <LoadingState shimmerCount={5} itemType="CARD" />;
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 2 }}>
+        <ErrorAlert message={error} onRetry={() => setRetryCount(c => c + 1)} />
+        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
+          Voltar
+        </Button>
+      </Container>
+    );
   }
 
   if (!location) {

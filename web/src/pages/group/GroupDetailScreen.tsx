@@ -41,12 +41,14 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useGroupDetail, useInvitePlayers } from '../../hooks/useGroups';
+import { ErrorAlert } from '../../components/common/ErrorAlert';
 import { useGames } from '../../hooks/useGames';
 import { softDeleteGroup } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { GroupRole } from '../../types/group';
-import { PlayerAvatar, EmptyState, ShimmerLoading } from '../../components/common/GameCard';
+import { PlayerAvatar, ShimmerLoading } from '../../components/common/GameCard';
+import { EmptyState } from '../../components/common/EmptyState';
 import { GameCard } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
@@ -76,7 +78,8 @@ export const GroupDetailScreen: React.FC = () => {
   const { currentUser } = useAuth();
   const { showSuccess, showError } = useToast();
 
-  const { group, members, loading, error } = useGroupDetail(groupId || null);
+  const [retryCount, setRetryCount] = useState(0);
+  const { group, members, loading, error } = useGroupDetail(groupId || null, retryCount);
   const { games, loading: gamesLoading } = useGames({ groupId: groupId || undefined, limitCount: 5 });
   const { generateInviteCode, loading: inviteLoading } = useInvitePlayers();
 
@@ -106,7 +109,7 @@ export const GroupDetailScreen: React.FC = () => {
     try {
       await navigator.clipboard.writeText(link);
       showSuccess('Link copiado!');
-    } catch (err) {
+    } catch {
       showError('Erro ao copiar link');
     }
   };
@@ -150,7 +153,7 @@ export const GroupDetailScreen: React.FC = () => {
   if (error || !group) {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Alert severity="error">{error || 'Grupo não encontrado'}</Alert>
+        <ErrorAlert message={error || 'Grupo não encontrado'} onRetry={() => setRetryCount(c => c + 1)} />
         <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
           Voltar
         </Button>
@@ -293,10 +296,8 @@ export const GroupDetailScreen: React.FC = () => {
                 icon={<SoccerIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
                 title="Nenhum jogo"
                 description="O grupo ainda não tem jogos agendados"
-                action={{
-                  label: 'Criar Jogo',
-                  onClick: () => navigate(`/game/create?groupId=${groupId}`),
-                }}
+                actionLabel="Criar Jogo"
+                onAction={() => navigate(`/game/create?groupId=${groupId}`)}
               />
             ) : (
               <Box sx={{ p: 2 }}>

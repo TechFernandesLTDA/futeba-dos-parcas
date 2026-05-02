@@ -35,7 +35,7 @@ import {
   Add as AddIcon,
   Timer as TimerIcon,
 } from '@mui/icons-material';
-import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -177,7 +177,7 @@ export const LiveGameScreen: React.FC = () => {
       unsubscribeEvents();
       unsubscribeConfirmations();
     };
-  }, [gameId]);
+  }, [gameId, showError]);
 
   useEffect(() => {
     if (isRunning && score?.startedAt) {
@@ -255,8 +255,9 @@ export const LiveGameScreen: React.FC = () => {
         status: 'LIVE',
         updated_at: serverTimestamp(),
       });
-    } catch (err: any) {
-      showError(err.message);
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      showError(e.message || 'Erro ao iniciar jogo');
     } finally {
       setActionLoading(false);
     }
@@ -275,7 +276,7 @@ export const LiveGameScreen: React.FC = () => {
     return (
       <Container maxWidth="sm" sx={{ py: 4 }}>
         <Alert severity="error">{error || 'Jogo não encontrado'}</Alert>
-        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
+        <Button startIcon={<BackIcon />} onClick={() => navigate('/')} sx={{ mt: 2 }}>
           Voltar
         </Button>
       </Container>

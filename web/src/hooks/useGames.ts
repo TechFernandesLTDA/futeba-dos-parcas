@@ -123,7 +123,7 @@ export function useGames(filters?: {
   return { games, loading, error };
 }
 
-export function useGameDetail(gameId: string | null) {
+export function useGameDetail(gameId: string | null, retryCount?: number) {
   const [game, setGame] = useState<Game | null>(null);
   const [confirmations, setConfirmations] = useState<GameConfirmation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,6 +134,9 @@ export function useGameDetail(gameId: string | null) {
       setLoading(false);
       return;
     }
+
+    setLoading(true);
+    setError(null);
 
     const gameRef = doc(db, 'games', gameId);
     // Usar coleção raiz 'confirmations' (igual ao Android)
@@ -182,7 +185,7 @@ export function useGameDetail(gameId: string | null) {
       unsubscribeGame();
       unsubscribeConfirmations();
     };
-  }, [gameId]);
+  }, [gameId, retryCount]);
 
   return { game, confirmations, loading, error };
 }
