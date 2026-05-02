@@ -132,8 +132,9 @@ export const onUserCreate = auth
             .collection("users")
             .doc(userId)
             .create(newUserDoc);
-        } catch (createError: any) {
-          if (createError.code === 6) {
+        } catch (createError: unknown) {
+          const err = createError as { code?: number };
+          if (err.code === 6) {
             logger.info(
               "[USER_MGMT] User " +
               `${userId} already exists` +
