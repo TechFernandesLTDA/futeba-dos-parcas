@@ -63,12 +63,6 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedFields);
     }
 
-    // PERF_001 P0 #1: Verifica se usuario pode editar XP
-    // Bloqueia FIELD_OWNER de editar experiencePoints (apenas Cloud Functions via Admin SDK)
-    function canEditExperiencePoints() {
-      return isAdmin();
-    }
-
     // ============================================
     // PERF_001: CUSTOM CLAIMS - FASE 2 COMPLETA + P0 OTIMIZACOES
     // ============================================
@@ -130,11 +124,6 @@ service cloud.firestore {
     // isAdmin() - Usa APENAS Custom Claims (0 Firestore reads)
     function isAdmin() {
       return isAuthenticated() && request.auth.token.role == 'ADMIN';
-    }
-
-    // isFieldOwner() - Verifica Custom Claims para FIELD_OWNER
-    function isFieldOwner() {
-      return isAuthenticated() && request.auth.token.role == 'FIELD_OWNER';
     }
 
     // Verifica se o usuario e um jogador confirmado no jogo (C-002 fix)
@@ -223,21 +212,6 @@ service cloud.firestore {
       return rating == null || (rating >= 0.0 && rating <= 5.0);
     }
 
-    // Valida league rating no range 0.0 - 100.0
-    function isValidLeagueRating(rating) {
-      return rating == null || (rating >= 0.0 && rating <= 100.0);
-    }
-
-    // Valida level no range 0 - 10
-    function isValidLevel(level) {
-      return level == null || (level >= 0 && level <= 10);
-    }
-
-    // Valida valor positivo (> 0)
-    function isPositiveNumber(value) {
-      return value is number && value > 0;
-    }
-
     // Valida valor nao-negativo (>= 0)
     function isNonNegativeNumber(value) {
       return value is number && value >= 0;
@@ -309,12 +283,6 @@ service cloud.firestore {
     // A funcao abaixo e um placeholder que pode ser usada
     // em conjunto com documentos de rate limit em Cloud Functions.
     // ============================================
-
-    // Verifica se o timestamp no documento corresponde ao request.time
-    // Util para garantir que created_at/updated_at sao definidos corretamente
-    function hasValidTimestamp(field) {
-      return request.resource.data[field] == request.time;
-    }
 
     // NOTA: Rate limiting real é aplicado por Cloud Functions + App Check.
     // Esta função foi removida pois sempre retornava true e induzia falsa sensação de segurança.
@@ -778,6 +746,14 @@ service cloud.firestore {
           let loc = getParentLocation();
           return loc != null &&
                  (!('deleted_at' in loc.data) || loc.data.deleted_at == null || isAdmin());
+        }
+
+        // Valida dados da quadra
+        function hasValidFieldData() {
+          let data = request.resource.data;
+          return
+            isValidName(data.name) &&
+            data.location_id == locationId;
         }
 
         // Read: usuarios autenticados podem ler quadras (se parent visivel)
