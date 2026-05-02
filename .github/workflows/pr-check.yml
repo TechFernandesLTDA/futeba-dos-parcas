@@ -110,7 +110,7 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Lint
-        run: npm run lint
+        run: npx eslint . --ext ts,tsx
 
       - name: Typecheck & Build
         run: npm run build
