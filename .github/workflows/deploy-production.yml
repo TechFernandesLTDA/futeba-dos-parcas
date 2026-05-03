@@ -13,6 +13,7 @@ jobs:
   deploy-production:
     name: Build & Deploy to Play Store
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 60
 
     steps:
       - name: Checkout code

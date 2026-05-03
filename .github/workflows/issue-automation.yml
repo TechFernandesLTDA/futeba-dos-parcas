@@ -8,9 +8,15 @@ permissions:
   issues: write
   contents: read
 
+# Uma automacao por issue de cada vez
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   auto-label:
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 10
     name: Auto-label Issues
     steps:
       - name: Auto-label Bug Reports
@@ -118,6 +124,7 @@ jobs:
 
   auto-comment:
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 10
     name: Auto-comment on Critical Bugs
     steps:
       - name: Comment on Critical Bugs
@@ -144,6 +151,7 @@ jobs:
 
   auto-project:
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 10
     name: Add to Project Board
     steps:
       - name: Add Bug to Backlog

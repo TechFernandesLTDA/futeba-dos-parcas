@@ -3,14 +3,36 @@ name: iOS Build & Test
 on:
   push:
     branches: [ master, feature/*, release/* ]
+    paths:
+      - 'shared/**'
+      - 'composeApp/**'
+      - 'iosApp/**'
+      - 'gradle/**'
+      - '*.gradle*'
+      - 'gradle.properties'
+      - '.github/workflows/ios-build.yml'
   pull_request:
     branches: [ master ]
+    paths:
+      - 'shared/**'
+      - 'composeApp/**'
+      - 'iosApp/**'
+      - 'gradle/**'
+      - '*.gradle*'
+      - 'gradle.properties'
+      - '.github/workflows/ios-build.yml'
   workflow_dispatch:
+
+# Cancela execucoes anteriores do mesmo branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   kmp-shared-tests:
     name: KMP Shared Unit Tests
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -45,6 +67,7 @@ jobs:
   build-shared-framework:
     name: Build Shared KMP Framework
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 40
     needs: kmp-shared-tests
     steps:
       - name: Checkout code
@@ -82,6 +105,7 @@ jobs:
   build-ios-app:
     name: Build iOS App
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 60
     needs: build-shared-framework
     steps:
       - name: Checkout code
@@ -137,6 +161,7 @@ jobs:
   notify:
     name: Notify Build Status
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 5
     needs: [kmp-shared-tests, build-shared-framework, build-ios-app]
     if: always()
     steps:

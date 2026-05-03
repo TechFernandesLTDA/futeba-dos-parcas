@@ -12,6 +12,7 @@ on:
 jobs:
   bump-version:
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 15
     permissions:
       contents: write  # Para criar tags e commits
 
