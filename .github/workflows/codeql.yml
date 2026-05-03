@@ -31,8 +31,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # build-mode: none para Kotlin (suportado desde 2024).
+          # Manual mode falha em macOS ARM64: tracer libtrace.dylib e x86_64-only
+          # e nao injeta em Gradle/Kotlin daemon que roda ARM64 native.
           - language: java-kotlin
-            build-mode: manual
+            build-mode: none
           - language: javascript-typescript
             build-mode: none
 
@@ -54,44 +57,6 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
-
-      - if: matrix.build-mode == 'manual'
-        name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - if: matrix.build-mode == 'manual'
-        name: Create local.properties
-        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-
-      - if: matrix.build-mode == 'manual'
-        name: Create google-services.json placeholder
-        run: |
-          mkdir -p app
-          cat > app/google-services.json << 'GSEOF'
-          {
-            "project_info": {
-              "project_number": "000000000000",
-              "project_id": "placeholder",
-              "storage_bucket": "placeholder.appspot.com"
-            },
-            "client": [{
-              "client_info": {
-                "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
-                "android_client_info": { "package_name": "com.futebadosparcas" }
-              },
-              "api_key": [{ "current_key": "placeholder" }]
-            }]
-          }
-          GSEOF
-
-      - if: matrix.build-mode == 'manual'
-        name: Build with Gradle
-        # --rerun-tasks: forca recompilacao mesmo com cache up-to-date.
-        # CodeQL precisa traçar o build em tempo real; tasks SKIPPED produzem
-        # "no source code seen during build" e falham a analise.
-        env:
-          JAVA_HOME: /Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
-        run: ./gradlew compileDebugKotlin --rerun-tasks --no-build-cache
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
