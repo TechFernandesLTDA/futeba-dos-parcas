@@ -105,8 +105,8 @@ Para inspecionar/editar:
 ```bash
 cat ~/actions-runner/.env
 # Edite se necessario, depois:
-sudo ~/actions-runner/svc.sh stop
-sudo ~/actions-runner/svc.sh start
+~/actions-runner/svc.sh stop
+~/actions-runner/svc.sh start
 ```
 
 Se mudar JDK, mover SDK ou instalar nova versao, **atualize esse arquivo e reinicie o servico** - caso contrario builds Android quebram com `sdk.dir=` vazio.
@@ -122,7 +122,7 @@ Se mudar JDK, mover SDK ou instalar nova versao, **atualize esse arquivo e reini
 Localmente:
 ```bash
 cd ~/actions-runner
-sudo ./svc.sh status
+./svc.sh status
 ```
 
 ---
@@ -133,9 +133,9 @@ sudo ./svc.sh status
 
 ```bash
 cd ~/actions-runner
-sudo ./svc.sh stop
-sudo ./svc.sh start
-sudo ./svc.sh status
+./svc.sh stop
+./svc.sh start
+./svc.sh status
 ```
 
 ### Logs em tempo real
@@ -206,7 +206,7 @@ cd ~/actions-runner
   --token <novo-token> \
   --labels self-hosted,macOS,ARM64 \
   --unattended
-sudo ./svc.sh stop && sudo ./svc.sh start
+./svc.sh stop && ./svc.sh start
 ```
 
 ### Caches inflam o disco
@@ -215,12 +215,12 @@ Self-hosted nao limpa entre runs. `_work/_actions`, `_work/_tool`, `~/.gradle`, 
 
 ```bash
 cd ~/actions-runner
-sudo ./svc.sh stop
+./svc.sh stop
 rm -rf _work/_actions/_temp _work/<repo-owner>/<repo>/<repo>/build
 # Gradle:
 rm -rf ~/.gradle/caches/transforms-*
 # Restart:
-sudo ./svc.sh start
+./svc.sh start
 ```
 
 ### local.properties stale ou sdk.dir vazio
@@ -236,8 +236,8 @@ cat ~/actions-runner/.env | grep ANDROID
 # 2. Se vazio, edite e reinicie
 echo "ANDROID_SDK_ROOT=$HOME/Library/Android/sdk" >> ~/actions-runner/.env
 echo "ANDROID_HOME=$HOME/Library/Android/sdk" >> ~/actions-runner/.env
-sudo ~/actions-runner/svc.sh stop
-sudo ~/actions-runner/svc.sh start
+~/actions-runner/svc.sh stop
+~/actions-runner/svc.sh start
 
 # 3. Verifique caminho do SDK
 ls $HOME/Library/Android/sdk/platforms/  # deve ter android-35
