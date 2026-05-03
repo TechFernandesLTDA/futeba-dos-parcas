@@ -11,9 +11,10 @@ on:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    # Self-hosted Mac (Apple Silicon). CodeQL suporta Darwin ARM64
-    # (action v3+). Para forcar github-hosted, defina vars.RUNNER_LABELS.
-    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    # GitHub-hosted runner: evita conflito de JAVA_HOME no self-hosted ARM64
+    # (erro -86: spawn Unknown system error com actions/setup-java@v4).
+    # Exceção justificada à migração self-hosted — CodeQL usa poucos minutos/mês.
+    runs-on: ubuntu-latest
     timeout-minutes: 360
     permissions:
       security-events: write
