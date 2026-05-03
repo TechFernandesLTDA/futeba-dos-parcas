@@ -24,7 +24,8 @@ export * from './PlayerCard';
 export * from './HeadToHead';
 
 // Pagamentos e Vaquinhas
-export * from './Payment';
+// PaymentStatus já exportado por GameConfirmation; re-exportar Payment exceto PaymentStatus
+export { Payment } from './Payment';
 export * from './Crowdfunding';
 export * from './CrowdfundingContribution';
 
