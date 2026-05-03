@@ -2,10 +2,16 @@
   "devDependencies": {
     "@commitlint/cli": "^20.4.4",
     "@commitlint/config-conventional": "^20.4.4",
-    "firebase-admin": "^10.3.0",
+    "firebase-admin": "^13.8.0",
     "husky": "^9.1.7"
   },
   "scripts": {
     "prepare": "husky"
+  },
+  "overrides": {
+    "uuid": ">=14.0.0",
+    "gaxios": ">=7.1.4",
+    "@tootallnate/once": ">=3.0.1",
+    "retry-request": ">=8.0.2"
   }
 }
