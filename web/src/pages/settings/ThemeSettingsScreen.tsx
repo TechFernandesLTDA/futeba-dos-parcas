@@ -14,6 +14,8 @@ import {
   ListItemText,
   Divider,
   Switch,
+  ToggleButton,
+  ToggleButtonGroup,
   useTheme,
   Chip,
 } from '@mui/material';
@@ -21,6 +23,7 @@ import {
   ArrowBack as BackIcon,
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
+  BrightnessAuto as SystemIcon,
   Notifications as NotificationsIcon,
   Language as LanguageIcon,
   Storage as StorageIcon,
@@ -34,7 +37,8 @@ export const ThemeSettingsScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   useAuth();
-  const { mode, toggleTheme } = useThemeContext();
+  // toggleTheme não é mais usado — setMode expõe controle preciso dos 3 modos
+  const { mode, setMode } = useThemeContext();
 
   const [notifications, setNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -61,20 +65,59 @@ export const ThemeSettingsScreen: React.FC = () => {
       </Box>
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
+        {/* Seletor de tema com 3 opções: claro, escuro, sistema.
+            Substituímos o Switch binário que estava acoplado ao toggleTheme
+            (ciclo light→dark→system), causando dessincronização entre estado
+            exibido e tema aplicado. ToggleButtonGroup + setMode resolve isso
+            de forma direta e sem ambiguidade. */}
         <Card sx={{ mb: 2 }}>
           <List disablePadding>
             <ListItem>
               <ListItemIcon>
-                {mode === 'dark' ? <DarkModeIcon /> : <LightModeIcon />}
+                {mode === 'dark' ? (
+                  <DarkModeIcon />
+                ) : mode === 'light' ? (
+                  <LightModeIcon />
+                ) : (
+                  <SystemIcon />
+                )}
               </ListItemIcon>
               <ListItemText
-                primary="Tema Escuro"
-                secondary="Ativar modo escuro"
+                primary="Tema"
+                secondary={
+                  mode === 'dark'
+                    ? 'Modo escuro'
+                    : mode === 'light'
+                    ? 'Modo claro'
+                    : 'Automático (sistema)'
+                }
               />
-              <Switch
-                checked={mode === 'dark'}
-                onChange={toggleTheme}
-              />
+            </ListItem>
+            <ListItem sx={{ pt: 0, pb: 2 }}>
+              <ToggleButtonGroup
+                value={mode}
+                exclusive
+                onChange={(_event, newMode) => {
+                  // Ignora clique no botão já selecionado (newMode seria null)
+                  if (newMode !== null) setMode(newMode);
+                }}
+                aria-label="Seleção de tema"
+                fullWidth
+                size="small"
+              >
+                <ToggleButton value="light" aria-label="Tema claro">
+                  <LightModeIcon sx={{ mr: 0.5 }} fontSize="small" />
+                  Claro
+                </ToggleButton>
+                <ToggleButton value="system" aria-label="Tema do sistema">
+                  <SystemIcon sx={{ mr: 0.5 }} fontSize="small" />
+                  Sistema
+                </ToggleButton>
+                <ToggleButton value="dark" aria-label="Tema escuro">
+                  <DarkModeIcon sx={{ mr: 0.5 }} fontSize="small" />
+                  Escuro
+                </ToggleButton>
+              </ToggleButtonGroup>
             </ListItem>
           </List>
         </Card>

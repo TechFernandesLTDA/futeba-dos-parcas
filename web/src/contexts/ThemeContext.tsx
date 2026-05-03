@@ -18,7 +18,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return (saved as ThemeMode) || 'system';
   });
 
-  const [isDark, setIsDark] = useState(false);
+  // Inicializa isDark de forma síncrona para evitar flash na primeira renderização.
+  // Sem esse lazy initializer, o tema light sempre pisca antes de aplicar o dark
+  // salvo, pois o useEffect só roda após a montagem do componente.
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    const saved = localStorage.getItem('themeMode') as ThemeMode | null;
+    if (saved === 'dark') return true;
+    if (saved === 'light') return false;
+    // Modo 'system' (ou nenhuma preferência salva): respeita prefers-color-scheme
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
