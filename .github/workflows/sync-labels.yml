@@ -7,9 +7,15 @@ on:
     paths:
       - .github/labels.yml
 
+# Cancela sync anterior se novo push chegar
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sync:
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: micnncim/action-label-syncer@v1

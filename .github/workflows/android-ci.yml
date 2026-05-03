@@ -58,14 +58,10 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
-      - name: Grant execute permission
-        run: chmod +x gradlew
-
-      - name: Create local.properties
-        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-
-      - name: Create google-services.json placeholder
+      - name: Setup environment
         run: |
+          chmod +x gradlew
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           mkdir -p app
           cat > app/google-services.json << 'GSEOF'
           {
@@ -117,14 +113,10 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
-      - name: Grant execute permission
-        run: chmod +x gradlew
-
-      - name: Create local.properties
-        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-
-      - name: Create google-services.json placeholder
+      - name: Setup environment
         run: |
+          chmod +x gradlew
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           mkdir -p app
           cat > app/google-services.json << 'GSEOF'
           {
@@ -184,14 +176,10 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
-      - name: Grant execute permission
-        run: chmod +x gradlew
-
-      - name: Create local.properties
-        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-
-      - name: Create google-services.json placeholder
+      - name: Setup environment
         run: |
+          chmod +x gradlew
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           mkdir -p app
           cat > app/google-services.json << 'GSEOF'
           {
@@ -253,14 +241,10 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
-      - name: Grant execute permission
-        run: chmod +x gradlew
-
-      - name: Create local.properties
-        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-
-      - name: Create google-services.json placeholder
+      - name: Setup environment
         run: |
+          chmod +x gradlew
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           mkdir -p app
           cat > app/google-services.json << 'GSEOF'
           {
