@@ -11,7 +11,9 @@ on:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    runs-on: ubuntu-latest
+    # Self-hosted Mac (Apple Silicon). CodeQL suporta Darwin ARM64
+    # (action v3+). Para forcar github-hosted, defina vars.RUNNER_LABELS.
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 360
     permissions:
       security-events: write
