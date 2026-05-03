@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { appConfig } from '../config';
 
 export interface JwtPayload {
@@ -8,9 +8,12 @@ export interface JwtPayload {
 
 export class JwtUtil {
   static generateToken(payload: JwtPayload): string {
-    return jwt.sign(payload, appConfig.jwt.secret, {
-      expiresIn: appConfig.jwt.expiration,
-    });
+    // expiresIn aceita number (segundos) ou string (ex: "7d", "1h"); cast necessário
+    // pois @types/jsonwebtoken usa tipo literal StringValue ao invés de string
+    const options: SignOptions = {
+      expiresIn: appConfig.jwt.expiration as SignOptions['expiresIn'],
+    };
+    return jwt.sign(payload, appConfig.jwt.secret, options);
   }
 
   static verifyToken(token: string): JwtPayload {
