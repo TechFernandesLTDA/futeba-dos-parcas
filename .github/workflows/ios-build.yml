@@ -107,9 +107,9 @@ jobs:
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 60
     needs: build-shared-framework
-    # Skip se iosApp ainda não tem xcodeproj real (CMP Phase 4 planned per CLAUDE.md).
-    # Atualmente só `project.pbxproj.template` existe; xcodeproj só após Phase 4.
-    if: hashFiles('iosApp/iosApp.xcworkspace/contents.xcworkspacedata') != ''
+    # Skip ate Phase 4 (xcodeproj real). Habilitar via Repo Settings > Vars:
+    # IOS_PHASE_4_ENABLED=true. Default skipa pq iosApp/ so tem template.
+    if: vars.IOS_PHASE_4_ENABLED == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
