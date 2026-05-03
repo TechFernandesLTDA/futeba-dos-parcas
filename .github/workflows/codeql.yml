@@ -31,10 +31,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Kotlin em macOS ARM64: tracer manual e x86_64-only (incompat).
-          # autobuild roda heuristica Kotlin que extrai source sem libtrace.
-          - language: java-kotlin
-            build-mode: autobuild
+          # Java/Kotlin desabilitado em macOS ARM64. Tres modos testados:
+          # 1. manual: libtrace.dylib e x86_64-only, nao injeta em JDK ARM64
+          # 2. none: extrator Kotlin nao processa source files
+          # 3. autobuild: falha em deps wasm (composeApp:binaryen)
+          # Reabilitar requer JDK x86_64 + Rosetta OU runner Linux.
+          # Decisao registrada em specs/DECISIONS.md (2026-05-03).
           - language: javascript-typescript
             build-mode: none
 

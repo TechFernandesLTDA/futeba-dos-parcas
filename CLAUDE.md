@@ -533,7 +533,7 @@ Compose Multiplatform migration tracked in `specs/CMP_MULTIPLATFORM_MIGRATION.md
 
 - **KMP Framework build**: Sempre falha em Linux runners (requer macOS) - **ignorar**
 - **Notify Build Status**: Depende do KMP Framework - falha em cascata - **ignorar**
-- **CodeQL**: Pode falhar por timeout em PRs grandes - re-run manual resolve
+- **CodeQL**: Apenas JavaScript/TypeScript analisado em macOS ARM64. Java/Kotlin desabilitado por incompat arquitetural do tracer (libtrace.dylib x86_64-only, JDK runner ARM64-only). Decisão registrada em `specs/DECISIONS.md` (2026-05-03)
 - **Build iOS App**: `skipping` em PRs que não tocam `:shared` - esperado
 
 ### CI/CD Workflows (`.github/workflows/`)
