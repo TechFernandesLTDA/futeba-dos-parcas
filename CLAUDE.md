@@ -93,6 +93,28 @@ firebase deploy --only functions           # Deploy
 # NOTE: New test files that use callable functions need:
 # jest.mock("../src/middleware/rate-limiter")
 # See functions/test/ for 12 existing test suites
+
+# Backend REST API (in /backend, Express + TypeORM + PostgreSQL — separate from Cloud Functions)
+cd backend && npm install                  # Install deps
+npm run dev                                # Start dev server (ts-node-dev, hot reload)
+npm run build                              # Compile TypeScript → dist/
+npm start                                  # Run compiled server
+npm run migration:generate -- src/migrations/<Name>  # Generate TypeORM migration
+npm run migration:run                      # Apply pending migrations
+npm run migration:revert                   # Rollback last migration
+
+# iOS App (CocoaPods + KMP framework consumer)
+cd iosApp && ./build_shared.sh             # Build shared KMP framework first
+cd iosApp && pod install                   # Install CocoaPods deps
+# Open iosApp/iosApp.xcworkspace in Xcode to build/run
+# See iosApp/SETUP.md for first-time setup
+
+# Fastlane (Android release automation)
+cd fastlane && fastlane test               # Run unit tests
+fastlane build_debug                       # Debug APK
+fastlane build_release                     # Release APK
+fastlane build_aab                         # AAB for Play Store
+fastlane beta                              # Deploy to Firebase App Distribution
 ```
 
 ### Key Files
@@ -112,6 +134,16 @@ firebase deploy --only functions           # Deploy
 | Modern UI components | `app/.../ui/components/modern/` (ShimmerLoading, ErrorState, etc.) |
 | Shared KMP module | `shared/commonMain/` (cross-platform domain logic) |
 | Project context (LLM) | `.claude/PROJECT_CONTEXT.md` (contexto consolidado para AIs) |
+| Repo facts non-obvious | `AGENTS.md` (atalhos para agentes — Firebase setup, build quirks) |
+| Quick start guide | `QUICK_START.md` |
+| Contributing guide | `CONTRIBUTING.md` |
+| Security policy | `SECURITY.md` |
+| Changelog | `CHANGELOG.md` |
+| Backend REST API | `backend/` (Express + TypeORM + PostgreSQL — `backend/ARCHITECTURE.md`) |
+| iOS app scaffold | `iosApp/` (CocoaPods + `build_shared.sh`, see `iosApp/SETUP.md`) |
+| Fastlane lanes | `fastlane/Fastfile` (test, build_debug, build_release, build_aab, beta) |
+| Commit lint config | `commitlint.config.js` (Conventional Commits enforced) |
+| Context generator | `context.yaml` (CTX config for LLM context bundles) |
 
 ---
 
@@ -169,6 +201,9 @@ The project uses a multi-module setup:
 - **`:baselineprofile`** - Baseline profiles for performance optimization
 - **`web/`** - React web application (React 18 + TypeScript + MUI 5 + Vite 5)
 - **`backend/`** - REST API + WebSocket server (Express.js + TypeORM + PostgreSQL) - separate from Cloud Functions
+- **`iosApp/`** - iOS app scaffold (CocoaPods, consumes KMP framework via `build_shared.sh`)
+- **`functions/`** - Firebase Cloud Functions v2 (Node 20, TypeScript, 12 Jest test suites)
+- **`fastlane/`** - Android release automation (Firebase App Distribution beta + Play Store)
 
 ### Architecture Layers
 
