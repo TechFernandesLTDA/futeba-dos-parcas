@@ -51,7 +51,7 @@ jobs:
           echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon
+        run: ./gradlew assembleRelease
 
       - name: Upload APK to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1

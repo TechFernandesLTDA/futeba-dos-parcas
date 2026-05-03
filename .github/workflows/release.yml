@@ -56,10 +56,10 @@ jobs:
           GSEOF
 
       - name: Build Release AAB
-        run: ./gradlew bundleRelease --no-daemon
+        run: ./gradlew bundleRelease
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon
+        run: ./gradlew assembleRelease
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4

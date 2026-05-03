@@ -81,7 +81,7 @@ jobs:
           GSEOF
 
       - name: Run Lint
-        run: ./gradlew lint --no-daemon
+        run: ./gradlew lint
 
       - name: Upload Lint Report
         if: always()
@@ -95,6 +95,8 @@ jobs:
 
   detekt:
     name: Detekt Static Analysis
+    # Pulado em PRs: pr-check.yml ja roda detekt como fast feedback
+    if: github.event_name != 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 20
 
@@ -137,7 +139,7 @@ jobs:
 
       # Detekt usa baseline (detekt-baseline.xml) para ignorar violacoes pre-existentes
       - name: Run Detekt
-        run: ./gradlew detekt --no-daemon
+        run: ./gradlew detekt
 
       - name: Upload Detekt SARIF to GitHub Security
         if: always()
@@ -158,6 +160,8 @@ jobs:
 
   test:
     name: Unit Tests
+    # Pulado em PRs: pr-check.yml ja roda unit tests como fast feedback
+    if: github.event_name != 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 30
 
@@ -199,7 +203,7 @@ jobs:
           GSEOF
 
       - name: Run Unit Tests
-        run: ./gradlew :app:testDebugUnitTest --no-daemon
+        run: ./gradlew :app:testDebugUnitTest
 
       - name: Upload Test Results
         if: always()
@@ -224,7 +228,9 @@ jobs:
     name: Build Debug APK
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 40
+    # detekt e test sao skipped em PRs (cobertos por pr-check.yml); build aguarda apenas lint em PRs
     needs: [ lint, detekt, test ]
+    if: always() && needs.lint.result == 'success' && (needs.detekt.result == 'success' || needs.detekt.result == 'skipped') && (needs.test.result == 'success' || needs.test.result == 'skipped')
 
     steps:
       - name: Checkout code
@@ -264,7 +270,7 @@ jobs:
           GSEOF
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
