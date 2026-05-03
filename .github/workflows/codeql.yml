@@ -31,11 +31,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # build-mode: none para Kotlin (suportado desde 2024).
-          # Manual mode falha em macOS ARM64: tracer libtrace.dylib e x86_64-only
-          # e nao injeta em Gradle/Kotlin daemon que roda ARM64 native.
+          # Kotlin em macOS ARM64: tracer manual e x86_64-only (incompat).
+          # autobuild roda heuristica Kotlin que extrai source sem libtrace.
           - language: java-kotlin
-            build-mode: none
+            build-mode: autobuild
           - language: javascript-typescript
             build-mode: none
 
