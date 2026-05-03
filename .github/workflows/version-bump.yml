@@ -47,15 +47,26 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add app/build.gradle.kts
-          git commit -m "chore: bump version to ${{ steps.bump.outputs.version }} [skip ci]"
+          TAG="v${{ steps.bump.outputs.version }}"
 
-          git tag "v${{ steps.bump.outputs.version }}"
-
-          git push origin master --tags
+          # Idempotência: se a tag já existe (local ou remoto), pula tag/release
+          # mas ainda commita o bump pra manter build.gradle.kts em sync.
+          if git rev-parse "$TAG" >/dev/null 2>&1 || \
+             git ls-remote --tags origin "refs/tags/$TAG" | grep -q "$TAG"; then
+            echo "::warning::Tag $TAG já existe — pulando tag/push de tag (commitando bump apenas)"
+            git add app/build.gradle.kts
+            git commit -m "chore: bump version to ${{ steps.bump.outputs.version }} [skip ci]" || echo "Nada a commitar"
+            git push origin master || true
+            echo "tag_skipped=true" >> $GITHUB_OUTPUT
+          else
+            git add app/build.gradle.kts
+            git commit -m "chore: bump version to ${{ steps.bump.outputs.version }} [skip ci]"
+            git tag "$TAG"
+            git push origin master --tags
+          fi
 
       - name: Create GitHub Release
-        if: steps.bump.outputs.changed == 'true'
+        if: steps.bump.outputs.changed == 'true' && steps.bump.outputs.tag_skipped != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.bump.outputs.version }}
