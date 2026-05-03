@@ -22,7 +22,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.Date
 
 /**
  * Testes unitarios para NotificationsViewModel.
@@ -393,11 +392,11 @@ class NotificationsViewModelTest {
     ) = AppNotification(
         id = id,
         userId = "user1",
-        type = type.name,
+        type = type,
         title = "Test",
         message = "Test message",
         read = false,
-        createdAtRaw = Date(),
+        createdAt = System.currentTimeMillis(),
         referenceId = referenceId
     )
 }
