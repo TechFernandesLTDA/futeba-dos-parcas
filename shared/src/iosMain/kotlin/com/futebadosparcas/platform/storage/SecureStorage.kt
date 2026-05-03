@@ -1,11 +1,11 @@
 package com.futebadosparcas.platform.storage
 
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
 import platform.CoreFoundation.CFDictionaryRef
+import platform.CoreFoundation.CFTypeRefVar
 import platform.Foundation.NSData
 import platform.Foundation.NSString
 import platform.Foundation.NSUTF8StringEncoding
@@ -49,7 +49,6 @@ actual class SecureStorage actual constructor() {
         SecItemAdd(query as CFDictionaryRef, null)
     }
 
-    @OptIn(ExperimentalForeignApi::class)
     actual fun get(key: String): String? {
         val query = mapOf<Any?, Any?>(
             kSecClass to kSecClassGenericPassword,
@@ -60,13 +59,15 @@ actual class SecureStorage actual constructor() {
         )
 
         return memScoped {
-            val result = alloc<CFDictionaryRef>()
+            // CFTypeRefVar eh o equivalente a CFTypeRef* em Objective-C/Swift
+            // Necessario porque CFDictionaryRef eh um typealias para CPointer<__CFDictionary>?, nao um CVariable
+            val result = alloc<CFTypeRefVar>()
 
             @Suppress("UNCHECKED_CAST")
             val status = SecItemCopyMatching(query as CFDictionaryRef, result.ptr)
 
             if (status == errSecSuccess) {
-                val data = result.value as? NSData ?: return null
+                val data = result.value as? NSData ?: return@memScoped null
                 NSString.create(data = data, encoding = NSUTF8StringEncoding) as? String
             } else {
                 null
@@ -95,7 +96,6 @@ actual class SecureStorage actual constructor() {
         SecItemDelete(query as CFDictionaryRef)
     }
 
-    @OptIn(ExperimentalForeignApi::class)
     actual fun contains(key: String): Boolean {
         val query = mapOf<Any?, Any?>(
             kSecClass to kSecClassGenericPassword,

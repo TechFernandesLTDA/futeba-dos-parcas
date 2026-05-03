@@ -17,6 +17,13 @@ configurations.all {
 }
 
 kotlin {
+    // Opt-in global para APIs experimentais usadas por todo o sourceset
+    // Resolve a maioria dos erros de cinterop em iosMain (CoreLocation, CoreCrypto, Security framework, etc)
+    sourceSets.all {
+        languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
+        languageSettings.optIn("kotlinx.cinterop.BetaInteropApi")
+    }
+
     // Android target
     androidTarget {
         compilerOptions {

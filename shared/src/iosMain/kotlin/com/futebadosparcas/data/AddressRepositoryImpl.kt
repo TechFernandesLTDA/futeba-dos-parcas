@@ -5,6 +5,7 @@ import com.futebadosparcas.domain.repository.AddressLookupResult
 import com.futebadosparcas.domain.repository.LatLngResult
 import com.futebadosparcas.data.network.ViaCepClient
 import com.futebadosparcas.platform.logging.PlatformLogger
+import kotlinx.cinterop.useContents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import platform.CoreLocation.*
@@ -64,11 +65,11 @@ class AddressRepositoryImpl(
 
                 // Usa CLGeocoder do iOS
                 val geocoder = CLGeocoder()
-                val nsString = fullAddress as NSString
 
                 // Geocoding assincrono no iOS
                 kotlinx.coroutines.suspendCancellableCoroutine { cont ->
-                    geocoder.geocodeAddressString(nsString) { placemarks, error ->
+                    // geocodeAddressString aceita String? diretamente (interop Foundation moderno)
+                    geocoder.geocodeAddressString(fullAddress) { placemarks, error ->
                         when {
                             error != null -> {
                             PlatformLogger.e(TAG, "Erro no CLGeocoder", error as? Throwable)
@@ -77,11 +78,15 @@ class AddressRepositoryImpl(
                             }
                         }
                             !placemarks.isNullOrEmpty() -> {
-                            val placemark = placemarks.first()
+                            // Cast explicito para CLPlacemark (placemarks: List<*>)
+                            val placemark = placemarks.first() as CLPlacemark
                             val location = placemark.location
                             if (location != null) {
-                                val coordinate = location.coordinate
-                                cont.resume(Result.success(LatLngResult(coordinate.latitude, coordinate.longitude))) {
+                                // CLLocationCoordinate2D requer ExperimentalForeignApi (opt-in global)
+                                val coordinate = location.coordinate.useContents {
+                                    LatLngResult(latitude, longitude)
+                                }
+                                cont.resume(Result.success(coordinate)) {
                                     throw it
                                 }
                             } else {

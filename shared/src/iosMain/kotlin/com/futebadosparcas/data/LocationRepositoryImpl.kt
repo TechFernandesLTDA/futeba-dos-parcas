@@ -52,6 +52,20 @@ class LocationRepositoryImpl(
         }
     }
 
+    override suspend fun getLocationsPaginated(
+        pageSize: Int,
+        cursor: String?,
+        sortBy: LocationSortField
+    ): Result<PaginatedResult<Location>> {
+        return try {
+            PlatformLogger.d(TAG,"Buscando locais paginados (cursor-based, iOS): pageSize=$pageSize, sortBy=$sortBy")
+            firebaseDataSource.getLocationsPaginated(pageSize, cursor, sortBy)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG,"Erro ao buscar locais paginados", e)
+            Result.failure(e)
+        }
+    }
+
     override suspend fun deleteLocation(locationId: String): Result<Unit> {
         return try {
             PlatformLogger.d(TAG,"Deletando local (iOS): $locationId")
