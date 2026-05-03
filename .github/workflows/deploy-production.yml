@@ -12,7 +12,7 @@ on:
 jobs:
   deploy-production:
     name: Build & Deploy to Play Store
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
 
     steps:
       - name: Checkout code
@@ -40,7 +40,8 @@ jobs:
 
       - name: Decode and save keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ${{ secrets.KEYSTORE_PATH }}
+          # base64 --decode e portavel entre macOS (BSD) e Linux (GNU coreutils).
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ${{ secrets.KEYSTORE_PATH }}
 
       - name: Create google-services.json
         run: |

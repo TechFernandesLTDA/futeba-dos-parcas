@@ -12,7 +12,7 @@ on:
 jobs:
   deploy-beta:
     name: Build & Deploy Beta
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
 
     steps:
       - name: Checkout code
@@ -40,7 +40,9 @@ jobs:
 
       - name: Decode and save keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ${{ secrets.KEYSTORE_PATH }}
+          # macOS base64 usa -D, GNU usa -d. -D funciona em ambos quando
+          # disponivel; usamos --decode que e portavel para coreutils e BSD.
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ${{ secrets.KEYSTORE_PATH }}
 
       - name: Create google-services.json
         run: |

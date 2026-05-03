@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   auto-label:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     name: Auto-label Issues
     steps:
       - name: Auto-label Bug Reports
@@ -117,7 +117,7 @@ jobs:
             });
 
   auto-comment:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     name: Auto-comment on Critical Bugs
     steps:
       - name: Comment on Critical Bugs
@@ -143,7 +143,7 @@ jobs:
             });
 
   auto-project:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     name: Add to Project Board
     steps:
       - name: Add Bug to Backlog
