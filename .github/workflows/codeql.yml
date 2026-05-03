@@ -16,11 +16,11 @@ concurrency:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    # GitHub-hosted runner: evita conflito de JAVA_HOME no self-hosted ARM64
-    # (erro -86: spawn Unknown system error com actions/setup-java@v4).
-    # Exceção justificada à migração self-hosted — CodeQL usa poucos minutos/mês.
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
+    # Self-hosted Mac ARM64: requer Rosetta 2 (CodeQL CLI e x86_64 binario).
+    # JDK 17 (Temurin) ja disponivel via JAVA_HOME no runner.env.
+    # setup-java@v4 removido (causava erro -86 spawn em arm64).
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 30
     permissions:
       security-events: write
       packages: read
@@ -45,14 +45,6 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
-
-      - if: matrix.build-mode == 'manual'
-        name: Setup JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
 
       - if: matrix.build-mode == 'manual'
         name: Grant execute permission for gradlew
@@ -85,7 +77,9 @@ jobs:
 
       - if: matrix.build-mode == 'manual'
         name: Build with Gradle
-        run: ./gradlew assembleDebug
+        env:
+          JAVA_HOME: /Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
+        run: ./gradlew compileDebugKotlin
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
