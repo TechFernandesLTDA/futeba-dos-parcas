@@ -17,8 +17,8 @@ import {
   LiveGameScore,
   UserStatistics,
 } from "../models";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 // ==========================================
 // CONVERSORES FIRESTORE → TIPO
@@ -318,7 +318,7 @@ export async function fetchAllUsers(
   }
   const snaps = await Promise.all(
     chunks.map((chunk) =>
-      db.collection("users")
+      db().collection("users")
         .where(
           admin.firestore
             .FieldPath.documentId(),
@@ -376,7 +376,7 @@ export async function fetchAllStats(
   }
   const snaps = await Promise.all(
     chunks.map((chunk) =>
-      db.collection("statistics")
+      db().collection("statistics")
         .where(
           admin.firestore
             .FieldPath.documentId(),
@@ -428,7 +428,7 @@ export async function fetchAllStreaks(
   }
   const snaps = await Promise.all(
     chunks.map((chunk) =>
-      db.collection("user_streaks")
+      db().collection("user_streaks")
         .where(
           "user_id", "in", chunk
         )
@@ -512,7 +512,7 @@ export function updateRankingDeltas(
   const weekId =
     `week_${weekKey}_${uid}`;
   batch.set(
-    db.collection("ranking_deltas")
+    db().collection("ranking_deltas")
       .doc(weekId),
     {
       user_id: uid,
@@ -526,7 +526,7 @@ export function updateRankingDeltas(
   const monthId =
     `month_${monthKey}_${uid}`;
   batch.set(
-    db.collection("ranking_deltas")
+    db().collection("ranking_deltas")
       .doc(monthId),
     {
       user_id: uid,
@@ -562,7 +562,7 @@ export function updateSeasonParticipation(
     (result === "DRAW" ? 1 : 0);
 
   batch.set(
-    db.collection("season_participation")
+    db().collection("season_participation")
       .doc(partId),
     {
       user_id: uid,

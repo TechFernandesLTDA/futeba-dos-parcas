@@ -15,8 +15,8 @@ import {
   MAX_XP_PER_GAME,
   MIN_XP_PER_GAME,
 } from "../constants";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 // ==========================================
 // CONSTANTES DE VALIDAÇÃO
@@ -494,7 +494,7 @@ export async function isTransactionAlreadyProcessed(
   transactionId: string
 ): Promise<boolean> {
   try {
-    const existingLog = await db
+    const existingLog = await db()
       .collection("xp_logs")
       .where(
         "transaction_id",
@@ -595,10 +595,10 @@ export async function processXpIdempotent(
 
   // FASE 2: Processamento atômico via Transaction
   try {
-    await db.runTransaction(
+    await db().runTransaction(
       async (transaction) => {
         // 2.1: Re-verificar idempotência
-        const xpLogsRef = db
+        const xpLogsRef = db()
           .collection("xp_logs");
         const existingCheck =
           await transaction.get(
@@ -622,7 +622,7 @@ export async function processXpIdempotent(
         }
 
         // 2.2: Atualizar XP do usuário
-        const userRef = db
+        const userRef = db()
           .collection("users")
           .doc(data.userId);
         const userDoc =
@@ -797,7 +797,7 @@ export async function processXpBatch(
 
   const existingLogsSnaps = await Promise.all(
     idChunks.map((chunk) =>
-      db
+      db()
         .collection("xp_logs")
         .where("transaction_id", "in", chunk)
         .get()
@@ -856,7 +856,7 @@ export async function processXpBatch(
       i,
       i + BATCH_SIZE
     );
-    const batch = db.batch();
+    const batch = db().batch();
 
     for (const data of chunk) {
       const transactionId =
@@ -867,7 +867,7 @@ export async function processXpBatch(
 
       try {
         // User update
-        const userRef = db
+        const userRef = db()
           .collection("users")
           .doc(data.userId);
         batch.update(userRef, {
@@ -894,7 +894,7 @@ export async function processXpBatch(
         }
 
         // XP log
-        const logRef = db
+        const logRef = db()
           .collection("xp_logs")
           .doc();
         batch.set(

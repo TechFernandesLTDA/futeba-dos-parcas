@@ -31,8 +31,8 @@
 
 import * as admin from "firebase-admin";
 import "../types/firestore-count";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 interface MigrationStats {
     processed: number;
@@ -92,7 +92,7 @@ async function migrateBatch(
           }
 
           // Atualizar timestamp de migração no Firestore (opcional)
-          await db.collection("users").doc(uid).update({
+          await db().collection("users").doc(uid).update({
             claims_migrated_at: admin.firestore.FieldValue.serverTimestamp(),
           });
         } catch (err: unknown) {
@@ -107,7 +107,7 @@ async function migrateBatch(
           stats.errors++;
 
           // Registrar erro em collection de auditoria
-          await db.collection("migration_errors").add({
+          await db().collection("migration_errors").add({
             type: "CUSTOM_CLAIMS_MIGRATION",
             user_id: uid,
             error: errMsg,
@@ -136,7 +136,7 @@ export async function runMigration(): Promise<MigrationStats> {
 
   try {
     // Contar total de usuários (para progresso)
-    const countSnapshot = await db.collection("users").count().get();
+    const countSnapshot = await db().collection("users").count().get();
     stats.totalUsers = countSnapshot.data().count;
 
     console.log(`[MIGRATION] Total users to migrate: ${stats.totalUsers}`);
@@ -146,7 +146,7 @@ export async function runMigration(): Promise<MigrationStats> {
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      let query = db.collection("users").limit(500);
+      let query = db().collection("users").limit(500);
 
       if (lastDoc) {
         query = query.startAfter(lastDoc);
@@ -175,7 +175,7 @@ export async function runMigration(): Promise<MigrationStats> {
     console.log(`  - Errors: ${stats.errors}`);
 
     // Registrar conclusão da migração
-    await db.collection("migration_logs").add({
+    await db().collection("migration_logs").add({
       type: "CUSTOM_CLAIMS_MIGRATION",
       stats,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -198,10 +198,10 @@ export async function checkMigrationStatus(): Promise<{
     migratedUsers: number;
     percentComplete: number;
 }> {
-  const totalSnapshot = await db.collection("users").count().get();
+  const totalSnapshot = await db().collection("users").count().get();
   const totalUsers = totalSnapshot.data().count;
 
-  const migratedSnapshot = await db
+  const migratedSnapshot = await db()
     .collection("users")
     .where("claims_migrated_at", "!=", null)
     .count()

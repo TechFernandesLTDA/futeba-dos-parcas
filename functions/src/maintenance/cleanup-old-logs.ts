@@ -4,8 +4,8 @@ import * as admin from "firebase-admin";
 import {
   FIRESTORE_PAGINATION_LIMIT,
 } from "../constants";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 // Timeout seguro: 8 min (margem de 1 min para limite de 9)
 const SAFE_TIMEOUT_MS = 8 * 60 * 1000;
@@ -82,7 +82,7 @@ export const cleanupOldXpLogs =
 
     try {
       // Query logs older than 1 year
-      const query = db.collection("xp_logs")
+      const query = db().collection("xp_logs")
         .where("created_at", "<", cutoffDate)
         .orderBy("created_at")
         .limit(FIRESTORE_PAGINATION_LIMIT);
@@ -110,7 +110,7 @@ export const cleanupOldXpLogs =
         }
 
         // Delete in batch
-        const batch = db.batch();
+        const batch = db().batch();
         snapshot.docs.forEach((doc) => {
           batch.delete(doc.ref);
         });
@@ -140,7 +140,7 @@ export const cleanupOldXpLogs =
       }
 
       // Log metrics for monitoring
-      await db.collection("metrics").add({
+      await db().collection("metrics").add({
         type: "xp_logs_cleanup",
         timestamp: now,
         deleted_count: totalDeleted,
@@ -168,7 +168,7 @@ export const cleanupOldXpLogs =
       );
 
       // Log error for monitoring
-      await db.collection("metrics").add({
+      await db().collection("metrics").add({
         type: "xp_logs_cleanup_error",
         timestamp: now,
         error: String(error),
@@ -214,7 +214,7 @@ export const cleanupOldActivities =
     let batchCount = 0;
 
     try {
-      const query = db.collection("activities")
+      const query = db().collection("activities")
         .where("created_at", "<", cutoffDate)
         .orderBy("created_at")
         .limit(FIRESTORE_PAGINATION_LIMIT);
@@ -240,7 +240,7 @@ export const cleanupOldActivities =
           break;
         }
 
-        const batch = db.batch();
+        const batch = db().batch();
         snapshot.docs.forEach((doc) => {
           batch.delete(doc.ref);
         });
@@ -268,7 +268,7 @@ export const cleanupOldActivities =
         }
       }
 
-      await db.collection("metrics").add({
+      await db().collection("metrics").add({
         type: "activities_cleanup",
         timestamp: now,
         deleted_count: totalDeleted,
@@ -287,7 +287,7 @@ export const cleanupOldActivities =
         error
       );
 
-      await db.collection("metrics").add({
+      await db().collection("metrics").add({
         type: "activities_cleanup_error",
         timestamp: now,
         error: String(error),
@@ -334,7 +334,7 @@ export const cleanupOldNotifications =
 
     try {
       // Only delete READ notifications older than 30d
-      const query = db.collection("notifications")
+      const query = db().collection("notifications")
         .where("read", "==", true)
         .where("created_at", "<", cutoffDate)
         .orderBy("created_at")
@@ -361,7 +361,7 @@ export const cleanupOldNotifications =
           break;
         }
 
-        const batch = db.batch();
+        const batch = db().batch();
         snapshot.docs.forEach((doc) => {
           batch.delete(doc.ref);
         });
@@ -389,7 +389,7 @@ export const cleanupOldNotifications =
         }
       }
 
-      await db.collection("metrics").add({
+      await db().collection("metrics").add({
         type: "notifications_cleanup",
         timestamp: now,
         deleted_count: totalDeleted,
@@ -408,7 +408,7 @@ export const cleanupOldNotifications =
         "cleanup:", error
       );
 
-      await db.collection("metrics").add({
+      await db().collection("metrics").add({
         type: "notifications_cleanup_error",
         timestamp: now,
         error: String(error),

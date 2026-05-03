@@ -6,12 +6,12 @@ import {Storage} from "@google-cloud/storage";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs/promises";
+import {db} from "../_db";
 // sharp é carregado dinamicamente dentro dos handlers
 // para evitar cold start cost em todas as outras functions
 // (~10MB de binário nativo carregado apenas quando necessário)
 
 const storage = new Storage();
-const db = admin.firestore();
 
 /**
  * Tamanho máximo permitido para upload de imagem
@@ -210,7 +210,7 @@ export const generateProfileThumbnail =
             "https://storage.googleapis.com/" +
             `${object.bucket}/${thumbFilePath}`;
 
-          await db
+          await db()
             .collection("users")
             .doc(userId)
             .update({
@@ -231,7 +231,7 @@ export const generateProfileThumbnail =
         await fs.unlink(tempThumbPath);
 
         // Log metrics
-        await db.collection("metrics").add({
+        await db().collection("metrics").add({
           type: "thumbnail_generated",
           timestamp:
             admin.firestore.FieldValue
@@ -270,7 +270,7 @@ export const generateProfileThumbnail =
         }
 
         // Log error
-        await db.collection("metrics").add({
+        await db().collection("metrics").add({
           type: "thumbnail_error",
           timestamp:
             admin.firestore.FieldValue
@@ -407,7 +407,7 @@ export const generateGroupThumbnail =
             "https://storage.googleapis.com/" +
             `${object.bucket}/${thumbFilePath}`;
 
-          await db
+          await db()
             .collection("groups")
             .doc(groupId)
             .update({
@@ -426,7 +426,7 @@ export const generateGroupThumbnail =
         await fs.unlink(tempFilePath);
         await fs.unlink(tempThumbPath);
 
-        await db.collection("metrics").add({
+        await db().collection("metrics").add({
           type: "group_thumbnail_generated",
           timestamp:
             admin.firestore.FieldValue
@@ -463,7 +463,7 @@ export const generateGroupThumbnail =
           // Ignorar erros de cleanup
         }
 
-        await db.collection("metrics").add({
+        await db().collection("metrics").add({
           type: "group_thumbnail_error",
           timestamp:
             admin.firestore.FieldValue

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "_comment": "FUNCTIONS LOCAL COPY — kept in sync with /shared/xp-constants.json (KMP source of truth). Reason: tsc rootDir=src forbids imports outside src/. When you change values in /shared/xp-constants.json, copy them here. Consumers: functions/src/constants.ts, web/src/types/gamification.ts, web/src/utils/constants.ts, shared/src/commonMain/.../XpAction.kt, shared/src/commonMain/.../LevelTable.kt, shared/src/commonMain/.../XPCalculator.kt",
+
+  "xpActions": {
+    "_comment": "XP awarded per action in a match. These are the DEFAULT values; groups can override via GamificationSettings.",
+    "PARTICIPATION": 10,
+    "GOAL": 10,
+    "ASSIST": 7,
+    "SAVE": 8,
+    "CLEAN_SHEET": 15,
+    "WIN": 20,
+    "DRAW": 10,
+    "MVP": 30,
+    "WORST_PLAYER": -10
+  },
+
+  "streakBonuses": {
+    "_comment": "Bonus XP for consecutive game attendance. Only the highest applicable tier is awarded.",
+    "STREAK_3": 20,
+    "STREAK_5": 35,
+    "STREAK_7": 50,
+    "STREAK_10": 100
+  },
+
+  "antiCheatLimits": {
+    "_comment": "Per-game caps to prevent abuse.",
+    "MAX_GOALS_PER_GAME": 15,
+    "MAX_ASSISTS_PER_GAME": 10,
+    "MAX_SAVES_PER_GAME": 30,
+    "MAX_XP_PER_GAME": 500,
+    "MIN_XP_PER_GAME": -100
+  },
+
+  "levelTable": {
+    "_comment": "Level definitions. xpRequired is the ABSOLUTE total XP needed to reach this level. Progression: Levels 0-10 (~1.5 years playing 1x/week), Levels 11-20 (~1.5 additional years).",
+    "levels": [
+      { "level": 0,  "xpRequired": 0,      "name": "Novato",             "phrase": "Todo craque comecou assim. Bora jogar!" },
+      { "level": 1,  "xpRequired": 100,    "name": "Iniciante",          "phrase": "Primeiros passos na pelada. Continue assim!" },
+      { "level": 2,  "xpRequired": 350,    "name": "Amador",             "phrase": "Ja mostra garra em campo!" },
+      { "level": 3,  "xpRequired": 850,    "name": "Regular",            "phrase": "Presenca garantida na pelada!" },
+      { "level": 4,  "xpRequired": 1850,   "name": "Experiente",         "phrase": "Conhece cada canto do campo!" },
+      { "level": 5,  "xpRequired": 3850,   "name": "Habilidoso",         "phrase": "Dribles e passes que encantam!" },
+      { "level": 6,  "xpRequired": 7350,   "name": "Profissional",       "phrase": "Joga como se fosse pago pra isso!" },
+      { "level": 7,  "xpRequired": 12850,  "name": "Expert",             "phrase": "Domina todos os fundamentos!" },
+      { "level": 8,  "xpRequired": 20850,  "name": "Mestre",             "phrase": "Nivel de academia de futebol!" },
+      { "level": 9,  "xpRequired": 32850,  "name": "Lenda",              "phrase": "Seu nome e lembrado nas peladas!" },
+      { "level": 10, "xpRequired": 52850,  "name": "Imortal",            "phrase": "Transcendeu o futebol amador!" },
+      { "level": 11, "xpRequired": 75000,  "name": "Garrincha",          "phrase": "Alegria do Povo! Dribla ate o vento!" },
+      { "level": 12, "xpRequired": 100000, "name": "Zico",               "phrase": "O Galinho de Quintino! Craque nato!" },
+      { "level": 13, "xpRequired": 128000, "name": "Cruyff",             "phrase": "Futebol Total! Visao de jogo unica!" },
+      { "level": 14, "xpRequired": 160000, "name": "Beckham",            "phrase": "Precisao cirurgica nos passes!" },
+      { "level": 15, "xpRequired": 198000, "name": "Ronaldinho",         "phrase": "Joga bonito! O sorriso do futebol!" },
+      { "level": 16, "xpRequired": 242000, "name": "Ronaldo Fenomeno",   "phrase": "Fenomeno! Velocidade e gols!" },
+      { "level": 17, "xpRequired": 295000, "name": "Messi",              "phrase": "La Pulga! Genio da bola!" },
+      { "level": 18, "xpRequired": 360000, "name": "Cristiano Ronaldo",  "phrase": "CR7! Determinacao e excelencia!" },
+      { "level": 19, "xpRequired": 440000, "name": "Diego Maradona",     "phrase": "La Mano de Dios! Pura magia!" },
+      { "level": 20, "xpRequired": 528500, "name": "Pele",               "phrase": "O Rei do Futebol! Nivel maximo!" }
+    ],
+    "maxLevel": 20
+  }
+}

@@ -50,6 +50,7 @@ import {
   updateRankingDeltas,
   updateSeasonParticipation,
 } from "./game/helpers";
+import {db} from "./_db";
 
 // ==========================================
 // RE-EXPORTS (manter API pública intacta)
@@ -127,7 +128,6 @@ async function getNotifications(): Promise<any> { // eslint-disable-line @typesc
 }
 
 admin.initializeApp();
-const db = admin.firestore();
 
 // Limites Anti-Cheat importados de ./constants
 
@@ -191,7 +191,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
     }
 
     // 3. Validate owner exists in users collection
-    const ownerDoc = await db
+    const ownerDoc = await db()
       .collection("users")
       .doc(after.owner_id)
       .get();
@@ -221,7 +221,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
       after.status === "FINISHED"
     ) {
       const gameRef = event.data.after.ref;
-      const lockResult = await db.runTransaction(
+      const lockResult = await db().runTransaction(
         async (tx) => {
           const freshSnap = await tx.get(gameRef);
           const fresh = freshSnap.data() as
@@ -278,24 +278,24 @@ export const onGameStatusUpdate = onDocumentUpdated(
           seasonSnap,
           gameSnap,
         ] = await Promise.all([
-          db.collection("confirmations")
+          db().collection("confirmations")
             .where("game_id", "==", gameId)
             .where("status", "==", "CONFIRMED")
             .get(),
-          db.collection("teams")
+          db().collection("teams")
             .where("game_id", "==", gameId)
             .get(),
-          db.collection("live_scores")
+          db().collection("live_scores")
             .doc(gameId)
             .get(),
-          db.collection("app_settings")
+          db().collection("app_settings")
             .doc("gamification")
             .get(),
-          db.collection("seasons")
+          db().collection("seasons")
             .where("is_active", "==", true)
             .limit(1)
             .get(),
-          db.collection("games")
+          db().collection("games")
             .doc(gameId)
             .get(),
         ]);
@@ -495,7 +495,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
         // data already loaded)
         const XP_BATCH_LIMIT =
           FIRESTORE_BATCH_SAFE_LIMIT;
-        let currentBatch = db.batch();
+        let currentBatch = db().batch();
         let currentBatchOps = 0;
         const batchCommits: Promise<
           admin.firestore.WriteResult[]
@@ -520,7 +520,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
               `with ${currentBatchOps} ops, ` +
               "starting new batch"
             );
-            currentBatch = db.batch();
+            currentBatch = db().batch();
             currentBatchOps = 0;
           }
         };
@@ -795,14 +795,14 @@ export const onGameStatusUpdate = onDocumentUpdated(
                 .arrayUnion(...newMilestones);
           }
           currentBatch.update(
-            db.collection("users").doc(uid),
+            db().collection("users").doc(uid),
             userUpdate
           );
           currentBatchOps++;
 
           // 2. Update Stats
           currentBatch.set(
-            db.collection("statistics")
+            db().collection("statistics")
               .doc(uid),
             newStats,
             {merge: true}
@@ -811,7 +811,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
           // 3. Update Confirmation
           currentBatch.update(
-            db.collection("confirmations")
+            db().collection("confirmations")
               .doc(`${gameId}_${uid}`),
             {xp_earned: xp}
           );
@@ -819,7 +819,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
           // 4. Create Log
           const logRef =
-            db.collection("xp_logs").doc();
+            db().collection("xp_logs").doc();
           const log: XpLog = {
             user_id: uid,
             game_id: gameId,
@@ -933,7 +933,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
             ensureBatchCapacity(1);
             const docId =
               `${uid}_${badge}`;
-            const badgeRef = db
+            const badgeRef = db()
               .collection("user_badges")
               .doc(docId);
 
@@ -1002,7 +1002,7 @@ export const onGameStatusUpdate = onDocumentUpdated(
             generateGameFinishedActivityDirect,
           } = await import("./activities.js");
           await generateGameFinishedActivityDirect(
-            gameId, after, db
+            gameId, after, db()
           );
         } catch (e) {
           console.error(
@@ -1063,7 +1063,7 @@ export const recalculateLeagueRating =
       }
 
       // 2. Validate user exists in users
-      const userDoc = await db
+      const userDoc = await db()
         .collection("users")
         .doc(userId)
         .get();
@@ -1114,7 +1114,7 @@ export const recalculateLeagueRating =
       try {
         // Buscar últimos 10 xp_logs deste
         // usuário
-        const xpLogsSnap = await db
+        const xpLogsSnap = await db()
           .collection("xp_logs")
           .where("user_id", "==", userId)
           .orderBy("created_at", "desc")
@@ -1182,7 +1182,7 @@ export const recalculateLeagueRating =
 
         // Atualizar documento (não triggera
         // loop pois games_played não muda)
-        await db
+        await db()
           .collection("season_participation")
           .doc(partId)
           .update({
@@ -1250,7 +1250,7 @@ export const onGameDeleted = onDocumentDeleted(
     const BATCH_LIMIT = FIRESTORE_BATCH_SAFE_LIMIT;
 
     try {
-      const gameSnap = await db
+      const gameSnap = await db()
         .collection("games")
         .doc(gameId)
         .get();
@@ -1268,7 +1268,7 @@ export const onGameDeleted = onDocumentDeleted(
         .DocumentReference[] = [];
 
       // 1. Delete confirmations
-      const confirmationsSnap = await db
+      const confirmationsSnap = await db()
         .collection("confirmations")
         .where("game_id", "==", gameId)
         .limit(2000)
@@ -1283,7 +1283,7 @@ export const onGameDeleted = onDocumentDeleted(
       );
 
       // 2. Delete teams
-      const teamsSnap = await db
+      const teamsSnap = await db()
         .collection("teams")
         .where("game_id", "==", gameId)
         .limit(2000)
@@ -1298,7 +1298,7 @@ export const onGameDeleted = onDocumentDeleted(
       );
 
       // 3. Delete game_events
-      const eventsSnap = await db
+      const eventsSnap = await db()
         .collection("game_events")
         .where("game_id", "==", gameId)
         .limit(2000)
@@ -1313,7 +1313,7 @@ export const onGameDeleted = onDocumentDeleted(
       );
 
       // 4. Delete mvp_votes
-      const votesSnap = await db
+      const votesSnap = await db()
         .collection("mvp_votes")
         .where("game_id", "==", gameId)
         .limit(2000)
@@ -1329,7 +1329,7 @@ export const onGameDeleted = onDocumentDeleted(
 
       // 5. Delete live_scores
       // (document with gameId as ID)
-      const liveScoreRef = db
+      const liveScoreRef = db()
         .collection("live_scores")
         .doc(gameId);
       const liveScoreDoc =
@@ -1343,7 +1343,7 @@ export const onGameDeleted = onDocumentDeleted(
       }
 
       // 6. Delete xp_logs related to this game
-      const xpLogsSnap = await db
+      const xpLogsSnap = await db()
         .collection("xp_logs")
         .where("game_id", "==", gameId)
         .limit(2000)
@@ -1369,7 +1369,7 @@ export const onGameDeleted = onDocumentDeleted(
           const chunk = allRefs.slice(
             i, i + BATCH_LIMIT
           );
-          const batch = db.batch();
+          const batch = db().batch();
           chunk.forEach(
             (ref) => batch.delete(ref)
           );
@@ -1436,7 +1436,7 @@ export const onGroupDeleted = onDocumentDeleted(
       const allOps: BatchOp[] = [];
 
       // 1. Delete all members (subcollection)
-      const membersSnap = await db
+      const membersSnap = await db()
         .collection("groups")
         .doc(groupId)
         .collection("members")
@@ -1453,7 +1453,7 @@ export const onGroupDeleted = onDocumentDeleted(
       );
 
       // 2. Delete cashbox entries
-      const cashboxSnap = await db
+      const cashboxSnap = await db()
         .collection("groups")
         .doc(groupId)
         .collection("cashbox")
@@ -1470,7 +1470,7 @@ export const onGroupDeleted = onDocumentDeleted(
       );
 
       // 3. Delete cashbox_summary
-      const summarySnap = await db
+      const summarySnap = await db()
         .collection("groups")
         .doc(groupId)
         .collection("cashbox_summary")
@@ -1482,7 +1482,7 @@ export const onGroupDeleted = onDocumentDeleted(
       );
 
       // 4. Delete group invites
-      const invitesSnap = await db
+      const invitesSnap = await db()
         .collection("group_invites")
         .where("group_id", "==", groupId)
         .get();
@@ -1498,7 +1498,7 @@ export const onGroupDeleted = onDocumentDeleted(
       );
 
       // 5. Delete schedules
-      const schedulesSnap = await db
+      const schedulesSnap = await db()
         .collection("schedules")
         .where("group_id", "==", groupId)
         .get();
@@ -1514,7 +1514,7 @@ export const onGroupDeleted = onDocumentDeleted(
       );
 
       // 6. Update users who had this group
-      const usersWithGroup = await db
+      const usersWithGroup = await db()
         .collectionGroup("groups")
         .where(
           admin.firestore
@@ -1537,7 +1537,7 @@ export const onGroupDeleted = onDocumentDeleted(
       // 7. Mark games from this group as
       // orphaned (don't delete - preserve
       // history)
-      const gamesSnap = await db
+      const gamesSnap = await db()
         .collection("games")
         .where("group_id", "==", groupId)
         .get();
@@ -1573,7 +1573,7 @@ export const onGroupDeleted = onDocumentDeleted(
           const chunk = allOps.slice(
             i, i + BATCH_LIMIT
           );
-          const batch = db.batch();
+          const batch = db().batch();
           chunk.forEach((op) => {
             if (op.type === "delete") {
               batch.delete(op.ref);
@@ -1668,7 +1668,7 @@ export const onConfirmationWrite =
         );
 
         // Recontagem das confirmações
-        const confirmationsSnap = await db
+        const confirmationsSnap = await db()
           .collection("confirmations")
           .where("game_id", "==", gameId)
           .where("status", "==", "CONFIRMED")
@@ -1684,7 +1684,7 @@ export const onConfirmationWrite =
           ).length;
 
         // Atualizar contador no jogo
-        await db.collection("games")
+        await db().collection("games")
           .doc(gameId)
           .update({
             players_count: playersCount,
