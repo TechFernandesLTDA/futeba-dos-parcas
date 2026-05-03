@@ -2883,13 +2883,15 @@ actual class FirebaseDataSource actual constructor() {
     @OptIn(ExperimentalEncodingApi::class)
     private fun encodeCursor(documentPath: String, sortField: LocationSortField, lastValue: Any?): String {
         val cursorStr = "$documentPath|${sortField.name}|${lastValue?.toString() ?: ""}|${Clock.System.now().toEpochMilliseconds()}"
-        return Base64.encode(cursorStr.toByteArray(Charsets.UTF_8))
+        // encodeToByteArray() / decodeToString() sao KMP (Kotlin stdlib) e usam UTF-8 por padrao
+        // Charsets/String(ByteArray, Charset) sao JVM-only - quebram build iOS
+        return Base64.encode(cursorStr.encodeToByteArray())
     }
 
     @OptIn(ExperimentalEncodingApi::class)
     private fun decodeCursor(cursor: String): CursorInfo? {
         return try {
-            val decoded = String(Base64.decode(cursor), Charsets.UTF_8)
+            val decoded = Base64.decode(cursor).decodeToString()
             val parts = decoded.split("|")
             if (parts.size < 4) return null
             val timestamp = parts[3].toLongOrNull() ?: 0L

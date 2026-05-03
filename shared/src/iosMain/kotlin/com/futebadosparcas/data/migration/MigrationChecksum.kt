@@ -1,6 +1,5 @@
 package com.futebadosparcas.data.migration
 
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.usePinned
@@ -18,7 +17,6 @@ actual object MigrationChecksum {
      * @param input String para calcular o hash
      * @return Hash MD5 em formato hexadecimal (32 caracteres)
      */
-    @OptIn(ExperimentalForeignApi::class)
     actual fun md5(input: String): String {
         val data = input.encodeToByteArray()
         val digest = UByteArray(CC_MD5_DIGEST_LENGTH)
@@ -33,7 +31,8 @@ actual object MigrationChecksum {
             }
         }
 
-        return digest.joinToString("") { "%02x".format(it.toInt()) }
+        // String.format() nao existe em Kotlin/Native iOS - usar toString(16) + padStart
+        return digest.joinToString("") { it.toInt().toString(16).padStart(2, '0') }
     }
 
     /**

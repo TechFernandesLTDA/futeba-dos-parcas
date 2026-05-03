@@ -1,7 +1,9 @@
 package com.futebadosparcas.platform
 
+import kotlinx.cinterop.useContents
 import platform.CoreLocation.CLLocation
 import platform.CoreLocation.CLLocationCoordinate2DMake
+import platform.Foundation.timeIntervalSince1970
 
 /**
  * Extensões para converter entre GeoLocation e CLLocation (iOS)
@@ -11,12 +13,15 @@ import platform.CoreLocation.CLLocationCoordinate2DMake
  * Converte CLLocation para GeoLocation comum
  */
 fun CLLocation.toGeoLocation(): GeoLocation {
+    // CLLocationCoordinate2D eh um struct C - precisa de useContents para acessar campos
+    val (lat, lng) = coordinate.useContents { latitude to longitude }
     return GeoLocation(
-        latitude = coordinate.latitude,
-        longitude = coordinate.longitude,
+        latitude = lat,
+        longitude = lng,
         altitude = altitude,
         accuracy = horizontalAccuracy,
-        timestamp = timestamp.toLong()
+        // NSDate.timeIntervalSince1970 retorna Double (segundos) - converter para Long (millis)
+        timestamp = (timestamp.timeIntervalSince1970 * 1000).toLong()
     )
 }
 
