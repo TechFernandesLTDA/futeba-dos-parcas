@@ -210,8 +210,8 @@ uninstall_runner() {
   pushd "$RUNNER_DIR" >/dev/null
   if [[ -f svc.sh ]]; then
     info "Parando e removendo servico launchd..."
-    sudo ./svc.sh stop  || true
-    sudo ./svc.sh uninstall || true
+    ./svc.sh stop  || true
+    ./svc.sh uninstall || true
   fi
   if [[ -n "$TOKEN" ]]; then
     info "Removendo registro do GitHub..."
@@ -321,12 +321,12 @@ write_runner_env() {
 install_service() {
   info "Instalando como servico launchd..."
   pushd "$RUNNER_DIR" >/dev/null
-  sudo ./svc.sh install
-  sudo ./svc.sh start
+  ./svc.sh install
+  ./svc.sh start
   ok "Servico instalado e iniciado."
-  info "Status: sudo ./svc.sh status"
-  info "Stop:   sudo ./svc.sh stop"
-  info "Start:  sudo ./svc.sh start"
+  info "Status: ./svc.sh status"
+  info "Stop:   ./svc.sh stop"
+  info "Start:  ./svc.sh start"
   popd >/dev/null
 }
 
