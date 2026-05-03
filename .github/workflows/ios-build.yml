@@ -107,6 +107,9 @@ jobs:
     runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
     timeout-minutes: 60
     needs: build-shared-framework
+    # Skip se iosApp ainda não tem xcodeproj real (CMP Phase 4 planned per CLAUDE.md).
+    # Atualmente só `project.pbxproj.template` existe; xcodeproj só após Phase 4.
+    if: hashFiles('iosApp/iosApp.xcworkspace/contents.xcworkspacedata') != ''
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -171,9 +174,11 @@ jobs:
           echo "Framework Build: ${{ needs.build-shared-framework.result }}"
           echo "iOS App Build: ${{ needs.build-ios-app.result }}"
 
+          # build-ios-app pode ser 'skipped' (CMP Phase 4 não pronto) — aceita.
           if [ "${{ needs.kmp-shared-tests.result }}" == "success" ] && \
              [ "${{ needs.build-shared-framework.result }}" == "success" ] && \
-             [ "${{ needs.build-ios-app.result }}" == "success" ]; then
+             [ "${{ needs.build-ios-app.result }}" == "success" -o \
+               "${{ needs.build-ios-app.result }}" == "skipped" ]; then
             echo "iOS pipeline succeeded!"
           else
             echo "iOS pipeline had failures"
