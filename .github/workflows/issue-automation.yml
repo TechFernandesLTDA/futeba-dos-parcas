@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Auto-label Bug Reports
         if: contains(github.event.issue.title, '[BUG]')
-        uses: actions/github-script@v8
+        uses: actions/github-script@v7
         with:
           script: |
             const labels = ['bug', 'needs-triage'];
@@ -59,7 +59,7 @@ jobs:
 
       - name: Auto-label Feature Requests
         if: contains(github.event.issue.title, '[FEATURE]')
-        uses: actions/github-script@v8
+        uses: actions/github-script@v7
         with:
           script: |
             const labels = ['enhancement', 'needs-discussion'];
@@ -100,7 +100,7 @@ jobs:
 
       - name: Auto-label Improvements
         if: contains(github.event.issue.title, '[IMPROVEMENT]')
-        uses: actions/github-script@v8
+        uses: actions/github-script@v7
         with:
           script: |
             await github.rest.issues.addLabels({
@@ -112,7 +112,7 @@ jobs:
 
       - name: Auto-label Documentation
         if: contains(github.event.issue.title, '[DOCS]')
-        uses: actions/github-script@v8
+        uses: actions/github-script@v7
         with:
           script: |
             await github.rest.issues.addLabels({
@@ -129,7 +129,7 @@ jobs:
     steps:
       - name: Comment on Critical Bugs
         if: contains(github.event.issue.title, '[BUG]') && contains(github.event.issue.body, '🔴 Crítico')
-        uses: actions/github-script@v8
+        uses: actions/github-script@v7
         with:
           script: |
             await github.rest.issues.createComment({
@@ -156,7 +156,7 @@ jobs:
     steps:
       - name: Add Bug to Backlog
         if: contains(github.event.issue.title, '[BUG]')
-        uses: actions/github-script@v8
+        uses: actions/github-script@v7
         with:
           script: |
             // Adiciona comentário informando que foi adicionado ao backlog
