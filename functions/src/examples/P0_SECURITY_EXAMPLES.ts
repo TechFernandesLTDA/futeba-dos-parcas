@@ -18,8 +18,8 @@ import {
 } from "../middleware/secure-callable-wrapper";
 import {RATE_LIMITS, checkRateLimit} from "../middleware/rate-limiter";
 import * as admin from "firebase-admin";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 // ==========================================
 // EXEMPLO 1: Admin-only com App Check
@@ -59,7 +59,7 @@ export const adminSetUserRole = secureCallable(
     await admin.auth().setCustomUserClaims(uid, {role});
 
     // Sync to Firestore
-    await db.collection("users").doc(uid).update({
+    await db().collection("users").doc(uid).update({
       role,
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
     });
@@ -122,7 +122,7 @@ export const createLocation = secureCallable(
     console.log(`[LOCATION] Creating location: ${name}`);
 
     // Criar documento
-    const locationRef = await db.collection("locations").add({
+    const locationRef = await db().collection("locations").add({
       name,
       address,
       latitude,
@@ -171,14 +171,14 @@ export const confirmGameParticipation = secureCallable(
     console.log(`[GAME] Confirming ${userId} for game ${gameId}`);
 
     // Verificar se jogo existe
-    const gameDoc = await db.collection("games").doc(gameId).get();
+    const gameDoc = await db().collection("games").doc(gameId).get();
     if (!gameDoc.exists) {
       throw new HttpsError("not-found", "Game not found");
     }
 
     // Criar confirmação
     const confirmationId = `${gameId}_${userId}`;
-    await db.collection("confirmations").doc(confirmationId).set({
+    await db().collection("confirmations").doc(confirmationId).set({
       game_id: gameId,
       user_id: userId,
       status: "CONFIRMED",
@@ -206,7 +206,7 @@ export const getUserProfile = secureCallable(
   async (request) => {
     const userId = request.auth!.uid;
 
-    const userDoc = await db.collection("users").doc(userId).get();
+    const userDoc = await db().collection("users").doc(userId).get();
 
     if (!userDoc.exists) {
       throw new HttpsError("not-found", "User profile not found");
@@ -245,7 +245,7 @@ export const advancedRateLimitExample = secureCallable(
     // Rate limit variável conforme o role do usuário
     let rateLimitConfig = RATE_LIMITS.DEFAULT;
 
-    const userDoc = await db.collection("users").doc(userId).get();
+    const userDoc = await db().collection("users").doc(userId).get();
     const userRole = userDoc.data()?.role;
 
     if (userRole === "ADMIN") {
@@ -298,7 +298,7 @@ export const getPublicLeaderboard = secureCallable(
     console.log("[PUBLIC] Fetching leaderboard");
 
     // Buscar top 10 jogadores
-    const topPlayers = await db
+    const topPlayers = await db()
       .collection("rankings")
       .orderBy("rating", "desc")
       .limit(10)

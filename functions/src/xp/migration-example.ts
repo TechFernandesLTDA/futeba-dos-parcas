@@ -19,8 +19,8 @@ import {
   XpBreakdown,
   XpMetadata,
 } from "./processing";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 /** Configurações de XP do grupo (legado) */
 interface XpSettings {
@@ -53,7 +53,7 @@ interface PlayerConf {
  */
 export async function isIdempotentXpEnabled(): Promise<boolean> {
   try {
-    const settingsDoc = await db
+    const settingsDoc = await db()
       .collection("app_settings")
       .doc("xp_processing")
       .get();
@@ -251,7 +251,7 @@ export async function processXpHybrid(
     }
 
     // Processar usando código antigo (batch writes)
-    const userRef = db.collection("users").doc(params.userId);
+    const userRef = db().collection("users").doc(params.userId);
     const userUpdate: Record<string, unknown> = {
       experience_points: params.finalXp,
       level: params.newLevel,
@@ -266,7 +266,7 @@ export async function processXpHybrid(
     legacyBatch.update(userRef, userUpdate);
 
     // Criar log (sem transaction_id - código antigo)
-    const logRef = db.collection("xp_logs").doc();
+    const logRef = db().collection("xp_logs").doc();
     const log = {
       user_id: params.userId,
       game_id: params.gameId,
@@ -373,7 +373,7 @@ export async function processGameXpBatch(
       "com sistema LEGADO"
     );
 
-    const batch = db.batch();
+    const batch = db().batch();
 
     for (const player of players) {
       await processXpHybrid(player, batch);
@@ -423,7 +423,7 @@ export async function backfillTransactionIds(
 
   try {
     // Buscar logs sem transaction_id
-    const logsSnap = await db
+    const logsSnap = await db()
       .collection("xp_logs")
       .where("transaction_id", "==", null)
       .limit(batchSize)
@@ -443,7 +443,7 @@ export async function backfillTransactionIds(
     );
 
     if (!dryRun) {
-      const batch = db.batch();
+      const batch = db().batch();
 
       logsSnap.docs.forEach((doc) => {
         const data = doc.data();

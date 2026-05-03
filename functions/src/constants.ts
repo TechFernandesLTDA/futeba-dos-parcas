@@ -8,11 +8,14 @@
  * ele DEVE estar aqui.
  *
  * XP e Level Table: Fonte de verdade em shared/xp-constants.json
+ * (KMP). Para evitar tsc rootDir fora de src/, mantemos uma
+ * cópia local em src/_constants/xp-constants.json — manter sincronizada
+ * com /shared/xp-constants.json (qualquer mudança lá deve ser copiada aqui).
  */
 
-// Importa constantes de XP do arquivo JSON centralizado
-// Source of truth: shared/xp-constants.json — keep in sync
-import xpConstants from "../../shared/xp-constants.json";
+// Importa constantes de XP do arquivo JSON local
+// Mantido em sync com /shared/xp-constants.json (KMP)
+import xpConstants from "./_constants/xp-constants.json";
 
 // Re-exporta constantes de XP do JSON centralizado
 export const XP_ACTIONS = xpConstants.xpActions;

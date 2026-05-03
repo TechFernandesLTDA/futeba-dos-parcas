@@ -67,8 +67,8 @@ import {
   FIRESTORE_BATCH_SAFE_LIMIT,
   FUNCTION_REGION,
 } from "../constants";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 /**
  * Scheduled job para validacao e manutencao
@@ -111,7 +111,7 @@ export const maintainStreaksData = onSchedule(
     try {
       // FASE 1: Coleta de metricas
       // (limitado a 1000 para evitar scan)
-      const allStreaksSnap = await db
+      const allStreaksSnap = await db()
         .collection("user_streaks")
         .limit(1000)
         .get();
@@ -154,7 +154,7 @@ export const maintainStreaksData = onSchedule(
       ) {
         const chunk =
           uniqueUserIds.slice(i, i + 10);
-        const snap = await db
+        const snap = await db()
           .collection("users")
           .where(
             admin.firestore
@@ -174,7 +174,7 @@ export const maintainStreaksData = onSchedule(
         `${uniqueUserIds.length}`
       );
 
-      const batch = db.batch();
+      const batch = db().batch();
       let batchOps = 0;
 
       // FASE 2: Processar cada streak
@@ -327,7 +327,7 @@ export const maintainStreaksData = onSchedule(
       const dateKey = new Date()
         .toISOString()
         .split("T")[0];
-      await db
+      await db()
         .collection("maintenance_logs")
         .doc(`streaks_${dateKey}`)
         .set({
@@ -357,7 +357,7 @@ export const maintainStreaksData = onSchedule(
       const dateKey = new Date()
         .toISOString()
         .split("T")[0];
-      await db
+      await db()
         .collection("maintenance_logs")
         .doc(`streaks_${dateKey}`)
         .set({

@@ -26,8 +26,8 @@ import {
   checkRateLimit,
   RATE_LIMITS,
 } from "../middleware/rate-limiter";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 // ==========================================
 // INTERFACES & TYPES
@@ -170,7 +170,7 @@ export async function processXpParallel(
         i,
         i + 10
       );
-      const existingSnap = await db
+      const existingSnap = await db()
         .collection("xp_logs")
         .where("transaction_id", "in", chunk)
         .get();
@@ -438,7 +438,7 @@ async function processBatch(
   players: BatchXpRequest["playerUpdates"],
   outTransactionIds: string[]
 ): Promise<{processed: number; failed: number}> {
-  const batch = db.batch();
+  const batch = db().batch();
   let batchOps = 0;
   let processedCount = 0;
 
@@ -464,7 +464,7 @@ async function processBatch(
       outTransactionIds.push(transactionId);
 
       // Op 1: Update user XP & level
-      const userRef = db
+      const userRef = db()
         .collection("users")
         .doc(player.userId);
       batch.update(userRef, {
@@ -477,7 +477,7 @@ async function processBatch(
       batchOps++;
 
       // Op 2: Merge statistics
-      const statsRef = db
+      const statsRef = db()
         .collection("statistics")
         .doc(player.userId);
       batch.set(
@@ -496,7 +496,7 @@ async function processBatch(
       batchOps++;
 
       // Op 3: Create XP log
-      const logRef = db
+      const logRef = db()
         .collection("xp_logs")
         .doc();
       batch.set(logRef, {
@@ -620,7 +620,7 @@ isParallelTransactionProcessed(
   transactionId: string
 ): Promise<boolean> {
   try {
-    const snap = await db
+    const snap = await db()
       .collection("xp_logs")
       .where(
         "transaction_id",
@@ -778,7 +778,7 @@ export const processXpBatch =
       // 4. SECURITY VALIDATION
       // ======================================
       // Verificar que o usuário é dono do jogo
-      const gameDoc = await db
+      const gameDoc = await db()
         .collection("games")
         .doc(gameId)
         .get();
@@ -873,7 +873,7 @@ export const resetXpRateLimit =
         );
       }
 
-      const callerDoc = await db
+      const callerDoc = await db()
         .collection("users")
         .doc(request.auth.uid)
         .get();
@@ -895,7 +895,7 @@ export const resetXpRateLimit =
         `xp_process_${targetUserId}`;
 
       try {
-        await db
+        await db()
           .collection("rate_limits")
           .doc(bucketKey)
           .delete();

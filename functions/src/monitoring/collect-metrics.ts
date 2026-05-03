@@ -2,8 +2,8 @@ import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 
 import "../types/firestore-count";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 /**
  * Coleta métricas de uso da aplicação.
@@ -56,7 +56,7 @@ export const collectHourlyMetrics =
 
       for (const colName of collections) {
         try {
-          const snapshot = await db.collection(colName).count().get();
+          const snapshot = await db().collection(colName).count().get();
           counts[colName] =
             snapshot.data().count;
         } catch (error) {
@@ -76,7 +76,7 @@ export const collectHourlyMetrics =
 
       let gamesLast24h = 0;
       try {
-        const snap = await db
+        const snap = await db()
           .collection("games")
           .where(
             "created_at", ">=",
@@ -94,7 +94,7 @@ export const collectHourlyMetrics =
 
       let finishedGamesLast24h = 0;
       try {
-        const snap = await db
+        const snap = await db()
           .collection("games")
           .where("status", "==", "FINISHED")
           .where(
@@ -117,7 +117,7 @@ export const collectHourlyMetrics =
 
       let activeUsersLast7d = 0;
       try {
-        const snap = await db
+        const snap = await db()
           .collection("users")
           .where(
             "updated_at", ">=",
@@ -136,7 +136,7 @@ export const collectHourlyMetrics =
       // XP processado (últimas 24h)
       let xpLogsLast24h = 0;
       try {
-        const snap = await db
+        const snap = await db()
           .collection("xp_logs")
           .where(
             "created_at", ">=",
@@ -153,7 +153,7 @@ export const collectHourlyMetrics =
       }
 
       // Buscar métrica anterior para deltas
-      const previousMetricsSnap = await db
+      const previousMetricsSnap = await db()
         .collection("metrics")
         .where("type", "==", "hourly_snapshot")
         .orderBy("timestamp", "desc")
@@ -195,7 +195,7 @@ export const collectHourlyMetrics =
           xpLogsLast24h,
       };
 
-      await db.collection("metrics")
+      await db().collection("metrics")
         .add(metricsDoc);
 
       console.log(
@@ -223,7 +223,7 @@ export const collectHourlyMetrics =
         error
       );
 
-      await db.collection("metrics").add({
+      await db().collection("metrics").add({
         type: "metrics_error",
         timestamp: timestamp,
         error: String(error),
@@ -268,7 +268,7 @@ export const collectDailyMetrics =
 
     try {
       // Jogos criados hoje
-      const gamesCreatedToday = await db
+      const gamesCreatedToday = await db()
         .collection("games")
         .where("created_at", ">=", todayTs)
         .where("created_at", "<", tomorrowTs)
@@ -276,7 +276,7 @@ export const collectDailyMetrics =
         .get();
 
       // Jogos finalizados hoje
-      const gamesFinishedToday = await db
+      const gamesFinishedToday = await db()
         .collection("games")
         .where("status", "==", "FINISHED")
         .where("xp_processed_at", ">=", todayTs)
@@ -285,7 +285,7 @@ export const collectDailyMetrics =
         .get();
 
       // Usuários criados hoje
-      const usersCreatedToday = await db
+      const usersCreatedToday = await db()
         .collection("users")
         .where("created_at", ">=", todayTs)
         .where("created_at", "<", tomorrowTs)
@@ -293,7 +293,7 @@ export const collectDailyMetrics =
         .get();
 
       // XP processado hoje
-      const xpLogsToday = await db
+      const xpLogsToday = await db()
         .collection("xp_logs")
         .where("created_at", ">=", todayTs)
         .where("created_at", "<", tomorrowTs)
@@ -301,7 +301,7 @@ export const collectDailyMetrics =
         .get();
 
       // Grupos criados hoje
-      const groupsCreatedToday = await db
+      const groupsCreatedToday = await db()
         .collection("groups")
         .where("created_at", ">=", todayTs)
         .where("created_at", "<", tomorrowTs)
@@ -309,7 +309,7 @@ export const collectDailyMetrics =
         .get();
 
       // Notificações enviadas hoje
-      const notificationsToday = await db
+      const notificationsToday = await db()
         .collection("notifications")
         .where("created_at", ">=", todayTs)
         .where("created_at", "<", tomorrowTs)
@@ -336,7 +336,7 @@ export const collectDailyMetrics =
           notificationsToday.data().count,
       };
 
-      await db.collection("metrics")
+      await db().collection("metrics")
         .add(dailyMetrics);
 
       console.log(
@@ -360,7 +360,7 @@ export const collectDailyMetrics =
         "metrics:", error
       );
 
-      await db.collection("metrics").add({
+      await db().collection("metrics").add({
         type: "daily_metrics_error",
         timestamp: timestamp,
         error: String(error),
@@ -401,7 +401,7 @@ export const cleanupOldMetrics =
     let batchCount = 0;
 
     try {
-      const query = db.collection("metrics")
+      const query = db().collection("metrics")
         .where("timestamp", "<", cutoffDate)
         .orderBy("timestamp")
         .limit(500);
@@ -416,7 +416,7 @@ export const cleanupOldMetrics =
           break;
         }
 
-        const batch = db.batch();
+        const batch = db().batch();
         snapshot.docs.forEach((doc) => {
           batch.delete(doc.ref);
         });

@@ -5,8 +5,8 @@ import {
   FIRESTORE_BATCH_LIMIT,
   FUNCTION_REGION,
 } from "../constants";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 /**
  * Scheduled job para verificar fim de season.
@@ -31,7 +31,7 @@ export const checkSeasonEnd = onSchedule(
     // Note: Datas armazenadas como strings YYYY-MM-DD
     const todayStr = now.toISOString().split("T")[0];
 
-    const seasonsRef = db.collection("seasons");
+    const seasonsRef = db().collection("seasons");
     const snapshot = await seasonsRef
       .where("is_active", "==", true)
       .where("end_date", "<", todayStr)
@@ -69,7 +69,7 @@ export const checkSeasonEnd = onSchedule(
       return isTimeLeft;
     };
 
-    let batch = db.batch();
+    let batch = db().batch();
     let operationCount = 0;
     const BATCH_LIMIT = FIRESTORE_BATCH_LIMIT;
 
@@ -80,7 +80,7 @@ export const checkSeasonEnd = onSchedule(
           "[SEASON] Committed batch of " +
           `${operationCount} operations.`
         );
-        batch = db.batch();
+        batch = db().batch();
         operationCount = 0;
       }
     };
@@ -123,7 +123,7 @@ export const checkSeasonEnd = onSchedule(
 
       // 2. Snapshot Final Standings
       // PERF: Chunked para evitar timeout
-      const participationsSnap = await db
+      const participationsSnap = await db()
         .collection("season_participation")
         .where("season_id", "==", seasonId)
         .get();
@@ -156,7 +156,7 @@ export const checkSeasonEnd = onSchedule(
             const p = partDoc.data();
 
             // Create Final Standing Record
-            const standingRef = db
+            const standingRef = db()
               .collection("season_final_standings")
               .doc();
             batch.set(standingRef, {

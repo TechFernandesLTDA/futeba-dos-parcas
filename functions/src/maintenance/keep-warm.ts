@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 /**
  * Keep-Warm Function para Cloud Functions
@@ -133,7 +133,7 @@ async function warmCallableFunction(
     // função. Para keep-warm, a escrita Firestore
     // é suficiente pois força o container a
     // manter-se ativo.
-    await db.collection("system")
+    await db().collection("system")
       .doc("keep_warm")
       .set({
         last_ping:
@@ -189,7 +189,7 @@ async function logKeepWarmMetrics(
       (r) => r.status === "success"
     ).length;
 
-    await db.collection("metrics").add({
+    await db().collection("metrics").add({
       type: "keep_warm_cycle",
       timestamp:
         admin.firestore.FieldValue
@@ -241,7 +241,7 @@ async function logKeepWarmMetrics(
  * listeners:
  *
  * ```typescript
- * await db.collection("system")
+ * await db().collection("system")
  *   .doc("keep_warm").set({
  *     last_triggered: new Date(),
  *     target_functions: [

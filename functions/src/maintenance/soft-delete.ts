@@ -29,8 +29,8 @@ import {
 import {
   checkRateLimit,
 } from "../middleware/rate-limiter.js";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 /** Dias de retenção antes de deletar */
 const RETENTION_DAYS = 30;
@@ -89,7 +89,7 @@ export const softDeleteGame =
     }
 
     try {
-      const gameDoc = await db
+      const gameDoc = await db()
         .collection("games")
         .doc(gameId)
         .get();
@@ -232,7 +232,7 @@ export const softDeleteGroup =
 
     try {
       // Verificar permissão (admin ou owner)
-      const groupDoc = await db
+      const groupDoc = await db()
         .collection("groups")
         .doc(groupId)
         .get();
@@ -257,7 +257,7 @@ export const softDeleteGroup =
       }
 
       // Verificar se é owner do grupo
-      const memberDoc = await db
+      const memberDoc = await db()
         .collection("groups")
         .doc(groupId)
         .collection("members")
@@ -383,7 +383,7 @@ export const restoreDeletedGame =
     }
 
     try {
-      const gameDoc = await db
+      const gameDoc = await db()
         .collection("games")
         .doc(gameId)
         .get();
@@ -514,7 +514,7 @@ export const restoreDeletedGroup =
     }
 
     try {
-      const groupDoc = await db
+      const groupDoc = await db()
         .collection("groups")
         .doc(groupId)
         .get();
@@ -663,7 +663,7 @@ export const cleanupAllSoftDeleted =
     );
 
     // Registrar métricas
-    await db.collection("metrics").add({
+    await db().collection("metrics").add({
       type: "soft_delete_cleanup_unified",
       timestamp:
         admin.firestore.FieldValue

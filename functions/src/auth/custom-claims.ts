@@ -34,8 +34,8 @@ import {
   MAX_CONCURRENT_OPS,
   FUNCTION_REGION,
 } from "../constants";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 // ==========================================
 // TYPES & INTERFACES
@@ -118,7 +118,7 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
     // ==========================================
     // 4. VERIFY TARGET USER EXISTS
     // ==========================================
-    const targetUserDoc = await db
+    const targetUserDoc = await db()
       .collection("users")
       .doc(uid)
       .get();
@@ -136,7 +136,7 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
     //    (Firestore deve persistir antes do
     //     Custom Claim para manter consistência)
     // ==========================================
-    await db
+    await db()
       .collection("users")
       .doc(uid)
       .update({
@@ -167,7 +167,7 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
     // 7. AUDIT LOG
     // ==========================================
     try {
-      await db.collection("audit_logs").add({
+      await db().collection("audit_logs").add({
         type: "ROLE_CHANGE",
         target_user_id: uid,
         actor_user_id: request.auth!.uid,
@@ -304,7 +304,7 @@ export const migrateAllUsersToCustomClaims = secureCallable(
     // Rate limiting: Apenas uma migração por hora
     // para evitar abuso
     const RATE_LIMIT_MS = 60 * 60 * 1000; // 1 hora
-    const lockRef = db
+    const lockRef = db()
       .collection("system_locks")
       .doc("claims_migration");
     const lockDoc = await lockRef.get();
@@ -362,7 +362,7 @@ export const migrateAllUsersToCustomClaims = secureCallable(
       let hasMore = true;
 
       while (hasMore) {
-        let query = db
+        let query = db()
           .collection("users")
           .limit(FIRESTORE_PAGINATION_LIMIT);
 

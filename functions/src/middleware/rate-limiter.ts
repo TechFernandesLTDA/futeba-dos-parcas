@@ -16,8 +16,8 @@ import {
   HttpsError,
   CallableRequest,
 } from "firebase-functions/v2/https";
+import {db} from "../_db";
 
-const db = admin.firestore();
 
 // ==========================================
 // CONFIGURAÇÃO DE RATE LIMITS
@@ -107,13 +107,13 @@ export async function checkRateLimit(
   const keyPrefix =
     config.keyPrefix || "default";
   const bucketKey = `${keyPrefix}_${userId}`;
-  const bucketRef = db
+  const bucketRef = db()
     .collection("rate_limits")
     .doc(bucketKey);
 
   try {
     // Usar transação para atomicidade
-    const result = await db.runTransaction(
+    const result = await db().runTransaction(
       async (transaction) => {
         const bucketDoc =
           await transaction.get(bucketRef);
@@ -296,7 +296,7 @@ export async function cleanupExpiredRateLimits(
 
   try {
     // Buscar buckets expirados
-    const expiredSnap = await db
+    const expiredSnap = await db()
       .collection("rate_limits")
       .where("expires_at", "<", now)
       .limit(500) // Processar em chunks
@@ -311,7 +311,7 @@ export async function cleanupExpiredRateLimits(
     }
 
     // Deletar em batch
-    const batch = db.batch();
+    const batch = db().batch();
     expiredSnap.docs.forEach((doc) => {
       batch.delete(doc.ref);
     });
@@ -358,12 +358,12 @@ export async function checkRateLimitByIp(
 
   const now = Date.now();
   const windowStart = now - config.windowMs;
-  const bucketRef = db
+  const bucketRef = db()
     .collection("rate_limits")
     .doc(bucketKey);
 
   try {
-    const result = await db.runTransaction(
+    const result = await db().runTransaction(
       async (transaction) => {
         const bucketDoc =
           await transaction.get(bucketRef);
@@ -443,7 +443,7 @@ export async function resetUserRateLimit(
   keyPrefix = "default"
 ): Promise<void> {
   const bucketKey = `${keyPrefix}_${userId}`;
-  const bucketRef = db
+  const bucketRef = db()
     .collection("rate_limits")
     .doc(bucketKey);
 
@@ -480,7 +480,7 @@ export async function getUserRateLimitStats(
   keyPrefix = "default"
 ): Promise<RateLimitStats> {
   const bucketKey = `${keyPrefix}_${userId}`;
-  const bucketRef = db
+  const bucketRef = db()
     .collection("rate_limits")
     .doc(bucketKey);
 
