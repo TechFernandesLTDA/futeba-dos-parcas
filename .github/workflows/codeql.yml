@@ -85,7 +85,7 @@ jobs:
 
       - if: matrix.build-mode == 'manual'
         name: Build with Gradle
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
