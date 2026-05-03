@@ -19,27 +19,40 @@ plugins {
 
 // Resoluções de segurança para kotlin-js-store/wasm/yarn.lock
 // Corrige vulnerabilidades em dependências de build-time do target wasmJs
-// GHSA resolvidas: GHSA-f886 (brace-expansion), GHSA-rf6f/GHSA-25h7 (flatted),
+// Todos os pacotes abaixo são build-time only (toolchain wasmJs) — sem impacto em runtime Android.
+//
+// PR #380 (minor bumps dentro do range semver):
+//   GHSA-f886 (brace-expansion), GHSA-rf6f/GHSA-25h7 (flatted),
 //   GHSA-r4q5 (follow-redirects), GHSA-7r86/GHSA-23c5 (minimatch),
 //   GHSA-2328/GHSA-q67f/GHSA-ppp5/GHSA-5m6q (node-forge), GHSA-37ch (path-to-regexp),
 //   GHSA-3v7f/GHSA-c2c7 (picomatch), GHSA-qj8w/GHSA-5c6j (serialize-javascript),
 //   GHSA-677m (socket.io-parser), GHSA-8fgc/GHSA-38r7 (webpack)
 //
-// Não fixáveis dentro do range atual (documentado no PR):
-//   lodash@4.x (GHSA-r5fr/GHSA-f23m — sem patch em 4.x)
-//   uuid@8.x (GHSA-w5hq — fix em 9.x, seria major bump)
-//   diff@7.x (GHSA-73rr — única versão 7.x, fix em 8.x, severity baixo)
-//   webpack-dev-server@4.x (GHSA-9jgg/GHSA-4v9v — fix em 5.x, seria major bump)
+// Este PR (major bumps necessários):
+//   GHSA-r5fr/GHSA-f23m (lodash 4.17.23 → 4.18.1 — acima do range afetado <= 4.17.23)
+//   GHSA-w5hq (uuid 8.x → 14.0.0 — advisory afeta < 14.0.0)
+//   GHSA-9jgg/GHSA-4v9v (webpack-dev-server 4.x → 5.2.3 — advisory afeta <= 5.2.0)
+//   GHSA-73rr (diff 7.x → 9.0.0 — advisory afeta >= 6.0.0, < 8.0.3)
+//   GHSA-qx2v (postcss 8.5.6 → 8.5.13 — advisory afeta < 8.5.10)
+//
+// WONTFIX justificado:
+//   lodash 5.x — não existe no npm (latest estável é 4.18.1); bump 4.17.23 → 4.18.1 resolve GHSAs
 rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnPlugin> {
     rootProject.extensions.getByType<org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension>().apply {
         // brace-expansion: lockfile 1.1.12 → 1.1.14 (GHSA-f886)
         // brace-expansion@^5 (via minimatch@9) é eliminada automaticamente ao
         // atualizar minimatch@^9 para 9.0.9, que muda sua dep para brace-expansion@^2
         resolution("brace-expansion") { include("1.1.14") }
+        // diff: ReDoS via O(n^2) backtracking em diffs grandes (GHSA-73rr)
+        // advisory afeta >= 6.0.0, < 8.0.3; bump para 9.0.0 (latest estável)
+        resolution("diff") { include("9.0.0") }
         // flatted: prototype pollution e unbounded recursion DoS (GHSA-rf6f, GHSA-25h7)
         resolution("flatted") { include("3.4.2") }
         // follow-redirects: vazamento de headers de auth cross-domain (GHSA-r4q5)
         resolution("follow-redirects") { include("1.16.0") }
+        // lodash: ReDoS e template injection (GHSA-r5fr, GHSA-f23m)
+        // advisory afeta <= 4.17.23; 4.18.1 está acima do range afetado
+        resolution("lodash") { include("4.18.1") }
         // minimatch: força 9.0.9 para todos os consumers (GHSA-7r86, GHSA-23c5)
         // minimatch 9.x é retrocompatível para uso de glob em karma/webpack (build-time)
         // 9.0.9 também muda dep brace-expansion de ^5 → ^2, corrigindo GHSA-f886 em 5.x
@@ -50,12 +63,21 @@ rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmY
         resolution("path-to-regexp") { include("0.1.13") }
         // picomatch: injeção em classes POSIX e ReDoS via extglob (GHSA-3v7f, GHSA-c2c7)
         resolution("picomatch") { include("2.3.2") }
+        // postcss: injeção de newline em grid layouts (GHSA-qx2v)
+        // advisory afeta < 8.5.10; bump para 8.5.13 (latest estável)
+        resolution("postcss") { include("8.5.13") }
         // serialize-javascript: CPU exhaustion DoS e RCE via RegExp.flags (GHSA-qj8w, GHSA-5c6j)
         resolution("serialize-javascript") { include("7.0.5") }
         // socket.io-parser: attachments ilimitados levando a OOM (GHSA-677m)
         resolution("socket.io-parser") { include("4.2.6") }
+        // uuid: insegurança no gerador de números aleatórios (GHSA-w5hq)
+        // advisory afeta < 14.0.0; bump major 8.x → 14.0.0 (build-time only, sem API breaking em consumidores)
+        resolution("uuid") { include("14.0.0") }
         // webpack: bypass de allowedUris no buildHttp (GHSA-8fgc, GHSA-38r7)
         resolution("webpack") { include("5.106.2") }
+        // webpack-dev-server: DNS rebinding e SSRF (GHSA-9jgg, GHSA-4v9v)
+        // advisory afeta <= 5.2.0; major bump 4.x → 5.2.3 (build-time only)
+        resolution("webpack-dev-server") { include("5.2.3") }
     }
 }
 
