@@ -1,4 +1,4 @@
-# Session Handoff — 2026-05-03
+# Session Handoff — 2026-05-03 (atualizado pós-PR #405)
 
 Consolidação completa para próxima sessão Claude Code começar saudável.
 
@@ -6,15 +6,27 @@ Consolidação completa para próxima sessão Claude Code começar saudável.
 
 | Item | Estado |
 |------|--------|
-| **Master HEAD** | `83c33be` (#404 CodeQL self-hosted) |
+| **Master HEAD** | `a765c36` (#405 CodeQL Java drop + JS/TS only) |
 | **PRs abertos** | 0 |
 | **Issues abertas** | 0 |
 | **Hosting** | 🟢 200 OK — https://futebadosparcas.web.app |
 | **Dependabot** | 1 medium (false positive `uuid` em backend — comprovado) |
 | **Runners** | 2 online (Mac + Mac2), 6 idle dirs (~/actions-runner-3..8 sem service) |
 | **RAM livre** | 10.2 GB |
+| **Worktrees** | Limpas (apenas main repo) |
+| **Branches locais** | Apenas `master` |
+| **CodeQL** | ✅ JS/TS verde em master; Java desabilitado (decisão documentada) |
 
-## ✅ O que foi feito (21 PRs nesta sessão: #377-#404)
+## ✅ O que foi feito (22 PRs total: #377-#405)
+
+### Sessão 2026-05-03 (continuação) — PR #405
+- Code Security habilitado no repo (Team plan inclui GHAS sem custo extra)
+- node 25.9.0 instalado via brew (`/opt/homebrew/bin/node`) pra autobuild JS/TS
+- Cleanup step no workflow: `rm -rf $RUNNER_TEMP/codeql_databases` antes do init
+- Java/Kotlin removido do matrix CodeQL (incompat ARM64 documentado)
+- 3 build-modes testados (manual/none/autobuild) antes do drop final
+
+### Sessão original 2026-05-03 — 21 PRs (#377-#404)
 
 ### Segurança (Dependabot 47→1)
 - #378 root deps (firebase-admin 10→13, jsonwebtoken)
@@ -101,12 +113,17 @@ Em `~/.claude/projects/.../memory/`:
 - Autonomia ampla autorizada (incl downtime)
 - Self-hosted runners macOS pattern
 - Tente primeiro, escalate só se falhar
+- Avaliações paralelas multi-modelo (Opus + Sonnet)
+- Xcode + iOS Simulator instalados
+- **CodeQL Java desabilitado em ARM64** (novo, PR #405)
 
 ## 🚀 Próxima sessão começa com
 
 1. CLAUDE.md auto-loaded (657 linhas + sub-rules)
 2. 14 skills `futeba-*` auto-disponíveis
-3. Master limpo, hosting LIVE, alerts mínimos
-4. Pipeline 5/6 workflows green (CodeQL único pendente)
+3. Master limpo (`a765c36`), hosting LIVE, alerts mínimos
+4. **Pipeline 100% green** — CodeQL passa (só JS/TS)
+5. Worktrees + branches locais limpos
+6. Memory atualizado com limitação CodeQL ARM64
 
 Pode começar qualquer task — pedir status, criar feature (com spec), fix bug, deploy, etc.
