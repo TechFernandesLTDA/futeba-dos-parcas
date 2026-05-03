@@ -40,6 +40,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Self-hosted runner nao limpa _work/_temp entre runs.
+      # CodeQL falha com "Error while recursively deleting codeql_databases/<lang>/src"
+      # se diretorios de runs anteriores ainda existem.
+      - name: Cleanup CodeQL temp dirs (self-hosted)
+        run: |
+          rm -rf "$RUNNER_TEMP/codeql_databases" 2>/dev/null || true
+          rm -rf "$RUNNER_TEMP/codeql-runner" 2>/dev/null || true
+          echo "CodeQL temp dirs cleaned"
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
