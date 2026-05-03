@@ -391,6 +391,11 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
       remaining: 4,
       resetAt: new Date(Date.now() + 60000),
     });
+    // Restaurar mockCollectionGet após clearAllMocks.
+    // A query de confirmações (db.collection("confirmations")....get()) fora da
+    // transaction retorna undefined por padrão após clear, causando
+    // confirmationsSnap.docs → "Cannot read properties of undefined".
+    mockCollectionGet.mockResolvedValue({ empty: true, docs: [] });
   });
 
   test("deve eleger corretamente o MVP com mais votos", async () => {
@@ -402,17 +407,16 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
       { category: "MVP", voted_player_id: "playerB" },
     ];
 
-    // Mock: busca de votos (fora da transaction)
-    mockCollectionGet.mockResolvedValue({
-      empty: false,
-      docs: votes.map((v) => ({ data: () => v })),
-    });
-
-    // Mock: transaction interna
+    // Mock: transaction interna (votos lidos dentro da transaction, não fora)
     mockRunTransaction.mockImplementation(async (callback: any) => {
       let callIndex = 0;
       const responses = [
-        // jogo snapshot
+        // 1º get: votos (transaction.get(db.collection("mvp_votes").where(...)))
+        {
+          docs: votes.map((v) => ({ data: () => v })),
+          empty: false,
+        },
+        // 2º get: jogo
         {
           exists: true,
           data: () => ({
@@ -421,8 +425,6 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
             owner_id: "owner1",
           }),
         },
-        // confirmações snapshot (dentro da transaction)
-        // Retornado via db.collection().where().where().get()
       ];
 
       const mockTx = {
@@ -468,20 +470,29 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
       { category: "MVP", voted_player_id: "alpha" },
     ];
 
-    mockCollectionGet.mockResolvedValue({
-      empty: false,
-      docs: votes.map((v) => ({ data: () => v })),
-    });
-
     mockRunTransaction.mockImplementation(async (callback: any) => {
-      const mockTx = {
-        get: jest.fn().mockResolvedValue({
+      let callIndex = 0;
+      const responses = [
+        // 1º get: votos
+        {
+          docs: votes.map((v) => ({ data: () => v })),
+          empty: false,
+        },
+        // 2º get: jogo
+        {
           exists: true,
           data: () => ({
             status: "FINISHED",
             voting_status: "OPEN",
             owner_id: "owner1",
           }),
+        },
+      ];
+
+      const mockTx = {
+        get: jest.fn().mockImplementation(() => {
+          const snap = responses[callIndex++] || { exists: false, data: () => ({}) };
+          return Promise.resolve(snap);
         }),
         update: jest.fn(),
         set: jest.fn(),
@@ -512,20 +523,26 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
 
   test("deve encerrar sem vencedor quando não há votos", async () => {
     // Nenhum voto registrado
-    mockCollectionGet.mockResolvedValue({
-      empty: true,
-      docs: [],
-    });
-
     mockRunTransaction.mockImplementation(async (callback: any) => {
-      const mockTx = {
-        get: jest.fn().mockResolvedValue({
+      let callIndex = 0;
+      const responses = [
+        // 1º get: votos (vazio)
+        { docs: [], empty: true },
+        // 2º get: jogo
+        {
           exists: true,
           data: () => ({
             status: "FINISHED",
             voting_status: "OPEN",
             owner_id: "owner1",
           }),
+        },
+      ];
+
+      const mockTx = {
+        get: jest.fn().mockImplementation(() => {
+          const snap = responses[callIndex++] || { exists: false, data: () => ({}) };
+          return Promise.resolve(snap);
         }),
         update: jest.fn(),
         set: jest.fn(),
@@ -546,11 +563,13 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
   });
 
   test("deve retornar alreadyConcluded quando votação já foi encerrada", async () => {
-    mockCollectionGet.mockResolvedValue({ empty: true, docs: [] });
-
     mockRunTransaction.mockImplementation(async (callback: any) => {
-      const mockTx = {
-        get: jest.fn().mockResolvedValue({
+      let callIndex = 0;
+      const responses = [
+        // 1º get: votos (vazio — irrelevante pois voting_status=CONCLUDED)
+        { docs: [], empty: true },
+        // 2º get: jogo já concluído
+        {
           exists: true,
           data: () => ({
             status: "FINISHED",
@@ -560,6 +579,13 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
             best_gk_id: null,
             worst_player_id: "playerZ",
           }),
+        },
+      ];
+
+      const mockTx = {
+        get: jest.fn().mockImplementation(() => {
+          const snap = responses[callIndex++] || { exists: false, data: () => ({}) };
+          return Promise.resolve(snap);
         }),
         update: jest.fn(),
         set: jest.fn(),
@@ -580,17 +606,26 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
   });
 
   test("deve rejeitar quando caller não é dono nem admin", async () => {
-    mockCollectionGet.mockResolvedValue({ empty: true, docs: [] });
-
     mockRunTransaction.mockImplementation(async (callback: any) => {
-      const mockTx = {
-        get: jest.fn().mockResolvedValue({
+      let callIndex = 0;
+      const responses = [
+        // 1º get: votos (vazio)
+        { docs: [], empty: true },
+        // 2º get: jogo pertence a outro dono
+        {
           exists: true,
           data: () => ({
             status: "FINISHED",
             voting_status: "OPEN",
             owner_id: "real_owner",
           }),
+        },
+      ];
+
+      const mockTx = {
+        get: jest.fn().mockImplementation(() => {
+          const snap = responses[callIndex++] || { exists: false, data: () => ({}) };
+          return Promise.resolve(snap);
         }),
         update: jest.fn(),
       };

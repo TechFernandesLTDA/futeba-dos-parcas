@@ -10,10 +10,12 @@
 
 // Mock firebase-admin
 const mockSet = jest.fn().mockResolvedValue(undefined);
+const mockCreate = jest.fn().mockResolvedValue(undefined);
 const mockGet = jest.fn();
 const mockDoc = jest.fn().mockReturnValue({
   get: mockGet,
   set: mockSet,
+  create: mockCreate,
 });
 const mockCollection = jest.fn().mockReturnValue({
   doc: mockDoc,
@@ -90,10 +92,10 @@ describe("User Management - onUserCreate", () => {
 
     expect(mockCollection).toHaveBeenCalledWith("users");
     expect(mockDoc).toHaveBeenCalledWith("user123");
-    expect(mockSet).toHaveBeenCalledTimes(1);
+    expect(mockCreate).toHaveBeenCalledTimes(1);
 
     // Verificar campos do documento criado
-    const createdDoc = mockSet.mock.calls[0][0];
+    const createdDoc = mockCreate.mock.calls[0][0];
 
     // Campos básicos do Auth
     expect(createdDoc.id).toBe("user123");
@@ -114,7 +116,7 @@ describe("User Management - onUserCreate", () => {
 
     await capturedHandler!(mockUser);
 
-    const createdDoc = mockSet.mock.calls[0][0];
+    const createdDoc = mockCreate.mock.calls[0][0];
 
     // Perfil
     expect(createdDoc.nickname).toBeNull();
@@ -139,7 +141,7 @@ describe("User Management - onUserCreate", () => {
       photoURL: null,
     });
 
-    const createdDoc = mockSet.mock.calls[0][0];
+    const createdDoc = mockCreate.mock.calls[0][0];
 
     expect(createdDoc.striker_rating).toBe(0.0);
     expect(createdDoc.mid_rating).toBe(0.0);
@@ -157,7 +159,7 @@ describe("User Management - onUserCreate", () => {
       photoURL: null,
     });
 
-    const createdDoc = mockSet.mock.calls[0][0];
+    const createdDoc = mockCreate.mock.calls[0][0];
 
     expect(createdDoc.auto_striker_rating).toBe(0.0);
     expect(createdDoc.auto_mid_rating).toBe(0.0);
@@ -177,7 +179,7 @@ describe("User Management - onUserCreate", () => {
       photoURL: null,
     });
 
-    const createdDoc = mockSet.mock.calls[0][0];
+    const createdDoc = mockCreate.mock.calls[0][0];
 
     expect(createdDoc.preferred_field_types).toEqual(["SOCIETY"]);
     expect(createdDoc.preferred_position).toBeNull();
@@ -193,7 +195,7 @@ describe("User Management - onUserCreate", () => {
       photoURL: null,
     });
 
-    const createdDoc = mockSet.mock.calls[0][0];
+    const createdDoc = mockCreate.mock.calls[0][0];
 
     expect(createdDoc.birth_date).toBeNull();
     expect(createdDoc.gender).toBeNull();
@@ -216,7 +218,7 @@ describe("User Management - onUserCreate", () => {
       photoURL: null,
     });
 
-    const createdDoc = mockSet.mock.calls[0][0];
+    const createdDoc = mockCreate.mock.calls[0][0];
     expect(createdDoc.fcm_token).toBeNull();
   });
 
@@ -230,7 +232,7 @@ describe("User Management - onUserCreate", () => {
       photoURL: null,
     });
 
-    const createdDoc = mockSet.mock.calls[0][0];
+    const createdDoc = mockCreate.mock.calls[0][0];
     expect(createdDoc.created_at).toEqual({ _type: "ServerTimestamp" });
     expect(createdDoc.updated_at).toEqual({ _type: "ServerTimestamp" });
   });
@@ -246,7 +248,7 @@ describe("User Management - onUserCreate", () => {
       photoURL: null,
     });
 
-    expect(mockSet).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
   });
 
   test("deve tratar campos ausentes do Auth com valores padrão", async () => {
@@ -260,7 +262,7 @@ describe("User Management - onUserCreate", () => {
       photoURL: undefined,
     });
 
-    const createdDoc = mockSet.mock.calls[0][0];
+    const createdDoc = mockCreate.mock.calls[0][0];
 
     expect(createdDoc.email).toBe("");
     expect(createdDoc.name).toBe("");
@@ -269,7 +271,7 @@ describe("User Management - onUserCreate", () => {
 
   test("deve propagar erros do Firestore", async () => {
     mockGet.mockResolvedValueOnce({ exists: false });
-    mockSet.mockRejectedValueOnce(new Error("Firestore write error"));
+    mockCreate.mockRejectedValueOnce(new Error("Firestore write error"));
 
     await expect(
       capturedHandler!({
