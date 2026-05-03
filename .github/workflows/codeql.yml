@@ -86,9 +86,12 @@ jobs:
 
       - if: matrix.build-mode == 'manual'
         name: Build with Gradle
+        # --rerun-tasks: forca recompilacao mesmo com cache up-to-date.
+        # CodeQL precisa traçar o build em tempo real; tasks SKIPPED produzem
+        # "no source code seen during build" e falham a analise.
         env:
           JAVA_HOME: /Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
-        run: ./gradlew compileDebugKotlin
+        run: ./gradlew compileDebugKotlin --rerun-tasks --no-build-cache
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
