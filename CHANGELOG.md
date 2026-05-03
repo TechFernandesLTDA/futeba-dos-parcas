@@ -99,6 +99,11 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ### Removido
 - Arquivos temporários obsoletos (`build_errors*.txt`, `nul`)
 
+### Segurança
+- **PR #378**: Atualizações de dependências raiz (firebase-admin 10→13, jsonwebtoken, uuid, gaxios). Resolveu 12 alertas de segurança Dependabot (2 críticos, 1 alto, 9 moderados).
+- **PR #379**: Atualizações backend (firebase-admin 10→13, multer 1→2 com DoS fixes, typeorm 0.3.19→0.3.28, node-cron 3→4). Resolveu 15 alertas (5 críticos, 2 altos, 8 moderados; 9 restantes são false positives de npm audit).
+- **PR #380**: Resolução de dependências wasmJs via yarn overrides no build.gradle.kts. Resolveu 21 GHSAs de segurança.
+
 ### Planejado
 - [ ] Aplicar componentes modernos em telas existentes (Fase 2)
 - [ ] Animações de transição e micro-interações (Fase 3)
