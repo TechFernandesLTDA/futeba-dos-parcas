@@ -19,7 +19,7 @@ import {
   SportsSoccer as SoccerIcon,
   NavigateNext as NextIcon,
 } from '@mui/icons-material';
-import { Game, STATUS_CONFIG, FIELD_TYPE_LABELS } from '../../types/game';
+import { Game, STATUS_CONFIG, FIELD_TYPE_LABELS, getStatusChipColors } from '../../types/game';
 import { formatGameDate } from '../../utils/dateFormatters';
 
 interface GameCardProps {
@@ -40,7 +40,7 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
   showActions = false,
 }) => {
   const theme = useTheme();
-  const statusConfig = STATUS_CONFIG[game.status];
+  const statusConfig = getStatusChipColors(theme, game.status);
   const progress = (game.playersCount / game.maxPlayers) * 100;
   const isFull = game.playersCount >= game.maxPlayers;
 

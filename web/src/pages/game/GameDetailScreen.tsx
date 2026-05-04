@@ -44,8 +44,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import {
-  STATUS_CONFIG,
   PAYMENT_STATUS_CONFIG,
+  getStatusChipColors,
 } from '../../types/game';
 import { PlayerAvatar, StatusChip, ShimmerLoading, EmptyState } from '../../components/common/GameCard';
 import { formatGameDateLong } from '../../utils/dateFormatters';
@@ -173,9 +173,16 @@ export const GameDetailScreen: React.FC = () => {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Alert severity="error">{error || 'Jogo não encontrado'}</Alert>
-        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
-          Voltar
-        </Button>
+        <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+          <Button startIcon={<BackIcon />} onClick={() => navigate(-1)}>
+            Voltar
+          </Button>
+          {error && (
+            <Button variant="contained" onClick={() => window.location.reload()}>
+              Tentar novamente
+            </Button>
+          )}
+        </Box>
       </Container>
     );
   }
@@ -219,7 +226,16 @@ export const GameDetailScreen: React.FC = () => {
         <Card sx={{ mb: 2 }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <StatusChip status={game.status} config={STATUS_CONFIG} />
+              {(() => {
+                const sc = getStatusChipColors(theme, game.status);
+                return (
+                  <Chip
+                    label={sc.label}
+                    size="small"
+                    sx={{ backgroundColor: sc.bgColor, color: sc.color, fontWeight: 600, fontSize: '0.75rem' }}
+                  />
+                );
+              })()}
               {game.gameType && <Chip label={game.gameType} size="small" variant="outlined" />}
             </Box>
 

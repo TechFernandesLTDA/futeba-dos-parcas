@@ -40,6 +40,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { GroupRole } from '../../types/group';
 import { PlayerAvatar, ShimmerLoading } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
+import { pluralizeCount } from '../../utils/pluralize';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const logger = createLogger('GroupSettingsScreen');
@@ -196,7 +197,7 @@ export const GroupSettingsScreen: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                   <GroupIcon fontSize="small" color="action" />
                   <Typography variant="caption" color="text.secondary">
-                    {group.memberCount || members.length} membros
+                    {pluralizeCount(group.memberCount || members.length, 'membro', 'membros')}
                   </Typography>
                   {group.isPublic ? (
                     <Chip label="Público" size="small" variant="outlined" />
@@ -253,7 +254,7 @@ export const GroupSettingsScreen: React.FC = () => {
                           />
                         </Box>
                       }
-                      secondary={`${member.totalGames || 0} jogos`}
+                      secondary={pluralizeCount(member.totalGames || 0, 'jogo', 'jogos')}
                     />
                   </ListItem>
                   {index < members.length - 1 && <Divider />}

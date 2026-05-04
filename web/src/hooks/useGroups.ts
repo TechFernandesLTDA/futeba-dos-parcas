@@ -94,7 +94,7 @@ export function useGroups() {
   const uid = firebaseUser?.uid || user?.id;
   const queryClient = useQueryClient();
 
-  const { data: groups = [], isLoading: loading, error: queryError } = useQuery({
+  const { data: groups = [], isLoading: loading, error: queryError, refetch } = useQuery({
     queryKey: ['groups', uid],
     queryFn: () => fetchUserGroups(uid!),
     enabled: !!uid,
@@ -126,7 +126,7 @@ export function useGroups() {
 
   const error = queryError ? (queryError as Error).message : null;
 
-  return { groups, loading, error };
+  return { groups, loading, error, refetch };
 }
 
 export function useGroupDetail(groupId: string | null) {

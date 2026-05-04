@@ -276,9 +276,16 @@ export const LiveGameScreen: React.FC = () => {
     return (
       <Container maxWidth="sm" sx={{ py: 4 }}>
         <Alert severity="error">{error || 'Jogo não encontrado'}</Alert>
-        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
-          Voltar
-        </Button>
+        <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+          <Button startIcon={<BackIcon />} onClick={() => navigate(-1)}>
+            Voltar
+          </Button>
+          {error && (
+            <Button variant="contained" onClick={() => window.location.reload()}>
+              Tentar novamente
+            </Button>
+          )}
+        </Box>
       </Container>
     );
   }

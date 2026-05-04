@@ -13,6 +13,7 @@ import {
   useTheme,
   Chip,
   Alert,
+  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -31,7 +32,7 @@ export const GroupsScreen: React.FC = () => {
   const theme = useTheme();
 
   // Usa hook que consulta subcoleção users/{uid}/groups (igual ao Android)
-  const { groups, loading, error } = useGroups();
+  const { groups, loading, error, refetch } = useGroups();
 
   return (
     <Box sx={{ pb: 8 }}>
@@ -56,7 +57,15 @@ export const GroupsScreen: React.FC = () => {
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={() => refetch()}>
+                Tentar novamente
+              </Button>
+            }
+          >
             {error}
           </Alert>
         )}
