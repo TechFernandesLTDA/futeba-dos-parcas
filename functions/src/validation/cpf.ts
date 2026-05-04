@@ -2,8 +2,10 @@ import * as crypto from "crypto";
 
 /**
  * Valida CPF brasileiro pelo algoritmo de dígito verificador (mod 11).
+ * Aceita CPF com ou sem máscara. Rejeita sequências iguais.
  *
- * Aceita CPF com ou sem máscara. Rejeita sequências de dígitos iguais.
+ * @param {string | null | undefined} cpf CPF a validar.
+ * @return {boolean} true se válido, false caso contrário.
  */
 export function isValidCpf(cpf: string | null | undefined): boolean {
   if (!cpf || typeof cpf !== "string") return false;
@@ -32,18 +34,24 @@ export function isValidCpf(cpf: string | null | undefined): boolean {
 }
 
 /**
- * Strip não-dígitos.
+ * Remove caracteres não-dígito (canonicaliza CPF para storage).
+ *
+ * @param {string} cpf CPF com ou sem máscara.
+ * @return {string} Apenas dígitos do CPF.
  */
 export function stripCpf(cpf: string): string {
   return cpf.replace(/\D/g, "");
 }
 
 /**
- * Hash determinístico do CPF (SHA-256 com salt fixo do projeto).
- * Salt deve estar em Firebase Functions config (firebase functions:config:set cpf.salt=...).
+ * Hash determinístico do CPF (SHA-256 com salt do projeto).
+ * Salt deve estar em Firebase Functions secrets (CPF_SALT).
+ * NUNCA armazenar CPF em plaintext no Firestore. Usar este hash
+ * como key em cpf_index/{cpfHash}.
  *
- * NUNCA armazenar CPF em plaintext no Firestore. Usar este hash como key
- * em cpf_index/{cpfHash} para detectar duplicatas sem expor o CPF.
+ * @param {string} cpf CPF puro ou com máscara.
+ * @param {string} salt Salt secreto do projeto (CPF_SALT).
+ * @return {string} Hash SHA-256 hexadecimal (64 chars).
  */
 export function hashCpf(cpf: string, salt: string): string {
   const digits = stripCpf(cpf);
@@ -55,9 +63,13 @@ export function hashCpf(cpf: string, salt: string): string {
 
 /**
  * Mascara CPF para logs (NUNCA logar CPF puro).
+ *
+ * @param {string} cpf CPF a mascarar.
+ * @return {string} CPF mascarado (***.xxx.xxx-**).
  */
 export function maskCpf(cpf: string): string {
   const digits = stripCpf(cpf);
   if (digits.length !== 11) return "***";
-  return `***.${digits.substring(3, 6)}.${digits.substring(6, 9)}-**`;
+  return `***.${digits.substring(3, 6)}.` +
+    `${digits.substring(6, 9)}-**`;
 }

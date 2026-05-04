@@ -2,8 +2,8 @@
  * Phone + CPF verification (Fase 1: Foundation).
  *
  * Implementa callables:
- * - verifyCpf({ cpf }) — valida CPF, checa duplicate, registra users_private
- * - setUserVerified({ uid }) — seta custom claim verified=true (ADMIN-only ou self)
+ * - verifyCpf({ cpf }) — valida + duplicate check + users_private
+ * - setUserVerified({ uid }) — custom claim verified=true
  *
  * Spec: specs/SPEC_FEATURE_PHONE_CPF_VERIFICATION.md
  */
@@ -11,15 +11,20 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import {hashCpf, isValidCpf, maskCpf} from "../validation/cpf";
 
-// CPF salt deve estar em Firebase config:
-// firebase functions:config:set cpf.salt="<random-32-byte-hex>"
-// Em runtime: process.env.CPF_SALT (Firebase Functions v2)
+/**
+ * CPF salt vem de Firebase Functions secrets.
+ * Setup: firebase functions:secrets:set CPF_SALT
+ *
+ * @return {string} Salt secreto.
+ * @throws {HttpsError} Se CPF_SALT não configurado.
+ */
 function getCpfSalt(): string {
   const salt = process.env.CPF_SALT;
   if (!salt || salt.length < 16) {
     throw new HttpsError(
       "failed-precondition",
-      "CPF_SALT not configured. Run: firebase functions:secrets:set CPF_SALT",
+      "CPF_SALT not configured. " +
+        "Run: firebase functions:secrets:set CPF_SALT",
     );
   }
   return salt;
@@ -88,7 +93,8 @@ export const verifyCpf = onCall(
       ) {
         throw new HttpsError(
           "permission-denied",
-          "CPF já cadastrado nesta conta. Entre em contato com suporte para alterar.",
+          "CPF já cadastrado nesta conta. " +
+            "Entre em contato com suporte para alterar.",
         );
       }
 
