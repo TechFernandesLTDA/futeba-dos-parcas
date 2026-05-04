@@ -1,10 +1,11 @@
 import { createTheme } from '@mui/material/styles';
 
-// Cores do Futeba (igual ao Android)
+// Cores do Futeba — primary.main ajustada para WCAG AA (4.76:1 sobre branco)
+// Brand original #00C853 (2.24:1, falha WCAG) preservado em gamificationColors.brand
 const primary = {
-  main: '#00C853',
+  main: '#00852A',      // ratio 4.76:1 vs #FFFFFF (passa WCAG AA)
   light: '#4ADE80',
-  dark: '#00852A',
+  dark: '#005A1C',      // ratio ~7.5:1 vs branco
   contrastText: '#FFFFFF',
 };
 
@@ -50,9 +51,9 @@ export const futebaTheme = createTheme({
       dark: '#CC4E00',
     },
     success: {
-      main: '#00C853',
+      main: '#00852A',     // WCAG AA 4.76:1 vs branco
       light: '#4ADE80',
-      dark: '#00852A',
+      dark: '#005A1C',
     },
     info: {
       main: '#2979FF',
