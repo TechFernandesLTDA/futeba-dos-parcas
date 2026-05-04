@@ -39,6 +39,7 @@ import { doc, collection, query, where, onSnapshot, updateDoc, addDoc, getDoc, s
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { Game, GameEvent, GameEventType } from '../../types/game';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -255,8 +256,8 @@ export const LiveGameScreen: React.FC = () => {
         status: 'LIVE',
         updated_at: serverTimestamp(),
       });
-    } catch (err: any) {
-      showError(err.message);
+    } catch (err: unknown) {
+      showError(getFirestoreErrorMessage(err));
     } finally {
       setActionLoading(false);
     }
@@ -390,8 +391,11 @@ export const LiveGameScreen: React.FC = () => {
           sx={{
             position: 'fixed',
             bottom: 0,
-            left: 0,
-            right: 0,
+            left: { xs: 0, sm: '50%' },
+            right: { xs: 0, sm: 'auto' },
+            transform: { sm: 'translateX(-50%)' },
+            width: { xs: '100%', sm: 480 },
+            maxWidth: 480,
             bgcolor: 'background.paper',
             borderTop: `1px solid ${theme.palette.divider}`,
             p: 2,

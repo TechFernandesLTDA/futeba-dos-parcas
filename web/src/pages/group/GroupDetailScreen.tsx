@@ -45,6 +45,7 @@ import { useGames } from '../../hooks/useGames';
 import { softDeleteGroup } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { GroupRole } from '../../types/group';
 import { PlayerAvatar, EmptyState, ShimmerLoading } from '../../components/common/GameCard';
 import { GameCard } from '../../components/common/GameCard';
@@ -97,7 +98,7 @@ export const GroupDetailScreen: React.FC = () => {
       const code = await generateInviteCode(groupId, group.name);
       setInviteCode(code);
     } catch (err) {
-      showError((err as Error).message);
+      showError(getFirestoreErrorMessage(err));
     }
   };
 
@@ -173,7 +174,7 @@ export const GroupDetailScreen: React.FC = () => {
           <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
             <BackIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ flex: 1, ml: 1 }} noWrap>
+          <Typography component="h1" variant="h6" sx={{ flex: 1, ml: 1 }} noWrap>
             {group.name}
           </Typography>
           {isAdmin && (
@@ -342,8 +343,11 @@ export const GroupDetailScreen: React.FC = () => {
         sx={{
           position: 'fixed',
           bottom: 0,
-          left: 0,
-          right: 0,
+          left: { xs: 0, sm: '50%' },
+          right: { xs: 0, sm: 'auto' },
+          transform: { sm: 'translateX(-50%)' },
+          width: { xs: '100%', sm: 480 },
+          maxWidth: 480,
           bgcolor: 'background.paper',
           borderTop: `1px solid ${theme.palette.divider}`,
           p: 2,

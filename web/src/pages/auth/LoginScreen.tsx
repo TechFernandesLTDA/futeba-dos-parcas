@@ -110,7 +110,7 @@ export function LoginScreen() {
             >
               <SportsSoccer sx={{ fontSize: 40, color: 'white' }} />
             </Box>
-            <Typography variant="h4" fontWeight="bold" color="primary">
+            <Typography component="h1" variant="h4" fontWeight="bold" color="primary">
               Futeba dos Parças
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>

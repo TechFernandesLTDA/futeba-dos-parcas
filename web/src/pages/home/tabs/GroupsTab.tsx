@@ -236,7 +236,7 @@ export function GroupsTab() {
         sx={{
           position: 'fixed',
           bottom: 80,
-          right: 16,
+          right: { xs: 16, sm: 'calc(50% - 240px + 16px)' },
         }}
       >
         <Add />

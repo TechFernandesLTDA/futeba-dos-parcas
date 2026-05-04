@@ -371,8 +371,11 @@ export const MVPVoteScreen: React.FC = () => {
         sx={{
           position: 'fixed',
           bottom: 0,
-          left: 0,
-          right: 0,
+          left: { xs: 0, sm: '50%' },
+          right: { xs: 0, sm: 'auto' },
+          transform: { sm: 'translateX(-50%)' },
+          width: { xs: '100%', sm: 480 },
+          maxWidth: 480,
           bgcolor: 'background.paper',
           borderTop: `1px solid ${theme.palette.divider}`,
           p: 2,

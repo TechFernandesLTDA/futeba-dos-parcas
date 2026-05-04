@@ -42,6 +42,7 @@ import { useGameDetail, useConfirmPresence, useUpdateGameStatus } from '../../ho
 import { softDeleteGame } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import {
   STATUS_CONFIG,
   PAYMENT_STATUS_CONFIG,
@@ -97,7 +98,7 @@ export const GameDetailScreen: React.FC = () => {
       setPositionDialogOpen(false);
       showSuccess('Presença confirmada!');
     } catch (err) {
-      showError((err as Error).message);
+      showError(getFirestoreErrorMessage(err));
     }
   };
 
@@ -109,7 +110,7 @@ export const GameDetailScreen: React.FC = () => {
       setCancelDialogOpen(false);
       showSuccess('Presença cancelada');
     } catch (err) {
-      showError((err as Error).message);
+      showError(getFirestoreErrorMessage(err));
     }
   };
 
@@ -124,7 +125,7 @@ export const GameDetailScreen: React.FC = () => {
         navigate(`/game/${gameId}/live`);
       }
     } catch (err) {
-      showError((err as Error).message);
+      showError(getFirestoreErrorMessage(err));
     }
   };
 
@@ -194,7 +195,7 @@ export const GameDetailScreen: React.FC = () => {
           <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
             <BackIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ flex: 1, ml: 1 }} noWrap>
+          <Typography component="h1" variant="h6" sx={{ flex: 1, ml: 1 }} noWrap>
             {game.locationName}
           </Typography>
           <IconButton onClick={handleShare} aria-label="Compartilhar jogo">
@@ -482,8 +483,11 @@ export const GameDetailScreen: React.FC = () => {
         sx={{
           position: 'fixed',
           bottom: 0,
-          left: 0,
-          right: 0,
+          left: { xs: 0, sm: '50%' },
+          right: { xs: 0, sm: 'auto' },
+          transform: { sm: 'translateX(-50%)' },
+          width: { xs: '100%', sm: 480 },
+          maxWidth: 480,
           bgcolor: 'background.paper',
           borderTop: `1px solid ${theme.palette.divider}`,
           p: 2,
