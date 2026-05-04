@@ -30,7 +30,7 @@ import {
   Close,
   FilterListOff,
 } from '@mui/icons-material';
-import { STATUS_CONFIG, FIELD_TYPE_LABELS, GameStatus } from '../../../types/game';
+import { FIELD_TYPE_LABELS, GameStatus, getStatusChipColors } from '../../../types/game';
 import { useGames } from '../../../hooks/useGames';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatGameDate } from '../../../utils/dateFormatters';
@@ -44,7 +44,7 @@ export function GamesTab() {
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { games, loading, error } = useGames();
+  const { games, loading, error, refetch } = useGames();
 
   const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all';
 
@@ -138,7 +138,15 @@ export function GamesTab() {
 
       <Box sx={{ px: 2, pt: 2 }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={() => refetch()}>
+                Tentar novamente
+              </Button>
+            }
+          >
             {error}
           </Alert>
         )}
@@ -199,17 +207,22 @@ export function GamesTab() {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                       <Box sx={{ flex: 1 }}>
                         <Box sx={{ display: 'flex', gap: 0.5, mb: 0.5 }}>
-                          <Chip
-                            label={STATUS_CONFIG[game.status]?.label || game.status}
-                            size="small"
-                            sx={{
-                              bgcolor: alpha(STATUS_CONFIG[game.status]?.color || theme.palette.grey[500], 0.15),
-                              color: STATUS_CONFIG[game.status]?.color || theme.palette.grey[500],
-                              fontWeight: 600,
-                              fontSize: '0.7rem',
-                              height: 22,
-                            }}
-                          />
+                          {(() => {
+                            const sc = getStatusChipColors(theme, game.status);
+                            return (
+                              <Chip
+                                label={sc.label || game.status}
+                                size="small"
+                                sx={{
+                                  bgcolor: alpha(sc.color, 0.15),
+                                  color: sc.color,
+                                  fontWeight: 600,
+                                  fontSize: '0.7rem',
+                                  height: 22,
+                                }}
+                              />
+                            );
+                          })()}
                           {game.fieldType && (
                             <Chip
                               label={FIELD_TYPE_LABELS[game.fieldType] || game.fieldType}

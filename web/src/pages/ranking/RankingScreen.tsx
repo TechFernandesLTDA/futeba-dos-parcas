@@ -27,6 +27,7 @@ import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { PlayerCard } from '../../components/player/PlayerCard';
 import { useLeague, LeaguePlayer } from '../../hooks/useLeague';
 import { DIVISION_CONFIG } from '../../types/gamification';
+import { pluralizeCount } from '../../utils/pluralize';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export const RankingScreen: React.FC = () => {
@@ -213,7 +214,7 @@ const RankingItem = React.memo(function RankingItem({
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Typography variant="caption" color="text.secondary">
-                {player.gamesPlayed} jogos
+                {pluralizeCount(player.gamesPlayed, 'jogo', 'jogos')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {player.wins}V

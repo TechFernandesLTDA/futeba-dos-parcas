@@ -46,6 +46,7 @@ import { softDeleteGroup } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
+import { pluralizeCount } from '../../utils/pluralize';
 import { GroupRole } from '../../types/group';
 import { PlayerAvatar, EmptyState, ShimmerLoading } from '../../components/common/GameCard';
 import { GameCard } from '../../components/common/GameCard';
@@ -152,9 +153,16 @@ export const GroupDetailScreen: React.FC = () => {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Alert severity="error">{error || 'Grupo não encontrado'}</Alert>
-        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
-          Voltar
-        </Button>
+        <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+          <Button startIcon={<BackIcon />} onClick={() => navigate(-1)}>
+            Voltar
+          </Button>
+          {error && (
+            <Button variant="contained" onClick={() => window.location.reload()}>
+              Tentar novamente
+            </Button>
+          )}
+        </Box>
       </Container>
     );
   }
@@ -473,7 +481,7 @@ const GroupMemberItem = React.memo(function GroupMemberItem({
               />
             </Box>
           }
-          secondary={`${member.totalGames} jogos`}
+          secondary={pluralizeCount(member.totalGames, 'jogo', 'jogos')}
         />
       </ListItem>
       {showDivider && <Divider />}

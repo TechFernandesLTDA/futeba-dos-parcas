@@ -210,13 +210,47 @@ export interface Game {
   updatedAt?: Date;
 }
 
-export const STATUS_CONFIG: Record<GameStatus, { label: string; color: string; bgColor: string }> = {
-  SCHEDULED: { label: 'Aberto', color: '#4CAF50', bgColor: '#E8F5E9' },
-  CONFIRMED: { label: 'Fechado', color: '#2196F3', bgColor: '#E3F2FD' },
-  LIVE: { label: 'Ao Vivo', color: '#F44336', bgColor: '#FFEBEE' },
-  FINISHED: { label: 'Finalizado', color: '#9E9E9E', bgColor: '#F5F5F5' },
-  CANCELLED: { label: 'Cancelado', color: '#9E9E9E', bgColor: '#FAFAFA' },
+/**
+ * Status com keys do MUI palette para suporte light/dark mode.
+ * Use getStatusChipColors(theme, status) para obter color/bgColor resolvidos.
+ */
+export type StatusPaletteKey = 'success' | 'info' | 'error' | 'default';
+
+export const STATUS_CONFIG: Record<
+  GameStatus,
+  { label: string; paletteKey: StatusPaletteKey }
+> = {
+  SCHEDULED: { label: 'Aberto', paletteKey: 'success' },
+  CONFIRMED: { label: 'Fechado', paletteKey: 'info' },
+  LIVE: { label: 'Ao Vivo', paletteKey: 'error' },
+  FINISHED: { label: 'Finalizado', paletteKey: 'default' },
+  CANCELLED: { label: 'Cancelado', paletteKey: 'default' },
 };
+
+/**
+ * Resolve paletteKey para cores reais do theme (suporta light/dark mode).
+ * Aceita Theme do MUI; usa indexer dinâmico para acessar palette[paletteKey].
+ */
+export function getStatusChipColors(
+  theme: { palette: { success: { main: string }; info: { main: string }; error: { main: string }; text: { disabled: string }; action: { hover: string } } },
+  status: GameStatus,
+): { label: string; color: string; bgColor: string } {
+  const config = STATUS_CONFIG[status];
+  if (config.paletteKey === 'default') {
+    return {
+      label: config.label,
+      color: theme.palette.text.disabled,
+      bgColor: theme.palette.action.hover,
+    };
+  }
+  const palette = theme.palette[config.paletteKey];
+  return {
+    label: config.label,
+    color: palette.main,
+    // alpha 0.12 funciona bem em ambos light e dark mode
+    bgColor: `${palette.main}1F`,
+  };
+}
 
 export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   SOCIETY: 'Society',

@@ -120,7 +120,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   >
                     {toast.action.label}
                   </Box>
-                  <IconButton size="small" onClick={() => dismissToast(toast.id)}>
+                  <IconButton
+                    aria-label="Fechar notificação"
+                    onClick={() => dismissToast(toast.id)}
+                    sx={{ padding: '8px' }}
+                  >
                     <CloseIcon fontSize="small" />
                   </IconButton>
                 </Box>

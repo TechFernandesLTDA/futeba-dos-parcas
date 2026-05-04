@@ -172,12 +172,13 @@ export interface RankingPlayer {
   currentStreak: number;
 }
 
+// Cores alinhadas com gamificationColors em theme/index.ts (single source of truth)
 export const DIVISION_CONFIG: Record<LeagueDivision, { label: string; color: string; minPoints: number }> = {
-  BRONZE: { label: 'Bronze', color: '#5D4037', minPoints: 0 },
-  SILVER: { label: 'Prata', color: '#757575', minPoints: 100 },
-  GOLD: { label: 'Ouro', color: '#FFD700', minPoints: 300 },
+  BRONZE: { label: 'Bronze', color: '#CD7F32', minPoints: 0 },        // gamificationColors.bronze
+  SILVER: { label: 'Prata', color: '#C0C0C0', minPoints: 100 },       // gamificationColors.silver
+  GOLD: { label: 'Ouro', color: '#FFD700', minPoints: 300 },          // gamificationColors.gold
   PLATINUM: { label: 'Platina', color: '#00E676', minPoints: 600 },
-  DIAMOND: { label: 'Diamante', color: '#00BCD4', minPoints: 1000 },
+  DIAMOND: { label: 'Diamante', color: '#00BCD4', minPoints: 1000 },  // gamificationColors.level
   CHAMPION: { label: 'Campeão', color: '#E91E63', minPoints: 2000 },
 };
 

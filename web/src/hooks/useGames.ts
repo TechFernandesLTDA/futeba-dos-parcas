@@ -80,7 +80,7 @@ export function useGames(filters?: {
   // Chave de query estável baseada nos filtros
   const queryKey = ['games', filters?.status, filters?.groupId, filters?.date, filters?.limitCount] as const;
 
-  const { data: games = [], isLoading: loading, error: queryError } = useQuery({
+  const { data: games = [], isLoading: loading, error: queryError, refetch } = useQuery({
     queryKey,
     queryFn: () => fetchGames(filters),
     staleTime: 1 * 60 * 1000, // 1 minuto - jogos mudam com frequência
@@ -120,7 +120,7 @@ export function useGames(filters?: {
 
   const error = queryError ? (queryError as Error).message : null;
 
-  return { games, loading, error };
+  return { games, loading, error, refetch };
 }
 
 export function useGameDetail(gameId: string | null) {
