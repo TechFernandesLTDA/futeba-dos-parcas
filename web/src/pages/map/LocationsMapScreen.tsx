@@ -235,7 +235,7 @@ export const LocationsMapScreen: React.FC = () => {
 
       <Fab
         color="primary"
-        sx={{ position: 'fixed', bottom: 16, right: 16 }}
+        sx={{ position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
         onClick={() => navigate('/location/create')}
         aria-label="Adicionar local"
       >

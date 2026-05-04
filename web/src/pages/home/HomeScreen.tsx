@@ -62,12 +62,16 @@ export function HomeScreen() {
       </Box>
 
       {/* Bottom Navigation - 5 botões (igual ao Android) */}
+      {/* Em sm+ respeita MobileShell (480px centrado) */}
       <Paper
         sx={{
           position: 'fixed',
           bottom: 0,
-          left: 0,
-          right: 0,
+          left: { xs: 0, sm: '50%' },
+          right: { xs: 0, sm: 'auto' },
+          transform: { sm: 'translateX(-50%)' },
+          width: { xs: '100%', sm: 480 },
+          maxWidth: 480,
           zIndex: 1000,
           // Safe area para dispositivos com notch/barra de gestos
           pb: 'env(safe-area-inset-bottom, 0px)',

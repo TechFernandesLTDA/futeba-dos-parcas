@@ -111,7 +111,7 @@ export const StatisticsScreen: React.FC = () => {
           <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
             <BackIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
+          <Typography component="h1" variant="h6" sx={{ ml: 1 }}>
             Estatísticas
           </Typography>
         </Box>

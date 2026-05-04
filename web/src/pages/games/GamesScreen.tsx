@@ -99,7 +99,7 @@ export const GamesScreen: React.FC = () => {
           <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
             <BackIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
+          <Typography component="h1" variant="h6" sx={{ ml: 1, flex: 1 }}>
             Jogos
           </Typography>
           <IconButton aria-label="Filtrar jogos">
@@ -179,7 +179,7 @@ export const GamesScreen: React.FC = () => {
       <Fab
         color="primary"
         aria-label="Criar novo jogo"
-        sx={{ position: 'fixed', bottom: 16, right: 16 }}
+        sx={{ position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
         onClick={() => navigate('/game/create')}
       >
         <AddIcon />

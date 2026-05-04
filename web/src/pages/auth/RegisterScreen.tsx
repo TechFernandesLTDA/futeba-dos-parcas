@@ -151,7 +151,7 @@ export function RegisterScreen() {
             >
               <SportsSoccer sx={{ fontSize: 32, color: 'white' }} />
             </Box>
-            <Typography variant="h5" fontWeight="bold">
+            <Typography component="h1" variant="h5" fontWeight="bold">
               Criar Conta
             </Typography>
             <Typography variant="body2" color="text.secondary">
