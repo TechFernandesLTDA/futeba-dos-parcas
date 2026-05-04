@@ -1533,6 +1533,25 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLECAO: users_private (Phone + CPF dados sensiveis - LGPD)
+    // ============================================
+    // SECURITY: Escrito EXCLUSIVAMENTE por Cloud Functions (verifyCpf,
+    // setUserVerified). Cliente NAO le nem escreve.
+    // Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md
+    match /users_private/{userId} {
+      allow read, write: if false;
+    }
+
+    // ============================================
+    // COLECAO: cpf_index (lookup de duplicatas CPF)
+    // ============================================
+    // SECURITY: Hash CPF -> uid mapping. Apenas Cloud Functions acessa.
+    // Cliente NUNCA pode listar/consultar (vazaria CPFs cadastrados).
+    match /cpf_index/{cpfHash} {
+      allow read, write: if false;
+    }
+
+    // ============================================
     // REGRA PADRAO: Negar tudo que nao foi explicitamente permitido
     // ============================================
     match /{document=**} {

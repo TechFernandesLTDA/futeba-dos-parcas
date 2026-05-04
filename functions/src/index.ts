@@ -1735,6 +1735,13 @@ export * from "./storage/generate-thumbnails";
 export * from "./auth/custom-claims";
 
 // ==========================================
+// Phone + CPF Verification (Anti-Bot)
+// Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md
+// Issues: #443 (epic), #444 (Fase 1 Foundation)
+// ==========================================
+export {verifyCpf, setUserVerified} from "./auth/verification";
+
+// ==========================================
 // P0 OPTIMIZATIONS: XP PARALLEL PROCESSING
 // ==========================================
 // Implementar P0 #6, #7, #9, #10
