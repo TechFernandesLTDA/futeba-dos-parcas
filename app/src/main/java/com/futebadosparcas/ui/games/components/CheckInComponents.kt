@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.games.components
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import com.futebadosparcas.util.AppLogger
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -426,7 +427,21 @@ fun OnTheWayButton(
 }
 
 /**
+ * SECFIX #432/#436: detecta mock GPS provider.
+ * Apps tipo Fake GPS sinalizam isMock=true. Bloquear evita XP farming.
+ */
+private fun isMockLocation(location: android.location.Location): Boolean {
+    return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+        location.isMock
+    } else {
+        @Suppress("DEPRECATION")
+        location.isFromMockProvider
+    }
+}
+
+/**
  * Obtém a localização atual usando FusedLocationProvider.
+ * Rejeita mock GPS providers (anti-fraud #432/#436).
  */
 private fun getCurrentLocation(
     context: Context,
@@ -438,12 +453,21 @@ private fun getCurrentLocation(
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
             .addOnSuccessListener { location ->
                 if (location != null) {
-                    callback(location.latitude, location.longitude)
+                    if (isMockLocation(location)) {
+                        AppLogger.w("CheckIn") { "Mock GPS detected - blocking" }
+                        callback(null, null)
+                    } else {
+                        callback(location.latitude, location.longitude)
+                    }
                 } else {
-                    // Fallback: tentar última localização conhecida
                     fusedLocationClient.lastLocation
                         .addOnSuccessListener { lastLocation ->
-                            callback(lastLocation?.latitude, lastLocation?.longitude)
+                            if (lastLocation != null && isMockLocation(lastLocation)) {
+                                AppLogger.w("CheckIn") { "Mock GPS lastLoc - blocking" }
+                                callback(null, null)
+                            } else {
+                                callback(lastLocation?.latitude, lastLocation?.longitude)
+                            }
                         }
                         .addOnFailureListener {
                             callback(null, null)
