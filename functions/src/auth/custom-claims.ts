@@ -74,7 +74,9 @@ interface SetUserRoleRequest {
  */
 export const setUserRole = secureCallable<SetUserRoleRequest>(
   {
-    appCheck: false,
+    // SECFIX #429: appCheck enforce em production.
+    // Token admin roubado/leaked nao serve fora do app oficial.
+    appCheck: process.env.NODE_ENV === "production",
     requireAuth: true,
     requiredRole: "ADMIN",
     rateLimit: {
@@ -157,10 +159,17 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
     await admin
       .auth()
       .setCustomUserClaims(uid, {role});
+
+    // SECFIX #429: invalida JWT antigo (TTL 1h).
+    // Sem isso, token de role anterior continua valido ate expirar.
+    // Forca re-auth do cliente apos mudanca de role.
+    await admin.auth().revokeRefreshTokens(uid);
+
     logger.info(
       "[CUSTOM_CLAIMS] " +
       `Set role=${role} for user ${uid} ` +
-      `by admin ${request.auth!.uid}`
+      `by admin ${request.auth!.uid} ` +
+      "(refresh tokens revoked)"
     );
 
     // ==========================================
@@ -286,7 +295,8 @@ export const onNewUserCreated = onDocumentCreated(
  */
 export const migrateAllUsersToCustomClaims = secureCallable(
   {
-    appCheck: false,
+    // SECFIX #429: appCheck enforce em production
+    appCheck: process.env.NODE_ENV === "production",
     requireAuth: true,
     requiredRole: "ADMIN",
     rateLimit: {
