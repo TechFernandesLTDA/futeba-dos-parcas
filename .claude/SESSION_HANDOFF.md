@@ -1,4 +1,87 @@
-# Session Handoff — 2026-05-03 (atualizado pós-PR #405)
+# Session Handoff — 2026-05-05 (overnight session: 19 PRs merged)
+
+## 🌙 Overnight session (2026-05-04 → 05)
+
+**19 PRs mergeadas + deployed sem intervenção:**
+
+### Phone+CPF anti-bot epic (#443) — 5/6 fases concluídas
+- #450 Fase 1 Foundation (CPF validators 4 plataformas + verifyCpf/setUserVerified callables + secrets)
+- #451 Fase 2 Web (PhoneVerificationScreen + CpfVerificationScreen + ProtectedRoute guard)
+- #452 Fase 3 Android (KMP CpfValidator + Compose screens + Koin VMs)
+- #456 Fase 5 Enforcement (isVerifiedOrGrace() em rules + 30-day grace 2026-06-04)
+- #457 Android VerificationBanner companion
+- #458 Fase 6 Anti-abuse (canSendSmsOtp rate limit + logVerificationFailure)
+
+Pendente: #447 iOS (BLOCKED por PHASE_4 CMP).
+
+### Security audit fixes — 22 issues fechadas
+**CRITICAL (4)**: #427 self-promote OWNER, #428 impersonation conf, #429 setUserRole token revoke, #438 conf field whitelist (PR #454)
+
+**Backend hardening**: #435 originalError leak, #437 soft-delete App Check (PR #460)
+
+**Game lifecycle**: #421/#422 backdating, #423 status transition, #424 cross-group create, #425 events volume, #426 server-side check-in, #430 temporal overlap (PRs #462, #464, #466, #467)
+
+**Stats integrity**: #431 conf immutables, #434 owner stats whitelist, #440 reviews uniqueness (PRs #463, #464)
+
+**Location anti-fraud**: #432, #436 mock GPS detection (PR #461)
+
+**XP doc sync**: #439 (PR #465)
+
+### P2 visual — 5 issues fechadas
+- #413 BottomNav theme tokens
+- #414 ROLE_CONFIG dedup
+- #417 IconButton touch targets
+- #418 LiveGame toasts especificos
+- #419 Empty state CTA
+
+### Tooling — 2 PRs novos
+- #453 semantic-index.js (Ollama nomic-embed-text indexa specs+issues)
+- #455 ollama-review.js (code review local privacy-first)
+
+## ⚠️ Backlog deferred
+
+- **#441** batch race idempotência — mitigado por trigger lock, refactor pendente
+- **#442** lat/lng PII — refactor de read profile necessário
+- **#433** is_searchable PII — denormalização users/private requer migração
+- **#415** PlayerCard 30+ hex — refactor extenso
+- **#416** Adaptive nav (NavigationRail tablet/desktop) — design decision
+
+## 🤖 Ollama setup
+
+**Modelos baixados (tunados pra este Mac M-series):**
+- nomic-embed-text (274 MB) - EN embeddings
+- bge-m3 (1.2 GB) - multilíngue PT-BR
+- llama3.2:3b (2 GB) - small fast
+- qwen2.5-coder:7b (4.7 GB) - code review
+- deepseek-r1:7b (4.7 GB) - reasoning
+- gemma4:e4b (9.6 GB)
+- phi-4:14b-q4_K_M (9 GB) - reasoning médio
+- gemma4:31b (19 GB)
+- qwen3.6:35b (23 GB)
+
+**Config**: OLLAMA_MAX_LOADED_MODELS=2, OLLAMA_NUM_PARALLEL=2 (launchctl persist).
+
+**Skill nova**: `futeba-ollama` (.claude/skills/futeba-ollama/SKILL.md) — guia completo de uso.
+
+**Helpers**:
+- `node scripts/semantic-index.js [index|query|stats]`
+- `git diff | node scripts/ollama-review.js [--reasoning]`
+
+## 📊 Estado pós-overnight
+
+| Item | Estado |
+|------|--------|
+| Master HEAD | `8b85aac` |
+| PRs abertos | 0 |
+| Issues abertas | 5 (defer) + #443 EPIC + #447 iOS blocked |
+| Hosting | 🟢 LIVE |
+| Cloud Functions | 50+ deployed (incluindo verifyCpf, setUserVerified, canSendSmsOtp, logVerificationFailure, onConfirmationCreated, checkInToGame, onGameEventCreated) |
+| Custom Claims | `verified` setado pós-onboarding |
+| Firestore Rules | enforcement Phone+CPF (grace 30d) + helpers isFutureGameDate, isValidGameStatusTransition |
+
+---
+
+
 
 Consolidação completa para próxima sessão Claude Code começar saudável.
 
