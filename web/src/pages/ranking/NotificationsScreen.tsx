@@ -90,7 +90,7 @@ export const NotificationsScreen: React.FC = () => {
             <Badge badgeContent={unreadCount} color="error" sx={{ mr: 1 }} />
           )}
           {unreadCount > 0 && (
-            <IconButton size="small" onClick={markAllAsRead} aria-label="Marcar todas como lidas">
+            <IconButton onClick={markAllAsRead} aria-label="Marcar todas como lidas" sx={{ padding: '10px' }}>
               <CheckIcon fontSize="small" />
             </IconButton>
           )}
@@ -146,7 +146,7 @@ export const NotificationsScreen: React.FC = () => {
                       </Typography>
                     </Box>
                     {!notification.read && (
-                      <IconButton size="small" onClick={() => markAsRead(notification.id)} aria-label="Marcar como lida">
+                      <IconButton onClick={() => markAsRead(notification.id)} aria-label="Marcar como lida" sx={{ padding: '10px' }}>
                         <CheckIcon fontSize="small" color="success" />
                       </IconButton>
                     )}
