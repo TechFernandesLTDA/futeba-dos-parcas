@@ -178,17 +178,33 @@ export const setUserVerified = onCall(
     const privateSnap = await db.doc(`users_private/${targetUid}`).get();
     const privateData = privateSnap.data();
 
-    if (
-      !privateData?.cpfVerifiedAt ||
-      !privateData?.phoneVerifiedAt
-    ) {
+    // CPF verificado via verifyCpf callable (escreve cpfVerifiedAt)
+    if (!privateData?.cpfVerifiedAt) {
       throw new HttpsError(
         "failed-precondition",
-        "Verificação de telefone e CPF deve ser concluída antes",
+        "Verifique seu CPF antes de concluir o cadastro.",
       );
     }
 
+    // Phone verificado via Firebase Auth linkWithCredential
+    // (Firebase popula phone_number no UserRecord automaticamente).
     const userRecord = await admin.auth().getUser(targetUid);
+    if (!userRecord.phoneNumber) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Verifique seu telefone antes de concluir o cadastro.",
+      );
+    }
+
+    // Persiste phoneVerifiedAt em users_private (para audit/historico)
+    await db.doc(`users_private/${targetUid}`).set(
+      {
+        phoneVerifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+        phoneNumber: userRecord.phoneNumber,
+      },
+      {merge: true},
+    );
+
     const currentClaims = userRecord.customClaims ?? {};
 
     await admin.auth().setCustomUserClaims(targetUid, {
