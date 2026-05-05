@@ -146,8 +146,9 @@ export const PhoneVerificationScreen: React.FC = () => {
         otp,
       );
       await linkWithCredential(firebaseUser, credential);
+      // Force token refresh pra Firebase popular phoneNumber no userRecord
+      await firebaseUser.getIdToken(true);
       setStep('success');
-      // Pequeno delay pra usuário ver checkmark
       setTimeout(() => navigate('/onboarding/cpf'), 1100);
     } catch (err) {
       const code = (err as { code?: string }).code;
