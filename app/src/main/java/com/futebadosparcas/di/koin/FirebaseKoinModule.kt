@@ -4,6 +4,7 @@ import com.futebadosparcas.data.datasource.ProfilePhotoDataSource
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.MemoryCacheSettings
+import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import org.koin.android.ext.koin.androidApplication
@@ -57,6 +58,12 @@ val firebaseKoinModule = module {
 
     single<FirebaseMessaging> {
         FirebaseMessaging.getInstance()
+    }
+
+    // Firebase Functions (callables: verifyCpf, setUserVerified, etc)
+    // Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md
+    single<FirebaseFunctions> {
+        FirebaseFunctions.getInstance("us-central1")
     }
 
     single<FirebaseStorage> {
