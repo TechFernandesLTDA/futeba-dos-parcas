@@ -60,6 +60,13 @@ export const PhoneVerificationScreen: React.FC = () => {
     };
   }, []);
 
+  // Se phone já estiver vinculado, pula direto pra CPF
+  useEffect(() => {
+    if (firebaseUser?.phoneNumber) {
+      navigate('/onboarding/cpf', { replace: true });
+    }
+  }, [firebaseUser, navigate]);
+
   // Cooldown resend (60s)
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -144,6 +151,12 @@ export const PhoneVerificationScreen: React.FC = () => {
       setTimeout(() => navigate('/onboarding/cpf'), 1100);
     } catch (err) {
       const code = (err as { code?: string }).code;
+      // Se telefone já estava linkado a este user, OK — segue pra CPF
+      if (code === 'auth/provider-already-linked') {
+        setStep('success');
+        setTimeout(() => navigate('/onboarding/cpf'), 600);
+        return;
+      }
       let msg = 'Código inválido. Tente novamente.';
       if (code === 'auth/invalid-verification-code') msg = 'Código incorreto. Verifique o SMS.';
       else if (code === 'auth/code-expired') {
