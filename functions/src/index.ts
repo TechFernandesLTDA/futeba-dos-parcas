@@ -1740,7 +1740,6 @@ export * from "./auth/custom-claims";
 // Issues: #443 (epic), #444 (Fase 1), #449 (Fase 6 Anti-abuse)
 // ==========================================
 export {verifyCpf, setUserVerified} from "./auth/verification";
-export {debugMyState} from "./auth/debug-user-state";
 export {canSendSmsOtp, logVerificationFailure} from "./auth/anti-abuse";
 
 // SECFIX #430: detector de confirmacoes em jogos overlapping
