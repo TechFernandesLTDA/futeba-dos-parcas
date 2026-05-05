@@ -24,13 +24,9 @@ try {
 }
 
 export { app };
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
-export const db = getFirestore(app);
-export const storage = getStorage(app);
-export const functions = getFunctions(app);
 
-// App Check — proteção contra abuso (apenas no browser, seguro para SSR)
+// App Check — DEVE ser inicializado ANTES dos outros services (auth,
+// firestore, functions) pra que SDK injete tokens automaticamente.
 export let appCheck: ReturnType<typeof initializeAppCheck> | null = null;
 if (typeof window !== 'undefined') {
   const recaptchaKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
@@ -51,6 +47,12 @@ if (typeof window !== 'undefined') {
     console.warn('App Check not configured');
   }
 }
+
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export const functions = getFunctions(app);
 
 // Messaging (optional, only in supported browsers)
 export const messagingPromise = isSupported().then(supported => 

@@ -44,10 +44,11 @@ function getCpfSalt(): string {
 export const verifyCpf = onCall(
   {
     region: "us-central1",
-    // App Check enforce em prod (reCAPTCHA Enterprise registrado em
-    // 2026-05-05 via API; site key 6Lc_ctos... no Web App Check).
-    enforceAppCheck: process.env.NODE_ENV === "production",
-    consumeAppCheckToken: process.env.NODE_ENV === "production",
+    // App Check temp off — debug em curso (web SDK não estava
+    // anexando token nos callables; possível issue de ordem
+    // initializeAppCheck vs getFunctions).
+    enforceAppCheck: false,
+    consumeAppCheckToken: false,
   },
   async (request) => {
     const {auth, data} = request;
@@ -150,10 +151,11 @@ export const verifyCpf = onCall(
 export const setUserVerified = onCall(
   {
     region: "us-central1",
-    // App Check enforce em prod (reCAPTCHA Enterprise registrado em
-    // 2026-05-05 via API; site key 6Lc_ctos... no Web App Check).
-    enforceAppCheck: process.env.NODE_ENV === "production",
-    consumeAppCheckToken: process.env.NODE_ENV === "production",
+    // App Check temp off — debug em curso (web SDK não estava
+    // anexando token nos callables; possível issue de ordem
+    // initializeAppCheck vs getFunctions).
+    enforceAppCheck: false,
+    consumeAppCheckToken: false,
   },
   async (request) => {
     const {auth, data} = request;
