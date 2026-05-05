@@ -364,18 +364,26 @@ export const setUserRole = onCall({
 
 ## XP System Quick Reference
 
+**Source of truth**: `shared/xp-constants.json` (consumido por functions, web, KMP).
+**SECFIX #439**: tabela alinhada com JSON (era divergente).
+
 | Action | XP |
 |--------|-----|
 | Participation | +10 |
-| Goal | +5 |
-| Assist | +3 |
-| Save (GK) | +2 |
-| MVP | +50 |
+| Goal | +10 |
+| Assist | +7 |
+| Save (GK) | +8 |
+| Clean Sheet | +15 |
 | Win | +20 |
-| Streak 3+ | +10 |
-| Streak 7+ | +20 |
-| Streak 10+ | +30 |
+| Draw | +10 |
+| MVP | +30 |
+| Bola Murcha (worst) | -10 |
+| Streak 3 | +20 |
+| Streak 5 | +35 |
+| Streak 7 | +50 |
+| Streak 10 | +100 |
 
+**Anti-cheat caps**: GOALS=15, ASSISTS=10, SAVES=30 por jogo.
 **Season Reset**: Monthly on the 1st. Global XP never resets.
 
 ---
