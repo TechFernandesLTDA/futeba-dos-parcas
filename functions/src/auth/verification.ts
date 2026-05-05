@@ -49,6 +49,9 @@ export const verifyCpf = onCall(
     // initializeAppCheck vs getFunctions).
     enforceAppCheck: false,
     consumeAppCheckToken: false,
+    // CRITICAL: secret precisa ser declarada em onCall pra
+    // ser acessivel via process.env.CPF_SALT em runtime.
+    secrets: ["CPF_SALT"],
   },
   async (request) => {
     const {auth, data} = request;
