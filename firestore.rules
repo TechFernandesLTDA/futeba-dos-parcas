@@ -295,6 +295,18 @@ service cloud.firestore {
       return desc == null || desc == '' || (desc is string && desc.size() <= 500);
     }
 
+    // SECFIX #423: valida transicao de status de jogos.
+    // Path correto: SCHEDULED -> CONFIRMED -> LIVE -> FINISHED
+    // Bloqueia skip (SCHEDULED -> FINISHED) e reversao (FINISHED -> X).
+    function isValidGameStatusTransition(before, after) {
+      return (before == after) ||
+             (before == 'SCHEDULED' && after == 'CONFIRMED') ||
+             (before == 'CONFIRMED' && after == 'LIVE') ||
+             (before == 'CONFIRMED' && after == 'CANCELLED') ||
+             (before == 'LIVE' && after == 'FINISHED') ||
+             (before == 'SCHEDULED' && after == 'CANCELLED');
+    }
+
     // ============================================
     // FUNCOES DE RATE LIMITING
     // ============================================
@@ -426,6 +438,7 @@ service cloud.firestore {
 
       // FASE 5 #448: criar jogo exige verified (com 30-day grace)
       // SECFIX #422: rejeita criacao de jogo com data no passado
+      // SECFIX #424: criar jogo em grupo exige ser membro daquele grupo
       // Qualquer usuario autenticado pode criar jogos
       // Validacoes na criacao de jogo (#28, #29 - Validações de bounds e coordenadas)
       // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
@@ -433,6 +446,10 @@ service cloud.firestore {
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
                        // SECFIX #422: data deve ser futura (1h tolerance)
                        isFutureGameDate(request.resource.data) &&
+                       // SECFIX #424: se group_id presente, exige membership
+                       (request.resource.data.get('group_id', null) == null ||
+                        isGroupMember(request.resource.data.group_id) ||
+                        isAdmin()) &&
                        // Validacao de max_players (2-50) - #28
                        isValidMaxPlayers(request.resource.data.max_players) &&
                        // Validacao de max_goalkeepers (0-10) - #28
@@ -453,8 +470,10 @@ service cloud.firestore {
       // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
       allow update: if isAuthenticated() && (
         isAdmin() ||
-        // Dono pode fazer qualquer atualizacao (com validacao de dados)
+        // SECFIX #423: Dono pode atualizar mas com transicao status valida
+        // (impede skip SCHEDULED->FINISHED e reversao FINISHED->X)
         (canManageGame(resource.data) &&
+         isValidGameStatusTransition(resource.data.status, request.resource.data.status) &&
          // P0 #30: Validacao estrita de scores - Previne exploits de XP
          isValidScore(request.resource.data.team1_score) &&
          isValidScore(request.resource.data.team2_score) &&
@@ -545,7 +564,11 @@ service cloud.firestore {
       //   - dono do jogo (isGameOwner)
       //   - jogador confirmado em flags de MVP (validacao explicita)
       //   - Cloud Functions (Admin SDK)
-      allow update: if isAuthenticated() && (
+      // SECFIX #431: user_id e game_id sempre imutaveis (qualquer branch)
+      allow update: if isAuthenticated() &&
+        fieldUnchanged('user_id') &&
+        fieldUnchanged('game_id') &&
+        (
         // Self-update: apenas campos de ETA
         (resource.data.user_id == userId() &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_on_the_way', 'eta_minutes', 'on_the_way_at', 'updated_at'])) ||
@@ -562,7 +585,7 @@ service cloud.firestore {
         // Jogadores confirmados podem atualizar flags de MVP (para votação)
         (isConfirmedPlayer(resource.data.game_id) &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_mvp', 'is_best_gk', 'is_worst_player']))
-      );
+        );
 
       // Usuario pode deletar sua propria confirmacao
       // OU dono do jogo / admin pode remover qualquer jogador
