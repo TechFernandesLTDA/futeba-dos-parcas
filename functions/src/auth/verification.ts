@@ -44,8 +44,11 @@ function getCpfSalt(): string {
 export const verifyCpf = onCall(
   {
     region: "us-central1",
-    enforceAppCheck: process.env.NODE_ENV === "production",
-    consumeAppCheckToken: true,
+    // TODO: re-enable apos configurar reCAPTCHA Enterprise no web
+    // (Firebase Console -> App Check -> Web -> reCAPTCHA Enterprise).
+    // Atualmente desabilitado pra destravar fluxo onboarding.
+    enforceAppCheck: false,
+    consumeAppCheckToken: false,
   },
   async (request) => {
     const {auth, data} = request;
@@ -148,8 +151,11 @@ export const verifyCpf = onCall(
 export const setUserVerified = onCall(
   {
     region: "us-central1",
-    enforceAppCheck: process.env.NODE_ENV === "production",
-    consumeAppCheckToken: true,
+    // TODO: re-enable apos configurar reCAPTCHA Enterprise no web
+    // (Firebase Console -> App Check -> Web -> reCAPTCHA Enterprise).
+    // Atualmente desabilitado pra destravar fluxo onboarding.
+    enforceAppCheck: false,
+    consumeAppCheckToken: false,
   },
   async (request) => {
     const {auth, data} = request;
