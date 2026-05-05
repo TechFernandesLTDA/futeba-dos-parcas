@@ -1595,6 +1595,15 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLECAO: verification_failures (Fase 6 anti-abuse #449)
+    // ============================================
+    // SECURITY: Apenas Cloud Functions escrevem. Admins leem para audit.
+    match /verification_failures/{failId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // ============================================
     // REGRA PADRAO: Negar tudo que nao foi explicitamente permitido
     // ============================================
     match /{document=**} {

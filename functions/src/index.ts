@@ -1737,9 +1737,10 @@ export * from "./auth/custom-claims";
 // ==========================================
 // Phone + CPF Verification (Anti-Bot)
 // Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md
-// Issues: #443 (epic), #444 (Fase 1 Foundation)
+// Issues: #443 (epic), #444 (Fase 1), #449 (Fase 6 Anti-abuse)
 // ==========================================
 export {verifyCpf, setUserVerified} from "./auth/verification";
+export {canSendSmsOtp, logVerificationFailure} from "./auth/anti-abuse";
 
 // ==========================================
 // P0 OPTIMIZATIONS: XP PARALLEL PROCESSING
