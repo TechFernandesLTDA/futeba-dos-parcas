@@ -1748,6 +1748,9 @@ export {onConfirmationCreated} from "./voting/temporal-overlap";
 // SECFIX #425: rate-limit de game_events por user
 export {onGameEventCreated} from "./voting/events-rate-limit";
 
+// SECFIX #426: server-side check-in com validacao GPS + distancia
+export {checkInToGame} from "./voting/check-in";
+
 // ==========================================
 // P0 OPTIMIZATIONS: XP PARALLEL PROCESSING
 // ==========================================
