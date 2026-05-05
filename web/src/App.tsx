@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, ThemeProvider, useAuth } from './contexts';
@@ -22,6 +22,8 @@ const queryClient = new QueryClient({
 // Splash & Onboarding
 const SplashScreen = lazy(() => import('./pages/splash/SplashScreen').then(m => ({ default: m.SplashScreen })));
 const WelcomeScreen = lazy(() => import('./pages/onboarding/WelcomeScreen').then(m => ({ default: m.WelcomeScreen })));
+const PhoneVerificationScreen = lazy(() => import('./pages/onboarding/PhoneVerificationScreen').then(m => ({ default: m.PhoneVerificationScreen })));
+const CpfVerificationScreen = lazy(() => import('./pages/onboarding/CpfVerificationScreen').then(m => ({ default: m.CpfVerificationScreen })));
 const ProfileSetupScreen = lazy(() => import('./pages/onboarding/ProfileSetupScreen').then(m => ({ default: m.ProfileSetupScreen })));
 const AppGuideScreen = lazy(() => import('./pages/onboarding/AppGuideScreen').then(m => ({ default: m.AppGuideScreen })));
 
@@ -130,6 +132,27 @@ function AppLoadingFallback() {
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { firebaseUser, loading } = useAuth();
+  const location = useLocation();
+  const [verified, setVerified] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!firebaseUser) {
+      setVerified(null);
+      return;
+    }
+    let cancelled = false;
+    firebaseUser
+      .getIdTokenResult()
+      .then((result) => {
+        if (!cancelled) setVerified(result.claims.verified === true);
+      })
+      .catch(() => {
+        if (!cancelled) setVerified(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [firebaseUser]);
 
   if (loading) {
     return <AppLoadingFallback />;
@@ -137,6 +160,17 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!firebaseUser) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Aguarda verificação do token (custom claim verified)
+  if (verified === null) {
+    return <AppLoadingFallback />;
+  }
+
+  // Onboarding: rotas /onboarding/* permitem !verified
+  const isOnboardingRoute = location.pathname.startsWith('/onboarding/');
+  if (verified === false && !isOnboardingRoute) {
+    return <Navigate to="/onboarding/phone" replace />;
   }
 
   return <>{children}</>;
@@ -177,6 +211,10 @@ function AppRoutes() {
       {/* Splash & Onboarding */}
       <Route path="/splash" element={<Suspense fallback={<RouteFallback />}><SplashScreen /></Suspense>} />
       <Route path="/welcome" element={<PublicRoute><Suspense fallback={<RouteFallback />}><WelcomeScreen /></Suspense></PublicRoute>} />
+
+      {/* Onboarding obrigatório: phone + CPF (Anti-Bot) */}
+      <Route path="/onboarding/phone" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><PhoneVerificationScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/onboarding/cpf" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><CpfVerificationScreen /></Suspense></ProtectedRoute>} />
       <Route path="/profile/setup" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ProfileSetupScreen /></Suspense></ProtectedRoute>} />
       <Route path="/guide" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><AppGuideScreen /></Suspense></ProtectedRoute>} />
 
