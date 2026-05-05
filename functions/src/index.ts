@@ -1745,6 +1745,9 @@ export {canSendSmsOtp, logVerificationFailure} from "./auth/anti-abuse";
 // SECFIX #430: detector de confirmacoes em jogos overlapping
 export {onConfirmationCreated} from "./voting/temporal-overlap";
 
+// SECFIX #425: rate-limit de game_events por user
+export {onGameEventCreated} from "./voting/events-rate-limit";
+
 // ==========================================
 // P0 OPTIMIZATIONS: XP PARALLEL PROCESSING
 // ==========================================
