@@ -5,6 +5,8 @@ import com.futebadosparcas.data.repository.GroupRepository as AndroidGroupReposi
 import com.futebadosparcas.ui.admin.UserManagementViewModel
 import com.futebadosparcas.ui.auth.LoginViewModel
 import com.futebadosparcas.ui.auth.RegisterViewModel
+import com.futebadosparcas.ui.onboarding.CpfVerificationViewModel
+import com.futebadosparcas.ui.onboarding.PhoneVerificationViewModel
 import com.futebadosparcas.ui.badges.BadgesViewModel
 import com.futebadosparcas.ui.developer.DeveloperViewModel
 import com.futebadosparcas.ui.game_experience.MVPVoteViewModel
@@ -321,6 +323,20 @@ val viewModelKoinModule = module {
 
     viewModel {
         RegisterViewModel()
+    }
+
+    // Phone+CPF onboarding (Anti-Bot, spec SPEC_FEATURE_PHONE_CPF_VERIFICATION.md)
+    viewModel {
+        PhoneVerificationViewModel(
+            auth = get(),
+        )
+    }
+
+    viewModel {
+        CpfVerificationViewModel(
+            functions = get(),
+            auth = get(),
+        )
     }
 
     viewModel {
