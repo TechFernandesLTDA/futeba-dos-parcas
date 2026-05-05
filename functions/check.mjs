@@ -1,0 +1,10 @@
+import admin from 'firebase-admin';
+admin.initializeApp({ projectId: 'futebadosparcas' });
+const u = await admin.auth().getUserByEmail('renankakinho69@gmail.com');
+console.log('phoneNumber:', u.phoneNumber);
+console.log('claims:', JSON.stringify(u.customClaims));
+const p = await admin.firestore().doc(`users_private/${u.uid}`).get();
+console.log('users_private exists:', p.exists, p.data());
+const idx = await admin.firestore().collection('cpf_index').where('uid','==',u.uid).get();
+console.log('cpf_index docs:', idx.size);
+process.exit(0);
