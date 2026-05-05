@@ -491,6 +491,10 @@ service cloud.firestore {
       // Apenas o proprio usuario pode ler suas confirmacoes
       allow read: if isAuthenticated() && resource.data.user_id == request.auth.uid;
 
+      // SECFIX #428: branch summon (game owner) agora exige
+      //   - user_id != self (impede self-confirmation via summon)
+      //   - doc-id pattern enforcement (mesmo que self-create)
+      //   - status PENDING obrigatorio (impede pre-CONFIRMED falso)
       // C-003 FIX: Usuario pode criar sua propria confirmacao com validação de ID
       // ID deve seguir padrao: {gameId}_{userId}
       // OU o dono do jogo pode criar convites (summon) para outros
@@ -498,13 +502,21 @@ service cloud.firestore {
                        ((request.resource.data.user_id == userId() &&
                          isValidConfirmationId(confirmationId, request.resource.data.game_id, userId())) ||
                         (isGameOwner(request.resource.data.game_id) &&
-                         // Para summon, o ID não precisa seguir o padrão gameId_userId pois pode ser convite para outro usuário
-                         request.resource.data.game_id != null));
+                         request.resource.data.user_id != userId() &&
+                         isValidConfirmationId(confirmationId, request.resource.data.game_id, request.resource.data.user_id) &&
+                         request.resource.data.get('status', 'PENDING') == 'PENDING'));
 
-      // Usuario pode atualizar sua propria confirmacao
+      // SECFIX #438: dono da confirmacao agora restrito a campos de
+      // ETA only (is_on_the_way, eta_minutes, on_the_way_at, updated_at).
+      // Campos sensiveis (is_mvp, was_present, checked_in,
+      // confirmation_order, is_best_gk, is_worst_player) so via:
+      //   - dono do jogo (isGameOwner)
+      //   - jogador confirmado em flags de MVP (validacao explicita)
+      //   - Cloud Functions (Admin SDK)
       allow update: if isAuthenticated() && (
-        // O dono da confirmação pode atualizar (sem restrição de campos por enquanto, ou restringir se necessário)
-        (resource.data.user_id == userId()) ||
+        // Self-update: apenas campos de ETA
+        (resource.data.user_id == userId() &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_on_the_way', 'eta_minutes', 'on_the_way_at', 'updated_at'])) ||
         // O dono do JOGO pode atualizar qualquer confirmação (necessário para setar MVP/Stats no final)
         isGameOwner(resource.data.game_id) ||
         // Jogadores confirmados podem atualizar flags de MVP (para votação)
@@ -1001,11 +1013,19 @@ service cloud.firestore {
       match /members/{memberId} {
         allow read: if isAuthenticated();
 
+        // SECFIX #427: TOCTOU corrigido via getAfter().
+        // Self-OWNER membership agora exige que o documento /groups/{groupId}
+        // sendo criado no MESMO batch tenha owner_id == userId.
+        // Isto impede atacante de pre-criar member OWNER em groupId
+        // previsivel/arbitrario sem owner do group ser o atacante.
         allow create, update: if isAuthenticated() && (
            isGroupAdmin(groupId) ||
            (memberId == userId() && isGroupOwnerById(groupId)) ||
-           (request.resource.data.role == 'OWNER' && request.resource.data.user_id == userId() && !exists(/databases/$(database)/documents/groups/$(groupId))) ||
-           (request.resource.data.role == 'MEMBER' && request.resource.data.user_id == userId())
+           (request.resource.data.role == 'OWNER' &&
+            request.resource.data.user_id == userId() &&
+            memberId == userId() &&
+            getAfter(/databases/$(database)/documents/groups/$(groupId)).data.owner_id == userId()) ||
+           (request.resource.data.role == 'MEMBER' && request.resource.data.user_id == userId() && memberId == userId())
         );
 
         allow delete: if isAuthenticated() && (
