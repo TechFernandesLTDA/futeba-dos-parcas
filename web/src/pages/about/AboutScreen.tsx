@@ -89,21 +89,21 @@ export const AboutScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <List disablePadding aria-label="Links legais">
-            <ListItem button onClick={() => window.open('https://futebadosparcas.web.app/terms_of_service.html', '_blank')}>
+            <ListItem button onClick={() => window.open('/terms_of_service.html', '_blank')}>
               <ListItemIcon>
                 <TermsIcon />
               </ListItemIcon>
               <ListItemText primary="Termos de Uso" />
             </ListItem>
             <Divider />
-            <ListItem button onClick={() => window.open('https://futebadosparcas.web.app/privacy_policy.html', '_blank')}>
+            <ListItem button onClick={() => window.open('/privacy_policy.html', '_blank')}>
               <ListItemIcon>
                 <PrivacyIcon />
               </ListItemIcon>
               <ListItemText primary="Política de Privacidade" />
             </ListItem>
             <Divider />
-            <ListItem button onClick={() => window.open('https://futebadosparcas.web.app/child_safety.html', '_blank')}>
+            <ListItem button onClick={() => window.open('/child_safety.html', '_blank')}>
               <ListItemIcon>
                 <SecurityIcon />
               </ListItemIcon>

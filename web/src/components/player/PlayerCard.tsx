@@ -582,7 +582,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               variant="caption"
               sx={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.6rem', letterSpacing: '0.1em' }}
             >
-              futebadosparcas.web.app
+              futebadosparcas.com.br
             </Typography>
           </Box>
         </Box>
