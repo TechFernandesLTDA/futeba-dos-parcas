@@ -22,6 +22,7 @@ const queryClient = new QueryClient({
 // Splash & Onboarding
 const SplashScreen = lazy(() => import('./pages/splash/SplashScreen').then(m => ({ default: m.SplashScreen })));
 const WelcomeScreen = lazy(() => import('./pages/onboarding/WelcomeScreen').then(m => ({ default: m.WelcomeScreen })));
+import { VerificationBanner } from './components/auth/VerificationBanner';
 const PhoneVerificationScreen = lazy(() => import('./pages/onboarding/PhoneVerificationScreen').then(m => ({ default: m.PhoneVerificationScreen })));
 const CpfVerificationScreen = lazy(() => import('./pages/onboarding/CpfVerificationScreen').then(m => ({ default: m.CpfVerificationScreen })));
 const ProfileSetupScreen = lazy(() => import('./pages/onboarding/ProfileSetupScreen').then(m => ({ default: m.ProfileSetupScreen })));
@@ -343,6 +344,7 @@ function App() {
             <ToastProvider>
               <SkipNav />
               <MobileShell>
+                <VerificationBanner />
                 <Box component="main" id="main-content">
                   <SafeScreen />
                 </Box>

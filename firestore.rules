@@ -137,6 +137,23 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.role == 'FIELD_OWNER';
     }
 
+    // FASE 5 #448: Phone+CPF verification enforcement
+    // isVerified() - Verifica custom claim verified=true (Phone+CPF Anti-Bot)
+    // Spec: SPEC_PHONE_CPF_FASE5_ENFORCEMENT.md
+    function isVerified() {
+      return isAuthenticated() && request.auth.token.verified == true;
+    }
+
+    // isVerifiedOrGrace() - Permite users existentes durante 30-day grace
+    // Apos 2026-06-04 (30d apos deploy Fase 5), passa a exigir verified=true.
+    // Server-side fixed (cliente nao pode bypassar mudando timestamp local).
+    function isVerifiedOrGrace() {
+      return isAuthenticated() && (
+        request.auth.token.verified == true ||
+        request.time < timestamp.date(2026, 6, 4)
+      );
+    }
+
     // Verifica se o usuario e um jogador confirmado no jogo (C-002 fix)
     // Bug fix: Verifica status == 'CONFIRMED' alem de existencia do documento
     function isConfirmedPlayer(gameId) {
@@ -397,10 +414,11 @@ service cloud.firestore {
       allow read: if isAuthenticated() &&
                      (!('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin());
 
+      // FASE 5 #448: criar jogo exige verified (com 30-day grace)
       // Qualquer usuario autenticado pode criar jogos
       // Validacoes na criacao de jogo (#28, #29 - Validações de bounds e coordenadas)
       // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
-      allow create: if isAuthenticated() &&
+      allow create: if isVerifiedOrGrace() &&
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
                        // Validacao de max_players (2-50) - #28
                        isValidMaxPlayers(request.resource.data.max_players) &&
@@ -491,6 +509,7 @@ service cloud.firestore {
       // Apenas o proprio usuario pode ler suas confirmacoes
       allow read: if isAuthenticated() && resource.data.user_id == request.auth.uid;
 
+      // FASE 5 #448: confirmacao exige verified (30-day grace).
       // SECFIX #428: branch summon (game owner) agora exige
       //   - user_id != self (impede self-confirmation via summon)
       //   - doc-id pattern enforcement (mesmo que self-create)
@@ -498,7 +517,7 @@ service cloud.firestore {
       // C-003 FIX: Usuario pode criar sua propria confirmacao com validação de ID
       // ID deve seguir padrao: {gameId}_{userId}
       // OU o dono do jogo pode criar convites (summon) para outros
-      allow create: if isAuthenticated() &&
+      allow create: if isVerifiedOrGrace() &&
                        ((request.resource.data.user_id == userId() &&
                          isValidConfirmationId(confirmationId, request.resource.data.game_id, userId())) ||
                         (isGameOwner(request.resource.data.game_id) &&
@@ -986,8 +1005,9 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()))
       );
 
+      // FASE 5 #448: criar grupo exige verified (30-day grace)
       // Validacoes na criacao de grupo
-      allow create: if isAuthenticated() &&
+      allow create: if isVerifiedOrGrace() &&
                        request.resource.data.owner_id == userId() &&
                        // Nome do grupo: 3-50 caracteres
                        isValidStringLength(request.resource.data.name, 3, 50) &&
@@ -1042,9 +1062,10 @@ service cloud.firestore {
       match /cashbox/{entryId} {
         allow read: if isAuthenticated() && isGroupMember(groupId);
 
+        // FASE 5 #448: cashbox create exige verified (30-day grace)
         // SECURITY: Validacao de bounds no amount (max R$ 100.000)
         // Previne entradas absurdas que poderiam indicar exploit ou erro
-        allow create: if isAuthenticated() &&
+        allow create: if isVerifiedOrGrace() &&
                          isGroupAdmin(groupId) &&
                          isGroupActive(groupId) &&
                          request.resource.data.amount > 0 &&
@@ -1186,11 +1207,12 @@ service cloud.firestore {
     match /game_events/{eventId} {
       allow read: if isAuthenticated();
 
+      // FASE 5 #448: game_event create exige verified (30-day grace)
       // SECURITY: Validacao na criacao de eventos
       // 1. game_id obrigatorio
       // 2. type deve ser um dos tipos validos
       // 3. Campos de score (se presentes) devem ter bounds
-      allow create: if isAuthenticated() && (
+      allow create: if isVerifiedOrGrace() && (
         isAdmin() ||
         isGameOwner(request.resource.data.game_id) ||
         isConfirmedPlayer(request.resource.data.game_id)
@@ -1297,7 +1319,8 @@ service cloud.firestore {
     match /mvp_votes/{voteId} {
       allow read: if isAuthenticated();
 
-      allow create: if isAuthenticated() && (
+      // FASE 5 #448: votar MVP exige verified (30-day grace)
+      allow create: if isVerifiedOrGrace() && (
         isConfirmedPlayer(request.resource.data.game_id) &&
         request.resource.data.voter_id == userId() &&
         request.resource.data.mvp_id != userId() &&
