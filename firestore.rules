@@ -275,6 +275,16 @@ service cloud.firestore {
              isValidLongitude(data.get('location_lng', null));
     }
 
+    // SECFIX #422: rejeita criacao de jogo com data no passado
+    // (impede backdating fraudulento -> XP retroativo).
+    // Permite tolerancia de 1h (timezone/clock skew).
+    function isFutureGameDate(data) {
+      let dt = data.get('date_time', data.get('dateTime', null));
+      return dt == null ||
+             dt is timestamp &&
+             dt > timestamp.value(request.time.toMillis() - 3600000);
+    }
+
     // Valida nome (2-100 caracteres)
     function isValidName(name) {
       return name is string && name.size() >= 2 && name.size() <= 100;
@@ -415,11 +425,14 @@ service cloud.firestore {
                      (!('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin());
 
       // FASE 5 #448: criar jogo exige verified (com 30-day grace)
+      // SECFIX #422: rejeita criacao de jogo com data no passado
       // Qualquer usuario autenticado pode criar jogos
       // Validacoes na criacao de jogo (#28, #29 - Validações de bounds e coordenadas)
       // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
       allow create: if isVerifiedOrGrace() &&
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
+                       // SECFIX #422: data deve ser futura (1h tolerance)
+                       isFutureGameDate(request.resource.data) &&
                        // Validacao de max_players (2-50) - #28
                        isValidMaxPlayers(request.resource.data.max_players) &&
                        // Validacao de max_goalkeepers (0-10) - #28
