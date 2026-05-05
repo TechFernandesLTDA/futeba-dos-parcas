@@ -64,11 +64,8 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
   </Box>
 );
 
-const ROLE_CONFIG: Record<GroupRole, { label: string; color: string }> = {
-  OWNER: { label: 'Dono', color: '#F59E0B' },
-  ADMIN: { label: 'Admin', color: '#2979FF' },
-  MEMBER: { label: 'Membro', color: '#78716C' },
-};
+// Fix #414: ROLE_CONFIG extraído para constants/group.ts (single source of truth)
+import { ROLE_CONFIG } from '../../constants/group';
 
 export const GroupDetailScreen: React.FC = () => {
   useDocumentTitle('Detalhes do Grupo');

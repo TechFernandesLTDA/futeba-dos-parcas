@@ -132,11 +132,13 @@ export const futebaTheme = createTheme({
     },
     MuiBottomNavigation: {
       styleOverrides: {
-        root: {
+        // Fix #413: usar palette tokens em vez de hex hardcoded
+        // Hex anteriores quebravam dark mode quando tema dinamico mudava.
+        root: ({theme}: {theme: import('@mui/material/styles').Theme}) => ({
           height: 64,
-          backgroundColor: '#FFFFFF',
-          borderTop: '1px solid #E5E3E6',
-        },
+          backgroundColor: theme.palette.background.paper,
+          borderTop: `1px solid ${theme.palette.divider}`,
+        }),
       },
     },
     MuiBottomNavigationAction: {
@@ -215,10 +217,11 @@ export const futebaDarkTheme = createTheme({
     },
     MuiBottomNavigation: {
       styleOverrides: {
-        root: {
-          backgroundColor: '#1E293B',
-          borderTop: '1px solid #334155',
-        },
+        // Fix #413: dark mode também usa palette tokens
+        root: ({theme}: {theme: import('@mui/material/styles').Theme}) => ({
+          backgroundColor: theme.palette.background.paper,
+          borderTop: `1px solid ${theme.palette.divider}`,
+        }),
       },
     },
   },
