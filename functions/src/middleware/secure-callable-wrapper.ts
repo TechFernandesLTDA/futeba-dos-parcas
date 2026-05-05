@@ -388,12 +388,15 @@ export function secureCallable<
           throw error;
         }
 
-        // Wrap generic errors
+        // SECFIX #435: NAO expor originalError ao cliente
+        // (information disclosure - OWASP A05:2021).
+        // Cliente recebe apenas requestId opaco para correlacao
+        // em logs servidor. errorMessage ja foi logado acima.
         throw new HttpsError(
           "internal",
           "An error occurred while " +
           "processing your request",
-          {originalError: errorMessage}
+          {requestId}
         );
       }
     }

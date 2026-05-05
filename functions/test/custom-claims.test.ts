@@ -36,6 +36,7 @@ jest.mock("firebase-admin", () => {
     auth: jest.fn(() => ({
       setCustomUserClaims: mockSetCustomUserClaims,
       getUser: mockGetUser,
+      revokeRefreshTokens: jest.fn().mockResolvedValue(undefined),
     })),
     initializeApp: jest.fn(),
   };
