@@ -267,7 +267,11 @@ export const GroupDetailScreen: React.FC = () => {
               <EmptyState
                 icon={<PersonIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
                 title="Nenhum membro"
-                description="O grupo ainda não tem membros"
+                description="O grupo ainda não tem membros. Convide amigos pra começar!"
+                action={{
+                  label: 'Convidar',
+                  onClick: () => setInviteDialogOpen(true),
+                }}
               />
             ) : (
               <List disablePadding aria-label="Membros do grupo">
