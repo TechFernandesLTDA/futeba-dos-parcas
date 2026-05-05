@@ -1742,6 +1742,9 @@ export * from "./auth/custom-claims";
 export {verifyCpf, setUserVerified} from "./auth/verification";
 export {canSendSmsOtp, logVerificationFailure} from "./auth/anti-abuse";
 
+// SECFIX #430: detector de confirmacoes em jogos overlapping
+export {onConfirmationCreated} from "./voting/temporal-overlap";
+
 // ==========================================
 // P0 OPTIMIZATIONS: XP PARALLEL PROCESSING
 // ==========================================
