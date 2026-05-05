@@ -131,7 +131,7 @@ export const LiveGameScreen: React.FC = () => {
       }
     }, (err) => {
       logger.error('Error in score listener:', err);
-      showError('Erro ao carregar dados do jogo');
+      showError('Erro ao carregar placar do jogo');
     });
 
     const eventsQuery = query(collection(db, 'game_events'), where('game_id', '==', gameId));
@@ -148,7 +148,7 @@ export const LiveGameScreen: React.FC = () => {
       setEvents([...eventsData].sort((a, b) => (b.minute ?? 0) - (a.minute ?? 0)));
     }, (err) => {
       logger.error('Error in events listener:', err);
-      showError('Erro ao carregar dados do jogo');
+      showError('Erro ao carregar eventos do jogo');
     });
 
     const confirmationsQuery = query(
@@ -169,7 +169,7 @@ export const LiveGameScreen: React.FC = () => {
       setConfirmedPlayers(players);
     }, (err) => {
       logger.error('Error in confirmations listener:', err);
-      showError('Erro ao carregar dados do jogo');
+      showError('Erro ao carregar lista de presença');
     });
 
     return () => {
