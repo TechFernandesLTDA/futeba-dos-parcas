@@ -91,7 +91,11 @@ export const CpfVerificationScreen: React.FC = () => {
 
       setSuccess(true);
       showSuccess('Conta verificada!');
-      setTimeout(() => navigate('/'), 1400);
+      // Hard reload pra ProtectedRoute re-ler custom claim verified=true.
+      // navigate() mantem instancia React e o cache de verified em memoria.
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1400);
     } catch (err) {
       const code = (err as { code?: string }).code;
       const message = (err as { message?: string }).message || '';
