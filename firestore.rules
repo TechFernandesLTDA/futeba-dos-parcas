@@ -536,8 +536,16 @@ service cloud.firestore {
         // Self-update: apenas campos de ETA
         (resource.data.user_id == userId() &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_on_the_way', 'eta_minutes', 'on_the_way_at', 'updated_at'])) ||
-        // O dono do JOGO pode atualizar qualquer confirmação (necessário para setar MVP/Stats no final)
-        isGameOwner(resource.data.game_id) ||
+        // SECFIX #434: dono do jogo restrito a campos de stats/MVP/status.
+        // Antes podia escrever em QUALQUER campo — permitia injetar
+        // own_stats (goals=15, assists=10) antes de FINISHED -> XP fraud.
+        // O dono do JOGO pode atualizar campos de stats/MVP/status only.
+        (isGameOwner(resource.data.game_id) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'status', 'goals', 'assists', 'saves', 'goalkeeper',
+           'is_mvp', 'is_best_gk', 'is_worst_player', 'was_present',
+           'checked_in', 'checked_in_at', 'team', 'updated_at',
+         ])) ||
         // Jogadores confirmados podem atualizar flags de MVP (para votação)
         (isConfirmedPlayer(resource.data.game_id) &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_mvp', 'is_best_gk', 'is_worst_player']))
@@ -874,11 +882,15 @@ service cloud.firestore {
         allow read: if isAuthenticated();
 
         // Create: usuario pode criar review para si mesmo
+        // SECFIX #440: enforcer 1 review por user via doc-id == userId.
+        // Tentativa de duplicate cria conflict no doc existente.
         // Validacoes:
+        // - reviewId deve ser igual ao userId (impede dup)
         // - user_id deve ser o proprio usuario
         // - rating deve ser 1-5
         // - comment max 500 chars
         allow create: if isAuthenticated() &&
+          reviewId == userId() &&
           request.resource.data.user_id == userId() &&
           request.resource.data.rating >= 1 &&
           request.resource.data.rating <= 5 &&
