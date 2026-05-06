@@ -413,4 +413,183 @@ class UserPermissionsTest {
             assertEquals(23, UserPermissions.Action.entries.size)
         }
     }
+
+    // ==================== MATRIZ EXAUSTIVA POR ROLE ====================
+
+    /**
+     * Source-of-truth do esperado por role. Sincronizar com `UserPermissions.rolePermissions`.
+     * Falha aqui = mudou matriz e esqueceu de atualizar testes (ou vice-versa).
+     */
+    @Nested
+    @DisplayName("Permission matrix (exhaustive)")
+    inner class PermissionMatrixTests {
+
+        private val adminExpected: Set<UserPermissions.Action> =
+            UserPermissions.Action.entries.toSet()
+
+        private val fieldOwnerExpected: Set<UserPermissions.Action> = setOf(
+            UserPermissions.Action.CREATE_GAME,
+            UserPermissions.Action.EDIT_ANY_GAME,
+            UserPermissions.Action.EDIT_GAME_STATS,
+            UserPermissions.Action.CREATE_LOCATION,
+            UserPermissions.Action.MANAGE_OWN_LOCATIONS,
+            UserPermissions.Action.CREATE_GROUP,
+            UserPermissions.Action.MANAGE_GROUP_CASHBOX,
+            UserPermissions.Action.VIEW_GLOBAL_STATS
+        )
+
+        private val playerExpected: Set<UserPermissions.Action> = setOf(
+            UserPermissions.Action.CREATE_GAME,
+            UserPermissions.Action.EDIT_ANY_GAME,
+            UserPermissions.Action.CONFIRM_PRESENCE_ANY_GAME,
+            UserPermissions.Action.CREATE_GROUP,
+            UserPermissions.Action.MANAGE_GROUP_CASHBOX
+        )
+
+        @Test
+        @DisplayName("ADMIN: matriz exata (23 allow, 0 deny)")
+        fun `admin matrix`() {
+            val admin = createUser(role = UserRole.ADMIN.name)
+            UserPermissions.Action.entries.forEach { action ->
+                val expected = action in adminExpected
+                assertEquals(
+                    expected,
+                    UserPermissions.hasPermission(admin, action),
+                    "ADMIN $action: esperado=$expected"
+                )
+            }
+        }
+
+        @Test
+        @DisplayName("FIELD_OWNER: matriz exata (8 allow, 15 deny)")
+        fun `field owner matrix`() {
+            val fieldOwner = createUser(role = UserRole.FIELD_OWNER.name)
+            UserPermissions.Action.entries.forEach { action ->
+                val expected = action in fieldOwnerExpected
+                assertEquals(
+                    expected,
+                    UserPermissions.hasPermission(fieldOwner, action),
+                    "FIELD_OWNER $action: esperado=$expected"
+                )
+            }
+        }
+
+        @Test
+        @DisplayName("PLAYER: matriz exata (5 allow, 18 deny)")
+        fun `player matrix`() {
+            val player = createUser(role = UserRole.PLAYER.name)
+            UserPermissions.Action.entries.forEach { action ->
+                val expected = action in playerExpected
+                assertEquals(
+                    expected,
+                    UserPermissions.hasPermission(player, action),
+                    "PLAYER $action: esperado=$expected"
+                )
+            }
+        }
+
+        @Test
+        @DisplayName("ADMIN tem superset de FIELD_OWNER e PLAYER")
+        fun `admin is superset of other roles`() {
+            assertTrue(
+                fieldOwnerExpected.all { it in adminExpected },
+                "ADMIN deve conter todas as permissões de FIELD_OWNER"
+            )
+            assertTrue(
+                playerExpected.all { it in adminExpected },
+                "ADMIN deve conter todas as permissões de PLAYER"
+            )
+        }
+
+        @Test
+        @DisplayName("FIELD_OWNER NÃO pode acessar admin panel nem mudar role")
+        fun `field owner has no admin actions`() {
+            val fieldOwner = createUser(role = UserRole.FIELD_OWNER.name)
+            val adminOnly = listOf(
+                UserPermissions.Action.MANAGE_USERS,
+                UserPermissions.Action.VIEW_ALL_USERS,
+                UserPermissions.Action.CHANGE_USER_ROLE,
+                UserPermissions.Action.DELETE_ANY_GAME,
+                UserPermissions.Action.EDIT_ANY_LOCATION,
+                UserPermissions.Action.DELETE_ANY_LOCATION,
+                UserPermissions.Action.EDIT_ANY_GROUP,
+                UserPermissions.Action.DELETE_ANY_GROUP,
+                UserPermissions.Action.EDIT_RANKINGS,
+                UserPermissions.Action.ADJUST_XP,
+                UserPermissions.Action.MANAGE_NOTIFICATIONS,
+                UserPermissions.Action.ACCESS_ADMIN_PANEL,
+                UserPermissions.Action.MANAGE_BADGES,
+                UserPermissions.Action.MANAGE_CHALLENGES
+            )
+            adminOnly.forEach { action ->
+                assertFalse(
+                    UserPermissions.hasPermission(fieldOwner, action),
+                    "FIELD_OWNER NÃO deve ter $action"
+                )
+            }
+        }
+
+        @Test
+        @DisplayName("PLAYER NÃO pode gerenciar locais nem ver stats globais")
+        fun `player has no field owner or admin actions`() {
+            val player = createUser(role = UserRole.PLAYER.name)
+            val notForPlayer = listOf(
+                UserPermissions.Action.CREATE_LOCATION,
+                UserPermissions.Action.MANAGE_OWN_LOCATIONS,
+                UserPermissions.Action.EDIT_ANY_LOCATION,
+                UserPermissions.Action.DELETE_ANY_LOCATION,
+                UserPermissions.Action.VIEW_GLOBAL_STATS,
+                UserPermissions.Action.EDIT_GAME_STATS,
+                UserPermissions.Action.MANAGE_USERS,
+                UserPermissions.Action.ACCESS_ADMIN_PANEL,
+                UserPermissions.Action.ADJUST_XP
+            )
+            notForPlayer.forEach { action ->
+                assertFalse(
+                    UserPermissions.hasPermission(player, action),
+                    "PLAYER NÃO deve ter $action"
+                )
+            }
+        }
+    }
+
+    // ==================== USUARIO NAO AUTENTICADO / ROLE INVALIDO ====================
+
+    @Nested
+    @DisplayName("Edge cases")
+    inner class EdgeCaseTests {
+
+        @Test
+        @DisplayName("Role string invalido deve cair em PLAYER (default)")
+        fun `invalid role string defaults to PLAYER`() {
+            val user = createUser(role = "INVALID_ROLE_XYZ")
+            assertTrue(
+                UserPermissions.hasPermission(user, UserPermissions.Action.CREATE_GAME),
+                "Role invalido deve ter perms de PLAYER"
+            )
+            assertFalse(
+                UserPermissions.hasPermission(user, UserPermissions.Action.MANAGE_USERS),
+                "Role invalido NAO deve ter perms admin"
+            )
+        }
+
+        @Test
+        @DisplayName("Role string vazio deve cair em PLAYER (default)")
+        fun `empty role string defaults to PLAYER`() {
+            val user = createUser(role = "")
+            assertFalse(UserPermissions.isAdmin(user))
+            assertFalse(UserPermissions.isFieldOwner(user))
+        }
+
+        @Test
+        @DisplayName("Role e case-insensitive (UserRole.fromString usa ignoreCase=true)")
+        fun `role is case-insensitive`() {
+            // UserRole.fromString normaliza com ignoreCase=true.
+            // Documenta o comportamento atual: 'admin', 'Admin', 'ADMIN' equivalem.
+            assertTrue(UserPermissions.isAdmin(createUser(role = "admin")))
+            assertTrue(UserPermissions.isAdmin(createUser(role = "Admin")))
+            assertTrue(UserPermissions.isAdmin(createUser(role = "ADMIN")))
+            assertTrue(UserPermissions.isFieldOwner(createUser(role = "field_owner")))
+        }
+    }
 }
