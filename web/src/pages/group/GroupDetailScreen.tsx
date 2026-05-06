@@ -101,6 +101,11 @@ export const GroupDetailScreen: React.FC = () => {
   };
 
   const handleCopyInvite = async () => {
+    // Guard issue #514: sem codigo o link sai /join/ (sem param)
+    if (!inviteCode) {
+      showError('Gere um convite primeiro');
+      return;
+    }
     const link = `${window.location.origin}/join/${inviteCode}`;
     try {
       await navigator.clipboard.writeText(link);
@@ -111,6 +116,10 @@ export const GroupDetailScreen: React.FC = () => {
   };
 
   const handleShare = async () => {
+    if (!inviteCode) {
+      showError('Gere um convite primeiro');
+      return;
+    }
     const link = `${window.location.origin}/join/${inviteCode}`;
     if (navigator.share) {
       await navigator.share({
