@@ -8,6 +8,7 @@ import {
   LinearProgress,
   Skeleton,
   IconButton,
+  Button,
   Tooltip,
   useTheme,
   alpha,
@@ -314,9 +315,23 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
             ) : isError ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography color="error" gutterBottom>Erro ao carregar jogador</Typography>
-                <IconButton onClick={() => refetch()} size="small" sx={{ color: theme.palette.common.white }}>
+                {/* SECFIX #492: Button (não IconButton) — IconButton é semanticamente
+                    pra ícones puros; texto sem ícone usa Button (WCAG 4.1.2). */}
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => refetch()}
+                  sx={{
+                    color: theme.palette.common.white,
+                    borderColor: alpha(theme.palette.common.white, 0.5),
+                    '&:hover': {
+                      borderColor: theme.palette.common.white,
+                      bgcolor: alpha(theme.palette.common.white, 0.08),
+                    },
+                  }}
+                >
                   Tentar novamente
-                </IconButton>
+                </Button>
               </Box>
             ) : player ? (
               <>

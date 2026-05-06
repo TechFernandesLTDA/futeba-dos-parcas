@@ -13,6 +13,8 @@ import {
   alpha,
   Grid,
   Paper,
+  Alert,
+  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -61,6 +63,9 @@ export const EvolutionScreen: React.FC = () => {
   const [evolutionData, setEvolutionData] = useState<EvolutionData[]>([]);
   const [summary, setSummary] = useState<StatsSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  // SECFIX #493: estado de erro pra distinguir falha de rede vs sem dados
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const targetUserId = userId || currentUser?.id;
 
@@ -69,6 +74,9 @@ export const EvolutionScreen: React.FC = () => {
       setLoading(false);
       return;
     }
+
+    setError(null);
+    setLoading(true);
 
     const fetchData = async () => {
       try {
@@ -111,18 +119,36 @@ export const EvolutionScreen: React.FC = () => {
         });
 
         setEvolutionData(data);
-      } catch (error) {
-        logger.error('Error fetching evolution data:', error);
+      } catch (err) {
+        logger.error('Error fetching evolution data:', err);
+        setError('Não foi possível carregar os dados de evolução. Tente novamente.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [targetUserId]);
+  }, [targetUserId, reloadKey]);
 
   if (loading) {
     return <LoadingState shimmerCount={6} itemType="CARD" />;
+  }
+
+  // SECFIX #493: estado de erro com retry distinto do empty state
+  if (error) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Alert severity="error" sx={{ mb: 2, textAlign: 'left' }}>
+          {error}
+        </Alert>
+        <Button
+          variant="contained"
+          onClick={() => setReloadKey((k) => k + 1)}
+        >
+          Tentar novamente
+        </Button>
+      </Box>
+    );
   }
 
   if (!summary) {
