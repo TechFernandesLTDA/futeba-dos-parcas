@@ -277,16 +277,60 @@ describe("groups — atualização", () => {
 // ============================================================
 
 describe("groups — deleção", () => {
-  it("Owner pode deletar o próprio grupo", async () => {
-    await seedDoc(testEnv, "groups/group-to-delete", {
-      name: "Para Deletar",
+  // Issue #516: owner NAO pode mais hard-delete. Soft delete via update
+  // (set deleted_at) e o caminho correto. Hard delete fica reservado
+  // para ADMIN (cleanup/recovery final).
+  it("Owner NAO pode hard-delete (deve usar soft delete via update)", async () => {
+    await seedDoc(testEnv, "groups/group-owner-hard-delete-blocked", {
+      name: "Tentativa Hard Delete",
       owner_id: UID_PLAYER_A,
       is_public: true,
       status: "ACTIVE",
       description: "",
     });
     const db = asPlayerA(testEnv);
-    await assertSucceeds(db.doc("groups/group-to-delete").delete());
+    await assertFails(
+      db.doc("groups/group-owner-hard-delete-blocked").delete()
+    );
+  });
+
+  it("Owner pode SOFT delete via update (set deleted_at + deleted_by)", async () => {
+    await seedDoc(testEnv, "groups/group-soft-delete", {
+      name: "Para Soft Deletar",
+      owner_id: UID_PLAYER_A,
+      is_public: true,
+      status: "ACTIVE",
+      description: "",
+    });
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc("groups/group-soft-delete").update({
+        deleted_at: new Date(),
+        deleted_by: UID_PLAYER_A,
+        status: "DELETED",
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Admin pode RESTAURAR grupo soft-deletado (clear deleted_at)", async () => {
+    await seedDoc(testEnv, "groups/group-soft-deleted-for-restore", {
+      name: "Soft Deleted",
+      owner_id: UID_PLAYER_A,
+      is_public: true,
+      status: "DELETED",
+      description: "",
+      deleted_at: new Date(),
+      deleted_by: UID_PLAYER_A,
+    });
+    const db = asAdmin(testEnv);
+    await assertSucceeds(
+      db.doc("groups/group-soft-deleted-for-restore").update({
+        deleted_at: null,
+        status: "ACTIVE",
+        updated_at: new Date(),
+      })
+    );
   });
 
   it("Membro simples NÃO pode deletar grupo", async () => {
