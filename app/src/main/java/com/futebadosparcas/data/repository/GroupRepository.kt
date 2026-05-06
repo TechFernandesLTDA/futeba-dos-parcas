@@ -2,6 +2,7 @@ package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.datasource.GroupPhotoDataSource
 import com.futebadosparcas.domain.model.Group
+import com.futebadosparcas.data.model.Group as PublicGroup
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.data.model.GroupMemberStatus
@@ -190,6 +191,33 @@ class GroupRepository constructor(
                 }
                 val groups = snapshot?.toObjects(UserGroup::class.java) ?: emptyList()
                 trySend(groups)
+            }
+
+        awaitClose { listener.remove() }
+    }
+
+    /**
+     * Observa grupos publicos para descoberta (issue #517 Phase 1.b).
+     *
+     * Query: groups where is_public == true.
+     * Filtra deleted_at == null no cliente (volume baixo de grupos publicos
+     * dispensa composite index).
+     *
+     * Resultado e ordenado por member_count desc no cliente.
+     */
+    fun getPublicGroupsFlow(): Flow<Result<List<PublicGroup>>> = callbackFlow {
+        val listener = groupsCollection
+            .whereEqualTo("is_public", true)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(Result.failure(error))
+                    return@addSnapshotListener
+                }
+                val groups = snapshot?.toObjects(PublicGroup::class.java)
+                    ?.filter { it.deletedAt == null }
+                    ?.sortedByDescending { it.memberCount }
+                    ?: emptyList()
+                trySend(Result.success(groups))
             }
 
         awaitClose { listener.remove() }
