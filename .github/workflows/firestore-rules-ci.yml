@@ -15,8 +15,10 @@ on:
 jobs:
   rules-tests:
     name: Testar Firestore Security Rules
-    # Usa runner self-hosted macOS (disponível neste projeto) ou ubuntu como fallback
-    runs-on: ubuntu-latest
+    # Self-hosted macOS ARM64 (mesmo padrao de android-ci.yml e ios-build.yml).
+    # Evita custos de GitHub-hosted; user pool de 8 runners locais.
+    runs-on: ${{ fromJSON(vars.RUNNER_LABELS || '["self-hosted","macOS","ARM64"]') }}
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
