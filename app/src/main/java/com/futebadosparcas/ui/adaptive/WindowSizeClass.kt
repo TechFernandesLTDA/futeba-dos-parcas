@@ -3,8 +3,14 @@ package com.futebadosparcas.ui.adaptive
 import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
@@ -203,4 +209,30 @@ fun AdaptiveLayout(
         WindowWidthSizeClass.MEDIUM -> medium()
         WindowWidthSizeClass.EXPANDED -> expanded()
     }
+}
+
+/**
+ * SECFIX #489: Modifier helper que aplica width constraint adaptive
+ * baseado em WindowSizeClass.contentMaxWidth + centraliza horizontalmente.
+ *
+ * Uso:
+ * ```kotlin
+ * LazyColumn(
+ *     modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
+ *     ...
+ * )
+ * ```
+ *
+ * - COMPACT: Dp.Unspecified → sem efeito (full width)
+ * - MEDIUM (sw600dp+): max 840dp + centralizado
+ * - EXPANDED (sw840dp+): max 1040dp + centralizado
+ *
+ * Substitui boilerplate em 28+ telas (per audit issue #489).
+ */
+@Composable
+fun Modifier.adaptiveContentWidth(): Modifier {
+    val windowSizeClass = rememberWindowSizeClass()
+    return this
+        .widthIn(max = windowSizeClass.contentMaxWidth)
+        .wrapContentWidth(Alignment.CenterHorizontally)
 }

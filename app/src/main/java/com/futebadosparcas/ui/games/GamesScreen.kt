@@ -33,6 +33,7 @@ import com.futebadosparcas.data.repository.GameFilterType
 import com.futebadosparcas.ui.components.FutebaTopBar
 import com.futebadosparcas.ui.components.ShimmerGameCard
 import com.futebadosparcas.ui.theme.GamificationColors
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.ui.adaptive.WindowWidthSizeClass
 import com.futebadosparcas.R
@@ -173,7 +174,10 @@ private fun GamesSuccessContent(
         if (windowSizeClass.widthSizeClass == WindowWidthSizeClass.COMPACT) {
             // Compact: lista vertical simples
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                // SECFIX #489: adaptiveContentWidth() centraliza em tablets/desktop
+                modifier = Modifier
+                    .fillMaxSize()
+                    .adaptiveContentWidth(),
                 contentPadding = PaddingValues(
                     horizontal = windowSizeClass.horizontalPadding,
                     vertical = 8.dp
@@ -192,7 +196,10 @@ private fun GamesSuccessContent(
             // Medium/Expanded: grid de 2 colunas
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize(),
+                // SECFIX #489: adaptiveContentWidth() limita 840/1040dp + centraliza
+                modifier = Modifier
+                    .fillMaxSize()
+                    .adaptiveContentWidth(),
                 contentPadding = PaddingValues(
                     horizontal = windowSizeClass.horizontalPadding,
                     vertical = 8.dp
