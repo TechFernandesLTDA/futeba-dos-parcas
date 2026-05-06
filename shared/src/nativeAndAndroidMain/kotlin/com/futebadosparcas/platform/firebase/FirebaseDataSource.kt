@@ -674,8 +674,49 @@ actual class FirebaseDataSource actual constructor() {
 
         println("FirebaseDataSource: getCurrentUser: buscando para uid=$uid")
 
-        return getUserById(uid).onSuccess { user ->
-            println("FirebaseDataSource: getCurrentUser: carregado ${user.name}, Level=${user.level}")
+        // SECFIX #433 STAGE 2: merge PII de users_private quando próprio user.
+        // Stage 1 (PR #482) já popula users_private via triggers + backfill.
+        // Backward compat: se users_private vazio/inacessível, fallback pra
+        // PII em users (Stage 3 vai remover de users e isolar em users_private).
+        val publicResult = getUserById(uid)
+        val publicUser = publicResult.getOrNull() ?: return publicResult
+
+        return try {
+            val privateDoc = firestore.collection("users_private")
+                .document(uid)
+                .get()
+
+            val mergedUser = if (privateDoc.exists) {
+                publicUser.copy(
+                    email = privateDoc.get<String?>("email") ?: publicUser.email,
+                    fcmToken = privateDoc.get<String?>("fcm_token")
+                        ?: publicUser.fcmToken,
+                    birthDate = (privateDoc.get<Long?>("birth_date"))
+                        ?: publicUser.birthDate,
+                    heightCm = (privateDoc.get<Long?>("height_cm"))?.toInt()
+                        ?: publicUser.heightCm,
+                    weightKg = (privateDoc.get<Long?>("weight_kg"))?.toInt()
+                        ?: publicUser.weightKg,
+                    gender = privateDoc.get<String?>("gender")
+                        ?: publicUser.gender,
+                )
+            } else {
+                publicUser
+            }
+
+            println(
+                "FirebaseDataSource: getCurrentUser: carregado " +
+                    "${mergedUser.name}, Level=${mergedUser.level}, " +
+                    "PII source=${if (privateDoc.exists) "users_private" else "users (fallback)"}"
+            )
+            Result.success(mergedUser)
+        } catch (e: Exception) {
+            // Falha lendo users_private → fallback pra user de users (sem merge)
+            println(
+                "FirebaseDataSource: getCurrentUser: users_private read failed, " +
+                    "fallback to users PII: ${e.message}"
+            )
+            Result.success(publicUser)
         }
     }
 

@@ -1637,13 +1637,16 @@ service cloud.firestore {
     }
 
     // ============================================
-    // COLECAO: users_private (Phone + CPF dados sensiveis - LGPD)
+    // COLECAO: users_private (PII + Phone/CPF sensíveis - LGPD)
     // ============================================
-    // SECURITY: Escrito EXCLUSIVAMENTE por Cloud Functions (verifyCpf,
-    // setUserVerified). Cliente NAO le nem escreve.
-    // Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md
+    // STAGE 2 (#433): Owner pode LER próprio doc pra acessar PII
+    //   (email, fcm_token, birth_date, height_cm, weight_kg, gender, cpfHash)
+    // ESCRITA: apenas Cloud Functions (verifyCpf, setUserVerified,
+    //   onUserDocCreated/Updated triggers que sincronizam PII de users)
+    // Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md + SECFIX #433
     match /users_private/{userId} {
-      allow read, write: if false;
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if false;
     }
 
     // ============================================
