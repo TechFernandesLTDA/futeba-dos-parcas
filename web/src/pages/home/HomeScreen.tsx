@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Box, BottomNavigation, BottomNavigationAction, Paper, Snackbar, Button } from '@mui/material';
+import {
+  Box,
+  BottomNavigation,
+  BottomNavigationAction,
+  Paper,
+  Snackbar,
+  Button,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+  Tooltip,
+} from '@mui/material';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import {
   Home as HomeIcon,
@@ -18,6 +32,10 @@ import { ProfileTab } from './tabs/ProfileTab';
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
 
 const TAB_TITLES = ['Início', 'Jogos', 'Grupos', 'Liga', 'Perfil'];
+
+// Larguras dos navs adaptativos (Material 3 spec)
+const RAIL_WIDTH = 80;     // md: NavigationRail (icon-only)
+const DRAWER_WIDTH = 240;  // lg+: Drawer permanent (icon + label)
 
 export function HomeScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -43,15 +61,134 @@ export function HomeScreen() {
     { icon: <Person />, label: 'Perfil' },
   ];
 
+  const handleTabChange = (idx: number) => {
+    setSearchParams({ tab: idx.toString() });
+  };
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        height: '100dvh',
+      }}
+    >
+      {/* Tablet (md): NavigationRail icon-only */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', md: 'block', lg: 'none' },
+          width: RAIL_WIDTH,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: RAIL_WIDTH,
+            position: 'relative',
+            borderRight: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          },
+        }}
+        aria-label="Navegação principal"
+      >
+        <List sx={{ pt: 2 }}>
+          {tabConfigs.map((config, idx) => (
+            <Tooltip key={config.label} title={config.label} placement="right">
+              <ListItemButton
+                selected={tabValue === idx}
+                onClick={() => handleTabChange(idx)}
+                sx={{
+                  flexDirection: 'column',
+                  py: 1.5,
+                  '&.Mui-selected': {
+                    bgcolor: 'action.selected',
+                    '& .MuiListItemIcon-root': { color: 'primary.main' },
+                  },
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    justifyContent: 'center',
+                    mb: 0.5,
+                  }}
+                >
+                  {config.icon}
+                </ListItemIcon>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.65rem',
+                    fontWeight: tabValue === idx ? 600 : 400,
+                    color: tabValue === idx ? 'primary.main' : 'text.secondary',
+                  }}
+                >
+                  {config.label}
+                </Typography>
+              </ListItemButton>
+            </Tooltip>
+          ))}
+        </List>
+      </Drawer>
+
+      {/* Desktop (lg+): Drawer permanent expanded */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', lg: 'block' },
+          width: DRAWER_WIDTH,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: DRAWER_WIDTH,
+            position: 'relative',
+            borderRight: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          },
+        }}
+        aria-label="Navegação principal"
+      >
+        <Box sx={{ p: 2 }}>
+          <Typography variant="h6" fontWeight={700} color="primary.main">
+            Futeba dos Parças
+          </Typography>
+        </Box>
+        <List>
+          {tabConfigs.map((config, idx) => (
+            <ListItemButton
+              key={config.label}
+              selected={tabValue === idx}
+              onClick={() => handleTabChange(idx)}
+              sx={{
+                borderRadius: 2,
+                mx: 1,
+                my: 0.5,
+                '&.Mui-selected': {
+                  bgcolor: 'action.selected',
+                  '& .MuiListItemIcon-root': { color: 'primary.main' },
+                  '& .MuiListItemText-primary': {
+                    color: 'primary.main',
+                    fontWeight: 600,
+                  },
+                },
+              }}
+            >
+              <ListItemIcon sx={{ color: 'text.secondary' }}>
+                {config.icon}
+              </ListItemIcon>
+              <ListItemText primary={config.label} />
+            </ListItemButton>
+          ))}
+        </List>
+      </Drawer>
+
       {/* Conteúdo principal com scroll */}
       <Box
         sx={{
           flex: 1,
           overflow: 'auto',
           WebkitOverflowScrolling: 'touch',
-          pb: '72px', // Espaço para a bottom nav
+          // pb apenas em mobile pra não ficar sob a bottom nav
+          pb: { xs: '72px', md: 0 },
         }}
       >
         {tabValue === 0 && <HomeTab />}
@@ -61,10 +198,11 @@ export function HomeScreen() {
         {tabValue === 4 && <ProfileTab />}
       </Box>
 
-      {/* Bottom Navigation - 5 botões (igual ao Android) */}
+      {/* Mobile (xs/sm): BottomNavigation - 5 botões (igual ao Android) */}
       {/* Em sm+ respeita MobileShell (480px centrado) */}
       <Paper
         sx={{
+          display: { xs: 'block', md: 'none' },
           position: 'fixed',
           bottom: 0,
           left: { xs: 0, sm: '50%' },
@@ -80,7 +218,7 @@ export function HomeScreen() {
       >
         <BottomNavigation
           value={tabValue}
-          onChange={(_, newValue) => setSearchParams({ tab: newValue.toString() })}
+          onChange={(_, newValue) => handleTabChange(newValue)}
           showLabels
           aria-label="Navegação principal"
           sx={{
@@ -131,7 +269,7 @@ export function HomeScreen() {
           </>
         }
         onClose={() => setShowNotifBanner(false)}
-        sx={{ bottom: 80 }}
+        sx={{ bottom: { xs: 80, md: 16 } }}
       />
     </Box>
   );
