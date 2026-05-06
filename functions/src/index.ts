@@ -1742,6 +1742,21 @@ export * from "./auth/custom-claims";
 export {verifyCpf, setUserVerified} from "./auth/verification";
 export {canSendSmsOtp, logVerificationFailure} from "./auth/anti-abuse";
 
+// SECFIX #433: PII denormalization users -> users_private
+// Triggers + callable migration (ADMIN one-shot)
+export {
+  onUserDocCreated,
+  onUserDocUpdated,
+  migratePiiToUsersPrivate,
+} from "./auth/pii-migration";
+
+// SECFIX #442: location_lat/lng denormalization (LGPD)
+// Trigger + callable backfill (ADMIN one-shot)
+export {
+  onGameWrittenDenormalizeLocation,
+  denormalizeGameLocations,
+} from "./games/denormalize-location";
+
 // SECFIX #430: detector de confirmacoes em jogos overlapping
 export {onConfirmationCreated} from "./voting/temporal-overlap";
 

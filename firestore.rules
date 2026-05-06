@@ -350,6 +350,13 @@ service cloud.firestore {
       // Exceção: usuarios marcados como is_searchable podem ser lidos por qualquer autenticado
       // PERF_001: fcm_token é SEMPRE privado (não exposto em leitura pública)
       // Bug fix: Usuarios soft-deleted nao devem ser encontraveis via busca
+      //
+      // SECFIX #433 (HIGH PII) - STAGE 1:
+      // Triggers onUserDocCreated/onUserDocUpdated copiam PII (email,
+      // fcm_token, birth_date, height_cm, weight_kg, gender) pra users_private.
+      // STAGE 2 (PR futuro): clientes leem PII de users_private (apenas owner+admin),
+      // PII removida de users via cleanup callable. Firestore não tem field-level
+      // deny on read — denormalização é o approach correto.
       allow read: if isOwner(userId) || isAdmin() || (isAuthenticated() && resource.data.is_searchable == true && (!('deleted_at' in resource.data) || resource.data.deleted_at == null));
 
       // Usuario so pode criar seu proprio perfil (com role padrao PLAYER)
@@ -433,6 +440,12 @@ service cloud.firestore {
       // Qualquer usuario autenticado pode ler jogos (EXCETO soft-deleted)
       // Admins podem ver soft-deleted para recuperação
       // Bug fix: deleted_at pode nao existir no documento (undefined != null em Firestore rules)
+      //
+      // SECFIX #442 (LGPD) - STAGE 1:
+      // Trigger onGameWrittenDenormalizeLocation calcula location_lat_approx /
+      // location_lng_approx (3 decimais ~111m precisão) automaticamente.
+      // STAGE 2 (PR futuro): repos clientes leem _approx pra views públicas;
+      // location_lat/lng exatos só pra owner + confirmed players.
       allow read: if isAuthenticated() &&
                      (!('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin());
 
