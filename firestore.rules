@@ -1082,16 +1082,27 @@ service cloud.firestore {
                        // Descricao: max 500 caracteres
                        isValidDescription(request.resource.data.description);
 
-      // Validacoes no update de grupo
+      // Validacoes no update de grupo (issue #515).
+      // FIX: validar name/description APENAS quando estao sendo alterados.
+      // Antes, isValidDescription(undefined) rejeitava updates parciais em
+      // grupos legados sem o campo description (e qualquer update sem
+      // alterar name/description tambem falhava).
       allow update: if isAuthenticated() && (
         isAdmin() ||
         (
           (resource.data.owner_id == userId() || isGroupAdmin(groupId)) &&
-          // Validacao de dados no update
-          isValidStringLength(request.resource.data.name, 3, 50) &&
-          isValidDescription(request.resource.data.description)
+          // Valida name SO se estiver no diff
+          (
+            !('name' in request.resource.data.diff(resource.data).affectedKeys()) ||
+            isValidStringLength(request.resource.data.name, 3, 50)
+          ) &&
+          // Valida description SO se estiver no diff
+          (
+            !('description' in request.resource.data.diff(resource.data).affectedKeys()) ||
+            isValidDescription(request.resource.data.description)
+          )
         ) ||
-        // Atualizacao de contadores permitida
+        // Atualizacao de contadores permitida (sem owner check)
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['member_count', 'updated_at'])
       );
 
