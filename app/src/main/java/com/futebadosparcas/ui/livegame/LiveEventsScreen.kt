@@ -22,6 +22,7 @@ import com.futebadosparcas.domain.model.GameEvent
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * LiveEventsScreen - Exibe eventos ao vivo de um jogo
@@ -78,7 +79,7 @@ private fun LiveEventsContent(
     onEventClick: (eventId: String) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {

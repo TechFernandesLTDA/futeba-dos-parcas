@@ -32,6 +32,7 @@ import com.futebadosparcas.ui.components.lists.ShimmerBox
 import com.futebadosparcas.ui.theme.systemBarsPadding
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * InvitePlayersScreen - Convidar jogadores para grupo
@@ -257,7 +258,7 @@ private fun InvitePlayersContent(
 @Composable
 private fun LoadingUsersList() {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -322,7 +323,7 @@ private fun UsersList(
     onInviteClick: (User) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {

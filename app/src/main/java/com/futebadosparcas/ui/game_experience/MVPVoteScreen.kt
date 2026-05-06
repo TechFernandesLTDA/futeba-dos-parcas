@@ -32,6 +32,7 @@ import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * MVPVoteScreen - Tela de Votação MVP/Melhor Goleiro/Bola Murcha
@@ -226,7 +227,7 @@ private fun VotingContent(
         // Candidates Grid
         LazyVerticalGrid(
             columns = GridCells.Fixed(columns),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
             contentPadding = PaddingValues(bottom = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -440,7 +441,7 @@ private fun MVPVoteLoadingState() {
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(shimmerColumns),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {

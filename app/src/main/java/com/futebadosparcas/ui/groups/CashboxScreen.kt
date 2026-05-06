@@ -45,6 +45,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * CashboxScreen - Gestão financeira do grupo
@@ -562,7 +563,7 @@ private fun HistoryList(
     onEntryLongClick: (AndroidCashboxEntry) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = contentPadding
     ) {
         items(items, key = { item ->

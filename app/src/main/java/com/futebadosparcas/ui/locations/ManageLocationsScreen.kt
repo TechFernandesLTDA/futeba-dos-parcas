@@ -37,6 +37,7 @@ import com.futebadosparcas.ui.components.LocationListSkeleton
 import com.futebadosparcas.ui.locations.components.WelcomeLocationEmptyState
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * ManageLocationsScreen - Gerencia locais (campos de futebol)
@@ -327,7 +328,7 @@ private fun ManageLocationsContent(
     onDeleteField: (com.futebadosparcas.domain.model.Field) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {

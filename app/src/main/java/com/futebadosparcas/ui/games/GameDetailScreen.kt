@@ -52,6 +52,7 @@ import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.util.ShareCardHelper
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import java.time.LocalDate
@@ -345,6 +346,7 @@ fun GameDetailContent(
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
+            modifier = Modifier.adaptiveContentWidth(),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             // Header

@@ -43,6 +43,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * Issue #66: Relatorio Pos-Jogo
@@ -119,6 +120,7 @@ fun PostGameReportScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .adaptiveContentWidth()
                 .padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)

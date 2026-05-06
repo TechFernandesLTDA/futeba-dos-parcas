@@ -28,6 +28,7 @@ import java.text.NumberFormat
 import java.util.Locale
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * Issue #67: Estatisticas do Organizador
@@ -75,6 +76,7 @@ fun OwnerStatsScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
+                    .adaptiveContentWidth()
                     .padding(paddingValues),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)

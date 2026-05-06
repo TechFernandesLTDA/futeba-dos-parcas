@@ -45,6 +45,7 @@ import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.util.LevelBadgeHelper
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * Tela principal de Estatísticas com Jetpack Compose
@@ -142,6 +143,7 @@ private fun StatisticsLoadingState(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
+            .adaptiveContentWidth()
             .background(MaterialTheme.colorScheme.surface),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -252,6 +254,7 @@ private fun StatisticsSuccessContent(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
+            .adaptiveContentWidth()
             .background(MaterialTheme.colorScheme.surface),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
