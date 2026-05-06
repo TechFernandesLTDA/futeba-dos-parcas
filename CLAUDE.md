@@ -76,15 +76,15 @@ sealed class UiState {
 ./gradlew connectedDebugAndroidTest        # Instrumented tests (device required)
 
 # Quality
-./gradlew lint                             # Lint check
-./gradlew detekt                           # Static analysis (Detekt)
+./gradlew lint                             # Android Lint (XML/manifest/resources)
+./gradlew detekt                           # Static analysis (Detekt - the real linter for Kotlin)
 ./gradlew clean                            # Clean build
 
 # Cloud Functions (in /functions directory, Node 20)
 cd functions && npm install                # Install deps
 npm run build                              # Compile TypeScript
 npm run lint                               # ESLint (same as CI)
-npx jest --no-coverage                     # All tests (398 tests, 12 suites)
+npx jest --no-coverage                     # All tests (~20 test files, run `ls test/*.test.ts | wc -l` for current)
 npx jest path/to/file.test.ts              # Single test file
 npx jest --testNamePattern="test name"     # Single test by name
 firebase emulators:start                   # Local testing
@@ -92,7 +92,7 @@ firebase deploy --only functions           # Deploy
 
 # NOTE: New test files that use callable functions need:
 # jest.mock("../src/middleware/rate-limiter")
-# See functions/test/ for 12 existing test suites
+# See functions/test/ for existing test suites
 
 # Backend REST API (in /backend, Express + TypeORM + PostgreSQL — separate from Cloud Functions)
 cd backend && npm install                  # Install deps
@@ -138,7 +138,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 | Quick start guide | `QUICK_START.md` |
 | Contributing guide | `CONTRIBUTING.md` |
 | Security policy | `SECURITY.md` |
-| Changelog | `CHANGELOG.md` |
+| Changelog | `CHANGELOG.md` (release notes per version) |
 | Backend REST API | `backend/` (Express + TypeORM + PostgreSQL — `backend/ARCHITECTURE.md`) |
 | iOS app scaffold | `iosApp/` (CocoaPods + `build_shared.sh`, see `iosApp/SETUP.md`) |
 | Fastlane lanes | `fastlane/Fastfile` (test, build_debug, build_release, build_aab, beta) |
@@ -518,7 +518,7 @@ Compose Multiplatform migration tracked in `specs/CMP_MULTIPLATFORM_MIGRATION.md
 |-------|--------|----|-------------|
 | Phase 0 | ✅ COMPLETE | #159 | CMP 1.7.3→1.10.0, SQLDelight 2.2.1, wasmJs targets |
 | Phase 1 | ✅ COMPLETE | #160 | Hilt → Koin 4.1.1 (14 modules) |
-| Phase 2 | 🔄 IN PROGRESS | #161 | GitLive Firebase SDK 2.4.0 migration |
+| Phase 2 | ✅ COMPLETE | #161 | GitLive Firebase SDK 2.4.0 migration (merged 2026-02-20) |
 | Phase 3 | ⏳ PLANNED | - | Shared UI components in composeApp/ |
 | Phase 4 | ⏳ PLANNED | - | iOS app launch via TestFlight |
 
@@ -543,6 +543,7 @@ Compose Multiplatform migration tracked in `specs/CMP_MULTIPLATFORM_MIGRATION.md
 - **Notify Build Status**: Depende do KMP Framework - falha em cascata - **ignorar**
 - **CodeQL**: Apenas JavaScript/TypeScript analisado em macOS ARM64. Java/Kotlin desabilitado por incompat arquitetural do tracer (libtrace.dylib x86_64-only, JDK runner ARM64-only). Decisão registrada em `specs/DECISIONS.md` (2026-05-03)
 - **Build iOS App**: `skipping` em PRs que não tocam `:shared` - esperado
+- **Self-hosted runners (macOS)**: Pool no MacBook local roda jobs `macos-arm64` (KMP iOS, CodeQL JS/TS). Use skill `futeba-runner` para start/stop/scale. Squash-merge only no `master` (branch protection: 1 review + code owner)
 
 ### CI/CD Workflows (`.github/workflows/`)
 
@@ -620,6 +621,34 @@ Require plan approval before implementation. Use Sonnet for each teammate.
 - Keep 5-6 tasks per teammate for optimal throughput
 - Start with research/review teams before attempting parallel implementation
 - See `.claude/rules/agent-teams.md` for detailed team patterns
+
+---
+
+## Working with This Codebase Efficiently
+
+### context-mode (large outputs)
+
+Para comandos com output > 20 linhas (gradle builds, jest, gh api, git log, find), use `mcp__plugin_context-mode_context-mode__ctx_batch_execute` em vez de Bash bruto. Bash fica reservado para `git`, `mkdir`, `rm`, `mv`, navegação. Knowledge base persiste após `/clear` ou `/compact`.
+
+### Skills disponíveis (slash commands)
+
+| Skill | Quando invocar |
+|-------|----------------|
+| `/futeba-pr-flow` | Sempre que precisar persistir mudanças (branch + commit + PR + admin merge) |
+| `/futeba-deploy` | Deploy Firebase (Functions, Hosting, Rules, Storage, Remote Config) |
+| `/futeba-status` | Snapshot saúde projeto (CI, runners, RAM, hosting, PRs) |
+| `/futeba-ci-triage` | CI vermelho — diagnostica + propõe fix |
+| `/futeba-runner` | Self-hosted runners macOS (start/stop/scale) |
+| `/futeba-emulators` | Firestore/Auth/Storage/Functions emulators local |
+| `/futeba-test-fix` | Testes falhando (Android/Functions/Web) |
+| `/futeba-deps` | Triagem Dependabot + lockfile bumps |
+| `/futeba-firestore-rules` | Editar/deploy security rules + indexes |
+| `/futeba-merge-train` | 3+ PRs do mesmo escopo ou stack/dependências |
+| `/futeba-rollback` | Reverter deploy prod / commit master |
+| `/futeba-spec` | Criar spec antes de feature/bugfix (Regra #1 SDD) |
+| `/futeba-xp-validate` | Validar integridade XP system |
+| `/futeba-kmp-build` | Build shared module + iOS Framework |
+| `/futeba-ollama` | Semantic search / code review local privacy-sensitive |
 
 ---
 
