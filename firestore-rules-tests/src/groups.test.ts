@@ -165,6 +165,111 @@ describe("groups — atualização", () => {
       db.doc(`groups/${GROUP_PUBLIC}`).update({ name: "Anon" })
     );
   });
+
+  // ==========================================
+  // FIX issue #515: updates parciais (sem name/description no payload)
+  // Antes do fix, qualquer update sem name+description falhava porque
+  // a rule exigia validacao mesmo quando o campo nao era alterado.
+  // ==========================================
+
+  it("Owner pode atualizar SOMENTE photo_url (sem mexer em name/description)", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`groups/${GROUP_PUBLIC}`).update({
+        photo_url: "https://cdn.example.com/photo.jpg",
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Owner pode toggle is_public sem alterar nome", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`groups/${GROUP_PUBLIC}`).update({
+        is_public: false,
+        type: "PRIVATE",
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Owner pode atualizar SOMENTE description", async () => {
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc(`groups/${GROUP_PUBLIC}`).update({
+        description: "Apenas a descricao",
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Grupo legacy SEM campo description: owner pode atualizar nome (sem o description undefined quebrar)", async () => {
+    // Cenario real do bug: grupo criado antes da rule existir, sem campo description.
+    await seedDoc(testEnv, "groups/legacy-no-desc", {
+      name: "Grupo Legacy",
+      owner_id: UID_PLAYER_A,
+      is_public: true,
+      status: "ACTIVE",
+      // INTENCIONAL: sem campo `description`
+    });
+
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc("groups/legacy-no-desc").update({
+        name: "Grupo Legacy Atualizado",
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Grupo legacy: owner pode atualizar SOMENTE photo_url (description undefined nao deve falhar)", async () => {
+    await seedDoc(testEnv, "groups/legacy-no-desc-2", {
+      name: "Outro Legacy",
+      owner_id: UID_PLAYER_A,
+      is_public: true,
+      status: "ACTIVE",
+    });
+
+    const db = asPlayerA(testEnv);
+    await assertSucceeds(
+      db.doc("groups/legacy-no-desc-2").update({
+        photo_url: "https://x.com/foto.png",
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Owner com name vazio (length < 3) é rejeitado", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`groups/${GROUP_PUBLIC}`).update({
+        name: "AB",
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Owner com name > 50 caracteres é rejeitado", async () => {
+    const db = asPlayerA(testEnv);
+    const longName = "A".repeat(51);
+    await assertFails(
+      db.doc(`groups/${GROUP_PUBLIC}`).update({
+        name: longName,
+        updated_at: new Date(),
+      })
+    );
+  });
+
+  it("Owner com description > 500 caracteres é rejeitado", async () => {
+    const db = asPlayerA(testEnv);
+    const longDesc = "x".repeat(501);
+    await assertFails(
+      db.doc(`groups/${GROUP_PUBLIC}`).update({
+        description: longDesc,
+        updated_at: new Date(),
+      })
+    );
+  });
 });
 
 // ============================================================
