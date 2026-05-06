@@ -441,12 +441,18 @@ service cloud.firestore {
       // Admins podem ver soft-deleted para recuperação
       // Bug fix: deleted_at pode nao existir no documento (undefined != null em Firestore rules)
       //
-      // SECFIX #442 (LGPD) - STAGE 1:
+      // SECFIX #442 (LGPD) - STAGE 2:
       // Trigger onGameWrittenDenormalizeLocation calcula location_lat_approx /
       // location_lng_approx (3 decimais ~111m precisão) automaticamente.
-      // STAGE 2 (PR futuro): repos clientes leem _approx pra views públicas;
-      // location_lat/lng exatos só pra owner + confirmed players.
-      allow read: if isAuthenticated() &&
+      //
+      // Read agora EXIGE verified=true (com 30-day grace pra users existentes).
+      // Reduz surface attack: anônimos/bots não podem listar games + coords.
+      // Repos clientes podem ler _approx pra views públicas; lat/lng exato fica
+      // disponível apenas pra users verificados (Phone+CPF passados).
+      //
+      // Stage 3 (PR futuro): denormalizar games pra games_public (sem lat/lng
+      // exato) e callable getGamePreciseLocation(gameId) gateway pra owner+confirmed.
+      allow read: if isVerifiedOrGrace() &&
                      (!('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin());
 
       // FASE 5 #448: criar jogo exige verified (com 30-day grace)
