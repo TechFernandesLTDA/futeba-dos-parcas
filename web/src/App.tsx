@@ -314,6 +314,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
         display: 'flex',
         justifyContent: 'center',
         minHeight: '100vh',
+        // Fundo externo apenas quando o shell é centralizado (sm+)
         bgcolor: { xs: 'background.default', sm: 'divider' },
       }}
     >
@@ -321,7 +322,8 @@ function MobileShell({ children }: { children: React.ReactNode }) {
         id="mobile-shell"
         sx={{
           width: '100%',
-          maxWidth: { xs: '100%', sm: 480 },
+          // Largura máxima responsiva: mobile → tablet → desktop
+          maxWidth: { xs: '100%', sm: 480, md: 720, lg: 960 },
           minHeight: '100vh',
           bgcolor: 'background.default',
           boxShadow: { xs: 'none', sm: '0 0 40px rgba(0,0,0,0.12)' },
