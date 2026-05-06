@@ -19,8 +19,15 @@ import {db} from "../_db";
  *
  * @return {void}
  */
+// SECFIX #495: memory + timeout 9min explicit (cron diário, processa
+// múltiplas seasons + batch updates em participation)
 export const checkSeasonEnd = onSchedule(
-  {schedule: "every day 03:00", region: FUNCTION_REGION},
+  {
+    schedule: "every day 03:00",
+    region: FUNCTION_REGION,
+    memory: "512MiB",
+    timeoutSeconds: 540,
+  },
   async () => {
     logger.info(
       "[SEASON] Checking for seasons to close..."
