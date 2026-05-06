@@ -1,0 +1,492 @@
+/**
+ * TESTES DE ROLE GATING EM CLOUD FUNCTIONS CALLABLES
+ *
+ * Layer 2 do spec feat-2026-05-06-role-permissions-test-coverage.
+ *
+ * Cobre verificacao de role/auth nos callables principais:
+ * - denormalizeGameLocations: ADMIN only (explicit check)
+ * - setUserVerified: ADMIN ou self
+ * - verifyCpf: qualquer auth (uses auth.uid; no role gate)
+ * - checkInToGame: qualquer auth (uses auth.uid; no role gate)
+ *
+ * NOTA: setUserRole ja coberto em custom-claims.test.ts.
+ *       enqueueNotificationCallable usa secureCallable wrapper
+ *       (testado em batch-sender.test.ts).
+ */
+
+// ==========================================
+// MOCKS COMPARTILHADOS
+// ==========================================
+
+const mockSetCustomUserClaims = jest.fn().mockResolvedValue(undefined);
+const mockGetUser = jest.fn().mockResolvedValue({
+  customClaims: {},
+  phoneNumber: "+5511999999999",
+});
+
+const mockDocGet = jest.fn();
+const mockDocSet = jest.fn().mockResolvedValue(undefined);
+const mockDoc = jest.fn().mockReturnValue({
+  get: mockDocGet,
+  set: mockDocSet,
+  update: jest.fn().mockResolvedValue(undefined),
+});
+
+const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+const mockBatchUpdate = jest.fn();
+const mockBatch = jest.fn().mockReturnValue({
+  update: mockBatchUpdate,
+  commit: mockBatchCommit,
+});
+
+const mockCollectionGet = jest.fn().mockResolvedValue({
+  docs: [],
+  empty: true,
+});
+const mockCollection = jest.fn().mockReturnValue({
+  doc: mockDoc,
+  get: mockCollectionGet,
+  add: jest.fn().mockResolvedValue({id: "audit_1"}),
+});
+
+const mockRunTransaction = jest.fn();
+
+jest.mock("firebase-admin", () => {
+  const mockAdmin: any = {
+    apps: [{name: "test"}],
+    firestore: jest.fn(() => ({
+      collection: mockCollection,
+      doc: mockDoc,
+      batch: mockBatch,
+      runTransaction: mockRunTransaction,
+    })),
+    auth: jest.fn(() => ({
+      setCustomUserClaims: mockSetCustomUserClaims,
+      getUser: mockGetUser,
+    })),
+    initializeApp: jest.fn(),
+  };
+
+  mockAdmin.firestore.FieldValue = {
+    serverTimestamp: jest.fn(() => ({_type: "ServerTimestamp"})),
+  };
+
+  return mockAdmin;
+});
+
+jest.mock("firebase-admin/firestore", () => ({
+  FieldValue: {
+    serverTimestamp: jest.fn(() => ({_type: "ServerTimestamp"})),
+  },
+}));
+
+// Mock onCall: retorna o handler como valor exportado.
+// Cada onCall(config, handler) vira o proprio handler como export.
+jest.mock("firebase-functions/v2/https", () => ({
+  onCall: jest.fn((configOrHandler: any, handler?: any) => {
+    return handler || configOrHandler;
+  }),
+  HttpsError: class HttpsError extends Error {
+    code: string;
+    constructor(code: string, message: string) {
+      super(message);
+      this.code = code;
+      this.name = "HttpsError";
+    }
+  },
+}));
+
+// Imports apos mocks: como onCall retorna o handler, esses
+// imports SAO o handler-as-function.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const {denormalizeGameLocations: denormalizeHandler} = require(
+  "../src/games/denormalize-location"
+);
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const {
+  setUserVerified: setUserVerifiedHandler,
+  verifyCpf: verifyCpfHandler,
+} = require("../src/auth/verification");
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const {checkInToGame: checkInToGameHandler} = require(
+  "../src/voting/check-in"
+);
+
+// CPF salt mock para verifyCpf
+process.env.CPF_SALT = "test_salt_minimum_16_chars_long_xyz";
+
+// ==========================================
+// HELPERS
+// ==========================================
+
+const ADMIN_AUTH = {
+  uid: "admin-1",
+  token: {role: "ADMIN"},
+};
+const FIELD_OWNER_AUTH = {
+  uid: "fo-1",
+  token: {role: "FIELD_OWNER"},
+};
+const PLAYER_AUTH = {
+  uid: "player-1",
+  token: {role: "PLAYER"},
+};
+
+// ==========================================
+// denormalizeGameLocations — ADMIN only
+// ==========================================
+
+describe("denormalizeGameLocations - role gating (ADMIN only)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockCollectionGet.mockResolvedValue({docs: [], empty: true});
+  });
+
+  test("rejeita request sem autenticacao", async () => {
+    await expect(
+      denormalizeHandler({auth: null, data: {}})
+    ).rejects.toThrow(/Login obrigat/);
+  });
+
+  test("rejeita PLAYER", async () => {
+    await expect(
+      denormalizeHandler({auth: PLAYER_AUTH, data: {}})
+    ).rejects.toThrow(/ADMIN/);
+  });
+
+  test("rejeita FIELD_OWNER", async () => {
+    await expect(
+      denormalizeHandler({auth: FIELD_OWNER_AUTH, data: {}})
+    ).rejects.toThrow(/ADMIN/);
+  });
+
+  test("rejeita auth sem role", async () => {
+    await expect(
+      denormalizeHandler({
+        auth: {uid: "x", token: {}},
+        data: {},
+      })
+    ).rejects.toThrow(/ADMIN/);
+  });
+
+  test("rejeita role lowercase", async () => {
+    // Custom Claims sao case-sensitive (diferente de UserRole.fromString)
+    await expect(
+      denormalizeHandler({
+        auth: {uid: "x", token: {role: "admin"}},
+        data: {},
+      })
+    ).rejects.toThrow(/ADMIN/);
+  });
+
+  test("aceita ADMIN", async () => {
+    const result = await denormalizeHandler({
+      auth: ADMIN_AUTH,
+      data: {},
+    });
+    expect(result).toBeDefined();
+    expect(mockCollectionGet).toHaveBeenCalled();
+  });
+});
+
+// ==========================================
+// setUserVerified — ADMIN ou self
+// ==========================================
+
+describe("setUserVerified - role gating (ADMIN ou self)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    mockGetUser.mockResolvedValue({
+      customClaims: {},
+      phoneNumber: "+5511999999999",
+    });
+    mockDocGet.mockImplementation(() =>
+      Promise.resolve({
+        exists: true,
+        data: () => ({cpfVerifiedAt: "2026-01-01T00:00:00Z"}),
+      })
+    );
+  });
+
+  test("rejeita request sem autenticacao", async () => {
+    await expect(
+      setUserVerifiedHandler({auth: null, data: {}})
+    ).rejects.toThrow(/Login obrigat/);
+  });
+
+  test("rejeita PLAYER tentando verificar OUTRO usuario", async () => {
+    await expect(
+      setUserVerifiedHandler({
+        auth: PLAYER_AUTH,
+        data: {uid: "victim-uid"},
+      })
+    ).rejects.toThrow(/Apenas o pr/);
+  });
+
+  test("rejeita FIELD_OWNER tentando verificar OUTRO usuario", async () => {
+    await expect(
+      setUserVerifiedHandler({
+        auth: FIELD_OWNER_AUTH,
+        data: {uid: "victim-uid"},
+      })
+    ).rejects.toThrow(/Apenas o pr/);
+  });
+
+  test("aceita PLAYER verificando A SI MESMO", async () => {
+    const result = await setUserVerifiedHandler({
+      auth: PLAYER_AUTH,
+      data: {uid: PLAYER_AUTH.uid},
+    });
+    expect(result).toBeDefined();
+    expect(mockSetCustomUserClaims).toHaveBeenCalledWith(
+      PLAYER_AUTH.uid,
+      expect.objectContaining({verified: true})
+    );
+  });
+
+  test("aceita PLAYER sem passar uid (default = self)", async () => {
+    const result = await setUserVerifiedHandler({
+      auth: PLAYER_AUTH,
+      data: {},
+    });
+    expect(result).toBeDefined();
+    expect(mockSetCustomUserClaims).toHaveBeenCalled();
+  });
+
+  test("aceita ADMIN verificando OUTRO usuario", async () => {
+    const result = await setUserVerifiedHandler({
+      auth: ADMIN_AUTH,
+      data: {uid: "target-uid"},
+    });
+    expect(result).toBeDefined();
+    expect(mockSetCustomUserClaims).toHaveBeenCalledWith(
+      "target-uid",
+      expect.objectContaining({verified: true})
+    );
+  });
+
+  test("rejeita quando CPF nao verificado", async () => {
+    mockDocGet.mockImplementation(() =>
+      Promise.resolve({
+        exists: false,
+        data: () => null,
+      })
+    );
+
+    await expect(
+      setUserVerifiedHandler({
+        auth: PLAYER_AUTH,
+        data: {uid: PLAYER_AUTH.uid},
+      })
+    ).rejects.toThrow(/Verifique seu CPF/);
+  });
+
+  test("rejeita quando phoneNumber ausente no UserRecord", async () => {
+    mockGetUser.mockResolvedValueOnce({
+      customClaims: {},
+      phoneNumber: undefined,
+    });
+
+    await expect(
+      setUserVerifiedHandler({
+        auth: PLAYER_AUTH,
+        data: {uid: PLAYER_AUTH.uid},
+      })
+    ).rejects.toThrow(/Verifique seu telefone/);
+  });
+
+  test("preserva claims existentes ao setar verified=true", async () => {
+    mockGetUser.mockResolvedValueOnce({
+      customClaims: {role: "FIELD_OWNER"},
+      phoneNumber: "+5511999999999",
+    });
+
+    await setUserVerifiedHandler({
+      auth: FIELD_OWNER_AUTH,
+      data: {uid: FIELD_OWNER_AUTH.uid},
+    });
+
+    expect(mockSetCustomUserClaims).toHaveBeenCalledWith(
+      FIELD_OWNER_AUTH.uid,
+      {role: "FIELD_OWNER", verified: true}
+    );
+  });
+});
+
+// ==========================================
+// verifyCpf — qualquer auth (no role gate)
+// ==========================================
+
+describe("verifyCpf - sem role gate (apenas auth)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Mock transaction passa direto (sem duplicate, sem CPF previo)
+    mockRunTransaction.mockImplementation(async (fn: any) => {
+      const tx = {
+        get: jest.fn().mockResolvedValue({exists: false, data: () => null}),
+        set: jest.fn(),
+      };
+      return await fn(tx);
+    });
+  });
+
+  test("rejeita sem autenticacao", async () => {
+    await expect(
+      verifyCpfHandler({auth: null, data: {cpf: "12345678909"}})
+    ).rejects.toThrow(/Login obrigat/);
+  });
+
+  test("rejeita CPF nao-string", async () => {
+    await expect(
+      verifyCpfHandler({auth: PLAYER_AUTH, data: {cpf: 12345678909}})
+    ).rejects.toThrow(/CPF deve ser string/);
+  });
+
+  test("rejeita CPF invalido", async () => {
+    await expect(
+      verifyCpfHandler({auth: PLAYER_AUTH, data: {cpf: "11111111111"}})
+    ).rejects.toThrow(/CPF inv/);
+  });
+
+  test("aceita PLAYER", async () => {
+    const result = await verifyCpfHandler({
+      auth: PLAYER_AUTH,
+      // CPF valido (digito verificador correto)
+      data: {cpf: "12345678909"},
+    });
+    expect(result.success).toBe(true);
+    expect(result.cpfMasked).toBeDefined();
+  });
+
+  test("aceita FIELD_OWNER", async () => {
+    const result = await verifyCpfHandler({
+      auth: FIELD_OWNER_AUTH,
+      data: {cpf: "12345678909"},
+    });
+    expect(result.success).toBe(true);
+  });
+
+  test("aceita ADMIN", async () => {
+    const result = await verifyCpfHandler({
+      auth: ADMIN_AUTH,
+      data: {cpf: "12345678909"},
+    });
+    expect(result.success).toBe(true);
+  });
+});
+
+// ==========================================
+// checkInToGame — qualquer auth (ownership-based)
+// ==========================================
+
+describe("checkInToGame - sem role gate (ownership da confirmation)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("rejeita sem autenticacao", async () => {
+    await expect(
+      checkInToGameHandler({
+        auth: null,
+        data: {gameId: "g1", lat: -23.5, lng: -46.6},
+      })
+    ).rejects.toThrow(/Login obrigat/);
+  });
+
+  test("rejeita coordenadas invalidas (lat fora de range)", async () => {
+    await expect(
+      checkInToGameHandler({
+        auth: PLAYER_AUTH,
+        data: {gameId: "g1", lat: 999, lng: -46.6},
+      })
+    ).rejects.toThrow(/Coordenadas/);
+  });
+
+  test("rejeita coordenadas invalidas (lng fora de range)", async () => {
+    await expect(
+      checkInToGameHandler({
+        auth: PLAYER_AUTH,
+        data: {gameId: "g1", lat: -23.5, lng: 999},
+      })
+    ).rejects.toThrow(/Coordenadas/);
+  });
+
+  test("rejeita gameId nao-string", async () => {
+    await expect(
+      checkInToGameHandler({
+        auth: PLAYER_AUTH,
+        data: {gameId: 123, lat: -23.5, lng: -46.6},
+      })
+    ).rejects.toThrow(/gameId/);
+  });
+
+  test("rejeita quando jogo nao existe", async () => {
+    mockDocGet.mockResolvedValueOnce({exists: false, data: () => null});
+
+    await expect(
+      checkInToGameHandler({
+        auth: PLAYER_AUTH,
+        data: {gameId: "ghost", lat: -23.5, lng: -46.6},
+      })
+    ).rejects.toThrow(/nao encontrado/);
+  });
+
+  test("rejeita PLAYER que NAO esta confirmado no jogo (ownership)", async () => {
+    // Mock: game existe, status CONFIRMED
+    mockDocGet
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          status: "CONFIRMED",
+          location_lat: -23.5,
+          location_lng: -46.6,
+        }),
+      })
+      // confirmation: nao existe (player nao foi convocado)
+      .mockResolvedValueOnce({exists: false, data: () => null});
+
+    await expect(
+      checkInToGameHandler({
+        auth: PLAYER_AUTH,
+        data: {gameId: "g1", lat: -23.5, lng: -46.6},
+      })
+    ).rejects.toThrow(/nao esta confirmado/);
+  });
+
+  test("rejeita check-in em jogo SCHEDULED (so CONFIRMED ou LIVE)", async () => {
+    mockDocGet.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({status: "SCHEDULED"}),
+    });
+
+    await expect(
+      checkInToGameHandler({
+        auth: PLAYER_AUTH,
+        data: {gameId: "g1", lat: -23.5, lng: -46.6},
+      })
+    ).rejects.toThrow(/CONFIRMED ou LIVE/);
+  });
+
+  test("ADMIN tambem precisa de confirmation (sem bypass por role)", async () => {
+    // Documenta: ADMIN nao tem bypass — checkInToGame e ownership-based
+    mockDocGet
+      .mockResolvedValueOnce({
+        exists: true,
+        data: () => ({
+          status: "CONFIRMED",
+          location_lat: -23.5,
+          location_lng: -46.6,
+        }),
+      })
+      .mockResolvedValueOnce({exists: false, data: () => null});
+
+    await expect(
+      checkInToGameHandler({
+        auth: ADMIN_AUTH,
+        data: {gameId: "g1", lat: -23.5, lng: -46.6},
+      })
+    ).rejects.toThrow(/nao esta confirmado/);
+  });
+});
