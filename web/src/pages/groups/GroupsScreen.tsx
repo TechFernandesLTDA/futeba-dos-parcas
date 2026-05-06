@@ -49,9 +49,17 @@ export const GroupsScreen: React.FC = () => {
           <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
             <BackIcon />
           </IconButton>
-          <Typography component="h1" variant="h6" sx={{ ml: 1 }}>
+          <Typography component="h1" variant="h6" sx={{ ml: 1, flex: 1 }}>
             Grupos
           </Typography>
+          {/* Issue #517 Phase 1: link para descobrir grupos publicos */}
+          <Button
+            size="small"
+            onClick={() => navigate('/groups/discover')}
+            aria-label="Descobrir grupos publicos"
+          >
+            Descobrir
+          </Button>
         </Box>
       </Box>
 

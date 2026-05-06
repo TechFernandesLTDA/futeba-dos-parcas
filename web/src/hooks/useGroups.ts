@@ -88,6 +88,58 @@ async function fetchUserGroups(uid: string): Promise<Group[]> {
     .filter((g) => !g.deletedAt);
 }
 
+/**
+ * Discovery de grupos publicos (issue #517 phase 1).
+ *
+ * Query: groups where is_public == true && deleted_at == null
+ * Lista todos os grupos publicos do sistema, paginada client-side.
+ * Filtra deleted_at no cliente (a maioria dos grupos publicos NAO esta
+ * soft-deleted, entao nao vale criar um composite index).
+ */
+async function fetchPublicGroups(limit = 100): Promise<Group[]> {
+  const groupsRef = collection(db, 'groups');
+  const q = query(groupsRef, where('is_public', '==', true));
+  const snapshot = await getDocs(q);
+
+  const groups: Group[] = [];
+  for (const docSnap of snapshot.docs) {
+    if (groups.length >= limit) break;
+    const raw = docSnap.data();
+    // Skip soft-deleted (filtrado no cliente — sem composite index)
+    if (raw.deleted_at) continue;
+    if (raw.status === 'DELETED') continue;
+    const camel = snakeToCamel(raw) as Partial<Group>;
+    groups.push({
+      ...(camel as Group),
+      id: docSnap.id,
+    });
+  }
+
+  // Ordenar por created_at DESC (mais novos primeiro)
+  groups.sort((a, b) => {
+    const aTs = (a as any).createdAt?.seconds ?? 0;
+    const bTs = (b as any).createdAt?.seconds ?? 0;
+    return bTs - aTs;
+  });
+
+  return groups;
+}
+
+export function useDiscoverPublicGroups() {
+  const { user, firebaseUser } = useAuth();
+  const uid = firebaseUser?.uid || user?.id;
+
+  const { data: groups = [], isLoading: loading, error, refetch } = useQuery({
+    queryKey: ['public-groups', uid],
+    queryFn: () => fetchPublicGroups(),
+    enabled: !!uid,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 15 * 60 * 1000,
+  });
+
+  return { groups, loading, error: error?.message || null, refetch };
+}
+
 // Busca grupos do usuário via subcoleção users/{uid}/groups (igual ao Android)
 export function useGroups() {
   const { user, firebaseUser } = useAuth();
