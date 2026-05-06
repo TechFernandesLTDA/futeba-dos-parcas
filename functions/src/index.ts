@@ -153,8 +153,15 @@ admin.initializeApp();
 // Ver: auth/custom-claims.ts para exemplo
 // ==========================================
 
+// SECFIX #495: memory + timeout explicit pra workload pesado (XP +
+// league rating + notificações pra todos os confirmados, até ~100 users)
 export const onGameStatusUpdate = onDocumentUpdated(
-  {document: "games/{gameId}", region: FUNCTION_REGION},
+  {
+    document: "games/{gameId}",
+    region: FUNCTION_REGION,
+    memory: "512MiB",
+    timeoutSeconds: 180,
+  },
   async (event) => {
     if (!event.data) return;
 
@@ -1238,8 +1245,15 @@ export const recalculateLeagueRating =
 // DELEÇÃO EM CASCATA DE JOGOS
 // ==========================================
 
+// SECFIX #495: memory + timeout pra cascade delete (game_events,
+// confirmations, ranking_deltas, etc)
 export const onGameDeleted = onDocumentDeleted(
-  {document: "games/{gameId}", region: FUNCTION_REGION},
+  {
+    document: "games/{gameId}",
+    region: FUNCTION_REGION,
+    memory: "512MiB",
+    timeoutSeconds: 300,
+  },
   async (event) => {
     const gameId = event.params.gameId;
     console.log(
@@ -1413,8 +1427,16 @@ export const onGameDeleted = onDocumentDeleted(
 // (#36 - Validação Firebase)
 // ==========================================
 
+// SECFIX #495: memory + timeout pra cascade delete em 9 coleções
+// (group_members, games, season_participation, etc) — pode processar
+// 200+ jogadores e 50+ jogos
 export const onGroupDeleted = onDocumentDeleted(
-  {document: "groups/{groupId}", region: FUNCTION_REGION},
+  {
+    document: "groups/{groupId}",
+    region: FUNCTION_REGION,
+    memory: "512MiB",
+    timeoutSeconds: 300,
+  },
   async (event) => {
     const groupId = event.params.groupId;
     console.log(
