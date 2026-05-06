@@ -25,7 +25,7 @@ val imageKoinModule = module {
         ImageLoader.Builder(context)
             .diskCache {
                 DiskCache.Builder()
-                    .directory(context.cacheDir.resolve("image_cache").toPath().toOkioPath())
+                    .directory(context.cacheDir.resolve("image_cache").toOkioPath())
                     .maxSizeBytes(100 * 1024 * 1024) // 100MB
                     .build()
             }

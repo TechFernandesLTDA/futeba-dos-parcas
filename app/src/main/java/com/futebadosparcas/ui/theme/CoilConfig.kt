@@ -47,7 +47,9 @@ object CoilConfig {
             // ✅ Disk Cache: 200MB persistent cache
             .diskCache {
                 DiskCache.Builder()
-                    .directory(context.cacheDir.resolve("image_cache").toPath().toOkioPath())
+                    // SECFIX NewApi: toOkioPath() direto no File (Okio extension).
+                    // .toPath() requer API 26 (minSdk=24).
+                    .directory(context.cacheDir.resolve("image_cache").toOkioPath())
                     .maxSizeBytes(200 * 1024 * 1024) // 200MB
                     .build()
             }
