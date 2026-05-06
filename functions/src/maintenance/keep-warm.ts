@@ -83,14 +83,15 @@ export const keepWarmFunctions =
         },
       ];
 
-      // Pingar cada função
-      for (const fn of functionsToWarm) {
-        if (fn.callable) {
-          const result =
-            await warmCallableFunction(fn.name);
-          results.push(result);
-        }
-      }
+      // Pingar todas as funções callable em paralelo
+      // Antes: loop for..of sequencial (~200ms × N)
+      // Depois: Promise.all (~200ms total)
+      const warmResults = await Promise.all(
+        functionsToWarm
+          .filter((fn) => fn.callable)
+          .map((fn) => warmCallableFunction(fn.name))
+      );
+      results.push(...warmResults);
 
       // Log de métricas
       await logKeepWarmMetrics(results);
