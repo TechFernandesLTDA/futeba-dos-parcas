@@ -93,6 +93,7 @@ jest.mock("firebase-functions/v2/firestore", () => ({
   onDocumentUpdated: jest.fn((_config: any, handler: any) => handler),
   onDocumentDeleted: jest.fn((_config: any, handler: any) => handler),
   onDocumentCreated: jest.fn((_config: any, handler: any) => handler),
+  onDocumentWritten: jest.fn((_config: any, handler: any) => handler),
 }));
 
 jest.mock("firebase-functions/v2/https", () => ({
