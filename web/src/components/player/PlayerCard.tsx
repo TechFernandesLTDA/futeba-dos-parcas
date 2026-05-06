@@ -31,6 +31,14 @@ import {
 import { getLevelColor } from '../../types/user';
 import { gamificationColors } from '../../theme';
 
+// Cores intencionais do design — figurinha de futebol com textura de campo.
+// Estes gradients são identidade visual da figurinha e NÃO seguem o tema
+// claro/escuro do MUI (o card sempre tem fundo verde independente do theme.mode).
+const CARD_GRADIENT = 'linear-gradient(160deg, #1B5E20 0%, #2E7D32 35%, #388E3C 60%, #43A047 100%)';
+const CARD_BADGE_BORDER = '#1B5E20';
+const XP_BAR_GRADIENT = `linear-gradient(90deg, #00C853, ${gamificationColors.gold})`;
+const OVERALL_BAR_GRADIENT = `linear-gradient(90deg, ${gamificationColors.gold}, #FF8C00)`;
+
 // Mapeamento de posição para rótulo PT-BR
 const POSITION_LABELS: Record<string, string> = {
   GOLEIRO: 'Goleiro',
@@ -48,44 +56,47 @@ interface StatItemProps {
   color?: string;
 }
 
-const StatItem: React.FC<StatItemProps> = ({ icon, label, value, color }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: 0.25,
-      minWidth: 64,
-    }}
-  >
-    <Box sx={{ color: color || 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center' }}>
-      {icon}
+const StatItem: React.FC<StatItemProps> = ({ icon, label, value, color }) => {
+  const theme = useTheme();
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 0.25,
+        minWidth: 64,
+      }}
+    >
+      <Box sx={{ color: color || alpha(theme.palette.common.white, 0.7), display: 'flex', alignItems: 'center' }}>
+        {icon}
+      </Box>
+      <Typography
+        variant="h6"
+        sx={{
+          color: theme.palette.common.white,
+          fontWeight: 700,
+          lineHeight: 1,
+          fontSize: '1.1rem',
+        }}
+      >
+        {value}
+      </Typography>
+      <Typography
+        variant="caption"
+        sx={{
+          color: alpha(theme.palette.common.white, 0.6),
+          fontSize: '0.65rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          textAlign: 'center',
+        }}
+      >
+        {label}
+      </Typography>
     </Box>
-    <Typography
-      variant="h6"
-      sx={{
-        color: '#FFFFFF',
-        fontWeight: 700,
-        lineHeight: 1,
-        fontSize: '1.1rem',
-      }}
-    >
-      {value}
-    </Typography>
-    <Typography
-      variant="caption"
-      sx={{
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: '0.65rem',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        textAlign: 'center',
-      }}
-    >
-      {label}
-    </Typography>
-  </Box>
-);
+  );
+};
 
 interface PlayerCardProps {
   userId: string | null;
@@ -188,7 +199,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               aria-label="Fechar card do jogador"
               sx={{
                 bgcolor: alpha(theme.palette.common.white, 0.15),
-                color: '#fff',
+                color: theme.palette.common.white,
                 backdropFilter: 'blur(4px)',
                 '&:hover': { bgcolor: alpha(theme.palette.common.white, 0.25) },
               }}
@@ -205,7 +216,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 aria-label="Compartilhar card do jogador"
                 sx={{
                   bgcolor: alpha(theme.palette.primary.main, 0.9),
-                  color: '#fff',
+                  color: theme.palette.primary.contrastText,
                   '&:hover': { bgcolor: theme.palette.primary.dark },
                   '&:disabled': { opacity: 0.5 },
                 }}
@@ -222,8 +233,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
           sx={{
             borderRadius: '16px',
             overflow: 'hidden',
-            background: `linear-gradient(160deg, #1B5E20 0%, #2E7D32 35%, #388E3C 60%, #43A047 100%)`,
-            boxShadow: `0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)`,
+            background: CARD_GRADIENT,
+            boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.5)}, 0 0 0 1px ${alpha(theme.palette.common.white, 0.1)}`,
             position: 'relative',
           }}
         >
@@ -237,8 +248,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   0deg,
                   transparent,
                   transparent 28px,
-                  rgba(255,255,255,0.03) 28px,
-                  rgba(255,255,255,0.03) 56px
+                  ${alpha(theme.palette.common.white, 0.03)} 28px,
+                  ${alpha(theme.palette.common.white, 0.03)} 56px
                 )
               `,
               pointerEvents: 'none',
@@ -259,7 +270,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
             <Typography
               variant="overline"
               sx={{
-                color: 'rgba(255,255,255,0.5)',
+                color: alpha(theme.palette.common.white, 0.5),
                 fontSize: '0.6rem',
                 letterSpacing: '0.15em',
               }}
@@ -268,7 +279,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
             </Typography>
             <Box
               sx={{
-                bgcolor: 'rgba(255,255,255,0.1)',
+                bgcolor: alpha(theme.palette.common.white, 0.1),
                 borderRadius: '6px',
                 px: 0.75,
                 py: 0.25,
@@ -276,7 +287,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
             >
               <Typography
                 variant="overline"
-                sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.6rem', letterSpacing: '0.1em' }}
+                sx={{ color: alpha(theme.palette.common.white, 0.7), fontSize: '0.6rem', letterSpacing: '0.1em' }}
               >
                 ⚽ FIGURINHA
               </Typography>
@@ -296,14 +307,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
           >
             {isLoading ? (
               <>
-                <Skeleton variant="circular" width={120} height={120} sx={{ bgcolor: 'rgba(255,255,255,0.1)' }} />
-                <Skeleton variant="text" width={160} sx={{ bgcolor: 'rgba(255,255,255,0.1)', mt: 1.5 }} />
-                <Skeleton variant="text" width={100} sx={{ bgcolor: 'rgba(255,255,255,0.1)', mt: 0.5 }} />
+                <Skeleton variant="circular" width={120} height={120} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1) }} />
+                <Skeleton variant="text" width={160} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1), mt: 1.5 }} />
+                <Skeleton variant="text" width={100} sx={{ bgcolor: alpha(theme.palette.common.white, 0.1), mt: 0.5 }} />
               </>
             ) : isError ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography color="error" gutterBottom>Erro ao carregar jogador</Typography>
-                <IconButton onClick={() => refetch()} size="small" sx={{ color: '#fff' }}>
+                <IconButton onClick={() => refetch()} size="small" sx={{ color: theme.palette.common.white }}>
                   Tentar novamente
                 </IconButton>
               </Box>
@@ -315,8 +326,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     sx={{
                       borderRadius: '50%',
                       p: '3px',
-                      background: `linear-gradient(135deg, #FFD700, #FFA000, #FFD700)`,
-                      boxShadow: `0 0 20px rgba(255,215,0,0.4)`,
+                      background: `linear-gradient(135deg, ${gamificationColors.gold}, #FFA000, ${gamificationColors.gold})`,
+                      boxShadow: `0 0 20px ${alpha(gamificationColors.gold, 0.4)}`,
                     }}
                   >
                     <Avatar
@@ -328,7 +339,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                         bgcolor: alpha(levelColor, 0.3),
                         fontSize: '2.5rem',
                         fontWeight: 700,
-                        color: '#fff',
+                        color: theme.palette.common.white,
                       }}
                     >
                       {player.name.charAt(0).toUpperCase()}
@@ -345,20 +356,20 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       height: 32,
                       borderRadius: '50%',
                       bgcolor: levelColor,
-                      border: '2px solid #1B5E20',
+                      border: `2px solid ${CARD_BADGE_BORDER}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: `0 2px 8px rgba(0,0,0,0.4)`,
+                      boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.4)}`,
                     }}
                   >
                     <Typography
                       sx={{
-                        color: '#fff',
+                        color: theme.palette.common.white,
                         fontWeight: 900,
                         fontSize: '0.7rem',
                         lineHeight: 1,
-                        textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                        textShadow: `0 1px 2px ${alpha(theme.palette.common.black, 0.5)}`,
                       }}
                     >
                       {player.level}
@@ -370,11 +381,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 <Typography
                   variant="h5"
                   sx={{
-                    color: '#FFFFFF',
+                    color: theme.palette.common.white,
                     fontWeight: 800,
                     textAlign: 'center',
                     lineHeight: 1.1,
-                    textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                    textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.3)}`,
                   }}
                 >
                   {player.name}
@@ -384,7 +395,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   <Typography
                     variant="body2"
                     sx={{
-                      color: 'rgba(255,255,255,0.65)',
+                      color: alpha(theme.palette.common.white, 0.65),
                       fontStyle: 'italic',
                       mt: 0.25,
                     }}
@@ -398,7 +409,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   {player.preferredPosition && (
                     <Box
                       sx={{
-                        bgcolor: 'rgba(255,255,255,0.15)',
+                        bgcolor: alpha(theme.palette.common.white, 0.15),
                         borderRadius: '20px',
                         px: 1.25,
                         py: 0.25,
@@ -406,7 +417,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     >
                       <Typography
                         variant="caption"
-                        sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600, fontSize: '0.7rem' }}
+                        sx={{ color: alpha(theme.palette.common.white, 0.85), fontWeight: 600, fontSize: '0.7rem' }}
                       >
                         {POSITION_LABELS[player.preferredPosition] ?? player.preferredPosition}
                       </Typography>
@@ -433,10 +444,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 {/* Barra de XP */}
                 <Box sx={{ width: '100%', mt: 2, px: 0.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.65rem' }}>
+                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.6), fontSize: '0.65rem' }}>
                       {player.experiencePoints.toLocaleString('pt-BR')} XP
                     </Typography>
-                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.65rem' }}>
+                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.6), fontSize: '0.65rem' }}>
                       {player.level < 20
                         ? `${xpRemaining.toLocaleString('pt-BR')} para nível ${player.level + 1}`
                         : 'Nível máximo!'}
@@ -446,7 +457,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     sx={{
                       height: 6,
                       borderRadius: 3,
-                      bgcolor: 'rgba(0,0,0,0.3)',
+                      bgcolor: alpha(theme.palette.common.black, 0.3),
                       overflow: 'hidden',
                     }}
                   >
@@ -454,7 +465,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       sx={{
                         height: '100%',
                         width: `${xpProgress * 100}%`,
-                        background: `linear-gradient(90deg, #00C853, #FFD700)`,
+                        background: XP_BAR_GRADIENT,
                         borderRadius: 3,
                         transition: 'width 0.8s ease',
                         boxShadow: '0 0 6px rgba(0,200,83,0.6)',
@@ -468,7 +479,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   sx={{
                     width: '100%',
                     height: '1px',
-                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                    background: `linear-gradient(90deg, transparent, ${alpha(theme.palette.common.white, 0.2)}, transparent)`,
                     my: 2,
                   }}
                 />
@@ -526,7 +537,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     mt: 2,
                     px: 2,
                     py: 1,
-                    bgcolor: 'rgba(0,0,0,0.25)',
+                    bgcolor: alpha(theme.palette.common.black, 0.25),
                     borderRadius: '12px',
                     display: 'flex',
                     alignItems: 'center',
@@ -536,17 +547,17 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 >
                   <Typography
                     sx={{
-                      color: '#FFD700',
+                      color: gamificationColors.gold,
                       fontWeight: 900,
                       fontSize: '2rem',
                       lineHeight: 1,
-                      textShadow: '0 0 12px rgba(255,215,0,0.5)',
+                      textShadow: `0 0 12px ${alpha(gamificationColors.gold, 0.5)}`,
                     }}
                   >
                     {player.overallRating}
                   </Typography>
                   <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.6rem' }}>
+                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.5), fontSize: '0.6rem' }}>
                       OVERALL
                     </Typography>
                     <LinearProgress
@@ -555,9 +566,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       sx={{
                         height: 6,
                         borderRadius: 3,
-                        bgcolor: 'rgba(0,0,0,0.3)',
+                        bgcolor: alpha(theme.palette.common.black, 0.3),
                         '& .MuiLinearProgress-bar': {
-                          background: 'linear-gradient(90deg, #FFD700, #FF8C00)',
+                          background: OVERALL_BAR_GRADIENT,
                           borderRadius: 3,
                         },
                       }}
@@ -571,7 +582,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
           {/* Rodapé do card */}
           <Box
             sx={{
-              bgcolor: 'rgba(0,0,0,0.2)',
+              bgcolor: alpha(theme.palette.common.black, 0.2),
               px: 2,
               py: 1,
               display: 'flex',
@@ -580,7 +591,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
           >
             <Typography
               variant="caption"
-              sx={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.6rem', letterSpacing: '0.1em' }}
+              sx={{ color: alpha(theme.palette.common.white, 0.3), fontSize: '0.6rem', letterSpacing: '0.1em' }}
             >
               futebadosparcas.com.br
             </Typography>
