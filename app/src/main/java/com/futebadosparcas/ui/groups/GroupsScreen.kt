@@ -56,6 +56,7 @@ fun GroupsScreen(
     viewModel: GroupsViewModel = koinViewModel(),
     onGroupClick: (String) -> Unit,
     onCreateGroupClick: () -> Unit,
+    onDiscoverGroupsClick: () -> Unit = {},
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -65,7 +66,8 @@ fun GroupsScreen(
     Scaffold(
         topBar = {
             GroupsTopBar(
-                onBackClick = onBackClick
+                onBackClick = onBackClick,
+                onDiscoverGroupsClick = onDiscoverGroupsClick
             )
         },
         floatingActionButton = {
@@ -147,7 +149,8 @@ fun GroupsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GroupsTopBar(
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onDiscoverGroupsClick: () -> Unit = {}
 ) {
     TopAppBar(
         title = {
@@ -162,6 +165,14 @@ private fun GroupsTopBar(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.close)
+                )
+            }
+        },
+        actions = {
+            IconButton(onClick = onDiscoverGroupsClick) {
+                Icon(
+                    imageVector = Icons.Default.Public,
+                    contentDescription = stringResource(R.string.discover_groups_title)
                 )
             }
         },

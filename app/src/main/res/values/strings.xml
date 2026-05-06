@@ -3823,6 +3823,16 @@ subir no ranking!</string>
     <!-- GroupsScreen -->
     <string name="groups_clear_search">Limpar Busca</string>
 
+    <!-- DiscoverGroupsScreen (issue #517 Phase 1.b) -->
+    <string name="discover_groups_title">Descobrir Grupos</string>
+    <string name="discover_groups_search_hint">Buscar por nome ou descrição</string>
+    <string name="discover_groups_empty_title">Nenhum grupo público</string>
+    <string name="discover_groups_empty_description">Ainda não há grupos públicos para descobrir. Tente novamente mais tarde.</string>
+    <string name="discover_groups_no_results">Nenhum grupo encontrado para \"%1$s\"</string>
+    <string name="discover_groups_clear_search">Limpar Busca</string>
+    <string name="discover_groups_chip_public">Público</string>
+    <string name="discover_groups_chip_member_count">%1$d %2$s</string>
+
     <!-- GlobalSearchScreen -->
     <string name="search_advanced_filters_hint">Filtros avançados disponíveis via AdvancedFiltersBottomSheet</string>
 

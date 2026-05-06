@@ -33,6 +33,7 @@ import com.futebadosparcas.ui.statistics.EvolutionScreen
 import com.futebadosparcas.ui.groups.CashboxScreen
 import com.futebadosparcas.ui.games.CreateGameScreen
 import com.futebadosparcas.ui.groups.CreateGroupScreen
+import com.futebadosparcas.ui.groups.DiscoverGroupsScreen
 import com.futebadosparcas.ui.developer.DeveloperScreen
 import com.futebadosparcas.ui.profile.EditProfileScreen
 import com.futebadosparcas.ui.locations.FieldOwnerDashboardScreen
@@ -108,6 +109,7 @@ sealed class Screen(
 
     // Group management
     data object Groups : Screen("groups", titleResId = R.string.groups)
+    data object DiscoverGroups : Screen("groups/discover", titleResId = R.string.discover_groups_title)
     data object GroupDetail : Screen("group_detail/{groupId}", titleResId = R.string.group_detail) {
         fun createRoute(groupId: String) = "group_detail/$groupId"
     }
@@ -501,6 +503,20 @@ fun AppNavHost(
                 },
                 onCreateGroupClick = {
                     navController.navigate(Screen.CreateGroup.route)
+                },
+                onDiscoverGroupsClick = {
+                    navController.navigate(Screen.DiscoverGroups.route)
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.DiscoverGroups.route) {
+            val viewModel: com.futebadosparcas.ui.groups.DiscoverGroupsViewModel = koinViewModel()
+            DiscoverGroupsScreen(
+                viewModel = viewModel,
+                onGroupClick = { groupId ->
+                    navController.navigate(Screen.GroupDetail.createRoute(groupId))
                 },
                 onBackClick = { navController.popBackStack() }
             )
