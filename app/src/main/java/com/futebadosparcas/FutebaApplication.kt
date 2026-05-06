@@ -80,7 +80,7 @@ class FutebaApplication : Application(), Configuration.Provider {
             }
             .diskCache {
                 DiskCache.Builder()
-                    .directory(cacheDir.resolve("image_cache").toPath().toOkioPath())
+                    .directory(cacheDir.resolve("image_cache").toOkioPath())
                     .maxSizeBytes(100 * 1024 * 1024) // 100MB
                     .build()
             }
