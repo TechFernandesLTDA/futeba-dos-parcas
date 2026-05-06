@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -545,8 +546,10 @@ private fun PlayersListContent(
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
+        // SECFIX #489: adaptiveContentWidth limita 840/1040dp em tablet+
         modifier = modifier
             .fillMaxSize()
+            .adaptiveContentWidth()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(vertical = 16.dp)

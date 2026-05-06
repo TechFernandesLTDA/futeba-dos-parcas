@@ -27,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -210,7 +211,10 @@ private fun GroupsSuccessContent(
     val showSearch = groups.size >= 3
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        // SECFIX #489: adaptiveContentWidth limita largura em tablets
+        modifier = Modifier
+            .fillMaxSize()
+            .adaptiveContentWidth(),
         contentPadding = PaddingValues(vertical = 8.dp) // Padding mínimo, FAB já é posicionado pelo Scaffold
     ) {
         // Campo de busca
