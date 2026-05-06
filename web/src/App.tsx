@@ -60,6 +60,7 @@ const GroupEditScreen = lazy(() => import('./pages/group/GroupEditScreen').then(
 const GroupSettingsScreen = lazy(() => import('./pages/group/GroupSettingsScreen').then(m => ({ default: m.GroupSettingsScreen })));
 const CashboxScreen = lazy(() => import('./pages/groups/CashboxScreen').then(m => ({ default: m.CashboxScreen })));
 const InvitePlayersScreen = lazy(() => import('./pages/groups/InvitePlayersScreen').then(m => ({ default: m.InvitePlayersScreen })));
+const JoinByInviteScreen = lazy(() => import('./pages/group/JoinByInviteScreen').then(m => ({ default: m.JoinByInviteScreen })));
 const PlayersScreen = lazy(() => import('./pages/players/PlayersScreen').then(m => ({ default: m.PlayersScreen })));
 
 // Profile
@@ -252,6 +253,8 @@ function AppRoutes() {
       <Route path="/group/:groupId/cashbox" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><CashboxScreen /></Suspense></ProtectedRoute>} />
       <Route path="/group/:groupId/invite" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><InvitePlayersScreen /></Suspense></ProtectedRoute>} />
       <Route path="/group/:groupId/players" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><PlayersScreen /></Suspense></ProtectedRoute>} />
+      {/* Issue #514: aceitar convite via link compartilhado /join/:code */}
+      <Route path="/join/:code" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><JoinByInviteScreen /></Suspense></ProtectedRoute>} />
 
       {/* Profile */}
       <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense></ProtectedRoute>} />

@@ -1169,6 +1169,43 @@ service cloud.firestore {
     }
 
     // ============================================
+    // COLECAO: invites (codigo de convite compartilhavel — usado pelo web)
+    // Issue #514: collection nao tinha rule, todas writes caiam no
+    // catch-all deny. Schema usado pelo web: code, group_id, group_name,
+    // inviter_id, inviter_name, created_at, expires_at, used.
+    // Codigos sao aleatorios (6 chars) e nao enumeraveis, entao read
+    // amplo e aceitavel — necessario pro join flow lookup por code.
+    // ============================================
+    match /invites/{inviteId} {
+      function isGroupAdminFor(gId) {
+        let member = get(/databases/$(database)/documents/groups/$(gId)/members/$(request.auth.uid));
+        return member != null && (member.data.role == 'OWNER' || member.data.role == 'ADMIN');
+      }
+
+      // Read: qualquer auth (codigos sao random, lookup por code precisa disso)
+      allow read: if isAuthenticated();
+
+      // Create: somente admin/owner do grupo, e inviter_id == auth.uid
+      allow create: if isAuthenticated() &&
+                       request.resource.data.inviter_id == userId() &&
+                       request.resource.data.used == false &&
+                       isGroupAdminFor(request.resource.data.group_id);
+
+      // Update: marcar como usado (qualquer auth, mas so o campo `used`,
+      // `used_by`, `used_at` podem ser alterados, e o convite nao pode
+      // ja estar usado)
+      allow update: if isAuthenticated() &&
+                       resource.data.used == false &&
+                       request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['used', 'used_by', 'used_at']);
+
+      // Delete: admin global ou criador do convite
+      allow delete: if isAuthenticated() && (
+        isAdmin() || resource.data.inviter_id == userId()
+      );
+    }
+
+    // ============================================
     // COLECAO: group_invites
     // ============================================
     match /group_invites/{inviteId} {
