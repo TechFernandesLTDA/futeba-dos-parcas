@@ -1106,7 +1106,13 @@ service cloud.firestore {
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['member_count', 'updated_at'])
       );
 
-      allow delete: if isAuthenticated() && (isAdmin() || resource.data.owner_id == userId());
+      // Issue #516: hard delete somente ADMIN (recovery/compliance).
+      // Owner faz SOFT delete via update (set deleted_at, deleted_by) —
+      // permitido pela rule de update acima. Cascade em subcolecoes
+      // (members, cashbox) e jogos relacionados e feito pela Cloud
+      // Function `softDeleteGroup` (functions/src/maintenance/soft-delete.ts).
+      // Antes: owner podia hard-delete deixando members/cashbox orfaos.
+      allow delete: if isAuthenticated() && isAdmin();
 
       // Sub-colecao: members
       match /members/{memberId} {
