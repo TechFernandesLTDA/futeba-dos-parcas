@@ -777,184 +777,157 @@ export async function processXpBatch(
   // Substituir transactions pelas validadas
   transactions = validatedTransactions;
 
-  // FASE 1: Filtrar transações já processadas
-  // Firestore whereIn: máximo 10 itens
-  const transactionIds = transactions.map((t) =>
-    generateTransactionId(t.gameId, t.userId)
-  );
-
-  const processedIds = new Set<string>();
-  const idChunks: string[][] = [];
-  for (
-    let i = 0;
-    i < transactionIds.length;
-    i += 10
-  ) {
-    idChunks.push(
-      transactionIds.slice(i, i + 10)
-    );
-  }
-
-  const existingLogsSnaps = await Promise.all(
-    idChunks.map((chunk) =>
-      db()
-        .collection("xp_logs")
-        .where("transaction_id", "in", chunk)
-        .get()
-    )
-  );
-
-  for (const snap of existingLogsSnaps) {
-    for (const doc of snap.docs) {
-      processedIds.add(
-        doc.data().transaction_id
-      );
-    }
-  }
-
-  const toProcess = transactions.filter(
-    (t) => !processedIds.has(
-      generateTransactionId(t.gameId, t.userId)
-    )
-  );
-
-  const skipped =
-    transactions.length - toProcess.length;
-
-  if (skipped > 0) {
-    console.log(
-      `[XP_BATCH] ${skipped} transações ` +
-      "já processadas. Pulando."
-    );
-  }
-
-  if (toProcess.length === 0) {
-    // Todas já processadas
-    return transactions.map((t) => ({
-      success: true,
-      transactionId: generateTransactionId(
-        t.gameId,
-        t.userId
-      ),
-      alreadyProcessed: true,
-    }));
-  }
-
-  // FASE 2: Processar em batches de 500 ops
+  // SECFIX #441: Idempotência atômica via runTransaction
+  //
+  // Problema antigo: o whereIn de pré-filtro rodava FORA de
+  // transaction (Promise.all sobre db().collection().where()).
+  // Sob retry concorrente do trigger, 2 instances liam empty,
+  // ambos commitavam — XP duplicado.
+  //
+  // Fix: cada chunk roda em runTransaction com:
+  //   1. xp_logs/{transactionId} como doc ID determinístico
+  //   2. tx.get(logRef) atômico pra detectar duplicata
+  //   3. tx.set + tx.update no mesmo escopo
+  // Firestore garante: 2 transactions concorrentes no mesmo
+  // logRef → 1 vence, outra retry, detecta exists, skip.
+  //
+  // Limites: 500 reads + 500 writes por transaction. Cada
+  // transação aqui = 1 read (logRef) + 2-3 writes (user,
+  // milestone opt, log). Chunk de 50 → 50 reads + ~150 writes.
+  const TXN_CHUNK_SIZE = 50;
   const results: XpProcessingResult[] = [];
 
-  // Cada transação = 2 writes + milestone
-  // Limite seguro: 166 transações por batch
-  const BATCH_SIZE = 166;
-
   for (
     let i = 0;
-    i < toProcess.length;
-    i += BATCH_SIZE
+    i < transactions.length;
+    i += TXN_CHUNK_SIZE
   ) {
-    const chunk = toProcess.slice(
+    const chunk = transactions.slice(
       i,
-      i + BATCH_SIZE
+      i + TXN_CHUNK_SIZE
     );
-    const batch = db().batch();
 
-    for (const data of chunk) {
-      const transactionId =
-        generateTransactionId(
-          data.gameId,
-          data.userId
-        );
-
-      try {
-        // User update
-        const userRef = db()
-          .collection("users")
-          .doc(data.userId);
-        batch.update(userRef, {
-          experience_points: FieldValue.increment(data.xpEarned),
-          level: data.levelAfter,
-          updated_at:
-            admin.firestore.FieldValue
-              .serverTimestamp(),
-        });
-
-        // Milestones
-        if (
-          data.metadata.milestonesUnlocked
-            .length > 0
-        ) {
-          batch.update(userRef, {
-            milestones_achieved:
-              admin.firestore.FieldValue
-                .arrayUnion(
-                  ...data.metadata
-                    .milestonesUnlocked
-                ),
-          });
-        }
-
-        // XP log
-        const logRef = db()
-          .collection("xp_logs")
-          .doc();
-        batch.set(
-          logRef,
-          buildXpLogData(transactionId, data)
-        );
-
-        results.push({
-          success: true,
-          transactionId,
-          alreadyProcessed: false,
-        });
-      } catch (error: unknown) {
-        const typedError =
-          error as Record<string, unknown>;
-        console.error(
-          "[XP_BATCH] Erro ao processar " +
-          `${transactionId}:`,
-          error
-        );
-        results.push({
-          success: false,
-          transactionId,
-          alreadyProcessed: false,
-          error:
-            typedError.message as string,
-        });
-      }
-    }
-
-    // Commit batch
     try {
-      await batch.commit();
+      const chunkResults = await db().runTransaction(
+        async (tx) => {
+          const partial: XpProcessingResult[] = [];
+
+          // FASE A: ler todos os logRef do chunk pra
+          // detectar duplicatas atomicamente
+          const refs = chunk.map((data) => ({
+            data,
+            transactionId:
+              generateTransactionId(
+                data.gameId,
+                data.userId
+              ),
+            logRef: db()
+              .collection("xp_logs")
+              .doc(
+                generateTransactionId(
+                  data.gameId,
+                  data.userId
+                )
+              ),
+          }));
+
+          const snaps = await Promise.all(
+            refs.map((r) => tx.get(r.logRef))
+          );
+
+          // FASE B: escrever apenas os não-processados
+          for (let j = 0; j < refs.length; j++) {
+            const {data, transactionId, logRef} =
+              refs[j];
+            const snap = snaps[j];
+
+            if (snap.exists) {
+              partial.push({
+                success: true,
+                transactionId,
+                alreadyProcessed: true,
+              });
+              continue;
+            }
+
+            const userRef = db()
+              .collection("users")
+              .doc(data.userId);
+
+            tx.update(userRef, {
+              experience_points:
+                FieldValue.increment(
+                  data.xpEarned
+                ),
+              level: data.levelAfter,
+              updated_at:
+                admin.firestore.FieldValue
+                  .serverTimestamp(),
+            });
+
+            if (
+              data.metadata.milestonesUnlocked
+                .length > 0
+            ) {
+              tx.update(userRef, {
+                milestones_achieved:
+                  admin.firestore.FieldValue
+                    .arrayUnion(
+                      ...data.metadata
+                        .milestonesUnlocked
+                    ),
+              });
+            }
+
+            tx.set(
+              logRef,
+              buildXpLogData(
+                transactionId,
+                data
+              )
+            );
+
+            partial.push({
+              success: true,
+              transactionId,
+              alreadyProcessed: false,
+            });
+          }
+
+          return partial;
+        }
+      );
+
+      results.push(...chunkResults);
+
+      const skippedInChunk = chunkResults.filter(
+        (r) => r.alreadyProcessed
+      ).length;
       console.log(
-        "[XP_BATCH] Batch de " +
-        `${chunk.length} transações commitado`
+        "[XP_BATCH] Chunk de " +
+        `${chunk.length} transações commitado ` +
+        `(${skippedInChunk} já processadas)`
       );
     } catch (error: unknown) {
       const typedError =
         error as Record<string, unknown>;
       console.error(
-        "[XP_BATCH] Erro ao commitar batch:",
+        "[XP_BATCH] Erro ao commitar chunk " +
+        `${i / TXN_CHUNK_SIZE}:`,
         error
       );
-      // Marcar como falhadas
-      chunk.forEach((data) => {
-        const idx = results.findIndex(
-          (r) =>
-            r.transactionId ===
-            generateTransactionId(
-              data.gameId,
-              data.userId
-            )
-        );
-        if (idx !== -1) {
-          results[idx].success = false;
-          results[idx].error =
-            typedError.message as string;
-        }
-      });
+      // Marcar todas do chunk como falhadas
+      for (const data of chunk) {
+        results.push({
+          success: false,
+          transactionId: generateTransactionId(
+            data.gameId,
+            data.userId
+          ),
+          alreadyProcessed: false,
+          error: typedError.message as string,
+        });
+      }
     }
   }
 

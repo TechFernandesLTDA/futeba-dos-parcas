@@ -435,90 +435,84 @@ describe("XP Processing - Batch Operations", () => {
       expect(results).toEqual([]);
     });
 
+    /**
+     * SECFIX #441: Tests adaptados para runTransaction
+     * (idempotência atômica via xp_logs/{transactionId}).
+     *
+     * Helper: cria mock de tx.get retornando exists conforme map.
+     */
+    const mockTxnExistsMap = (existsMap: Record<string, boolean>) => {
+      mockDb.collection.mockImplementation((coll: string) => ({
+        doc: jest.fn((id?: string) => ({_path: `${coll}/${id ?? "auto"}`, _id: id})),
+        where: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({empty: true, docs: []}),
+        }),
+      }));
+
+      mockDb.runTransaction.mockImplementation(
+        async (callback: (tx: any) => Promise<any>) => {
+          const tx = {
+            get: jest.fn(async (ref: any) => {
+              // ref tem formato {_path: "xp_logs/<txId>", _id}
+              const txId = ref._id;
+              return {
+                exists: existsMap[txId] === true,
+                data: () => ({transaction_id: txId}),
+              };
+            }),
+            update: jest.fn(),
+            set: jest.fn(),
+          };
+          return callback(tx);
+        }
+      );
+    };
+
+    const sampleTxn = (
+      gameId: string,
+      userId: string,
+      xpEarned = 100,
+      milestonesUnlocked: string[] = []
+    ): XpTransactionData => ({
+      gameId,
+      userId,
+      xpEarned,
+      xpBefore: 500,
+      xpAfter: 500 + xpEarned,
+      levelBefore: 5,
+      levelAfter: 5,
+      breakdown: {
+        participation: 10,
+        goals: 50,
+        assists: 20,
+        saves: 0,
+        result: 20,
+        mvp: 0,
+        cleanSheet: 0,
+        milestones: 0,
+        streak: 0,
+        penalty: 0,
+      },
+      metadata: {
+        goals: 5,
+        assists: 2,
+        saves: 0,
+        wasMvp: false,
+        wasCleanSheet: false,
+        wasWorstPlayer: false,
+        gameResult: "WIN",
+        milestonesUnlocked,
+      },
+    });
+
     test("deve processar múltiplas transações com sucesso", async () => {
-      const mockTransactions: XpTransactionData[] = [
-        {
-          gameId: "game1",
-          userId: "user1",
-          xpEarned: 100,
-          xpBefore: 500,
-          xpAfter: 600,
-          levelBefore: 5,
-          levelAfter: 5,
-          breakdown: {
-            participation: 10,
-            goals: 50,
-            assists: 20,
-            saves: 0,
-            result: 20,
-            mvp: 0,
-            cleanSheet: 0,
-            milestones: 0,
-            streak: 0,
-            penalty: 0,
-          },
-          metadata: {
-            goals: 5,
-            assists: 2,
-            saves: 0,
-            wasMvp: false,
-            wasCleanSheet: false,
-            wasWorstPlayer: false,
-            gameResult: "WIN",
-            milestonesUnlocked: [],
-          },
-        },
-        {
-          gameId: "game1",
-          userId: "user2",
-          xpEarned: 80,
-          xpBefore: 400,
-          xpAfter: 480,
-          levelBefore: 4,
-          levelAfter: 4,
-          breakdown: {
-            participation: 10,
-            goals: 30,
-            assists: 20,
-            saves: 0,
-            result: 20,
-            mvp: 0,
-            cleanSheet: 0,
-            milestones: 0,
-            streak: 0,
-            penalty: 0,
-          },
-          metadata: {
-            goals: 3,
-            assists: 2,
-            saves: 0,
-            wasMvp: false,
-            wasCleanSheet: false,
-            wasWorstPlayer: false,
-            gameResult: "WIN",
-            milestonesUnlocked: [],
-          },
-        },
+      const mockTransactions = [
+        sampleTxn("game1", "user1"),
+        sampleTxn("game1", "user2", 80),
       ];
 
-      // Mock: Nenhuma transação já processada
-      mockDb.collection.mockReturnValue({
-        where: jest.fn().mockReturnValue({
-          get: jest.fn().mockResolvedValue({
-            empty: true,
-            docs: [],
-          }),
-        }),
-        doc: jest.fn().mockReturnValue({}),
-      });
-
-      // Mock batch
-      const mockBatchObj: any = {};
-      mockBatchObj.update = jest.fn().mockReturnValue(mockBatchObj);
-      mockBatchObj.set = jest.fn().mockReturnValue(mockBatchObj);
-      mockBatchObj.commit = jest.fn().mockResolvedValue({});
-
-      mockDb.batch.mockReturnValue(mockBatchObj);
+      // Nenhum log existente
+      mockTxnExistsMap({});
 
       const results = await processXpBatch(mockTransactions);
 
@@ -527,166 +521,108 @@ describe("XP Processing - Batch Operations", () => {
       expect(results[1].success).toBe(true);
       expect(results[0].alreadyProcessed).toBe(false);
       expect(results[1].alreadyProcessed).toBe(false);
-      expect(mockDb.batch).toHaveBeenCalled();
-      expect(mockBatchObj.commit).toHaveBeenCalled();
+      expect(mockDb.runTransaction).toHaveBeenCalled();
     });
 
     test("deve filtrar transações já processadas no batch", async () => {
-      const mockTransactions: XpTransactionData[] = [
-        {
-          gameId: "game1",
-          userId: "user1",
-          xpEarned: 100,
-          xpBefore: 500,
-          xpAfter: 600,
-          levelBefore: 5,
-          levelAfter: 5,
-          breakdown: {
-            participation: 10,
-            goals: 50,
-            assists: 20,
-            saves: 0,
-            result: 20,
-            mvp: 0,
-            cleanSheet: 0,
-            milestones: 0,
-            streak: 0,
-            penalty: 0,
-          },
-          metadata: {
-            goals: 5,
-            assists: 2,
-            saves: 0,
-            wasMvp: false,
-            wasCleanSheet: false,
-            wasWorstPlayer: false,
-            gameResult: "WIN",
-            milestonesUnlocked: [],
-          },
-        },
-        {
-          gameId: "game1",
-          userId: "user2",
-          xpEarned: 80,
-          xpBefore: 400,
-          xpAfter: 480,
-          levelBefore: 4,
-          levelAfter: 4,
-          breakdown: {
-            participation: 10,
-            goals: 30,
-            assists: 20,
-            saves: 0,
-            result: 20,
-            mvp: 0,
-            cleanSheet: 0,
-            milestones: 0,
-            streak: 0,
-            penalty: 0,
-          },
-          metadata: {
-            goals: 3,
-            assists: 2,
-            saves: 0,
-            wasMvp: false,
-            wasCleanSheet: false,
-            wasWorstPlayer: false,
-            gameResult: "WIN",
-            milestonesUnlocked: [],
-          },
-        },
+      const mockTransactions = [
+        sampleTxn("game1", "user1"),
+        sampleTxn("game1", "user2", 80),
       ];
 
-      // Mock: primeira transação já processada
-      mockDb.collection.mockReturnValue({
-        where: jest.fn().mockReturnValue({
-          get: jest.fn().mockResolvedValue({
-            empty: false,
-            docs: [
-              {
-                data: () => ({ transaction_id: "game_game1_user_user1" }),
-              },
-            ],
-          }),
-        }),
-        doc: jest.fn().mockReturnValue({}),
-      });
-
-      const mockBatchObj2: any = {};
-      mockBatchObj2.update = jest.fn().mockReturnValue(mockBatchObj2);
-      mockBatchObj2.set = jest.fn().mockReturnValue(mockBatchObj2);
-      mockBatchObj2.commit = jest.fn().mockResolvedValue({});
-
-      mockDb.batch.mockReturnValue(mockBatchObj2);
+      // user1 já tem log
+      mockTxnExistsMap({"game_game1_user_user1": true});
 
       const results = await processXpBatch(mockTransactions);
 
-      // Deve retornar apenas a transação nova (user2), já que user1 foi skipped
-      expect(results).toHaveLength(1);
-      expect(results[0].transactionId).toBe("game_game1_user_user2");
-      expect(results[0].alreadyProcessed).toBe(false);
-      expect(results[0].success).toBe(true);
+      expect(results).toHaveLength(2);
+      const user1 = results.find((r) =>
+        r.transactionId === "game_game1_user_user1"
+      );
+      const user2 = results.find((r) =>
+        r.transactionId === "game_game1_user_user2"
+      );
+      expect(user1?.alreadyProcessed).toBe(true);
+      expect(user1?.success).toBe(true);
+      expect(user2?.alreadyProcessed).toBe(false);
+      expect(user2?.success).toBe(true);
     });
 
-    test("deve lidar com erro de commit no batch", async () => {
-      const mockTransactions: XpTransactionData[] = [
-        {
-          gameId: "game1",
-          userId: "user1",
-          xpEarned: 100,
-          xpBefore: 500,
-          xpAfter: 600,
-          levelBefore: 5,
-          levelAfter: 5,
-          breakdown: {
-            participation: 10,
-            goals: 50,
-            assists: 20,
-            saves: 0,
-            result: 20,
-            mvp: 0,
-            cleanSheet: 0,
-            milestones: 0,
-            streak: 0,
-            penalty: 0,
-          },
-          metadata: {
-            goals: 5,
-            assists: 2,
-            saves: 0,
-            wasMvp: false,
-            wasCleanSheet: false,
-            wasWorstPlayer: false,
-            gameResult: "WIN",
-            milestonesUnlocked: [],
-          },
-        },
-      ];
+    test("deve lidar com erro de commit na transaction", async () => {
+      const mockTransactions = [sampleTxn("game1", "user1")];
 
-      // Mock: Nenhuma transação processada
-      mockDb.collection.mockReturnValue({
+      mockDb.collection.mockImplementation((_coll: string) => ({
+        doc: jest.fn(() => ({})),
         where: jest.fn().mockReturnValue({
-          get: jest.fn().mockResolvedValue({
-            empty: true,
-            docs: [],
-          }),
+          get: jest.fn().mockResolvedValue({empty: true, docs: []}),
         }),
-        doc: jest.fn().mockReturnValue({}),
-      });
-
-      // Mock batch com erro no commit
-      const mockBatchObj3: any = {};
-      mockBatchObj3.update = jest.fn().mockReturnValue(mockBatchObj3);
-      mockBatchObj3.set = jest.fn().mockReturnValue(mockBatchObj3);
-      mockBatchObj3.commit = jest.fn().mockRejectedValue(new Error("Batch commit failed"));
-
-      mockDb.batch.mockReturnValue(mockBatchObj3);
+      }));
+      mockDb.runTransaction.mockRejectedValue(
+        new Error("Transaction commit failed")
+      );
 
       const results = await processXpBatch(mockTransactions);
 
       expect(results).toHaveLength(1);
       expect(results[0].success).toBe(false);
-      expect(results[0].error).toBe("Batch commit failed");
+      expect(results[0].error).toBe("Transaction commit failed");
+    });
+
+    /**
+     * SECFIX #441: Race condition coverage.
+     *
+     * Verifica que tx.get(logRef) é chamado ANTES de tx.set(logRef)
+     * — i.e. check de existência acontece dentro da transaction.
+     * Isso garante que Firestore detecta contention e força retry
+     * em concurrent triggers.
+     */
+    test("[SECFIX #441] check de idempotência roda dentro de runTransaction", async () => {
+      const mockTransactions = [sampleTxn("game1", "user1")];
+
+      const callOrder: string[] = [];
+
+      mockDb.collection.mockImplementation((coll: string) => ({
+        doc: jest.fn((id?: string) => ({
+          _path: `${coll}/${id ?? "auto"}`,
+          _id: id,
+        })),
+        where: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({empty: true, docs: []}),
+        }),
+      }));
+
+      mockDb.runTransaction.mockImplementation(
+        async (callback: (tx: any) => Promise<any>) => {
+          const tx = {
+            get: jest.fn(async (ref: any) => {
+              callOrder.push(`tx.get(${ref._id})`);
+              return {exists: false};
+            }),
+            update: jest.fn((ref: any) => {
+              callOrder.push(`tx.update(${ref._path})`);
+            }),
+            set: jest.fn((ref: any) => {
+              callOrder.push(`tx.set(${ref._id})`);
+            }),
+          };
+          return callback(tx);
+        }
+      );
+
+      await processXpBatch(mockTransactions);
+
+      // Asserções de ordem: get DEVE preceder set/update
+      const getIdx = callOrder.findIndex((c) =>
+        c.startsWith("tx.get(game_game1_user_user1)")
+      );
+      const setIdx = callOrder.findIndex((c) =>
+        c.startsWith("tx.set(game_game1_user_user1)")
+      );
+
+      expect(getIdx).toBeGreaterThanOrEqual(0);
+      expect(setIdx).toBeGreaterThanOrEqual(0);
+      expect(getIdx).toBeLessThan(setIdx);
+      expect(mockDb.runTransaction).toHaveBeenCalledTimes(1);
     });
   });
 });
