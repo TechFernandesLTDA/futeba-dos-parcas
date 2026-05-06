@@ -71,6 +71,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 /**
  * Tela de Busca Global do Futeba dos Parças.
  * Permite buscar jogos, jogadores, grupos e locais em uma única interface.
@@ -429,7 +430,7 @@ private fun InitialSearchContent(
     onClearHistory: () -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(16.dp)
     ) {
         if (recentSearches.isNotEmpty()) {
@@ -543,7 +544,7 @@ private fun SearchResultsList(
     onResultClick: (SearchResult) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {

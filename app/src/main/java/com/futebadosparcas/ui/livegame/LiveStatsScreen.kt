@@ -25,6 +25,7 @@ import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * LiveStatsScreen - Exibe estatísticas ao vivo dos jogadores
@@ -82,7 +83,7 @@ private fun LiveStatsContent(
     onPlayerClick: (playerId: String) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {

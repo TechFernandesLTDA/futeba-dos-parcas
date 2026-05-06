@@ -40,6 +40,7 @@ import com.futebadosparcas.ui.groups.dialogs.EditGroupDialog
 import com.futebadosparcas.ui.groups.dialogs.TransferOwnershipDialog
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * GroupDetailScreen - Exibe detalhes de um grupo (CMD-30)
@@ -472,7 +473,7 @@ private fun GroupDetailContent(
     onRemoveMember: (GroupMember) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {

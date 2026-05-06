@@ -23,6 +23,7 @@ import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.ui.theme.systemBarsPadding
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * FieldOwnerDashboardScreen - Dashboard do dono de quadra
@@ -117,7 +118,7 @@ private fun LocationsList(
     onLocationClick: (String) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {

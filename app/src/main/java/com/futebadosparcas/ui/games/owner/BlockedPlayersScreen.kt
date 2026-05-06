@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * Issue #64: Tela para gerenciar jogadores bloqueados
@@ -77,6 +78,7 @@ fun BlockedPlayersScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
+                    .adaptiveContentWidth()
                     .padding(paddingValues),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)

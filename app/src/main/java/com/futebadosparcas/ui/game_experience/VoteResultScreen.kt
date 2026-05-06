@@ -78,6 +78,7 @@ import com.futebadosparcas.ui.theme.GamificationColors
 import kotlinx.coroutines.delay
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * Tela de resultados da votação MVP.
@@ -178,7 +179,7 @@ private fun VoteResultContent(
     }
 
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {

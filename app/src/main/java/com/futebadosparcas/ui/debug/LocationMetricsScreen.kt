@@ -27,6 +27,7 @@ import com.futebadosparcas.util.LocationQueryMetrics
 import com.futebadosparcas.util.QueryStats
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * Tela de debug para visualizar metricas de queries de Location.
@@ -203,7 +204,7 @@ private fun MetricsList(
     } else 0L
 
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier.adaptiveContentWidth(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {

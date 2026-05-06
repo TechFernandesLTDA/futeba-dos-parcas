@@ -57,6 +57,7 @@ import java.time.LocalTime
 import java.util.Locale
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * Tela avançada de seleção de local com:
@@ -513,7 +514,7 @@ private fun LocationListView(
     searchQuery: String
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {

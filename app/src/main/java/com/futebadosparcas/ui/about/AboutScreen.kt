@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.futebadosparcas.BuildConfig
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 /**
  * Tela Sobre o aplicativo
  *
@@ -39,7 +40,7 @@ fun AboutScreen(
     val context = LocalContext.current
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {

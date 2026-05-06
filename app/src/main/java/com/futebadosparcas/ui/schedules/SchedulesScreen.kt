@@ -24,6 +24,7 @@ import com.futebadosparcas.ui.components.states.LoadingState
 import com.futebadosparcas.ui.components.states.LoadingItemType
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 private const val TAG = "SchedulesScreen"
 
@@ -99,7 +100,7 @@ fun SchedulesScreen(
                 } else {
                     // List of Schedules
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
