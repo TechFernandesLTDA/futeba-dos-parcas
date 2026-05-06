@@ -5,6 +5,7 @@ import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.usecase.SuspendUseCase
 import com.futebadosparcas.util.AppLogger
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -29,7 +30,8 @@ import kotlinx.coroutines.tasks.await
  * ```
  */
 class UpdateProfileUseCase constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance()
 ) : SuspendUseCase<UpdateProfileParams, User>() {
 
     companion object {
@@ -46,46 +48,56 @@ class UpdateProfileUseCase constructor(
         // Validar parâmetros
         validateParams(params)
 
-        // Construir mapa de atualizações
-        val updates = mutableMapOf<String, Any?>()
+        // SECFIX #433 STAGE 3: separa PII (escrita via callable updateUserPii em
+        // users_private) de não-PII (write direto em users docs).
+        val piiUpdates = mutableMapOf<String, Any?>()
+        params.birthDate?.let { piiUpdates["birth_date"] = it.time }
+        params.gender?.let { piiUpdates["gender"] = it }
+        params.heightCm?.let { piiUpdates["height_cm"] = it }
+        params.weightKg?.let { piiUpdates["weight_kg"] = it }
 
+        // Construir mapa de atualizações non-PII (vai pra users docs)
+        val updates = mutableMapOf<String, Any?>()
         params.name?.let { updates["name"] = it.trim() }
         params.photoUrl?.let { updates["photo_url"] = it.trim() }
         params.nickname?.let { updates["nickname"] = it.trim() }
         params.phone?.let { updates["phone"] = it.trim() }
         params.isProfilePublic?.let { updates["is_profile_public"] = it }
         params.isSearchable?.let { updates["is_searchable"] = it }
-        params.preferredFieldTypes?.let { updates["preferred_field_types"] = it.map { type -> type.name } }
-        params.birthDate?.let { updates["birth_date"] = it }
-        params.gender?.let { updates["gender"] = it }
-        params.heightCm?.let { updates["height_cm"] = it }
-        params.weightKg?.let { updates["weight_kg"] = it }
+        params.preferredFieldTypes?.let {
+            updates["preferred_field_types"] = it.map { type -> type.name }
+        }
         params.dominantFoot?.let { updates["dominant_foot"] = it }
         params.primaryPosition?.let { updates["primary_position"] = it }
         params.secondaryPosition?.let { updates["secondary_position"] = it }
         params.playStyle?.let { updates["play_style"] = it }
         params.experienceYears?.let { updates["experience_years"] = it }
 
-        // Se não houver atualizações, apenas retornar o usuário atual
-        if (updates.isEmpty()) {
-            val userSnapshot = firestore.collection("users")
-                .document(params.userId)
-                .get()
-                .await()
-            return userSnapshot.toObject(User::class.java)
-                ?: throw IllegalStateException("Usuário não encontrado: ${params.userId}")
+        // PII via callable (escreve em users_private)
+        if (piiUpdates.isNotEmpty()) {
+            try {
+                functions.getHttpsCallable("updateUserPii")
+                    .call(piiUpdates)
+                    .await()
+                AppLogger.d(TAG) {
+                    "PII atualizado via callable: ${piiUpdates.keys.joinToString(",")}"
+                }
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Falha ao atualizar PII via callable", e)
+                throw e
+            }
         }
 
-        // Adicionar timestamp de atualização
-        updates["updated_at"] = com.google.firebase.firestore.FieldValue.serverTimestamp()
+        // Non-PII via direct write em users
+        if (updates.isNotEmpty()) {
+            updates["updated_at"] = com.google.firebase.firestore.FieldValue.serverTimestamp()
+            firestore.collection("users")
+                .document(params.userId)
+                .update(updates.filterValues { it != null } as Map<String, Any>)
+                .await()
+        }
 
-        // Atualizar no Firestore
-        firestore.collection("users")
-            .document(params.userId)
-            .update(updates.filterValues { it != null } as Map<String, Any>)
-            .await()
-
-        // Buscar usuário atualizado
+        // Buscar usuário atualizado (UserRepository.getCurrentUser merge users + users_private)
         val updatedSnapshot = firestore.collection("users")
             .document(params.userId)
             .get()

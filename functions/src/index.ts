@@ -1743,11 +1743,13 @@ export {verifyCpf, setUserVerified} from "./auth/verification";
 export {canSendSmsOtp, logVerificationFailure} from "./auth/anti-abuse";
 
 // SECFIX #433: PII denormalization users -> users_private
-// Triggers + callable migration (ADMIN one-shot)
+// Triggers + callable migration (ADMIN one-shot) + Stage 3 callables
 export {
   onUserDocCreated,
   onUserDocUpdated,
   migratePiiToUsersPrivate,
+  updateUserPii,
+  removePiiFromUsers,
 } from "./auth/pii-migration";
 
 // SECFIX #442: location_lat/lng denormalization (LGPD)
