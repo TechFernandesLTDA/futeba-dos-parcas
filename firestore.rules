@@ -1062,11 +1062,12 @@ service cloud.firestore {
     // ============================================
     match /groups/{groupId} {
       // Usuários podem ler grupos públicos ou onde são membros (EXCETO soft-deleted)
-      // Admins podem ver soft-deleted para recuperação
+      // Admins podem ver soft-deleted para recuperação E grupos privados (issue #511)
       // Bug fix: deleted_at pode nao existir no documento (undefined != null em Firestore rules)
       allow read: if isAuthenticated() && (
         !('deleted_at' in resource.data) || resource.data.deleted_at == null || isAdmin()
       ) && (
+        isAdmin() ||
         resource.data.is_public == true ||
         resource.data.owner_id == userId() ||
         exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()))

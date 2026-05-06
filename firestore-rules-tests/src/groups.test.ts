@@ -117,18 +117,11 @@ describe("groups — leitura", () => {
     await assertFails(db.doc(`groups/${GROUP_PRIVATE}`).get());
   });
 
-  // BUG DETECTADO: A rule de leitura de grupos NÃO inclui isAdmin() no segundo bloco.
-  // Admin passa na verificação de deleted_at mas FALHA na verificação de is_public/owner/member.
-  // Resultado: admin NÃO consegue ler grupos privados onde não é membro.
-  // Linha 1067-1073 do firestore.rules:
-  //   allow read: if isAuthenticated() && (...deleted_at...) && (is_public || owner || member)
-  // isAdmin() está AUSENTE do bloco de autorização final.
-  // TODO: Reportar ao time — admin deveria conseguir ler todos os grupos.
-  it("Admin NÃO pode ler grupo privado sem ser membro (BUG: isAdmin() ausente no read de groups)", async () => {
+  // FIX issue #511: isAdmin() agora incluido no bloco de visibilidade da rule.
+  // Admin pode ler qualquer grupo (publico, privado, soft-deleted) para suporte/recuperacao.
+  it("Admin pode ler grupo privado mesmo sem ser membro", async () => {
     const db = asAdmin(testEnv);
-    // Este teste documenta o BUG: admin é NEGADO em grupos privados onde não é membro.
-    // O comportamento esperado pela spec seria assertSucceeds, mas a rule atual nega.
-    await assertFails(db.doc(`groups/${GROUP_PRIVATE}`).get());
+    await assertSucceeds(db.doc(`groups/${GROUP_PRIVATE}`).get());
   });
 
   it("Não-autenticado NÃO pode ler grupos", async () => {
