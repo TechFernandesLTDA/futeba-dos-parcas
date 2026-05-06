@@ -22,6 +22,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.domain.model.GamificationSettings
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.components.states.LoadingState
+import com.futebadosparcas.ui.components.states.LoadingItemType
 
 @Composable
 fun GamificationSettingsScreen(
@@ -37,9 +39,11 @@ fun GamificationSettingsScreen(
     ) {
         when (val state = uiState) {
             is SettingsUiState.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.primary
+                // SECFIX #491: shimmer skeleton em vez de CircularProgressIndicator
+                // (Regra #6 CLAUDE.md — listas/forms usam shimmer, não spinner)
+                LoadingState(
+                    shimmerCount = 6,
+                    itemType = LoadingItemType.CARD
                 )
             }
             is SettingsUiState.Success -> {
