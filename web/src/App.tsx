@@ -61,6 +61,7 @@ const GroupSettingsScreen = lazy(() => import('./pages/group/GroupSettingsScreen
 const CashboxScreen = lazy(() => import('./pages/groups/CashboxScreen').then(m => ({ default: m.CashboxScreen })));
 const InvitePlayersScreen = lazy(() => import('./pages/groups/InvitePlayersScreen').then(m => ({ default: m.InvitePlayersScreen })));
 const JoinByInviteScreen = lazy(() => import('./pages/group/JoinByInviteScreen').then(m => ({ default: m.JoinByInviteScreen })));
+const DiscoverGroupsScreen = lazy(() => import('./pages/group/DiscoverGroupsScreen').then(m => ({ default: m.DiscoverGroupsScreen })));
 const PlayersScreen = lazy(() => import('./pages/players/PlayersScreen').then(m => ({ default: m.PlayersScreen })));
 
 // Profile
@@ -246,6 +247,8 @@ function AppRoutes() {
 
       {/* Groups */}
       <Route path="/groups" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupsScreen /></Suspense></ProtectedRoute>} />
+      {/* Issue #517 Phase 1: discovery de grupos publicos */}
+      <Route path="/groups/discover" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><DiscoverGroupsScreen /></Suspense></ProtectedRoute>} />
       <Route path="/group/:groupId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense></ProtectedRoute>} />
       <Route path="/group/create" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense></ProtectedRoute>} />
       <Route path="/group/:groupId/edit" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupEditScreen /></Suspense></ProtectedRoute>} />
