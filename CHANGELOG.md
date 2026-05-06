@@ -5,6 +5,84 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.21.0] - 2026-05-06
+
+> Resumo consolidado de releases entre 1.8.0 e 1.21.0 (Fev–Mai 2026).
+> Para granularidade detalhada, consulte git log + PRs no GitHub.
+
+### Adicionado
+
+- **Phone+CPF Verification (Anti-Bot/Anti-Fraud)** — EPIC #443 fechado, 6/6 fases
+  - SMS OTP via Firebase Phone Auth (Web + Android + iOS)
+  - CPF validator (mod-11) compartilhado KMP/JS/TS
+  - `verifyCpf` + `setUserVerified` callables
+  - Custom claim `verified=true` enforced em writes críticos
+  - 30-day grace period pra users existentes
+  - Anti-abuse: rate limit SMS, `verification_failures` log
+- **PII Denormalization (LGPD)** — issue #433 fechada (3 stages)
+  - `users_private` collection canonical pra email, fcm_token, birth_date, height_cm, weight_kg, gender
+  - Triggers `onUserDocCreated`/`Updated` mantêm sync automático
+  - Migration one-shot rodada: 101 users limpos
+  - `updateUserPii` callable owner-only pra writes futuras
+- **Game Location Privacy** — issue #442 fechada (2 stages)
+  - `location_lat_approx`/`lng_approx` (3 decimais ~111m precisão) denormalizados
+  - `games.read` exige `isVerifiedOrGrace()` reduzindo surface attack
+  - Migration: 65 games denormalizados
+- **App Check** — reCAPTCHA Enterprise (Web) + Play Integrity (Android)
+- **Adaptive UI**
+  - Web: Rail (md) + Drawer permanent (lg+) — issue #416
+  - Android: `Modifier.adaptiveContentWidth()` helper aplicado em 25 telas — issue #489
+  - PlayerCard theme tokens — issue #415
+- **iOS Phone+CPF SwiftUI** — issue #447
+  - PhoneVerificationView + CpfVerificationView + VerificationFlowView
+  - APNs setup documentation em `iosApp/SETUP.md`
+
+### Mudado
+
+- **Cloud Functions perf** (issues #494, #495, #496)
+  - `processXpBatch`: idempotência atômica via runTransaction (race condition #441 fix)
+  - Memory bumps 256MB→512MB em onGameStatusUpdate, onGameDeleted, onGroupDeleted, checkSeasonEnd
+  - Timeout bumps em triggers críticos (180–540s)
+  - `collectHourlyMetrics`: paralelização (-85% latência)
+  - `keepWarmFunctions`: Promise.all (-75% latência)
+- Web: `EvolutionScreen` agora exibe error state com retry (#493)
+- Android: `GamificationSettingsScreen` shimmer skeleton (#491)
+
+### Corrigido
+
+- **Race conditions e idempotência** em XP batch processing (#441)
+- **PII exposure** via `is_searchable` em users docs (#433)
+- **LGPD** lat/lng exato exposto (#442)
+- **A11Y**: PlayerCard IconButton com texto → Button (#492)
+- **Lint NewApi** em Coil disk cache (File.toPath API 26 vs minSdk 24)
+- **Firestore index missing** em metrics(type, timestamp)
+
+### Removido
+
+- Dead code: `AdaptiveScaffold.kt` + `GameListDetailPane.kt` (642 linhas) — issue #490
+
+### Segurança
+
+- 5 stages de privacy denormalization completos
+- 0 npm audit vulnerabilities (web + functions)
+- 167 Dependabot alerts fixed historically; 0 abertos
+- Custom Claims (PERF_001) eliminam 40% Firestore reads em authz checks
+
+### Performance
+
+- XP race condition fix evita XP duplicado em retry concorrente
+- Memory/timeout bumps eliminam OOM em grupos com 200+ users
+- Metrics queries paralelas reduzem cron latency em ~85%
+
+### Migrations rodadas em prod
+
+- `migratePiiToUsersPrivate`: 101 users → users_private
+- `denormalizeGameLocations`: 65 games com `_approx` fields
+- `removePiiFromUsers`: 101 users com PII removida de users docs
+- `migrateAllUsersToCustomClaims`: role=PLAYER no JWT (PERF_001)
+
+---
+
 ## [1.7.2] - 2026-02-01
 
 ### Removido
