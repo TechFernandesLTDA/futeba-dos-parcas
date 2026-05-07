@@ -79,6 +79,19 @@ kotlin {
     }
 
     sourceSets {
+        // Source set hierarchy explicita — `kotlin.mpp.applyDefaultHierarchyTemplate=false`
+        // em gradle.properties, então `iosMain` não conecta automaticamente nos
+        // 3 iOS targets. Sem este dependsOn, expects em commonMain (AppNavigation,
+        // getPlatformName, blendColors, calculateLuminance, PlatformThemeSetup)
+        // ficam sem actual visível em Native, e build falha.
+        val commonMain by getting
+        val iosMain by creating {
+            dependsOn(commonMain)
+        }
+        val iosX64Main by getting { dependsOn(iosMain) }
+        val iosArm64Main by getting { dependsOn(iosMain) }
+        val iosSimulatorArm64Main by getting { dependsOn(iosMain) }
+
         commonMain.dependencies {
             // Compose Multiplatform 1.10.0
             implementation(compose.runtime)
