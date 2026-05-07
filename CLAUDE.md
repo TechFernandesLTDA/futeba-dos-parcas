@@ -534,7 +534,7 @@ Compose Multiplatform migration tracked in `specs/CMP_MULTIPLATFORM_MIGRATION.md
 
 **Repo**: `TechFernandesLTDA/futeba-dos-parcas`
 **Issues abertas**: 0
-**PRs abertos**: 0 (sessão 2026-05-07 fechou tudo)
+**PRs abertos**: 0 (sessão noturna 2026-05-07 fechou 9 PRs)
 **Dependabot alerts**: 0
 **Branches remotos**: ~64
 
@@ -544,7 +544,9 @@ Compose Multiplatform migration tracked in `specs/CMP_MULTIPLATFORM_MIGRATION.md
 - **Firestore rules deploy** — manual via worktree isolado
 - **Cloud Functions deploy** — `firebase deploy --only functions:<name>` em worktree
 - **Web hosting** — `npm run build && firebase deploy --only hosting`
-- **Issue #517 RESOLVIDA** — discovery + request-to-join full-stack (PRs #521, #523, #526)
+- **Issue #517 RESOLVIDA** — discovery + request-to-join full-stack (PRs #521, #523, #526, #551 iOS Phase 1.c)
+- **iOS reativação 100% Frente A+B+C+D** — 13 repos shared, framework BUILD SUCCESSFUL, smoke test xcodebuild OK (PRs #546-#555)
+- **Epic UX desktop modernization** — 4 issues P3 fechadas (PRs #547, #548, #550, #552)
 
 ### CI Known Behaviors
 
