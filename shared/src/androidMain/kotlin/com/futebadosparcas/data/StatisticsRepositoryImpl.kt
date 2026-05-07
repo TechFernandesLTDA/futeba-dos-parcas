@@ -9,8 +9,13 @@ import com.futebadosparcas.domain.repository.StatisticsRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import java.util.Calendar
-import java.util.LinkedHashMap
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Implementacao Android do StatisticsRepository usando FirebaseDataSource.
@@ -126,31 +131,15 @@ class StatisticsRepositoryImpl(
 
             val games = confirmedGamesResult.getOrNull() ?: emptyList()
 
-            // Inicializar mapa dos ultimos 6 meses
-            val goalsHistory = LinkedHashMap<String, Int>()
-            val cal = Calendar.getInstance()
-            cal.add(Calendar.MONTH, -5)
+            val goalsHistory = buildLast6MonthsMap()
 
-            for (i in 0 until 6) {
-                val monthKey = "${cal.get(Calendar.MONTH) + 1}/${cal.get(Calendar.YEAR)}"
-                goalsHistory[monthKey] = 0
-                cal.add(Calendar.MONTH, 1)
-            }
-
-            // Processar cada jogo
             for (game in games) {
                 try {
                     val gameDate = game.createdAt
                     if (gameDate != null) {
-                        val calDate = Calendar.getInstance().apply {
-                            time = java.util.Date(gameDate)
-                        }
-                        val monthKey = "${calDate.get(Calendar.MONTH) + 1}/${calDate.get(Calendar.YEAR)}"
+                        val monthKey = monthKeyFromEpochMs(gameDate)
 
-                        // Se estiver nos ultimos 6 meses, adicionar gols
-                        // Nota: Como nao temos PlayerStats separado, precisamos buscar confirmacoes
                         if (goalsHistory.containsKey(monthKey)) {
-                            // Buscar confirmacoes do jogo
                             val confirmationsResult = dataSource.getGameConfirmations(game.id)
                             val confirmations = confirmationsResult.getOrNull() ?: emptyList()
 
@@ -161,26 +150,35 @@ class StatisticsRepositoryImpl(
                         }
                     }
                 } catch (e: Exception) {
-                    // Ignorar erro e continuar
                     continue
                 }
             }
 
             Result.success(goalsHistory)
         } catch (e: Exception) {
-            // Retornar dados vazios em caso de erro
-            val emptyHistory = LinkedHashMap<String, Int>()
-            val cal = Calendar.getInstance()
-            cal.add(Calendar.MONTH, -5)
-
-            for (i in 0 until 6) {
-                val key = "${cal.get(Calendar.MONTH) + 1}/${cal.get(Calendar.YEAR)}"
-                emptyHistory[key] = 0
-                cal.add(Calendar.MONTH, 1)
-            }
-
-            Result.success(emptyHistory)
+            Result.success(buildLast6MonthsMap())
         }
+    }
+
+    /**
+     * Constrói mapa "M/yyyy" -> 0 dos últimos 6 meses (cronológico).
+     * Usa kotlinx.datetime para portabilidade Android+iOS.
+     */
+    private fun buildLast6MonthsMap(): LinkedHashMap<String, Int> {
+        val zone = TimeZone.currentSystemDefault()
+        val today: LocalDate = Clock.System.now().toLocalDateTime(zone).date
+        val map = LinkedHashMap<String, Int>()
+        for (offset in 5 downTo 0) {
+            val d = today.minus(offset, DateTimeUnit.MONTH)
+            map["${d.monthNumber}/${d.year}"] = 0
+        }
+        return map
+    }
+
+    private fun monthKeyFromEpochMs(epochMs: Long): String {
+        val zone = TimeZone.currentSystemDefault()
+        val ldt = Instant.fromEpochMilliseconds(epochMs).toLocalDateTime(zone)
+        return "${ldt.monthNumber}/${ldt.year}"
     }
 
     override suspend fun getXpHistory(userId: String, limit: Int): Result<List<XpLog>> {
