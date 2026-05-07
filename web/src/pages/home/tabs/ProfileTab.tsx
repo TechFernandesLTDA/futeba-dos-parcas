@@ -36,6 +36,10 @@ import {
   DirectionsRun,
   SportsKabaddi,
   ChevronRight,
+  AdminPanelSettings,
+  Stadium,
+  BugReport,
+  Dashboard,
 } from '@mui/icons-material';
 import { getLevelColor } from '../../../types/user';
 import { getLevelBadgeImage, getLevelBadgeDescription } from '../../../utils/levelBadge';
@@ -86,6 +90,43 @@ export function ProfileTab() {
     { icon: <TrendingUp />, label: 'Estatísticas', onClick: () => navigate('/statistics') },
     { icon: <Settings />, label: 'Configurações', onClick: () => navigate('/settings') },
   ];
+
+  // Itens condicionais por role
+  const isAdmin = user?.role === 'ADMIN';
+  const isFieldOwner = user?.role === 'FIELD_OWNER';
+
+  const adminMenuItems: Array<{ icon: React.ReactNode; label: string; onClick: () => void }> = [];
+  if (isAdmin || isFieldOwner) {
+    adminMenuItems.push({
+      icon: <Stadium />,
+      label: 'Gerenciar Quadras',
+      onClick: () => navigate('/locations'),
+    });
+  }
+  if (isFieldOwner) {
+    adminMenuItems.push({
+      icon: <Dashboard />,
+      label: 'Painel do Dono',
+      onClick: () => navigate('/owner/dashboard'),
+    });
+  }
+  if (isAdmin) {
+    adminMenuItems.push({
+      icon: <AdminPanelSettings />,
+      label: 'Gerenciar Usuários',
+      onClick: () => navigate('/admin/users'),
+    });
+    adminMenuItems.push({
+      icon: <EmojiEvents />,
+      label: 'Configurações da Liga',
+      onClick: () => navigate('/settings/gamification'),
+    });
+    adminMenuItems.push({
+      icon: <BugReport />,
+      label: 'Ferramentas de Dev',
+      onClick: () => navigate('/dev'),
+    });
+  }
 
   // Ratings de posição
   const positionRatings = [
@@ -327,6 +368,46 @@ export function ProfileTab() {
           </List>
         </Card>
       </Box>
+
+      {/* Seção Administração — só ADMIN/FIELD_OWNER */}
+      {adminMenuItems.length > 0 && (
+        <Box sx={{ px: 2, mt: 2 }}>
+          <Typography
+            variant="overline"
+            sx={{ color: 'text.secondary', pl: 1, fontWeight: 600 }}
+          >
+            Administração
+          </Typography>
+          <Card sx={{ borderRadius: 3, mt: 0.5 }}>
+            <List disablePadding aria-label="Menu de administração">
+              {adminMenuItems.map((item, index) => (
+                <React.Fragment key={`admin-${index}`}>
+                  {index > 0 && <Divider />}
+                  <ListItem
+                    component="button"
+                    onClick={item.onClick}
+                    aria-label={item.label}
+                    sx={{
+                      border: 0,
+                      bgcolor: 'transparent',
+                      width: '100%',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: 'action.hover' },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 40, color: 'primary.main' }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText primary={item.label} />
+                    <ChevronRight color="action" />
+                  </ListItem>
+                </React.Fragment>
+              ))}
+            </List>
+          </Card>
+        </Box>
+      )}
 
       {/* Action Buttons */}
       <Box sx={{ px: 2, mt: 2, display: 'flex', gap: 2 }}>
