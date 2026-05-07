@@ -19,6 +19,7 @@ import com.futebadosparcas.ui.games.teamformation.TeamFormationViewModel
 import com.futebadosparcas.ui.groups.CashboxViewModel
 import com.futebadosparcas.ui.groups.DiscoverGroupsViewModel
 import com.futebadosparcas.ui.groups.GameSummonViewModel
+import com.futebadosparcas.ui.groups.JoinRequestViewModel
 import com.futebadosparcas.ui.groups.GroupDetailViewModel
 import com.futebadosparcas.ui.groups.GroupsViewModel
 import com.futebadosparcas.ui.groups.InviteViewModel
@@ -214,6 +215,14 @@ val viewModelKoinModule = module {
     viewModel {
         DiscoverGroupsViewModel(
             groupRepository = get<AndroidGroupRepository>()
+        )
+    }
+
+    viewModel {
+        JoinRequestViewModel(
+            joinRequestRepository = get(),
+            userRepository = get(),
+            auth = get()
         )
     }
 

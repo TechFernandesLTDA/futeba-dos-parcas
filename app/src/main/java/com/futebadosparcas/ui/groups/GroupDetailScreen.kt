@@ -31,6 +31,8 @@ import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.ui.components.CachedGroupImage
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.cards.GroupMemberCard
+import com.futebadosparcas.data.repository.JoinRequest
+import org.koin.compose.viewmodel.koinViewModel
 import com.futebadosparcas.ui.components.dialogs.*
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
@@ -88,11 +90,18 @@ fun GroupDetailScreen(
     onNavigateToInvite: () -> Unit = {},
     onNavigateToCashbox: () -> Unit = {},
     onNavigateToCreateGame: () -> Unit = {},
-    onMemberClick: (userId: String) -> Unit = {}
+    onMemberClick: (userId: String) -> Unit = {},
+    joinRequestViewModel: JoinRequestViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val actionState by viewModel.actionState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Join requests (issue #517 Phase 2)
+    val myJoinRequestState by joinRequestViewModel.myRequestState.collectAsStateWithLifecycle()
+    val pendingJoinRequests by joinRequestViewModel.pendingRequests.collectAsStateWithLifecycle()
+    val joinSubmitting by joinRequestViewModel.isSubmitting.collectAsStateWithLifecycle()
+    val joinActioningId by joinRequestViewModel.actioningRequesterId.collectAsStateWithLifecycle()
 
     // Dialog states
     var showLeaveDialog by remember { mutableStateOf(false) }
@@ -104,6 +113,18 @@ fun GroupDetailScreen(
     // Carrega os dados do grupo na primeira composição
     LaunchedEffect(groupId) {
         viewModel.loadGroup(groupId)
+    }
+
+    // Quando carrega o grupo + membros, decide o que observar:
+    //  - Sempre observa myRequest (cheap, retorna null se nao tem)
+    //  - Se owner/admin, tambem observa pending list
+    val successState = uiState as? GroupDetailUiState.Success
+    LaunchedEffect(groupId, successState?.myRole) {
+        joinRequestViewModel.observeMyRequest(groupId)
+        if (successState?.myRole == GroupMemberRole.OWNER ||
+            successState?.myRole == GroupMemberRole.ADMIN) {
+            joinRequestViewModel.observePendingRequests(groupId)
+        }
     }
 
     // Observa o actionState para mostrar mensagens e navegar
@@ -236,7 +257,19 @@ fun GroupDetailScreen(
                         onMemberClick = onMemberClick,
                         onPromoteMember = { viewModel.promoteMember(it) },
                         onDemoteMember = { viewModel.demoteMember(it) },
-                        onRemoveMember = { viewModel.removeMember(it) }
+                        onRemoveMember = { viewModel.removeMember(it) },
+                        myJoinRequestState = myJoinRequestState,
+                        pendingJoinRequests = pendingJoinRequests,
+                        joinSubmitting = joinSubmitting,
+                        joinActioningId = joinActioningId,
+                        onRequestJoin = { joinRequestViewModel.requestJoin(groupId) },
+                        onCancelJoinRequest = { joinRequestViewModel.cancelRequest(groupId) },
+                        onApproveJoinRequest = { rid ->
+                            joinRequestViewModel.approve(groupId, rid)
+                        },
+                        onRejectJoinRequest = { rid ->
+                            joinRequestViewModel.reject(groupId, rid)
+                        }
                     )
                     is GroupDetailUiState.Error -> EmptyState(
                         type = EmptyStateType.Error(
@@ -470,8 +503,18 @@ private fun GroupDetailContent(
     onMemberClick: (userId: String) -> Unit,
     onPromoteMember: (GroupMember) -> Unit,
     onDemoteMember: (GroupMember) -> Unit,
-    onRemoveMember: (GroupMember) -> Unit
+    onRemoveMember: (GroupMember) -> Unit,
+    myJoinRequestState: MyJoinRequestState = MyJoinRequestState.Loading,
+    pendingJoinRequests: List<JoinRequest> = emptyList(),
+    joinSubmitting: Boolean = false,
+    joinActioningId: String? = null,
+    onRequestJoin: () -> Unit = {},
+    onCancelJoinRequest: () -> Unit = {},
+    onApproveJoinRequest: (String) -> Unit = {},
+    onRejectJoinRequest: (String) -> Unit = {}
 ) {
+    val isMember = myRole != null
+    val isOwnerOrAdmin = myRole == GroupMemberRole.OWNER || myRole == GroupMemberRole.ADMIN
     LazyColumn(
         modifier = Modifier.fillMaxSize().adaptiveContentWidth(),
         contentPadding = PaddingValues(16.dp),
@@ -484,6 +527,30 @@ private fun GroupDetailContent(
                 myRole = myRole,
                 membersCount = members.size
             )
+        }
+
+        // Pedir entrada (issue #517 Phase 2) — so para nao-membro em grupo publico
+        if (!isMember && group.isPublic) {
+            item {
+                JoinRequestSection(
+                    state = myJoinRequestState,
+                    submitting = joinSubmitting,
+                    onRequest = onRequestJoin,
+                    onCancel = onCancelJoinRequest
+                )
+            }
+        }
+
+        // Solicitacoes pendentes (issue #517 Phase 2) — owner/admin apenas
+        if (isOwnerOrAdmin && pendingJoinRequests.isNotEmpty()) {
+            item {
+                PendingJoinRequestsSection(
+                    requests = pendingJoinRequests,
+                    actioningId = joinActioningId,
+                    onApprove = onApproveJoinRequest,
+                    onReject = onRejectJoinRequest
+                )
+            }
         }
 
         // Action buttons (visibilidade baseada no role)
@@ -1095,4 +1162,184 @@ private fun GroupMemberListItem(
             { showRemoveDialog = true }
         } else null
     )
+}
+
+/**
+ * Secao "Pedir entrada" (issue #517 Phase 2).
+ * Aparece para nao-membro em grupo publico.
+ */
+@Composable
+private fun JoinRequestSection(
+    state: MyJoinRequestState,
+    submitting: Boolean,
+    onRequest: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            when (state) {
+                is MyJoinRequestState.Loading -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
+                }
+                is MyJoinRequestState.NotRequested -> {
+                    Text(
+                        text = stringResource(R.string.join_request_can_request),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Button(
+                        onClick = onRequest,
+                        enabled = !submitting,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (submitting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(stringResource(R.string.join_request_action_request))
+                        }
+                    }
+                }
+                is MyJoinRequestState.Pending -> {
+                    Text(
+                        text = stringResource(R.string.join_request_pending),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    OutlinedButton(
+                        onClick = onCancel,
+                        enabled = !submitting,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (submitting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(stringResource(R.string.join_request_action_cancel))
+                        }
+                    }
+                }
+                is MyJoinRequestState.Approved -> {
+                    Text(
+                        text = stringResource(R.string.join_request_approved),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                is MyJoinRequestState.Rejected -> {
+                    Text(
+                        text = stringResource(R.string.join_request_rejected),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                is MyJoinRequestState.Error -> {
+                    Text(
+                        text = state.message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Secao "Solicitacoes pendentes" (issue #517 Phase 2).
+ * Aparece para owner/admin se ha pedidos PENDING.
+ */
+@Composable
+private fun PendingJoinRequestsSection(
+    requests: List<JoinRequest>,
+    actioningId: String?,
+    onApprove: (String) -> Unit,
+    onReject: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.join_request_pending_section_title, requests.size),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            requests.forEach { req ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CachedProfileImage(
+                        photoUrl = req.userPhoto,
+                        userName = req.userName,
+                        modifier = Modifier.size(40.dp),
+                        size = 40.dp
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = req.userName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    val acting = actioningId == req.userId
+                    if (acting) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                    } else {
+                        IconButton(
+                            onClick = { onApprove(req.userId) },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = stringResource(R.string.join_request_action_approve),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(
+                            onClick = { onReject(req.userId) },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = stringResource(R.string.join_request_action_reject),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

@@ -1740,6 +1740,9 @@ export * from "./season";
 export * from "./seeding";
 export * from "./user-management";
 
+// Issue #517 Phase 2: request-to-join em grupos publicos
+export * from "./groups/join-requests";
+
 // Infrastructure & Monitoring
 export * from "./maintenance/cleanup-old-logs";
 export * from "./maintenance/soft-delete";

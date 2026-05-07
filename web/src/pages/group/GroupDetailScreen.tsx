@@ -22,6 +22,7 @@ import {
   TextField,
   Alert,
   Skeleton,
+  Stack,
   Tab,
   Tabs,
   useTheme,
@@ -41,6 +42,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useGroupDetail, useInvitePlayers } from '../../hooks/useGroups';
+import { useMyJoinRequest } from '../../hooks/useJoinRequests';
 import { useGames } from '../../hooks/useGames';
 import { softDeleteGroup } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
@@ -88,6 +90,15 @@ export const GroupDetailScreen: React.FC = () => {
   const myMember = members.find((m) => m.userId === currentUser?.uid);
   const isOwner = myMember?.role === 'OWNER';
   const isAdmin = myMember?.role === 'ADMIN' || isOwner;
+  const isMember = !!myMember;
+  // Habilita listener de join request apenas se nao-membro em grupo publico.
+  const shouldTrackJoinRequest = !isMember && group?.isPublic === true;
+  const {
+    request: joinRequest,
+    submitting: joinSubmitting,
+    requestJoin,
+    cancelRequest,
+  } = useMyJoinRequest(shouldTrackJoinRequest ? groupId : undefined);
 
   const handleGenerateInvite = async () => {
     if (!groupId || !group) return;
@@ -242,6 +253,41 @@ export const GroupDetailScreen: React.FC = () => {
               <Typography variant="body2" color="text.secondary">
                 {group.description}
               </Typography>
+            )}
+
+            {shouldTrackJoinRequest && (
+              <Box sx={{ mt: 2 }}>
+                {!joinRequest && (
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={requestJoin}
+                    disabled={joinSubmitting}
+                  >
+                    {joinSubmitting ? 'Enviando…' : 'Pedir entrada'}
+                  </Button>
+                )}
+                {joinRequest?.status === 'PENDING' && (
+                  <Stack spacing={1}>
+                    <Alert severity="info" icon={false}>
+                      Aguardando aprovação do organizador
+                    </Alert>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={cancelRequest}
+                      disabled={joinSubmitting}
+                    >
+                      {joinSubmitting ? 'Cancelando…' : 'Cancelar pedido'}
+                    </Button>
+                  </Stack>
+                )}
+                {joinRequest?.status === 'REJECTED' && (
+                  <Alert severity="warning" icon={false}>
+                    Seu pedido foi recusado
+                  </Alert>
+                )}
+              </Box>
             )}
           </CardContent>
         </Card>
