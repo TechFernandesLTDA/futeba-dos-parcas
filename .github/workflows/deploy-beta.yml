@@ -32,23 +32,36 @@ jobs:
         run: chmod +x gradlew
 
       - name: Create local.properties with signing config
+        env:
+          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-          echo "STORE_FILE=${{ secrets.KEYSTORE_PATH }}" >> local.properties
-          echo "STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> local.properties
-          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> local.properties
-          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> local.properties
+          # Passar via env evita shell injection em senhas com chars especiais.
+          {
+            echo "sdk.dir=$ANDROID_SDK_ROOT"
+            echo "STORE_FILE=$KEYSTORE_PATH"
+            echo "STORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "KEY_ALIAS=$KEY_ALIAS"
+            echo "KEY_PASSWORD=$KEY_PASSWORD"
+          } > local.properties
 
       - name: Decode and save keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
         run: |
-          # macOS base64 usa -D, GNU usa -d. -D funciona em ambos quando
-          # disponivel; usamos --decode que e portavel para coreutils e BSD.
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ${{ secrets.KEYSTORE_PATH }}
+          # base64 --decode e portavel entre macOS (BSD) e Linux (GNU coreutils).
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
 
       - name: Create google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
           mkdir -p app
-          echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+          # printf '%s' preserva multi-line JSON com chars especiais.
+          printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
 
       - name: Build Release APK
         run: ./gradlew assembleRelease
