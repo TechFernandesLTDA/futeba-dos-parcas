@@ -2544,6 +2544,10 @@ subir no ranking!</string>
     <string name="about_privacy_policy_desc">Como tratamos seus dados</string>
     <string name="about_terms_of_service">Termos de Uso</string>
     <string name="about_terms_of_service_desc">Condições de uso do aplicativo</string>
+    <string name="about_delete_account">Excluir Conta</string>
+    <string name="about_delete_account_desc">Como solicitar exclusão da sua conta</string>
+    <string name="about_child_safety">Segurança Infantil</string>
+    <string name="about_child_safety_desc">Padrões de proteção a menores (CSAE/CSAM)</string>
 
     <!-- Gamification Settings Strings -->
     <string name="gamification_section_match_result">Partida e Resultado</string>
