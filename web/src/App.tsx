@@ -181,6 +181,43 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/**
+ * Restringe a rota a usuários ADMIN.
+ * Redireciona pra `/` se o usuário autenticado não for ADMIN.
+ */
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <AppLoadingFallback />;
+  if (user?.role !== 'ADMIN') return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+/**
+ * Restringe a rota a ADMIN ou FIELD_OWNER.
+ * Usado pra telas de gerenciamento de quadras (donos podem editar suas quadras,
+ * admin pode editar todas).
+ */
+function FieldOwnerOrAdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <AppLoadingFallback />;
+  if (user?.role !== 'ADMIN' && user?.role !== 'FIELD_OWNER') {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
+
+/**
+ * Restringe a rota a usuários FIELD_OWNER (donos de quadra).
+ */
+function FieldOwnerRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <AppLoadingFallback />;
+  if (user?.role !== 'FIELD_OWNER' && user?.role !== 'ADMIN') {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
+
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { firebaseUser, loading } = useAuth();
 
@@ -280,10 +317,10 @@ function AppRoutes() {
       <Route path="/badges" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><BadgesScreen /></Suspense></ProtectedRoute>} />
 
       {/* Locations */}
-      <Route path="/locations" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/locations" element={<ProtectedRoute><FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></FieldOwnerOrAdminRoute></ProtectedRoute>} />
       <Route path="/location/:locationId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LocationDetailScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/location/create" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/owner/dashboard" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><FieldOwnerDashboardScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/location/create" element={<ProtectedRoute><FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></FieldOwnerOrAdminRoute></ProtectedRoute>} />
+      <Route path="/owner/dashboard" element={<ProtectedRoute><FieldOwnerRoute><Suspense fallback={<RouteFallback />}><FieldOwnerDashboardScreen /></Suspense></FieldOwnerRoute></ProtectedRoute>} />
 
       {/* Map */}
       <Route path="/map/games" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><PublicGamesMapScreen /></Suspense></ProtectedRoute>} />
@@ -303,8 +340,8 @@ function AppRoutes() {
 
       {/* About & Admin */}
       <Route path="/about" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><AboutScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/admin/users" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><UserManagementScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/dev" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><DevToolsScreen /></Suspense></ProtectedRoute>} />
+      <Route path="/admin/users" element={<ProtectedRoute><AdminRoute><Suspense fallback={<RouteFallback />}><UserManagementScreen /></Suspense></AdminRoute></ProtectedRoute>} />
+      <Route path="/dev" element={<ProtectedRoute><AdminRoute><Suspense fallback={<RouteFallback />}><DevToolsScreen /></Suspense></AdminRoute></ProtectedRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
