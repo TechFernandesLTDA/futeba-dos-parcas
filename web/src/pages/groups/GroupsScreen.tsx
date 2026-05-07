@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
   Typography,
-  Card,
   CardContent,
   IconButton,
   Avatar,
   List,
   Fab,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
   useTheme,
   Chip,
   Alert,
@@ -20,18 +23,23 @@ import {
   Add as AddIcon,
   Groups as GroupsIcon,
   Person as PersonIcon,
+  ExitToApp as ExitIcon,
+  PersonAdd as InviteIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useGroups } from '../../hooks/useGroups';
 import { LoadingState } from '../../components/common/GameCard';
+import { InteractiveCard } from '../../components/common/InteractiveCard';
+import { useContextMenu, ContextMenuItem } from '../../hooks/useContextMenu';
 import { Group } from '../../types/group';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useAuth } from '../../contexts/AuthContext';
 
 export const GroupsScreen: React.FC = () => {
   useDocumentTitle('Grupos');
   const navigate = useNavigate();
   const theme = useTheme();
 
-  // Usa hook que consulta subcoleção users/{uid}/groups (igual ao Android)
   const { groups, loading, error, refetch } = useGroups();
 
   return (
@@ -52,7 +60,6 @@ export const GroupsScreen: React.FC = () => {
           <Typography component="h1" variant="h6" sx={{ ml: 1, flex: 1 }}>
             Grupos
           </Typography>
-          {/* Issue #517 Phase 1: link para descobrir grupos publicos */}
           <Button
             size="small"
             onClick={() => navigate('/groups/discover')}
@@ -96,6 +103,8 @@ export const GroupsScreen: React.FC = () => {
                 key={group.id}
                 group={group}
                 onClick={() => navigate(`/group/${group.id}`)}
+                onSettings={() => navigate(`/group/${group.id}/settings`)}
+                onInvite={() => navigate(`/group/${group.id}/invite`)}
               />
             ))}
           </List>
@@ -117,49 +126,112 @@ export const GroupsScreen: React.FC = () => {
 const GroupItem = React.memo(function GroupItem({
   group,
   onClick,
+  onSettings,
+  onInvite,
+  onLeave,
 }: {
   group: Group;
   onClick: () => void;
+  onSettings?: () => void;
+  onInvite?: () => void;
+  onLeave?: () => void;
 }) {
+  const { currentUser } = useAuth();
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const isOwner = group.ownerId === currentUser?.uid;
+
+  const contextMenuItems: ContextMenuItem[] = [
+    {
+      id: 'settings',
+      label: 'Configuracoes',
+      icon: <SettingsIcon fontSize="small" />,
+      onClick: onSettings ?? (() => {}),
+      hidden: !isOwner || !onSettings,
+    },
+    {
+      id: 'invite',
+      label: 'Convidar jogadores',
+      icon: <InviteIcon fontSize="small" />,
+      onClick: onInvite ?? (() => {}),
+      hidden: !onInvite,
+    },
+    {
+      id: 'leave',
+      label: 'Sair do grupo',
+      icon: <ExitIcon fontSize="small" color="error" />,
+      onClick: onLeave ?? (() => {}),
+      hidden: isOwner || !onLeave,
+      color: 'error',
+    },
+  ];
+
+  const menu = useContextMenu(contextMenuItems);
+
   return (
-    <Card
-      sx={{
-        mb: 1,
-        cursor: 'pointer',
-        transition: 'transform 0.2s',
-        '&:hover': { transform: 'scale(1.01)' },
-      }}
-      onClick={onClick}
-    >
-      <CardContent sx={{ py: 1.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Avatar
-            src={group.photoUrl}
-            alt={group.name}
-            sx={{
-              width: 56,
-              height: 56,
-              bgcolor: 'primary.main',
-            }}
-          >
-            {group.name?.charAt(0)?.toUpperCase() || <GroupsIcon />}
-          </Avatar>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              {group.name}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <PersonIcon fontSize="small" color="action" />
-              <Typography variant="caption" color="text.secondary">
-                {group.memberCount || 0} membros
+    <>
+      <InteractiveCard
+        ref={cardRef}
+        onClick={onClick}
+        actionAreaLabel={`Grupo ${group.name} com ${group.memberCount || 0} membros`}
+        onContextMenu={menu.visibleItems.length > 0 ? menu.handleContextMenu : undefined}
+        onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+          menu.handleKeyboardContextMenu(e, cardRef.current);
+        }}
+        sx={{ mb: 1 }}
+      >
+        <CardContent sx={{ py: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar
+              src={group.photoUrl}
+              alt={group.name}
+              sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}
+            >
+              {group.name?.charAt(0)?.toUpperCase() || <GroupsIcon />}
+            </Avatar>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="subtitle1" fontWeight={600}>
+                {group.name}
               </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <PersonIcon fontSize="small" color="action" />
+                <Typography variant="caption" color="text.secondary">
+                  {group.memberCount || 0} membros
+                </Typography>
+              </Box>
             </Box>
+            {group.isPrivate && (
+              <Chip label="Privado" size="small" color="default" />
+            )}
           </Box>
-          {group.isPrivate && (
-            <Chip label="Privado" size="small" color="default" />
-          )}
-        </Box>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </InteractiveCard>
+
+      {menu.visibleItems.length > 0 && (
+        <Menu
+          open={Boolean(menu.anchorPosition)}
+          onClose={menu.handleClose}
+          anchorReference="anchorPosition"
+          anchorPosition={menu.anchorPosition ?? undefined}
+          aria-label="Menu de acoes do grupo"
+        >
+          {menu.visibleItems.map((item: ContextMenuItem) => (
+            <MenuItem
+              key={item.id}
+              onClick={() => menu.handleItemClick(item)}
+              disabled={item.disabled}
+              sx={item.color === 'error' ? { color: 'error.main' } : undefined}
+            >
+              {item.icon && (
+                <ListItemIcon sx={item.color === 'error' ? { color: 'error.main' } : undefined}>
+                  {item.icon}
+                </ListItemIcon>
+              )}
+              <ListItemText>{item.label}</ListItemText>
+            </MenuItem>
+          ))}
+        </Menu>
+      )}
+    </>
   );
 });
