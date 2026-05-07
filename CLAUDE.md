@@ -533,8 +533,8 @@ Compose Multiplatform migration tracked in `specs/CMP_MULTIPLATFORM_MIGRATION.md
 ## GitHub Status
 
 **Repo**: `TechFernandesLTDA/futeba-dos-parcas`
-**Issues abertas**: 0
-**PRs abertos**: 0 (sessão noturna 2026-05-07 fechou 9 PRs)
+**Issues abertas**: 1 (#559 Phase 3 CMP iosMain actuals — roadmap)
+**PRs abertos**: 0 (sessão noturna 2026-05-07 fechou 11 PRs)
 **Dependabot alerts**: 0
 **Branches remotos**: ~64
 
@@ -545,8 +545,9 @@ Compose Multiplatform migration tracked in `specs/CMP_MULTIPLATFORM_MIGRATION.md
 - **Cloud Functions deploy** — `firebase deploy --only functions:<name>` em worktree
 - **Web hosting** — `npm run build && firebase deploy --only hosting`
 - **Issue #517 RESOLVIDA** — discovery + request-to-join full-stack (PRs #521, #523, #526, #551 iOS Phase 1.c)
-- **iOS reativação 100% Frente A+B+C+D** — 13 repos shared, framework BUILD SUCCESSFUL, smoke test xcodebuild OK (PRs #546-#555)
+- **iOS reativação 100% Frentes A+B+C+D+F1+F3** — **14 repos shared** (era 6), framework BUILD SUCCESSFUL, smoke test xcodebuild OK (PRs #546-#558)
 - **Epic UX desktop modernization** — 4 issues P3 fechadas (PRs #547, #548, #550, #552)
+- **Phase 3 CMP composeApp UI** — diferida para issue #559 (5 actuals iosMain pendentes)
 
 ### CI Known Behaviors
 
