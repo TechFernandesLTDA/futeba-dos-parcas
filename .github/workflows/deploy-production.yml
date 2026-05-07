@@ -33,15 +33,16 @@ jobs:
 
       - name: Create local.properties with signing config
         env:
-          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          # Passar via env evita shell injection em senhas com chars especiais.
+          # KEYSTORE_PATH hardcoded (nao precisa ser secret — path nao eh sensivel).
+          # Quando era secret, GH mascarava o valor inteiro e o Gradle via path
+          # vazio (caia em app/<empty>).
           {
             echo "sdk.dir=$ANDROID_SDK_ROOT"
-            echo "STORE_FILE=$KEYSTORE_PATH"
+            echo "STORE_FILE=$RUNNER_TEMP/release.jks"
             echo "STORE_PASSWORD=$KEYSTORE_PASSWORD"
             echo "KEY_ALIAS=$KEY_ALIAS"
             echo "KEY_PASSWORD=$KEY_PASSWORD"
@@ -50,10 +51,10 @@ jobs:
       - name: Decode and save keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
         run: |
-          # base64 --decode e portavel entre macOS (BSD) e Linux (GNU coreutils).
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          # Verificar se foi escrito (sem revelar conteudo)
+          test -s "$RUNNER_TEMP/release.jks" && echo "✓ keystore written ($(wc -c < "$RUNNER_TEMP/release.jks") bytes)" || (echo "✗ empty keystore"; exit 1)
 
       - name: Create google-services.json
         env:
