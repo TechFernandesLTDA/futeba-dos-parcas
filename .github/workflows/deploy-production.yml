@@ -37,15 +37,19 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          # KEYSTORE_PATH hardcoded (nao precisa ser secret — path nao eh sensivel).
-          # Quando era secret, GH mascarava o valor inteiro e o Gradle via path
-          # vazio (caia em app/<empty>).
+          # KEYSTORE_PATH hardcoded em $RUNNER_TEMP — path nao eh sensivel.
+          # Debug: print 8 chars do SHA256 da senha (sem revelar valor) pra
+          # poder confirmar que o secret nao esta sendo mangled.
+          PW_SHA=$(printf '%s' "$KEYSTORE_PASSWORD" | shasum -a 256 | head -c 16)
+          PW_LEN=${#KEYSTORE_PASSWORD}
+          echo "::notice::DEBUG store_pw len=$PW_LEN sha8=$PW_SHA"
+          # printf evita interpretacao de \ ou similar; sem expansao recursiva.
           {
-            echo "sdk.dir=$ANDROID_SDK_ROOT"
-            echo "STORE_FILE=$RUNNER_TEMP/release.jks"
-            echo "STORE_PASSWORD=$KEYSTORE_PASSWORD"
-            echo "KEY_ALIAS=$KEY_ALIAS"
-            echo "KEY_PASSWORD=$KEY_PASSWORD"
+            printf 'sdk.dir=%s\n' "$ANDROID_SDK_ROOT"
+            printf 'STORE_FILE=%s/release.jks\n' "$RUNNER_TEMP"
+            printf 'STORE_PASSWORD=%s\n' "$KEYSTORE_PASSWORD"
+            printf 'KEY_ALIAS=%s\n' "$KEY_ALIAS"
+            printf 'KEY_PASSWORD=%s\n' "$KEY_PASSWORD"
           } > local.properties
 
       - name: Decode and save keystore
