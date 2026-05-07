@@ -25,7 +25,9 @@ import {
   Stack,
   Tab,
   Tabs,
+  Grid,
   useTheme,
+  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -77,6 +79,10 @@ export const GroupDetailScreen: React.FC = () => {
   const theme = useTheme();
   const { currentUser } = useAuth();
   const { showSuccess, showError } = useToast();
+
+  // Breakpoints para layout responsivo
+  const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg'));
+  const isLg = useMediaQuery(theme.breakpoints.up('lg'));
 
   const { group, members, loading, error } = useGroupDetail(groupId || null);
   const { games, loading: gamesLoading } = useGames({ groupId: groupId || undefined, limitCount: 5 });
@@ -226,190 +232,229 @@ export const GroupDetailScreen: React.FC = () => {
         ]}
       />
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Card sx={{ mb: 2 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Avatar
-                src={group.photoUrl}
-                sx={{
-                  width: 80,
-                  height: 80,
-                  bgcolor: 'primary.main',
-                  fontSize: '2rem',
-                }}
-              >
-                {group.name.charAt(0).toUpperCase()}
-              </Avatar>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="h5" fontWeight={700}>
-                  {group.name}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                  <GroupIcon fontSize="small" color="action" />
-                  <Typography variant="body2" color="text.secondary">
-                    {group.memberCount ?? 0} membros
+      {/* Painel de informações do grupo — reutilizado em xs/sm (inline) e lg (sidebar) */}
+      {(() => {
+        const infoPanel = (
+          <Card sx={{ mb: 2 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Avatar
+                  src={group.photoUrl}
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    bgcolor: 'primary.main',
+                    fontSize: '2rem',
+                  }}
+                >
+                  {group.name.charAt(0).toUpperCase()}
+                </Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h5" fontWeight={700}>
+                    {group.name}
                   </Typography>
-                  {group.isPublic && (
-                    <Chip label="Público" size="small" variant="outlined" />
-                  )}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                    <GroupIcon fontSize="small" color="action" />
+                    <Typography variant="body2" color="text.secondary">
+                      {group.memberCount ?? 0} membros
+                    </Typography>
+                    {group.isPublic && (
+                      <Chip label="Público" size="small" variant="outlined" />
+                    )}
+                  </Box>
                 </Box>
               </Box>
-            </Box>
 
-            {group.description && (
-              <Typography variant="body2" color="text.secondary">
-                {group.description}
-              </Typography>
-            )}
+              {group.description && (
+                <Typography variant="body2" color="text.secondary">
+                  {group.description}
+                </Typography>
+              )}
 
-            {shouldTrackJoinRequest && (
-              <Box sx={{ mt: 2 }}>
-                {!joinRequest && (
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    onClick={requestJoin}
-                    disabled={joinSubmitting}
-                  >
-                    {joinSubmitting ? 'Enviando…' : 'Pedir entrada'}
-                  </Button>
-                )}
-                {joinRequest?.status === 'PENDING' && (
-                  <Stack spacing={1}>
-                    <Alert severity="info" icon={false}>
-                      Aguardando aprovação do organizador
-                    </Alert>
+              {shouldTrackJoinRequest && (
+                <Box sx={{ mt: 2 }}>
+                  {!joinRequest && (
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       fullWidth
-                      onClick={cancelRequest}
+                      onClick={requestJoin}
                       disabled={joinSubmitting}
                     >
-                      {joinSubmitting ? 'Cancelando…' : 'Cancelar pedido'}
+                      {joinSubmitting ? 'Enviando…' : 'Pedir entrada'}
                     </Button>
-                  </Stack>
-                )}
-                {joinRequest?.status === 'REJECTED' && (
-                  <Alert severity="warning" icon={false}>
-                    Seu pedido foi recusado
-                  </Alert>
-                )}
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card sx={{ mb: 2 }}>
-          <Tabs
-            value={tabValue}
-            onChange={(_, v) => setTabValue(v)}
-            variant="fullWidth"
-            aria-label="Seções do grupo"
-            sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}
-          >
-            <Tab label="Membros" />
-            <Tab label="Jogos" />
-            <Tab label="Caixa" />
-          </Tabs>
-
-          <TabPanel value={tabValue} index={0}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pb: 0 }}>
-              <Button
-                startIcon={<AddIcon />}
-                onClick={() => {
-                  setInviteDialogOpen(true);
-                  handleGenerateInvite();
-                }}
-              >
-                Convidar
-              </Button>
-            </Box>
-
-            {members.length === 0 ? (
-              <EmptyState
-                icon={<PersonIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-                title="Nenhum membro"
-                description="O grupo ainda não tem membros. Convide amigos pra começar!"
-                action={{
-                  label: 'Convidar',
-                  onClick: () => setInviteDialogOpen(true),
-                }}
-              />
-            ) : (
-              <List disablePadding aria-label="Membros do grupo">
-                {members.map((member, index) => (
-                  <GroupMemberItem
-                    key={member.userId}
-                    member={member}
-                    showDivider={index < members.length - 1}
-                  />
-                ))}
-              </List>
-            )}
-          </TabPanel>
-
-          <TabPanel value={tabValue} index={1}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pb: 0 }}>
-              <Button
-                startIcon={<AddIcon />}
-                onClick={() => navigate(`/game/create?groupId=${groupId}`)}
-              >
-                Novo Jogo
-              </Button>
-            </Box>
-
-            {gamesLoading ? (
-              <ShimmerLoading count={2} type="card" />
-            ) : games.length === 0 ? (
-              <EmptyState
-                icon={<SoccerIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
-                title="Nenhum jogo"
-                description="O grupo ainda não tem jogos agendados"
-                action={{
-                  label: 'Criar Jogo',
-                  onClick: () => navigate(`/game/create?groupId=${groupId}`),
-                }}
-              />
-            ) : (
-              <Box sx={{ p: 2 }}>
-                {games.map((game) => (
-                  <GameCard
-                    key={game.id}
-                    game={game}
-                    onClick={() => navigate(`/game/${game.id}`)}
-                  />
-                ))}
-              </Box>
-            )}
-          </TabPanel>
-
-          <TabPanel value={tabValue} index={2}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="subtitle1" fontWeight={600}>
-                  Saldo Atual
-                </Typography>
-                <Typography
-                  variant="h4"
-                  fontWeight={700}
-                  color={(group.totalBalance || 0) >= 0 ? 'success.main' : 'error.main'}
-                >
-                  R$ {(group.totalBalance || 0).toFixed(2)}
-                </Typography>
-              </Box>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<MoneyIcon />}
-                onClick={() => navigate(`/group/${groupId}/cashbox`)}
-              >
-                Ver Detalhes
-              </Button>
+                  )}
+                  {joinRequest?.status === 'PENDING' && (
+                    <Stack spacing={1}>
+                      <Alert severity="info" icon={false}>
+                        Aguardando aprovação do organizador
+                      </Alert>
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        onClick={cancelRequest}
+                        disabled={joinSubmitting}
+                      >
+                        {joinSubmitting ? 'Cancelando…' : 'Cancelar pedido'}
+                      </Button>
+                    </Stack>
+                  )}
+                  {joinRequest?.status === 'REJECTED' && (
+                    <Alert severity="warning" icon={false}>
+                      Seu pedido foi recusado
+                    </Alert>
+                  )}
+                </Box>
+              )}
             </CardContent>
-          </TabPanel>
-        </Card>
-      </Container>
+          </Card>
+        );
+
+        const mainContent = (
+          <Card sx={{ mb: 2 }}>
+            <Tabs
+              value={tabValue}
+              onChange={(_, v) => setTabValue(v)}
+              variant="fullWidth"
+              aria-label="Seções do grupo"
+              sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}
+            >
+              <Tab label="Membros" />
+              <Tab label="Jogos" />
+              <Tab label="Caixa" />
+            </Tabs>
+
+            <TabPanel value={tabValue} index={0}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pb: 0 }}>
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={() => {
+                    setInviteDialogOpen(true);
+                    handleGenerateInvite();
+                  }}
+                >
+                  Convidar
+                </Button>
+              </Box>
+
+              {members.length === 0 ? (
+                <EmptyState
+                  icon={<PersonIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
+                  title="Nenhum membro"
+                  description="O grupo ainda não tem membros. Convide amigos pra começar!"
+                  action={{
+                    label: 'Convidar',
+                    onClick: () => setInviteDialogOpen(true),
+                  }}
+                />
+              ) : (
+                <List disablePadding aria-label="Membros do grupo">
+                  {members.map((member, index) => (
+                    <GroupMemberItem
+                      key={member.userId}
+                      member={member}
+                      showDivider={index < members.length - 1}
+                    />
+                  ))}
+                </List>
+              )}
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={1}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pb: 0 }}>
+                <Button
+                  startIcon={<AddIcon />}
+                  onClick={() => navigate(`/game/create?groupId=${groupId}`)}
+                >
+                  Novo Jogo
+                </Button>
+              </Box>
+
+              {gamesLoading ? (
+                <ShimmerLoading count={2} type="card" />
+              ) : games.length === 0 ? (
+                <EmptyState
+                  icon={<SoccerIcon sx={{ fontSize: 48, color: 'text.disabled' }} />}
+                  title="Nenhum jogo"
+                  description="O grupo ainda não tem jogos agendados"
+                  action={{
+                    label: 'Criar Jogo',
+                    onClick: () => navigate(`/game/create?groupId=${groupId}`),
+                  }}
+                />
+              ) : (
+                <Box sx={{ p: 2 }}>
+                  {games.map((game) => (
+                    <GameCard
+                      key={game.id}
+                      game={game}
+                      onClick={() => navigate(`/game/${game.id}`)}
+                    />
+                  ))}
+                </Box>
+              )}
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={2}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    Saldo Atual
+                  </Typography>
+                  <Typography
+                    variant="h4"
+                    fontWeight={700}
+                    color={(group.totalBalance || 0) >= 0 ? 'success.main' : 'error.main'}
+                  >
+                    R$ {(group.totalBalance || 0).toFixed(2)}
+                  </Typography>
+                </Box>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<MoneyIcon />}
+                  onClick={() => navigate(`/group/${groupId}/cashbox`)}
+                >
+                  Ver Detalhes
+                </Button>
+              </CardContent>
+            </TabPanel>
+          </Card>
+        );
+
+        // lg+: split-pane com sidebar de informações
+        if (isLg) {
+          return (
+            <Container maxWidth="xl" sx={{ py: 2 }}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} lg={4}>
+                  {infoPanel}
+                </Grid>
+                <Grid item xs={12} lg={8}>
+                  {mainContent}
+                </Grid>
+              </Grid>
+            </Container>
+          );
+        }
+
+        // md: container mais largo, layout linear
+        if (isMd) {
+          return (
+            <Container maxWidth="md" sx={{ py: 2 }}>
+              {infoPanel}
+              {mainContent}
+            </Container>
+          );
+        }
+
+        // xs/sm: comportamento original (sem mudança)
+        return (
+          <Container maxWidth="sm" sx={{ py: 2 }}>
+            {infoPanel}
+            {mainContent}
+          </Container>
+        );
+      })()}
 
       <Box
         sx={{
