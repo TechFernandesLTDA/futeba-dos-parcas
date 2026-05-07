@@ -1144,6 +1144,50 @@ service cloud.firestore {
         }
       }
 
+      // ============================================
+      // SUB-COLECAO: join_requests (issue #517 Phase 2)
+      // Solicitacoes de entrada em grupos publicos.
+      // DocId == userId garante 1 request por user por grupo.
+      // ============================================
+      match /join_requests/{requesterId} {
+        function isGroupOwnerById2(gId) {
+          let groupDoc = get(/databases/$(database)/documents/groups/$(gId));
+          return groupDoc != null && groupDoc.data.owner_id == userId();
+        }
+
+        // Read: requester ve proprio, owner/admin ve todos do grupo
+        allow read: if isAuthenticated() && (
+          requesterId == userId() ||
+          isGroupOwnerById2(groupId) ||
+          isGroupAdmin(groupId) ||
+          isAdmin()
+        );
+
+        // Create: nao-membro pede pro proprio uid em grupo publico
+        allow create: if isAuthenticated() &&
+          requesterId == userId() &&
+          request.resource.data.user_id == userId() &&
+          request.resource.data.status == 'PENDING' &&
+          // Grupo precisa ser publico
+          get(/databases/$(database)/documents/groups/$(groupId)).data.is_public == true &&
+          // Nao pode ja ser membro
+          !exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));
+
+        // Update: owner/admin transiciona PENDING -> APPROVED|REJECTED
+        allow update: if isAuthenticated() &&
+          (isGroupOwnerById2(groupId) || isGroupAdmin(groupId)) &&
+          resource.data.status == 'PENDING' &&
+          (request.resource.data.status == 'APPROVED' || request.resource.data.status == 'REJECTED') &&
+          request.resource.data.responded_by == userId();
+
+        // Delete: requester deleta proprio (cancelar) ou owner/admin limpa
+        allow delete: if isAuthenticated() && (
+          requesterId == userId() ||
+          isGroupOwnerById2(groupId) ||
+          isGroupAdmin(groupId)
+        );
+      }
+
       match /cashbox/{entryId} {
         allow read: if isAuthenticated() && isGroupMember(groupId);
 

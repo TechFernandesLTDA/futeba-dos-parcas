@@ -3823,6 +3823,17 @@ subir no ranking!</string>
     <!-- GroupsScreen -->
     <string name="groups_clear_search">Limpar Busca</string>
 
+    <!-- JoinRequest (issue #517 Phase 2) -->
+    <string name="join_request_can_request">Este é um grupo público. Peça para entrar e aguarde aprovação do organizador.</string>
+    <string name="join_request_action_request">Pedir entrada</string>
+    <string name="join_request_action_cancel">Cancelar pedido</string>
+    <string name="join_request_action_approve">Aprovar</string>
+    <string name="join_request_action_reject">Recusar</string>
+    <string name="join_request_pending">Aguardando aprovação do organizador</string>
+    <string name="join_request_approved">Pedido aprovado!</string>
+    <string name="join_request_rejected">Seu pedido foi recusado</string>
+    <string name="join_request_pending_section_title">Solicitações pendentes (%1$d)</string>
+
     <!-- DiscoverGroupsScreen (issue #517 Phase 1.b) -->
     <string name="discover_groups_title">Descobrir Grupos</string>
     <string name="discover_groups_search_hint">Buscar por nome ou descrição</string>

@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogActions,
   Alert,
+  Stack,
   useTheme,
   alpha,
   CircularProgress,
@@ -30,10 +31,13 @@ import {
   Group as GroupIcon,
   ExitToApp as LeaveIcon,
   Delete as DeleteIcon,
+  Check as CheckIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { doc, writeBatch } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useGroupDetail } from '../../hooks/useGroups';
+import { usePendingJoinRequests } from '../../hooks/useJoinRequests';
 import { softDeleteGroup } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -65,6 +69,15 @@ export const GroupSettingsScreen: React.FC = () => {
   const uid = firebaseUser?.uid || user?.id;
   const myMember = members.find((m) => m.userId === uid);
   const isOwner = myMember?.role === 'OWNER';
+  const isAdminOrOwner = isOwner || myMember?.role === 'ADMIN';
+  // Carregar pending requests so para owner/admin (rules so permitem ler)
+  const {
+    requests: pendingRequests,
+    loading: pendingLoading,
+    approve,
+    reject,
+  } = usePendingJoinRequests(isAdminOrOwner ? groupId : undefined);
+  const [pendingActioningId, setPendingActioningId] = useState<string | null>(null);
 
   // Sair do grupo: remover membro e subcoleção do usuário
   const handleLeaveGroup = async () => {
@@ -205,6 +218,81 @@ export const GroupSettingsScreen: React.FC = () => {
             </Box>
           </CardContent>
         </Card>
+
+        {/* Solicitacoes pendentes (issue #517 Phase 2) */}
+        {isAdminOrOwner && (
+          <Card sx={{ mb: 2 }}>
+            <CardContent sx={{ pb: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                Solicitações pendentes ({pendingRequests.length})
+              </Typography>
+              {pendingLoading && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              )}
+              {!pendingLoading && pendingRequests.length === 0 && (
+                <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center', py: 1 }}>
+                  Nenhuma solicitação pendente
+                </Typography>
+              )}
+              {!pendingLoading && pendingRequests.length > 0 && (
+                <List disablePadding>
+                  {pendingRequests.map((req, idx) => {
+                    const isLast = idx === pendingRequests.length - 1;
+                    const acting = pendingActioningId === req.userId;
+                    return (
+                      <React.Fragment key={req.userId}>
+                        <ListItem
+                          disableGutters
+                          secondaryAction={
+                            <Stack direction="row" spacing={1}>
+                              <IconButton
+                                color="primary"
+                                size="small"
+                                disabled={acting}
+                                onClick={async () => {
+                                  setPendingActioningId(req.userId);
+                                  await approve(req.userId);
+                                  setPendingActioningId(null);
+                                }}
+                                aria-label={`Aprovar pedido de ${req.userName}`}
+                              >
+                                {acting ? <CircularProgress size={20} /> : <CheckIcon />}
+                              </IconButton>
+                              <IconButton
+                                color="error"
+                                size="small"
+                                disabled={acting}
+                                onClick={async () => {
+                                  setPendingActioningId(req.userId);
+                                  await reject(req.userId);
+                                  setPendingActioningId(null);
+                                }}
+                                aria-label={`Recusar pedido de ${req.userName}`}
+                              >
+                                <CloseIcon />
+                              </IconButton>
+                            </Stack>
+                          }
+                        >
+                          <ListItemAvatar>
+                            <PlayerAvatar name={req.userName} photoUrl={req.userPhoto || undefined} />
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={req.userName}
+                            secondary={req.requestedAt ? `Pediu em ${req.requestedAt.toLocaleDateString('pt-BR')}` : null}
+                          />
+                        </ListItem>
+                        {!isLast && <Divider variant="inset" component="li" />}
+                      </React.Fragment>
+                    );
+                  })}
+                </List>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Membros */}
         <Card sx={{ mb: 2 }}>

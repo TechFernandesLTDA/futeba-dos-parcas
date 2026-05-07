@@ -66,9 +66,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
       </Stack>
 
       <Alert severity="info" icon={<PublicIcon />} sx={{ mb: 3 }}>
-        Grupos públicos podem ser vistos por qualquer usuário. Para entrar,
-        peça um link de convite ao organizador. (A funcionalidade de
-        \"pedir entrada\" será adicionada em breve — issue #517 Phase 2.)
+        Toque em um grupo para ver detalhes e pedir para entrar.
       </Alert>
 
       <TextField
