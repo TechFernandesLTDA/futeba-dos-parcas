@@ -33,16 +33,19 @@ jobs:
 
       - name: Create local.properties with signing config
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          # Senhas em base64 pra evitar shell expansion de $ chars.
+          KEYSTORE_PASSWORD_B64: ${{ secrets.KEYSTORE_PASSWORD_B64 }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_PASSWORD_B64: ${{ secrets.KEY_PASSWORD_B64 }}
         run: |
+          STORE_PW=$(printf '%s' "$KEYSTORE_PASSWORD_B64" | base64 --decode)
+          KEY_PW=$(printf '%s' "$KEY_PASSWORD_B64" | base64 --decode)
           {
-            echo "sdk.dir=$ANDROID_SDK_ROOT"
-            echo "STORE_FILE=$RUNNER_TEMP/release.jks"
-            echo "STORE_PASSWORD=$KEYSTORE_PASSWORD"
-            echo "KEY_ALIAS=$KEY_ALIAS"
-            echo "KEY_PASSWORD=$KEY_PASSWORD"
+            printf 'sdk.dir=%s\n' "$ANDROID_SDK_ROOT"
+            printf 'STORE_FILE=%s/release.jks\n' "$RUNNER_TEMP"
+            printf 'STORE_PASSWORD=%s\n' "$STORE_PW"
+            printf 'KEY_ALIAS=%s\n' "$KEY_ALIAS"
+            printf 'KEY_PASSWORD=%s\n' "$KEY_PW"
           } > local.properties
 
       - name: Decode and save keystore
