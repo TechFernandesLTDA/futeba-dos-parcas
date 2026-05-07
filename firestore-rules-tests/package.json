@@ -10,7 +10,7 @@
     "test:ci": "JAVA_HOME=/opt/homebrew/Cellar/openjdk/25.0.2/libexec/openjdk.jdk/Contents/Home firebase emulators:exec --only firestore --project futebadosparcas 'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run --reporter=verbose'"
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "^3.0.4",
+    "@firebase/rules-unit-testing": "^5.0.0",
     "firebase": "^12.12.1",
     "firebase-tools": "^15.17.0",
     "typescript": "^5.7.3",
