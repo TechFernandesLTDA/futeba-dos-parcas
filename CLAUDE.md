@@ -145,6 +145,18 @@ fastlane beta                              # Deploy to Firebase App Distribution
 | Commit lint config | `commitlint.config.js` (Conventional Commits enforced) |
 | Context generator | `context.yaml` (CTX config for LLM context bundles) |
 
+### Repo Conventions (non-obvious)
+
+- **Private repo** (`TechFernandesLTDA/futeba-dos-parcas`) — external collaborators need explicit access
+- **Squash-merge only** on `master`. `delete_branch_on_merge: true`. **NEVER push direto a master**
+- **Branch protection**: 1 approving review + code owner review required, no force-push, no deletions
+- **Conventional Commits enforced** via `commitlint.config.js` + Husky pre-commit hook
+- **Node 20** required (see `.nvmrc`) — run `nvm use` before working in `web/` or `functions/`
+- **Dependabot**: monthly schedule, limit 2 PRs, label `dependencies`. Auto-bumps closed — deps handled in batch via `npm audit fix`
+- **Firebase Hosting URL**: `https://futebadosparcas.web.app` (SPA, all routes → `/index.html`)
+- **Self-hosted macOS runners** for `macos-arm64` jobs (KMP iOS, CodeQL JS/TS, Play Store deploy) — use skill `futeba-runner` to manage
+- **Workflow shell injection**: NUNCA `echo '${{ secrets.X }}'` direto — use env vars + `printf '%s' "$VAR"`. Skill `futeba-gh-secrets` documents the pattern
+
 ---
 
 ## Project Overview
@@ -360,6 +372,17 @@ export const setUserRole = onCall({
 - Available types: `CARD`, `GAME_CARD`, `PLAYER_CARD`, `RANKING_ITEM`, `LIST_ITEM`, `LOCATION_CARD`
 - See: `app/src/main/java/com/futebadosparcas/ui/components/states/LoadingState.kt`
 
+### Web App (React) — auditoria de bugs já encontrados
+
+> Padrões descobertos por auditoria. **NÃO REPETIR**. Detalhes completos em `AGENTS.md`.
+
+- **Firebase writes**: SEMPRE usar `serverTimestamp()` para `createdAt`/`updatedAt` (nunca `new Date()`); strip `id` e undefined fields antes de `setDoc`/`addDoc`
+- **Hooks**: declarar todos os hooks (incluindo `useTheme`, `useToast`) ANTES de qualquer `if`/early return — quebrar regra dos Hooks gera bugs sutis
+- **Theme**: usar tokens MUI (`theme.palette.*`); nunca hardcode `#000`/`#fff`/`Color.Black`. Cor de fundo de seção via `theme.palette.background.default`, não `paper`
+- **Auth**: gates em rotas protegidas via `AuthGate` (já existe). Nunca verificar `currentUser` no componente da página — o gate cuida disso
+- **Toast**: `useToast()` retorna `{ showToast }`; SEMPRE chamar via hook, nunca importar singleton
+- **Estados obrigatórios** em toda tela: `loading`, `empty`, `error` + `success`. Componentes prontos em `web/src/components/states/`
+
 ---
 
 ## XP System Quick Reference
@@ -533,30 +556,33 @@ Compose Multiplatform migration tracked in `specs/CMP_MULTIPLATFORM_MIGRATION.md
 ## GitHub Status
 
 **Repo**: `TechFernandesLTDA/futeba-dos-parcas`
-**Issues abertas**: 1 (#559 Phase 3 CMP iosMain actuals — roadmap)
-**PRs abertos**: 0 (sessão noturna 2026-05-07 fechou 11 PRs)
-**Dependabot alerts**: 0
-**Branches remotos**: ~64
 
-### Pipelines em produção (✅ todos verdes)
+Para estado atual (PRs/issues abertos, último deploy, Dependabot alerts), use:
 
-- **deploy-production.yml** — build AAB + sign + upload Play Store Internal Testing (run 25473394288 ✅, 2026-05-07)
-- **Firestore rules deploy** — manual via worktree isolado
-- **Cloud Functions deploy** — `firebase deploy --only functions:<name>` em worktree
-- **Web hosting** — `npm run build && firebase deploy --only hosting`
-- **Issue #517 RESOLVIDA** — discovery + request-to-join full-stack (PRs #521, #523, #526, #551 iOS Phase 1.c)
-- **iOS reativação 100% Frentes A+B+C+D+F1+F3** — **14 repos shared** (era 6), framework BUILD SUCCESSFUL, smoke test xcodebuild OK (PRs #546-#558)
-- **Epic UX desktop modernization** — 4 issues P3 fechadas (PRs #547, #548, #550, #552)
-- **Phase 3 CMP composeApp UI** — diferida para issue #559 (5 actuals iosMain pendentes)
+```bash
+gh pr list --state open
+gh issue list --state open
+gh run list --workflow=deploy-production.yml --limit 5
+```
 
-### CI Known Behaviors
+Ou use a skill `/futeba-status` para snapshot completo (CI, runners, RAM, hosting).
 
-- **KMP Framework build**: Sempre falha em Linux runners (requer macOS) - **ignorar**
-- **Notify Build Status**: Depende do KMP Framework - falha em cascata - **ignorar**
-- **CodeQL**: Apenas JavaScript/TypeScript analisado em macOS ARM64. Java/Kotlin desabilitado por incompat arquitetural do tracer (libtrace.dylib x86_64-only, JDK runner ARM64-only). Decisão registrada em `specs/DECISIONS.md` (2026-05-03)
-- **Build iOS App**: `skipping` em PRs que não tocam `:shared` - esperado
-- **Self-hosted runners (macOS)**: Pool no MacBook local roda jobs `macos-arm64` (KMP iOS, CodeQL JS/TS, Play Store deploy). Use skill `futeba-runner` para start/stop/scale. Squash-merge only no `master` (branch protection: 1 review + code owner)
-- **Workflow shell injection** (corrigido em PRs #527, #530, #531, #533): NUNCA usar `echo '${{ secrets.X }}'` direto — usar env vars + `printf '%s' "$VAR"`. Skill `futeba-gh-secrets` documenta padrão.
+### Pipelines em produção
+
+| Pipeline | Como disparar |
+|----------|---------------|
+| Android Play Store (Internal Testing) | Workflow `deploy-production.yml` ou skill `/futeba-play-store` |
+| Cloud Functions | `firebase deploy --only functions:<name>` (worktree isolado) ou skill `/futeba-deploy` |
+| Firestore rules + indexes | `firebase deploy --only firestore` (worktree isolado) |
+| Web hosting | `cd web && npm run build && firebase deploy --only hosting` |
+
+### CI Known Behaviors (não fixar — comportamento esperado)
+
+- **KMP Framework build**: falha em Linux runners (requer macOS) — **ignorar** ou rodar em self-hosted ARM
+- **Notify Build Status**: depende do KMP Framework, falha em cascata em Linux — **ignorar**
+- **CodeQL**: apenas JavaScript/TypeScript em macOS ARM64. Java/Kotlin desabilitado (libtrace.dylib x86_64-only). Decisão em `specs/DECISIONS.md`
+- **Build iOS App**: `skipping` em PRs que não tocam `:shared` — esperado
+- **Self-hosted macOS runner OOM**: daemon disappeared/stopped → `gh run rerun --failed` (não é bug, é capacidade)
 
 ### CI/CD Workflows (`.github/workflows/`)
 
