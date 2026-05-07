@@ -69,12 +69,22 @@ jobs:
           echo "::notice::keystore sha8=$KS_SHA"
           STORE_PW=$(printf '%s' "$KEYSTORE_PASSWORD_B64" | base64 --decode)
           if keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$STORE_PW" >/tmp/kt.log 2>&1; then
-            echo "✓ keytool list OK"
-            grep -E 'Tipo|Type|alias' /tmp/kt.log | head -3
+            echo "✓ keytool list OK (pwd from b64 secret)"
           else
-            echo "✗ keytool failed:"
+            echo "✗ keytool failed (pwd from b64 secret):"
             cat /tmp/kt.log
             exit 1
+          fi
+          # Tambem testar com pwd lido de local.properties (igual Gradle faz)
+          PW_FROM_FILE=$(grep '^STORE_PASSWORD=' local.properties | sed 's/^STORE_PASSWORD=//')
+          PW_FROM_FILE_LEN=${#PW_FROM_FILE}
+          PW_FROM_FILE_SHA=$(printf '%s' "$PW_FROM_FILE" | shasum -a 256 | head -c 16)
+          echo "::notice::pwd from local.properties: len=$PW_FROM_FILE_LEN sha8=$PW_FROM_FILE_SHA"
+          if keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$PW_FROM_FILE" >/tmp/kt2.log 2>&1; then
+            echo "✓ keytool list OK (pwd from local.properties grep)"
+          else
+            echo "✗ keytool failed (pwd from local.properties grep):"
+            cat /tmp/kt2.log
           fi
 
       - name: Create google-services.json
