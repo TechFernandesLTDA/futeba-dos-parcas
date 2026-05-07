@@ -5,6 +5,28 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.21.1] - 2026-05-07
+
+### Corrigido
+
+- **Play Store compliance** (#571): legal HTMLs (privacy_policy, terms_of_service,
+  delete_account, child_safety) não eram deployadas — `firebase.json` aponta `web/dist`
+  mas arquivos estavam em `/public/` raiz. URLs mandatórias retornavam SPA index em prod.
+  Corrigido movendo pra `web/public/` → Vite copia pra `web/dist/`.
+- Android About: adicionados 2 links Play Store mandatórios que faltavam:
+  "Excluir Conta" + "Segurança Infantil"
+- Web About: link "Excluir Conta" + email contato `techfernandesltda@gmail.com`
+- Web versions sincronizadas em todos lugares: 1.21.1 (build 43)
+- `delete_account.html`: data "Última atualização" adicionada
+- Test XP_MVP corrigido (50 → 30, source of truth `shared/xp-constants.json`)
+- ESLint: `eslint-plugin-react-refresh` 0.5.2 → 0.4.20 (compat ESLint v8 legacy)
+- Cleanup: `/public/` raiz removido (5 órfãos sem refs no código, -1064 linhas)
+
+### Mudado
+
+- Web AboutScreen footer: "© 2024-2026 Futeba dos Parças" (brand consistency com Android)
+- Legal HTMLs copyright: "© 2024-2026 Tech Fernandes Ltda" (entidade legal)
+
 ## [1.21.0] - 2026-05-06
 
 > Resumo consolidado de releases entre 1.8.0 e 1.21.0 (Fev–Mai 2026).
