@@ -127,18 +127,29 @@ Implementadas via agentes especialistas em paralelo, todas mergeadas:
 ## Próximas frentes sugeridas
 
 ### Curto prazo (ROI alto)
-- **Phase 3 CMP UI compartilhada**: `composeApp/iosMain/MainViewController` para substituir ContentView placeholder
-- **Configurar signing team** no Xcode para device builds
+- **Configurar signing team** no Xcode para device builds (requer Apple Developer account)
 - **TestFlight smoke**: archive + upload via fastlane ou Xcode Organizer
+- **Phase 3 CMP UI compartilhada** (issue #559): implementar 5 actuals iosMain em `composeApp` (AppNavigation, getPlatformName, blendColors, calculateLuminance, PlatformThemeSetup) — destrava UI compartilhada Compose Multiplatform
 
 ### Médio prazo
-- Migrar `JoinRequestRepository.kt` Android (`app/data/repository/`) para usar nova `GroupRepository.observeMyJoinRequest()` etc., e deletar versão Android-specific
-- Refactor LocationRepositoryImpl (eliminar versão iOS divergente — convergir pra única impl shared)
-- Refactor AddressRepositoryImpl (extrair uso de `android.os.Build` para Platform expect/actual)
+- ~~Migrar `JoinRequestRepository.kt` Android para usar shared~~ ✅ PR #557
+- ~~Convergir LocationRepositoryImpl Android+iOS~~ ✅ PR #558
+- AddressRepositoryImpl: usa `android.location.Geocoder` (Android) vs `CLGeocoder` (iOS). Convergir requer abstração via Platform expect/actual — fora de escopo até agora.
 
 ### Maintenance
 - Promover Internal → Production no Play Console (deploy stage anterior funcionando)
-- Considerar migrar `app/JoinRequestRepository.kt` ViewModels para usar a interface shared
+
+## Frentes adicionais entregues nesta extensão da sessão
+
+| PR | Frente | Conteúdo |
+|----|--------|----------|
+| [#557](https://github.com/TechFernandesLTDA/futeba-dos-parcas/pull/557) | F1 | Migrar JoinRequestViewModel Android → shared GroupRepository (-225 linhas) |
+| [#558](https://github.com/TechFernandesLTDA/futeba-dos-parcas/pull/558) | F3 | Convergir LocationRepositoryImpl (delete iOS duplicado, -400 linhas) |
+
+**Issues criadas:**
+- [#559](https://github.com/TechFernandesLTDA/futeba-dos-parcas/issues/559) — Phase 3 CMP iosMain actuals (deferred)
+
+**Total final desta sessão noturna:** 11 PRs merged, 6 issues fechadas, 1 issue criada como roadmap.
 
 ## Padrões aprendidos
 
