@@ -20,9 +20,16 @@ interface UseDirtyGuardResult {
  * @param isDirty Se há mudanças não salvas
  */
 export function useDirtyGuard(isDirty: boolean): UseDirtyGuardResult {
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
-    return isDirty && currentLocation.pathname !== nextLocation.pathname;
-  });
+  // Callback precisa ser estável entre renders — caso contrário useBlocker
+  // re-registra a cada render e dispara loop "Maximum update depth exceeded"
+  // (React error 301), capturado pelo ErrorBoundary como "Oops!".
+  const shouldBlock = useCallback(
+    ({ currentLocation, nextLocation }: { currentLocation: { pathname: string }; nextLocation: { pathname: string } }) => {
+      return isDirty && currentLocation.pathname !== nextLocation.pathname;
+    },
+    [isDirty]
+  );
+  const blocker = useBlocker(shouldBlock);
 
   const [pendingDecision, setPendingDecision] = useState(false);
 
