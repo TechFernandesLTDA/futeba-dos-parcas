@@ -15,6 +15,13 @@ import {
   Rating,
   Paper,
   List,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  CircularProgress,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -25,14 +32,21 @@ import {
   Star as StarIcon,
   Directions as DirectionsIcon,
   Reviews as ReviewIcon,
+  WbIncandescent as LightbulbIcon,
+  LocalParking as ParkingIcon,
+  Shower as ShowerIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, limit, getDocs, deleteDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
-import { Location } from '../../types/location';
+import { Location, FIELD_TYPE_CONFIG, canManageLocation } from '../../types/location';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 
 const logger = createLogger('LocationDetailScreen');
 
@@ -49,93 +63,193 @@ export const LocationDetailScreen: React.FC = () => {
   useDocumentTitle('Detalhes do Local');
   const navigate = useNavigate();
   const theme = useTheme();
+  const { user } = useAuth();
+  const { showSuccess, showError, showInfo } = useToast();
   const { locationId } = useParams<{ locationId: string }>();
 
   const [location, setLocation] = useState<Location | null>(null);
   const [reviews, setReviews] = useState<LocationReview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!locationId) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
 
     const fetchLocation = async () => {
       try {
         const locDoc = await getDoc(doc(db, 'locations', locationId));
-        if (locDoc.exists()) {
-          setLocation({ ...snakeToCamel<Location>(locDoc.data()), id: locDoc.id });
-
-          const reviewsRef = collection(db, 'locations', locationId, 'reviews');
-          const q = query(reviewsRef, orderBy('created_at', 'desc'), limit(20));
-          const reviewsSnap = await getDocs(q);
-          const reviewsData = reviewsSnap.docs.map((d) => {
-            const raw = d.data();
-            return {
-              ...snakeToCamel(raw),
-              id: d.id,
-              createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
-            };
-          }) as LocationReview[];
-          setReviews(reviewsData);
+        if (!locDoc.exists()) {
+          if (!cancelled) {
+            setError('Local não encontrado.');
+            setLoading(false);
+          }
+          return;
         }
-      } catch (error) {
-        logger.error('Error fetching location:', error);
-      } finally {
-        setLoading(false);
+        const locData = { ...snakeToCamel<Location>(locDoc.data()), id: locDoc.id };
+
+        const reviewsRef = collection(db, 'locations', locationId, 'reviews');
+        const q = query(reviewsRef, orderBy('created_at', 'desc'), limit(20));
+        const reviewsSnap = await getDocs(q);
+        const reviewsData = reviewsSnap.docs.map((d) => {
+          const raw = d.data();
+          return {
+            ...snakeToCamel(raw),
+            id: d.id,
+            createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
+          };
+        }) as LocationReview[];
+
+        if (!cancelled) {
+          setLocation(locData);
+          setReviews(reviewsData);
+          setLoading(false);
+        }
+      } catch (err) {
+        logger.error('Erro ao carregar local:', err);
+        if (!cancelled) {
+          setError('Não foi possível carregar este local. Verifique sua conexão e tente novamente.');
+          setLoading(false);
+        }
       }
     };
 
     fetchLocation();
-  }, [locationId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [locationId, reloadKey]);
+
+  const userCanManage =
+    !!user && !!location && (user.role === 'ADMIN' || canManageLocation(location, user.id));
+
+  const handleDelete = async () => {
+    if (!locationId || !location) return;
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'locations', locationId));
+      showSuccess(`Local "${location.name}" excluído com sucesso.`);
+      navigate('/locations');
+    } catch (err) {
+      logger.error('Erro ao excluir local:', err);
+      showError('Erro ao excluir local. Tente novamente.');
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
+  };
+
+  const renderHeader = (title: string) => (
+    <Box
+      sx={{
+        position: 'sticky',
+        top: 0,
+        bgcolor: 'background.paper',
+        zIndex: 10,
+        borderBottom: `1px solid ${theme.palette.divider}`,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
+        <IconButton onClick={() => navigate('/locations')} aria-label="Voltar">
+          <BackIcon />
+        </IconButton>
+        <Typography variant="h6" sx={{ ml: 1, flex: 1 }} noWrap>
+          {title}
+        </Typography>
+        {userCanManage && location && (
+          <>
+            <IconButton
+              onClick={() => navigate(`/location/${location.id}/edit`)}
+              aria-label="Editar local"
+            >
+              <EditIcon />
+            </IconButton>
+            <IconButton
+              onClick={() => setDeleteOpen(true)}
+              aria-label="Excluir local"
+              color="error"
+            >
+              <DeleteIcon />
+            </IconButton>
+          </>
+        )}
+      </Box>
+    </Box>
+  );
 
   if (loading) {
-    return <LoadingState shimmerCount={5} itemType="CARD" />;
-  }
-
-  if (!location) {
     return (
-      <Box sx={{ textAlign: 'center', py: 8 }}>
-        <LocationIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-        <Typography variant="h6" color="text.secondary">
-          Local não encontrado
-        </Typography>
+      <Box>
+        {renderHeader('Carregando...')}
+        <Container maxWidth="md" sx={{ py: 2 }}>
+          <LoadingState shimmerCount={5} itemType="CARD" />
+        </Container>
       </Box>
     );
   }
 
-  const averageRating = reviews.length > 0
-    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-    : 0;
+  if (error || !location) {
+    return (
+      <Box>
+        {renderHeader('Local')}
+        <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
+          <LocationIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            {error || 'Local não encontrado'}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mt: 2 }}>
+            <Button variant="outlined" onClick={() => navigate('/locations')}>
+              Ver todos os locais
+            </Button>
+            {error && (
+              <Button variant="contained" onClick={() => setReloadKey((k) => k + 1)}>
+                Tentar novamente
+              </Button>
+            )}
+          </Box>
+        </Container>
+      </Box>
+    );
+  }
+
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      : location.averageRating || location.rating || 0;
+  const reviewCount = reviews.length || location.reviewCount || location.ratingCount || 0;
+
+  const fullAddress = [location.address, location.district, location.city, location.state]
+    .filter(Boolean)
+    .join(', ');
+
+  const fieldTypeLabel = location.fieldType
+    ? FIELD_TYPE_CONFIG[location.fieldType]?.label || location.fieldType
+    : 'Campo';
 
   return (
     <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1, flex: 1 }} noWrap>
-            {location.name}
-          </Typography>
+      {renderHeader(location.name)}
 
-        </Box>
-      </Box>
+      <Container maxWidth="md" sx={{ py: 2 }}>
+        {!location.isVerified && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Este local ainda não foi verificado.
+          </Alert>
+        )}
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
         <Card sx={{ mb: 2 }}>
           {location.photoUrl && (
             <Box
               component="img"
               src={location.photoUrl}
               alt={location.name}
-              sx={{ width: '100%', height: 200, objectFit: 'cover' }}
+              loading="lazy"
+              sx={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }}
             />
           )}
           <CardContent>
@@ -146,21 +260,29 @@ export const LocationDetailScreen: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Rating value={averageRating} precision={0.5} readOnly size="small" />
               <Typography variant="body2" color="text.secondary">
-                ({reviews.length} avaliações)
+                {averageRating.toFixed(1)} ({reviewCount} {reviewCount === 1 ? 'avaliação' : 'avaliações'})
               </Typography>
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
               <LocationIcon color="action" fontSize="small" sx={{ mt: 0.5 }} />
               <Typography variant="body2" color="text.secondary">
-                {location.address}, {location.city}
+                {fullAddress}
               </Typography>
             </Box>
 
             {location.phone && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <PhoneIcon color="action" fontSize="small" />
-                <Typography variant="body2">{location.phone}</Typography>
+                <Typography
+                  variant="body2"
+                  component="a"
+                  href={`tel:${location.phone}`}
+                  color="primary"
+                  sx={{ textDecoration: 'none' }}
+                >
+                  {location.phone}
+                </Typography>
               </Box>
             )}
 
@@ -172,12 +294,19 @@ export const LocationDetailScreen: React.FC = () => {
                   component="a"
                   href={location.website}
                   target="_blank"
+                  rel="noopener noreferrer"
                   color="primary"
-                  sx={{ textDecoration: 'none' }}
+                  sx={{ textDecoration: 'none', wordBreak: 'break-all' }}
                 >
                   {location.website}
                 </Typography>
               </Box>
+            )}
+
+            {location.description && (
+              <Typography variant="body2" sx={{ mt: 2 }}>
+                {location.description}
+              </Typography>
             )}
           </CardContent>
         </Card>
@@ -187,43 +316,57 @@ export const LocationDetailScreen: React.FC = () => {
             <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
               Características
             </Typography>
-            <Grid container spacing={1}>
-              <Grid xs={6}>
+            <Grid container spacing={1.5}>
+              <Grid xs={6} sm={4}>
                 <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                  <SoccerIcon color="action" />
+                  <SoccerIcon color="primary" />
                   <Typography variant="body2" sx={{ mt: 0.5 }}>
-                    {location.fieldType || 'Campo'}
-                  </Typography>
-                </Paper>
-              </Grid>
-              <Grid xs={6}>
-                <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                  <Typography variant="body1" fontWeight={600}>
-                    {location.playersPerTeam || 11}v{location.playersPerTeam || 11}
+                    {fieldTypeLabel}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Jogadores
+                    {location.fieldCount || 1} {(location.fieldCount || 1) === 1 ? 'campo' : 'campos'}
                   </Typography>
                 </Paper>
               </Grid>
-              {location.hasLighting && (
-                <Grid xs={6}>
+              {location.playersPerTeam && (
+                <Grid xs={6} sm={4}>
                   <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                    <Typography variant="body2">💡 Iluminação</Typography>
+                    <Typography variant="h6" fontWeight={700} color="primary">
+                      {location.playersPerTeam}v{location.playersPerTeam}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Jogadores
+                    </Typography>
+                  </Paper>
+                </Grid>
+              )}
+              {location.hasLighting && (
+                <Grid xs={6} sm={4}>
+                  <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                    <LightbulbIcon color="warning" />
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>
+                      Iluminação
+                    </Typography>
                   </Paper>
                 </Grid>
               )}
               {location.hasParking && (
-                <Grid xs={6}>
+                <Grid xs={6} sm={4}>
                   <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                    <Typography variant="body2">🚗 Estacionamento</Typography>
+                    <ParkingIcon color="info" />
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>
+                      Estacionamento
+                    </Typography>
                   </Paper>
                 </Grid>
               )}
               {location.hasShowers && (
-                <Grid xs={6}>
+                <Grid xs={6} sm={4}>
                   <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                    <Typography variant="body2">🚿 Vestiários</Typography>
+                    <ShowerIcon color="info" />
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>
+                      Vestiários
+                    </Typography>
                   </Paper>
                 </Grid>
               )}
@@ -233,11 +376,17 @@ export const LocationDetailScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}
+            >
               <Typography variant="subtitle1" fontWeight={600}>
                 Avaliações
               </Typography>
-              <Button size="small" startIcon={<ReviewIcon />}>
+              <Button
+                size="small"
+                startIcon={<ReviewIcon />}
+                onClick={() => showInfo('Em breve: avaliar local')}
+              >
                 Avaliar
               </Button>
             </Box>
@@ -275,19 +424,50 @@ export const LocationDetailScreen: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Button
-          variant="contained"
-          fullWidth
-          startIcon={<DirectionsIcon />}
-          onClick={() => {
-            if (location.latitude && location.longitude) {
-              window.open(`https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`, '_blank');
+        {location.latitude && location.longitude && (
+          <Button
+            variant="contained"
+            fullWidth
+            startIcon={<DirectionsIcon />}
+            onClick={() =>
+              window.open(
+                `https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`,
+                '_blank',
+                'noopener,noreferrer',
+              )
             }
-          }}
-        >
-          Obter Direções
-        </Button>
+          >
+            Obter Direções
+          </Button>
+        )}
       </Container>
+
+      <Dialog
+        open={deleteOpen}
+        onClose={() => !deleting && setDeleteOpen(false)}
+        aria-labelledby="delete-detail-title"
+      >
+        <DialogTitle id="delete-detail-title">Excluir local?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Tem certeza que deseja excluir <strong>{location.name}</strong>? Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)} disabled={deleting}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDelete}
+            color="error"
+            variant="contained"
+            disabled={deleting}
+            startIcon={deleting ? <CircularProgress size={16} /> : <DeleteIcon />}
+          >
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

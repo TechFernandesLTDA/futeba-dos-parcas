@@ -1,0 +1,429 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  Box,
+  Container,
+  TextField,
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  CircularProgress,
+  Alert,
+  FormControlLabel,
+  Switch,
+  MenuItem,
+  Stack,
+} from '@mui/material';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { db } from '../../services/firebase';
+import { snakeToCamel } from '../../utils/firestoreHelpers';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { Location, FieldType, FIELD_TYPE_CONFIG } from '../../types/location';
+import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('LocationFormScreen');
+
+interface FormState {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  district: string;
+  phone: string;
+  website: string;
+  fieldType: FieldType;
+  playersPerTeam: number;
+  fieldCount: number;
+  description: string;
+  hasLighting: boolean;
+  hasParking: boolean;
+  hasShowers: boolean;
+}
+
+const defaultForm: FormState = {
+  name: '',
+  address: '',
+  city: '',
+  state: '',
+  district: '',
+  phone: '',
+  website: '',
+  fieldType: 'SOCIETY',
+  playersPerTeam: 7,
+  fieldCount: 1,
+  description: '',
+  hasLighting: false,
+  hasParking: false,
+  hasShowers: false,
+};
+
+export const LocationFormScreen: React.FC = () => {
+  const navigate = useNavigate();
+  const { locationId } = useParams<{ locationId: string }>();
+  const { user } = useAuth();
+  const { showSuccess, showError } = useToast();
+
+  const isEdit = !!locationId;
+  useDocumentTitle(isEdit ? 'Editar Local' : 'Criar Local');
+
+  const [form, setForm] = useState<FormState>(defaultForm);
+  const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(isEdit);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+
+  // Carrega dados existentes quando em modo edição
+  useEffect(() => {
+    if (!isEdit || !locationId) return;
+    const load = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'locations', locationId));
+        if (!snap.exists()) {
+          setFetchError('Local não encontrado');
+          setFetchLoading(false);
+          return;
+        }
+        const data = snakeToCamel<Location>(snap.data());
+        setForm({
+          name: data.name || '',
+          address: data.address || '',
+          city: data.city || '',
+          state: data.state || '',
+          district: data.district || '',
+          phone: data.phone || '',
+          website: data.website || '',
+          fieldType: data.fieldType || 'SOCIETY',
+          playersPerTeam: data.playersPerTeam || 7,
+          fieldCount: data.fieldCount || 1,
+          description: data.description || '',
+          hasLighting: !!data.hasLighting,
+          hasParking: !!data.hasParking,
+          hasShowers: !!data.hasShowers,
+        });
+        setFetchError(null);
+      } catch (err) {
+        logger.error('Erro ao carregar local:', err);
+        setFetchError('Erro ao carregar local. Tente novamente.');
+      } finally {
+        setFetchLoading(false);
+      }
+    };
+    load();
+  }, [isEdit, locationId]);
+
+  const isDirty = JSON.stringify(form) !== JSON.stringify(defaultForm);
+
+  const validate = (): boolean => {
+    const e: Partial<Record<keyof FormState, string>> = {};
+    if (!form.name.trim()) e.name = 'Nome é obrigatório';
+    else if (form.name.length < 3) e.name = 'Mínimo 3 caracteres';
+    if (!form.address.trim()) e.address = 'Endereço é obrigatório';
+    if (!form.city.trim()) e.city = 'Cidade é obrigatória';
+    if (form.fieldCount < 1) e.fieldCount = 'Mínimo 1 campo';
+    if (form.playersPerTeam < 3 || form.playersPerTeam > 11) {
+      e.playersPerTeam = 'Entre 3 e 11';
+    }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleChange = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
+  };
+
+  const handleSubmit = async () => {
+    if (!validate() || !user) return;
+    setLoading(true);
+    try {
+      const payload = {
+        name: form.name.trim(),
+        address: form.address.trim(),
+        city: form.city.trim(),
+        state: form.state.trim(),
+        district: form.district.trim(),
+        phone: form.phone.trim() || null,
+        website: form.website.trim() || null,
+        field_type: form.fieldType,
+        primary_field_type: form.fieldType,
+        players_per_team: form.playersPerTeam,
+        field_count: form.fieldCount,
+        description: form.description.trim(),
+        has_lighting: form.hasLighting,
+        has_parking: form.hasParking,
+        has_showers: form.hasShowers,
+        is_active: true,
+        updated_at: serverTimestamp(),
+        updated_by: user.id,
+      };
+
+      if (isEdit && locationId) {
+        await updateDoc(doc(db, 'locations', locationId), payload);
+        showSuccess('Local atualizado com sucesso!');
+        navigate(`/location/${locationId}`);
+      } else {
+        const newRef = doc(collection(db, 'locations'));
+        await setDoc(newRef, {
+          ...payload,
+          owner_id: user.id,
+          managers: [user.id],
+          is_verified: false,
+          rating: 0,
+          rating_count: 0,
+          amenities: [],
+          operating_days: [1, 2, 3, 4, 5, 6, 7],
+          opening_time: '06:00',
+          closing_time: '23:00',
+          min_game_duration_minutes: 60,
+          has_active_fields: false,
+          country: 'BR',
+          neighborhood: form.district.trim(),
+          region: form.state.trim(),
+          cep: '',
+          street: '',
+          number: '',
+          complement: '',
+          created_at: serverTimestamp(),
+        });
+        showSuccess('Local criado com sucesso!');
+        navigate(`/location/${newRef.id}`);
+      }
+    } catch (err) {
+      logger.error('Erro ao salvar local:', err);
+      showError('Erro ao salvar local. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const closeDestination = isEdit && locationId ? `/location/${locationId}` : '/locations';
+
+  if (fetchLoading) {
+    return (
+      <AdaptiveFormSheet closeDestination={closeDestination}>
+        <FormScaffold title={isEdit ? 'Editar Local' : 'Criar Local'} closeDestination={closeDestination} closeVariant="X">
+          <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
+            <CircularProgress />
+          </Container>
+        </FormScaffold>
+      </AdaptiveFormSheet>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <AdaptiveFormSheet closeDestination={closeDestination}>
+        <FormScaffold title="Editar Local" closeDestination={closeDestination} closeVariant="X">
+          <Container maxWidth="sm" sx={{ py: 4 }}>
+            <Alert severity="error" sx={{ mb: 2 }}>{fetchError}</Alert>
+            <Button variant="outlined" fullWidth onClick={() => navigate('/locations')}>
+              Voltar para Locais
+            </Button>
+          </Container>
+        </FormScaffold>
+      </AdaptiveFormSheet>
+    );
+  }
+
+  return (
+    <AdaptiveFormSheet closeDestination={closeDestination}>
+      <FormScaffold
+        title={isEdit ? 'Editar Local' : 'Criar Local'}
+        closeDestination={closeDestination}
+        closeVariant="X"
+        isDirty={isDirty}
+        loading={loading}
+      >
+        <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
+          <Stack spacing={2}>
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+                  Informações básicas
+                </Typography>
+                <Stack spacing={2}>
+                  <TextField
+                    label="Nome do local"
+                    fullWidth
+                    required
+                    value={form.name}
+                    onChange={(e) => handleChange('name', e.target.value)}
+                    error={!!errors.name}
+                    helperText={errors.name}
+                    inputProps={{ maxLength: 100 }}
+                  />
+                  <TextField
+                    label="Endereço"
+                    fullWidth
+                    required
+                    value={form.address}
+                    onChange={(e) => handleChange('address', e.target.value)}
+                    error={!!errors.address}
+                    helperText={errors.address}
+                  />
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                    <TextField
+                      label="Cidade"
+                      fullWidth
+                      required
+                      value={form.city}
+                      onChange={(e) => handleChange('city', e.target.value)}
+                      error={!!errors.city}
+                      helperText={errors.city}
+                    />
+                    <TextField
+                      label="Estado"
+                      sx={{ minWidth: { sm: 120 } }}
+                      inputProps={{ maxLength: 2 }}
+                      value={form.state}
+                      onChange={(e) => handleChange('state', e.target.value.toUpperCase())}
+                    />
+                  </Stack>
+                  <TextField
+                    label="Bairro"
+                    fullWidth
+                    value={form.district}
+                    onChange={(e) => handleChange('district', e.target.value)}
+                  />
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+                  Quadras
+                </Typography>
+                <Stack spacing={2}>
+                  <TextField
+                    label="Tipo de quadra"
+                    select
+                    fullWidth
+                    value={form.fieldType}
+                    onChange={(e) => handleChange('fieldType', e.target.value as FieldType)}
+                  >
+                    {(Object.keys(FIELD_TYPE_CONFIG) as FieldType[]).map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {FIELD_TYPE_CONFIG[type].label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                    <TextField
+                      label="Jogadores por time"
+                      type="number"
+                      fullWidth
+                      value={form.playersPerTeam}
+                      onChange={(e) => handleChange('playersPerTeam', parseInt(e.target.value) || 0)}
+                      error={!!errors.playersPerTeam}
+                      helperText={errors.playersPerTeam}
+                      inputProps={{ min: 3, max: 11 }}
+                    />
+                    <TextField
+                      label="Quantidade de campos"
+                      type="number"
+                      fullWidth
+                      value={form.fieldCount}
+                      onChange={(e) => handleChange('fieldCount', parseInt(e.target.value) || 0)}
+                      error={!!errors.fieldCount}
+                      helperText={errors.fieldCount}
+                      inputProps={{ min: 1, max: 20 }}
+                    />
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+                  Comodidades
+                </Typography>
+                <Stack>
+                  <FormControlLabel
+                    control={<Switch checked={form.hasLighting} onChange={(e) => handleChange('hasLighting', e.target.checked)} />}
+                    label="Iluminação"
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={form.hasParking} onChange={(e) => handleChange('hasParking', e.target.checked)} />}
+                    label="Estacionamento"
+                  />
+                  <FormControlLabel
+                    control={<Switch checked={form.hasShowers} onChange={(e) => handleChange('hasShowers', e.target.checked)} />}
+                    label="Vestiários"
+                  />
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+                  Contato (opcional)
+                </Typography>
+                <Stack spacing={2}>
+                  <TextField
+                    label="Telefone"
+                    fullWidth
+                    value={form.phone}
+                    onChange={(e) => handleChange('phone', e.target.value)}
+                    placeholder="(00) 00000-0000"
+                  />
+                  <TextField
+                    label="Site"
+                    fullWidth
+                    value={form.website}
+                    onChange={(e) => handleChange('website', e.target.value)}
+                    placeholder="https://"
+                    type="url"
+                  />
+                  <TextField
+                    label="Descrição"
+                    fullWidth
+                    multiline
+                    rows={3}
+                    value={form.description}
+                    onChange={(e) => handleChange('description', e.target.value)}
+                    inputProps={{ maxLength: 500 }}
+                    helperText={`${form.description.length}/500`}
+                  />
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Box sx={{ display: 'flex', gap: 2, pt: 1 }}>
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => navigate(closeDestination)}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={handleSubmit}
+                disabled={loading}
+                startIcon={loading ? <CircularProgress size={20} /> : null}
+              >
+                {isEdit ? 'Salvar' : 'Criar Local'}
+              </Button>
+            </Box>
+          </Stack>
+        </Container>
+      </FormScaffold>
+    </AdaptiveFormSheet>
+  );
+};
