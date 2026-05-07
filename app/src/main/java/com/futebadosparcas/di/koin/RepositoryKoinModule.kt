@@ -111,8 +111,12 @@ val repositoryKoinModule = module {
         LiveGameRepositoryImpl(get())
     }
 
+    single<com.futebadosparcas.platform.geocoding.GeocoderService> {
+        com.futebadosparcas.platform.geocoding.GeocoderService(androidContext())
+    }
+
     single<AddressRepository> {
-        AddressRepositoryImpl(androidContext())
+        AddressRepositoryImpl(get())
     }
 
     single<ActivityRepository> {
