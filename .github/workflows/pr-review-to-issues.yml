@@ -30,11 +30,18 @@ jobs:
 
       - name: Check if comment is from Claude Code Review
         id: check-claude
+        env:
+          # Passar via env evita shell injection em corpo de comentario com
+          # parens/brackets/aspas que quebravam [[ "${{ ... }}" ]] interpolado.
+          COMMENT_LOGIN: ${{ github.event.comment.user.login }}
+          REVIEW_LOGIN: ${{ github.event.review.user.login }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          REVIEW_BODY: ${{ github.event.review.body }}
         run: |
-          if [[ "${{ github.event.comment.user.login }}" == "github-actions[bot]" ]] || \
-             [[ "${{ github.event.review.user.login }}" == "github-actions[bot]" ]] || \
-             [[ "${{ github.event.comment.body }}" == *"Claude Code Report"* ]] || \
-             [[ "${{ github.event.review.body }}" == *"Claude Code Report"* ]]; then
+          if [[ "$COMMENT_LOGIN" == "github-actions[bot]" ]] || \
+             [[ "$REVIEW_LOGIN" == "github-actions[bot]" ]] || \
+             [[ "$COMMENT_BODY" == *"Claude Code Report"* ]] || \
+             [[ "$REVIEW_BODY" == *"Claude Code Report"* ]]; then
             echo "is_claude=true" >> $GITHUB_OUTPUT
           else
             echo "is_claude=false" >> $GITHUB_OUTPUT
