@@ -93,10 +93,8 @@ val appKoinModule = module {
         AndroidGroupRepository(get(), get(), get(), get())
     }
 
-    // Issue #517 Phase 2: join_requests
-    single<com.futebadosparcas.data.repository.JoinRequestRepository> {
-        com.futebadosparcas.data.repository.JoinRequestRepository(get(), get())
-    }
+    // Issue #517 Phase 2 — join_requests via GroupRepository.observeMyJoinRequest()
+    // (migrado de Android-only JoinRequestRepository em 2026-05-07)
 
     single<com.google.firebase.remoteconfig.FirebaseRemoteConfig> {
         val remoteConfig = com.google.firebase.remoteconfig.FirebaseRemoteConfig.getInstance()

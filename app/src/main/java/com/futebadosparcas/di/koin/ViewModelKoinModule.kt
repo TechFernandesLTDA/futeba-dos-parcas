@@ -220,9 +220,7 @@ val viewModelKoinModule = module {
 
     viewModel {
         JoinRequestViewModel(
-            joinRequestRepository = get(),
-            userRepository = get(),
-            auth = get()
+            groupRepository = get(),
         )
     }
 

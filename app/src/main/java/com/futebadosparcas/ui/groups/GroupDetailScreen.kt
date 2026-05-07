@@ -31,7 +31,7 @@ import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.ui.components.CachedGroupImage
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.cards.GroupMemberCard
-import com.futebadosparcas.data.repository.JoinRequest
+import com.futebadosparcas.domain.model.GroupJoinRequest
 import org.koin.compose.viewmodel.koinViewModel
 import com.futebadosparcas.ui.components.dialogs.*
 import com.futebadosparcas.ui.components.EmptyState
@@ -505,7 +505,7 @@ private fun GroupDetailContent(
     onDemoteMember: (GroupMember) -> Unit,
     onRemoveMember: (GroupMember) -> Unit,
     myJoinRequestState: MyJoinRequestState = MyJoinRequestState.Loading,
-    pendingJoinRequests: List<JoinRequest> = emptyList(),
+    pendingJoinRequests: List<GroupJoinRequest> = emptyList(),
     joinSubmitting: Boolean = false,
     joinActioningId: String? = null,
     onRequestJoin: () -> Unit = {},
@@ -1271,7 +1271,7 @@ private fun JoinRequestSection(
  */
 @Composable
 private fun PendingJoinRequestsSection(
-    requests: List<JoinRequest>,
+    requests: List<GroupJoinRequest>,
     actioningId: String?,
     onApprove: (String) -> Unit,
     onReject: (String) -> Unit
