@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, ThemeProvider, useAuth } from './contexts';
@@ -10,6 +10,7 @@ import { SkipNav } from './components/common/SkipNav';
 import { LoadingScreen } from './components/common/LoadingScreen';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { AppLayout } from './components/layout';
+import { CommandPalette } from './components/search/CommandPalette';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -352,6 +353,10 @@ function MobileShell({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const openPalette = useCallback(() => setPaletteOpen(true), []);
+  const closePalette = useCallback(() => setPaletteOpen(false), []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -359,6 +364,12 @@ function App() {
           <AuthProvider>
             <ToastProvider>
               <SkipNav />
+              {/* CommandPalette montado fora do MobileShell para não sofrer restrição de largura */}
+              <CommandPalette
+                open={paletteOpen}
+                onOpen={openPalette}
+                onClose={closePalette}
+              />
               <MobileShell>
                 <VerificationBanner />
                 <Box component="main" id="main-content">
