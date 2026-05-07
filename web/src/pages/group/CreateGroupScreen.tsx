@@ -19,7 +19,7 @@ import {
   Add as AddIcon,
   PhotoCamera as CameraIcon,
 } from '@mui/icons-material';
-import { FormScaffold } from '../../components/layout';
+import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { useCreateGroup } from '../../hooks/useGroups';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -85,6 +85,7 @@ export const CreateGroupScreen: React.FC = () => {
   };
 
   return (
+    <AdaptiveFormSheet closeDestination="/groups">
     <FormScaffold
       title="Criar Grupo"
       closeDestination="/groups"
@@ -200,5 +201,6 @@ export const CreateGroupScreen: React.FC = () => {
         </Card>
       </Container>
     </FormScaffold>
+    </AdaptiveFormSheet>
   );
 };

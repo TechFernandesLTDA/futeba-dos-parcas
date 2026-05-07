@@ -27,7 +27,7 @@ import {
   ArrowForward as NextIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
-import { FormScaffold } from '../../components/layout';
+import { FormScaffold, AdaptiveFormSheet } from '../../components/layout';
 import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useCreateGame } from '../../hooks/useGames';
@@ -674,6 +674,7 @@ export const CreateGameScreen: React.FC = () => {
   };
 
   return (
+    <AdaptiveFormSheet closeDestination={closeDestination}>
     <FormScaffold
       title="Criar Jogo"
       closeDestination={closeDestination}
@@ -731,5 +732,6 @@ export const CreateGameScreen: React.FC = () => {
         </Stepper>
       </Container>
     </FormScaffold>
+    </AdaptiveFormSheet>
   );
 };
