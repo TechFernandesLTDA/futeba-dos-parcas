@@ -11,9 +11,14 @@ import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import java.text.SimpleDateFormat
-import java.util.*
 import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
 
 // Removido import desnecessário - coroutineScope ainda é usado no fetchUserDataParallel
 
@@ -214,18 +219,13 @@ class RankingRepositoryImpl(
         months: Int
     ): Result<XpEvolution> {
         return try {
-            // Calcular data de início usando Calendar (API 24 compatível)
-            val startCalendar = Calendar.getInstance().apply {
-                add(Calendar.MONTH, -months)
-                set(Calendar.DAY_OF_MONTH, 1)
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }
-            val startTimestamp = startCalendar.timeInMillis
+            // Calcular data de início via kotlinx.datetime: 1º dia do mês, N meses atrás
+            val zone = TimeZone.currentSystemDefault()
+            val today: LocalDate = Clock.System.now().toLocalDateTime(zone).date
+            val firstDayOfMonth = LocalDate(today.year, today.monthNumber, 1)
+            val startDate = firstDayOfMonth.minus(months, DateTimeUnit.MONTH)
+            val startTimestamp = startDate.atStartOfDayIn(zone).toEpochMilliseconds()
 
-            // Buscar logs de XP no período
             val logsResult = firebaseDataSource.getUserXpLogs(userId, 500)
             if (logsResult.isFailure) {
                 return Result.failure(logsResult.exceptionOrNull() ?: Exception("Erro ao buscar logs de XP"))
@@ -235,11 +235,12 @@ class RankingRepositoryImpl(
                 ?.filter { it.createdAt != null && it.createdAt >= startTimestamp }
                 ?: emptyList()
 
-            // Agrupar por mês usando SimpleDateFormat (API 24 compatível)
-            val formatter = SimpleDateFormat("MM/yyyy", Locale.getDefault())
+            // Agrupar por mês "MM/yyyy" via kotlinx.datetime
             val monthlyXp = logs.groupBy { log ->
-                log.createdAt?.let {
-                    formatter.format(Date(it))
+                log.createdAt?.let { epochMs ->
+                    val ldt = Instant.fromEpochMilliseconds(epochMs).toLocalDateTime(zone)
+                    val month = ldt.monthNumber.toString().padStart(2, '0')
+                    "$month/${ldt.year}"
                 } ?: "N/A"
             }.mapValues { (_, logsInMonth) ->
                 logsInMonth.sumOf { it.xpEarned }
@@ -409,20 +410,23 @@ class RankingRepositoryImpl(
     }
 
     private fun getCurrentWeekKey(): String {
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val weekNumber = calendar.get(Calendar.WEEK_OF_YEAR)
-        return "${year}-W${weekNumber.toString().padStart(2, '0')}"
+        val zone = TimeZone.currentSystemDefault()
+        val today: LocalDate = Clock.System.now().toLocalDateTime(zone).date
+        // ISO week: usa primeira segunda-feira do ano como semana 1.
+        // Aproximação simples (cross-platform): dia do ano / 7 + 1.
+        val dayOfYear = today.dayOfYear
+        val weekNumber = ((dayOfYear - 1) / 7) + 1
+        return "${today.year}-W${weekNumber.toString().padStart(2, '0')}"
     }
 
     private fun getCurrentMonthKey(): String {
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH) + 1
-        return "${year}-${month.toString().padStart(2, '0')}"
+        val zone = TimeZone.currentSystemDefault()
+        val today: LocalDate = Clock.System.now().toLocalDateTime(zone).date
+        return "${today.year}-${today.monthNumber.toString().padStart(2, '0')}"
     }
 
     private fun getCurrentYearKey(): String {
-        return Calendar.getInstance().get(Calendar.YEAR).toString()
+        val zone = TimeZone.currentSystemDefault()
+        return Clock.System.now().toLocalDateTime(zone).year.toString()
     }
 }
