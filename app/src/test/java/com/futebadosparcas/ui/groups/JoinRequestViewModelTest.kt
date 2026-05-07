@@ -1,11 +1,8 @@
 package com.futebadosparcas.ui.groups
 
-import com.futebadosparcas.data.repository.JoinRequest
-import com.futebadosparcas.data.repository.JoinRequestRepository
-import com.futebadosparcas.data.repository.JoinRequestStatus
-import com.futebadosparcas.domain.repository.UserRepository
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
+import com.futebadosparcas.domain.model.GroupJoinRequest
+import com.futebadosparcas.domain.model.GroupJoinRequestStatus
+import com.futebadosparcas.domain.repository.GroupRepository
 import com.futebadosparcas.util.InstantTaskExecutorExtension
 import com.futebadosparcas.util.MockLogExtension
 import io.mockk.coEvery
@@ -30,6 +27,10 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 /**
  * Testes unitarios para JoinRequestViewModel (issue #517 Phase 2).
+ *
+ * Migrado em 2026-05-07 (PR #557): VM agora usa GroupRepository (shared) em vez de
+ * JoinRequestRepository (Android-only). Models trocaram de JoinRequest/JoinRequestStatus
+ * para GroupJoinRequest/GroupJoinRequestStatus.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("JoinRequestViewModel Tests")
@@ -37,22 +38,12 @@ import org.junit.jupiter.api.extension.ExtendWith
 class JoinRequestViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var repo: JoinRequestRepository
-    private lateinit var userRepo: UserRepository
-    private lateinit var auth: FirebaseAuth
-    private lateinit var firebaseUser: FirebaseUser
+    private lateinit var groupRepo: GroupRepository
 
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        repo = mockk(relaxed = true)
-        userRepo = mockk()
-        auth = mockk()
-        firebaseUser = mockk()
-        every { firebaseUser.uid } returns "uid-1"
-        every { firebaseUser.displayName } returns "Test User"
-        every { firebaseUser.photoUrl } returns null
-        every { auth.currentUser } returns firebaseUser
+        groupRepo = mockk(relaxed = true)
     }
 
     @AfterEach
@@ -61,11 +52,11 @@ class JoinRequestViewModelTest {
     }
 
     @Test
-    @DisplayName("observeMyRequest sem request emite NotRequested")
+    @DisplayName("observeMyJoinRequest sem request emite NotRequested")
     fun observeMyRequest_noRequest_emitsNotRequested() = runTest(testDispatcher) {
-        every { repo.observeMyRequest("g1") } returns flowOf(null)
+        every { groupRepo.observeMyJoinRequest("g1") } returns flowOf(null)
 
-        val vm = JoinRequestViewModel(repo, userRepo, auth)
+        val vm = JoinRequestViewModel(groupRepo)
         vm.observeMyRequest("g1")
         advanceUntilIdle()
 
@@ -73,12 +64,17 @@ class JoinRequestViewModelTest {
     }
 
     @Test
-    @DisplayName("observeMyRequest com PENDING emite Pending")
+    @DisplayName("observeMyJoinRequest com PENDING emite Pending")
     fun observeMyRequest_pending_emitsPending() = runTest(testDispatcher) {
-        val req = JoinRequest(id = "uid-1", userId = "uid-1", userName = "Test User", status = JoinRequestStatus.PENDING)
-        every { repo.observeMyRequest("g1") } returns flowOf(req)
+        val req = GroupJoinRequest(
+            id = "uid-1",
+            userId = "uid-1",
+            userName = "Test User",
+            status = GroupJoinRequestStatus.PENDING,
+        )
+        every { groupRepo.observeMyJoinRequest("g1") } returns flowOf(req)
 
-        val vm = JoinRequestViewModel(repo, userRepo, auth)
+        val vm = JoinRequestViewModel(groupRepo)
         vm.observeMyRequest("g1")
         advanceUntilIdle()
 
@@ -86,12 +82,17 @@ class JoinRequestViewModelTest {
     }
 
     @Test
-    @DisplayName("observeMyRequest com APPROVED emite Approved")
+    @DisplayName("observeMyJoinRequest com APPROVED emite Approved")
     fun observeMyRequest_approved_emitsApproved() = runTest(testDispatcher) {
-        val req = JoinRequest(id = "uid-1", userId = "uid-1", userName = "Test", status = JoinRequestStatus.APPROVED)
-        every { repo.observeMyRequest("g1") } returns flowOf(req)
+        val req = GroupJoinRequest(
+            id = "uid-1",
+            userId = "uid-1",
+            userName = "Test",
+            status = GroupJoinRequestStatus.APPROVED,
+        )
+        every { groupRepo.observeMyJoinRequest("g1") } returns flowOf(req)
 
-        val vm = JoinRequestViewModel(repo, userRepo, auth)
+        val vm = JoinRequestViewModel(groupRepo)
         vm.observeMyRequest("g1")
         advanceUntilIdle()
 
@@ -99,12 +100,17 @@ class JoinRequestViewModelTest {
     }
 
     @Test
-    @DisplayName("observeMyRequest com REJECTED emite Rejected")
+    @DisplayName("observeMyJoinRequest com REJECTED emite Rejected")
     fun observeMyRequest_rejected_emitsRejected() = runTest(testDispatcher) {
-        val req = JoinRequest(id = "uid-1", userId = "uid-1", userName = "Test", status = JoinRequestStatus.REJECTED)
-        every { repo.observeMyRequest("g1") } returns flowOf(req)
+        val req = GroupJoinRequest(
+            id = "uid-1",
+            userId = "uid-1",
+            userName = "Test",
+            status = GroupJoinRequestStatus.REJECTED,
+        )
+        every { groupRepo.observeMyJoinRequest("g1") } returns flowOf(req)
 
-        val vm = JoinRequestViewModel(repo, userRepo, auth)
+        val vm = JoinRequestViewModel(groupRepo)
         vm.observeMyRequest("g1")
         advanceUntilIdle()
 
@@ -112,15 +118,15 @@ class JoinRequestViewModelTest {
     }
 
     @Test
-    @DisplayName("observePendingRequests popula lista")
+    @DisplayName("observePendingJoinRequests popula lista")
     fun observePendingRequests_populates() = runTest(testDispatcher) {
         val items = listOf(
-            JoinRequest(id = "u1", userId = "u1", userName = "U1"),
-            JoinRequest(id = "u2", userId = "u2", userName = "U2")
+            GroupJoinRequest(id = "u1", userId = "u1", userName = "U1"),
+            GroupJoinRequest(id = "u2", userId = "u2", userName = "U2"),
         )
-        every { repo.observePendingRequests("g1") } returns flowOf(items)
+        every { groupRepo.observePendingJoinRequests("g1") } returns flowOf(items)
 
-        val vm = JoinRequestViewModel(repo, userRepo, auth)
+        val vm = JoinRequestViewModel(groupRepo)
         vm.observePendingRequests("g1")
         advanceUntilIdle()
 
@@ -128,57 +134,50 @@ class JoinRequestViewModelTest {
     }
 
     @Test
-    @DisplayName("requestJoin chama createRequest com nome do usuario")
+    @DisplayName("requestJoin chama createJoinRequest")
     fun requestJoin_callsCreateRequest() = runTest(testDispatcher) {
-        coEvery { userRepo.getUserById("uid-1") } returns Result.success(
-            com.futebadosparcas.domain.model.User(
-                id = "uid-1",
-                name = "Test User",
-                email = "test@example.com"
-            )
-        )
-        coEvery { repo.createRequest("g1", "Test User", null) } returns Result.success(Unit)
+        coEvery { groupRepo.createJoinRequest("g1") } returns Result.success(Unit)
 
-        val vm = JoinRequestViewModel(repo, userRepo, auth)
+        val vm = JoinRequestViewModel(groupRepo)
         vm.requestJoin("g1")
         advanceUntilIdle()
 
-        coVerify { repo.createRequest("g1", "Test User", null) }
+        coVerify { groupRepo.createJoinRequest("g1") }
     }
 
     @Test
-    @DisplayName("cancelRequest chama cancelRequest no repo")
+    @DisplayName("cancelRequest chama cancelMyJoinRequest")
     fun cancelRequest_callsRepo() = runTest(testDispatcher) {
-        coEvery { repo.cancelRequest("g1") } returns Result.success(Unit)
+        coEvery { groupRepo.cancelMyJoinRequest("g1") } returns Result.success(Unit)
 
-        val vm = JoinRequestViewModel(repo, userRepo, auth)
+        val vm = JoinRequestViewModel(groupRepo)
         vm.cancelRequest("g1")
         advanceUntilIdle()
 
-        coVerify { repo.cancelRequest("g1") }
+        coVerify { groupRepo.cancelMyJoinRequest("g1") }
     }
 
     @Test
-    @DisplayName("approve chama approveRequest com requesterId correto")
+    @DisplayName("approve chama approveJoinRequest com requesterId correto")
     fun approve_callsRepo() = runTest(testDispatcher) {
-        coEvery { repo.approveRequest("g1", "u-req") } returns Result.success(Unit)
+        coEvery { groupRepo.approveJoinRequest("g1", "u-req") } returns Result.success(Unit)
 
-        val vm = JoinRequestViewModel(repo, userRepo, auth)
+        val vm = JoinRequestViewModel(groupRepo)
         vm.approve("g1", "u-req")
         advanceUntilIdle()
 
-        coVerify { repo.approveRequest("g1", "u-req") }
+        coVerify { groupRepo.approveJoinRequest("g1", "u-req") }
     }
 
     @Test
-    @DisplayName("reject chama rejectRequest com requesterId correto")
+    @DisplayName("reject chama rejectJoinRequest com requesterId correto")
     fun reject_callsRepo() = runTest(testDispatcher) {
-        coEvery { repo.rejectRequest("g1", "u-req") } returns Result.success(Unit)
+        coEvery { groupRepo.rejectJoinRequest("g1", "u-req") } returns Result.success(Unit)
 
-        val vm = JoinRequestViewModel(repo, userRepo, auth)
+        val vm = JoinRequestViewModel(groupRepo)
         vm.reject("g1", "u-req")
         advanceUntilIdle()
 
-        coVerify { repo.rejectRequest("g1", "u-req") }
+        coVerify { groupRepo.rejectJoinRequest("g1", "u-req") }
     }
 }
