@@ -115,7 +115,7 @@ class GamificationRepositoryImpl(
                 val newBadge = UserBadge(
                     userId = userId,
                     badgeId = badgeId,
-                    unlockedAt = System.currentTimeMillis(),
+                    unlockedAt = Clock.System.now().toEpochMilliseconds(),
                     unlockCount = 1
                 )
 
@@ -125,7 +125,7 @@ class GamificationRepositoryImpl(
                 // Incrementar contador
                 val updatedBadge = existing.copy(
                     unlockCount = existing.unlockCount + 1,
-                    unlockedAt = System.currentTimeMillis()
+                    unlockedAt = Clock.System.now().toEpochMilliseconds()
                 )
 
                 dataSource.updateUserBadge(updatedBadge)
@@ -201,7 +201,7 @@ class GamificationRepositoryImpl(
                     goals = existing.goals + goalsScored,
                     assists = existing.assists + assists,
                     mvpCount = if (isMVP) existing.mvpCount + 1 else existing.mvpCount,
-                    updatedAt = System.currentTimeMillis()
+                    updatedAt = Clock.System.now().toEpochMilliseconds()
                 )
             } else {
                 SeasonParticipation(
@@ -215,8 +215,8 @@ class GamificationRepositoryImpl(
                     goals = goalsScored,
                     assists = assists,
                     mvpCount = if (isMVP) 1 else 0,
-                    createdAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis()
+                    createdAt = Clock.System.now().toEpochMilliseconds(),
+                    updatedAt = Clock.System.now().toEpochMilliseconds()
                 )
             }
 
