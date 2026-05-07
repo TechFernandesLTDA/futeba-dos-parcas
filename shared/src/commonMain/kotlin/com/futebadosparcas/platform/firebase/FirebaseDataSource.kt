@@ -164,6 +164,33 @@ expect class FirebaseDataSource() {
     suspend fun joinGroupByInviteCode(inviteCode: String, userId: String, userName: String, userPhoto: String?): Result<String>
     suspend fun generateGroupInviteCode(groupId: String): Result<String>
 
+    // ========== DISCOVERY (issue #517 Phase 1) ==========
+    suspend fun searchPublicGroups(query: String, limit: Int = 50): Result<List<Group>>
+
+    // ========== JOIN REQUESTS (issue #517 Phase 2) ==========
+    suspend fun createGroupJoinRequest(
+        groupId: String,
+        userId: String,
+        userName: String,
+        userPhoto: String?,
+    ): Result<Unit>
+    suspend fun cancelGroupJoinRequest(groupId: String, userId: String): Result<Unit>
+    suspend fun approveGroupJoinRequest(
+        groupId: String,
+        requesterId: String,
+        approverId: String,
+    ): Result<Unit>
+    suspend fun rejectGroupJoinRequest(
+        groupId: String,
+        requesterId: String,
+        approverId: String,
+    ): Result<Unit>
+    fun observeMyGroupJoinRequest(
+        groupId: String,
+        userId: String,
+    ): Flow<GroupJoinRequest?>
+    fun observePendingGroupJoinRequests(groupId: String): Flow<List<GroupJoinRequest>>
+
     // ========== BATCH OPERATIONS ==========
 
     suspend fun executeBatch(operations: List<BatchOperation>): Result<Unit>

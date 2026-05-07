@@ -408,4 +408,80 @@ class GroupRepositoryImpl(
             Result.failure(e)
         }
     }
+
+    // ========== DISCOVERY (Issue #517 Phase 1) ==========
+
+    override suspend fun searchPublicGroups(
+        query: String,
+        limit: Int,
+    ): Result<List<com.futebadosparcas.domain.model.Group>> {
+        return try {
+            firebaseDataSource.searchPublicGroups(query, limit)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG, "Erro ao buscar grupos publicos", e)
+            Result.failure(e)
+        }
+    }
+
+    // ========== JOIN REQUESTS (Issue #517 Phase 2) ==========
+
+    override suspend fun createJoinRequest(groupId: String): Result<Unit> {
+        return try {
+            val userId = firebaseDataSource.getCurrentAuthUserId()
+                ?: return Result.failure(Exception("Usuario nao autenticado"))
+            val user = userRepository.getCurrentUser().getOrNull()
+                ?: return Result.failure(Exception("Usuario nao encontrado"))
+            firebaseDataSource.createGroupJoinRequest(groupId, userId, user.name, user.photoUrl)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG, "Erro ao criar join request", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun cancelMyJoinRequest(groupId: String): Result<Unit> {
+        return try {
+            val userId = firebaseDataSource.getCurrentAuthUserId()
+                ?: return Result.failure(Exception("Usuario nao autenticado"))
+            firebaseDataSource.cancelGroupJoinRequest(groupId, userId)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG, "Erro ao cancelar join request", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun approveJoinRequest(groupId: String, requesterId: String): Result<Unit> {
+        return try {
+            val approverId = firebaseDataSource.getCurrentAuthUserId()
+                ?: return Result.failure(Exception("Usuario nao autenticado"))
+            firebaseDataSource.approveGroupJoinRequest(groupId, requesterId, approverId)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG, "Erro ao aprovar join request", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun rejectJoinRequest(groupId: String, requesterId: String): Result<Unit> {
+        return try {
+            val approverId = firebaseDataSource.getCurrentAuthUserId()
+                ?: return Result.failure(Exception("Usuario nao autenticado"))
+            firebaseDataSource.rejectGroupJoinRequest(groupId, requesterId, approverId)
+        } catch (e: Exception) {
+            PlatformLogger.e(TAG, "Erro ao rejeitar join request", e)
+            Result.failure(e)
+        }
+    }
+
+    override fun observeMyJoinRequest(
+        groupId: String,
+    ): kotlinx.coroutines.flow.Flow<com.futebadosparcas.domain.model.GroupJoinRequest?> {
+        val userId = firebaseDataSource.getCurrentAuthUserId()
+            ?: return kotlinx.coroutines.flow.flowOf(null)
+        return firebaseDataSource.observeMyGroupJoinRequest(groupId, userId).catch { emit(null) }
+    }
+
+    override fun observePendingJoinRequests(
+        groupId: String,
+    ): kotlinx.coroutines.flow.Flow<List<com.futebadosparcas.domain.model.GroupJoinRequest>> {
+        return firebaseDataSource.observePendingGroupJoinRequests(groupId).catch { emit(emptyList()) }
+    }
 }

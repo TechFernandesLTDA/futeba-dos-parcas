@@ -2013,6 +2013,196 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
+    // ========== DISCOVERY (Issue #517 Phase 1) ==========
+
+    actual suspend fun searchPublicGroups(query: String, limit: Int): Result<List<Group>> {
+        return try {
+            val normalized = query.trim().lowercase()
+            // Firestore não tem full-text search nativa. Estratégia:
+            // 1. Buscar TODOS public+ACTIVE
+            // 2. Filtrar in-memory por nome OU descrição contendo o query
+            // Aceitável até ~hundreds de grupos públicos. Para escalar, plugar Algolia/MeiliSearch.
+            val snap = firestore.collection(COLLECTION_GROUPS)
+                .where { "is_public" equalTo true }
+                .where { "status" equalTo "ACTIVE" }
+                .limit(200)
+                .get()
+
+            val all = snap.documents.mapNotNull { doc ->
+                try {
+                    Group(
+                        id = doc.id,
+                        name = doc.get<String?>("name") ?: "",
+                        description = doc.get<String?>("description") ?: "",
+                        photoUrl = doc.get<String?>("photo_url"),
+                        ownerId = doc.get<String?>("owner_id") ?: "",
+                        ownerName = doc.get<String?>("owner_name") ?: "",
+                        isPublic = doc.get<Boolean?>("is_public") ?: false,
+                        membersCount = doc.get<Long?>("members_count")?.toInt() ?: 0,
+                    )
+                } catch (_: Exception) {
+                    null
+                }
+            }
+
+            val filtered = if (normalized.isBlank()) {
+                all
+            } else {
+                all.filter { g ->
+                    g.name.lowercase().contains(normalized) ||
+                        g.description.lowercase().contains(normalized)
+                }
+            }
+
+            Result.success(filtered.take(limit))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ========== JOIN REQUESTS (Issue #517 Phase 2) ==========
+
+    actual suspend fun createGroupJoinRequest(
+        groupId: String,
+        userId: String,
+        userName: String,
+        userPhoto: String?,
+    ): Result<Unit> {
+        return try {
+            val data = mapOf(
+                "user_id" to userId,
+                "user_name" to userName,
+                "user_photo" to userPhoto,
+                "status" to "PENDING",
+                "requested_at" to FieldValue.serverTimestamp,
+            )
+            firestore.collection(COLLECTION_GROUPS)
+                .document(groupId)
+                .collection("join_requests")
+                .document(userId)
+                .set(data)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun cancelGroupJoinRequest(groupId: String, userId: String): Result<Unit> {
+        return try {
+            firestore.collection(COLLECTION_GROUPS)
+                .document(groupId)
+                .collection("join_requests")
+                .document(userId)
+                .delete()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun approveGroupJoinRequest(
+        groupId: String,
+        requesterId: String,
+        approverId: String,
+    ): Result<Unit> {
+        return try {
+            firestore.collection(COLLECTION_GROUPS)
+                .document(groupId)
+                .collection("join_requests")
+                .document(requesterId)
+                .update(
+                    mapOf(
+                        "status" to "APPROVED",
+                        "responded_at" to FieldValue.serverTimestamp,
+                        "responded_by" to approverId,
+                    )
+                )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun rejectGroupJoinRequest(
+        groupId: String,
+        requesterId: String,
+        approverId: String,
+    ): Result<Unit> {
+        return try {
+            firestore.collection(COLLECTION_GROUPS)
+                .document(groupId)
+                .collection("join_requests")
+                .document(requesterId)
+                .update(
+                    mapOf(
+                        "status" to "REJECTED",
+                        "responded_at" to FieldValue.serverTimestamp,
+                        "responded_by" to approverId,
+                    )
+                )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    actual fun observeMyGroupJoinRequest(
+        groupId: String,
+        userId: String,
+    ): Flow<GroupJoinRequest?> = flow {
+        firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("join_requests")
+            .document(userId)
+            .snapshots
+            .collect { snapshot ->
+                if (!snapshot.exists) {
+                    emit(null)
+                } else {
+                    emit(parseGroupJoinRequest(snapshot.id, snapshot::get))
+                }
+            }
+    }
+
+    actual fun observePendingGroupJoinRequests(groupId: String): Flow<List<GroupJoinRequest>> = flow {
+        firestore.collection(COLLECTION_GROUPS)
+            .document(groupId)
+            .collection("join_requests")
+            .where { "status" equalTo "PENDING" }
+            .orderBy("requested_at")
+            .snapshots
+            .collect { snap ->
+                val items = snap.documents.mapNotNull { doc ->
+                    parseGroupJoinRequest(doc.id, doc::get)
+                }
+                emit(items)
+            }
+    }
+
+    private fun parseGroupJoinRequest(
+        id: String,
+        getter: (String) -> Any?,
+    ): GroupJoinRequest? {
+        return try {
+            @Suppress("UNCHECKED_CAST")
+            val requestedAtTs = getter("requested_at") as? Timestamp
+            @Suppress("UNCHECKED_CAST")
+            val respondedAtTs = getter("responded_at") as? Timestamp
+            GroupJoinRequest(
+                id = id,
+                userId = (getter("user_id") as? String) ?: id,
+                userName = (getter("user_name") as? String) ?: "",
+                userPhoto = getter("user_photo") as? String,
+                status = GroupJoinRequestStatus.fromString(getter("status") as? String),
+                requestedAt = requestedAtTs?.let { it.seconds * 1000L + it.nanoseconds / 1_000_000L },
+                respondedAt = respondedAtTs?.let { it.seconds * 1000L + it.nanoseconds / 1_000_000L },
+                respondedBy = getter("responded_by") as? String,
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     // ========== MÉTODOS AUXILIARES DE GRUPO ==========
 
     suspend fun getMyRoleInGroup(groupId: String, userId: String): Result<String?> {
