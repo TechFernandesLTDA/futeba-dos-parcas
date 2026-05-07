@@ -1,0 +1,66 @@
+# XcodeGen spec — gera iosApp.xcodeproj a partir de YAML versionado
+# Uso: cd iosApp && xcodegen generate
+#
+# Requisitos prévios:
+# 1. Build do shared framework: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+# 2. CocoaPods: pod install (usa Podfile)
+# 3. Abrir iosApp.xcworkspace (gerado por pod install)
+
+name: iosApp
+options:
+  bundleIdPrefix: com.futebadosparcas
+  deploymentTarget:
+    iOS: "15.0"
+  xcodeVersion: "15.0"
+  developmentLanguage: pt-BR
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    ENABLE_BITCODE: NO
+    IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+    DEVELOPMENT_TEAM: "" # Configure no Xcode
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: iosApp
+        excludes:
+          - "**/*.md"
+    resources:
+      - path: iosApp/Info.plist
+        type: file
+    dependencies:
+      - framework: ../shared/build/bin/iosSimulatorArm64/debugFramework/shared.framework
+        embed: true
+        codeSign: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.futebadosparcas
+        PRODUCT_NAME: iosApp
+        INFOPLIST_FILE: iosApp/Info.plist
+        FRAMEWORK_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(SRCROOT)/../shared/build/bin/iosArm64/debugFramework"
+          - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework"
+        OTHER_LDFLAGS:
+          - "$(inherited)"
+          - "-framework"
+          - "shared"
+        SWIFT_OBJC_BRIDGING_HEADER: ""
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    info:
+      path: iosApp/Info.plist
+    preBuildScripts:
+      - script: |
+          # Build shared framework antes de compilar iOS
+          cd "$SRCROOT/.."
+          ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+        name: "Build Shared Framework"
+        outputFiles:
+          - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework/shared.framework"

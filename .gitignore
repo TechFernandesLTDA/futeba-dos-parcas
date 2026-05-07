@@ -120,3 +120,14 @@ functions/lib/
 
 # Claude worktrees agent cache
 .claude/worktrees/
+
+# iOS — gerados via XcodeGen + CocoaPods
+iosApp/iosApp.xcodeproj/
+iosApp/iosApp.xcworkspace/
+iosApp/Pods/
+iosApp/Podfile.lock
+iosApp/build/
+iosApp/.build/
+iosApp/DerivedData/
+*.xcuserdatad/
+xcuserdata/

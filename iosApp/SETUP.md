@@ -1,36 +1,65 @@
 # Setup do Projeto iOS
 
-## Passo 1: Criar Projeto no Xcode
+> **Status (2026-05-07):** smoke test funcional via `xcodebuild`. Spec do projeto Xcode é versionado em `project.yml` (XcodeGen). Pods são instalados via CocoaPods (`Podfile`).
 
-1. Abrir Xcode
-2. File → New → Project
-3. Selecionar "App" (iOS)
-4. Product Name: `iosApp`
-5. Organization Identifier: `com.futebadosparcas`
-6. Interface: SwiftUI
-7. Language: Swift
-8. Salvar em: `FutebaDosParcas/iosApp/`
+## Quick start (smoke test)
 
-## Passo 2: Configurar Targets
+```bash
+# 1. Instalar XcodeGen (uma vez)
+brew install xcodegen
 
-### Build Settings:
-- iOS Deployment Target: 15.0
-- Swift Language Version: 5.9
-- Enable Bitcode: No
+# 2. Build shared framework KMP
+cd /path/to/futeba-dos-parcas
+./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
 
-### Framework Search Paths:
-Adicionar em Build Settings → Framework Search Paths:
+# 3. Gerar .xcodeproj a partir do project.yml
+cd iosApp
+xcodegen generate
+
+# 4. Instalar Pods (locale fix necessário com Ruby 4.x)
+LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install
+
+# 5. Build via CLI (smoke test)
+xcodebuild -workspace iosApp.xcworkspace -scheme iosApp \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -configuration Debug build \
+  CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+# 6. Ou abrir no Xcode
+open iosApp.xcworkspace
 ```
-$(SRCROOT)/../shared/build/bin/iosArm64/debugFramework
-$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework
+
+## Estrutura
+
+```
+iosApp/
+├── project.yml                # XcodeGen spec (versionado)
+├── Podfile                    # CocoaPods deps (versionado)
+├── build_shared.sh            # Helper para build do KMP framework
+├── iosApp/                    # Sources Swift
+│   ├── FutebaApp.swift        # @main entry
+│   ├── ContentView.swift      # Smoke screen (placeholder)
+│   ├── AppDelegate.swift
+│   ├── Info.plist
+│   ├── Firebase/
+│   ├── Services/
+│   └── Assets.xcassets
+├── iosApp.xcodeproj/          # gerado por xcodegen (gitignored)
+├── iosApp.xcworkspace/        # gerado por pod install (gitignored)
+└── Pods/                      # gerado por pod install (gitignored)
 ```
 
-### Other Linker Flags:
-```
--framework shared
-```
+## XcodeGen + CocoaPods
 
-## Passo 3: Capabilities
+`project.yml` define configurações Xcode em YAML:
+- Bundle ID, deployment target, Swift version
+- Dependências de framework (`shared.framework` do KMP)
+- Build settings (FRAMEWORK_SEARCH_PATHS, OTHER_LDFLAGS)
+- preBuildScripts: roda `:shared:linkDebugFrameworkIosSimulatorArm64` antes de compilar
+
+Atualize `project.yml` em vez do `.xcodeproj` (que é gerado).
+
+## Capabilities (configurar no Xcode)
 
 Ativar em Signing & Capabilities:
 - Push Notifications
@@ -38,180 +67,34 @@ Ativar em Signing & Capabilities:
 - Background Modes → Remote notifications
 - Location → When In Use
 
-## Passo 4: Info.plist
+## Info.plist (já configurado)
 
-Adicionar chaves:
-```xml
-<key>NSLocationWhenInUseUsageDescription</key>
-<string>Precisamos da sua localização para validar check-in nos jogos</string>
+Chaves principais:
+- `NSLocationWhenInUseUsageDescription` — check-in nos jogos
+- `NSCameraUsageDescription` — fotos
+- `NSPhotoLibraryUsageDescription` — perfil
 
-<key>NSCameraUsageDescription</key>
-<string>Tire fotos para compartilhar momentos das peladas</string>
+## Status atual (2026-05-07)
 
-<key>NSPhotoLibraryUsageDescription</key>
-<string>Escolha fotos para seu perfil e jogos</string>
+✅ **Frame compila e linka contra `shared` KMP framework**
+✅ **xcodebuild simulator build succeeded**
+✅ **Pods integrados** (Firebase, GoogleSignIn)
 
-<key>UIApplicationSceneManifest</key>
-<dict>
-    <key>UIApplicationSupportsMultipleScenes</key>
-    <true/>
-</dict>
-```
-
-## Passo 5: Instalar CocoaPods
-
-```bash
-cd iosApp
-pod install
-```
-
-## Passo 6: Build Shared Framework
-
-```bash
-cd ..
-./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
-```
-
-## Passo 7: Abrir Workspace
-
-```bash
-open iosApp.xcworkspace
-```
+⏳ **Pendente** (Phase 3 CMP):
+- `composeApp/MainViewController` (UI compartilhada via Compose Multiplatform)
+- ContentView atual é apenas placeholder smoke test (usa `Platform()` do shared)
+- Configurar signing team para device builds e TestFlight
 
 ## Troubleshooting
 
-### Framework not found
-Se o Xcode não encontrar o framework `shared`:
-1. Verifique se o framework foi compilado: `./iosApp/build_shared.sh`
-2. Limpe o build: Product → Clean Build Folder
-3. Rebuild: ⌘B
+**Erro Ruby/CocoaPods Unicode**: Ruby 4.x tem bug com `unicode_normalize`. Workaround: rodar `pod install` com `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`.
 
-### Simulator issues
-Se houver problemas com o simulador:
-- Certifique-se de que o framework correto está sendo usado (Arm64 para M1/M2, x86_64 para Intel)
-- Execute: `./gradlew :shared:linkDebugFrameworkIosSimulatorArm64` (M1/M2) ou `./gradlew :shared:linkDebugFrameworkIosX64` (Intel)
+**`module 'ComposeApp' not found`**: composeApp ainda não tem MainViewController iOS. ContentView placeholder atual usa apenas `shared`. Habilitar quando Phase 3 CMP destrava.
 
-### CocoaPods issues
-Se o `pod install` falhar:
-```bash
-pod repo update
-pod install --repo-update
-```
+**Framework search path warning**: build pra Simulator gera só `iosSimulatorArm64`. Pra device, rodar `./gradlew :shared:linkDebugFrameworkIosArm64`.
 
----
+## Próximos passos
 
-## Phone+CPF Verification Setup (Fase 4 — #447)
-
-Os arquivos abaixo implementam o fluxo de verificação anti-bot iOS:
-
-- `Utils/CpfValidator.swift` — algoritmo CPF mod-11 (espelha shared KMP)
-- `Services/VerificationService.swift` — wrapper das callables `verifyCpf` + `setUserVerified`
-- `ViewModels/PhoneVerificationViewModel.swift` — Firebase PhoneAuthProvider link
-- `ViewModels/CpfVerificationViewModel.swift` — submit CPF + complete flow
-- `Views/PhoneVerificationView.swift` — UI etapa 1/2 (SMS OTP)
-- `Views/CpfVerificationView.swift` — UI etapa 2/2 (CPF input + LGPD panel)
-- `Views/VerificationFlowView.swift` — coordinator (auto-skip phone se já linked)
-
-### APNs Setup (necessário pra Phone Auth)
-
-O Firebase Phone Auth no iOS requer APNs configurado pra receber silent push tokens (substituem o reCAPTCHA usado em Android/Web).
-
-#### Passo APNs 1: Apple Developer Account
-
-1. Acesse https://developer.apple.com/account
-2. **Certificates, IDs & Profiles → Keys → "+" novo key**
-3. Habilite **Apple Push Notifications service (APNs)**
-4. Download o `.p8` file (guarde — só pode baixar 1x)
-5. Anote o **Key ID** e o **Team ID** (mostrados no portal)
-
-#### Passo APNs 2: Firebase Console
-
-1. https://console.firebase.google.com → projeto `futebadosparcas`
-2. **Project Settings → Cloud Messaging tab**
-3. Em iOS app config, **Upload APNs auth key**:
-   - Key file: `.p8` baixado
-   - Key ID: copiado do Apple
-   - Team ID: copiado do Apple
-
-#### Passo APNs 3: AppDelegate
-
-Adicionar em `AppDelegate.swift`:
-
-```swift
-import FirebaseAuth
-import UIKit
-import UserNotifications
-
-// MARK: APNs
-func application(_ application: UIApplication,
-                 didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-    Auth.auth().setAPNSToken(deviceToken, type: .unknown)
-}
-
-func application(_ application: UIApplication,
-                 didReceiveRemoteNotification notification: [AnyHashable: Any],
-                 fetchCompletionHandler completionHandler:
-                    @escaping (UIBackgroundFetchResult) -> Void) {
-    if Auth.auth().canHandleNotification(notification) {
-        completionHandler(.noData)
-        return
-    }
-    completionHandler(.newData)
-}
-
-// Em didFinishLaunchingWithOptions:
-UIApplication.shared.registerForRemoteNotifications()
-```
-
-#### Passo APNs 4: Capabilities
-
-Em **Signing & Capabilities** do target iosApp:
-- Push Notifications ✅ (já documentado em Passo 3)
-- Background Modes → **Remote notifications** ✅
-
-#### Verificação
-
-Após setup, fazer login + tentar `Auth.auth().settings.isAppVerificationDisabledForTesting = false` (default). Se SMS chega → APNs OK. Se erro `auth/missing-app-credentials` → APNs não configurado.
-
-#### Modo Test
-
-Pra desenvolvimento sem APNs:
-```swift
-#if DEBUG
-Auth.auth().settings?.isAppVerificationDisabledForTesting = true
-#endif
-```
-
-E adicionar números de teste em **Firebase Console → Authentication → Sign-in method → Phone → Phone numbers for testing**.
-
-### Integração no app
-
-Em `MainTabView` ou `ContentView`, adicionar gate de onboarding:
-
-```swift
-struct RootView: View {
-    @State private var verified: Bool = false
-    @State private var checking: Bool = true
-
-    var body: some View {
-        if checking {
-            ProgressView().task { await checkVerified() }
-        } else if !verified {
-            VerificationFlowView(onCompleted: { verified = true })
-        } else {
-            MainTabView()
-        }
-    }
-
-    private func checkVerified() async {
-        guard let user = Auth.auth().currentUser else {
-            verified = true  // sem auth = AuthView mostra; não bloqueia onboarding
-            checking = false
-            return
-        }
-        let token = try? await user.getIDTokenResult(forcingRefresh: false)
-        verified = token?.claims["verified"] as? Bool == true
-        checking = false
-    }
-}
-```
+1. **Configurar signing team** no Xcode (Signing & Capabilities)
+2. **Implementar Phase 3 CMP**: composeApp/iosMain com MainViewController
+3. **TestFlight**: archive + upload via Xcode Organizer ou fastlane
