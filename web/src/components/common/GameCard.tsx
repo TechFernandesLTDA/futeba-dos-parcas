@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   Box,
   Card,
@@ -9,6 +9,10 @@ import {
   LinearProgress,
   Skeleton,
   Button,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
   useTheme,
   alpha,
 } from '@mui/material';
@@ -18,9 +22,14 @@ import {
   People as PeopleIcon,
   SportsSoccer as SoccerIcon,
   NavigateNext as NextIcon,
+  Share as ShareIcon,
+  Link as LinkIcon,
+  Cancel as CancelIcon,
 } from '@mui/icons-material';
 import { Game, STATUS_CONFIG, FIELD_TYPE_LABELS, getStatusChipColors } from '../../types/game';
 import { formatGameDate } from '../../utils/dateFormatters';
+import { InteractiveCard } from './InteractiveCard';
+import { useContextMenu, ContextMenuItem } from '../../hooks/useContextMenu';
 
 interface GameCardProps {
   game: Game;
@@ -29,6 +38,11 @@ interface GameCardProps {
   onCancel?: () => void;
   isConfirmed?: boolean;
   showActions?: boolean;
+  // Props para menu de contexto
+  currentUserId?: string;
+  onCancelGame?: () => void;
+  onShare?: () => void;
+  onCopyLink?: () => void;
 }
 
 export const GameCard: React.FC<GameCardProps> = React.memo(({
@@ -38,156 +52,213 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
   onCancel,
   isConfirmed,
   showActions = false,
+  currentUserId,
+  onCancelGame,
+  onShare,
+  onCopyLink,
 }) => {
   const theme = useTheme();
+  const cardRef = useRef<HTMLDivElement>(null);
   const statusConfig = getStatusChipColors(theme, game.status);
   const progress = (game.playersCount / game.maxPlayers) * 100;
   const isFull = game.playersCount >= game.maxPlayers;
 
+  // Dono do jogo pode cancelar; nao-donos nao veem a opcao
+  const isGameOwner = Boolean(currentUserId && game.ownerId === currentUserId);
+  const canCancelViaMenu =
+    isGameOwner &&
+    Boolean(onCancelGame) &&
+    (game.status === 'SCHEDULED' || game.status === 'CONFIRMED');
+
+  const contextMenuItems: ContextMenuItem[] = [
+    {
+      id: 'share',
+      label: 'Compartilhar',
+      icon: <ShareIcon fontSize="small" />,
+      onClick: onShare ?? (() => {}),
+      hidden: !onShare,
+    },
+    {
+      id: 'copy-link',
+      label: 'Copiar link',
+      icon: <LinkIcon fontSize="small" />,
+      onClick: onCopyLink ?? (() => {}),
+      hidden: !onCopyLink,
+    },
+    {
+      id: 'cancel-game',
+      label: 'Cancelar jogo',
+      icon: <CancelIcon fontSize="small" color="error" />,
+      onClick: onCancelGame ?? (() => {}),
+      hidden: !canCancelViaMenu,
+      color: 'error',
+    },
+  ];
+
+  const menu = useContextMenu(contextMenuItems);
+
   return (
-    <Card
-      onClick={onClick}
-      onKeyDown={onClick ? (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick();
-        }
-      } : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      role={onClick ? 'button' : undefined}
-      aria-label={onClick ? `Jogo em ${game.locationName} às ${game.time}` : undefined}
-      sx={{
-        mb: 2,
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.2s ease',
-        border: `1px solid ${theme.palette.divider}`,
-        '&:hover': onClick ? {
-          boxShadow: theme.shadows[4],
-          transform: 'translateY(-2px)',
-        } : {},
-        '&:focus-visible': onClick ? {
-          outline: `2px solid ${theme.palette.primary.main}`,
-          outlineOffset: 2,
-        } : {},
-      }}
-    >
-      <CardContent sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-          <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <Chip
-                label={statusConfig.label}
-                size="small"
-                sx={{
-                  backgroundColor: statusConfig.bgColor,
-                  color: statusConfig.color,
-                  fontWeight: 600,
-                  fontSize: '0.7rem',
-                }}
-              />
-              <Chip
-                label={FIELD_TYPE_LABELS[game.fieldType] || game.fieldType}
-                size="small"
-                variant="outlined"
-                sx={{ fontSize: '0.7rem' }}
-              />
-            </Box>
-            <Typography variant="subtitle1" fontWeight={600}>
-              {game.locationName}
-            </Typography>
-          </Box>
-          {onClick && <NextIcon color="action" />}
-        </Box>
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
-            <TimeIcon fontSize="small" />
-            <Typography variant="body2">
-              {formatGameDate(game.date)} às {game.time}
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
-            <LocationIcon fontSize="small" />
-            <Typography variant="body2" noWrap sx={{ flex: 1 }}>
-              {game.locationAddress}
-            </Typography>
-          </Box>
-        </Box>
-
-        <Box sx={{ mt: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <PeopleIcon fontSize="small" color={isFull ? 'error' : 'primary'} />
-              <Typography
-                variant="body2"
-                fontWeight={500}
-                color={isFull ? 'error' : 'text.primary'}
-              >
-                {game.playersCount}/{game.maxPlayers} jogadores
+    <>
+      <InteractiveCard
+        ref={cardRef}
+        onClick={onClick}
+        actionAreaLabel={`Jogo em ${game.locationName} as ${game.time}`}
+        onContextMenu={menu.visibleItems.length > 0 ? menu.handleContextMenu : undefined}
+        onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+          menu.handleKeyboardContextMenu(e, cardRef.current);
+        }}
+        sx={{
+          mb: 2,
+          border: `1px solid ${theme.palette.divider}`,
+          '&:focus-visible': onClick
+            ? { outline: `2px solid ${theme.palette.primary.main}`, outlineOffset: 2 }
+            : {},
+        }}
+      >
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <Chip
+                  label={statusConfig.label}
+                  size="small"
+                  sx={{
+                    backgroundColor: statusConfig.bgColor,
+                    color: statusConfig.color,
+                    fontWeight: 600,
+                    fontSize: '0.7rem',
+                  }}
+                />
+                <Chip
+                  label={FIELD_TYPE_LABELS[game.fieldType] || game.fieldType}
+                  size="small"
+                  variant="outlined"
+                  sx={{ fontSize: '0.7rem' }}
+                />
+              </Box>
+              <Typography variant="subtitle1" fontWeight={600}>
+                {game.locationName}
               </Typography>
             </Box>
-            {game.dailyPrice > 0 && (
-              <Typography variant="body2" fontWeight={600} color="primary">
-                R$ {game.dailyPrice.toFixed(2)}
-              </Typography>
-            )}
+            {onClick && <NextIcon color="action" />}
           </Box>
 
-          <LinearProgress
-            variant="determinate"
-            value={progress}
-            sx={{
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: alpha(theme.palette.primary.main, 0.1),
-              '& .MuiLinearProgress-bar': {
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
+              <TimeIcon fontSize="small" />
+              <Typography variant="body2">
+                {formatGameDate(game.date)} as {game.time}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
+              <LocationIcon fontSize="small" />
+              <Typography variant="body2" noWrap sx={{ flex: 1 }}>
+                {game.locationAddress}
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ mt: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <PeopleIcon fontSize="small" color={isFull ? 'error' : 'primary'} />
+                <Typography
+                  variant="body2"
+                  fontWeight={500}
+                  color={isFull ? 'error' : 'text.primary'}
+                >
+                  {game.playersCount}/{game.maxPlayers} jogadores
+                </Typography>
+              </Box>
+              {game.dailyPrice > 0 && (
+                <Typography variant="body2" fontWeight={600} color="primary">
+                  R$ {game.dailyPrice.toFixed(2)}
+                </Typography>
+              )}
+            </Box>
+
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              sx={{
+                height: 6,
                 borderRadius: 3,
-                backgroundColor: isFull ? theme.palette.error.main : theme.palette.primary.main,
-              },
-            }}
-          />
-        </Box>
-
-        {game.groupName && (
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            {game.groupName}
-          </Typography>
-        )}
-
-        {showActions && game.status === 'SCHEDULED' && (
-          <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-            {!isConfirmed ? (
-              <Button
-                variant="contained"
-                fullWidth
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onConfirm?.();
-                }}
-                disabled={isFull}
-              >
-                {isFull ? 'Lotado' : 'Confirmar'}
-              </Button>
-            ) : (
-              <Button
-                variant="outlined"
-                color="error"
-                fullWidth
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCancel?.();
-                }}
-              >
-                Cancelar
-              </Button>
-            )}
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                '& .MuiLinearProgress-bar': {
+                  borderRadius: 3,
+                  backgroundColor: isFull ? theme.palette.error.main : theme.palette.primary.main,
+                },
+              }}
+            />
           </Box>
-        )}
-      </CardContent>
-    </Card>
+
+          {game.groupName && (
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+              {game.groupName}
+            </Typography>
+          )}
+
+          {showActions && game.status === 'SCHEDULED' && (
+            <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+              {!isConfirmed ? (
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onConfirm?.();
+                  }}
+                  disabled={isFull}
+                >
+                  {isFull ? 'Lotado' : 'Confirmar'}
+                </Button>
+              ) : (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  fullWidth
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCancel?.();
+                  }}
+                >
+                  Cancelar
+                </Button>
+              )}
+            </Box>
+          )}
+        </CardContent>
+      </InteractiveCard>
+
+      {menu.visibleItems.length > 0 && (
+        <Menu
+          open={Boolean(menu.anchorPosition)}
+          onClose={menu.handleClose}
+          anchorReference="anchorPosition"
+          anchorPosition={menu.anchorPosition ?? undefined}
+          aria-label="Menu de acoes do jogo"
+        >
+          {menu.visibleItems.map((item: ContextMenuItem) => (
+            <MenuItem
+              key={item.id}
+              onClick={() => menu.handleItemClick(item)}
+              disabled={item.disabled}
+              sx={item.color === 'error' ? { color: 'error.main' } : undefined}
+            >
+              {item.icon && (
+                <ListItemIcon sx={item.color === 'error' ? { color: 'error.main' } : undefined}>
+                  {item.icon}
+                </ListItemIcon>
+              )}
+              <ListItemText>{item.label}</ListItemText>
+            </MenuItem>
+          ))}
+        </Menu>
+      )}
+    </>
   );
 });
 
@@ -317,7 +388,7 @@ export const ShimmerLoading: React.FC<{ count?: number; type?: 'card' | 'list' }
   type = 'card',
 }) => {
   return (
-    <Box role="status" aria-label="Carregando conteúdo">
+    <Box role="status" aria-label="Carregando conteudo">
       {Array.from({ length: count }).map((_, index) => (
         <Box key={index}>
           {type === 'card' ? <GameCardSkeleton /> : <Skeleton variant="text" height={60} />}
@@ -371,7 +442,7 @@ export const LoadingState: React.FC<{ shimmerCount?: number; itemType?: string }
   itemType: _itemType = 'CARD',
 }) => {
   return (
-    <Box role="status" aria-label="Carregando conteúdo">
+    <Box role="status" aria-label="Carregando conteudo">
       {Array.from({ length: shimmerCount }).map((_, index) => (
         <Card key={index} sx={{ mb: 1 }}>
           <CardContent>
