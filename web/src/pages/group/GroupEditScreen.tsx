@@ -12,13 +12,12 @@ import {
   Switch,
   Alert,
   CircularProgress,
-  IconButton,
-  useTheme,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   Save as SaveIcon,
 } from '@mui/icons-material';
+import { FormScaffold } from '../../components/layout';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useGroupDetail } from '../../hooks/useGroups';
@@ -34,8 +33,8 @@ export const GroupEditScreen: React.FC = () => {
   useDocumentTitle('Editar Grupo');
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
-  const theme = useTheme();
   const { firebaseUser, user } = useAuth();
+  const closeDestination = groupId ? `/group/${groupId}` : '/groups';
 
   const { group, members, loading, error } = useGroupDetail(groupId || null);
   const { showSuccess, showError } = useToast();
@@ -121,7 +120,7 @@ export const GroupEditScreen: React.FC = () => {
 
       logger.info('Grupo atualizado com sucesso', { groupId });
       showSuccess('Grupo atualizado com sucesso!');
-      navigate(-1);
+      navigate(closeDestination);
     } catch (err) {
       logger.error('Erro ao atualizar grupo:', err);
       showError('Erro ao atualizar grupo. Tente novamente.');
@@ -144,7 +143,7 @@ export const GroupEditScreen: React.FC = () => {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Alert severity="error">{error || 'Grupo não encontrado'}</Alert>
-        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
+        <Button startIcon={<BackIcon />} onClick={() => navigate(closeDestination)} sx={{ mt: 2 }}>
           Voltar
         </Button>
       </Container>
@@ -158,36 +157,29 @@ export const GroupEditScreen: React.FC = () => {
         <Alert severity="warning">
           Apenas o dono ou administradores podem editar o grupo.
         </Alert>
-        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
+        <Button startIcon={<BackIcon />} onClick={() => navigate(closeDestination)} sx={{ mt: 2 }}>
           Voltar
         </Button>
       </Container>
     );
   }
 
-  return (
-    <Box sx={{ pb: 4 }}>
-      {/* Cabeçalho */}
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Editar Grupo
-          </Typography>
-        </Box>
-      </Box>
+  const isDirty =
+    initialized &&
+    group !== null &&
+    (formData.name !== (group.name || '') ||
+      formData.description !== (group.description || '') ||
+      formData.isPublic !== (group.isPublic || false));
 
-      <Container maxWidth="sm" sx={{ py: 3 }}>
+  return (
+    <FormScaffold
+      title="Editar Grupo"
+      closeDestination={closeDestination}
+      closeVariant="X"
+      isDirty={isDirty}
+      loading={saving}
+    >
+      <Container maxWidth="sm" disableGutters sx={{ py: 3 }}>
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -237,7 +229,7 @@ export const GroupEditScreen: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                 <Button
                   variant="outlined"
-                  onClick={() => navigate(-1)}
+                  onClick={() => navigate(closeDestination)}
                   fullWidth
                   disabled={saving}
                 >
@@ -258,6 +250,6 @@ export const GroupEditScreen: React.FC = () => {
           </CardContent>
         </Card>
       </Container>
-    </Box>
+    </FormScaffold>
   );
 };

@@ -9,6 +9,7 @@ import { ConnectionStatus, useOnlineStatus } from './components/common/Connectio
 import { SkipNav } from './components/common/SkipNav';
 import { LoadingScreen } from './components/common/LoadingScreen';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
+import { AppLayout } from './components/layout';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -231,8 +232,16 @@ function AppRoutes() {
 
       {/* Games */}
       <Route path="/games" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GamesScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/game/:gameId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GameDetailScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/game/create" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><CreateGameScreen /></Suspense></ProtectedRoute>} />
+      {/* Rotas detail/form com AppLayout (sidebar global desktop) */}
+      <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+        <Route path="/game/:gameId" element={<Suspense fallback={<RouteFallback />}><GameDetailScreen /></Suspense>} />
+        <Route path="/game/create" element={<Suspense fallback={<RouteFallback />}><CreateGameScreen /></Suspense>} />
+        <Route path="/group/:groupId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
+        <Route path="/group/create" element={<Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense>} />
+        <Route path="/group/:groupId/edit" element={<Suspense fallback={<RouteFallback />}><GroupEditScreen /></Suspense>} />
+        <Route path="/profile/edit" element={<Suspense fallback={<RouteFallback />}><EditProfileScreen /></Suspense>} />
+        <Route path="/group/:groupId/invite" element={<Suspense fallback={<RouteFallback />}><InvitePlayersScreen /></Suspense>} />
+      </Route>
       <Route path="/game/:gameId/live" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveGameScreen /></Suspense></ProtectedRoute>} />
       <Route path="/game/:gameId/vote" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><MVPVoteScreen /></Suspense></ProtectedRoute>} />
       <Route path="/game/:gameId/results" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><VoteResultScreen /></Suspense></ProtectedRoute>} />
@@ -249,12 +258,8 @@ function AppRoutes() {
       <Route path="/groups" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupsScreen /></Suspense></ProtectedRoute>} />
       {/* Issue #517 Phase 1: discovery de grupos publicos */}
       <Route path="/groups/discover" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><DiscoverGroupsScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/group/:groupId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/group/create" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/group/:groupId/edit" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupEditScreen /></Suspense></ProtectedRoute>} />
       <Route path="/group/:groupId/settings" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupSettingsScreen /></Suspense></ProtectedRoute>} />
       <Route path="/group/:groupId/cashbox" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><CashboxScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/group/:groupId/invite" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><InvitePlayersScreen /></Suspense></ProtectedRoute>} />
       <Route path="/group/:groupId/players" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><PlayersScreen /></Suspense></ProtectedRoute>} />
       {/* Issue #514: aceitar convite via link compartilhado /join/:code */}
       <Route path="/join/:code" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><JoinByInviteScreen /></Suspense></ProtectedRoute>} />
@@ -262,7 +267,6 @@ function AppRoutes() {
       {/* Profile */}
       <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense></ProtectedRoute>} />
       <Route path="/profile/:userId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/profile/edit" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><EditProfileScreen /></Suspense></ProtectedRoute>} />
       <Route path="/level-journey" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LevelJourneyScreen /></Suspense></ProtectedRoute>} />
       <Route path="/level-journey/:userId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LevelJourneyScreen /></Suspense></ProtectedRoute>} />
 

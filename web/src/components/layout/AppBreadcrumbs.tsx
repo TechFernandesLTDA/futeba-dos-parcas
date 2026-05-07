@@ -1,0 +1,64 @@
+import { Breadcrumbs, Link, Typography, Box } from '@mui/material';
+import { NavigateNext } from '@mui/icons-material';
+import { Link as RouterLink } from 'react-router-dom';
+import { Fragment } from 'react';
+
+export interface BreadcrumbItem {
+  label: string;
+  to?: string;
+}
+
+interface AppBreadcrumbsProps {
+  items: BreadcrumbItem[];
+}
+
+/**
+ * Breadcrumb hierárquico para telas de detalhe.
+ * Renderiza apenas em md+. Em mobile, ArrowBack do header já é suficiente.
+ */
+export function AppBreadcrumbs({ items }: AppBreadcrumbsProps) {
+  if (items.length === 0) return null;
+
+  return (
+    <Box
+      sx={{
+        display: { xs: 'none', md: 'block' },
+        px: { md: 3 },
+        py: 1,
+      }}
+    >
+      <Breadcrumbs
+        separator={<NavigateNext fontSize="small" />}
+        aria-label="Breadcrumb"
+      >
+        {items.map((item, idx) => {
+          const isLast = idx === items.length - 1;
+          if (isLast || !item.to) {
+            return (
+              <Typography
+                key={`${item.label}-${idx}`}
+                color={isLast ? 'text.primary' : 'text.secondary'}
+                sx={{ fontSize: '0.875rem' }}
+              >
+                {item.label}
+              </Typography>
+            );
+          }
+          return (
+            <Fragment key={`${item.label}-${idx}`}>
+              <Link
+                component={RouterLink}
+                to={item.to}
+                underline="hover"
+                color="inherit"
+                sx={{ fontSize: '0.875rem' }}
+              >
+                {item.label}
+              </Link>
+            </Fragment>
+          );
+        })}
+      </Breadcrumbs>
+    </Box>
+  );
+}

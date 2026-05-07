@@ -38,6 +38,7 @@ import {
   Navigation as NavIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
+import { AppBreadcrumbs } from '../../components/layout';
 import { useGameDetail, useConfirmPresence, useUpdateGameStatus } from '../../hooks/useGames';
 import { softDeleteGame } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
@@ -221,6 +222,14 @@ export const GameDetailScreen: React.FC = () => {
           )}
         </Box>
       </Box>
+
+      <AppBreadcrumbs
+        items={[
+          { label: 'Jogos', to: '/?tab=1' },
+          ...(game.groupId ? [{ label: game.groupName ?? 'Grupo', to: `/group/${game.groupId}` }] : []),
+          { label: game.locationName || `Jogo ${game.date}` },
+        ]}
+      />
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Card sx={{ mb: 2 }}>
