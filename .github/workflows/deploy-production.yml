@@ -97,7 +97,10 @@ jobs:
           printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
 
       - name: Build Release AAB
-        run: ./gradlew bundleRelease
+        # --no-configuration-cache + --rerun-tasks forca leitura fresca do
+        # local.properties (config cache podia estar usando senha velha de
+        # tentativas anteriores que tinham bytes corrompidos).
+        run: ./gradlew bundleRelease --no-configuration-cache --rerun-tasks
 
       - name: Upload AAB to Play Store (Internal Testing)
         uses: r0adkll/upload-google-play@v1
