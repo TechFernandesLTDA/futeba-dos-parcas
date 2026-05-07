@@ -1,6 +1,7 @@
 package com.futebadosparcas.domain.repository
 
 import com.futebadosparcas.domain.model.Group
+import com.futebadosparcas.domain.model.GroupJoinRequest
 import com.futebadosparcas.domain.model.GroupMember
 import com.futebadosparcas.domain.model.GroupMemberRole
 import com.futebadosparcas.domain.model.UserGroup
@@ -200,4 +201,48 @@ interface GroupRepository {
      * Implementação deve retornar URL pública.
      */
     suspend fun uploadGroupPhoto(groupId: String, photoPath: String): Result<String>
+
+    // ========== DISCOVERY (Issue #517 Phase 1) ==========
+
+    /**
+     * Busca grupos públicos por nome ou descrição (case-insensitive).
+     * Retorna grupos `is_public = true` e `status = ACTIVE`.
+     * Cross-platform: Android, iOS e Web devem ter paridade.
+     */
+    suspend fun searchPublicGroups(query: String, limit: Int = 50): Result<List<Group>>
+
+    // ========== JOIN REQUESTS (Issue #517 Phase 2) ==========
+
+    /**
+     * Cria solicitação de entrada do usuário atual em grupo público.
+     * Status inicial PENDING. Owner/admin pode aprovar/rejeitar.
+     */
+    suspend fun createJoinRequest(groupId: String): Result<Unit>
+
+    /**
+     * Cancela a solicitação do usuário atual (delete do doc).
+     */
+    suspend fun cancelMyJoinRequest(groupId: String): Result<Unit>
+
+    /**
+     * Aprova solicitação (PENDING → APPROVED). Apenas owner/admin.
+     * Cloud Function `onJoinRequestApproved` cria member.
+     */
+    suspend fun approveJoinRequest(groupId: String, requesterId: String): Result<Unit>
+
+    /**
+     * Rejeita solicitação (PENDING → REJECTED). Apenas owner/admin.
+     */
+    suspend fun rejectJoinRequest(groupId: String, requesterId: String): Result<Unit>
+
+    /**
+     * Observa o request do usuário atual em um grupo.
+     * Emite null se não existe.
+     */
+    fun observeMyJoinRequest(groupId: String): Flow<GroupJoinRequest?>
+
+    /**
+     * Observa todos requests PENDING em um grupo (apenas owner/admin pode ler).
+     */
+    fun observePendingJoinRequests(groupId: String): Flow<List<GroupJoinRequest>>
 }
