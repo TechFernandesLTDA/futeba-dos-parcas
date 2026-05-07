@@ -534,8 +534,17 @@ Compose Multiplatform migration tracked in `specs/CMP_MULTIPLATFORM_MIGRATION.md
 
 **Repo**: `TechFernandesLTDA/futeba-dos-parcas`
 **Issues abertas**: 0
-**PRs abertos**: ~12 Dependabot (deps bumps)
+**PRs abertos**: 0 (sessão 2026-05-07 fechou tudo)
+**Dependabot alerts**: 0
 **Branches remotos**: ~64
+
+### Pipelines em produção (✅ todos verdes)
+
+- **deploy-production.yml** — build AAB + sign + upload Play Store Internal Testing (run 25473394288 ✅, 2026-05-07)
+- **Firestore rules deploy** — manual via worktree isolado
+- **Cloud Functions deploy** — `firebase deploy --only functions:<name>` em worktree
+- **Web hosting** — `npm run build && firebase deploy --only hosting`
+- **Issue #517 RESOLVIDA** — discovery + request-to-join full-stack (PRs #521, #523, #526)
 
 ### CI Known Behaviors
 
@@ -543,7 +552,8 @@ Compose Multiplatform migration tracked in `specs/CMP_MULTIPLATFORM_MIGRATION.md
 - **Notify Build Status**: Depende do KMP Framework - falha em cascata - **ignorar**
 - **CodeQL**: Apenas JavaScript/TypeScript analisado em macOS ARM64. Java/Kotlin desabilitado por incompat arquitetural do tracer (libtrace.dylib x86_64-only, JDK runner ARM64-only). Decisão registrada em `specs/DECISIONS.md` (2026-05-03)
 - **Build iOS App**: `skipping` em PRs que não tocam `:shared` - esperado
-- **Self-hosted runners (macOS)**: Pool no MacBook local roda jobs `macos-arm64` (KMP iOS, CodeQL JS/TS). Use skill `futeba-runner` para start/stop/scale. Squash-merge only no `master` (branch protection: 1 review + code owner)
+- **Self-hosted runners (macOS)**: Pool no MacBook local roda jobs `macos-arm64` (KMP iOS, CodeQL JS/TS, Play Store deploy). Use skill `futeba-runner` para start/stop/scale. Squash-merge only no `master` (branch protection: 1 review + code owner)
+- **Workflow shell injection** (corrigido em PRs #527, #530, #531, #533): NUNCA usar `echo '${{ secrets.X }}'` direto — usar env vars + `printf '%s' "$VAR"`. Skill `futeba-gh-secrets` documenta padrão.
 
 ### CI/CD Workflows (`.github/workflows/`)
 
@@ -636,6 +646,9 @@ Para comandos com output > 20 linhas (gradle builds, jest, gh api, git log, find
 |-------|----------------|
 | `/futeba-pr-flow` | Sempre que precisar persistir mudanças (branch + commit + PR + admin merge) |
 | `/futeba-deploy` | Deploy Firebase (Functions, Hosting, Rules, Storage, Remote Config) |
+| `/futeba-play-store` | **Deploy Android pro Play Store** (build + sign + upload Internal Testing) |
+| `/futeba-gh-secrets` | Setar GH Secrets corretamente (workarounds `$digit`, paths, JSON multi-line) |
+| `/futeba-fullstack-feature` | Pattern feature full-stack (rules + function + web + android) |
 | `/futeba-status` | Snapshot saúde projeto (CI, runners, RAM, hosting, PRs) |
 | `/futeba-ci-triage` | CI vermelho — diagnostica + propõe fix |
 | `/futeba-runner` | Self-hosted runners macOS (start/stop/scale) |
