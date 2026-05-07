@@ -1750,6 +1750,11 @@ export * from "./maintenance/keep-warm";
 export * from "./monitoring/collect-metrics";
 export * from "./storage/generate-thumbnails";
 
+// SPEC: feat-2026-05-08-consolidate-shareable-invites
+// Migra groups.invite_code (legacy) -> invites/ (canonical)
+export {migrateGroupsInviteCodeToInvites}
+  from "./migration/invites-migration";
+
 // ==========================================
 // PERF_001: CUSTOM CLAIMS & SECURITY
 // ==========================================
