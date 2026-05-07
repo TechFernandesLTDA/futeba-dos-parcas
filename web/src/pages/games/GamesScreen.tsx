@@ -8,6 +8,7 @@ import {
   Tabs,
   Tab,
   Fab,
+  Button,
   CircularProgress,
   useTheme,
 } from '@mui/material';
@@ -113,6 +114,14 @@ export const GamesScreen: React.FC = () => {
           >
             {refreshing ? <CircularProgress size={20} /> : <RefreshIcon />}
           </IconButton>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/game/create')}
+            sx={{ display: { xs: 'none', md: 'inline-flex' }, ml: 1 }}
+          >
+            Criar Jogo
+          </Button>
         </Box>
         <Tabs
           value={tabValue}
@@ -179,7 +188,7 @@ export const GamesScreen: React.FC = () => {
       <Fab
         color="primary"
         aria-label="Criar novo jogo"
-        sx={{ position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
+        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
         onClick={() => navigate('/game/create')}
       >
         <AddIcon />

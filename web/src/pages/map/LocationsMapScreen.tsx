@@ -15,6 +15,7 @@ import {
   useTheme,
   alpha,
   Fab,
+  Button,
   Grid,
 } from '@mui/material';
 import {
@@ -84,9 +85,17 @@ export const LocationsMapScreen: React.FC = () => {
           <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
             <BackIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
+          <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             Quadras Próximas
           </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/location/create')}
+            sx={{ display: { xs: 'none', md: 'inline-flex' } }}
+          >
+            Adicionar Local
+          </Button>
         </Box>
         <Box sx={{ px: 2, pb: 2 }}>
           <TextField
@@ -235,7 +244,7 @@ export const LocationsMapScreen: React.FC = () => {
 
       <Fab
         color="primary"
-        sx={{ position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
+        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
         onClick={() => navigate('/location/create')}
         aria-label="Adicionar local"
       >

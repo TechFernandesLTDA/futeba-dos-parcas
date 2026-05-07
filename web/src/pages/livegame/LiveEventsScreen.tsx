@@ -159,9 +159,17 @@ export const LiveEventsScreen: React.FC = () => {
           <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
             <BackIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
+          <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             Eventos do Jogo
           </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setDialogOpen(true)}
+            sx={{ display: { xs: 'none', md: 'inline-flex' } }}
+          >
+            Adicionar Evento
+          </Button>
         </Box>
       </Box>
 
@@ -211,7 +219,7 @@ export const LiveEventsScreen: React.FC = () => {
 
       <Fab
         color="primary"
-        sx={{ position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
+        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
         onClick={() => setDialogOpen(true)}
         aria-label="Adicionar evento"
       >

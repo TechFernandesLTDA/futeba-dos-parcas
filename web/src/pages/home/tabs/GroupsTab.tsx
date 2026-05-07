@@ -52,6 +52,27 @@ export function GroupsTab() {
     <Box sx={{ pb: 8 }}>
       {/* Barra de busca */}
       <Box sx={{ p: 2, pb: 0 }}>
+        {/* Header com título + Criar (md+) */}
+        <Box
+          sx={{
+            display: { xs: 'none', md: 'flex' },
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 1.5,
+          }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            Grupos
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => navigate('/group/create')}
+          >
+            Criar Grupo
+          </Button>
+        </Box>
+
         <TextField
           fullWidth
           size="small"
@@ -228,12 +249,13 @@ export function GroupsTab() {
         )}
       </Box>
 
-      {/* FAB */}
+      {/* FAB (xs/sm only) */}
       <Fab
         color="primary"
         aria-label="Criar novo grupo"
         onClick={() => navigate('/group/create')}
         sx={{
+          display: { xs: 'flex', md: 'none' },
           position: 'fixed',
           bottom: 80,
           right: { xs: 16, sm: 'calc(50% - 240px + 16px)' },
