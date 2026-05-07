@@ -1899,17 +1899,51 @@ actual class FirebaseDataSource actual constructor() {
         userPhoto: String?
     ): Result<String> {
         return try {
-            val snapshot = firestore.collection(COLLECTION_GROUPS)
-                .where { "invite_code" equalTo inviteCode }
-                .where { "status" equalTo "ACTIVE" }
-                .get()
+            // Sistema canonico: lookup primeiro em invites/ (codigos com TTL e tracking)
+            // Fallback: groups.invite_code (codes legados, sticky)
+            // SPEC: feat-2026-05-08-consolidate-shareable-invites.md
+            val normalized = inviteCode.uppercase()
 
-            if (snapshot.documents.isEmpty()) {
-                return Result.failure(Exception("Código de convite inválido"))
+            // 1. Tenta resolver via collection invites/
+            val resolvedGroupId: String? = run {
+                val invitesSnap = firestore.collection("invites")
+                    .where { "code" equalTo normalized }
+                    .where { "used" equalTo false }
+                    .limit(1)
+                    .get()
+
+                if (invitesSnap.documents.isEmpty()) return@run null
+                val invDoc = invitesSnap.documents[0]
+                val expiresAt = invDoc.get<Timestamp?>("expires_at")
+                val nowMs = Clock.System.now().toEpochMilliseconds()
+                if (expiresAt != null && expiresAt.seconds * 1000L < nowMs) return@run null
+                invDoc.get<String?>("group_id")
             }
 
-            val groupDoc = snapshot.documents[0]
-            val groupId = groupDoc.id
+            val groupId = if (resolvedGroupId != null) {
+                resolvedGroupId
+            } else {
+                // 2. Fallback: legacy invite_code field em groups/
+                val legacySnap = firestore.collection(COLLECTION_GROUPS)
+                    .where { "invite_code" equalTo normalized }
+                    .where { "status" equalTo "ACTIVE" }
+                    .limit(1)
+                    .get()
+
+                if (legacySnap.documents.isEmpty()) {
+                    return Result.failure(Exception("Código de convite inválido"))
+                }
+                legacySnap.documents[0].id
+            }
+
+            val groupDoc = firestore.collection(COLLECTION_GROUPS).document(groupId).get()
+            if (!groupDoc.exists) {
+                return Result.failure(Exception("Grupo não encontrado"))
+            }
+            val groupStatus = groupDoc.get<String?>("status") ?: "ACTIVE"
+            if (groupStatus != "ACTIVE") {
+                return Result.failure(Exception("Grupo não está mais ativo"))
+            }
             val groupName = groupDoc.get<String?>("name") ?: ""
             val groupPhoto = groupDoc.get<String?>("photo_url")
 
