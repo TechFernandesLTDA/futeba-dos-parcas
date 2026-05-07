@@ -84,6 +84,7 @@ const BadgesScreen = lazy(() => import('./pages/badges/BadgesScreen').then(m => 
 // Locations
 const LocationDetailScreen = lazy(() => import('./pages/locations/LocationDetailScreen').then(m => ({ default: m.LocationDetailScreen })));
 const ManageLocationsScreen = lazy(() => import('./pages/locations/ManageLocationsScreen').then(m => ({ default: m.ManageLocationsScreen })));
+const LocationFormScreen = lazy(() => import('./pages/locations/LocationFormScreen').then(m => ({ default: m.LocationFormScreen })));
 const FieldOwnerDashboardScreen = lazy(() => import('./pages/locations/FieldOwnerDashboardScreen').then(m => ({ default: m.FieldOwnerDashboardScreen })));
 
 // Map
@@ -305,7 +306,8 @@ function AppRoutes() {
         {/* Locations */}
         <Route path="/locations" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></FieldOwnerOrAdminRoute>} />
         <Route path="/location/:locationId" element={<Suspense fallback={<RouteFallback />}><LocationDetailScreen /></Suspense>} />
-        <Route path="/location/create" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></FieldOwnerOrAdminRoute>} />
+        <Route path="/location/create" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><LocationFormScreen /></Suspense></FieldOwnerOrAdminRoute>} />
+        <Route path="/location/:locationId/edit" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><LocationFormScreen /></Suspense></FieldOwnerOrAdminRoute>} />
         <Route path="/owner/dashboard" element={<FieldOwnerRoute><Suspense fallback={<RouteFallback />}><FieldOwnerDashboardScreen /></Suspense></FieldOwnerRoute>} />
         {/* Map */}
         <Route path="/map/games" element={<Suspense fallback={<RouteFallback />}><PublicGamesMapScreen /></Suspense>} />
