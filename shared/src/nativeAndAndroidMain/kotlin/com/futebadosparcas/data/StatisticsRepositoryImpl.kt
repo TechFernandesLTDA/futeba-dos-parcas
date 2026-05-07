@@ -79,7 +79,7 @@ class StatisticsRepositoryImpl(
                 totalDraws = currentStats.totalDraws + if (gameResult == GameResult.DRAW) 1 else 0,
                 mvpCount = currentStats.mvpCount + if (isBestPlayer) 1 else 0,
                 worstPlayerCount = currentStats.worstPlayerCount + if (isWorstPlayer) 1 else 0,
-                updatedAt = System.currentTimeMillis()
+                updatedAt = Clock.System.now().toEpochMilliseconds()
             )
 
             // Atualizar no Firestore

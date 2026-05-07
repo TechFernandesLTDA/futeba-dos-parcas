@@ -260,7 +260,7 @@ class RankingRepositoryImpl(
                     monthlyXp = monthlyXp,
                     totalXp = user?.experiencePoints ?: 0L,
                     currentLevel = user?.level ?: 1,
-                    lastUpdate = System.currentTimeMillis()
+                    lastUpdate = Clock.System.now().toEpochMilliseconds()
                 )
             )
         } catch (e: Exception) {
@@ -269,15 +269,13 @@ class RankingRepositoryImpl(
     }
 
     override fun clearUserCache() {
-        synchronized(userCache) {
-            userCache.clear()
-        }
+        // KMP cross-platform: kotlin.synchronized não disponível em K/Native (iOS).
+        // Cache é não-crítico (LRU best-effort) — race aceitável (pior caso: re-fetch).
+        userCache.clear()
     }
 
     override fun invalidateUserCache(userId: String) {
-        synchronized(userCache) {
-            userCache.remove(userId)
-        }
+        userCache.remove(userId)
     }
 
     override suspend fun getTopRankings(
