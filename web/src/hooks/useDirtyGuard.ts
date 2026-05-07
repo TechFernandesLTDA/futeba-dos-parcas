@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useBlocker } from 'react-router-dom';
 
 interface UseDirtyGuardResult {
   isBlocked: boolean;
@@ -8,38 +7,25 @@ interface UseDirtyGuardResult {
 }
 
 /**
- * Bloqueia navegação (router + reload/close) quando há mudanças não salvas.
+ * Bloqueia reload/fechamento de aba do browser quando há mudanças não salvas.
  *
- * Camadas:
- * 1. useBlocker: intercepta navegação interna do React Router
- * 2. beforeunload: intercepta reload/fechamento de aba do browser
+ * NOTA: a camada de bloqueio de navegação interna (useBlocker do react-router)
+ * foi removida porque exige RouterProvider/createBrowserRouter (DataRouter API).
+ * O app usa <BrowserRouter> legacy, e chamar useBlocker fora do DataRouter
+ * lança erro síncrono no useContext, derrubando a tela com ErrorBoundary
+ * (sintoma: "Oops!" em /game/create e /group/create em desktop).
  *
- * O caller deve renderizar um Dialog quando isBlocked=true e chamar
- * proceed() para confirmar saída ou cancel() para abortar.
+ * Para readicionar o bloqueio interno seria preciso migrar a árvore de rotas
+ * pra createBrowserRouter + RouterProvider.
+ *
+ * O caller pode renderizar um Dialog quando isBlocked=true (atualmente nunca
+ * acontece, mantido pra compatibilidade da interface) e chamar proceed/cancel.
  *
  * @param isDirty Se há mudanças não salvas
  */
 export function useDirtyGuard(isDirty: boolean): UseDirtyGuardResult {
-  // Callback precisa ser estável entre renders — caso contrário useBlocker
-  // re-registra a cada render e dispara loop "Maximum update depth exceeded"
-  // (React error 301), capturado pelo ErrorBoundary como "Oops!".
-  const shouldBlock = useCallback(
-    ({ currentLocation, nextLocation }: { currentLocation: { pathname: string }; nextLocation: { pathname: string } }) => {
-      return isDirty && currentLocation.pathname !== nextLocation.pathname;
-    },
-    [isDirty]
-  );
-  const blocker = useBlocker(shouldBlock);
-
   const [pendingDecision, setPendingDecision] = useState(false);
 
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      setPendingDecision(true);
-    }
-  }, [blocker.state]);
-
-  // Camada 2: reload/close de aba do browser
   useEffect(() => {
     if (!isDirty) return;
     const handler = (e: BeforeUnloadEvent) => {
@@ -52,17 +38,11 @@ export function useDirtyGuard(isDirty: boolean): UseDirtyGuardResult {
 
   const proceed = useCallback(() => {
     setPendingDecision(false);
-    if (blocker.state === 'blocked') {
-      blocker.proceed();
-    }
-  }, [blocker]);
+  }, []);
 
   const cancel = useCallback(() => {
     setPendingDecision(false);
-    if (blocker.state === 'blocked') {
-      blocker.reset();
-    }
-  }, [blocker]);
+  }, []);
 
   return {
     isBlocked: pendingDecision,
