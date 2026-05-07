@@ -54,7 +54,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
   return (
     <Container maxWidth="md" sx={{ py: 3 }}>
       <Stack direction="row" alignItems="center" spacing={1} mb={3}>
-        <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+        <IconButton onClick={() => navigate('/?tab=2')} aria-label="Voltar">
           <BackIcon />
         </IconButton>
         <Typography variant="h5" fontWeight="bold" flex={1}>
