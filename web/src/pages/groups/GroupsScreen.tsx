@@ -67,6 +67,14 @@ export const GroupsScreen: React.FC = () => {
           >
             Descobrir
           </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/group/create')}
+            sx={{ display: { xs: 'none', md: 'inline-flex' }, ml: 1 }}
+          >
+            Criar Grupo
+          </Button>
         </Box>
       </Box>
 
@@ -114,7 +122,7 @@ export const GroupsScreen: React.FC = () => {
       <Fab
         color="primary"
         aria-label="Criar novo grupo"
-        sx={{ position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
+        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: { xs: 16, sm: 'calc(50% - 240px + 16px)' } }}
         onClick={() => navigate('/group/create')}
       >
         <AddIcon />

@@ -90,6 +90,27 @@ export function GamesTab() {
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
+        {/* Header com título + Criar (md+) */}
+        <Box
+          sx={{
+            display: { xs: 'none', md: 'flex' },
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 1.5,
+          }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            Jogos
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => navigate('/game/create')}
+          >
+            Criar Jogo
+          </Button>
+        </Box>
+
         <TextField
           fullWidth
           size="small"
@@ -314,6 +335,7 @@ export function GamesTab() {
         aria-label="Criar novo jogo"
         onClick={() => navigate('/game/create')}
         sx={{
+          display: { xs: 'flex', md: 'none' },
           position: 'fixed',
           bottom: 80,
           right: { xs: 16, sm: 'calc(50% - 240px + 16px)' },

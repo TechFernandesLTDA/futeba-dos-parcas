@@ -10,12 +10,14 @@ import {
   useTheme,
   alpha,
   Fab,
+  Button,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   Search as SearchIcon,
   SportsSoccer as SoccerIcon,
   Map as MapIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-maps/api';
@@ -81,9 +83,17 @@ export const PublicGamesMapScreen: React.FC = () => {
           <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
             <BackIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
+          <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
             Jogos Públicos
           </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/game/create')}
+            sx={{ display: { xs: 'none', md: 'inline-flex' } }}
+          >
+            Criar Jogo
+          </Button>
         </Box>
         <Box sx={{ px: 2, pb: 2 }}>
           <TextField
@@ -187,7 +197,7 @@ export const PublicGamesMapScreen: React.FC = () => {
 
       <Fab
         color="primary"
-        sx={{ position: 'fixed', bottom: 16, right: 16 }}
+        sx={{ display: { xs: 'flex', md: 'none' }, position: 'fixed', bottom: 16, right: 16 }}
         onClick={() => navigate('/game/create')}
         aria-label="Criar novo jogo"
       >
