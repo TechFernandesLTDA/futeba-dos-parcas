@@ -2,7 +2,9 @@
 # Uso: cd iosApp && xcodegen generate
 #
 # Requisitos prévios:
-# 1. Build do shared framework: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+# 1. Build dos frameworks KMP:
+#    ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+#    ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
 # 2. CocoaPods: pod install (usa Podfile)
 # 3. Abrir iosApp.xcworkspace (gerado por pod install)
 
@@ -39,6 +41,9 @@ targets:
       - framework: ../shared/build/bin/iosSimulatorArm64/debugFramework/shared.framework
         embed: true
         codeSign: true
+      - framework: ../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework
+        embed: true
+        codeSign: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.futebadosparcas
@@ -48,19 +53,25 @@ targets:
           - "$(inherited)"
           - "$(SRCROOT)/../shared/build/bin/iosArm64/debugFramework"
           - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework"
+          - "$(SRCROOT)/../composeApp/build/bin/iosArm64/debugFramework"
+          - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework"
         OTHER_LDFLAGS:
           - "$(inherited)"
           - "-framework"
           - "shared"
+          - "-framework"
+          - "ComposeApp"
         SWIFT_OBJC_BRIDGING_HEADER: ""
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     info:
       path: iosApp/Info.plist
     preBuildScripts:
       - script: |
-          # Build shared framework antes de compilar iOS
+          # Build dos frameworks KMP antes de compilar iOS
           cd "$SRCROOT/.."
           ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
-        name: "Build Shared Framework"
+          ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
+        name: "Build KMP Frameworks (shared + ComposeApp)"
         outputFiles:
           - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework/shared.framework"
+          - "$(SRCROOT)/../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework"
