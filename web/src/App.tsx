@@ -272,8 +272,10 @@ function AppRoutes() {
       <Route path="/games" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GamesScreen /></Suspense></ProtectedRoute>} />
       {/* Rotas detail/form com AppLayout (sidebar global desktop) */}
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+        {/* Games */}
         <Route path="/game/:gameId" element={<Suspense fallback={<RouteFallback />}><GameDetailScreen /></Suspense>} />
         <Route path="/game/create" element={<Suspense fallback={<RouteFallback />}><CreateGameScreen /></Suspense>} />
+        {/* Groups */}
         <Route path="/group/:groupId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
         <Route path="/group/create" element={<Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense>} />
         <Route path="/group/:groupId/edit" element={<Suspense fallback={<RouteFallback />}><GroupEditScreen /></Suspense>} />
@@ -284,7 +286,41 @@ function AppRoutes() {
         <Route path="/group/:groupId/invite" element={<Suspense fallback={<RouteFallback />}><InvitePlayersScreen /></Suspense>} />
         <Route path="/groups" element={<Suspense fallback={<RouteFallback />}><GroupsScreen /></Suspense>} />
         <Route path="/groups/discover" element={<Suspense fallback={<RouteFallback />}><DiscoverGroupsScreen /></Suspense>} />
+        {/* Profile + perfis públicos */}
+        <Route path="/profile" element={<Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense>} />
+        <Route path="/profile/:userId" element={<Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense>} />
         <Route path="/profile/edit" element={<Suspense fallback={<RouteFallback />}><EditProfileScreen /></Suspense>} />
+        <Route path="/level-journey" element={<Suspense fallback={<RouteFallback />}><LevelJourneyScreen /></Suspense>} />
+        <Route path="/level-journey/:userId" element={<Suspense fallback={<RouteFallback />}><LevelJourneyScreen /></Suspense>} />
+        {/* Statistics */}
+        <Route path="/statistics" element={<Suspense fallback={<RouteFallback />}><StatisticsScreen /></Suspense>} />
+        <Route path="/weekly-recap" element={<Suspense fallback={<RouteFallback />}><WeeklyRecapScreen /></Suspense>} />
+        <Route path="/weekly-recap/:userId" element={<Suspense fallback={<RouteFallback />}><WeeklyRecapScreen /></Suspense>} />
+        <Route path="/evolution" element={<Suspense fallback={<RouteFallback />}><EvolutionScreen /></Suspense>} />
+        <Route path="/evolution/:userId" element={<Suspense fallback={<RouteFallback />}><EvolutionScreen /></Suspense>} />
+        {/* Rankings */}
+        <Route path="/ranking" element={<Suspense fallback={<RouteFallback />}><RankingScreen /></Suspense>} />
+        <Route path="/league" element={<Suspense fallback={<RouteFallback />}><LeagueScreen /></Suspense>} />
+        <Route path="/badges" element={<Suspense fallback={<RouteFallback />}><BadgesScreen /></Suspense>} />
+        {/* Locations */}
+        <Route path="/locations" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></FieldOwnerOrAdminRoute>} />
+        <Route path="/location/:locationId" element={<Suspense fallback={<RouteFallback />}><LocationDetailScreen /></Suspense>} />
+        <Route path="/location/create" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></FieldOwnerOrAdminRoute>} />
+        <Route path="/owner/dashboard" element={<FieldOwnerRoute><Suspense fallback={<RouteFallback />}><FieldOwnerDashboardScreen /></Suspense></FieldOwnerRoute>} />
+        {/* Map */}
+        <Route path="/map/games" element={<Suspense fallback={<RouteFallback />}><PublicGamesMapScreen /></Suspense>} />
+        <Route path="/map/locations" element={<Suspense fallback={<RouteFallback />}><LocationsMapScreen /></Suspense>} />
+        {/* Settings */}
+        <Route path="/settings" element={<Suspense fallback={<RouteFallback />}><SettingsScreen /></Suspense>} />
+        <Route path="/settings/theme" element={<Suspense fallback={<RouteFallback />}><ThemeSettingsScreen /></Suspense>} />
+        <Route path="/settings/gamification" element={<AdminRoute><Suspense fallback={<RouteFallback />}><GamificationSettingsScreen /></Suspense></AdminRoute>} />
+        {/* Search & Notifications & About */}
+        <Route path="/notifications" element={<Suspense fallback={<RouteFallback />}><NotificationsScreen /></Suspense>} />
+        <Route path="/search" element={<Suspense fallback={<RouteFallback />}><GlobalSearchScreen /></Suspense>} />
+        <Route path="/about" element={<Suspense fallback={<RouteFallback />}><AboutScreen /></Suspense>} />
+        {/* Admin */}
+        <Route path="/admin/users" element={<AdminRoute><Suspense fallback={<RouteFallback />}><UserManagementScreen /></Suspense></AdminRoute>} />
+        <Route path="/dev" element={<AdminRoute><Suspense fallback={<RouteFallback />}><DevToolsScreen /></Suspense></AdminRoute>} />
       </Route>
       <Route path="/game/:gameId/live" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveGameScreen /></Suspense></ProtectedRoute>} />
       <Route path="/game/:gameId/vote" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><MVPVoteScreen /></Suspense></ProtectedRoute>} />
@@ -298,50 +334,8 @@ function AppRoutes() {
       {/* Issue #514: aceitar convite via link compartilhado /join/:code */}
       <Route path="/join/:code" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><JoinByInviteScreen /></Suspense></ProtectedRoute>} />
 
-      {/* Profile */}
-      <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/profile/:userId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ProfileScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/level-journey" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LevelJourneyScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/level-journey/:userId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LevelJourneyScreen /></Suspense></ProtectedRoute>} />
-
-      {/* Statistics */}
-      <Route path="/statistics" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><StatisticsScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/weekly-recap" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><WeeklyRecapScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/weekly-recap/:userId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><WeeklyRecapScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/evolution" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><EvolutionScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/evolution/:userId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><EvolutionScreen /></Suspense></ProtectedRoute>} />
-
-      {/* Rankings & League */}
-      <Route path="/ranking" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><RankingScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/league" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LeagueScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/badges" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><BadgesScreen /></Suspense></ProtectedRoute>} />
-
-      {/* Locations */}
-      <Route path="/locations" element={<ProtectedRoute><FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></FieldOwnerOrAdminRoute></ProtectedRoute>} />
-      <Route path="/location/:locationId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LocationDetailScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/location/create" element={<ProtectedRoute><FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><ManageLocationsScreen /></Suspense></FieldOwnerOrAdminRoute></ProtectedRoute>} />
-      <Route path="/owner/dashboard" element={<ProtectedRoute><FieldOwnerRoute><Suspense fallback={<RouteFallback />}><FieldOwnerDashboardScreen /></Suspense></FieldOwnerRoute></ProtectedRoute>} />
-
-      {/* Map */}
-      <Route path="/map/games" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><PublicGamesMapScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/map/locations" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LocationsMapScreen /></Suspense></ProtectedRoute>} />
-
-      {/* Tactical */}
+      {/* Tactical (full-screen, sem sidebar) */}
       <Route path="/tactical/:gameId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><TacticalBoardScreen /></Suspense></ProtectedRoute>} />
-
-      {/* Settings */}
-      <Route path="/settings" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><SettingsScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/settings/theme" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ThemeSettingsScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/settings/gamification" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GamificationSettingsScreen /></Suspense></ProtectedRoute>} />
-
-      {/* Notifications & Search */}
-      <Route path="/notifications" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><NotificationsScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/search" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GlobalSearchScreen /></Suspense></ProtectedRoute>} />
-
-      {/* About & Admin */}
-      <Route path="/about" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><AboutScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/admin/users" element={<ProtectedRoute><AdminRoute><Suspense fallback={<RouteFallback />}><UserManagementScreen /></Suspense></AdminRoute></ProtectedRoute>} />
-      <Route path="/dev" element={<ProtectedRoute><AdminRoute><Suspense fallback={<RouteFallback />}><DevToolsScreen /></Suspense></AdminRoute></ProtectedRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
