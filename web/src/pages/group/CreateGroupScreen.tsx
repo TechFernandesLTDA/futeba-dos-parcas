@@ -14,13 +14,12 @@ import {
   CircularProgress,
   IconButton,
   Avatar,
-  useTheme,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   Add as AddIcon,
   PhotoCamera as CameraIcon,
 } from '@mui/icons-material';
+import { FormScaffold } from '../../components/layout';
 import { useCreateGroup } from '../../hooks/useGroups';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -32,7 +31,6 @@ const logger = createLogger('CreateGroupScreen');
 export const CreateGroupScreen: React.FC = () => {
   useDocumentTitle('Criar Grupo');
   const navigate = useNavigate();
-  const theme = useTheme();
   useAuth();
 
   const { createGroup, loading, error } = useCreateGroup();
@@ -44,6 +42,7 @@ export const CreateGroupScreen: React.FC = () => {
     isPublic: false,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const isDirty = !!formData.name || !!formData.description || formData.isPublic;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleInputChange = (field: string, value: any) => {
@@ -86,27 +85,14 @@ export const CreateGroupScreen: React.FC = () => {
   };
 
   return (
-    <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Criar Grupo
-          </Typography>
-        </Box>
-      </Box>
-
-      <Container maxWidth="sm" sx={{ py: 3 }}>
+    <FormScaffold
+      title="Criar Grupo"
+      closeDestination="/groups"
+      closeVariant="X"
+      isDirty={isDirty}
+      loading={loading}
+    >
+      <Container maxWidth="sm" disableGutters sx={{ py: 3 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -194,7 +180,7 @@ export const CreateGroupScreen: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                 <Button
                   variant="outlined"
-                  onClick={() => navigate(-1)}
+                  onClick={() => navigate('/groups')}
                   fullWidth
                 >
                   Cancelar
@@ -213,6 +199,6 @@ export const CreateGroupScreen: React.FC = () => {
           </CardContent>
         </Card>
       </Container>
-    </Box>
+    </FormScaffold>
   );
 };

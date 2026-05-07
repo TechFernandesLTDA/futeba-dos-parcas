@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
   Container,
-  Typography,
   TextField,
   Button,
   Card,
@@ -22,14 +21,13 @@ import {
   InputAdornment,
   Alert,
   CircularProgress,
-  IconButton,
-  useTheme,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   ArrowForward as NextIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
+import { FormScaffold } from '../../components/layout';
 import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useCreateGame } from '../../hooks/useGames';
@@ -103,7 +101,6 @@ export const CreateGameScreen: React.FC = () => {
   useDocumentTitle('Criar Jogo');
   const navigate = useNavigate();
   const { groupId } = useParams<{ groupId?: string }>();
-  const theme = useTheme();
 
   const { group } = useGroupDetail(groupId || null);
   const { createGame, loading, error } = useCreateGame();
@@ -123,16 +120,7 @@ export const CreateGameScreen: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const isDirty = JSON.stringify(formData) !== JSON.stringify(defaultFormData);
-
-  useEffect(() => {
-    const handler = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
-        e.preventDefault();
-      }
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [isDirty]);
+  // beforeunload + useBlocker tratados pelo FormScaffold via useDirtyGuard
 
   // Carregar quadras quando local é selecionado
   useEffect(() => {
@@ -253,14 +241,8 @@ export const CreateGameScreen: React.FC = () => {
     setActiveStep((prev) => prev - 1);
   };
 
-  const handleNavigateBack = () => {
-    if (isDirty) {
-      if (!window.confirm('Tem certeza? Os dados do formulário serão perdidos.')) {
-        return;
-      }
-    }
-    navigate(-1);
-  };
+  // Saída agora tratada por FormScaffold (closeDestination + useDirtyGuard)
+  const closeDestination = groupId ? `/group/${groupId}` : '/games';
 
   const handleSubmit = async () => {
     if (!validateStep(activeStep)) return;
@@ -692,27 +674,14 @@ export const CreateGameScreen: React.FC = () => {
   };
 
   return (
-    <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={handleNavigateBack} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Criar Jogo
-          </Typography>
-        </Box>
-      </Box>
-
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+    <FormScaffold
+      title="Criar Jogo"
+      closeDestination={closeDestination}
+      closeVariant="X"
+      isDirty={isDirty}
+      loading={loading}
+    >
+      <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -761,6 +730,6 @@ export const CreateGameScreen: React.FC = () => {
           ))}
         </Stepper>
       </Container>
-    </Box>
+    </FormScaffold>
   );
 };

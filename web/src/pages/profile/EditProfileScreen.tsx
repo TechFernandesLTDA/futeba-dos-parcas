@@ -13,13 +13,12 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
-  useTheme,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   PhotoCamera as CameraIcon,
   Save as SaveIcon,
 } from '@mui/icons-material';
+import { FormScaffold } from '../../components/layout';
 import { useAuth } from '../../contexts/AuthContext';
 import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -47,8 +46,8 @@ interface UserProfile {
 export const EditProfileScreen: React.FC = () => {
   useDocumentTitle('Editar Perfil');
   const navigate = useNavigate();
-  const theme = useTheme();
   const { currentUser, updateUserProfile } = useAuth();
+  const [initialData, setInitialData] = useState<UserProfile | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -86,13 +85,15 @@ export const EditProfileScreen: React.FC = () => {
       if (userDoc.exists()) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = snakeToCamel(userDoc.data()) as Record<string, any>;
-        setFormData({
+        const loaded: UserProfile = {
           name: data.name || currentUser.displayName || '',
           nickname: data.nickname || '',
           phone: data.phone || '',
           preferredPosition: data.preferredPosition,
           bio: data.bio || '',
-        });
+        };
+        setFormData(loaded);
+        setInitialData(loaded);
       }
     } catch (err) {
       setError((err as Error).message);
@@ -152,7 +153,8 @@ export const EditProfileScreen: React.FC = () => {
       }
 
       setSuccess(true);
-      setTimeout(() => navigate(-1), 1500);
+      setInitialData(formData); // sync para evitar dirty guard após save
+      setTimeout(() => navigate('/profile'), 1500);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -168,28 +170,24 @@ export const EditProfileScreen: React.FC = () => {
     );
   }
 
-  return (
-    <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Editar Perfil
-          </Typography>
-        </Box>
-      </Box>
+  const isDirty =
+    initialData !== null &&
+    (formData.name !== initialData.name ||
+      formData.nickname !== initialData.nickname ||
+      formData.phone !== initialData.phone ||
+      formData.preferredPosition !== initialData.preferredPosition ||
+      formData.bio !== initialData.bio ||
+      previewUrl !== null);
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+  return (
+    <FormScaffold
+      title="Editar Perfil"
+      closeDestination="/profile"
+      closeVariant="X"
+      isDirty={isDirty}
+      loading={saving}
+    >
+      <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -315,6 +313,6 @@ export const EditProfileScreen: React.FC = () => {
           Salvar Alterações
         </Button>
       </Container>
-    </Box>
+    </FormScaffold>
   );
 };

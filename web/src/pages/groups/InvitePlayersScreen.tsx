@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -14,14 +14,13 @@ import {
   ListItemSecondaryAction,
   Chip,
   Divider,
-  useTheme,
   CircularProgress,
 } from '@mui/material';
 import {
-  ArrowBack as BackIcon,
   Search as SearchIcon,
   PersonAdd as PersonAddIcon,
 } from '@mui/icons-material';
+import { FormScaffold } from '../../components/layout';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
@@ -49,10 +48,9 @@ interface GroupMember {
 
 export const InvitePlayersScreen: React.FC = () => {
   useDocumentTitle('Convidar Jogadores');
-  const navigate = useNavigate();
-  const theme = useTheme();
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
+  const closeDestination = groupId ? `/group/${groupId}` : '/groups';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -151,27 +149,12 @@ export const InvitePlayersScreen: React.FC = () => {
   const _existingMemberIds = new Set(members.map((m) => m.id));
 
   return (
-    <Box sx={{ pb: 4 }}>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          bgcolor: 'background.paper',
-          zIndex: 10,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ ml: 1 }}>
-            Convidar Jogadores
-          </Typography>
-        </Box>
-      </Box>
-
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+    <FormScaffold
+      title="Convidar Jogadores"
+      closeDestination={closeDestination}
+      closeVariant="back"
+    >
+      <Container maxWidth="sm" disableGutters sx={{ py: 2 }}>
         <TextField
           fullWidth
           placeholder="Buscar por nome..."
@@ -258,6 +241,6 @@ export const InvitePlayersScreen: React.FC = () => {
           </Card>
         )}
       </Container>
-    </Box>
+    </FormScaffold>
   );
 };

@@ -41,6 +41,7 @@ import {
   Share as ShareIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
+import { AppBreadcrumbs } from '../../components/layout';
 import { useGroupDetail, useInvitePlayers } from '../../hooks/useGroups';
 import { useMyJoinRequest } from '../../hooks/useJoinRequests';
 import { useGames } from '../../hooks/useGames';
@@ -217,6 +218,13 @@ export const GroupDetailScreen: React.FC = () => {
           )}
         </Box>
       </Box>
+
+      <AppBreadcrumbs
+        items={[
+          { label: 'Grupos', to: '/?tab=2' },
+          { label: group.name },
+        ]}
+      />
 
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Card sx={{ mb: 2 }}>
