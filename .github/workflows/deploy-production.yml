@@ -60,10 +60,22 @@ jobs:
       - name: Decode and save keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD_B64: ${{ secrets.KEYSTORE_PASSWORD_B64 }}
         run: |
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
-          # Verificar se foi escrito (sem revelar conteudo)
           test -s "$RUNNER_TEMP/release.jks" && echo "✓ keystore written ($(wc -c < "$RUNNER_TEMP/release.jks") bytes)" || (echo "✗ empty keystore"; exit 1)
+          # Debug: SHA do keystore + tentar abrir com keytool
+          KS_SHA=$(shasum -a 256 "$RUNNER_TEMP/release.jks" | awk '{print $1}' | head -c 16)
+          echo "::notice::keystore sha8=$KS_SHA"
+          STORE_PW=$(printf '%s' "$KEYSTORE_PASSWORD_B64" | base64 --decode)
+          if keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$STORE_PW" >/tmp/kt.log 2>&1; then
+            echo "✓ keytool list OK"
+            grep -E 'Tipo|Type|alias' /tmp/kt.log | head -3
+          else
+            echo "✗ keytool failed:"
+            cat /tmp/kt.log
+            exit 1
+          fi
 
       - name: Create google-services.json
         env:
