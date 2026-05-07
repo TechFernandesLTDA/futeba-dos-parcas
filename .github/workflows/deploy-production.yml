@@ -42,6 +42,11 @@ jobs:
         run: |
           STORE_PW=$(printf '%s' "$KEYSTORE_PASSWORD_B64" | base64 --decode)
           KEY_PW=$(printf '%s' "$KEY_PASSWORD_B64" | base64 --decode)
+          # Debug: SHA8 e len pra confirmar decode
+          STORE_SHA=$(printf '%s' "$STORE_PW" | shasum -a 256 | head -c 16)
+          STORE_LEN=${#STORE_PW}
+          B64_LEN=${#KEYSTORE_PASSWORD_B64}
+          echo "::notice::DEBUG b64_len=$B64_LEN store_pw_len=$STORE_LEN sha8=$STORE_SHA"
           {
             printf 'sdk.dir=%s\n' "$ANDROID_SDK_ROOT"
             printf 'STORE_FILE=%s/release.jks\n' "$RUNNER_TEMP"
@@ -49,6 +54,8 @@ jobs:
             printf 'KEY_ALIAS=%s\n' "$KEY_ALIAS"
             printf 'KEY_PASSWORD=%s\n' "$KEY_PW"
           } > local.properties
+          # Verificar conteudo final do local.properties (mascara senhas)
+          sed 's/=.*$/=***MASKED***/' local.properties
 
       - name: Decode and save keystore
         env:
