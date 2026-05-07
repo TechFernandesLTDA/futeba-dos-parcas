@@ -90,6 +90,20 @@ fun AboutScreen(
                         data = Uri.parse("https://futebadosparcas.web.app/terms_of_service.html")
                     }
                     context.startActivity(intent)
+                },
+                onDeleteAccountClick = {
+                    // Link para exclusão de conta (Play Store mandatory)
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse("https://futebadosparcas.web.app/delete_account.html")
+                    }
+                    context.startActivity(intent)
+                },
+                onChildSafetyClick = {
+                    // Link para padrões de segurança infantil (Play Store mandatory desde 2024)
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse("https://futebadosparcas.web.app/child_safety.html")
+                    }
+                    context.startActivity(intent)
                 }
             )
         }
@@ -300,7 +314,9 @@ private fun LinksCard(
     onRateClick: () -> Unit,
     onContactClick: () -> Unit,
     onPrivacyClick: () -> Unit,
-    onTermsClick: () -> Unit
+    onTermsClick: () -> Unit,
+    onDeleteAccountClick: () -> Unit,
+    onChildSafetyClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -342,6 +358,20 @@ private fun LinksCard(
                 title = stringResource(R.string.about_terms_of_service),
                 subtitle = stringResource(R.string.about_terms_of_service_desc),
                 onClick = onTermsClick
+            )
+            HorizontalDivider()
+            LinkMenuItem(
+                icon = Icons.Default.DeleteForever,
+                title = stringResource(R.string.about_delete_account),
+                subtitle = stringResource(R.string.about_delete_account_desc),
+                onClick = onDeleteAccountClick
+            )
+            HorizontalDivider()
+            LinkMenuItem(
+                icon = Icons.Default.Shield,
+                title = stringResource(R.string.about_child_safety),
+                subtitle = stringResource(R.string.about_child_safety_desc),
+                onClick = onChildSafetyClick
             )
         }
     }

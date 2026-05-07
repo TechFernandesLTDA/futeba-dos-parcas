@@ -214,7 +214,7 @@ export const SettingsScreen: React.FC = () => {
                   <ListItemIcon>
                     <InfoIcon />
                   </ListItemIcon>
-                  <ListItemText primary="Sobre o App" secondary="Versão 1.19.0" />
+                  <ListItemText primary="Sobre o App" secondary="Versão 1.21.0" />
                 </ListItem>
               </List>
             </Card>

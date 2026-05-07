@@ -25,6 +25,7 @@ import {
   Language as LanguageIcon,
   Smartphone as DeviceIcon,
   Storage as DataIcon,
+  DeleteForever as DeleteIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -35,8 +36,8 @@ export const AboutScreen: React.FC = () => {
   const theme = useTheme();
   const { user } = useAuth();
 
-  const appVersion = '1.10.7';
-  const buildNumber = '30';
+  const appVersion = '1.21.0';
+  const buildNumber = '42';
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -109,6 +110,13 @@ export const AboutScreen: React.FC = () => {
               </ListItemIcon>
               <ListItemText primary="Segurança Infantil" />
             </ListItem>
+            <Divider />
+            <ListItem button onClick={() => window.open('/delete_account.html', '_blank')}>
+              <ListItemIcon>
+                <DeleteIcon />
+              </ListItemIcon>
+              <ListItemText primary="Excluir Conta" secondary="Como solicitar exclusão da conta" />
+            </ListItem>
           </List>
         </Card>
 
@@ -128,11 +136,11 @@ export const AboutScreen: React.FC = () => {
               <ListItemText primary="Reportar Problema" />
             </ListItem>
             <Divider />
-            <ListItem button onClick={() => window.open('mailto:suporte@futebadosparcas.com.br', '_blank')}>
+            <ListItem button onClick={() => window.open('mailto:techfernandesltda@gmail.com', '_blank')}>
               <ListItemIcon>
                 <EmailIcon />
               </ListItemIcon>
-              <ListItemText primary="Contato" secondary="suporte@futebadosparcas.com.br" />
+              <ListItemText primary="Contato" secondary="techfernandesltda@gmail.com" />
             </ListItem>
           </List>
         </Card>
@@ -167,7 +175,7 @@ export const AboutScreen: React.FC = () => {
 
         <Box sx={{ textAlign: 'center', py: 2 }}>
           <Typography variant="caption" color="text.disabled">
-            © 2024 Futeba dos Parças
+            © 2024-2026 Futeba dos Parças
           </Typography>
           <Typography variant="caption" color="text.disabled" sx={{ display: 'block' }}>
             Feito com ❤️ para os amantes do futebol
