@@ -135,7 +135,7 @@ export const GroupSettingsScreen: React.FC = () => {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Alert severity="error">{error || 'Grupo não encontrado'}</Alert>
-        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
+        <Button startIcon={<BackIcon />} onClick={() => navigate(`/group/${groupId}`)} sx={{ mt: 2 }}>
           Voltar
         </Button>
       </Container>
@@ -155,7 +155,7 @@ export const GroupSettingsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={() => navigate(`/group/${groupId}`)} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>

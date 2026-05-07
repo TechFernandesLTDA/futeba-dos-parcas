@@ -157,7 +157,7 @@ export const GroupDetailScreen: React.FC = () => {
       await softDeleteGroup({ groupId });
       setDeleteDialogOpen(false);
       showSuccess('Grupo excluído com sucesso');
-      setTimeout(() => navigate('/'), 1000);
+      setTimeout(() => navigate('/?tab=2'), 1000);
     } catch (err) {
       showError((err as Error)?.message || 'Erro ao excluir grupo');
     } finally {
@@ -178,7 +178,7 @@ export const GroupDetailScreen: React.FC = () => {
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Alert severity="error">{error || 'Grupo não encontrado'}</Alert>
         <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-          <Button startIcon={<BackIcon />} onClick={() => navigate(-1)}>
+          <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
             Voltar
           </Button>
           {error && (
@@ -203,7 +203,7 @@ export const GroupDetailScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={() => navigate('/?tab=2')} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ flex: 1, ml: 1 }} noWrap>

@@ -54,7 +54,7 @@ export const GroupsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={() => navigate('/')} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ ml: 1, flex: 1 }}>

@@ -240,8 +240,14 @@ function AppRoutes() {
         <Route path="/group/:groupId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
         <Route path="/group/create" element={<Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense>} />
         <Route path="/group/:groupId/edit" element={<Suspense fallback={<RouteFallback />}><GroupEditScreen /></Suspense>} />
-        <Route path="/profile/edit" element={<Suspense fallback={<RouteFallback />}><EditProfileScreen /></Suspense>} />
+        <Route path="/group/:groupId/settings" element={<Suspense fallback={<RouteFallback />}><GroupSettingsScreen /></Suspense>} />
+        <Route path="/group/:groupId/cashbox" element={<Suspense fallback={<RouteFallback />}><CashboxScreen /></Suspense>} />
+        <Route path="/group/:groupId/players" element={<Suspense fallback={<RouteFallback />}><PlayersScreen /></Suspense>} />
+        <Route path="/group/:groupId/schedules" element={<Suspense fallback={<RouteFallback />}><SchedulesScreen /></Suspense>} />
         <Route path="/group/:groupId/invite" element={<Suspense fallback={<RouteFallback />}><InvitePlayersScreen /></Suspense>} />
+        <Route path="/groups" element={<Suspense fallback={<RouteFallback />}><GroupsScreen /></Suspense>} />
+        <Route path="/groups/discover" element={<Suspense fallback={<RouteFallback />}><DiscoverGroupsScreen /></Suspense>} />
+        <Route path="/profile/edit" element={<Suspense fallback={<RouteFallback />}><EditProfileScreen /></Suspense>} />
       </Route>
       <Route path="/game/:gameId/live" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveGameScreen /></Suspense></ProtectedRoute>} />
       <Route path="/game/:gameId/vote" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><MVPVoteScreen /></Suspense></ProtectedRoute>} />
@@ -252,16 +258,6 @@ function AppRoutes() {
       <Route path="/game/:gameId/stats" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveStatsScreen /></Suspense></ProtectedRoute>} />
       <Route path="/game/:gameId/events" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><LiveEventsScreen /></Suspense></ProtectedRoute>} />
 
-      {/* Schedules */}
-      <Route path="/group/:groupId/schedules" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><SchedulesScreen /></Suspense></ProtectedRoute>} />
-
-      {/* Groups */}
-      <Route path="/groups" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupsScreen /></Suspense></ProtectedRoute>} />
-      {/* Issue #517 Phase 1: discovery de grupos publicos */}
-      <Route path="/groups/discover" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><DiscoverGroupsScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/group/:groupId/settings" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><GroupSettingsScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/group/:groupId/cashbox" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><CashboxScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/group/:groupId/players" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><PlayersScreen /></Suspense></ProtectedRoute>} />
       {/* Issue #514: aceitar convite via link compartilhado /join/:code */}
       <Route path="/join/:code" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><JoinByInviteScreen /></Suspense></ProtectedRoute>} />
 

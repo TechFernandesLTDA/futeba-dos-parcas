@@ -165,7 +165,7 @@ export const CashboxScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
