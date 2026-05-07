@@ -5,14 +5,17 @@ import com.futebadosparcas.domain.repository.GamificationRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import java.text.SimpleDateFormat
-import java.util.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.toLocalDateTime
 
 /**
- * Implementação Android do GamificationRepository usando FirebaseDataSource.
+ * Implementação compartilhada Android+iOS do GamificationRepository.
  *
- * Esta implementação fornece todas as operações de gamificação necessárias
- * para o app, incluindo streaks, badges, temporadas e desafios.
+ * Operações de gamificação: streaks, badges, temporadas, desafios.
+ * Usa kotlinx.datetime (cross-platform) para manipulação de datas.
  */
 class GamificationRepositoryImpl(
     private val dataSource: FirebaseDataSource
@@ -20,7 +23,6 @@ class GamificationRepositoryImpl(
 
     companion object {
         private const val TAG = "GamificationRepositoryImpl"
-        private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     }
 
     // ========== STREAKS ==========
@@ -48,21 +50,14 @@ class GamificationRepositoryImpl(
     }
 
     /**
-     * Calcula o novo streak baseado na última data jogada.
+     * Calcula o novo streak baseado na última data jogada (formato ISO yyyy-MM-dd).
      */
     private fun calculateNewStreak(
         currentStreak: UserStreak?,
         gameDate: String,
         userId: String
     ): UserStreak {
-        val gameDateParsed = try {
-            DATE_FORMAT.parse(gameDate) ?: Date()
-        } catch (e: Exception) {
-            Date()
-        }
-
         if (currentStreak == null) {
-            // Primeiro jogo
             return UserStreak(
                 userId = userId,
                 currentStreak = 1,
@@ -72,21 +67,17 @@ class GamificationRepositoryImpl(
             )
         }
 
-        // Parse última data jogada
-        val lastPlayedDate = try {
-            currentStreak.lastGameDate?.let { DATE_FORMAT.parse(it) } ?: Date()
-        } catch (e: Exception) {
-            Date()
-        }
+        val gameDateParsed = parseLocalDateOrToday(gameDate)
+        val lastPlayedDate = currentStreak.lastGameDate
+            ?.let { parseLocalDateOrToday(it) }
+            ?: gameDateParsed
 
-        // Calcular diferença em dias
-        val diffInMillis = gameDateParsed.time - lastPlayedDate.time
-        val diffInDays = (diffInMillis / (1000 * 60 * 60 * 24)).toInt()
+        val diffInDays = lastPlayedDate.daysUntil(gameDateParsed)
 
         val newCurrentStreak = when {
-            diffInDays == 0 -> currentStreak.currentStreak // Mesmo dia, mantém
-            diffInDays == 1 -> currentStreak.currentStreak + 1 // Dia consecutivo
-            else -> 1 // Streak quebrado, reinicia
+            diffInDays == 0 -> currentStreak.currentStreak
+            diffInDays == 1 -> currentStreak.currentStreak + 1
+            else -> 1
         }
 
         val newLongestStreak = maxOf(newCurrentStreak, currentStreak.longestStreak)
@@ -97,6 +88,16 @@ class GamificationRepositoryImpl(
             lastGameDate = gameDate,
             streakStartedAt = if (diffInDays > 1) gameDate else currentStreak.streakStartedAt
         )
+    }
+
+    private fun parseLocalDateOrToday(iso: String): LocalDate {
+        return try {
+            LocalDate.parse(iso)
+        } catch (_: Exception) {
+            Clock.System.now()
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .date
+        }
     }
 
     // ========== BADGES ==========
