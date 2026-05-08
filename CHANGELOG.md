@@ -5,6 +5,41 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.21.3] - 2026-05-08
+
+### Corrigido (bateria de auditorias 2026-05-08 — 8 PRs merged em master)
+
+**Web (#600 + #602 + #603 + #604)**
+- 3 CRITICAL: dirty guard em forms (root cause real do #574 que PR #598 não fixou),
+  login redirect ignorando `?redirect=` (#514 regression), ProtectedRoute sem state.from
+- Sweeps mecânicos em ~55 telas: onSnapshot sem error callback (8), catch swallow (9 telas/12 catches),
+  navigate(-1) sem fallback (16 telas), Dialog sem fullScreen mobile (11 dialogs), virtualization
+  Ranking/League, Login/Register 100dvh
+- NotFoundScreen 404 (era redirect silencioso), JoinByInvite replace:true, a11y improvements,
+  type-safety cleanup (16/17 any eliminados), ESLint rules custom (onSnapshot + catch swallow)
+
+**Android (#605 + #606 + #607)**
+- 2 CRITICAL: FCM extras nunca lidas em MainActivityCompose (notificações deep-link quebradas em prod);
+  portrait lock travava 49/58 telas adaptive code morto (tablet, foldable, split-screen)
+- 4 HIGH: PendingIntent collision (gameId.hashCode()), FLAG_ACTIVITY_CLEAR_TASK destroy back stack,
+  BackHandler ausente em forms (DiscardChangesGuard reusable component criado)
+- A11y: 6 Cards/Rows com mergeDescendants (TalkBack lê 1 frase coesa), WindowSizeClass adoption
+  em CreateGame/EditProfile/LiveGame, Empty state em LiveStatsScreen
+
+**Cloud Functions + cross-platform (#608)**
+- 2 CRITICAL: App Check disabled em prod em 5 callables (verifyCpf, setUserVerified, pii-migration*,
+  denormalizeGameLocations) — qualquer Auth token válido bypassava; in-memory Set dedup falhava
+  cross-instance em onConfirmationWrite (race em players_count) → atomic FieldValue.increment
+- 1 HIGH: recalculateLeagueRating sem lock → league_processing flag pattern análogo ao xp_processing
+- A2 Android LOW: JoinRequestViewModel logger ausente, VoteResultViewModel job tracking
+
+**Audit calibration**
+- 8 agentes Sonnet 4.6 paralelos lançados em sweeps mecânicos
+- Validação rigorosa via advisor + Read direto descartou ~50% false positives:
+  viewModelScope auto-cancela, presentational screens recebem data via params,
+  audit pipeline precisa grep mais específico antes de classificar bugs.
+- ~55 telas modificadas / 100+ fixes / 8 PRs sequenciais
+
 ## [1.21.2] - 2026-05-08
 
 ### Corrigido

@@ -36,8 +36,8 @@ export const AboutScreen: React.FC = () => {
   const theme = useTheme();
   const { user } = useAuth();
 
-  const appVersion = '1.21.0';
-  const buildNumber = '42';
+  const appVersion = '1.21.3';
+  const buildNumber = '45';
 
   return (
     <Box sx={{ pb: 4 }}>
