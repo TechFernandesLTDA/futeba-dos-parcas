@@ -31,6 +31,7 @@ import {
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
 import {
@@ -61,6 +62,7 @@ export const LevelJourneyScreen: React.FC = () => {
   const theme = useTheme();
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
+  const { showError } = useToast();
 
   const [currentXp, setCurrentXp] = useState(0);
   const [currentLevel, setCurrentLevel] = useState(0);
@@ -103,6 +105,7 @@ export const LevelJourneyScreen: React.FC = () => {
         setHistory(historyData);
       } catch (error) {
         logger.error('Error fetching level data:', error);
+        showError('Erro ao carregar histórico de nível.');
       } finally {
         setLoading(false);
       }

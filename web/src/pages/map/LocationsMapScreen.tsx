@@ -34,6 +34,10 @@ import { LoadingState } from '../../components/common/GameCard';
 import { Location } from '../../types/location';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useToast } from '../../contexts/ToastContext';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('LocationsMapScreen');
 
 export const LocationsMapScreen: React.FC = () => {
   useDocumentTitle('Mapa de Locais');
@@ -45,6 +49,7 @@ export const LocationsMapScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const { showError } = useToast();
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
   const { isLoaded: mapsLoaded } = useLoadScript({ googleMapsApiKey: apiKey });
@@ -53,17 +58,25 @@ export const LocationsMapScreen: React.FC = () => {
     const locRef = collection(db, 'locations');
     const q = query(locRef, orderBy('name', 'asc'));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((d) => ({
-        ...snakeToCamel<Location>(d.data()),
-        id: d.id,
-      }));
-      setLocations(data);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((d) => ({
+          ...snakeToCamel<Location>(d.data()),
+          id: d.id,
+        }));
+        setLocations(data);
+        setLoading(false);
+      },
+      (err) => {
+        logger.error('Error in locations map listener:', err);
+        showError('Erro ao carregar locais no mapa.');
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
-  }, []);
+  }, [showError]);
 
   const filteredLocations = locations.filter((loc) =>
     loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -27,6 +27,10 @@ import { LoadingState, GameCard } from '../../components/common/GameCard';
 import { Game } from '../../types/game';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useToast } from '../../contexts/ToastContext';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('PublicGamesMapScreen');
 
 export const PublicGamesMapScreen: React.FC = () => {
   useDocumentTitle('Jogos Públicos');
@@ -38,6 +42,7 @@ export const PublicGamesMapScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const { showError } = useToast();
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
   const { isLoaded: mapsLoaded } = useLoadScript({ googleMapsApiKey: apiKey });
@@ -52,17 +57,25 @@ export const PublicGamesMapScreen: React.FC = () => {
       limit(50)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const gamesData = snapshot.docs.map((d) => ({
-        ...snakeToCamel<Game>(d.data()),
-        id: d.id,
-      }));
-      setGames(gamesData);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const gamesData = snapshot.docs.map((d) => ({
+          ...snakeToCamel<Game>(d.data()),
+          id: d.id,
+        }));
+        setGames(gamesData);
+        setLoading(false);
+      },
+      (err) => {
+        logger.error('Error in public games map listener:', err);
+        showError('Erro ao carregar jogos no mapa.');
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
-  }, []);
+  }, [showError]);
 
   const filteredGames = games.filter((game) =>
     game.locationName?.toLowerCase().includes(searchQuery.toLowerCase())

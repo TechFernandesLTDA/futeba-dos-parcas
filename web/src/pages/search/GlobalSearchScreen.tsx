@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import { Box, IconButton, Typography, useTheme } from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
 import { SearchPanel } from '../../components/search/SearchPanel';
@@ -16,6 +17,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 export const GlobalSearchScreen: React.FC = () => {
   useDocumentTitle('Busca');
   const navigate = useNavigate();
+  const navigateBack = useNavigateBack('/');
   const theme = useTheme();
 
   const handleClose = () => {
@@ -43,7 +45,7 @@ export const GlobalSearchScreen: React.FC = () => {
           flexShrink: 0,
         }}
       >
-        <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+        <IconButton onClick={navigateBack} aria-label="Voltar">
           <BackIcon />
         </IconButton>
         <Typography variant="h6" sx={{ ml: 1 }}>

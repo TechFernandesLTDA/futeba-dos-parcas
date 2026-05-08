@@ -22,6 +22,7 @@ import {
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
@@ -52,6 +53,7 @@ export const TacticalBoardScreen: React.FC = () => {
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();
+  const { showError } = useToast();
 
   const [players, setPlayers] = useState<TacticalPlayer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +91,7 @@ export const TacticalBoardScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching players:', error);
+        showError('Erro ao carregar quadro tático.');
       } finally {
         setLoading(false);
       }

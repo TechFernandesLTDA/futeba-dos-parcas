@@ -31,6 +31,7 @@ import {
 import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { LoadingState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
@@ -65,6 +66,7 @@ export const WeeklyRecapScreen: React.FC = () => {
   const theme = useTheme();
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
+  const { showError } = useToast();
 
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats | null>(null);
   const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
@@ -122,6 +124,7 @@ export const WeeklyRecapScreen: React.FC = () => {
         setRecentGames(gamesData);
       } catch (error) {
         logger.error('Error fetching weekly recap:', error);
+        showError('Erro ao carregar recap semanal.');
       } finally {
         setLoading(false);
       }

@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -42,6 +43,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 export const ProfileScreen: React.FC = () => {
   useDocumentTitle('Perfil');
   const navigate = useNavigate();
+  const navigateBack = useNavigateBack('/');
   const theme = useTheme();
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
@@ -131,7 +133,7 @@ export const ProfileScreen: React.FC = () => {
         >
           Erro ao carregar perfil: {error}
         </Alert>
-        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
+        <Button startIcon={<BackIcon />} onClick={navigateBack} sx={{ mt: 2 }}>
           Voltar
         </Button>
       </Container>
@@ -147,7 +149,7 @@ export const ProfileScreen: React.FC = () => {
             Perfil não encontrado
           </Typography>
         </Box>
-        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
+        <Button startIcon={<BackIcon />} onClick={navigateBack} sx={{ mt: 2 }}>
           Voltar
         </Button>
       </Container>
@@ -168,7 +170,7 @@ export const ProfileScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ ml: 1, flex: 1 }}>

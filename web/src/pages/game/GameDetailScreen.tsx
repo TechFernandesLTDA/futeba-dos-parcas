@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -75,8 +76,10 @@ export const GameDetailScreen: React.FC = () => {
   const { showSuccess, showError } = useToast();
 
   // Breakpoints para layout responsivo
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg'));
   const isLg = useMediaQuery(theme.breakpoints.up('lg'));
+  const navigateBack = useNavigateBack('/games');
 
   const { game, confirmations, loading, error } = useGameDetail(gameId || null);
   const { confirmPresence, cancelPresence, loading: confirmLoading } = useConfirmPresence();
@@ -181,7 +184,7 @@ export const GameDetailScreen: React.FC = () => {
       <Container maxWidth="sm" sx={{ py: 2 }}>
         <Alert severity="error">{error || 'Jogo não encontrado'}</Alert>
         <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-          <Button startIcon={<BackIcon />} onClick={() => navigate(-1)}>
+          <Button startIcon={<BackIcon />} onClick={navigateBack}>
             Voltar
           </Button>
           {error && (
@@ -206,7 +209,7 @@ export const GameDetailScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ flex: 1, ml: 1 }} noWrap>
@@ -373,7 +376,9 @@ export const GameDetailScreen: React.FC = () => {
               <Tabs
                 value={tabValue}
                 onChange={(_, v) => setTabValue(v)}
-                variant="fullWidth"
+                variant="scrollable"
+                scrollButtons="auto"
+                allowScrollButtonsMobile
                 aria-label="Listas de jogadores"
                 sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}
               >
@@ -631,7 +636,7 @@ export const GameDetailScreen: React.FC = () => {
         </Container>
       </Box>
 
-      <Dialog open={positionDialogOpen} onClose={() => setPositionDialogOpen(false)} aria-labelledby="position-dialog-title">
+      <Dialog open={positionDialogOpen} onClose={() => setPositionDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="position-dialog-title">
         <DialogTitle id="position-dialog-title">Escolha sua posição</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', gap: 2, pt: 1 }}>
@@ -655,7 +660,7 @@ export const GameDetailScreen: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)} aria-labelledby="cancel-dialog-title">
+      <Dialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="cancel-dialog-title">
         <DialogTitle id="cancel-dialog-title">Cancelar Presença</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -670,7 +675,7 @@ export const GameDetailScreen: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} aria-labelledby="delete-game-dialog-title">
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="delete-game-dialog-title">
         <DialogTitle id="delete-game-dialog-title">Excluir Jogo</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">

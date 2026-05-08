@@ -19,6 +19,7 @@ import {
   DialogContentText,
   DialogActions,
   useTheme,
+  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -46,6 +47,7 @@ import { getLevelBadgeImage, getLevelBadgeDescription } from '../../../utils/lev
 import { getLevelForXp, getXpProgress, getXpRemaining, getLevelEntry } from '../../../types/gamification';
 import { gamificationColors } from '../../../theme';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../../contexts/ToastContext';
 import { createLogger } from '../../../utils/logger';
 
 const logger = createLogger('ProfileTab');
@@ -54,6 +56,8 @@ export function ProfileTab() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { showError } = useToast();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   // Calcular progresso usando LevelTable (fonte única de verdade)
@@ -73,6 +77,7 @@ export function ProfileTab() {
       navigate('/login');
     } catch (error) {
       logger.error('Erro ao sair:', error);
+      showError('Erro ao sair. Tente novamente.');
     }
   };
 
@@ -436,6 +441,9 @@ export function ProfileTab() {
       <Dialog
         open={logoutDialogOpen}
         onClose={() => setLogoutDialogOpen(false)}
+        fullScreen={isMobile}
+        fullWidth
+        maxWidth="sm"
         aria-labelledby="logout-dialog-title"
       >
         <DialogTitle id="logout-dialog-title">Sair da conta?</DialogTitle>

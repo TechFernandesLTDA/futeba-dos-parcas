@@ -37,6 +37,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('CashboxScreen');
 
 interface CashboxTransaction {
   id: string;
@@ -79,24 +82,32 @@ export const CashboxScreen: React.FC = () => {
     const cashRef = collection(db, 'cashbox');
     const q = query(cashRef, where('group_id', '==', groupId), orderBy('created_at', 'desc'));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((d) => {
-        const raw = d.data();
-        const converted = snakeToCamel(raw);
-        return {
-          id: d.id,
-          ...converted,
-          createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
-        };
-      }) as CashboxTransaction[];
-      setTransactions(data);
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((d) => {
+          const raw = d.data();
+          const converted = snakeToCamel(raw);
+          return {
+            id: d.id,
+            ...converted,
+            createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
+          };
+        }) as CashboxTransaction[];
+        setTransactions(data);
 
-      const total = data.reduce((sum, t) => {
-        return t.type === 'INCOME' ? sum + t.amount : sum - t.amount;
-      }, 0);
-      setBalance(total);
-      setLoading(false);
-    });
+        const total = data.reduce((sum, t) => {
+          return t.type === 'INCOME' ? sum + t.amount : sum - t.amount;
+        }, 0);
+        setBalance(total);
+        setLoading(false);
+      },
+      (err) => {
+        logger.error('Error in cashbox transactions listener:', err);
+        showError('Erro ao carregar transações do caixa.');
+        setLoading(false);
+      }
+    );
 
     const fetchMembers = async () => {
       const groupDoc = await getDoc(doc(db, 'groups', groupId));

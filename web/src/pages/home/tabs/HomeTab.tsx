@@ -36,6 +36,10 @@ import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { formatGameDateLong, formatTimeAgo as formatTimeAgoUtil } from '../../../utils/dateFormatters';
 import { getLevelForXp, getXpProgress, getLevelEntry, getXpRemaining } from '../../../types/gamification';
 import { getLevelColor } from '../../../types/user';
+import { useToast } from '../../../contexts/ToastContext';
+import { createLogger } from '../../../utils/logger';
+
+const logger = createLogger('HomeTab');
 
 interface Activity {
   id: string;
@@ -60,6 +64,7 @@ export function HomeTab() {
   // Atividades recentes do Firestore
   const [activities, setActivities] = useState<Activity[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
+  const { showError } = useToast();
 
   // Dados de nível usando LevelTable
   const currentXp = user?.experiencePoints || 0;
@@ -98,13 +103,15 @@ export function HomeTab() {
         setActivities(data);
         setActivitiesLoading(false);
       },
-      () => {
+      (err) => {
+        logger.error('Error in recent activities listener:', err);
+        showError('Erro ao carregar atividades recentes.');
         setActivitiesLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [user?.id]);
+  }, [user?.id, showError]);
 
   // Usa utilitários centralizados de dateFormatters
 

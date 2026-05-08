@@ -28,6 +28,10 @@ import { VirtualList } from '../../components/common/VirtualList';
 import { Game, GameStatus } from '../../types/game';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useToast } from '../../contexts/ToastContext';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('GamesScreen');
 
 export const GamesScreen: React.FC = () => {
   useDocumentTitle('Jogos');
@@ -39,6 +43,7 @@ export const GamesScreen: React.FC = () => {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { showError } = useToast();
 
   const fetchGames = useCallback(() => {
     return new Promise<void>((resolve) => {
@@ -54,14 +59,17 @@ export const GamesScreen: React.FC = () => {
         setLoading(false);
         setRefreshing(false);
         resolve();
-      }, () => {
+      }, (err) => {
+        logger.error('Error in games listener:', err);
+        showError('Erro ao carregar jogos. Verifique sua conexão.');
+        setLoading(false);
         setRefreshing(false);
         resolve();
       });
 
       return unsubscribe;
     });
-  }, []);
+  }, [showError]);
 
   useEffect(() => {
     const unsub = fetchGames();

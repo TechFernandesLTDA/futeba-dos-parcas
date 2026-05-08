@@ -22,6 +22,7 @@ import {
   Alert,
   Stack,
   useTheme,
+  useMediaQuery,
   alpha,
   CircularProgress,
 } from '@mui/material';
@@ -57,6 +58,7 @@ export const GroupSettingsScreen: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { firebaseUser, user } = useAuth();
   const { showSuccess, showError } = useToast();
 
@@ -392,6 +394,9 @@ export const GroupSettingsScreen: React.FC = () => {
       <Dialog
         open={leaveDialogOpen}
         onClose={() => setLeaveDialogOpen(false)}
+        fullScreen={isMobile}
+        fullWidth
+        maxWidth="sm"
         aria-labelledby="leave-group-dialog-title"
       >
         <DialogTitle id="leave-group-dialog-title">Sair do Grupo</DialogTitle>
@@ -421,6 +426,9 @@ export const GroupSettingsScreen: React.FC = () => {
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
+        fullScreen={isMobile}
+        fullWidth
+        maxWidth="sm"
         aria-labelledby="delete-group-dialog-title"
       >
         <DialogTitle id="delete-group-dialog-title">Excluir Grupo</DialogTitle>
