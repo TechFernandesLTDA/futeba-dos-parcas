@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import {
+  useNavigate,
+  useLocation,
+  useSearchParams,
+  Link as RouterLink,
+} from 'react-router-dom';
 import {
   Box,
   Card,
@@ -42,6 +47,23 @@ export function RegisterScreen() {
 
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  /**
+   * Resolve destino pós-cadastro (mesma lógica do LoginScreen).
+   * Anti open-redirect: aceita apenas paths internos.
+   * FIX #574: antes hardcoded `/`.
+   */
+  const resolveRedirect = (): string => {
+    const fromState = (location.state as { from?: { pathname?: string } } | null)
+      ?.from?.pathname;
+    const fromQuery = searchParams.get('redirect');
+    const candidate = fromState || fromQuery || '/';
+    return candidate.startsWith('/') && !candidate.startsWith('//')
+      ? candidate
+      : '/';
+  };
 
   const validate = () => {
     if (!name.trim()) {
@@ -84,7 +106,7 @@ export function RegisterScreen() {
 
     try {
       await signUp(email, password, name.trim());
-      navigate('/');
+      navigate(resolveRedirect(), { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao criar conta. Tente novamente'));
     } finally {
@@ -98,7 +120,7 @@ export function RegisterScreen() {
 
     try {
       await signInWithGoogle();
-      navigate('/');
+      navigate(resolveRedirect(), { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));
     } finally {

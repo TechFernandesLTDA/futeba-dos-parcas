@@ -59,10 +59,14 @@ export function FormScaffold({
   const navigate = useNavigate();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
-  const { isBlocked, proceed, cancel } = useDirtyGuard(isDirty);
+  const { isBlocked, attemptClose, proceed, cancel } = useDirtyGuard(isDirty);
 
+  // FIX #574: dirty guard agora intercepta o close button de verdade.
+  // Antes: handleClose navegava direto, dialog "Descartar mudanças?" nunca abria
+  // (isBlocked era hardcoded false). Agora attemptClose() dispara o dialog
+  // se isDirty=true, e proceed() executa a navegação pendente.
   const handleClose = () => {
-    navigate(closeDestination);
+    attemptClose(() => navigate(closeDestination));
   };
 
   const CloseIconComponent = closeVariant === 'X' ? CloseIcon : ArrowBackIcon;

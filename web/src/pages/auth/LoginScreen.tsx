@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import {
+  useNavigate,
+  useLocation,
+  useSearchParams,
+  Link as RouterLink,
+} from 'react-router-dom';
 import {
   Box,
   Card,
@@ -38,6 +43,34 @@ export function LoginScreen() {
 
   const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  /**
+   * Resolve destino pós-login com proteção anti open-redirect.
+   *
+   * Prioridade:
+   * 1. `location.state.from.pathname` — set pelo ProtectedRoute quando user
+   *    bate em rota protegida não-logado (deep link).
+   * 2. `?redirect=` — set pelo JoinByInviteScreen e outras telas pós-login.
+   * 3. `/` — fallback default.
+   *
+   * Anti open-redirect: aceita apenas paths internos (`/...`), rejeita
+   * `//evil.com` (URLs protocol-relative) e qualquer URL absoluta.
+   *
+   * FIX #574 (regression #514): antes hardcoded `/`, descartava deep links e
+   * convites por link.
+   */
+  const resolveRedirect = (): string => {
+    const fromState = (location.state as { from?: { pathname?: string } } | null)
+      ?.from?.pathname;
+    const fromQuery = searchParams.get('redirect');
+    const candidate = fromState || fromQuery || '/';
+    // Apenas paths internos. Rejeita protocol-relative (`//`) e URLs absolutas.
+    return candidate.startsWith('/') && !candidate.startsWith('//')
+      ? candidate
+      : '/';
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +84,7 @@ export function LoginScreen() {
 
     try {
       await signIn(email, password);
-      navigate('/');
+      navigate(resolveRedirect(), { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao fazer login. Tente novamente'));
     } finally {
@@ -65,6 +98,7 @@ export function LoginScreen() {
 
     try {
       await signInWithGoogle();
+      navigate(resolveRedirect(), { replace: true });
     } catch (err) {
       setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));
     } finally {
