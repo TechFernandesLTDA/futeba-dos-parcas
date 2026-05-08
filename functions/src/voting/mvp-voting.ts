@@ -37,6 +37,7 @@ import {
 } from "../middleware/rate-limiter";
 import {
   MVP_VOTE_WINDOW_HOURS,
+  XP_ACTIONS,
 } from "../constants";
 
 const getDb = () => admin.firestore();
@@ -809,6 +810,47 @@ export const concludeMvpVoting =
           `Worst=${result.worstPlayerId}`
         );
 
+        // FIX #579: aplicar XP delta MVP +30 / Bola Murcha -10.
+        // Antes: onGameStatusUpdate fira em FINISHED (24h antes do
+        // voting concluir), `mvp_id` e `is_worst_player` ainda não
+        // foram escritos → bonus/penalty NUNCA aplicados.
+        // Agora: aplicado aqui no callable após o voting concluir,
+        // idempotente via xp_logs com doc id determinístico.
+        // Best-effort: erros aqui não falham o concludeMvpVoting.
+        try {
+          if (
+            !result.alreadyConcluded &&
+            result.mvpId
+          ) {
+            await applyVotingXpDelta(
+              db,
+              gameId,
+              result.mvpId as string,
+              "MVP",
+              XP_ACTIONS.MVP
+            );
+          }
+          if (
+            !result.alreadyConcluded &&
+            result.worstPlayerId
+          ) {
+            await applyVotingXpDelta(
+              db,
+              gameId,
+              result.worstPlayerId as string,
+              "BOLA_MURCHA",
+              XP_ACTIONS.WORST_PLAYER
+            );
+          }
+        } catch (xpError) {
+          console.error(
+            "[MVP_CONCLUDE] " +
+            "XP delta application failed " +
+            "(non-fatal):",
+            xpError
+          );
+        }
+
         return {
           success: true,
           alreadyConcluded:
@@ -940,4 +982,102 @@ function resolveWinner(
   );
 
   return tied[0].playerId;
+}
+
+/**
+ * FIX #579: aplica XP delta de MVP (+30) ou Bola Murcha (-10) ao
+ * usuário, em transaction idempotente.
+ *
+ * Idempotência via doc id determinístico em `xp_logs`:
+ * - `mvp_${gameId}_${userId}` (MVP)
+ * - `bola_murcha_${gameId}_${userId}` (Bola Murcha)
+ *
+ * Se o log já existe (chamada repetida ou retry), no-op.
+ *
+ * @param {admin.firestore.Firestore} db - instância do Firestore
+ * @param {string} gameId - ID do jogo
+ * @param {string} userId - ID do usuário (MVP ou worst player)
+ * @param {"MVP" | "BOLA_MURCHA"} reason - tipo de delta
+ * @param {number} xpDelta - +30 (MVP) ou -10 (Bola Murcha)
+ * @return {Promise<void>}
+ */
+async function applyVotingXpDelta(
+  db: admin.firestore.Firestore,
+  gameId: string,
+  userId: string,
+  reason: "MVP" | "BOLA_MURCHA",
+  xpDelta: number
+): Promise<void> {
+  const logId =
+    reason === "MVP" ?
+      `mvp_${gameId}_${userId}` :
+      `bola_murcha_${gameId}_${userId}`;
+  const logRef = db
+    .collection("xp_logs")
+    .doc(logId);
+  const userRef = db
+    .collection("users")
+    .doc(userId);
+
+  try {
+    await db.runTransaction(async (txn) => {
+      const logDoc = await txn.get(logRef);
+      if (logDoc.exists) {
+        console.log(
+          `[VOTING_XP] Skipping ${reason} XP ` +
+          `for ${userId} in ${gameId} ` +
+          "— log already exists (idempotent)"
+        );
+        return;
+      }
+
+      const userDoc = await txn.get(userRef);
+      if (!userDoc.exists) {
+        console.warn(
+          `[VOTING_XP] User ${userId} not found, ` +
+          `skipping ${reason} XP for ${gameId}`
+        );
+        return;
+      }
+
+      const currentXp =
+        (userDoc.data()
+          ?.experience_points as number) || 0;
+      // Não permite XP negativo no acumulado.
+      const newXp = Math.max(0, currentXp + xpDelta);
+
+      txn.set(logRef, {
+        user_id: userId,
+        game_id: gameId,
+        xp_earned: xpDelta,
+        xp_before: currentXp,
+        xp_after: newXp,
+        reason,
+        transaction_id: logId,
+        source: "mvp_voting_concluded",
+        created_at: admin.firestore.FieldValue
+          .serverTimestamp(),
+      });
+      txn.update(userRef, {
+        experience_points: newXp,
+        updated_at: admin.firestore.FieldValue
+          .serverTimestamp(),
+      });
+
+      console.log(
+        `[VOTING_XP] Applied ${xpDelta} XP ` +
+        `to ${userId} for ${reason} ` +
+        `in ${gameId} ` +
+        `(${currentXp} → ${newXp})`
+      );
+    });
+  } catch (error) {
+    // Não throw — XP é best-effort. Falha aqui
+    // não deve fazer concludeMvpVoting falhar.
+    console.error(
+      `[VOTING_XP] Error applying ${reason} ` +
+      `XP for ${userId} in ${gameId}:`,
+      error
+    );
+  }
 }
