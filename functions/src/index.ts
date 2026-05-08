@@ -1129,6 +1129,51 @@ export const recalculateLeagueRating =
         `-> ${gamesPlayedAfter} games`
       );
 
+      // FIX F-H4: Lock distribuído para evitar
+      // race condition cross-instance.
+      // Padrão idêntico ao xp_processing lock.
+      const partRef = db()
+        .collection("season_participation")
+        .doc(partId);
+      const lockResult =
+        await db().runTransaction(
+          async (tx) => {
+            const freshSnap =
+              await tx.get(partRef);
+            const fresh = freshSnap.data();
+            if (!fresh) {
+              return {
+                shouldProcess: false,
+                reason: "missing" as const,
+              };
+            }
+            if (fresh.league_processing) {
+              return {
+                shouldProcess: false,
+                reason: "processing" as const,
+              };
+            }
+            tx.update(partRef, {
+              league_processing: true,
+              league_processing_at:
+                admin.firestore.FieldValue
+                  .serverTimestamp(),
+            });
+            return {
+              shouldProcess: true,
+              reason: "locked" as const,
+            };
+          }
+        );
+
+      if (!lockResult.shouldProcess) {
+        console.log(
+          `[LEAGUE] ${partId} skipped ` +
+          `(${lockResult.reason})`
+        );
+        return;
+      }
+
       try {
         // Buscar últimos 10 xp_logs deste
         // usuário
@@ -1200,22 +1245,25 @@ export const recalculateLeagueRating =
 
         // Atualizar documento (não triggera
         // loop pois games_played não muda)
-        await db()
-          .collection("season_participation")
-          .doc(partId)
-          .update({
-            league_rating: leagueRating,
-            division:
-              newLeagueState.division,
-            promotion_progress:
-              newLeagueState.promotionProgress,
-            relegation_progress:
-              newLeagueState
-                .relegationProgress,
-            protection_games:
-              newLeagueState.protectionGames,
-            recent_games: recentGames,
-          });
+        await partRef.update({
+          league_rating: leagueRating,
+          division:
+            newLeagueState.division,
+          promotion_progress:
+            newLeagueState.promotionProgress,
+          relegation_progress:
+            newLeagueState
+              .relegationProgress,
+          protection_games:
+            newLeagueState.protectionGames,
+          recent_games: recentGames,
+          league_processing:
+            admin.firestore.FieldValue
+              .delete(),
+          league_processing_at:
+            admin.firestore.FieldValue
+              .delete(),
+        });
 
         const promoReq = leagueModule
           .PROMOTION_GAMES_REQUIRED;
@@ -1247,6 +1295,22 @@ export const recalculateLeagueRating =
           `para ${partId}:`,
           e
         );
+        // Liberar lock em caso de erro para
+        // permitir retry limpo
+        await partRef.update({
+          league_processing:
+            admin.firestore.FieldValue
+              .delete(),
+          league_processing_at:
+            admin.firestore.FieldValue
+              .delete(),
+        }).catch((cleanupErr) => {
+          console.error(
+            "[LEAGUE] Falha ao liberar lock " +
+            `para ${partId}:`,
+            cleanupErr
+          );
+        });
         throw e;
       }
     }
@@ -1665,9 +1729,10 @@ export const onGroupDeleted = onDocumentDeleted(
 // (#38, #40 - Validação Firebase)
 // ==========================================
 
-// Sync de players_count quando
-// confirmações mudam
-const syncingGameIds = new Set<string>();
+// FIX F-C2: Substituído recontagem full + Set in-memory (não
+// funciona cross-instance em Cloud Functions v2) por
+// FieldValue.increment atômico — seguro em múltiplas instâncias.
+// Sync de players_count quando confirmações mudam
 export const onConfirmationWrite =
   onDocumentUpdated(
     "confirmations/{confirmationId}",
@@ -1689,53 +1754,46 @@ export const onConfirmationWrite =
 
       if (statusBefore === statusAfter) return;
 
-      if (syncingGameIds.has(gameId)) {
-        console.log(
-          "[SYNC] Skipping duplicate " +
-          `recalculation for game ${gameId}`
-        );
-        return;
+      // Calcular delta atômico baseado na
+      // transição de status
+      const wasConfirmed =
+        statusBefore === "CONFIRMED";
+      const isConfirmed =
+        statusAfter === "CONFIRMED";
+
+      let delta = 0;
+      if (!wasConfirmed && isConfirmed) {
+        delta = 1;
+      } else if (wasConfirmed && !isConfirmed) {
+        delta = -1;
       }
-      syncingGameIds.add(gameId);
+
+      if (delta === 0) return;
 
       try {
         console.log(
           "[SYNC] Confirmation status " +
           `changed: ${statusBefore} -> ` +
-          `${statusAfter} for game ${gameId}`
+          `${statusAfter} for game ${gameId} ` +
+          `(delta=${delta})`
         );
 
-        // Recontagem das confirmações
-        const confirmationsSnap = await db()
-          .collection("confirmations")
-          .where("game_id", "==", gameId)
-          .where("status", "==", "CONFIRMED")
-          .get();
-
-        const playersCount =
-          confirmationsSnap.size;
-        const goalkeeperCount =
-          confirmationsSnap.docs.filter(
-            (doc) =>
-              doc.data().position ===
-              "GOALKEEPER"
-          ).length;
-
-        // Atualizar contador no jogo
+        // Increment atômico — seguro
+        // cross-instance, sem race condition
         await db().collection("games")
           .doc(gameId)
           .update({
-            players_count: playersCount,
-            goalkeepers_count:
-              goalkeeperCount,
+            players_count:
+              admin.firestore.FieldValue
+                .increment(delta),
             updated_at: admin.firestore
               .FieldValue.serverTimestamp(),
           });
 
         console.log(
           `[SYNC] Game ${gameId}: ` +
-          `players=${playersCount}, ` +
-          `goalkeepers=${goalkeeperCount}`
+          `players_count ${delta > 0 ? "+" : ""}` +
+          `${delta}`
         );
       } catch (error) {
         console.error(
@@ -1743,8 +1801,8 @@ export const onConfirmationWrite =
           `for game ${gameId}:`,
           error
         );
-      } finally {
-        syncingGameIds.delete(gameId);
+        // Re-throw para permitir retry
+        throw error;
       }
     }
   );

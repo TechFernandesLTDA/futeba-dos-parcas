@@ -164,8 +164,10 @@ export const onUserDocUpdated = onDocumentUpdated(
 export const migratePiiToUsersPrivate = onCall(
   {
     region: "us-central1",
-    enforceAppCheck: false,
-    consumeAppCheckToken: false,
+    // FIX SEC-2026-05-08: enforce App Check em prod. Callable manipula PII
+    // de todos os usuários via batch — não deve aceitar chamada não-verificada.
+    enforceAppCheck: process.env.NODE_ENV === "production",
+    consumeAppCheckToken: true,
     timeoutSeconds: 540, // 9min — pode ter muitos users
     memory: "512MiB",
   },
@@ -319,8 +321,10 @@ function validatePiiField(field: string, value: unknown): boolean {
 export const updateUserPii = onCall(
   {
     region: "us-central1",
-    enforceAppCheck: false,
-    consumeAppCheckToken: false,
+    // FIX SEC-2026-05-08: enforce App Check em prod. Callable escreve PII
+    // em users_private — exige verificação de app em prod.
+    enforceAppCheck: process.env.NODE_ENV === "production",
+    consumeAppCheckToken: true,
   },
   async (request) => {
     const {auth, data} = request;
@@ -387,8 +391,10 @@ export const updateUserPii = onCall(
 export const removePiiFromUsers = onCall(
   {
     region: "us-central1",
-    enforceAppCheck: false,
-    consumeAppCheckToken: false,
+    // FIX SEC-2026-05-08: enforce App Check em prod. Callable ADMIN deleta
+    // PII em batch — operação destrutiva irreversível, exige verificação.
+    enforceAppCheck: process.env.NODE_ENV === "production",
+    consumeAppCheckToken: true,
     timeoutSeconds: 540,
     memory: "512MiB",
   },

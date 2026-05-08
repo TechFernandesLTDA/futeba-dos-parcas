@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.GroupJoinRequest
 import com.futebadosparcas.domain.model.GroupJoinRequestStatus
 import com.futebadosparcas.domain.repository.GroupRepository
+import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

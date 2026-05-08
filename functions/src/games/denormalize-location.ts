@@ -151,8 +151,10 @@ export const onGameWrittenDenormalizeLocation =
 export const denormalizeGameLocations = onCall(
   {
     region: "us-central1",
-    enforceAppCheck: false,
-    consumeAppCheckToken: false,
+    // FIX SEC-2026-05-08: enforce App Check em prod. Callable ADMIN manipula
+    // games em batch — não deve aceitar chamada não-verificada.
+    enforceAppCheck: process.env.NODE_ENV === "production",
+    consumeAppCheckToken: true,
     timeoutSeconds: 540,
     memory: "512MiB",
   },
