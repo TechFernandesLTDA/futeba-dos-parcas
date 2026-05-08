@@ -674,7 +674,7 @@ export const CreateGameScreen: React.FC = () => {
   };
 
   return (
-    <AdaptiveFormSheet closeDestination={closeDestination}>
+    <AdaptiveFormSheet closeDestination={closeDestination} isDirty={isDirty}>
     <FormScaffold
       title="Criar Jogo"
       closeDestination={closeDestination}

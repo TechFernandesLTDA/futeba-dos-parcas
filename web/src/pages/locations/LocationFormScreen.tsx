@@ -237,7 +237,7 @@ export const LocationFormScreen: React.FC = () => {
   }
 
   return (
-    <AdaptiveFormSheet closeDestination={closeDestination}>
+    <AdaptiveFormSheet closeDestination={closeDestination} isDirty={isDirty}>
       <FormScaffold
         title={isEdit ? 'Editar Local' : 'Criar Local'}
         closeDestination={closeDestination}

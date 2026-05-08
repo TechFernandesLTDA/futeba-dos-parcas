@@ -164,8 +164,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <AppLoadingFallback />;
   }
 
+  // FIX #574 (C3): preserva location pra que LoginScreen redirecione user
+  // de volta pro deep link após login. Antes: hardcoded `/`, perdendo destino.
   if (!firebaseUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Aguarda verificação do token (custom claim verified)
@@ -188,11 +190,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
  */
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, firebaseUser, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <AppLoadingFallback />;
   // FIX #584/H5: distinguir unauth (→/login) de auth-mas-nao-admin (→/).
   // Antes: user==null caía em `user?.role !== 'ADMIN'` (true) e ia pra /,
   // criando silent gap (unauth user via home em vez de login).
-  if (!firebaseUser) return <Navigate to="/login" replace />;
+  // FIX #574 (C3): preserva from-location pra restaurar deep link pós-login.
+  if (!firebaseUser) return <Navigate to="/login" state={{ from: location }} replace />;
   if (user?.role !== 'ADMIN') return <Navigate to="/" replace />;
   return <>{children}</>;
 }
@@ -204,9 +208,11 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
  */
 function FieldOwnerOrAdminRoute({ children }: { children: React.ReactNode }) {
   const { user, firebaseUser, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <AppLoadingFallback />;
   // FIX #584/H5: unauth user → /login (vide AdminRoute).
-  if (!firebaseUser) return <Navigate to="/login" replace />;
+  // FIX #574 (C3): preserva from-location pra restaurar deep link pós-login.
+  if (!firebaseUser) return <Navigate to="/login" state={{ from: location }} replace />;
   if (user?.role !== 'ADMIN' && user?.role !== 'FIELD_OWNER') {
     return <Navigate to="/" replace />;
   }
@@ -218,9 +224,11 @@ function FieldOwnerOrAdminRoute({ children }: { children: React.ReactNode }) {
  */
 function FieldOwnerRoute({ children }: { children: React.ReactNode }) {
   const { user, firebaseUser, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <AppLoadingFallback />;
   // FIX #584/H5: unauth user → /login.
-  if (!firebaseUser) return <Navigate to="/login" replace />;
+  // FIX #574 (C3): preserva from-location pra restaurar deep link pós-login.
+  if (!firebaseUser) return <Navigate to="/login" state={{ from: location }} replace />;
   if (user?.role !== 'FIELD_OWNER' && user?.role !== 'ADMIN') {
     return <Navigate to="/" replace />;
   }

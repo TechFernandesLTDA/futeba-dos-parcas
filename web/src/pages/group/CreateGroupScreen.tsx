@@ -85,7 +85,7 @@ export const CreateGroupScreen: React.FC = () => {
   };
 
   return (
-    <AdaptiveFormSheet closeDestination="/groups">
+    <AdaptiveFormSheet closeDestination="/groups" isDirty={isDirty}>
     <FormScaffold
       title="Criar Grupo"
       closeDestination="/groups"
