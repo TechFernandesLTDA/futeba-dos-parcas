@@ -15,6 +15,7 @@ import com.futebadosparcas.util.toAndroidLocationReviews
 import com.futebadosparcas.util.toAndroidCashboxEntry
 import com.futebadosparcas.util.toAndroidCashboxEntries
 import com.futebadosparcas.util.toAndroidGroupInvites
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,20 +32,26 @@ class LocationsMapViewModel(
     // Armazena a fonte de navegação para rastreamento
     private var navigationSource: String = LocationSources.MENU
 
+    // FIX #584/M11: Job tracking pra evitar concurrent loads em pull-to-refresh
+    // ou setNavigationSource → loadLocations duplo.
+    private var loadJob: Job? = null
+
     init {
         loadLocations()
     }
 
     /**
      * Define a fonte de navegação para rastreamento de analytics.
-     * Deve ser chamado antes de loadLocations quando aplicável.
+     * Deve ser chamado antes de loadLocations.
      */
     fun setNavigationSource(source: String) {
         navigationSource = source
     }
 
     fun loadLocations() {
-        viewModelScope.launch {
+        // FIX #584/M11: cancelar job anterior antes de iniciar novo.
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.value = LocationsMapUiState.Loading
             locationRepository.getAllLocations().fold(
                 onSuccess = { locations ->

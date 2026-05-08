@@ -77,6 +77,15 @@ export const checkInToGame = onCall(
         "gameId/lat/lng obrigatorios",
       );
     }
+    // FIX #584/M8: gameId sem max-length permitia cliente passar 10MB
+    // string causando doc path overflow. Cap em 128 chars (Firestore
+    // recomendação para document IDs).
+    if (gameId.length === 0 || gameId.length > 128) {
+      throw new HttpsError(
+        "invalid-argument",
+        "gameId deve ter entre 1 e 128 caracteres",
+      );
+    }
     if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
       throw new HttpsError(
         "invalid-argument",
