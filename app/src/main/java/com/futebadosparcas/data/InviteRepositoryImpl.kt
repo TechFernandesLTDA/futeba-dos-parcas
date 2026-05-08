@@ -6,9 +6,12 @@ import com.futebadosparcas.util.AppLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth.AuthStateListener
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 
@@ -164,7 +167,60 @@ class InviteRepositoryImpl constructor(
         }
     }
 
-    override fun getMyPendingInvitesFlow(): Flow<List<GroupInvite>> = callbackFlow {
+    /**
+     * Flow do uid atual do auth — emite cada mudança (sign-in/sign-out).
+     * FIX #584/M12: necessário pra trocar listener quando user troca.
+     */
+    private fun authUidFlow(): Flow<String?> = callbackFlow {
+        // Emit initial uid
+        trySend(auth.currentUser?.uid)
+        val listener = AuthStateListener { firebaseAuth ->
+            trySend(firebaseAuth.currentUser?.uid)
+        }
+        auth.addAuthStateListener(listener)
+        awaitClose { auth.removeAuthStateListener(listener) }
+    }
+
+    @kotlinx.coroutines.ExperimentalCoroutinesApi
+    override fun getMyPendingInvitesFlow(): Flow<List<GroupInvite>> {
+        // FIX #584/M12: era `val userId = auth.currentUser?.uid` capturado UMA VEZ
+        // no início do flow → após sign-out + sign-in com outra conta, flow
+        // continuava emitindo invites do user anterior.
+        // Agora: flatMapLatest sobre authUidFlow → cada mudança de uid cancela
+        // listener anterior e cria novo pra novo uid.
+        return authUidFlow().flatMapLatest { userId ->
+            if (userId == null) {
+                flowOf(emptyList())
+            } else {
+                callbackFlow {
+                    // P1 #12: Adicionar .limit() para real-time listener
+                    val listener = invitesCollection
+                        .whereEqualTo("invited_user_id", userId)
+                        .whereEqualTo("status", InviteStatus.PENDING.name)
+                        .limit(50)
+                        .addSnapshotListener { snapshot, e ->
+                            if (e != null) {
+                                close(e)
+                                return@addSnapshotListener
+                            }
+
+                            if (snapshot != null) {
+                                val invites = snapshot.toObjects(GroupInvite::class.java)
+                                    .filter { it.hasExpired().not() }
+                                    .sortedByDescending { it.createdAt }
+                                trySend(invites)
+                            } else {
+                                trySend(emptyList())
+                            }
+                        }
+                    awaitClose { listener.remove() }
+                }
+            }
+        }
+    }
+
+    @Suppress("unused")
+    private fun _legacyGetMyPendingInvitesFlow(): Flow<List<GroupInvite>> = callbackFlow {
         val userId = auth.currentUser?.uid
         if (userId == null) {
             trySend(emptyList())

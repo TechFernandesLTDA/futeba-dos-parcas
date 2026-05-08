@@ -49,13 +49,17 @@ class LiveGameRepository constructor(
     }
 
     /**
-     * Observa o placar em tempo real
+     * Observa o placar em tempo real.
+     * FIX #584/M10: era engole errors (só log) → consumer Flow hangs forever
+     * em permission-denied/network. Agora close(error) → collectors com
+     * .catch {} podem mostrar error state e dar retry.
      */
     fun observeLiveScore(gameId: String): Flow<LiveGameScore?> = callbackFlow {
         val listener = scoresCollection.document(gameId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     AppLogger.e(TAG, "Erro ao observar placar", error)
+                    close(error)
                     return@addSnapshotListener
                 }
 
