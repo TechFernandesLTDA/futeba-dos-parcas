@@ -865,7 +865,12 @@ export const resetXpRateLimit =
       region: "southamerica-east1",
     },
     async (request) => {
-      // Validar que é admin
+      // Validar que é admin via Custom Claim (PERF_001).
+      // FIX #582: era Firestore lookup (`users/{uid}.role`) vulnerável a:
+      //   - Stale doc antes do trigger sync propagar
+      //   - Bypass via rules ou admin SDK escrevendo users.role direto sem passar
+      //     pelo setUserRole callable (que sincroniza Custom Claim)
+      // Custom Claim em request.auth.token é a fonte de verdade canônica.
       if (!request.auth) {
         throw new HttpsError(
           "unauthenticated",
@@ -873,15 +878,7 @@ export const resetXpRateLimit =
         );
       }
 
-      const callerDoc = await db()
-        .collection("users")
-        .doc(request.auth.uid)
-        .get();
-
-      if (
-        !callerDoc.exists ||
-        callerDoc.data()?.role !== "ADMIN"
-      ) {
+      if (request.auth.token?.role !== "ADMIN") {
         throw new HttpsError(
           "permission-denied",
           "Admin access required"
