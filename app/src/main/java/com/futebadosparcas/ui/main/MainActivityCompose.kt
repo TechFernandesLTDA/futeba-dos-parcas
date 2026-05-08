@@ -1,5 +1,6 @@
 package com.futebadosparcas.ui.main
 
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.compose.BackHandler
@@ -72,9 +73,44 @@ class MainActivityCompose : AppCompatActivity() {
     private val authRepository: com.futebadosparcas.data.repository.AuthRepository by inject()
     private val updateProfileUseCase: com.futebadosparcas.domain.usecase.user.UpdateProfileUseCase by inject()
 
+    // Estado de deep link extraído do Intent da notificação FCM.
+    // Guardado no nível da Activity para sobreviver à recomposição e ao onNewIntent.
+    private val deepLinkTarget = mutableStateOf<String?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // Atualiza o Intent da Activity para que getIntent() reflita o novo Intent.
+        setIntent(intent)
+        handleIntentExtras(intent)
+    }
+
+    /**
+     * Extrai extras do Intent de notificação e define o alvo de deep link.
+     * Produtores conhecidos:
+     *   - NotificationHelper: "gameId" (String), "openBadges" (Boolean)
+     *   - FcmService: "gameId" (String), "notificationType" (String)
+     */
+    private fun handleIntentExtras(intent: Intent?) {
+        val gameId = intent?.getStringExtra("gameId")
+        val openBadges = intent?.getBooleanExtra("openBadges", false) ?: false
+        val notificationType = intent?.getStringExtra("notificationType")
+
+        deepLinkTarget.value = when {
+            gameId != null -> "game_detail/$gameId"
+            openBadges -> "badges"
+            notificationType == "level_up" -> "evolution"
+            else -> null
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
+        // Processa extras de notificação apenas em cold start (não em recreate por rotação).
+        // onNewIntent cobre o caso hot start (app já em foreground).
+        if (savedInstanceState == null) {
+            handleIntentExtras(intent)
+        }
 
         // Configurar cache de imagens
         CoilConfig.setupCoil(this)
@@ -137,7 +173,9 @@ class MainActivityCompose : AppCompatActivity() {
                         themeConfig = themeConfig,
                         onThemeChange = { recreate() },
                         badgeAwarder = badgeAwarder,
-                        notificationRepository = notificationRepository
+                        notificationRepository = notificationRepository,
+                        deepLinkTarget = deepLinkTarget.value,
+                        onDeepLinkConsumed = { deepLinkTarget.value = null }
                     )
                 }
             }
@@ -209,7 +247,9 @@ fun MainScreen(
     themeConfig: com.futebadosparcas.domain.model.AppThemeConfig,
     onThemeChange: () -> Unit,
     badgeAwarder: BadgeAwarder,
-    notificationRepository: NotificationRepository
+    notificationRepository: NotificationRepository,
+    deepLinkTarget: String? = null,
+    onDeepLinkConsumed: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val navController = androidx.navigation.compose.rememberNavController()
@@ -228,6 +268,17 @@ fun MainScreen(
     // Contagem de notificações não lidas
     val notificationCount by notificationRepository.getUnreadCountFlow()
         .collectAsStateWithLifecycle(initialValue = 0)
+
+    // Navega para o destino de deep link proveniente de notificação FCM.
+    // deepLinkTarget é não-nulo apenas quando o Intent contém extras de notificação.
+    LaunchedEffect(deepLinkTarget) {
+        deepLinkTarget?.let { route ->
+            navController.navigate(route) {
+                launchSingleTop = true
+            }
+            onDeepLinkConsumed()
+        }
+    }
 
     // Exibe snackbar ao desbloquear badge
     LaunchedEffect(Unit) {

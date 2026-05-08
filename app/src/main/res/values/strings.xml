@@ -3965,4 +3965,10 @@ subir no ranking!</string>
     <!-- VoiceMessageRecorder -->
     <string name="voice_tap_to_record">Toque para gravar</string>
 
+    <!-- DiscardChangesGuard (forms com mudanças não salvas) -->
+    <string name="form_discard_changes_title">Descartar alterações?</string>
+    <string name="form_discard_changes_message">Você tem alterações não salvas. Sair agora vai descartá-las.</string>
+    <string name="form_discard_changes_confirm">Descartar</string>
+    <string name="form_discard_changes_dismiss">Continuar editando</string>
+
 </resources>
