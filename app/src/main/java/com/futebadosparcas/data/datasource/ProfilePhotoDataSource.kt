@@ -154,8 +154,13 @@ class ProfilePhotoDataSource constructor(
                 close()
             }
 
+            // FIX #584/H8: era `uploadTask.pause()` que NÃO libera recursos
+            // nem detacha listeners. Quando o consumer cancela (user navega
+            // out mid-upload), upload continuava em bg consumindo bandwidth
+            // e listeners ficavam órfãos chamando trySend em channel fechado.
+            // Correto: cancel() para abort imediato + cleanup.
             awaitClose {
-                uploadTask.pause()
+                uploadTask.cancel()
             }
 
         } catch (e: Exception) {

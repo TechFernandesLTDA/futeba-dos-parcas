@@ -74,20 +74,23 @@ fun UpcomingGamesSection(
 ) {
     if (games.isEmpty()) return
 
-    // ✅ OTIMIZAÇÃO P2#9: Usar derivedStateOf para evitar recálculos desnecessários
-    // Só recompõe se o resultado da filtragem mudar, não a cada render
-    val pendingGames = remember { derivedStateOf {
+    // FIX #584/H9: era `remember { derivedStateOf { games.filter ... } }.value`
+    // — quebrado: `games` é param (não State), derivedStateOf nunca observa,
+    // e remember sem key captura referência inicial. Resultado: dados stale
+    // quando parent passa nova lista.
+    // Correto: remember(games) re-roda quando referência muda.
+    val pendingGames = remember(games) {
         games.filter {
             val gameStatus = it.game.getStatusEnum()
             !it.isUserConfirmed && gameStatus == GameStatus.SCHEDULED
         }
-    } }.value
-    val confirmedGames = remember { derivedStateOf {
+    }
+    val confirmedGames = remember(games) {
         games.filter {
             val gameStatus = it.game.getStatusEnum()
             it.isUserConfirmed || gameStatus == GameStatus.CONFIRMED
         }
-    } }.value
+    }
 
     Column(modifier = modifier) {
         // Seção "Para Confirmar" - Prioridade máxima

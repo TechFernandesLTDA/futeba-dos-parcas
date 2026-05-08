@@ -158,8 +158,9 @@ class FieldPhotoDataSource constructor(
                 close()
             }
 
+            // FIX #584/H8: pause() não libera recursos. Use cancel() pra abort.
             awaitClose {
-                uploadTask.pause()
+                uploadTask.cancel()
             }
 
         } catch (e: Exception) {
