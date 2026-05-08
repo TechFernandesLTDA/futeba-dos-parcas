@@ -7,6 +7,7 @@ import {
   FIRESTORE_BATCH_SAFE_LIMIT,
   FUNCTION_REGION,
   MAX_XP_PER_GAME,
+  MIN_XP_PER_GAME,
   MAX_GOALS_PER_GAME,
   MAX_ASSISTS_PER_GAME,
   MAX_SAVES_PER_GAME,
@@ -760,10 +761,16 @@ export const onGameStatusUpdate = onDocumentUpdated(
             );
           xp += milesXp;
 
-          // Aplicar teto máximo de XP por jogo
-          // (anti-cheat)
+          // Aplicar teto máximo + piso mínimo de XP por jogo
+          // (anti-cheat).
+          // FIX #584/H13: era Math.max(0, ...) → clampava Bola Murcha
+          // -10 silenciosamente pra 0, gerando log inconsistente
+          // (xp_penalty: -10 mas xp_earned: 0). Agora usa
+          // MIN_XP_PER_GAME = -100 (de shared/xp-constants.json) →
+          // permite penalidades negativas legítimas.
           xp = Math.max(
-            0, Math.min(xp, MAX_XP_PER_GAME)
+            MIN_XP_PER_GAME,
+            Math.min(xp, MAX_XP_PER_GAME)
           );
 
           // Final XP & Level

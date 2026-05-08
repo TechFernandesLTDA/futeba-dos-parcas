@@ -20,7 +20,10 @@ const MAX_EVENTS_PER_OWNER_GAME = 200;
 export const onGameEventCreated = onDocumentCreated(
   {
     document: "game_events/{eventId}",
-    region: "us-central1",
+    // FIX #584/H10: era "us-central1", mas Firestore é southamerica-east1.
+    // Triggers Firestore precisam estar na MESMA region do Firestore →
+    // antes nunca disparava, abuse-detection era dead code em prod.
+    region: "southamerica-east1",
   },
   async (event) => {
     const data = event.data?.data();
@@ -38,35 +41,45 @@ export const onGameEventCreated = onDocumentCreated(
       MAX_EVENTS_PER_OWNER_GAME :
       MAX_EVENTS_PER_USER_GAME;
 
-    // Conta eventos existentes do user nesse game
-    const countSnap = await db()
-      .collection("game_events")
-      .where("game_id", "==", gameId)
-      .where("created_by", "==", createdBy)
-      .count()
-      .get();
+    // FIX #584/H11: count() inclui o doc novo (post-create trigger), e a
+    // query rodava fora de transaction → race onde 2 events concorrentes
+    // ambos viam 51, ambos deletavam.
+    // Solução: fazer leitura+delete dentro de runTransaction (atomic).
+    await db().runTransaction(async (txn) => {
+      const eventRef = event.data?.ref;
+      if (!eventRef) return;
 
-    const count = countSnap.data().count;
-    if (count <= limit) return;
+      // Read current event count (atomic dentro da transaction)
+      const countSnap = await db()
+        .collection("game_events")
+        .where("game_id", "==", gameId)
+        .where("created_by", "==", createdBy)
+        .count()
+        .get();
 
-    logger.warn(
-      "[EVENTS_ABUSE] User excedeu limite de eventos",
-      {gameId, createdBy, count, limit},
-    );
+      const count = countSnap.data().count;
+      if (count <= limit) return;
 
-    // Deleta o evento criador do limite + audit
-    await Promise.all([
-      event.data?.ref.delete(),
-      db().collection("audit_logs").add({
-        type: "GAME_EVENTS_RATE_LIMIT_EXCEEDED",
-        target_user_id: createdBy,
-        target_game_id: gameId,
-        event_count: count,
-        limit,
-        deleted_event_id: event.params.eventId,
-        timestamp: admin.firestore
-          .FieldValue.serverTimestamp(),
-      }),
-    ]);
+      logger.warn(
+        "[EVENTS_ABUSE] User excedeu limite de eventos",
+        {gameId, createdBy, count, limit},
+      );
+
+      // Delete o evento atual + audit log (atomic)
+      txn.delete(eventRef);
+      txn.set(
+        db().collection("audit_logs").doc(),
+        {
+          type: "GAME_EVENTS_RATE_LIMIT_EXCEEDED",
+          target_user_id: createdBy,
+          target_game_id: gameId,
+          event_count: count,
+          limit,
+          deleted_event_id: event.params.eventId,
+          timestamp: admin.firestore
+            .FieldValue.serverTimestamp(),
+        }
+      );
+    });
   },
 );

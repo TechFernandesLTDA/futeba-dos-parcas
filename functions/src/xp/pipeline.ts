@@ -13,6 +13,7 @@ import {
   GamificationSettings,
   UserStatistics,
 } from "../models";
+import {LEVEL_TABLE} from "../constants";
 
 // ==========================================
 // CONSTANTS & LOGIC (Port from Kotlin)
@@ -38,23 +39,21 @@ export const DEFAULT_SETTINGS: GamificationSettings = {
 // Penalidade "Bola Murcha" (sync XPCalculator.kt)
 export const XP_WORST_PLAYER_PENALTY = -10;
 
-// LevelTable Logic (Synced with Kotlin LevelTable.kt)
-// Formato: level, name, xpRequired (acumulado)
-// Fonte de verdade:
-//   app/.../data/model/LevelTable.kt
-export const LEVELS = [
-  {level: 0, name: "Novato", xpRequired: 0},
-  {level: 1, name: "Iniciante", xpRequired: 100},
-  {level: 2, name: "Amador", xpRequired: 350},
-  {level: 3, name: "Regular", xpRequired: 850},
-  {level: 4, name: "Experiente", xpRequired: 1850},
-  {level: 5, name: "Habilidoso", xpRequired: 3850},
-  {level: 6, name: "Profissional", xpRequired: 7350},
-  {level: 7, name: "Expert", xpRequired: 12850},
-  {level: 8, name: "Mestre", xpRequired: 20850},
-  {level: 9, name: "Lenda", xpRequired: 32850},
-  {level: 10, name: "Imortal", xpRequired: 52850},
-];
+// LevelTable Logic — Source of truth: shared/xp-constants.json
+// Synced via constants.ts → LEVEL_TABLE (importado do JSON local).
+//
+// FIX #584/H14: era array hardcoded com 11 entries (cap level 10),
+// mas xp-constants.json tem 21 níveis (0-20). Após 52850 XP server
+// retornava cap level 10 incorreto. Agora deriva do JSON canônico.
+export const LEVELS: Array<{
+  level: number;
+  name: string;
+  xpRequired: number;
+}> = LEVEL_TABLE.levels.map((l) => ({
+  level: l.level,
+  name: l.name,
+  xpRequired: l.xpRequired,
+}));
 
 /**
  * Retorna o nível correspondente ao XP.
