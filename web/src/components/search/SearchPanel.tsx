@@ -87,6 +87,8 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const listRef = useRef<HTMLUListElement>(null);
+  // Referência de ID para descartar responses de requests stale (race condition)
+  const requestIdRef = useRef(0);
   const showQuickCommands = !searchQuery.trim();
 
   const navigableItems: SearchResult[] = showQuickCommands
@@ -102,6 +104,8 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   }, [searchQuery, tabValue]);
 
   const doSearch = async (q: string, tab: number) => {
+    // Gera ID único para este request; requests antigos são descartados ao retornar
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     try {
       const all: SearchResult[] = [];
@@ -149,11 +153,14 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
         });
       }
 
+      // Descarta resultado se um request mais recente já foi disparado
+      if (requestIdRef.current !== requestId) return;
       setResults(all);
     } catch (err) {
+      if (requestIdRef.current !== requestId) return;
       logger.error('Erro ao buscar:', err);
     } finally {
-      setLoading(false);
+      if (requestIdRef.current === requestId) setLoading(false);
     }
   };
 
