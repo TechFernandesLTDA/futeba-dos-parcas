@@ -145,7 +145,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
                           color="primary"
                           variant="outlined"
                         />
-                        {(group as any).memberCount != null && (
+                        {typeof (group as any).memberCount === 'number' && (
                           <Chip
                             label={`${(group as any).memberCount} membro${(group as any).memberCount === 1 ? '' : 's'}`}
                             size="small"

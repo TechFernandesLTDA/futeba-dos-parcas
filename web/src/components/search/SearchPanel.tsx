@@ -99,7 +99,6 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
     if (!searchQuery.trim()) { setResults([]); return; }
     const t = setTimeout(() => doSearch(searchQuery, tabValue), 300);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, tabValue]);
 
   const doSearch = async (q: string, tab: number) => {
