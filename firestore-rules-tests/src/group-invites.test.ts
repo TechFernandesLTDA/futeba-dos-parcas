@@ -186,6 +186,44 @@ describe("group_invites — atualização", () => {
       db.doc(`group_invites/${INVITE_A_TO_C}`).update({ status: "REJECTED" })
     );
   });
+
+  // ============================================================
+  // FIX #577: Field-restriction tests
+  // Antes: invitee podia overwrite group_id/invited_by_id arbitrariamente
+  // ============================================================
+  it("FIX #577: Destinatário NÃO pode pivotar invite pra outro grupo", async () => {
+    const db = asPlayerC(testEnv);
+    await assertFails(
+      db.doc(`group_invites/${INVITE_A_TO_C}`).update({
+        status: "ACCEPTED",
+        group_id: "outro-grupo-arbitrario",
+      })
+    );
+  });
+
+  it("FIX #577: Destinatário NÃO pode mudar invited_by_id", async () => {
+    const db = asPlayerC(testEnv);
+    await assertFails(
+      db.doc(`group_invites/${INVITE_A_TO_C}`).update({
+        status: "ACCEPTED",
+        invited_by_id: UID_PLAYER_C, // tenta se atribuir como inviter
+      })
+    );
+  });
+
+  it("FIX #577: Destinatário NÃO pode CANCELLED (só inviter pode)", async () => {
+    const db = asPlayerC(testEnv);
+    await assertFails(
+      db.doc(`group_invites/${INVITE_A_TO_C}`).update({ status: "CANCELLED" })
+    );
+  });
+
+  it("FIX #577: Destinatário NÃO pode setar status arbitrário (ex: APPROVED_PARALLEL)", async () => {
+    const db = asPlayerC(testEnv);
+    await assertFails(
+      db.doc(`group_invites/${INVITE_A_TO_C}`).update({ status: "APPROVED_PARALLEL" })
+    );
+  });
 });
 
 // ============================================================
