@@ -187,8 +187,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
  * Redireciona pra `/` se o usuário autenticado não for ADMIN.
  */
 function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, firebaseUser, loading } = useAuth();
   if (loading) return <AppLoadingFallback />;
+  // FIX #584/H5: distinguir unauth (→/login) de auth-mas-nao-admin (→/).
+  // Antes: user==null caía em `user?.role !== 'ADMIN'` (true) e ia pra /,
+  // criando silent gap (unauth user via home em vez de login).
+  if (!firebaseUser) return <Navigate to="/login" replace />;
   if (user?.role !== 'ADMIN') return <Navigate to="/" replace />;
   return <>{children}</>;
 }
@@ -199,8 +203,10 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
  * admin pode editar todas).
  */
 function FieldOwnerOrAdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, firebaseUser, loading } = useAuth();
   if (loading) return <AppLoadingFallback />;
+  // FIX #584/H5: unauth user → /login (vide AdminRoute).
+  if (!firebaseUser) return <Navigate to="/login" replace />;
   if (user?.role !== 'ADMIN' && user?.role !== 'FIELD_OWNER') {
     return <Navigate to="/" replace />;
   }
@@ -211,8 +217,10 @@ function FieldOwnerOrAdminRoute({ children }: { children: React.ReactNode }) {
  * Restringe a rota a usuários FIELD_OWNER (donos de quadra).
  */
 function FieldOwnerRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, firebaseUser, loading } = useAuth();
   if (loading) return <AppLoadingFallback />;
+  // FIX #584/H5: unauth user → /login.
+  if (!firebaseUser) return <Navigate to="/login" replace />;
   if (user?.role !== 'FIELD_OWNER' && user?.role !== 'ADMIN') {
     return <Navigate to="/" replace />;
   }
