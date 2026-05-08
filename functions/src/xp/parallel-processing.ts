@@ -22,10 +22,6 @@ import {
   onCall,
   HttpsError,
 } from "firebase-functions/v2/https";
-import {
-  checkRateLimit,
-  RATE_LIMITS,
-} from "../middleware/rate-limiter";
 import {db} from "../_db";
 
 
@@ -642,213 +638,25 @@ isParallelTransactionProcessed(
 }
 
 // ==========================================
-// P0 #10: RATE LIMITING EM CALLABLE FUNCTIONS
+// REMOVIDO em FIX #581: callable processXpBatch
 // ==========================================
-
-/**
- * Cloud Function: processXpBatch
- * (callable com rate limiting)
- *
- * RATE LIMIT: 5 calls/min por usuário
- * - Previne abuso (1 usuário não pode spam
- *   XP processing)
- * - Quota justo para 10k usuários
- *
- * EXEMPLO DE USO:
- * ```typescript
- * const processXp = httpsCallable(
- *   functions, 'processXpBatch'
- * );
- * const result = await processXp({
- *   gameId: 'game123',
- *   playerUpdates: [...]
- * });
- * ```
- *
- * @param {object} request - Requisição
- *   Firebase callable
- * @return {Promise<object>} Resultado do
- *   processamento
- */
-export const processXpBatch =
-  onCall<BatchXpRequest>(
-    {
-      // SEGURANÇA: Exigir autenticação e App Check
-      // Rate limiting de game_events é aplicado na camada de Cloud Functions
-      // via middleware rate-limiter (não nas Security Rules) — padrão
-      enforceAppCheck: true,
-      consumeAppCheckToken: true,
-    },
-    async (request) => {
-      // ======================================
-      // 1. AUTHENTICATION CHECK
-      // ======================================
-      if (!request.auth) {
-        throw new HttpsError(
-          "unauthenticated",
-          "User must be authenticated " +
-          "to process XP"
-        );
-      }
-
-      const userId = request.auth.uid;
-
-      // ======================================
-      // 2. RATE LIMITING CHECK (P0 #10)
-      // ======================================
-      const rateLimitConfig = {
-        ...RATE_LIMITS.BATCH_OPERATION,
-        keyPrefix: "xp_process",
-      };
-
-      const {allowed, remaining, resetAt} =
-        await checkRateLimit(
-          userId,
-          rateLimitConfig
-        );
-
-      if (!allowed) {
-        const resetInSeconds = Math.ceil(
-          (resetAt.getTime() - Date.now()) /
-          1000
-        );
-
-        console.warn(
-          "[XP_BATCH] User " +
-          `${userId} exceeded rate limit. ` +
-          `Reset in ${resetInSeconds}s`
-        );
-
-        throw new HttpsError(
-          "resource-exhausted",
-          "Rate limit exceeded. Try again " +
-          `in ${resetInSeconds} seconds.`,
-          {
-            retryAfter: resetInSeconds,
-            limit:
-              rateLimitConfig.maxRequests,
-            window:
-              rateLimitConfig.windowMs,
-          }
-        );
-      }
-
-      console.log(
-        "[XP_BATCH] User " +
-        `${userId}: ${remaining} ` +
-        "requests remaining"
-      );
-
-      // ======================================
-      // 3. INPUT VALIDATION
-      // ======================================
-      const {gameId, playerUpdates} =
-        request.data;
-
-      if (
-        !gameId ||
-        typeof gameId !== "string"
-      ) {
-        throw new HttpsError(
-          "invalid-argument",
-          "gameId must be a non-empty string"
-        );
-      }
-
-      if (
-        !Array.isArray(playerUpdates) ||
-        playerUpdates.length === 0
-      ) {
-        throw new HttpsError(
-          "invalid-argument",
-          "playerUpdates must be a " +
-          "non-empty array"
-        );
-      }
-
-      if (playerUpdates.length > 500) {
-        throw new HttpsError(
-          "invalid-argument",
-          "playerUpdates cannot " +
-          "exceed 500 items"
-        );
-      }
-
-      // ======================================
-      // 4. SECURITY VALIDATION
-      // ======================================
-      // Verificar que o usuário é dono do jogo
-      const gameDoc = await db()
-        .collection("games")
-        .doc(gameId)
-        .get();
-
-      if (!gameDoc.exists) {
-        throw new HttpsError(
-          "not-found",
-          `Game ${gameId} not found`
-        );
-      }
-
-      const gameData = gameDoc.data();
-      if (
-        gameData?.owner_id !== userId &&
-        gameData?.owner_id !==
-          request.auth.uid
-      ) {
-        throw new HttpsError(
-          "permission-denied",
-          "Only the game owner " +
-          "can process XP"
-        );
-      }
-
-      // ======================================
-      // 5. EXECUTE XP PROCESSING
-      // ======================================
-      try {
-        const result =
-          await processXpParallel(
-            gameId,
-            playerUpdates
-          );
-
-        return {
-          success: result.success,
-          gameId: result.gameId,
-          processedCount:
-            result.processedCount,
-          failedCount: result.failedCount,
-          totalDuration:
-            result.totalDuration,
-          message:
-            "Processed " +
-            `${result.processedCount}/` +
-            `${playerUpdates.length} ` +
-            "players in " +
-            `${result.totalDuration}ms`,
-        };
-      } catch (error: unknown) {
-        const typedError =
-          error as Record<string, unknown>;
-        console.error(
-          "[XP_BATCH] Processing failed " +
-          `for game ${gameId}:`,
-          error
-        );
-
-        throw new HttpsError(
-          "internal",
-          "XP processing failed. " +
-          "Please try again.",
-          {
-            originalError:
-              (typedError.message as string),
-          }
-        );
-      }
-    }
-  );
+//
+// O callable `processXpBatch` foi REMOVIDO em 2026-05-08 porque:
+//
+// 1. ANTI-CHEAT BYPASS: aceitava `xpEarned`/`breakdown` direto do cliente sem
+//    recomputar do server. Owner de jogo podia dar até 500 XP/call pra qualquer
+//    jogador. Caps de MAX_GOALS=15 etc eram bypassed.
+//
+// 2. DEAD CODE: zero callers em Android/web/iOS/shared. XP processing real é
+//    feito server-side por `onGameStatusUpdate` trigger em src/index.ts.
+//
+// 3. DOUBLE-CREDIT RACE: idempotency via `whereIn` rodava FORA de
+//    runTransaction (regressão do PR #441 fix em src/xp/processing.ts).
+//
+// Helpers internos (`processXpParallel`, `generateParallelTransactionId`,
+// `isParallelTransactionProcessed`) ficam disponíveis pra uso server-side.
+//
+// Closes #581.
 
 /**
  * Função auxiliar: Resetar rate limit
@@ -868,8 +676,8 @@ export const resetXpRateLimit =
       // Validar que é admin via Custom Claim (PERF_001).
       // FIX #582: era Firestore lookup (`users/{uid}.role`) vulnerável a:
       //   - Stale doc antes do trigger sync propagar
-      //   - Bypass via rules ou admin SDK escrevendo users.role direto sem passar
-      //     pelo setUserRole callable (que sincroniza Custom Claim)
+      //   - Bypass via rules ou admin SDK escrevendo users.role direto
+      //     sem passar pelo setUserRole callable (sync Custom Claim)
       // Custom Claim em request.auth.token é a fonte de verdade canônica.
       if (!request.auth) {
         throw new HttpsError(
