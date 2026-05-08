@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 
@@ -35,11 +35,17 @@ export const usePlayers = (groupId?: string) => {
 
     const fetchPlayers = async () => {
       try {
-        const groupDoc = await getDoc(doc(db, 'groups', groupId));
+        // FIX #584/H2: era `groupDoc.data().members` (array flat) — campo
+        // não existe; schema usa subcollection `groups/{id}/members/{uid}`.
+        // Por isso a tela Players sempre vinha vazia. Agora lemos da
+        // subcollection (consistente com useGroups e CF).
+        const membersSnap = await getDocs(
+          collection(db, 'groups', groupId, 'members')
+        );
         if (cancelled) return;
-        if (groupDoc.exists()) {
-          const memberIds = groupDoc.data().members || [];
-          
+        if (!membersSnap.empty) {
+          const memberIds = membersSnap.docs.map((d) => d.id);
+
           const playersData = await Promise.all(
             memberIds.map(async (uid: string) => {
               const userDoc = await getDoc(doc(db, 'users', uid));
