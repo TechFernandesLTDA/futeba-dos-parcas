@@ -1241,11 +1241,16 @@ service cloud.firestore {
                        request.resource.data.used == false &&
                        isGroupAdminFor(request.resource.data.group_id);
 
-      // Update: marcar como usado (qualquer auth, mas so o campo `used`,
-      // `used_by`, `used_at` podem ser alterados, e o convite nao pode
-      // ja estar usado)
+      // Update: marcar como usado.
+      // FIX #584/H17: era update permitido com `used_by` arbitrário →
+      // qualquer auth user podia marcar código como "usado por outro
+      // usuário", roubando o invite code.
+      // Agora: caller deve ser o usuário que se atribui via used_by.
+      // Status final deve ser used==true (sem toggle pra false).
       allow update: if isAuthenticated() &&
                        resource.data.used == false &&
+                       request.resource.data.used == true &&
+                       request.resource.data.used_by == userId() &&
                        request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['used', 'used_by', 'used_at']);
 
@@ -1529,18 +1534,16 @@ service cloud.firestore {
     // ============================================
     // COLECAO: ranking_deltas (incrementos de ranking)
     // ============================================
+    // FIX #584/H16: era create/update permitido pra game owner sem field
+    // restriction → owner podia escrever xp_added arbitrário (XP fraud).
+    // Após FIX #580 (Android processGame() é no-op), Cloud Function
+    // onGameStatusUpdate (admin SDK) é o único writer legítimo de
+    // ranking_deltas. Cliente NÃO precisa escrever — bloqueado por rule.
+    // Admin mantém acesso via Custom Claim pra rebuilds/migrations.
     match /ranking_deltas/{deltaId} {
       allow read: if isAuthenticated();
-
-      allow create: if isAuthenticated() && (
-        isAdmin() ||
-        (request.resource.data.keys().hasAll(['game_id']) && isGameOwner(request.resource.data.game_id))
-      );
-
-      allow update: if isAuthenticated() && (
-        isAdmin() ||
-        (resource.data.keys().hasAll(['game_id']) && isGameOwner(resource.data.game_id))
-      );
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
     // ============================================
