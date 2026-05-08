@@ -129,19 +129,13 @@ function makePlayerUpdate(userId: string, xpEarned = 50) {
   };
 }
 
-/** Handler processXpBatch extraído do onCall mock */
-let processXpBatchHandler: ((request: any) => Promise<any>) | null = null;
+// Handler do callable processXpBatch foi REMOVIDO em FIX #581 (dead code + anti-cheat bypass).
+// Apenas helpers internos (`processXpParallel` etc.) continuam testáveis.
 
 beforeAll(() => {
   const { onCall } = require("firebase-functions/v2/https");
-  // O parallel-processing.ts registra múltiplos onCall (processXpBatch, resetXpRateLimit)
-  // Capturamos apenas o primeiro (processXpBatch)
-  (onCall as jest.Mock).mockImplementationOnce((_config: any, handler: any) => {
-    processXpBatchHandler = handler || _config;
-    return processXpBatchHandler;
-  });
+  // resetXpRateLimit ainda é callable — ignoramos no mock
   (onCall as jest.Mock).mockImplementation((_config: any, handler?: any) => {
-    // resetXpRateLimit e outros — ignorar
     return handler || _config;
   });
 
@@ -287,139 +281,11 @@ describe("processXpParallel", () => {
   });
 });
 
+
 // ==========================================
-// TESTES: processXpBatch (callable)
+// TESTES: processXpBatch (callable) — REMOVIDOS em FIX #581
 // ==========================================
-
-describe("processXpBatch - validações de entrada", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    const { checkRateLimit } = require("../src/middleware/rate-limiter");
-    (checkRateLimit as jest.Mock).mockResolvedValue({
-      allowed: true,
-      remaining: 4,
-      resetAt: new Date(Date.now() + 60000),
-    });
-    mockQueryGet.mockResolvedValue({ empty: true, docs: [] });
-    mockBatchCommit.mockResolvedValue(undefined);
-  });
-
-  test("deve rejeitar request sem autenticação", async () => {
-    const request = {
-      auth: null,
-      data: { gameId: "game1", playerUpdates: [makePlayerUpdate("user1")] },
-    };
-
-    await expect(processXpBatchHandler!(request)).rejects.toThrow("authenticated");
-  });
-
-  test("deve rejeitar playerUpdates vazio", async () => {
-    const request = {
-      auth: { uid: "owner1" },
-      data: { gameId: "game1", playerUpdates: [] },
-    };
-
-    await expect(processXpBatchHandler!(request)).rejects.toThrow("non-empty array");
-  });
-
-  test("deve rejeitar gameId inválido (não-string)", async () => {
-    const request = {
-      auth: { uid: "owner1" },
-      data: { gameId: null, playerUpdates: [makePlayerUpdate("user1")] },
-    };
-
-    await expect(processXpBatchHandler!(request)).rejects.toThrow("gameId");
-  });
-
-  test("deve rejeitar playerUpdates com mais de 500 itens", async () => {
-    const updates = Array.from({ length: 501 }, (_, i) =>
-      makePlayerUpdate(`user${i}`)
-    );
-
-    const request = {
-      auth: { uid: "owner1" },
-      data: { gameId: "game1", playerUpdates: updates },
-    };
-
-    await expect(processXpBatchHandler!(request)).rejects.toThrow("500");
-  });
-
-  test("deve rejeitar quando rate limit excedido", async () => {
-    const { checkRateLimit } = require("../src/middleware/rate-limiter");
-    (checkRateLimit as jest.Mock).mockResolvedValue({
-      allowed: false,
-      remaining: 0,
-      resetAt: new Date(Date.now() + 30000),
-    });
-
-    const request = {
-      auth: { uid: "owner1" },
-      data: { gameId: "game1", playerUpdates: [makePlayerUpdate("user1")] },
-    };
-
-    await expect(processXpBatchHandler!(request)).rejects.toThrow("Rate limit exceeded");
-  });
-});
-
-describe("processXpBatch - segurança e processamento", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    const { checkRateLimit } = require("../src/middleware/rate-limiter");
-    (checkRateLimit as jest.Mock).mockResolvedValue({
-      allowed: true,
-      remaining: 4,
-      resetAt: new Date(Date.now() + 60000),
-    });
-    mockQueryGet.mockResolvedValue({ empty: true, docs: [] });
-    mockBatchCommit.mockResolvedValue(undefined);
-  });
-
-  test("deve rejeitar quando jogo não existe", async () => {
-    // Mock: game não encontrado
-    mockDocGet.mockResolvedValue({ exists: false, data: () => null });
-
-    const request = {
-      auth: { uid: "owner1" },
-      data: { gameId: "nonexistent", playerUpdates: [makePlayerUpdate("user1")] },
-    };
-
-    await expect(processXpBatchHandler!(request)).rejects.toThrow("not found");
-  });
-
-  test("deve rejeitar quando caller não é dono do jogo", async () => {
-    mockDocGet.mockResolvedValue({
-      exists: true,
-      data: () => ({ owner_id: "real_owner", status: "FINISHED" }),
-    });
-
-    const request = {
-      auth: { uid: "other_user" },
-      data: { gameId: "game1", playerUpdates: [makePlayerUpdate("user1")] },
-    };
-
-    await expect(processXpBatchHandler!(request)).rejects.toThrow("game owner");
-  });
-
-  test("deve processar XP com sucesso para o dono do jogo", async () => {
-    // Mock: game existe com owner correto
-    mockDocGet.mockResolvedValue({
-      exists: true,
-      data: () => ({ owner_id: "owner1", status: "FINISHED" }),
-    });
-
-    const request = {
-      auth: { uid: "owner1" },
-      data: {
-        gameId: "game1",
-        playerUpdates: [makePlayerUpdate("user1", 50)],
-      },
-    };
-
-    const result = await processXpBatchHandler!(request);
-
-    expect(result.success).toBe(true);
-    expect(result.gameId).toBe("game1");
-    expect(result.processedCount).toBe(1);
-    expect(result.message).toContain("1/1 players");
-  });
-});
+// O callable foi deletado por ser dead code + anti-cheat bypass.
+// Tests dos 8 cenários (validações + segurança) movidos junto.
+// Helpers internos (generateParallelTransactionId, isParallelTransactionProcessed,
+// processXpParallel) continuam cobertos pelos describe blocks acima.
