@@ -193,8 +193,16 @@ describe("Index - getLevelForXp", () => {
     expect(getLevelForXp(52850)).toBe(10);
   });
 
-  test("deve retornar nível 10 para XP acima de 52850", () => {
-    expect(getLevelForXp(100000)).toBe(10);
+  test("deve retornar nível 12 para XP=100000 (FIX #584/H14: 21 níveis)", () => {
+    // ANTES (bug): retornava 10 porque LEVELS array era hardcoded com 11 entradas.
+    // AGORA: 21 níveis (0-20) de shared/xp-constants.json.
+    // Level 12 (Zico) = 100000 XP, level 13 (Cruyff) = 128000.
+    expect(getLevelForXp(100000)).toBe(12);
+  });
+
+  test("deve retornar nível 20 para XP máximo (Pelé)", () => {
+    expect(getLevelForXp(528500)).toBe(20);
+    expect(getLevelForXp(1000000)).toBe(20);
   });
 
   test("deve retornar nível 0 para XP negativo", () => {
@@ -620,10 +628,14 @@ describe("Index - getGameDate", () => {
 // ==========================================
 
 describe("Index - Constants", () => {
-  test("LEVELS deve ter 11 níveis (0-10)", () => {
-    expect(LEVELS).toHaveLength(11);
+  test("LEVELS deve ter 21 níveis (0-20) — FIX #584/H14", () => {
+    // ANTES (bug): hardcoded 11 entries (cap level 10).
+    // AGORA: 21 níveis derivados de shared/xp-constants.json.
+    expect(LEVELS).toHaveLength(21);
     expect(LEVELS[0].level).toBe(0);
     expect(LEVELS[10].level).toBe(10);
+    expect(LEVELS[20].level).toBe(20);
+    expect(LEVELS[20].name).toBe("Pele");
   });
 
   test("LEVELS deve estar ordenado por xpRequired", () => {
