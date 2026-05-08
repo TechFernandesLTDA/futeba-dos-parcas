@@ -22,6 +22,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -283,11 +285,19 @@ private fun GameCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dateTime = buildString {
+        append(game.game.date)
+        if (game.game.time.isNotEmpty()) append(" ${game.game.time}")
+    }
+    val players = "${game.game.playersCount} ${stringResource(R.string.confirmed_players)}"
+    val cardCd = stringResource(R.string.cd_game_card, game.game.locationName, dateTime, players)
+
     Card(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 120.dp),
+            .heightIn(min = 120.dp)
+            .semantics(mergeDescendants = true) { contentDescription = cardCd },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant

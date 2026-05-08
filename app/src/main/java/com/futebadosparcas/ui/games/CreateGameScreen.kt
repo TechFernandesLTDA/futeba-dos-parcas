@@ -35,6 +35,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.components.rememberDiscardChangesGuard
 
 /**
  * Tela moderna de criação/edição de jogos em Jetpack Compose
@@ -139,6 +140,23 @@ fun CreateGameScreen(
         }
     }
 
+    // Guard contra descarte silencioso de dados não salvos
+    val isDirty = remember(ownerName, price, maxPlayers, selectedDate, selectedTime, selectedEndTime, selectedLocation, selectedField, recurrenceEnabled) {
+        ownerName.isNotEmpty() ||
+        price.isNotEmpty() ||
+        maxPlayers != "14" ||
+        selectedDate != null ||
+        selectedTime != null ||
+        selectedEndTime != null ||
+        selectedLocation != null ||
+        selectedField != null ||
+        recurrenceEnabled
+    }
+    val attemptExit = rememberDiscardChangesGuard(
+        isDirty = isDirty,
+        onConfirmedExit = onNavigateBack,
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         CreateGameContent(
             ownerName = ownerName,
@@ -201,7 +219,7 @@ fun CreateGameScreen(
             timeConflicts = timeConflicts,
             onCancelClick = {
                 hapticManager.tick()
-                onNavigateBack()
+                attemptExit()
             },
             onSaveClick = {
                 hapticManager.tick()

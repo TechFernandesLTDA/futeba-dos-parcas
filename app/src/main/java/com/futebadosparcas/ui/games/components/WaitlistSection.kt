@@ -14,6 +14,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -69,9 +73,19 @@ fun WaitlistSection(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     // Header
+                    val toggleLabel = if (isExpanded)
+                        stringResource(R.string.cd_waitlist_collapse)
+                    else
+                        stringResource(R.string.cd_waitlist_expand)
+                    val headerCd = stringResource(R.string.cd_waitlist_header, entries.size, toggleLabel)
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .semantics(mergeDescendants = true) {
+                                contentDescription = headerCd
+                                role = Role.Button
+                            }
                             .clickable { isExpanded = !isExpanded },
                         verticalAlignment = Alignment.CenterVertically
                     ) {

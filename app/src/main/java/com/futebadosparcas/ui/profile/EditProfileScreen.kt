@@ -39,6 +39,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.components.rememberDiscardChangesGuard
 
 /**
  * EditProfileScreen - Tela de edição de perfil em Compose
@@ -111,12 +112,19 @@ fun EditProfileScreen(
         }
     }
 
+    // Guard contra descarte silencioso de dados não salvos
+    var hasChanges by remember { mutableStateOf(false) }
+    val attemptExit = rememberDiscardChangesGuard(
+        isDirty = hasChanges,
+        onConfirmedExit = onBackClick,
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.edit_profile_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = attemptExit) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)
@@ -160,7 +168,8 @@ fun EditProfileScreen(
                     statistics = displayStatistics,
                     selectedImageUri = selectedImageUri,
                     isSaving = isSaving,
-                    onImageSelected = { uri -> selectedImageUri = uri },
+                    onFormChanged = { hasChanges = true },
+                    onImageSelected = { uri -> selectedImageUri = uri; hasChanges = true },
                     onPhotoClick = {
                         val currentTime = System.currentTimeMillis()
 
@@ -233,6 +242,7 @@ private fun EditProfileContent(
     statistics: com.futebadosparcas.domain.model.Statistics?,
     selectedImageUri: Uri?,
     isSaving: Boolean,
+    onFormChanged: () -> Unit,
     onImageSelected: (Uri?) -> Unit,
     onPhotoClick: () -> Unit,
     onSaveClick: (ProfileFormData) -> Unit,
@@ -307,57 +317,57 @@ private fun EditProfileContent(
         // Basic Info
         BasicInfoSection(
             name = name,
-            onNameChange = { name = it },
+            onNameChange = { name = it; onFormChanged() },
             nickname = nickname,
-            onNicknameChange = { nickname = it },
+            onNicknameChange = { nickname = it; onFormChanged() },
             birthDate = birthDate,
-            onBirthDateChange = { birthDate = it }
+            onBirthDateChange = { birthDate = it; onFormChanged() }
         )
 
         // Physical Info
         PhysicalInfoSection(
             gender = gender,
-            onGenderChange = { gender = it },
+            onGenderChange = { gender = it; onFormChanged() },
             heightCm = heightCm,
-            onHeightChange = { heightCm = it },
+            onHeightChange = { heightCm = it; onFormChanged() },
             weightKg = weightKg,
-            onWeightChange = { weightKg = it },
+            onWeightChange = { weightKg = it; onFormChanged() },
             dominantFoot = dominantFoot,
-            onDominantFootChange = { dominantFoot = it }
+            onDominantFootChange = { dominantFoot = it; onFormChanged() }
         )
 
         // Field Preferences
         FieldPreferencesSection(
             societyChecked = societyChecked,
-            onSocietyChange = { societyChecked = it },
+            onSocietyChange = { societyChecked = it; onFormChanged() },
             futsalChecked = futsalChecked,
-            onFutsalChange = { futsalChecked = it },
+            onFutsalChange = { futsalChecked = it; onFormChanged() },
             fieldChecked = fieldChecked,
-            onFieldChange = { fieldChecked = it }
+            onFieldChange = { fieldChecked = it; onFormChanged() }
         )
 
         // Position & Play Style
         PositionSection(
             primaryPosition = primaryPosition,
-            onPrimaryPositionChange = { primaryPosition = it },
+            onPrimaryPositionChange = { primaryPosition = it; onFormChanged() },
             secondaryPosition = secondaryPosition,
-            onSecondaryPositionChange = { secondaryPosition = it },
+            onSecondaryPositionChange = { secondaryPosition = it; onFormChanged() },
             playStyle = playStyle,
-            onPlayStyleChange = { playStyle = it },
+            onPlayStyleChange = { playStyle = it; onFormChanged() },
             experienceYears = experienceYears,
-            onExperienceYearsChange = { experienceYears = it }
+            onExperienceYearsChange = { experienceYears = it; onFormChanged() }
         )
 
         // Position Ratings
         PositionRatingsSection(
             strikerRating = strikerRating,
-            onStrikerChange = { strikerRating = it },
+            onStrikerChange = { strikerRating = it; onFormChanged() },
             midRating = midRating,
-            onMidChange = { midRating = it },
+            onMidChange = { midRating = it; onFormChanged() },
             defRating = defRating,
-            onDefChange = { defRating = it },
+            onDefChange = { defRating = it; onFormChanged() },
             gkRating = gkRating,
-            onGkChange = { gkRating = it },
+            onGkChange = { gkRating = it; onFormChanged() },
             statistics = statistics
         )
 
