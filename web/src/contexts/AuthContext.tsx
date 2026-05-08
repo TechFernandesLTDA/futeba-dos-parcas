@@ -9,6 +9,7 @@ import {
   sendPasswordResetEmail,
   updateProfile,
 } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../services/firebase';
 import { User } from '../types';
@@ -201,9 +202,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       await createUserDocument(result.user);
-    } catch (err: any) {
-      if (err?.code === 'auth/popup-closed-by-user') return;
-      setError((err as Error).message || 'Erro ao fazer login com Google');
+    } catch (err: unknown) {
+      if (err instanceof FirebaseError && err.code === 'auth/popup-closed-by-user') return;
+      setError(err instanceof Error ? err.message : 'Erro ao fazer login com Google');
       throw err;
     }
   }, []);

@@ -187,7 +187,7 @@ export const CreateGameScreen: React.FC = () => {
     }
   }, [group, groupId]);
 
-  const handleInputChange = (field: keyof GameFormData, value: any) => {
+  const handleInputChange = <K extends keyof GameFormData>(field: K, value: GameFormData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field]) {
       setFormErrors((prev) => ({ ...prev, [field]: '' }));
@@ -324,9 +324,9 @@ export const CreateGameScreen: React.FC = () => {
       const gameId = await createGame(gamePayload as any);
       showSuccess('Jogo criado com sucesso!');
       navigate(`/game/${gameId}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error creating game:', err);
-      const msg = err?.message || '';
+      const msg = err instanceof Error ? err.message : '';
       if (msg.includes('permission')) {
         showError('Sem permissão para criar jogo. Verifique se você está logado.');
       } else if (msg.includes('undefined')) {
@@ -517,7 +517,7 @@ export const CreateGameScreen: React.FC = () => {
               select
               label="Tipo de Quadra"
               value={formData.fieldType}
-              onChange={(e) => { handleInputChange('fieldType', e.target.value); }}
+              onChange={(e) => { handleInputChange('fieldType', e.target.value as FieldType); }}
               fullWidth
             >
               {Object.entries(FIELD_TYPE_LABELS).map(([value, label]) => (
@@ -612,7 +612,7 @@ export const CreateGameScreen: React.FC = () => {
                   select
                   label="Tipo de Chave Pix"
                   value={formData.pixKeyType}
-                  onChange={(e) => handleInputChange('pixKeyType', e.target.value)}
+                  onChange={(e) => handleInputChange('pixKeyType', e.target.value as PixKeyType)}
                   fullWidth
                 >
                   {Object.entries(PIX_KEY_TYPE_LABELS).map(([value, label]) => (

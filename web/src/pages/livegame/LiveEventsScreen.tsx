@@ -121,8 +121,8 @@ export const LiveEventsScreen: React.FC = () => {
       setDialogOpen(false);
       setPlayerName('');
       setMinute('0');
-    } catch (err: any) {
-      showError('Erro ao adicionar evento: ' + err.message);
+    } catch (err: unknown) {
+      showError('Erro ao adicionar evento: ' + (err instanceof Error ? err.message : 'Tente novamente.'));
     } finally {
       setSubmitting(false);
     }

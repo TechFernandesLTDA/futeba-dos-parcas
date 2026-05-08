@@ -42,6 +42,14 @@ interface TeamPlayer {
   position?: string;
 }
 
+interface ConfirmationData {
+  user_id: string;
+  user_name?: string;
+  user_photo?: string;
+  position?: string;
+  status: string;
+}
+
 export const TeamFormationScreen: React.FC = () => {
   useDocumentTitle('Formação de Times');
   const navigateBack = useNavigateBack('/games');
@@ -67,21 +75,19 @@ export const TeamFormationScreen: React.FC = () => {
 
         const confirmedDocs = snapshot.docs
           .filter((d) => d.data().status === 'CONFIRMED')
-          .map((d) => d.data());
+          .map((d) => d.data() as ConfirmationData);
 
         const players: TeamPlayer[] = await Promise.all(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          confirmedDocs.map(async (conf: any) => {
+          confirmedDocs.map(async (conf: ConfirmationData) => {
             const uid = conf.user_id;
             const userDoc = await getDoc(doc(db, 'users', uid));
             if (userDoc.exists()) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const userData = snakeToCamel(userDoc.data()) as Record<string, any>;
+              const userData = snakeToCamel(userDoc.data()) as Record<string, unknown>;
               return {
                 id: uid,
-                name: userData.name || conf.user_name || 'Jogador',
-                photoUrl: userData.photoUrl || conf.user_photo,
-                level: getLevelForXp(userData.experiencePoints ?? 0),
+                name: (userData.name as string | undefined) || conf.user_name || 'Jogador',
+                photoUrl: (userData.photoUrl as string | undefined) || conf.user_photo,
+                level: getLevelForXp((userData.experiencePoints as number | undefined) ?? 0),
                 position: conf.position || 'FIELD',
               };
             }

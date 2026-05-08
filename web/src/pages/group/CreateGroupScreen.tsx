@@ -44,8 +44,7 @@ export const CreateGroupScreen: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const isDirty = !!formData.name || !!formData.description || formData.isPublic;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = <K extends keyof typeof formData>(field: K, value: typeof formData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field]) {
       setFormErrors((prev) => ({ ...prev, [field]: '' }));

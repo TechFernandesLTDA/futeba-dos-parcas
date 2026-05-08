@@ -412,12 +412,18 @@ function App() {
           <AuthProvider>
             <ToastProvider>
               <SkipNav />
-              {/* CommandPalette montado fora do MobileShell para não sofrer restrição de largura */}
-              <CommandPalette
-                open={paletteOpen}
-                onOpen={openPalette}
-                onClose={closePalette}
-              />
+              {/* CommandPalette montado fora do MobileShell para não sofrer restrição
+                  de largura, mas wrapped em ErrorBoundary próprio — se SearchPanel
+                  der throw síncrono (ex: Firestore query inválida), não derruba
+                  a árvore inteira (já que está fora de SafeScreen).
+                  FIX #601 LOW backlog. */}
+              <ErrorBoundary fallback={<></>}>
+                <CommandPalette
+                  open={paletteOpen}
+                  onOpen={openPalette}
+                  onClose={closePalette}
+                />
+              </ErrorBoundary>
               <MobileShell>
                 <VerificationBanner />
                 <Box component="main" id="main-content">

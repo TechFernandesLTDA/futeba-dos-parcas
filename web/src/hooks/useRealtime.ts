@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { collection, doc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, onSnapshot, CollectionReference, Query } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useRealtime');
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useRealtimeDocument<T = any>(
+export function useRealtimeDocument<T = unknown>(
   collectionName: string,
   documentId: string | undefined
 ) {
@@ -48,19 +47,16 @@ export function useRealtimeDocument<T = any>(
   return { data, loading, error };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useRealtimeCollection<T = any>(
+export function useRealtimeCollection<T = unknown>(
   collectionName: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  queryFn?: (ref: any) => any,
+  queryFn?: (ref: CollectionReference) => Query,
   // FIX #584/H3: era effect deps `[collectionName]` apenas — ignorava
   // mudanças no queryFn (queryFnRef pegava nova ref a cada render mas
   // listener não re-subscrevia). Callers com filtros novos recebiam
   // stale data do primeiro render.
   // Agora: caller passa `deps` (valores que afetam o queryFn) e
   // listener re-subscreve quando deps mudam.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deps: any[] = []
+  deps: unknown[] = []
 ) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,10 +73,8 @@ export function useRealtimeCollection<T = any>(
 
     const unsubscribe = onSnapshot(
       q,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (snapshot: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const items = snapshot.docs.map((d: any) => ({
+      (snapshot) => {
+        const items = snapshot.docs.map((d) => ({
           id: d.id,
           ...snakeToCamel(d.data()),
         })) as T[];

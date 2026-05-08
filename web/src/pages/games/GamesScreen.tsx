@@ -75,7 +75,8 @@ export const GamesScreen: React.FC = () => {
 
   useEffect(() => {
     const unsub = fetchGames();
-    return () => { unsub.then((fn: any) => fn()); };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- fetchGames retorna Promise<void>, padrão de cleanup legado
+    return () => { unsub.then((fn: any) => fn && fn()); };
   }, [fetchGames]);
 
   const getStatusFilter = (): GameStatus | null => {

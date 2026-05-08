@@ -155,8 +155,8 @@ export const CashboxScreen: React.FC = () => {
       setDialogOpen(false);
       setAmount('');
       setDescription('');
-    } catch (err: any) {
-      showError('Erro ao adicionar transação: ' + err.message);
+    } catch (err: unknown) {
+      showError('Erro ao adicionar transação: ' + (err instanceof Error ? err.message : 'Tente novamente.'));
     } finally {
       setSubmitting(false);
     }
