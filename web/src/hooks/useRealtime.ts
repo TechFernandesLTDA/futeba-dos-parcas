@@ -52,7 +52,15 @@ export function useRealtimeDocument<T = any>(
 export function useRealtimeCollection<T = any>(
   collectionName: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  queryFn?: (ref: any) => any
+  queryFn?: (ref: any) => any,
+  // FIX #584/H3: era effect deps `[collectionName]` apenas — ignorava
+  // mudanças no queryFn (queryFnRef pegava nova ref a cada render mas
+  // listener não re-subscrevia). Callers com filtros novos recebiam
+  // stale data do primeiro render.
+  // Agora: caller passa `deps` (valores que afetam o queryFn) e
+  // listener re-subscreve quando deps mudam.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  deps: any[] = []
 ) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +71,7 @@ export function useRealtimeCollection<T = any>(
 
   useEffect(() => {
     setLoading(true);
-    
+
     const collectionRef = collection(db, collectionName);
     const q = queryFnRef.current ? queryFnRef.current(collectionRef) : collectionRef;
 
@@ -88,7 +96,8 @@ export function useRealtimeCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [collectionName]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collectionName, ...deps]);
 
   return { data, loading, error };
 }

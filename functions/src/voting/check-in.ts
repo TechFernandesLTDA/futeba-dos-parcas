@@ -17,6 +17,7 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {db} from "../_db";
+import {checkRateLimit} from "../middleware/rate-limiter";
 
 const DEFAULT_RADIUS_METERS = 200;
 const MAX_RADIUS_METERS = 2000;
@@ -64,6 +65,27 @@ export const checkInToGame = onCall(
       throw new HttpsError("unauthenticated", "Login obrigatorio");
     }
     const uid = auth.uid;
+
+    // FIX #584/H12: rate limit pra prevenir GPS coordinate enumeration.
+    // Antes: sem rate limit, atacante binary-searchearia coordenadas
+    // via mensagens de erro de distancia.
+    // Agora: 10 calls/min por user (suficiente pra tentativa legítima
+    // + retry com GPS lock fresh).
+    const {allowed, resetAt} = await checkRateLimit(uid, {
+      maxRequests: 10,
+      windowMs: 60 * 1000,
+      keyPrefix: "checkin",
+    });
+    if (!allowed) {
+      const resetInSec = Math.ceil(
+        (resetAt.getTime() - Date.now()) / 1000
+      );
+      throw new HttpsError(
+        "resource-exhausted",
+        `Rate limit excedido. Tente novamente em ${resetInSec}s.`,
+        {retryAfter: resetInSec}
+      );
+    }
 
     const {gameId, lat, lng} =
       (data ?? {}) as CheckInRequest;
