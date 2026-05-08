@@ -1356,6 +1356,17 @@ service cloud.firestore {
     }
 
     // ============================================
+    // SUB-COLECAO: users/{userId}/preferences
+    // ============================================
+    // FIX C1: settings de usuário (notificações push/email, lembretes de jogo).
+    // Antes era `doc(users/{uid}/settings)` (3 segments inválido) — fix #web-c1.
+    // Schema: users/{uid}/preferences/{prefDocId}
+    //   - "notifications" doc: { notifications, email_notifications, game_reminders, updated_at }
+    match /users/{userId}/preferences/{prefId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ============================================
     // SUB-COLECAO: users/{userId}/groups
     // ============================================
     // PERF_001 P0 #1: Removida duplicação de isGroupAdmin() - usa função global

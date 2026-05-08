@@ -69,7 +69,11 @@ export const SettingsScreen: React.FC = () => {
   const loadSettings = useCallback(async () => {
     if (!user) return;
     try {
-      const settingsRef = doc(db, 'users', user!.id, 'settings');
+      // FIX C1: era `doc(db, 'users', uid, 'settings')` com 3 segments —
+      // path inválido pra doc reference (Firebase v9 throwa). Silent fail
+      // em prod desde release inicial: try/catch swallow → defaults useState.
+      // Agora usa subcollection `users/{uid}/preferences/notifications` (4 segments).
+      const settingsRef = doc(db, 'users', user.id, 'preferences', 'notifications');
       const docSnap = await getDoc(settingsRef);
       if (docSnap.exists()) {
         setSettings(snakeToCamel(docSnap.data()) as Settings);
@@ -91,7 +95,8 @@ export const SettingsScreen: React.FC = () => {
     if (!user) return;
     setSaving(true);
     try {
-      const settingsRef = doc(db, 'users', user.id, 'settings');
+      // FIX C1: mesma correção do loadSettings — subcollection 4 segments.
+      const settingsRef = doc(db, 'users', user.id, 'preferences', 'notifications');
       await setDoc(settingsRef, {
         notifications: settings.notifications,
         email_notifications: settings.emailNotifications,
