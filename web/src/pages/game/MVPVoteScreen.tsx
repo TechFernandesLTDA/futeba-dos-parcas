@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -44,6 +45,7 @@ export const MVPVoteScreen: React.FC = () => {
   useDocumentTitle('Votação MVP');
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
+  const navigateBack = useNavigateBack('/games');
   const theme = useTheme();
   const { currentUser } = useAuth();
   const { showError } = useToast();
@@ -142,7 +144,7 @@ export const MVPVoteScreen: React.FC = () => {
     return (
       <Container maxWidth="sm" sx={{ py: 4 }}>
         <Alert severity="error">Jogo não encontrado</Alert>
-        <Button startIcon={<BackIcon />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
+        <Button startIcon={<BackIcon />} onClick={navigateBack} sx={{ mt: 2 }}>
           Voltar
         </Button>
       </Container>
@@ -179,7 +181,7 @@ export const MVPVoteScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>

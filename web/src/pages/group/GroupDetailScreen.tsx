@@ -81,6 +81,7 @@ export const GroupDetailScreen: React.FC = () => {
   const { showSuccess, showError } = useToast();
 
   // Breakpoints para layout responsivo
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg'));
   const isLg = useMediaQuery(theme.breakpoints.up('lg'));
 
@@ -483,7 +484,7 @@ export const GroupDetailScreen: React.FC = () => {
         </Container>
       </Box>
 
-      <Dialog open={inviteDialogOpen} onClose={() => setInviteDialogOpen(false)} aria-labelledby="invite-dialog-title">
+      <Dialog open={inviteDialogOpen} onClose={() => setInviteDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="invite-dialog-title">
         <DialogTitle id="invite-dialog-title">Convidar Jogadores</DialogTitle>
         <DialogContent>
           {inviteLoading ? (
@@ -534,7 +535,7 @@ export const GroupDetailScreen: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} aria-labelledby="delete-group-dialog-title">
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="delete-group-dialog-title">
         <DialogTitle id="delete-group-dialog-title">Excluir Grupo</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">

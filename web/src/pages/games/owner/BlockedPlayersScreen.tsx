@@ -85,6 +85,7 @@ export const BlockedPlayersScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching blocked players:', error);
+        showError('Erro ao carregar lista de bloqueados.');
       } finally {
         setLoading(false);
       }

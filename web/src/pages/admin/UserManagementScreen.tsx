@@ -32,6 +32,7 @@ import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
@@ -55,6 +56,7 @@ export const UserManagementScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   useAuth();
+  const { showError } = useToast();
 
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +91,7 @@ export const UserManagementScreen: React.FC = () => {
         setUsers(usersData);
       } catch (error) {
         logger.error('Error fetching users:', error);
+        showError('Erro ao carregar usuários.');
       } finally {
         setLoading(false);
       }

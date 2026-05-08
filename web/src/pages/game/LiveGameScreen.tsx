@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -24,6 +25,7 @@ import {
   Skeleton,
   CircularProgress,
   useTheme,
+  useMediaQuery,
   alpha,
   MenuItem,
 } from '@mui/material';
@@ -72,6 +74,8 @@ export const LiveGameScreen: React.FC = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigateBack = useNavigateBack('/games');
   const { currentUser } = useAuth();
   const { showError } = useToast();
 
@@ -277,7 +281,7 @@ export const LiveGameScreen: React.FC = () => {
       <Container maxWidth="sm" sx={{ py: 4 }}>
         <Alert severity="error">{error || 'Jogo não encontrado'}</Alert>
         <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-          <Button startIcon={<BackIcon />} onClick={() => navigate(-1)}>
+          <Button startIcon={<BackIcon />} onClick={navigateBack}>
             Voltar
           </Button>
           {error && (
@@ -302,7 +306,7 @@ export const LiveGameScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flex: 1, ml: 1 }}>
@@ -437,7 +441,7 @@ export const LiveGameScreen: React.FC = () => {
         </Box>
       )}
 
-      <Dialog open={addEventDialog} onClose={() => setAddEventDialog(false)} aria-labelledby="add-event-dialog-title">
+      <Dialog open={addEventDialog} onClose={() => setAddEventDialog(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="add-event-dialog-title">
         <DialogTitle id="add-event-dialog-title">Adicionar Evento</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>

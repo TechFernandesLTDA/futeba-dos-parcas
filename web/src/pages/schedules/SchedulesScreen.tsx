@@ -38,6 +38,9 @@ import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('SchedulesScreen');
 
 interface Schedule {
   id: string;
@@ -74,17 +77,25 @@ export const SchedulesScreen: React.FC = () => {
     const schedulesRef = collection(db, 'schedules');
     const q = query(schedulesRef, where('group_id', '==', groupId), orderBy('day_of_week'));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((d) => ({
-        ...snakeToCamel<Schedule>(d.data()),
-        id: d.id,
-      }));
-      setSchedules(data);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((d) => ({
+          ...snakeToCamel<Schedule>(d.data()),
+          id: d.id,
+        }));
+        setSchedules(data);
+        setLoading(false);
+      },
+      (err) => {
+        logger.error('Error in schedules listener:', err);
+        showError('Erro ao carregar agendas.');
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
-  }, [groupId]);
+  }, [groupId, showError]);
 
   const handleToggleActive = async (schedule: Schedule) => {
     try {

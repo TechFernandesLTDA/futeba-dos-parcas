@@ -25,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
+import { VirtualList } from '../../components/common/VirtualList';
 import { useLeague, LeaguePlayer } from '../../hooks/useLeague';
 import { DIVISION_CONFIG, LeagueDivision } from '../../types/gamification';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -117,14 +118,30 @@ export const LeagueScreen: React.FC = () => {
           </Box>
         ) : (
           <List disablePadding aria-label="Classificação da liga">
-            {players.map((player, index) => (
-              <LeaguePlayerItem
-                key={player.id}
-                player={player}
-                position={index + 1}
-                positionStyle={getPositionStyle(index + 1)}
+            {players.length > 20 ? (
+              <VirtualList
+                items={players}
+                estimateSize={100}
+                overscan={3}
+                getItemKey={(index) => players[index].id}
+                renderItem={(player, index) => (
+                  <LeaguePlayerItem
+                    player={player}
+                    position={index + 1}
+                    positionStyle={getPositionStyle(index + 1)}
+                  />
+                )}
               />
-            ))}
+            ) : (
+              players.map((player, index) => (
+                <LeaguePlayerItem
+                  key={player.id}
+                  player={player}
+                  position={index + 1}
+                  positionStyle={getPositionStyle(index + 1)}
+                />
+              ))
+            )}
           </List>
         )}
       </Container>

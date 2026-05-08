@@ -30,6 +30,7 @@ import { collection, query, orderBy, limit, onSnapshot, getDoc, doc } from 'fire
 import { db } from '../../../services/firebase';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useToast } from '../../../contexts/ToastContext';
 import { PlayerAvatar } from '../../../components/common/GameCard';
 import { PlayerCard } from '../../../components/player/PlayerCard';
 import { DIVISION_CONFIG, LeagueDivision, getLevelForXp } from '../../../types/gamification';
@@ -76,6 +77,7 @@ export function RankingsTab() {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showError } = useToast();
 
   const [tabValue, setTabValue] = useState(0); // 0=Liga, 1=Ranking, 2=XP
   const [players, setPlayers] = useState<RankingPlayer[]>([]);
@@ -88,73 +90,82 @@ export function RankingsTab() {
     const seasonRef = collection(db, 'season_participation');
     const q = query(seasonRef, orderBy('points', 'desc'), limit(100));
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      try {
-        const playersData = await Promise.all(
-          snapshot.docs.map(async (docSnapshot) => {
-            const raw = docSnapshot.data();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const data = snakeToCamel(raw) as Record<string, any>;
-            const userId = data.userId || raw.user_id || docSnapshot.id;
+    const unsubscribe = onSnapshot(
+      q,
+      async (snapshot) => {
+        try {
+          const playersData = await Promise.all(
+            snapshot.docs.map(async (docSnapshot) => {
+              const raw = docSnapshot.data();
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const data = snakeToCamel(raw) as Record<string, any>;
+              const userId = data.userId || raw.user_id || docSnapshot.id;
 
-            let userData = { name: 'Jogador', photoUrl: null as string | null, level: 1, xp: 0 };
-            try {
-              const userDoc = await getDoc(doc(db, 'users', userId));
-              if (userDoc.exists()) {
-                const d = userDoc.data();
-                const xp = d.experience_points ?? d.experiencePoints ?? 0;
-                userData = {
-                  name: d.name || 'Jogador',
-                  photoUrl: d.photo_url || d.photoUrl || null,
-                  level: getLevelForXp(xp),
-                  xp,
-                };
+              let userData = { name: 'Jogador', photoUrl: null as string | null, level: 1, xp: 0 };
+              try {
+                const userDoc = await getDoc(doc(db, 'users', userId));
+                if (userDoc.exists()) {
+                  const d = userDoc.data();
+                  const xp = d.experience_points ?? d.experiencePoints ?? 0;
+                  userData = {
+                    name: d.name || 'Jogador',
+                    photoUrl: d.photo_url || d.photoUrl || null,
+                    level: getLevelForXp(xp),
+                    xp,
+                  };
+                }
+              } catch {
+                // fallback silencioso
               }
-            } catch {
-              // fallback silencioso
+
+              return {
+                id: docSnapshot.id,
+                userId,
+                userName: userData.name,
+                userPhoto: userData.photoUrl || undefined,
+                level: userData.level,
+                points: data.points || 0,
+                gamesPlayed: data.gamesPlayed || data.games_played || 0,
+                wins: data.wins || 0,
+                goals: data.goals || 0,
+                assists: data.assists || 0,
+                mvpCount: data.mvpCount || data.mvp_count || 0,
+                division: data.division || 'BRONZE',
+                isCurrentUser: userId === user?.id,
+                experiencePoints: userData.xp,
+              } as RankingPlayer;
+            })
+          );
+
+          // Deduplicar por userId (manter a entrada com mais pontos)
+          const uniqueMap = new Map<string, RankingPlayer>();
+          for (const p of playersData) {
+            const existing = uniqueMap.get(p.userId);
+            if (!existing || p.points > existing.points) {
+              uniqueMap.set(p.userId, p);
             }
-
-            return {
-              id: docSnapshot.id,
-              userId,
-              userName: userData.name,
-              userPhoto: userData.photoUrl || undefined,
-              level: userData.level,
-              points: data.points || 0,
-              gamesPlayed: data.gamesPlayed || data.games_played || 0,
-              wins: data.wins || 0,
-              goals: data.goals || 0,
-              assists: data.assists || 0,
-              mvpCount: data.mvpCount || data.mvp_count || 0,
-              division: data.division || 'BRONZE',
-              isCurrentUser: userId === user?.id,
-              experiencePoints: userData.xp,
-            } as RankingPlayer;
-          })
-        );
-
-        // Deduplicar por userId (manter a entrada com mais pontos)
-        const uniqueMap = new Map<string, RankingPlayer>();
-        for (const p of playersData) {
-          const existing = uniqueMap.get(p.userId);
-          if (!existing || p.points > existing.points) {
-            uniqueMap.set(p.userId, p);
           }
-        }
-        const deduplicated = Array.from(uniqueMap.values())
-          .sort((a, b) => b.points - a.points);
+          const deduplicated = Array.from(uniqueMap.values())
+            .sort((a, b) => b.points - a.points);
 
-        setPlayers(deduplicated);
-      } catch (err) {
-        logger.error('Erro ao carregar rankings:', err);
-      } finally {
+          setPlayers(deduplicated);
+        } catch (err) {
+          logger.error('Erro ao carregar rankings:', err);
+        } finally {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      },
+      (err) => {
+        logger.error('Error in rankings listener:', err);
+        showError('Erro ao carregar ranking.');
         setLoading(false);
         setRefreshing(false);
       }
-    });
+    );
 
     return unsubscribe;
-  }, [user?.id]);
+  }, [user?.id, showError]);
 
   useEffect(() => {
     const unsubscribe = loadData();

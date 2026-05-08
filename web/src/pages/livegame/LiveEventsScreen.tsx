@@ -40,6 +40,9 @@ import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('LiveEventsScreen');
 
 interface GameEvent {
   id: string;
@@ -75,22 +78,30 @@ export const LiveEventsScreen: React.FC = () => {
     const eventsRef = collection(db, 'game_events');
     const q = query(eventsRef, where('game_id', '==', gameId), orderBy('created_at', 'desc'));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((d) => {
-        const raw = d.data();
-        const converted = snakeToCamel(raw);
-        return {
-          id: d.id,
-          ...converted,
-          createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
-        };
-      }) as GameEvent[];
-      setEvents(data);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((d) => {
+          const raw = d.data();
+          const converted = snakeToCamel(raw);
+          return {
+            id: d.id,
+            ...converted,
+            createdAt: (raw.created_at || raw.createdAt)?.toDate?.() || new Date(),
+          };
+        }) as GameEvent[];
+        setEvents(data);
+        setLoading(false);
+      },
+      (err) => {
+        logger.error('Error in live game events listener:', err);
+        showError('Erro ao carregar eventos do jogo.');
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
-  }, [gameId]);
+  }, [gameId, showError]);
 
   const handleAddEvent = async () => {
     if (!gameId || !user || !playerName.trim() || !eventType) return;

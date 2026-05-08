@@ -33,6 +33,7 @@ import { doc, getDoc, writeBatch, arrayRemove, deleteDoc } from 'firebase/firest
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { PlayerCard } from '../../components/player/PlayerCard';
 import { createLogger } from '../../utils/logger';
@@ -55,6 +56,7 @@ export const PlayersScreen: React.FC = () => {
   const theme = useTheme();
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
+  const { showError } = useToast();
 
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,6 +114,7 @@ export const PlayersScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching members:', error);
+        showError('Erro ao carregar membros.');
       } finally {
         setLoading(false);
       }
@@ -142,6 +145,7 @@ export const PlayersScreen: React.FC = () => {
       setConfirmRemoveId(null);
     } catch (error) {
       logger.error('Error removing member:', error);
+      showError('Erro ao remover membro.');
     } finally {
       setActionLoading(null);
     }

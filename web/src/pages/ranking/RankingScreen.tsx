@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
+import { VirtualList } from '../../components/common/VirtualList';
 import { PlayerCard } from '../../components/player/PlayerCard';
 import { useLeague, LeaguePlayer } from '../../hooks/useLeague';
 import { DIVISION_CONFIG } from '../../types/gamification';
@@ -124,16 +125,34 @@ export const RankingScreen: React.FC = () => {
           </Box>
         ) : (
           <List disablePadding aria-label="Classificação do ranking">
-            {ranked.map((player, index) => (
-              <RankingItem
-                key={player.id}
-                player={player}
-                position={index + 1}
-                positionStyle={getPositionStyle(index + 1)}
-                tabValue={tabValue}
-                onAvatarClick={setSelectedPlayerId}
+            {ranked.length > 20 ? (
+              <VirtualList
+                items={ranked}
+                estimateSize={100}
+                overscan={3}
+                getItemKey={(index) => ranked[index].id}
+                renderItem={(player, index) => (
+                  <RankingItem
+                    player={player}
+                    position={index + 1}
+                    positionStyle={getPositionStyle(index + 1)}
+                    tabValue={tabValue}
+                    onAvatarClick={setSelectedPlayerId}
+                  />
+                )}
               />
-            ))}
+            ) : (
+              ranked.map((player, index) => (
+                <RankingItem
+                  key={player.id}
+                  player={player}
+                  position={index + 1}
+                  positionStyle={getPositionStyle(index + 1)}
+                  tabValue={tabValue}
+                  onAvatarClick={setSelectedPlayerId}
+                />
+              ))
+            )}
           </List>
         )}
 

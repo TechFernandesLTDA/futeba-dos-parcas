@@ -25,6 +25,7 @@ import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, getDoc
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { LoadingState, PlayerAvatar } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -50,6 +51,7 @@ export const InvitePlayersScreen: React.FC = () => {
   useDocumentTitle('Convidar Jogadores');
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
+  const { showError } = useToast();
   const closeDestination = groupId ? `/group/${groupId}` : '/groups';
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,6 +97,7 @@ export const InvitePlayersScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching members:', error);
+        showError('Erro ao carregar membros.');
       } finally {
         setLoading(false);
       }
@@ -119,6 +122,7 @@ export const InvitePlayersScreen: React.FC = () => {
       setSearchResults(results);
     } catch (error) {
       logger.error('Error searching users:', error);
+      showError('Erro ao buscar usuários.');
     } finally {
       setSearching(false);
     }
@@ -141,6 +145,7 @@ export const InvitePlayersScreen: React.FC = () => {
       setSearchResults((prev) => prev.filter((r) => r.id !== targetUser.id));
     } catch (error) {
       logger.error('Error inviting user:', error);
+      showError('Erro ao enviar convite. Tente novamente.');
     } finally {
       setInviting(null);
     }

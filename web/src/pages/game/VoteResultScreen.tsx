@@ -23,6 +23,7 @@ import {
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -69,6 +70,7 @@ export const VoteResultScreen: React.FC = () => {
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();
+  const { showError } = useToast();
 
   const [voteResult, setVoteResult] = useState<VoteResult | null>(null);
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
@@ -130,6 +132,7 @@ export const VoteResultScreen: React.FC = () => {
         }
       } catch (error) {
         logger.error('Error fetching vote results:', error);
+        showError('Erro ao carregar resultado da votação.');
       } finally {
         setLoading(false);
       }
