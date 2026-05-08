@@ -3971,4 +3971,14 @@ subir no ranking!</string>
     <string name="form_discard_changes_confirm">Descartar</string>
     <string name="form_discard_changes_dismiss">Continuar editando</string>
 
+    <!-- Acessibilidade: descrições de Cards clicáveis (mergeDescendants) -->
+    <string name="cd_game_confirmation_card">Jogo em %1$s, %2$s, %3$s confirmados, %4$s</string>
+    <string name="cd_game_card">Jogo em %1$s, %2$s, %3$s confirmados</string>
+    <string name="cd_group_card">Grupo %1$s, %2$s, %3$s</string>
+    <string name="cd_user_card">%1$s, %2$s</string>
+    <string name="cd_user_card_compact">%1$s, %2$s</string>
+    <string name="cd_waitlist_header">Lista de espera, %1$d na fila. Toque para %2$s</string>
+    <string name="cd_waitlist_expand">expandir</string>
+    <string name="cd_waitlist_collapse">recolher</string>
+
 </resources>

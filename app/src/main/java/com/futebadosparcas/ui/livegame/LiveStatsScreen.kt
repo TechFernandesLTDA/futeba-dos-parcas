@@ -21,6 +21,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.futebadosparcas.domain.model.LivePlayerStats
+import com.futebadosparcas.ui.components.EmptyState
+import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.R
@@ -64,7 +66,14 @@ fun LiveStatsScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
         if (stats.isEmpty()) {
-            LiveStatsEmptyState()
+            EmptyState(
+                type = EmptyStateType.NoData(
+                    title = stringResource(R.string.live_game_no_stats),
+                    description = stringResource(R.string.live_game_no_stats_description),
+                    icon = Icons.Default.BarChart
+                ),
+                modifier = Modifier.fillMaxSize()
+            )
         } else {
             LiveStatsContent(
                 stats = stats,
@@ -315,38 +324,3 @@ private fun StatBadge(
     }
 }
 
-/**
- * Estado vazio quando não há estatísticas
- */
-@Composable
-private fun LiveStatsEmptyState() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = Icons.Default.BarChart,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = stringResource(R.string.live_game_no_stats),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Text(
-            text = stringResource(R.string.live_game_no_stats_description),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-    }
-}

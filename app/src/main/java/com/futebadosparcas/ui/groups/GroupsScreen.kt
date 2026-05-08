@@ -24,6 +24,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -312,9 +314,15 @@ private fun GroupCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val memberLabel = "${group.memberCount} ${if (group.memberCount == 1) "membro" else "membros"}"
+    val roleLabel = group.getRoleEnum().displayName
+    val cardCd = stringResource(R.string.cd_group_card, group.groupName, memberLabel, roleLabel)
+
     Card(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) { contentDescription = cardCd },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface

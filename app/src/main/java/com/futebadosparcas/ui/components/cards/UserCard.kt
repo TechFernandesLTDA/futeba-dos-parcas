@@ -15,6 +15,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -73,11 +75,19 @@ fun UserCard(
 ) {
     var showDropdownMenu = false
 
+    // Descrição acessível para TalkBack (apenas quando clicável)
+    val cardSubtitle = subtitle ?: badge ?: ""
+    val cardCd = if (onClick != null)
+        stringResource(R.string.cd_user_card, name, cardSubtitle)
+    else null
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                if (onClick != null) Modifier.clickable(onClick = onClick)
+                if (onClick != null) Modifier
+                    .semantics(mergeDescendants = true) { contentDescription = cardCd ?: "" }
+                    .clickable(onClick = onClick)
                 else Modifier
             ),
         shape = RoundedCornerShape(12.dp),
@@ -267,9 +277,13 @@ fun UserCardCompact(
     subtitle: String? = null,
     trailingContent: (@Composable () -> Unit)? = null
 ) {
+    val compactSubtitle = subtitle ?: ""
+    val compactCd = stringResource(R.string.cd_user_card_compact, name, compactSubtitle)
+
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .semantics(mergeDescendants = true) { contentDescription = compactCd }
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

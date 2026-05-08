@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
@@ -278,6 +280,18 @@ private fun GameConfirmationCard(
     val isUserConfirmed = gameWithConfirmations.isUserConfirmed
     val gameStatus = game.getStatusEnum()
 
+    // Descrição acessível do card (TalkBack lê uma vez)
+    val statusText = when {
+        gameStatus == GameStatus.CONFIRMED -> stringResource(R.string.upcoming_games_status_confirmed)
+        isUserConfirmed -> stringResource(R.string.upcoming_games_status_user_confirmed)
+        else -> stringResource(R.string.upcoming_games_status_pending)
+    }
+    val location = game.locationName.takeIf { it.isNotEmpty() }
+        ?: stringResource(R.string.public_games_location_unknown)
+    val dateTime = formatGameDateTime(game.dateTime.toDate())
+    val confirmedText = "${gameWithConfirmations.confirmedCount}/${game.maxPlayers}"
+    val cardCd = stringResource(R.string.cd_game_confirmation_card, location, dateTime, confirmedText, statusText)
+
     // Definir cores baseadas no status
     val statusColor = when {
         isPending -> MaterialTheme.colorScheme.error
@@ -296,6 +310,7 @@ private fun GameConfirmationCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .semantics(mergeDescendants = true) { contentDescription = cardCd }
             .clickable(onClick = onGameClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
