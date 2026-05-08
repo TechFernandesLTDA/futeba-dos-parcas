@@ -102,7 +102,7 @@ class NextGameWidget : AppWidgetProvider() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return null
 
         val firestore = FirebaseFirestore.getInstance()
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val today = Date()
 
         // Busca próximas confirmações do usuário
         val confirmations = firestore.collection("confirmations")
@@ -116,13 +116,23 @@ class NextGameWidget : AppWidgetProvider() {
         val gameIds = confirmations.documents.mapNotNull { it.getString("game_id") }
         if (gameIds.isEmpty()) return null
 
-        // Busca jogos futuros
+        // FIX #584/H6: 3 bugs corrigidos:
+        // 1. `whereIn("id", ...)` → campo `id` não existe nos docs Firestore;
+        //    correto é FieldPath.documentId().
+        // 2. `whereGreaterThanOrEqualTo("date", todayStr)` → campo correto é
+        //    `dateTime` (Date), não `date` (string).
+        // 3. `gameIds.take(10)` silenciosamente trunca; agora avisa se truncou.
+        if (gameIds.size > 10) {
+            android.util.Log.w(
+                "NextGameWidget",
+                "Truncating ${gameIds.size} confirmations to 10 (Firestore whereIn limit)"
+            )
+        }
         val games = firestore.collection("games")
-            .whereIn("id", gameIds.take(10)) // Firestore limit
-            .whereGreaterThanOrEqualTo("date", today)
+            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), gameIds.take(10))
+            .whereGreaterThanOrEqualTo("dateTime", today)
             .whereIn("status", listOf("SCHEDULED", "CONFIRMED"))
-            .orderBy("date", Query.Direction.ASCENDING)
-            .orderBy("time", Query.Direction.ASCENDING)
+            .orderBy("dateTime", Query.Direction.ASCENDING)
             .limit(1)
             .get()
             .await()
