@@ -34,15 +34,21 @@
     <!-- Permissões de Autenticação -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
-    <!-- Permissões de Mídia - Imagens -->
-    <!-- Android 13+ (API 33+) usa READ_MEDIA_* -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <!-- Android 13+ para áudio (Voice Messages) -->
+    <!-- Permissões de Mídia -->
+    <!-- FIX Play Store policy violation (2026-05-08): READ_MEDIA_IMAGES/VIDEO -->
+    <!-- removidas. App usa Photo Picker (ActivityResultContracts.PickVisualMedia) -->
+    <!-- que NÃO requer permissão e oferece acesso scoped a uma única imagem por -->
+    <!-- vez — alinhado com policy "single or infrequent access to media files". -->
+    <!--
+        REMOVIDOS:
+        - READ_MEDIA_IMAGES (Android 13+) → substituído por Photo Picker
+        - READ_EXTERNAL_STORAGE (≤32) → não usado, scoped storage suficiente
+        - WRITE_EXTERNAL_STORAGE (≤28) → não usado, FileProvider/cache suficiente
+
+        MANTIDO (Voice Messages feature):
+        - READ_MEDIA_AUDIO: leitura de mensagens de voz salvas
+    -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-    <!-- Fallback para Android 12 e inferior -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <!-- WRITE_EXTERNAL_STORAGE para Android 9 e inferior (API <= 28) -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
     <!-- Permissão de Câmera -->
     <uses-permission android:name="android.permission.CAMERA" />

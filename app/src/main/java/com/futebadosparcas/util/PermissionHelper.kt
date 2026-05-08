@@ -118,23 +118,16 @@ class PermissionHelper constructor(
     }
 
     /**
-     * Check if storage permission is granted
+     * Check if storage permission is granted.
+     *
+     * FIX Play Store policy (2026-05-08): após migração pro Photo Picker
+     * (PickVisualMedia), o app não precisa mais de READ_MEDIA_IMAGES/VIDEO/
+     * EXTERNAL_STORAGE pra image upload. Photo Picker é scoped + sem permissão.
+     *
+     * Pra Voice Messages (audio), continua precisando READ_MEDIA_AUDIO em A13+.
+     * Sempre true para o caller default (sem audio).
      */
-    fun hasStoragePermission(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            hasPermissions(
-                Manifest.permission.READ_MEDIA_IMAGES,
-                Manifest.permission.READ_MEDIA_VIDEO
-            )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            hasPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-        } else {
-            hasPermissions(
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            )
-        }
-    }
+    fun hasStoragePermission(): Boolean = true
 
     /**
      * Check if notification permission is granted (Android 13+)
@@ -183,23 +176,13 @@ class PermissionHelper constructor(
     }
 
     /**
-     * Get required storage permissions based on Android version
+     * Get required storage permissions based on Android version.
+     *
+     * FIX Play Store policy: empty array — Photo Picker dispensa permissões
+     * (vide hasStoragePermission). Voice messages continuam usando
+     * getAudioPermissions() / RECORD_AUDIO separadamente.
      */
-    fun getStoragePermissions(): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(
-                Manifest.permission.READ_MEDIA_IMAGES,
-                Manifest.permission.READ_MEDIA_VIDEO
-            )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-        } else {
-            arrayOf(
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            )
-        }
-    }
+    fun getStoragePermissions(): Array<String> = emptyArray()
 
     /**
      * Get required notification permissions (Android 13+)
