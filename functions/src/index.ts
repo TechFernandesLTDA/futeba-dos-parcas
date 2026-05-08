@@ -832,8 +832,12 @@ export const onGameStatusUpdate = onDocumentUpdated(
           currentBatchOps++;
 
           // 4. Create Log
+          // FIX #584/M5: era random doc id → CF crash mid-batch + Eventarc
+          // retry = double-credit via increment (mesmo player 2x).
+          // Agora deterministic id: replay safe (set sobreescreve mesmo doc).
           const logRef =
-            db().collection("xp_logs").doc();
+            db().collection("xp_logs")
+              .doc(`game_${gameId}_user_${uid}`);
           const log: XpLog = {
             user_id: uid,
             game_id: gameId,
@@ -1234,11 +1238,16 @@ export const recalculateLeagueRating =
           `${newLeagueState.protectionGames}`
         );
       } catch (e) {
+        // FIX #584/M7: era catch sem rethrow → liga permanentemente skip
+        // pra esse game, divisão stale sem alert.
+        // Agora rethrow → Eventarc retry com backoff. Se erro persiste,
+        // alerta via console.error mas não bloqueia o trigger Firestore.
         console.error(
           "Erro ao recalcular rating " +
           `para ${partId}:`,
           e
         );
+        throw e;
       }
     }
   );
