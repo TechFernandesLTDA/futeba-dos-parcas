@@ -5,6 +5,24 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.21.2] - 2026-05-08
+
+### Corrigido
+
+- **Play Store policy violation**: `READ_MEDIA_IMAGES`/`READ_MEDIA_VIDEO` removidas
+  do AndroidManifest. App rejeitado por "Uso inválido das permissões de acesso a
+  fotos e vídeos" (Play Store flagou que o app só precisa de acesso pontual).
+  Migração:
+  - 5 telas (CreateGroupScreen, ComposeGroupDialogs, EditProfileScreen,
+    ComposeLocationDialogs) trocaram `ActivityResultContracts.GetContent()`
+    por `ActivityResultContracts.PickVisualMedia()` (Photo Picker API).
+  - Photo Picker é scoped, não requer permissão e oferece UX padrão Material.
+  - Removidos do manifest: `READ_MEDIA_IMAGES`, `READ_EXTERNAL_STORAGE` (≤32),
+    `WRITE_EXTERNAL_STORAGE` (≤28).
+  - Mantido: `READ_MEDIA_AUDIO` (Voice Messages feature).
+- `PermissionHelper.hasStoragePermission()` retorna sempre `true` (Photo Picker
+  dispensa permissão). `getStoragePermissions()` retorna empty array.
+
 ## [1.21.1] - 2026-05-07
 
 ### Corrigido

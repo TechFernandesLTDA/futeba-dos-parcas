@@ -2,6 +2,7 @@ package com.futebadosparcas.ui.groups
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -91,8 +92,10 @@ fun CreateGroupScreen(
                                 createGroupState !is CreateGroupUiState.Loading
 
     // Launcher para galeria
+    // FIX Play Store policy (2026-05-08): Photo Picker em vez de GetContent
+    // pra evitar uso inválido de READ_MEDIA_IMAGES.
     val pickImageLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
+        ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         selectedPhotoUri = uri
     }
@@ -325,7 +328,11 @@ fun CreateGroupScreen(
             },
             onGalleryClick = {
                 showPhotoOptionsDialog = false
-                pickImageLauncher.launch("image/*")
+                pickImageLauncher.launch(
+                    PickVisualMediaRequest(
+                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                    )
+                )
             }
         )
     }

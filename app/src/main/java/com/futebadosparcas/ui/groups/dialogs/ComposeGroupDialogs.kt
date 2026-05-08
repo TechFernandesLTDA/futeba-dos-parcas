@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.groups.dialogs
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -62,8 +63,9 @@ fun EditGroupDialog(
     // Photo Logic
     val tempCameraUri = remember { mutableStateOf<Uri?>(null) }
 
+    // FIX Play Store policy: Photo Picker em vez de GetContent.
     val pickImageLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
+        ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         uri?.let {
             selectedPhotoUri = it
@@ -134,7 +136,11 @@ fun EditGroupDialog(
                         headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_gallery)) },
                         leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(R.string.cd_photo_gallery)) },
                         modifier = Modifier.clickable {
-                            pickImageLauncher.launch("image/*")
+                            pickImageLauncher.launch(
+                                PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
                             showPhotoOptions = false
                         }
                     )
@@ -399,8 +405,9 @@ fun AddCashboxEntryDialog(
     val tempCameraUri = remember { mutableStateOf<Uri?>(null) }
     var showPhotoOptions by remember { mutableStateOf(false) }
 
+    // FIX Play Store policy: Photo Picker.
     val pickImageLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
+        ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? -> selectedReceiptUri = uri }
 
     val takePictureLauncher = rememberLauncherForActivityResult(
@@ -433,7 +440,11 @@ fun AddCashboxEntryDialog(
                         headlineContent = { Text(stringResource(R.string.create_group_photo_dialog_gallery)) },
                         leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(R.string.cd_choose_photo)) },
                         modifier = Modifier.clickable {
-                            pickImageLauncher.launch("image/*")
+                            pickImageLauncher.launch(
+                                PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
                             showPhotoOptions = false
                         }
                     )

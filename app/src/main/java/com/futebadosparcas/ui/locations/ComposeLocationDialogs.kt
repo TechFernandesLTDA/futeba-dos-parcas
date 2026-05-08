@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.locations
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -72,8 +73,9 @@ fun FieldEditDialog(
     val tempCameraUri = remember { mutableStateOf<Uri?>(null) }
     var expandedType by remember { mutableStateOf(false) }
 
+    // FIX Play Store policy: Photo Picker em vez de GetContent.
     val pickImageLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
+        ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         selectedPhotoUri = uri
     }
@@ -113,7 +115,11 @@ fun FieldEditDialog(
                         headlineContent = { Text(stringResource(R.string.location_dialog_choose_gallery)) },
                         leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = stringResource(R.string.location_dialog_choose_gallery)) },
                         modifier = Modifier.clickable {
-                            pickImageLauncher.launch("image/*")
+                            pickImageLauncher.launch(
+                                PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
                             showPhotoOptions = false
                         }
                     )

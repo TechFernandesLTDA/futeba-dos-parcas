@@ -3,6 +3,7 @@ package com.futebadosparcas.ui.profile
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.clickable
@@ -263,8 +264,9 @@ private fun EditProfileContent(
     var gkRating by remember { mutableFloatStateOf(user.gkRating.toFloat()) }
 
     // Image picker launcher
+    // FIX Play Store policy: Photo Picker em vez de GetContent.
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         uri?.let {
             // Validate image size (max 10MB)
@@ -294,7 +296,11 @@ private fun EditProfileContent(
             selectedImageUri = selectedImageUri,
             onPhotoClick = {
                 onPhotoClick()
-                imagePickerLauncher.launch("image/*")
+                imagePickerLauncher.launch(
+                    PickVisualMediaRequest(
+                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                    )
+                )
             }
         )
 
