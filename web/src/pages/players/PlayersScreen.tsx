@@ -12,6 +12,7 @@ import {
   ListItemText,
   Divider,
   useTheme,
+  useMediaQuery,
   alpha,
   Chip,
   CircularProgress,
@@ -54,6 +55,7 @@ export const PlayersScreen: React.FC = () => {
   useDocumentTitle('Jogadores');
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
   const { showError } = useToast();
@@ -238,7 +240,7 @@ export const PlayersScreen: React.FC = () => {
         onClose={() => setSelectedPlayerId(null)}
       />
 
-      <Dialog open={!!confirmRemoveId} onClose={() => setConfirmRemoveId(null)}>
+      <Dialog open={!!confirmRemoveId} onClose={() => setConfirmRemoveId(null)} fullScreen={isMobile} fullWidth maxWidth="sm">
         <DialogTitle>Remover membro</DialogTitle>
         <DialogContent>
           <DialogContentText>

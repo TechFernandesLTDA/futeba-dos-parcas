@@ -390,7 +390,7 @@ export const ShimmerLoading: React.FC<{ count?: number; type?: 'card' | 'list' }
   return (
     <Box role="status" aria-label="Carregando conteudo">
       {Array.from({ length: count }).map((_, index) => (
-        <Box key={index}>
+        <Box key={index}> {/* list never reorders — static shimmer array */}
           {type === 'card' ? <GameCardSkeleton /> : <Skeleton variant="text" height={60} />}
         </Box>
       ))}
@@ -444,7 +444,7 @@ export const LoadingState: React.FC<{ shimmerCount?: number; itemType?: string }
   return (
     <Box role="status" aria-label="Carregando conteudo">
       {Array.from({ length: shimmerCount }).map((_, index) => (
-        <Card key={index} sx={{ mb: 1 }}>
+        <Card key={index} sx={{ mb: 1 }}> {/* list never reorders — static shimmer array */}
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Skeleton variant="circular" width={48} height={48} />

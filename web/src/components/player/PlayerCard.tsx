@@ -23,6 +23,10 @@ import {
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import { usePlayerCard } from '../../hooks/usePlayerCard';
+import { useToast } from '../../contexts/ToastContext';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('PlayerCard');
 import {
   getLevelEntry,
   getXpProgress,
@@ -108,6 +112,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
   const theme = useTheme();
   const cardRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
+  const { showError } = useToast();
   const { data: player, isLoading, isError, refetch } = usePlayerCard(userId);
 
   const levelColor = player ? getLevelColor(player.level) : '#78909C';
@@ -160,8 +165,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
         setSharing(false);
       }, 'image/png');
     } catch (error) {
-      console.error('Erro ao gerar imagem do card:', error);
-      alert('Não foi possível gerar a imagem. Verifique sua conexão e tente novamente.');
+      logger.error('Erro ao gerar imagem do card:', error);
+      showError('Erro ao gerar imagem do card. Tente novamente.');
       setSharing(false);
     }
   }, [player]);

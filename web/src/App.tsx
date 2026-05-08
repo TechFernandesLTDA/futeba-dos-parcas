@@ -108,6 +108,9 @@ const AboutScreen = lazy(() => import('./pages/about/AboutScreen').then(m => ({ 
 const UserManagementScreen = lazy(() => import('./pages/admin/UserManagementScreen').then(m => ({ default: m.UserManagementScreen })));
 const DevToolsScreen = lazy(() => import('./pages/devtools/DevToolsScreen').then(m => ({ default: m.DevToolsScreen })));
 
+// Error pages
+const NotFoundScreen = lazy(() => import('./pages/error/NotFoundScreen').then(m => ({ default: m.NotFoundScreen })));
+
 function RouteFallback() {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -356,7 +359,7 @@ function AppRoutes() {
       <Route path="/tactical/:gameId" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><TacticalBoardScreen /></Suspense></ProtectedRoute>} />
 
       {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Suspense fallback={<RouteFallback />}><NotFoundScreen /></Suspense>} />
     </Routes>
   );
 }

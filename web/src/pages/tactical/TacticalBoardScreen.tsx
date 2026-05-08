@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -49,7 +50,7 @@ const FORMATIONS = [
 
 export const TacticalBoardScreen: React.FC = () => {
   useDocumentTitle('Prancheta Tática');
-  const navigate = useNavigate();
+  const navigateBack = useNavigateBack('/games');
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();
@@ -141,7 +142,7 @@ export const TacticalBoardScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
