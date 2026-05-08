@@ -104,8 +104,8 @@ export const SchedulesScreen: React.FC = () => {
       await updateDoc(doc(db, 'schedules', schedule.id), {
         is_active: !schedule.isActive,
       });
-    } catch (err: any) {
-      showError('Erro ao alterar status: ' + err.message);
+    } catch (err: unknown) {
+      showError('Erro ao alterar status: ' + (err instanceof Error ? err.message : 'Tente novamente.'));
     }
   };
 
@@ -122,8 +122,8 @@ export const SchedulesScreen: React.FC = () => {
       showSuccess('Agendamento excluído.');
       setDeleteDialogOpen(false);
       setDeletingSchedule(null);
-    } catch (err: any) {
-      showError('Erro ao excluir: ' + err.message);
+    } catch (err: unknown) {
+      showError('Erro ao excluir: ' + (err instanceof Error ? err.message : 'Tente novamente.'));
     } finally {
       setActionLoading(false);
     }

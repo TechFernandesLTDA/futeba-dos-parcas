@@ -66,8 +66,7 @@ export const GroupEditScreen: React.FC = () => {
     }
   }, [group, initialized]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = <K extends keyof typeof formData>(field: K, value: typeof formData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field]) {
       setFormErrors((prev) => ({ ...prev, [field]: '' }));

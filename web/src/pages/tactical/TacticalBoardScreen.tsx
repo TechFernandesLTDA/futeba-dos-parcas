@@ -42,6 +42,12 @@ interface TacticalPlayer {
   team: 'A' | 'B';
 }
 
+interface RawPlayerData {
+  id?: string;
+  name?: string;
+  photoUrl?: string;
+}
+
 const FORMATIONS = [
   { name: '4-4-2', positions: [[50, 90], [20, 70], [40, 70], [60, 70], [80, 70], [20, 45], [40, 45], [60, 45], [80, 45], [35, 20], [65, 20]] },
   { name: '4-3-3', positions: [[50, 90], [20, 70], [40, 70], [60, 70], [80, 70], [30, 45], [50, 45], [70, 45], [25, 20], [50, 15], [75, 20]] },
@@ -68,10 +74,8 @@ export const TacticalBoardScreen: React.FC = () => {
       try {
         const gameDoc = await getDoc(doc(db, 'games', gameId));
         if (gameDoc.exists()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const teamA = (data.teamA || []).map((p: any, i: number) => ({
+          const data = snakeToCamel(gameDoc.data()) as Record<string, RawPlayerData[]>;
+          const teamA = (data.teamA || []).map((p: RawPlayerData, i: number) => ({
             id: p.id || `a-${i}`,
             name: p.name || 'Jogador',
             photoUrl: p.photoUrl,
@@ -79,8 +83,7 @@ export const TacticalBoardScreen: React.FC = () => {
             y: FORMATIONS[0].positions[i]?.[1] || 70,
             team: 'A' as const,
           }));
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const teamB = (data.teamB || []).map((p: any, i: number) => ({
+          const teamB = (data.teamB || []).map((p: RawPlayerData, i: number) => ({
             id: p.id || `b-${i}`,
             name: p.name || 'Jogador',
             photoUrl: p.photoUrl,
