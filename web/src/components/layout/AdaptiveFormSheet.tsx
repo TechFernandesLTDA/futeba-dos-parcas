@@ -97,6 +97,8 @@ export function AdaptiveFormSheet({
             maxWidth: '100vw',
             // Garante scroll interno caso o conteúdo exceda a altura
             overflowY: 'auto',
+            // Previne rubber-band scroll no body em iOS Safari (H5 fix)
+            overscrollBehavior: 'contain',
           },
         }}
         // Elevação padrão do Drawer; backdrop cobre o layout atrás

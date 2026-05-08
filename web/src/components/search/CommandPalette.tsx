@@ -66,6 +66,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
+          // Previne rubber-band scroll no body em iOS Safari quando fullScreen
+          overscrollBehavior: 'contain',
         },
       }}
       sx={{
