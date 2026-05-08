@@ -6,6 +6,7 @@ import com.futebadosparcas.domain.model.GameSummon
 import com.futebadosparcas.domain.model.PlayerPosition
 import com.futebadosparcas.domain.model.UpcomingGame
 import com.futebadosparcas.domain.repository.GameSummonRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -31,6 +32,11 @@ class GameSummonViewModel(
 
     private val _pendingCount = MutableStateFlow(0)
     val pendingCount: StateFlow<Int> = _pendingCount
+
+    // FIX #583: Job tracking pra evitar race + leak ao trocar de gameId.
+    // loadGameSummons e observeGameSummons compartilham o mesmo state (_gameSummonsState),
+    // então precisam compartilhar o mesmo Job — quem chama por último cancela o anterior.
+    private var gameSummonsJob: Job? = null
 
     init {
         observePendingSummons()
@@ -120,7 +126,11 @@ class GameSummonViewModel(
     }
 
     fun loadGameSummons(gameId: String) {
-        viewModelScope.launch {
+        // FIX #583: cancelar job anterior antes de iniciar novo.
+        // Sem isso, switch rápido entre gameIds acumulava collectors paralelos,
+        // last-write-wins com gameId stale.
+        gameSummonsJob?.cancel()
+        gameSummonsJob = viewModelScope.launch {
             _gameSummonsState.value = GameSummonsState.Loading
 
             val result = gameSummonRepository.getGameSummons(gameId)
@@ -143,7 +153,9 @@ class GameSummonViewModel(
     }
 
     fun observeGameSummons(gameId: String) {
-        gameSummonRepository.getGameSummonsFlow(gameId)
+        // FIX #583: cancelar job anterior — vide loadGameSummons.
+        gameSummonsJob?.cancel()
+        gameSummonsJob = gameSummonRepository.getGameSummonsFlow(gameId)
             .onEach { summons ->
                 _gameSummonsState.value = if (summons.isEmpty()) {
                     GameSummonsState.Empty
@@ -157,6 +169,11 @@ class GameSummonViewModel(
                 )
             }
             .launchIn(viewModelScope)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        gameSummonsJob?.cancel()
     }
 
     fun acceptSummon(gameId: String, position: PlayerPosition) {
