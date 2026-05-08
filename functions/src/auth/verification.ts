@@ -44,11 +44,11 @@ function getCpfSalt(): string {
 export const verifyCpf = onCall(
   {
     region: "us-central1",
-    // App Check temp off — debug em curso (web SDK não estava
-    // anexando token nos callables; possível issue de ordem
-    // initializeAppCheck vs getFunctions).
-    enforceAppCheck: false,
-    consumeAppCheckToken: false,
+    // FIX SEC-2026-05-08: enforce App Check em prod. Antes hardcoded false
+    // como "debug" temporário (web SDK não anexava token) — debug virou prod.
+    // Web App Check já está configurado (reCAPTCHA Enterprise ativo).
+    enforceAppCheck: process.env.NODE_ENV === "production",
+    consumeAppCheckToken: true,
     // CRITICAL: secret precisa ser declarada em onCall pra
     // ser acessivel via process.env.CPF_SALT em runtime.
     secrets: ["CPF_SALT"],
@@ -154,11 +154,11 @@ export const verifyCpf = onCall(
 export const setUserVerified = onCall(
   {
     region: "us-central1",
-    // App Check temp off — debug em curso (web SDK não estava
-    // anexando token nos callables; possível issue de ordem
-    // initializeAppCheck vs getFunctions).
-    enforceAppCheck: false,
-    consumeAppCheckToken: false,
+    // FIX SEC-2026-05-08: enforce App Check em prod. Antes hardcoded false
+    // como "debug" temporário (web SDK não anexava token) — debug virou prod.
+    // Web App Check já está configurado (reCAPTCHA Enterprise ativo).
+    enforceAppCheck: process.env.NODE_ENV === "production",
+    consumeAppCheckToken: true,
   },
   async (request) => {
     const {auth, data} = request;

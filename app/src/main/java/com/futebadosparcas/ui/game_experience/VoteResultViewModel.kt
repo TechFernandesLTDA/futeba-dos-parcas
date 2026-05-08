@@ -7,6 +7,7 @@ import com.futebadosparcas.domain.model.GameConfirmation
 import com.futebadosparcas.data.model.MVPVoteResult
 import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.data.repository.GameRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -26,6 +27,7 @@ class VoteResultViewModel(
     val uiState: StateFlow<VoteResultUiState> = _uiState
 
     private var currentGameId: String? = null
+    private var loadJob: Job? = null
 
     /**
      * Carrega os resultados da votação para um jogo.
@@ -35,8 +37,12 @@ class VoteResultViewModel(
             return // Já carregado
         }
 
+        // FIX android-audit A2-H4: cancela job anterior antes de iniciar novo —
+        // se loadResults é chamado com novo gameId enquanto carga anterior em vôo,
+        // dois coroutines escreviam em _uiState (last-write-wins inconsistente).
+        loadJob?.cancel()
         currentGameId = gameId
-        viewModelScope.launch {
+        loadJob = viewModelScope.launch {
             _uiState.value = VoteResultUiState.Loading
 
             try {
