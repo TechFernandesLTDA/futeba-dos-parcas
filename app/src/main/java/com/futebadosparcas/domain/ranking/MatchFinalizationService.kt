@@ -79,8 +79,42 @@ class MatchFinalizationService constructor(
      *
      * IMPORTANTE: Usa transação Firestore para garantir atomicidade e evitar
      * race conditions que poderiam causar XP duplicado.
+     *
+     * FIX #580 (2026-05-08): Esta função agora é NO-OP em produção. Cloud Function
+     * `onGameStatusUpdate` (functions/src/index.ts:158) é o único owner de XP
+     * processing (statistics, milestones, ranking deltas, streaks, badges, league).
+     *
+     * Antes: Android + CF rodavam em paralelo. Mesmo com flags `xp_processed`/
+     * `xp_processing` em transaction, OUTCOMES divergiam:
+     * - Schemas de xp_logs diferentes (Android vs CF)
+     * - Streak logic diferente (Android usa SimpleDateFormat, CF usa server timestamp)
+     * - Settings podiam mudar entre paths
+     *
+     * Código mantido intacto pra testes unitários + fallback caso CF caia
+     * (toggle via Remote Config futuro).
      */
     suspend fun processGame(gameId: String): GameProcessingResult {
+        // FIX #580: Cloud Function `onGameStatusUpdate` é o único owner.
+        // Returns "success" sem processar — CF processa server-side.
+        AppLogger.d(TAG) {
+            "FIX #580: processGame($gameId) é no-op em prod. " +
+                "Cloud Function onGameStatusUpdate processará XP server-side."
+        }
+        return GameProcessingResult(
+            gameId = gameId,
+            success = true,
+            playersProcessed = emptyList(),
+            error = null
+        )
+    }
+
+    /**
+     * Implementação legacy de processGame (DESABILITADA per #580).
+     * Mantida pra testes unitários e fallback caso CF caia.
+     * Renomeada com underscore prefix pra indicar uso interno apenas.
+     */
+    @Suppress("unused")
+    suspend fun _processGameLegacy(gameId: String): GameProcessingResult {
         AppLogger.d(TAG) { "Iniciando processamento do jogo $gameId" }
 
         return try {
