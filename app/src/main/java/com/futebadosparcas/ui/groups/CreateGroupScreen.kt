@@ -91,6 +91,16 @@ fun CreateGroupScreen(
                                 nameError == null &&
                                 createGroupState !is CreateGroupUiState.Loading
 
+    // FIX android-audit A1-H4: dirty guard previne perda de dados em system back gesture
+    // ou no botão fechar do TopBar quando user já preencheu campos.
+    val isDirty = groupName.isNotEmpty() ||
+                  groupDescription.isNotEmpty() ||
+                  selectedPhotoUri != null
+    val attemptExit = com.futebadosparcas.ui.components.rememberDiscardChangesGuard(
+        isDirty = isDirty,
+        onConfirmedExit = onNavigateBack,
+    )
+
     // Launcher para galeria
     // FIX Play Store policy (2026-05-08): Photo Picker em vez de GetContent
     // pra evitar uso inválido de READ_MEDIA_IMAGES.
@@ -131,7 +141,7 @@ fun CreateGroupScreen(
                 title = { Text(stringResource(R.string.create_group_title)) },
                 navigationIcon = {
                     IconButton(
-                        onClick = onNavigateBack,
+                        onClick = attemptExit,
                         modifier = Modifier.semantics {
                             contentDescription = context.getString(R.string.create_group_cd_close)
                         }

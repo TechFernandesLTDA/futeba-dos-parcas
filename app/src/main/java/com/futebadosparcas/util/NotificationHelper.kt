@@ -98,14 +98,19 @@ class NotificationHelper constructor(
         message: String,
         gameId: String? = null
     ) {
+        // Usa hash do gameId como requestCode para evitar colisão de PendingIntent entre jogos distintos.
+        // FLAG_ACTIVITY_SINGLE_TOP preserva o back stack quando o app já está em foreground.
+        val requestCode = gameId?.hashCode() ?: NOTIFICATION_ID_GAME
+        val notificationId = gameId?.hashCode() ?: NOTIFICATION_ID_GAME
+
         val intent = Intent(context, MainActivityCompose::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             gameId?.let { putExtra("gameId", it) }
         }
 
         val pendingIntent = PendingIntent.getActivity(
             context,
-            NOTIFICATION_ID_GAME,
+            requestCode,
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
@@ -119,7 +124,7 @@ class NotificationHelper constructor(
             .setContentIntent(pendingIntent)
             .build()
 
-        notificationManager.notify(NOTIFICATION_ID_GAME, notification)
+        notificationManager.notify(notificationId, notification)
     }
 
     /**
@@ -129,8 +134,9 @@ class NotificationHelper constructor(
         title: String,
         message: String
     ) {
+        // Social sem ID de entidade — preserva back stack via SINGLE_TOP
         val intent = Intent(context, MainActivityCompose::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
 
         val pendingIntent = PendingIntent.getActivity(
@@ -159,8 +165,9 @@ class NotificationHelper constructor(
         title: String,
         message: String
     ) {
+        // Preserva back stack via SINGLE_TOP; openBadges=true para deep link em conquistas
         val intent = Intent(context, MainActivityCompose::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("openBadges", true)
         }
 
@@ -192,14 +199,18 @@ class NotificationHelper constructor(
         message: String,
         gameId: String? = null
     ) {
+        // Usa hash do gameId como requestCode para evitar colisão de PendingIntent entre lembretes distintos.
+        val requestCode = gameId?.hashCode() ?: NOTIFICATION_ID_REMINDER
+        val notificationId = gameId?.hashCode() ?: NOTIFICATION_ID_REMINDER
+
         val intent = Intent(context, MainActivityCompose::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             gameId?.let { putExtra("gameId", it) }
         }
 
         val pendingIntent = PendingIntent.getActivity(
             context,
-            NOTIFICATION_ID_REMINDER,
+            requestCode,
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
@@ -214,7 +225,7 @@ class NotificationHelper constructor(
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .build()
 
-        notificationManager.notify(NOTIFICATION_ID_REMINDER, notification)
+        notificationManager.notify(notificationId, notification)
     }
 
     /**
