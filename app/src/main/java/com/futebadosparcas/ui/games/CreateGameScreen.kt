@@ -36,6 +36,7 @@ import java.time.format.DateTimeFormatter
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.components.rememberDiscardChangesGuard
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * Tela moderna de criação/edição de jogos em Jetpack Compose
@@ -375,6 +376,7 @@ private fun CreateGameContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .adaptiveContentWidth()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)

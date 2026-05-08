@@ -37,6 +37,7 @@ import com.futebadosparcas.ui.theme.GamificationColors
 import kotlinx.coroutines.launch
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 
 /**
  * LiveGameScreen - Tela principal de jogo ao vivo em Jetpack Compose
@@ -151,7 +152,7 @@ fun LiveGameScreen(
                 }
                 is LiveGameUiState.Success -> {
                     Column(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize().adaptiveContentWidth()
                     ) {
                         // Header com placar e informações do jogo
                         LiveGameHeader(
