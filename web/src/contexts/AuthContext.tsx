@@ -129,7 +129,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Listen for auth state changes
   useEffect(() => {
+    // FIX #584/H4: era onAuthStateChanged async sem cancellation guard.
+    // Token refresh / sign-out+sign-in rápido disparava 2 fetchUserData
+    // concorrentes, last-resolve-wins → user object stale.
+    // Agora: rastreia uid em closure local; descarta resultados se uid
+    // mudou enquanto o fetch estava pendente.
+    let lastFetchUid: string | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      const currentUid = firebaseUser?.uid ?? null;
+      lastFetchUid = currentUid;
+
       try {
         if (firebaseUser?.uid !== prevUserRef.current?.uid) {
           setLoading(true);
@@ -139,11 +149,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (firebaseUser) {
           let userData = await fetchUserData(firebaseUser.uid);
-          
+
+          // FIX #584/H4: descarta resultado se uid mudou durante fetch
+          if (lastFetchUid !== firebaseUser.uid) {
+            logger.debug(
+              `Discarding stale fetchUserData for ${firebaseUser.uid} ` +
+              `(current uid: ${lastFetchUid})`
+            );
+            return;
+          }
+
           if (!userData) {
             userData = await createUserDocument(firebaseUser);
+            // Re-check após segunda await
+            if (lastFetchUid !== firebaseUser.uid) return;
           }
-          
+
           setUser(userData);
         } else {
           setUser(null);
@@ -152,8 +173,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       } catch (err) {
         logger.error('Auth state change error:', err);
-        setUser(null);
-        setLoading(false);
+        // Só limpa state se ainda for o callback atual
+        if (lastFetchUid === currentUid) {
+          setUser(null);
+          setLoading(false);
+        }
       }
     });
 
