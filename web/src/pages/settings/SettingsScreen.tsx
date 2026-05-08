@@ -22,6 +22,7 @@ import {
   DialogContentText,
   DialogActions,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -52,6 +53,7 @@ export const SettingsScreen: React.FC = () => {
   useDocumentTitle('Configurações');
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
@@ -250,6 +252,9 @@ export const SettingsScreen: React.FC = () => {
       <Dialog
         open={logoutDialogOpen}
         onClose={() => setLogoutDialogOpen(false)}
+        fullScreen={isMobile}
+        fullWidth
+        maxWidth="sm"
         aria-labelledby="settings-logout-dialog-title"
       >
         <DialogTitle id="settings-logout-dialog-title">Sair da conta?</DialogTitle>

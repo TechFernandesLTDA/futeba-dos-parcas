@@ -18,6 +18,7 @@ import {
   CircularProgress,
   Skeleton,
   useTheme,
+  useMediaQuery,
   alpha,
   Dialog,
   DialogTitle,
@@ -59,6 +60,7 @@ export const SchedulesScreen: React.FC = () => {
   useDocumentTitle('Agenda');
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
 
@@ -198,7 +200,7 @@ export const SchedulesScreen: React.FC = () => {
         )}
       </Container>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} aria-labelledby="new-schedule-dialog-title">
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="new-schedule-dialog-title">
         <DialogTitle id="new-schedule-dialog-title">Novo Agendamento</DialogTitle>
         <DialogContent>
           <Typography>Formulário de criação de agendamento...</Typography>
@@ -209,7 +211,7 @@ export const SchedulesScreen: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} aria-labelledby="delete-schedule-dialog-title">
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="delete-schedule-dialog-title">
         <DialogTitle id="delete-schedule-dialog-title">Excluir Agendamento</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">

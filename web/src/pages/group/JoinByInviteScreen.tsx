@@ -115,7 +115,7 @@ export const JoinByInviteScreen: React.FC = () => {
     try {
       await joinByInviteCode(code);
       showSuccess(`Você entrou no grupo ${preview.groupName}!`);
-      navigate(`/group/${preview.groupId}`);
+      navigate(`/group/${preview.groupId}`, { replace: true });
     } catch (err) {
       logger.error('Erro ao entrar no grupo:', err);
       showError((err as Error).message || 'Erro ao entrar no grupo');

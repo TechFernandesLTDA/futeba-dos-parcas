@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -35,6 +36,7 @@ const logger = createLogger('PublicGamesMapScreen');
 export const PublicGamesMapScreen: React.FC = () => {
   useDocumentTitle('Jogos Públicos');
   const navigate = useNavigate();
+  const navigateBack = useNavigateBack('/');
   const theme = useTheme();
   useAuth();
 
@@ -93,7 +95,7 @@ export const PublicGamesMapScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
@@ -153,7 +155,14 @@ export const PublicGamesMapScreen: React.FC = () => {
                 position={{ lat: selectedGame.locationLat, lng: selectedGame.locationLng! }}
                 onCloseClick={() => setSelectedGame(null)}
               >
-                <Box sx={{ p: 0.5, maxWidth: 200, cursor: 'pointer' }} onClick={() => navigate(`/game/${selectedGame.id}`)}>
+                <Box
+                  sx={{ p: 0.5, maxWidth: 200, cursor: 'pointer' }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Abrir detalhes do jogo"
+                  onClick={() => navigate(`/game/${selectedGame.id}`)}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/game/${selectedGame.id}`)}
+                >
                   <Typography variant="subtitle2" fontWeight={600}>{selectedGame.locationName}</Typography>
                   <Typography variant="caption" color="text.secondary">
                     {selectedGame.date} às {selectedGame.time} • {selectedGame.playersCount}/{selectedGame.maxPlayers}

@@ -15,6 +15,7 @@ import {
   Button,
   Chip,
   useTheme,
+  useMediaQuery,
   alpha,
   Dialog,
   DialogTitle,
@@ -55,6 +56,7 @@ export const UserManagementScreen: React.FC = () => {
   useDocumentTitle('Gerenciar Usuários');
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   useAuth();
   const { showError } = useToast();
 
@@ -220,7 +222,7 @@ export const UserManagementScreen: React.FC = () => {
         )}
       </Container>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} aria-labelledby="manage-user-dialog-title">
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="manage-user-dialog-title">
         <DialogTitle id="manage-user-dialog-title">Gerenciar Usuário</DialogTitle>
         <DialogContent>
           {selectedUser && (

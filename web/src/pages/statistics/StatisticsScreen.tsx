@@ -30,7 +30,7 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { getLevelTitle, getLevelColor } from '../../types/user';
-import { PlayerAvatar } from '../../components/common/GameCard';
+import { PlayerAvatar, EmptyState } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
 
@@ -140,6 +140,8 @@ export const StatisticsScreen: React.FC = () => {
               Tentar novamente
             </Button>
           </Box>
+        ) : stats === null ? (
+          <EmptyState title="Sem estatísticas ainda" description="Jogue suas primeiras partidas pra começar." />
         ) : stats ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Card sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>

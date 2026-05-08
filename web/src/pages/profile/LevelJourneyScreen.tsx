@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -58,7 +59,7 @@ interface LevelHistory {
 
 export const LevelJourneyScreen: React.FC = () => {
   useDocumentTitle('Jornada de Nível');
-  const navigate = useNavigate();
+  const navigateBack = useNavigateBack('/');
   const theme = useTheme();
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
@@ -133,7 +134,7 @@ export const LevelJourneyScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
@@ -380,7 +381,7 @@ export const LevelJourneyScreen: React.FC = () => {
                 ) : (
                   <List disablePadding aria-label="Histórico de XP recente">
                     {history.slice(0, 10).map((item, index) => (
-                      <Box key={index}>
+                      <Box key={`${item.achievedAt.getTime()}-${item.source}-${index}`}>
                         {index > 0 && <Divider />}
                         <ListItem sx={{ px: 0 }}>
                           <ListItemIcon sx={{ minWidth: 40 }}>

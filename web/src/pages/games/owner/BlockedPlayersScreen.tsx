@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useNavigateBack } from '../../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -42,7 +43,7 @@ interface BlockedPlayer {
 
 export const BlockedPlayersScreen: React.FC = () => {
   useDocumentTitle('Jogadores Bloqueados');
-  const navigate = useNavigate();
+  const navigateBack = useNavigateBack('/games');
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
@@ -129,7 +130,7 @@ export const BlockedPlayersScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>

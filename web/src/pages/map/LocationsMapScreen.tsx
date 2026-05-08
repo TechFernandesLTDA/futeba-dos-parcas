@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -42,6 +43,7 @@ const logger = createLogger('LocationsMapScreen');
 export const LocationsMapScreen: React.FC = () => {
   useDocumentTitle('Mapa de Locais');
   const navigate = useNavigate();
+  const navigateBack = useNavigateBack('/');
   const theme = useTheme();
   useAuth();
 
@@ -95,7 +97,7 @@ export const LocationsMapScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>

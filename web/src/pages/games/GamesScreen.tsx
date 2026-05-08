@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
   Container,
@@ -36,6 +37,7 @@ const logger = createLogger('GamesScreen');
 export const GamesScreen: React.FC = () => {
   useDocumentTitle('Jogos');
   const navigate = useNavigate();
+  const navigateBack = useNavigateBack('/');
   const theme = useTheme();
   useAuth();
 
@@ -105,7 +107,7 @@ export const GamesScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label="Voltar">
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ ml: 1, flex: 1 }}>

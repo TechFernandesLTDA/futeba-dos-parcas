@@ -349,7 +349,7 @@ export function ProfileTab() {
         <Card sx={{ borderRadius: 3 }}>
           <List disablePadding aria-label="Menu do perfil">
             {menuItems.map((item, index) => (
-              <React.Fragment key={index}>
+              <React.Fragment key={item.label}>
                 {index > 0 && <Divider />}
                 <ListItem
                   component="button"

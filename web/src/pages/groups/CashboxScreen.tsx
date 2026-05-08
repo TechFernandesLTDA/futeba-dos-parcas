@@ -17,6 +17,7 @@ import {
   ListItemText,
   Divider,
   useTheme,
+  useMediaQuery,
   alpha,
   Dialog,
   DialogTitle,
@@ -62,6 +63,7 @@ export const CashboxScreen: React.FC = () => {
   useDocumentTitle('Caixinha');
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
 
@@ -275,7 +277,7 @@ export const CashboxScreen: React.FC = () => {
         )}
       </Container>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} aria-labelledby="cashbox-dialog-title">
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm" aria-labelledby="cashbox-dialog-title">
         <DialogTitle id="cashbox-dialog-title">
           {transactionType === 'INCOME' ? 'Adicionar Entrada' : 'Adicionar Saída'}
         </DialogTitle>
