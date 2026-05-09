@@ -4,6 +4,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { Location } from '../types/location';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('useLocations');
 
 // Busca todas as localizações
 async function fetchLocations(): Promise<Location[]> {
@@ -40,13 +43,19 @@ export const useLocations = () => {
     const q = query(locRef, orderBy('name', 'asc'));
     let isFirstSnapshot = true;
 
-    const unsubscribe = onSnapshot(q, () => {
-      if (isFirstSnapshot) {
-        isFirstSnapshot = false;
-        return;
+    const unsubscribe = onSnapshot(
+      q,
+      () => {
+        if (isFirstSnapshot) {
+          isFirstSnapshot = false;
+          return;
+        }
+        queryClient.invalidateQueries({ queryKey: ['locations'] });
+      },
+      (err) => {
+        logger.error('Error in locations listener:', err);
       }
-      queryClient.invalidateQueries({ queryKey: ['locations'] });
-    });
+    );
 
     return () => unsubscribe();
   }, [queryClient]);
