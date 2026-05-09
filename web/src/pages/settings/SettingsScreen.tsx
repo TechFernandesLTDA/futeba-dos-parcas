@@ -31,6 +31,7 @@ import {
   Info as InfoIcon,
   Logout as LogoutIcon,
   EmojiEvents as TrophyIcon,
+  RateReview as FeedbackIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -39,6 +40,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 
 const logger = createLogger('SettingsScreen');
 
@@ -56,6 +58,7 @@ export const SettingsScreen: React.FC = () => {
   const { user, logout } = useAuth();
   const { showSuccess, showError } = useToast();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const [settings, setSettings] = useState<Settings>({
     notifications: true,
@@ -224,6 +227,20 @@ export const SettingsScreen: React.FC = () => {
                   </ListItemIcon>
                   <ListItemText primary="Sobre o App" secondary="Versão 1.21.3" />
                 </ListItemButton>
+                <Divider />
+                <ListItemButton onClick={() => setFeedbackOpen(true)}>
+                  <ListItemIcon>
+                    <FeedbackIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Enviar Feedback" secondary="Reportar bugs ou sugerir melhorias" />
+                </ListItemButton>
+                <Divider />
+                <ListItemButton onClick={() => navigate('/settings/feedbacks')}>
+                  <ListItemIcon>
+                    <FeedbackIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Meus Feedbacks" secondary="Acompanhe seus feedbacks enviados" />
+                </ListItemButton>
               </List>
             </Card>
 
@@ -275,6 +292,8 @@ export const SettingsScreen: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </Box>
   );
 };
