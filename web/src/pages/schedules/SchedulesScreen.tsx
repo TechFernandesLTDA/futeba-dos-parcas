@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -61,6 +61,8 @@ export const SchedulesScreen: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { groupId } = useParams<{ groupId: string }>();
   const { showError, showSuccess } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
   const { t } = useTranslation();
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -92,13 +94,13 @@ export const SchedulesScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error in schedules listener:', err);
-        showError('Erro ao carregar agendas.');
+        showErrorRef.current('Erro ao carregar agendas.');
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [groupId, showError]);
+  }, [groupId]);
 
   const handleToggleActive = async (schedule: Schedule) => {
     try {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gamificationColors } from '../../../theme';
 import { getPositionBadgeStyle } from '../../../utils/gamificationStyle';
@@ -84,6 +84,8 @@ export function RankingsTab() {
     const navigate = useNavigate();
   const { user } = useAuth();
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
   const { t } = useTranslation();
 
   const [tabValue, setTabValue] = useState(0); // 0=Liga, 1=Ranking, 2=XP
@@ -164,15 +166,15 @@ export function RankingsTab() {
         }
       },
       (err) => {
-        logger.error('Error in rankings listener:', err);
-        showError('Erro ao carregar ranking.');
+          logger.error('Error in rankings listener:', err);
+          showErrorRef.current('Erro ao carregar ranking.');
         setLoading(false);
         setRefreshing(false);
       }
     );
 
     return unsubscribe;
-  }, [user?.id, showError]);
+  }, [user?.id]);
 
   useEffect(() => {
     const unsubscribe = loadData();

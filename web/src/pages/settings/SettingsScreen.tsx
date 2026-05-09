@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -56,6 +56,8 @@ export const SettingsScreen: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user, logout } = useAuth();
   const { showSuccess, showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
   const { t } = useTranslation();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -82,10 +84,10 @@ export const SettingsScreen: React.FC = () => {
       }
     } catch (error) {
       logger.error('Error loading settings:', error);
-      showError('Erro ao carregar configurações.');
+      showErrorRef.current('Erro ao carregar configurações.');
     }
     setLoading(false);
-  }, [user, showError]);
+  }, [user]);
 
   useEffect(() => {
     if (user) {

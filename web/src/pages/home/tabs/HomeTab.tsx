@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
@@ -66,6 +66,8 @@ export function HomeTab() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   // Dados de nível usando LevelTable
   const currentXp = user?.experiencePoints || 0;
@@ -116,13 +118,13 @@ export function HomeTab() {
       },
       (err) => {
         logger.error('Error in recent activities listener:', err);
-        showError('Erro ao carregar atividades recentes.');
+        showErrorRef.current('Erro ao carregar atividades recentes.');
         setActivitiesLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [user?.id, showError]);
+  }, [user?.id]);
 
   // Usa utilitários centralizados de dateFormatters
 

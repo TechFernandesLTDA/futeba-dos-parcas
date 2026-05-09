@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -72,6 +72,8 @@ export const LiveEventsScreen: React.FC = () => {
   const [playerName, setPlayerName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   useEffect(() => {
     if (!gameId) return;
@@ -96,13 +98,13 @@ export const LiveEventsScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error in live game events listener:', err);
-        showError('Erro ao carregar eventos do jogo.');
+        showErrorRef.current('Erro ao carregar eventos do jogo.');
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [gameId, showError]);
+  }, [gameId]);
 
   const handleAddEvent = async () => {
     if (!gameId || !user || !playerName.trim() || !eventType) return;

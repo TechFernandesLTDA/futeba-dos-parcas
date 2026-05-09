@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -50,6 +50,8 @@ export const MVPVoteScreen: React.FC = () => {
   const theme = useTheme();
   const { currentUser } = useAuth();
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const [game, setGame] = useState<Game | null>(null);
   const [confirmations, setConfirmations] = useState<GameConfirmation[]>([]);
@@ -77,6 +79,10 @@ export const MVPVoteScreen: React.FC = () => {
         } as Game);
       }
       setLoading(false);
+    }, (err) => {
+      logger.error('Error in MVP vote game listener:', err);
+      showErrorRef.current('Erro ao carregar dados do jogo.');
+      setLoading(false);
     });
 
     const unsubscribeConfirmations = onSnapshot(query(confirmationsRef, where('game_id', '==', gameId)), (snapshot) => {
@@ -92,6 +98,9 @@ export const MVPVoteScreen: React.FC = () => {
           };
         }) as GameConfirmation[];
       setConfirmations(confirmationsData);
+    }, (err) => {
+      logger.error('Error in MVP vote confirmations listener:', err);
+      showErrorRef.current('Erro ao carregar confirmações do jogo.');
     });
 
     return () => {

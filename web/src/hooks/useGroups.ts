@@ -163,13 +163,13 @@ export function useGroups() {
     let isFirstSnapshot = true;
 
     const unsubscribe = onSnapshot(q, () => {
-      // Ignorar primeiro snapshot (dados já carregados pelo useQuery)
       if (isFirstSnapshot) {
         isFirstSnapshot = false;
         return;
       }
-      // Invalidar cache para refetch
       queryClient.invalidateQueries({ queryKey: ['groups', uid] });
+    }, (err) => {
+      logger.error('Error in groups listener:', err);
     });
 
     return () => unsubscribe();
