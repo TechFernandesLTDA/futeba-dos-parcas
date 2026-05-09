@@ -172,7 +172,7 @@ export function RegisterScreen() {
                 mb: 2,
               }}
             >
-              <SportsSoccer sx={{ fontSize: 32, color: 'white' }} />
+              <SportsSoccer sx={{ fontSize: 32, color: theme.palette.primary.contrastText }} />
             </Box>
             <Typography component="h1" variant="h5" fontWeight="bold">
               Criar Conta

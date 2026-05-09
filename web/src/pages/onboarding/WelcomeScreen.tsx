@@ -19,7 +19,7 @@ export const WelcomeScreen: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-        color: 'white',
+        color: theme.palette.primary.contrastText,
         p: 3,
       }}
     >
@@ -52,7 +52,7 @@ export const WelcomeScreen: React.FC = () => {
           variant="contained"
           size="large"
           sx={{
-            bgcolor: 'white',
+            bgcolor: 'background.paper',
             color: theme.palette.primary.main,
             py: 1.5,
             mb: 2,

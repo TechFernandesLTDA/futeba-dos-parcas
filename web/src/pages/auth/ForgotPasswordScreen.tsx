@@ -100,7 +100,7 @@ export function ForgotPasswordScreen() {
                 mb: 2,
               }}
             >
-              <SportsSoccer sx={{ fontSize: 40, color: 'white' }} />
+              <SportsSoccer sx={{ fontSize: 40, color: theme.palette.primary.contrastText }} />
             </Box>
             <Typography variant="h5" fontWeight="bold">
               Recuperar Senha
