@@ -31,12 +31,16 @@ import {
   onCall,
   HttpsError,
 } from "firebase-functions/v2/https";
+import {
+  onDocumentWritten,
+} from "firebase-functions/v2/firestore";
 import {checkRateLimit} from "../middleware/rate-limiter";
 import {
   sanitizeText,
 } from "../validation/index";
 import {
   FIRESTORE_WHERE_IN_LIMIT,
+  FUNCTION_REGION,
 } from "../constants";
 
 const getDb = () => admin.firestore();
@@ -499,3 +503,74 @@ async function fetchUsersInBatch(
 
   return userMap;
 }
+
+// ==========================================
+// INVALIDAÇÃO PROATIVA DE CACHE
+// ==========================================
+
+/**
+ * FIX #621: Invalida leaderboard cache quando season_participation muda.
+ *
+ * Antes: apenas TTL de 5 min — doc-code mismatch com o comentário
+ * do módulo que prometia "invalidação automática quando
+ * season_participation é atualizada". Pós-partida, ranking ficava
+ * stale por até 5 min para todos os clientes.
+ *
+ * Agora: trigger proativa deleta todos os docs de cache da season.
+ * Cache key format: `${seasonId}_${limit}` — query por season_id
+ * para capturar todas as variantes de limit cacheadas.
+ *
+ * Custo: ~20 trigger invocations por partida encerrada (1 por
+ * season_participation doc). Cada invocation: 1 query + batch delete.
+ * Aceitável para ranking correto imediatamente pós-partida.
+ */
+export const invalidateLeaderboardOnParticipation = onDocumentWritten(
+  {
+    document: "season_participation/{partId}",
+    region: FUNCTION_REGION,
+  },
+  async (event) => {
+    const after = event.data?.after?.data?.();
+    const before = event.data?.before?.data?.();
+    const seasonId = after?.season_id || before?.season_id;
+
+    if (!seasonId || typeof seasonId !== "string") return;
+
+    const db = getDb();
+
+    try {
+      // Buscar todos os docs de cache dessa season
+      // (podem haver múltiplos com limites diferentes: 10, 20, 50, 100…)
+      const cacheSnap = await db
+        .collection(CACHE_COLLECTION)
+        .where("season_id", "==", seasonId)
+        .get();
+
+      if (cacheSnap.empty) {
+        // Nenhum cache para invalidar — operação idempotente
+        return;
+      }
+
+      // Deletar em batch (máx 500 por batch do Firestore)
+      const batch = db.batch();
+      cacheSnap.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+
+      console.log(
+        "[LEADERBOARD_CACHE] Invalidated " +
+        `${cacheSnap.size} cache doc(s) ` +
+        `for season ${seasonId}`
+      );
+    } catch (error) {
+      // Não re-throw: falha de invalidação é não-crítica.
+      // TTL de 5 min garante eventual consistência.
+      console.error(
+        "[LEADERBOARD_CACHE] " +
+        `Erro ao invalidar cache da season ${seasonId}:`,
+        error
+      );
+    }
+  }
+);

@@ -65,7 +65,8 @@ export const onJoinRequestApproved = onDocumentUpdated(
       return;
     }
 
-    // Verificar se ja eh membro (idempotencia: re-aprovacao nao duplica)
+    // Verificar se ja eh membro fora da transação
+    // (idempotencia: early exit barato)
     const memberRef = db().doc(`groups/${groupId}/members/${userId}`);
     const memberSnap = await memberRef.get();
     if (memberSnap.exists) {
@@ -76,46 +77,63 @@ export const onJoinRequestApproved = onDocumentUpdated(
       return;
     }
 
-    // Buscar dados do grupo (necessario para denormalized user/groups)
-    const groupSnap = await db().doc(`groups/${groupId}`).get();
+    // FIX #620: runTransaction para re-ler group.member_count dentro da
+    // transação e evitar drift em aprovações concorrentes. Antes: snapshot
+    // lido fora → aprovações simultâneas resultavam em member_count stale+1
+    // no doc users/{uid}/groups/{gid} (usado como fallback em fetchUserGroups,
+    // web/src/hooks/useGroups.ts:58).
+    //
+    // Estratégia: existência e metadados (name/photo) verificados fora da
+    // transação (early-exit barato); member_count re-lido dentro para garantir
+    // consistência durante o commit.
+    const groupRef = db().doc(`groups/${groupId}`);
+    const groupSnap = await groupRef.get();
     if (!groupSnap.exists) {
       logger.error("join_request group not found", {groupId, userId});
       return;
     }
-    const group = groupSnap.data() as Record<string, unknown>;
+    const groupMeta = groupSnap.data() as Record<string, unknown>;
+    const groupName = (groupMeta.name as string) ?? "";
+    const groupPhoto = (groupMeta.photo_url as string | null) ?? null;
 
-    // Batch atomico: member + counter + user/groups
-    const batch = db().batch();
+    await db().runTransaction(async (tx) => {
+      // Re-ler group DENTRO da transação — garante member_count consistente
+      // mesmo com aprovações concorrentes de admins diferentes
+      const freshGroupSnap = await tx.get(groupRef);
+      const freshGroup = freshGroupSnap.data() as
+        Record<string, unknown> | undefined;
 
-    batch.set(memberRef, {
-      id: userId,
-      user_id: userId,
-      user_name: after.user_name,
-      user_photo: after.user_photo ?? null,
-      role: "MEMBER",
-      status: "ACTIVE",
-      joined_at: admin.firestore.FieldValue.serverTimestamp(),
-      invited_by: after.responded_by,
+      const currentMemberCount =
+        typeof freshGroup?.member_count === "number" ?
+          freshGroup.member_count : 0;
+
+      tx.set(memberRef, {
+        id: userId,
+        user_id: userId,
+        user_name: after.user_name,
+        user_photo: after.user_photo ?? null,
+        role: "MEMBER",
+        status: "ACTIVE",
+        joined_at: admin.firestore.FieldValue.serverTimestamp(),
+        invited_by: after.responded_by,
+      });
+
+      tx.update(groupRef, {
+        member_count: admin.firestore.FieldValue.increment(1),
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      tx.set(db().doc(`users/${userId}/groups/${groupId}`), {
+        id: groupId,
+        group_id: groupId,
+        group_name: groupName,
+        group_photo: groupPhoto,
+        role: "MEMBER",
+        // member_count lido na transação + 1 (reflete estado pós-commit)
+        member_count: currentMemberCount + 1,
+        joined_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
     });
-
-    batch.update(db().doc(`groups/${groupId}`), {
-      member_count: admin.firestore.FieldValue.increment(1),
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    const currentMemberCount =
-      typeof group.member_count === "number" ? group.member_count : 0;
-    batch.set(db().doc(`users/${userId}/groups/${groupId}`), {
-      id: groupId,
-      group_id: groupId,
-      group_name: (group.name as string) ?? "",
-      group_photo: (group.photo_url as string | null) ?? null,
-      role: "MEMBER",
-      member_count: currentMemberCount + 1,
-      joined_at: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    await batch.commit();
 
     logger.info("join_request approved and member created", {
       groupId,
@@ -127,7 +145,7 @@ export const onJoinRequestApproved = onDocumentUpdated(
     try {
       await sendNotificationToUser(userId, {
         type: NotificationType.GROUP_JOIN_APPROVED,
-        title: `Voce foi aceito em ${group.name}!`,
+        title: `Voce foi aceito em ${groupName}!`,
         body: "Toque pra abrir o grupo e ver os jogos.",
         data: {
           groupId,

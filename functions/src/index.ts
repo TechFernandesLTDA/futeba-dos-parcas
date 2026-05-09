@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 import {
   onDocumentUpdated,
   onDocumentDeleted,
+  onDocumentWritten,
 } from "firebase-functions/v2/firestore";
 import {
   FIRESTORE_BATCH_SAFE_LIMIT,
@@ -1344,14 +1345,14 @@ export const onGameDeleted = onDocumentDeleted(
     const BATCH_LIMIT = FIRESTORE_BATCH_SAFE_LIMIT;
 
     try {
-      const gameSnap = await db()
-        .collection("games")
-        .doc(gameId)
-        .get();
-      if (!gameSnap.exists) {
+      // FIX #615: usar snapshot pré-deleção (event.data) em vez de
+      // re-read pós-trigger. O documento já foi deletado quando o
+      // trigger dispara, então re-read sempre retorna exists=false,
+      // tornando o cascade delete dead code.
+      if (!event.data?.exists) {
         console.log(
           "[CASCADE DELETE] Game " +
-          `${gameId} no longer exists, ` +
+          `${gameId} sem dados pré-deleção, ` +
           "skipping (idempotent)."
         );
         return;
@@ -1732,17 +1733,25 @@ export const onGroupDeleted = onDocumentDeleted(
 // FIX F-C2: Substituído recontagem full + Set in-memory (não
 // funciona cross-instance em Cloud Functions v2) por
 // FieldValue.increment atômico — seguro em múltiplas instâncias.
-// Sync de players_count quando confirmações mudam
+// Sync de players_count quando confirmações mudam.
+//
+// FIX #616: onDocumentWritten captura CREATE/UPDATE/DELETE.
+// Antes: onDocumentUpdated → players_count não atualizava em first
+// confirmation (status já vem CONFIRMED na criação) nem em delete
+// (admin remove player). Self-correcting via subsequent updates,
+// mas inconsistência observável.
 export const onConfirmationWrite =
-  onDocumentUpdated(
+  onDocumentWritten(
     "confirmations/{confirmationId}",
     async (event) => {
       if (!event.data) return;
 
+      // FIX #616: before pode não existir (CREATE), after pode não
+      // existir (DELETE) — usar optional chaining em ambos os lados.
       const before =
-        event.data.before.data();
+        event.data.before?.data?.();
       const after =
-        event.data.after.data();
+        event.data.after?.data?.();
       const gameId =
         after?.game_id || before?.game_id;
 
@@ -1845,6 +1854,10 @@ export * from "./auth/custom-claims";
 // ==========================================
 export {verifyCpf, setUserVerified} from "./auth/verification";
 export {canSendSmsOtp, logVerificationFailure} from "./auth/anti-abuse";
+
+// FIX #619: cleanup cpf_index + users_private ao deletar conta
+// (LGPD Art. 18 VI — direito ao apagamento)
+export {onUserDeleted} from "./auth/account-cleanup";
 
 // SECFIX #433: PII denormalization users -> users_private
 // Triggers + callable migration (ADMIN one-shot) + Stage 3 callables
