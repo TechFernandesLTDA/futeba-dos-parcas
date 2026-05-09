@@ -39,7 +39,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
-import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 
 const logger = createLogger('SettingsScreen');
@@ -51,12 +51,12 @@ interface Settings {
 }
 
 export const SettingsScreen: React.FC = () => {
-  useDocumentTitle('Configurações');
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user, logout } = useAuth();
   const { showSuccess, showError } = useToast();
+  const { t } = useTranslation();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -137,11 +137,11 @@ export const SettingsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label="Voltar">
+          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
-            Configurações
+            {t('settings.title')}
           </Typography>
         </Box>
       </Box>
@@ -173,7 +173,7 @@ export const SettingsScreen: React.FC = () => {
             <Card sx={{ mb: 2 }}>
               <CardContent>
                 <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                  Notificações
+                  {t('nav.notifications')}
                 </Typography>
                 <FormControlLabel
                   control={
@@ -182,7 +182,7 @@ export const SettingsScreen: React.FC = () => {
                       onChange={(e) => setSettings({ ...settings, notifications: e.target.checked })}
                     />
                   }
-                  label="Notificações Push"
+                  label={t('settings.pushNotifications')}
                 />
                 <FormControlLabel
                   control={
@@ -191,7 +191,7 @@ export const SettingsScreen: React.FC = () => {
                       onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
                     />
                   }
-                  label="Notificações por Email"
+                  label={t('settings.emailNotifications')}
                 />
                 <FormControlLabel
                   control={
@@ -200,7 +200,7 @@ export const SettingsScreen: React.FC = () => {
                       onChange={(e) => setSettings({ ...settings, gameReminders: e.target.checked })}
                     />
                   }
-                  label="Lembretes de Jogos"
+                  label={t('settings.gameReminders')}
                 />
               </CardContent>
             </Card>
@@ -211,7 +211,7 @@ export const SettingsScreen: React.FC = () => {
                   <ListItemIcon>
                     <PaletteIcon />
                   </ListItemIcon>
-                  <ListItemText primary="Tema" secondary="Personalizar aparência" />
+                  <ListItemText primary={t('theme.title')} secondary="Personalizar aparência" />
                 </ListItemButton>
                 <Divider />
                 <ListItemButton onClick={() => navigate('/settings/gamification')}>
@@ -232,14 +232,14 @@ export const SettingsScreen: React.FC = () => {
                   <ListItemIcon>
                     <FeedbackIcon />
                   </ListItemIcon>
-                  <ListItemText primary="Enviar Feedback" secondary="Reportar bugs ou sugerir melhorias" />
+                  <ListItemText primary={t('feedback.sendFeedback')} secondary="Reportar bugs ou sugerir melhorias" />
                 </ListItemButton>
                 <Divider />
                 <ListItemButton onClick={() => navigate('/settings/feedbacks')}>
                   <ListItemIcon>
                     <FeedbackIcon />
                   </ListItemIcon>
-                  <ListItemText primary="Meus Feedbacks" secondary="Acompanhe seus feedbacks enviados" />
+                  <ListItemText primary={t('feedback.myFeedbacks')} secondary="Acompanhe seus feedbacks enviados" />
                 </ListItemButton>
               </List>
             </Card>
@@ -263,7 +263,7 @@ export const SettingsScreen: React.FC = () => {
                 onClick={() => setLogoutDialogOpen(true)}
                 startIcon={<LogoutIcon />}
               >
-                Sair
+                {t('nav.logout')}
               </Button>
             </Box>
           </>
@@ -286,9 +286,9 @@ export const SettingsScreen: React.FC = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setLogoutDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setLogoutDialogOpen(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleLogout} color="error" variant="contained">
-            Sair
+            {t('nav.logout')}
           </Button>
         </DialogActions>
       </Dialog>

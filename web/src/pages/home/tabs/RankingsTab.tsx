@@ -42,6 +42,7 @@ import {
   XP_MVP, XP_WIN, XP_STREAK_3, XP_STREAK_7, XP_STREAK_10,
 } from '../../../utils/constants';
 import { createLogger } from '../../../utils/logger';
+import { useTranslation } from 'react-i18next';
 
 const logger = createLogger('RankingsTab');
 
@@ -81,6 +82,7 @@ export function RankingsTab() {
     const navigate = useNavigate();
   const { user } = useAuth();
   const { showError } = useToast();
+  const { t } = useTranslation();
 
   const [tabValue, setTabValue] = useState(0); // 0=Liga, 1=Ranking, 2=XP
   const [players, setPlayers] = useState<RankingPlayer[]>([]);
@@ -205,7 +207,7 @@ export function RankingsTab() {
         <Box sx={{ display: 'flex', alignItems: 'center', px: 2, pt: 1.5, pb: 0.5 }}>
           <TrophyIcon sx={{ color: 'primary.main', mr: 1 }} />
           <Typography variant="h6" fontWeight={700} sx={{ flex: 1 }}>
-            Liga
+            {t('nav.league')}
           </Typography>
           <Tooltip title="Atualizar">
             <IconButton
@@ -224,7 +226,7 @@ export function RankingsTab() {
           aria-label="Categorias de ranking"
           sx={{ minHeight: 40 }}
         >
-          <Tab label="Liga" sx={{ minHeight: 40, py: 0 }} />
+          <Tab label={t('nav.league')} sx={{ minHeight: 40, py: 0 }} />
           <Tab label="XP Global" sx={{ minHeight: 40, py: 0 }} />
           <Tab label="Sistema XP" sx={{ minHeight: 40, py: 0 }} />
         </Tabs>
@@ -269,7 +271,7 @@ export function RankingsTab() {
                   </Box>
                   <Box sx={{ flex: 1 }}>
                     <Typography variant="subtitle2" color="text.secondary">
-                      Sua posição
+                      {t('ranking.myPosition')}
                     </Typography>
                     <Typography variant="h5" fontWeight={700} color="primary.main">
                       #{currentUserRank}
@@ -280,7 +282,7 @@ export function RankingsTab() {
                       {tabValue === 1 ? currentPlayer.experiencePoints : currentPlayer.points}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {tabValue === 1 ? 'XP Total' : 'pontos'}
+                      {tabValue === 1 ? 'XP Total' : t('ranking.points')}
                     </Typography>
                     {tabValue === 0 && (
                       <Chip
@@ -301,7 +303,7 @@ export function RankingsTab() {
                   <Box sx={{ mt: 1.5 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                       <Typography variant="caption" color="text.secondary">
-                        Nível {currentPlayer.level}
+                        {t('profile.level')} {currentPlayer.level}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {currentPlayer.experiencePoints} XP
@@ -366,7 +368,7 @@ export function RankingsTab() {
               </Card>
 
               <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1.5 }}>
-                Divisões da Liga
+                {t('league.divisions')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {(Object.entries(DIVISION_CONFIG) as [LeagueDivision, typeof DIVISION_CONFIG[LeagueDivision]][]).map(([key, config]) => (
@@ -403,7 +405,7 @@ export function RankingsTab() {
                   <CardActionArea onClick={() => navigate('/level-journey')} sx={{ p: 2, textAlign: 'center' }}>
                     <StarIcon sx={{ fontSize: 32, color: gamificationColors.gold, mb: 0.5 }} />
                     <Typography variant="body2" fontWeight={600}>
-                      Jornada de Nível
+                      {t('profile.levelJourney')}
                     </Typography>
                     <OpenIcon sx={{ fontSize: 14, color: 'text.disabled', mt: 0.5 }} />
                   </CardActionArea>

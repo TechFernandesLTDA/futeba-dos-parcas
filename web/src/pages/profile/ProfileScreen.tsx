@@ -39,16 +39,16 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePlayerDetail } from '../../hooks/usePlayers';
 import { PlayerAvatar } from '../../components/common/GameCard';
 import { DIVISION_CONFIG } from '../../types/gamification';
-import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 export const ProfileScreen: React.FC = () => {
-  useDocumentTitle('Perfil');
   const navigate = useNavigate();
   const navigateBack = useNavigateBack('/');
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
+  const { t } = useTranslation();
 
   const isOwnProfile = !userId || userId === currentUser?.id;
   const targetUserId = userId || currentUser?.id;
@@ -129,14 +129,14 @@ export const ProfileScreen: React.FC = () => {
           severity="error"
           action={
             <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => window.location.reload()}>
-              Tentar novamente
+              {t('common.retry')}
             </Button>
           }
         >
           Erro ao carregar perfil: {error}
         </Alert>
         <Button startIcon={<BackIcon />} onClick={navigateBack} sx={{ mt: 2 }}>
-          Voltar
+          {t('common.back')}
         </Button>
       </Container>
     );
@@ -172,14 +172,14 @@ export const ProfileScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ ml: 1, flex: 1 }}>
-            Perfil
+            {t('profile.title')}
           </Typography>
           {isOwnProfile && (
-            <IconButton onClick={() => navigate('/profile/edit')} aria-label="Editar perfil">
+            <IconButton onClick={() => navigate('/profile/edit')} aria-label={t('profile.editProfile')}>
               <EditIcon />
             </IconButton>
           )}
@@ -221,7 +221,7 @@ export const ProfileScreen: React.FC = () => {
                         {profile.level}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Nível
+                        {t('profile.level')}
                       </Typography>
                     </Paper>
                   </Grid>
@@ -252,7 +252,7 @@ export const ProfileScreen: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
-                  Estatísticas
+                  {t('profile.statistics')}
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid xs={6}>
@@ -260,7 +260,7 @@ export const ProfileScreen: React.FC = () => {
                       <SoccerIcon color="action" />
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          Jogos
+                          {t('profile.games')}
                         </Typography>
                         <Typography variant="h6">{profile.gamesPlayed}</Typography>
                       </Box>
@@ -271,7 +271,7 @@ export const ProfileScreen: React.FC = () => {
                       <TrophyIcon color="action" />
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          Vitórias
+                          {t('profile.victories')}
                         </Typography>
                         <Typography variant="h6">{profile.wins}</Typography>
                       </Box>
@@ -282,7 +282,7 @@ export const ProfileScreen: React.FC = () => {
                       <SoccerIcon color="success" />
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          Gols
+                          {t('profile.goals')}
                         </Typography>
                         <Typography variant="h6">{profile.goals}</Typography>
                       </Box>
@@ -319,21 +319,21 @@ export const ProfileScreen: React.FC = () => {
                     <ListItemIcon>
                       <BadgeIcon />
                     </ListItemIcon>
-                    <ListItemText primary="Conquistas" />
+                    <ListItemText primary={t('profile.achievements')} />
                   </ListItemButton>
                   <Divider />
                   <ListItemButton onClick={() => navigate('/level-journey')}>
                     <ListItemIcon>
                       <MilitaryTechIcon />
                     </ListItemIcon>
-                    <ListItemText primary="Jornada de Níveis" />
+                    <ListItemText primary={t('profile.levelJourney')} />
                   </ListItemButton>
                   <Divider />
                   <ListItemButton onClick={() => navigate('/settings')}>
                     <ListItemIcon>
                       <SettingsIcon />
                     </ListItemIcon>
-                    <ListItemText primary="Configurações" />
+                    <ListItemText primary={t('nav.settings')} />
                   </ListItemButton>
                 </List>
               </Card>

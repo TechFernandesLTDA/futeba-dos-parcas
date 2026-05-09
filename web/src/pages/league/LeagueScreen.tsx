@@ -29,14 +29,14 @@ import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { VirtualList } from '../../components/common/VirtualList';
 import { useLeague, LeaguePlayer } from '../../hooks/useLeague';
 import { DIVISION_CONFIG, LeagueDivision } from '../../types/gamification';
-import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 export const LeagueScreen: React.FC = () => {
-  useDocumentTitle('Liga');
   const navigate = useNavigate();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const [tabValue, setTabValue] = useState(0);
   const divisions: LeagueDivision[] = ['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'DIAMOND', 'CHAMPION'];
@@ -58,11 +58,11 @@ export const LeagueScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(-1)} aria-label="Voltar">
+          <IconButton onClick={() => navigate(-1)} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
-            Liga
+            {t('nav.league')}
           </Typography>
         </Box>
         <Tabs
@@ -73,11 +73,11 @@ export const LeagueScreen: React.FC = () => {
           aria-label="Divisões da liga"
         >
           <Tab label="Geral" />
-          <Tab label="Bronze" />
-          <Tab label="Prata" />
-          <Tab label="Ouro" />
+          <Tab label={t('league.bronze')} />
+          <Tab label={t('league.silver')} />
+          <Tab label={t('league.gold')} />
           <Tab label="Platina" />
-          <Tab label="Diamante" />
+          <Tab label={t('league.diamond')} />
           <Tab label="Campeão" />
         </Tabs>
       </Box>
@@ -90,7 +90,7 @@ export const LeagueScreen: React.FC = () => {
             severity="error"
             action={
               <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => window.location.reload()}>
-                Tentar novamente
+                {t('common.retry')}
               </Button>
             }
             sx={{ mb: 2 }}
