@@ -263,10 +263,12 @@ export const getLeaderboardCached =
       const startTime = Date.now();
 
       // Query principal de ranking
+      // FIX #654-B2: secondary sort by user_id for deterministic tie-breaking
       const rankingSnap = await db
         .collection("season_participation")
         .where("season_id", "==", safeSeasonId)
         .orderBy("points", "desc")
+        .orderBy("user_id", "asc")
         .limit(resultLimit)
         .get();
 

@@ -156,9 +156,15 @@ export const setUserRole = secureCallable<SetUserRoleRequest>(
     // 6. SET CUSTOM CLAIM
     //    (only after Firestore sync succeeds)
     // ==========================================
+    const existingClaims =
+      (await admin.auth().getUser(uid))
+        .customClaims || {};
     await admin
       .auth()
-      .setCustomUserClaims(uid, {role});
+      .setCustomUserClaims(uid, {
+        ...existingClaims,
+        role,
+      });
 
     // SECFIX #429: invalida JWT antigo (TTL 1h).
     // Sem isso, token de role anterior continua valido ate expirar.
@@ -405,11 +411,20 @@ export const migrateAllUsersToCustomClaims = secureCallable(
                 uData.role || "PLAYER";
 
               try {
+                const existingClaims =
+                  (
+                    await admin.auth().getUser(
+                      doc.id
+                    )
+                  ).customClaims || {};
                 await admin
                   .auth()
                   .setCustomUserClaims(
                     doc.id,
-                    {role: docRole}
+                    {
+                      ...existingClaims,
+                      role: docRole,
+                    }
                   );
                 processed++;
 

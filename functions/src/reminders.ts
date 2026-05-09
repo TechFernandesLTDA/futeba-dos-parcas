@@ -81,16 +81,19 @@ interface ConfirmationForReminder {
 // ==========================================
 
 /**
- * Converte data do jogo para Date no
- * timezone America/Sao_Paulo.
+ * Converte data do jogo para Date (UTC).
+ *
+ * Priority 1: dateTime Timestamp (ja e UTC,
+ *   retorna direto sem conversao).
+ * Priority 2: date + time strings (BRT),
+ *   converte para UTC corretamente.
  *
  * @param {GameForReminder} game - Jogo.
- * @return {Date | null} Data convertida.
+ * @return {Date | null} Data convertida (UTC).
  */
 export function getGameDateTime(
   game: GameForReminder
 ): Date | null {
-  // Prioridade 1: Campo dateTime (Timestamp)
   if (
     game.dateTime &&
     typeof game.dateTime.toDate === "function"
@@ -98,54 +101,29 @@ export function getGameDateTime(
     return game.dateTime.toDate();
   }
 
-  // Prioridade 2: Campos date + time separados
   if (game.date) {
     const dateStr = game.date;
-    // Default 20:00 se nao houver hora
     const timeStr = game.time || "20:00";
 
-    // Formato esperado: "2026-01-20" + "18:00"
     const [year, month, day] =
       dateStr.split("-").map(Number);
     const [hour, minute] =
       timeStr.split(":").map(Number);
 
     if (year && month && day) {
-      // Criar data no timezone local
-      // (servidor Firebase geralmente em UTC)
-      // Para America/Sao_Paulo, precisamos
-      // ajustar manualmente
-      // Nota: Em producao, considerar usar
-      // biblioteca como date-fns-tz
-      const utcDate = new Date(
-        Date.UTC(
-          year,
-          month - 1,
-          day,
-          hour || 20,
-          minute || 0,
-          0
-        )
+      // Constrói como data BRT (America/Sao_Paulo
+      // = UTC-3) e converte para UTC sem double-shift
+      const brtDate = new Date(
+        year,
+        month - 1,
+        day,
+        hour || 20,
+        minute || 0,
+        0
       );
-
-      // LIMITACAO: Offset fixo para
-      // America/Sao_Paulo (UTC-3).
-      // Nao leva em conta horario de verao
-      // (que foi abolido no Brasil em 2019,
-      // mas se fosse reintroduzido, este valor
-      // precisaria ser dinamico).
-      // Para suporte completo de timezone,
-      // considerar usar date-fns-tz ou luxon.
-      const BRAZIL_UTC_OFFSET = -3;
-      // A hora informada pelo usuario e hora
-      // local (BRT). Para converter para UTC,
-      // subtraimos o offset (que e negativo,
-      // entao somamos o valor absoluto).
-      utcDate.setHours(
-        utcDate.getHours() - BRAZIL_UTC_OFFSET
-      );
-
-      return utcDate;
+      const utcMs =
+        brtDate.getTime() + 3 * 60 * 60 * 1000;
+      return new Date(utcMs);
     }
   }
 
@@ -274,6 +252,72 @@ async function fetchGamesInReminderWindow(
     });
   }
 
+  // B3: Buscar jogos sem dateTime com fallback
+  // para created_at. Jogos criados antes da
+  // migracao podem nao ter o campo dateTime.
+  try {
+    const noDateTimeSnap = await getDb()
+      .collection("games")
+      .where("dateTime", "==", null)
+      .get();
+
+    for (const doc of noDateTimeSnap.docs) {
+      const data = doc.data();
+      const status = data.status || "SCHEDULED";
+
+      if (
+        EXCLUDED_GAME_STATUSES.includes(status)
+      ) {
+        continue;
+      }
+
+      if (!data.created_at) continue;
+
+      const createdAt =
+        typeof data.created_at.toDate === "function" ?
+          data.created_at.toDate() :
+          null;
+      if (!createdAt) continue;
+
+      const createdTarget =
+        new Date(
+          createdAt.getTime() + reminderTimeMs
+        );
+      if (
+        createdTarget >= windowStart &&
+        createdTarget <= windowEnd
+      ) {
+        games.push({
+          id: doc.id,
+          dateTime: data.dateTime || null,
+          date: data.date || null,
+          time: data.time || null,
+          status: status,
+          group_id: data.group_id || null,
+          location_name:
+            data.location_name ||
+            data.locationName ||
+            null,
+        });
+      }
+    }
+
+    if (noDateTimeSnap.size > 0) {
+      console.log(
+        "[REMINDERS] " +
+        `${noDateTimeSnap.size} jogos sem` +
+        " dateTime processados (fallback" +
+        " created_at)"
+      );
+    }
+  } catch (e) {
+    console.error(
+      "[REMINDERS] Erro ao buscar jogos" +
+      " sem dateTime:",
+      e
+    );
+  }
+
   console.log(
     `[REMINDERS] Encontrados ${games.length}` +
     " jogos elegiveis para lembrete" +
@@ -359,7 +403,11 @@ async function fetchGroupMembersWithoutConfirmation(
   groupId: string,
   reminderType: "24h" | "2h"
 ): Promise<string[]> {
-  // Buscar membros do grupo
+  const reminderField =
+    reminderType === "24h" ?
+      "reminder_24h_sent" :
+      "reminder_2h_sent";
+
   const membersSnap = await getDb()
     .collection("groups")
     .doc(groupId)
@@ -375,7 +423,6 @@ async function fetchGroupMembersWithoutConfirmation(
     (doc) => doc.id
   );
 
-  // Buscar confirmacoes existentes para o jogo
   const confirmationsSnap = await getDb()
     .collection("confirmations")
     .where("game_id", "==", gameId)
@@ -391,20 +438,25 @@ async function fetchGroupMembersWithoutConfirmation(
     const userId = data.user_id || data.userId;
     usersWithConfirmation.add(userId);
 
-    // Verificar se ja recebeu o lembrete
-    // (via campo na confirmacao)
-    const reminderField =
-      reminderType === "24h" ?
-        "reminder_24h_sent" :
-        "reminder_2h_sent";
     if (data[reminderField] === true) {
       usersAlreadyNotified.add(userId);
     }
   }
 
-  // Retornar membros que nao tem confirmacao
-  // Para estes, precisamos criar um documento
-  // temporario ou enviar diretamente
+  // B2: Verificar tambem tracking collection
+  // para membros sem confirmacao (evita spam)
+  const trackingSnap = await getDb()
+    .collection("reminder_tracking")
+    .where("game_id", "==", gameId)
+    .where("reminder_type", "==", reminderType)
+    .get();
+
+  for (const doc of trackingSnap.docs) {
+    const data = doc.data();
+    const userId = data.user_id || data.userId;
+    usersAlreadyNotified.add(userId);
+  }
+
   const membersWithoutConfirmation =
     memberIds.filter(
       (id) =>
@@ -492,7 +544,10 @@ async function sendReminder(
 }
 
 /**
- * Marca o lembrete como enviado na confirmacao.
+ * Marca o lembrete como enviado na confirmacao
+ * existente. Se a confirmacao nao existe, nao
+ * cria documento PENDING (evita inflar analytics
+ * com confirmacoes falsas).
  *
  * @param {string} gameId - ID do jogo.
  * @param {string} userId - ID do usuario.
@@ -519,7 +574,6 @@ async function markReminderSent(
       await confirmationRef.get();
 
     if (confirmationDoc.exists) {
-      // Atualizar documento existente
       const tsField =
         `${reminderField}_at`;
       await confirmationRef.update({
@@ -529,21 +583,21 @@ async function markReminderSent(
             .serverTimestamp(),
       });
     } else {
-      // Criar documento com status PENDING
-      // para rastrear o lembrete
-      const tsField =
-        `${reminderField}_at`;
-      const serverTs =
-        admin.firestore.FieldValue
-          .serverTimestamp();
-      await confirmationRef.set({
-        game_id: gameId,
-        user_id: userId,
-        status: "PENDING",
-        [reminderField]: true,
-        [tsField]: serverTs,
-        created_at: serverTs,
-      });
+      // B2: Rastrear em collection separada
+      // em vez de criar doc PENDING falso
+      const trackingId =
+        `${gameId}_${userId}_${reminderType}`;
+      await getDb()
+        .collection("reminder_tracking")
+        .doc(trackingId)
+        .set({
+          game_id: gameId,
+          user_id: userId,
+          reminder_type: reminderType,
+          sent_at:
+            admin.firestore.FieldValue
+              .serverTimestamp(),
+        });
     }
   } catch (e) {
     console.error(

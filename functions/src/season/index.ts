@@ -24,6 +24,7 @@ import {db} from "../_db";
 export const checkSeasonEnd = onSchedule(
   {
     schedule: "every day 03:00",
+    timeZone: "America/Sao_Paulo",
     region: FUNCTION_REGION,
     memory: "512MiB",
     timeoutSeconds: 540,
@@ -203,35 +204,56 @@ export const checkSeasonEnd = onSchedule(
         hasTimeRemaining()
       ) {
         try {
-          const endDate = new Date(
-            seasonData.end_date
+          // FIX #653-B2: usar UTC para parser de data consistente e
+          // evitar off-by-one no mês em boundary days (ex: 31 -> 1).
+          const [endYearStr, endMonthStr, endDayStr] =
+            seasonData.end_date.split("-");
+          const endYear = parseInt(endYearStr, 10);
+          const endMonth = parseInt(endMonthStr, 10) - 1;
+          const endDay = parseInt(endDayStr, 10);
+
+          // Avançar 1 dia a partir do end_date (UTC evita shift de tz)
+          const nextStart = new Date(
+            Date.UTC(endYear, endMonth, endDay + 1)
           );
-          const nextStartDate = new Date(endDate);
-          nextStartDate.setDate(
-            nextStartDate.getDate() + 1
+          // Último dia do mês seguinte ao start
+          const nextEnd = new Date(
+            Date.UTC(
+              nextStart.getUTCFullYear(),
+              nextStart.getUTCMonth() + 1,
+              0
+            )
           );
 
-          const nextEndDate = new Date(
-            nextStartDate.getFullYear(),
-            nextStartDate.getMonth() + 1,
-            0
-          );
-
-          const nextMonthStr =
-            (nextStartDate.getMonth() + 1)
-              .toString()
-              .padStart(2, "0");
-          const nextYearStr =
-            nextStartDate.getFullYear().toString();
+          // Formatar como chaves canônicas (BRT — usar UTC para evitar drift)
+          const nextYear = nextStart.getUTCFullYear();
+          const nextMonth = nextStart.getUTCMonth() + 1;
+          const nextMonthStr = nextMonth
+            .toString()
+            .padStart(2, "0");
           const nextId =
-            `monthly_${nextYearStr}_${nextMonthStr}`;
+            `monthly_${nextYear}_${nextMonthStr}`;
+
+          const nextStartDateStr = [
+            nextYear,
+            nextMonthStr,
+            (nextStart.getUTCDate()
+              .toString()
+              .padStart(2, "0")),
+          ].join("-");
+
+          const nextEndDateStr = [
+            nextEnd.getUTCFullYear(),
+            (nextEnd.getUTCMonth() + 1)
+              .toString()
+              .padStart(2, "0"),
+            nextEnd.getUTCDate()
+              .toString()
+              .padStart(2, "0"),
+          ].join("-");
 
           const nextName =
-            "Temporada " +
-            getMonthName(
-              nextStartDate.getMonth()
-            ) +
-            ` ${nextYearStr}`;
+            `Temporada ${getMonthName(nextStart.getUTCMonth())} ${nextYear}`;
 
           const nextSeasonRef =
             seasonsRef.doc(nextId);
@@ -241,12 +263,8 @@ export const checkSeasonEnd = onSchedule(
           if (!nextSeasonSnap.exists) {
             batch.set(nextSeasonRef, {
               name: nextName,
-              start_date: nextStartDate
-                .toISOString()
-                .split("T")[0],
-              end_date: nextEndDate
-                .toISOString()
-                .split("T")[0],
+              start_date: nextStartDateStr,
+              end_date: nextEndDateStr,
               is_active: true,
               created_at:
                 admin.firestore.FieldValue

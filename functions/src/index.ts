@@ -483,6 +483,38 @@ export const onGameStatusUpdate = onDocumentUpdated(
         const teamResults =
           determineGameResults(teams, liveScore);
 
+        // 2.5 IDEMPOTENCY GUARD: Check for
+        // already-processed users (fixes #644)
+        //
+        // When Promise.all(batchCommits) partially
+        // fails (some batches committed, some not)
+        // and the CF retries, users from committed
+        // batches would get XP double-credited via
+        // FieldValue.increment. Since xp_logs use
+        // deterministic IDs (game_{id}_user_{uid}),
+        // already-existing xp_log docs serve as
+        // idempotency markers to skip on retry.
+        const existingXpLogsSnap = await db()
+          .collection("xp_logs")
+          .where("game_id", "==", gameId)
+          .select("user_id")
+          .get();
+        const alreadyProcessedUserIds =
+          new Set<string>();
+        existingXpLogsSnap.docs.forEach((doc) => {
+          const uid = doc.data().user_id as
+            string | undefined;
+          if (uid) alreadyProcessedUserIds.add(uid);
+        });
+        if (alreadyProcessedUserIds.size > 0) {
+          console.log(
+            "[XP_IDEMPOTENCY] Skipping " +
+            `${alreadyProcessedUserIds.size} ` +
+            "already-processed user(s) for " +
+            `game ${gameId}`
+          );
+        }
+
         // 3. Pre-fetch ALL player data in parallel
         // (PERF: reduces 60+ sequential ops to ~3)
         const userIds = confirmations
@@ -548,6 +580,13 @@ export const onGameStatusUpdate = onDocumentUpdated(
 
         for (const conf of validConfirmations) {
           const uid = conf.userId;
+
+          // Skip if already processed (idempotency
+          // guard for partial-batch retry, #644)
+          if (alreadyProcessedUserIds.has(uid)) {
+            continue;
+          }
+
           const team = teams.find(
             (t) => t.playerIds.includes(uid)
           );

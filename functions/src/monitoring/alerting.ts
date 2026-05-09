@@ -435,19 +435,48 @@ export const systemHealthCheck =
 
     // Salvar alertas
     if (alerts.length > 0) {
-      const alertBatch = db.batch();
-      for (const alert of alerts) {
-        const alertRef =
-          db.collection("alerts").doc();
-        alertBatch.set(alertRef, {
-          ...alert,
-          created_at:
-            admin.firestore.FieldValue
-              .serverTimestamp(),
-          acknowledged: false,
-        });
-      }
-      await alertBatch.commit();
+      // FIX #654-B4: retry logic para evitar alertas silenciosamente
+      // perdidos por falha transitória de rede ou batch.
+      const saveAlertsWithRetry = async (
+        alertsList: PartialAlert[],
+        maxRetries = 3,
+      ): Promise<void> => {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            const alertBatch = db.batch();
+            for (const alert of alertsList) {
+              const alertRef =
+                db.collection("alerts").doc();
+              alertBatch.set(alertRef, {
+                ...alert,
+                created_at:
+                  admin.firestore.FieldValue
+                    .serverTimestamp(),
+                acknowledged: false,
+              });
+            }
+            await alertBatch.commit();
+            return;
+          } catch (err) {
+            if (attempt < maxRetries) {
+              console.warn(
+                "[HEALTH_CHECK] Alert batch commit failed " +
+                `(attempt ${attempt}/${maxRetries}), retrying...`,
+                err
+              );
+              await new Promise((r) => setTimeout(r, 1000 * attempt));
+            } else {
+              console.error(
+                "[HEALTH_CHECK] Alert batch commit failed " +
+                `after ${maxRetries} attempts, alerts dropped:`,
+                err
+              );
+            }
+          }
+        }
+      };
+
+      await saveAlertsWithRetry(alerts);
 
       const alertTypes = alerts.map(
         (a) => a.type

@@ -21,8 +21,6 @@ import {db} from "../_db";
  */
 const ACTIVE_STATUSES = new Set([
   "ACTIVE",
-  // Owner e admin são roles, mas member docs também usam status — manter
-  // ACTIVE como único state contável reduz ambiguidade.
 ]);
 
 /**
@@ -39,11 +37,21 @@ const ACTIVE_STATUSES = new Set([
 function isActiveMember(data: Record<string, unknown> | undefined): boolean {
   if (!data) return false;
   const status = data.status as string | undefined;
-  if (status === undefined || status === null || status === "") {
-    // Legacy web join doc sem status — assume ACTIVE
-    return true;
-  }
+  if (!status) return false;
   return ACTIVE_STATUSES.has(status);
+}
+
+/**
+ * Detecta se o member foi criado via join-request approval,
+ * que já incrementou member_count atomicamente na transação.
+ *
+ * @param {Record<string, unknown> | undefined} data Member doc data
+ * @return {boolean} true se ja foi contado pelo join-request
+ */
+function isCountedByJoinRequest(
+  data: Record<string, unknown> | undefined
+): boolean {
+  return data?._counted_by_join_request === true;
 }
 
 /**
@@ -79,6 +87,19 @@ export const onMemberWritten = onDocumentWritten(
     const before = event.data?.before?.data();
     const after = event.data?.after?.data();
 
+    // FIX #651-B1: join-request approval already increments member_count
+    // atomically in a transaction. Skip double-count.
+    if (isCountedByJoinRequest(after)) {
+      console.log(
+        `[MEMBER_COUNTER] Skipping ${groupId}/${memberId} — ` +
+        "member_count already incremented by join-request approval"
+      );
+      return;
+    }
+
+    // FIX #651-B2: member doc status changed away from ACTIVE
+    // via soft-delete or other mechanisms. onMemberWritten detects
+    // the transition and decrements.
     const wasActive = isActiveMember(before);
     const isActive = isActiveMember(after);
 
