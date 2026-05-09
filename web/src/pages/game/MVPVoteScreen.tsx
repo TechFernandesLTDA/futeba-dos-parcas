@@ -28,6 +28,7 @@ import {
   ArrowBack as BackIcon,
   HowToVote as VoteIcon,
   EmojiEvents as TrophyIcon,
+  SentimentVeryDissatisfied as BolaMurchaIcon,
 } from '@mui/icons-material';
 import { doc, collection, query, where, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -315,11 +316,28 @@ export const MVPVoteScreen: React.FC = () => {
             </CardContent>
           </Card>
 
+          <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.error.main, 0.08) }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <BolaMurchaIcon sx={{ fontSize: 40, color: theme.palette.error.main }} />
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    Escolha a Bola Murcha
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Vote no jogador que menos se destacou
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+
           <Card sx={{ mb: 2 }}>
             <CardContent>
               <FormControl component="fieldset" sx={{ width: '100%' }}>
                 <FormLabel component="legend">
                   <Typography variant="subtitle1" fontWeight={600}>
+                    <BolaMurchaIcon sx={{ verticalAlign: 'middle', mr: 1, color: theme.palette.error.main }} />
                     Bola Murcha
                   </Typography>
                 </FormLabel>

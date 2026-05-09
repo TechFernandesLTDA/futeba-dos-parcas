@@ -293,7 +293,7 @@ export const TacticalBoardScreen: React.FC = () => {
               justifyContent: 'center',
             }}
           >
-            <SoccerIcon sx={{ fontSize: 16, color: '#333' }} />
+            <SoccerIcon sx={{ fontSize: 16, color: 'text.primary' }} />
           </Box>
         </Paper>
 

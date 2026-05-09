@@ -10,13 +10,14 @@ import {
   Chip,
   Divider,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Skeleton,
   Alert,
   Button,
   useTheme,
+  useMediaQuery,
   alpha,
   Grid,
   Paper,
@@ -45,6 +46,7 @@ export const ProfileScreen: React.FC = () => {
   const navigate = useNavigate();
   const navigateBack = useNavigateBack('/');
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
 
@@ -184,154 +186,160 @@ export const ProfileScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Card sx={{ mb: 2 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <PlayerAvatar
-                name={profile.name}
-                photoUrl={profile.photoUrl}
-                size={80}
-                level={profile.level}
-              />
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="h5" fontWeight={700}>
-                  {profile.name}
+      <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={5}>
+            <Card sx={{ mb: 2 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <PlayerAvatar
+                    name={profile.name}
+                    photoUrl={profile.photoUrl}
+                    size={80}
+                    level={profile.level}
+                  />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h5" fontWeight={700}>
+                      {profile.name}
+                    </Typography>
+                    <Chip
+                      label={divisionConfig.label}
+                      size="small"
+                      sx={{
+                        bgcolor: alpha(divisionConfig.color, 0.1),
+                        color: divisionConfig.color,
+                        mt: 0.5,
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                <Grid container spacing={2}>
+                  <Grid xs={4}>
+                    <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                      <Typography variant="h5" fontWeight={700} color="primary">
+                        {profile.level}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Nível
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid xs={4}>
+                    <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                      <Typography variant="h5" fontWeight={700} color="secondary">
+                        {profile.xp}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        XP Total
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid xs={4}>
+                    <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+                      <Typography variant="h5" fontWeight={700} color="warning.main">
+                        {profile.mvpCount}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        MVPs
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
+                  Estatísticas
                 </Typography>
-                <Chip
-                  label={divisionConfig.label}
-                  size="small"
-                  sx={{
-                    bgcolor: alpha(divisionConfig.color, 0.1),
-                    color: divisionConfig.color,
-                    mt: 0.5,
-                  }}
-                />
-              </Box>
-            </Box>
+                <Grid container spacing={2}>
+                  <Grid xs={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <SoccerIcon color="action" />
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Jogos
+                        </Typography>
+                        <Typography variant="h6">{profile.gamesPlayed}</Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                  <Grid xs={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <TrophyIcon color="action" />
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Vitórias
+                        </Typography>
+                        <Typography variant="h6">{profile.wins}</Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                  <Grid xs={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <SoccerIcon color="success" />
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Gols
+                        </Typography>
+                        <Typography variant="h6">{profile.goals}</Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                  <Grid xs={6}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <TrendingIcon color="info" />
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Assists
+                        </Typography>
+                        <Typography variant="h6">{profile.assists}</Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
 
-            <Grid container spacing={2}>
-              <Grid xs={4}>
-                <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                  <Typography variant="h5" fontWeight={700} color="primary">
-                    {profile.level}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Nível
-                  </Typography>
-                </Paper>
-              </Grid>
-              <Grid xs={4}>
-                <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                  <Typography variant="h5" fontWeight={700} color="secondary">
-                    {profile.xp}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    XP Total
-                  </Typography>
-                </Paper>
-              </Grid>
-              <Grid xs={4}>
-                <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
-                  <Typography variant="h5" fontWeight={700} color="warning.main">
-                    {profile.mvpCount}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    MVPs
-                  </Typography>
-                </Paper>
-              </Grid>
+          {isOwnProfile && (
+            <Grid item xs={12} md={7}>
+              <Card>
+                <List disablePadding aria-label="Opções do perfil">
+                  <ListItemButton onClick={() => navigate('/statistics')}>
+                    <ListItemIcon>
+                      <StatsIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Estatísticas Detalhadas" />
+                  </ListItemButton>
+                  <Divider />
+                  <ListItemButton onClick={() => navigate('/badges')}>
+                    <ListItemIcon>
+                      <BadgeIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Conquistas" />
+                  </ListItemButton>
+                  <Divider />
+                  <ListItemButton onClick={() => navigate('/level-journey')}>
+                    <ListItemIcon>
+                      <MilitaryTechIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Jornada de Níveis" />
+                  </ListItemButton>
+                  <Divider />
+                  <ListItemButton onClick={() => navigate('/settings')}>
+                    <ListItemIcon>
+                      <SettingsIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Configurações" />
+                  </ListItemButton>
+                </List>
+              </Card>
             </Grid>
-          </CardContent>
-        </Card>
-
-        <Card sx={{ mb: 2 }}>
-          <CardContent>
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
-              Estatísticas
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid xs={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <SoccerIcon color="action" />
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Jogos
-                    </Typography>
-                    <Typography variant="h6">{profile.gamesPlayed}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid xs={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <TrophyIcon color="action" />
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Vitórias
-                    </Typography>
-                    <Typography variant="h6">{profile.wins}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid xs={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <SoccerIcon color="success" />
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Gols
-                    </Typography>
-                    <Typography variant="h6">{profile.goals}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-              <Grid xs={6}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <TrendingIcon color="info" />
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Assists
-                    </Typography>
-                    <Typography variant="h6">{profile.assists}</Typography>
-                  </Box>
-                </Box>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-
-        {isOwnProfile && (
-          <Card>
-            <List disablePadding aria-label="Opções do perfil">
-              <ListItem button onClick={() => navigate('/statistics')}>
-                <ListItemIcon>
-                  <StatsIcon />
-                </ListItemIcon>
-                <ListItemText primary="Estatísticas Detalhadas" />
-              </ListItem>
-              <Divider />
-              <ListItem button onClick={() => navigate('/badges')}>
-                <ListItemIcon>
-                  <BadgeIcon />
-                </ListItemIcon>
-                <ListItemText primary="Conquistas" />
-              </ListItem>
-              <Divider />
-              <ListItem button onClick={() => navigate('/level-journey')}>
-                <ListItemIcon>
-                  <MilitaryTechIcon />
-                </ListItemIcon>
-                <ListItemText primary="Jornada de Níveis" />
-              </ListItem>
-              <Divider />
-              <ListItem button onClick={() => navigate('/settings')}>
-                <ListItemIcon>
-                  <SettingsIcon />
-                </ListItemIcon>
-                <ListItemText primary="Configurações" />
-              </ListItem>
-            </List>
-          </Card>
-        )}
+          )}
+        </Grid>
       </Container>
     </Box>
   );

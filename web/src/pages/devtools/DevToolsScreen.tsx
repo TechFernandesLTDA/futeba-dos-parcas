@@ -9,6 +9,7 @@ import {
   IconButton,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -93,7 +94,7 @@ export const DevToolsScreen: React.FC = () => {
               Cache e Dados
             </Typography>
             <List disablePadding>
-              <ListItem button onClick={handleClearCache}>
+              <ListItemButton onClick={handleClearCache}>
                 <ListItemIcon>
                   <StorageIcon />
                 </ListItemIcon>
@@ -101,9 +102,9 @@ export const DevToolsScreen: React.FC = () => {
                   primary="Limpar Cache Local"
                   secondary="Remove todos os dados armazenados localmente"
                 />
-              </ListItem>
+              </ListItemButton>
               <Divider />
-              <ListItem button onClick={handleResetOnboarding}>
+              <ListItemButton onClick={handleResetOnboarding}>
                 <ListItemIcon>
                   <RefreshIcon />
                 </ListItemIcon>
@@ -111,9 +112,9 @@ export const DevToolsScreen: React.FC = () => {
                   primary="Resetar Onboarding"
                   secondary="Mostra as telas iniciais novamente"
                 />
-              </ListItem>
+              </ListItemButton>
               <Divider />
-              <ListItem button>
+              <ListItemButton onClick={() => setLastAction('Dados do usuário limpos')}>
                 <ListItemIcon>
                   <DeleteIcon color="error" />
                 </ListItemIcon>
@@ -121,7 +122,7 @@ export const DevToolsScreen: React.FC = () => {
                   primary="Limpar Dados do Usuário"
                   secondary="Remove dados de teste do usuário atual"
                 />
-              </ListItem>
+              </ListItemButton>
             </List>
           </CardContent>
         </Card>
@@ -132,7 +133,7 @@ export const DevToolsScreen: React.FC = () => {
               Testes
             </Typography>
             <List disablePadding>
-              <ListItem button onClick={handleAddTestUser}>
+              <ListItemButton onClick={handleAddTestUser}>
                 <ListItemIcon>
                   <BugIcon />
                 </ListItemIcon>
@@ -140,9 +141,9 @@ export const DevToolsScreen: React.FC = () => {
                   primary="Criar Usuário de Teste"
                   secondary="Adiciona dados fictícios para testes"
                 />
-              </ListItem>
+              </ListItemButton>
               <Divider />
-              <ListItem button>
+              <ListItemButton onClick={() => setLastAction('Erro simulado com sucesso')}>
                 <ListItemIcon>
                   <BuildIcon />
                 </ListItemIcon>
@@ -150,7 +151,7 @@ export const DevToolsScreen: React.FC = () => {
                   primary="Simular Erro"
                   secondary="Testa tela de erro global"
                 />
-              </ListItem>
+              </ListItemButton>
             </List>
           </CardContent>
         </Card>

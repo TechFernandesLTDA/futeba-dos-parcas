@@ -176,7 +176,7 @@ export const WeeklyRecapScreen: React.FC = () => {
               Últimos 7 dias
             </Typography>
             <Grid container spacing={2}>
-              <Grid xs={4}>
+              <Grid item xs={4}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h3" fontWeight={700} color="primary">
                     {weeklyStats.gamesPlayed}
@@ -186,7 +186,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid xs={4}>
+              <Grid item xs={4}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h3" fontWeight={700} color="success.main">
                     {weeklyStats.wins}
@@ -196,7 +196,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid xs={4}>
+              <Grid item xs={4}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h3" fontWeight={700} color="warning.main">
                     +{weeklyStats.xpEarned}
@@ -216,7 +216,7 @@ export const WeeklyRecapScreen: React.FC = () => {
               Estatísticas da Semana
             </Typography>
             <Grid container spacing={2}>
-              <Grid xs={6}>
+              <Grid item xs={6}>
                 <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                   <SoccerIcon color="success" sx={{ mb: 0.5 }} />
                   <Typography variant="h5" fontWeight={600}>
@@ -227,7 +227,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                   </Typography>
                 </Paper>
               </Grid>
-              <Grid xs={6}>
+              <Grid item xs={6}>
                 <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                   <TrendingIcon color="info" sx={{ mb: 0.5 }} />
                   <Typography variant="h5" fontWeight={600}>
@@ -238,7 +238,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                   </Typography>
                 </Paper>
               </Grid>
-              <Grid xs={6}>
+              <Grid item xs={6}>
                 <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                   <StarIcon color="warning" sx={{ mb: 0.5 }} />
                   <Typography variant="h5" fontWeight={600}>
@@ -249,7 +249,7 @@ export const WeeklyRecapScreen: React.FC = () => {
                   </Typography>
                 </Paper>
               </Grid>
-              <Grid xs={6}>
+              <Grid item xs={6}>
                 <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                   <FireIcon color="error" sx={{ mb: 0.5 }} />
                   <Typography variant="h5" fontWeight={600}>

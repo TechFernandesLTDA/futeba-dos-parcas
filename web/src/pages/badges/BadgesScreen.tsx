@@ -12,6 +12,7 @@ import {
   Alert,
   Button,
   useTheme,
+  useMediaQuery,
   alpha,
   Tooltip,
 } from '@mui/material';
@@ -29,9 +30,10 @@ import { rarityColors } from '../../theme';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export const BadgesScreen: React.FC = () => {
-  useDocumentTitle('Badges');
+  useDocumentTitle('Conquistas');
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
 
   const { unlockedIds, loading, error } = useBadges(user?.id);
@@ -65,7 +67,7 @@ export const BadgesScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
         {error ? (
           <Alert
             severity="error"
@@ -101,7 +103,7 @@ export const BadgesScreen: React.FC = () => {
             ) : (
               <Grid container spacing={2}>
                 {BADGE_DEFINITIONS.map((badge) => (
-                  <Grid xs={6} key={badge.id}>
+                  <Grid item xs={6} sm={4} md={3} key={badge.id}>
                     <BadgeItem
                       badge={badge}
                       isUnlocked={unlockedIds.has(badge.id)}

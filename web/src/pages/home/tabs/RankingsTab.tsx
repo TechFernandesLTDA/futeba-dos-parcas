@@ -33,7 +33,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
 import { PlayerAvatar } from '../../../components/common/GameCard';
 import { PlayerCard } from '../../../components/player/PlayerCard';
-import { DIVISION_CONFIG, LeagueDivision, getLevelForXp } from '../../../types/gamification';
+import { DIVISION_CONFIG, LeagueDivision, getLevelForXp, getXpProgress } from '../../../types/gamification';
 import { getLevelBadgeImage } from '../../../utils/levelBadge';
 import {
   XP_PARTICIPATION, XP_GOAL, XP_ASSIST, XP_SAVE,
@@ -313,7 +313,7 @@ export function RankingsTab() {
                     </Box>
                     <LinearProgress
                       variant="determinate"
-                      value={Math.min(100, ((currentPlayer.experiencePoints || 0) % 1000) / 10)}
+                      value={getXpProgress(currentPlayer.experiencePoints || 0) * 100}
                       sx={{
                         height: 6,
                         borderRadius: 3,

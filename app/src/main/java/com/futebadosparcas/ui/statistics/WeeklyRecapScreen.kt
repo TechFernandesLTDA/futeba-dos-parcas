@@ -116,6 +116,17 @@ object RecapColors {
     val AccentPurple = Color(0xFFAB47BC)
 }
 
+// ==================== Overlay Constants ====================
+
+private val RecapOverlayText = Color.White
+private val RecapOverlayTextHigh = Color.White.copy(alpha = 0.9f)
+private val RecapOverlayTextMedium = Color.White.copy(alpha = 0.8f)
+private val RecapOverlayTextLow = Color.White.copy(alpha = 0.7f)
+private val RecapOverlayIconBg = Color.White.copy(alpha = 0.2f)
+private val RecapOverlayCardBg = Color.White.copy(alpha = 0.15f)
+private val RecapOverlayProgressTrack = Color.White.copy(alpha = 0.3f)
+private val RecapOverlayBgFaint = Color.White.copy(alpha = 0.1f)
+
 // ==================== Tela Principal ====================
 
 @Composable
@@ -180,12 +191,12 @@ fun WeeklyRecapScreen(
             IconButton(
                 onClick = onClose,
                 modifier = Modifier
-                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                    .background(RecapOverlayIconBg, CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = stringResource(R.string.cd_close),
-                    tint = Color.White
+                    tint = RecapOverlayText
                 )
             }
 
@@ -215,13 +226,13 @@ fun WeeklyRecapScreen(
                             .weight(1f)
                             .height(3.dp)
                             .clip(RoundedCornerShape(2.dp))
-                            .background(Color.White.copy(alpha = 0.3f))
+                            .background(RecapOverlayProgressTrack)
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(progress)
                                 .height(3.dp)
-                                .background(Color.White)
+                                .background(RecapOverlayText)
                         )
                     }
                 }
@@ -230,12 +241,12 @@ fun WeeklyRecapScreen(
             IconButton(
                 onClick = onShare,
                 modifier = Modifier
-                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                    .background(RecapOverlayIconBg, CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.Default.Share,
                     contentDescription = stringResource(R.string.cd_share),
-                    tint = Color.White
+                    tint = RecapOverlayText
                 )
             }
         }
@@ -282,12 +293,12 @@ fun WeeklyRecapScreen(
                         }
                     },
                     modifier = Modifier
-                        .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                        .background(RecapOverlayIconBg, CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(R.string.cd_previous),
-                        tint = Color.White
+                        tint = RecapOverlayText
                     )
                 }
             } else {
@@ -303,12 +314,12 @@ fun WeeklyRecapScreen(
                         }
                     },
                     modifier = Modifier
-                        .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                        .background(RecapOverlayIconBg, CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = stringResource(R.string.cd_next),
-                        tint = Color.White
+                        tint = RecapOverlayText
                     )
                 }
             } else {
@@ -344,7 +355,7 @@ private fun IntroSlide(data: WeeklyRecapData) {
                 Text(
                     text = stringResource(R.string.recap_your_summary),
                     style = MaterialTheme.typography.headlineMedium,
-                    color = Color.White.copy(alpha = 0.8f)
+                    color = RecapOverlayTextMedium
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -353,7 +364,7 @@ private fun IntroSlide(data: WeeklyRecapData) {
                     text = stringResource(R.string.recap_week_number, data.weekNumber),
                     style = MaterialTheme.typography.displayLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = RecapOverlayText
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -361,7 +372,7 @@ private fun IntroSlide(data: WeeklyRecapData) {
                 Text(
                     text = "${data.startDate} - ${data.endDate}",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White.copy(alpha = 0.7f)
+                    color = RecapOverlayTextLow
                 )
 
                 Spacer(modifier = Modifier.height(48.dp))
@@ -369,7 +380,7 @@ private fun IntroSlide(data: WeeklyRecapData) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_football),
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = RecapOverlayText,
                     modifier = Modifier.size(80.dp)
                 )
 
@@ -378,7 +389,7 @@ private fun IntroSlide(data: WeeklyRecapData) {
                 Text(
                     text = stringResource(R.string.recap_lets_see),
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White.copy(alpha = 0.9f)
+                    color = RecapOverlayTextHigh
                 )
             }
         }
@@ -413,7 +424,7 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
         Text(
             text = stringResource(R.string.recap_you_played),
             style = MaterialTheme.typography.headlineSmall,
-            color = Color.White.copy(alpha = 0.8f)
+            color = RecapOverlayTextMedium
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -430,14 +441,14 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
         Text(
             text = stringResource(if (data.gamesPlayed == 1) R.string.recap_pelada_singular else R.string.recap_pelada_plural),
             style = MaterialTheme.typography.headlineMedium,
-            color = Color.White
+            color = RecapOverlayText
         )
 
         Spacer(modifier = Modifier.height(48.dp))
 
         Card(
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.15f)
+                containerColor = RecapOverlayCardBg
             ),
             shape = RoundedCornerShape(16.dp)
         ) {
@@ -449,12 +460,12 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
                     text = "$animatedMinutes",
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = RecapOverlayText
                 )
                 Text(
                     text = stringResource(R.string.recap_minutes_on_field),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White.copy(alpha = 0.8f)
+                    color = RecapOverlayTextMedium
                 )
             }
         }
@@ -482,7 +493,7 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
         Text(
             text = stringResource(R.string.recap_your_performance),
             style = MaterialTheme.typography.headlineSmall,
-            color = Color.White.copy(alpha = 0.8f)
+            color = RecapOverlayTextMedium
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -516,7 +527,7 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
                 modifier = Modifier
                     .size(180.dp)
                     .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.1f))
+                    .background(RecapOverlayBgFaint)
             )
 
             // Progress indicator
@@ -540,12 +551,12 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
                     text = "${(animatedProgress.value * 100).toInt()}%",
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = RecapOverlayText
                 )
                 Text(
                     text = stringResource(R.string.recap_win_rate),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.8f)
+                    color = RecapOverlayTextMedium
                 )
             }
         }
@@ -575,12 +586,12 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
                         text = stringResource(R.string.recap_xp_earned_format, data.xpEarned),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = RecapOverlayText
                     )
                     Text(
                         text = stringResource(R.string.recap_xp_earned_this_week),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.8f)
+                        color = RecapOverlayTextMedium
                     )
                 }
             }
@@ -597,7 +608,7 @@ private fun StatBox(
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.15f)
+            containerColor = RecapOverlayCardBg
         ),
         shape = RoundedCornerShape(16.dp),
         modifier = modifier
@@ -609,7 +620,7 @@ private fun StatBox(
             Icon(
                 painter = painterResource(id = icon),
                 contentDescription = null,
-                tint = Color.White,
+                tint = RecapOverlayText,
                 modifier = Modifier.size(32.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -617,12 +628,12 @@ private fun StatBox(
                 text = value,
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = RecapOverlayText
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.8f)
+                color = RecapOverlayTextMedium
             )
         }
     }
@@ -640,7 +651,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
         Text(
             text = stringResource(R.string.recap_social_life),
             style = MaterialTheme.typography.headlineSmall,
-            color = Color.White.copy(alpha = 0.8f)
+            color = RecapOverlayTextMedium
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -649,7 +660,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
         if (data.topPartner != null) {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.15f)
+                    containerColor = RecapOverlayCardBg
                 ),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -661,7 +672,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
                     Text(
                         text = stringResource(R.string.recap_your_pelada_partner),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.7f)
+                        color = RecapOverlayTextLow
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -678,7 +689,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
                             text = data.topPartner.take(2).uppercase(),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = RecapOverlayText
                         )
                     }
 
@@ -688,7 +699,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
                         text = data.topPartner,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = RecapOverlayText
                     )
 
                     Text(
@@ -706,7 +717,7 @@ private fun SocialSlide(data: WeeklyRecapData) {
         if (data.favoriteLocation != null) {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.15f)
+                    containerColor = RecapOverlayCardBg
                 ),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -728,13 +739,13 @@ private fun SocialSlide(data: WeeklyRecapData) {
                         Text(
                             text = stringResource(R.string.recap_favorite_location),
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.7f)
+                            color = RecapOverlayTextLow
                         )
                         Text(
                             text = data.favoriteLocation,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color.White
+                            color = RecapOverlayText
                         )
                     }
 
@@ -762,7 +773,7 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
         Text(
             text = stringResource(R.string.recap_achievements),
             style = MaterialTheme.typography.headlineSmall,
-            color = Color.White.copy(alpha = 0.8f)
+            color = RecapOverlayTextMedium
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -792,12 +803,12 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
                             text = stringResource(R.string.recap_streak_days, data.streakDays),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = RecapOverlayText
                         )
                         Text(
                             text = stringResource(R.string.recap_keep_going),
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = RecapOverlayTextMedium
                         )
                     }
                 }
@@ -831,12 +842,12 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
                             text = stringResource(R.string.recap_mvp_count, data.mvpCount),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = RecapOverlayText
                         )
                         Text(
                             text = stringResource(R.string.recap_mvp_star),
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = RecapOverlayTextMedium
                         )
                     }
                 }
@@ -879,12 +890,12 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
                             },
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = RecapOverlayText
                         )
                         Text(
                             text = stringResource(R.string.recap_in_group_ranking),
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = RecapOverlayTextMedium
                         )
                     }
                 }
@@ -899,7 +910,7 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
                 text = stringResource(R.string.recap_personal_bests),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = RecapOverlayText
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -908,7 +919,7 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
                 Text(
                     text = "${best.category}: ${best.value} (antes: ${best.previousBest})",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.9f)
+                    color = RecapOverlayTextHigh
                 )
             }
         }
@@ -938,7 +949,7 @@ private fun FunFactsSlide(data: WeeklyRecapData) {
         Text(
             text = stringResource(R.string.recap_curiosities),
             style = MaterialTheme.typography.headlineSmall,
-            color = Color.White.copy(alpha = 0.8f)
+            color = RecapOverlayTextMedium
         )
 
         Spacer(modifier = Modifier.height(48.dp))
@@ -954,7 +965,7 @@ private fun FunFactsSlide(data: WeeklyRecapData) {
             ) { index ->
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White.copy(alpha = 0.15f)
+                        containerColor = RecapOverlayCardBg
                     ),
                     shape = RoundedCornerShape(24.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -974,7 +985,7 @@ private fun FunFactsSlide(data: WeeklyRecapData) {
                             text = data.funFacts[index],
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Medium,
-                            color = Color.White,
+                            color = RecapOverlayText,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -993,8 +1004,8 @@ private fun FunFactsSlide(data: WeeklyRecapData) {
                             .size(8.dp)
                             .clip(CircleShape)
                             .background(
-                                if (index == currentFact) Color.White
-                                else Color.White.copy(alpha = 0.3f)
+                                if (index == currentFact) RecapOverlayText
+                                else RecapOverlayProgressTrack
                             )
                     )
                 }
@@ -1019,7 +1030,7 @@ private fun SummarySlide(
             text = stringResource(R.string.recap_thats_it),
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = RecapOverlayText
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -1027,7 +1038,7 @@ private fun SummarySlide(
         Text(
             text = stringResource(R.string.recap_week_was_great, data.weekNumber),
             style = MaterialTheme.typography.titleLarge,
-            color = Color.White.copy(alpha = 0.9f)
+            color = RecapOverlayTextHigh
         )
 
         Spacer(modifier = Modifier.height(48.dp))
@@ -1035,7 +1046,7 @@ private fun SummarySlide(
         // Resumo rápido
         Card(
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.15f)
+                containerColor = RecapOverlayCardBg
             ),
             shape = RoundedCornerShape(20.dp),
             modifier = Modifier.fillMaxWidth()
@@ -1058,7 +1069,7 @@ private fun SummarySlide(
         Button(
             onClick = onShare,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White,
+                containerColor = RecapOverlayText,
                 contentColor = RecapColors.GradientStart
             ),
             shape = RoundedCornerShape(16.dp),
@@ -1084,7 +1095,7 @@ private fun SummarySlide(
         Text(
             text = stringResource(R.string.recap_see_you_next),
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.7f)
+            color = RecapOverlayTextLow
         )
     }
 }
@@ -1098,13 +1109,13 @@ private fun SummaryRow(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
-            color = Color.White.copy(alpha = 0.8f)
+            color = RecapOverlayTextMedium
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = RecapOverlayText
         )
     }
 }
