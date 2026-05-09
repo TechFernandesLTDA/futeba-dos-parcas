@@ -15,6 +15,7 @@ import {
   ListItemText,
   Skeleton,
   LinearProgress,
+  Grid,
   useTheme,
   alpha,
 } from '@mui/material';
@@ -297,128 +298,133 @@ export function HomeTab() {
         </Card>
       )}
 
-      {/* Próximo Jogo */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <Typography variant="subtitle1" fontWeight={600} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <CalendarMonth fontSize="small" color="primary" />
-          Próximo Jogo
-        </Typography>
-        <Typography
-          variant="body2"
-          color="primary"
-          sx={{ cursor: 'pointer', fontWeight: 500, '&:hover': { textDecoration: 'underline' } }}
-          onClick={() => navigate('/games')}
-        >
-          Ver todos
-        </Typography>
-      </Box>
-      {gamesLoading ? (
-        <Card sx={{ mb: 3, borderRadius: 3 }}>
-          <CardContent>
-            <Skeleton variant="text" width="60%" height={28} />
-            <Skeleton variant="text" width="40%" />
-            <Skeleton variant="text" width="50%" />
-          </CardContent>
-        </Card>
-      ) : nextGame ? (
-        <Card sx={{ mb: 3, borderRadius: 3 }}>
-          <CardActionArea onClick={() => navigate(`/game/${nextGame.id}`)}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    {nextGame.locationName || nextGame.groupName || 'Jogo'}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                    <CalendarMonth fontSize="small" color="action" />
-                    <Typography variant="body2" color="text.secondary">
-                      {formatGameDateLong(nextGame.date)} às {nextGame.time}
-                    </Typography>
-                  </Box>
-                  {nextGame.locationAddress && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                      <LocationOn fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
-                        {nextGame.locationAddress}
+      {/* Próximo Jogo + Atividade Recente */}
+      <Grid container spacing={2}>
+        <Grid item xs={12} lg={6}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <CalendarMonth fontSize="small" color="primary" />
+              Próximo Jogo
+            </Typography>
+            <Typography
+              variant="body2"
+              color="primary"
+              sx={{ cursor: 'pointer', fontWeight: 500, '&:hover': { textDecoration: 'underline' } }}
+              onClick={() => navigate('/games')}
+            >
+              Ver todos
+            </Typography>
+          </Box>
+          {gamesLoading ? (
+            <Card sx={{ borderRadius: 3 }}>
+              <CardContent>
+                <Skeleton variant="text" width="60%" height={28} />
+                <Skeleton variant="text" width="40%" />
+                <Skeleton variant="text" width="50%" />
+              </CardContent>
+            </Card>
+          ) : nextGame ? (
+            <Card sx={{ borderRadius: 3 }}>
+              <CardActionArea onClick={() => navigate(`/game/${nextGame.id}`)}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        {nextGame.locationName || nextGame.groupName || 'Jogo'}
                       </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+                        <CalendarMonth fontSize="small" color="action" />
+                        <Typography variant="body2" color="text.secondary">
+                          {formatGameDateLong(nextGame.date)} às {nextGame.time}
+                        </Typography>
+                      </Box>
+                      {nextGame.locationAddress && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                          <LocationOn fontSize="small" color="action" />
+                          <Typography variant="body2" color="text.secondary">
+                            {nextGame.locationAddress}
+                          </Typography>
+                        </Box>
+                      )}
                     </Box>
-                  )}
-                </Box>
-                <Chip
-                  icon={<People />}
-                  label={`${nextGame.playersCount}/${nextGame.maxPlayers}`}
-                  color="primary"
-                  size="small"
-                />
-              </Box>
-            </CardContent>
-          </CardActionArea>
-        </Card>
-      ) : (
-        <Card sx={{ mb: 3, borderRadius: 3 }}>
-          <CardContent>
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <SportsSoccer sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-              <Typography variant="body2" color="text.secondary">
-                Nenhum jogo agendado
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Atividade Recente */}
-      <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <Notifications fontSize="small" color="primary" />
-        Atividade Recente
-      </Typography>
-      <Card sx={{ borderRadius: 3 }}>
-        {activitiesLoading ? (
-          <List disablePadding>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <ListItem key={i} divider={i < 2}>
-                <ListItemAvatar>
-                  <Skeleton variant="circular" width={40} height={40} />
-                </ListItemAvatar>
-                <ListItemText
-                  primary={<Skeleton variant="text" width="60%" />}
-                  secondary={<Skeleton variant="text" width="30%" />}
-                />
-              </ListItem>
-            ))}
-          </List>
-        ) : activities.length === 0 ? (
-          <CardContent>
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Notifications sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-              <Typography variant="body2" color="text.secondary">
-                Nenhuma atividade recente
-              </Typography>
-            </Box>
-          </CardContent>
-        ) : (
-          <List disablePadding>
-            {activities.map((activity, index) => (
-              <ListItem
-                key={activity.id}
-                divider={index < activities.length - 1}
-                secondaryAction={
-                  <Typography variant="caption" color="text.secondary">
-                    {activity.time}
+                    <Chip
+                      icon={<People />}
+                      label={`${nextGame.playersCount}/${nextGame.maxPlayers}`}
+                      color="primary"
+                      size="small"
+                    />
+                  </Box>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          ) : (
+            <Card sx={{ borderRadius: 3 }}>
+              <CardContent>
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <SportsSoccer sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhum jogo agendado
                   </Typography>
-                }
-              >
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'action.hover' }}>
-                    {getActivityIcon(activity.type)}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText primary={activity.text} />
-              </ListItem>
-            ))}
-          </List>
-        )}
-      </Card>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+        </Grid>
+
+        <Grid item xs={12} lg={6}>
+          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Notifications fontSize="small" color="primary" />
+            Atividade Recente
+          </Typography>
+          <Card sx={{ borderRadius: 3 }}>
+            {activitiesLoading ? (
+              <List disablePadding>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <ListItem key={i} divider={i < 2}>
+                    <ListItemAvatar>
+                      <Skeleton variant="circular" width={40} height={40} />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={<Skeleton variant="text" width="60%" />}
+                      secondary={<Skeleton variant="text" width="30%" />}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            ) : activities.length === 0 ? (
+              <CardContent>
+                <Box sx={{ textAlign: 'center', py: 2 }}>
+                  <Notifications sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhuma atividade recente
+                  </Typography>
+                </Box>
+              </CardContent>
+            ) : (
+              <List disablePadding>
+                {activities.map((activity, index) => (
+                  <ListItem
+                    key={activity.id}
+                    divider={index < activities.length - 1}
+                    secondaryAction={
+                      <Typography variant="caption" color="text.secondary">
+                        {activity.time}
+                      </Typography>
+                    }
+                  >
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: 'action.hover' }}>
+                        {getActivityIcon(activity.type)}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText primary={activity.text} />
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </Card>
+        </Grid>
+      </Grid>
     </Box>
   );
 }

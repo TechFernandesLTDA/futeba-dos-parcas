@@ -35,6 +35,32 @@ export async function generateGameFinishedActivityDirect(
     return;
   }
 
+  // Validar que o jogo (parent) ainda existe
+  // e nao foi deletado desde o trigger
+  const gameSnap = await db
+    .collection("games")
+    .doc(gameId)
+    .get();
+  if (!gameSnap.exists) {
+    logger.warn(
+      "[ACTIVITY_DIRECT] Game " +
+      `${gameId} nao existe mais. ` +
+      "Atividade orfa evitada."
+    );
+    return;
+  }
+
+  // Verificar owner_id existe e eh valido
+  const ownerId = gameData.owner_id;
+  if (!ownerId || typeof ownerId !== "string") {
+    logger.warn(
+      "[ACTIVITY_DIRECT] Game " +
+      `${gameId} sem owner_id valido. ` +
+      "Atividade orfa evitada."
+    );
+    return;
+  }
+
   logger.info(
     "[ACTIVITY_DIRECT] Gerando atividade " +
     `para game ${gameId}...`

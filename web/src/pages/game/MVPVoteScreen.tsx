@@ -234,7 +234,10 @@ export const MVPVoteScreen: React.FC = () => {
                         borderRadius: 2,
                         mb: 1,
                         cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        transform: mvpVote === player.userId ? 'scale(1.02)' : 'scale(1)',
                         bgcolor: mvpVote === player.userId ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                        boxShadow: mvpVote === player.userId ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.4)}` : 'none',
                       }}
                     >
                       <ListItemAvatar>
@@ -283,11 +286,15 @@ export const MVPVoteScreen: React.FC = () => {
                           key={player.userId}
                           dense
                           onClick={() => setBestGkVote(player.userId)}
-                          sx={{
-                            borderRadius: 2,
-                            mb: 1,
-                            bgcolor: bestGkVote === player.userId ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                          }}
+                        sx={{
+                          borderRadius: 2,
+                          mb: 1,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          transform: bestGkVote === player.userId ? 'scale(1.02)' : 'scale(1)',
+                          bgcolor: bestGkVote === player.userId ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                          boxShadow: bestGkVote === player.userId ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.4)}` : 'none',
+                        }}
                         >
                           <ListItemAvatar>
                             <PlayerAvatar
@@ -354,12 +361,15 @@ export const MVPVoteScreen: React.FC = () => {
                           key={player.userId}
                           dense
                           onClick={() => setWorstPlayerVote(player.userId)}
-                          sx={{
-                            borderRadius: 2,
-                            mb: 1,
-                            cursor: 'pointer',
-                            bgcolor: worstPlayerVote === player.userId ? alpha(theme.palette.error.main, 0.1) : 'transparent',
-                          }}
+                        sx={{
+                          borderRadius: 2,
+                          mb: 1,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          transform: worstPlayerVote === player.userId ? 'scale(1.02)' : 'scale(1)',
+                          bgcolor: worstPlayerVote === player.userId ? alpha(theme.palette.error.main, 0.1) : 'transparent',
+                          boxShadow: worstPlayerVote === player.userId ? `0 0 0 1px ${alpha(theme.palette.error.main, 0.4)}` : 'none',
+                        }}
                         >
                           <ListItemAvatar>
                             <PlayerAvatar

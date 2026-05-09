@@ -167,7 +167,7 @@ private fun RankingHeader(
                 FilterChip(
                     selected = category == selectedCategory,
                     onClick = { onCategorySelected(category) },
-                    label = { Text(getCategoryLabel(category), fontSize = 11.sp, maxLines = 1) },
+                    label = { Text(getCategoryLabel(category), fontSize = 14.sp, maxLines = 2) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.onPrimary,
                         selectedLabelColor = MaterialTheme.colorScheme.primary,

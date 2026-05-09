@@ -277,7 +277,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
               variant="overline"
               sx={{
                 color: alpha(theme.palette.common.white, 0.5),
-                fontSize: '0.6rem',
+                fontSize: '0.75rem',
                 letterSpacing: '0.15em',
               }}
             >
@@ -293,7 +293,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
             >
               <Typography
                 variant="overline"
-                sx={{ color: alpha(theme.palette.common.white, 0.7), fontSize: '0.6rem', letterSpacing: '0.1em' }}
+                sx={{ color: alpha(theme.palette.common.white, 0.7), fontSize: '0.75rem', letterSpacing: '0.1em' }}
               >
                 ⚽ FIGURINHA
               </Typography>
@@ -387,7 +387,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                       sx={{
                         color: theme.palette.common.white,
                         fontWeight: 900,
-                        fontSize: '0.7rem',
+                        fontSize: '0.75rem',
                         lineHeight: 1,
                         textShadow: `0 1px 2px ${alpha(theme.palette.common.black, 0.5)}`,
                       }}
@@ -437,7 +437,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     >
                       <Typography
                         variant="caption"
-                        sx={{ color: alpha(theme.palette.common.white, 0.85), fontWeight: 600, fontSize: '0.7rem' }}
+                        sx={{ color: alpha(theme.palette.common.white, 0.85), fontWeight: 600, fontSize: '0.75rem' }}
                       >
                         {POSITION_LABELS[player.preferredPosition] ?? player.preferredPosition}
                       </Typography>
@@ -454,7 +454,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                   >
                     <Typography
                       variant="caption"
-                      sx={{ color: levelColor, fontWeight: 700, fontSize: '0.7rem' }}
+                      sx={{ color: levelColor, fontWeight: 700, fontSize: '0.75rem' }}
                     >
                       {levelEntry?.name}
                     </Typography>
@@ -577,7 +577,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                     {player.overallRating}
                   </Typography>
                   <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.5), fontSize: '0.6rem' }}>
+                    <Typography variant="caption" sx={{ color: alpha(theme.palette.common.white, 0.5), fontSize: '0.75rem' }}>
                       OVERALL
                     </Typography>
                     <LinearProgress
@@ -611,7 +611,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
           >
             <Typography
               variant="caption"
-              sx={{ color: alpha(theme.palette.common.white, 0.3), fontSize: '0.6rem', letterSpacing: '0.1em' }}
+              sx={{ color: alpha(theme.palette.common.white, 0.3), fontSize: '0.75rem', letterSpacing: '0.1em' }}
             >
               futebadosparcas.com.br
             </Typography>

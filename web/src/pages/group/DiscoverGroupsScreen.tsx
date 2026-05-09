@@ -47,7 +47,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
     return groups.filter(
       (g: Group) =>
         g.name?.toLowerCase().includes(q) ||
-        (g as any).description?.toLowerCase().includes(q),
+        g.description?.toLowerCase().includes(q),
     );
   }, [groups, searchQuery]);
 
@@ -114,7 +114,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
                 <CardContent>
                   <Stack direction="row" spacing={2} alignItems="center">
                     <Avatar
-                      src={(group as any).photoUrl}
+                      src={group.photoUrl}
                       sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}
                     >
                       <GroupIcon />
@@ -123,7 +123,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
                       <Typography variant="h6" noWrap fontWeight="bold">
                         {group.name}
                       </Typography>
-                      {(group as any).description && (
+                      {group.description && (
                         <Typography
                           variant="body2"
                           color="text.secondary"
@@ -134,7 +134,7 @@ export const DiscoverGroupsScreen: React.FC = () => {
                             overflow: 'hidden',
                           }}
                         >
-                          {(group as any).description}
+                          {group.description}
                         </Typography>
                       )}
                       <Stack direction="row" spacing={1} mt={1}>
@@ -145,9 +145,9 @@ export const DiscoverGroupsScreen: React.FC = () => {
                           color="primary"
                           variant="outlined"
                         />
-                        {typeof (group as any).memberCount === 'number' && (
+                        {typeof group.memberCount === 'number' && (
                           <Chip
-                            label={`${(group as any).memberCount} membro${(group as any).memberCount === 1 ? '' : 's'}`}
+                            label={`${group.memberCount} membro${group.memberCount === 1 ? '' : 's'}`}
                             size="small"
                             variant="outlined"
                           />

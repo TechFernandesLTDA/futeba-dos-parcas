@@ -155,6 +155,27 @@ export const migrateGroupsInviteCodeToInvites =
                 continue;
               }
 
+              // Collision check: code ja existe em invites/?
+              // (dois grupos podem ter o mesmo invite_code legado)
+              const codeCollision = await db()
+                .collection("invites")
+                .where("code", "==", code.toUpperCase())
+                .limit(1)
+                .get();
+
+              if (!codeCollision.empty) {
+                logger.warn(
+                  "[INVITES_MIGRATION] Code collision: " +
+                  `"${code}" do grupo ${groupId} ` +
+                  "ja existe em " +
+                  `invites/${codeCollision.docs[0].id} ` +
+                  `(grupo ${codeCollision.docs[0].data().group_id}). ` +
+                  "Pulando para evitar duplicata."
+                );
+                result.skipped += 1;
+                continue;
+              }
+
               // Cria doc em invites/ com TTL longo
               // (legacy codes sao sticky -> 365 dias)
               const expiresAt = admin.firestore.Timestamp

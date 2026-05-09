@@ -1,4 +1,4 @@
-import { Box, Typography, Button, useTheme, alpha } from '@mui/material';
+import { Box, Typography, Button, Link, useTheme, alpha } from '@mui/material';
 import { ArrowForward as ArrowForwardIcon, SportsSoccer as SoccerIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -79,7 +79,14 @@ export const WelcomeScreen: React.FC = () => {
       </Box>
 
       <Typography variant="caption" sx={{ mt: 4, opacity: 0.7 }}>
-        Ao continuar, você concorda com nossos Termos de Uso
+        Ao continuar, você concorda com nossos{' '}
+        <Link href="/terms_of_service.html" color="primary" underline="hover">
+          Termos de Uso
+        </Link>
+        {' '}e{' '}
+        <Link href="/privacy_policy.html" color="primary" underline="hover">
+          Política de Privacidade
+        </Link>
       </Typography>
     </Box>
   );

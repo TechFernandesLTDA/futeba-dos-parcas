@@ -180,6 +180,7 @@ const RankingItem = React.memo(function RankingItem({
   tabValue: number;
   onAvatarClick: (userId: string) => void;
 }) {
+  const theme = useTheme();
   return (
     <Card
       sx={{
@@ -256,9 +257,9 @@ const RankingItem = React.memo(function RankingItem({
               label={DIVISION_CONFIG[player.division]?.label || 'Bronze'}
               size="small"
               sx={{
-                bgcolor: alpha(DIVISION_CONFIG[player.division]?.color || '#5D4037', 0.1),
-                color: DIVISION_CONFIG[player.division]?.color || '#5D4037',
-                fontSize: '0.7rem',
+                bgcolor: alpha(DIVISION_CONFIG[player.division]?.color || theme.palette.text.primary, 0.1),
+                color: DIVISION_CONFIG[player.division]?.color || theme.palette.text.primary,
+                fontSize: '0.75rem',
                 height: 20,
               }}
             />

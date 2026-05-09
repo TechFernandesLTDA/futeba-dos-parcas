@@ -140,10 +140,13 @@ export const seedDatabase = onRequest(
 
     // Development-only: Basic secret protection
     // Sanitizar param (defense-in-depth)
+    // Use SEED_SECRET env var in prod; fallback for local dev only
     const rawSecret =
       request.query.secret as string || "";
     const secret = sanitizeText(rawSecret);
-    if (secret !== "antigravity_seed") {
+    const expectedSecret =
+      process.env.SEED_SECRET || "antigravity_seed";
+    if (!expectedSecret || secret !== expectedSecret) {
       logger.warn(
         "[SEEDING][SECURITY] Seeding " +
         "blocked: Invalid secret"

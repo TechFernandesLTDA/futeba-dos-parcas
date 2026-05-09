@@ -17,9 +17,11 @@
 import {auth} from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import {logger} from "firebase-functions/v2";
+import {Storage} from "@google-cloud/storage";
 
 // Lazy initialization para evitar erro de initializeApp
 const getDb = () => admin.firestore();
+const getStorage = () => new Storage();
 
 /**
  * Cloud Function: onUserDeleted
@@ -90,6 +92,33 @@ export const onUserDeleted = auth
         logger.info(
           `[ACCOUNT_CLEANUP] Cleanup completo para usuário ${uid}`
         );
+
+        // 3. Limpar thumbnails orfaos do Storage
+        // (profile_photos/thumbnails/{uid}_thumb.*)
+        try {
+          const storage = getStorage();
+          const bucketName =
+            process.env.STORAGE_BUCKET ||
+            `${process.env.GCLOUD_PROJECT}.appspot.com`;
+          const bucket = storage.bucket(bucketName);
+          const [thumbFiles] = await bucket.getFiles({
+            prefix: `profile_photos/thumbnails/${uid}_thumb`,
+          });
+          if (thumbFiles.length > 0) {
+            for (const file of thumbFiles) {
+              await file.delete();
+              logger.info(
+                `[ACCOUNT_CLEANUP] Thumbnail orfao deletado: ${file.name}`
+              );
+            }
+          }
+        } catch (storageError) {
+          logger.warn(
+            "[ACCOUNT_CLEANUP] Erro ao limpar thumbnails " +
+            `do Storage para ${uid} (non-fatal):`,
+            storageError
+          );
+        }
       } catch (error) {
         logger.error(
           `[ACCOUNT_CLEANUP] Erro no cleanup do usuário ${uid}:`,

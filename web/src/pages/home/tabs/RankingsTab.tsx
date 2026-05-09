@@ -292,8 +292,8 @@ export function RankingsTab() {
                         size="small"
                         sx={{
                           mt: 0.5,
-                          bgcolor: alpha(DIVISION_CONFIG[currentPlayer.division]?.color || '#5D4037', 0.15),
-                          color: DIVISION_CONFIG[currentPlayer.division]?.color || '#5D4037',
+                          bgcolor: alpha(DIVISION_CONFIG[currentPlayer.division]?.color || theme.palette.text.primary, 0.15),
+                          color: DIVISION_CONFIG[currentPlayer.division]?.color || theme.palette.text.primary,
                           fontWeight: 600,
                         }}
                       />
@@ -545,7 +545,7 @@ const RankingCard = React.memo(function RankingCard({
                 {player.userName}
               </Typography>
               {player.isCurrentUser && (
-                <Chip label="Você" size="small" color="primary" sx={{ height: 18, fontSize: '0.6rem' }} />
+                <Chip label="Você" size="small" color="primary" sx={{ height: 18, fontSize: '0.75rem' }} />
               )}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

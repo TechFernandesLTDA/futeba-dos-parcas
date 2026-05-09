@@ -29,7 +29,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
-const FIELD_GREEN = '#2E7D32';
+
 
 const logger = createLogger('TacticalBoardScreen');
 
@@ -179,7 +179,7 @@ export const TacticalBoardScreen: React.FC = () => {
         <Paper
           sx={{
             aspectRatio: '3/4',
-            bgcolor: FIELD_GREEN,
+            bgcolor: theme.palette.success.dark,
             position: 'relative',
             borderRadius: 2,
             overflow: 'hidden',
