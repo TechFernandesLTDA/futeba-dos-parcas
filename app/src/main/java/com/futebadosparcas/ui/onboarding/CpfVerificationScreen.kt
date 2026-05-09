@@ -33,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.util.CpfValidator
+import com.futebadosparcas.R
+import androidx.compose.ui.res.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -80,12 +82,12 @@ fun CpfVerificationScreen(
                     }
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Verificar CPF",
+                        text = stringResource(R.string.cpf_verification_title),
                         style = MaterialTheme.typography.headlineSmall,
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Seu CPF e usado apenas para evitar contas falsas e duplicadas. Nao compartilhamos com terceiros. Etapa 2 de 2.",
+                        text = stringResource(R.string.cpf_verification_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -110,15 +112,15 @@ fun CpfVerificationScreen(
                             val digits = input.filter { it.isDigit() }.take(11)
                             cpf = formatProgressive(digits)
                         },
-                        label = { Text("CPF") },
-                        placeholder = { Text("999.999.999-99") },
+                        label = { Text(stringResource(R.string.cpf_label)) },
+                        placeholder = { Text(stringResource(R.string.cpf_placeholder)) },
                         singleLine = true,
                         enabled = !loading,
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.NumberPassword,
                         ),
-                        supportingText = { Text("Apenas numeros, com ou sem mascara") },
+                        supportingText = { Text(stringResource(R.string.cpf_supporting_text)) },
                     )
                     Spacer(Modifier.height(16.dp))
                     Button(
@@ -132,14 +134,14 @@ fun CpfVerificationScreen(
                                 strokeWidth = 2.dp,
                             )
                             Spacer(Modifier.size(8.dp))
-                            Text("Verificando...")
+                            Text(stringResource(R.string.cpf_verifying))
                         } else {
-                            Text("Concluir verificacao")
+                            Text(stringResource(R.string.cpf_finish))
                         }
                     }
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = "Ao continuar, voce concorda com a Politica de Privacidade e os Termos de Uso.",
+                        text = stringResource(R.string.cpf_privacy_terms),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

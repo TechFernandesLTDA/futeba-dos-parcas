@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gamificationColors } from '../../../theme';
+import { getPositionBadgeStyle } from '../../../utils/gamificationStyle';
 import {
   Box,
   Container,
@@ -13,6 +14,7 @@ import {
   Chip,
   Skeleton,
   useTheme,
+  useMediaQuery,
   alpha,
   LinearProgress,
   IconButton,
@@ -74,8 +76,9 @@ const XP_TABLE = [
 ];
 
 export function RankingsTab() {
-  const theme = useTheme();
-  const navigate = useNavigate();
+    const theme = useTheme();
+    const isMd = useMediaQuery(theme.breakpoints.up('md'));
+    const navigate = useNavigate();
   const { user } = useAuth();
   const { showError } = useToast();
 
@@ -176,14 +179,7 @@ export function RankingsTab() {
   const currentUserRank = players.findIndex(p => p.isCurrentUser) + 1;
   const currentPlayer = players.find(p => p.isCurrentUser);
 
-  const getPositionStyle = (position: number) => {
-    switch (position) {
-      case 1: return { bgcolor: gamificationColors.gold, color: '#000' };
-      case 2: return { bgcolor: gamificationColors.silver, color: '#000' };
-      case 3: return { bgcolor: gamificationColors.bronze, color: '#fff' };
-      default: return { bgcolor: theme.palette.grey[300], color: theme.palette.text.primary };
-    }
-  };
+  const getPositionStyle = (position: number) => getPositionBadgeStyle(position, theme);
 
   const getSortedPlayers = () => {
     if (tabValue === 1) {
@@ -234,7 +230,7 @@ export function RankingsTab() {
         </Tabs>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {/* Card de posição do usuário atual */}
         {tabValue !== 2 && currentPlayer && (
           <Fade in>

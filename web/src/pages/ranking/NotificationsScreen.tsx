@@ -13,6 +13,7 @@ import {
   Badge,
   Skeleton,
   useTheme,
+  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -31,8 +32,9 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 export const NotificationsScreen: React.FC = () => {
   useDocumentTitle('Notificações');
   const navigate = useNavigate();
-  const theme = useTheme();
-  const { user } = useAuth();
+    const theme = useTheme();
+    const isMd = useMediaQuery(theme.breakpoints.up('md'));
+    const { user } = useAuth();
 
   const { notifications, loading, markAsRead, markAllAsRead, deleteNotification } = useNotifications(user?.id);
 
@@ -97,7 +99,7 @@ export const NotificationsScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => (
             <Card key={i} sx={{ mb: 1 }}>

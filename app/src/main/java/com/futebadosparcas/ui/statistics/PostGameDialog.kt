@@ -63,7 +63,7 @@ fun PostGameDialog(
                 ) {
                     Text(
                         text = stringResource(R.string.post_game_leveled_up),
-                        fontSize = 22.sp,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.primary,
                         letterSpacing = 1.sp
@@ -95,13 +95,13 @@ fun PostGameDialog(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = "+$staticXp",
-                            fontSize = 32.sp,
+                            style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                         Text(
                             text = stringResource(R.string.post_game_xp_label),
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
                     }
@@ -142,7 +142,7 @@ fun PostGameDialog(
                 ) {
                     Text(
                         text = stringResource(R.string.post_game_rumoa),
-                        fontSize = 16.sp,
+                        style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(vertical = 4.dp),
                         letterSpacing = 1.sp
@@ -169,7 +169,7 @@ private fun GameResultBadge(result: String) {
     ) {
         Text(
             text = text,
-            fontSize = 18.sp,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = com.futebadosparcas.util.ContrastHelper.getContrastingTextColor(backgroundColor)
         )
@@ -190,7 +190,7 @@ private fun XpBreakdownSection(breakdown: Map<String, Long>) {
         ) {
             Text(
                 text = stringResource(R.string.post_game_journey),
-                fontSize = 13.sp,
+                style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp),
@@ -207,12 +207,12 @@ private fun XpBreakdownSection(breakdown: Map<String, Long>) {
                     ) {
                         Text(
                             text = label,
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "+$xp XP",
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.tertiary
                         )
@@ -243,7 +243,7 @@ private fun LevelProgressSection(
             ) {
                 Text(
                     text = stringResource(R.string.post_game_level_up),
-                    fontSize = 16.sp,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.tertiary
                 )
@@ -257,17 +257,17 @@ private fun LevelProgressSection(
             ) {
                 Text(
                     text = stringResource(R.string.post_game_level, previousLevel),
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = " → ",
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = stringResource(R.string.post_game_level_to, newLevel, newLevelName),
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -275,7 +275,7 @@ private fun LevelProgressSection(
         } else {
             Text(
                 text = stringResource(R.string.post_game_current_level, newLevel),
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -296,7 +296,7 @@ private fun LevelProgressSection(
 
         Text(
             text = stringResource(R.string.post_game_progress, (progress * 100).toInt()),
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp)
         )
@@ -330,7 +330,7 @@ private fun MilestonesUnlockedSection(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.post_game_conquistas),
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.tertiary
                 )
@@ -354,13 +354,13 @@ private fun MilestonesUnlockedSection(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = milestone.displayName,
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
                         text = "+${milestone.xpReward} XP",
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.tertiary
                     )

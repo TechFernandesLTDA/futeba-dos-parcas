@@ -452,7 +452,7 @@ fun GameDetailContent(
                         state.isUserPending -> stringResource(R.string.accept_invite)
                         else -> stringResource(R.string.confirm_presence)
                     },
-                    fontSize = 18.sp,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -627,7 +627,7 @@ fun TeamCard(
                     ) {
                         Text(player.userName, modifier = Modifier.weight(1f))
                         if (player.goals > 0) {
-                            Text("⚽ ${player.goals} ", fontSize = 12.sp)
+                            Text("⚽ ${player.goals} ", style = MaterialTheme.typography.labelMedium)
                         }
                     }
                 }

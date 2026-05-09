@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { gamificationColors } from '../../theme';
+import { getPositionBadgeStyle } from '../../utils/gamificationStyle';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -14,6 +14,7 @@ import {
   Alert,
   Button,
   useTheme,
+  useMediaQuery,
   alpha,
   List,
 } from '@mui/material';
@@ -35,6 +36,7 @@ export const RankingScreen: React.FC = () => {
   useDocumentTitle('Ranking');
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
 
   const [tabValue, setTabValue] = useState(0);
@@ -54,18 +56,7 @@ export const RankingScreen: React.FC = () => {
     return sorted;
   }, [players, tabValue]);
 
-  const getPositionStyle = (position: number) => {
-    switch (position) {
-      case 1:
-        return { bgcolor: gamificationColors.gold, color: '#000' };
-      case 2:
-        return { bgcolor: gamificationColors.silver, color: '#000' };
-      case 3:
-        return { bgcolor: gamificationColors.bronze, color: '#fff' };
-      default:
-        return { bgcolor: theme.palette.grey[200], color: theme.palette.text.primary };
-    }
-  };
+  const getPositionStyle = (position: number) => getPositionBadgeStyle(position, theme);
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -98,7 +89,7 @@ export const RankingScreen: React.FC = () => {
         </Tabs>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {loading ? (
           <LoadingState shimmerCount={8} itemType="RANKING" />
         ) : error ? (
