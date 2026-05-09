@@ -1425,10 +1425,15 @@ service cloud.firestore {
       // Nao pode alterar game_id (previne mover evento entre jogos)
       fieldUnchanged('game_id');
 
+      // SECFIX #610: confirmedPlayer só pode deletar eventos que ELE mesmo criou.
+      // Sem o check de ownership, qualquer jogador confirmado poderia deletar gols/
+      // assistências de outros jogadores — privilege escalation em sistema gamificado.
+      // Nota: eventos criados pelo Android (que não popula created_by) só podem ser
+      // deletados por admin ou game owner até que o bug de população seja corrigido.
       allow delete: if isAuthenticated() && (
         isAdmin() ||
         isGameOwner(resource.data.game_id) ||
-        isConfirmedPlayer(resource.data.game_id)
+        (isConfirmedPlayer(resource.data.game_id) && resource.data.created_by == userId())
       );
     }
 
