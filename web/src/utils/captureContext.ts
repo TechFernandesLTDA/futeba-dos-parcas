@@ -15,7 +15,7 @@ interface FeedbackContext {
 
 export function captureContext(): FeedbackContext {
   return {
-    platform: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+    platform: 'web',
     app_version: '1.21.3',
     screen_route: typeof window !== 'undefined' ? window.location.pathname : '',
     device_info: {
