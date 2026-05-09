@@ -10,8 +10,10 @@ import {
   Tab,
   Fab,
   Button,
+  Grid,
   CircularProgress,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -25,7 +27,6 @@ import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { GameCard, LoadingState } from '../../components/common/GameCard';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
-import { VirtualList } from '../../components/common/VirtualList';
 import { Game, GameStatus } from '../../types/game';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -39,6 +40,7 @@ export const GamesScreen: React.FC = () => {
   const navigate = useNavigate();
   const navigateBack = useNavigateBack('/');
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   useAuth();
 
   const [tabValue, setTabValue] = useState(0);
@@ -156,7 +158,7 @@ export const GamesScreen: React.FC = () => {
         }}
         disabled={loading}
       >
-        <Container maxWidth="sm" sx={{ py: 2 }}>
+        <Container maxWidth={isMd ? 'xl' : 'sm'} sx={{ py: 2 }}>
           {loading ? (
             <LoadingState shimmerCount={8} itemType="GAME" />
           ) : filteredGames.length === 0 ? (
@@ -170,28 +172,27 @@ export const GamesScreen: React.FC = () => {
               </Typography>
             </Box>
           ) : filteredGames.length > 20 ? (
-            <VirtualList
-              items={filteredGames}
-              estimateSize={200}
-              overscan={3}
-              getItemKey={(index) => filteredGames[index].id}
-              renderItem={(game) => (
-                <Box sx={{ px: 0, py: 1 }}>
+            <Grid container spacing={2}>
+              {filteredGames.map((game) => (
+                <Grid item xs={12} md={6} key={game.id}>
                   <GameCard
                     game={game}
                     onClick={() => navigate(`/game/${game.id}`)}
                   />
-                </Box>
-              )}
-            />
+                </Grid>
+              ))}
+            </Grid>
           ) : (
-            filteredGames.map((game) => (
-              <GameCard
-                key={game.id}
-                game={game}
-                onClick={() => navigate(`/game/${game.id}`)}
-              />
-            ))
+            <Grid container spacing={2}>
+              {filteredGames.map((game) => (
+                <Grid item xs={12} md={6} key={game.id}>
+                  <GameCard
+                    game={game}
+                    onClick={() => navigate(`/game/${game.id}`)}
+                  />
+                </Grid>
+              ))}
+            </Grid>
           )}
         </Container>
       </PullToRefresh>

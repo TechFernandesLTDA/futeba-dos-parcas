@@ -326,7 +326,7 @@ export const LiveGameScreen: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
               <Box sx={{ textAlign: 'center', flex: 1 }}>
-                <Typography variant="h2" fontWeight={700}>
+                <Typography variant="h5" fontWeight={600} color="text.secondary">
                   {game.team1Name || 'Time 1'}
                 </Typography>
                 <Typography variant="h2" fontWeight={700} color="primary">
@@ -337,7 +337,7 @@ export const LiveGameScreen: React.FC = () => {
                 X
               </Typography>
               <Box sx={{ textAlign: 'center', flex: 1 }}>
-                <Typography variant="h2" fontWeight={700}>
+                <Typography variant="h5" fontWeight={600} color="text.secondary">
                   {game.team2Name || 'Time 2'}
                 </Typography>
                 <Typography variant="h2" fontWeight={700} color="primary">

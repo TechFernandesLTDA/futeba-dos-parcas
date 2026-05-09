@@ -10,6 +10,7 @@ import {
   IconButton,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -31,6 +32,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useThemeContext } from '../../contexts/ThemeContext';
+import { useToast } from '../../contexts/ToastContext';
 
 export const ThemeSettingsScreen: React.FC = () => {
   useDocumentTitle('Tema');
@@ -40,8 +42,23 @@ export const ThemeSettingsScreen: React.FC = () => {
   // toggleTheme não é mais usado — setMode expõe controle preciso dos 3 modos
   const { mode, setMode } = useThemeContext();
 
+  const { showSuccess, showError } = useToast();
+
   const [notifications, setNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
+
+  const handleClearCache = () => {
+    try {
+      localStorage.clear();
+      showSuccess('Cache limpo com sucesso');
+    } catch {
+      showError('Erro ao limpar cache');
+    }
+  };
+
+  const handleSyncData = () => {
+    window.location.reload();
+  };
 
   return (
     <Box sx={{ pb: 4 }}>
@@ -169,7 +186,7 @@ export const ThemeSettingsScreen: React.FC = () => {
 
         <Card>
           <List disablePadding>
-            <ListItem button>
+            <ListItemButton onClick={handleClearCache}>
               <ListItemIcon>
                 <StorageIcon />
               </ListItemIcon>
@@ -177,9 +194,9 @@ export const ThemeSettingsScreen: React.FC = () => {
                 primary="Limpar Cache"
                 secondary="Remover dados armazenados localmente"
               />
-            </ListItem>
+            </ListItemButton>
             <Divider />
-            <ListItem button>
+            <ListItemButton onClick={handleSyncData}>
               <ListItemIcon>
                 <RefreshIcon />
               </ListItemIcon>
@@ -187,7 +204,7 @@ export const ThemeSettingsScreen: React.FC = () => {
                 primary="Sincronizar Dados"
                 secondary="Forçar sincronização com servidor"
               />
-            </ListItem>
+            </ListItemButton>
           </List>
         </Card>
       </Container>

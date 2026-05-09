@@ -8,6 +8,7 @@ import {
   IconButton,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -90,58 +91,58 @@ export const AboutScreen: React.FC = () => {
 
         <Card sx={{ mb: 2 }}>
           <List disablePadding aria-label="Links legais">
-            <ListItem button onClick={() => window.open('/terms_of_service.html', '_blank')}>
+            <ListItemButton onClick={() => window.open('/terms_of_service.html', '_blank')}>
               <ListItemIcon>
                 <TermsIcon />
               </ListItemIcon>
               <ListItemText primary="Termos de Uso" />
-            </ListItem>
+            </ListItemButton>
             <Divider />
-            <ListItem button onClick={() => window.open('/privacy_policy.html', '_blank')}>
+            <ListItemButton onClick={() => window.open('/privacy_policy.html', '_blank')}>
               <ListItemIcon>
                 <PrivacyIcon />
               </ListItemIcon>
               <ListItemText primary="Política de Privacidade" />
-            </ListItem>
+            </ListItemButton>
             <Divider />
-            <ListItem button onClick={() => window.open('/child_safety.html', '_blank')}>
+            <ListItemButton onClick={() => window.open('/child_safety.html', '_blank')}>
               <ListItemIcon>
                 <SecurityIcon />
               </ListItemIcon>
               <ListItemText primary="Segurança Infantil" />
-            </ListItem>
+            </ListItemButton>
             <Divider />
-            <ListItem button onClick={() => window.open('/delete_account.html', '_blank')}>
+            <ListItemButton onClick={() => window.open('/delete_account.html', '_blank')}>
               <ListItemIcon>
                 <DeleteIcon />
               </ListItemIcon>
               <ListItemText primary="Excluir Conta" secondary="Como solicitar exclusão da conta" />
-            </ListItem>
+            </ListItemButton>
           </List>
         </Card>
 
         <Card sx={{ mb: 2 }}>
           <List disablePadding aria-label="Suporte e contato">
-            <ListItem button>
+            <ListItemButton>
               <ListItemIcon>
                 <HelpIcon />
               </ListItemIcon>
               <ListItemText primary="Central de Ajuda" />
-            </ListItem>
+            </ListItemButton>
             <Divider />
-            <ListItem button>
+            <ListItemButton onClick={() => window.open('mailto:techfernandesltda@gmail.com', '_blank')}>
               <ListItemIcon>
                 <BugIcon />
               </ListItemIcon>
               <ListItemText primary="Reportar Problema" />
-            </ListItem>
+            </ListItemButton>
             <Divider />
-            <ListItem button onClick={() => window.open('mailto:techfernandesltda@gmail.com', '_blank')}>
+            <ListItemButton onClick={() => window.open('mailto:techfernandesltda@gmail.com', '_blank')}>
               <ListItemIcon>
                 <EmailIcon />
               </ListItemIcon>
               <ListItemText primary="Contato" secondary="techfernandesltda@gmail.com" />
-            </ListItem>
+            </ListItemButton>
           </List>
         </Card>
 

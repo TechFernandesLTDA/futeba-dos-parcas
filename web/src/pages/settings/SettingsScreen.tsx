@@ -7,7 +7,7 @@ import {
   Card,
   CardContent,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   IconButton,
@@ -204,26 +204,26 @@ export const SettingsScreen: React.FC = () => {
 
             <Card sx={{ mb: 2 }}>
               <List disablePadding aria-label="Opções de configuração">
-                <ListItem button onClick={() => navigate('/settings/theme')}>
+                <ListItemButton onClick={() => navigate('/settings/theme')}>
                   <ListItemIcon>
                     <PaletteIcon />
                   </ListItemIcon>
                   <ListItemText primary="Tema" secondary="Personalizar aparência" />
-                </ListItem>
+                </ListItemButton>
                 <Divider />
-                <ListItem button onClick={() => navigate('/settings/gamification')}>
+                <ListItemButton onClick={() => navigate('/settings/gamification')}>
                   <ListItemIcon>
                     <TrophyIcon />
                   </ListItemIcon>
                   <ListItemText primary="Gamificação" secondary="XP, Níveis, Badges" />
-                </ListItem>
+                </ListItemButton>
                 <Divider />
-                <ListItem button onClick={() => navigate('/about')}>
+                <ListItemButton onClick={() => navigate('/about')}>
                   <ListItemIcon>
                     <InfoIcon />
                   </ListItemIcon>
                   <ListItemText primary="Sobre o App" secondary="Versão 1.21.3" />
-                </ListItem>
+                </ListItemButton>
               </List>
             </Card>
 

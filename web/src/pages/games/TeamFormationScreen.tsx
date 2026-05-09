@@ -14,10 +14,11 @@ import {
   useTheme,
   alpha,
   Skeleton,
-  Chip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
+  ArrowForward,
+  ArrowBack,
   Shuffle as ShuffleIcon,
   Save as SaveIcon,
 } from '@mui/icons-material';
@@ -206,6 +207,7 @@ export const TeamFormationScreen: React.FC = () => {
                       py: 1,
                       borderBottom: `1px solid ${theme.palette.divider}`,
                       cursor: 'pointer',
+                      '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) },
                     }}
                     onClick={() => movePlayer(player, 'A')}
                   >
@@ -213,12 +215,14 @@ export const TeamFormationScreen: React.FC = () => {
                     <Typography variant="body2" sx={{ flex: 1 }}>
                       {player.name}
                     </Typography>
-                    <Chip label="→" size="small" />
+                    <IconButton size="small" color="primary" aria-label={`Mover ${player.name} para Time B`}>
+                      <ArrowForward fontSize="small" />
+                    </IconButton>
                   </Box>
                 ))}
                 {teamA.length === 0 && (
                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                    Arraste jogadores aqui
+                    Clique para mover jogadores
                   </Typography>
                 )}
               </CardContent>
@@ -243,19 +247,22 @@ export const TeamFormationScreen: React.FC = () => {
                       py: 1,
                       borderBottom: `1px solid ${theme.palette.divider}`,
                       cursor: 'pointer',
+                      '&:hover': { bgcolor: alpha(theme.palette.secondary.main, 0.08) },
                     }}
                     onClick={() => movePlayer(player, 'B')}
                   >
+                    <IconButton size="small" color="secondary" aria-label={`Mover ${player.name} para Time A`}>
+                      <ArrowBack fontSize="small" />
+                    </IconButton>
                     <PlayerAvatar name={player.name} photoUrl={player.photoUrl} size={32} level={player.level} />
                     <Typography variant="body2" sx={{ flex: 1 }}>
                       {player.name}
                     </Typography>
-                    <Chip label="←" size="small" />
                   </Box>
                 ))}
                 {teamB.length === 0 && (
                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                    Arraste jogadores aqui
+                    Clique para mover jogadores
                   </Typography>
                 )}
               </CardContent>

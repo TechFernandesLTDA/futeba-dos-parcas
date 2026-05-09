@@ -91,6 +91,16 @@ export const StatisticsScreen: React.FC = () => {
     return ((stats.totalWins / stats.totalGames) * 100).toFixed(1);
   };
 
+  const getDrawRate = () => {
+    if (!stats || stats.totalGames === 0) return 0;
+    return ((stats.totalDraws / stats.totalGames) * 100).toFixed(1);
+  };
+
+  const getLossRate = () => {
+    if (!stats || stats.totalGames === 0) return 0;
+    return ((stats.totalLosses / stats.totalGames) * 100).toFixed(1);
+  };
+
   const getGoalsPerGame = () => {
     if (!stats || stats.totalGames === 0) return '0.0';
     return (stats.totalGoals / stats.totalGames).toFixed(2);
@@ -225,6 +235,18 @@ export const StatisticsScreen: React.FC = () => {
                         Taxa de vitória: <strong>{getWinRate()}%</strong>
                       </Typography>
                     </Box>
+                    <Box sx={{ mt: 1.5 }}>
+                      <Box sx={{ display: 'flex', borderRadius: 1, overflow: 'hidden', height: 8 }}>
+                        <Box sx={{ width: `${getWinRate()}%`, bgcolor: 'success.main' }} />
+                        <Box sx={{ width: `${getDrawRate()}%`, bgcolor: 'warning.main' }} />
+                        <Box sx={{ width: `${getLossRate()}%`, bgcolor: 'error.main' }} />
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                        <Typography variant="caption">V: {getWinRate()}%</Typography>
+                        <Typography variant="caption">E: {getDrawRate()}%</Typography>
+                        <Typography variant="caption">D: {getLossRate()}%</Typography>
+                      </Box>
+                    </Box>
                   </CardContent>
                 </Card>
 
@@ -242,6 +264,22 @@ export const StatisticsScreen: React.FC = () => {
                         <Typography variant="body2" color="text.secondary">
                           Sequência atual • Recorde: {stats.bestStreak}
                         </Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ mt: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                        <Typography variant="caption" sx={{ width: 70 }}>Atual</Typography>
+                        <Box sx={{ flex: 1, height: 12, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
+                          <Box sx={{ height: '100%', width: `${Math.min(100, (stats.currentStreak / Math.max(stats.currentStreak, stats.bestStreak, 1)) * 100)}%`, bgcolor: 'warning.main', borderRadius: 1 }} />
+                        </Box>
+                        <Typography variant="caption" sx={{ width: 30, textAlign: 'right' }}>{stats.currentStreak}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="caption" sx={{ width: 70 }}>Recorde</Typography>
+                        <Box sx={{ flex: 1, height: 12, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.success.main, 0.1) }}>
+                          <Box sx={{ height: '100%', width: `${Math.min(100, (stats.bestStreak / Math.max(stats.currentStreak, stats.bestStreak, 1)) * 100)}%`, bgcolor: 'success.main', borderRadius: 1 }} />
+                        </Box>
+                        <Typography variant="caption" sx={{ width: 30, textAlign: 'right' }}>{stats.bestStreak}</Typography>
                       </Box>
                     </Box>
                   </CardContent>
@@ -283,6 +321,22 @@ export const StatisticsScreen: React.FC = () => {
                         </Box>
                       </Grid>
                     </Grid>
+                    <Box sx={{ mt: 2 }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="caption" sx={{ width: 100 }}>Gols</Typography>
+                          <Box sx={{ flex: 1, height: 14, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                            <Box sx={{ height: '100%', width: `${Math.min(100, (stats.totalGoals / Math.max(stats.totalGoals, stats.totalAssists, 1)) * 100)}%`, bgcolor: 'primary.main', borderRadius: 1 }} />
+                          </Box>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="caption" sx={{ width: 100 }}>Assistências</Typography>
+                          <Box sx={{ flex: 1, height: 14, borderRadius: 1, overflow: 'hidden', bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
+                            <Box sx={{ height: '100%', width: `${Math.min(100, (stats.totalAssists / Math.max(stats.totalGoals, stats.totalAssists, 1)) * 100)}%`, bgcolor: 'secondary.main', borderRadius: 1 }} />
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
                   </CardContent>
                 </Card>
 
