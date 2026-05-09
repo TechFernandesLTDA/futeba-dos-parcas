@@ -697,23 +697,18 @@ export const concludeMvpVoting =
                 resolveWinner(worstCounts);
 
               // 2.9: Buscar confirmações
-              // (dentro da transaction)
+              // FIX #617: usar transaction.get() em vez de db.get()
+              // para evitar janela TOCTOU — se uma confirmation mudar
+              // entre a query e o commit, a transaction detecta conflito
+              // e retenta automaticamente com dados frescos.
+              const confirmationsRef = db
+                .collection("confirmations")
+                .where("game_id", "==", gameId)
+                .where("status", "==", "CONFIRMED");
               const confirmationsSnap =
-                await db
-                  .collection(
-                    "confirmations"
-                  )
-                  .where(
-                    "game_id",
-                    "==",
-                    gameId
-                  )
-                  .where(
-                    "status",
-                    "==",
-                    "CONFIRMED"
-                  )
-                  .get();
+                await transaction.get(
+                  confirmationsRef
+                );
 
               // 2.10: Atualizar confirmações
               for (
