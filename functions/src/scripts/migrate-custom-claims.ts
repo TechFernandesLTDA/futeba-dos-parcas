@@ -78,7 +78,10 @@ async function migrateBatch(
           }
 
           // Setar Custom Claim
-          await admin.auth().setCustomUserClaims(uid, {role});
+          await admin.auth().setCustomUserClaims(uid, {
+            ...currentClaims,
+            role,
+          });
           stats.processed++;
 
           // Log progresso a cada 100 usuários

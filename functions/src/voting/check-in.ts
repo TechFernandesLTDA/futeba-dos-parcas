@@ -18,6 +18,7 @@ import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {db} from "../_db";
 import {checkRateLimit} from "../middleware/rate-limiter";
+import {FUNCTION_REGION} from "../constants";
 
 const DEFAULT_RADIUS_METERS = 200;
 const MAX_RADIUS_METERS = 2000;
@@ -55,8 +56,8 @@ function haversineMeters(
 
 export const checkInToGame = onCall(
   {
-    region: "us-central1",
-    enforceAppCheck: process.env.NODE_ENV === "production",
+    region: FUNCTION_REGION,
+    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
     consumeAppCheckToken: true,
   },
   async (request) => {
@@ -114,6 +115,14 @@ export const checkInToGame = onCall(
         "Coordenadas fora de range",
       );
     }
+    // FIX #647: Null-island bypass — rejeita coordenadas
+    // no ponto (0, 0) ou proximas, comum em GPS spoof.
+    if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Localização inválida",
+      );
+    }
 
     const gameSnap = await db().doc(`games/${gameId}`).get();
     if (!gameSnap.exists) {
@@ -129,22 +138,27 @@ export const checkInToGame = onCall(
       );
     }
 
-    // Confirmacao deve existir
-    const confId = `${gameId}_${uid}`;
-    const confRef = db().doc(`confirmations/${confId}`);
-    const confSnap = await confRef.get();
-    if (!confSnap.exists) {
-      throw new HttpsError(
-        "permission-denied",
-        "Voce nao esta confirmado neste jogo",
+    // FIX #647: Time window — check-in apenas ±30 min do
+    // inicio do jogo. Previne check-in dias antes/depois.
+    const gameDateTime = game.dateTime as
+      | admin.firestore.Timestamp
+      | undefined;
+    if (
+      gameDateTime &&
+      typeof gameDateTime.toDate === "function"
+    ) {
+      const gameTime = gameDateTime.toDate();
+      const now = new Date();
+      const diffMs = Math.abs(
+        now.getTime() - gameTime.getTime(),
       );
-    }
-    const conf = confSnap.data() as Record<string, unknown>;
-    if (conf.status !== "CONFIRMED") {
-      throw new HttpsError(
-        "failed-precondition",
-        "Confirmacao precisa estar em status CONFIRMED",
-      );
+      if (diffMs > 30 * 60 * 1000) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Fora da janela de check-in " +
+            "(±30 min do início do jogo)",
+        );
+      }
     }
 
     // Valida distancia ao campo
@@ -167,6 +181,18 @@ export const checkInToGame = onCall(
       Math.max(radiusRaw, 50),
       MAX_RADIUS_METERS,
     );
+    // FIX #647: Loga quando radius foi clampado silenciosamente,
+    // evitando surpresas com configuracao incorreta de raio.
+    if (radiusRaw !== radius) {
+      logger.warn(
+        "[CHECKIN_RADIUS_CLAMP]",
+        {
+          gameId,
+          configured: radiusRaw,
+          used: radius,
+        },
+      );
+    }
 
     if (dist > radius) {
       logger.warn(
@@ -180,26 +206,56 @@ export const checkInToGame = onCall(
       );
     }
 
-    // Anti-replay: idempotencia
-    if (conf.checked_in === true) {
+    // FIX #647: TOCTOU — leitura e escrita do doc de
+    // confirmacao dentro de transaction para evitar
+    // race entre checar checked_in e escrever.
+    const confId = `${gameId}_${uid}`;
+    const confRef = db().doc(`confirmations/${confId}`);
+
+    await db().runTransaction(async (tx) => {
+      const confSnap = await tx.get(confRef);
+      if (!confSnap.exists) {
+        throw new HttpsError(
+          "permission-denied",
+          "Voce nao esta confirmado neste jogo",
+        );
+      }
+      const conf =
+        confSnap.data() as Record<string, unknown>;
+      if (conf.status !== "CONFIRMED") {
+        throw new HttpsError(
+          "failed-precondition",
+          "Confirmacao precisa estar em status CONFIRMED",
+        );
+      }
+
+      // Anti-replay: idempotencia
+      if (conf.checked_in === true) {
+        return {
+          success: true,
+          already: true,
+        };
+      }
+
+      tx.set(
+        confRef,
+        {
+          checked_in: true,
+          checked_in_at: admin.firestore
+            .FieldValue.serverTimestamp(),
+          check_in_lat: lat,
+          check_in_lng: lng,
+          check_in_distance_m: Math.round(dist),
+          was_present: true,
+        },
+        {merge: true},
+      );
+
       return {
         success: true,
-        already: true,
+        distance_m: Math.round(dist),
       };
-    }
-
-    await confRef.set(
-      {
-        checked_in: true,
-        checked_in_at: admin.firestore
-          .FieldValue.serverTimestamp(),
-        check_in_lat: lat,
-        check_in_lng: lng,
-        check_in_distance_m: Math.round(dist),
-        was_present: true,
-      },
-      {merge: true},
-    );
+    });
 
     return {
       success: true,

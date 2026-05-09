@@ -38,6 +38,8 @@ import {
 import {
   MVP_VOTE_WINDOW_HOURS,
   XP_ACTIONS,
+  LEVEL_TABLE,
+  MAX_XP_PER_GAME,
 } from "../constants";
 
 const getDb = () => admin.firestore();
@@ -274,6 +276,9 @@ export const submitMvpVote =
 
             // 3.4: Validar janela de votação
             // (24h após fim do jogo)
+            // FIX #648/B1: deadline = gameEndTime + 24h,
+            // não gameStartTime + 24h. Usa duration_minutes
+            // (default 90min) para calcular fim do jogo.
             const gameDateTime =
               gameData.dateTime;
             let deadline: Date;
@@ -282,30 +287,26 @@ export const submitMvpVote =
               typeof gameDateTime.toDate ===
               "function"
             ) {
-              const gameEndDate =
+              const gameStartDate =
                 gameDateTime.toDate();
+              const durationMin =
+                (gameData.duration_minutes as number) ?? 90;
+              const gameEndMs =
+                gameStartDate.getTime() +
+                durationMin * 60 * 1000;
               deadline = new Date(
-                gameEndDate.getTime() +
-                VOTE_WINDOW_HOURS *
-                60 * 60 * 1000
-              );
-            } else if (
-              gameData.created_at &&
-              typeof gameData.created_at.toDate ===
-              "function"
-            ) {
-              const createdAt =
-                gameData.created_at.toDate();
-              deadline = new Date(
-                createdAt.getTime() +
+                gameEndMs +
                 VOTE_WINDOW_HOURS *
                 60 * 60 * 1000
               );
             } else {
+              // FIX #648/B2: sem dateTime, NÃO usar
+              // created_at como fallback (causa timezone
+              // issues). Throw em vez disso.
               throw new HttpsError(
                 "internal",
                 "Dados do jogo incompletos: " +
-                "sem data de realização ou criação"
+                "sem data de realização"
               );
             }
             const now = new Date();
@@ -1037,6 +1038,42 @@ async function applyVotingXpDelta(
         return;
       }
 
+      // FIX #648/B4: Verifica MAX_XP_PER_GAME por jogador
+      // por jogo, somando todos os xp_logs existentes.
+      if (xpDelta > 0) {
+        const existingXpLogsSnap = await txn.get(
+          db.collection("xp_logs")
+            .where("user_id", "==", userId)
+            .where("game_id", "==", gameId)
+        );
+        let totalExistingXp = 0;
+        existingXpLogsSnap.forEach((doc) => {
+          totalExistingXp +=
+            (doc.data().xp_earned as number) || 0;
+        });
+        if (
+          totalExistingXp + xpDelta >
+          MAX_XP_PER_GAME
+        ) {
+          const cappedDelta = Math.max(
+            0,
+            MAX_XP_PER_GAME - totalExistingXp
+          );
+          console.warn(
+            `[VOTING_XP] Capping ${reason} XP ` +
+            `for ${userId} in ${gameId}: ` +
+            `${totalExistingXp} + ${xpDelta} ` +
+            "exceeds MAX_XP_PER_GAME " +
+            `(${MAX_XP_PER_GAME}). ` +
+            `Capped to ${cappedDelta}.`
+          );
+          if (cappedDelta <= 0) {
+            return;
+          }
+          xpDelta = cappedDelta;
+        }
+      }
+
       const userDoc = await txn.get(userRef);
       if (!userDoc.exists) {
         console.warn(
@@ -1049,8 +1086,18 @@ async function applyVotingXpDelta(
       const currentXp =
         (userDoc.data()
           ?.experience_points as number) || 0;
-      // Não permite XP negativo no acumulado.
       const newXp = Math.max(0, currentXp + xpDelta);
+
+      // FIX #648/B3: recalcula level apos aplicar XP
+      // (antes era feito sem atualizar level no user doc).
+      const levelTable = LEVEL_TABLE.levels;
+      const sortedLevels = [...levelTable].sort(
+        (a, b) => b.xpRequired - a.xpRequired
+      );
+      const newLevel =
+        sortedLevels.find(
+          (l) => newXp >= l.xpRequired
+        )?.level ?? 0;
 
       txn.set(logRef, {
         user_id: userId,
@@ -1066,6 +1113,7 @@ async function applyVotingXpDelta(
       });
       txn.update(userRef, {
         experience_points: newXp,
+        level: newLevel,
         updated_at: admin.firestore.FieldValue
           .serverTimestamp(),
       });
@@ -1074,12 +1122,11 @@ async function applyVotingXpDelta(
         `[VOTING_XP] Applied ${xpDelta} XP ` +
         `to ${userId} for ${reason} ` +
         `in ${gameId} ` +
-        `(${currentXp} → ${newXp})`
+        `(${currentXp} → ${newXp}, ` +
+        `level ${newLevel})`
       );
     });
   } catch (error) {
-    // Não throw — XP é best-effort. Falha aqui
-    // não deve fazer concludeMvpVoting falhar.
     console.error(
       `[VOTING_XP] Error applying ${reason} ` +
       `XP for ${userId} in ${gameId}:`,

@@ -174,7 +174,7 @@ export const maintainStreaksData = onSchedule(
         `${uniqueUserIds.length}`
       );
 
-      const batch = db().batch();
+      let batch = db().batch();
       let batchOps = 0;
 
       // FASE 2: Processar cada streak
@@ -279,6 +279,8 @@ export const maintainStreaksData = onSchedule(
             "operacoes commitado"
           );
           batchOps = 0;
+          // FIX #654-B1: re-create batch after commit
+          batch = db().batch();
         }
       }
 

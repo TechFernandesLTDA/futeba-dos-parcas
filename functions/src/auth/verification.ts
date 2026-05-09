@@ -8,6 +8,7 @@
  * Spec: specs/SPEC_FEATURE_PHONE_CPF_VERIFICATION.md
  */
 import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {hashCpf, isValidCpf, maskCpf} from "../validation/cpf";
 
@@ -82,9 +83,15 @@ export const verifyCpf = onCall(
     await db.runTransaction(async (tx) => {
       const indexSnap = await tx.get(indexRef);
       if (indexSnap.exists && indexSnap.data()?.uid !== uid) {
+        // FIX #652-B2: não revelar se CPF existe para prevenir enumeration.
+        // Internamente registramos o attempt, mas retornamos mensagem genérica.
+        logger.warn(
+          "[VERIFICATION] Duplicate CPF attempt blocked — " +
+          `uid=${uid} collided with existing cpf_index`
+        );
         throw new HttpsError(
           "already-exists",
-          "Este CPF já está cadastrado em outra conta",
+          "Verification code sent if CPF is valid",
         );
       }
 
@@ -97,10 +104,14 @@ export const verifyCpf = onCall(
         privateData.cpfHash &&
         privateData.cpfHash !== cpfHash
       ) {
+        // FIX #652-B2: mensagem genérica para prevenir enumeration
+        logger.warn(
+          "[VERIFICATION] CPF change blocked — " +
+          `uid=${uid} already has a different CPF registered`
+        );
         throw new HttpsError(
           "permission-denied",
-          "CPF já cadastrado nesta conta. " +
-            "Entre em contato com suporte para alterar.",
+          "Verification code sent if CPF is valid",
         );
       }
 

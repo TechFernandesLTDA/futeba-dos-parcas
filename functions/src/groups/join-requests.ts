@@ -116,6 +116,7 @@ export const onJoinRequestApproved = onDocumentUpdated(
         status: "ACTIVE",
         joined_at: admin.firestore.FieldValue.serverTimestamp(),
         invited_by: after.responded_by,
+        _counted_by_join_request: true,
       });
 
       tx.update(groupRef, {

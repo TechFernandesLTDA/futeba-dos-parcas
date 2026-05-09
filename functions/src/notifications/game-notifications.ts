@@ -282,6 +282,38 @@ export const onGameVacancy = onDocumentUpdated(
         return;
       }
 
+      // B2: Idempotencia - verificar se vaga ja foi
+      // notificada recentemente (evita envio duplicado
+      // quando multiplos jogadores cancelam em seguida)
+      if (game.vacancy_notified_at) {
+        const notifiedAt =
+            game.vacancy_notified_at.toDate();
+        const now = new Date();
+        const minutesSince =
+            (now.getTime() - notifiedAt.getTime()) /
+            60000;
+        if (minutesSince < 5) {
+          console.log(
+            "[GAME_VACANCY] Vaga ja notificada" +
+              ` ha ${minutesSince.toFixed(1)}min` +
+              ` para jogo ${gameId}, ignorando.`
+          );
+          return;
+        }
+      }
+
+      // Marcar como notificada para idempotencia
+      // (antes de enviar, para evitar race condition
+      // com triggers paralelos)
+      await getDb()
+        .collection("games")
+        .doc(gameId)
+        .update({
+          vacancy_notified_at:
+              admin.firestore.FieldValue
+                .serverTimestamp(),
+        });
+
       const maxPlayers =
         game.max_players ||
         game.maxPlayers ||

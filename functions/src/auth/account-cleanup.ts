@@ -1,11 +1,14 @@
 /**
- * ACCOUNT CLEANUP — FIX #619
+ * ACCOUNT CLEANUP — FIX #619 / #652-B3
  *
  * Trigger: Firebase Auth onDelete (v1)
  *
  * Quando uma conta é deletada, limpa:
  * - cpf_index/{cpfHash} → libera dedup para re-registro
  * - users_private/{uid} → LGPD Art. 18 VI (direito ao apagamento)
+ * - audit_logs (target_user_id=uid) → LGPD cleanup
+ * - sessions/{uid} → LGPD session cleanup
+ * - verification_failures (uid=uid) → LGPD cleanup
  *
  * Usuários sem CPF verificado (sem users_private) são no-op silencioso.
  *
@@ -49,52 +52,111 @@ export const onUserDeleted = auth
       const db = getDb();
 
       try {
-        // Lê users_private para encontrar cpfHash
+        const batch = db.batch();
+        let batchOps = 0;
+
+        // FIX #652-B3: helper to commit batch and refresh
+        const commitBatch = async () => {
+          if (batchOps > 0) {
+            await batch.commit();
+            batchOps = 0;
+          }
+        };
+
+        // 1. Remove users/{uid} (user profile)
+        const userRef = db.doc(`users/${uid}`);
+        batch.delete(userRef);
+        batchOps++;
+        logger.info(`[ACCOUNT_CLEANUP] Deletando users/${uid}`);
+
+        // 2. Remove users_private/{uid} (PII data + cpfHash lookup)
         const userPrivateRef = db.doc(`users_private/${uid}`);
         const userPrivateSnap = await userPrivateRef.get();
+        const cpfHash = userPrivateSnap.data()?.cpfHash as string | undefined;
 
-        if (!userPrivateSnap.exists) {
-          // Usuário sem CPF verificado — sem dados para limpar
-          logger.info(
-            `[ACCOUNT_CLEANUP] users_private/${uid} não existe, ` +
-            "nenhum dado a limpar (no-op)."
-          );
-          return;
+        if (userPrivateSnap.exists) {
+          batch.delete(userPrivateRef);
+          batchOps++;
+          logger.info(`[ACCOUNT_CLEANUP] Deletando users_private/${uid}`);
         }
 
-        const data = userPrivateSnap.data();
-        const cpfHash = data?.cpfHash as string | undefined;
-
-        const batch = db.batch();
-
-        // 1. Remove cpf_index/{cpfHash} → libera dedup para re-registro
+        // 3. Remove cpf_index/{cpfHash} → libera dedup para re-registro
         if (cpfHash) {
-          const cpfIndexRef = db.doc(`cpf_index/${cpfHash}`);
-          batch.delete(cpfIndexRef);
+          batch.delete(db.doc(`cpf_index/${cpfHash}`));
+          batchOps++;
           logger.info(
             `[ACCOUNT_CLEANUP] Deletando cpf_index/${cpfHash} ` +
             `do usuário ${uid}`
           );
-        } else {
-          logger.warn(
-            `[ACCOUNT_CLEANUP] users_private/${uid} existe mas ` +
-            "não tem cpfHash — apenas users_private será deletado."
+        }
+
+        // 4. FIX #652-B3: Cleanup audit_logs (target_user_id == uid)
+        const auditLogsSnap = await db
+          .collection("audit_logs")
+          .where("target_user_id", "==", uid)
+          .limit(500)
+          .get();
+        for (const doc of auditLogsSnap.docs) {
+          batch.delete(doc.ref);
+          batchOps++;
+          if (batchOps >= 450) await commitBatch();
+        }
+        if (auditLogsSnap.size > 0) {
+          logger.info(
+            `[ACCOUNT_CLEANUP] Deletando ${auditLogsSnap.size} audit_logs ` +
+            `do usuário ${uid}`
           );
         }
 
-        // 2. Remove users_private/{uid} → LGPD cleanup de dados PII
-        batch.delete(userPrivateRef);
-        logger.info(
-          `[ACCOUNT_CLEANUP] Deletando users_private/${uid}`
-        );
+        // 5. FIX #652-B3: Cleanup sessions/{uid}
+        batch.delete(db.doc(`sessions/${uid}`));
+        batchOps++;
+        logger.info(`[ACCOUNT_CLEANUP] Deletando sessions/${uid}`);
 
-        await batch.commit();
+        // 6. FIX #652-B3: Cleanup verification_failures
+        const verifyFailSnap = await db
+          .collection("verification_failures")
+          .where("uid", "==", uid)
+          .limit(500)
+          .get();
+        for (const doc of verifyFailSnap.docs) {
+          batch.delete(doc.ref);
+          batchOps++;
+          if (batchOps >= 450) await commitBatch();
+        }
+        if (verifyFailSnap.size > 0) {
+          logger.info(
+            "[ACCOUNT_CLEANUP] Deletando " +
+            `${verifyFailSnap.size} ` +
+            `verification_failures do usuário ${uid}`
+          );
+        }
+
+        // 7. FIX #652-B3: Cleanup notifications (recipient)
+        const notificationsSnap = await db
+          .collection("notifications")
+          .where("recipient_id", "==", uid)
+          .limit(500)
+          .get();
+        for (const doc of notificationsSnap.docs) {
+          batch.delete(doc.ref);
+          batchOps++;
+          if (batchOps >= 450) await commitBatch();
+        }
+        if (notificationsSnap.size > 0) {
+          logger.info(
+            "[ACCOUNT_CLEANUP] Deletando " +
+            `${notificationsSnap.size} ` +
+            `notifications do usuário ${uid}`
+          );
+        }
+
+        await commitBatch();
         logger.info(
           `[ACCOUNT_CLEANUP] Cleanup completo para usuário ${uid}`
         );
 
-        // 3. Limpar thumbnails orfaos do Storage
-        // (profile_photos/thumbnails/{uid}_thumb.*)
+        // 8. Limpar thumbnails orfaos do Storage
         try {
           const storage = getStorage();
           const bucketName =
@@ -124,7 +186,6 @@ export const onUserDeleted = auth
           `[ACCOUNT_CLEANUP] Erro no cleanup do usuário ${uid}:`,
           error
         );
-        // Re-throw para acionar retry automático do Firebase
         throw error;
       }
     }

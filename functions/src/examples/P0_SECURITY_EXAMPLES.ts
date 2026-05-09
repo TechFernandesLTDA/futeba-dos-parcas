@@ -56,7 +56,13 @@ export const adminSetUserRole = secureCallable(
     console.log(`[ADMIN] Setting role=${role} for user=${uid}`);
 
     // Update Firebase Auth Custom Claims
-    await admin.auth().setCustomUserClaims(uid, {role});
+    const existingClaims =
+      (await admin.auth().getUser(uid)).customClaims ||
+      {};
+    await admin.auth().setCustomUserClaims(uid, {
+      ...existingClaims,
+      role,
+    });
 
     // Sync to Firestore
     await db().collection("users").doc(uid).update({

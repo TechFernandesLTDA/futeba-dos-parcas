@@ -155,6 +155,31 @@ export const collectHourlyMetrics =
         ),
       ]);
 
+      // FIX #654-B3: DAU real — usuários únicos que criaram jogos
+      // nas últimas 24h. O campo "active_users_last_7d" conta docs
+      // de users atualizados, não usuários ativos reais.
+      // DAU agora usa Set<string> com owner_id dos jogos.
+      let dauLast24h = 0;
+      try {
+        const dauGamesSnap = await db()
+          .collection("games")
+          .where(
+            "created_at",
+            ">=",
+            admin.firestore.Timestamp.fromDate(oneDayAgo)
+          )
+          .limit(1000)
+          .get();
+        const dauUserIds = new Set<string>();
+        for (const doc of dauGamesSnap.docs) {
+          const ownerId = doc.data().owner_id;
+          if (ownerId) dauUserIds.add(ownerId);
+        }
+        dauLast24h = dauUserIds.size;
+      } catch (dauErr) {
+        console.warn("[METRICS] DAU query failed:", dauErr);
+      }
+
       // Buscar métrica anterior para deltas
       const previousMetricsSnap = await db()
         .collection("metrics")
@@ -194,6 +219,7 @@ export const collectHourlyMetrics =
           finishedGamesLast24h,
         active_users_last_7d:
           activeUsersLast7d,
+        dau_last_24h: dauLast24h,
         xp_logs_last_24h:
           xpLogsLast24h,
       };
@@ -219,6 +245,10 @@ export const collectHourlyMetrics =
       console.log(
         "[METRICS] Active users last 7d: " +
         activeUsersLast7d
+      );
+      console.log(
+        "[METRICS] DAU (unique owners): " +
+        dauLast24h
       );
     } catch (error) {
       console.error(

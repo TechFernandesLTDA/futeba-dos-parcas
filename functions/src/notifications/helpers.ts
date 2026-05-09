@@ -221,17 +221,37 @@ async function sendWithRetry(
 
 /**
  * Remove token FCM inválido do usuário no Firestore.
+ * Apenas deleta se o token armazenado corresponder
+ * ao token inválido reportado pelo FCM.
  *
  * @param {string} userId - ID do usuário
- * @param {string} _token - Token FCM inválido
+ * @param {string} invalidToken - Token FCM inválido
  * @return {Promise<void>} Resolução após remoção
  */
 async function removeInvalidToken(
   userId: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _token: string
+  invalidToken: string
 ): Promise<void> {
   try {
+    const userDoc = await getDb()
+      .collection("users")
+      .doc(userId)
+      .get();
+    if (!userDoc.exists) return;
+
+    const data = userDoc.data();
+    const storedToken =
+      data?.fcm_token || data?.fcmToken;
+
+    if (storedToken !== invalidToken) {
+      console.log(
+        "Token armazenado para " + userId +
+        " nao corresponde ao token invalido." +
+        " Ignorando remocao (idempotencia)."
+      );
+      return;
+    }
+
     console.log(
       `Removendo token invalido do usuario ${userId}`
     );
@@ -675,7 +695,37 @@ export async function saveNotificationToFirestore(
 }
 
 /**
+ * Remove campos PII (email, telefone) do payload
+ * de notificação antes de salvar/enviar.
+ *
+ * @param {NotificationPayload} payload - Payload
+ * @return {NotificationPayload} Payload limpo
+ */
+function stripPiiFields(
+  payload: NotificationPayload
+): NotificationPayload {
+  const piiKeys = [
+    "email",
+    "phone",
+    "phoneNumber",
+    "telefone",
+    "cpf",
+    "address",
+    "endereco",
+  ] as const;
+  const cleaned = {...payload} as Record<string, unknown>;
+  for (const key of piiKeys) {
+    if (cleaned[key] !== undefined) {
+      delete cleaned[key];
+    }
+  }
+  return cleaned as unknown as NotificationPayload;
+}
+
+/**
  * Envia e salva notificação para um usuário.
+ * Inclui guard contra auto-notificação (B3)
+ * e stripping de campos PII (B4).
  *
  * @param {string} userId - ID do usuário
  * @param {NotificationPayload} payload - Dados
@@ -685,17 +735,32 @@ export async function sendAndSaveNotification(
   userId: string,
   payload: NotificationPayload
 ): Promise<boolean> {
-  await saveNotificationToFirestore(userId, payload);
+  // B3: Evitar auto-notificacao
+  if (payload.senderId && payload.senderId === userId) {
+    console.log(
+      "[SELF-NOTIFY] Pulando auto-notificacao" +
+      ` para ${userId} (senderId === userId)`
+    );
+    return false;
+  }
+
+  // B4: Remover campos PII antes de persistir/enviar
+  const cleanPayload = stripPiiFields(payload);
+
+  await saveNotificationToFirestore(
+    userId,
+    cleanPayload
+  );
 
   return await sendNotificationToUser(userId, {
-    title: payload.title,
-    body: payload.body,
-    type: payload.type,
+    title: cleanPayload.title,
+    body: cleanPayload.body,
+    type: cleanPayload.type,
     data: {
-      gameId: payload.gameId || "",
-      groupId: payload.groupId || "",
-      senderId: payload.senderId || "",
-      action: payload.action || "",
+      gameId: cleanPayload.gameId || "",
+      groupId: cleanPayload.groupId || "",
+      senderId: cleanPayload.senderId || "",
+      action: cleanPayload.action || "",
     },
   });
 }
