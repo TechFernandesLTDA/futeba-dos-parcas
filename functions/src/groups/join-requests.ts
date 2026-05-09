@@ -65,7 +65,8 @@ export const onJoinRequestApproved = onDocumentUpdated(
       return;
     }
 
-    // Verificar se ja eh membro fora da transação (idempotencia: early exit barato)
+    // Verificar se ja eh membro fora da transação
+    // (idempotencia: early exit barato)
     const memberRef = db().doc(`groups/${groupId}/members/${userId}`);
     const memberSnap = await memberRef.get();
     if (memberSnap.exists) {
@@ -76,35 +77,35 @@ export const onJoinRequestApproved = onDocumentUpdated(
       return;
     }
 
-    // FIX #620: usar runTransaction em vez de batch para re-ler group.member_count
-    // dentro da transação. Antes: snapshot lido fora → aprovações concorrentes por
-    // dois admins no mesmo grupo resultavam em member_count stale+1 no doc
-    // users/{uid}/groups/{gid}, divergindo do source-of-truth groups/{gid}.
-    // member_count no doc de user é usado como fallback em fetchUserGroups()
-    // (web/src/hooks/useGroups.ts:58) — exatidão importa para UX.
+    // FIX #620: runTransaction para re-ler group.member_count dentro da
+    // transação e evitar drift em aprovações concorrentes. Antes: snapshot
+    // lido fora → aprovações simultâneas resultavam em member_count stale+1
+    // no doc users/{uid}/groups/{gid} (usado como fallback em fetchUserGroups,
+    // web/src/hooks/useGroups.ts:58).
+    //
+    // Estratégia: existência e metadados (name/photo) verificados fora da
+    // transação (early-exit barato); member_count re-lido dentro para garantir
+    // consistência durante o commit.
     const groupRef = db().doc(`groups/${groupId}`);
-    let groupName = "";
-    let groupPhoto: string | null = null;
+    const groupSnap = await groupRef.get();
+    if (!groupSnap.exists) {
+      logger.error("join_request group not found", {groupId, userId});
+      return;
+    }
+    const groupMeta = groupSnap.data() as Record<string, unknown>;
+    const groupName = (groupMeta.name as string) ?? "";
+    const groupPhoto = (groupMeta.photo_url as string | null) ?? null;
 
     await db().runTransaction(async (tx) => {
-      // Re-ler group DENTRO da transação garante member_count consistente
-      const groupSnap = await tx.get(groupRef);
-      if (!groupSnap.exists) {
-        logger.error("join_request group not found inside transaction", {
-          groupId,
-          userId,
-        });
-        // Lançar erro para abortar a transação
-        throw new Error(`Group ${groupId} not found`);
-      }
-      const group = groupSnap.data() as Record<string, unknown>;
-      groupName = (group.name as string) ?? "";
-      groupPhoto = (group.photo_url as string | null) ?? null;
+      // Re-ler group DENTRO da transação — garante member_count consistente
+      // mesmo com aprovações concorrentes de admins diferentes
+      const freshGroupSnap = await tx.get(groupRef);
+      const freshGroup = freshGroupSnap.data() as
+        Record<string, unknown> | undefined;
 
-      // member_count lido dentro da transação — valor consistente mesmo com
-      // aprovações concorrentes (Firestore serializa transações por documento)
       const currentMemberCount =
-        typeof group.member_count === "number" ? group.member_count : 0;
+        typeof freshGroup?.member_count === "number" ?
+          freshGroup.member_count : 0;
 
       tx.set(memberRef, {
         id: userId,

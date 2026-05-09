@@ -9,14 +9,11 @@
  * - Falha de notification nao bloqueia o member create
  */
 
-const mockBatchSet = jest.fn();
-const mockBatchUpdate = jest.fn();
-const mockBatchCommit = jest.fn().mockResolvedValue([]);
-const mockBatch = jest.fn(() => ({
-  set: mockBatchSet,
-  update: mockBatchUpdate,
-  commit: mockBatchCommit,
-}));
+// FIX #620: substituído batch por runTransaction — mocks atualizados.
+// tx.set/update/commit não existem; transação usa tx.set/tx.update diretamente
+// e commit é implícito ao retornar do callback.
+const mockTxSet = jest.fn();
+const mockTxUpdate = jest.fn();
 
 const mockMemberGet = jest.fn().mockResolvedValue({exists: false});
 const mockGroupGet = jest.fn().mockResolvedValue({
@@ -27,6 +24,17 @@ const mockGroupGet = jest.fn().mockResolvedValue({
     member_count: 5,
   }),
 });
+
+const mockRunTransaction = jest.fn(
+  async (callback: (tx: Record<string, unknown>) => Promise<void>) => {
+    const tx = {
+      get: jest.fn((ref: {get: () => Promise<unknown>}) => ref.get()),
+      set: mockTxSet,
+      update: mockTxUpdate,
+    };
+    await callback(tx);
+  }
+);
 
 const mockDoc = jest.fn((path: string) => {
   if (path?.includes("/members/")) {
@@ -44,7 +52,7 @@ jest.mock("firebase-admin", () => {
     apps: [{name: "test"}],
     firestore: jest.fn(() => ({
       doc: mockDoc,
-      batch: mockBatch,
+      runTransaction: mockRunTransaction,
     })),
     initializeApp: jest.fn(),
   };
@@ -108,6 +116,17 @@ describe("onJoinRequestApproved", () => {
         member_count: 5,
       }),
     });
+    // Resetar runTransaction para comportamento padrão
+    mockRunTransaction.mockImplementation(
+      async (callback: (tx: Record<string, unknown>) => Promise<void>) => {
+        const tx = {
+          get: jest.fn((ref: {get: () => Promise<unknown>}) => ref.get()),
+          set: mockTxSet,
+          update: mockTxUpdate,
+        };
+        await callback(tx);
+      }
+    );
   });
 
   it("PENDING -> APPROVED cria member, incrementa counter e envia push", async () => {
@@ -124,11 +143,11 @@ describe("onJoinRequestApproved", () => {
 
     await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
 
-    expect(mockBatch).toHaveBeenCalled();
-    // 1 set member + 1 update group counter + 1 set user/groups
-    expect(mockBatchSet).toHaveBeenCalledTimes(2);
-    expect(mockBatchUpdate).toHaveBeenCalledTimes(1);
-    expect(mockBatchCommit).toHaveBeenCalled();
+    expect(mockRunTransaction).toHaveBeenCalled();
+    // 1 tx.set member + 1 tx.set user/groups = 2 sets
+    expect(mockTxSet).toHaveBeenCalledTimes(2);
+    // 1 tx.update group counter
+    expect(mockTxUpdate).toHaveBeenCalledTimes(1);
     expect(mockSendNotification).toHaveBeenCalledWith(
       "u1",
       expect.objectContaining({
@@ -151,7 +170,7 @@ describe("onJoinRequestApproved", () => {
 
     await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
 
-    expect(mockBatch).not.toHaveBeenCalled();
+    expect(mockRunTransaction).not.toHaveBeenCalled();
     expect(mockSendNotification).not.toHaveBeenCalled();
   });
 
@@ -163,7 +182,7 @@ describe("onJoinRequestApproved", () => {
 
     await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
 
-    expect(mockBatch).not.toHaveBeenCalled();
+    expect(mockRunTransaction).not.toHaveBeenCalled();
   });
 
   it("idempotente: se member ja existe, nao reprocessa", async () => {
@@ -181,7 +200,7 @@ describe("onJoinRequestApproved", () => {
 
     await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
 
-    expect(mockBatchCommit).not.toHaveBeenCalled();
+    expect(mockRunTransaction).not.toHaveBeenCalled();
     expect(mockSendNotification).not.toHaveBeenCalled();
   });
 
@@ -198,7 +217,7 @@ describe("onJoinRequestApproved", () => {
 
     await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
 
-    expect(mockBatch).not.toHaveBeenCalled();
+    expect(mockRunTransaction).not.toHaveBeenCalled();
   });
 
   it("aborta se nao tem responded_by", async () => {
@@ -209,7 +228,7 @@ describe("onJoinRequestApproved", () => {
 
     await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
 
-    expect(mockBatch).not.toHaveBeenCalled();
+    expect(mockRunTransaction).not.toHaveBeenCalled();
   });
 
   it("aborta se grupo nao existe", async () => {
@@ -227,7 +246,7 @@ describe("onJoinRequestApproved", () => {
 
     await (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event);
 
-    expect(mockBatch).not.toHaveBeenCalled();
+    expect(mockRunTransaction).not.toHaveBeenCalled();
   });
 
   it("falha de push notification nao bloqueia member create", async () => {
@@ -247,6 +266,6 @@ describe("onJoinRequestApproved", () => {
       (onJoinRequestApproved as unknown as (e: MockEvent) => Promise<void>)(event)
     ).resolves.not.toThrow();
 
-    expect(mockBatchCommit).toHaveBeenCalled();
+    expect(mockRunTransaction).toHaveBeenCalled();
   });
 });
