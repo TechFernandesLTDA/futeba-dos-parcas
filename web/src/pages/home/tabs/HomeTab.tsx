@@ -30,7 +30,7 @@ import {
 } from '@mui/icons-material';
 import { gamificationColors } from '../../../theme';
 import { useGames } from '../../../hooks/useGames';
-import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../services/firebase';
 import { snakeToCamel } from '../../../utils/firestoreHelpers';
 import { formatGameDateLong, formatTimeAgo as formatTimeAgoUtil } from '../../../utils/dateFormatters';
@@ -81,8 +81,18 @@ export function HomeTab() {
       return;
     }
 
-    const notificationsRef = collection(db, 'users', uid, 'notifications');
-    const q = query(notificationsRef, orderBy('created_at', 'desc'), limit(5));
+    // FIX: era `users/{uid}/notifications` (subcollection inexistente — sem rule)
+    // → permission denied → toast "Erro ao carregar atividades recentes".
+    // Schema real: top-level `notifications` com campo `user_id`. Index composto
+    // (user_id ASC, created_at DESC) já existe em firestore.indexes.json.
+    // Android usa o mesmo path top-level (vide InviteRepositoryImpl.kt:34).
+    const notificationsRef = collection(db, 'notifications');
+    const q = query(
+      notificationsRef,
+      where('user_id', '==', uid),
+      orderBy('created_at', 'desc'),
+      limit(5),
+    );
 
     const unsubscribe = onSnapshot(
       q,
