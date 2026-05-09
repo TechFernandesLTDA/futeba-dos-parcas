@@ -83,6 +83,16 @@ expect class FirebaseDataSource() {
     suspend fun getCurrentUser(): Result<User>
     fun getCurrentUserId(): String?
     suspend fun updateUser(userId: String, updates: Map<String, Any>): Result<Unit>
+
+    /**
+     * FIX #578: escreve PII (birth_date, gender, height_cm, weight_kg, fcm_token, email)
+     * em users_private/{uid} via callable Cloud Function `updateUserPii`.
+     * Owner-only — Cloud Function valida `auth.uid` matches target user.
+     *
+     * Aceita subset de PII fields. Validação acontece server-side.
+     */
+    suspend fun updateUserPiiViaCallable(updates: Map<String, Any>): Result<Unit>
+
     suspend fun searchUsers(query: String, limit: Int): Result<List<User>>
     suspend fun getAllUsers(): Result<List<User>>
     suspend fun updateUserRole(userId: String, newRole: String): Result<Unit>

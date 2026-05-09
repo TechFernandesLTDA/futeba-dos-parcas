@@ -410,7 +410,18 @@ service cloud.firestore {
            fieldUnchanged('auto_gk_rating') &&
            fieldUnchanged('auto_rating_samples') &&
            fieldUnchanged('auto_rating_updated_at') &&
-           // Bug fix: fcm_token PODE ser atualizado pelo proprio usuario (necessario para push notifications)
+           // SECFIX #578 STAGE 2: PII fields (email, fcm_token, birth_date,
+           // height_cm, weight_kg, gender) NÃO podem ser escritos client-side em `users`.
+           // Devem usar callable Cloud Function `updateUserPii` que escreve em
+           // `users_private/{uid}` (only owner reads). Trigger `onUserDocUpdated`
+           // sincroniza PII de `users` → `users_private` (legacy backward compat
+           // até cleanup callable rodar em prod).
+           fieldUnchanged('email') &&
+           fieldUnchanged('fcm_token') &&
+           fieldUnchanged('birth_date') &&
+           fieldUnchanged('height_cm') &&
+           fieldUnchanged('weight_kg') &&
+           fieldUnchanged('gender') &&
            // Apenas updated_at e protegido (gerenciado por Cloud Functions)
            fieldUnchanged('updated_at') &&
            // Validacao de dados no update

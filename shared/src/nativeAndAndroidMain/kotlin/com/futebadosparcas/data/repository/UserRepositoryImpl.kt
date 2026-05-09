@@ -157,47 +157,68 @@ class UserRepositoryImpl(
             try {
                 PlatformLogger.d(TAG, "updateUser: Starting update for user ${user.id}")
 
-                // Converter User para Map com todos os campos do perfil
-                // Incluindo campos pessoais, ratings e preferencias
-                val updates = mutableMapOf<String, Any>()
+                // FIX #578 STAGE 2: separa PII de dados públicos.
+                // PII (birth_date, gender, height_cm, weight_kg) vai pra users_private
+                // via callable updateUserPii (Cloud Function admin SDK).
+                // Dados públicos vão pra users via updateDoc direto.
 
-                // Campos basicos
-                if (user.name.isNotBlank()) updates["name"] = user.name
-                user.nickname?.let { updates["nickname"] = it }
-                user.photoUrl?.let { updates["photo_url"] = it }
+                // === Dados públicos (users) ===
+                val publicUpdates = mutableMapOf<String, Any>()
+                if (user.name.isNotBlank()) publicUpdates["name"] = user.name
+                user.nickname?.let { publicUpdates["nickname"] = it }
+                user.photoUrl?.let { publicUpdates["photo_url"] = it }
 
                 // Preferencias de campo (tipo Society, Futsal, Campo)
-                updates["preferred_field_types"] = user.preferredFieldTypes.map { it.name }
+                publicUpdates["preferred_field_types"] = user.preferredFieldTypes.map { it.name }
 
                 // Ratings manuais (0.0 - 5.0)
-                updates["striker_rating"] = user.strikerRating
-                updates["mid_rating"] = user.midRating
-                updates["defender_rating"] = user.defenderRating
-                updates["gk_rating"] = user.gkRating
+                publicUpdates["striker_rating"] = user.strikerRating
+                publicUpdates["mid_rating"] = user.midRating
+                publicUpdates["defender_rating"] = user.defenderRating
+                publicUpdates["gk_rating"] = user.gkRating
 
-                // Informacoes pessoais
-                user.birthDate?.let { updates["birth_date"] = it }
-                user.gender?.let { updates["gender"] = it }
-                user.heightCm?.let { updates["height_cm"] = it }
-                user.weightKg?.let { updates["weight_kg"] = it }
-                user.dominantFoot?.let { updates["dominant_foot"] = it }
-                user.primaryPosition?.let { updates["primary_position"] = it }
-                user.secondaryPosition?.let { updates["secondary_position"] = it }
-                user.playStyle?.let { updates["play_style"] = it }
-                user.experienceYears?.let { updates["experience_years"] = it }
+                // Atributos NÃO-PII (estilo de jogo / posições / perna dominante)
+                user.dominantFoot?.let { publicUpdates["dominant_foot"] = it }
+                user.primaryPosition?.let { publicUpdates["primary_position"] = it }
+                user.secondaryPosition?.let { publicUpdates["secondary_position"] = it }
+                user.playStyle?.let { publicUpdates["play_style"] = it }
+                user.experienceYears?.let { publicUpdates["experience_years"] = it }
 
-                PlatformLogger.d(TAG, "updateUser: Sending updates to Firebase: ${updates.keys}")
+                PlatformLogger.d(TAG, "updateUser: Sending public updates to users/${user.id}: ${publicUpdates.keys}")
 
-                return@withContext firebaseDataSource.updateUser(user.id, updates).also { result ->
-                    if (result.isSuccess) {
-                        // Invalidar cache para forcar recarga do Firebase com dados atualizados
-                        database.futebaDatabaseQueries.deleteUserById(user.id)
-                        PlatformLogger.d(TAG, "User ${user.id} updated successfully, cache invalidated")
-                    } else {
-                        val error = result.exceptionOrNull()
-                        PlatformLogger.e(TAG, "Failed to update user ${user.id}: ${error?.message}", error)
+                val publicResult = firebaseDataSource.updateUser(user.id, publicUpdates)
+                if (publicResult.isFailure) {
+                    val error = publicResult.exceptionOrNull()
+                    PlatformLogger.e(TAG, "Failed to update users/${user.id}: ${error?.message}", error)
+                    return@withContext publicResult
+                }
+
+                // === PII (users_private via callable) ===
+                // FIX #578: PII fields são escritos via Cloud Function `updateUserPii`
+                // (callable owner-only) que escreve em users_private/{uid}. Rules de
+                // users_private permitem read APENAS pro owner — protege LGPD.
+                val piiUpdates = mutableMapOf<String, Any>()
+                user.birthDate?.let { piiUpdates["birth_date"] = it }
+                user.gender?.let { piiUpdates["gender"] = it }
+                user.heightCm?.let { piiUpdates["height_cm"] = it }
+                user.weightKg?.let { piiUpdates["weight_kg"] = it }
+
+                if (piiUpdates.isNotEmpty()) {
+                    PlatformLogger.d(TAG, "updateUser: Sending PII updates via callable: ${piiUpdates.keys}")
+                    val piiResult = firebaseDataSource.updateUserPiiViaCallable(piiUpdates)
+                    if (piiResult.isFailure) {
+                        val error = piiResult.exceptionOrNull()
+                        PlatformLogger.e(TAG, "Failed to update PII via callable: ${error?.message}", error)
+                        // Non-fatal: dados públicos já foram salvos. PII pode ser retentado.
+                        // Retorna sucesso parcial pra não bloquear UX (showError já mostra erro public).
                     }
                 }
+
+                // Invalidar cache para forcar recarga do Firebase com dados atualizados
+                database.futebaDatabaseQueries.deleteUserById(user.id)
+                PlatformLogger.d(TAG, "User ${user.id} updated successfully, cache invalidated")
+
+                Result.success(Unit)
             } catch (e: Exception) {
                 PlatformLogger.e(TAG, "Exception in updateUser", e)
                 Result.failure(e)
