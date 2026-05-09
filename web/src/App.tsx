@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './services/queryClient';
 import { AuthProvider, ThemeProvider, useAuth } from './contexts';
 import { Box } from '@mui/material';
 import { ErrorBoundary, withErrorBoundary } from './components/common/ErrorBoundary';
@@ -12,14 +13,6 @@ import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { AppLayout } from './components/layout';
 import { CommandPalette } from './components/search/CommandPalette';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5,
-      retry: 1,
-    },
-  },
-});
 
 // Splash & Onboarding
 const SplashScreen = lazy(() => import('./pages/splash/SplashScreen').then(m => ({ default: m.SplashScreen })));

@@ -33,8 +33,7 @@ import {
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
-import { db, auth } from '../../services/firebase';
+import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useToast } from '../../contexts/ToastContext';
@@ -54,7 +53,7 @@ export const SettingsScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { showSuccess, showError } = useToast();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
@@ -114,7 +113,8 @@ export const SettingsScreen: React.FC = () => {
   const handleLogout = async () => {
     setLogoutDialogOpen(false);
     try {
-      await signOut(auth);
+      // Usa logout() do contexto que já limpa o cache do TanStack Query
+      await logout();
       navigate('/login');
     } catch (err) {
       logger.error('Error signing out:', err);

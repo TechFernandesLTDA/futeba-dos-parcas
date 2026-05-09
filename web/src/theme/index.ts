@@ -97,12 +97,30 @@ export const futebaTheme = createTheme({
           fontWeight: 600,
           borderRadius: 12,
           padding: '10px 24px',
+          // Remove tap delay de 300ms no iOS Safari (legacy double-tap-to-zoom)
+          touchAction: 'manipulation',
         },
         contained: {
           boxShadow: `0 2px 4px ${primary.main}33`,
           '&:hover': {
             boxShadow: `0 4px 8px ${primary.main}4D`,
           },
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          // Remove tap delay de 300ms no iOS Safari
+          touchAction: 'manipulation',
+        },
+      },
+    },
+    MuiListItemButton: {
+      styleOverrides: {
+        root: {
+          // Remove tap delay de 300ms no iOS Safari
+          touchAction: 'manipulation',
         },
       },
     },

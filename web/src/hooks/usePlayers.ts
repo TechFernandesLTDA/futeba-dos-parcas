@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
+import { collection, doc, documentId, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 
@@ -46,35 +46,45 @@ export const usePlayers = (groupId?: string) => {
         if (!membersSnap.empty) {
           const memberIds = membersSnap.docs.map((d) => d.id);
 
-          const playersData = await Promise.all(
-            memberIds.map(async (uid: string) => {
-              const userDoc = await getDoc(doc(db, 'users', uid));
-              if (userDoc.exists()) {
-                const raw = userDoc.data();
-                const data = snakeToCamel(raw) as Record<string, any>;
-                return {
-                  id: uid,
-                  name: data.name || 'Jogador',
-                  email: data.email || '',
-                  photoUrl: data.photoUrl || raw.photo_url,
-                  level: data.level || 1,
-                  xp: data.experiencePoints ?? data.xp ?? 0,
-                  division: data.division || 'BRONZE',
-                  gamesPlayed: data.gamesPlayed || raw.games_played || 0,
-                  wins: data.wins || 0,
-                  goals: data.goals || 0,
-                  assists: data.assists || 0,
-                  mvpCount: data.mvpCount || raw.mvp_count || 0,
-                  streak: data.streak || 0,
-                  createdAt: raw.created_at?.toDate?.() || (data.createdAt as any)?.toDate?.(),
-                } as Player;
-              }
-              return null;
-            })
+          // Agrupa em chunks de 10 (limite do whereIn do Firestore) para
+          // evitar N+1 reads individuais — reduz custo de N para ⌈N/10⌉ reads.
+          const chunks: string[][] = [];
+          for (let i = 0; i < memberIds.length; i += 10) {
+            chunks.push(memberIds.slice(i, i + 10));
+          }
+
+          const chunkSnaps = await Promise.all(
+            chunks.map((chunk) =>
+              getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk)))
+            )
           );
 
           if (cancelled) return;
-          setPlayers(playersData.filter(Boolean) as Player[]);
+
+          const allUserDocs = chunkSnaps.flatMap((snap) => snap.docs);
+          const playersData = allUserDocs.map((userDoc) => {
+            const raw = userDoc.data();
+            const data = snakeToCamel(raw) as Record<string, any>;
+            return {
+              id: userDoc.id,
+              name: data.name || 'Jogador',
+              email: data.email || '',
+              photoUrl: data.photoUrl || raw.photo_url,
+              level: data.level || 1,
+              xp: data.experiencePoints ?? data.xp ?? 0,
+              division: data.division || 'BRONZE',
+              gamesPlayed: data.gamesPlayed || raw.games_played || 0,
+              wins: data.wins || 0,
+              goals: data.goals || 0,
+              assists: data.assists || 0,
+              mvpCount: data.mvpCount || raw.mvp_count || 0,
+              streak: data.streak || 0,
+              createdAt: raw.created_at?.toDate?.() || (data.createdAt as any)?.toDate?.(),
+            } as Player;
+          });
+
+          if (cancelled) return;
+          setPlayers(playersData);
         }
         if (!cancelled) {
           setLoading(false);

@@ -20,6 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { ReactNode } from 'react';
 import { useDirtyGuard } from '../../hooks/useDirtyGuard';
+import { useKeyboardInset } from '../../hooks/useKeyboardInset';
 
 interface FormScaffoldProps {
   /** Título mostrado no header */
@@ -60,6 +61,7 @@ export function FormScaffold({
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const { isBlocked, attemptClose, proceed, cancel } = useDirtyGuard(isDirty);
+  const kbdInset = useKeyboardInset();
 
   // FIX #574: dirty guard agora intercepta o close button de verdade.
   // Antes: handleClose navegava direto, dialog "Descartar mudanças?" nunca abria
@@ -131,8 +133,9 @@ export function FormScaffold({
             display: 'flex',
             justifyContent: { xs: 'stretch', md: 'flex-end' },
             gap: 1,
-            // Safe-area pra mobile
-            pb: { xs: 'calc(env(safe-area-inset-bottom, 0px) + 16px)', md: 2 },
+            // Safe-area + keyboard inset dinâmico (visualViewport API, iOS Safari)
+            // env(safe-area-inset-bottom) é estático; kbdInset compensa o teclado virtual
+            pb: { xs: `calc(env(safe-area-inset-bottom, 0px) + ${kbdInset}px + 16px)`, md: 2 },
           }}
         >
           {footer}

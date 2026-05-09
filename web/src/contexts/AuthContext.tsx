@@ -12,6 +12,7 @@ import {
 import { FirebaseError } from 'firebase/app';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../services/firebase';
+import { queryClient } from '../services/queryClient';
 import { User } from '../types';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
@@ -227,6 +228,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       await signOut(auth);
+      // Limpar cache do TanStack Query para evitar vazamento de dados entre contas
+      queryClient.clear();
     } catch (err) {
       setError((err as Error).message || 'Erro ao sair');
       throw err;
