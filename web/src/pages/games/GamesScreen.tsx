@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -48,6 +48,8 @@ export const GamesScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const fetchGames = useCallback(() => {
     return new Promise<void>((resolve) => {
@@ -63,9 +65,9 @@ export const GamesScreen: React.FC = () => {
         setLoading(false);
         setRefreshing(false);
         resolve();
-      }, (err) => {
+      },       (err) => {
         logger.error('Error in games listener:', err);
-        showError('Erro ao carregar jogos. Verifique sua conexão.');
+        showErrorRef.current('Erro ao carregar jogos. Verifique sua conexão.');
         setLoading(false);
         setRefreshing(false);
         resolve();
@@ -73,7 +75,7 @@ export const GamesScreen: React.FC = () => {
 
       return unsubscribe;
     });
-  }, [showError]);
+  }, []);
 
   useEffect(() => {
     const unsub = fetchGames();
