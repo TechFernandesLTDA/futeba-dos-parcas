@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 import {
   onDocumentUpdated,
   onDocumentDeleted,
+  onDocumentWritten,
 } from "firebase-functions/v2/firestore";
 import {
   FIRESTORE_BATCH_SAFE_LIMIT,
@@ -1732,17 +1733,25 @@ export const onGroupDeleted = onDocumentDeleted(
 // FIX F-C2: Substituído recontagem full + Set in-memory (não
 // funciona cross-instance em Cloud Functions v2) por
 // FieldValue.increment atômico — seguro em múltiplas instâncias.
-// Sync de players_count quando confirmações mudam
+// Sync de players_count quando confirmações mudam.
+//
+// FIX #616: onDocumentWritten captura CREATE/UPDATE/DELETE.
+// Antes: onDocumentUpdated → players_count não atualizava em first
+// confirmation (status já vem CONFIRMED na criação) nem em delete
+// (admin remove player). Self-correcting via subsequent updates,
+// mas inconsistência observável.
 export const onConfirmationWrite =
-  onDocumentUpdated(
+  onDocumentWritten(
     "confirmations/{confirmationId}",
     async (event) => {
       if (!event.data) return;
 
+      // FIX #616: before pode não existir (CREATE), after pode não
+      // existir (DELETE) — usar optional chaining em ambos os lados.
       const before =
-        event.data.before.data();
+        event.data.before?.data?.();
       const after =
-        event.data.after.data();
+        event.data.after?.data?.();
       const gameId =
         after?.game_id || before?.game_id;
 
