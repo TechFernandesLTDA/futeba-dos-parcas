@@ -4,6 +4,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { UserBadge, BadgeDefinition, BADGE_DEFINITIONS } from '../types/gamification';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('useBadges');
 
 // Busca badges desbloqueadas do usuário
 async function fetchUserBadges(userId: string): Promise<{
@@ -55,6 +58,8 @@ export const useBadges = (userId?: string) => {
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['badges', userId] });
+    }, (err) => {
+      logger.error('Error in badges listener:', err);
     });
 
     return () => unsubscribe();

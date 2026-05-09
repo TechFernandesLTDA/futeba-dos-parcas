@@ -1151,7 +1151,9 @@ service cloud.firestore {
            (request.resource.data.role == 'OWNER' &&
             request.resource.data.user_id == userId() &&
             memberId == userId() &&
-            getAfter(/databases/$(database)/documents/groups/$(groupId)).data.owner_id == userId()) ||
+            // Fix: null-check getAfter() result before accessing .data (#540)
+            let groupAfter = getAfter(/databases/$(database)/documents/groups/$(groupId));
+            groupAfter != null && groupAfter.data.owner_id == userId()) ||
            (request.resource.data.role == 'MEMBER' && request.resource.data.user_id == userId() && memberId == userId())
         );
 
@@ -1190,7 +1192,8 @@ service cloud.firestore {
           requesterId == userId() &&
           request.resource.data.user_id == userId() &&
           request.resource.data.status == 'PENDING' &&
-          // Grupo precisa ser publico
+          // Grupo precisa ser publico e existir (#540)
+          exists(/databases/$(database)/documents/groups/$(groupId)) &&
           get(/databases/$(database)/documents/groups/$(groupId)).data.is_public == true &&
           // Nao pode ja ser membro
           !exists(/databases/$(database)/documents/groups/$(groupId)/members/$(userId()));

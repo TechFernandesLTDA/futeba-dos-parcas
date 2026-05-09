@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -52,6 +52,8 @@ export const LocationsMapScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
   const { isLoaded: mapsLoaded } = useLoadScript({ googleMapsApiKey: apiKey });
@@ -72,13 +74,13 @@ export const LocationsMapScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error in locations map listener:', err);
-        showError('Erro ao carregar locais no mapa.');
+        showErrorRef.current('Erro ao carregar locais no mapa.');
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [showError]);
+  }, []);
 
   const filteredLocations = locations.filter((loc) =>
     loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

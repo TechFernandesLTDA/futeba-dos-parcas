@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
@@ -45,6 +45,8 @@ export const PublicGamesMapScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const { showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
   const { isLoaded: mapsLoaded } = useLoadScript({ googleMapsApiKey: apiKey });
@@ -71,13 +73,13 @@ export const PublicGamesMapScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error in public games map listener:', err);
-        showError('Erro ao carregar jogos no mapa.');
+        showErrorRef.current('Erro ao carregar jogos no mapa.');
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [showError]);
+  }, []);
 
   const filteredGames = games.filter((game) =>
     game.locationName?.toLowerCase().includes(searchQuery.toLowerCase())

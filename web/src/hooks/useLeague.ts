@@ -15,6 +15,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { LeagueDivision } from '../types/gamification';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('useLeague');
 
 export interface LeaguePlayer {
   id: string;
@@ -131,6 +134,8 @@ export const useLeague = (currentUserId?: string, division?: LeagueDivision) => 
         return;
       }
       queryClient.invalidateQueries({ queryKey: ['league'] });
+    }, (err) => {
+      logger.error('Error in league listener:', err);
     });
 
     return () => unsubscribe();

@@ -113,6 +113,8 @@ export function useGames(filters?: {
         return;
       }
       queryClient.invalidateQueries({ queryKey });
+    }, (err) => {
+      logger.error('Error in games cache invalidation listener:', err);
     });
 
     return () => unsubscribe();
@@ -175,6 +177,11 @@ export function useGameDetail(gameId: string | null) {
         // Ordenar por confirmation_order client-side
         confirmationsData.sort((a, b) => (a.confirmationOrder || 0) - (b.confirmationOrder || 0));
         setConfirmations(confirmationsData);
+      },
+      (err) => {
+        logger.error('Error in confirmations listener:', err);
+        setConfirmations([]);
+        setError(err.message);
       }
     );
 
