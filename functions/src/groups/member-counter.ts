@@ -13,7 +13,7 @@
  */
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
-import {db} from "../utils/admin";
+import {db} from "../_db";
 
 /**
  * Statuses que CONTAM como membro ativo no member_count.
@@ -32,6 +32,9 @@ const ACTIVE_STATUSES = new Set([
  *
  * Esta tolerância evita drift em data legacy. Cloud Function é authoritative
  * pra count, então qualquer ambiguidade é resolvida aqui em vez de no client.
+ *
+ * @param {Record<string, unknown> | undefined} data Member doc data
+ * @return {boolean} true se member conta no member_count
  */
 function isActiveMember(data: Record<string, unknown> | undefined): boolean {
   if (!data) return false;
@@ -59,7 +62,7 @@ function isActiveMember(data: Record<string, unknown> | undefined): boolean {
  * | yes           | yes          |  0    | profile update       |
  * | no            | no           |  0    | INACTIVE → REMOVED   |
  *
- * Idempotency: trigger pode re-fire em retry. Se delta=0 (mudança não-counting),
+ * Idempotency: trigger pode re-fire em retry. Se delta=0 (sem mudança),
  * skip update — sem efeito colateral. Se delta != 0, increment é aplicado mesmo
  * em retry, mas Eventarc dedup minimiza repetição. Tolerável em sistema de
  * gamificação (member_count é counter, não financeiro).
