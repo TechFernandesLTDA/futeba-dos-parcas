@@ -18,7 +18,6 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   useTheme,
-  Chip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -169,19 +168,6 @@ export const ThemeSettingsScreen: React.FC = () => {
               />
             </ListItem>
           </List>
-        </Card>
-
-        <Card sx={{ mb: 2 }}>
-          <CardContent>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Idioma
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Chip label="Português" color="primary" />
-              <Chip label="English" variant="outlined" />
-              <Chip label="Español" variant="outlined" />
-            </Box>
-          </CardContent>
         </Card>
 
         <Card>
