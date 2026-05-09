@@ -1826,6 +1826,11 @@ export * from "./user-management";
 // Issue #517 Phase 2: request-to-join em grupos publicos
 export * from "./groups/join-requests";
 
+// Issue #611 / #626: server-authoritative member_count counter
+// (cliente não pode mais escrever member_count direto — bypassa privilege
+// escalation e desbloqueia join-via-invite no web)
+export * from "./groups/member-counter";
+
 // Infrastructure & Monitoring
 export * from "./maintenance/cleanup-old-logs";
 export * from "./maintenance/soft-delete";

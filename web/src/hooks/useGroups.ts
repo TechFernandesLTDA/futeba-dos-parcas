@@ -13,7 +13,6 @@ import {
   serverTimestamp,
   writeBatch,
   documentId,
-  increment,
 } from 'firebase/firestore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '../services/firebase';
@@ -452,14 +451,17 @@ export function useInvitePlayers() {
           group_name: groupData?.name || inviteData.group_name || 'Grupo',
           group_photo: groupData?.photo_url || null,
           role: 'MEMBER',
-          member_count: increment(1),
+          // FIX #611 / #626: member_count é SERVER-AUTHORITATIVE. Cloud Function
+          // `onMemberWritten` increment automático ao detectar member doc creation.
+          // Cliente lê member_count via real-time snapshot da group quando precisar.
           joined_at: serverTimestamp(),
         });
 
-        batch.update(groupRef, {
-          member_count: increment(1),
-          updated_at: serverTimestamp(),
-        });
+        // FIX #611 / #626: REMOVIDO o client-side increment de groups/{gid}.member_count.
+        // Antes: privilege escalation (qualquer auth podia overwrite) + quebrava
+        // join-via-invite quando rule restringia a member-only.
+        // Agora: trigger `onMemberWritten` faz increment via admin SDK ao detectar
+        // o batch.set(memberRef) acima.
 
         batch.update(inviteDoc.ref, {
           used: true,

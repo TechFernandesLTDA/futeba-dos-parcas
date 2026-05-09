@@ -551,16 +551,15 @@ class GroupRepository constructor(
                 return Result.failure(Exception("Administrador não pode remover outro administrador"))
             }
 
-            // Usar FieldValue.increment(-1) atômico em vez de full recount
-            // Economiza N reads + evita race condition em remoções simultâneas
+            // FIX #611 / #626: member_count é SERVER-AUTHORITATIVE.
+            // Cloud Function `onMemberWritten` detecta mudança de status ACTIVE→REMOVED
+            // e aplica increment(-1) via admin SDK (bypassa rules).
+            // Antes: client escrevia member_count direto, abrindo privilege escalation
+            // (qualquer auth podia overwrite member_count em qualquer grupo).
             firestore.runTransaction { transaction ->
                 val memberRef = groupsCollection.document(groupId)
                     .collection("members").document(memberId)
                 transaction.update(memberRef, "status", GroupMemberStatus.REMOVED.name)
-
-                // Decremento atômico no grupo principal
-                val groupRef = groupsCollection.document(groupId)
-                transaction.update(groupRef, "member_count", FieldValue.increment(-1))
 
                 // Remover referência do membro removido
                 val userGroupRef = usersCollection.document(memberId)
@@ -592,16 +591,15 @@ class GroupRepository constructor(
                 return Result.failure(Exception("O dono não pode sair do grupo. Transfira a propriedade primeiro."))
             }
 
-            // Sair do grupo - apenas atualiza o próprio documento e o grupo principal
-            // A sincronização do member_count nos outros membros será feita via syncGroupMemberCount
-            // quando eles abrirem a tela de grupos (evita erro de permissão do Firestore)
+            // FIX #611 / #626: member_count é SERVER-AUTHORITATIVE.
+            // Cloud Function `onMemberWritten` detecta mudança de status ACTIVE→INACTIVE
+            // e aplica increment(-1) via admin SDK (bypassa rules).
+            // syncGroupMemberCount() ainda existe pra reconciliar denormalized
+            // user-group docs, mas member_count do group em si é managed pela trigger.
             firestore.runTransaction { transaction ->
                 val memberRef = groupsCollection.document(groupId)
                     .collection("members").document(userId)
                 transaction.update(memberRef, "status", GroupMemberStatus.INACTIVE.name)
-
-                val groupRef = groupsCollection.document(groupId)
-                transaction.update(groupRef, "member_count", FieldValue.increment(-1))
 
                 // Remover referência do usuário que está saindo
                 val userGroupRef = usersCollection.document(userId)
@@ -929,10 +927,10 @@ class GroupRepository constructor(
 
             val correctMemberCount = allMemberIds.size
 
-            // Atualizar grupo principal
-            groupsCollection.document(groupId)
-                .update("member_count", correctMemberCount)
-                .await()
+            // FIX #611 / #626: NÃO atualizar groups/{gid}.member_count aqui.
+            // Cloud Function `onMemberWritten` é o único path autorizado a escrever
+            // esse campo. Esta função apenas reconcilia denormalized
+            // users/{uid}/groups/{gid}.member_count via batch.
 
             // Atualizar UserGroups em batches de 400
             for (i in allMemberIds.indices step 400) {

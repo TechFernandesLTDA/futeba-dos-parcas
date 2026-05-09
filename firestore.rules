@@ -1101,22 +1101,17 @@ service cloud.firestore {
             !('description' in request.resource.data.diff(resource.data).affectedKeys()) ||
             isValidDescription(request.resource.data.description)
           )
-        ) ||
-        // SECFIX #611: atualização de member_count limitada a +1/-1 increment.
-        // Antes: qualquer auth podia overwrite member_count com valor arbitrário
-        // (data corruption: setar 999999 em qualquer grupo).
-        // Agora: aceita apenas +1 (join) ou -1 (leave/remove). Não verifica membership
-        // porque join-via-invite (web batch) precisa incrementar antes do member doc
-        // ser visível pra rule. Spam de +1 ainda é possível mas detectável em audit logs.
-        // Solução completa: trigger onMemberAdded/Removed via Cloud Function (admin SDK
-        // bypassa rules). Rastreado em #611-FU (follow-up).
-        (
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['member_count', 'updated_at']) &&
-          (
-            request.resource.data.member_count == resource.data.member_count + 1 ||
-            request.resource.data.member_count == resource.data.member_count - 1
-          )
         )
+        // SECFIX #611 / #626: member_count é SERVER-AUTHORITATIVE.
+        // REMOVIDO o branch que permitia client write em member_count.
+        // Cloud Function `onMemberWritten` (functions/src/groups/member-counter.ts)
+        // mantém o counter sincronizado via admin SDK (bypassa rules) ao detectar
+        // criação/atualização/deleção de doc em groups/{gid}/members/{uid}.
+        //
+        // Antes: privilege escalation (qualquer auth podia overwrite member_count
+        // em qualquer grupo, mesmo não-membro).
+        // Mitigação intermediária (PR #627, agora obsoleta): aceitava +1/-1 only.
+        // Solução final (este PR): client NUNCA escreve member_count.
       );
 
       // Issue #516: hard delete somente ADMIN (recovery/compliance).
