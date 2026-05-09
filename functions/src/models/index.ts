@@ -15,6 +15,8 @@ export interface Game {
     id: string;
     xp_processed?: boolean;
     xp_processing?: boolean;
+    xp_processing_at?: admin.firestore.Timestamp;
+    xp_processing_error?: string;
     status: string; // "FINISHED"
     mvp_id?: string;
     owner_id: string;

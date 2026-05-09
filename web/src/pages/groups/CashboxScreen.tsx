@@ -31,7 +31,7 @@ import {
   TrendingDown as TrendingDownIcon,
   History as HistoryIcon,
 } from '@mui/icons-material';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -81,8 +81,10 @@ export const CashboxScreen: React.FC = () => {
   useEffect(() => {
     if (!groupId) return;
 
-    const cashRef = collection(db, 'cashbox');
-    const q = query(cashRef, where('group_id', '==', groupId), orderBy('created_at', 'desc'));
+    let cancelled = false;
+
+    const cashRef = collection(db, 'groups', groupId, 'cashbox');
+    const q = query(cashRef, orderBy('created_at', 'desc'));
 
     const unsubscribe = onSnapshot(
       q,
@@ -112,26 +114,34 @@ export const CashboxScreen: React.FC = () => {
     );
 
     const fetchMembers = async () => {
-      const groupDoc = await getDoc(doc(db, 'groups', groupId));
-      if (groupDoc.exists()) {
-        const memberIds = groupDoc.data().members || [];
-        const membersData = await Promise.all(
-          memberIds.slice(0, 20).map(async (uid: string) => {
-            const userDoc = await getDoc(doc(db, 'users', uid));
-            if (userDoc.exists()) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const d = snakeToCamel(userDoc.data()) as Record<string, any>;
-              return { id: uid, name: d.name || 'Jogador', photoUrl: d.photoUrl };
-            }
-            return { id: uid, name: 'Jogador' };
-          })
-        );
-        setMembers(membersData);
+      try {
+        const groupDoc = await getDoc(doc(db, 'groups', groupId));
+        if (cancelled) return;
+        if (groupDoc.exists()) {
+          const memberIds = groupDoc.data().members || [];
+          const membersData = await Promise.all(
+            memberIds.slice(0, 20).map(async (uid: string) => {
+              const userDoc = await getDoc(doc(db, 'users', uid));
+              if (userDoc.exists()) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const d = snakeToCamel(userDoc.data()) as Record<string, any>;
+                return { id: uid, name: d.name || 'Jogador', photoUrl: d.photoUrl };
+              }
+              return { id: uid, name: 'Jogador' };
+            })
+          );
+          if (!cancelled) setMembers(membersData);
+        }
+      } catch (err) {
+        if (!cancelled) logger.error('Error fetching members:', err);
       }
     };
 
     fetchMembers();
-    return () => unsubscribe();
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [groupId]);
 
   const handleAddTransaction = async () => {
@@ -142,7 +152,7 @@ export const CashboxScreen: React.FC = () => {
       const userDoc = await getDoc(doc(db, 'users', user.id));
       const userName = userDoc.exists() ? userDoc.data().name : 'Usuário';
 
-      await addDoc(collection(db, 'cashbox'), {
+      await addDoc(collection(db, 'groups', groupId, 'cashbox'), {
         group_id: groupId,
         type: transactionType,
         amount: parsedAmount,

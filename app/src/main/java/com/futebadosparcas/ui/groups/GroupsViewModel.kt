@@ -141,7 +141,7 @@ class GroupsViewModel(
         viewModelScope.launch {
             _createGroupState.value = CreateGroupUiState.Loading
 
-            val result = createGroupUseCase(name, description, photoUri)
+            val result = createGroupUseCase(name, description, photoUri?.toString())
 
             result.fold(
                 onSuccess = { group ->
@@ -160,7 +160,7 @@ class GroupsViewModel(
         viewModelScope.launch {
             _actionState.value = GroupActionState.Loading
 
-            val result = updateGroupUseCase(groupId, name, description, photoUri)
+            val result = updateGroupUseCase(groupId, name, description, photoUri?.toString())
 
             result.fold(
                 onSuccess = {

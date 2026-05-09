@@ -51,7 +51,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 const logger = createLogger('GroupSettingsScreen');
 
 // Fix #414: ROLE_CONFIG extraído para constants/group.ts (single source of truth)
-import { ROLE_CONFIG } from '../../constants/group';
+import { ROLE_CONFIG, getRoleColor } from '../../constants/group';
 
 export const GroupSettingsScreen: React.FC = () => {
   useDocumentTitle('Configurações do Grupo');
@@ -334,8 +334,8 @@ export const GroupSettingsScreen: React.FC = () => {
                             sx={{
                               height: 20,
                               fontSize: '0.75rem',
-                              bgcolor: alpha(ROLE_CONFIG[member.role]?.color || theme.palette.text.secondary, 0.1),
-                              color: ROLE_CONFIG[member.role]?.color || theme.palette.text.secondary,
+                              bgcolor: alpha(getRoleColor(theme, member.role), 0.1),
+                              color: getRoleColor(theme, member.role),
                             }}
                           />
                         </Box>

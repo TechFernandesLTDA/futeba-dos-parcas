@@ -207,7 +207,7 @@ class GroupDetailViewModel(
             // Log de ação (CMD-30 #4)
             AppLogger.i("GroupDetailVM") { "Updating group $groupId: name=$name" }
 
-            val result = updateGroupUseCase(groupId, name.trim(), description.trim(), photoUri)
+            val result = updateGroupUseCase(groupId, name.trim(), description.trim(), photoUri?.toString())
 
             result.fold(
                 onSuccess = {

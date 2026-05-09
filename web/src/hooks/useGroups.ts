@@ -226,6 +226,10 @@ export function useGroupDetail(groupId: string | null) {
           };
         });
         setMembers(membersData);
+      },
+      (err) => {
+        logger.error('Error fetching members:', err);
+        setError(err.message);
       }
     );
 

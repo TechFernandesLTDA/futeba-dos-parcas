@@ -2,6 +2,7 @@ package com.futebadosparcas.data.repository
 
 import com.futebadosparcas.data.datasource.GroupPhotoDataSource
 import com.futebadosparcas.domain.model.Group
+import com.futebadosparcas.domain.model.GroupInvite
 import com.futebadosparcas.data.model.Group as PublicGroup
 import com.futebadosparcas.data.model.GroupMember
 import com.futebadosparcas.data.model.GroupMemberRole
@@ -83,7 +84,7 @@ class GroupRepository constructor(
     /**
      * Cria um novo grupo com o usuário atual como owner
      */
-    suspend fun createGroup(name: String, description: String, photoUri: Uri? = null): Result<Group> {
+    suspend fun createGroup(name: String, description: String, photoUri: String? = null): Result<Group> {
         return try {
             val userId = auth.currentUser?.uid
                 ?: return Result.failure(Exception("Usuário não autenticado"))
@@ -99,7 +100,8 @@ class GroupRepository constructor(
             // Upload da foto se houver
             var photoUrl: String? = null
             if (photoUri != null) {
-                val uploadResult = uploadGroupPhoto(groupId, photoUri)
+                val uri = Uri.parse(photoUri)
+                val uploadResult = uploadGroupPhoto(groupId, uri)
                 photoUrl = uploadResult.getOrElse { return Result.failure(it) }
             }
 
@@ -186,7 +188,7 @@ class GroupRepository constructor(
             .orderBy("joined_at", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    trySend(emptyList())
+                    close(error)
                     return@addSnapshotListener
                 }
                 val groups = snapshot?.toObjects(UserGroup::class.java) ?: emptyList()
@@ -383,7 +385,7 @@ class GroupRepository constructor(
         groupId: String,
         name: String,
         description: String,
-        photoUri: Uri? = null
+        photoUri: String? = null
     ): Result<Unit> {
         return try {
             val userId = auth.currentUser?.uid
@@ -398,7 +400,8 @@ class GroupRepository constructor(
             // Upload da foto se houver
             var photoUrl: String? = null
             if (photoUri != null) {
-                photoUrl = uploadGroupPhoto(groupId, photoUri)
+                val uri = Uri.parse(photoUri)
+                photoUrl = uploadGroupPhoto(groupId, uri)
                     .getOrElse { return Result.failure(it) }
             }
 
@@ -706,36 +709,13 @@ class GroupRepository constructor(
 
     /**
      * Realiza soft delete de um grupo (P2 #40).
-     * Marca deleted_at e deleted_by sem alterar o status.
+     * Delega para deleteGroup() que ja faz soft delete completo + limpeza de referencias.
      *
      * @param groupId ID do grupo a ser soft-deletado
      * @return Result<Unit>
      */
     suspend fun softDeleteGroup(groupId: String): Result<Unit> {
-        return try {
-            val userId = auth.currentUser?.uid
-                ?: return Result.failure(Exception("Usuário não autenticado"))
-
-            // Verificar se é owner ou admin
-            val role = getMyRoleInGroup(groupId).getOrElse { return Result.failure(it) }
-            if (role != GroupMemberRole.OWNER) {
-                return Result.failure(Exception("Apenas o dono pode deletar o grupo"))
-            }
-
-            val updates = mapOf(
-                "deleted_at" to FieldValue.serverTimestamp(),
-                "deleted_by" to userId,
-                "status" to GroupStatus.DELETED.name,
-                "updated_at" to FieldValue.serverTimestamp()
-            )
-            groupsCollection.document(groupId).update(updates).await()
-
-            AppLogger.i(TAG) { "Grupo $groupId soft-deletado por $userId" }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            AppLogger.e(TAG, "Erro ao soft-deletar grupo $groupId", e)
-            Result.failure(e)
-        }
+        return deleteGroup(groupId)
     }
 
     /**
@@ -1054,6 +1034,117 @@ class GroupRepository constructor(
             blockedRef.delete().await()
 
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ========== CONVITE DE GRUPO (InviteToGroupUseCase) ==========
+
+    /**
+     * Busca um usuário pelo email no Firestore.
+     * Retorna mapa com dados do usuário, incluindo uid como campo "uid".
+     */
+    suspend fun findUserByEmail(email: String): Result<Map<String, Any>> {
+        return try {
+            val snapshot = firestore.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .await()
+
+            if (snapshot.isEmpty) {
+                Result.failure(Exception("Usuário não encontrado"))
+            } else {
+                val doc = snapshot.documents.first()
+                val userData = doc.data ?: emptyMap()
+                val userDataWithId = userData.toMutableMap()
+                userDataWithId["uid"] = doc.id
+                Result.success(userDataWithId)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Verifica se já existe um convite pendente do mesmo grupo para o usuário.
+     */
+    suspend fun hasPendingGroupInvite(groupId: String, invitedUserId: String): Result<Boolean> {
+        return try {
+            val snapshot = firestore.collection("group_invites")
+                .whereEqualTo("group_id", groupId)
+                .whereEqualTo("invited_user_id", invitedUserId)
+                .whereEqualTo("status", "PENDING")
+                .limit(1)
+                .get()
+                .await()
+
+            Result.success(snapshot.size() > 0)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Cria um convite de grupo e atualiza contagem de convites pendentes.
+     * Opera em transação para atomicidade.
+     */
+    suspend fun createGroupInvite(invite: GroupInvite): Result<GroupInvite> {
+        return try {
+            val inviteRef = firestore.collection("group_invites").document()
+            val inviteWithId = invite.copy(id = inviteRef.id)
+
+            firestore.runTransaction { transaction ->
+                transaction.set(inviteRef, inviteWithId)
+                val userRef = firestore.collection("users").document(invite.invitedUserId)
+                transaction.update(userRef, "pending_invites_count", FieldValue.increment(1))
+            }.await()
+
+            Result.success(inviteWithId)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Verifica se um usuário específico é membro ativo de um grupo.
+     */
+    suspend fun isUserMemberOfGroup(groupId: String, userId: String): Result<Boolean> {
+        return try {
+            val memberDoc = groupsCollection.document(groupId)
+                .collection("members")
+                .document(userId)
+                .get()
+                .await()
+
+            if (memberDoc.exists()) {
+                val status = memberDoc.getString("status")
+                Result.success(status == GroupMemberStatus.ACTIVE.name)
+            } else {
+                Result.success(false)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Retorna o ID do usuário autenticado atual.
+     */
+    fun getCurrentUserId(): String? = auth.currentUser?.uid
+
+    /**
+     * Busca o nome do usuário atual no Firestore.
+     */
+    suspend fun getCurrentUserName(): Result<String> {
+        return try {
+            val userId = auth.currentUser?.uid
+                ?: return Result.failure(Exception("Usuário não autenticado"))
+
+            val userDoc = firestore.collection("users").document(userId).get().await()
+            val name = userDoc.getString("name") ?: "Usuário"
+            Result.success(name)
         } catch (e: Exception) {
             Result.failure(e)
         }

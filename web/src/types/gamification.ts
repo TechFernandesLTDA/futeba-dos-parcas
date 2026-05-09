@@ -188,28 +188,28 @@ export interface BadgeDefinition {
   description: string;
   icon: string;
   category: string;
-  rarity: 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
+  rarity: BadgeRarity;
   requirement: string;
   xpReward: number;
 }
 
 export const BADGE_DEFINITIONS: BadgeDefinition[] = [
-  { id: 'first_game', name: 'Primeira Pelada', description: 'Participe do seu primeiro jogo', icon: '⚽', category: 'participation', rarity: 'COMMON', requirement: 'Participar de 1 jogo', xpReward: 50 },
-  { id: 'streak_3', name: 'Sequência Iniciante', description: 'Jogue 3 partidas seguidas', icon: '🔥', category: 'streak', rarity: 'COMMON', requirement: 'Sequência de 3 jogos', xpReward: 30 },
-  { id: 'streak_7', name: 'Semana Perfeita', description: 'Jogue 7 partidas seguidas', icon: '💪', category: 'streak', rarity: 'RARE', requirement: 'Sequência de 7 jogos', xpReward: 100 },
-  { id: 'streak_30', name: 'Mês Imbatível', description: 'Jogue 30 partidas seguidas', icon: '🏆', category: 'streak', rarity: 'LEGENDARY', requirement: 'Sequência de 30 jogos', xpReward: 500 },
-  { id: 'mvp_1', name: 'Estreante MVP', description: 'Seja eleito MVP pela primeira vez', icon: '⭐', category: 'mvp', rarity: 'COMMON', requirement: '1 MVP', xpReward: 100 },
-  { id: 'mvp_10', name: 'Estrela em Ascensão', description: 'Seja eleito MVP 10 vezes', icon: '🌟', category: 'mvp', rarity: 'RARE', requirement: '10 MVPs', xpReward: 300 },
-  { id: 'mvp_50', name: 'Lenda do MVP', description: 'Seja eleito MVP 50 vezes', icon: '👑', category: 'mvp', rarity: 'LEGENDARY', requirement: '50 MVPs', xpReward: 1000 },
-  { id: 'goals_10', name: 'Goleador', description: 'Marque 10 gols', icon: '🥅', category: 'goals', rarity: 'COMMON', requirement: '10 gols', xpReward: 50 },
-  { id: 'goals_100', name: 'Artilheiro', description: 'Marque 100 gols', icon: '⚽', category: 'goals', rarity: 'RARE', requirement: '100 gols', xpReward: 200 },
-  { id: 'goals_500', name: 'Máquina de Gols', description: 'Marque 500 gols', icon: '🎯', category: 'goals', rarity: 'LEGENDARY', requirement: '500 gols', xpReward: 1000 },
-  { id: 'assists_50', name: 'Garçom', description: 'Dê 50 assistências', icon: '👟', category: 'assists', rarity: 'COMMON', requirement: '50 assists', xpReward: 50 },
-  { id: 'assists_200', name: 'Mestre das Assistências', description: 'Dê 200 assistências', icon: '🎭', category: 'assists', rarity: 'RARE', requirement: '200 assists', xpReward: 300 },
-  { id: 'wins_10', name: 'Vencedor', description: 'Vença 10 jogos', icon: '🏅', category: 'wins', rarity: 'COMMON', requirement: '10 vitórias', xpReward: 100 },
-  { id: 'wins_50', name: 'Campeão', description: 'Vença 50 jogos', icon: '🏆', category: 'wins', rarity: 'RARE', requirement: '50 vitórias', xpReward: 400 },
-  { id: 'games_100', name: 'Veterano', description: 'Participe de 100 jogos', icon: '🎖️', category: 'participation', rarity: 'EPIC', requirement: '100 jogos', xpReward: 500 },
-  { id: 'games_500', name: 'Lenda Viva', description: 'Participe de 500 jogos', icon: '🏟️', category: 'participation', rarity: 'LEGENDARY', requirement: '500 jogos', xpReward: 2000 },
+  { id: 'first_game', name: 'Primeira Pelada', description: 'Participe do seu primeiro jogo', icon: '⚽', category: 'participation', rarity: 'COMUM', requirement: 'Participar de 1 jogo', xpReward: 50 },
+  { id: 'streak_3', name: 'Sequência Iniciante', description: 'Jogue 3 partidas seguidas', icon: '🔥', category: 'streak', rarity: 'COMUM', requirement: 'Sequência de 3 jogos', xpReward: 30 },
+  { id: 'streak_7', name: 'Semana Perfeita', description: 'Jogue 7 partidas seguidas', icon: '💪', category: 'streak', rarity: 'RARO', requirement: 'Sequência de 7 jogos', xpReward: 100 },
+  { id: 'streak_30', name: 'Mês Imbatível', description: 'Jogue 30 partidas seguidas', icon: '🏆', category: 'streak', rarity: 'LENDARIO', requirement: 'Sequência de 30 jogos', xpReward: 500 },
+  { id: 'mvp_1', name: 'Estreante MVP', description: 'Seja eleito MVP pela primeira vez', icon: '⭐', category: 'mvp', rarity: 'COMUM', requirement: '1 MVP', xpReward: 100 },
+  { id: 'mvp_10', name: 'Estrela em Ascensão', description: 'Seja eleito MVP 10 vezes', icon: '🌟', category: 'mvp', rarity: 'RARO', requirement: '10 MVPs', xpReward: 300 },
+  { id: 'mvp_50', name: 'Lenda do MVP', description: 'Seja eleito MVP 50 vezes', icon: '👑', category: 'mvp', rarity: 'LENDARIO', requirement: '50 MVPs', xpReward: 1000 },
+  { id: 'goals_10', name: 'Goleador', description: 'Marque 10 gols', icon: '🥅', category: 'goals', rarity: 'COMUM', requirement: '10 gols', xpReward: 50 },
+  { id: 'goals_100', name: 'Artilheiro', description: 'Marque 100 gols', icon: '⚽', category: 'goals', rarity: 'RARO', requirement: '100 gols', xpReward: 200 },
+  { id: 'goals_500', name: 'Máquina de Gols', description: 'Marque 500 gols', icon: '🎯', category: 'goals', rarity: 'LENDARIO', requirement: '500 gols', xpReward: 1000 },
+  { id: 'assists_50', name: 'Garçom', description: 'Dê 50 assistências', icon: '👟', category: 'assists', rarity: 'COMUM', requirement: '50 assists', xpReward: 50 },
+  { id: 'assists_200', name: 'Mestre das Assistências', description: 'Dê 200 assistências', icon: '🎭', category: 'assists', rarity: 'RARO', requirement: '200 assists', xpReward: 300 },
+  { id: 'wins_10', name: 'Vencedor', description: 'Vença 10 jogos', icon: '🏅', category: 'wins', rarity: 'COMUM', requirement: '10 vitórias', xpReward: 100 },
+  { id: 'wins_50', name: 'Campeão', description: 'Vença 50 jogos', icon: '🏆', category: 'wins', rarity: 'RARO', requirement: '50 vitórias', xpReward: 400 },
+  { id: 'games_100', name: 'Veterano', description: 'Participe de 100 jogos', icon: '🎖️', category: 'participation', rarity: 'EPICO', requirement: '100 jogos', xpReward: 500 },
+  { id: 'games_500', name: 'Lenda Viva', description: 'Participe de 500 jogos', icon: '🏟️', category: 'participation', rarity: 'LENDARIO', requirement: '500 jogos', xpReward: 2000 },
 ];
 
 export const BADGE_RARITY_CONFIG: Record<BadgeRarity, { label: string; color: string }> = {

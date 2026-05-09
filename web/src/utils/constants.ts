@@ -50,7 +50,9 @@ export const XP_ASSIST = xpConstants.xpActions.ASSIST;
 export const XP_SAVE = xpConstants.xpActions.SAVE;
 export const XP_MVP = xpConstants.xpActions.MVP;
 export const XP_WIN = xpConstants.xpActions.WIN;
+export const XP_DRAW = xpConstants.xpActions.DRAW;
 export const XP_STREAK_3 = xpConstants.streakBonuses.STREAK_3;
+export const XP_STREAK_5 = xpConstants.streakBonuses.STREAK_5;
 export const XP_STREAK_7 = xpConstants.streakBonuses.STREAK_7;
 export const XP_STREAK_10 = xpConstants.streakBonuses.STREAK_10;
 

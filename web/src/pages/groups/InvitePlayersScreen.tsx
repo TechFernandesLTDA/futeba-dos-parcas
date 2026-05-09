@@ -11,7 +11,6 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
   Chip,
   Divider,
   CircularProgress,
@@ -65,9 +64,12 @@ export const InvitePlayersScreen: React.FC = () => {
   useEffect(() => {
     if (!groupId) return;
 
+    let cancelled = false;
+
     const fetchMembers = async () => {
       try {
         const groupDoc = await getDoc(doc(db, 'groups', groupId));
+        if (cancelled) return;
         if (groupDoc.exists()) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const groupData = snakeToCamel(groupDoc.data()) as Record<string, any>;
@@ -93,17 +95,21 @@ export const InvitePlayersScreen: React.FC = () => {
             })
           );
 
-          setMembers(membersData.filter(Boolean) as GroupMember[]);
+          if (!cancelled) setMembers(membersData.filter(Boolean) as GroupMember[]);
         }
       } catch (error) {
-        logger.error('Error fetching members:', error);
-        showError('Erro ao carregar membros.');
+        if (!cancelled) {
+          logger.error('Error fetching members:', error);
+          showError('Erro ao carregar membros.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchMembers();
+
+    return () => { cancelled = true; };
   }, [groupId]);
 
   const handleSearch = async () => {
@@ -183,15 +189,8 @@ export const InvitePlayersScreen: React.FC = () => {
               {searchResults.map((result, index) => (
                 <Box key={result.id}>
                   {index > 0 && <Divider />}
-                  <ListItem>
-                    <ListItemAvatar>
-                      <PlayerAvatar name={result.name} photoUrl={result.photoUrl} size={40} />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={result.name}
-                      secondary={result.email}
-                    />
-                    <ListItemSecondaryAction>
+                  <ListItem
+                    secondaryAction={
                       <IconButton
                         edge="end"
                         onClick={() => handleInvite(result)}
@@ -204,7 +203,15 @@ export const InvitePlayersScreen: React.FC = () => {
                           <PersonAddIcon color="primary" />
                         )}
                       </IconButton>
-                    </ListItemSecondaryAction>
+                    }
+                  >
+                    <ListItemAvatar>
+                      <PlayerAvatar name={result.name} photoUrl={result.photoUrl} size={40} />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={result.name}
+                      secondary={result.email}
+                    />
                   </ListItem>
                 </Box>
               ))}

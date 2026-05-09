@@ -21,6 +21,7 @@ data class XpBreakdown(
     val goals: Long = 0,
     val assists: Long = 0,
     val saves: Long = 0,
+    val cleanSheet: Long = 0,
     val result: Long = 0,
     val mvp: Long = 0,
     val milestones: Long = 0,
@@ -28,7 +29,7 @@ data class XpBreakdown(
     val penalty: Long = 0
 ) {
     val total: Long
-        get() = participation + goals + assists + saves + result + mvp + milestones + streak + penalty
+        get() = participation + goals + assists + saves + cleanSheet + result + mvp + milestones + streak + penalty
 
     fun toDisplayMap(): Map<String, Long> {
         val map = mutableMapOf<String, Long>()
@@ -36,6 +37,7 @@ data class XpBreakdown(
         if (goals > 0) map["Gols"] = goals
         if (assists > 0) map["Assistencias"] = assists
         if (saves > 0) map["Defesas"] = saves
+        if (cleanSheet > 0) map["Clean Sheet"] = cleanSheet
         if (result > 0) map["Resultado"] = result
         if (mvp > 0) map["MVP"] = mvp
         if (milestones > 0) map["Milestones"] = milestones
@@ -149,17 +151,24 @@ object XPCalculator {
         val cappedSaves = playerData.saves.coerceAtMost(MAX_SAVES_PER_GAME)
         val savesXp = cappedSaves * xpPerSave
 
-        // 5. XP de Resultado
+        // 5. XP de Clean Sheet (goleiro sem sofrer gols)
+        val cleanSheetXp = if (playerData.position == PlayerPosition.GOALKEEPER && opponentsGoals == 0) {
+            xpCleanSheet
+        } else {
+            0
+        }
+
+        // 6. XP de Resultado
         val resultXp = when {
             playerData.teamWon -> xpWin
             playerData.teamDrew -> xpDraw
             else -> 0
         }
 
-        // 6. XP de MVP
+        // 7. XP de MVP
         val mvpXp = if (playerData.isMvp) xpMvp else 0
 
-        // 7. XP de Sequencia (Streak) - escalonado: 3 -> 5 -> 7 -> 10
+        // 8. XP de Sequencia (Streak) - escalonado: 3 -> 5 -> 7 -> 10
         val streakXp = when {
             playerData.currentStreak >= 10 -> xpStreak10
             playerData.currentStreak >= 7 -> xpStreak7
@@ -168,7 +177,7 @@ object XPCalculator {
             else -> 0
         }
 
-        // 8. Penalidade por ser Bola Murcha (worst player)
+        // 9. Penalidade por ser Bola Murcha (worst player)
         val penaltyXp = if (playerData.isWorstPlayer) xpWorstPlayerPenalty else 0
 
         // Determinar resultado do jogo
@@ -183,6 +192,7 @@ object XPCalculator {
             goals = goalsXp.toLong(),
             assists = assistsXp.toLong(),
             saves = savesXp.toLong(),
+            cleanSheet = cleanSheetXp.toLong(),
             result = resultXp.toLong(),
             mvp = mvpXp.toLong(),
             streak = streakXp.toLong(),

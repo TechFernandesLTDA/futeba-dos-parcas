@@ -70,7 +70,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
 );
 
 // Fix #414: ROLE_CONFIG extraído para constants/group.ts (single source of truth)
-import { ROLE_CONFIG } from '../../constants/group';
+import { ROLE_CONFIG, getRoleColor } from '../../constants/group';
 
 export const GroupDetailScreen: React.FC = () => {
   useDocumentTitle('Detalhes do Grupo');
@@ -562,6 +562,7 @@ const GroupMemberItem = React.memo(function GroupMemberItem({
   member: { userId: string; userName: string; userPhotoUrl?: string; level?: number; role: GroupRole; totalGames: number };
   showDivider: boolean;
 }) {
+  const theme = useTheme();
   return (
     <React.Fragment>
       <ListItem sx={{ py: 1.5 }}>
@@ -585,8 +586,8 @@ const GroupMemberItem = React.memo(function GroupMemberItem({
                 sx={{
                   height: 20,
                   fontSize: '0.75rem',
-                  bgcolor: alpha(ROLE_CONFIG[member.role].color, 0.1),
-                  color: ROLE_CONFIG[member.role].color,
+                  bgcolor: alpha(getRoleColor(theme, member.role), 0.1),
+                  color: getRoleColor(theme, member.role),
                 }}
               />
             </Box>

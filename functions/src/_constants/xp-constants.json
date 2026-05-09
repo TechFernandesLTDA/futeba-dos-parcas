@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "_comment": "FUNCTIONS LOCAL COPY — kept in sync with /shared/xp-constants.json (KMP source of truth). Reason: tsc rootDir=src forbids imports outside src/. When you change values in /shared/xp-constants.json, copy them here. Consumers: functions/src/constants.ts, web/src/types/gamification.ts, web/src/utils/constants.ts, shared/src/commonMain/.../XpAction.kt, shared/src/commonMain/.../LevelTable.kt, shared/src/commonMain/.../XPCalculator.kt",
+  "_comment": "#730 DUAL-SOURCE SYNC — Keep this file identical to /shared/xp-constants.json (KMP source of truth). Reason: tsc rootDir=src forbids imports outside src/. When you change values in /shared/xp-constants.json, copy them here. A CI test (test/xp-constants-sync.test.ts) enforces this. Consumers: functions/src/constants.ts, web/src/types/gamification.ts, web/src/utils/constants.ts, shared/src/commonMain/.../XpAction.kt, shared/src/commonMain/.../LevelTable.kt, shared/src/commonMain/.../XPCalculator.kt",
 
   "xpActions": {
     "_comment": "XP awarded per action in a match. These are the DEFAULT values; groups can override via GamificationSettings.",

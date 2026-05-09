@@ -442,3 +442,39 @@ data class UserGroup(
     @Exclude
     fun isValidForGame(): Boolean = memberCount >= 2
 }
+
+/**
+ * Converte o modelo Firestore (app) para o modelo de dominio (shared KMP).
+ */
+fun com.futebadosparcas.data.model.Group.toDomainGroup(): com.futebadosparcas.domain.model.Group {
+    return com.futebadosparcas.domain.model.Group(
+        id = this.id,
+        name = this.name,
+        description = this.description,
+        photoUrl = this.photoUrl,
+        ownerId = this.ownerId,
+        ownerName = this.ownerName,
+        membersCount = this.memberCount,
+        isPublic = this.isPublic,
+        createdAt = this.createdAt?.time,
+        updatedAt = this.updatedAt?.time
+    )
+}
+
+/**
+ * Converte o modelo de dominio (shared KMP) para o modelo Firestore (app).
+ */
+fun com.futebadosparcas.domain.model.Group.toFirestoreGroup(): com.futebadosparcas.data.model.Group {
+    return com.futebadosparcas.data.model.Group(
+        id = this.id,
+        name = this.name,
+        description = this.description,
+        ownerId = this.ownerId,
+        ownerName = this.ownerName,
+        photoUrl = this.photoUrl,
+        memberCount = this.membersCount,
+        isPublic = this.isPublic,
+        createdAt = this.createdAt?.let { java.util.Date(it) },
+        updatedAt = this.updatedAt?.let { java.util.Date(it) }
+    )
+}
