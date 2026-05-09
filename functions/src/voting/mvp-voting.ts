@@ -1038,9 +1038,12 @@ async function applyVotingXpDelta(
         return;
       }
 
-      // FIX #648/B4: Verifica MAX_XP_PER_GAME por jogador
-      // por jogo, somando todos os xp_logs existentes.
-      if (xpDelta > 0) {
+      // FIX #726: MVP bonus (voting reward) is applied OVER the
+      // MAX_XP_PER_GAME cap. The cap only limits game-performance XP
+      // (goals/assists/etc), not voting-based rewards. MVP is determined
+      // democratically by peers, not by stats that could be inflated.
+      // Bola Murcha (-10) is always applied regardless of cap.
+      if (xpDelta > 0 && reason !== "MVP") {
         const existingXpLogsSnap = await txn.get(
           db.collection("xp_logs")
             .where("user_id", "==", userId)

@@ -7,10 +7,24 @@
  * Regra: Se um número aparece em 2+ arquivos,
  * ele DEVE estar aqui.
  *
- * XP e Level Table: Fonte de verdade em shared/xp-constants.json
- * (KMP). Para evitar tsc rootDir fora de src/, mantemos uma
- * cópia local em src/_constants/xp-constants.json — manter sincronizada
- * com /shared/xp-constants.json (qualquer mudança lá deve ser copiada aqui).
+ * === XP & Level Table: DUAL-SOURCE SYNC (ISSUE #730) ===
+ *
+ * Source of truth: shared/xp-constants.json (KMP root).
+ * Local copy:     src/_constants/xp-constants.json
+ *
+ * WHY a local copy? tsc rootDir=src forbids imports outside src/.
+ * Web can import ../../../shared/xp-constants.json directly because
+ * its rootDir is the monorepo root, but functions/ cannot.
+ *
+ * SYNC RULE: When you change shared/xp-constants.json, you MUST copy
+ * the changes to src/_constants/xp-constants.json. A CI test
+ * (test/xp-constants-sync.test.ts) enforces this automatically.
+ *
+ * Consumers of these constants:
+ *   - functions/src/constants.ts (imports from _constants/)
+ *   - web/src/types/gamification.ts (imports from shared/)
+ *   - web/src/utils/constants.ts (imports from shared/)
+ *   - shared/src/commonMain/.../XpAction.kt, LevelTable.kt, XPCalculator.kt
  */
 
 // Importa constantes de XP do arquivo JSON local

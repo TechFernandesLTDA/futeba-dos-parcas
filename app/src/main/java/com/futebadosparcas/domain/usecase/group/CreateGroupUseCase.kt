@@ -1,7 +1,8 @@
 package com.futebadosparcas.domain.usecase.group
 
-import android.net.Uri
 import com.futebadosparcas.domain.model.Group
+import com.futebadosparcas.domain.usecase.ValidateGroupDescriptionUseCase
+import com.futebadosparcas.domain.usecase.ValidateGroupNameUseCase
 import com.futebadosparcas.data.repository.GroupRepository
 
 /**
@@ -13,34 +14,22 @@ class CreateGroupUseCase constructor(
     suspend operator fun invoke(
         name: String,
         description: String,
-        photoUri: Uri? = null
+        photoUri: String? = null
     ): Result<Group> {
-        // Validações
-        val trimmedName = name.trim()
-        val trimmedDescription = description.trim()
-
-        if (trimmedName.isEmpty()) {
-            return Result.failure(GroupValidationException("Nome do grupo é obrigatório"))
+        val nameResult = ValidateGroupNameUseCase(name)
+        if (nameResult.isError()) {
+            return Result.failure(GroupValidationException(nameResult.getErrorOrNull() ?: "Nome inválido"))
         }
 
-        if (trimmedName.length < 3) {
-            return Result.failure(GroupValidationException("Nome deve ter pelo menos 3 caracteres"))
+        val descResult = ValidateGroupDescriptionUseCase(description)
+        if (descResult.isError()) {
+            return Result.failure(GroupValidationException(descResult.getErrorOrNull() ?: "Descrição inválida"))
         }
 
-        if (trimmedName.length > 50) {
-            return Result.failure(GroupValidationException("Nome deve ter no máximo 50 caracteres"))
-        }
+        val validatedName = nameResult.getOrNull() ?: name
+        val validatedDesc = descResult.getOrNull() ?: description
 
-        if (trimmedDescription.length > 200) {
-            return Result.failure(GroupValidationException("Descrição deve ter no máximo 200 caracteres"))
-        }
-
-        // Validar caracteres especiais no nome
-        if (!trimmedName.matches(Regex("^[\\p{L}\\p{N}\\s\\-_']+$"))) {
-            return Result.failure(GroupValidationException("Nome contém caracteres inválidos"))
-        }
-
-        return groupRepository.createGroup(trimmedName, trimmedDescription, photoUri)
+        return groupRepository.createGroup(validatedName, validatedDesc, photoUri)
     }
 }
 

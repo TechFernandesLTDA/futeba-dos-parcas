@@ -25,6 +25,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { validateGroupForm } from '../../utils/groupValidation';
 
 const logger = createLogger('CreateGroupScreen');
 
@@ -52,20 +53,7 @@ export const CreateGroupScreen: React.FC = () => {
   };
 
   const validate = (): boolean => {
-    const errors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      errors.name = 'Nome do grupo é obrigatório';
-    } else if (formData.name.length < 3) {
-      errors.name = 'Nome deve ter pelo menos 3 caracteres';
-    } else if (formData.name.length > 50) {
-      errors.name = 'Nome deve ter no máximo 50 caracteres';
-    }
-
-    if (formData.description.length > 500) {
-      errors.description = 'Descrição deve ter no máximo 500 caracteres';
-    }
-
+    const errors = validateGroupForm(formData);
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };

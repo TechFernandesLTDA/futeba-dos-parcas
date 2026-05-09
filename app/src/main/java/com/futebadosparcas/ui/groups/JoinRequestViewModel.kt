@@ -126,7 +126,12 @@ class JoinRequestViewModel(
         viewModelScope.launch {
             _actioningRequesterId.value = requesterId
             try {
-                groupRepository.approveJoinRequest(groupId, requesterId)
+                val result = groupRepository.approveJoinRequest(groupId, requesterId)
+                if (result.isFailure) {
+                    _myRequestState.value = MyJoinRequestState.Error(
+                        result.exceptionOrNull()?.message ?: "Erro ao aprovar pedido"
+                    )
+                }
             } finally {
                 _actioningRequesterId.value = null
             }
@@ -137,7 +142,12 @@ class JoinRequestViewModel(
         viewModelScope.launch {
             _actioningRequesterId.value = requesterId
             try {
-                groupRepository.rejectJoinRequest(groupId, requesterId)
+                val result = groupRepository.rejectJoinRequest(groupId, requesterId)
+                if (result.isFailure) {
+                    _myRequestState.value = MyJoinRequestState.Error(
+                        result.exceptionOrNull()?.message ?: "Erro ao rejeitar pedido"
+                    )
+                }
             } finally {
                 _actioningRequesterId.value = null
             }

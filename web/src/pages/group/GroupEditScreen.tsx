@@ -18,7 +18,7 @@ import {
   Save as SaveIcon,
 } from '@mui/icons-material';
 import { FormScaffold } from '../../components/layout';
-import { doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useGroupDetail } from '../../hooks/useGroups';
 import { useAuth } from '../../contexts/AuthContext';
@@ -26,6 +26,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { ShimmerLoading } from '../../components/common/GameCard';
+import { validateGroupForm } from '../../utils/groupValidation';
 
 const logger = createLogger('GroupEditScreen');
 
@@ -74,20 +75,7 @@ export const GroupEditScreen: React.FC = () => {
   };
 
   const validate = (): boolean => {
-    const errors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      errors.name = 'Nome do grupo é obrigatório';
-    } else if (formData.name.length < 3) {
-      errors.name = 'Nome deve ter pelo menos 3 caracteres';
-    } else if (formData.name.length > 50) {
-      errors.name = 'Nome deve ter no máximo 50 caracteres';
-    }
-
-    if (formData.description.length > 500) {
-      errors.description = 'Descrição deve ter no máximo 500 caracteres';
-    }
-
+    const errors = validateGroupForm(formData);
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -104,7 +92,7 @@ export const GroupEditScreen: React.FC = () => {
         description: formData.description.trim(),
         is_public: formData.isPublic,
         type: formData.isPublic ? 'PUBLIC' : 'PRIVATE',
-        updated_at: Timestamp.now(),
+        updated_at: serverTimestamp(),
       });
 
       // Atualizar subcoleção users/{uid}/groups (denormalização, não-crítico)

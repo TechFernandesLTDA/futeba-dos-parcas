@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -100,12 +100,15 @@ const defaultFormData: GameFormData = {
 export const CreateGameScreen: React.FC = () => {
   useDocumentTitle('Criar Jogo');
   const navigate = useNavigate();
-  const { groupId } = useParams<{ groupId?: string }>();
+  const [searchParams] = useSearchParams();
+  const groupId = searchParams.get('groupId') || undefined;
 
   const { group } = useGroupDetail(groupId || null);
   const { createGame, loading, error } = useCreateGame();
-  const { locations, loading: locationsLoading } = useLocations();
+  const { locations, loading: locationsLoading, error: locationsError } = useLocations();
   const { showSuccess, showError } = useToast();
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
   const [useCustomLocation, setUseCustomLocation] = useState(false);
   const [fields, setFields] = useState<Field[]>([]);
   const [fieldsLoading, setFieldsLoading] = useState(false);
@@ -119,7 +122,8 @@ export const CreateGameScreen: React.FC = () => {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const isDirty = JSON.stringify(formData) !== JSON.stringify(defaultFormData);
+  const [userInteracted, setUserInteracted] = useState(false);
+  const isDirty = userInteracted && JSON.stringify(formData) !== JSON.stringify(defaultFormData);
   // beforeunload + useBlocker tratados pelo FormScaffold via useDirtyGuard
 
   // Carregar quadras quando local é selecionado
@@ -129,6 +133,8 @@ export const CreateGameScreen: React.FC = () => {
       return;
     }
 
+    let cancelled = false;
+
     const loadFields = async () => {
       setFieldsLoading(true);
       setFieldsError(null);
@@ -137,6 +143,7 @@ export const CreateGameScreen: React.FC = () => {
         const fieldsRef = collection(db, 'locations', formData.locationId, 'fields');
         const q = query(fieldsRef, orderBy('name', 'asc'));
         const snapshot = await getDocs(q);
+        if (cancelled) return;
         let fieldsData = snapshot.docs
           .map((d) => ({ ...snakeToCamel<Field>(d.data()), id: d.id }))
           .filter((f) => f.isActive !== false);
@@ -146,11 +153,13 @@ export const CreateGameScreen: React.FC = () => {
           const rootFieldsRef = collection(db, 'fields');
           const rootQ = query(rootFieldsRef, where('location_id', '==', formData.locationId));
           const rootSnapshot = await getDocs(rootQ);
+          if (cancelled) return;
           fieldsData = rootSnapshot.docs
             .map((d) => ({ ...snakeToCamel<Field>(d.data()), id: d.id }))
             .filter((f) => f.isActive !== false);
         }
 
+        if (cancelled) return;
         setFields(fieldsData);
 
         // Se só tem 1 quadra, selecionar automaticamente
@@ -166,15 +175,17 @@ export const CreateGameScreen: React.FC = () => {
           }));
         }
       } catch (err) {
+        if (cancelled) return;
         logger.error('Erro ao carregar quadras:', err);
         setFieldsError('Erro ao carregar quadras. Tente novamente.');
-        showError('Erro ao carregar quadras. Tente novamente.');
+        showErrorRef.current('Erro ao carregar quadras. Tente novamente.');
       } finally {
-        setFieldsLoading(false);
+        if (!cancelled) setFieldsLoading(false);
       }
     };
 
     loadFields();
+    return () => { cancelled = true; };
   }, [formData.locationId, useCustomLocation]);
 
   useEffect(() => {
@@ -188,6 +199,7 @@ export const CreateGameScreen: React.FC = () => {
   }, [group, groupId]);
 
   const handleInputChange = <K extends keyof GameFormData>(field: K, value: GameFormData[K]) => {
+    setUserInteracted(true);
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field]) {
       setFormErrors((prev) => ({ ...prev, [field]: '' }));
@@ -259,26 +271,30 @@ export const CreateGameScreen: React.FC = () => {
           const [h, m] = t.split(':').map(Number);
           return h * 60 + m;
         };
-        const gamesRef = collection(db, 'games');
-        const overlapQuery = query(
-          gamesRef,
-          where('field_id', '==', formData.fieldId),
-          where('date', '==', formData.date),
-        );
-        const existingGames = await getDocs(overlapQuery);
-        const newStart = parseTime(formData.time);
-        const newEnd = formData.endTime ? parseTime(formData.endTime) : newStart + 120;
-        const conflicting = existingGames.docs.find((d) => {
-          const g = d.data();
-          if (g.status === 'CANCELLED') return false;
-          const gStart = g.time ? parseTime(g.time) : 0;
-          const gEnd = g.end_time ? parseTime(g.end_time) : gStart + 120;
-          return gStart < newEnd && gEnd > newStart;
-        });
-        if (conflicting) {
-          const g = conflicting.data();
-          showError(`Já existe um jogo nesta quadra às ${g.time}. Escolha outro horário.`);
-          return;
+        try {
+          const gamesRef = collection(db, 'games');
+          const overlapQuery = query(
+            gamesRef,
+            where('field_id', '==', formData.fieldId),
+          );
+          const existingGames = await getDocs(overlapQuery);
+          const newStart = parseTime(formData.time);
+          const newEnd = formData.endTime ? parseTime(formData.endTime) : newStart + 120;
+          const conflicting = existingGames.docs.find((d) => {
+            const g = d.data();
+            if (g.status === 'CANCELLED') return false;
+            if (g.date !== formData.date) return false;
+            const gStart = g.time ? parseTime(g.time) : 0;
+            const gEnd = g.end_time ? parseTime(g.end_time) : gStart + 120;
+            return gStart < newEnd && gEnd > newStart;
+          });
+          if (conflicting) {
+            const g = conflicting.data();
+            showError(`Já existe um jogo nesta quadra às ${g.time}. Escolha outro horário.`);
+            return;
+          }
+        } catch (overlapErr) {
+          logger.warn('Erro ao verificar sobreposição:', overlapErr);
         }
       }
 
@@ -299,7 +315,7 @@ export const CreateGameScreen: React.FC = () => {
         pixPaymentEnabled: formData.pixPaymentEnabled,
         rules: formData.rules || '',
         isPublic: formData.isPublic,
-        visibility: formData.groupId ? 'GROUP_ONLY' : (formData.isPublic ? 'PUBLIC_CLOSED' : 'PUBLIC_CLOSED'),
+        visibility: formData.groupId ? (formData.isPublic ? 'PUBLIC_CLOSED' : 'GROUP_ONLY') : 'PUBLIC_CLOSED',
         team1Name: 'Time 1',
         team2Name: 'Time 2',
         confirmationDeadlineHours: 0,
@@ -362,11 +378,14 @@ export const CreateGameScreen: React.FC = () => {
                   setUseCustomLocation(false);
                   const loc = locations.find((l) => l.id === val);
                   if (loc) {
+                    const streetPart = [loc.street, loc.number].filter(Boolean).join(', ');
+                    const areaPart = [loc.district, loc.city].filter(Boolean).join(', ');
+                    const constructedAddress = areaPart ? `${streetPart} - ${areaPart}` : streetPart;
                     setFormData((prev) => ({
                       ...prev,
                       locationId: loc.id,
                       locationName: loc.name,
-                      locationAddress: loc.address || `${loc.street || ''}, ${loc.number || ''} - ${loc.district || ''}, ${loc.city || ''}`.replace(/^, | - ,|, $/g, '').trim(),
+                      locationAddress: loc.address || constructedAddress,
                       locationLat: loc.latitude,
                       locationLng: loc.longitude,
                     }));
@@ -532,7 +551,7 @@ export const CreateGameScreen: React.FC = () => {
                 label="Máx. Jogadores"
                 type="number"
                 value={formData.maxPlayers}
-                onChange={(e) => handleInputChange('maxPlayers', parseInt(e.target.value) || 14)}
+                onChange={(e) => { const v = parseInt(e.target.value); handleInputChange('maxPlayers', isNaN(v) ? 14 : v); }}
                 error={!!formErrors.maxPlayers}
                 helperText={formErrors.maxPlayers}
                 fullWidth
@@ -543,7 +562,7 @@ export const CreateGameScreen: React.FC = () => {
                 label="Máx. Goleiros"
                 type="number"
                 value={formData.maxGoalkeepers}
-                onChange={(e) => handleInputChange('maxGoalkeepers', parseInt(e.target.value) || 2)}
+                onChange={(e) => { const v = parseInt(e.target.value); handleInputChange('maxGoalkeepers', isNaN(v) ? 2 : v); }}
                 error={!!formErrors.maxGoalkeepers}
                 helperText={formErrors.maxGoalkeepers}
                 fullWidth
@@ -555,7 +574,7 @@ export const CreateGameScreen: React.FC = () => {
               label="Número de Times"
               type="number"
               value={formData.numberOfTeams}
-              onChange={(e) => handleInputChange('numberOfTeams', parseInt(e.target.value) || 2)}
+              onChange={(e) => { const v = parseInt(e.target.value); handleInputChange('numberOfTeams', isNaN(v) ? 2 : v); }}
               fullWidth
               inputProps={{ min: 2, max: 4 }}
             />
@@ -588,7 +607,7 @@ export const CreateGameScreen: React.FC = () => {
               label="Valor por Jogador"
               type="number"
               value={formData.dailyPrice}
-              onChange={(e) => handleInputChange('dailyPrice', parseFloat(e.target.value) || 0)}
+              onChange={(e) => { const v = parseFloat(e.target.value); handleInputChange('dailyPrice', isNaN(v) ? 0 : v); }}
               fullWidth
               InputProps={{
                 startAdornment: <InputAdornment position="start">R$</InputAdornment>,
@@ -686,6 +705,11 @@ export const CreateGameScreen: React.FC = () => {
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
+          </Alert>
+        )}
+        {locationsError && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Erro ao carregar locais: {locationsError}. Tente recarregar a página.
           </Alert>
         )}
 

@@ -39,7 +39,7 @@ import { DIVISION_CONFIG, LeagueDivision, getLevelForXp, getXpProgress } from '.
 import { getLevelBadgeImage } from '../../../utils/levelBadge';
 import {
   XP_PARTICIPATION, XP_GOAL, XP_ASSIST, XP_SAVE,
-  XP_MVP, XP_WIN, XP_STREAK_3, XP_STREAK_7, XP_STREAK_10,
+  XP_MVP, XP_WIN, XP_DRAW, XP_STREAK_3, XP_STREAK_5, XP_STREAK_7, XP_STREAK_10,
 } from '../../../utils/constants';
 import { createLogger } from '../../../utils/logger';
 import { useTranslation } from 'react-i18next';
@@ -71,7 +71,9 @@ const XP_TABLE = [
   { label: 'Defesa (GK)', xp: XP_SAVE, icon: '🧤' },
   { label: 'MVP', xp: XP_MVP, icon: '⭐' },
   { label: 'Vitória', xp: XP_WIN, icon: '🏆' },
+  { label: 'Empate', xp: XP_DRAW, icon: '🤝' },
   { label: 'Streak 3+', xp: XP_STREAK_3, icon: '🔥' },
+  { label: 'Streak 5+', xp: XP_STREAK_5, icon: '🔥🔥' },
   { label: 'Streak 7+', xp: XP_STREAK_7, icon: '🔥🔥' },
   { label: 'Streak 10+', xp: XP_STREAK_10, icon: '🔥🔥🔥' },
 ];

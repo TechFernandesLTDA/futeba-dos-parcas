@@ -70,9 +70,12 @@ export const PlayersScreen: React.FC = () => {
   useEffect(() => {
     if (!groupId || !user) return;
 
+    let cancelled = false;
+
     const fetchMembers = async () => {
       try {
         const groupDoc = await getDoc(doc(db, 'groups', groupId));
+        if (cancelled) return;
         if (groupDoc.exists()) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const groupData = snakeToCamel(groupDoc.data()) as Record<string, any>;
@@ -112,17 +115,21 @@ export const PlayersScreen: React.FC = () => {
             })
           );
 
-          setMembers(membersData.filter(Boolean) as GroupMember[]);
+          if (!cancelled) setMembers(membersData.filter(Boolean) as GroupMember[]);
         }
       } catch (error) {
-        logger.error('Error fetching members:', error);
-        showError('Erro ao carregar membros.');
+        if (!cancelled) {
+          logger.error('Error fetching members:', error);
+          showError('Erro ao carregar membros.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchMembers();
+
+    return () => { cancelled = true; };
   }, [groupId, user]);
 
   const handleRemoveMember = async (memberId: string) => {

@@ -385,15 +385,17 @@ class XPCalculatorTest {
                 teamWon = true,  // 20 XP
                 position = PlayerPosition.GOALKEEPER
             )
-            val result = XPCalculator.calculate(playerData)
+            val result = XPCalculator.calculate(playerData, opponentsGoals = 2)
 
             // Participação: 10
             // Defesas: 64
             // Resultado: 20
+            // Clean Sheet: 0 (sofreu gols)
             // Total: 94
             assertEquals(10L, result.breakdown.participation)
             assertEquals(64L, result.breakdown.saves)
             assertEquals(20L, result.breakdown.result)
+            assertEquals(0L, result.breakdown.cleanSheet)
             assertEquals(94L, result.totalXp)
         }
     }

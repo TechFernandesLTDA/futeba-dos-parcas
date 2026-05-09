@@ -248,10 +248,30 @@ export const onGameStatusUpdate = onDocumentUpdated(
             };
           }
           if (fresh.xp_processing) {
-            return {
-              shouldProcess: false,
-              reason: "processing" as const,
-            };
+            // FIX #728: Lock TTL fallback. If the Cloud Function
+            // crashed/timed-out after acquiring the lock, xp_processing
+            // would stay true forever, permanently blocking XP for this
+            // game. Check xp_processing_at timestamp: if older than
+            // 10 minutes, treat as stale and take over the lock.
+            const LOCK_TTL_MS = 10 * 60 * 1000;
+            const lockAge =
+              Date.now() - (
+                fresh.xp_processing_at?.toMillis ?
+                  fresh.xp_processing_at.toMillis() :
+                  Date.now()
+              );
+            if (lockAge < LOCK_TTL_MS) {
+              return {
+                shouldProcess: false,
+                reason: "processing" as const,
+              };
+            }
+            console.warn(
+              "[LOCK_TTL] Stale xp_processing lock " +
+              `detected for game ${event.params.gameId} ` +
+              `(age: ${Math.round(lockAge / 1000)}s). ` +
+              "Taking over."
+            );
           }
           tx.update(gameRef, {
             xp_processing: true,
@@ -1188,10 +1208,27 @@ export const recalculateLeagueRating =
               };
             }
             if (fresh.league_processing) {
-              return {
-                shouldProcess: false,
-                reason: "processing" as const,
-              };
+              // FIX #728: Lock TTL fallback (same pattern
+              // as xp_processing lock above).
+              const LOCK_TTL_MS = 10 * 60 * 1000;
+              const lockAge =
+                Date.now() - (
+                  fresh.league_processing_at?.toMillis ?
+                    fresh.league_processing_at.toMillis() :
+                    Date.now()
+                );
+              if (lockAge < LOCK_TTL_MS) {
+                return {
+                  shouldProcess: false,
+                  reason: "processing" as const,
+                };
+              }
+              console.warn(
+                "[LOCK_TTL] Stale league_processing " +
+                `lock detected for ${partId} ` +
+                `(age: ${Math.round(lockAge / 1000)}s). ` +
+                "Taking over."
+              );
             }
             tx.update(partRef, {
               league_processing: true,
