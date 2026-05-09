@@ -32,13 +32,13 @@ import { LoadingState } from '../../components/common/GameCard';
 import { InteractiveCard } from '../../components/common/InteractiveCard';
 import { useContextMenu, ContextMenuItem } from '../../hooks/useContextMenu';
 import { Group } from '../../types/group';
-import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 
 export const GroupsScreen: React.FC = () => {
-  useDocumentTitle('Grupos');
   const navigate = useNavigate();
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const { groups, loading, error, refetch } = useGroups();
 
@@ -54,11 +54,11 @@ export const GroupsScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate('/')} aria-label="Voltar">
+          <IconButton onClick={() => navigate('/')} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ ml: 1, flex: 1 }}>
-            Grupos
+            {t('groups.title')}
           </Typography>
           <Button
             size="small"
@@ -73,7 +73,7 @@ export const GroupsScreen: React.FC = () => {
             onClick={() => navigate('/group/create')}
             sx={{ display: { xs: 'none', md: 'inline-flex' }, ml: 1 }}
           >
-            Criar Grupo
+            {t('groups.createGroup')}
           </Button>
         </Box>
       </Box>
@@ -85,7 +85,7 @@ export const GroupsScreen: React.FC = () => {
             sx={{ mb: 2 }}
             action={
               <Button color="inherit" size="small" onClick={() => refetch()}>
-                Tentar novamente
+                {t('common.retry')}
               </Button>
             }
           >
@@ -146,6 +146,7 @@ const GroupItem = React.memo(function GroupItem({
 }) {
   const { currentUser } = useAuth();
   const cardRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   const isOwner = group.ownerId === currentUser?.uid;
 
@@ -159,14 +160,14 @@ const GroupItem = React.memo(function GroupItem({
     },
     {
       id: 'invite',
-      label: 'Convidar jogadores',
+      label: t('groups.invitePlayers'),
       icon: <InviteIcon fontSize="small" />,
       onClick: onInvite ?? (() => {}),
       hidden: !onInvite,
     },
     {
       id: 'leave',
-      label: 'Sair do grupo',
+      label: t('groups.leaveGroup'),
       icon: <ExitIcon fontSize="small" color="error" />,
       onClick: onLeave ?? (() => {}),
       hidden: isOwner || !onLeave,
@@ -204,7 +205,7 @@ const GroupItem = React.memo(function GroupItem({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <PersonIcon fontSize="small" color="action" />
                 <Typography variant="caption" color="text.secondary">
-                  {group.memberCount || 0} membros
+                  {group.memberCount || 0} {t('groups.members').toLowerCase()}
                 </Typography>
               </Box>
             </Box>

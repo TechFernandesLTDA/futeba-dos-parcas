@@ -30,14 +30,14 @@ import { PlayerCard } from '../../components/player/PlayerCard';
 import { useLeague, LeaguePlayer } from '../../hooks/useLeague';
 import { DIVISION_CONFIG } from '../../types/gamification';
 import { pluralizeCount } from '../../utils/pluralize';
-import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 export const RankingScreen: React.FC = () => {
-  useDocumentTitle('Ranking');
   const navigate = useNavigate();
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const [tabValue, setTabValue] = useState(0);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -70,11 +70,11 @@ export const RankingScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label="Voltar">
+          <IconButton onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/', { replace: true }); } }} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ ml: 1 }}>
-            Ranking
+            {t('ranking.title')}
           </Typography>
         </Box>
         <Tabs
@@ -97,7 +97,7 @@ export const RankingScreen: React.FC = () => {
             severity="error"
             action={
               <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={() => window.location.reload()}>
-                Tentar novamente
+                {t('common.retry')}
               </Button>
             }
             sx={{ mb: 2 }}

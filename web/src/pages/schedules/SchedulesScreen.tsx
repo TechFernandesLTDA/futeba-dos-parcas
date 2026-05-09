@@ -38,7 +38,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
-import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('SchedulesScreen');
@@ -57,13 +57,13 @@ interface Schedule {
 const DAYS_OF_WEEK = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 export const SchedulesScreen: React.FC = () => {
-  useDocumentTitle('Agenda');
   const navigate = useNavigate();
     const theme = useTheme();
     const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,7 +142,7 @@ export const SchedulesScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')} aria-label="Voltar">
+          <IconButton onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
@@ -207,8 +207,8 @@ export const SchedulesScreen: React.FC = () => {
           <Typography>Formulário de criação de agendamento...</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
-          <Button variant="contained">Salvar</Button>
+          <Button onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
+          <Button variant="contained">{t('common.save')}</Button>
         </DialogActions>
       </Dialog>
 
@@ -220,9 +220,9 @@ export const SchedulesScreen: React.FC = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} disabled={actionLoading}>Cancelar</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={actionLoading}>{t('common.cancel')}</Button>
           <Button onClick={handleDelete} color="error" variant="contained" disabled={actionLoading} startIcon={actionLoading ? <CircularProgress size={16} /> : undefined}>
-            {actionLoading ? 'Excluindo...' : 'Excluir'}
+            {actionLoading ? 'Excluindo...' : t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

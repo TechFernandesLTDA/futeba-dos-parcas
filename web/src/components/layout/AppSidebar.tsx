@@ -16,6 +16,7 @@ import {
   Person,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const RAIL_WIDTH = 80;
 const DRAWER_WIDTH = 240;
@@ -26,14 +27,6 @@ interface NavItem {
   path: string;
   matchPaths?: string[];
 }
-
-const NAV_ITEMS: NavItem[] = [
-  { icon: <HomeIcon />, label: 'Início', path: '/?tab=0', matchPaths: ['/'] },
-  { icon: <SportsSoccer />, label: 'Jogos', path: '/?tab=1', matchPaths: ['/games', '/game'] },
-  { icon: <Groups />, label: 'Grupos', path: '/?tab=2', matchPaths: ['/groups', '/group'] },
-  { icon: <EmojiEvents />, label: 'Liga', path: '/?tab=3', matchPaths: ['/ranking', '/league'] },
-  { icon: <Person />, label: 'Perfil', path: '/?tab=4', matchPaths: ['/profile'] },
-];
 
 function isItemActive(item: NavItem, currentPath: string, currentSearch: string): boolean {
   if (currentPath === '/') {
@@ -46,6 +39,15 @@ function isItemActive(item: NavItem, currentPath: string, currentSearch: string)
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
+
+  const NAV_ITEMS: NavItem[] = [
+    { icon: <HomeIcon />, label: t('nav.home'), path: '/?tab=0', matchPaths: ['/'] },
+    { icon: <SportsSoccer />, label: t('nav.games'), path: '/?tab=1', matchPaths: ['/games', '/game'] },
+    { icon: <Groups />, label: t('nav.groups'), path: '/?tab=2', matchPaths: ['/groups', '/group'] },
+    { icon: <EmojiEvents />, label: t('nav.league'), path: '/?tab=3', matchPaths: ['/ranking', '/league'] },
+    { icon: <Person />, label: t('nav.profile'), path: '/?tab=4', matchPaths: ['/profile'] },
+  ];
 
   return (
     <>
@@ -142,7 +144,7 @@ export function AppSidebar() {
         >
           <SportsSoccer sx={{ color: 'primary.main', fontSize: 28 }} />
           <Typography variant="h6" fontWeight={700} color="primary.main">
-            Futeba dos Parças
+            {t('common.appName')}
           </Typography>
         </Box>
         <List>

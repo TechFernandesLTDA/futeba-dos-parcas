@@ -18,6 +18,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   useTheme,
+  Chip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -32,16 +33,26 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useThemeContext } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useLanguage, type SupportedLanguage } from '../../contexts';
+import { syncLanguageToFirestore } from '../../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 export const ThemeSettingsScreen: React.FC = () => {
   useDocumentTitle('Tema');
   const navigate = useNavigate();
   const theme = useTheme();
-  useAuth();
-  // toggleTheme não é mais usado — setMode expõe controle preciso dos 3 modos
   const { mode, setMode } = useThemeContext();
-
+  const { language, setLanguage } = useLanguage();
+  const { t } = useTranslation();
+  const { user } = useAuth();
   const { showSuccess, showError } = useToast();
+
+  const handleLanguageChange = (lang: SupportedLanguage) => {
+    setLanguage(lang);
+    if (user?.id) {
+      syncLanguageToFirestore(user.id, lang);
+    }
+  };
 
   const [notifications, setNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -168,6 +179,29 @@ export const ThemeSettingsScreen: React.FC = () => {
               />
             </ListItem>
           </List>
+        </Card>
+
+        <Card sx={{ mb: 2 }}>
+          <CardContent>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              {t('settings.language')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              {t('settings.languageDesc')}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {(['pt-BR', 'en', 'es'] as SupportedLanguage[]).map((lang) => (
+                <Chip
+                  key={lang}
+                  label={t(`common.${lang === 'pt-BR' ? 'portuguese' : lang === 'en' ? 'english' : 'spanish'}`)}
+                  color={language === lang ? 'primary' : 'default'}
+                  variant={language === lang ? 'filled' : 'outlined'}
+                  onClick={() => handleLanguageChange(lang)}
+                  sx={{ cursor: 'pointer' }}
+                />
+              ))}
+            </Box>
+          </CardContent>
         </Card>
 
         <Card>

@@ -29,19 +29,19 @@ import { GameCard, LoadingState } from '../../components/common/GameCard';
 import { PullToRefresh } from '../../components/common/PullToRefresh';
 import { Game, GameStatus } from '../../types/game';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
-import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('GamesScreen');
 
 export const GamesScreen: React.FC = () => {
-  useDocumentTitle('Jogos');
   const navigate = useNavigate();
   const navigateBack = useNavigateBack('/');
   const theme = useTheme();
   const isMd = useMediaQuery(theme.breakpoints.up('md'));
   useAuth();
+  const { t } = useTranslation();
 
   const [tabValue, setTabValue] = useState(0);
   const [games, setGames] = useState<Game[]>([]);
@@ -110,11 +110,11 @@ export const GamesScreen: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
-          <IconButton onClick={navigateBack} aria-label="Voltar">
+          <IconButton onClick={navigateBack} aria-label={t('common.back')}>
             <BackIcon />
           </IconButton>
           <Typography component="h1" variant="h6" sx={{ ml: 1, flex: 1 }}>
-            Jogos
+            {t('games.title')}
           </Typography>
           <IconButton aria-label="Filtrar jogos">
             <FilterIcon />
@@ -133,7 +133,7 @@ export const GamesScreen: React.FC = () => {
             onClick={() => navigate('/game/create')}
             sx={{ display: { xs: 'none', md: 'inline-flex' }, ml: 1 }}
           >
-            Criar Jogo
+            {t('games.createGame')}
           </Button>
         </Box>
         <Tabs
@@ -165,7 +165,7 @@ export const GamesScreen: React.FC = () => {
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <SoccerIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
-                Nenhum jogo encontrado
+                {t('games.noGames')}
               </Typography>
               <Typography variant="body2" color="text.disabled">
                 {tabValue === 0 ? 'Crie um novo jogo para começar!' : 'Não há jogos nesta categoria'}

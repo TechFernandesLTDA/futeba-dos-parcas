@@ -15,7 +15,6 @@ import {
   Typography,
   Tooltip,
 } from '@mui/material';
-import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import {
   Home as HomeIcon,
   SportsSoccer,
@@ -23,6 +22,7 @@ import {
   EmojiEvents,
   Person,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 import { HomeTab } from './tabs/HomeTab';
 import { GamesTab } from './tabs/GamesTab';
@@ -30,8 +30,6 @@ import { GroupsTab } from './tabs/GroupsTab';
 import { RankingsTab } from './tabs/RankingsTab';
 import { ProfileTab } from './tabs/ProfileTab';
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
-
-const TAB_TITLES = ['Início', 'Jogos', 'Grupos', 'Liga', 'Perfil'];
 
 // Larguras dos navs adaptativos (Material 3 spec)
 const RAIL_WIDTH = 80;     // md: NavigationRail (icon-only)
@@ -42,8 +40,7 @@ export function HomeScreen() {
   const tabValue = parseInt(searchParams.get('tab') || '0');
   const { permission, requestPermission } = useNotificationPermission();
   const [showNotifBanner, setShowNotifBanner] = useState(false);
-
-  useDocumentTitle(TAB_TITLES[tabValue]);
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Mostrar banner apenas se permissão ainda não foi decidida
@@ -54,11 +51,11 @@ export function HomeScreen() {
   }, [permission]);
 
   const tabConfigs = [
-    { icon: <HomeIcon />, label: 'Início' },
-    { icon: <SportsSoccer />, label: 'Jogos' },
-    { icon: <Groups />, label: 'Grupos' },
-    { icon: <EmojiEvents />, label: 'Liga' },
-    { icon: <Person />, label: 'Perfil' },
+    { icon: <HomeIcon />, label: t('nav.home') },
+    { icon: <SportsSoccer />, label: t('nav.games') },
+    { icon: <Groups />, label: t('nav.groups') },
+    { icon: <EmojiEvents />, label: t('nav.league') },
+    { icon: <Person />, label: t('nav.profile') },
   ];
 
   const handleTabChange = (idx: number) => {
@@ -149,7 +146,7 @@ export function HomeScreen() {
       >
         <Box sx={{ p: 2 }}>
           <Typography variant="h6" fontWeight={700} color="primary.main">
-            Futeba dos Parças
+            {t('common.appName')}
           </Typography>
         </Box>
         <List>

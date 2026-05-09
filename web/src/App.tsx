@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './services/queryClient';
-import { AuthProvider, ThemeProvider, useAuth } from './contexts';
+import { AuthProvider, ThemeProvider, LanguageProvider, useAuth } from './contexts';
 import { Box } from '@mui/material';
 import { ErrorBoundary, withErrorBoundary } from './components/common/ErrorBoundary';
 import { ToastProvider } from './contexts/ToastContext';
@@ -405,6 +405,7 @@ function App() {
       <ThemeProvider>
         <BrowserRouter>
           <AuthProvider>
+            <LanguageProvider>
             <ToastProvider>
               <SkipNav />
               {/* CommandPalette montado fora do MobileShell para não sofrer restrição
@@ -427,6 +428,7 @@ function App() {
                 <ConnectionStatusWrapper />
               </MobileShell>
             </ToastProvider>
+            </LanguageProvider>
           </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>
