@@ -10,6 +10,11 @@ module.exports = {
       isolatedModules: true,
     }],
   },
+  // FIX: @google-cloud/storage usa ESM exports incompatíveis com CommonJS
+  // jest. Stub global pra tests que indiretamente importam (via account-cleanup).
+  moduleNameMapper: {
+    "^@google-cloud/storage$": "<rootDir>/test/__mocks__/google-cloud-storage.ts",
+  },
   clearMocks: true,
   collectCoverageFrom: [
     "src/**/*.ts",
