@@ -1102,16 +1102,20 @@ service cloud.firestore {
             isValidDescription(request.resource.data.description)
           )
         ) ||
-        // SECFIX #611: atualização de member_count restringida a membros do grupo.
-        // Antes: qualquer auth podia overwrite member_count em QUALQUER grupo.
-        // Agora: apenas membros atuais podem incrementar/decrementar (leave/remove paths
-        // do Android e Web). O join-via-invite (web) faz batch com member doc + increment
-        // na mesma transação — Firestore evalua pre-batch, então isGroupMember() nega
-        // o incremento do join. TODO: mover increment do join para Cloud Function trigger
-        // (onMemberJoined) que usa admin SDK e bypassa rules. Rastreado em #611.
+        // SECFIX #611: atualização de member_count limitada a +1/-1 increment.
+        // Antes: qualquer auth podia overwrite member_count com valor arbitrário
+        // (data corruption: setar 999999 em qualquer grupo).
+        // Agora: aceita apenas +1 (join) ou -1 (leave/remove). Não verifica membership
+        // porque join-via-invite (web batch) precisa incrementar antes do member doc
+        // ser visível pra rule. Spam de +1 ainda é possível mas detectável em audit logs.
+        // Solução completa: trigger onMemberAdded/Removed via Cloud Function (admin SDK
+        // bypassa rules). Rastreado em #611-FU (follow-up).
         (
-          isGroupMember(groupId) &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['member_count', 'updated_at'])
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['member_count', 'updated_at']) &&
+          (
+            request.resource.data.member_count == resource.data.member_count + 1 ||
+            request.resource.data.member_count == resource.data.member_count - 1
+          )
         )
       );
 
@@ -1437,12 +1441,24 @@ service cloud.firestore {
       // SECFIX #610: confirmedPlayer só pode deletar eventos que ELE mesmo criou.
       // Sem o check de ownership, qualquer jogador confirmado poderia deletar gols/
       // assistências de outros jogadores — privilege escalation em sistema gamificado.
-      // Nota: eventos criados pelo Android (que não popula created_by) só podem ser
-      // deletados por admin ou game owner até que o bug de população seja corrigido.
+      //
+      // Fallback legacy: eventos antigos podem não ter `created_by` setado (Android
+      // não populava antes do fix). Pra esses, aceitamos `player_id == userId()`
+      // como ownership proxy — o jogador do evento pode auto-deletar. Não reabre
+      // privilege escalation (limitado a eventos próprios), apenas permite recovery
+      // de eventos legacy.
       allow delete: if isAuthenticated() && (
         isAdmin() ||
         isGameOwner(resource.data.game_id) ||
-        (isConfirmedPlayer(resource.data.game_id) && resource.data.created_by == userId())
+        (
+          isConfirmedPlayer(resource.data.game_id) && (
+            resource.data.created_by == userId() ||
+            (
+              (!('created_by' in resource.data) || resource.data.created_by == '') &&
+              resource.data.player_id == userId()
+            )
+          )
+        )
       );
     }
 

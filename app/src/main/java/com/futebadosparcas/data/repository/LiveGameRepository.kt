@@ -142,6 +142,12 @@ class LiveGameRepository constructor(
 
             val docRef = eventsCollection.document()
 
+            // FIX #610: popular created_by pra que a security rule de delete
+            // (confirmedPlayer && created_by == userId()) consiga validar ownership.
+            // Antes: campo ficava em string vazia, eventos criados em Android não
+            // podiam ser deletados pelo creator após o fix da rule.
+            val currentUserId = auth.currentUser?.uid ?: ""
+
             val event = GameEvent(
                 id = docRef.id,
                 gameId = gameId,
@@ -151,7 +157,8 @@ class LiveGameRepository constructor(
                 teamId = teamId,
                 assistedById = assistedById,
                 assistedByName = assistedByName,
-                minute = minute
+                minute = minute,
+                createdBy = currentUserId
             )
 
             docRef.set(event).await()
