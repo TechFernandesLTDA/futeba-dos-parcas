@@ -9,6 +9,7 @@ import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.Query
 import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.firestore
+import dev.gitlive.firebase.functions.functions
 import dev.gitlive.firebase.storage.storage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -729,6 +730,25 @@ actual class FirebaseDataSource actual constructor() {
             firestore.collection(COLLECTION_USERS)
                 .document(userId)
                 .update(updates)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * FIX #578 STAGE 2: chama callable Cloud Function `updateUserPii` (us-central1)
+     * pra escrever PII em users_private/{auth.uid}. Owner-only — Cloud Function
+     * deduz target user via auth context (não aceita userId no payload).
+     *
+     * Valida server-side: subset de PII fields (email, fcm_token, birth_date,
+     * height_cm, weight_kg, gender) com type checks.
+     */
+    actual suspend fun updateUserPiiViaCallable(updates: Map<String, Any>): Result<Unit> {
+        return try {
+            val functions = Firebase.functions("us-central1")
+            functions.httpsCallable("updateUserPii")
+                .invoke(updates)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

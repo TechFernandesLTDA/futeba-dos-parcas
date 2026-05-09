@@ -217,16 +217,37 @@ describe("users — campos imutáveis (atualização)", () => {
     );
   });
 
-  it("Player pode atualizar campos básicos do próprio perfil (name, email)", async () => {
+  it("Player pode atualizar campos básicos do próprio perfil (name, ratings)", async () => {
+    // SECFIX #578 STAGE 2: PII fields (email, fcm_token, birth_date, height_cm,
+    // weight_kg, gender) NÃO podem ser escritos client-side em users.
+    // Devem usar callable updateUserPii → users_private.
     const db = asPlayerA(testEnv);
     await assertSucceeds(
       db.doc(`users/${UID_PLAYER_A}`).update({
         name: "Jogador A Atualizado",
-        email: "updated.a@test.com",
         striker_rating: 3.0,
         mid_rating: 2.5,
         defender_rating: 2.0,
         gk_rating: 1.5,
+      })
+    );
+  });
+
+  it("SECFIX #578: Player NÃO pode atualizar PII (email, birth_date, etc) em users", async () => {
+    const db = asPlayerA(testEnv);
+    await assertFails(
+      db.doc(`users/${UID_PLAYER_A}`).update({
+        email: "tentativa@hack.com",
+      })
+    );
+    await assertFails(
+      db.doc(`users/${UID_PLAYER_A}`).update({
+        birth_date: 946684800000,
+      })
+    );
+    await assertFails(
+      db.doc(`users/${UID_PLAYER_A}`).update({
+        height_cm: 180,
       })
     );
   });

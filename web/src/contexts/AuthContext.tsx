@@ -50,20 +50,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   firebaseUserRef.current = firebaseUser;
 
   // Fetch user data from Firestore
+  // FIX #578: PII (email, fcm_token, birth_date, height_cm, weight_kg, gender)
+  // está em `users_private/{uid}` (only owner reads). Merge users + users_private
+  // pra construir User completo (apenas pro próprio user — owner-only access).
   const fetchUserData = async (uid: string): Promise<User | null> => {
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
-      if (userDoc.exists()) {
-        const raw = userDoc.data();
-        const converted = snakeToCamel(raw);
-        return {
-          id: userDoc.id,
-          ...converted,
-          createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
-          updatedAt: (raw.updated_at || raw.updatedAt)?.toDate?.(),
-        } as User;
+      if (!userDoc.exists()) return null;
+
+      const raw = userDoc.data();
+      const converted = snakeToCamel(raw);
+
+      // Tentativa de ler PII de users_private (only owner). Não-fatal:
+      // se permission denied (não é owner) ou doc não existe, retorna apenas
+      // dados públicos de users.
+      let piiData: Record<string, unknown> = {};
+      try {
+        const privateDoc = await getDoc(doc(db, 'users_private', uid));
+        if (privateDoc.exists()) {
+          piiData = snakeToCamel(privateDoc.data());
+        }
+      } catch (privateErr) {
+        // Esperado pra não-owner — silently skip.
+        logger.debug('users_private read denied (expected for non-owner):', privateErr);
       }
-      return null;
+
+      return {
+        id: userDoc.id,
+        ...converted,
+        ...piiData, // PII fields override (users_private é authoritative)
+        createdAt: (raw.created_at || raw.createdAt)?.toDate?.(),
+        updatedAt: (raw.updated_at || raw.updatedAt)?.toDate?.(),
+      } as User;
     } catch (err) {
       logger.error('Error fetching user data:', err);
       return null;

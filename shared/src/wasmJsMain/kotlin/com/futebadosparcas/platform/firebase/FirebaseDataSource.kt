@@ -83,6 +83,7 @@ actual class FirebaseDataSource {
     actual suspend fun getCurrentUser(): Result<User> = stubResult()
     actual fun getCurrentUserId(): String? = null
     actual suspend fun updateUser(userId: String, updates: Map<String, Any>): Result<Unit> = stubResult()
+    actual suspend fun updateUserPiiViaCallable(updates: Map<String, Any>): Result<Unit> = stubResult()
     actual suspend fun searchUsers(query: String, limit: Int): Result<List<User>> = stubResult()
     actual suspend fun getAllUsers(): Result<List<User>> = stubResult()
     actual suspend fun updateUserRole(userId: String, newRole: String): Result<Unit> = stubResult()
