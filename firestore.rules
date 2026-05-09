@@ -1102,8 +1102,17 @@ service cloud.firestore {
             isValidDescription(request.resource.data.description)
           )
         ) ||
-        // Atualizacao de contadores permitida (sem owner check)
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['member_count', 'updated_at'])
+        // SECFIX #611: atualização de member_count restringida a membros do grupo.
+        // Antes: qualquer auth podia overwrite member_count em QUALQUER grupo.
+        // Agora: apenas membros atuais podem incrementar/decrementar (leave/remove paths
+        // do Android e Web). O join-via-invite (web) faz batch com member doc + increment
+        // na mesma transação — Firestore evalua pre-batch, então isGroupMember() nega
+        // o incremento do join. TODO: mover increment do join para Cloud Function trigger
+        // (onMemberJoined) que usa admin SDK e bypassa rules. Rastreado em #611.
+        (
+          isGroupMember(groupId) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['member_count', 'updated_at'])
+        )
       );
 
       // Issue #516: hard delete somente ADMIN (recovery/compliance).
