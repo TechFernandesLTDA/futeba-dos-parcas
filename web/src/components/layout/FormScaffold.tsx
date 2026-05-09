@@ -16,16 +16,16 @@ import {
   ArrowBack as ArrowBackIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import { ReactNode } from 'react';
 import { useDirtyGuard } from '../../hooks/useDirtyGuard';
 import { useKeyboardInset } from '../../hooks/useKeyboardInset';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 
 interface FormScaffoldProps {
   /** Título mostrado no header */
   title: string;
-  /** Destino quando usuário fecha o formulário (NÃO usar navigate(-1)) */
+  /** Destino fallback quando usuário fecha o formulário sem histórico (deep-link). Com histórico, usa navigate(-1). */
   closeDestination: string;
   /** Variante visual do botão de fechar */
   closeVariant?: 'X' | 'back';
@@ -43,7 +43,8 @@ interface FormScaffoldProps {
  * Scaffold padronizado para telas de formulário.
  *
  * Resolve:
- * - Botão X/back com closeDestination hard-coded (não navigate(-1) que quebra deeplinks)
+ * - Botão X/back: navigate(-1) volta pra origem (com fallback p/ closeDestination
+ *   quando não há histórico, evitando blank-screen em deep-links)
  * - Dirty guard via Dialog MUI (não window.confirm)
  * - Header consistente com title + close button
  * - Footer fixo com ações (cancel/save)
@@ -57,18 +58,18 @@ export function FormScaffold({
   footer,
   loading = false,
 }: FormScaffoldProps) {
-  const navigate = useNavigate();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const { isBlocked, attemptClose, proceed, cancel } = useDirtyGuard(isDirty);
   const kbdInset = useKeyboardInset();
+  // Fechar volta pra origem (navigate(-1)). Sem histórico cai em closeDestination.
+  // Antes: navigate(closeDestination) hardcoded, levava a /games ou /group/X
+  // mesmo quando user veio de outra tela — surfava como "página de erro" se
+  // o destino fixo não tinha permissão (ex.: grupo deletado/removido).
+  const goBack = useNavigateBack(closeDestination);
 
-  // FIX #574: dirty guard agora intercepta o close button de verdade.
-  // Antes: handleClose navegava direto, dialog "Descartar mudanças?" nunca abria
-  // (isBlocked era hardcoded false). Agora attemptClose() dispara o dialog
-  // se isDirty=true, e proceed() executa a navegação pendente.
   const handleClose = () => {
-    attemptClose(() => navigate(closeDestination));
+    attemptClose(goBack);
   };
 
   const CloseIconComponent = closeVariant === 'X' ? CloseIcon : ArrowBackIcon;

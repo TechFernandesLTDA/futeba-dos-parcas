@@ -10,8 +10,8 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useDirtyGuard } from '../../hooks/useDirtyGuard';
+import { useNavigateBack } from '../../hooks/useNavigateBack';
 
 interface AdaptiveFormSheetProps {
   /**
@@ -20,8 +20,8 @@ interface AdaptiveFormSheetProps {
    */
   children: ReactNode;
   /**
-   * Rota pai para navegação ao fechar o sheet (backdrop, ESC).
-   * Deve ser a mesma rota usada no closeDestination do FormScaffold interno.
+   * Destino fallback ao fechar o sheet (backdrop, ESC) sem histórico (deep-link).
+   * Com histórico, usa navigate(-1) — mesma semântica do FormScaffold interno.
    */
   closeDestination: string;
   /**
@@ -64,7 +64,7 @@ export function AdaptiveFormSheet({
 }: AdaptiveFormSheetProps) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
-  const navigate = useNavigate();
+  const goBack = useNavigateBack(closeDestination);
   const { isBlocked, attemptClose, proceed, cancel } = useDirtyGuard(isDirty);
 
   // Mobile: renderiza sem wrapper — comportamento fullscreen atual preservado.
@@ -76,8 +76,9 @@ export function AdaptiveFormSheet({
   // Desktop: Drawer modal anchor=right.
   // open=true sempre — o componente só existe enquanto a rota estiver ativa.
   // Fechar (Esc/backdrop) = attemptClose (dirty guard intercepta se isDirty).
+  // navigate(-1) volta pra origem; closeDestination é fallback p/ deep-link.
   const handleClose = () => {
-    attemptClose(() => navigate(closeDestination));
+    attemptClose(goBack);
   };
 
   return (
