@@ -4,9 +4,11 @@ import { Box, CircularProgress, Typography, useTheme, alpha } from '@mui/materia
 import { SportsSoccer as SoccerIcon } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 export const SplashScreen: React.FC = () => {
   useDocumentTitle();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const theme = useTheme();
   const { firebaseUser, loading } = useAuth();
@@ -67,7 +69,7 @@ export const SplashScreen: React.FC = () => {
       </Box>
 
       <Typography variant="h4" fontWeight={700} color="primary.contrastText" gutterBottom>
-        Futeba dos Parças
+        {t('common.appName')}
       </Typography>
 
       <Typography variant="body1" sx={{ color: alpha(theme.palette.primary.contrastText, 0.8), mb: 4 }}>

@@ -86,7 +86,7 @@ export const ThemeSettingsScreen: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography variant="h6" sx={{ ml: 1 }}>
-            Aparência
+            {t('common.appearance')}
           </Typography>
         </Box>
       </Box>
