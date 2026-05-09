@@ -812,11 +812,18 @@ export const concludeMvpVoting =
         // Agora: aplicado aqui no callable após o voting concluir,
         // idempotente via xp_logs com doc id determinístico.
         // Best-effort: erros aqui não falham o concludeMvpVoting.
-        try {
-          if (
-            !result.alreadyConcluded &&
-            result.mvpId
-          ) {
+        //
+        // FIX #618: guard !alreadyConcluded removido intencionalmente.
+        // applyVotingXpDelta é idempotente via doc id determinístico
+        // (mvp_${gameId}_${userId} / bola_murcha_${gameId}_${userId}
+        // em xp_logs). Segunda chamada vê logDoc.exists e retorna no-op.
+        // Antes: guard bloqueava retry após qualquer erro transient
+        // (timeout, network blip) → MVP perdia +30 XP permanentemente
+        // sem recovery automático.
+        // Separado em dois try/catch independentes para que falha no MVP
+        // não impeça aplicação do XP do Bola Murcha e vice-versa.
+        if (result.mvpId) {
+          try {
             await applyVotingXpDelta(
               db,
               gameId,
@@ -824,11 +831,16 @@ export const concludeMvpVoting =
               "MVP",
               XP_ACTIONS.MVP
             );
+          } catch (xpError) {
+            console.error(
+              "[VOTING_XP] MVP application failed " +
+              "(will be safe on retry — idempotente):",
+              xpError
+            );
           }
-          if (
-            !result.alreadyConcluded &&
-            result.worstPlayerId
-          ) {
+        }
+        if (result.worstPlayerId) {
+          try {
             await applyVotingXpDelta(
               db,
               gameId,
@@ -836,14 +848,13 @@ export const concludeMvpVoting =
               "BOLA_MURCHA",
               XP_ACTIONS.WORST_PLAYER
             );
+          } catch (xpError) {
+            console.error(
+              "[VOTING_XP] Bola Murcha application failed " +
+              "(will be safe on retry — idempotente):",
+              xpError
+            );
           }
-        } catch (xpError) {
-          console.error(
-            "[MVP_CONCLUDE] " +
-            "XP delta application failed " +
-            "(non-fatal):",
-            xpError
-          );
         }
 
         return {
