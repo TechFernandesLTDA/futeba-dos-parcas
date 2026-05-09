@@ -333,9 +333,9 @@ export const GroupSettingsScreen: React.FC = () => {
                             size="small"
                             sx={{
                               height: 20,
-                              fontSize: '0.7rem',
-                              bgcolor: alpha(ROLE_CONFIG[member.role]?.color || '#78716C', 0.1),
-                              color: ROLE_CONFIG[member.role]?.color || '#78716C',
+                              fontSize: '0.75rem',
+                              bgcolor: alpha(ROLE_CONFIG[member.role]?.color || theme.palette.text.secondary, 0.1),
+                              color: ROLE_CONFIG[member.role]?.color || theme.palette.text.secondary,
                             }}
                           />
                         </Box>

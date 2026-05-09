@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 // ==========================================
 // LIGHT THEME COLORS
 // ==========================================
-private val md3_light_primary = Color(0xFF00C853) // Vibrant Green
+private val md3_light_primary = Color(0xFF00852A) // Vibrant Green (WCAG AA)
 private val md3_light_onPrimary = Color(0xFFFFFFFF)
 private val md3_light_primaryContainer = Color(0xFFB7F7D2) // Light mint
 private val md3_light_onPrimaryContainer = Color(0xFF002910)
@@ -103,7 +103,7 @@ private val md3_dark_outlineVariant = Color(0xFF30373C)
 
 private val md3_dark_inverseSurface = Color(0xFFE6E6E6)
 private val md3_dark_inverseOnSurface = Color(0xFF1C1B1F)
-private val md3_dark_inversePrimary = Color(0xFF00C853)
+private val md3_dark_inversePrimary = Color(0xFF00852A)
 
 // Surface Containers Dark (M3 1.2+) - OLED optimized
 private val md3_dark_surfaceDim = Color(0xFF0F1114)
@@ -226,128 +226,128 @@ object FutebaColors {
     // PRIMARY - Electric Pro Green
     // Modern, energetic, yet professional.
     // ==========================================
-    val Primary = android.graphics.Color.parseColor("#00C853") // Vibrant Green (Material A700 equivalent)
-    val PrimaryDark = android.graphics.Color.parseColor("#009624")
-    val PrimaryLight = android.graphics.Color.parseColor("#5EFC82") // Neon pop
-    val PrimaryContainer = android.graphics.Color.parseColor("#E0F2F1") // Very subtle mint tint
-    val OnPrimary = android.graphics.Color.parseColor("#FFFFFF")
-    val OnPrimaryContainer = android.graphics.Color.parseColor("#003300")
+    val Primary = Color(0xFF00852A) // Vibrant Green (WCAG AA)
+    val PrimaryDark = Color(0xFF009624)
+    val PrimaryLight = Color(0xFF5EFC82) // Neon pop
+    val PrimaryContainer = Color(0xFFE0F2F1) // Very subtle mint tint
+    val OnPrimary = Color(0xFFFFFFFF)
+    val OnPrimaryContainer = Color(0xFF003300)
 
     // PRIMARY OLED - High Contrast Neon
-    val PrimaryDarkTheme = android.graphics.Color.parseColor("#4ADE80") // Balanced vivid green
-    val PrimaryContainerDark = android.graphics.Color.parseColor("#0F3B24")
-    val OnPrimaryDark = android.graphics.Color.parseColor("#0B0F0D")
-    val OnPrimaryContainerDark = android.graphics.Color.parseColor("#B7F7D2")
+    val PrimaryDarkTheme = Color(0xFF4ADE80) // Balanced vivid green
+    val PrimaryContainerDark = Color(0xFF0F3B24)
+    val OnPrimaryDark = Color(0xFF0B0F0D)
+    val OnPrimaryContainerDark = Color(0xFFB7F7D2)
 
     // ==========================================
     // SECONDARY - Electric Blue / Accent
     // ==========================================
-    val Secondary = android.graphics.Color.parseColor("#2979FF") // Electric Blue
-    val SecondaryDark = android.graphics.Color.parseColor("#004ECB")
-    val SecondaryLight = android.graphics.Color.parseColor("#75A7FF")
-    val SecondaryContainer = android.graphics.Color.parseColor("#E3F2FD")
-    val OnSecondary = android.graphics.Color.parseColor("#FFFFFF")
-    val OnSecondaryContainer = android.graphics.Color.parseColor("#0D47A1")
+    val Secondary = Color(0xFF2979FF) // Electric Blue
+    val SecondaryDark = Color(0xFF004ECB)
+    val SecondaryLight = Color(0xFF75A7FF)
+    val SecondaryContainer = Color(0xFFE3F2FD)
+    val OnSecondary = Color(0xFFFFFFFF)
+    val OnSecondaryContainer = Color(0xFF0D47A1)
 
     // SECONDARY OLED - Cyan/Teal
-    val SecondaryDarkTheme = android.graphics.Color.parseColor("#5CC8FF")
-    val SecondaryContainerDark = android.graphics.Color.parseColor("#103447")
-    val OnSecondaryDark = android.graphics.Color.parseColor("#0B1114")
-    val OnSecondaryContainerDark = android.graphics.Color.parseColor("#BFE9FF")
+    val SecondaryDarkTheme = Color(0xFF5CC8FF)
+    val SecondaryContainerDark = Color(0xFF103447)
+    val OnSecondaryDark = Color(0xFF0B1114)
+    val OnSecondaryContainerDark = Color(0xFFBFE9FF)
 
     // ==========================================
     // TERTIARY - Energetic Orange (Action)
     // ==========================================
-    val Tertiary = android.graphics.Color.parseColor("#FF6D00") // Deep Orange
-    val Accent = android.graphics.Color.parseColor("#FF6D00")
-    val TertiaryContainer = android.graphics.Color.parseColor("#FFF3E0")
-    val OnTertiary = android.graphics.Color.parseColor("#FFFFFF")
-    val OnTertiaryContainer = android.graphics.Color.parseColor("#E65100")
+    val Tertiary = Color(0xFFFF6D00) // Deep Orange
+    val Accent = Color(0xFFFF6D00)
+    val TertiaryContainer = Color(0xFFFFF3E0)
+    val OnTertiary = Color(0xFFFFFFFF)
+    val OnTertiaryContainer = Color(0xFFE65100)
 
     // TERTIARY OLED - Amber/Gold
-    val TertiaryDarkTheme = android.graphics.Color.parseColor("#FFB74D")
-    val TertiaryContainerDark = android.graphics.Color.parseColor("#4A2A00")
-    val OnTertiaryDark = android.graphics.Color.parseColor("#2A1700")
-    val OnTertiaryContainerDark = android.graphics.Color.parseColor("#FFD9A0")
+    val TertiaryDarkTheme = Color(0xFFFFB74D)
+    val TertiaryContainerDark = Color(0xFF4A2A00)
+    val OnTertiaryDark = Color(0xFF2A1700)
+    val OnTertiaryContainerDark = Color(0xFFFFD9A0)
 
     // ==========================================
     // SEMANTIC COLORS - Field Types
     // ==========================================
-    val FieldGrass = android.graphics.Color.parseColor("#388E3C")
-    val FieldSynthetic = android.graphics.Color.parseColor("#4CAF50")
-    val FieldFutsal = android.graphics.Color.parseColor("#1976D2")
-    val FieldSand = android.graphics.Color.parseColor("#FBC02D")
+    val FieldGrass = Color(0xFF388E3C)
+    val FieldSynthetic = Color(0xFF4CAF50)
+    val FieldFutsal = Color(0xFF1976D2)
+    val FieldSand = Color(0xFFFBC02D)
 
     // ==========================================
     // STATUS COLORS
     // ==========================================
-    val Success = android.graphics.Color.parseColor("#00C853")
-    val SuccessDark = android.graphics.Color.parseColor("#69F0AE")
+    val Success = Color(0xFF00852A)
+    val SuccessDark = Color(0xFF69F0AE)
 
-    val Warning = android.graphics.Color.parseColor("#FFD600") // Vibrant Yellow
-    val WarningDark = android.graphics.Color.parseColor("#F7D87A")
+    val Warning = Color(0xFFFFD600) // Vibrant Yellow
+    val WarningDark = Color(0xFFF7D87A)
 
-    val Error = android.graphics.Color.parseColor("#D32F2F")
-    val ErrorDark = android.graphics.Color.parseColor("#FF5252") // Red A200
+    val Error = Color(0xFFD32F2F)
+    val ErrorDark = Color(0xFFFF5252) // Red A200
 
-    val Info = android.graphics.Color.parseColor("#0288D1")
-    val InfoDark = android.graphics.Color.parseColor("#40C4FF")
+    val Info = Color(0xFF0288D1)
+    val InfoDark = Color(0xFF40C4FF)
 
     // ==========================================
     // LIGHT THEME - BACKGROUNDS & SURFACES
     // Clean, airy, premium white/grey
     // ==========================================
-    val Background = android.graphics.Color.parseColor("#F8F9FA") // Off-white, easier on eyes than #FFFFFF
-    val Surface = android.graphics.Color.parseColor("#FFFFFF")
-    val SurfaceVariant = android.graphics.Color.parseColor("#F1F5F9") // Slate-tinted grey
-    val OnBackground = android.graphics.Color.parseColor("#1A1C1E")
-    val OnSurface = android.graphics.Color.parseColor("#1A1C1E")
-    val OnSurfaceVariant = android.graphics.Color.parseColor("#49454F")
-    val Outline = android.graphics.Color.parseColor("#79747E")
-    val OutlineVariant = android.graphics.Color.parseColor("#CAC4D0")
+    val Background = Color(0xFFF8F9FA) // Off-white, easier on eyes than #FFFFFF
+    val Surface = Color(0xFFFFFFFF)
+    val SurfaceVariant = Color(0xFFF1F5F9) // Slate-tinted grey
+    val OnBackground = Color(0xFF1A1C1E)
+    val OnSurface = Color(0xFF1A1C1E)
+    val OnSurfaceVariant = Color(0xFF49454F)
+    val Outline = Color(0xFF79747E)
+    val OutlineVariant = Color(0xFFCAC4D0)
 
     // ==========================================
     // DARK THEME - OLED OPTIMIZED
     // True Black & Slate Greys
     // ==========================================
-    val BackgroundDark = android.graphics.Color.parseColor("#0F1114")
-    val SurfaceDark = android.graphics.Color.parseColor("#15191C")
-    val SurfaceVariantDark = android.graphics.Color.parseColor("#20252A")
-    val OnBackgroundDark = android.graphics.Color.parseColor("#E8ECEF")
-    val OnSurfaceDark = android.graphics.Color.parseColor("#E8ECEF")
-    val OnSurfaceVariantDark = android.graphics.Color.parseColor("#C7CDD1")
-    val OutlineDark = android.graphics.Color.parseColor("#445058")
-    val OutlineVariantDark = android.graphics.Color.parseColor("#30373C")
+    val BackgroundDark = Color(0xFF0F1114)
+    val SurfaceDark = Color(0xFF15191C)
+    val SurfaceVariantDark = Color(0xFF20252A)
+    val OnBackgroundDark = Color(0xFFE8ECEF)
+    val OnSurfaceDark = Color(0xFFE8ECEF)
+    val OnSurfaceVariantDark = Color(0xFFC7CDD1)
+    val OutlineDark = Color(0xFF445058)
+    val OutlineVariantDark = Color(0xFF30373C)
 
     // ==========================================
     // TEXT COLORS
     // ==========================================
-    val TextPrimary = android.graphics.Color.parseColor("#1A1C1E")
-    val TextSecondary = android.graphics.Color.parseColor("#49454F")
-    val TextPrimaryDark = android.graphics.Color.parseColor("#E8ECEF")
-    val TextSecondaryDark = android.graphics.Color.parseColor("#C7CDD1")
+    val TextPrimary = Color(0xFF1A1C1E)
+    val TextSecondary = Color(0xFF49454F)
+    val TextPrimaryDark = Color(0xFFE8ECEF)
+    val TextSecondaryDark = Color(0xFFC7CDD1)
 
     // ==========================================
     // GAMIFICATION - Premium Metals & Effects
     // ==========================================
-    val Gold = android.graphics.Color.parseColor("#FFD700")
-    val Silver = android.graphics.Color.parseColor("#E0E0E0")
-    val Bronze = android.graphics.Color.parseColor("#CD7F32")
+    val Gold = Color(0xFFFFD700)
+    val Silver = Color(0xFFE0E0E0)
+    val Bronze = Color(0xFFCD7F32)
 
     // Royal Purple for Premium/MVP
-    val Purple = android.graphics.Color.parseColor("#6200EA") // Deep Purple A700
-    val PurpleLight = android.graphics.Color.parseColor("#B388FF")
+    val Purple = Color(0xFF6200EA) // Deep Purple A700
+    val PurpleLight = Color(0xFFB388FF)
 
     // XP Gradients
-    val XpStart = android.graphics.Color.parseColor("#00C853")
-    val XpEnd = android.graphics.Color.parseColor("#64DD17")
-    val LevelUpGold = android.graphics.Color.parseColor("#FFAB00")
+    val XpStart = Color(0xFF00852A)
+    val XpEnd = Color(0xFF64DD17)
+    val LevelUpGold = Color(0xFFFFAB00)
 
     // ==========================================
     // LEGACY
     // ==========================================
-    val Divider = android.graphics.Color.parseColor("#E0E0E0")
-    val DividerDark = android.graphics.Color.parseColor("#30373C")
+    val Divider = Color(0xFFE0E0E0)
+    val DividerDark = Color(0xFF30373C)
 }
 
 // ==========================================
@@ -378,7 +378,7 @@ object GamificationColors {
     val Purple = Color(0xFF6200EA)
     val PurpleLight = Color(0xFFB388FF)
 
-    val XpGreen = Color(0xFF00C853)
+    val XpGreen = Color(0xFF00852A)
     val XpLightGreen = Color(0xFF64DD17)
     val LevelUpGold = Color(0xFFFFAB00)
     

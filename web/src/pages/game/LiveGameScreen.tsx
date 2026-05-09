@@ -334,7 +334,7 @@ export const LiveGameScreen: React.FC = () => {
                 </Typography>
               </Box>
               <Typography variant="h4" color="text.secondary">
-                X
+                vs
               </Typography>
               <Box sx={{ textAlign: 'center', flex: 1 }}>
                 <Typography variant="h5" fontWeight={600} color="text.secondary">
@@ -377,15 +377,17 @@ export const LiveGameScreen: React.FC = () => {
                           }}
                         >
                           {event.eventType === 'GOAL' && <SoccerIcon />}
-                          {event.eventType === 'YELLOW_CARD' && <Typography variant="caption">YC</Typography>}
-                          {event.eventType === 'RED_CARD' && <Typography variant="caption">RC</Typography>}
-                          {event.eventType === 'ASSIST' && <Typography variant="caption">A</Typography>}
-                          {event.eventType === 'SAVE' && <Typography variant="caption">D</Typography>}
+                          {event.eventType === 'YELLOW_CARD' && <Typography variant="caption">CA</Typography>}
+                          {event.eventType === 'RED_CARD' && <Typography variant="caption">CV</Typography>}
+                          {event.eventType === 'ASSIST' && <Typography variant="caption">AST</Typography>}
+                          {event.eventType === 'SAVE' && <Typography variant="caption">DEF</Typography>}
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
                         primary={event.playerName}
-                        secondary={`${event.eventType} - ${event.minute}'`}
+                        secondary={`${
+                          { GOAL: 'Gol', ASSIST: 'Assistência', SAVE: 'Defesa', YELLOW_CARD: 'Cartão Amarelo', RED_CARD: 'Cartão Vermelho', SUBSTITUTION: 'Substituição' }[event.eventType] || event.eventType
+                        } - ${event.minute}'`}
                       />
                     </ListItem>
                     {index < events.length - 1 && <Divider />}

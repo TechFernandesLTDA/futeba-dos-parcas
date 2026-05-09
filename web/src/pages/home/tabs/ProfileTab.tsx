@@ -147,7 +147,7 @@ export function ProfileTab() {
       <Box
         sx={{
           background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-          pt: 4,
+          pt: 2,
           pb: 6,
           px: 2,
           textAlign: 'center',
@@ -340,6 +340,9 @@ export function ProfileTab() {
                 />
               </Box>
             ))}
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5, textAlign: 'right' }}>
+              Escala: 0 a 5
+            </Typography>
           </CardContent>
         </Card>
       </Box>

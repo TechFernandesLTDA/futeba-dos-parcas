@@ -49,7 +49,7 @@ export const LeagueScreen: React.FC = () => {
       case 2:
         return { bgcolor: gamificationColors.silver, color: '#000' };
       case 3:
-        return { bgcolor: gamificationColors.bronze, color: '#fff' };
+        return { bgcolor: gamificationColors.bronze, color: theme.palette.common.white };
       default:
         return { bgcolor: theme.palette.grey[200], color: theme.palette.text.primary };
     }
@@ -229,7 +229,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
               sx={{
                 bgcolor: alpha(divisionConfig.color, 0.1),
                 color: divisionConfig.color,
-                fontSize: '0.7rem',
+                fontSize: '0.75rem',
                 height: 20,
               }}
             />

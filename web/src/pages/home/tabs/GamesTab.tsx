@@ -227,21 +227,39 @@ export function GamesTab() {
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                       <Box sx={{ flex: 1 }}>
-                        <Box sx={{ display: 'flex', gap: 0.5, mb: 0.5 }}>
+                        <Box sx={{ display: 'flex', gap: 0.5, mb: 0.5, alignItems: 'center' }}>
                           {(() => {
                             const sc = getStatusChipColors(theme, game.status);
                             return (
-                              <Chip
-                                label={sc.label || game.status}
-                                size="small"
-                                sx={{
-                                  bgcolor: alpha(sc.color, 0.15),
-                                  color: sc.color,
-                                  fontWeight: 600,
-                                  fontSize: '0.7rem',
-                                  height: 22,
-                                }}
-                              />
+                              <>
+                                <Chip
+                                  label={sc.label || game.status}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: alpha(sc.color, 0.15),
+                                    color: sc.color,
+                                    fontWeight: 600,
+                                    fontSize: '0.75rem',
+                                    height: 22,
+                                  }}
+                                />
+                                {game.status === 'LIVE' && (
+                                  <Box
+                                    sx={{
+                                      width: 8,
+                                      height: 8,
+                                      borderRadius: '50%',
+                                      bgcolor: theme.palette.error.main,
+                                      animation: 'livePulse 1.5s ease-in-out infinite',
+                                      '@keyframes livePulse': {
+                                        '0%': { opacity: 1 },
+                                        '50%': { opacity: 0.3 },
+                                        '100%': { opacity: 1 },
+                                      },
+                                    }}
+                                  />
+                                )}
+                              </>
                             );
                           })()}
                           {game.fieldType && (
@@ -249,7 +267,7 @@ export function GamesTab() {
                               label={FIELD_TYPE_LABELS[game.fieldType] || game.fieldType}
                               size="small"
                               variant="outlined"
-                              sx={{ fontSize: '0.7rem', height: 22 }}
+                              sx={{ fontSize: '0.75rem', height: 22 }}
                             />
                           )}
                         </Box>

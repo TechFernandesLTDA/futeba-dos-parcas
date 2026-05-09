@@ -584,7 +584,7 @@ const GroupMemberItem = React.memo(function GroupMemberItem({
                 size="small"
                 sx={{
                   height: 20,
-                  fontSize: '0.7rem',
+                  fontSize: '0.75rem',
                   bgcolor: alpha(ROLE_CONFIG[member.role].color, 0.1),
                   color: ROLE_CONFIG[member.role].color,
                 }}

@@ -484,7 +484,7 @@ function LevelRow({
                   px: 0.8,
                   py: 0.1,
                   borderRadius: 1,
-                  fontSize: '0.6rem',
+                  fontSize: '0.75rem',
                   fontWeight: 700,
                   letterSpacing: 0.5,
                 }}

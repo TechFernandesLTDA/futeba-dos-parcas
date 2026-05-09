@@ -355,16 +355,6 @@ private fun HomeSuccessContent(
             }
         }
 
-        // Activity Heatmap - Remover para reduzir peso da tela
-        // if (activities.isNotEmpty()) {
-        //     item(key = "heatmap") {
-        //         ActivityHeatmapSection(
-        //             activities = activities,
-        //             modifier = Modifier.padding(top = 16.dp)
-        //         )
-        //     }
-        // }
-
         // Recent Badges
         if (state.recentBadges.isNotEmpty()) {
             item(key = "badges") {

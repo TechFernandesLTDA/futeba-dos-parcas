@@ -230,7 +230,7 @@ export function HomeScreen() {
               '& .MuiBottomNavigationAction-label': {
                 fontSize: '0.65rem',
                 '&.Mui-selected': {
-                  fontSize: '0.7rem',
+                   fontSize: '0.75rem',
                 },
               },
             },

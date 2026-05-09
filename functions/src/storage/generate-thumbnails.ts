@@ -87,7 +87,7 @@ export const generateProfileThumbnail =
       // Evitar loop infinito - não processar thumbs
       if (
         filePath.includes("/thumbnails/") ||
-        filePath.includes("_thumb")
+        /_thumb\.\w+$/.test(filePath)
       ) {
         logger.info(
           "[THUMBNAIL] Already a thumbnail, " +
@@ -177,6 +177,11 @@ export const generateProfileThumbnail =
         );
         const sharp = (await import("sharp")).default;
         await sharp(tempFilePath)
+          .withMetadata({
+            exif: undefined,
+            icc: undefined,
+            xmp: undefined,
+          } as Record<string, undefined>)
           .resize(200, 200, {
             fit: "cover",
             position: "center",
@@ -311,7 +316,7 @@ export const generateGroupThumbnail =
 
       if (
         filePath.includes("/thumbnails/") ||
-        filePath.includes("_thumb")
+        /_thumb\.\w+$/.test(filePath)
       ) {
         return;
       }
@@ -381,6 +386,11 @@ export const generateGroupThumbnail =
 
         const sharp = (await import("sharp")).default;
         await sharp(tempFilePath)
+          .withMetadata({
+            exif: undefined,
+            icc: undefined,
+            xmp: undefined,
+          } as Record<string, undefined>)
           .resize(200, 200, {
             fit: "cover",
             position: "center",

@@ -126,14 +126,14 @@ export const GameCard: React.FC<GameCardProps> = React.memo(({
                     backgroundColor: statusConfig.bgColor,
                     color: statusConfig.color,
                     fontWeight: 600,
-                    fontSize: '0.7rem',
+                    fontSize: '0.75rem',
                   }}
                 />
                 <Chip
                   label={FIELD_TYPE_LABELS[game.fieldType] || game.fieldType}
                   size="small"
                   variant="outlined"
-                  sx={{ fontSize: '0.7rem' }}
+                  sx={{ fontSize: '0.75rem' }}
                 />
               </Box>
               <Typography variant="subtitle1" fontWeight={600}>
