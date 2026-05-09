@@ -144,7 +144,8 @@ export function HomeScreen() {
         }}
         aria-label="Navegação principal"
       >
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <SportsSoccer sx={{ color: 'primary.main', fontSize: 28 }} />
           <Typography variant="h6" fontWeight={700} color="primary.main">
             {t('common.appName')}
           </Typography>

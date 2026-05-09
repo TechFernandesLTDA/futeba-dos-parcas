@@ -31,9 +31,11 @@ import { useTheme } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAuthErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 export function LoginScreen() {
   useDocumentTitle('Login');
+  const { t } = useTranslation();
   const theme = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -145,9 +147,9 @@ export function LoginScreen() {
             >
               <SportsSoccer sx={{ fontSize: 40, color: 'white' }} />
             </Box>
-            <Typography component="h1" variant="h4" fontWeight="bold" color="primary">
-              Futeba dos Parças
-            </Typography>
+              <Typography component="h1" variant="h4" fontWeight="bold" color="primary">
+                {t('common.appName')}
+              </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               Organize suas peladas!
             </Typography>

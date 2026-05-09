@@ -2,9 +2,11 @@ import { Box, Typography, Button, Link, useTheme, alpha } from '@mui/material';
 import { ArrowForward as ArrowForwardIcon, SportsSoccer as SoccerIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { useTranslation } from 'react-i18next';
 
 export const WelcomeScreen: React.FC = () => {
   useDocumentTitle('Bem-vindo');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const theme = useTheme();
 
@@ -37,7 +39,7 @@ export const WelcomeScreen: React.FC = () => {
       </Box>
 
       <Typography variant="h3" fontWeight={700} gutterBottom sx={{ textAlign: 'center' }}>
-        Futeba dos Parças
+        {t('common.appName')}
       </Typography>
 
       <Typography variant="h6" sx={{ textAlign: 'center', opacity: 0.9, mb: 4, maxWidth: 300 }}>
