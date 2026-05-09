@@ -42,6 +42,12 @@ service firebase.storage {
       return member != null && (member.role == 'OWNER' || member.role == 'ADMIN');
     }
 
+    // Verifica se o usuário é admin do sistema
+    function isAdmin() {
+      return firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+    }
+
     // Verifica se o arquivo é uma imagem válida
     function isImage() {
       return request.resource.contentType.matches('image/.*');
@@ -207,6 +213,15 @@ service firebase.storage {
       allow delete: if isAuthenticated() &&
                       firestore.exists(/databases/(default)/documents/games/$(gameId)) &&
                       firestore.get(/databases/(default)/documents/games/$(gameId)).data.owner_id == request.auth.uid;
+    }
+
+    // ============================================
+    // SCREENSHOTS DE FEEDBACK
+    // Path: feedback_screenshots/{userId}/{feedbackId}/{fileName}
+    // ============================================
+    match /feedback_screenshots/{userId}/{feedbackId}/{fileName} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if false;
     }
 
     // ============================================

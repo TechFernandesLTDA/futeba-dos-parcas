@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import {
   Box,
   Container,
@@ -14,6 +15,7 @@ import {
   Divider,
   useTheme,
   Avatar,
+  Chip,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
@@ -30,9 +32,11 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
 
 export const AboutScreen: React.FC = () => {
   useDocumentTitle('Sobre');
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
   const { user } = useAuth();
@@ -130,7 +134,7 @@ export const AboutScreen: React.FC = () => {
               <ListItemText primary="Central de Ajuda" />
             </ListItemButton>
             <Divider />
-            <ListItemButton onClick={() => window.open('mailto:techfernandesltda@gmail.com', '_blank')}>
+            <ListItemButton onClick={() => setFeedbackOpen(true)}>
               <ListItemIcon>
                 <BugIcon />
               </ListItemIcon>
@@ -183,8 +187,8 @@ export const AboutScreen: React.FC = () => {
           </Typography>
         </Box>
       </Container>
+
+      <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </Box>
   );
 };
-
-import { Chip } from '@mui/material';
