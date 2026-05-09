@@ -1344,14 +1344,14 @@ export const onGameDeleted = onDocumentDeleted(
     const BATCH_LIMIT = FIRESTORE_BATCH_SAFE_LIMIT;
 
     try {
-      const gameSnap = await db()
-        .collection("games")
-        .doc(gameId)
-        .get();
-      if (!gameSnap.exists) {
+      // FIX #615: usar snapshot pré-deleção (event.data) em vez de
+      // re-read pós-trigger. O documento já foi deletado quando o
+      // trigger dispara, então re-read sempre retorna exists=false,
+      // tornando o cascade delete dead code.
+      if (!event.data?.exists) {
         console.log(
           "[CASCADE DELETE] Game " +
-          `${gameId} no longer exists, ` +
+          `${gameId} sem dados pré-deleção, ` +
           "skipping (idempotent)."
         );
         return;
@@ -1845,6 +1845,10 @@ export * from "./auth/custom-claims";
 // ==========================================
 export {verifyCpf, setUserVerified} from "./auth/verification";
 export {canSendSmsOtp, logVerificationFailure} from "./auth/anti-abuse";
+
+// FIX #619: cleanup cpf_index + users_private ao deletar conta
+// (LGPD Art. 18 VI — direito ao apagamento)
+export {onUserDeleted} from "./auth/account-cleanup";
 
 // SECFIX #433: PII denormalization users -> users_private
 // Triggers + callable migration (ADMIN one-shot) + Stage 3 callables

@@ -1102,8 +1102,17 @@ service cloud.firestore {
             isValidDescription(request.resource.data.description)
           )
         ) ||
-        // Atualizacao de contadores permitida (sem owner check)
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['member_count', 'updated_at'])
+        // SECFIX #611: atualização de member_count restringida a membros do grupo.
+        // Antes: qualquer auth podia overwrite member_count em QUALQUER grupo.
+        // Agora: apenas membros atuais podem incrementar/decrementar (leave/remove paths
+        // do Android e Web). O join-via-invite (web) faz batch com member doc + increment
+        // na mesma transação — Firestore evalua pre-batch, então isGroupMember() nega
+        // o incremento do join. TODO: mover increment do join para Cloud Function trigger
+        // (onMemberJoined) que usa admin SDK e bypassa rules. Rastreado em #611.
+        (
+          isGroupMember(groupId) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['member_count', 'updated_at'])
+        )
       );
 
       // Issue #516: hard delete somente ADMIN (recovery/compliance).
@@ -1425,10 +1434,15 @@ service cloud.firestore {
       // Nao pode alterar game_id (previne mover evento entre jogos)
       fieldUnchanged('game_id');
 
+      // SECFIX #610: confirmedPlayer só pode deletar eventos que ELE mesmo criou.
+      // Sem o check de ownership, qualquer jogador confirmado poderia deletar gols/
+      // assistências de outros jogadores — privilege escalation em sistema gamificado.
+      // Nota: eventos criados pelo Android (que não popula created_by) só podem ser
+      // deletados por admin ou game owner até que o bug de população seja corrigido.
       allow delete: if isAuthenticated() && (
         isAdmin() ||
         isGameOwner(resource.data.game_id) ||
-        isConfirmedPlayer(resource.data.game_id)
+        (isConfirmedPlayer(resource.data.game_id) && resource.data.created_by == userId())
       );
     }
 
