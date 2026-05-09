@@ -69,6 +69,10 @@ jest.mock("../src/middleware/rate-limiter", () => ({
 // Mock constants
 jest.mock("../src/constants", () => ({
   MVP_VOTE_WINDOW_HOURS: 24,
+  XP_ACTIONS: {
+    MVP: 30,
+    WORST_PLAYER: -10,
+  },
 }));
 
 // Capturar handlers registrados pelo onCall
@@ -425,6 +429,8 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
             owner_id: "owner1",
           }),
         },
+        // 3º get: confirmations query (FIX #617 — agora via transaction.get())
+        { docs: [], empty: true },
       ];
 
       const mockTx = {
@@ -435,18 +441,6 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
         update: jest.fn(),
         set: jest.fn(),
       };
-
-      // Mock para confirmations query dentro da transaction
-      const admin = require("firebase-admin");
-      const db = admin.firestore();
-      db.collection.mockReturnValue({
-        doc: jest.fn().mockReturnValue({ get: jest.fn() }),
-        where: jest.fn().mockReturnThis(),
-        get: jest.fn().mockResolvedValue({
-          empty: true,
-          docs: [],
-        }),
-      });
 
       return callback(mockTx);
     });
@@ -487,6 +481,8 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
             owner_id: "owner1",
           }),
         },
+        // 3º get: confirmations query (FIX #617 — agora via transaction.get())
+        { docs: [], empty: true },
       ];
 
       const mockTx = {
@@ -497,14 +493,6 @@ describe("concludeMvpVoting - contagem de votos e vencedor", () => {
         update: jest.fn(),
         set: jest.fn(),
       };
-
-      const admin = require("firebase-admin");
-      const db = admin.firestore();
-      db.collection.mockReturnValue({
-        doc: jest.fn().mockReturnValue({ get: jest.fn() }),
-        where: jest.fn().mockReturnThis(),
-        get: jest.fn().mockResolvedValue({ empty: true, docs: [] }),
-      });
 
       return callback(mockTx);
     });
