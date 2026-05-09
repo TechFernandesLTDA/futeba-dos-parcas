@@ -15,6 +15,7 @@ import {
   Alert,
   Button,
   useTheme,
+  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -57,7 +58,8 @@ interface UserStats {
 export const StatisticsScreen: React.FC = () => {
   useDocumentTitle('Estatísticas');
   const navigate = useNavigate();
-  const theme = useTheme();
+    const theme = useTheme();
+    const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { user } = useAuth();
 
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -137,7 +139,7 @@ export const StatisticsScreen: React.FC = () => {
         </Tabs>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
         {loading ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 2 }} />

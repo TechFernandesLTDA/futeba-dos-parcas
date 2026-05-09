@@ -470,7 +470,6 @@ private fun XpEvolutionChart(
                     text = entry.key.take(3),
                     style = MaterialTheme.typography.labelSmall,
                     color = onSurfaceVariant,
-                    fontSize = 10.sp,
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center
                 )

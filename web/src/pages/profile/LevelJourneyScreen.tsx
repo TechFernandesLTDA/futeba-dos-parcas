@@ -15,6 +15,7 @@ import {
   ListItemText,
   Collapse,
   useTheme,
+  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -61,6 +62,7 @@ export const LevelJourneyScreen: React.FC = () => {
   useDocumentTitle('Jornada de Nível');
   const navigateBack = useNavigateBack('/');
   const theme = useTheme();
+  const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { showError } = useToast();
@@ -143,7 +145,7 @@ export const LevelJourneyScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {loading ? (
           <LoadingState shimmerCount={4} itemType="CARD" />
         ) : (

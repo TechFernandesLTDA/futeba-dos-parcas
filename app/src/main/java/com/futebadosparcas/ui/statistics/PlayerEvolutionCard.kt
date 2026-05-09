@@ -85,13 +85,13 @@ fun PlayerEvolutionCard(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "$currentLevel",
-                        fontSize = 32.sp,
+                        style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
                         color = onPrimaryColor
                     )
                     Text(
                         text = stringResource(R.string.player_evolution_level),
-                        fontSize = 10.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         color = onPrimaryColor.copy(alpha = 0.8f)
                     )
                 }
@@ -102,7 +102,7 @@ fun PlayerEvolutionCard(
             // Level name
             Text(
                 text = levelName,
-                fontSize = 20.sp,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = onPrimaryColor
             )
@@ -117,12 +117,12 @@ fun PlayerEvolutionCard(
                 ) {
                     Text(
                         text = "$xpProgress XP",
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.labelMedium,
                         color = onPrimaryColor.copy(alpha = 0.8f)
                     )
                     Text(
                         text = "$xpNeeded XP",
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.labelMedium,
                         color = onPrimaryColor.copy(alpha = 0.8f)
                     )
                 }
@@ -143,7 +143,7 @@ fun PlayerEvolutionCard(
 
                 Text(
                     text = stringResource(R.string.player_evolution_xp_remaining, xpNeeded - xpProgress),
-                    fontSize = 11.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     color = onPrimaryColor.copy(alpha = 0.7f),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
@@ -155,7 +155,7 @@ fun PlayerEvolutionCard(
             // Total XP
             Text(
                 text = stringResource(R.string.player_evolution_total, currentXp),
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = onPrimaryColor
             )
@@ -209,7 +209,7 @@ fun PlayerLeagueCard(
                 ) {
                     Text(
                         text = getDivisionIcon(division),
-                        fontSize = 24.sp,
+                        style = MaterialTheme.typography.titleLarge,
                         color = com.futebadosparcas.util.ContrastHelper.getContrastingTextColor(divisionColor)
                     )
                 }
@@ -219,13 +219,13 @@ fun PlayerLeagueCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(R.string.player_evolution_league, division.displayName),
-                        fontSize = 18.sp,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = stringResource(R.string.player_evolution_rating, leagueRating.toFloat()),
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -321,13 +321,13 @@ private fun LeagueRatingBar(
             thresholds.dropLast(1).forEach { threshold ->
                 Text(
                     text = "$threshold",
-                    fontSize = 10.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Text(
                 text = "100",
-                fontSize = 10.sp,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -347,7 +347,7 @@ private fun StatusBadge(
     ) {
         Text(
             text = text,
-            fontSize = 11.sp,
+            style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Medium,
             color = color
         )
@@ -395,7 +395,7 @@ fun MilestoneProgressCard(
                 )
                 Text(
                     text = "${(progress * 100).toInt()}%",
-                    fontSize = 10.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -406,13 +406,13 @@ fun MilestoneProgressCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = milestoneName,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "$current / $target - $description",
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -421,13 +421,13 @@ fun MilestoneProgressCard(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "+$xpReward",
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.tertiary
                 )
                 Text(
                     text = stringResource(R.string.player_evolution_xp, xpReward),
-                    fontSize = 10.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

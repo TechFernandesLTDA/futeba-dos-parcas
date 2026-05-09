@@ -10,6 +10,7 @@ import {
   Tabs,
   Tab,
   useTheme,
+  useMediaQuery,
   alpha,
   Grid,
   Paper,
@@ -55,7 +56,8 @@ interface StatsSummary {
 export const EvolutionScreen: React.FC = () => {
   useDocumentTitle('Evolução');
   const navigate = useNavigate();
-  const theme = useTheme();
+    const theme = useTheme();
+    const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
 
@@ -189,7 +191,7 @@ export const EvolutionScreen: React.FC = () => {
         </Tabs>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {tabValue === 0 && (
           <>
             <Card sx={{ mb: 2 }}>

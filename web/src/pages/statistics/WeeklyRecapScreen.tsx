@@ -13,6 +13,7 @@ import {
   Grid,
   Paper,
   useTheme,
+  useMediaQuery,
   alpha,
   List,
   ListItem,
@@ -63,7 +64,8 @@ interface GameRecord {
 export const WeeklyRecapScreen: React.FC = () => {
   useDocumentTitle('Resumo Semanal');
   const navigate = useNavigate();
-  const theme = useTheme();
+    const theme = useTheme();
+    const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
   const { showError } = useToast();
@@ -169,7 +171,7 @@ export const WeeklyRecapScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         <Card sx={{ mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
           <CardContent>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>

@@ -12,6 +12,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   useTheme,
+  useMediaQuery,
   alpha,
 } from '@mui/material';
 import {
@@ -57,7 +58,8 @@ const FORMATIONS = [
 export const TacticalBoardScreen: React.FC = () => {
   useDocumentTitle('Prancheta Tática');
   const navigateBack = useNavigateBack('/games');
-  const theme = useTheme();
+    const theme = useTheme();
+    const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();
   const { showError } = useToast();
@@ -160,7 +162,7 @@ export const TacticalBoardScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'lg' : 'sm'} sx={{ py: 2 }}>
         <ToggleButtonGroup
           value={selectedFormation}
           exclusive

@@ -278,42 +278,25 @@ object LocationTimeFormatter {
      * Retorna nomes completos dos dias da semana para um locale.
      */
     private fun getDayNamesForLocale(locale: Locale): List<String> {
-        return if (locale.language == "pt") {
-            listOf("Domingo", "Segunda-feira", "Terca-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sabado")
-        } else {
-            listOf("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
-        }
+        return listOf("Domingo", "Segunda-feira", "Terca-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sabado")
     }
 
     /**
      * Retorna abreviacoes dos dias da semana para um locale.
      */
     private fun getDayNamesAbbrevForLocale(locale: Locale): List<String> {
-        return if (locale.language == "pt") {
-            listOf("Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab")
-        } else {
-            listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
-        }
+        return listOf("Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab")
     }
 
     /**
      * Retorna texto localizado para strings comuns.
      */
     private fun getTextForLocale(key: String, locale: Locale): String {
-        return if (locale.language == "pt") {
-            when (key) {
-                "all_days" -> "Todos os dias"
-                "weekdays" -> "Seg - Sex"
-                "weekend" -> "Fim de semana"
-                else -> ""
-            }
-        } else {
-            when (key) {
-                "all_days" -> "Every day"
-                "weekdays" -> "Mon - Fri"
-                "weekend" -> "Weekends"
-                else -> ""
-            }
+        return when (key) {
+            "all_days" -> "Todos os dias"
+            "weekdays" -> "Seg - Sex"
+            "weekend" -> "Fim de semana"
+            else -> ""
         }
     }
 

@@ -3981,4 +3981,14 @@ subir no ranking!</string>
     <string name="cd_waitlist_expand">expandir</string>
     <string name="cd_waitlist_collapse">recolher</string>
 
+    <!-- CPF Verification Screen -->
+    <string name="cpf_verification_title">Verificar CPF</string>
+    <string name="cpf_verification_subtitle">Seu CPF é usado apenas para evitar contas falsas e duplicadas. Não compartilhamos com terceiros. Etapa 2 de 2.</string>
+    <string name="cpf_label">CPF</string>
+    <string name="cpf_placeholder">999.999.999-99</string>
+    <string name="cpf_supporting_text">Apenas números, com ou sem máscara</string>
+    <string name="cpf_verifying">Verificando...</string>
+    <string name="cpf_finish">Concluir verificação</string>
+    <string name="cpf_privacy_terms">Ao continuar, você concorda com a Política de Privacidade e os Termos de Uso.</string>
+
 </resources>

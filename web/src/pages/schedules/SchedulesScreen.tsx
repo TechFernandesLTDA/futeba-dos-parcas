@@ -59,7 +59,8 @@ const DAYS_OF_WEEK = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta
 export const SchedulesScreen: React.FC = () => {
   useDocumentTitle('Agenda');
   const navigate = useNavigate();
-  const theme = useTheme();
+    const theme = useTheme();
+    const isMd = useMediaQuery(theme.breakpoints.up('md'));
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { groupId } = useParams<{ groupId: string }>();
   const { user } = useAuth();
@@ -153,7 +154,7 @@ export const SchedulesScreen: React.FC = () => {
         </Box>
       </Box>
 
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Container maxWidth={isMd ? 'md' : 'sm'} sx={{ py: 2 }}>
         {loading ? (
           <LoadingState shimmerCount={4} itemType="CARD" />
         ) : schedules.length === 0 ? (
