@@ -145,7 +145,7 @@ export function LoginScreen() {
                 boxShadow: `0 4px 12px ${theme.palette.primary.main}66`,
               }}
             >
-              <SportsSoccer sx={{ fontSize: 40, color: 'white' }} />
+              <SportsSoccer sx={{ fontSize: 40, color: theme.palette.primary.contrastText }} />
             </Box>
               <Typography component="h1" variant="h4" fontWeight="bold" color="primary">
                 {t('common.appName')}

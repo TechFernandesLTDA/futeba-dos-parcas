@@ -53,7 +53,7 @@ export const ConnectionStatus: React.FC<{ isOnline: boolean }> = ({ isOnline }) 
         py: 1,
         borderRadius: 2,
         bgcolor: 'error.main',
-        color: 'white',
+        color: 'error.contrastText',
         display: 'flex',
         alignItems: 'center',
         gap: 1,

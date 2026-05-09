@@ -289,7 +289,8 @@ export const StatusChip: React.FC<{
   status: string;
   config: Record<string, { label: string; color: string; bgColor?: string }>;
 }> = React.memo(({ status, config }) => {
-  const statusConfig = config[status] || { label: status, color: '#9E9E9E', bgColor: '#F5F5F5' };
+  const theme = useTheme();
+  const statusConfig = config[status] || { label: status, color: theme.palette.text.disabled, bgColor: theme.palette.action.disabledBackground };
 
   return (
     <Chip
@@ -311,6 +312,7 @@ export const PlayerAvatar: React.FC<{
   size?: number;
   level?: number;
 }> = React.memo(({ name, photoUrl, size = 40, level }) => {
+  const theme = useTheme();
   const [imgLoaded, setImgLoaded] = React.useState(false);
   const [imgError, setImgError] = React.useState(false);
   const initial = name?.charAt(0)?.toUpperCase() || '?';
@@ -371,10 +373,10 @@ export const PlayerAvatar: React.FC<{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '2px solid white',
+            border: `2px solid ${theme.palette.primary.contrastText}`,
           }}
         >
-          <Typography variant="caption" fontWeight={700} color="white" sx={{ fontSize: size * 0.25 }}>
+          <Typography variant="caption" fontWeight={700} sx={{ color: theme.palette.primary.contrastText, fontSize: size * 0.25 }}>
             {level}
           </Typography>
         </Box>
