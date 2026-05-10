@@ -249,7 +249,8 @@ class ProfileViewModel(
                     heightCm = formData.heightCm,
                     weightKg = formData.weightKg,
                     dominantFoot = formData.dominantFoot,
-                    preferredFieldTypes = formData.preferredFieldTypes
+                    preferredFieldTypes = formData.preferredFieldTypes,
+                    favoriteTeam = formData.favoriteTeam
                 )
 
                 // Atualizar no repositório

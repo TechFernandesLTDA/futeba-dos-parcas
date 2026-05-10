@@ -19,6 +19,8 @@ import {
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
+import { TeamSelector } from '../../components/team/TeamSelector';
 import { updateProfile } from 'firebase/auth';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
@@ -30,8 +32,10 @@ export const ProfileSetupScreen: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { firebaseUser } = useAuth();
+  const { showError } = useToast();
 
   const [name, setName] = useState(firebaseUser?.displayName || '');
+  const [favoriteTeam, setFavoriteTeam] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
@@ -55,6 +59,7 @@ export const ProfileSetupScreen: React.FC = () => {
         gk_rating: 3,
         preferred_position: null,
         preferred_field_types: [],
+        favorite_team: favoriteTeam,
         total_games: 0,
         total_goals: 0,
         total_assists: 0,
@@ -76,6 +81,7 @@ export const ProfileSetupScreen: React.FC = () => {
       navigate('/');
     } catch (error) {
       logger.error('Error saving profile:', error);
+      showError('Erro ao salvar perfil. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -149,6 +155,14 @@ export const ProfileSetupScreen: React.FC = () => {
           disabled
           sx={{ mb: 3 }}
         />
+
+        <Box sx={{ mb: 3 }}>
+          <TeamSelector
+            value={favoriteTeam}
+            onChange={setFavoriteTeam}
+            optional
+          />
+        </Box>
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           Seu nome será exibido para outros jogadores nos jogos e grupos.
