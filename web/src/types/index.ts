@@ -1,6 +1,7 @@
 export * from './user';
 export * from './game';
 export * from './group';
+export * from './team';
 
 // Re-export gamification sem conflito com Badge de user.ts
 export {

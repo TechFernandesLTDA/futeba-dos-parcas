@@ -24,6 +24,7 @@ export interface User {
   // Preferences
   preferredPosition?: PreferredPosition;
   preferredFieldTypes: FieldType[];
+  favoriteTeam?: string;
   
   // Stats
   totalGames: number;

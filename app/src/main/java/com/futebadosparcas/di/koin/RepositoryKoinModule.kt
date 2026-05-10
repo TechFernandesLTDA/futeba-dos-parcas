@@ -23,6 +23,7 @@ import com.futebadosparcas.data.repository.LiveGameRepositoryImpl
 import com.futebadosparcas.data.repository.MeteredLocationRepository
 import com.futebadosparcas.data.repository.PaymentRepositoryImpl
 import com.futebadosparcas.data.repository.UserRepositoryImpl
+import com.futebadosparcas.data.TeamsRepositoryImpl
 import com.futebadosparcas.data.repository.WaitlistRepositoryImpl
 import com.futebadosparcas.db.FutebaDatabase
 import com.futebadosparcas.domain.repository.ActivityRepository
@@ -42,6 +43,7 @@ import com.futebadosparcas.domain.repository.LocationRepository
 import com.futebadosparcas.domain.repository.NotificationRepository
 import com.futebadosparcas.domain.repository.RankingRepository
 import com.futebadosparcas.domain.repository.StatisticsRepository
+import com.futebadosparcas.domain.repository.TeamsRepository
 import com.futebadosparcas.domain.repository.UserRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 import com.futebadosparcas.platform.storage.PreferencesService
@@ -72,6 +74,10 @@ val repositoryKoinModule = module {
 
     single<UserRepository> {
         UserRepositoryImpl(get(), get(), get())
+    }
+
+    single<TeamsRepository> {
+        TeamsRepositoryImpl(get())
     }
 
     single<AuthRepository> {

@@ -43,6 +43,7 @@ actual class FirebaseDataSource actual constructor() {
         private const val COLLECTION_GAMES = "games"
         private const val COLLECTION_CONFIRMATIONS = "confirmations"
         private const val COLLECTION_TEAMS = "teams"
+        private const val COLLECTION_FAVORITE_TEAMS = "favorite_teams"
         private const val COLLECTION_STATISTICS = "statistics"
         private const val COLLECTION_USERS = "users"
         private const val COLLECTION_GROUPS = "groups"
@@ -890,6 +891,57 @@ actual class FirebaseDataSource actual constructor() {
             Result.success(Unit)
         } catch (e: Exception) {
             println("FirebaseDataSource: updateFcmToken falhou: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    // ========== FAVORITE TEAMS ==========
+
+    actual suspend fun getAllFavoriteTeams(): Result<List<Team>> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_FAVORITE_TEAMS)
+                .orderBy("name")
+                .get()
+
+            val teams = snapshot.documents.mapNotNull { doc ->
+                if (!doc.exists) return@mapNotNull null
+                Team(
+                    id = doc.id,
+                    name = doc.get<String?>("name") ?: "",
+                    badgeUrl = doc.get<String?>("badge_url") ?: doc.get<String?>("badgeUrl"),
+                    shortName = doc.get<String?>("short_name") ?: doc.get<String?>("shortName"),
+                    category = doc.get<String?>("category"),
+                    state = doc.get<String?>("state")
+                )
+            }
+            Result.success(teams)
+        } catch (e: Exception) {
+            println("FirebaseDataSource: getAllFavoriteTeams falhou: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    actual suspend fun getFavoriteTeamById(teamId: String): Result<Team> {
+        return try {
+            val doc = firestore.collection(COLLECTION_FAVORITE_TEAMS)
+                .document(teamId)
+                .get()
+
+            if (!doc.exists) {
+                return Result.failure(Exception("Time nao encontrado: $teamId"))
+            }
+
+            val team = Team(
+                id = doc.id,
+                name = doc.get<String?>("name") ?: "",
+                badgeUrl = doc.get<String?>("badge_url") ?: doc.get<String?>("badgeUrl"),
+                shortName = doc.get<String?>("short_name") ?: doc.get<String?>("shortName"),
+                category = doc.get<String?>("category"),
+                state = doc.get<String?>("state")
+            )
+            Result.success(team)
+        } catch (e: Exception) {
+            println("FirebaseDataSource: getFavoriteTeamById falhou: ${e.message}")
             Result.failure(e)
         }
     }
@@ -3534,6 +3586,7 @@ private fun dev.gitlive.firebase.firestore.DocumentSnapshot.toUserOrNull(): User
         preferredFieldTypes = ((get<List<*>?>("preferred_field_types") ?: get<List<*>?>("preferredFieldTypes")))?.mapNotNull { item ->
             (item as? String)?.let { name -> try { FieldType.valueOf(name) } catch (e: Exception) { null } }
         } ?: emptyList(),
+        favoriteTeam = get<String?>("favorite_team") ?: get<String?>("favoriteTeam"),
         birthDate = safeLong("birth_date") ?: safeLong("birthDate"),
         gender = get<String?>("gender"), heightCm = safeInt("height_cm") ?: safeInt("heightCm"),
         weightKg = safeInt("weight_kg") ?: safeInt("weightKg"),

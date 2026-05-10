@@ -1,0 +1,2 @@
+-- Migration to Version 5 (Add favorite_team field)
+ALTER TABLE users ADD COLUMN favoriteTeam TEXT;
