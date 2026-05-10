@@ -34,6 +34,7 @@ import { getLevelTitle, getLevelColor } from '../../types/user';
 import { PlayerAvatar, EmptyState } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { TeamBadge } from '../../components/team/TeamBadge';
 
 const logger = createLogger('StatisticsScreen');
 
@@ -166,9 +167,12 @@ export const StatisticsScreen: React.FC = () => {
                     level={stats.level}
                   />
                   <Box sx={{ flex: 1 }}>
-                    <Typography variant="h5" fontWeight={700}>
-                      {user?.name || 'Jogador'}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="h5" fontWeight={700}>
+                        {user?.name || 'Jogador'}
+                      </Typography>
+                      <TeamBadge teamId={user?.favoriteTeam} size={24} />
+                    </Box>
                     <Typography variant="body2" color="text.secondary">
                       Nível {stats.level} • {getLevelTitle(stats.level)}
                     </Typography>

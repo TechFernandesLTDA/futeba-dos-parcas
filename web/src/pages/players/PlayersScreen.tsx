@@ -37,6 +37,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { PlayerCard } from '../../components/player/PlayerCard';
+import { TeamBadge } from '../../components/team/TeamBadge';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
@@ -47,6 +48,7 @@ interface GroupMember {
   name: string;
   email: string;
   photoUrl?: string;
+  favoriteTeam?: string;
   role: 'OWNER' | 'ADMIN' | 'MEMBER';
   joinedAt?: Date;
 }
@@ -107,6 +109,7 @@ export const PlayersScreen: React.FC = () => {
                   name: d.name || 'Jogador',
                   email: d.email || '',
                   photoUrl: d.photoUrl,
+                  favoriteTeam: (d.favorite_team || d.favoriteTeam || undefined) as string | undefined,
                   role,
                   joinedAt: (raw.joined_at || raw.joinedAt)?.toDate?.(),
                 };
@@ -326,6 +329,7 @@ const PlayerMemberItem = React.memo(function PlayerMemberItem({
           primary={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {member.name}
+              <TeamBadge teamId={member.favoriteTeam} size={18} />
               {member.role !== 'MEMBER' && (
                 <Chip
                   icon={member.role === 'OWNER' ? <AdminIcon /> : undefined}

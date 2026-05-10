@@ -38,6 +38,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlayerDetail } from '../../hooks/usePlayers';
 import { PlayerAvatar } from '../../components/common/GameCard';
+import { TeamBadge } from '../../components/team/TeamBadge';
 import { DIVISION_CONFIG } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
 
@@ -199,9 +200,12 @@ export const ProfileScreen: React.FC = () => {
                     level={profile.level}
                   />
                   <Box sx={{ flex: 1 }}>
-                    <Typography variant="h5" fontWeight={700}>
-                      {profile.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="h5" fontWeight={700}>
+                        {profile.name}
+                      </Typography>
+                      <TeamBadge teamId={profile.favoriteTeam} size={24} />
+                    </Box>
                     <Chip
                       label={divisionConfig.label}
                       size="small"

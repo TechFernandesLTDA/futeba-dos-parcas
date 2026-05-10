@@ -35,6 +35,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
 import { PlayerAvatar } from '../../../components/common/GameCard';
 import { PlayerCard } from '../../../components/player/PlayerCard';
+import { TeamBadge } from '../../../components/team/TeamBadge';
 import { DIVISION_CONFIG, LeagueDivision, getLevelForXp, getXpProgress } from '../../../types/gamification';
 import { getLevelBadgeImage } from '../../../utils/levelBadge';
 import {
@@ -51,6 +52,7 @@ interface RankingPlayer {
   userId: string;
   userName: string;
   userPhoto?: string;
+  favoriteTeam?: string;
   level: number;
   points: number;
   gamesPlayed: number;
@@ -110,7 +112,7 @@ export function RankingsTab() {
               const data = snakeToCamel(raw) as Record<string, any>;
               const userId = data.userId || raw.user_id || docSnapshot.id;
 
-              let userData = { name: 'Jogador', photoUrl: null as string | null, level: 1, xp: 0 };
+              let userData = { name: 'Jogador', photoUrl: null as string | null, level: 1, xp: 0, favoriteTeam: null as string | null };
               try {
                 const userDoc = await getDoc(doc(db, 'users', userId));
                 if (userDoc.exists()) {
@@ -121,6 +123,7 @@ export function RankingsTab() {
                     photoUrl: d.photo_url || d.photoUrl || null,
                     level: getLevelForXp(xp),
                     xp,
+                    favoriteTeam: (d.favorite_team || d.favoriteTeam || null) as string | null,
                   };
                 }
               } catch {
@@ -132,6 +135,7 @@ export function RankingsTab() {
                 userId,
                 userName: userData.name,
                 userPhoto: userData.photoUrl || undefined,
+                favoriteTeam: userData.favoriteTeam || undefined,
                 level: userData.level,
                 points: data.points || 0,
                 gamesPlayed: data.gamesPlayed || data.games_played || 0,
@@ -546,6 +550,7 @@ const RankingCard = React.memo(function RankingCard({
               >
                 {player.userName}
               </Typography>
+              <TeamBadge teamId={player.favoriteTeam} size={18} />
               {player.isCurrentUser && (
                 <Chip label="Você" size="small" color="primary" sx={{ height: 18, fontSize: '0.75rem' }} />
               )}

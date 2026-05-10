@@ -49,6 +49,7 @@ import { gamificationColors } from '../../../theme';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../../contexts/ToastContext';
 import { createLogger } from '../../../utils/logger';
+import { TeamBadge } from '../../../components/team/TeamBadge';
 
 const logger = createLogger('ProfileTab');
 
@@ -191,9 +192,12 @@ export function ProfileTab() {
           </Box>
         </Box>
 
-        <Typography variant="h5" fontWeight="bold" sx={{ color: 'primary.contrastText', mt: 2 }}>
-          {user?.name || 'Jogador'}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 2 }}>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: 'primary.contrastText' }}>
+            {user?.name || 'Jogador'}
+          </Typography>
+          <TeamBadge teamId={user?.favoriteTeam} size={28} />
+        </Box>
 
         {user?.nickname && (
           <Typography variant="body2" sx={{ color: 'primary.contrastText', opacity: 0.9 }}>

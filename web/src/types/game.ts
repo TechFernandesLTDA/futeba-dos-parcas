@@ -20,6 +20,7 @@ export interface GameConfirmation {
   userId: string;
   userName: string;
   userPhoto?: string;
+  favoriteTeam?: string;
   position: PlayerPosition;
   status: ConfirmationStatus;
   paymentStatus: PaymentStatus;

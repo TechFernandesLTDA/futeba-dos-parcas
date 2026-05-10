@@ -36,6 +36,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Game, GameConfirmation } from '../../types/game';
 import { PlayerAvatar } from '../../components/common/GameCard';
+import { TeamBadge } from '../../components/team/TeamBadge';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
@@ -257,7 +258,12 @@ export const MVPVoteScreen: React.FC = () => {
                         />
                       </ListItemAvatar>
                       <ListItemText
-                        primary={player.userName}
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {player.userName}
+                            <TeamBadge teamId={player.favoriteTeam} size={18} />
+                          </Box>
+                        }
                         secondary={player.position === 'GOALKEEPER' ? 'Goleiro' : 'Jogador de Linha'}
                       />
                       <ListItemSecondaryAction>
@@ -312,7 +318,14 @@ export const MVPVoteScreen: React.FC = () => {
                               size={44}
                             />
                           </ListItemAvatar>
-                          <ListItemText primary={player.userName} />
+                          <ListItemText
+                            primary={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {player.userName}
+                                <TeamBadge teamId={player.favoriteTeam} size={18} />
+                              </Box>
+                            }
+                          />
                           <ListItemSecondaryAction>
                             <Radio
                               checked={bestGkVote === player.userId}
@@ -388,7 +401,12 @@ export const MVPVoteScreen: React.FC = () => {
                             />
                           </ListItemAvatar>
                           <ListItemText
-                            primary={player.userName}
+                            primary={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {player.userName}
+                                <TeamBadge teamId={player.favoriteTeam} size={18} />
+                              </Box>
+                            }
                             secondary={player.position === 'GOALKEEPER' ? 'Goleiro' : 'Jogador de Linha'}
                           />
                           <ListItemSecondaryAction>

@@ -8,6 +8,7 @@ export interface Player {
   name: string;
   email: string;
   photoUrl?: string;
+  favoriteTeam?: string;
   level: number;
   xp: number;
   division: string;
@@ -70,6 +71,7 @@ export const usePlayers = (groupId?: string) => {
               name: data.name || 'Jogador',
               email: data.email || '',
               photoUrl: data.photoUrl || raw.photo_url,
+              favoriteTeam: data.favoriteTeam ?? raw.favorite_team ?? undefined,
               level: data.level || 1,
               xp: data.experiencePoints ?? data.xp ?? 0,
               division: data.division || 'BRONZE',
@@ -130,6 +132,7 @@ export const usePlayerDetail = (userId?: string) => {
               name: data.name || 'Jogador',
               email: data.email || '',
               photoUrl: data.photoUrl || raw.photo_url,
+              favoriteTeam: data.favoriteTeam ?? raw.favorite_team ?? undefined,
               level: data.level || 1,
               xp: data.experiencePoints ?? data.xp ?? 0,
               division: data.division || 'BRONZE',

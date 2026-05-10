@@ -25,6 +25,7 @@ import {
 import { usePlayerCard } from '../../hooks/usePlayerCard';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
+import { TeamBadge } from '../team/TeamBadge';
 
 const logger = createLogger('PlayerCard');
 import {
@@ -398,18 +399,21 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ userId, onClose }) => {
                 </Box>
 
                 {/* Nome e apelido */}
-                <Typography
-                  variant="h5"
-                  sx={{
-                    color: theme.palette.common.white,
-                    fontWeight: 800,
-                    textAlign: 'center',
-                    lineHeight: 1.1,
-                    textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.3)}`,
-                  }}
-                >
-                  {player.name}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      color: theme.palette.common.white,
+                      fontWeight: 800,
+                      textAlign: 'center',
+                      lineHeight: 1.1,
+                      textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.3)}`,
+                    }}
+                  >
+                    {player.name}
+                  </Typography>
+                  <TeamBadge teamId={player.favoriteTeam} size={20} />
+                </Box>
 
                 {player.nickname && (
                   <Typography

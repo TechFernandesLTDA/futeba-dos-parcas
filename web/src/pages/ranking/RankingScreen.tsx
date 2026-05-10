@@ -27,6 +27,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { VirtualList } from '../../components/common/VirtualList';
 import { PlayerCard } from '../../components/player/PlayerCard';
+import { TeamBadge } from '../../components/team/TeamBadge';
 import { useLeague, LeaguePlayer } from '../../hooks/useLeague';
 import { DIVISION_CONFIG } from '../../types/gamification';
 import { pluralizeCount } from '../../utils/pluralize';
@@ -219,6 +220,7 @@ const RankingItem = React.memo(function RankingItem({
               <Typography variant="subtitle1" fontWeight={600}>
                 {player.userName}
               </Typography>
+              <TeamBadge teamId={player.favoriteTeam} size={18} />
               {player.isCurrentUser && (
                 <Chip label="Você" size="small" color="primary" />
               )}

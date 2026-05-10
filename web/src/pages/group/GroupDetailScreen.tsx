@@ -54,6 +54,7 @@ import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 import { pluralizeCount } from '../../utils/pluralize';
 import { GroupRole } from '../../types/group';
 import { PlayerAvatar, EmptyState, ShimmerLoading } from '../../components/common/GameCard';
+import { TeamBadge } from '../../components/team/TeamBadge';
 import { GameCard } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
@@ -559,7 +560,7 @@ const GroupMemberItem = React.memo(function GroupMemberItem({
   member,
   showDivider,
 }: {
-  member: { userId: string; userName: string; userPhotoUrl?: string; level?: number; role: GroupRole; totalGames: number };
+  member: { userId: string; userName: string; userPhotoUrl?: string; level?: number; role: GroupRole; totalGames: number; favoriteTeam?: string };
   showDivider: boolean;
 }) {
   const theme = useTheme();
@@ -580,6 +581,7 @@ const GroupMemberItem = React.memo(function GroupMemberItem({
               <Typography variant="subtitle1" fontWeight={500}>
                 {member.userName}
               </Typography>
+              <TeamBadge teamId={member.favoriteTeam} size={18} />
               <Chip
                 label={ROLE_CONFIG[member.role].label}
                 size="small"
