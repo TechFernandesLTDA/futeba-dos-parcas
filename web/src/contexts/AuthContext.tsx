@@ -123,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         best_streak: 0,
         is_searchable: true,
         is_verified: false,
+        favorite_team: null,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
         ...additionalData,

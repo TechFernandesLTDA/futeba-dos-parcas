@@ -426,7 +426,9 @@ class UserRepositoryImpl(
             autoRatingSamples = user.autoRatingSamples.toLong(),
             // Timestamps
             createdAt = user.createdAt,
-            updatedAt = user.updatedAt
+            updatedAt = user.updatedAt,
+            // Favorite team
+            favoriteTeam = user.favoriteTeam
         )
     }
 
@@ -506,6 +508,8 @@ private fun com.futebadosparcas.db.Users.toUser(): User {
         autoRatingSamples = this.autoRatingSamples.toInt(),
         // Timestamps
         createdAt = this.createdAt,
-        updatedAt = this.updatedAt
+        updatedAt = this.updatedAt,
+        // Favorite team
+        favoriteTeam = this.favoriteTeam
     )
 }

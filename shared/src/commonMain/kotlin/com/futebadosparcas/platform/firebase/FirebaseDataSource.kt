@@ -217,6 +217,11 @@ expect class FirebaseDataSource() {
 
     suspend fun updateFcmToken(token: String): Result<Unit>
 
+    // ========== FAVORITE TEAMS ==========
+
+    suspend fun getAllFavoriteTeams(): Result<List<Team>>
+    suspend fun getFavoriteTeamById(teamId: String): Result<Team>
+
     // ========== AUTH ==========
 
     /**

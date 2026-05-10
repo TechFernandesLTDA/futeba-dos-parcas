@@ -105,6 +105,7 @@ data class User(
     // Posicao preferida
     @SerialName("preferred_position") val preferredPosition: String? = null,
     @SerialName("preferred_field_types") val preferredFieldTypes: List<FieldType> = emptyList(),
+    @SerialName("favorite_team") val favoriteTeam: String? = null,
 
     // Informacoes pessoais
     @SerialName("birth_date") val birthDate: Long? = null,
