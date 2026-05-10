@@ -41,6 +41,9 @@ import java.util.*
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.components.rememberDiscardChangesGuard
+import com.futebadosparcas.ui.components.team.TeamPickerDialog
+import com.futebadosparcas.ui.components.team.TeamBadge
+import com.futebadosparcas.domain.model.Team
 
 /**
  * EditProfileScreen - Tela de edição de perfil em Compose
@@ -264,6 +267,10 @@ private fun EditProfileContent(
     var secondaryPosition by remember { mutableStateOf(user.secondaryPosition ?: "") }
     var playStyle by remember { mutableStateOf(user.playStyle ?: "") }
     var experienceYears by remember { mutableStateOf(user.experienceYears?.toString() ?: "") }
+    var favoriteTeamId by remember { mutableStateOf(user.favoriteTeam ?: "") }
+    var selectedTeam by remember { mutableStateOf<Team?>(null) }
+
+    var showTeamPicker by remember { mutableStateOf(false) }
 
     var societyChecked by remember { mutableStateOf(user.preferredFieldTypes.contains(FieldType.SOCIETY)) }
     var futsalChecked by remember { mutableStateOf(user.preferredFieldTypes.contains(FieldType.FUTSAL)) }
@@ -324,6 +331,12 @@ private fun EditProfileContent(
             onNicknameChange = { nickname = it; onFormChanged() },
             birthDate = birthDate,
             onBirthDateChange = { birthDate = it; onFormChanged() }
+        )
+
+        // Favorite Team
+        FavoriteTeamSection(
+            selectedTeam = selectedTeam,
+            onTeamClick = { showTeamPicker = true }
         )
 
         // Physical Info
@@ -408,7 +421,8 @@ private fun EditProfileContent(
                     primaryPosition = primaryPosition.takeIf { it.isNotBlank() },
                     secondaryPosition = secondaryPosition.takeIf { it.isNotBlank() },
                     playStyle = playStyle.takeIf { it.isNotBlank() },
-                    experienceYears = experienceYears.toIntOrNull()
+                    experienceYears = experienceYears.toIntOrNull(),
+                    favoriteTeam = favoriteTeamId.takeIf { it.isNotBlank() }
                 )
 
                 com.futebadosparcas.util.AppLogger.d("EditProfileScreen") { "Saving profile data: $formData" }
@@ -432,6 +446,59 @@ private fun EditProfileContent(
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+    }
+
+    if (showTeamPicker) {
+        TeamPickerDialog(
+            onDismiss = { showTeamPicker = false },
+            onTeamSelected = { team ->
+                selectedTeam = team
+                favoriteTeamId = team?.id ?: ""
+                showTeamPicker = false
+                onFormChanged()
+            },
+            currentTeamId = favoriteTeamId.takeIf { it.isNotBlank() }
+        )
+    }
+}
+
+@Composable
+private fun FavoriteTeamSection(
+    selectedTeam: Team?,
+    onTeamClick: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = "Time do Coração",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onTeamClick)
+                .padding(vertical = 12.dp, horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (selectedTeam != null) {
+                TeamBadge(team = selectedTeam, iconSize = 28)
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = selectedTeam.name,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            } else {
+                Text(
+                    text = "Selecionar time",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+        }
+
+        HorizontalDivider()
     }
 }
 
@@ -1068,5 +1135,6 @@ data class ProfileFormData(
     val primaryPosition: String?,
     val secondaryPosition: String?,
     val playStyle: String?,
-    val experienceYears: Int?
+    val experienceYears: Int?,
+    val favoriteTeam: String? = null
 )

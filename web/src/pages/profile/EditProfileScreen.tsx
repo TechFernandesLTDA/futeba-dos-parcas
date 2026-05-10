@@ -19,7 +19,9 @@ import {
   Save as SaveIcon,
 } from '@mui/icons-material';
 import { FormScaffold } from '../../components/layout';
+import { TeamSelector } from '../../components/team/TeamSelector';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
@@ -41,12 +43,14 @@ interface UserProfile {
   phone: string;
   preferredPosition?: PreferredPosition;
   bio: string;
+  favoriteTeam?: string | null;
 }
 
 export const EditProfileScreen: React.FC = () => {
   useDocumentTitle('Editar Perfil');
   const navigate = useNavigate();
   const { currentUser, updateUserProfile } = useAuth();
+  const { showError } = useToast();
   const [initialData, setInitialData] = useState<UserProfile | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -60,6 +64,7 @@ export const EditProfileScreen: React.FC = () => {
     phone: '',
     preferredPosition: undefined,
     bio: '',
+    favoriteTeam: null,
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -91,6 +96,7 @@ export const EditProfileScreen: React.FC = () => {
           phone: data.phone || '',
           preferredPosition: data.preferredPosition,
           bio: data.bio || '',
+          favoriteTeam: data.favoriteTeam || null,
         };
         setFormData(loaded);
         setInitialData(loaded);
@@ -145,6 +151,7 @@ export const EditProfileScreen: React.FC = () => {
         phone: formData.phone,
         preferred_position: formData.preferredPosition,
         bio: formData.bio,
+        favorite_team: formData.favoriteTeam,
         updated_at: serverTimestamp(),
       });
 
@@ -157,6 +164,7 @@ export const EditProfileScreen: React.FC = () => {
       setTimeout(() => navigate('/profile'), 1500);
     } catch (err) {
       setError((err as Error).message);
+      showError('Erro ao salvar perfil. Tente novamente.');
     } finally {
       setSaving(false);
     }
@@ -177,6 +185,7 @@ export const EditProfileScreen: React.FC = () => {
       formData.phone !== initialData.phone ||
       formData.preferredPosition !== initialData.preferredPosition ||
       formData.bio !== initialData.bio ||
+      formData.favoriteTeam !== initialData.favoriteTeam ||
       previewUrl !== null);
 
   return (
@@ -287,6 +296,12 @@ export const EditProfileScreen: React.FC = () => {
                   </MenuItem>
                 ))}
               </TextField>
+
+              <TeamSelector
+                value={formData.favoriteTeam || null}
+                onChange={(teamId) => handleInputChange('favoriteTeam', teamId)}
+                optional
+              />
 
               <TextField
                 label="Bio"
