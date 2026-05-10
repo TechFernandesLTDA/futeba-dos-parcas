@@ -3,20 +3,20 @@ import { useEffect, useMemo } from 'react';
 import { collection, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
-import { Team } from '../types/team';
+import { FavoriteTeam } from '../types/team';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('useTeams');
 
 const COLLECTION = 'favorite_teams';
 
-async function fetchTeams(): Promise<Team[]> {
+async function fetchTeams(): Promise<FavoriteTeam[]> {
   const coll = collection(db, COLLECTION);
   const q = query(coll, orderBy('name', 'asc'));
   const snapshot = await getDocs(q);
 
   return snapshot.docs.map((d) => ({
-    ...snakeToCamel<Team>(d.data()),
+    ...snakeToCamel<FavoriteTeam>(d.data()),
     id: d.id,
   }));
 }
@@ -58,7 +58,7 @@ export function useTeams() {
   }, [queryClient]);
 
   const teamsById = useMemo(() => {
-    const map = new Map<string, Team>();
+    const map = new Map<string, FavoriteTeam>();
     for (const t of teams) {
       map.set(t.id, t);
     }
