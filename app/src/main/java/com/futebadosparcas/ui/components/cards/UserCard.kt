@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -68,6 +69,7 @@ fun UserCard(
     badge: String? = null,
     badgeColor: Color? = null,
     badgeIcon: ImageVector? = null,
+    favoriteTeam: String? = null,
     onClick: (() -> Unit)? = null,
     showMenu: Boolean = false,
     menuItems: List<UserCardMenuItem> = emptyList(),
@@ -114,12 +116,19 @@ fun UserCard(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text(
-                    text = name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    TeamBadgeById(
+                        teamId = favoriteTeam,
+                        iconSize = 20
+                    )
+                }
 
                 if (subtitle != null) {
                     Text(
@@ -235,6 +244,7 @@ fun GroupMemberCard(
     onClick: () -> Unit,
     canManage: Boolean,
     modifier: Modifier = Modifier,
+    favoriteTeam: String? = null,
     onPromote: (() -> Unit)? = null,
     onDemote: (() -> Unit)? = null,
     onRemove: (() -> Unit)? = null
@@ -258,6 +268,7 @@ fun GroupMemberCard(
         badge = role,
         badgeColor = roleColor,
         badgeIcon = roleIcon,
+        favoriteTeam = favoriteTeam,
         onClick = onClick,
         showMenu = canManage,
         menuItems = menuItems,
@@ -275,6 +286,7 @@ fun UserCardCompact(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    favoriteTeam: String? = null,
     trailingContent: (@Composable () -> Unit)? = null
 ) {
     val compactSubtitle = subtitle ?: ""
@@ -298,12 +310,19 @@ fun UserCardCompact(
 
         // Nome e subtitle
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                TeamBadgeById(
+                    teamId = favoriteTeam,
+                    iconSize = 20
+                )
+            }
 
             if (subtitle != null) {
                 Text(

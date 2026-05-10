@@ -40,6 +40,7 @@ import com.futebadosparcas.data.model.UserGroup
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.ui.components.EmptyPlayersState
 import com.futebadosparcas.ui.components.EmptySearchState
@@ -618,13 +619,20 @@ private fun PlayerCard(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 // Nome
-                Text(
-                    text = player.getDisplayName(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = player.getDisplayName(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    TeamBadgeById(
+                        teamId = player.favoriteTeam,
+                        iconSize = 20
+                    )
+                }
 
                 // Ratings
                 Row(

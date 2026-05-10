@@ -219,8 +219,8 @@ expect class FirebaseDataSource() {
 
     // ========== FAVORITE TEAMS ==========
 
-    suspend fun getAllFavoriteTeams(): Result<List<Team>>
-    suspend fun getFavoriteTeamById(teamId: String): Result<Team>
+    suspend fun getAllFavoriteTeams(): Result<List<FavoriteTeam>>
+    suspend fun getFavoriteTeamById(teamId: String): Result<FavoriteTeam>
 
     // ========== AUTH ==========
 

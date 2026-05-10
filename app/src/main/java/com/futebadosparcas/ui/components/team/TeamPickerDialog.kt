@@ -28,7 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.futebadosparcas.domain.model.Team
+import com.futebadosparcas.domain.model.FavoriteTeam
 import com.futebadosparcas.domain.repository.TeamsRepository
 import org.koin.compose.koinInject
 
@@ -36,11 +36,11 @@ import org.koin.compose.koinInject
 @Composable
 fun TeamPickerDialog(
     onDismiss: () -> Unit,
-    onTeamSelected: (Team?) -> Unit,
+    onTeamSelected: (FavoriteTeam?) -> Unit,
     currentTeamId: String?
 ) {
     val teamsRepository: TeamsRepository = koinInject()
-    var teams by remember { mutableStateOf<List<Team>>(emptyList()) }
+    var teams by remember { mutableStateOf<List<FavoriteTeam>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(true) }
 

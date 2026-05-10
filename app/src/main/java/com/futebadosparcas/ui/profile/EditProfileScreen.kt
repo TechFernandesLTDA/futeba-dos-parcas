@@ -43,7 +43,7 @@ import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.components.rememberDiscardChangesGuard
 import com.futebadosparcas.ui.components.team.TeamPickerDialog
 import com.futebadosparcas.ui.components.team.TeamBadge
-import com.futebadosparcas.domain.model.Team
+import com.futebadosparcas.domain.model.FavoriteTeam
 
 /**
  * EditProfileScreen - Tela de edição de perfil em Compose
@@ -268,7 +268,7 @@ private fun EditProfileContent(
     var playStyle by remember { mutableStateOf(user.playStyle ?: "") }
     var experienceYears by remember { mutableStateOf(user.experienceYears?.toString() ?: "") }
     var favoriteTeamId by remember { mutableStateOf(user.favoriteTeam ?: "") }
-    var selectedTeam by remember { mutableStateOf<Team?>(null) }
+    var selectedTeam by remember { mutableStateOf<FavoriteTeam?>(null) }
 
     var showTeamPicker by remember { mutableStateOf(false) }
 
@@ -464,7 +464,7 @@ private fun EditProfileContent(
 
 @Composable
 private fun FavoriteTeamSection(
-    selectedTeam: Team?,
+    selectedTeam: FavoriteTeam?,
     onTeamClick: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

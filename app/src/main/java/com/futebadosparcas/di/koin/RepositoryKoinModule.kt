@@ -23,7 +23,7 @@ import com.futebadosparcas.data.repository.LiveGameRepositoryImpl
 import com.futebadosparcas.data.repository.MeteredLocationRepository
 import com.futebadosparcas.data.repository.PaymentRepositoryImpl
 import com.futebadosparcas.data.repository.UserRepositoryImpl
-import com.futebadosparcas.data.TeamsRepositoryImpl
+import com.futebadosparcas.data.repository.TeamsRepositoryImpl
 import com.futebadosparcas.data.repository.WaitlistRepositoryImpl
 import com.futebadosparcas.db.FutebaDatabase
 import com.futebadosparcas.domain.repository.ActivityRepository

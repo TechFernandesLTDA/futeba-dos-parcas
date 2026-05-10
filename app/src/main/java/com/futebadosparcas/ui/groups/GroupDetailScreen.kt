@@ -31,6 +31,7 @@ import com.futebadosparcas.data.model.GroupMemberRole
 import com.futebadosparcas.ui.components.CachedGroupImage
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.cards.GroupMemberCard
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.domain.model.GroupJoinRequest
 import org.koin.compose.viewmodel.koinViewModel
 import com.futebadosparcas.ui.components.dialogs.*
@@ -1306,14 +1307,21 @@ private fun PendingJoinRequestsSection(
                         size = 40.dp
                     )
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = req.userName,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = req.userName,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            TeamBadgeById(
+                                teamId = null,
+                                iconSize = 18
+                            )
+                        }
                     }
                     val acting = actioningId == req.userId
                     if (acting) {

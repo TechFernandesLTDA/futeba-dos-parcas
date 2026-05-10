@@ -52,6 +52,7 @@ import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
 import com.futebadosparcas.util.ShareCardHelper
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -572,7 +573,14 @@ fun ConfirmationCard(
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(confirmation.userName, fontWeight = FontWeight.SemiBold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(confirmation.userName, fontWeight = FontWeight.SemiBold)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    TeamBadgeById(
+                        teamId = null,
+                        iconSize = 18
+                    )
+                }
                 Text(confirmation.position, style = MaterialTheme.typography.bodySmall)
             }
 
@@ -625,7 +633,14 @@ fun TeamCard(
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(player.userName, modifier = Modifier.weight(1f))
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Text(player.userName)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            TeamBadgeById(
+                                teamId = null,
+                                iconSize = 18
+                            )
+                        }
                         if (player.goals > 0) {
                             Text("⚽ ${player.goals} ", style = MaterialTheme.typography.labelMedium)
                         }
