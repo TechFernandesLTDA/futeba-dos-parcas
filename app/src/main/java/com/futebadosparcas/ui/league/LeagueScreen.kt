@@ -40,6 +40,7 @@ import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.lists.RankingItemShimmer
 import com.futebadosparcas.ui.components.FutebaTopBar
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
 import com.futebadosparcas.R
@@ -693,13 +694,20 @@ fun RankingListItem(
 
             // Nome e Nickname
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.user.name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = item.user.name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    TeamBadgeById(
+                        teamId = item.user.favoriteTeam,
+                        iconSize = 18
+                    )
+                }
                 if (!item.user.nickname.isNullOrEmpty()) {
                     Text(
                         text = item.user.nickname ?: "",

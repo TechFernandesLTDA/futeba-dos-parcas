@@ -20,6 +20,7 @@ import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import java.text.SimpleDateFormat
 import java.util.Locale
 import com.futebadosparcas.R
@@ -133,11 +134,18 @@ private fun BlockedPlayerCard(
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = player.userName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
+                Spacer(modifier = Modifier.width(4.dp))
+                TeamBadgeById(
+                    teamId = null,
+                    iconSize = 18
+                )
+            }
                 if (player.reason.isNotBlank()) {
                     Text(
                         text = stringResource(R.string.owner_block_reason, player.reason),
@@ -224,10 +232,17 @@ private fun BlockPlayerDialog(
                                     size = 32.dp
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = player.getDisplayName(),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = player.getDisplayName(),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            TeamBadgeById(
+                                teamId = null,
+                                iconSize = 18
+                            )
+                        }
                             }
                         }
                     }

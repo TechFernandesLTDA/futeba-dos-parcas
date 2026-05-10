@@ -38,6 +38,7 @@ import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.FieldType
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 import com.futebadosparcas.util.LevelHelper
@@ -453,12 +454,19 @@ private fun ProfileHeader(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Nome
-            Text(
-                text = user.name,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = user.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                TeamBadgeById(
+                    teamId = user.favoriteTeam,
+                    iconSize = 24
+                )
+            }
 
             Spacer(modifier = Modifier.height(4.dp))
 

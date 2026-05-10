@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Team(
+data class FavoriteTeam(
     val id: String = "",
     val name: String = "",
     @SerialName("badge_url") val badgeUrl: String? = null,

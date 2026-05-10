@@ -29,6 +29,7 @@ import com.futebadosparcas.domain.model.PlayerRatingRole
 import com.futebadosparcas.domain.model.User
 import com.futebadosparcas.domain.model.Statistics
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.LevelBadgeHelper
 import com.futebadosparcas.util.LevelHelper
@@ -155,13 +156,20 @@ private fun PlayerHeader(user: User, color: Color) {
              }
         }
         Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = user.getDisplayName(),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            color = MaterialTheme.colorScheme.onSurface 
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = user.getDisplayName(),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            TeamBadgeById(
+                teamId = user.favoriteTeam,
+                iconSize = 20
+            )
+        }
     }
 }
 
@@ -363,12 +371,19 @@ fun PlayerCardContent(
             Spacer(modifier = Modifier.height(12.dp))
             
             // Nome
-            Text(
-                text = user.getDisplayName(),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = user.getDisplayName(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                TeamBadgeById(
+                    teamId = user.favoriteTeam,
+                    iconSize = 20
+                )
+            }
             
             Spacer(modifier = Modifier.height(4.dp))
             

@@ -30,6 +30,7 @@ import com.futebadosparcas.domain.model.VoteCategory
 import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.ShimmerBox
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 import com.futebadosparcas.ui.adaptive.adaptiveContentWidth
@@ -288,14 +289,21 @@ private fun CandidateCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Player Name
-            Text(
-                text = candidate.getDisplayName(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                maxLines = 2
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = candidate.getDisplayName(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                TeamBadgeById(
+                    teamId = null,
+                    iconSize = 18
+                )
+            }
 
             Spacer(modifier = Modifier.height(4.dp))
 

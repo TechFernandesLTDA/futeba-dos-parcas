@@ -40,6 +40,7 @@ import com.futebadosparcas.ui.components.EmptyState
 import com.futebadosparcas.ui.components.EmptyStateType
 import com.futebadosparcas.ui.components.lists.RankingItemShimmer
 import com.futebadosparcas.ui.components.lists.ShimmerBox
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
 import com.futebadosparcas.ui.adaptive.rememberWindowSizeClass
@@ -390,14 +391,21 @@ private fun PodiumPlayer(
         Spacer(modifier = Modifier.height(4.dp))
 
         // Name
-        Text(
-            text = player.playerName,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = player.playerName,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            TeamBadgeById(
+                teamId = null,
+                iconSize = 18
+            )
+        }
 
         // Level badge
         if (player.level > 0) {
@@ -477,6 +485,11 @@ private fun RankingItem(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    TeamBadgeById(
+                        teamId = null,
+                        iconSize = 18
                     )
 
                     if (player.level > 0) {

@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.futebadosparcas.domain.model.ConfirmationStatus
 import com.futebadosparcas.data.model.GameConfirmation
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
 
@@ -66,10 +67,7 @@ fun TransferOwnershipDialog(
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         CachedProfileImage(
                             photoUrl = selectedPlayer?.userPhoto,
                             userName = selectedPlayer?.userName ?: "",
@@ -80,6 +78,11 @@ fun TransferOwnershipDialog(
                             text = selectedPlayer?.getDisplayName() ?: "",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        TeamBadgeById(
+                            teamId = null,
+                            iconSize = 18
                         )
                     }
                     Spacer(modifier = Modifier.height(12.dp))
@@ -218,11 +221,18 @@ fun TransferOwnershipDialog(
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column {
-                                        Text(
-                                            text = player.getDisplayName(),
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            fontWeight = FontWeight.Medium
-                                        )
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = player.getDisplayName(),
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            TeamBadgeById(
+                                                teamId = null,
+                                                iconSize = 18
+                                            )
+                                        }
                                         if (player.nickname != null && player.nickname != player.userName) {
                                             Text(
                                                 text = player.userName,

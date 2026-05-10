@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.futebadosparcas.ui.components.CachedProfileImage
 import com.futebadosparcas.ui.home.GamificationSummary
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.HapticManager
 import com.futebadosparcas.util.LevelBadgeHelper
@@ -141,12 +142,19 @@ private fun CompactHeaderLayout(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                text = user.getDisplayName(),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = user.getDisplayName(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                TeamBadgeById(
+                    teamId = user.favoriteTeam,
+                    iconSize = 28
+                )
+            }
         }
 
         // Badge de Nível (Expressivo) - Clicável para Rumo ao Estrelato
@@ -248,12 +256,19 @@ private fun ExpandedHeaderLayout(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text(
-                    text = user.getDisplayName(),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = user.getDisplayName(),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    TeamBadgeById(
+                        teamId = user.favoriteTeam,
+                        iconSize = 28
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(spacing.xs))
 

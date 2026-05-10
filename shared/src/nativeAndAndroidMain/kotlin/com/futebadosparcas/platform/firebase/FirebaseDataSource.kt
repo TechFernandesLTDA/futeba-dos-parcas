@@ -897,7 +897,7 @@ actual class FirebaseDataSource actual constructor() {
 
     // ========== FAVORITE TEAMS ==========
 
-    actual suspend fun getAllFavoriteTeams(): Result<List<Team>> {
+    actual suspend fun getAllFavoriteTeams(): Result<List<FavoriteTeam>> {
         return try {
             val snapshot = firestore.collection(COLLECTION_FAVORITE_TEAMS)
                 .orderBy("name")
@@ -905,7 +905,7 @@ actual class FirebaseDataSource actual constructor() {
 
             val teams = snapshot.documents.mapNotNull { doc ->
                 if (!doc.exists) return@mapNotNull null
-                Team(
+                FavoriteTeam(
                     id = doc.id,
                     name = doc.get<String?>("name") ?: "",
                     badgeUrl = doc.get<String?>("badge_url") ?: doc.get<String?>("badgeUrl"),
@@ -921,7 +921,7 @@ actual class FirebaseDataSource actual constructor() {
         }
     }
 
-    actual suspend fun getFavoriteTeamById(teamId: String): Result<Team> {
+    actual suspend fun getFavoriteTeamById(teamId: String): Result<FavoriteTeam> {
         return try {
             val doc = firestore.collection(COLLECTION_FAVORITE_TEAMS)
                 .document(teamId)
@@ -931,7 +931,7 @@ actual class FirebaseDataSource actual constructor() {
                 return Result.failure(Exception("Time nao encontrado: $teamId"))
             }
 
-            val team = Team(
+            val team = FavoriteTeam(
                 id = doc.id,
                 name = doc.get<String?>("name") ?: "",
                 badgeUrl = doc.get<String?>("badge_url") ?: doc.get<String?>("badgeUrl"),

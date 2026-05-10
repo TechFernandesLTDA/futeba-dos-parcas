@@ -1,6 +1,6 @@
 package com.futebadosparcas.data.repository
 
-import com.futebadosparcas.domain.model.Team
+import com.futebadosparcas.domain.model.FavoriteTeam
 import com.futebadosparcas.domain.repository.TeamsRepository
 import com.futebadosparcas.platform.firebase.FirebaseDataSource
 
@@ -8,9 +8,9 @@ class TeamsRepositoryImpl(
     private val firebaseDataSource: FirebaseDataSource
 ) : TeamsRepository {
 
-    private val cache = mutableMapOf<String, Team>()
+    private val cache = mutableMapOf<String, FavoriteTeam>()
 
-    override suspend fun getAllTeams(): Result<List<Team>> {
+    override suspend fun getAllTeams(): Result<List<FavoriteTeam>> {
         val result = firebaseDataSource.getAllFavoriteTeams()
         result.getOrNull()?.forEach { team ->
             cache[team.id] = team
@@ -18,7 +18,7 @@ class TeamsRepositoryImpl(
         return result
     }
 
-    override suspend fun getTeamById(teamId: String): Result<Team> {
+    override suspend fun getTeamById(teamId: String): Result<FavoriteTeam> {
         cache[teamId]?.let { return Result.success(it) }
 
         val result = firebaseDataSource.getFavoriteTeamById(teamId)
