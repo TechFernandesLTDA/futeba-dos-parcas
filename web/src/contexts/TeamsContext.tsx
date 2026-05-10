@@ -1,10 +1,10 @@
 import { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useTeams as useTeamsHook } from '../hooks/useTeams';
-import { Team } from '../types/team';
+import { FavoriteTeam } from '../types/team';
 
 interface TeamsContextType {
-  teams: Team[];
-  teamsById: Map<string, Team>;
+  teams: FavoriteTeam[];
+  teamsById: Map<string, FavoriteTeam>;
   loading: boolean;
   error: string | null;
 }
