@@ -24,6 +24,7 @@ export interface LeaguePlayer {
   userId: string;
   userName: string;
   userPhoto?: string;
+  favoriteTeam?: string;
   level: number;
   points: number;
   gamesPlayed: number;
@@ -36,8 +37,8 @@ export interface LeaguePlayer {
 }
 
 // Busca dados de usuários em batch (chunks de 10)
-async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, { name: string; photoUrl: string | null }>> {
-  const usersMap = new Map<string, { name: string; photoUrl: string | null }>();
+async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, { name: string; photoUrl: string | null; favoriteTeam?: string }>> {
+  const usersMap = new Map<string, { name: string; photoUrl: string | null; favoriteTeam?: string }>();
   if (userIds.length === 0) return usersMap;
 
   const chunks: string[][] = [];
@@ -57,6 +58,7 @@ async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, { name
       usersMap.set(docSnap.id, {
         name: (d.name as string) || 'Jogador',
         photoUrl: (d.photo_url as string) || (d.photoUrl as string) || null,
+        favoriteTeam: (d.favorite_team as string) || (d.favoriteTeam as string) || undefined,
       });
     }
   }
@@ -99,11 +101,12 @@ async function fetchLeagueData(currentUserId?: string, division?: LeagueDivision
 
   // Combinar dados
   const players: LeaguePlayer[] = participationData.map((p) => {
-    const userData = usersMap.get(p.userId) || { name: 'Jogador', photoUrl: null };
+    const userData = usersMap.get(p.userId) || { name: 'Jogador', photoUrl: null, favoriteTeam: undefined };
     return {
       ...p,
       userName: userData.name,
       userPhoto: userData.photoUrl || undefined,
+      favoriteTeam: userData.favoriteTeam,
       isCurrentUser: p.userId === currentUserId,
     };
   });

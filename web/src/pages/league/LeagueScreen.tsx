@@ -27,6 +27,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { VirtualList } from '../../components/common/VirtualList';
+import { TeamBadge } from '../../components/team/TeamBadge';
 import { useLeague, LeaguePlayer } from '../../hooks/useLeague';
 import { DIVISION_CONFIG, LeagueDivision } from '../../types/gamification';
 import { useTranslation } from 'react-i18next';
@@ -189,6 +190,7 @@ const LeaguePlayerItem = React.memo(function LeaguePlayerItem({
               <Typography variant="subtitle1" fontWeight={600}>
                 {player.userName}
               </Typography>
+              <TeamBadge teamId={player.favoriteTeam} size={18} />
               {player.isCurrentUser && (
                 <Chip label="Você" size="small" color="primary" />
               )}

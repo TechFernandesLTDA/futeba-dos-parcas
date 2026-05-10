@@ -25,6 +25,7 @@ export interface PlayerCardData {
   bestStreak: number;
   // Rating calculado a partir das notas de posição
   overallRating: number;
+  favoriteTeam?: string;
 }
 
 // Busca dados completos do usuário para o Player Card
@@ -69,6 +70,7 @@ async function fetchPlayerCardData(userId: string): Promise<PlayerCardData> {
     currentStreak: data.currentStreak ?? raw.current_streak ?? 0,
     bestStreak: data.bestStreak ?? raw.best_streak ?? 0,
     overallRating,
+    favoriteTeam: data.favoriteTeam ?? raw.favorite_team ?? undefined,
   };
 }
 

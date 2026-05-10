@@ -6,6 +6,7 @@ export interface GroupMember {
   userId: string;
   userName: string;
   userPhotoUrl?: string;
+  favoriteTeam?: string;
   role: GroupRole;
   joinedAt: Date;
   totalGames: number;

@@ -385,6 +385,7 @@ service cloud.firestore {
       // - striker_rating, mid_rating, defender_rating, gk_rating (ratings manuais)
       // - birth_date, gender, height_cm, weight_kg (dados pessoais)
       // - dominant_foot, primary_position, secondary_position, play_style, experience_years
+      // - favorite_team (time do coracao — opcional)
       //
       // Campos protegidos (apenas admin/cloud functions):
       // - id, created_at, role (identidade e permissões)
@@ -1864,6 +1865,15 @@ service cloud.firestore {
         && !('github_issue_number' in request.resource.data);
       allow update: if isAdmin();
       allow delete: if false;
+    }
+
+    // ============================================
+    // FAVORITE TEAMS: Colecao de times de futebol (read-only)
+    // Dados estaticos geridos por admin/seed script.
+    // ============================================
+    match /favorite_teams/{teamId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if false;
     }
 
     // ============================================

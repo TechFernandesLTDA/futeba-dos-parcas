@@ -30,6 +30,7 @@ import { Game, STATUS_CONFIG, FIELD_TYPE_LABELS, getStatusChipColors } from '../
 import { formatGameDate } from '../../utils/dateFormatters';
 import { InteractiveCard } from './InteractiveCard';
 import { useContextMenu, ContextMenuItem } from '../../hooks/useContextMenu';
+import { TeamBadge } from '../team/TeamBadge';
 
 interface GameCardProps {
   game: Game;
@@ -311,7 +312,8 @@ export const PlayerAvatar: React.FC<{
   photoUrl?: string;
   size?: number;
   level?: number;
-}> = React.memo(({ name, photoUrl, size = 40, level }) => {
+  teamId?: string | null;
+}> = React.memo(({ name, photoUrl, size = 40, level, teamId }) => {
   const theme = useTheme();
   const [imgLoaded, setImgLoaded] = React.useState(false);
   const [imgError, setImgError] = React.useState(false);
@@ -325,62 +327,65 @@ export const PlayerAvatar: React.FC<{
   const showInitials = !photoUrl || imgError;
 
   return (
-    <Box sx={{ position: 'relative' }}>
-      {photoUrl && !imgLoaded && !imgError && (
-        <Box
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+      <Box sx={{ position: 'relative' }}>
+        {photoUrl && !imgLoaded && !imgError && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 1,
+            }}
+          >
+            <Skeleton
+              variant="circular"
+              width={size}
+              height={size}
+              sx={{ display: 'block' }}
+            />
+          </Box>
+        )}
+        <Avatar
+          src={imgError ? undefined : photoUrl}
+          alt={name}
           sx={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 1,
+            width: size,
+            height: size,
+            bgcolor: showInitials ? 'primary.main' : undefined,
+            fontSize: size * 0.4,
+            opacity: imgLoaded || showInitials ? 1 : 0,
           }}
+          imgProps={photoUrl ? {
+            onLoad: () => setImgLoaded(true),
+            onError: () => setImgError(true),
+            loading: 'lazy',
+          } : undefined}
         >
-          <Skeleton
-            variant="circular"
-            width={size}
-            height={size}
-            sx={{ display: 'block' }}
-          />
-        </Box>
-      )}
-      <Avatar
-        src={imgError ? undefined : photoUrl}
-        alt={name}
-        sx={{
-          width: size,
-          height: size,
-          bgcolor: showInitials ? 'primary.main' : undefined,
-          fontSize: size * 0.4,
-          opacity: imgLoaded || showInitials ? 1 : 0,
-        }}
-        imgProps={photoUrl ? {
-          onLoad: () => setImgLoaded(true),
-          onError: () => setImgError(true),
-          loading: 'lazy',
-        } : undefined}
-      >
-        {showInitials ? initial : null}
-      </Avatar>
-      {level !== undefined && level > 0 && (
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: -2,
-            right: -2,
-            width: size * 0.4,
-            height: size * 0.4,
-            borderRadius: '50%',
-            bgcolor: 'primary.main',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: `2px solid ${theme.palette.primary.contrastText}`,
-          }}
-        >
-          <Typography variant="caption" fontWeight={700} sx={{ color: theme.palette.primary.contrastText, fontSize: size * 0.25 }}>
-            {level}
-          </Typography>
-        </Box>
-      )}
+          {showInitials ? initial : null}
+        </Avatar>
+        {level !== undefined && level > 0 && (
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: -2,
+              right: -2,
+              width: size * 0.4,
+              height: size * 0.4,
+              borderRadius: '50%',
+              bgcolor: 'primary.main',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: `2px solid ${theme.palette.primary.contrastText}`,
+            }}
+          >
+            <Typography variant="caption" fontWeight={700} sx={{ color: theme.palette.primary.contrastText, fontSize: size * 0.25 }}>
+              {level}
+            </Typography>
+          </Box>
+        )}
+      </Box>
+      <TeamBadge teamId={teamId} size={18} />
     </Box>
   );
 });

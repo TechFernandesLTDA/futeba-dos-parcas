@@ -52,6 +52,7 @@ import {
   getStatusChipColors,
 } from '../../types/game';
 import { PlayerAvatar, StatusChip, ShimmerLoading, EmptyState } from '../../components/common/GameCard';
+import { TeamBadge } from '../../components/team/TeamBadge';
 import { formatGameDateLong } from '../../utils/dateFormatters';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
@@ -409,6 +410,7 @@ export const GameDetailScreen: React.FC = () => {
                           primary={
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Typography variant="subtitle2">{player.userName}</Typography>
+                              <TeamBadge teamId={player.favoriteTeam} size={18} />
                               {player.position === 'GOALKEEPER' && (
                                 <Chip label="GK" size="small" color="primary" sx={{ height: 20 }} />
                               )}
@@ -438,7 +440,14 @@ export const GameDetailScreen: React.FC = () => {
                         <ListItemAvatar>
                           <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} />
                         </ListItemAvatar>
-                        <ListItemText primary={player.userName} />
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              {player.userName}
+                              <TeamBadge teamId={player.favoriteTeam} size={18} />
+                            </Box>
+                          }
+                        />
                       </ListItem>
                     ))}
                   </List>
@@ -459,7 +468,14 @@ export const GameDetailScreen: React.FC = () => {
                         <ListItemAvatar>
                           <PlayerAvatar name={player.userName} photoUrl={player.userPhoto} />
                         </ListItemAvatar>
-                        <ListItemText primary={player.userName} />
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              {player.userName}
+                              <TeamBadge teamId={player.favoriteTeam} size={18} />
+                            </Box>
+                          }
+                        />
                       </ListItem>
                     ))}
                   </List>

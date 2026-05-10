@@ -39,6 +39,7 @@ import { getLevelForXp, getXpProgress, getLevelEntry, getXpRemaining } from '../
 import { getLevelColor } from '../../../types/user';
 import { useToast } from '../../../contexts/ToastContext';
 import { createLogger } from '../../../utils/logger';
+import { TeamBadge } from '../../../components/team/TeamBadge';
 
 const logger = createLogger('HomeTab');
 
@@ -201,9 +202,12 @@ export function HomeTab() {
                 </Box>
               </Box>
               <Box sx={{ ml: 2, flex: 1 }}>
-                <Typography variant="h6" fontWeight="bold" sx={{ lineHeight: 1.2 }}>
-                  Olá, {user?.name?.split(' ')[0] || 'Jogador'}!
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="h6" fontWeight="bold" sx={{ lineHeight: 1.2 }}>
+                    Olá, {user?.name?.split(' ')[0] || 'Jogador'}!
+                  </Typography>
+                  <TeamBadge teamId={user?.favoriteTeam} size={28} />
+                </Box>
                 <Typography variant="body2" sx={{ opacity: 0.85, mt: 0.25 }}>
                   {levelEntry.name} • {currentXp.toLocaleString('pt-BR')} XP
                 </Typography>
