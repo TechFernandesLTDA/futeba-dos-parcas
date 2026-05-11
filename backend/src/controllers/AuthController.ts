@@ -43,7 +43,8 @@ export class AuthController {
         email: user.email,
       });
 
-      logger.info(`New user registered: ${email}`);
+      // Não logar email (PII — LGPD #813); usar ID do usuário
+      logger.info(`New user registered: ${user.id}`);
 
       ApiResponse.created(res, {
         user: user.toPublic(),
@@ -86,7 +87,8 @@ export class AuthController {
         email: user.email,
       });
 
-      logger.info(`User logged in: ${email}`);
+      // Não logar email (PII — LGPD #813); usar ID do usuário
+      logger.info(`User logged in: ${user.id}`);
 
       ApiResponse.success(res, {
         user: user.toPublic(),
