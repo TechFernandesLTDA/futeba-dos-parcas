@@ -139,6 +139,20 @@ export const InvitePlayersScreen: React.FC = () => {
 
     setInviting(targetUser.id);
     try {
+      // Verificar limite de convites pendentes antes de enviar (#1043)
+      const MAX_PENDING_INVITES = 20;
+      const existingQuery = query(
+        collection(db, 'invites'),
+        where('from_user_id', '==', user.id),
+        where('group_id', '==', groupId),
+        where('status', '==', 'PENDING')
+      );
+      const existing = await getDocs(existingQuery);
+      if (existing.size >= MAX_PENDING_INVITES) {
+        showError(`Você já tem ${existing.size} convites pendentes neste grupo. Aguarde respostas antes de enviar mais.`);
+        return;
+      }
+
       await addDoc(collection(db, 'invites'), {
         group_id: groupId,
         group_name: groupName,

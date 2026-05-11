@@ -37,9 +37,22 @@ export const useToast = () => {
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = useCallback((message: string, severity: AlertColor = 'info', duration: number = 4000) => {
+  // Duração padrão por severidade:
+  // success → 4s (confirmação rápida)
+  // info    → 5s (informativo)
+  // warning → 8s (requer atenção)
+  // error   → 10s + anchor bottom/center (erro crítico, sempre visível mesmo com scroll)
+  const DEFAULT_DURATIONS: Record<AlertColor, number> = {
+    success: 4000,
+    info: 5000,
+    warning: 8000,
+    error: 10000,
+  };
+
+  const showToast = useCallback((message: string, severity: AlertColor = 'info', duration?: number) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const newToast: Toast = { id, message, severity, duration };
+    const resolvedDuration = duration ?? DEFAULT_DURATIONS[severity];
+    const newToast: Toast = { id, message, severity, duration: resolvedDuration };
     setToasts((prev) => [...prev, newToast]);
   }, []);
 
@@ -47,12 +60,14 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     showToast(message, 'success', duration);
   }, [showToast]);
 
+  // Erros ficam 10s e ancorados em bottom/center para garantir visibilidade
+  // independente da posição de scroll do usuário.
   const showError = useCallback((message: string, duration?: number) => {
-    showToast(message, 'error', duration ?? 6000);
+    showToast(message, 'error', duration);
   }, [showToast]);
 
   const showWarning = useCallback((message: string, duration?: number) => {
-    showToast(message, 'warning', duration ?? 5000);
+    showToast(message, 'warning', duration);
   }, [showToast]);
 
   const showInfo = useCallback((message: string, duration?: number) => {
@@ -97,8 +112,16 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           open={true}
           autoHideDuration={toast.duration}
           onClose={handleClose(toast.id)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          sx={{ top: `${80 + index * 60}px !important`, zIndex: 99999 }}
+          anchorOrigin={
+            toast.severity === 'error'
+              ? { vertical: 'bottom', horizontal: 'center' }
+              : { vertical: 'top', horizontal: 'center' }
+          }
+          sx={
+            toast.severity === 'error'
+              ? { bottom: `${16 + index * 60}px !important`, zIndex: 99999 }
+              : { top: `${80 + index * 60}px !important`, zIndex: 99999 }
+          }
         >
           <Alert
             severity={toast.severity}

@@ -289,10 +289,24 @@ export const GamificationSettingsScreen: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card sx={{ mb: 2 }}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={handleSave}
+            disabled={saving}
+            sx={{ mt: 1 }}
+          >
+            {saving ? 'Salvando...' : 'Salvar Configurações'}
+          </Button>
+
+          {/* Seção somente leitura — fora do formulário para evitar submissão acidental */}
+          <Card sx={{ mt: 3 }}>
             <CardContent>
-              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
                 Valores de XP (padrão do sistema)
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                Valores globais do sistema (somente leitura). Para alterar, contate o admin.
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 <Chip label={`Participação: +${XP_PARTICIPATION} XP`} size="small" />
@@ -304,16 +318,6 @@ export const GamificationSettingsScreen: React.FC = () => {
               </Box>
             </CardContent>
           </Card>
-
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={handleSave}
-            disabled={saving}
-            sx={{ mt: 1 }}
-          >
-            {saving ? 'Salvando...' : 'Salvar Configurações'}
-          </Button>
         </Container>
       )}
     </Box>

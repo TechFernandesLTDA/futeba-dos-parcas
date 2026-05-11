@@ -29,7 +29,7 @@ import {
   AdminPanelSettings as AdminIcon,
   Search as SearchIcon,
 } from '@mui/icons-material';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, startAfter, DocumentSnapshot } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -61,37 +61,44 @@ export const UserManagementScreen: React.FC = () => {
   useAuth();
   const { showError } = useToast();
 
+  const PAGE_SIZE = 50;
+
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [lastDoc, setLastDoc] = useState<DocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const parseUserDoc = (d: DocumentSnapshot) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = snakeToCamel(d.data() as Record<string, any>) as Record<string, any>;
+    return {
+      id: d.id,
+      name: data.name || 'Sem nome',
+      email: data.email || '',
+      photoUrl: data.photoUrl,
+      role: data.role || 'PLAYER',
+      createdAt: data.createdAt?.toDate?.(),
+      gamesPlayed: data.gamesPlayed || 0,
+      level: data.level || 1,
+    };
+  };
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const usersRef = collection(db, 'users');
-        const q = query(usersRef, orderBy('created_at', 'desc'), limit(50));
+        const q = query(usersRef, orderBy('created_at', 'desc'), limit(PAGE_SIZE));
         const snapshot = await getDocs(q);
 
-        const usersData = snapshot.docs.map((d) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = snakeToCamel(d.data()) as Record<string, any>;
-          return {
-            id: d.id,
-            name: data.name || 'Sem nome',
-            email: data.email || '',
-            photoUrl: data.photoUrl,
-            role: data.role || 'PLAYER',
-            createdAt: data.createdAt?.toDate?.(),
-            gamesPlayed: data.gamesPlayed || 0,
-            level: data.level || 1,
-          };
-        });
-
-        setUsers(usersData);
+        setUsers(snapshot.docs.map(parseUserDoc));
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1] ?? null);
+        setHasMore(snapshot.docs.length === PAGE_SIZE);
       } catch (error) {
         logger.error('Error fetching users:', error);
         showError('Erro ao carregar usuários.');
@@ -102,6 +109,25 @@ export const UserManagementScreen: React.FC = () => {
 
     fetchUsers();
   }, []);
+
+  const handleLoadMore = async () => {
+    if (!lastDoc || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, orderBy('created_at', 'desc'), startAfter(lastDoc), limit(PAGE_SIZE));
+      const snapshot = await getDocs(q);
+
+      setUsers((prev) => [...prev, ...snapshot.docs.map(parseUserDoc)]);
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1] ?? null);
+      setHasMore(snapshot.docs.length === PAGE_SIZE);
+    } catch (error) {
+      logger.error('Error loading more users:', error);
+      showError('Erro ao carregar mais usuários.');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleRoleChange = async (newRole: string) => {
     if (!selectedUser) return;
@@ -179,47 +205,65 @@ export const UserManagementScreen: React.FC = () => {
         {loading ? (
           <LoadingState shimmerCount={8} itemType="LIST" />
         ) : (
-          <Card>
-            <List disablePadding aria-label="Lista de usuários">
-              {filteredUsers.map((u, index) => (
-                <Box key={u.id}>
-                  {index > 0 && <Divider />}
-                  <ListItem
-                    button
-                    onClick={() => {
-                      setSelectedUser(u);
-                      setDialogOpen(true);
-                    }}
-                  >
-                    <ListItemAvatar>
-                      <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={48} level={u.level} />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {u.name}
-                          <Chip
-                            label={u.role}
-                            size="small"
-                            sx={{
-                              bgcolor: alpha(getRoleColor(u.role), 0.1),
-                              color: getRoleColor(u.role),
-                            }}
-                          />
-                        </Box>
-                      }
-                      secondary={`${u.email} • ${u.gamesPlayed} jogos`}
-                    />
-                    <ListItemSecondaryAction>
-                      <IconButton edge="end" aria-label="Gerenciar permissões">
-                        <AdminIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                </Box>
-              ))}
-            </List>
-          </Card>
+          <>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+              {filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''} exibido{filteredUsers.length !== 1 ? 's' : ''}
+              {hasMore && !searchQuery ? ' (mais disponíveis)' : ''}
+            </Typography>
+            <Card>
+              <List disablePadding aria-label="Lista de usuários">
+                {filteredUsers.map((u, index) => (
+                  <Box key={u.id}>
+                    {index > 0 && <Divider />}
+                    <ListItem
+                      button
+                      onClick={() => {
+                        setSelectedUser(u);
+                        setDialogOpen(true);
+                      }}
+                    >
+                      <ListItemAvatar>
+                        <PlayerAvatar name={u.name} photoUrl={u.photoUrl} size={48} level={u.level} />
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {u.name}
+                            <Chip
+                              label={u.role}
+                              size="small"
+                              sx={{
+                                bgcolor: alpha(getRoleColor(u.role), 0.1),
+                                color: getRoleColor(u.role),
+                              }}
+                            />
+                          </Box>
+                        }
+                        secondary={`${u.email} • ${u.gamesPlayed} jogos`}
+                      />
+                      <ListItemSecondaryAction>
+                        <IconButton edge="end" aria-label="Gerenciar permissões">
+                          <AdminIcon />
+                        </IconButton>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  </Box>
+                ))}
+              </List>
+            </Card>
+            {/* Botão de paginação — só aparece quando não há filtro ativo e há mais dados */}
+            {hasMore && !searchQuery && (
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                sx={{ mt: 2 }}
+              >
+                {loadingMore ? 'Carregando...' : 'Carregar mais'}
+              </Button>
+            )}
+          </>
         )}
       </Container>
 
