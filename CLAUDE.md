@@ -190,7 +190,7 @@ fastlane beta                              # Deploy to Firebase App Distribution
 
 ### Version
 
-- **Current**: 1.21.0 (versionCode: 42)
+- **Current**: 1.22.0 (versionCode: 46) — released 2026-05-11 (mega audit wave: 141 fixes, 15 PRs, 219 issues fechadas)
 - **SDK**: compileSdk 36, minSdk 24, targetSdk 35, JDK 17
 - **Kotlin**: 2.2.10
 - **AGP**: 9.0.1
