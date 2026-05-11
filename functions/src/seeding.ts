@@ -89,28 +89,30 @@ function getGameDates(
 export const seedDatabase = onRequest(
   {region: FUNCTION_REGION},
   async (request, response) => {
-    // SECURITY: Bloquear em produção e fora
-    // do emulador. Apenas permitir quando
-    // executando no emulador local OU com
-    // ENVIRONMENT=development explícito.
+    // SECURITY: Bloquear em produção e fora do
+    // emulador local. Apenas permitir quando
+    // FUNCTIONS_EMULATOR=true (Firebase Emulator
+    // Suite local). K_SERVICE é injetado pelo
+    // Cloud Run em qualquer deploy real — sua
+    // presença indica ambiente deployed, mesmo
+    // que ENVIRONMENT=development seja passado
+    // via env var. Isso fecha a brecha anterior
+    // onde ENVIRONMENT=development em projeto
+    // não-prod passava o guard sem emulador.
     const isEmulator =
       process.env.FUNCTIONS_EMULATOR === "true";
-    const environment =
-      process.env.ENVIRONMENT || "production";
+    const isDeployed =
+      Boolean(process.env.K_SERVICE);
     const isProductionProject =
       process.env.GCLOUD_PROJECT ===
         "futeba-dos-parcas";
 
-    if (
-      !isEmulator &&
-      (environment !== "development" ||
-        isProductionProject)
-    ) {
+    if (!isEmulator || isDeployed || isProductionProject) {
       logger.error(
         "[SEEDING][SECURITY] Seeding blocked" +
-        ": Not in emulator/dev environment" +
-        ` (env=${environment},` +
-        ` emulator=${isEmulator},` +
+        ": must run in local Firebase Emulator" +
+        ` (emulator=${isEmulator},` +
+        ` deployed=${isDeployed},` +
         ` project=${process.env.GCLOUD_PROJECT})`
       );
       response.status(403).send(
