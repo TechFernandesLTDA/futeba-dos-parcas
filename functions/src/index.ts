@@ -252,8 +252,10 @@ export const onGameStatusUpdate = onDocumentUpdated(
             // crashed/timed-out after acquiring the lock, xp_processing
             // would stay true forever, permanently blocking XP for this
             // game. Check xp_processing_at timestamp: if older than
-            // 10 minutes, treat as stale and take over the lock.
-            const LOCK_TTL_MS = 10 * 60 * 1000;
+            // 4 minutes, treat as stale and take over the lock.
+            // FIX #1040: reduzido de 10min para 4min — timeout da função
+            // é 180s (3min); 4min dá margem sem bloquear partidas em crash.
+            const LOCK_TTL_MS = 4 * 60 * 1000;
             const lockAge =
               Date.now() - (
                 fresh.xp_processing_at?.toMillis ?
@@ -1234,7 +1236,8 @@ export const recalculateLeagueRating =
             if (fresh.league_processing) {
               // FIX #728: Lock TTL fallback (same pattern
               // as xp_processing lock above).
-              const LOCK_TTL_MS = 10 * 60 * 1000;
+              // FIX #1040: reduzido de 10min para 4min (paridade com xp lock).
+              const LOCK_TTL_MS = 4 * 60 * 1000;
               const lockAge =
                 Date.now() - (
                   fresh.league_processing_at?.toMillis ?
@@ -1967,7 +1970,12 @@ export * from "./auth/custom-claims";
 // Spec: SPEC_FEATURE_PHONE_CPF_VERIFICATION.md
 // Issues: #443 (epic), #444 (Fase 1), #449 (Fase 6 Anti-abuse)
 // ==========================================
-export {verifyCpf, setUserVerified} from "./auth/verification";
+export {
+  verifyCpf,
+  setUserVerified,
+  // #1018: backfill operacional — chame 1x após deploy para migrar usuários existentes
+  bulkSetVerifiedForExistingUsers,
+} from "./auth/verification";
 export {canSendSmsOtp, logVerificationFailure} from "./auth/anti-abuse";
 
 // FIX #619: cleanup cpf_index + users_private ao deletar conta

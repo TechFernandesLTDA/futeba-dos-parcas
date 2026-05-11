@@ -1,3 +1,4 @@
+/* NOT FOR DEPLOYMENT — examples only */
 /**
  * EXEMPLOS - P0 SECURITY OPTIMIZATIONS
  *

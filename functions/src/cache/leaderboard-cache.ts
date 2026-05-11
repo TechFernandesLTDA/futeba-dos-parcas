@@ -567,8 +567,11 @@ export const invalidateLeaderboardOnParticipation = onDocumentWritten(
         `for season ${seasonId}`
       );
     } catch (error) {
-      // Não re-throw: falha de invalidação é não-crítica.
-      // TTL de 5 min garante eventual consistência.
+      // DECISÃO DE DESIGN (#1040): falha de invalidação é best-effort intencional.
+      // O trigger é chamado ~20x por partida encerrada (1 por doc season_participation).
+      // Não re-throw para evitar retry em cascata que custaria Firestore reads extras.
+      // O TTL de 5 min na coleção leaderboard_cache garante eventual consistência
+      // sem dados stale por mais de 5 minutos no pior caso.
       console.error(
         "[LEADERBOARD_CACHE] " +
         `Erro ao invalidar cache da season ${seasonId}:`,

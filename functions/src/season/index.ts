@@ -288,8 +288,12 @@ export const checkSeasonEnd = onSchedule(
             "next season",
             e
           );
-          // Não fazer throw aqui, continuar
-          // A próxima execução tentará novamente
+          // FIX #1040: Re-throw para que o scheduler faça retry.
+          // A season atual permanece ativa (is_active=false é gravado DEPOIS,
+          // no passo 3b) — nunca ficará sem próxima season criada.
+          // Sem o throw, a season seria fechada mesmo sem próxima season,
+          // causando gap de temporada visível aos usuários.
+          throw e;
         }
       }
 

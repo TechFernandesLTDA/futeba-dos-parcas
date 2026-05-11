@@ -1,3 +1,4 @@
+/* NOT FOR DEPLOYMENT — examples only */
 /**
  * EXEMPLOS DE USO DO RATE LIMITER
  *
