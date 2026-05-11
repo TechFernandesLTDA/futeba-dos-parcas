@@ -104,9 +104,36 @@ export const keepWarmFunctions =
     }
   );
 
+// Região e projeto onde as funções estão deployadas
+const REGION = "southamerica-east1";
+const PROJECT_ID =
+  process.env.GCLOUD_PROJECT || "futeba-dos-parcas";
+
 /**
- * Pinga uma Cloud Function callable.
- * Usa timeout curto para não bloquear scheduler.
+ * Constrói a URL HTTP de uma Cloud Function
+ * callable v2 no projeto/região configurados.
+ *
+ * @param {string} functionName - Nome da função
+ * @return {string} URL completa da função
+ */
+function buildFunctionUrl(functionName: string): string {
+  return (
+    `https://${REGION}-${PROJECT_ID}` +
+    `.cloudfunctions.net/${functionName}`
+  );
+}
+
+/**
+ * Pinga uma Cloud Function callable via HTTP POST.
+ * A escrita Firestore anterior não invocava a
+ * função — apenas escrevia um documento, o que não
+ * aquecia o container da CF alvo. Esta implementação
+ * envia uma requisição HTTP real à URL da função,
+ * forçando o Cold Start antes do tráfego real.
+ *
+ * Usa AbortSignal com timeout de 8 s para não
+ * bloquear o scheduler caso a função esteja
+ * em inicialização demorada.
  *
  * @param {string} functionName - Nome da função
  * @return {Promise<KeepWarmResult>} Resultado
@@ -121,28 +148,27 @@ async function warmCallableFunction(
       `[KEEP-WARM] Warming up ${functionName}...`
     );
 
-    // Estratégia: Escrever um documento Firestore
-    // que referencia a função. Isso não chama a
-    // função diretamente, mas mantém o ambiente
-    // do projeto "quente" reduzindo cold starts
-    // em funções co-located no mesmo container.
-    //
-    // NOTA: admin.functions().httpsCallable() foi
-    // removido em firebase-admin v13.
-    // Para chamar callable functions
-    // server-to-server, usar fetch com URL da
-    // função. Para keep-warm, a escrita Firestore
-    // é suficiente pois força o container a
-    // manter-se ativo.
-    await db().collection("system")
-      .doc("keep_warm")
-      .set({
-        last_ping:
-          admin.firestore.FieldValue
-            .serverTimestamp(),
-        target_function: functionName,
-        ping_cycle: new Date().toISOString(),
-      }, {merge: true});
+    const url = buildFunctionUrl(functionName);
+
+    // Callable functions v2 esperam POST com
+    // body JSON {"data": ...}. Uma requisição
+    // sem autenticação válida retorna 401/403,
+    // mas o container já estará aquecido.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(), 8000
+    );
+
+    try {
+      await fetch(url, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({data: {_keepWarm: true}}),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     const latency = Date.now() - startTime;
     console.log(

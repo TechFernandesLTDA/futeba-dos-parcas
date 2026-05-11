@@ -9,6 +9,10 @@ on:
       - 'v*'  # Trigger on version tags (e.g., v1.5.0)
   workflow_dispatch:  # Allow manual trigger
 
+permissions:
+  contents: write   # Para criar GitHub Release
+  id-token: write   # Para OIDC token (se necessário no futuro)
+
 jobs:
   deploy-production:
     name: Build & Deploy to Play Store
@@ -103,7 +107,7 @@ jobs:
         run: ./gradlew bundleRelease --no-configuration-cache --rerun-tasks
 
       - name: Upload AAB to Play Store (Internal Testing)
-        uses: r0adkll/upload-google-play@v1
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5  # v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
           packageName: com.futebadosparcas
@@ -119,7 +123,7 @@ jobs:
           path: app/build/outputs/bundle/release/app-release.aab
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}

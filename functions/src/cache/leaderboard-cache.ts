@@ -150,6 +150,7 @@ export const getLeaderboardCached =
       region: "southamerica-east1",
       memory: "512MiB",
       enforceAppCheck: true,
+      consumeAppCheckToken: true,
     },
     async (request) => {
       // ==========================================

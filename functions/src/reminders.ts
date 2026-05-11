@@ -920,6 +920,7 @@ export const processExpiredWaitlistEntries =
             "<=",
             nowTs
           )
+          .limit(500)
           .get();
 
         const wlSize = waitlistQuery.size;
