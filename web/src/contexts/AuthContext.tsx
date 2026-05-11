@@ -16,6 +16,7 @@ import { queryClient } from '../services/queryClient';
 import { User } from '../types';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
+import { getAuthErrorMessage } from '../utils/firebaseErrors';
 
 const logger = createLogger('AuthContext');
 
@@ -224,7 +225,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await createUserDocument(result.user);
     } catch (err: unknown) {
       if (err instanceof FirebaseError && err.code === 'auth/popup-closed-by-user') return;
-      setError(err instanceof Error ? err.message : 'Erro ao fazer login com Google');
+      // FIX #942: tratar account-exists-with-different-credential explicitamente
+      // (ex: usuário tentou login via Google mas já tem conta com email/senha)
+      if (err instanceof FirebaseError) {
+        setError(getAuthErrorMessage(err, 'Erro ao fazer login com Google'));
+      } else {
+        setError(err instanceof Error ? err.message : 'Erro ao fazer login com Google');
+      }
       throw err;
     }
   }, []);
@@ -259,7 +266,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword = useCallback(async (email: string) => {
     setError(null);
     try {
+      // FIX #932: se o usuário está logado ao solicitar reset de senha (ex: mudança
+      // de senha dentro do app), encerrar a sessão atual para forçar reautenticação
+      // após o reset. Isso evita que tokens antigos continuem válidos.
+      const currentlyLoggedIn = auth.currentUser;
       await sendPasswordResetEmail(auth, email);
+      if (currentlyLoggedIn) {
+        // Encerrar sessão web local; tokens do servidor expiram naturalmente.
+        // Revogação completa de tokens refresh requer Auth Blocking Functions (v2).
+        await signOut(auth);
+        queryClient.clear();
+      }
     } catch (err) {
       setError((err as Error).message || 'Erro ao enviar email de recuperação');
       throw err;
