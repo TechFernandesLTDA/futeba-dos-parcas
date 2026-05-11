@@ -33,6 +33,7 @@ import {
 } from "firebase-functions/v2/https";
 import {
   FCM_MULTICAST_LIMIT,
+  FCM_TTL_SECONDS,
   FIRESTORE_WHERE_IN_LIMIT,
   FIRESTORE_PAGINATION_LIMIT,
   FUNCTION_REGION,
@@ -327,16 +328,19 @@ async function processNotificationQueue():
       const imageUrl =
         data.imageUrl as string | undefined;
 
-      // Filtrar tokens válidos
+      // Filtrar tokens válidos — inclui todos os tokens por usuário
+      // para suportar múltiplos dispositivos (#978)
       const tokens: string[] = [];
       const tokenToUser =
         new Map<string, string>();
 
       for (const userId of userIds) {
-        const token = tokenMap.get(userId);
-        if (token) {
-          tokens.push(token);
-          tokenToUser.set(token, userId);
+        const userTokens = tokenMap.get(userId);
+        if (userTokens && userTokens.length > 0) {
+          for (const token of userTokens) {
+            tokens.push(token);
+            tokenToUser.set(token, userId);
+          }
         }
       }
 
@@ -464,11 +468,9 @@ async function sendMulticastInChunks(
     );
   }
 
-  // TTL de 1 hora para notificações time-sensitive
-  const TTL_SECONDS = 3600;
-  // Expiração APNS: Unix timestamp (segundos)
+  // TTL centralizado em constants.ts (FCM_TTL_SECONDS)
   const apnsExpiration =
-    String(Math.floor(Date.now() / 1000) + TTL_SECONDS);
+    String(Math.floor(Date.now() / 1000) + FCM_TTL_SECONDS);
 
   for (const chunk of chunks) {
     try {
@@ -486,7 +488,7 @@ async function sendMulticastInChunks(
           },
           android: {
             priority: "high",
-            ttl: TTL_SECONDS,
+            ttl: FCM_TTL_SECONDS,
             notification: {
               channelId: notification.type,
               sound: "default",
@@ -580,19 +582,21 @@ async function sendMulticastInChunks(
 // ==========================================
 
 /**
- * Busca tokens FCM de múltiplos usuários em
- * batch. Usa chunks de 10 para respeitar limite
- * do whereIn.
+ * Busca todos os tokens FCM de múltiplos usuários
+ * em batch. Retorna todos os tokens do usuário
+ * (fcmTokens array + campos legados fcm_token/fcmToken)
+ * para suportar usuários com múltiplos dispositivos.
+ * Usa chunks de 10 para respeitar limite do whereIn.
  *
  * @param {string[]} userIds - IDs de usuário
- * @return {Promise<Map<string, string>>}
- *   Map userId -> token
+ * @return {Promise<Map<string, string[]>>}
+ *   Map userId -> lista de todos os tokens
  */
 async function fetchTokensInBatch(
   userIds: string[]
-): Promise<Map<string, string>> {
+): Promise<Map<string, string[]>> {
   const db = getDb();
-  const tokenMap = new Map<string, string>();
+  const tokenMap = new Map<string, string[]>();
 
   // Chunks de 10 (limite do whereIn)
   const chunks: string[][] = [];
@@ -614,27 +618,26 @@ async function fetchTokensInBatch(
           )
           .get();
 
-        const map = new Map<string, string>();
+        const map = new Map<string, string[]>();
         snapshot.docs.forEach((doc) => {
           const data =
             doc.data() as Record<string, unknown>;
-          // Prioridade: fcmTokens array (web),
-          // depois campos legados escalares
+          // Coleta todos os tokens únicos do usuário:
+          // fcmTokens array (web) + campos legados escalares
+          const tokens = new Set<string>();
           const arr = data?.fcmTokens;
-          if (Array.isArray(arr) && arr.length > 0) {
-            // Usar primeiro token válido do array
-            const firstToken =
-              (arr as string[]).find((t) => !!t);
-            if (firstToken) {
-              map.set(doc.id, firstToken);
-            }
-          } else {
-            const token =
-              (data?.fcm_token as string | undefined) ||
-              (data?.fcmToken as string | undefined);
-            if (token) {
-              map.set(doc.id, token);
-            }
+          if (Array.isArray(arr)) {
+            (arr as string[]).forEach((t) => {
+              if (t) tokens.add(t);
+            });
+          }
+          const legacyToken =
+            (data?.fcm_token as string | undefined) ||
+            (data?.fcmToken as string | undefined);
+          if (legacyToken) tokens.add(legacyToken);
+
+          if (tokens.size > 0) {
+            map.set(doc.id, Array.from(tokens));
           }
         });
 
@@ -644,15 +647,15 @@ async function fetchTokensInBatch(
           "[BATCH_FCM] Erro ao buscar tokens:",
           error
         );
-        return new Map<string, string>();
+        return new Map<string, string[]>();
       }
     })
   );
 
   // Consolidar resultados
   for (const result of results) {
-    for (const [userId, token] of result) {
-      tokenMap.set(userId, token);
+    for (const [userId, tokens] of result) {
+      tokenMap.set(userId, tokens);
     }
   }
 

@@ -84,6 +84,14 @@ export const FCM_MULTICAST_LIMIT = 500;
 /** Limite de caracteres no corpo da notificação */
 export const FCM_BODY_MAX_LENGTH = 500;
 
+/**
+ * TTL de mensagens FCM em segundos (1 hora).
+ * Usado em android.ttl e no header apns-expiration.
+ * Centralizado aqui para evitar repetição em
+ * batch-sender.ts e helpers.ts.
+ */
+export const FCM_TTL_SECONDS = 3600;
+
 // ==========================================
 // RATE LIMITING
 // ==========================================

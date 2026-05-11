@@ -6,6 +6,7 @@
 
 import * as admin from "firebase-admin";
 import {
+  FCM_TTL_SECONDS,
   FIRESTORE_WHERE_IN_LIMIT,
 } from "../constants";
 
@@ -516,11 +517,9 @@ export async function sendNotificationToUser(
     return false;
   }
 
-  // TTL de 1 hora para notificações time-sensitive
-  const TTL_SECONDS = 3600;
-  // Expiração APNS: Unix timestamp (segundos)
+  // TTL centralizado em constants.ts (FCM_TTL_SECONDS)
   const apnsExpiration =
-    String(Math.floor(Date.now() / 1000) + TTL_SECONDS);
+    String(Math.floor(Date.now() / 1000) + FCM_TTL_SECONDS);
 
   // Badge APNS dinâmico baseado em não lidas
   const badgeCount = await getUnreadCount(userId);
@@ -541,7 +540,7 @@ export async function sendNotificationToUser(
       },
       android: {
         priority: "high",
-        ttl: TTL_SECONDS,
+        ttl: FCM_TTL_SECONDS,
         notification: {
           channelId: notification.type,
           sound: "default",
@@ -652,11 +651,9 @@ export async function sendNotificationToUsers(
     userId: string;
   }[] = [];
 
-  // TTL de 1 hora para notificações time-sensitive
-  const TTL_SECONDS = 3600;
-  // Expiração APNS: Unix timestamp (segundos)
+  // TTL centralizado em constants.ts (FCM_TTL_SECONDS)
   const apnsExpiration =
-    String(Math.floor(Date.now() / 1000) + TTL_SECONDS);
+    String(Math.floor(Date.now() / 1000) + FCM_TTL_SECONDS);
 
   for (const chunk of chunks) {
     try {
@@ -674,7 +671,7 @@ export async function sendNotificationToUsers(
           },
           android: {
             priority: "high",
-            ttl: TTL_SECONDS,
+            ttl: FCM_TTL_SECONDS,
             notification: {
               channelId: notification.type,
               sound: "default",
