@@ -134,9 +134,11 @@ function AppLoadingFallback() {
   return <LoadingScreen variant="cards" message="Carregando..." />;
 }
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { firebaseUser, loading } = useAuth();
-  const location = useLocation();
+/**
+ * Hook compartilhado para checar o custom claim `verified` do ID token.
+ * Retorna `null` enquanto aguarda a resolução, `true`/`false` quando resolvido.
+ */
+function useVerifiedClaim(firebaseUser: ReturnType<typeof useAuth>['firebaseUser']): boolean | null {
   const [verified, setVerified] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -158,6 +160,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     };
   }, [firebaseUser]);
 
+  return verified;
+}
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { firebaseUser, loading } = useAuth();
+  const location = useLocation();
+  const verified = useVerifiedClaim(firebaseUser);
+
   if (loading) {
     return <AppLoadingFallback />;
   }
@@ -176,7 +186,35 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // Onboarding: rotas /onboarding/* permitem !verified
   const isOnboardingRoute = location.pathname.startsWith('/onboarding/');
   if (verified === false && !isOnboardingRoute) {
-    return <Navigate to="/onboarding/phone" replace />;
+    // FIX #1024: se já tem telefone verificado, vai direto pro CPF; caso contrário,
+    // começa pelo telefone. Evita regredir o usuário que já completou essa etapa.
+    const nextStep = firebaseUser.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
+    return <Navigate to={nextStep} replace />;
+  }
+
+  return <>{children}</>;
+}
+
+/**
+ * Restringe a rota a usuários com `verified === true` (custom claim).
+ * Redireciona para onboarding se não verificado.
+ */
+function VerifiedRoute({ children }: { children: React.ReactNode }) {
+  const { firebaseUser, loading } = useAuth();
+  const location = useLocation();
+  const verified = useVerifiedClaim(firebaseUser);
+
+  if (loading) return <AppLoadingFallback />;
+
+  if (!firebaseUser) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (verified === null) return <AppLoadingFallback />;
+
+  if (verified === false) {
+    const nextStep = firebaseUser.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
+    return <Navigate to={nextStep} replace />;
   }
 
   return <>{children}</>;
@@ -235,12 +273,24 @@ function FieldOwnerRoute({ children }: { children: React.ReactNode }) {
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { firebaseUser, loading } = useAuth();
+  const verified = useVerifiedClaim(firebaseUser);
 
   if (loading) {
     return <AppLoadingFallback />;
   }
 
   if (firebaseUser) {
+    // Aguarda resolução do claim antes de decidir destino — evita piscar
+    if (verified === null) return <AppLoadingFallback />;
+
+    // FIX #1024: usuário logado mas não-verificado NÃO vai pra `/` (causaria loop
+    // ProtectedRoute → /onboarding/phone → PublicRoute → / → ProtectedRoute...).
+    // Redireciona diretamente pro próximo passo do onboarding.
+    if (verified === false) {
+      const nextStep = firebaseUser.phoneNumber ? '/onboarding/cpf' : '/onboarding/phone';
+      return <Navigate to={nextStep} replace />;
+    }
+
     return <Navigate to="/" replace />;
   }
 
@@ -271,14 +321,16 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Splash & Onboarding */}
-      <Route path="/splash" element={<Suspense fallback={<RouteFallback />}><SplashScreen /></Suspense>} />
+      {/* FIX #1024: /splash restrito a não-logados; usuário logado é redirecionado pelo PublicRoute */}
+      <Route path="/splash" element={<PublicRoute><Suspense fallback={<RouteFallback />}><SplashScreen /></Suspense></PublicRoute>} />
       <Route path="/welcome" element={<PublicRoute><Suspense fallback={<RouteFallback />}><WelcomeScreen /></Suspense></PublicRoute>} />
 
       {/* Onboarding obrigatório: phone + CPF (Anti-Bot) */}
       <Route path="/onboarding/phone" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><PhoneVerificationScreen /></Suspense></ProtectedRoute>} />
       <Route path="/onboarding/cpf" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><CpfVerificationScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/profile/setup" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><ProfileSetupScreen /></Suspense></ProtectedRoute>} />
-      <Route path="/guide" element={<ProtectedRoute><Suspense fallback={<RouteFallback />}><AppGuideScreen /></Suspense></ProtectedRoute>} />
+      {/* FIX #1024: /profile/setup e /guide exigem verified=true (usuário completou onboarding) */}
+      <Route path="/profile/setup" element={<VerifiedRoute><Suspense fallback={<RouteFallback />}><ProfileSetupScreen /></Suspense></VerifiedRoute>} />
+      <Route path="/guide" element={<VerifiedRoute><Suspense fallback={<RouteFallback />}><AppGuideScreen /></Suspense></VerifiedRoute>} />
 
       {/* Auth */}
       <Route path="/login" element={<PublicRoute><Suspense fallback={<RouteFallback />}><LoginScreen /></Suspense></PublicRoute>} />
@@ -297,7 +349,8 @@ function AppRoutes() {
         <Route path="/game/create" element={<Suspense fallback={<RouteFallback />}><CreateGameScreen /></Suspense>} />
         {/* Groups */}
         <Route path="/group/:groupId" element={<Suspense fallback={<RouteFallback />}><GroupDetailScreen /></Suspense>} />
-        <Route path="/group/create" element={<Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense>} />
+        {/* FIX #1033: apenas FIELD_OWNER ou ADMIN podem criar grupos via URL direta */}
+        <Route path="/group/create" element={<FieldOwnerOrAdminRoute><Suspense fallback={<RouteFallback />}><CreateGroupScreen /></Suspense></FieldOwnerOrAdminRoute>} />
         <Route path="/group/:groupId/edit" element={<Suspense fallback={<RouteFallback />}><GroupEditScreen /></Suspense>} />
         <Route path="/group/:groupId/settings" element={<Suspense fallback={<RouteFallback />}><GroupSettingsScreen /></Suspense>} />
         <Route path="/group/:groupId/cashbox" element={<Suspense fallback={<RouteFallback />}><CashboxScreen /></Suspense>} />
