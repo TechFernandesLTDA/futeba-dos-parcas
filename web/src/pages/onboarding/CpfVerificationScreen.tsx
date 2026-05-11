@@ -130,7 +130,7 @@ export const CpfVerificationScreen: React.FC = () => {
       } else if (code === 'functions/invalid-argument') {
         userMsg = 'CPF inválido. Confira os dígitos.';
       } else if (code === 'functions/permission-denied') {
-        userMsg = message || 'Operação não permitida. Entre em contato com o suporte.';
+        userMsg = 'Complete a verificação de telefone antes de continuar.';
       } else if (code === 'functions/unauthenticated') {
         // Mensagem mais informativa: pode ser App Check rejection (web em modo
         // privado, AdBlock bloqueando reCAPTCHA, etc.) ou token expirado.

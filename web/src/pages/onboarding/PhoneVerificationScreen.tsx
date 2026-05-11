@@ -122,7 +122,8 @@ export const PhoneVerificationScreen: React.FC = () => {
       let msg = 'Erro ao enviar SMS. Verifique o número e tente novamente.';
       if (code === 'auth/invalid-phone-number') msg = 'Número inválido. Confira DDD e número.';
       else if (code === 'auth/too-many-requests') {
-        msg = 'Muitas tentativas. Aguarde alguns minutos.';
+        msg = 'Muitas tentativas em sequência. Aguarde 5 minutos.';
+        setResendCooldown(300); // 5 minutos
       }
       setError(msg);
       verifierRef.current?.clear();
