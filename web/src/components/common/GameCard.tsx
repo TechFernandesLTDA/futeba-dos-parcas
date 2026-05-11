@@ -26,7 +26,7 @@ import {
   Link as LinkIcon,
   Cancel as CancelIcon,
 } from '@mui/icons-material';
-import { Game, STATUS_CONFIG, FIELD_TYPE_LABELS, getStatusChipColors } from '../../types/game';
+import { Game, STATUS_CONFIG, FIELD_TYPE_LABELS, getStatusChipColors, ConfirmationPaletteKey } from '../../types/game';
 import { formatGameDate } from '../../utils/dateFormatters';
 import { InteractiveCard } from './InteractiveCard';
 import { useContextMenu, ContextMenuItem } from '../../hooks/useContextMenu';
@@ -286,20 +286,48 @@ export const GameCardSkeleton: React.FC = () => {
   );
 };
 
+/**
+ * StatusChip aceita configurações com paletteKey (theme-aware, fix #761)
+ * ou color direto (legado) para compatibilidade.
+ */
 export const StatusChip: React.FC<{
   status: string;
-  config: Record<string, { label: string; color: string; bgColor?: string }>;
+  config: Record<string, { label: string; paletteKey?: ConfirmationPaletteKey; color?: string; bgColor?: string }>;
 }> = React.memo(({ status, config }) => {
   const theme = useTheme();
-  const statusConfig = config[status] || { label: status, color: theme.palette.text.disabled, bgColor: theme.palette.action.disabledBackground };
+  const entry = config[status];
+
+  // Resolve cores via paletteKey (theme-aware) ou fallback para color direto
+  let color: string;
+  let bgColor: string;
+  let label: string;
+
+  if (!entry) {
+    label = status;
+    color = theme.palette.text.disabled;
+    bgColor = theme.palette.action.disabledBackground;
+  } else if (entry.paletteKey) {
+    label = entry.label;
+    if (entry.paletteKey === 'default') {
+      color = theme.palette.text.disabled;
+      bgColor = theme.palette.action.hover;
+    } else {
+      color = theme.palette[entry.paletteKey].main;
+      bgColor = entry.bgColor ?? `${color}1F`;
+    }
+  } else {
+    label = entry.label;
+    color = entry.color ?? theme.palette.text.disabled;
+    bgColor = entry.bgColor ?? alpha(color, 0.1);
+  }
 
   return (
     <Chip
-      label={statusConfig.label}
+      label={label}
       size="small"
       sx={{
-        backgroundColor: statusConfig.bgColor || alpha(statusConfig.color, 0.1),
-        color: statusConfig.color,
+        backgroundColor: bgColor,
+        color: color,
         fontWeight: 600,
         fontSize: '0.75rem',
       }}

@@ -268,21 +268,77 @@ export const PIX_KEY_TYPE_LABELS: Record<PixKeyType, string> = {
   RANDOM: 'Aleatória',
 };
 
-export const CONFIRMATION_STATUS_CONFIG: Record<ConfirmationStatus, { label: string; color: string }> = {
-  CONFIRMED: { label: 'Confirmado', color: '#4CAF50' },
-  PENDING: { label: 'Pendente', color: '#FF9800' },
-  CANCELLED: { label: 'Cancelado', color: '#F44336' },
-  WAITLIST: { label: 'Lista de Espera', color: '#9E9E9E' },
-  ON_THE_WAY: { label: 'A Caminho', color: '#2196F3' },
-  CHECKED_IN: { label: 'Check-in', color: '#00C853' },
+/**
+ * Paleta para status de confirmação/pagamento — usa keys do MUI para suportar light/dark mode.
+ * Fix #761: substituídas hex hardcoded por paletteKey do tema.
+ */
+export type ConfirmationPaletteKey = 'success' | 'warning' | 'error' | 'default' | 'info';
+
+export const CONFIRMATION_STATUS_CONFIG: Record<ConfirmationStatus, { label: string; paletteKey: ConfirmationPaletteKey }> = {
+  CONFIRMED: { label: 'Confirmado', paletteKey: 'success' },
+  PENDING: { label: 'Pendente', paletteKey: 'warning' },
+  CANCELLED: { label: 'Cancelado', paletteKey: 'error' },
+  WAITLIST: { label: 'Lista de Espera', paletteKey: 'default' },
+  ON_THE_WAY: { label: 'A Caminho', paletteKey: 'info' },
+  CHECKED_IN: { label: 'Check-in', paletteKey: 'success' },
 };
 
-export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; color: string }> = {
-  PAID: { label: 'Pago', color: '#4CAF50' },
-  PENDING: { label: 'Pendente', color: '#FF9800' },
-  EXEMPT: { label: 'Isento', color: '#9E9E9E' },
-  PARTIAL: { label: 'Parcial', color: '#2196F3' },
+export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; paletteKey: ConfirmationPaletteKey }> = {
+  PAID: { label: 'Pago', paletteKey: 'success' },
+  PENDING: { label: 'Pendente', paletteKey: 'warning' },
+  EXEMPT: { label: 'Isento', paletteKey: 'default' },
+  PARTIAL: { label: 'Parcial', paletteKey: 'info' },
 };
+
+/**
+ * Resolve paletteKey de confirmação/pagamento para cores reais do theme.
+ * Suporta light/dark mode e WCAG AA (usa cores do tema WCAG-compliant).
+ */
+type PaletteTheme = {
+  palette: {
+    success: { main: string };
+    warning: { main: string };
+    error: { main: string };
+    info: { main: string };
+    text: { disabled: string };
+    action: { hover: string };
+  };
+};
+
+export function getConfirmationChipColors(
+  theme: PaletteTheme,
+  status: ConfirmationStatus,
+): { label: string; color: string; bgColor: string } {
+  const config = CONFIRMATION_STATUS_CONFIG[status];
+  return resolvePaletteKeyColors(theme, config);
+}
+
+export function getPaymentChipColors(
+  theme: PaletteTheme,
+  status: PaymentStatus,
+): { label: string; color: string; bgColor: string } {
+  const config = PAYMENT_STATUS_CONFIG[status];
+  return resolvePaletteKeyColors(theme, config);
+}
+
+function resolvePaletteKeyColors(
+  theme: PaletteTheme,
+  config: { label: string; paletteKey: ConfirmationPaletteKey },
+): { label: string; color: string; bgColor: string } {
+  if (config.paletteKey === 'default') {
+    return {
+      label: config.label,
+      color: theme.palette.text.disabled,
+      bgColor: theme.palette.action.hover,
+    };
+  }
+  const paletteColor = theme.palette[config.paletteKey].main;
+  return {
+    label: config.label,
+    color: paletteColor,
+    bgColor: `${paletteColor}1F`,
+  };
+}
 
 export function canManageGame(game: Game, userId: string): boolean {
   return game.ownerId === userId || game.coOrganizers.includes(userId);
