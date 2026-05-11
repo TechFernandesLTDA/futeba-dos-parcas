@@ -77,14 +77,13 @@ export function useNotificationPermission() {
               (snap.data()?.fcmTokens as string[]) || [];
             if (tokens.length > MAX_FCM_TOKENS) {
               // Remover tokens excedentes (os mais antigos,
-              // que são os primeiros no array)
+              // que são os primeiros no array) — 1 único
+              // updateDoc com spread para evitar N writes (#978)
               const tokensToRemove =
                 tokens.slice(0, tokens.length - MAX_FCM_TOKENS);
-              for (const oldToken of tokensToRemove) {
-                await updateDoc(userRef, {
-                  fcmTokens: arrayRemove(oldToken),
-                });
-              }
+              await updateDoc(userRef, {
+                fcmTokens: arrayRemove(...tokensToRemove),
+              });
             }
           }
         }

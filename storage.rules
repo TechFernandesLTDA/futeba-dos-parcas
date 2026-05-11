@@ -37,11 +37,14 @@ service firebase.storage {
     }
 
     // Verifica se o usuário é admin do grupo.
-    // Usa exists() para evitar falha quando o doc está ausente.
+    // Usa um único firestore.get() — em Storage Rules o get() retorna null
+    // quando o documento não existe (diferente do comportamento em Firestore Rules),
+    // portanto não é necessário preceder com exists(), economizando 1 read por operação.
     function isGroupAdmin(groupId) {
+      let memberDoc = firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid));
       return isAuthenticated() &&
-             firestore.exists(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)) &&
-             firestore.get(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid)).data.role in ['OWNER', 'ADMIN'];
+             memberDoc != null &&
+             memberDoc.data.role in ['OWNER', 'ADMIN'];
     }
 
     // Verifica se o usuário é admin do sistema via Custom Claims (zero Firestore reads).
