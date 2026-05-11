@@ -23,7 +23,10 @@ actual class GeocoderService(
     }
 
     actual suspend fun geocode(fullAddress: String): Result<LatLngResult> {
-        return withContext(Dispatchers.Default) {
+        // CLGeocoder deve ser instanciado e chamado na main thread (requisito CoreLocation).
+        // Usar Dispatchers.Main garante isso; o callback do CLGeocoder também chega na main
+        // thread, então cont.resume é chamado no contexto correto (issue #879).
+        return withContext(Dispatchers.Main) {
             try {
                 if (fullAddress.isBlank()) {
                     return@withContext Result.failure(

@@ -23,7 +23,11 @@ interface ImagePicker {
      * @param allowMultiple Permitir seleção múltipla (padrão: false)
      * @param maxImages Número máximo de imagens (apenas se allowMultiple = true)
      * @return Lista de imagens selecionadas (ou lista vazia se cancelado)
+     *
+     * @Throws adicionado para que o Swift consumer receba NSError em vez de NSException
+     * ao chamar esta função suspend via Kotlin/Native (issue #882).
      */
+    @Throws(Exception::class)
     suspend fun pickImage(
         allowMultiple: Boolean = false,
         maxImages: Int = 1
@@ -33,7 +37,11 @@ interface ImagePicker {
      * Captura uma foto usando a câmera
      *
      * @return URI da foto capturada (ou null se cancelado)
+     *
+     * @Throws adicionado para que o Swift consumer receba NSError em vez de NSException
+     * ao chamar esta função suspend via Kotlin/Native (issue #882).
      */
+    @Throws(Exception::class)
     suspend fun captureImage(): ImagePickerResult?
 
     /**
