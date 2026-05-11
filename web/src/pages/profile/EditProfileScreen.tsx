@@ -217,6 +217,7 @@ export const EditProfileScreen: React.FC = () => {
                   accept="image/*"
                   ref={fileInputRef}
                   hidden
+                  aria-label="Selecionar foto de perfil"
                   onChange={handleFileChange}
                 />
                 <Avatar

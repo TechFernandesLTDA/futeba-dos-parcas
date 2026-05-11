@@ -140,6 +140,7 @@ export function ForgotPasswordScreen() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
+                inputProps={{ autoComplete: 'email' }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
