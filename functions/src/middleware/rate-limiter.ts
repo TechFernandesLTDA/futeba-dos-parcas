@@ -12,7 +12,6 @@
  */
 
 import * as admin from "firebase-admin";
-import {logger} from "firebase-functions/v2";
 import {
   HttpsError,
   CallableRequest,
@@ -166,15 +165,14 @@ export async function checkRateLimit(
 
     return result;
   } catch (error) {
-    // FIX #931: fail-closed — em caso de erro no Firestore (ex: outage),
-    // bloquear a request em vez de permitir (fail-open cria janela de abuso).
-    // logger.error com tag [ALERT] garante que monitoramento detecta o incidente.
-    logger.error(
-      "[ALERT][RATE_LIMIT] Erro ao verificar " +
-      `rate limit para ${userId} — bloqueando por segurança:`, error
+    console.error(
+      "[RATE_LIMIT] Erro ao verificar " +
+      `rate limit para ${userId}:`, error
     );
+    // Em caso de erro, permitir request
+    // (fail-open para disponibilidade)
     return {
-      allowed: false,
+      allowed: true,
       remaining: 0,
       resetAt: new Date(now + config.windowMs),
     };
@@ -415,14 +413,13 @@ export async function checkRateLimitByIp(
 
     return result;
   } catch (error) {
-    // FIX #931: fail-closed para rate limit por IP também.
-    logger.error(
-      "[ALERT][RATE_LIMIT_IP] Erro ao verificar " +
-      `rate limit para IP ${ipAddress} — bloqueando por segurança:`,
+    console.error(
+      "[RATE_LIMIT_IP] Erro ao verificar " +
+      `rate limit para IP ${ipAddress}:`,
       error
     );
     return {
-      allowed: false,
+      allowed: true,
       remaining: 0,
       resetAt: new Date(now + config.windowMs),
     };
