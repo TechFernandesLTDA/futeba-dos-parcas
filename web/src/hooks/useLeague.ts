@@ -5,8 +5,6 @@ import {
   orderBy,
   limit,
   getDocs,
-  doc,
-  getDoc,
   onSnapshot,
   documentId,
   where,
@@ -46,14 +44,16 @@ async function fetchUserDataBatch(userIds: string[]): Promise<Map<string, { name
     chunks.push(userIds.slice(i, i + 10));
   }
 
-  const results = await Promise.all(
+  // Usar allSettled para que falha em um chunk não derrube os demais
+  const settled = await Promise.allSettled(
     chunks.map((chunk) =>
       getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk)))
     )
   );
 
-  for (const result of results) {
-    for (const docSnap of result.docs) {
+  for (const result of settled) {
+    if (result.status === 'rejected') continue;
+    for (const docSnap of result.value.docs) {
       const d = docSnap.data();
       usersMap.set(docSnap.id, {
         name: (d.name as string) || 'Jogador',
