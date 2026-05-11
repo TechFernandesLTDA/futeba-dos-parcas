@@ -26,6 +26,9 @@ import { verifyCpf, setUserVerified } from '../../services/cloudFunctions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('CpfVerification');
 
 /**
  * Etapa 2/2 do onboarding obrigatorio: verificacao de CPF.
@@ -82,6 +85,19 @@ export const CpfVerificationScreen: React.FC = () => {
 
     setLoading(true);
     try {
+      // FIX 2026-05-11: força refresh do ID token ANTES de chamar verifyCpf.
+      // Sintoma reportado (user Gustavo): "Sessão deslogado" = functions/unauthenticated.
+      // Causa raiz provável: ID token expirou entre login+phone-verify e click no CPF;
+      // App Check + auth token desync. getIdToken(true) renova token + força App Check
+      // refresh ANTES da callable, eliminando a janela onde token está expirando.
+      try {
+        await firebaseUser.getIdToken(true);
+      } catch (refreshErr) {
+        logger.error('Failed to refresh ID token before verifyCpf:', refreshErr);
+        // Continue mesmo se refresh falhar — callable vai dar erro melhor.
+      }
+
+      logger.info('Calling verifyCpf', { uid: firebaseUser.uid, cpfMasked: '***.' + stripCpf(cpf).slice(-4) });
       const verifyResult = await verifyCpf({ cpf: stripCpf(cpf) });
       if (!verifyResult.data.success) {
         throw new Error('Falha ao verificar CPF');
@@ -99,6 +115,14 @@ export const CpfVerificationScreen: React.FC = () => {
     } catch (err) {
       const code = (err as { code?: string }).code;
       const message = (err as { message?: string }).message || '';
+      // Log detalhado pra debug: code + message + appCheckRejected flag se houver
+      logger.error('verifyCpf failed', {
+        code,
+        message,
+        details: (err as { details?: unknown }).details,
+        uid: firebaseUser?.uid,
+      });
+
       let userMsg = 'Não foi possível verificar agora. Tente novamente em instantes.';
 
       if (code === 'functions/already-exists') {
@@ -108,7 +132,10 @@ export const CpfVerificationScreen: React.FC = () => {
       } else if (code === 'functions/permission-denied') {
         userMsg = message || 'Operação não permitida. Entre em contato com o suporte.';
       } else if (code === 'functions/unauthenticated') {
-        userMsg = 'Sua sessão expirou. Faça login novamente.';
+        // Mensagem mais informativa: pode ser App Check rejection (web em modo
+        // privado, AdBlock bloqueando reCAPTCHA, etc.) ou token expirado.
+        userMsg = 'Não foi possível validar sua sessão. Recarregue a página e tente novamente. ' +
+          'Se persistir, desabilite extensões/AdBlock ou tente em outro navegador.';
       } else if (code === 'functions/failed-precondition') {
         userMsg = 'Conclua a verificação de telefone primeiro.';
       }

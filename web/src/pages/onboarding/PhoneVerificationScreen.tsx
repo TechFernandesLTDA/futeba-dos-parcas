@@ -29,10 +29,14 @@ import {
   ConfirmationResult,
 } from 'firebase/auth';
 import { signInWithPhoneNumber } from 'firebase/auth';
-import { auth } from '../../services/firebase';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('PhoneVerification');
 
 /**
  * Etapa 1/2 do onboarding obrigatorio: verificacao de telefone via SMS OTP.
@@ -148,12 +152,38 @@ export const PhoneVerificationScreen: React.FC = () => {
       await linkWithCredential(firebaseUser, credential);
       // Force token refresh pra Firebase popular phoneNumber no userRecord
       await firebaseUser.getIdToken(true);
+
+      // FIX: persistir phone no Firestore users/{uid} (antes era só linkado no
+      // Auth provider, doc Firestore ficava sem phone — quebrava notificações
+      // SMS, contato, recovery). Bug reportado 2026-05-11 (user Gustavo).
+      const phoneNumber = firebaseUser.phoneNumber || `+${phone.replace(/\D/g, '')}`;
+      try {
+        await updateDoc(doc(db, 'users', firebaseUser.uid), {
+          phone: phoneNumber,
+          phone_verified: true,
+          updated_at: serverTimestamp(),
+        });
+      } catch (firestoreErr) {
+        // Non-fatal: phone está no Auth, app continua funcionando.
+        // Logamos pra investigar mas seguimos o fluxo de onboarding.
+        logger.error('Failed to persist phone to users doc (non-fatal):', firestoreErr);
+      }
+
       setStep('success');
       setTimeout(() => navigate('/onboarding/cpf'), 1100);
     } catch (err) {
+      logger.error('Phone verification failed:', err);
       const code = (err as { code?: string }).code;
       // Se telefone já estava linkado a este user, OK — segue pra CPF
       if (code === 'auth/provider-already-linked') {
+        // Tentar persistir phone mesmo no caso already-linked (idempotente)
+        if (firebaseUser?.phoneNumber) {
+          updateDoc(doc(db, 'users', firebaseUser.uid), {
+            phone: firebaseUser.phoneNumber,
+            phone_verified: true,
+            updated_at: serverTimestamp(),
+          }).catch((e) => logger.error('Failed to persist phone (already-linked path):', e));
+        }
         setStep('success');
         setTimeout(() => navigate('/onboarding/cpf'), 600);
         return;
