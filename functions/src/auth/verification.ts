@@ -259,3 +259,153 @@ export const setUserVerified = onCall(
     };
   },
 );
+
+/**
+ * Backfill operacional: define verified=true via Custom Claim para usuários
+ * que já têm CPF verificado (cpfVerifiedAt em users_private) e telefone
+ * registrado no Firebase Auth, mas não têm o claim ainda.
+ *
+ * Executar UMA VEZ após deploy via Cloud Console ou httpsCallable("bulkSetVerifiedForExistingUsers").
+ *
+ * Critério de elegibilidade:
+ * - users_private/{uid}.cpfVerifiedAt != null
+ * - userRecord.phoneNumber != null (Firebase Auth)
+ * - customClaims.verified !== true (ainda não migrado)
+ *
+ * @param {functions.https.CallableRequest} request - Requisição callable
+ * @return {Promise<{totalProcessed, totalSetVerified, errors}>}
+ */
+export const bulkSetVerifiedForExistingUsers = onCall(
+  {
+    region: FUNCTION_REGION,
+    enforceAppCheck: process.env.NODE_ENV === "production",
+    consumeAppCheckToken: process.env.NODE_ENV === "production",
+    // Timeout maior para processar muitos usuários em lote
+    timeoutSeconds: 540,
+  },
+  async (request) => {
+    // Apenas ADMIN pode disparar o backfill
+    if (
+      !request.auth ||
+      request.auth.token.role !== "ADMIN"
+    ) {
+      throw new HttpsError(
+        "permission-denied",
+        "Apenas admin pode executar backfill de verificação."
+      );
+    }
+
+    const auth = admin.auth();
+    const db = admin.firestore();
+
+    let totalProcessed = 0;
+    let totalSetVerified = 0;
+    const errors: Array<{uid: string; error: string}> = [];
+
+    logger.info(
+      "[BULK_VERIFY] Iniciando backfill de verified=true"
+    );
+
+    // Iterar todos os usuários via listUsers com paginação
+    let pageToken: string | undefined = undefined;
+
+    do {
+      // Buscar até 1000 usuários por página (máximo da API)
+      const listResult = await auth.listUsers(1000, pageToken);
+      pageToken = listResult.pageToken;
+
+      // Processar em mini-batches de 5 para evitar quota burst
+      const users = listResult.users;
+      for (let i = 0; i < users.length; i += 5) {
+        const batch = users.slice(i, i + 5);
+
+        await Promise.all(
+          batch.map(async (userRecord) => {
+            totalProcessed++;
+
+            // Pular se já tem claim verified=true
+            if (userRecord.customClaims?.verified === true) {
+              return;
+            }
+
+            // Pular se não tem telefone no Firebase Auth
+            if (!userRecord.phoneNumber) {
+              return;
+            }
+
+            // Verificar se tem CPF verificado em users_private
+            let privateData: admin.firestore.DocumentData | undefined;
+            try {
+              const snap = await db
+                .doc(`users_private/${userRecord.uid}`)
+                .get();
+              privateData = snap.data();
+            } catch (err) {
+              const msg =
+                err instanceof Error ? err.message : String(err);
+              logger.warn(
+                `[BULK_VERIFY] Erro ao buscar users_private/${userRecord.uid}:`,
+                {error: msg}
+              );
+              errors.push({uid: userRecord.uid, error: msg});
+              return;
+            }
+
+            // Pular se não tem cpfVerifiedAt
+            if (!privateData?.cpfVerifiedAt) {
+              return;
+            }
+
+            // Elegível — setar claim verified=true
+            try {
+              const currentClaims = userRecord.customClaims ?? {};
+              await auth.setCustomUserClaims(userRecord.uid, {
+                ...currentClaims,
+                verified: true,
+              });
+
+              // Mirror em users/{uid} para listeners cliente
+              await db.doc(`users/${userRecord.uid}`).set(
+                {
+                  verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+                },
+                {merge: true}
+              );
+
+              totalSetVerified++;
+              logger.info(
+                `[BULK_VERIFY] verified=true setado para uid=${userRecord.uid}`
+              );
+            } catch (err) {
+              const msg =
+                err instanceof Error ? err.message : String(err);
+              logger.error(
+                `[BULK_VERIFY] Erro ao setar claim para uid=${userRecord.uid}:`,
+                {error: msg}
+              );
+              errors.push({uid: userRecord.uid, error: msg});
+            }
+          })
+        );
+      }
+
+      logger.info(
+        `[BULK_VERIFY] Processados ${totalProcessed} usuários ` +
+        `(verificados: ${totalSetVerified}, erros: ${errors.length})`
+      );
+    } while (pageToken);
+
+    logger.info(
+      "[BULK_VERIFY] Backfill concluído: " +
+      `totalProcessed=${totalProcessed}, ` +
+      `totalSetVerified=${totalSetVerified}, ` +
+      `errors=${errors.length}`
+    );
+
+    return {
+      totalProcessed,
+      totalSetVerified,
+      errors,
+    };
+  }
+);

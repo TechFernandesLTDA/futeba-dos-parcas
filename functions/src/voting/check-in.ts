@@ -57,7 +57,10 @@ function haversineMeters(
 export const checkInToGame = onCall(
   {
     region: FUNCTION_REGION,
-    enforceAppCheck: process.env.FUNCTIONS_EMULATOR !== "true",
+    // FIX #1041: padronizar com resto das callables — NODE_ENV===production.
+    // FUNCTIONS_EMULATOR é variável de ambiente de runtime do emulador, não
+    // uma convenção usada no resto do projeto.
+    enforceAppCheck: process.env.NODE_ENV === "production",
     consumeAppCheckToken: true,
   },
   async (request) => {

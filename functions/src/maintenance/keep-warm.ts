@@ -42,9 +42,12 @@ interface KeepWarmResult {
  *
  * Funções aquecidas:
  * - setUserRole (custom claims)
- * - onGameFinished (XP processing)
  * - migrateAllUsersToCustomClaims
  * - recalculateLeagueRating
+ *
+ * FIX #1047: onGameFinished removido — é Firestore trigger (não callable),
+ * não pode ser pingado via HTTP POST. Pingá-la sempre retornava 404/405,
+ * inflando erros no log sem benefício de warm-up.
  */
 export const keepWarmFunctions =
   functions.scheduler.onSchedule(
@@ -63,15 +66,12 @@ export const keepWarmFunctions =
 
       const results: KeepWarmResult[] = [];
 
-      // Lista de funções críticas para aquecer
+      // Lista de funções críticas para aquecer (apenas callables — triggers
+      // Firestore não têm endpoint HTTP e não podem ser aquecidos assim)
       const functionsToWarm = [
         {
           name: "setUserRole",
           callable: true, // onCall function
-        },
-        {
-          name: "onGameFinished",
-          callable: false, // Firestore trigger
         },
         {
           name: "migrateAllUsersToCustomClaims",

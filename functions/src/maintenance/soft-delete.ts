@@ -638,6 +638,9 @@ export const cleanupAllSoftDeleted =
     timeoutSeconds: 540,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   }, async (_event) => {
+    // FIX #1040: try/catch externo para re-throw — aciona retry do Cloud Scheduler.
+    // Sem isso, erros eram swallowed e documentos expirados ficavam acumulados.
+    try {
     console.log(
       "[SOFT_DELETE_CLEANUP] Iniciando " +
       "cleanup unificado (TTL: " +
@@ -703,4 +706,13 @@ export const cleanupAllSoftDeleted =
       `${totalDuration}ms. Total removido: ` +
       `${totalDeleted} documentos`
     );
+    } catch (error) {
+      // Re-throw para acionar retry automático do Cloud Scheduler.
+      // Sem o throw, falhas silenciosas passavam despercebidas e documentos
+      // expirados nunca seriam removidos até a próxima execução semanal.
+      console.error(
+        "[SOFT_DELETE_CLEANUP] Erro fatal no cleanup:", error
+      );
+      throw error;
+    }
   });
