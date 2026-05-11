@@ -96,8 +96,9 @@ export const generateProfileThumbnail =
         return;
       }
 
-      // Apenas processar profile_photos
-      if (!filePath.startsWith("profile_photos/")) {
+      // Apenas processar fotos de perfil: users/{uid}/profile.jpg
+      // Android faz upload para users/{userId}/profile.jpg (não profile_photos/)
+      if (!(filePath.startsWith("users/") && filePath.endsWith("/profile.jpg"))) {
         logger.info(
           "[THUMBNAIL] Not a profile photo, " +
           "skipping"
@@ -147,19 +148,13 @@ export const generateProfileThumbnail =
         `thumb_${fileName}`
       );
 
-      // Thumbnail path:
-      // profile_photos/thumbnails/{userId}_thumb.jpg
-      const thumbFileName = fileName.replace(
-        /\.\w+$/,
-        "_thumb.jpg"
-      );
+      // Thumbnail path: users/{uid}/thumbnails/profile_thumb.jpg
+      const thumbFileName = "profile_thumb.jpg";
       const thumbFilePath =
         `${fileDir}/thumbnails/${thumbFileName}`;
 
-      // Extrair userId antes do try/catch
-      const userIdMatch = fileName.match(
-        /^([a-zA-Z0-9_-]+)/
-      );
+      // Extrair userId do path: users/{uid}/profile.jpg → segmento 1
+      const userId = filePath.split("/")[1];
 
       try {
         // Download original
@@ -207,19 +202,15 @@ export const generateProfileThumbnail =
           },
         });
 
-        if (userIdMatch) {
-          const userId = userIdMatch[1];
-
-          // Atualizar documento do usuário
-          const thumbUrl =
-            "https://storage.googleapis.com/" +
-            `${object.bucket}/${thumbFilePath}`;
-
+        if (userId) {
+          // Armazenar o path no Storage (não URL pública) para evitar
+          // privacy leak. Clientes devem usar Firebase Storage SDK para
+          // obter URL autenticada ou signed URL com TTL.
           await db()
             .collection("users")
             .doc(userId)
             .update({
-              photo_thumbnail_url: thumbUrl,
+              photo_thumbnail_path: thumbFilePath,
               photo_thumbnail_updated_at:
                 admin.firestore.FieldValue
                   .serverTimestamp(),
@@ -227,7 +218,7 @@ export const generateProfileThumbnail =
 
           logger.info(
             "[THUMBNAIL] Updated user " +
-            `${userId} with thumbnail URL`
+            `${userId} with thumbnail path`
           );
         }
 
@@ -243,9 +234,7 @@ export const generateProfileThumbnail =
               .serverTimestamp(),
           original_file: filePath,
           thumbnail_file: thumbFilePath,
-          user_id: userIdMatch ?
-            userIdMatch[1] :
-            null,
+          user_id: userId || null,
         });
 
         logger.info(
@@ -321,8 +310,9 @@ export const generateGroupThumbnail =
         return;
       }
 
-      // Apenas processar group_photos
-      if (!filePath.startsWith("group_photos/")) {
+      // Apenas processar logos de grupos: groups/{groupId}/logo.jpg
+      // Android faz upload para groups/{groupId}/logo.jpg (não group_photos/)
+      if (!(filePath.startsWith("groups/") && filePath.endsWith("/logo.jpg"))) {
         return;
       }
 
@@ -368,16 +358,13 @@ export const generateGroupThumbnail =
         `thumb_${fileName}`
       );
 
-      const thumbFileName = fileName.replace(
-        /\.\w+$/,
-        "_thumb.jpg"
-      );
+      // Thumbnail path: groups/{groupId}/thumbnails/logo_thumb.jpg
+      const thumbFileName = "logo_thumb.jpg";
       const thumbFilePath =
         `${fileDir}/thumbnails/${thumbFileName}`;
 
-      const groupIdMatch = fileName.match(
-        /^([a-zA-Z0-9_-]+)/
-      );
+      // Extrair groupId do path: groups/{groupId}/logo.jpg → segmento 1
+      const groupId = filePath.split("/")[1];
 
       try {
         await bucket.file(filePath).download(
@@ -411,17 +398,15 @@ export const generateGroupThumbnail =
           },
         });
 
-        if (groupIdMatch) {
-          const groupId = groupIdMatch[1];
-          const thumbUrl =
-            "https://storage.googleapis.com/" +
-            `${object.bucket}/${thumbFilePath}`;
-
+        if (groupId) {
+          // Armazenar o path no Storage (não URL pública) para evitar
+          // privacy leak. Clientes devem usar Firebase Storage SDK para
+          // obter URL autenticada ou signed URL com TTL.
           await db()
             .collection("groups")
             .doc(groupId)
             .update({
-              photo_thumbnail_url: thumbUrl,
+              photo_thumbnail_path: thumbFilePath,
               photo_thumbnail_updated_at:
                 admin.firestore.FieldValue
                   .serverTimestamp(),
@@ -429,7 +414,7 @@ export const generateGroupThumbnail =
 
           logger.info(
             "[THUMBNAIL] Updated group " +
-            `${groupId} with thumbnail URL`
+            `${groupId} with thumbnail path`
           );
         }
 
@@ -443,9 +428,7 @@ export const generateGroupThumbnail =
               .serverTimestamp(),
           original_file: filePath,
           thumbnail_file: thumbFilePath,
-          group_id: groupIdMatch ?
-            groupIdMatch[1] :
-            null,
+          group_id: groupId || null,
         });
 
         logger.info(
