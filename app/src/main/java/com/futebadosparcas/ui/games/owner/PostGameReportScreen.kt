@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.futebadosparcas.domain.model.*
 import com.futebadosparcas.ui.components.CachedProfileImage
+import com.futebadosparcas.ui.components.team.TeamBadgeById
 import com.futebadosparcas.ui.theme.GamificationColors
 import com.futebadosparcas.util.ContrastHelper
 import java.io.File
@@ -360,11 +361,18 @@ private fun MvpCard(player: GameConfirmation) {
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
-                Text(
-                    text = player.getDisplayName(),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = player.getDisplayName(),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    TeamBadgeById(
+                        teamId = null,
+                        iconSize = 20
+                    )
+                }
             }
 
             CachedProfileImage(
@@ -510,13 +518,19 @@ private fun ReportTopPlayersCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    Text(
-                        text = player.getDisplayName(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = player.getDisplayName(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        TeamBadgeById(
+                            teamId = null,
+                            iconSize = 18
+                        )
+                    }
 
                     Text(
                         text = count.toString(),
@@ -638,13 +652,19 @@ private fun ReportPlayerRow(
         )
         Spacer(modifier = Modifier.width(8.dp))
 
-        Text(
-            text = player.getDisplayName(),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            Text(
+                text = player.getDisplayName(),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            TeamBadgeById(
+                teamId = null,
+                iconSize = 18
+            )
+        }
 
         if (player.goals > 0) {
             Text(
