@@ -159,12 +159,142 @@ export const onUserDeleted = auth
           );
         }
 
+        // FIX #786: LGPD Art. 18 VI — coleções de gameplay/social faltantes.
+        // confirmations, mvp_votes, xp_logs, statistics, season_participation,
+        // activities, user_badges — dados pessoais que devem ser apagados.
+
+        // 8. FIX #786: confirmations (user_id == uid)
+        const confirmationsSnap = await db
+          .collection("confirmations")
+          .where("user_id", "==", uid)
+          .limit(500)
+          .get();
+        for (const doc of confirmationsSnap.docs) {
+          batch.delete(doc.ref);
+          batchOps++;
+          if (batchOps >= 450) await commitBatch();
+        }
+        if (confirmationsSnap.size > 0) {
+          logger.info(
+            `[ACCOUNT_CLEANUP] Deletando ${confirmationsSnap.size} ` +
+            `confirmations do usuário ${uid}`
+          );
+        }
+
+        // 9. FIX #786: mvp_votes (voter_id == uid)
+        const mvpVotesSnap = await db
+          .collection("mvp_votes")
+          .where("voter_id", "==", uid)
+          .limit(500)
+          .get();
+        for (const doc of mvpVotesSnap.docs) {
+          batch.delete(doc.ref);
+          batchOps++;
+          if (batchOps >= 450) await commitBatch();
+        }
+        if (mvpVotesSnap.size > 0) {
+          logger.info(
+            `[ACCOUNT_CLEANUP] Deletando ${mvpVotesSnap.size} ` +
+            `mvp_votes do usuário ${uid}`
+          );
+        }
+
+        // 10. FIX #786: xp_logs (user_id == uid)
+        const xpLogsSnap = await db
+          .collection("xp_logs")
+          .where("user_id", "==", uid)
+          .limit(500)
+          .get();
+        for (const doc of xpLogsSnap.docs) {
+          batch.delete(doc.ref);
+          batchOps++;
+          if (batchOps >= 450) await commitBatch();
+        }
+        if (xpLogsSnap.size > 0) {
+          logger.info(
+            `[ACCOUNT_CLEANUP] Deletando ${xpLogsSnap.size} ` +
+            `xp_logs do usuário ${uid}`
+          );
+        }
+
+        // 11. FIX #786: statistics (user_id == uid)
+        const statisticsSnap = await db
+          .collection("statistics")
+          .where("user_id", "==", uid)
+          .limit(500)
+          .get();
+        for (const doc of statisticsSnap.docs) {
+          batch.delete(doc.ref);
+          batchOps++;
+          if (batchOps >= 450) await commitBatch();
+        }
+        if (statisticsSnap.size > 0) {
+          logger.info(
+            `[ACCOUNT_CLEANUP] Deletando ${statisticsSnap.size} ` +
+            `statistics do usuário ${uid}`
+          );
+        }
+
+        // 12. FIX #786: season_participation (user_id == uid)
+        const seasonPartSnap = await db
+          .collection("season_participation")
+          .where("user_id", "==", uid)
+          .limit(500)
+          .get();
+        for (const doc of seasonPartSnap.docs) {
+          batch.delete(doc.ref);
+          batchOps++;
+          if (batchOps >= 450) await commitBatch();
+        }
+        if (seasonPartSnap.size > 0) {
+          logger.info(
+            `[ACCOUNT_CLEANUP] Deletando ${seasonPartSnap.size} ` +
+            `season_participation do usuário ${uid}`
+          );
+        }
+
+        // 13. FIX #786: activities (user_id == uid)
+        const activitiesSnap = await db
+          .collection("activities")
+          .where("user_id", "==", uid)
+          .limit(500)
+          .get();
+        for (const doc of activitiesSnap.docs) {
+          batch.delete(doc.ref);
+          batchOps++;
+          if (batchOps >= 450) await commitBatch();
+        }
+        if (activitiesSnap.size > 0) {
+          logger.info(
+            `[ACCOUNT_CLEANUP] Deletando ${activitiesSnap.size} ` +
+            `activities do usuário ${uid}`
+          );
+        }
+
+        // 14. FIX #786: user_badges (user_id == uid)
+        const userBadgesSnap = await db
+          .collection("user_badges")
+          .where("user_id", "==", uid)
+          .limit(500)
+          .get();
+        for (const doc of userBadgesSnap.docs) {
+          batch.delete(doc.ref);
+          batchOps++;
+          if (batchOps >= 450) await commitBatch();
+        }
+        if (userBadgesSnap.size > 0) {
+          logger.info(
+            `[ACCOUNT_CLEANUP] Deletando ${userBadgesSnap.size} ` +
+            `user_badges do usuário ${uid}`
+          );
+        }
+
         await commitBatch();
         logger.info(
           `[ACCOUNT_CLEANUP] Cleanup completo para usuário ${uid}`
         );
 
-        // 8. Limpar thumbnails orfaos do Storage
+        // 15. Limpar thumbnails órfãos do Storage
         try {
           const storage = getStorage();
           const bucketName =
