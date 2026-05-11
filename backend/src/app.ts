@@ -9,6 +9,11 @@ import routes from './routes';
 
 const app: Application = express();
 
+// Necessário para que express-rate-limit leia o IP real quando o app
+// estiver atrás de um proxy (ex: Cloud Run, nginx). Sem isso, o IP
+// reportado é sempre o do proxy, tornando o rate-limit ineficaz.
+app.set('trust proxy', 1);
+
 // Security middlewares
 app.use(helmet());
 app.use(
