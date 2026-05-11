@@ -37,6 +37,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
 import { createLogger } from '../../utils/logger';
+import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const logger = createLogger('UserManagementScreen');
@@ -117,7 +118,7 @@ export const UserManagementScreen: React.FC = () => {
       setDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      setError((error as Error)?.message || 'Erro ao atualizar role');
+      setError(getFunctionsErrorMessage(error, 'setUserRole', 'Erro ao atualizar role'));
     } finally {
       setActionLoading(false);
     }

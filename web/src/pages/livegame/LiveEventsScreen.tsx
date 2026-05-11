@@ -42,6 +42,7 @@ import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 
 const logger = createLogger('LiveEventsScreen');
 
@@ -124,7 +125,7 @@ export const LiveEventsScreen: React.FC = () => {
       setPlayerName('');
       setMinute('0');
     } catch (err: unknown) {
-      showError('Erro ao adicionar evento: ' + (err instanceof Error ? err.message : 'Tente novamente.'));
+      showError(getFirestoreErrorMessage(err, 'Erro ao adicionar evento'));
     } finally {
       setSubmitting(false);
     }

@@ -27,6 +27,7 @@ import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PreferredPosition } from '../../types/user';
+import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 
 const POSITIONS: { value: PreferredPosition; label: string }[] = [
   { value: 'GOLEIRO', label: 'Goleiro' },
@@ -102,7 +103,7 @@ export const EditProfileScreen: React.FC = () => {
         setInitialData(loaded);
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(getFirestoreErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -163,7 +164,7 @@ export const EditProfileScreen: React.FC = () => {
       setInitialData(formData); // sync para evitar dirty guard após save
       setTimeout(() => navigate('/profile'), 1500);
     } catch (err) {
-      setError((err as Error).message);
+      setError(getFirestoreErrorMessage(err));
       showError('Erro ao salvar perfil. Tente novamente.');
     } finally {
       setSaving(false);

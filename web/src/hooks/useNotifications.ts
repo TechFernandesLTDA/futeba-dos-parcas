@@ -4,6 +4,7 @@ import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { useToast } from '../contexts/ToastContext';
+import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 
 const logger = createLogger('useNotifications');
 
@@ -54,7 +55,8 @@ export const useNotifications = (userId?: string) => {
       setUnreadCount(data.filter((n) => !n.read).length);
       setLoading(false);
     }, (err) => {
-      setError(err.message);
+      logger.error('Erro no listener de notificações:', err);
+      setError(getFirestoreErrorMessage(err));
       setLoading(false);
     });
 

@@ -40,6 +40,7 @@ import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
+import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 
 const logger = createLogger('CreateGameScreen');
 
@@ -342,14 +343,7 @@ export const CreateGameScreen: React.FC = () => {
       navigate(`/game/${gameId}`);
     } catch (err: unknown) {
       logger.error('Error creating game:', err);
-      const msg = err instanceof Error ? err.message : '';
-      if (msg.includes('permission')) {
-        showError('Sem permissão para criar jogo. Verifique se você está logado.');
-      } else if (msg.includes('undefined')) {
-        showError('Erro nos dados do jogo. Verifique todos os campos.');
-      } else {
-        showError(`Erro ao criar jogo: ${msg || 'Tente novamente.'}`);
-      }
+      showError(getFunctionsErrorMessage(err, 'createGame', 'Erro ao criar jogo'));
     }
   };
 
