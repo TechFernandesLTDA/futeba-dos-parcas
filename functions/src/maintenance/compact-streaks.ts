@@ -97,7 +97,7 @@ export const maintainStreaksData = onSchedule(
     schedule: "0 4 1 * *",
     timeZone: "America/Sao_Paulo",
     region: FUNCTION_REGION,
-    timeoutSeconds: 60,
+    timeoutSeconds: 540,
     memory: "256MiB",
     retryCount: 1,
   },
