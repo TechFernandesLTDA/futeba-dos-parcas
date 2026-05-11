@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  TextField,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
@@ -32,6 +33,7 @@ import {
   Logout as LogoutIcon,
   EmojiEvents as TrophyIcon,
   RateReview as FeedbackIcon,
+  DeleteForever as DeleteForeverIcon,
 } from '@mui/icons-material';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -41,6 +43,8 @@ import { useToast } from '../../contexts/ToastContext';
 import { createLogger } from '../../utils/logger';
 import { useTranslation } from 'react-i18next';
 import { FeedbackDialog } from '../../components/feedback/FeedbackDialog';
+import { deleteAccount } from '../../services/cloudFunctions';
+import { getFunctionErrorMessage } from '../../utils/firebaseErrors';
 
 const logger = createLogger('SettingsScreen');
 
@@ -61,6 +65,11 @@ export const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // Fluxo de exclusão de conta — LGPD art. 18
+  const [deleteStep1Open, setDeleteStep1Open] = useState(false);
+  const [deleteStep2Open, setDeleteStep2Open] = useState(false);
+  const [deleteEmailInput, setDeleteEmailInput] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   const [settings, setSettings] = useState<Settings>({
     notifications: true,
@@ -124,6 +133,32 @@ export const SettingsScreen: React.FC = () => {
     } catch (err) {
       logger.error('Error signing out:', err);
       showError('Erro ao sair da conta. Tente novamente.');
+    }
+  };
+
+  // Abre o passo 2 do fluxo de exclusão, fechando o passo 1
+  const handleDeleteStep1Continue = () => {
+    setDeleteStep1Open(false);
+    setDeleteEmailInput('');
+    setDeleteStep2Open(true);
+  };
+
+  // Executa a exclusão definitiva da conta via Cloud Function
+  const handleDeleteAccountConfirm = async () => {
+    if (!user || deleteEmailInput.trim().toLowerCase() !== user.email?.toLowerCase()) return;
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      // Limpar cache e encerrar sessão — a CF já apagou os dados no backend
+      await logout();
+      navigate('/login', { replace: true });
+      showSuccess('Conta excluída com sucesso.');
+    } catch (err) {
+      logger.error('Error deleting account:', err);
+      showError(getFunctionErrorMessage(err, 'deleteAccount', 'Erro ao excluir conta. Tente novamente.'));
+    } finally {
+      setDeleting(false);
+      setDeleteStep2Open(false);
     }
   };
 
@@ -268,6 +303,20 @@ export const SettingsScreen: React.FC = () => {
                 {t('nav.logout')}
               </Button>
             </Box>
+
+            {/* Seção de exclusão de conta — LGPD art. 18 */}
+            <Box sx={{ mt: 2 }}>
+              <Button
+                variant="outlined"
+                color="error"
+                fullWidth
+                onClick={() => setDeleteStep1Open(true)}
+                startIcon={<DeleteForeverIcon />}
+                aria-label="Excluir minha conta permanentemente"
+              >
+                Excluir conta
+              </Button>
+            </Box>
           </>
         )}
       </Container>
@@ -296,6 +345,102 @@ export const SettingsScreen: React.FC = () => {
       </Dialog>
 
       <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+
+      {/* Dialog passo 1: aviso sobre o que será excluído */}
+      <Dialog
+        open={deleteStep1Open}
+        onClose={() => setDeleteStep1Open(false)}
+        fullWidth
+        maxWidth="sm"
+        role="alertdialog"
+        aria-labelledby="delete-step1-title"
+        aria-describedby="delete-step1-desc"
+      >
+        <DialogTitle id="delete-step1-title">Excluir conta permanentemente?</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-step1-desc" sx={{ mb: 2 }}>
+            Esta ação é <strong>irreversível</strong>. Todos os seus dados serão apagados definitivamente, incluindo:
+          </DialogContentText>
+          <Box component="ul" sx={{ pl: 3, m: 0, color: 'text.secondary' }}>
+            {[
+              'Perfil e informações pessoais',
+              'Histórico de jogos e estatísticas',
+              'XP, nível e badges conquistados',
+              'Fotos de perfil',
+              'Configurações e preferências',
+            ].map((item) => (
+              <Box component="li" key={item} sx={{ mb: 0.5 }}>
+                <DialogContentText component="span" variant="body2">{item}</DialogContentText>
+              </Box>
+            ))}
+          </Box>
+          <DialogContentText sx={{ mt: 2 }} color="error">
+            Após a exclusão você não poderá recuperar sua conta.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteStep1Open(false)} autoFocus>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDeleteStep1Continue}
+            color="error"
+            variant="outlined"
+            startIcon={<DeleteForeverIcon />}
+          >
+            Continuar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog passo 2: confirmar com email para evitar exclusão acidental */}
+      <Dialog
+        open={deleteStep2Open}
+        onClose={() => !deleting && setDeleteStep2Open(false)}
+        fullWidth
+        maxWidth="sm"
+        role="alertdialog"
+        aria-labelledby="delete-step2-title"
+        aria-describedby="delete-step2-desc"
+      >
+        <DialogTitle id="delete-step2-title" color="error">
+          Confirmar exclusão definitiva
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-step2-desc" sx={{ mb: 2 }}>
+            Digite o seu email <strong>{user?.email}</strong> para confirmar a exclusão da conta.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Seu email"
+            type="email"
+            value={deleteEmailInput}
+            onChange={(e) => setDeleteEmailInput(e.target.value)}
+            disabled={deleting}
+            aria-label="Confirmar email para excluir conta"
+            inputProps={{ 'aria-describedby': 'delete-step2-desc' }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteStep2Open(false)} disabled={deleting}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDeleteAccountConfirm}
+            color="error"
+            variant="contained"
+            startIcon={<DeleteForeverIcon />}
+            disabled={
+              deleting ||
+              deleteEmailInput.trim().toLowerCase() !== user?.email?.toLowerCase()
+            }
+            aria-label="Excluir minha conta definitivamente"
+          >
+            {deleting ? 'Excluindo...' : 'Excluir definitivamente'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
