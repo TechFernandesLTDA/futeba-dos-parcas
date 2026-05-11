@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.futebadosparcas.domain.model.GameEvent
 import com.futebadosparcas.data.repository.LiveGameRepository
+import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -13,8 +14,15 @@ class LiveEventsViewModel(
     private val liveGameRepository: LiveGameRepository
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "LiveEventsViewModel"
+    }
+
     private val _events = MutableStateFlow<List<GameEvent>>(emptyList())
     val events: StateFlow<List<GameEvent>> = _events
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
 
     // Job tracking para cancelamento em onCleared (fix memory leak)
     private var eventsJob: kotlinx.coroutines.Job? = null
@@ -25,10 +33,11 @@ class LiveEventsViewModel(
         eventsJob = viewModelScope.launch {
             liveGameRepository.observeGameEvents(gameId)
                 .catch { e ->
-                    // Tratamento de erro: em caso de falha, manter lista vazia
-                    _events.value = emptyList()
+                    AppLogger.e(TAG, "Erro ao observar eventos do jogo: ${e.message}", e)
+                    _error.value = e.message ?: "Erro ao carregar eventos"
                 }
                 .collect { eventsList ->
+                    _error.value = null
                     _events.value = eventsList
                 }
         }
