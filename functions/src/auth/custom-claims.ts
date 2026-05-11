@@ -271,8 +271,9 @@ export const onNewUserCreated = onDocumentCreated(
         `claims for ${userId}:`,
         error
       );
-      // Não throw - o usuário ainda pode usar
-      // o app, o role está no Firestore
+      // #1030: Relança o erro para que o trigger falhe e o
+      // Firebase reprocesse automaticamente com retry
+      throw error;
     }
   }
 );

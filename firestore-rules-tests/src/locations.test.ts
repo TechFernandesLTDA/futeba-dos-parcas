@@ -135,9 +135,9 @@ describe("locations — leitura", () => {
 // ============================================================
 
 describe("locations — criação", () => {
-  it("Player pode criar local com owner_id próprio", async () => {
+  it("Player NÃO pode criar local — apenas FIELD_OWNER ou ADMIN (#1026)", async () => {
     const db = asPlayerA(testEnv);
-    await assertSucceeds(
+    await assertFails(
       db.doc("locations/loc-new-player-a").set({
         name: "Meu Campo",
         owner_id: UID_PLAYER_A,
