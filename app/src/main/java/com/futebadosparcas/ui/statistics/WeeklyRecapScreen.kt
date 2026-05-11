@@ -577,6 +577,7 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_star),
+                    // Decorativo — texto de XP ao lado fornece semântica
                     contentDescription = null,
                     tint = RecapColors.AccentGold,
                     modifier = Modifier.size(32.dp)
@@ -619,6 +620,7 @@ private fun StatBox(
         ) {
             Icon(
                 painter = painterResource(id = icon),
+                // Decorativo — rótulo renderizado abaixo fornece semântica
                 contentDescription = null,
                 tint = RecapOverlayText,
                 modifier = Modifier.size(32.dp)

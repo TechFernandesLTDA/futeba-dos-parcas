@@ -56,6 +56,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.futebadosparcas.R
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 
 /**
  * Tela de listagem de jogadores com Jetpack Compose
@@ -587,6 +588,7 @@ private fun PlayerCard(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 72.dp, max = 120.dp)
+            .semantics(mergeDescendants = true) { }
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),

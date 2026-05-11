@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.Role
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
@@ -198,6 +200,7 @@ private fun GamesByStatusSection(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .semantics { role = Role.Button }
                     .clickable(onClick = onSeeAllClick)
                     .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f))
                     .padding(12.dp),
