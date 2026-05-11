@@ -90,9 +90,14 @@ class FcmService : FirebaseMessagingService(), KoinComponent {
         gameId?.let { intent.putExtra("gameId", it) }
         intent.putExtra("notificationType", type)
 
+        // Usar hash determinístico do conteúdo para o
+        // requestCode do PendingIntent, evitando colisões
+        val requestCode =
+            (title + body + type + (gameId ?: "")).hashCode()
+
         val pendingIntent = PendingIntent.getActivity(
             this,
-            System.currentTimeMillis().toInt(),
+            requestCode,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -122,7 +127,11 @@ class FcmService : FirebaseMessagingService(), KoinComponent {
         }
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
+        // ID determinístico baseado no conteúdo —
+        // evita overflow de Int (~25 dias) e colisões
+        val notificationId =
+            (title + body + type + (gameId ?: "")).hashCode()
+        notificationManager.notify(notificationId, notificationBuilder.build())
     }
 
     override fun onDestroy() {

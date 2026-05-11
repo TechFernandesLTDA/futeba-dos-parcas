@@ -458,6 +458,12 @@ async function sendMulticastInChunks(
     );
   }
 
+  // TTL de 1 hora para notificações time-sensitive
+  const TTL_SECONDS = 3600;
+  // Expiração APNS: Unix timestamp (segundos)
+  const apnsExpiration =
+    String(Math.floor(Date.now() / 1000) + TTL_SECONDS);
+
   for (const chunk of chunks) {
     try {
       const message:
@@ -474,12 +480,16 @@ async function sendMulticastInChunks(
           },
           android: {
             priority: "high",
+            ttl: TTL_SECONDS,
             notification: {
               channelId: notification.type,
               sound: "default",
             },
           },
           apns: {
+            headers: {
+              "apns-expiration": apnsExpiration,
+            },
             payload: {
               aps: {
                 alert: {
@@ -600,11 +610,25 @@ async function fetchTokensInBatch(
 
         const map = new Map<string, string>();
         snapshot.docs.forEach((doc) => {
-          const data = doc.data();
-          const token =
-            data?.fcm_token || data?.fcmToken;
-          if (token) {
-            map.set(doc.id, token);
+          const data =
+            doc.data() as Record<string, unknown>;
+          // Prioridade: fcmTokens array (web),
+          // depois campos legados escalares
+          const arr = data?.fcmTokens;
+          if (Array.isArray(arr) && arr.length > 0) {
+            // Usar primeiro token válido do array
+            const firstToken =
+              (arr as string[]).find((t) => !!t);
+            if (firstToken) {
+              map.set(doc.id, firstToken);
+            }
+          } else {
+            const token =
+              (data?.fcm_token as string | undefined) ||
+              (data?.fcmToken as string | undefined);
+            if (token) {
+              map.set(doc.id, token);
+            }
           }
         });
 
@@ -653,7 +677,9 @@ function isInvalidTokenError(
 
 /**
  * Remove tokens FCM inválidos do Firestore
- * em batch.
+ * em batch. Limpa todos os campos onde o token
+ * pode estar: fcm_token, fcmToken (escalares)
+ * e fcmTokens (array).
  *
  * @param {Array<object>} tokensToRemove -
  *   Array de token/userId para remover
@@ -667,16 +693,76 @@ async function cleanupInvalidTokens(
 ): Promise<void> {
   const db = getDb();
 
+  // Buscar docs para saber quais campos deletar
+  const userIds = [
+    ...new Set(tokensToRemove.map((t) => t.userId)),
+  ];
+  const userDocs = new Map<
+    string,
+    Record<string, unknown>
+  >();
+
+  try {
+    const chunks: string[][] = [];
+    for (let i = 0; i < userIds.length; i += 10) {
+      chunks.push(userIds.slice(i, i + 10));
+    }
+    for (const chunk of chunks) {
+      const snap = await db.collection("users")
+        .where(
+          admin.firestore.FieldPath.documentId(),
+          "in",
+          chunk
+        )
+        .get();
+      snap.docs.forEach((d) =>
+        userDocs.set(
+          d.id,
+          d.data() as Record<string, unknown>
+        )
+      );
+    }
+  } catch (err) {
+    console.error(
+      "[BATCH_FCM] Erro ao buscar docs para" +
+      " cleanup:",
+      err
+    );
+  }
+
   try {
     const batch = db.batch();
 
-    for (const {userId} of tokensToRemove) {
+    for (const {token, userId} of tokensToRemove) {
       const userRef =
         db.collection("users").doc(userId);
-      batch.update(userRef, {
-        fcm_token:
-          admin.firestore.FieldValue.delete(),
-      });
+      const data = userDocs.get(userId);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const update: Record<string, any> = {};
+
+      if (data?.fcm_token === token) {
+        update.fcm_token =
+          admin.firestore.FieldValue.delete();
+      }
+      if (data?.fcmToken === token) {
+        update.fcmToken =
+          admin.firestore.FieldValue.delete();
+      }
+      const arr = data?.fcmTokens;
+      if (
+        Array.isArray(arr) &&
+        (arr as string[]).includes(token)
+      ) {
+        update.fcmTokens =
+          admin.firestore.FieldValue.arrayRemove(
+            token
+          );
+      }
+
+      if (Object.keys(update).length > 0) {
+        batch.update(userRef, update);
+      }
     }
 
     await batch.commit();

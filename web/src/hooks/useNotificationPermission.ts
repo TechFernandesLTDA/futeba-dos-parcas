@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getToken, onMessage } from 'firebase/messaging';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
 import { db, messagingPromise } from '../services/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { createLogger } from '../utils/logger';
@@ -61,10 +61,32 @@ export function useNotificationPermission() {
 
         const token = await getToken(messaging, { vapidKey });
         if (token) {
-          // Salvar token no Firestore
-          await updateDoc(doc(db, 'users', user.id), {
+          // Salvar token no Firestore usando arrayUnion
+          // e limitar o array a 5 tokens para evitar
+          // crescimento ilimitado (#921)
+          const MAX_FCM_TOKENS = 5;
+          const userRef = doc(db, 'users', user.id);
+          await updateDoc(userRef, {
             fcmTokens: arrayUnion(token),
           });
+          // Verificar se ultrapassou o limite e remover
+          // tokens mais antigos (além do novo)
+          const snap = await getDoc(userRef);
+          if (snap.exists()) {
+            const tokens: string[] =
+              (snap.data()?.fcmTokens as string[]) || [];
+            if (tokens.length > MAX_FCM_TOKENS) {
+              // Remover tokens excedentes (os mais antigos,
+              // que são os primeiros no array)
+              const tokensToRemove =
+                tokens.slice(0, tokens.length - MAX_FCM_TOKENS);
+              for (const oldToken of tokensToRemove) {
+                await updateDoc(userRef, {
+                  fcmTokens: arrayRemove(oldToken),
+                });
+              }
+            }
+          }
         }
       }
     } catch (error) {

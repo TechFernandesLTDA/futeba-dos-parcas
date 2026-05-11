@@ -27,12 +27,43 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
+  // Resolver deep link a partir do payload de dados
+  // Validar que a URL pertence ao mesmo origin para
+  // evitar open-redirect via payload FCM malicioso
+  const data = event.notification.data || {};
+  let targetUrl = '/';
+
+  try {
+    const rawUrl = data.url || data.action || '/';
+    // Se for caminho relativo, resolve no origin atual
+    const resolved = new URL(rawUrl, self.location.origin);
+    if (resolved.origin === self.location.origin) {
+      targetUrl = resolved.href;
+    } else {
+      // URL de outro origin — ignorar e abrir raiz
+      console.warn('[SW] Deep link ignorado (origin externo):', rawUrl);
+    }
+  } catch (e) {
+    // rawUrl invalido — fallback para raiz
+  }
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      if (clientList.length > 0) {
-        return clientList[0].focus();
+      // Se já existe janela com a URL alvo, focar nela
+      for (const client of clientList) {
+        if (client.url === targetUrl && 'focus' in client) {
+          return client.focus();
+        }
       }
-      return clients.openWindow('/');
+      // Se existe alguma janela aberta, navegar para a URL
+      if (clientList.length > 0 && 'navigate' in clientList[0]) {
+        return clientList[0].focus().then(() =>
+          clientList[0].navigate(targetUrl)
+        );
+      }
+      // Nenhuma janela aberta — abrir nova
+      return clients.openWindow(targetUrl);
     })
   );
 });
