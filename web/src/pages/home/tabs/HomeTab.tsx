@@ -16,6 +16,7 @@ import {
   Skeleton,
   LinearProgress,
   Grid,
+  Link,
   useTheme,
   alpha,
 } from '@mui/material';
@@ -312,14 +313,16 @@ export function HomeTab() {
               <CalendarMonth fontSize="small" color="primary" />
               Próximo Jogo
             </Typography>
-            <Typography
+            <Link
+              component="button"
+              type="button"
               variant="body2"
               color="primary"
-              sx={{ cursor: 'pointer', fontWeight: 500, '&:hover': { textDecoration: 'underline' } }}
+              sx={{ fontWeight: 500 }}
               onClick={() => navigate('/games')}
             >
               Ver todos
-            </Typography>
+            </Link>
           </Box>
           {gamesLoading ? (
             <Card sx={{ borderRadius: 3 }}>
