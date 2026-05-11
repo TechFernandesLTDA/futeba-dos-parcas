@@ -34,29 +34,33 @@ jobs:
 
       - name: Create local.properties with signing config
         env:
-          KEYSTORE_PASSWORD_B64: ${{ secrets.KEYSTORE_PASSWORD_BASE64 }}
-          KEY_PASSWORD_B64: ${{ secrets.KEY_PASSWORD_BASE64 }}
+          # FIX 2026-05-11: secret names alinhados com deploy-production.yml
+          # (eram KEYSTORE_PASSWORD_BASE64 que não existem — secrets reais
+          # são KEYSTORE_PASSWORD_B64). Keys do local.properties também
+          # alinhados com app/build.gradle.kts que lê STORE_FILE, STORE_PASSWORD,
+          # KEY_ALIAS, KEY_PASSWORD (não RELEASE_*).
+          KEYSTORE_PASSWORD_B64: ${{ secrets.KEYSTORE_PASSWORD_B64 }}
+          KEY_PASSWORD_B64: ${{ secrets.KEY_PASSWORD_B64 }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          # Decodifica senhas base64 para evitar shell expansion de $ chars
-          # (mesmo padrão de deploy-production.yml)
-          KEYSTORE_PASSWORD=$(printf '%s' "$KEYSTORE_PASSWORD_B64" | base64 --decode)
-          KEY_PASSWORD=$(printf '%s' "$KEY_PASSWORD_B64" | base64 --decode)
-
-          cat > local.properties << EOF
-          sdk.dir=$ANDROID_SDK_ROOT
-          RELEASE_STORE_FILE=keystore.jks
-          RELEASE_STORE_PASSWORD=$KEYSTORE_PASSWORD
-          RELEASE_KEY_ALIAS=$KEY_ALIAS
-          RELEASE_KEY_PASSWORD=$KEY_PASSWORD
-          EOF
+          STORE_PW=$(printf '%s' "$KEYSTORE_PASSWORD_B64" | base64 --decode)
+          KEY_PW=$(printf '%s' "$KEY_PASSWORD_B64" | base64 --decode)
+          {
+            printf 'sdk.dir=%s\n' "$ANDROID_SDK_ROOT"
+            printf 'STORE_FILE=%s/release.jks\n' "$RUNNER_TEMP"
+            printf 'STORE_PASSWORD=%s\n' "$STORE_PW"
+            printf 'KEY_ALIAS=%s\n' "$KEY_ALIAS"
+            printf 'KEY_PASSWORD=%s\n' "$KEY_PW"
+          } > local.properties
+          # Mascara senhas no log
+          sed 's/=.*$/=***MASKED***/' local.properties
 
       - name: Decode and save keystore
         env:
-          KEYSTORE_B64: ${{ secrets.KEYSTORE_FILE_BASE64 }}
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          printf '%s' "$KEYSTORE_B64" | base64 --decode > keystore.jks
-          ls -la keystore.jks
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          test -s "$RUNNER_TEMP/release.jks" && echo "✓ keystore written ($(wc -c < "$RUNNER_TEMP/release.jks") bytes)" || (echo "✗ empty keystore"; exit 1)
 
       - name: Create google-services.json placeholder
         run: |
