@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
@@ -54,9 +54,10 @@ interface ConfirmationData {
 export const TeamFormationScreen: React.FC = () => {
   useDocumentTitle('Formação de Times');
   const navigateBack = useNavigateBack('/games');
+  const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
-  useAuth();
+  const { user } = useAuth();
   const { showError } = useToast();
 
   const [teamA, setTeamA] = useState<TeamPlayer[]>([]);
@@ -69,6 +70,19 @@ export const TeamFormationScreen: React.FC = () => {
 
     const fetchGame = async () => {
       try {
+        // Verificar se o usuário é dono do jogo antes de mostrar o formulário
+        const gameDoc = await getDoc(doc(db, 'games', gameId));
+        if (gameDoc.exists()) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const gameData = snakeToCamel(gameDoc.data()) as Record<string, any>;
+          const ownerId = gameData.ownerId || gameData.owner_id;
+          if (user && user.id !== ownerId) {
+            showError('Apenas o dono do jogo pode formar os times.');
+            navigate(`/game/${gameId}`);
+            return;
+          }
+        }
+
         // Buscar confirmações da coleção raiz (igual ao Android)
         const confirmationsRef = collection(db, 'confirmations');
         const q = query(confirmationsRef, where('game_id', '==', gameId));

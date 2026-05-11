@@ -71,6 +71,7 @@ export const CashboxScreen: React.FC = () => {
   const [_members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState(0);
+  const [isAdminOrOwner, setIsAdminOrOwner] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<'INCOME' | 'EXPENSE'>('INCOME');
   const [amount, setAmount] = useState('');
@@ -118,7 +119,24 @@ export const CashboxScreen: React.FC = () => {
         const groupDoc = await getDoc(doc(db, 'groups', groupId));
         if (cancelled) return;
         if (groupDoc.exists()) {
-          const memberIds = groupDoc.data().members || [];
+          const groupData = groupDoc.data();
+          const memberIds = groupData.members || [];
+
+          // Verificar se o usuário atual é admin ou owner do grupo
+          if (user) {
+            const ownerId = groupData.owner_id || groupData.ownerId;
+            if (user.id === ownerId) {
+              if (!cancelled) setIsAdminOrOwner(true);
+            } else {
+              // Ler papel do membro na subcoleção members
+              const memberDoc = await getDoc(doc(db, 'groups', groupId, 'members', user.id));
+              if (!cancelled && memberDoc.exists()) {
+                const memberRole = memberDoc.data().role as string | undefined;
+                setIsAdminOrOwner(memberRole === 'ADMIN' || memberRole === 'OWNER');
+              }
+            }
+          }
+
           const membersData = await Promise.all(
             memberIds.slice(0, 20).map(async (uid: string) => {
               const userDoc = await getDoc(doc(db, 'users', uid));
@@ -217,32 +235,34 @@ export const CashboxScreen: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-          <Button
-            variant="contained"
-            color="success"
-            fullWidth
-            startIcon={<TrendingIcon />}
-            onClick={() => {
-              setTransactionType('INCOME');
-              setDialogOpen(true);
-            }}
-          >
-            Entrada
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            fullWidth
-            startIcon={<TrendingDownIcon />}
-            onClick={() => {
-              setTransactionType('EXPENSE');
-              setDialogOpen(true);
-            }}
-          >
-            Saída
-          </Button>
-        </Box>
+        {isAdminOrOwner && (
+          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+            <Button
+              variant="contained"
+              color="success"
+              fullWidth
+              startIcon={<TrendingIcon />}
+              onClick={() => {
+                setTransactionType('INCOME');
+                setDialogOpen(true);
+              }}
+            >
+              Entrada
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              fullWidth
+              startIcon={<TrendingDownIcon />}
+              onClick={() => {
+                setTransactionType('EXPENSE');
+                setDialogOpen(true);
+              }}
+            >
+              Saída
+            </Button>
+          </Box>
+        )}
 
         {loading ? (
           <LoadingState shimmerCount={5} itemType="LIST" />

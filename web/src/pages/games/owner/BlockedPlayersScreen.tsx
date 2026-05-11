@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../../hooks/useNavigateBack';
 import {
   Box,
@@ -44,6 +44,7 @@ interface BlockedPlayer {
 export const BlockedPlayersScreen: React.FC = () => {
   useDocumentTitle('Jogadores Bloqueados');
   const navigateBack = useNavigateBack('/games');
+  const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   const { user } = useAuth();
@@ -64,7 +65,15 @@ export const BlockedPlayersScreen: React.FC = () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const gameData = snakeToCamel(gameDoc.data()) as Record<string, any>;
           const blockedIds = gameData.blockedPlayers || [];
-          setGameOwnerId(gameData.ownerId || null);
+          const ownerId = gameData.ownerId || null;
+          setGameOwnerId(ownerId);
+
+          // Guard: apenas o dono do jogo pode acessar esta tela
+          if (user && user.id !== ownerId) {
+            showError('Apenas o dono do jogo pode acessar esta tela.');
+            navigate(-1);
+            return;
+          }
 
           const players = await Promise.all(
             blockedIds.map(async (uid: string) => {
