@@ -22,8 +22,10 @@ import com.futebadosparcas.util.toDataLocations
 import com.futebadosparcas.util.toDataModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -68,7 +70,7 @@ class ProfileViewModel(
     private val _unreadCount = MutableStateFlow(0)
     val unreadCount: StateFlow<Int> = _unreadCount
 
-    private var statisticsListener: com.google.firebase.firestore.ListenerRegistration? = null
+    private var statisticsListenerJob: kotlinx.coroutines.Job? = null
     private var unreadCountJob: kotlinx.coroutines.Job? = null
     private var loadProfileJob: kotlinx.coroutines.Job? = null
 
@@ -94,9 +96,9 @@ class ProfileViewModel(
         // Cancelar job anterior para evitar coleções concorrentes
         loadProfileJob?.cancel()
 
-        // Remover listener anterior para evitar race condition ao recarregar
-        statisticsListener?.remove()
-        statisticsListener = null
+        // Cancelar listener de estatísticas anterior — garante cleanup mesmo se loadProfile lança antes do setup
+        statisticsListenerJob?.cancel()
+        statisticsListenerJob = null
 
         loadProfileJob = viewModelScope.launch {
             if (_uiState.value !is ProfileUiState.Success) {
@@ -147,39 +149,59 @@ class ProfileViewModel(
 
     private fun loadMyLocations(userId: String) {
         viewModelScope.launch {
-            locationRepository.getLocationsByOwner(userId).onSuccess { locations ->
-                _myLocations.value = locations
+            try {
+                locationRepository.getLocationsByOwner(userId).onSuccess { locations ->
+                    _myLocations.value = locations
+                }
+            } catch (e: Exception) {
+                AppLogger.e(TAG, "Erro ao carregar locais do usuário: ${e.message}", e)
             }
         }
     }
 
-    private fun setupStatisticsRealTimeListener(userId: String) {
-        // Remover listener anterior se existir
-        statisticsListener?.remove()
-
-        // Configurar novo listener para atualizações em tempo real
-        statisticsListener = firestore.collection("statistics")
+    /**
+     * Cria um Flow via callbackFlow para o listener de estatísticas em tempo real.
+     * O awaitClose garante que o listener é removido mesmo em caso de cancelamento ou exceção.
+     */
+    private fun observeStatisticsFlow(userId: String) = callbackFlow {
+        val listenerRegistration = firestore.collection("statistics")
             .document(userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     AppLogger.e(TAG, "Erro no listener de estatísticas: ${error.message}", error)
+                    close(error)
                     return@addSnapshotListener
                 }
 
                 if (snapshot != null && snapshot.exists()) {
                     try {
                         val updatedStats = snapshot.toObject(com.futebadosparcas.domain.model.Statistics::class.java)
-                        val currentState = _uiState.value
-
-                        if (currentState is ProfileUiState.Success && updatedStats != null) {
-                            _uiState.value = currentState.copy(statistics = updatedStats)
-                            maybeUpdateAutoRatings(currentState.user, updatedStats)
-                        }
+                        if (updatedStats != null) trySend(updatedStats)
                     } catch (e: Exception) {
                         AppLogger.w(TAG) { "Erro ao parsear estatísticas: ${e.message}" }
                     }
                 }
             }
+
+        awaitClose { listenerRegistration.remove() }
+    }
+
+    private fun setupStatisticsRealTimeListener(userId: String) {
+        // Cancelar listener anterior — idempotente e seguro antes de criar novo
+        statisticsListenerJob?.cancel()
+        statisticsListenerJob = viewModelScope.launch {
+            observeStatisticsFlow(userId)
+                .catch { e ->
+                    AppLogger.e(TAG, "Flow de estatísticas encerrado com erro: ${e.message}", e)
+                }
+                .collect { updatedStats ->
+                    val currentState = _uiState.value
+                    if (currentState is ProfileUiState.Success) {
+                        _uiState.value = currentState.copy(statistics = updatedStats)
+                        maybeUpdateAutoRatings(currentState.user, updatedStats)
+                    }
+                }
+        }
     }
 
     fun updateProfile(
@@ -384,8 +406,8 @@ class ProfileViewModel(
         // Cancelar jobs para evitar memory leaks
         loadProfileJob?.cancel()
         unreadCountJob?.cancel()
-        // Remover listener de tempo real ao destruir o ViewModel
-        statisticsListener?.remove()
+        // Cancelar job do listener de tempo real — awaitClose remove o Firestore listener
+        statisticsListenerJob?.cancel()
         // Fechar Channel para evitar memory leak
         _uiEvents.close()
     }
