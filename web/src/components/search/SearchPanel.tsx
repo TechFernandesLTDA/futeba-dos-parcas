@@ -111,8 +111,10 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
       const all: SearchResult[] = [];
 
       if (tab === 0 || tab === 1) {
+        // Privacidade: apenas jogadores com is_searchable=true aparecem na busca (#1027)
         const snap = await getDocs(query(
           collection(db, 'users'),
+          where('is_searchable', '==', true),
           where('name', '>=', q), where('name', '<=', q + ''), limit(10)
         ));
         snap.docs.forEach((d) => {

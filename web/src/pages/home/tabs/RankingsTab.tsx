@@ -126,6 +126,7 @@ export function RankingsTab() {
           });
 
           // Batch fetch de usuários em chunks de 10 (whereIn limit)
+          // Privacidade: jogadores com is_searchable=false ficam ocultos no ranking (#1027 — Privacy by Default)
           const userIds = [...new Set(participationDocs.map((p) => p.userId))];
           const usersMap = new Map<string, { name: string; photoUrl: string | null; xp: number; favoriteTeam: string | null }>();
           const userChunks: string[][] = [];
@@ -134,7 +135,7 @@ export function RankingsTab() {
           }
           const chunkResults = await Promise.allSettled(
             userChunks.map((chunk) =>
-              getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk)))
+              getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk), where('is_searchable', '==', true)))
             )
           );
 
