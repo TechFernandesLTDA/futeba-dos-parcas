@@ -341,9 +341,13 @@ export const onGameVacancy = onDocumentUpdated(
         // Estava lotado, agora tem vaga
 
         // 1. Notificar a waitlist
+        // FIX #753: era .collection("waitlist") raiz inexistente.
+        // Android escreve em games/{gameId}/waitlist/ (subcollection).
+        // Usar subcollection direta com gameId já disponível.
         const waitlistSnap = await getDb()
+          .collection("games")
+          .doc(gameId)
           .collection("waitlist")
-          .where("game_id", "==", gameId)
           .where("status", "==", "WAITING")
           .orderBy("created_at", "asc")
           .limit(5)
