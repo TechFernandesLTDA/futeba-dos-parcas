@@ -35,9 +35,16 @@ export const checkSeasonEnd = onSchedule(
     );
 
     const now = new Date();
+    // FIX #790: usar timezone do Brasil (UTC-3) para gerar todayStr.
+    // .toISOString() retorna data UTC — query fechava season 1 dia atrasado
+    // (03:00 BRT = 06:00 UTC → todayStr UTC ainda é dia anterior).
+    // Cron já roda em America/Sao_Paulo (timeZone acima), data deve coincidir.
+    // "en-CA" locale produz formato YYYY-MM-DD nativo.
+    const todayStr = now.toLocaleDateString("en-CA", {
+      timeZone: "America/Sao_Paulo",
+    });
     // Encontrar seasons ativas que passaram do end_date
     // Note: Datas armazenadas como strings YYYY-MM-DD
-    const todayStr = now.toISOString().split("T")[0];
 
     const seasonsRef = db().collection("seasons");
     const snapshot = await seasonsRef

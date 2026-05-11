@@ -1049,8 +1049,24 @@ export const onGameStatusUpdate = onDocumentUpdated(
           currentBatch.commit()
         );
 
-        // Aguardar todos os batches
-        await Promise.all(batchCommits);
+        // FIX #793: Promise.allSettled preserva chunks bem-sucedidos
+        // mesmo quando 1 chunk falha. Promise.all abortava tudo.
+        const commitResults =
+          await Promise.allSettled(batchCommits);
+        const failedCommits = commitResults.filter(
+          (r) => r.status === "rejected"
+        );
+        if (failedCommits.length > 0) {
+          console.error(
+            `[XP] ${failedCommits.length}/${batchCommits.length} ` +
+            "batch commits falharam para game " + gameId
+          );
+          // Re-throw com detalhes mas sem perder XP parcialmente processado
+          throw new Error(
+            `${failedCommits.length} batch(es) XP falharam: ` +
+            (failedCommits[0] as PromiseRejectedResult).reason
+          );
+        }
         console.log(
           `Game ${gameId} processing ` +
           "complete " +
@@ -1115,9 +1131,15 @@ export const onGameStatusUpdate = onDocumentUpdated(
 // RECALCULAR LEAGUE RATING E DIVISÃO
 // ==========================================
 
+// FIX #752: options object com region explícita (era 2-arg sem region → us-central1 default)
 export const recalculateLeagueRating =
   onDocumentUpdated(
-    "season_participation/{partId}",
+    {
+      document: "season_participation/{partId}",
+      region: FUNCTION_REGION,
+      memory: "512MiB",
+      timeoutSeconds: 180,
+    },
     async (event) => {
       if (!event.data) return;
 
@@ -1821,9 +1843,13 @@ export const onGroupDeleted = onDocumentDeleted(
 // confirmation (status já vem CONFIRMED na criação) nem em delete
 // (admin remove player). Self-correcting via subsequent updates,
 // mas inconsistência observável.
+// FIX #752: options object com region explícita (era 2-arg sem region → us-central1 default)
 export const onConfirmationWrite =
   onDocumentWritten(
-    "confirmations/{confirmationId}",
+    {
+      document: "confirmations/{confirmationId}",
+      region: FUNCTION_REGION,
+    },
     async (event) => {
       if (!event.data) return;
 
@@ -1915,7 +1941,10 @@ export * from "./groups/member-counter";
 // Infrastructure & Monitoring
 export * from "./maintenance/cleanup-old-logs";
 export * from "./maintenance/soft-delete";
-export * from "./maintenance/keep-warm";
+// FIX #760: keepWarmFunctions removido — escrevia em Firestore mas não aquecia
+// containers de outras funções (isolamento por função em CF v2).
+// Use minInstances na declaração das funções críticas se necessário.
+// export * from "./maintenance/keep-warm";
 export * from "./monitoring/collect-metrics";
 export * from "./storage/generate-thumbnails";
 

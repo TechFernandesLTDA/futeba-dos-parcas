@@ -483,7 +483,6 @@ export async function softDeleteGroupCascade(
   const db = getDb();
 
   try {
-    const batch = db.batch();
     const now =
       admin.firestore.FieldValue.serverTimestamp();
 
@@ -509,41 +508,83 @@ export async function softDeleteGroupCascade(
       };
     }
 
-    batch.update(groupRef, {
+    // 2. Soft-delete dos jogos do grupo
+    // FIX #757: query unbounded + batch único explodia com >499 jogos.
+    // Agora: paginar query + chunks de 450 ops (1 slot reservado pro grupo).
+    const GAME_CHUNK = 450;
+    let gamesDeleted = 0;
+    let lastGameDoc: admin.firestore.QueryDocumentSnapshot | undefined;
+
+    // Primeiro commit inclui o group update
+    const firstBatch = db.batch();
+    firstBatch.update(groupRef, {
       deleted_at: now,
       deleted_by: deletedBy,
       deleted_reason:
         reason || "Grupo deletado pelo proprietário",
       updated_at: now,
     });
+    let firstBatchOps = 1; // 1 op = group update
 
-    // 2. Soft-delete dos jogos do grupo
-    const gamesSnap = await db
-      .collection("games")
-      .where("group_id", "==", groupId)
-      .get();
+    // Processar jogos em páginas de 500 docs
+    while (true) {
+      let q = db
+        .collection("games")
+        .where("group_id", "==", groupId)
+        .orderBy(admin.firestore.FieldPath.documentId())
+        .limit(500);
+      if (lastGameDoc) q = q.startAfter(lastGameDoc);
 
-    let gamesDeleted = 0;
+      const gamesSnap = await q.get();
+      if (gamesSnap.empty) break;
 
-    for (const gameDoc of gamesSnap.docs) {
-      const gameData = gameDoc.data();
+      // Filtrar jogos não deletados
+      const toDelete = gamesSnap.docs.filter(
+        (d) => !d.data().deleted_at
+      );
 
-      // Pular jogos já deletados
-      if (gameData.deleted_at) continue;
+      // Distribuir em chunks de 450 (deixando 1 slot pro group no primeiro)
+      for (let i = 0; i < toDelete.length; i += GAME_CHUNK) {
+        const chunk = toDelete.slice(i, i + GAME_CHUNK);
+        const chunkBatch = i === 0 ? firstBatch : db.batch();
 
-      batch.update(gameDoc.ref, {
-        deleted_at: now,
-        deleted_by: deletedBy,
-        deleted_reason:
-          `Grupo deletado: ${reason}`,
-        status: "DELETED",
-        updated_at: now,
-      });
+        for (const gameDoc of chunk) {
+          // No primeiro chunk, respeitar slot do group update
+          if (chunkBatch === firstBatch && firstBatchOps >= GAME_CHUNK) {
+            // Overflow para novo batch
+            const overflowBatch = db.batch();
+            overflowBatch.update(gameDoc.ref, {
+              deleted_at: now,
+              deleted_by: deletedBy,
+              deleted_reason: `Grupo deletado: ${reason}`,
+              status: "DELETED",
+              updated_at: now,
+            });
+            await overflowBatch.commit();
+          } else {
+            chunkBatch.update(gameDoc.ref, {
+              deleted_at: now,
+              deleted_by: deletedBy,
+              deleted_reason: `Grupo deletado: ${reason}`,
+              status: "DELETED",
+              updated_at: now,
+            });
+            if (chunkBatch === firstBatch) firstBatchOps++;
+          }
+          gamesDeleted++;
+        }
 
-      gamesDeleted++;
+        if (chunkBatch !== firstBatch) {
+          await chunkBatch.commit();
+        }
+      }
+
+      lastGameDoc = gamesSnap.docs[gamesSnap.docs.length - 1];
+      if (gamesSnap.size < 500) break;
     }
 
-    await batch.commit();
+    // Commit do primeiro batch (group + primeiros jogos)
+    await firstBatch.commit();
 
     console.log(
       "[SOFT_DELETE_CASCADE] Grupo " +

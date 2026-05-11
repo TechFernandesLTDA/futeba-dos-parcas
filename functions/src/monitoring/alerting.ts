@@ -433,60 +433,8 @@ export const systemHealthCheck =
       alerts_generated: alerts.length,
     });
 
-    // Salvar alertas
-    if (alerts.length > 0) {
-      // FIX #654-B4: retry logic para evitar alertas silenciosamente
-      // perdidos por falha transitória de rede ou batch.
-      const saveAlertsWithRetry = async (
-        alertsList: PartialAlert[],
-        maxRetries = 3,
-      ): Promise<void> => {
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          try {
-            const alertBatch = db.batch();
-            for (const alert of alertsList) {
-              const alertRef =
-                db.collection("alerts").doc();
-              alertBatch.set(alertRef, {
-                ...alert,
-                created_at:
-                  admin.firestore.FieldValue
-                    .serverTimestamp(),
-                acknowledged: false,
-              });
-            }
-            await alertBatch.commit();
-            return;
-          } catch (err) {
-            if (attempt < maxRetries) {
-              console.warn(
-                "[HEALTH_CHECK] Alert batch commit failed " +
-                `(attempt ${attempt}/${maxRetries}), retrying...`,
-                err
-              );
-              await new Promise((r) => setTimeout(r, 1000 * attempt));
-            } else {
-              console.error(
-                "[HEALTH_CHECK] Alert batch commit failed " +
-                `after ${maxRetries} attempts, alerts dropped:`,
-                err
-              );
-            }
-          }
-        }
-      };
-
-      await saveAlertsWithRetry(alerts);
-
-      const alertTypes = alerts.map(
-        (a) => a.type
-      );
-      console.log(
-        "[HEALTH_CHECK] " +
-        `${alerts.length} alertas gerados: ` +
-        alertTypes.join(", ")
-      );
-    }
+    // FIX #754: CHECK 6 e CHECK 7 movidos para ANTES do saveAlertsWithRetry
+    // (antes ficavam APÓS o save → nunca eram persistidos ao Firestore)
 
     // CHECK 6: Latência do health check
     const maxDuration =
@@ -547,6 +495,61 @@ export const systemHealthCheck =
         status: "ERROR",
         message: `Erro ao verificar: ${error}`,
       };
+    }
+
+    // Salvar alertas (cobre todos os 7 CHECKs agora)
+    if (alerts.length > 0) {
+      // FIX #654-B4: retry logic para evitar alertas silenciosamente
+      // perdidos por falha transitória de rede ou batch.
+      const saveAlertsWithRetry = async (
+        alertsList: PartialAlert[],
+        maxRetries = 3,
+      ): Promise<void> => {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            const alertBatch = db.batch();
+            for (const alert of alertsList) {
+              const alertRef =
+                db.collection("alerts").doc();
+              alertBatch.set(alertRef, {
+                ...alert,
+                created_at:
+                  admin.firestore.FieldValue
+                    .serverTimestamp(),
+                acknowledged: false,
+              });
+            }
+            await alertBatch.commit();
+            return;
+          } catch (err) {
+            if (attempt < maxRetries) {
+              console.warn(
+                "[HEALTH_CHECK] Alert batch commit failed " +
+                `(attempt ${attempt}/${maxRetries}), retrying...`,
+                err
+              );
+              await new Promise((r) => setTimeout(r, 1000 * attempt));
+            } else {
+              console.error(
+                "[HEALTH_CHECK] Alert batch commit failed " +
+                `after ${maxRetries} attempts, alerts dropped:`,
+                err
+              );
+            }
+          }
+        }
+      };
+
+      await saveAlertsWithRetry(alerts);
+
+      const alertTypes = alerts.map(
+        (a) => a.type
+      );
+      console.log(
+        "[HEALTH_CHECK] " +
+        `${alerts.length} alertas gerados: ` +
+        alertTypes.join(", ")
+      );
     }
 
     const checkCount =

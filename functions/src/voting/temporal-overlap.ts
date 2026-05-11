@@ -15,6 +15,7 @@ import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {db} from "../_db";
+import {FUNCTION_REGION} from "../constants";
 
 interface GameTimeWindow {
   start: number;
@@ -64,7 +65,9 @@ function getGameWindow(
 export const onConfirmationCreated = onDocumentCreated(
   {
     document: "confirmations/{confId}",
-    region: "us-central1",
+    // FIX #752: region deve coincidir com database southamerica-east1
+    // (era us-central1 — trigger nunca disparava em prod)
+    region: FUNCTION_REGION,
   },
   async (event) => {
     const conf = event.data?.data();
@@ -90,10 +93,22 @@ export const onConfirmationCreated = onDocumentCreated(
       return;
     }
 
-    // Query confirmacoes do mesmo user em outros jogos
+    // FIX #796: filtrar por janela temporal relevante (±2 dias)
+    // evita carregar todo o histórico do usuário (N reads crescentes)
+    const TWO_DAYS_MS = 2 * 24 * 3600 * 1000;
+    const windowStart = admin.firestore.Timestamp.fromMillis(
+      window.start - TWO_DAYS_MS,
+    );
+    const windowEnd = admin.firestore.Timestamp.fromMillis(
+      window.end + TWO_DAYS_MS,
+    );
+
+    // Query confirmacoes do mesmo user em outros jogos (com filtro temporal)
     const userConfsSnap = await db()
       .collection("confirmations")
       .where("user_id", "==", userId)
+      .where("game_date_time", ">=", windowStart)
+      .where("game_date_time", "<=", windowEnd)
       .get();
 
     const overlaps: string[] = [];

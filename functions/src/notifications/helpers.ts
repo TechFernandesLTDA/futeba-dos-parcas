@@ -354,6 +354,57 @@ async function getUserFcmTokens(
 }
 
 /**
+ * FIX #785: Verifica se o usuário deve receber uma notificação,
+ * respeitando notification_preferences e mute_groups.
+ *
+ * @param {string} userId - ID do usuário
+ * @param {string} notificationType - Tipo de notificação
+ * @param {string | undefined} groupId - ID do grupo (para mute_groups)
+ * @return {Promise<boolean>} true se deve notificar
+ */
+async function shouldNotifyUser(
+  userId: string,
+  notificationType: string,
+  groupId?: string,
+): Promise<boolean> {
+  try {
+    const userDoc = await getDb()
+      .collection("users")
+      .doc(userId)
+      .get();
+    if (!userDoc.exists) return false;
+    const data =
+      (userDoc.data() ?? {}) as Record<string, unknown>;
+
+    // Push global desabilitado
+    const prefs =
+      (data.notification_preferences ?? {}) as Record<string, unknown>;
+    if (prefs.push_enabled === false) return false;
+
+    // Tipo específico desabilitado
+    if (prefs[notificationType] === false) return false;
+
+    // Grupo silenciado
+    if (
+      groupId &&
+      Array.isArray(data.mute_groups) &&
+      (data.mute_groups as string[]).includes(groupId)
+    ) {
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    // fail-open: não bloquear notificação em caso de erro de leitura
+    console.error(
+      "[NOTIF] shouldNotifyUser erro para " + userId + ":",
+      e
+    );
+    return true;
+  }
+}
+
+/**
  * Busca tokens FCM de múltiplos usuários com
  * mapeamento token->userId.
  *
@@ -441,8 +492,22 @@ async function getUnreadCount(
  */
 export async function sendNotificationToUser(
   userId: string,
-  notification: FcmNotification
+  notification: FcmNotification,
+  groupId?: string,
 ): Promise<boolean> {
+  // FIX #785: respeitar notification_preferences e mute_groups
+  const shouldSend = await shouldNotifyUser(
+    userId,
+    notification.type ?? "default",
+    groupId,
+  );
+  if (!shouldSend) {
+    console.log(
+      "[NOTIF] Notificação suprimida por preferências do usuário " + userId
+    );
+    return false;
+  }
+
   const tokens = await getUserFcmTokens(userId);
   if (tokens.length === 0) {
     console.log(
@@ -539,13 +604,25 @@ export async function sendNotificationToUser(
  */
 export async function sendNotificationToUsers(
   userIds: string[],
-  notification: FcmNotification
+  notification: FcmNotification,
+  groupId?: string,
 ): Promise<number> {
   if (userIds.length === 0) return 0;
 
-  // Buscar tokens com mapeamento
+  // FIX #785: filtrar usuários que desativaram notificações ou silenciaram o grupo
+  const notifType = notification.type ?? "default";
+  const filterResults = await Promise.all(
+    userIds.map((uid) => shouldNotifyUser(uid, notifType, groupId))
+  );
+  const filteredUserIds = userIds.filter((_, i) => filterResults[i]);
+  if (filteredUserIds.length === 0) {
+    console.log("[NOTIF] Todos os usuários suprimiram este tipo de notificação");
+    return 0;
+  }
+
+  // Buscar tokens com mapeamento (apenas usuários que devem receber)
   const tokenMappings =
-    await getUserFcmTokensWithMapping(userIds);
+    await getUserFcmTokensWithMapping(filteredUserIds);
   if (tokenMappings.length === 0) {
     console.log("Nenhum token FCM encontrado");
     return 0;

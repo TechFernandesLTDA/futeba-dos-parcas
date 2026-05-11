@@ -138,8 +138,10 @@ export const checkInToGame = onCall(
       );
     }
 
-    // FIX #647: Time window — check-in apenas ±30 min do
-    // inicio do jogo. Previne check-in dias antes/depois.
+    // FIX #647: Time window — check-in apenas dentro da janela do jogo.
+    // FIX #784: janela assimétrica — 30min ANTES do início (não atrasar
+    // muito), mas SEM limite depois (jogo LIVE = qualquer horário válido).
+    // Status CONFIRMED ou LIVE já é validado acima — gate semântico real.
     const gameDateTime = game.dateTime as
       | admin.firestore.Timestamp
       | undefined;
@@ -149,16 +151,17 @@ export const checkInToGame = onCall(
     ) {
       const gameTime = gameDateTime.toDate();
       const now = new Date();
-      const diffMs = Math.abs(
-        now.getTime() - gameTime.getTime(),
-      );
-      if (diffMs > 30 * 60 * 1000) {
+      const diffMs = now.getTime() - gameTime.getTime();
+      // Apenas bloquear check-in MUITO ANTES do início (>30 min antes)
+      // diffMs negativo = agora está antes do jogo
+      if (diffMs < -30 * 60 * 1000) {
         throw new HttpsError(
           "failed-precondition",
           "Fora da janela de check-in " +
-            "(±30 min do início do jogo)",
+            "(mais de 30 min antes do início do jogo)",
         );
       }
+      // Sem limite superior: jogo LIVE permite check-in a qualquer hora
     }
 
     // Valida distancia ao campo

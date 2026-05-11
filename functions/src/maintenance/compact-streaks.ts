@@ -109,15 +109,19 @@ export const maintainStreaksData = onSchedule(
     );
 
     try {
-      // FASE 1: Coleta de metricas
-      // (limitado a 1000 para evitar scan)
+      // FASE 1: Coleta de streaks ativas
+      // FIX #788: era .limit(1000) sem paginação — usuários #1001+ nunca
+      // tinham streaks resetadas. Agora: filtrar apenas current_streak > 0
+      // (streaks zeradas não precisam processing) com limite maior.
+      // Docs sem current_streak field são capturados pelo else branch abaixo.
       const allStreaksSnap = await db()
         .collection("user_streaks")
-        .limit(1000)
+        .where("current_streak", ">", 0)
+        .limit(5000)
         .get();
       console.log(
         "[STREAK_MAINTENANCE] Total de " +
-        "streaks encontrados: " +
+        "streaks ativas encontradas: " +
         `${allStreaksSnap.size}`
       );
 
