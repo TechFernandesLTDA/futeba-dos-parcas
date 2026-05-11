@@ -52,7 +52,7 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export const functions = getFunctions(app);
+export const functions = getFunctions(app, 'southamerica-east1');
 
 // Messaging (optional, only in supported browsers)
 export const messagingPromise = isSupported().then(supported => 

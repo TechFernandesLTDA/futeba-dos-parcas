@@ -22,6 +22,7 @@ import {
 } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import {logger} from "firebase-functions/v2";
+import {FUNCTION_REGION} from "../constants";
 
 const PII_FIELDS = [
   "email",
@@ -80,7 +81,7 @@ function piiChanged(
  */
 export const onUserDocCreated = onDocumentCreated(
   {
-    region: "us-central1",
+    region: FUNCTION_REGION,
     document: "users/{userId}",
   },
   async (event) => {
@@ -120,7 +121,7 @@ export const onUserDocCreated = onDocumentCreated(
  */
 export const onUserDocUpdated = onDocumentUpdated(
   {
-    region: "us-central1",
+    region: FUNCTION_REGION,
     document: "users/{userId}",
   },
   async (event) => {
@@ -163,7 +164,7 @@ export const onUserDocUpdated = onDocumentUpdated(
  */
 export const migratePiiToUsersPrivate = onCall(
   {
-    region: "us-central1",
+    region: FUNCTION_REGION,
     // FIX SEC-2026-05-08: enforce App Check em prod. Callable manipula PII
     // de todos os usuários via batch — não deve aceitar chamada não-verificada.
     enforceAppCheck: process.env.NODE_ENV === "production",
@@ -320,7 +321,7 @@ function validatePiiField(field: string, value: unknown): boolean {
  */
 export const updateUserPii = onCall(
   {
-    region: "us-central1",
+    region: FUNCTION_REGION,
     // FIX SEC-2026-05-08: enforce App Check em prod. Callable escreve PII
     // em users_private — exige verificação de app em prod.
     enforceAppCheck: process.env.NODE_ENV === "production",
@@ -390,7 +391,7 @@ export const updateUserPii = onCall(
  */
 export const removePiiFromUsers = onCall(
   {
-    region: "us-central1",
+    region: FUNCTION_REGION,
     // FIX SEC-2026-05-08: enforce App Check em prod. Callable ADMIN deleta
     // PII em batch — operação destrutiva irreversível, exige verificação.
     enforceAppCheck: process.env.NODE_ENV === "production",

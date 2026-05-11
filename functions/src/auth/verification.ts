@@ -11,6 +11,7 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {hashCpf, isValidCpf, maskCpf} from "../validation/cpf";
+import {FUNCTION_REGION} from "../constants";
 
 /**
  * CPF salt vem de Firebase Functions secrets.
@@ -44,7 +45,7 @@ function getCpfSalt(): string {
  */
 export const verifyCpf = onCall(
   {
-    region: "us-central1",
+    region: FUNCTION_REGION,
     // FIX SEC-2026-05-08: enforce App Check em prod. Antes hardcoded false
     // como "debug" temporário (web SDK não anexava token) — debug virou prod.
     // Web App Check já está configurado (reCAPTCHA Enterprise ativo).
@@ -182,7 +183,7 @@ export const verifyCpf = onCall(
  */
 export const setUserVerified = onCall(
   {
-    region: "us-central1",
+    region: FUNCTION_REGION,
     // FIX SEC-2026-05-08: enforce App Check em prod. Antes hardcoded false
     // como "debug" temporário (web SDK não anexava token) — debug virou prod.
     // Web App Check já está configurado (reCAPTCHA Enterprise ativo).
