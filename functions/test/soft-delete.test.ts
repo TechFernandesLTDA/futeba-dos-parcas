@@ -84,6 +84,9 @@ jest.mock("firebase-admin", () => {
 
   mockAdmin.firestore.FieldValue = mockFieldValue;
   mockAdmin.firestore.Timestamp = mockTimestamp;
+  mockAdmin.firestore.FieldPath = {
+    documentId: jest.fn(() => ({ _type: "FieldPathDocumentId" })),
+  };
 
   return mockAdmin;
 });

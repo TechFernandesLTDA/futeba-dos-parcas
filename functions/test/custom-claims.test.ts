@@ -351,7 +351,9 @@ describe("Custom Claims - onNewUserCreated", () => {
     expect(mockSetCustomUserClaims).not.toHaveBeenCalled();
   });
 
-  test("não deve propagar erro de Auth (non-critical)", async () => {
+  test("deve propagar erro de Auth para CF v2 fazer retry (#1030)", async () => {
+    // Após fix #1030, onNewUserCreated relança erros pra Cloud Functions v2
+    // disparar retry automático. setCustomUserClaims é idempotente.
     mockSetCustomUserClaims.mockRejectedValueOnce(
       new Error("Auth service unavailable")
     );
@@ -363,8 +365,9 @@ describe("Custom Claims - onNewUserCreated", () => {
       },
     };
 
-    // Não deve lançar exceção
-    await expect(onNewUserCreatedHandler!(event)).resolves.not.toThrow();
+    await expect(onNewUserCreatedHandler!(event)).rejects.toThrow(
+      "Auth service unavailable"
+    );
   });
 });
 
