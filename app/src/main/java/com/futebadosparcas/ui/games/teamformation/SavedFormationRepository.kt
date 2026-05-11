@@ -2,6 +2,7 @@ package com.futebadosparcas.ui.games.teamformation
 
 import com.futebadosparcas.data.model.SavedTeamFormation
 import com.futebadosparcas.util.AppLogger
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
@@ -124,20 +125,16 @@ class SavedFormationRepository constructor(
 
     /**
      * Incrementa o contador de uso de uma formacao.
+     * Usa FieldValue.increment para evitar race condition em chamadas concorrentes.
      */
     suspend fun incrementFormationUsage(formationId: String): Result<Unit> {
         return try {
-            val docRef = firestore.collection(COLLECTION).document(formationId)
-
-            firestore.runTransaction { transaction ->
-                val snapshot = transaction.get(docRef)
-                val currentUsage = snapshot.getLong("times_used")?.toInt() ?: 0
-
-                transaction.update(docRef, mapOf(
-                    "times_used" to currentUsage + 1,
+            firestore.collection(COLLECTION).document(formationId)
+                .update(mapOf(
+                    "times_used" to FieldValue.increment(1),
                     "last_used_at" to Date()
                 ))
-            }.await()
+                .await()
 
             AppLogger.d(TAG) { "Uso da formacao incrementado: $formationId" }
             Result.success(Unit)
