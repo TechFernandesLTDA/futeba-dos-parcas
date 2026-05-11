@@ -3,6 +3,7 @@ import { collection, query, where, orderBy, limit, onSnapshot, updateDoc, delete
 import { db } from '../services/firebase';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
+import { useToast } from '../contexts/ToastContext';
 
 const logger = createLogger('useNotifications');
 
@@ -18,6 +19,7 @@ export interface Notification {
 }
 
 export const useNotifications = (userId?: string) => {
+  const { showError } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,7 @@ export const useNotifications = (userId?: string) => {
       await updateDoc(doc(db, 'notifications', notificationId), { read: true });
     } catch (err) {
       logger.error('Error marking notification as read:', err);
+      showError('Erro ao marcar notificação como lida.');
     }
   };
 
@@ -76,9 +79,11 @@ export const useNotifications = (userId?: string) => {
       const failures = results.filter((r) => r.status === 'rejected');
       if (failures.length > 0) {
         logger.error(`${failures.length} notificações falharam ao marcar como lida`);
+        showError('Algumas notificações não puderam ser marcadas como lidas.');
       }
     } catch (err) {
       logger.error('Error marking all notifications as read:', err);
+      showError('Erro ao marcar todas as notificações como lidas.');
     }
   };
 
@@ -87,6 +92,7 @@ export const useNotifications = (userId?: string) => {
       await deleteDoc(doc(db, 'notifications', notificationId));
     } catch (err) {
       logger.error('Error deleting notification:', err);
+      showError('Erro ao excluir notificação.');
     }
   };
 
