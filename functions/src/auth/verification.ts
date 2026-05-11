@@ -55,8 +55,26 @@ export const verifyCpf = onCall(
     secrets: ["CPF_SALT"],
   },
   async (request) => {
-    const {auth, data} = request;
+    const {auth, data, app} = request;
+
+    // FIX 2026-05-11 (Gustavo): logar contexto detalhado de auth + App Check
+    // pra diagnosticar "Sessão deslogado" no client (= functions/unauthenticated).
+    // Antes: callable rejeitava silenciosamente sem dica do motivo.
+    logger.info("[VERIFY_CPF] Called", {
+      hasAuth: !!auth,
+      uid: auth?.uid || "none",
+      hasAppCheck: !!app,
+      appCheckAppId: app?.appId || "none",
+      appCheckToken: app?.token ? "present" : "missing",
+    });
+
     if (!auth) {
+      // Pode ser: ID token expirado, malformado, ou App Check rejected (em
+      // alguns casos vira unauthenticated quando enforceAppCheck=true).
+      logger.warn(
+        "[VERIFY_CPF] Rejected: no auth context. " +
+        "Possible causes: expired ID token, App Check rejection, or missing token."
+      );
       throw new HttpsError("unauthenticated", "Login obrigatório");
     }
 
