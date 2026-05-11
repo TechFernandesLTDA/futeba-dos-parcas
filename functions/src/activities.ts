@@ -148,7 +148,10 @@ export async function generateGameFinishedActivityDirect(
  */
 export const generateActivityOnGameFinish =
   onDocumentUpdated(
-    "games/{gameId}",
+    {
+      document: "games/{gameId}",
+      region: "southamerica-east1",
+    },
     async (event) => {
       if (!event.data) return;
 
@@ -182,6 +185,7 @@ export const generateActivityOnGameFinish =
             "Error generating activity for game:",
             error
           );
+          throw error;
         }
       }
     }

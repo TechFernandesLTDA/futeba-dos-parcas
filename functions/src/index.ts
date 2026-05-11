@@ -1701,6 +1701,7 @@ export const onGroupDeleted = onDocumentDeleted(
           "==",
           groupId
         )
+        .limit(500)
         .get();
       usersWithGroup.docs.forEach(
         (doc) => allOps.push({
