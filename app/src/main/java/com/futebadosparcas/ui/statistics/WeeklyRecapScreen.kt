@@ -111,7 +111,7 @@ object RecapColors {
     val GradientStart = Color(0xFF667eea)
     val GradientEnd = Color(0xFF764ba2)
     val AccentGold = Color(0xFFFFD700)
-    val AccentGreen = Color(0xFF00C853)
+    // AccentGreen removido — fix #778: usar MaterialTheme.colorScheme.primary (WCAG AA)
     val AccentBlue = Color(0xFF2196F3)
     val AccentPurple = Color(0xFFAB47BC)
 }
@@ -474,6 +474,8 @@ private fun GamesPlayedSlide(data: WeeklyRecapData) {
 
 @Composable
 private fun PerformanceSlide(data: WeeklyRecapData) {
+    // Cor via tema — fix #778: AccentGreen era 0xFF00C853 (WCAG-failing ratio 2.24:1)
+    val accentGreen = MaterialTheme.colorScheme.primary
     val animatedProgress = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
@@ -535,7 +537,7 @@ private fun PerformanceSlide(data: WeeklyRecapData) {
                 modifier = Modifier.size(180.dp)
             ) {
                 drawArc(
-                    color = RecapColors.AccentGreen,
+                    color = accentGreen,
                     startAngle = -90f,
                     sweepAngle = 360f * animatedProgress.value,
                     useCenter = false,
@@ -864,7 +866,7 @@ private fun AchievementsSlide(data: WeeklyRecapData) {
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = if (isUp) {
-                        RecapColors.AccentGreen.copy(alpha = 0.3f)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                     } else {
                         MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
                     }
