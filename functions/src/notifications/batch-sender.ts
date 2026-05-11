@@ -184,7 +184,10 @@ export async function enqueueNotifications(
 
   if (notifications.length === 0) return 0;
 
-  const batch = db.batch();
+  // FIX #787: WriteBatch reuse após commit causa silent drop.
+  // Sempre criar novo batch após commit (após cada 450 ops).
+  let currentBatch = db.batch();
+  let batchOpCount = 0;
   let count = 0;
 
   for (const notification of notifications) {
@@ -197,7 +200,7 @@ export async function enqueueNotifications(
 
     const queueDoc =
       db.collection(QUEUE_COLLECTION).doc();
-    batch.set(queueDoc, {
+    currentBatch.set(queueDoc, {
       ...notification,
       status: "PENDING",
       priority:
@@ -207,15 +210,18 @@ export async function enqueueNotifications(
           .serverTimestamp(),
     });
     count++;
+    batchOpCount++;
 
-    // Batch limit é 500, commit se necessário
-    if (count % 450 === 0) {
-      await batch.commit();
+    // Batch limit é 500 — commit e criar NOVO batch
+    if (batchOpCount >= 450) {
+      await currentBatch.commit();
+      currentBatch = db.batch();
+      batchOpCount = 0;
     }
   }
 
-  if (count % 450 !== 0) {
-    await batch.commit();
+  if (batchOpCount > 0) {
+    await currentBatch.commit();
   }
 
   console.log(

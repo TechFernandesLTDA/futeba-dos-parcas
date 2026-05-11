@@ -236,7 +236,9 @@ export async function processXpParallel(
     );
 
     // PASSO 3: Processar chunks em paralelo
-    const batchResults = await Promise.all(
+    // FIX #793: Promise.allSettled preserva chunks bem-sucedidos.
+    // Com Promise.all: 1 chunk falho → todos marcados como falha.
+    const settledResults = await Promise.allSettled(
       chunks.map((chunk, index) =>
         processBatchWithRetry(
           gameId,
@@ -246,6 +248,26 @@ export async function processXpParallel(
         )
       )
     );
+
+    // Extrair resultados — chunks rejeitados viram failedCount parcial
+    const batchResults = settledResults.map((r, i) => {
+      if (r.status === "fulfilled") return r.value;
+      console.error(
+        `[XP_PARALLEL] Chunk ${i} falhou após retries:`,
+        r.reason
+      );
+      // Fallback: reportar chunk como falha com shape BatchResult completo
+      return {
+        batchNumber: i,
+        startIndex: i * chunks[i].length,
+        endIndex: (i + 1) * chunks[i].length - 1,
+        processedCount: 0,
+        failedCount: chunks[i].length,
+        duration: 0,
+        transactionIds: [],
+        error: String(r.reason),
+      } as BatchResult;
+    });
 
     // PASSO 4: Compilar resultados
     const totalProcessed = batchResults.reduce(
