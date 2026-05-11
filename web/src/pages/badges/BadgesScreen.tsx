@@ -39,7 +39,7 @@ export const BadgesScreen: React.FC = () => {
   const { unlockedIds, loading, error } = useBadges(user?.id);
 
   const getRarityStyle = (rarity: string) => {
-    const color = rarityColors[rarity] || rarityColors.COMMON;
+    const color = rarityColors[rarity] ?? rarityColors.COMUM;
     return {
       border: `2px solid ${color}`,
       boxShadow: `0 0 10px ${alpha(color, 0.3)}`,
@@ -147,7 +147,7 @@ const BadgeItem = React.memo(function BadgeItem({
               width: 60,
               height: 60,
               borderRadius: '50%',
-              bgcolor: alpha(rarityColors[badge.rarity], 0.1),
+              bgcolor: alpha(rarityColors[badge.rarity] ?? rarityColors.COMUM, 0.1),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -167,8 +167,8 @@ const BadgeItem = React.memo(function BadgeItem({
             size="small"
             sx={{
               mt: 0.5,
-              bgcolor: alpha(rarityColors[badge.rarity], 0.1),
-              color: rarityColors[badge.rarity],
+              bgcolor: alpha(rarityColors[badge.rarity] ?? rarityColors.COMUM, 0.1),
+              color: rarityColors[badge.rarity] ?? rarityColors.COMUM,
               fontSize: '0.65rem',
               height: 18,
             }}

@@ -16,8 +16,15 @@ const secondary = {
   contrastText: '#FFFFFF',
 };
 
-// Badge rarity colors
+// Badge rarity colors — suporta nomes PT-BR (canônico do BadgeRarity) e EN (legacy).
+// BADGE_DEFINITIONS usa COMUM/RARO/EPICO/LENDARIO; aliases EN ficam por compat.
 export const rarityColors: Record<string, string> = {
+  // PT-BR (canônico, alinhado a BadgeRarity em types/gamification.ts)
+  COMUM: '#9E9E9E',
+  RARO: '#2196F3',
+  EPICO: '#9C27B0',
+  LENDARIO: '#FF9800',
+  // EN aliases (legacy / fallback)
   COMMON: '#9E9E9E',
   RARE: '#2196F3',
   EPIC: '#9C27B0',
