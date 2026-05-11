@@ -13,6 +13,7 @@ import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import {db} from "../_db";
 import {checkRateLimit} from "../middleware/rate-limiter";
+import {FUNCTION_REGION} from "../constants";
 
 const SMS_RATE_LIMIT_PER_PHONE_HOUR = 3;
 const SMS_RATE_LIMIT_PER_IP_HOUR = 10;
@@ -40,7 +41,7 @@ const VERIFY_FAIL_AUDIT_THRESHOLD = 5;
  */
 export const canSendSmsOtp = onCall(
   {
-    region: "us-central1",
+    region: FUNCTION_REGION,
     enforceAppCheck: process.env.NODE_ENV === "production",
     consumeAppCheckToken: true,
   },
@@ -98,7 +99,7 @@ export const canSendSmsOtp = onCall(
  */
 export const logVerificationFailure = onCall(
   {
-    region: "us-central1",
+    region: FUNCTION_REGION,
     enforceAppCheck: process.env.NODE_ENV === "production",
     consumeAppCheckToken: true,
   },
