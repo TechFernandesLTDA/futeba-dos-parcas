@@ -2639,24 +2639,25 @@ actual class FirebaseDataSource actual constructor() {
                 "game_id" to (finalEntry.gameId ?: ""), "receipt_url" to (finalEntry.receiptUrl ?: ""),
                 "status" to finalEntry.status
             )
+            // Transação garante que a entrada e o summary são atualizados atomicamente (#945)
+            val amount = finalEntry.amount
             firestore.runTransaction<Unit> {
                 val summaryDoc = get(summaryRef)
                 val balance = summaryDoc.get<Double?>("balance") ?: 0.0
                 val totalIncome = summaryDoc.get<Double?>("total_income") ?: 0.0
                 val totalExpense = summaryDoc.get<Double?>("total_expense") ?: 0.0
-                val entryCount = summaryDoc.get<Long?>("entry_count")?.toInt() ?: 0
-                val amount = finalEntry.amount
+                val entryCount = (summaryDoc.get<Long?>("entry_count") ?: 0L) + 1L
                 val newSummary = if (finalEntry.isIncome()) mapOf(
                     "balance" to (balance + amount), "total_income" to (totalIncome + amount),
                     "total_expense" to totalExpense, "last_entry_at" to FieldValue.serverTimestamp,
-                    "entry_count" to (entryCount + 1)
+                    "entry_count" to entryCount
                 ) else mapOf(
                     "balance" to (balance - amount), "total_income" to totalIncome,
                     "total_expense" to (totalExpense + amount), "last_entry_at" to FieldValue.serverTimestamp,
-                    "entry_count" to (entryCount + 1)
+                    "entry_count" to entryCount
                 )
-                set(summaryRef, newSummary)
                 set(entryRef, entryData)
+                set(summaryRef, newSummary)
             }
             Result.success(entryRef.id)
         } catch (e: Exception) {
@@ -2753,24 +2754,27 @@ actual class FirebaseDataSource actual constructor() {
             val userId = auth.currentUser?.uid ?: return Result.failure(Exception("Usuário não autenticado"))
             val memberDoc = firestore.collection(COLLECTION_GROUPS).document(groupId).collection("members").document(userId).get()
             if (!memberDoc.exists) return Result.failure(Exception("Você não é membro deste grupo"))
-            if (memberDoc.get<String?>("role") != "OWNER") return Result.failure(Exception("Apenas o dono do grupo pode estornar entradas"))
+            // Alinha com as Firestore Rules que permitem isGroupAdmin (OWNER ou ADMIN) estornar entradas (#951)
+            val role = memberDoc.get<String?>("role")
+            if (role != "OWNER" && role != "ADMIN") return Result.failure(Exception("Apenas administradores do grupo podem estornar entradas"))
             val entryDoc = firestore.collection(COLLECTION_GROUPS).document(groupId).collection(SUBCOLLECTION_CASHBOX).document(entryId).get()
             if (!entryDoc.exists) return Result.failure(Exception("Entrada não encontrada"))
             val entry = entryDoc.toCashboxEntryOrNull() ?: return Result.failure(Exception("Erro ao converter entrada"))
             if (entry.status == CashboxAppStatus.VOIDED.name) return Result.failure(Exception("Esta entrada já foi estornada"))
+            // Transação garante que o estorno da entrada e o summary são atualizados atomicamente (#945)
+            val summaryRef = firestore.collection(COLLECTION_GROUPS).document(groupId).collection(SUBCOLLECTION_CASHBOX_SUMMARY).document("current")
             firestore.runTransaction<Unit> {
-                val summaryRef = firestore.collection(COLLECTION_GROUPS).document(groupId).collection(SUBCOLLECTION_CASHBOX_SUMMARY).document("current")
                 val summaryDoc = get(summaryRef)
                 val balance = summaryDoc.get<Double?>("balance") ?: 0.0
                 val totalIncome = summaryDoc.get<Double?>("total_income") ?: 0.0
                 val totalExpense = summaryDoc.get<Double?>("total_expense") ?: 0.0
-                val entryCount = summaryDoc.get<Long?>("entry_count")?.toInt() ?: 0
+                val entryCount = (summaryDoc.get<Long?>("entry_count") ?: 0L)
                 update(summaryRef, mapOf(
                     "balance" to (balance + (if (entry.isIncome()) -entry.amount else entry.amount)),
                     "total_income" to (if (entry.isIncome()) totalIncome - entry.amount else totalIncome),
                     "total_expense" to (if (entry.isExpense()) totalExpense - entry.amount else totalExpense),
                     "last_entry_at" to FieldValue.serverTimestamp,
-                    "entry_count" to (entryCount - 1).coerceAtLeast(0)
+                    "entry_count" to (entryCount - 1L).coerceAtLeast(0L)
                 ))
                 val entryRef = firestore.collection(COLLECTION_GROUPS).document(groupId).collection(SUBCOLLECTION_CASHBOX).document(entryId)
                 update(entryRef, mapOf("status" to CashboxAppStatus.VOIDED.name, "voided_at" to FieldValue.serverTimestamp, "voided_by" to userId))
@@ -2788,10 +2792,17 @@ actual class FirebaseDataSource actual constructor() {
             val memberDoc = firestore.collection(COLLECTION_GROUPS).document(groupId).collection("members").document(userId).get()
             val role = memberDoc.get<String?>("role")
             if (role != "ADMIN" && role != "OWNER") return Result.failure(Exception("Apenas administradores podem recalcular o saldo"))
+            // Limite de segurança: grupos com >1000 entradas ativas são muito incomuns; sem limite a query pode ser cara (#952)
+            val maxEntries = 1000
             val entriesSnapshot = firestore.collection(COLLECTION_GROUPS).document(groupId)
-                .collection(SUBCOLLECTION_CASHBOX).where { "status" equalTo CashboxAppStatus.ACTIVE.name }.get()
+                .collection(SUBCOLLECTION_CASHBOX).where { "status" equalTo CashboxAppStatus.ACTIVE.name }
+                .limit(maxEntries + 1).get()
             var totalIncome = 0.0; var totalExpense = 0.0
-            val entries = entriesSnapshot.documents.mapNotNull { it.toCashboxEntryOrNull() }
+            val allDocs = entriesSnapshot.documents.mapNotNull { it.toCashboxEntryOrNull() }
+            if (allDocs.size > maxEntries) {
+                println("FirebaseDataSource: AVISO — recalculateCashboxBalance truncou em $maxEntries entradas para o grupo $groupId; saldo pode estar incompleto")
+            }
+            val entries = allDocs.take(maxEntries)
             val sortedEntries = entries.sortedByDescending { it.createdAt ?: Clock.System.now() }
             sortedEntries.forEach { if (it.isIncome()) totalIncome += it.amount else totalExpense += it.amount }
             val lastEntryDate: Timestamp? = sortedEntries.firstOrNull()?.createdAt?.let { inst ->

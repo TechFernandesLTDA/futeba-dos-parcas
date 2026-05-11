@@ -22,7 +22,7 @@ import {
   Shuffle as ShuffleIcon,
   Save as SaveIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { PlayerAvatar, LoadingState } from '../../components/common/GameCard';
@@ -139,17 +139,26 @@ export const TeamFormationScreen: React.FC = () => {
     setSaving(true);
     try {
       const gameRef = doc(db, 'games', gameId);
-      await updateDoc(gameRef, {
-        team1_players: teamA.map(p => p.id),
-        team2_players: teamB.map(p => p.id),
-        team1_name: 'Time A',
-        team2_name: 'Time B',
-        updated_at: serverTimestamp(),
+      // Usa transação com campo de versão para detectar edições concorrentes (#949).
+      // Se outro admin salvou os times enquanto este usuário editava, a transação
+      // falha e o usuário recebe feedback para recarregar a página.
+      await runTransaction(db, async (tx) => {
+        const gameSnap = await tx.get(gameRef);
+        if (!gameSnap.exists()) throw new Error('Jogo não encontrado.');
+        const currentVersion = gameSnap.data()?.team_formation_version ?? 0;
+        tx.update(gameRef, {
+          team1_players: teamA.map(p => p.id),
+          team2_players: teamB.map(p => p.id),
+          team1_name: 'Time A',
+          team2_name: 'Time B',
+          team_formation_version: currentVersion + 1,
+          updated_at: serverTimestamp(),
+        });
       });
       navigateBack();
     } catch (error) {
       logger.error('Error saving teams:', error);
-      showError('Erro ao salvar os times. Tente novamente.');
+      showError('Erro ao salvar os times. Recarregue a página e tente novamente.');
     } finally {
       setSaving(false);
     }

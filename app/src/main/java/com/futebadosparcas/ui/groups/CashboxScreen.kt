@@ -79,7 +79,8 @@ fun CashboxScreen(
 
     val context = LocalContext.current
     val canManage = userRole == GroupMemberRole.ADMIN || userRole == GroupMemberRole.OWNER
-    val canDelete = userRole == GroupMemberRole.OWNER
+    // Alinha com as Firestore Rules que permitem OWNER ou ADMIN estornar entradas (#951)
+    val canDelete = userRole == GroupMemberRole.OWNER || userRole == GroupMemberRole.ADMIN
 
     LaunchedEffect(groupId) {
         viewModel.loadCashbox(groupId)

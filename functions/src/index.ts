@@ -936,6 +936,8 @@ export const onGameStatusUpdate = onDocumentUpdated(
             was_clean_sheet: cleanSheetXp > 0,
             was_worst_player: isWorstPlayer,
             game_result: result,
+            // Armazenado para permitir filtro defensivo em recalculateLeagueRating (#954)
+            game_status: "FINISHED",
             milestones_unlocked: newMilestones,
             created_at: now,
           };
@@ -1252,11 +1254,13 @@ export const recalculateLeagueRating =
       }
 
       try {
-        // Buscar últimos 10 xp_logs deste
-        // usuário
+        // Buscar últimos 10 xp_logs deste usuário — filtra game_status=FINISHED
+        // defensivamente: xp_logs de jogos cancelados não devem existir,
+        // mas o filtro evita contaminação por dados legados ou migrações (#954)
         const xpLogsSnap = await db()
           .collection("xp_logs")
           .where("user_id", "==", userId)
+          .where("game_status", "==", "FINISHED")
           .orderBy("created_at", "desc")
           .limit(10)
           .get();
