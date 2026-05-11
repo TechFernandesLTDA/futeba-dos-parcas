@@ -7,8 +7,10 @@ const FIREBASE_AUTH_ERRORS: Record<string, string> = {
   'auth/invalid-credential': 'Email ou senha inválidos',
   'auth/invalid-email': 'Email inválido',
   'auth/user-disabled': 'Esta conta foi desativada',
-  'auth/user-not-found': 'Usuário não encontrado',
-  'auth/wrong-password': 'Senha incorreta',
+  // FIX #930: user-not-found e wrong-password mapeados para a mesma mensagem genérica
+  // para prevenir enumeração de email (atacante não consegue distinguir "email existe" vs "senha errada")
+  'auth/user-not-found': 'Email ou senha inválidos',
+  'auth/wrong-password': 'Email ou senha inválidos',
   'auth/email-already-in-use': 'Este email já está em uso',
   'auth/weak-password': 'Senha muito fraca. Use pelo menos 6 caracteres',
   'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde',

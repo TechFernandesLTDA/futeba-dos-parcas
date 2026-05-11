@@ -45,19 +45,23 @@ export function ForgotPasswordScreen() {
 
     try {
       await resetPassword(email);
-      setSuccess(true);
     } catch (err) {
+      // FIX #930: Não distinguir auth/user-not-found — previne enumeração de email.
+      // auth/invalid-email lança exceção antes do Firebase tentar enviar, então
+      // é seguro exibir. Qualquer outro erro é tratado genericamente.
       const code = (err as { code?: string })?.code;
-      if (code === 'auth/user-not-found') {
-        setError('Email não encontrado');
-      } else if (code === 'auth/invalid-email') {
+      if (code === 'auth/invalid-email') {
         setError('Email inválido');
-      } else {
-        setError('Erro ao enviar email de recuperação');
+        setLoading(false);
+        return;
       }
+      // Para user-not-found e todos os outros erros: sempre exibir sucesso genérico.
+      // Isso previne que um atacante enumere quais emails estão cadastrados.
     } finally {
       setLoading(false);
     }
+    // Sempre exibir mensagem de sucesso, independente de o email existir ou não
+    setSuccess(true);
   };
 
   return (
