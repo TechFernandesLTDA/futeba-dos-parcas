@@ -86,7 +86,7 @@ export const GroupDetailScreen: React.FC = () => {
   const isMd = useMediaQuery(theme.breakpoints.between('md', 'lg'));
   const isLg = useMediaQuery(theme.breakpoints.up('lg'));
 
-  const { group, members, loading, error } = useGroupDetail(groupId || null);
+  const { group, groupDeleted, members, loading, error } = useGroupDetail(groupId || null);
   const { games, loading: gamesLoading } = useGames({ groupId: groupId || undefined, limitCount: 5 });
   const { generateInviteCode, loading: inviteLoading } = useInvitePlayers();
 
@@ -175,19 +175,43 @@ export const GroupDetailScreen: React.FC = () => {
     );
   }
 
-  if (error || !group) {
+  if (error) {
     return (
       <Container maxWidth="sm" sx={{ py: 2 }}>
-        <Alert severity="error">{error || 'Grupo não encontrado'}</Alert>
+        <Alert severity="error">{error}</Alert>
         <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
           <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
             Voltar
           </Button>
-          {error && (
-            <Button variant="contained" onClick={() => window.location.reload()}>
-              Tentar novamente
-            </Button>
-          )}
+          <Button variant="contained" onClick={() => window.location.reload()}>
+            Tentar novamente
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
+
+  if (groupDeleted) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 2 }}>
+        <Alert severity="warning">Este grupo foi encerrado.</Alert>
+        <Box sx={{ mt: 2 }}>
+          <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
+            Voltar
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
+
+  if (!group) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 2 }}>
+        <Alert severity="info">Grupo não encontrado.</Alert>
+        <Box sx={{ mt: 2 }}>
+          <Button startIcon={<BackIcon />} onClick={() => navigate('/?tab=2')}>
+            Voltar
+          </Button>
         </Box>
       </Container>
     );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useNavigateBack } from '../../hooks/useNavigateBack';
 import {
   Box,
@@ -27,6 +27,7 @@ import {
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -52,9 +53,11 @@ interface PostGameStats {
 export const PostGameReportScreen: React.FC = () => {
   useDocumentTitle('Relatório Pós-Jogo');
   const navigateBack = useNavigateBack('/games');
+  const navigate = useNavigate();
   const theme = useTheme();
   const { gameId } = useParams<{ gameId: string }>();
   useAuth();
+  const { showError } = useToast();
 
   const [stats, setStats] = useState<PostGameStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,6 +71,13 @@ export const PostGameReportScreen: React.FC = () => {
         if (gameDoc.exists()) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = snakeToCamel(gameDoc.data()) as Record<string, any>;
+
+          // Relatório só disponível após jogo finalizado
+          if (data.status !== 'FINISHED') {
+            showError('Relatório só disponível após o jogo ser finalizado.');
+            navigate(`/game/${gameId}`, { replace: true });
+            return;
+          }
 
           let mvpName = '';
           if (data.mvpId) {
@@ -97,6 +107,7 @@ export const PostGameReportScreen: React.FC = () => {
     };
 
     fetchReport();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameId]);
 
   if (loading) {

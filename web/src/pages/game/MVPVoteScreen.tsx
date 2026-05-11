@@ -113,6 +113,15 @@ export const MVPVoteScreen: React.FC = () => {
   const handleVote = async () => {
     if (!mvpVote || !gameId || !currentUser) return;
 
+    // Apenas jogadores confirmados podem votar
+    const myConfirmation = confirmations.find(
+      (c) => c.userId === currentUser.uid && c.status === 'CONFIRMED'
+    );
+    if (!myConfirmation) {
+      showError('Apenas jogadores confirmados podem votar.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {

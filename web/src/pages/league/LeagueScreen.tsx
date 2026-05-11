@@ -111,11 +111,20 @@ export const LeagueScreen: React.FC = () => {
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <MilitaryTechIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
-              Nenhum jogador nesta divisão
+              {selectedDivision
+                ? 'Nenhum jogador nesta divisão ainda'
+                : 'Temporada ainda não iniciada.'}
             </Typography>
-            <Typography variant="body2" color="text.disabled">
-              Participe de jogos para entrar na liga!
+            <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+              {selectedDivision
+                ? 'Jogue mais para subir de divisão!'
+                : 'Participe de jogos para entrar na liga e acumular pontos.'}
             </Typography>
+            {!selectedDivision && (
+              <Button variant="outlined" onClick={() => navigate(-1)}>
+                Ver temporada anterior
+              </Button>
+            )}
           </Box>
         ) : (
           <List disablePadding aria-label="Classificação da liga">
