@@ -30,7 +30,7 @@ import {
   PersonRemove as PersonRemoveIcon,
   AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
-import { doc, getDoc, writeBatch, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, getDocs, query, collection, where, documentId, writeBatch, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -93,30 +93,45 @@ export const PlayersScreen: React.FC = () => {
             setCurrentUserRole('MEMBER');
           }
 
-          const membersData = await Promise.all(
-            memberIds.map(async (uid: string) => {
-              const userDoc = await getDoc(doc(db, 'users', uid));
-              if (userDoc.exists()) {
-                const raw = userDoc.data();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const d = snakeToCamel(raw) as Record<string, any>;
-                let role: 'OWNER' | 'ADMIN' | 'MEMBER' = 'MEMBER';
-                if (uid === ownerId) role = 'OWNER';
-                else if (admins.includes(uid)) role = 'ADMIN';
-
-                return {
-                  id: uid,
-                  name: d.name || 'Jogador',
-                  email: d.email || '',
-                  photoUrl: d.photoUrl,
-                  favoriteTeam: (d.favorite_team || d.favoriteTeam || undefined) as string | undefined,
-                  role,
-                  joinedAt: (raw.joined_at || raw.joinedAt)?.toDate?.(),
-                };
-              }
-              return null;
-            })
+          // Batch fetch de usuários em chunks de 10 (whereIn limit) — evita N+1 getDoc
+          const userDataMap = new Map<string, { raw: Record<string, unknown>; camel: Record<string, unknown> }>();
+          const memberChunks: string[][] = [];
+          for (let i = 0; i < memberIds.length; i += 10) {
+            memberChunks.push(memberIds.slice(i, i + 10));
+          }
+          const chunkResults = await Promise.allSettled(
+            memberChunks.map((chunk: string[]) =>
+              getDocs(query(collection(db, 'users'), where(documentId(), 'in', chunk)))
+            )
           );
+          if (cancelled) return;
+          for (const result of chunkResults) {
+            if (result.status === 'rejected') continue;
+            for (const userDoc of result.value.docs) {
+              const raw = userDoc.data();
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              userDataMap.set(userDoc.id, { raw, camel: snakeToCamel(raw) as Record<string, any> });
+            }
+          }
+
+          const membersData: (GroupMember | null)[] = memberIds.map((uid: string) => {
+            const entry = userDataMap.get(uid);
+            if (!entry) return null;
+            const { raw, camel: d } = entry;
+            let role: 'OWNER' | 'ADMIN' | 'MEMBER' = 'MEMBER';
+            if (uid === ownerId) role = 'OWNER';
+            else if (admins.includes(uid)) role = 'ADMIN';
+
+            return {
+              id: uid,
+              name: (d.name as string) || 'Jogador',
+              email: (d.email as string) || '',
+              photoUrl: d.photoUrl as string | undefined,
+              favoriteTeam: ((d.favorite_team || d.favoriteTeam) as string | undefined),
+              role,
+              joinedAt: ((raw.joined_at || raw.joinedAt) as { toDate?: () => Date } | undefined)?.toDate?.(),
+            };
+          });
 
           if (!cancelled) setMembers(membersData.filter(Boolean) as GroupMember[]);
         }
