@@ -220,9 +220,39 @@ async function sendWithRetry(
 }
 
 /**
+ * Coleta todos os tokens FCM únicos do documento
+ * do usuário — suporta campos legados (fcm_token,
+ * fcmToken) e o novo array (fcmTokens).
+ *
+ * @param {Record<string, unknown>} data - Dados do doc
+ * @return {string[]} Lista de tokens únicos
+ */
+function extractTokensFromUserData(
+  data: Record<string, unknown>
+): string[] {
+  const tokens = new Set<string>();
+
+  // Campos legados (escalares)
+  const legacyToken =
+    (data?.fcm_token as string | undefined) ||
+    (data?.fcmToken as string | undefined);
+  if (legacyToken) tokens.add(legacyToken);
+
+  // Novo campo (array — escrito pela web)
+  const arr = data?.fcmTokens;
+  if (Array.isArray(arr)) {
+    (arr as string[]).forEach((t) => {
+      if (t) tokens.add(t);
+    });
+  }
+
+  return Array.from(tokens);
+}
+
+/**
  * Remove token FCM inválido do usuário no Firestore.
- * Apenas deleta se o token armazenado corresponder
- * ao token inválido reportado pelo FCM.
+ * Limpa fcm_token, fcmToken (escalares) e remove
+ * o token do array fcmTokens caso exista.
  *
  * @param {string} userId - ID do usuário
  * @param {string} invalidToken - Token FCM inválido
@@ -239,15 +269,14 @@ async function removeInvalidToken(
       .get();
     if (!userDoc.exists) return;
 
-    const data = userDoc.data();
-    const storedToken =
-      data?.fcm_token || data?.fcmToken;
+    const data =
+      userDoc.data() as Record<string, unknown>;
+    const allTokens = extractTokensFromUserData(data);
 
-    if (storedToken !== invalidToken) {
+    if (!allTokens.includes(invalidToken)) {
       console.log(
-        "Token armazenado para " + userId +
-        " nao corresponde ao token invalido." +
-        " Ignorando remocao (idempotencia)."
+        "Token invalido nao encontrado para " +
+        userId + " — ignorando remocao."
       );
       return;
     }
@@ -255,12 +284,36 @@ async function removeInvalidToken(
     console.log(
       `Removendo token invalido do usuario ${userId}`
     );
-    await getDb()
-      .collection("users")
-      .doc(userId)
-      .update({
-        fcm_token: admin.firestore.FieldValue.delete(),
-      });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const update: Record<string, any> = {};
+
+    // Limpar campos legados se correspondem
+    if (data?.fcm_token === invalidToken) {
+      update.fcm_token =
+        admin.firestore.FieldValue.delete();
+    }
+    if (data?.fcmToken === invalidToken) {
+      update.fcmToken =
+        admin.firestore.FieldValue.delete();
+    }
+
+    // Remover do array fcmTokens
+    const arr = data?.fcmTokens;
+    if (Array.isArray(arr) &&
+        (arr as string[]).includes(invalidToken)) {
+      update.fcmTokens =
+        admin.firestore.FieldValue.arrayRemove(
+          invalidToken
+        );
+    }
+
+    if (Object.keys(update).length > 0) {
+      await getDb()
+        .collection("users")
+        .doc(userId)
+        .update(update);
+    }
   } catch (e) {
     console.error(
       "Erro ao remover token invalido" +
@@ -271,34 +324,32 @@ async function removeInvalidToken(
 }
 
 /**
- * Busca o token FCM de um usuário.
+ * Busca todos os tokens FCM de um usuário
+ * (escalares legados + array fcmTokens).
  *
  * @param {string} userId - ID do usuário
- * @return {Promise<string | null>} Token ou null
+ * @return {Promise<string[]>} Tokens ou array vazio
  */
-async function getUserFcmToken(
+async function getUserFcmTokens(
   userId: string
-): Promise<string | null> {
+): Promise<string[]> {
   try {
     const userDoc = await getDb()
       .collection("users")
       .doc(userId)
       .get();
-    if (!userDoc.exists) return null;
+    if (!userDoc.exists) return [];
 
-    const userData = userDoc.data();
-    return (
-      userData?.fcm_token ||
-      userData?.fcmToken ||
-      null
-    );
+    const data =
+      userDoc.data() as Record<string, unknown>;
+    return extractTokensFromUserData(data);
   } catch (e) {
     console.error(
-      "Erro ao buscar token FCM do usuario " +
+      "Erro ao buscar tokens FCM do usuario " +
       userId + ":",
       e
     );
-    return null;
+    return [];
   }
 }
 
@@ -332,12 +383,13 @@ async function getUserFcmTokensWithMapping(
 
       snapshot.docs.forEach(
         (doc: admin.firestore.QueryDocumentSnapshot) => {
-          const data = doc.data();
-          const token =
-            data?.fcm_token || data?.fcmToken;
-          if (token) {
+          const data =
+            doc.data() as Record<string, unknown>;
+          const tokens =
+            extractTokensFromUserData(data);
+          tokens.forEach((token) => {
             mappings.push({token, userId: doc.id});
-          }
+          });
         }
       );
     } catch (e) {
@@ -352,86 +404,130 @@ async function getUserFcmTokensWithMapping(
 }
 
 /**
+ * Busca o contador de notificações não lidas de
+ * um usuário para uso no badge APNS.
+ *
+ * @param {string} userId - ID do usuário
+ * @return {Promise<number>} Contagem de não lidas
+ */
+async function getUnreadCount(
+  userId: string
+): Promise<number> {
+  try {
+    const snap = await getDb()
+      .collection("notifications")
+      .where("user_id", "==", userId)
+      .where("read", "==", false)
+      .count()
+      .get();
+    // O campo .data().count existe na API Admin
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (snap.data() as any).count ?? 1;
+  } catch (e) {
+    // Fallback seguro: 1 (indica ao menos uma notif)
+    return 1;
+  }
+}
+
+/**
  * Envia notificação FCM para um único usuário.
+ * Lê todos os tokens (legados + array fcmTokens)
+ * e envia para cada um.
  *
  * @param {string} userId - ID do usuário
  * @param {FcmNotification} notification - Dados
- * @return {Promise<boolean>} true se enviou
+ * @return {Promise<boolean>} true se ao menos
+ *   um token recebeu com sucesso
  */
 export async function sendNotificationToUser(
   userId: string,
   notification: FcmNotification
 ): Promise<boolean> {
-  const token = await getUserFcmToken(userId);
-  if (!token) {
+  const tokens = await getUserFcmTokens(userId);
+  if (tokens.length === 0) {
     console.log(
       "Usuario " + userId + " nao tem token FCM"
     );
     return false;
   }
 
-  const message: admin.messaging.Message = {
-    token: token,
-    notification: {
-      title: notification.title,
-      body: notification.body,
-      imageUrl: notification.imageUrl,
-    },
-    data: {
-      type: notification.type,
-      ...notification.data,
-    },
-    android: {
-      priority: "high",
+  // TTL de 1 hora para notificações time-sensitive
+  const TTL_SECONDS = 3600;
+  // Expiração APNS: Unix timestamp (segundos)
+  const apnsExpiration =
+    String(Math.floor(Date.now() / 1000) + TTL_SECONDS);
+
+  // Badge APNS dinâmico baseado em não lidas
+  const badgeCount = await getUnreadCount(userId);
+
+  let atLeastOneSuccess = false;
+
+  for (const token of tokens) {
+    const message: admin.messaging.Message = {
+      token: token,
       notification: {
-        channelId: notification.type,
-        sound: "default",
-        clickAction:
-          notification.data?.action ||
-          "FLUTTER_NOTIFICATION_CLICK",
+        title: notification.title,
+        body: notification.body,
+        imageUrl: notification.imageUrl,
       },
-    },
-    apns: {
-      payload: {
-        aps: {
-          alert: {
-            title: notification.title,
-            body: notification.body,
-          },
+      data: {
+        type: notification.type,
+        ...notification.data,
+      },
+      android: {
+        priority: "high",
+        ttl: TTL_SECONDS,
+        notification: {
+          channelId: notification.type,
           sound: "default",
-          badge: 1,
+          clickAction:
+            notification.data?.action ||
+            "FLUTTER_NOTIFICATION_CLICK",
         },
       },
-    },
-  };
+      apns: {
+        headers: {
+          "apns-expiration": apnsExpiration,
+        },
+        payload: {
+          aps: {
+            alert: {
+              title: notification.title,
+              body: notification.body,
+            },
+            sound: "default",
+            badge: badgeCount,
+          },
+        },
+      },
+    };
 
-  // Usar retry com exponential backoff
-  const result = await sendWithRetry(message);
+    // Usar retry com exponential backoff
+    const result = await sendWithRetry(message);
 
-  if (result.success) {
-    console.log(
-      `Notificacao enviada para ${userId}`
-    );
-    return true;
+    if (result.success) {
+      console.log(
+        `Notificacao enviada para ${userId}` +
+        ` (token ...${token.slice(-8)})`
+      );
+      atLeastOneSuccess = true;
+    } else if (
+      result.error &&
+      isInvalidTokenError(result.error)
+    ) {
+      console.log(
+        `Token invalido para ${userId}, limpando...`
+      );
+      await removeInvalidToken(userId, token);
+    } else if (result.error) {
+      console.error(
+        `Erro ao enviar notificacao para ${userId}:`,
+        result.error
+      );
+    }
   }
 
-  // Tratar erros de token inválido
-  if (
-    result.error &&
-    isInvalidTokenError(result.error)
-  ) {
-    console.log(
-      `Token invalido para ${userId}, limpando...`
-    );
-    await removeInvalidToken(userId, token);
-  } else if (result.error) {
-    console.error(
-      `Erro ao enviar notificacao para ${userId}:`,
-      result.error
-    );
-  }
-
-  return false;
+  return atLeastOneSuccess;
 }
 
 /**
@@ -479,6 +575,12 @@ export async function sendNotificationToUsers(
     userId: string;
   }[] = [];
 
+  // TTL de 1 hora para notificações time-sensitive
+  const TTL_SECONDS = 3600;
+  // Expiração APNS: Unix timestamp (segundos)
+  const apnsExpiration =
+    String(Math.floor(Date.now() / 1000) + TTL_SECONDS);
+
   for (const chunk of chunks) {
     try {
       const message:
@@ -495,9 +597,23 @@ export async function sendNotificationToUsers(
           },
           android: {
             priority: "high",
+            ttl: TTL_SECONDS,
             notification: {
               channelId: notification.type,
               sound: "default",
+            },
+          },
+          apns: {
+            headers: {
+              "apns-expiration": apnsExpiration,
+            },
+            payload: {
+              aps: {
+                // Badge 1 por default no multicast
+                // (sem contexto do userId individual)
+                badge: 1,
+                sound: "default",
+              },
             },
           },
         };
