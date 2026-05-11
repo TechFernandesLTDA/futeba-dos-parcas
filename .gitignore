@@ -131,3 +131,7 @@ iosApp/.build/
 iosApp/DerivedData/
 *.xcuserdatad/
 xcuserdata/
+
+# iOS — Firebase config (baixar via `firebase apps:sdkconfig IOS <APP_ID>`)
+iosApp/iosApp/GoogleService-Info.plist
+iosApp/GoogleService-Info.plist
