@@ -176,6 +176,20 @@ actual class FirebaseDataSource actual constructor() {
             val docRef = firestore.collection(COLLECTION_GAMES).document
             val gameWithId = game.copy(id = docRef.id)
             docRef.set(gameWithId)
+
+            // Escreve campo "dateTime" como Firestore Timestamp para permitir
+            // consultas por data (ex: getUpcomingGames usa where { "dateTime" >= nowTs }).
+            // A classe Game tem dateTime como computed getter (String), não como campo
+            // armazenado, então é necessário escrever explicitamente (issue #877).
+            val dateTimeTs = runCatching {
+                val localDateTime = LocalDateTime.parse("${game.date}T${game.time}")
+                val epochSeconds = localDateTime.toInstant(kotlinx.datetime.TimeZone.currentSystemDefault()).epochSeconds
+                Timestamp(epochSeconds, 0)
+            }.getOrNull()
+            if (dateTimeTs != null) {
+                docRef.update(mapOf("dateTime" to dateTimeTs))
+            }
+
             Result.success(gameWithId)
         } catch (e: Exception) {
             Result.failure(e)
@@ -2554,10 +2568,13 @@ actual class FirebaseDataSource actual constructor() {
                 "schedule_id" to (payment.scheduleId ?: ""), "type" to payment.type.name,
                 "amount" to payment.amount, "status" to payment.status.name,
                 "payment_method" to (payment.paymentMethod?.name ?: ""), "due_date" to payment.dueDate,
-                "paid_at" to (payment.paidAt ?: 0L), "pix_key" to (payment.pixKey ?: ""),
+                // paid_at: usa serverTimestamp se já pago sem timestamp local; 0L se ainda não pago (issue #878)
+                "paid_at" to (payment.paidAt?.let { if (it == 0L) 0L else it } ?: 0L),
+                "pix_key" to (payment.pixKey ?: ""),
                 "pix_qrcode" to (payment.pixQrcode ?: ""), "pix_txid" to (payment.pixTxid ?: ""),
                 "receipt_url" to (payment.receiptUrl ?: ""), "notes" to (payment.notes ?: ""),
-                "created_at" to (payment.createdAt ?: Clock.System.now().toEpochMilliseconds())
+                // created_at: usa serverTimestamp para evitar clock skew do cliente (issue #878)
+                "created_at" to FieldValue.serverTimestamp
             )
             paymentRef.set(paymentData)
             Result.success(payment.copy(id = paymentRef.id))
@@ -2569,8 +2586,9 @@ actual class FirebaseDataSource actual constructor() {
 
     actual suspend fun confirmPayment(paymentId: String): Result<Unit> {
         return try {
+            // paid_at: usa serverTimestamp para evitar clock skew do cliente (issue #878)
             firestore.collection(COLLECTION_PAYMENTS).document(paymentId)
-                .update(mapOf("status" to PaymentStatus.PAID.name, "paid_at" to Clock.System.now().toEpochMilliseconds()))
+                .update(mapOf("status" to PaymentStatus.PAID.name, "paid_at" to FieldValue.serverTimestamp))
             Result.success(Unit)
         } catch (e: Exception) {
             println("FirebaseDataSource: Erro ao confirmar pagamento: ${e.message}")
