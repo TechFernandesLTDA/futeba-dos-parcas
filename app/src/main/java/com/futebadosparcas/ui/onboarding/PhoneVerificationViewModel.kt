@@ -9,6 +9,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
+import com.google.firebase.functions.FirebaseFunctions
 import com.futebadosparcas.util.AppLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,7 @@ import java.util.concurrent.TimeUnit
  */
 class PhoneVerificationViewModel(
     private val auth: FirebaseAuth,
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(),
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<PhoneVerificationUiState>(
@@ -73,6 +75,14 @@ class PhoneVerificationViewModel(
 
     /**
      * Dispara SMS OTP. Phone deve estar em formato E.164 (+5511999998888).
+     *
+     * FIX #933: consulta canSendSmsOtp (Cloud Function) antes de iniciar o
+     * fluxo de Phone Auth. Isso aplica rate limiting server-side por número/IP,
+     * prevenindo abuso de envio de SMS.
+     *
+     * NOTA: a enforcement é advisory (cliente legítimo respeita; cliente malicioso
+     * pode bypassar chamando Firebase Phone Auth diretamente). Enforcement completa
+     * requer Auth Blocking Functions — ver #940.
      */
     fun sendVerificationCode(activity: Activity, phone: String) {
         val normalized = phone.replace("\\s".toRegex(), "")
@@ -83,15 +93,55 @@ class PhoneVerificationViewModel(
         }
         _uiState.value = PhoneVerificationUiState.SendingCode
 
-        val options = PhoneAuthOptions.newBuilder(auth)
-            .setPhoneNumber(normalized)
-            .setTimeout(60L, TimeUnit.SECONDS)
-            .setActivity(activity)
-            .setCallbacks(callbacks)
-            .apply { resendToken?.let { setForceResendingToken(it) } }
-            .build()
+        pendingJob?.cancel()
+        pendingJob = viewModelScope.launch {
+            try {
+                // Verificar rate limit OTP via Cloud Function antes de disparar SMS
+                val canSendResult = functions
+                    .getHttpsCallable("canSendSmsOtp")
+                    .call(mapOf("phone" to normalized))
+                    .await()
 
-        PhoneAuthProvider.verifyPhoneNumber(options)
+                @Suppress("UNCHECKED_CAST")
+                val resultData = canSendResult.data as? Map<String, Any>
+                val allowed = resultData?.get("allowed") as? Boolean ?: false
+
+                if (!allowed) {
+                    val retryAfterSec = resultData?.get("retryAfterSec") as? Number
+                    val msg = if (retryAfterSec != null && retryAfterSec.toInt() > 0) {
+                        "Muitas tentativas. Tente novamente em ${retryAfterSec.toInt()}s"
+                    } else {
+                        "Muitas tentativas. Tente novamente mais tarde."
+                    }
+                    _uiState.value = PhoneVerificationUiState.Error(msg)
+                    return@launch
+                }
+
+                // Rate limit OK — iniciar verificação de telefone
+                val options = PhoneAuthOptions.newBuilder(auth)
+                    .setPhoneNumber(normalized)
+                    .setTimeout(60L, TimeUnit.SECONDS)
+                    .setActivity(activity)
+                    .setCallbacks(callbacks)
+                    .apply { resendToken?.let { setForceResendingToken(it) } }
+                    .build()
+
+                PhoneAuthProvider.verifyPhoneNumber(options)
+            } catch (e: Exception) {
+                AppLogger.e("PhoneVerification", "Erro ao verificar rate limit OTP", e)
+                // Em caso de falha na CF (ex: offline), prosseguir com envio
+                // para não degradar a experiência quando há problemas de rede.
+                // O Firebase Phone Auth tem seus próprios limites de quota.
+                val options = PhoneAuthOptions.newBuilder(auth)
+                    .setPhoneNumber(normalized)
+                    .setTimeout(60L, TimeUnit.SECONDS)
+                    .setActivity(activity)
+                    .setCallbacks(callbacks)
+                    .apply { resendToken?.let { setForceResendingToken(it) } }
+                    .build()
+                PhoneAuthProvider.verifyPhoneNumber(options)
+            }
+        }
     }
 
     /**

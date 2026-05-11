@@ -26,6 +26,16 @@ const VERIFY_FAIL_AUDIT_THRESHOLD = 5;
  * detectar abuso preventivamente. Backend tambem
  * valida no fluxo final via Auth Triggers.
  *
+ * FIX #940 — LIMITAÇÃO ARQUITETURAL (advisory):
+ * Esta função é consultiva. Um cliente malicioso pode ignorá-la
+ * e chamar Firebase Phone Auth (signInWithPhoneNumber /
+ * PhoneAuthProvider.verifyPhoneNumber) diretamente, bypassando
+ * este rate limit. A enforcement completa requer Auth Blocking
+ * Functions (beforeSignIn trigger) — issue de follow-up para
+ * avaliar custo/benefício (Blocking Functions não têm free tier).
+ * Por ora, o cliente legítimo (Android/Web) DEVE chamar
+ * canSendSmsOtp antes de iniciar o fluxo de Phone Auth.
+ *
  * @return {Promise<object>} {allowed, retryAfterSec}
  */
 export const canSendSmsOtp = onCall(

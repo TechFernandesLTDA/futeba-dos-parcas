@@ -478,6 +478,8 @@ service cloud.firestore {
       // PERF_001 P0 #30: Validação estrita de scores (max 100 gols por time)
       allow create: if isVerifiedOrGrace() &&
                        (isAdmin() || request.resource.data.owner_id == userId()) &&
+                       // SECFIX #866: status inicial deve ser SCHEDULED para prevenir criação em estado inválido
+                       request.resource.data.status == 'SCHEDULED' &&
                        // SECFIX #422: data deve ser futura (1h tolerance)
                        isFutureGameDate(request.resource.data) &&
                        // SECFIX #424: se group_id presente, exige membership
@@ -559,8 +561,14 @@ service cloud.firestore {
 
       // Usuario pode atualizar suas proprias recorrencias
       // Admins podem atualizar qualquer uma
-      allow update: if isAuthenticated() &&
-        (resource.data.owner_id == userId() || isAdmin());
+      // SECFIX #863: whitelist de campos editáveis — owner não pode alterar owner_id/group_id
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (resource.data.owner_id == userId() &&
+         fieldUnchanged('owner_id') &&
+         fieldUnchanged('group_id') &&
+         fieldUnchanged('created_at'))
+      );
 
       // Usuario pode deletar suas proprias recorrencias
       // Admins podem deletar qualquer uma
@@ -637,9 +645,19 @@ service cloud.firestore {
       // Qualquer usuario autenticado pode ler times
       allow read: if isAuthenticated();
 
-      // Apenas dono do jogo ou admin pode criar/modificar times
-      allow create, update, delete: if isAuthenticated() &&
-                                       (isAdmin() || isGameOwner(request.resource.data.game_id));
+      // Apenas dono do jogo ou admin pode criar times
+      // SECFIX #860 (create): usa request.resource.data para verificar game_id do novo time
+      allow create: if isAuthenticated() &&
+                       (isAdmin() || isGameOwner(request.resource.data.game_id));
+
+      // SECFIX #860 (update): usa resource.data (doc existente) para prevenir ownership pivot attack
+      // Imutabilidade de game_id garante que o time não pode ser transferido para outro jogo
+      allow update: if isAuthenticated() &&
+                       (isAdmin() || isGameOwner(resource.data.game_id)) &&
+                       fieldUnchanged('game_id');
+
+      allow delete: if isAuthenticated() &&
+                       (isAdmin() || isGameOwner(resource.data.game_id));
     }
 
     // ============================================
@@ -1106,6 +1124,9 @@ service cloud.firestore {
         isAdmin() ||
         (
           (resource.data.owner_id == userId() || isGroupAdmin(groupId)) &&
+          // SECFIX #862: owner_id e created_at são imutáveis — previne privilege escalation
+          fieldUnchanged('owner_id') &&
+          fieldUnchanged('created_at') &&
           // Valida name SO se estiver no diff
           (
             !('name' in request.resource.data.diff(resource.data).affectedKeys()) ||
@@ -1273,8 +1294,10 @@ service cloud.firestore {
       // usuário", roubando o invite code.
       // Agora: caller deve ser o usuário que se atribui via used_by.
       // Status final deve ser used==true (sem toggle pra false).
+      // SECFIX #873: convite expirado não pode ser consumido
       allow update: if isAuthenticated() &&
                        resource.data.used == false &&
+                       resource.data.expires_at > request.time &&
                        request.resource.data.used == true &&
                        request.resource.data.used_by == userId() &&
                        request.resource.data.diff(resource.data).affectedKeys()
@@ -1301,8 +1324,10 @@ service cloud.firestore {
         canManageInvites(resource.data.group_id)
       );
 
+      // SECFIX #867: status inicial deve ser PENDING para prevenir criação em estado inválido
       allow create: if isAuthenticated() &&
                        request.resource.data.invited_by_id == userId() &&
+                       request.resource.data.status == 'PENDING' &&
                        canManageInvites(request.resource.data.group_id);
 
       // FIX #577: era update sem field restriction → invitee podia overwrite group_id/invited_by_id.
@@ -1350,9 +1375,13 @@ service cloud.firestore {
         request.resource.data.keys().hasAll(['user_id', 'game_id', 'summoned_by']) &&
         exists(/databases/$(database)/documents/games/$(request.resource.data.game_id));
 
+      // SECFIX #864: whitelist de campos — destinatário só pode alterar status/updated_at
+      // Previne que recipient altere game_id, summoned_by ou user_id
       allow update: if isAuthenticated() && (
-        resource.data.user_id == userId() ||
-        isAdmin()
+        isAdmin() ||
+        (resource.data.user_id == userId() &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['status', 'updated_at']))
       );
 
       allow delete: if isAuthenticated() && (
@@ -1431,10 +1460,13 @@ service cloud.firestore {
       // 1. game_id obrigatorio
       // 2. type deve ser um dos tipos validos
       // 3. Campos de score (se presentes) devem ter bounds
+      // SECFIX #856: confirmed player deve ser o autor do evento (created_by == userId())
+      // Game owner e admin podem criar eventos sem restrição de autoria
       allow create: if isVerifiedOrGrace() && (
         isAdmin() ||
         isGameOwner(request.resource.data.game_id) ||
-        isConfirmedPlayer(request.resource.data.game_id)
+        (isConfirmedPlayer(request.resource.data.game_id) &&
+         request.resource.data.created_by == userId())
       ) &&
       // game_id obrigatorio
       request.resource.data.game_id is string &&
@@ -1484,10 +1516,11 @@ service cloud.firestore {
       // PERF_001 P0 #30: Validacao estrita de scores (max 100 gols por time)
       // PERF_001 P0 #1: Otimizado - usa resource.data.owner_id em vez de get(games/{scoreId})
       // scoreId é o próprio gameId, então owner_id está em resource.data
+      // SECFIX #869: isConfirmedPlayer branch removido — qualquer criação requer owner_id == userId()
+      // (game owner é o único caso legítimo; confirmed players não devem criar scores de outros)
       allow create: if isAuthenticated() && (
         isAdmin() ||
-        request.resource.data.owner_id == userId() ||
-        isConfirmedPlayer(scoreId)
+        request.resource.data.owner_id == userId()
       ) &&
       // Validacao de bounds para placares
       isValidScore(request.resource.data.get('team1_score', null)) &&
@@ -1519,10 +1552,12 @@ service cloud.firestore {
       // PERF_001 P0 #30: Validacao estrita de scores (goals, assists, saves - max 100)
       // Previne exploits de XP inflados durante jogo ao vivo
       // SECURITY: Separado create/update para validar fieldUnchanged('game_id') no update
+      // SECFIX #857: confirmed player só pode criar/atualizar as próprias stats (player_id == userId())
       allow create: if isAuthenticated() && (
         isAdmin() ||
         isGameOwner(request.resource.data.game_id) ||
-        isConfirmedPlayer(request.resource.data.game_id)
+        (isConfirmedPlayer(request.resource.data.game_id) &&
+         request.resource.data.player_id == userId())
       ) &&
       // game_id obrigatorio
       request.resource.data.game_id is string &&
@@ -1532,12 +1567,15 @@ service cloud.firestore {
       isValidScore(request.resource.data.get('saves', null));
 
       // SECURITY: No update, game_id nao pode ser alterado (previne mover stats entre jogos)
+      // SECFIX #857: confirmed player só pode atualizar as próprias stats (player_id == userId())
       allow update: if isAuthenticated() && (
         isAdmin() ||
-        isGameOwner(request.resource.data.game_id) ||
-        isConfirmedPlayer(request.resource.data.game_id)
+        isGameOwner(resource.data.game_id) ||
+        (isConfirmedPlayer(resource.data.game_id) &&
+         resource.data.player_id == userId())
       ) &&
       fieldUnchanged('game_id') &&
+      fieldUnchanged('player_id') &&
       // Validacao de bounds para stats de jogo
       isValidScore(request.resource.data.get('goals', null)) &&
       isValidScore(request.resource.data.get('assists', null)) &&
@@ -1553,7 +1591,20 @@ service cloud.firestore {
     // COLECAO: mvp_votes (votacao MVP)
     // ============================================
     match /mvp_votes/{voteId} {
-      allow read: if isAuthenticated();
+      // SECFIX #858: anominidade das votações — leitura individual restrita ao próprio voter ou admin.
+      // Game owners e confirmed players podem listar votos apenas para agregação de resultados
+      // (sem identificar quem votou em quem — o voteId é opaco / UUID do voter).
+      allow get: if isAuthenticated() && (
+        resource.data.voter_id == userId() ||
+        isAdmin() ||
+        isGameOwner(resource.data.game_id) ||
+        isConfirmedPlayer(resource.data.game_id)
+      );
+      allow list: if isAuthenticated() && (
+        isAdmin() ||
+        isGameOwner(resource.data.game_id) ||
+        isConfirmedPlayer(resource.data.game_id)
+      );
 
       // FASE 5 #448: votar MVP exige verified (30-day grace)
       allow create: if isVerifiedOrGrace() && (
@@ -1846,10 +1897,12 @@ service cloud.firestore {
     // USER FEEDBACK
     // ============================================
     match /user_feedback/{feedbackId} {
+      // SECFIX #872: read individual restrito ao owner ou admin
       allow read: if isAuthenticated() && (
         resource.data.user_id == request.auth.uid || isAdmin()
       );
-      allow list: if isAuthenticated();
+      // SECFIX #872: list restrito a admins — evita exposição de feedback de outros usuários
+      allow list: if isAuthenticated() && isAdmin();
       allow create: if isAuthenticated()
         && request.resource.data.user_id == request.auth.uid
         && request.resource.data.user_email == request.auth.token.email
