@@ -28,6 +28,33 @@ Registro de decisões técnicas e de produto. Cada entrada deve ter contexto, al
 
 ## Decisões Registradas
 
+### [2026-05-11] iOS Bundle ID: `com.futebadosparcas` (sem sufixo `.ios`)
+
+**Contexto:** Master `iosApp/iosApp/Info.plist` tinha `CFBundleIdentifier` hardcoded como `com.futebadosparcas.ios` (sufixo separava Android/iOS). Ao registrar app iOS no Firebase Console + rodar pela primeira vez no Simulator (PR #1055), decidi unificar com Android (`com.futebadosparcas`).
+
+**Alternativas consideradas:**
+1. **Manter `com.futebadosparcas.ios`** — pro: separação visual; contra: configurações Firebase/Apple Developer separadas pra mesma app, deeplink schemes precisam handling distinto, mais confusão pra App Store / TestFlight reviewer
+2. **Migrar pra `com.futebadosparcas`** — pro: paridade total com Android, identidade única cross-platform, deep links unificados; contra: muda master (mas iOS nunca shipped, sem usuário afetado)
+
+**Decisão:** Migrar pra `com.futebadosparcas` via `$(PRODUCT_BUNDLE_IDENTIFIER)` (Xcode var) resolvido em `project.yml` como `PRODUCT_BUNDLE_IDENTIFIER: com.futebadosparcas`.
+
+**Justificativa:**
+- iOS nunca foi shipped publicamente, então sem usuários afetados por mudança de bundle ID
+- Apple permite mesmo bundle ID em iOS/Android (lojas separadas, não há conflito)
+- Match com Android namespace `com.futebadosparcas` (`applicationId`)
+- Firebase iOS app já criado pra esse bundle ID (`1:490094091078:ios:e51b069afe7aefa3b5a347`)
+- Convenção moderna: `$(PRODUCT_BUNDLE_IDENTIFIER)` em Info.plist, valor definido em build settings (xcodegen `PRODUCT_BUNDLE_IDENTIFIER`)
+
+**Consequências:**
+- Apple Developer Portal: registrar App ID = `com.futebadosparcas` (não `.ios`)
+- TestFlight (futuro, spec `IOS_TESTFLIGHT_SETUP.md`): mesmo bundle ID
+- Deep links / Universal Links: unificar com Android (mesmo `applinks:` no apple-app-site-association)
+- `fastlane match` (TestFlight phase): certs e provisioning profiles com bundle `com.futebadosparcas`
+
+**Relacionado:** PR #1055, `specs/IOS_TESTFLIGHT_SETUP.md`, memory `project_ios_simulator_firebase_running_2026_05_11`.
+
+---
+
 ### [2026-05-03] CodeQL Java/Kotlin desabilitado em macOS ARM64
 
 **Contexto:** Pipeline CodeQL Security Analysis migrada para self-hosted Mac M-series (PRs #386, #389, #404). Java/Kotlin analyzer falha em todos os build-modes testados em runners ARM64.

@@ -20,10 +20,11 @@ cd iosApp
 xcodegen generate
 LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install
 
-# 3. GoogleService-Info.plist (uma vez — depois fica no repo)
+# 3. GoogleService-Info.plist (uma vez — depois fica local, é gitignored)
+#    project.yml resolve path relativo ao próprio yml, então alvo = iosApp/iosApp/GoogleService-Info.plist
 firebase apps:sdkconfig IOS 1:490094091078:ios:e51b069afe7aefa3b5a347 \
   --project futebadosparcas \
-  --out iosApp/GoogleService-Info.plist
+  --out iosApp/iosApp/GoogleService-Info.plist
 
 # 4a. Build + run via CLI
 cd ..
