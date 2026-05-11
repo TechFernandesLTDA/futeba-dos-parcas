@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Query, onSnapshot, DocumentData } from 'firebase/firestore';
 import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
+import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 
 const logger = createLogger('useFirestoreQuery');
 
@@ -62,7 +63,7 @@ export function useFirestoreQuery<T>({
       },
       (err) => {
         logger.error('Firestore query error:', err);
-        setError(err.message);
+        setError(getFirestoreErrorMessage(err));
         setLoading(false);
       }
     );

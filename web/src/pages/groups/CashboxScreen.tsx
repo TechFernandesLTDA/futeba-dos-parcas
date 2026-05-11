@@ -39,6 +39,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { LoadingState } from '../../components/common/GameCard';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 
 const logger = createLogger('CashboxScreen');
 
@@ -187,7 +188,7 @@ export const CashboxScreen: React.FC = () => {
       setAmount('');
       setDescription('');
     } catch (err: unknown) {
-      showError('Erro ao adicionar transação: ' + (err instanceof Error ? err.message : 'Tente novamente.'));
+      showError(getFirestoreErrorMessage(err, 'Erro ao adicionar transação'));
     } finally {
       setSubmitting(false);
     }

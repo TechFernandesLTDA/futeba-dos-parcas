@@ -122,7 +122,7 @@ export const LiveGameScreen: React.FC = () => {
       },
       (err) => {
         logger.error('Error fetching game:', err);
-        setError(err.message);
+        setError(getFirestoreErrorMessage(err));
         setLoading(false);
       }
     );
@@ -229,9 +229,8 @@ export const LiveGameScreen: React.FC = () => {
       setAddEventDialog(false);
       setSelectedPlayer('');
     } catch (err) {
-      const msg = (err as Error).message;
       logger.error('Error adding event:', err);
-      showError(`Erro ao adicionar evento: ${msg}`);
+      showError(getFirestoreErrorMessage(err, 'Erro ao adicionar evento'));
     }
   };
 
@@ -251,9 +250,8 @@ export const LiveGameScreen: React.FC = () => {
       });
       navigate(`/game/${gameId}/vote`);
     } catch (err) {
-      const msg = (err as Error).message;
       logger.error('Error finishing game:', err);
-      showError(`Erro ao finalizar jogo: ${msg}`);
+      showError(getFirestoreErrorMessage(err, 'Erro ao finalizar jogo'));
     }
   };
 

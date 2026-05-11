@@ -25,6 +25,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useInvitePlayers } from '../../hooks/useGroups';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createLogger } from '../../utils/logger';
+import { getFunctionsErrorMessage } from '../../utils/firebaseErrors';
 
 const logger = createLogger('JoinByInviteScreen');
 
@@ -127,7 +128,7 @@ export const JoinByInviteScreen: React.FC = () => {
       navigate(`/group/${preview.groupId}`, { replace: true });
     } catch (err) {
       logger.error('Erro ao entrar no grupo:', err);
-      showError((err as Error).message || 'Erro ao entrar no grupo');
+      showError(getFunctionsErrorMessage(err, 'joinGroup', 'Erro ao entrar no grupo'));
     }
   };
 

@@ -161,7 +161,7 @@ export const GroupDetailScreen: React.FC = () => {
       showSuccess('Grupo excluído com sucesso');
       setTimeout(() => navigate('/?tab=2'), 1000);
     } catch (err) {
-      showError((err as Error)?.message || 'Erro ao excluir grupo');
+      showError(getFirestoreErrorMessage(err, 'Erro ao excluir grupo'));
     } finally {
       setDeleteLoading(false);
     }

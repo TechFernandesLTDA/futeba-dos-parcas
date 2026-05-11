@@ -38,6 +38,7 @@ import { LoadingState } from '../../components/common/GameCard';
 import { snakeToCamel } from '../../utils/firestoreHelpers';
 import { useTranslation } from 'react-i18next';
 import { createLogger } from '../../utils/logger';
+import { getFirestoreErrorMessage } from '../../utils/firebaseErrors';
 
 const logger = createLogger('SchedulesScreen');
 
@@ -108,7 +109,7 @@ export const SchedulesScreen: React.FC = () => {
         is_active: !schedule.isActive,
       });
     } catch (err: unknown) {
-      showError('Erro ao alterar status: ' + (err instanceof Error ? err.message : 'Tente novamente.'));
+      showError(getFirestoreErrorMessage(err, 'Erro ao alterar status'));
     }
   };
 
@@ -126,7 +127,7 @@ export const SchedulesScreen: React.FC = () => {
       setDeleteDialogOpen(false);
       setDeletingSchedule(null);
     } catch (err: unknown) {
-      showError('Erro ao excluir: ' + (err instanceof Error ? err.message : 'Tente novamente.'));
+      showError(getFirestoreErrorMessage(err, 'Erro ao excluir agendamento'));
     } finally {
       setActionLoading(false);
     }
@@ -152,7 +153,7 @@ export const SchedulesScreen: React.FC = () => {
       setNewScheduleTime('');
       setNewScheduleMaxPlayers(14);
     } catch (err: unknown) {
-      showError('Erro ao criar agendamento: ' + (err instanceof Error ? err.message : 'Tente novamente.'));
+      showError(getFirestoreErrorMessage(err, 'Erro ao criar agendamento'));
     } finally {
       setActionLoading(false);
     }

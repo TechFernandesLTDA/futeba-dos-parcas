@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
+import { getFirestoreErrorMessage } from '../utils/firebaseErrors';
 
 export interface SearchResult {
   id: string;
@@ -79,7 +80,7 @@ export const useSearch = (searchQuery: string, type: 'all' | 'users' | 'groups' 
         }
       } catch (err: unknown) {
         if (!cancelled) {
-          setError((err as Error).message);
+          setError(getFirestoreErrorMessage(err));
         }
       } finally {
         if (!cancelled) {

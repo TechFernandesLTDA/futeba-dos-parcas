@@ -76,6 +76,30 @@ export function getFirestoreErrorMessage(error: unknown, fallback?: string): str
 }
 
 /**
+ * Mapa de códigos HttpsError do Firebase Functions para mensagens PT-BR.
+ * Códigos seguem a convenção `functions/<code>` retornada pelo SDK.
+ */
+const FIREBASE_FUNCTIONS_ERRORS: Record<string, string> = {
+  'functions/permission-denied': 'Você não tem permissão para esta ação.',
+  'functions/unauthenticated': 'Faça login para continuar.',
+  'functions/failed-precondition': 'Operação indisponível no momento. Tente novamente em instantes.',
+  'functions/resource-exhausted': 'Limite atingido. Aguarde alguns minutos.',
+  'functions/unavailable': 'Servidor temporariamente indisponível.',
+  'functions/internal': 'Ocorreu um erro inesperado no servidor.',
+  'functions/not-found': 'Recurso não encontrado.',
+  'functions/invalid-argument': 'Dados inválidos enviados.',
+  // Códigos sem prefixo (alguns SDKs omitem o prefixo functions/)
+  'permission-denied': 'Você não tem permissão para esta ação.',
+  'unauthenticated': 'Faça login para continuar.',
+  'failed-precondition': 'Operação indisponível no momento. Tente novamente em instantes.',
+  'resource-exhausted': 'Limite atingido. Aguarde alguns minutos.',
+  'unavailable': 'Servidor temporariamente indisponível.',
+  'internal': 'Ocorreu um erro inesperado no servidor.',
+  'not-found': 'Recurso não encontrado.',
+  'invalid-argument': 'Dados inválidos enviados.',
+};
+
+/**
  * Retorna mensagem de erro em PT-BR para um erro de Cloud Function (HttpsError).
  * Erros críticos são automaticamente registrados via logError.
  */
@@ -87,7 +111,7 @@ export function getFunctionErrorMessage(
   const code = (error as { code?: string })?.code || '';
 
   // Persiste erros relevantes de Functions para debug
-  if (code && LOG_WORTHY_CODES.has(code)) {
+  if (code && LOG_WORTHY_CODES.has(code.replace('functions/', ''))) {
     logError(
       error instanceof Error ? error : new Error(`Function error [${functionName}]: ${code}`),
       { kind: 'firebase', functionName, extra: { code } }
@@ -95,8 +119,14 @@ export function getFunctionErrorMessage(
   }
 
   return (
-    FIREBASE_FIRESTORE_ERRORS[code] ||
+    FIREBASE_FUNCTIONS_ERRORS[code] ||
     fallback ||
-    'Erro ao executar operação. Tente novamente'
+    'Não foi possível completar a operação.'
   );
 }
+
+/**
+ * Alias com `s` para consistência com a convenção `getFunctionsErrorMessage`.
+ * @see getFunctionErrorMessage
+ */
+export const getFunctionsErrorMessage = getFunctionErrorMessage;
