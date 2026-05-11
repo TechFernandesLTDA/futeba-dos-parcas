@@ -24,7 +24,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const setLanguage = useCallback(async (lang: SupportedLanguage) => {
     setLanguageState(lang);
     await i18n.changeLanguage(lang);
-    localStorage.setItem(STORAGE_KEY, lang);
+    try {
+      localStorage.setItem(STORAGE_KEY, lang);
+    } catch {
+      // QuotaExceededError em Safari/Firefox modo privado — ignorar, estado em memória persiste
+    }
   }, [i18n]);
 
   useEffect(() => {
