@@ -18,6 +18,7 @@ import { snakeToCamel } from '../utils/firestoreHelpers';
 import { createLogger } from '../utils/logger';
 import { getAuthErrorMessage } from '../utils/firebaseErrors';
 import { addBreadcrumb, clearBreadcrumbs } from '../utils/errorContext';
+import { markClaimRefresh } from '../utils/authRetry';
 
 const logger = createLogger('AuthContext');
 
@@ -35,9 +36,16 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateUserProfile: (profile: { displayName?: string; photoURL?: string }) => Promise<void>;
-  
+
   // User methods
   refreshUser: () => Promise<void>;
+
+  /**
+   * Força refresh do ID token, atualizando custom claims (ex: `verified`, `role`)
+   * que podem ter sido setados por Cloud Functions após o cadastro.
+   * Útil para chamar após etapas de onboarding (verificação de telefone/CPF).
+   */
+  refreshClaims: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -247,6 +255,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName: name });
+
+      // NOTA (#1023): forçar refresh do token ANTES de qualquer escrita no Firestore
+      // para garantir que custom claims setados pelo trigger `onNewUserCreated`
+      // (Cloud Functions) cheguem ao token local antes do primeiro request.
+      // AVISO: o trigger roda de forma assíncrona no servidor — este getIdToken(true)
+      // pode ainda não capturar o claim recém-setado. O withClaimRefreshRetry em
+      // web/src/utils/authRetry.ts é a rede de segurança para esse caso.
+      try {
+        await result.user.getIdToken(true);
+        markClaimRefresh();
+      } catch (tokenErr) {
+        // Não-fatal — falha no refresh de token não impede criação da conta.
+        logger.warn('Falha ao forçar refresh de token após cadastro:', tokenErr);
+      }
+
       await createUserDocument(result.user, { name });
     } catch (err) {
       setError((err as Error).message || 'Erro ao criar conta');
@@ -299,6 +322,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData);
   }, []);
 
+  // Força refresh do ID token para capturar custom claims atualizados
+  const refreshClaims = useCallback(async () => {
+    const currentUser = firebaseUserRef.current;
+    if (!currentUser) return;
+    try {
+      await currentUser.getIdToken(true);
+      markClaimRefresh();
+      logger.debug('Claims refreshed com sucesso para uid:', currentUser.uid);
+    } catch (err) {
+      logger.error('Falha ao refreshar claims:', err);
+      throw err;
+    }
+  }, []);
+
   // Update profile
   const updateUserProfile = useCallback(async (profile: { displayName?: string; photoURL?: string }) => {
     if (firebaseUser && user) {
@@ -326,7 +363,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resetPassword,
     updateUserProfile,
     refreshUser,
-  }), [firebaseUser, user, loading, error, signIn, signInWithGoogle, signUp, logout, resetPassword, updateUserProfile, refreshUser]);
+    refreshClaims,
+  }), [firebaseUser, user, loading, error, signIn, signInWithGoogle, signUp, logout, resetPassword, updateUserProfile, refreshUser, refreshClaims]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
