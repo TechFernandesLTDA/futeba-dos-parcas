@@ -37,6 +37,9 @@ targets:
     resources:
       - path: iosApp/Info.plist
         type: file
+      - path: iosApp/GoogleService-Info.plist
+        type: file
+        optional: true
     dependencies:
       - framework: ../shared/build/bin/iosSimulatorArm64/debugFramework/shared.framework
         embed: true
@@ -63,8 +66,9 @@ targets:
           - "ComposeApp"
         SWIFT_OBJC_BRIDGING_HEADER: ""
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-    info:
-      path: iosApp/Info.plist
+    # Sem `info:` block — Info.plist mantido manualmente (privacy descriptions,
+    # CFBundleURLTypes pra OAuth, UISupportedInterfaceOrientations, etc).
+    # `info:` faz xcodegen REGENERAR o plist, sobrescrevendo essas keys.
     preBuildScripts:
       - script: |
           # Build dos frameworks KMP antes de compilar iOS

@@ -10,20 +10,22 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
 
-        // Configure Firebase
-        FirebaseApp.configure()
-
-        // Setup notifications
+        // Notifications (independente de Firebase — usa UserNotifications nativo)
         UNUserNotificationCenter.current().delegate = self
-        Messaging.messaging().delegate = self
-
-        // Request permission
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             if granted {
                 DispatchQueue.main.async {
                     application.registerForRemoteNotifications()
                 }
             }
+        }
+
+        // Firebase só inicializa se GoogleService-Info.plist presente (smoke-test mode sem config)
+        if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
+            FirebaseApp.configure()
+            Messaging.messaging().delegate = self
+        } else {
+            print("WARNING: GoogleService-Info.plist nao encontrado — Firebase desativado (smoke-test mode)")
         }
 
         return true
