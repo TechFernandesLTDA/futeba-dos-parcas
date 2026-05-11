@@ -125,8 +125,11 @@ export const LocationDetailScreen: React.FC = () => {
     };
   }, [locationId, reloadKey]);
 
-  const userCanManage =
+  // Editar: ADMIN ou owner do local podem editar
+  const userCanEdit =
     !!user && !!location && (user.role === 'ADMIN' || canManageLocation(location, user.id));
+  // Excluir: apenas ADMIN — owners não veem o botão delete (#1025)
+  const userCanDelete = !!user && user.role === 'ADMIN';
 
   const handleDelete = async () => {
     if (!locationId || !location) return;
@@ -161,22 +164,22 @@ export const LocationDetailScreen: React.FC = () => {
         <Typography variant="h6" sx={{ ml: 1, flex: 1 }} noWrap>
           {title}
         </Typography>
-        {userCanManage && location && (
-          <>
-            <IconButton
-              onClick={() => navigate(`/location/${location.id}/edit`)}
-              aria-label="Editar local"
-            >
-              <EditIcon />
-            </IconButton>
-            <IconButton
-              onClick={() => setDeleteOpen(true)}
-              aria-label="Excluir local"
-              color="error"
-            >
-              <DeleteIcon />
-            </IconButton>
-          </>
+        {userCanEdit && location && (
+          <IconButton
+            onClick={() => navigate(`/location/${location.id}/edit`)}
+            aria-label="Editar local"
+          >
+            <EditIcon />
+          </IconButton>
+        )}
+        {userCanDelete && location && (
+          <IconButton
+            onClick={() => setDeleteOpen(true)}
+            aria-label="Excluir local"
+            color="error"
+          >
+            <DeleteIcon />
+          </IconButton>
         )}
       </Box>
     </Box>

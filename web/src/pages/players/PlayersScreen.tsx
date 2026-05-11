@@ -65,6 +65,7 @@ export const PlayersScreen: React.FC = () => {
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const [isMember, setIsMember] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
@@ -84,6 +85,17 @@ export const PlayersScreen: React.FC = () => {
           const memberIds = groupData.members || [];
           const ownerId = groupData.ownerId;
           const admins = groupData.admins || [];
+
+          // Privacidade: apenas membros do grupo podem ver a lista de jogadores (#1028)
+          const isGroupMember =
+            ownerId === user.id || admins.includes(user.id) || memberIds.includes(user.id);
+          if (!isGroupMember) {
+            if (!cancelled) {
+              setIsMember(false);
+              setLoading(false);
+            }
+            return;
+          }
 
           if (ownerId === user.id) {
             setCurrentUserRole('OWNER');
@@ -202,6 +214,44 @@ export const PlayersScreen: React.FC = () => {
 
   if (loading) {
     return <LoadingState shimmerCount={6} itemType="LIST" />;
+  }
+
+  // Usuário não é membro do grupo — não buscar perfis (#1028)
+  if (!isMember) {
+    return (
+      <Box sx={{ pb: 4 }}>
+        <Box
+          sx={{
+            position: 'sticky',
+            top: 0,
+            bgcolor: 'background.paper',
+            zIndex: 10,
+            borderBottom: `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
+            <IconButton onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')} aria-label="Voltar">
+              <BackIcon />
+            </IconButton>
+            <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
+              Jogadores
+            </Typography>
+          </Box>
+        </Box>
+        <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
+          <PersonIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            Acesso restrito
+          </Typography>
+          <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+            Você precisa ser membro deste grupo para ver os jogadores.
+          </Typography>
+          <Button variant="outlined" onClick={() => navigate(groupId ? `/group/${groupId}` : '/?tab=2')}>
+            Voltar
+          </Button>
+        </Container>
+      </Box>
+    );
   }
 
   return (
