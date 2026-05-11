@@ -16,6 +16,9 @@ export const setUserVerified = httpsCallable<
   { success: boolean; uid: string }
 >(functions, 'setUserVerified');
 
+// Exclusão de conta — LGPD art. 18 (direito ao esquecimento)
+export const deleteAccount = httpsCallable<void, { success: boolean }>(functions, 'deleteAccount');
+
 // Soft Delete
 export const softDeleteGame = httpsCallable(functions, 'softDeleteGame');
 export const softDeleteGroup = httpsCallable(functions, 'softDeleteGroup');
