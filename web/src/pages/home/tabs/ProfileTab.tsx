@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
   Box,
@@ -90,57 +90,62 @@ export function ProfileTab() {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const menuItems = [
+  // Memoizado: recriado apenas quando navigate muda (estável por sessão)
+  const menuItems = useMemo(() => [
     { icon: <Timeline />, label: 'Rumo ao Estrelato', onClick: () => navigate('/level-journey') },
     { icon: <MilitaryTech />, label: 'Badges', onClick: () => navigate('/badges') },
     { icon: <TrendingUp />, label: 'Estatísticas', onClick: () => navigate('/statistics') },
     { icon: <Settings />, label: 'Configurações', onClick: () => navigate('/settings') },
-  ];
+  ], [navigate]);
 
   // Itens condicionais por role
   const isAdmin = user?.role === 'ADMIN';
   const isFieldOwner = user?.role === 'FIELD_OWNER';
 
-  const adminMenuItems: Array<{ icon: React.ReactNode; label: string; onClick: () => void }> = [];
-  if (isAdmin || isFieldOwner) {
-    adminMenuItems.push({
-      icon: <Stadium />,
-      label: 'Gerenciar Quadras',
-      onClick: () => navigate('/locations'),
-    });
-  }
-  if (isFieldOwner) {
-    adminMenuItems.push({
-      icon: <Dashboard />,
-      label: 'Painel do Dono',
-      onClick: () => navigate('/owner/dashboard'),
-    });
-  }
-  if (isAdmin) {
-    adminMenuItems.push({
-      icon: <AdminPanelSettings />,
-      label: 'Gerenciar Usuários',
-      onClick: () => navigate('/admin/users'),
-    });
-    adminMenuItems.push({
-      icon: <EmojiEvents />,
-      label: 'Configurações da Liga',
-      onClick: () => navigate('/settings/gamification'),
-    });
-    adminMenuItems.push({
-      icon: <BugReport />,
-      label: 'Ferramentas de Dev',
-      onClick: () => navigate('/dev'),
-    });
-  }
+  // Memoizado: recriado apenas quando role do usuário muda
+  const adminMenuItems = useMemo<Array<{ icon: React.ReactNode; label: string; onClick: () => void }>>(() => {
+    const items: Array<{ icon: React.ReactNode; label: string; onClick: () => void }> = [];
+    if (isAdmin || isFieldOwner) {
+      items.push({
+        icon: <Stadium />,
+        label: 'Gerenciar Quadras',
+        onClick: () => navigate('/locations'),
+      });
+    }
+    if (isFieldOwner) {
+      items.push({
+        icon: <Dashboard />,
+        label: 'Painel do Dono',
+        onClick: () => navigate('/owner/dashboard'),
+      });
+    }
+    if (isAdmin) {
+      items.push({
+        icon: <AdminPanelSettings />,
+        label: 'Gerenciar Usuários',
+        onClick: () => navigate('/admin/users'),
+      });
+      items.push({
+        icon: <EmojiEvents />,
+        label: 'Configurações da Liga',
+        onClick: () => navigate('/settings/gamification'),
+      });
+      items.push({
+        icon: <BugReport />,
+        label: 'Ferramentas de Dev',
+        onClick: () => navigate('/dev'),
+      });
+    }
+    return items;
+  }, [isAdmin, isFieldOwner, navigate]);
 
-  // Ratings de posição
-  const positionRatings = [
+  // Memoizado: recriado apenas quando ratings do usuário ou tema mudam
+  const positionRatings = useMemo(() => [
     { icon: <SportsSoccer fontSize="small" />, label: 'Atacante', value: user?.strikerRating || 0, color: theme.palette.error.main },
     { icon: <DirectionsRun fontSize="small" />, label: 'Meia', value: user?.midRating || 0, color: theme.palette.warning.main },
     { icon: <Shield fontSize="small" />, label: 'Zagueiro', value: user?.defenderRating || 0, color: theme.palette.info.main },
     { icon: <SportsKabaddi fontSize="small" />, label: 'Goleiro', value: user?.gkRating || 0, color: theme.palette.success.main },
-  ];
+  ], [user?.strikerRating, user?.midRating, user?.defenderRating, user?.gkRating, theme.palette]);
 
   return (
     <Box sx={{ pb: 8 }}>

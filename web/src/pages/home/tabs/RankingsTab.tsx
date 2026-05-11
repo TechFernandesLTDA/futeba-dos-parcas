@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gamificationColors } from '../../../theme';
 import { getPositionBadgeStyle } from '../../../utils/gamificationStyle';
@@ -223,14 +223,15 @@ export function RankingsTab() {
 
   const getPositionStyle = (position: number) => getPositionBadgeStyle(position, theme);
 
-  const getSortedPlayers = () => {
+  // Memoizado: recalcula apenas quando players ou tabValue mudam
+  const sortedPlayers = useMemo(() => {
     if (tabValue === 1) {
       // Ranking por XP global
       return [...players].sort((a, b) => (b.experiencePoints || 0) - (a.experiencePoints || 0));
     }
     // Liga por pontos da temporada
     return players;
-  };
+  }, [players, tabValue]);
 
   return (
     <Box sx={{ minHeight: '100%' }}>
@@ -473,7 +474,7 @@ export function RankingsTab() {
                 </CardContent>
               </Card>
             ))
-          ) : getSortedPlayers().length === 0 ? (
+          ) : sortedPlayers.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <TrophyIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
@@ -484,7 +485,7 @@ export function RankingsTab() {
               </Typography>
             </Box>
           ) : (
-            getSortedPlayers().map((player, index) => (
+            sortedPlayers.map((player, index) => (
               <RankingCard
                 key={player.id}
                 player={player}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -48,10 +48,11 @@ export function GamesTab() {
 
   const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all';
 
-  const clearFilters = () => {
+  // Estabilizado: evita recriação em cada render (passado a botões filhos)
+  const clearFilters = useCallback(() => {
     setSearchQuery('');
     setStatusFilter('all');
-  };
+  }, []);
 
   const filteredGames = useMemo(() => {
     let result = [...games];
@@ -72,9 +73,10 @@ export function GamesTab() {
     return result;
   }, [games, debouncedSearch, statusFilter]);
 
-  const handleCardClick = (gameId: string) => {
+  // Estabilizado: navigate é estável, dep array vazio seguro
+  const handleCardClick = useCallback((gameId: string) => {
     navigate(`/game/${gameId}`);
-  };
+  }, [navigate]);
 
   return (
     <Box sx={{ pb: 10 }}>

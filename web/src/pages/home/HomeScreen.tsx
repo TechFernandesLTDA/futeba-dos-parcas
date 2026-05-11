@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -14,6 +14,7 @@ import {
   ListItemText,
   Typography,
   Tooltip,
+  Skeleton,
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -24,16 +25,28 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
-import { HomeTab } from './tabs/HomeTab';
-import { GamesTab } from './tabs/GamesTab';
-import { GroupsTab } from './tabs/GroupsTab';
-import { RankingsTab } from './tabs/RankingsTab';
-import { ProfileTab } from './tabs/ProfileTab';
+// Carregamento lazy das tabs para reduzir bundle inicial da HomeScreen
+const HomeTab = lazy(() => import('./tabs/HomeTab').then(m => ({ default: m.HomeTab })));
+const GamesTab = lazy(() => import('./tabs/GamesTab').then(m => ({ default: m.GamesTab })));
+const GroupsTab = lazy(() => import('./tabs/GroupsTab').then(m => ({ default: m.GroupsTab })));
+const RankingsTab = lazy(() => import('./tabs/RankingsTab').then(m => ({ default: m.RankingsTab })));
+const ProfileTab = lazy(() => import('./tabs/ProfileTab').then(m => ({ default: m.ProfileTab })));
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
 
 // Larguras dos navs adaptativos (Material 3 spec)
 const RAIL_WIDTH = 80;     // md: NavigationRail (icon-only)
 const DRAWER_WIDTH = 240;  // lg+: Drawer permanent (icon + label)
+
+// Skeleton de carregamento para transição entre tabs
+function TabSkeleton() {
+  return (
+    <Box sx={{ p: 2 }}>
+      {[...Array(4)].map((_, i) => (
+        <Skeleton key={i} variant="rounded" height={80} sx={{ mb: 1.5 }} />
+      ))}
+    </Box>
+  );
+}
 
 export function HomeScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -50,17 +63,24 @@ export function HomeScreen() {
     }
   }, [permission]);
 
-  const tabConfigs = [
+  // Memoizado para evitar recriação dos objetos JSX a cada render
+  const tabConfigs = useMemo(() => [
     { icon: <HomeIcon />, label: t('nav.home') },
     { icon: <SportsSoccer />, label: t('nav.games') },
     { icon: <Groups />, label: t('nav.groups') },
     { icon: <EmojiEvents />, label: t('nav.league') },
     { icon: <Person />, label: t('nav.profile') },
-  ];
+  ], [t]);
 
-  const handleTabChange = (idx: number) => {
+  // Estabilizado com useCallback para evitar recriação a cada render
+  const handleTabChange = useCallback((idx: number) => {
     setSearchParams({ tab: idx.toString() });
-  };
+  }, [setSearchParams]);
+
+  // Handler estabilizado para o BottomNavigation
+  const handleBottomNavChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
+    handleTabChange(newValue);
+  }, [handleTabChange]);
 
   return (
     <Box
@@ -189,11 +209,14 @@ export function HomeScreen() {
           pb: { xs: '72px', md: 0 },
         }}
       >
-        {tabValue === 0 && <HomeTab />}
-        {tabValue === 1 && <GamesTab />}
-        {tabValue === 2 && <GroupsTab />}
-        {tabValue === 3 && <RankingsTab />}
-        {tabValue === 4 && <ProfileTab />}
+        {/* Suspense local: evita desmontar o nav ao carregar chunk da tab */}
+        <Suspense fallback={<TabSkeleton />}>
+          {tabValue === 0 && <HomeTab />}
+          {tabValue === 1 && <GamesTab />}
+          {tabValue === 2 && <GroupsTab />}
+          {tabValue === 3 && <RankingsTab />}
+          {tabValue === 4 && <ProfileTab />}
+        </Suspense>
       </Box>
 
       {/* Mobile (xs/sm): BottomNavigation - 5 botões (igual ao Android) */}
@@ -216,7 +239,7 @@ export function HomeScreen() {
       >
         <BottomNavigation
           value={tabValue}
-          onChange={(_, newValue) => handleTabChange(newValue)}
+          onChange={handleBottomNavChange}
           showLabels
           aria-label="Navegação principal"
           sx={{
